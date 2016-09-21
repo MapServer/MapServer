@@ -1,0 +1,247 @@
+# RUN_PARMS: legend_sizeunits_meters.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=png" > [RESULT_DEMIME]
+# RUN_PARMS: legend_sizeunits_meters.cairo.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=cairopng" > [RESULT_DEMIME]
+# RUN_PARMS: legend_sizeunits_meters.svg [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=svg" > [RESULT_DEMIME]
+# RUN_PARMS: legend_sizeunits_meters.pdf [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=pdf" > [RESULT_DEMIME]
+
+#
+#
+# legend support.
+#   
+# REQUIRES: OUTPUT=PNG 
+#
+MAP
+
+STATUS ON
+EXTENT 478300 4762880 481650 4765610
+SIZE 150 100
+shapepath "../misc/data"
+IMAGETYPE png
+fontset "../misc/fonts.lst"
+imagecolor 255 200 0
+
+symbol 
+  name "circle"
+  type ellipse
+  points 1 1 end
+  filled true
+end
+
+LEGEND 
+  imagecolor 255 255 255
+  label
+    type truetype
+    color 0 0 0
+    font "default"
+    size 9
+  end
+END
+
+LAYER
+  NAME "points"
+  TYPE point
+  STATUS default
+
+  # Legend MapServer 7.0.1 Label SIZE is ignored when using SIZEUNITS meters
+  # Legend Label is very small
+  # https://github.com/mapserver/mapserver/pull/5268
+  SIZEUNITS meters
+
+  CLASS 
+    NAME "point text+shape"
+    style
+      symbol "circle"
+      size 10
+      color 255 0 0
+      outlinecolor 0 0 0
+    end
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+    END
+  END
+  CLASS 
+    NAME "point labelpnt+shape"
+    style
+      symbol "circle"
+      size 10
+      color 255 0 0
+      outlinecolor 0 0 0
+    end
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+      style
+        geomtransform "labelpnt"
+        symbol "circle"
+        size 5
+        color 200 200 200
+        outlinecolor 0 0 0
+      end
+    END
+  END
+  CLASS 
+    NAME "point labelpnt only"
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+      style
+        geomtransform "labelpnt"
+        symbol "circle"
+        size 5
+        color 200 200 200
+        outlinecolor 0 0 0
+      end
+    END
+  END
+  CLASS 
+    NAME "point text only"
+    LABEL
+      type truetype
+      size 9
+      color 255 255 255
+      outlinecolor 0 0 0
+      outlinewidth 1
+      font "default"
+    END
+  END
+END
+
+LAYER
+  NAME lines
+  TYPE line
+  STATUS default
+  CLASS 
+    NAME "line text+shape"
+    COLOR 255 0 0 
+    OUTLINECOLOR 0 0 0
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+    END
+  END
+  CLASS 
+    NAME "line labelpnt+shape"
+    COLOR 0 255 0
+    OUTLINECOLOR 0 0 0
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+      style
+        geomtransform "labelpnt"
+        symbol "circle"
+        size 5
+        color 200 200 200
+        outlinecolor 0 0 0
+      end
+    END
+  END
+  CLASS 
+    NAME "line labelpnt only"
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+      style
+        geomtransform "labelpnt"
+        symbol "circle"
+        size 5
+        color 200 200 200
+        outlinecolor 0 0 0
+      end
+    END
+  END
+  CLASS 
+    NAME "line text only"
+    LABEL
+      type truetype
+      size 9
+      color 255 255 255
+      outlinecolor 0 0 0
+      outlinewidth 1
+      font "default"
+    END
+  END
+  CLASS
+    NAME 'line with outline'
+    STYLE
+      color '#4186f0'
+      width 3
+      outlinewidth 1
+      outlinecolor '#000000'
+    END
+  END
+END
+LAYER
+  NAME shppoly
+  TYPE polygon
+  STATUS default
+  CLASS 
+    NAME "poly text+shape"
+    COLOR 255 0 0 
+    OUTLINECOLOR 0 0 0
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+    END
+  END
+  CLASS 
+    NAME "poly labelpnt+shape"
+    COLOR 0 255 0
+    OUTLINECOLOR 0 0 0
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+      style
+        geomtransform "labelpnt"
+        symbol "circle"
+        size 5
+        color 200 200 200
+        outlinecolor 0 0 0
+      end
+    END
+  END
+  CLASS 
+    NAME "poly labelpnt only"
+    LABEL
+      type truetype
+      size 9
+      color 0 0 0
+      font "default"
+      style
+        geomtransform "labelpnt"
+        symbol "circle"
+        size 5
+        color 200 200 200
+        outlinecolor 0 0 0
+      end
+    END
+  END
+  CLASS 
+    NAME "poly text only"
+    LABEL
+      type truetype
+      size 9
+      color 255 255 255
+      outlinecolor 0 0 0
+      outlinewidth 1
+      font "default"
+    END
+  END
+END
+
+END
