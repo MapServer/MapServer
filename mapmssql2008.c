@@ -202,6 +202,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
   char    *index_name;  /* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
   char    *sort_spec;  /* the sort by specification which should be applied to the generated select statement */
+  SQLSMALLINT *itemtypes; /* storing the sql field types for further reference */
 
   msODBCconn * conn;          /* Connection to db */
   msGeometryParserInfo gpi;   /* struct for the geometry parser */
@@ -603,7 +604,7 @@ static int executeSQL(msODBCconn *conn, const char * sql)
 }
 
 /* Get columns name from query results */
-static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLength, layerObj *layer, char pass_field_def)
+static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLength, layerObj *layer, char pass_field_def, SQLSMALLINT *itemType)
 {
   SQLRETURN rc;
 
@@ -613,6 +614,7 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
   SQLULEN columnSize;
   SQLSMALLINT decimalDigits;
   SQLSMALLINT nullable;
+  msMSSQL2008LayerInfo  *layerinfo = getMSSQL2008LayerInfo(layer);
 
   rc = SQLDescribeCol(
          conn->hstmt,
@@ -630,6 +632,8 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
       strlcpy(buffer, (const char *)columnName, bufferLength);
     else
       strlcpy(buffer, (const char *)columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
+
+    *itemType = dataType;
 
     if (pass_field_def) {
       char md_item_name[256];
@@ -748,6 +752,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
   layerinfo->index_name = NULL;
   layerinfo->sort_spec = NULL;
   layerinfo->conn = NULL;
+  layerinfo->itemtypes = NULL;
 
   layerinfo->conn = (msODBCconn *) msConnPoolRequest(layer);
 
@@ -976,11 +981,19 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     char buffer[10000] = "";
 
     for(t = 0; t < layer->numitems; t++) {
-#ifdef USE_ICONV      
+      if (layerinfo->itemtypes && (layerinfo->itemtypes[t] == SQL_BINARY || layerinfo->itemtypes[t] == SQL_VARBINARY)) {
+#ifdef USE_ICONV
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(nvarchar(max), convert(varbinary(max),[%s]),2),", layer->items[t]);
+#else
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), convert(varbinary(max),[%s]),2),", layer->items[t]);
+#endif
+      } else {
+#ifdef USE_ICONV
       snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(nvarchar(max), [%s]),", layer->items[t]);
 #else
       snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), [%s]),", layer->items[t]);
 #endif
+      }
     }
 
     if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
@@ -1200,6 +1213,11 @@ int msMSSQL2008LayerClose(layerObj *layer)
     if(layerinfo->geom_table) {
       msFree(layerinfo->geom_table);
       layerinfo->geom_table = NULL;
+    }
+
+    if(layerinfo->itemtypes) {
+      msFree(layerinfo->itemtypes);
+      layerinfo->itemtypes = NULL;
     }
 
     setMSSQL2008LayerInfo(layer, NULL);
@@ -2035,6 +2053,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
   layer->numitems = cols - 1; /* dont include the geometry column */
 
   layer->items = msSmallMalloc(sizeof(char *) * (layer->numitems + 1)); /* +1 in case there is a problem finding goeometry column */
+  layerinfo->itemtypes = msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
   /* it will return an error if there is no geometry column found, */
   /* so this isnt a problem */
 
@@ -2048,13 +2067,15 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 
   for(t = 0; t < cols; t++) {
     char colBuff[256];
+    SQLSMALLINT itemType;
 
-    columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff), layer, pass_field_def);
+    columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff), layer, pass_field_def, &itemType);
 
     if(strcmp(colBuff, layerinfo->geom_column) != 0) {
       /* this isnt the geometry column */
       layer->items[item_num] = (char *) msSmallMalloc(strlen(colBuff) + 1);
       strcpy(layer->items[item_num], colBuff);
+      layerinfo->itemtypes[item_num] = itemType;
       item_num++;
     } else {
       found_geom = 1;
