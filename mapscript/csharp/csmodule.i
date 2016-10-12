@@ -430,6 +430,12 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
     %}
 %typemap(csvarin, excode="") (double pattern[ANY]) %{$excode%}
 
+/* Typemaps for int array */
+%typemap(imtype, out="IntPtr") int *panIndexes "int[]"
+%typemap(cstype) int *panIndexes %{int[]%}
+%typemap(in) int *panIndexes %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (int *panIndexes)  "$csinput"
+
 /* Typemaps for device handle */
 %typemap(imtype) (void* device)  %{IntPtr%}
 %typemap(cstype) (void* device) %{IntPtr%}
