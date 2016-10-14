@@ -9,7 +9,7 @@ IMPORTANT - READ THIS FIRST:
   So it is strongly recommended that you use one of the precompiled 
   binaries available on the MapServer site:
  
-    http://mapserver.gis.umn.edu/download/current/windows
+    http://www.mapserver.org/download.html#windows
 
   There are precompiled Win32 binaries available for the last stable
   release and the latest nightly build and they include the most common
