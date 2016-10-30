@@ -504,7 +504,7 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
     /* Conversion to UTF-8 encoding */
     *stringptr = '\0';
     char * utf8;
-    utf8 = msConvertWideStringToUTF8 (string, "UCS-4LE");
+    utf8 = msConvertWideStringToUTF8 (string, "UCS-2LE");
     msIO_fprintf(fp,"%s", utf8);
     msFree(utf8);
     msFree(string);
