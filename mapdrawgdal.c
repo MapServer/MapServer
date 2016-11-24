@@ -58,13 +58,13 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
                 int *pnNoData1, int *pnNoData2, int *pnNoData3 );
 static int
 msDrawRasterLayerGDAL_RawMode(
-  mapObj *map, layerObj *layer, imageObj *image, GDALDatasetH hDS,
+  mapObj *map, layerObj *layer, imageObj *image,rasterBufferObj * mask_rb,GDALDatasetH hDS,
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
 
 static int
 msDrawRasterLayerGDAL_16BitClassification(
-  mapObj *map, layerObj *layer, rasterBufferObj *rb,
+  mapObj *map, layerObj *layer, rasterBufferObj *rb,rasterBufferObj * mask_rb,
   GDALDatasetH hDS, GDALRasterBandH hBand,
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
@@ -101,7 +101,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   int red_band=0, green_band=0, blue_band=0, alpha_band=0;
   int band_count, band_numbers[4];
   GDALDatasetH hDS = hDSVoid;
-  GDALColorTableH hColorMap;
+  GDALColorTableH hColorMap=NULL;
   GDALRasterBandH hBand1=NULL, hBand2=NULL, hBand3=NULL, hBandAlpha=NULL;
   int bHaveRGBNoData = FALSE;
   int nNoData1=-1,nNoData2=-1,nNoData3=-1;
@@ -111,8 +111,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
     mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
     ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
-    if(ret != MS_SUCCESS)
+    if(ret != MS_SUCCESS) {
+      msFree(mask_rb);
       return -1;
+    }
   }
 
   /*only support rawdata and pluggable renderers*/
@@ -152,6 +154,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                image->width, image->height );
 
     if( CSLCount(papszTokens) != 4 ) {
+      msFree(mask_rb);
       CSLDestroy( papszTokens );
       msSetError( MS_IMGERR, "RAW_WINDOW PROCESSING directive corrupt.",
                   "msDrawGDAL()" );
@@ -206,6 +209,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy ) {
       if( layer->debug )
         msDebug( "msDrawRasterLayerGDAL(): Error in overlap calculation.\n" );
+      msFree(mask_rb);
       return 0;
     }
 
@@ -237,12 +241,14 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     if( src_xsize == 0 || src_ysize == 0 ) {
       if( layer->debug )
         msDebug( "msDrawRasterLayerGDAL(): no apparent overlap between map view and this window(1).\n" );
+      msFree(mask_rb);
       return 0;
     }
 
     if (map->cellsize == 0) {
       if( layer->debug )
         msDebug( "msDrawRasterLayerGDAL(): Cellsize can't be 0.\n" );
+      msFree(mask_rb);
       return 0;
     }
 
@@ -260,6 +266,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     if( dst_xsize == 0 || dst_ysize == 0 ) {
       if( layer->debug )
         msDebug( "msDrawRasterLayerGDAL(): no apparent overlap between map view and this window(2).\n" );
+      msFree(mask_rb);
       return 0;
     }
 
@@ -296,11 +303,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
   /*
    * In RAWDATA mode we don't fool with colors.  Do the raw processing,
-   * and return from the function early.
+   * and return from the function early. mask_rb is freed by msDrawRasterLayerGDAL_RawMode.
    */
   if( MS_RENDERER_RAWDATA( image->format ) ) {
     return msDrawRasterLayerGDAL_RawMode(
-             map, layer, image, hDS,
+             map, layer, image, mask_rb, hDS,
              src_xoff, src_yoff, src_xsize, src_ysize,
              dst_xoff, dst_yoff, dst_xsize, dst_ysize );
   }
@@ -364,8 +371,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     int *band_list;
 
     band_list = msGetGDALBandList( layer, hDS, 4, &band_count );
-    if( band_list == NULL )
+    if( band_list == NULL ) {
+      msFree( mask_rb );
       return -1;
+    }
 
     if( band_count > 0 )
       red_band = band_list[0];
@@ -412,8 +421,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * Get band handles for PC256, RGB or RGBA cases.
    */
   hBand1 = GDALGetRasterBand( hDS, red_band );
-  if( hBand1 == NULL )
+  if( hBand1 == NULL ) {
+    msFree( mask_rb );
     return -1;
+  }
 
   hBand2 = hBand3 = hBandAlpha = NULL;
 
@@ -421,8 +432,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     hBand1 = GDALGetRasterBand( hDS, red_band );
     hBand2 = GDALGetRasterBand( hDS, green_band );
     hBand3 = GDALGetRasterBand( hDS, blue_band );
-    if( hBand1 == NULL || hBand2 == NULL || hBand3 == NULL )
+    if( hBand1 == NULL || hBand2 == NULL || hBand3 == NULL ) {
+      msFree( mask_rb );
       return -1;
+    }
   }
 
   if( alpha_band != 0 )
@@ -432,11 +445,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * The logic for a classification rendering of non-8bit raster bands
    * is sufficiently different than the normal mechanism of loading
    * into an 8bit buffer, that we isolate it into it's own subfunction.
+   * mask_rb is freed by msDrawRasterLayerGDAL_16BitClassification.
    */
   if( classified
       && hBand1 != NULL && GDALGetRasterDataType( hBand1 ) != GDT_Byte ) {
     return msDrawRasterLayerGDAL_16BitClassification(
-             map, layer, rb, hDS, hBand1,
+             map, layer, rb, mask_rb, hDS, hBand1,
              src_xoff, src_yoff, src_xsize, src_ysize,
              dst_xoff, dst_yoff, dst_xsize, dst_ysize );
   }
@@ -519,6 +533,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       msSetError(MS_IOERR,
                  "Attempt to classify 24bit image, this is unsupported.",
                  "drawGDAL()");
+
+      msFree( mask_rb );
       return -1;
     }
     
@@ -530,6 +546,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       msSetError(MS_MISCERR,
                  "Unknown RANGE_COLORSPACE \"%s\", expecting RGB or HSL",
                  "drawGDAL()", pszRangeColorspace);
+
+      msFree( mask_rb );
+      GDALDestroyColorTable( hColorMap );
       return -1;
     }
 
@@ -624,6 +643,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( pabyRaw1 == NULL ) {
     msSetError(MS_MEMERR, "Allocating work image of size %dx%dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize, band_count );
+    msFree( mask_rb );
+    if( hColorMap != NULL )
+      GDALDestroyColorTable( hColorMap );
     return -1;
   }
 
@@ -648,6 +670,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       &bHaveRGBNoData,
                       &nNoData1, &nNoData2, &nNoData3 ) == -1 ) {
     free( pabyRaw1 );
+    msFree( mask_rb );
+    if( hColorMap != NULL )
+      GDALDestroyColorTable( hColorMap );
     return -1;
   }
 
@@ -680,6 +705,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                    "Allocating work image of size %dx%dx%d failed.",
                    "msDrawRasterLayerGDAL()",
                    dst_xsize, dst_ysize, band_count );
+        msFree( mask_rb );
+        if( hColorMap != NULL )
+          GDALDestroyColorTable( hColorMap );
         return -1;
       }
 
@@ -701,6 +729,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         msSetError( MS_IOERR, "GDALRasterIO() failed: %s",
                     "drawGDAL()", CPLGetLastErrorMsg() );
         free( pabyRaw1 );
+        msFree( mask_rb );
+        if( hColorMap != NULL )
+          GDALDestroyColorTable( hColorMap );
         return -1;
       }
 
@@ -978,6 +1009,8 @@ static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
     msSetError(MS_MISCERR,
                "GIMP curve file appears corrupt.",
                "ParseGimpLUT()" );
+
+    CSLDestroy( lines );
     return -1;
   }
 
@@ -1237,6 +1270,7 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
           && EQUAL(papszTokens[0],"AUTO") ) {
         dfScaleMin = dfScaleMax = 0.0;
       } else if( CSLCount(papszTokens) != 2 ) {
+        CSLDestroy( papszTokens );
         free( pafWholeRawData );
         msSetError( MS_MISCERR,
                     "SCALE PROCESSING option unparsable for layer %s.",
@@ -1494,7 +1528,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 
 static int
 msDrawRasterLayerGDAL_RawMode(
-  mapObj *map, layerObj *layer, imageObj *image, GDALDatasetH hDS,
+  mapObj *map, layerObj *layer, imageObj *image,rasterBufferObj * mask_rb,GDALDatasetH hDS,
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
 
@@ -1508,19 +1542,11 @@ msDrawRasterLayerGDAL_RawMode(
   unsigned char *b_nodatas = NULL;
   GInt16 *i_nodatas = NULL;
   int got_nodata=FALSE;
-  rasterBufferObj *mask_rb = NULL;
-  if(layer->mask) {
-    int ret;
-    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
-    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
-    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
-    if(ret != MS_SUCCESS)
-      return -1;
-  }
 
   if( image->format->bands > 256 ) {
     msSetError( MS_IMGERR, "Too many bands (more than 256).",
                 "msDrawRasterLayerGDAL_RawMode()" );
+    msFree( mask_rb );
     return -1;
   }
 
@@ -1541,11 +1567,14 @@ msDrawRasterLayerGDAL_RawMode(
   /* -------------------------------------------------------------------- */
   band_list = msGetGDALBandList( layer, hDS, image->format->bands,
                                  &band_count );
-  if( band_list == NULL )
+  if( band_list == NULL ) {
+    msFree( mask_rb );
     return -1;
+  }
 
   if( band_count != image->format->bands ) {
     free( band_list );
+    msFree( mask_rb );
     msSetError( MS_IMGERR, "BANDS PROCESSING directive has wrong number of bands, expected %d, got %d.",
                 "msDrawRasterLayerGDAL_RawMode()",
                 image->format->bands, band_count );
@@ -1560,6 +1589,7 @@ msDrawRasterLayerGDAL_RawMode(
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawRasterLayerGDAL_RawMode()",
                __FILE__, __LINE__, (unsigned int)(sizeof(float)*band_count));
     free( band_list );
+    msFree( mask_rb );
     return -1;
   }
 
@@ -1585,7 +1615,7 @@ msDrawRasterLayerGDAL_RawMode(
   }
 
   if( !got_nodata ) {
-    msFree( f_nodatas );
+    free( f_nodatas );
     f_nodatas = NULL;
   } else if( eDataType == GDT_Byte ) {
     b_nodatas = (unsigned char *) f_nodatas;
@@ -1606,6 +1636,10 @@ msDrawRasterLayerGDAL_RawMode(
     msSetError(MS_MEMERR,
                "Allocating work image of size %dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
+
+    free( band_list );
+    free( f_nodatas );
+    msFree( mask_rb );
     return -1;
   }
 
@@ -1621,6 +1655,7 @@ msDrawRasterLayerGDAL_RawMode(
                 "msDrawRasterLayerGDAL_RawMode()", CPLGetLastErrorMsg() );
     free( pBuffer );
     free( f_nodatas );
+    msFree( mask_rb );
     return -1;
   }
 
@@ -1700,7 +1735,7 @@ msDrawRasterLayerGDAL_RawMode(
 
 static int
 msDrawRasterLayerGDAL_16BitClassification(
-  mapObj *map, layerObj *layer, rasterBufferObj *rb,
+  mapObj *map, layerObj *layer, rasterBufferObj *rb, rasterBufferObj * mask_rb,
   GDALDatasetH hDS, GDALRasterBandH hBand,
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
@@ -1716,15 +1751,6 @@ msDrawRasterLayerGDAL_16BitClassification(
   int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
   unsigned char *rb_cmap[4];
   CPLErr eErr;
-  rasterBufferObj *mask_rb = NULL;
-  if(layer->mask) {
-    int ret;
-    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
-    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
-    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
-    if(ret != MS_SUCCESS)
-      return -1;
-  }
 
   assert( rb->type == MS_BUFFER_BYTE_RGBA );
 
@@ -1736,6 +1762,8 @@ msDrawRasterLayerGDAL_16BitClassification(
   if( pafRawData == NULL ) {
     msSetError( MS_MEMERR, "Out of memory allocating working buffer.",
                 "msDrawRasterLayerGDAL_16BitClassification()" );
+
+    msFree( mask_rb );
     return -1;
   }
 
@@ -1745,6 +1773,7 @@ msDrawRasterLayerGDAL_16BitClassification(
 
   if( eErr != CE_None ) {
     free( pafRawData );
+    msFree( mask_rb );
     msSetError( MS_IOERR, "GDALRasterIO() failed: %s",
                 "msDrawRasterLayerGDAL_16BitClassification()",
                 CPLGetLastErrorMsg() );
@@ -1794,7 +1823,9 @@ msDrawRasterLayerGDAL_16BitClassification(
         && EQUAL(papszTokens[0],"AUTO") ) {
       dfScaleMin = dfScaleMax = 0.0;
     } else if( CSLCount(papszTokens) != 2 ) {
+      CSLDestroy( papszTokens );
       free( pafRawData );
+      msFree( mask_rb );
       msSetError( MS_MISCERR,
                   "SCALE PROCESSING option unparsable for layer %s.",
                   "msDrawGDAL()",
@@ -1844,6 +1875,7 @@ msDrawRasterLayerGDAL_16BitClassification(
     nBucketCount = atoi(pszBuckets);
     if( nBucketCount < 2 ) {
       free( pafRawData );
+      msFree( mask_rb );
       msSetError( MS_MISCERR,
                   "SCALE_BUCKETS PROCESSING option is not a value of 2 or more: %s.",
                   "msDrawRasterLayerGDAL_16BitClassification()",
@@ -2061,6 +2093,8 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
 
     *band_count = CSLCount(papszItems);
     band_list = (int *) malloc(sizeof(int) * *band_count);
+
+    /* FIXME MS_CHECK_ALLOC leaks papszItems */
     MS_CHECK_ALLOC(band_list, sizeof(int) * *band_count, NULL);
 
     for( i = 0; i < *band_count; i++ ) {
