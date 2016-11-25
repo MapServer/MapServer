@@ -691,8 +691,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
       msAcquireLock( TLOCK_GDAL );
       hDS = GDALOpenShared( decrypted_path, GA_ReadOnly );
     } else {
+      msAcquireLock( TLOCK_GDAL );
       status = msComputeKernelDensityDataset(map, image, layer, &hDS, &kernel_density_cleanup_ptr);
       if(status != MS_SUCCESS) {
+        msReleaseLock( TLOCK_GDAL );
         final_status = status;
         goto cleanup;
       }
@@ -702,6 +704,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
 
         /* Set the projection to the map file projection */
         if (msLoadProjectionString(&(layer->projection), mapProjStr) != 0) {
+          GDALClose( hDS );
+          msReleaseLock( TLOCK_GDAL );
           msSetError(MS_CGIERR, "Unable to set projection on interpolation layer.", "msDrawRasterLayerLow()");
           return(MS_FAILURE);
         }
@@ -745,6 +749,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
 
     if( msDrawRasterLoadProjection(layer, hDS, filename, tilesrsindex, tilesrsname) != MS_SUCCESS )
     {
+        GDALClose( hDS );
         msReleaseLock( TLOCK_GDAL );
         final_status = MS_FAILURE;
         break;
@@ -792,18 +797,31 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     ** default to keeping open for single data files, and
     ** to closing for tile indexes
     */
-
-    close_connection = msLayerGetProcessingKey( layer,
+    if(layer->connectiontype == MS_KERNELDENSITY) {
+      /*
+      ** Fix issue #5330
+      ** The in-memory kernel density heatmap gdal dataset handle (hDS) gets re-used
+      ** but the associated rasterband cache doesn't get flushed, which causes old data
+      ** to be rendered instead of the newly generated imagery. To fix, simply close the
+      ** the handle and prevent further re-use.
+      ** Note that instead of this workaround, we could explicitely set 
+      ** CLOSE_CONNECTION=ALWAYS on the kerneldensity layer.
+      */
+      GDALClose( hDS );
+    }
+    else {
+      close_connection = msLayerGetProcessingKey( layer,
                        "CLOSE_CONNECTION" );
 
-    if( close_connection == NULL && layer->tileindex == NULL )
-      close_connection = "DEFER";
+      if( close_connection == NULL && layer->tileindex == NULL )
+        close_connection = "DEFER";
 
-    if( close_connection != NULL
-        && strcasecmp(close_connection,"DEFER") == 0 ) {
-      GDALDereferenceDataset( hDS );
-    } else {
-      GDALClose( hDS );
+      if( close_connection != NULL
+          && strcasecmp(close_connection,"DEFER") == 0 ) {
+        GDALDereferenceDataset( hDS );
+      } else {
+        GDALClose( hDS );
+      }
     }
     msReleaseLock( TLOCK_GDAL );
   } /* next tile */

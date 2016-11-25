@@ -2278,7 +2278,7 @@ void offsetAndTest(mapObj *map, labelCacheMemberObj *cachePtr, double ox, double
       }
     }
     for(j=0; j<ts->label->numstyles; j++) {
-      if(ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+      if(ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
         scratch->poly = scratch_line;
         offset_label_bounds(ts->style_bounds[j], scratch, ox, oy);
         status = msTestLabelCacheCollisions(map, cachePtr, scratch, priority, label_idx);
@@ -2322,8 +2322,8 @@ void offsetAndTest(mapObj *map, labelCacheMemberObj *cachePtr, double ox, double
     }
     if(ts->style_bounds) {
       for(j=0; j<ts->label->numstyles; j++) {
-        if(ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
-            ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
+        if(ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
+            ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
           offset_label_bounds(ts->style_bounds[j], ts->style_bounds[j], ox, oy);
         }
       }
@@ -2395,8 +2395,8 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority)
 
 #define otest(ox,oy) if((x0+(ox)) >= labelcache->gutter &&\
                 (y0+(oy)) >= labelcache->gutter &&\
-                (x0+(ox)) < image->width + labelcache->gutter &&\
-                (y0+(oy)) < image->height + labelcache->gutter) {\
+                (x0+(ox)) < image->width - labelcache->gutter &&\
+                (y0+(oy)) < image->height - labelcache->gutter) {\
                    scratch_line.point = scratch_points;\
                    scratch.poly = &scratch_line; \
                    offsetAndTest(map,cachePtr,(ox),(oy),priority,l,&scratch); \
@@ -2520,7 +2520,7 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority)
             /* here's where we draw the label styles */
             for(i=0; i<ts->label->numstyles; i++) {
               if(ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
-                retval = msDrawMarkerSymbol(map, image, &(cachePtr->point), ts->label->styles[i], layerPtr->scalefactor);
+                retval = msDrawMarkerSymbol(map, image, &(labelLeader.line->point[1]), ts->label->styles[i], layerPtr->scalefactor);
                 if(UNLIKELY(retval == MS_FAILURE)) {
                   goto offset_cleanup;
                 }
@@ -2961,7 +2961,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                                                            textSymbolPtr->rotation, textSymbolPtr->label->buffer * textSymbolPtr->scalefactor,
                                                            &metrics_bounds);
                     if(need_labelpoly) get_metrics(&(cachePtr->point), MS_CC, textSymbolPtr->textpath,
-                                                              marker_offset_x + label_offset_x, marker_offset_y + label_offset_y,
+                                                              label_offset_x, label_offset_y,
                                                               textSymbolPtr->rotation, 1, &labelpoly_bounds);
                   }
                 } else { /* explicit position */
@@ -2969,7 +2969,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                     metrics_bounds.poly = &metrics_line;
                     textSymbolPtr->annopoint = get_metrics(&(cachePtr->point), MS_CC, textSymbolPtr->textpath, label_offset_x, label_offset_y,
                             textSymbolPtr->rotation, textSymbolPtr->label->buffer * textSymbolPtr->scalefactor, &metrics_bounds);
-                    if(need_labelpoly) get_metrics(&(cachePtr->point), textSymbolPtr->label->position, textSymbolPtr->textpath,
+                    if(need_labelpoly) get_metrics(&(cachePtr->point), MS_CC, textSymbolPtr->textpath,
                                                               label_offset_x, label_offset_y, textSymbolPtr->rotation, 1, &labelpoly_bounds);
                   } else {
                     metrics_bounds.poly = &metrics_line;

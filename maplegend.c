@@ -523,7 +523,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
 
       if(*text) {
         initTextSymbol(&ts);
-        msPopulateTextSymbolForLabelAndString(&ts,&map->legend.label,msStrdup(text),lp->scalefactor*resolutionfactor,resolutionfactor, 0);
+        msPopulateTextSymbolForLabelAndString(&ts,&map->legend.label,msStrdup(text),resolutionfactor,resolutionfactor, 0);
         if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&ts,&rect))) {
           freeTextSymbol(&ts);
           return MS_FAILURE;
@@ -638,7 +638,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
       cur = (legendlabel*) msSmallMalloc(sizeof(legendlabel));
       initTextSymbol(&cur->ts);
       if(*text) {
-        msPopulateTextSymbolForLabelAndString(&cur->ts,&map->legend.label,msStrdup(text),lp->scalefactor*map->resolution/map->defresolution,map->resolution/map->defresolution, 0);
+        msPopulateTextSymbolForLabelAndString(&cur->ts,&map->legend.label,msStrdup(text),map->resolution/map->defresolution,map->resolution/map->defresolution, 0);
         if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&cur->ts))) {
           ret = MS_FAILURE;
           goto cleanup;
@@ -697,11 +697,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     pnt.y += cur->height;
 
     if(cur->ts.annotext) {
-      pnt.y -= cur->ts.textpath->bounds.bbox.maxy;
-      ret = msDrawTextSymbol(map,image,pnt,&cur->ts);
+      pointObj textPnt = pnt;
+      textPnt.y -= cur->ts.textpath->bounds.bbox.maxy;
+      textPnt.y += map->legend.label.offsety;
+      textPnt.x += map->legend.label.offsetx;
+      ret = msDrawTextSymbol(map,image,textPnt,&cur->ts);
       if(UNLIKELY(ret == MS_FAILURE))
         goto cleanup;
-      pnt.y += cur->ts.textpath->bounds.bbox.maxy;
       freeTextSymbol(&cur->ts);
     }
     

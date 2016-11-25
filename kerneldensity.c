@@ -318,6 +318,7 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
       msSetError(MS_MISCERR,"msComputeKernelDensityDataset()","failed to create in-memory gdal dataset for interpolated data");
       status = MS_FAILURE;
       free(iValues);
+      return status;
     }
     adfGeoTransform[0] = map->extent.minx - map->cellsize * 0.5; /* top left x */
     adfGeoTransform[1] = map->cellsize;/* w-e pixel resolution */

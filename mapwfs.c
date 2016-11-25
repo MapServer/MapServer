@@ -4197,6 +4197,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                 if (z == geometryList->numgeometries) {
                   msSetError(MS_WFSERR,
                             "Invalid VALUEREFERENCE %s",  "msWFSGetPropertyValue()", paramsObj->pszValueReference);
+                  msFree(pszGMLGroups);
                   msGMLFreeItems(itemList);
                   msGMLFreeGroups(groupList);
                   msGMLFreeGeometries(geometryList);
@@ -4265,8 +4266,12 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                                         &maxfeatures, &startindex);
 
   status = msWFSAnalyzeBBOX(map, paramsObj, &bbox, &sBBoxSrs);
-  if( status != 0 )
+  if( status != 0 ) {
+      msFree(pszGMLGroups);
+      msFree(pszGMLIncludeItems);
+      msFree(pszGMLGeometries);
       return status;
+      }
 
   if( iResultTypeHits == 1 )
   {

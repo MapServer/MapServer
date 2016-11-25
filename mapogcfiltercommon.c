@@ -68,7 +68,7 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   /*      Use operand with regular expressions.                           */
   /* -------------------------------------------------------------------- */
   szBuffer[0] = '\0';
-  sprintf(szTmp, "%s", " (\"[");
+  sprintf(szTmp, "%s", "(\"[");
   szTmp[4] = '\0';
 
   strlcat(szBuffer, szTmp, bufferSize);
@@ -174,9 +174,9 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   /* -------------------------------------------------------------------- */
   /* attribute */
   if (bString)
-    sprintf(szBuffer, "%s", " (\"[");
+    sprintf(szBuffer, "%s", "(\"[");
   else
-    sprintf(szBuffer, "%s", " ([");
+    sprintf(szBuffer, "%s", "([");
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
   
   pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
@@ -288,9 +288,9 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
 
   /* attribute */
   if (bString)
-    sprintf(szTmp, "%s", " (\"[");
+    sprintf(szTmp, "%s", "(\"[");
   else
-    sprintf(szTmp,  "%s"," ([");
+    sprintf(szTmp,  "%s","([");
   pszExpression = msStringConcatenate(pszExpression, szTmp);
   pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
   
@@ -307,19 +307,20 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
     else
       sprintf(szTmp,  "%s", "=");
   } else if (strcasecmp(psFilterNode->pszValue, "PropertyIsNotEqualTo") == 0)
-    sprintf(szTmp,  "%s", " != ");
+    sprintf(szTmp,  "%s", "!=");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLessThan") == 0)
-    sprintf(szTmp,  "%s", " < ");
+    sprintf(szTmp,  "%s", "<");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsGreaterThan") == 0)
-    sprintf(szTmp,  "%s", " > ");
+    sprintf(szTmp,  "%s", ">");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLessThanOrEqualTo") == 0)
-    sprintf(szTmp,  "%s", " <= ");
+    sprintf(szTmp,  "%s", "<=");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsGreaterThanOrEqualTo") == 0)
-    sprintf(szTmp,  "%s", " >= ");
+    sprintf(szTmp,  "%s", ">=");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-    sprintf(szTmp,  "%s", " ~ ");
+    sprintf(szTmp,  "%s", "~");
 
   pszExpression = msStringConcatenate(pszExpression, szTmp);
+  pszExpression = msStringConcatenate(pszExpression, " ");
 
   /* value */
   if (bString) {
@@ -356,7 +357,6 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
 {
   char *pszExpression = NULL;
   char *pszTmp = NULL;
-  char szBuffer[256];
 
   if (!psFilterNode || !FLTIsLogicalFilterType(psFilterNode->pszValue))
     return NULL;
@@ -369,17 +369,16 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
     if (!pszTmp)
       return NULL;
 
-    sprintf(szBuffer, "%s", " (");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "(");
 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);
 
-    sprintf(szBuffer, "%s", " ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, " ");
 
     pszExpression = msStringConcatenate(pszExpression, psFilterNode->pszValue);
-    sprintf(szBuffer, "%s", " ");
+
+    pszExpression = msStringConcatenate(pszExpression, " ");
 
     pszTmp = FLTGetCommonExpression(psFilterNode->psRightNode, lp);
     if (!pszTmp) {
@@ -390,8 +389,7 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);
 
-    sprintf(szBuffer, "%s", ") ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, ")");
   }
   /* -------------------------------------------------------------------- */
   /*      NOT                                                             */
@@ -401,14 +399,12 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
     if (!pszTmp)
       return NULL;
 
-    sprintf(szBuffer, "%s", " (NOT ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "(NOT ");
 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);
 
-    sprintf(szBuffer, "%s", ") ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, ")");
   }
 
   return pszExpression;

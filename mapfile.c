@@ -3726,6 +3726,7 @@ void freeLayerCompositer(LayerCompositer *compositer) {
   freeCompositingFilter(compositer->filter);
   free(compositer);
 }
+
 /*
 ** Initialize, load and free a single layer structure
 */
@@ -4198,6 +4199,11 @@ int loadLayerCompositer(LayerCompositer *compositer) {
         else {
           msSetError(MS_PARSEERR,"Unknown COMPOP \"%s\"", "loadLayerCompositer()", compop);
           free(compop);
+          if (compositer->filter) {
+            msFree(compositer->filter->filter);
+            msFree(compositer->filter);
+            compositer->filter=NULL;
+            }
           return MS_FAILURE;
         }
         free(compop);
@@ -4206,14 +4212,30 @@ int loadLayerCompositer(LayerCompositer *compositer) {
       case END:
         return MS_SUCCESS;
       case OPACITY:
-        if (getInteger(&(compositer->opacity)) == -1)
+        if (getInteger(&(compositer->opacity)) == -1) {
+          if (compositer->filter) {
+            msFree(compositer->filter->filter);
+            msFree(compositer->filter);
+            compositer->filter=NULL;
+            }
           return MS_FAILURE;
+          }
         if(compositer->opacity<0 || compositer->opacity>100) {
+          if (compositer->filter) {
+            msFree(compositer->filter->filter);
+            msFree(compositer->filter);
+            compositer->filter=NULL;
+            }
           msSetError(MS_PARSEERR,"OPACITY must be between 0 and 100 (line %d)","loadLayerCompositer()",msyylineno);
           return MS_FAILURE;
         }
         break;
       default:
+        if (compositer->filter) {
+          msFree(compositer->filter->filter);
+          msFree(compositer->filter);
+          compositer->filter=NULL;
+          }
         msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)", "loadLayerCompositer()",  msyystring_buffer, msyylineno );
         return(MS_FAILURE);
     }
@@ -4266,7 +4288,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(COMPOSITE): {
         LayerCompositer *compositer = msSmallMalloc(sizeof(LayerCompositer));
         initLayerCompositer(compositer);
-        if(MS_FAILURE == loadLayerCompositer(compositer)) return -1;
+        if(MS_FAILURE == loadLayerCompositer(compositer)) {
+          msFree(compositer);
+          return -1;
+          }
         if(!layer->compositer) {
           layer->compositer = compositer;
         } else {
@@ -7000,11 +7025,14 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
 static void hashTableSubstituteString(hashTableObj *hash, const char *from, const char *to) {
   const char *key, *val;
+  char *new_val;
   key = msFirstKeyFromHashTable(hash);
   while(key != NULL) {
     val = msLookupHashTable(hash, key);
     if(strcasestr(val, from)) {
-      msInsertHashTable(hash, key, msCaseReplaceSubstring(msStrdup(val), from, to));
+      new_val = msCaseReplaceSubstring(msStrdup(val), from, to);
+      msInsertHashTable(hash, key, new_val);
+      msFree(new_val);
     }
     key = msNextKeyFromHashTable(hash, key);
   }
