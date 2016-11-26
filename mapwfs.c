@@ -2065,6 +2065,8 @@ static int msWFSRunFilter(mapObj* map,
         return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, paramsObj->pszVersion);
     }
 
+    FLTProcessPropertyIsNull(psNode, map, lp->index);
+
     /*preparse the filter for gml aliases*/
     FLTPreParseFilterForAliasAndGroup(psNode, map, lp->index, "G");
 
