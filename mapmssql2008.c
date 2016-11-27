@@ -2381,7 +2381,10 @@ int process_node(layerObj* layer, expressionObj *filter)
        break;
     case ')':
        filter->native_string = msStringConcatenate(filter->native_string, ")");
-       break;   
+       break;
+    /* argument separator */
+    case ',':
+       break;
     /* literal tokens */
     case MS_TOKEN_LITERAL_BOOLEAN:
     case MS_TOKEN_LITERAL_NUMBER:
@@ -2518,67 +2521,131 @@ int process_node(layerObj* layer, expressionObj *filter)
 
     /* spatial comparison tokens */
     case MS_TOKEN_COMPARISON_INTERSECTS:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STIntersects(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STIntersects(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_DISJOINT:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STDisjoint(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STDisjoint(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_TOUCHES:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STTouches(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STTouches(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_OVERLAPS:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STOverlaps(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STOverlaps(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_CROSSES:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STCrosses(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STCrosses(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_WITHIN:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STWithin(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STWithin(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_CONTAINS:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STContains(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STContains(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_EQUALS:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STEquals(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ".STEquals(");
+      if (!process_node(layer, filter))
+        return 0;
       break;
 
     case MS_TOKEN_COMPARISON_BEYOND:
@@ -2591,24 +2658,44 @@ int process_node(layerObj* layer, expressionObj *filter)
 
     /* spatial functions */
     case MS_TOKEN_FUNCTION_AREA:
-      filter->native_string = msStringConcatenate(filter->native_string, ".STArea(");
-      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       if (!process_node(layer, filter))
         return 0;
-      filter->native_string = msStringConcatenate(filter->native_string, ")");
+      filter->native_string = msStringConcatenate(filter->native_string, ".STArea()");
       break;
 
     case MS_TOKEN_FUNCTION_BUFFER:
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (!process_node(layer, filter))
+        return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       filter->native_string = msStringConcatenate(filter->native_string, ".STBuffer(");
-      layerinfo->current_node = layerinfo->current_node->next;
       if (!process_node(layer, filter))
         return 0;
       filter->native_string = msStringConcatenate(filter->native_string, ")");
       break;
 
     case MS_TOKEN_FUNCTION_DIFFERENCE:
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (!process_node(layer, filter))
+        return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
+      if (layerinfo->current_node->next) layerinfo->current_node = layerinfo->current_node->next;
+      else return 0;
       filter->native_string = msStringConcatenate(filter->native_string, ".STDifference(");
-      layerinfo->current_node = layerinfo->current_node->next;
       if (!process_node(layer, filter))
         return 0;
       filter->native_string = msStringConcatenate(filter->native_string, ")");
