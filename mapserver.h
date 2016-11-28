@@ -3130,6 +3130,8 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset);
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 #endif
 
+int msOGRIsSpatialite(layerObj* layer);
+
 #endif /* SWIG */
 
 #ifdef __cplusplus

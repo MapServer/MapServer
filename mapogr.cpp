@@ -1531,7 +1531,7 @@ static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 {
 #ifdef USE_OGR
   char* pszEscapedStr =NULL;
-  if(layer && pszString && strlen(pszString) > 0) {
+  if(layer && pszString) {
     char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
                               CPLES_SQL );
     pszEscapedStr = msStrdup(pszEscapedOGRStr);
@@ -1617,6 +1617,14 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
         out = msStrdup(n->tokenval.dblval == 0 ? "FALSE" : "TRUE");
         break;
     case MS_TOKEN_COMPARISON_EQ:
+        if(n->next != NULL && n->next->token == MS_TOKEN_LITERAL_STRING &&
+           strcmp(n->next->tokenval.strval, "_MAPSERVER_NULL_") == 0 )
+        {
+            out = msStrdup(" IS NULL");
+            n = n->next;
+            break;
+        }
+
         out = msStrdup(" = ");
         break;
     case MS_TOKEN_COMPARISON_NE:
@@ -3034,6 +3042,35 @@ static int msOGRLayerIsOpen(layerObj *layer)
 
 #endif /* USE_OGR */
 }
+
+int msOGRIsSpatialite(layerObj* layer)
+{
+#ifdef USE_OGR
+  msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
+  if (psInfo && psInfo->dialect &&
+      EQUAL(psInfo->dialect, "Spatialite") )
+  {
+    // reasons to not produce native string: not simple layer, or an explicit deny
+    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    if (do_this && strcmp(do_this, "NO") == 0) {
+        return MS_FALSE;
+    }
+    return MS_TRUE;
+  }
+
+  return MS_FALSE;
+
+#else
+  /* ------------------------------------------------------------------
+   * OGR Support not included...
+   * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRIsSpatialite()");
+  return(MS_FALSE);
+
+#endif /* USE_OGR */
+}
+
 
 /**********************************************************************
  *                     msOGRLayerWhichShapes()

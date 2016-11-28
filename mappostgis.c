@@ -3454,7 +3454,7 @@ char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
   size_t nSrcLen;
   char* pszEscapedStr =NULL;
 
-  if (layer && pszString && strlen(pszString) > 0) {
+  if (layer && pszString) {
     if(!msPostGISLayerIsOpen(layer))
       msPostGISLayerOpen(layer);
 
@@ -3752,6 +3752,13 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 
           if(node->token == MS_TOKEN_COMPARISON_EQ && node->next != NULL && node->next->token == MS_TOKEN_LITERAL_TIME) break; /* skip, handled with the next token */
           if(bindingToken == MS_TOKEN_BINDING_TIME && (node->token == MS_TOKEN_COMPARISON_EQ || node->token == MS_TOKEN_COMPARISON_NE)) break; /* skip, handled elsewhere */
+          if(node->token == MS_TOKEN_COMPARISON_EQ && node->next != NULL && node->next->token == MS_TOKEN_LITERAL_STRING &&
+             strcmp(node->next->tokenval.strval, "_MAPSERVER_NULL_") == 0 )
+          {
+              native_string = msStringConcatenate(native_string, " IS NULL");
+              node = node->next;
+              break;
+          }
 
           native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
           break;
