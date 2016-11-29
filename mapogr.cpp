@@ -1177,16 +1177,13 @@ msOGRFileOpen(layerObj *layer, const char *connection )
     RELEASE_OGR_LOCK;
 
     if( hDS == NULL ) {
-      if( strlen(CPLGetLastErrorMsg()) == 0 )
-        msSetError(MS_OGRERR,
+      msSetError(MS_OGRERR,
                    "Open failed for OGR connection in layer `%s'.  "
-                   "File not found or unsupported format.",
+                   "File not found or unsupported format. Check server logs.",
                    "msOGRFileOpen()",
                    layer->name?layer->name:"(null)" );
-      else
-        msSetError(MS_OGRERR,
-                   "Open failed for OGR connection in layer `%s'.\n%s\n",
-                   "msOGRFileOpen()",
+      if( strlen(CPLGetLastErrorMsg()) == 0 )
+        msDebug("Open failed for OGR connection in layer `%s'.\n%s\n",
                    layer->name?layer->name:"(null)",
                    CPLGetLastErrorMsg() );
       CPLFree( pszDSName );
@@ -1214,9 +1211,11 @@ msOGRFileOpen(layerObj *layer, const char *connection )
     hLayer = OGR_DS_ExecuteSQL( hDS, pszLayerDef, NULL, NULL );
     if( hLayer == NULL ) {
       msSetError(MS_OGRERR,
-                 "ExecuteSQL(%s) failed.\n%s",
-                 "msOGRFileOpen()",
-                 pszLayerDef, CPLGetLastErrorMsg() );
+                 "ExecuteSQL() failed. Check server logs.",
+                 "msOGRFileOpen()");
+      if( strlen(CPLGetLastErrorMsg()) == 0 )
+        msDebug("ExecuteSQL(%s) failed.\n%s\n",
+                pszLayerDef, CPLGetLastErrorMsg() );
       RELEASE_OGR_LOCK;
       msConnPoolRelease( layer, hDS );
       CPLFree( pszLayerDef );
@@ -1248,9 +1247,11 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   }
 
   if (hLayer == NULL) {
-    msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection `%s'.",
+    msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection. Check logs.",
                "msOGRFileOpen()",
-               pszLayerDef, connection );
+               pszLayerDef);
+    msDebug("GetLayer(%s) failed for OGR connection `%s'.\n",
+            pszLayerDef, connection );
     CPLFree( pszLayerDef );
     msConnPoolRelease( layer, hDS );
     return NULL;
@@ -2074,7 +2075,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
         if( psInfo->hLayer == NULL ) {
             RELEASE_OGR_LOCK;
-            msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", select, CPLGetLastErrorMsg());
+            msSetError(MS_OGRERR, "ExecuteSQL() failed. Check logs.", "msOGRFileWhichShapes()");
+            msDebug("ExecuteSQL(%s) failed.\n%s\n", select, CPLGetLastErrorMsg());
             msFree(select);
             return MS_FAILURE;
         }
@@ -2141,7 +2143,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
             CPLErrorReset();
             if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter ) != OGRERR_NONE ) {
-                msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
+                msSetError(MS_OGRERR, "SetAttributeFilter() failed on layer %s. Check logs.", "msOGRFileWhichShapes()", layer->name?layer->name:"(null)");
+                msDebug("SetAttributeFilter(%s) failed on layer %s.\n%s\n", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
                 RELEASE_OGR_LOCK;
                 msFree(pszOGRFilter);
                 msFree(select);
@@ -2359,8 +2362,10 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
     if( (hFeature = OGR_L_GetNextFeature( psInfo->hLayer )) == NULL ) {
       psInfo->last_record_index_read = -1;
       if( CPLGetLastErrorType() == CE_Failure ) {
-        msSetError(MS_OGRERR, "%s", "msOGRFileNextShape()",
-                   CPLGetLastErrorMsg() );
+        msSetError(MS_OGRERR, "OGR GetNextFeature() error'd. Check logs.",
+                   "msOGRFileNextShape()");
+        msDebug("msOGRFileNextShape(): %s\n",
+                CPLGetLastErrorMsg() );
         RELEASE_OGR_LOCK;
         return MS_FAILURE;
       } else {
