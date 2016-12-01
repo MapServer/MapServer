@@ -6,6 +6,9 @@
 # simple bbox
 #
 # RUN_PARMS: wfs_ogr_native_sql_01.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><BBOX><PropertyName>Geometry</PropertyName><Box srsName='EPSG:32632'><coordinates>659159,4877386 696879,4898059</coordinates></Box></BBOX></Filter>" > [RESULT]
+
+# RUN_PARMS: wfs_ogr_native_sql_01_spatial_index_disabled.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns_spatial_index_disabled&OUTPUTFORMAT=GML2&FILTER=<Filter><BBOX><PropertyName>Geometry</PropertyName><Box srsName='EPSG:32632'><coordinates>659159,4877386 696879,4898059</coordinates></Box></BBOX></Filter>" > [RESULT]
+
 #
 # and, or, not
 #
@@ -84,6 +87,9 @@
 # PropertyIsNull
 # RUN_PARMS: wfs_ogr_native_sql_40.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=towns_with_null&FILTER=<Filter><PropertyIsNull><PropertyName>name</PropertyName></PropertyIsNull></Filter>" > [RESULT]
 
+# SortBy
+# RUN_PARMS: wfs_ogr_native_sql_41.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsNotEqualTo><PropertyName>name</PropertyName><Literal>Fanano</Literal></PropertyIsNotEqualTo></Filter>&SORTBY=name" > [RESULT_DEVERSION]
+
 MAP
 
 NAME WFS_OGR_NATIVE_SQL_TEST
@@ -126,6 +132,29 @@ LAYER
   PROCESSING "NATIVE_SQL=YES"
   METADATA
     "ows_title"         "towns"
+    "wfs_featureid"     "ID"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_getfeature_formatlist" "ogrgml"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:32632"
+  END
+
+  TEMPLATE "wfs_ogr_native_sql.map"
+END # Layer
+
+LAYER
+  NAME towns_spatial_index_disabled
+  DATA towns
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/db.sqlite"
+  PROCESSING "NATIVE_SQL=YES"
+  PROCESSING "USE_SPATIAL_INDEX=NO"
+  METADATA
+    "ows_title"         "towns_spatial_index_disabled"
     "wfs_featureid"     "ID"
     "gml_include_items" "all"
     "gml_types"         "auto"
