@@ -2092,6 +2092,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
     }
 
     char *select = (psInfo->pszSelect) ? msStrdup(psInfo->pszSelect) : NULL;
+    const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+    bool bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
     // we'll go strictly two possible ways: 
     // 1) GetLayer + SetFilter
@@ -2192,13 +2194,15 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             rect.miny = MAX(psInfo->rect.miny, rect.miny);
             rect.maxx = MIN(psInfo->rect.maxx, rect.maxx);
             rect.maxy = MIN(psInfo->rect.maxy, rect.maxy);
+            bIsValidRect = true;
         }
         psInfo->rect = rect;
 
         bool bSpatialiteAddOrderByFID = false;
 
         if( psInfo->dialect && EQUAL(psInfo->dialect, "Spatialite") &&
-            psInfo->pszMainTableName != NULL && psInfo->bHasSpatialIndex )
+            psInfo->pszMainTableName != NULL && psInfo->bHasSpatialIndex &&
+            bIsValidRect )
         {
             select = msStringConcatenate(select, " JOIN ");
 
@@ -2255,7 +2259,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
         bool bOffsetAlreadyAdded = false;
         // use spatial index
-        if (psInfo->dialect) {
+        if (psInfo->dialect && bIsValidRect ) {
             if (EQUAL(psInfo->dialect, "PostgreSQL")) {
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 const char *col = OGR_L_GetGeometryColumn(psInfo->hLayer); // which geom field??
@@ -2391,7 +2395,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
         ACQUIRE_OGR_LOCK;
 
-        if( OGR_L_GetGeomType( psInfo->hLayer ) != wkbNone ) {
+        if( OGR_L_GetGeomType( psInfo->hLayer ) != wkbNone && bIsValidRect ) {
             if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
                 OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
 
@@ -2423,7 +2427,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         psInfo->rect = rect;
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
-            msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
+            msDebug("msOGRFileWhichShapes: Setting spatial filter to %.15g %.15g %.15g %.15g\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
 
         /* ------------------------------------------------------------------
          * Apply an attribute filter if we have one prefixed with a WHERE

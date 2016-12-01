@@ -670,6 +670,7 @@ int msQueryByFilter(mapObj *map)
   expressionObj old_filter;
 
   rectObj search_rect;
+  const rectObj invalid_rect = MS_INIT_INVALID_RECT;
 
   shapeObj shape;
 
@@ -761,9 +762,10 @@ int msQueryByFilter(mapObj *map)
     if(status != MS_SUCCESS) goto query_error;
 
     search_rect = map->query.rect;
+
 #ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
-    if(lp->project)
+    if(lp->project && memcmp( &search_rect, &invalid_rect, sizeof(search_rect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
 #endif
 

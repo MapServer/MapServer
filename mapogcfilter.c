@@ -667,8 +667,18 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 
   pszExpression = FLTGetCommonExpression(psNode,  lp);
   if (pszExpression) {
+    const char* pszUseDefaultExtent;
     FilterEncodingNode* psTopBBOX;
     rectObj rect = map->extent;
+
+    pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
+                                              "use_default_extent_for_getfeature");
+    if( pszUseDefaultExtent && CSLTestBoolean(pszUseDefaultExtent) &&
+        lp->connectiontype == MS_OGR )
+    {
+        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+        rect = rectInvalid;
+    }
 
     psTopBBOX = FLTGetTopBBOX(psNode);
     if( psTopBBOX )
@@ -706,9 +716,9 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     if(map->debug == MS_DEBUGLEVEL_VVV)
     {
       if( pszExpression )
-        msDebug("FLTLayerApplyPlainFilterToLayer(): %s, rect=%f,%f,%f,%f\n", pszExpression, rect.minx, rect.miny, rect.maxx, rect.maxy);
+        msDebug("FLTLayerApplyPlainFilterToLayer(): %s, rect=%.15g,%.15g,%.15g,%.15g\n", pszExpression, rect.minx, rect.miny, rect.maxx, rect.maxy);
       else
-        msDebug("FLTLayerApplyPlainFilterToLayer(): rect=%f,%f,%f,%f\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
+        msDebug("FLTLayerApplyPlainFilterToLayer(): rect=%.15g,%.15g,%.15g,%.15g\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
     }
 
     status = FLTApplyFilterToLayerCommonExpressionWithRect(map, iLayerIndex,

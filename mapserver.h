@@ -474,7 +474,9 @@ extern "C" {
 #define MS_IS_VALID_ARRAY_INDEX(index, size) ((index<0 || index>=size)?MS_FALSE:MS_TRUE)
 
 #define MS_CONVERT_UNIT(src_unit, dst_unit, value) (value * msInchesPerUnit(src_unit,0) / msInchesPerUnit(dst_unit,0))
-  
+
+#define MS_INIT_INVALID_RECT { -1e300, -1e300, 1e300, 1e300 }
+
 #endif
 
   /* General enumerated types - needed by scripts */
