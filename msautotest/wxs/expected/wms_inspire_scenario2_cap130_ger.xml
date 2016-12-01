@@ -29,8 +29,8 @@
   </ContactInformation>
   <Fees>conditions unknown</Fees>
   <AccessConstraints>None</AccessConstraints>
-  <MaxWidth>4096</MaxWidth>
-  <MaxHeight>4096</MaxHeight>
+  <MaxWidth>2048</MaxWidth>
+  <MaxHeight>2048</MaxHeight>
 </Service>
 
 <Capability>
@@ -108,7 +108,7 @@
   </inspire_vs:ExtendedCapabilities>
   <Layer>
     <Name>TN.RoadTransportNetwork.RoadArea</Name>
-    <Title>Verkehrsnetze: Stra√üenfl√§che</Title>
+    <Title>Verkehrsnetze: Straﬂenfl‰che</Title>
     <Abstract>myroadareaabstractger</Abstract>
     <KeywordList>
         <Keyword>myroadareakeyword1</Keyword>
@@ -139,7 +139,7 @@
     </Style>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>TN.RoadTransportNetwork.RoadLink</Name>
-        <Title>Verkehrsnetze: Stra√üensegment</Title>
+        <Title>Verkehrsnetze: Straﬂensegment</Title>
         <Abstract>myroadlinklayerabstractger</Abstract>
         <KeywordList>
             <Keyword>myroadlinklayerkeyword1</Keyword>
