@@ -1745,14 +1745,22 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       for(j=0; j<lp->resultcache->numresults; j++) {
         char* pszFID;
 
-        status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
-        if(status != MS_SUCCESS) {
-          msGMLFreeGroups(groupList);
-          msGMLFreeConstants(constantList);
-          msGMLFreeItems(itemList);
-          msGMLFreeGeometries(geometryList);
-          msFree(layerName);
-          return(status);
+        if( lp->resultcache->results[j].shape )
+        {
+            /* msDebug("Using cached shape %ld\n", lp->resultcache->results[j].shapeindex); */
+            msCopyShape(lp->resultcache->results[j].shape, &shape);
+        }
+        else
+        {
+            status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
+            if(status != MS_SUCCESS) {
+                msGMLFreeGroups(groupList);
+                msGMLFreeConstants(constantList);
+                msGMLFreeItems(itemList);
+                msGMLFreeGeometries(geometryList);
+                msFree(layerName);
+                return(status);
+            }
         }
 
 #ifdef USE_PROJ

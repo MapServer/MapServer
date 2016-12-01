@@ -3953,7 +3953,7 @@ int freeLayer(layerObj *layer)
     freeFeatureList(layer->features);
 
   if(layer->resultcache) {
-    if(layer->resultcache->results) free(layer->resultcache->results);
+    cleanupResultCache(layer->resultcache);
     msFree(layer->resultcache);
   }
 
@@ -7408,6 +7408,28 @@ void initResultCache(resultCacheObj *resultcache)
     resultcache->usegetshape = MS_FALSE;
   }
 }
+
+void cleanupResultCache(resultCacheObj *resultcache)
+{
+  if(resultcache) {
+    if(resultcache->results)
+    {
+        int i;
+        for( i = 0; i < resultcache->numresults; i++ )
+        {
+            if( resultcache->results[i].shape )
+            {
+                msFreeShape( resultcache->results[i].shape );
+                msFree( resultcache->results[i].shape );
+            }
+        }
+        free(resultcache->results);
+    }
+    resultcache->results = NULL;
+    initResultCache(resultcache);
+  }
+}
+
 
 static int resolveSymbolNames(mapObj* map)
 {

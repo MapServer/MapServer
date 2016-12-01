@@ -169,6 +169,27 @@ void msFreeShape(shapeObj *shape)
   msInitShape(shape); /* now reset */
 }
 
+int msGetShapeRAMSize(shapeObj* shape)
+{
+    int i;
+    int size = 0;
+    size += sizeof(shapeObj);
+    size += shape->numlines * sizeof(lineObj);
+    for (i = 0; i < shape->numlines; i++)
+    {
+        size += shape->line[i].numpoints * sizeof(pointObj);
+    }
+    size += shape->numvalues * sizeof(char*);
+    for( i = 0; i < shape->numvalues; i++ )
+    {
+        if( shape->values[i] )
+            size += strlen( shape->values[i] ) + 1;
+    }
+    if( shape->text )
+        size += strlen( shape->text ) + 1;
+    return size;
+}
+
 void msFreeLabelPathObj(labelPathObj *path)
 {
   msFreeShape(&(path->bounds));

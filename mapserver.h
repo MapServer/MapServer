@@ -882,6 +882,10 @@ extern "C" {
     char *filteritem;
 
     int slayer; /* selection layer, used for msQueryByFeatures() (note this is not a query mode per se) */
+
+    int cache_shapes; /* whether to cache shapes in resultCacheObj */
+    int max_cached_shape_count; /* maximum number of shapes cached in the total number of resultCacheObj */
+    int max_cached_shape_ram_amount; /* maximum number of bytes taken by shapes cached in the total number of resultCacheObj */
   } queryObj;
 #endif
 
@@ -1302,6 +1306,9 @@ extern "C" {
     int tileindex;
     int resultindex;
     int classindex;
+#ifndef SWIG
+    shapeObj* shape;
+#endif
   } resultObj;
 #ifdef SWIG
   %mutable;
@@ -2024,6 +2031,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void initWeb(webObj *web);
   MS_DLL_EXPORT void freeWeb(webObj *web);
   MS_DLL_EXPORT void initResultCache(resultCacheObj *resultcache);
+  void cleanupResultCache(resultCacheObj *resultcache);
   MS_DLL_EXPORT int initLayerCompositer(LayerCompositer *compositer);
   MS_DLL_EXPORT void initLeader(labelLeaderObj *leader);
   MS_DLL_EXPORT void freeGrid( graticuleObj *pGraticule);
@@ -2317,6 +2325,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
   MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimitive.c */
+  int msGetShapeRAMSize(shapeObj* shape); /* in mapprimitive.c */
   MS_DLL_EXPORT void msFreeLabelPathObj(labelPathObj *path);
   MS_DLL_EXPORT shapeObj *msShapeFromWKT(const char *string);
   MS_DLL_EXPORT char *msShapeToWKT(shapeObj *shape);

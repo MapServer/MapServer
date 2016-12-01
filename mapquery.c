@@ -30,6 +30,21 @@
 #include "mapserver.h"
 #include "mapows.h"
 
+/* This object is used by the various mapQueryXXXXX() functions. It stores
+ * the total amount of shapes and their RAM footprint, when they are cached
+ * in the resultCacheObj* of layers. This is the total number accross all queried
+ * layers. However this is isn't persistant accross several calls to
+ * mapQueryXXXXX(), if the resultCacheObj* objects weren't cleaned up. This
+ * is not needed in the context of WFS, for which this is used for now.
+ */
+typedef struct
+{
+    int cachedShapeCountWarningEmitted;
+    int cachedShapeCount;
+    int cachedShapeRAMWarningEmitted;
+    int cachedShapeRAM;
+} queryCacheObj;
+
 int msInitQuery(queryObj *query) {
   if(!query) return MS_FAILURE;
 
@@ -56,6 +71,10 @@ int msInitQuery(queryObj *query) {
   
   query->filteritem = NULL;
   msInitExpression(&query->filter);
+  
+  query->cache_shapes = MS_FALSE;
+  query->max_cached_shape_count = 0;
+  query->max_cached_shape_ram_amount = 0;
 
   return MS_SUCCESS;
 }
@@ -133,9 +152,60 @@ int msIsLayerQueryable(layerObj *lp)
   return MS_FALSE;
 }
 
-static int addResult(resultCacheObj *cache, shapeObj *shape)
+static void initQueryCache(queryCacheObj* queryCache)
+{
+    queryCache->cachedShapeCountWarningEmitted = MS_FALSE;
+    queryCache->cachedShapeCount = 0;
+    queryCache->cachedShapeRAMWarningEmitted = MS_FALSE;
+    queryCache->cachedShapeRAM = 0;
+}
+
+/** Check whether we should store the shape in resultCacheObj* given the
+ * limits allowed in map->query.max_cached_shape_count and
+ * map->query.max_cached_shape_ram_amount.
+ */
+static int canCacheShape(mapObj* map, queryCacheObj *queryCache,
+                         shapeObj* shape, int shape_ram_size)
+{
+  if( !map->query.cache_shapes )
+      return MS_FALSE;
+  if( queryCache->cachedShapeCountWarningEmitted ||
+      (map->query.max_cached_shape_count > 0 &&
+      queryCache->cachedShapeCount >= map->query.max_cached_shape_count) )
+  {
+      if( !queryCache->cachedShapeCountWarningEmitted )
+      {
+          queryCache->cachedShapeCountWarningEmitted = MS_TRUE;
+          msDebug("map->query.max_cached_shape_count = %d reached. "
+                  "Next features will not be cached.\n",
+                  map->query.max_cached_shape_count);
+      }
+      return MS_FALSE;
+  }
+  if( queryCache->cachedShapeRAMWarningEmitted ||
+      (map->query.max_cached_shape_ram_amount > 0 &&
+       queryCache->cachedShapeRAM + shape_ram_size > map->query.max_cached_shape_ram_amount) )
+  {
+      if( !queryCache->cachedShapeRAMWarningEmitted )
+      {
+          queryCache->cachedShapeRAMWarningEmitted = MS_TRUE;
+          msDebug("map->query.max_cached_shape_ram_amount = %d reached after %d cached features. "
+                  "Next features will not be cached.\n",
+                  map->query.max_cached_shape_ram_amount,
+                  queryCache->cachedShapeCount);
+      }
+      return MS_FALSE;
+  }
+  return MS_TRUE;
+}
+
+static int addResult(mapObj* map, resultCacheObj *cache,
+                     queryCacheObj* queryCache, shapeObj *shape)
 {
   int i;
+  int shape_ram_size = (map->query.max_cached_shape_ram_amount > 0) ? 
+                                            msGetShapeRAMSize( shape ) : 0;
+  int store_shape = canCacheShape (map, queryCache, shape, shape_ram_size);
 
   if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)
@@ -155,6 +225,16 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
   cache->results[i].tileindex = shape->tileindex;
   cache->results[i].shapeindex = shape->index;
   cache->results[i].resultindex = shape->resultindex;
+  if( store_shape )
+  {
+      cache->results[i].shape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+      msInitShape(cache->results[i].shape);
+      msCopyShape(shape, cache->results[i].shape);
+      queryCache->cachedShapeCount ++;
+      queryCache->cachedShapeRAM += shape_ram_size;
+  }
+  else
+      cache->results[i].shape = NULL;
   cache->numresults++;
 
   cache->previousBounds = cache->bounds;
@@ -471,9 +551,12 @@ int msQueryByIndex(mapObj *map)
   int status;
 
   resultObj record;
+  queryCacheObj queryCache;
 
   shapeObj shape;
   double minfeaturesize = -1;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_INDEX) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByIndex()");
@@ -494,7 +577,7 @@ int msQueryByIndex(mapObj *map)
 
   if(map->query.clear_resultcache) {
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
+      cleanupResultCache(lp->resultcache);
       free(lp->resultcache);
       lp->resultcache = NULL;
     }
@@ -568,7 +651,7 @@ int msQueryByIndex(mapObj *map)
     return(MS_FAILURE);
   }
   
-  addResult(lp->resultcache, &shape);
+  addResult(map, lp->resultcache, &queryCache, &shape);
 
   msFreeShape(&shape);
   /* msLayerClose(lp); */
@@ -659,6 +742,9 @@ int msQueryByFilter(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_FILTER) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByFilter()");
@@ -865,7 +951,7 @@ int msQueryByFilter(mapObj *map)
       if( map->query.only_cache_result_count )
         lp->resultcache->numresults ++;
       else
-        addResult(lp->resultcache, &shape);
+        addResult(map, lp->resultcache, &queryCache, &shape);
       msFreeShape(&shape);
 
       if(map->query.mode == MS_QUERY_SINGLE) { /* no need to look any further */
@@ -925,6 +1011,9 @@ int msQueryByRect(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_RECT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByRect()");
@@ -1156,7 +1245,7 @@ int msQueryByRect(mapObj *map)
         if( map->query.only_cache_result_count )
             lp->resultcache->numresults ++;
         else
-            addResult(lp->resultcache, &shape);
+            addResult(map, lp->resultcache, &queryCache, &shape);
         --map->query.maxfeatures;
       }
       msFreeShape(&shape);
@@ -1217,6 +1306,10 @@ int msQueryByFeatures(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->debug) msDebug("in msQueryByFeatures()\n");
 
@@ -1474,7 +1567,7 @@ int msQueryByFeatures(mapObj *map)
             msFreeShape(&shape);
             continue;
           }
-          addResult(lp->resultcache, &shape);
+          addResult(map, lp->resultcache, &queryCache, &shape);
         }
         msFreeShape(&shape);
 
@@ -1537,6 +1630,10 @@ int msQueryByPoint(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_POINT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByPoint()");
@@ -1693,11 +1790,12 @@ int msQueryByPoint(mapObj *map)
         }
 
         if(map->query.mode == MS_QUERY_SINGLE) {
-          lp->resultcache->numresults = 0;
-          addResult(lp->resultcache, &shape);
+          cleanupResultCache(lp->resultcache);
+          initQueryCache(&queryCache);
+          addResult(map, lp->resultcache, &queryCache, &shape);
           t = d; /* next one must be closer */
         } else {
-          addResult(lp->resultcache, &shape);
+          addResult(map, lp->resultcache, &queryCache, &shape);
         }
       }
 
@@ -1748,6 +1846,9 @@ int msQueryByShape(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_SHAPE) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByShape()");
@@ -1981,7 +2082,7 @@ int msQueryByShape(mapObj *map)
           msFreeShape(&shape);
           continue;
         }
-        addResult(lp->resultcache, &shape);
+        addResult(map, lp->resultcache, &queryCache, &shape);
       }
       msFreeShape(&shape);
 

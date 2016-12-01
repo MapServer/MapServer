@@ -121,6 +121,7 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
   cache->results[i].tileindex = tileindex;
   cache->results[i].shapeindex = shapeindex;
   cache->results[i].resultindex = -1; /* unused */
+  cache->results[i].shape = NULL;
   cache->numresults++;
 
   return(MS_SUCCESS);
