@@ -2296,7 +2296,8 @@ int msPostGISLayerOpen(layerObj *layer)
         }
       }
 
-      msSetError(MS_QUERYERR, "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), maskeddata);
+      msDebug("Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?.\n", PQerrorMessage(layerinfo->pgconn), maskeddata);
+      msSetError(MS_QUERYERR, "Database connection failed.\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()");
 
       free(maskeddata);
       free(layerinfo);
@@ -2318,7 +2319,6 @@ int msPostGISLayerOpen(layerObj *layer)
         msSetError(MS_QUERYERR, "PostgreSQL database connection gone bad (%s)", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn));
         return MS_FAILURE;
       }
-
     }
   }
 
