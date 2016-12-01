@@ -652,6 +652,7 @@ int msQueryByFilter(mapObj *map)
   expressionObj old_filter;
 
   rectObj search_rect;
+  const rectObj invalid_rect = MS_INIT_INVALID_RECT;
 
   shapeObj shape;
 
@@ -758,6 +759,7 @@ int msQueryByFilter(mapObj *map)
       /* whole layer extent, but expressed in a map SRS different from the layer SRS */
       /* In the case, we can directly request against the layer extent in its native SRS */
       if( lp->project &&
+          memcmp( &search_rect, &invalid_rect, sizeof(search_rect) ) != 0 &&
           msProjectionsDiffer(&(lp->projection), &(map->projection)) )
       {
         rectObj layerExtent;
@@ -804,7 +806,7 @@ int msQueryByFilter(mapObj *map)
 
 #ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
-    if(lp->project)
+    if(lp->project && memcmp( &search_rect, &invalid_rect, sizeof(search_rect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
 #endif
 

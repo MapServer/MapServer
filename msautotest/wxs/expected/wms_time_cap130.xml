@@ -10,8 +10,8 @@ Content-Type: text/xml; charset=UTF-8
   <ContactInformation>
   </ContactInformation>
   <Fees>none</Fees>
-  <MaxWidth>2048</MaxWidth>
-  <MaxHeight>2048</MaxHeight>
+  <MaxWidth>4096</MaxWidth>
+  <MaxHeight>4096</MaxHeight>
 </Service>
 
 <Capability>
