@@ -1408,16 +1408,14 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       
       if( hDS == NULL )
       {
-          if( strlen(CPLGetLastErrorMsg()) == 0 )
-              msSetError(MS_OGRERR, 
-                         "Open failed for OGR connection in layer `%s'.  "
-                         "File not found or unsupported format.", 
-                         "msOGRFileOpen()",
-                         layer->name?layer->name:"(null)" );
-          else
-              msSetError(MS_OGRERR, 
+          msSetError(MS_OGRERR, 
+                    "Open failed for OGR connection in layer `%s'.  "
+                    "Check logs.", 
+                    "msOGRFileOpen()",
+                    layer->name?layer->name:"(null)" );
+          if( strlen(CPLGetLastErrorMsg()) != 0 )
+              msDebug(
                          "Open failed for OGR connection in layer `%s'.\n%s\n",
-                         "msOGRFileOpen()", 
                          layer->name?layer->name:"(null)", 
                          CPLGetLastErrorMsg() );
           CPLFree( pszDSName );
@@ -1467,8 +1465,11 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       if( hLayer == NULL )
       {
           msSetError(MS_OGRERR, 
-                     "ExecuteSQL(%s) failed.\n%s",
+                     "ExecuteSQL(%s) failed. Check logs",
                      "msOGRFileOpen()", 
+                     pszLayerDef);
+          msDebug(
+                     "ExecuteSQL(%s) failed.\n%s",
                      pszLayerDef, CPLGetLastErrorMsg() );
           RELEASE_OGR_LOCK;
           msConnPoolRelease( layer, hDS );
@@ -1481,8 +1482,10 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   if (hLayer == NULL)
   {
-      msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection `%s'.",
+      msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection. Check logs.",
                  "msOGRFileOpen()", 
+                 pszLayerDef);
+      msDebug("GetLayer(%s) failed for OGR connection `%s'.",
                  pszLayerDef, connection );
       CPLFree( pszLayerDef );
       msConnPoolRelease( layer, hDS );
@@ -1635,8 +1638,11 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
           != OGRERR_NONE )
       {
           msSetError(MS_OGRERR,
-                     "SetAttributeFilter(%s) failed on layer %s.\n%s", 
+                     "SetAttributeFilter(%s) failed on layer %s.", 
                      "msOGRFileWhichShapes()",
+                     layer->filter.string+6, layer->name?layer->name:"(null)");
+          msDebug(
+                     "SetAttributeFilter(%s) failed on layer %s.\n%s", 
                      layer->filter.string+6, layer->name?layer->name:"(null)", 
                      CPLGetLastErrorMsg() );
           RELEASE_OGR_LOCK;
@@ -1852,8 +1858,8 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
           psInfo->last_record_index_read = -1;
           if( CPLGetLastErrorType() == CE_Failure )
           {
-              msSetError(MS_OGRERR, "%s", "msOGRFileNextShape()",
-                         CPLGetLastErrorMsg() );
+              msSetError(MS_OGRERR, "error. check logs", "msOGRFileNextShape()");
+              msDebug("%s", CPLGetLastErrorMsg() );
               RELEASE_OGR_LOCK;
               return MS_FAILURE;
           }
