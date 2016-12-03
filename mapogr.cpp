@@ -1376,7 +1376,7 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
 
           char* pszRequest = NULL;
           pszRequest = msStringConcatenate(pszRequest,
-              "SELECT * FROM sqlite_master WHERE type = 'table' AND name = lower('");
+              "SELECT name FROM sqlite_master WHERE type = 'table' AND name = lower('");
           pszRequest = msStringConcatenate(pszRequest, psInfo->pszMainTableName);
           pszRequest = msStringConcatenate(pszRequest, "')");
           OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
@@ -1387,7 +1387,13 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
               OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
               psInfo->bIsOKForSQLCompose = (hFeature != NULL);
               if( hFeature )
+              {
+                msFree(psInfo->pszMainTableName);
+                msFree(psInfo->pszSpatialFilterTableName);
+                psInfo->pszMainTableName = msStrdup( OGR_F_GetFieldAsString( hFeature, 0) );
+                psInfo->pszSpatialFilterTableName = msStrdup( psInfo->pszMainTableName );
                 OGR_F_Destroy(hFeature);
+              }
               OGR_DS_ReleaseResultSet( psInfo->hDS, hLayer );
           }
           if( psInfo->bIsOKForSQLCompose )
@@ -1510,6 +1516,7 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
       pszRequest = msStringConcatenate(pszRequest, "'");
 
       psInfo->bHasSpatialIndex = false;
+      //msDebug("msOGRFileOpen(): %s", pszRequest);
 
       OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
       if( hLayer )
