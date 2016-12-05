@@ -2452,7 +2452,6 @@ int msPostGISLayerOpen(layerObj *layer)
          * times there will be a leak... */
         return MS_FAILURE;
       }
-
     }
   }
 
