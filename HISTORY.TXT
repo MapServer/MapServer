@@ -11,8 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-Current Version (future 6.0.4, GIT branch-6-0):
------------------------------------------------
+Version 6.0.5 (2016-12-05):
+---------------------------
+
+- Fix potential information leakage on postgis and OGR layers (#4938, #5356)
+  CVE-2016-9839
 
 Version 6.0.4 (2014-01-02):
 ---------------------------
