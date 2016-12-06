@@ -24,7 +24,7 @@ Step 2: Build PHP-Mapscript
 After step 5 of ../../README.WIN32 you have an open VS2012 x86 Native Tools Shell in build-Directory in your Mapserver sources (C:\dev\work\mapserver\build).
 If not, open VS2012 x86 Native Tools Shell, add cmake to your PATH (see ../../README.WIN32) and "cd C:\dev\work\mapserver\build".
 1. Tell CMake to build Mapscript by entering:
-  cmake .. -DWITH_PHP=1 -DPHP5_EXTENSION_DIR=C:\dev\builds\php-5.6.27-Win32-VC11-x86_mapscript\ext -DPHP5_INCLUDES=C:\dev\work\php-sdk\phpdev\vc11\x86\php-5.6.27-src
+  cmake .. -DWITH_PHP=1 -DPHP5_EXTENSION_DIR=C:\dev\builds\php-5.6.28-Win32-VC11-x86_mapscript\ext -DPHP5_INCLUDES=C:\dev\work\php-sdk\phpdev\vc11\x86\php-5.6.28-src
 2. build:
   nmake
 
