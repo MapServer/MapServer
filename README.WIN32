@@ -245,27 +245,6 @@ downloading GISInternals packages.
    with the PNG support, make sure that the libpng that you use in mapserver 
    is the same as the one used in GDAL.
 
-------------------------------------------------------------
-        Notes on PDF suuport
-------------------------------------------------------------
-
-The PDF support allows the output of a map file as a PDF file.
-
-To be able to build mapserver with the PDF support, you need to download
-and build a PDF library from www.pdflib.com (http://www.pdflib.com/pdflib/download/index.html).
-The best option is to download the zip file containing the source code and build it. Please refer to the docs inside the zip for informations on how to build the library.  Here are some quick notes that can help in building mapserver with PDF :
-
- 1) Build the PDF lib
-
-  - open the project PDFLib.dsw
-  - build the project pdflib_dll
-  - after a sucessful build, you should have a pdflib.lib and pdblib.dll under the
-    pdflib directory
-  - copy the pdflib.dll under your system directory (ex : c:/winnt/system32)
- 
- 2) Build mapserver with PDF
-
-  - uncomment in the nmake.opt the flags related to PDF
 
 
 $Id$
