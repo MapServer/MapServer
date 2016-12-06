@@ -36,10 +36,10 @@ Download the SDK for you version and follow the readme inside the packages.
 
 This Readme will cover the compilation with Visual Studio 2012 Express on
 Windows with CMake and the GISInternals-Packages for the following reasons:
-  - not everybody wants to buy Visual Studio. And there is no reason to force
+  - not everybody wants to buy Visual Studio and there is no reason to force
     you to buy it just tu build Mapserver on Windows
   - CMake is the configuration-system for Linux. Why should you use something
-    else which needs to be cared for?
+    else which needs to be maintainerd?
   - as of today, PHP-Mapscript is not suppored for PHP-7. PHP-5.6 is build
     with VC11. To make PHP-Mapscript compatible with the downloadable
     PHP-Version you need to build with VC11 wich is Visual Studio 2012.
@@ -56,7 +56,7 @@ work for you.
 To build Mapserver on Windows with Visual Studio 2012 Express you need
 Visual Studio 2012 Express installed.
 Install CMake (https://cmake.org/) and add CMake bin-directory to your PATH
-environment variable. You dan even to this after opening VS2012 x86 Native
+environment variable. You can even to this after opening VS2012 x86 Native
 Tools Command Prompt by entering:
   set PATH=%PATH%;"C:\Program Files\CMake\bin"
 ... if CMake is installed to "C:\Program Files\CMake" ;)
@@ -66,8 +66,7 @@ Tools Command Prompt by entering:
 --------------------------------------------------------------------
 
 For our first build, we will use stable releases to build mapserver.
-Download MSVC 2012 win32 Packages for GDAL-2.1.2 and Mapserver-7.0.2 from
-http://gisinternals.com/release.php.
+Download MSVC 2012 win32 Packages for GDAL-2.1.2 and Mapserver-7.0.2 from http://gisinternals.com/release.php.
 We need "Compiled binaries in a single .zip package", "GDAL and MapServer sources" and "Compiled libraries and headers".
 Download the MSVC 2012 win32 Developement Kit from http://gisinternals.com/sdk.php.
 Extract everything to C:\dev\work\release-1700-gdal-2-1-2-mapserver-7-0-2.
@@ -78,16 +77,8 @@ After you got this done, feel free to use other packages which fit your needs be
       Mapserver-sources
 --------------------------------------------------------------------
 
-As of today (2016-11-26), you can build the Mapserver-sources from the
-GISInternals-SDK, Mapserver-Homepage or Github if you don't want to compile
-PHP-Mapscript.
-If you want to compile PHP-Mapscript, it will not work.
-You will need to clone or download the sources from
-https://github.com/alexandergabriel/mapserver or merge the changes from branch
-branch-7-0-fixphpmapscriptwin32buildwithcmake into other sources.
-If not, building of PHP-MapScript will fail.
-
-Extract "your" sources to C:\dev\work\mapserver.
+Download at least Mapserver-7.0.3 or current 7.0-Branch from github
+and extract or clone from github to C:\dev\work\mapserver.
 
 --------------------------------------------------------------------
       Building Mapserver
