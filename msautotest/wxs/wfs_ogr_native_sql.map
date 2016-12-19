@@ -163,7 +163,7 @@ LAYER
     "gml_include_items" "all"
     "gml_types"         "auto"
     "wfs_getfeature_formatlist" "ogrgml"
-    "wfs_use_default_extent_for_getfeature" "yes"
+    "wfs_use_default_extent_for_getfeature" "no"
   END
   TYPE POINT
   STATUS ON
