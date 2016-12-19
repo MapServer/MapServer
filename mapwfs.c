@@ -2153,7 +2153,7 @@ static int msWFSRunBasicGetFeature(mapObj* map,
 
     pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
                                               "use_default_extent_for_getfeature");
-    if( pszUseDefaultExtent && CSLTestBoolean(pszUseDefaultExtent) &&
+    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
         lp->connectiontype == MS_OGR )
     {
         const rectObj rectInvalid = MS_INIT_INVALID_RECT;

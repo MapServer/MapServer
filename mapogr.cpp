@@ -2429,12 +2429,14 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
                 OGR_G_DestroyGeometry( hSpatialFilterPolygon );
             }
+
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+            {
+                msDebug("msOGRFileWhichShapes: Setting spatial filter to %.15g %.15g %.15g %.15g\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
+            }
         }
 
         psInfo->rect = rect;
-
-        if (layer->debug >= MS_DEBUGLEVEL_VVV)
-            msDebug("msOGRFileWhichShapes: Setting spatial filter to %.15g %.15g %.15g %.15g\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
 
         /* ------------------------------------------------------------------
          * Apply an attribute filter if we have one prefixed with a WHERE
