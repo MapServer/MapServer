@@ -273,11 +273,17 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph) {
   key.glyph = glyph;
   UT_HASH_FIND(hh,face->outline_cache,&key, sizeof(outline_element_key),oc);
   if(!oc) {
+    FT_Matrix matrix;
+    FT_Vector pen;
     FT_Error error;
     oc = msSmallMalloc(sizeof(outline_element));
     if(MS_NINT(glyph->key.size * 96.0/72.0) != face->face->size->metrics.x_ppem) {
       FT_Set_Pixel_Sizes(face->face,0,MS_NINT(glyph->key.size * 96/72.0));
     }
+    matrix.xx = matrix.yy = 0x10000L;
+    matrix.xy = matrix.yx = 0x00000L;
+    pen.x = pen.y = 0;
+    FT_Set_Transform(face->face, &matrix, &pen);
     error = FT_Load_Glyph(face->face,glyph->key.codepoint,FT_LOAD_DEFAULT/*|FT_LOAD_IGNORE_TRANSFORM*/|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
     if(error) {
       msSetError(MS_MISCERR, "unable to load glyph %ud for font \"%s\"", "msGetGlyphByIndex()",glyph->key.codepoint, face->font);

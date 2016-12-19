@@ -857,7 +857,7 @@ ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-ms_link_libraries( ${MS_EXTERNAL_LIBS})
+ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
 endif (WIN32)
 
 configure_file (

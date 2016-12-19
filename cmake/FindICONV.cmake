@@ -48,7 +48,7 @@ if(WIN32)
 	find_file(ICONV_DLL   
 					NAMES ${ICONV_DLL_NAMES}
 					PATHS ENV PATH
-					NO_DEFAULT_PATH)
+					${ICONV_INCLUDE_DIR}/../bin)
 	find_file(ICONV_DLL_HELP   
 					NAMES ${ICONV_DLL_NAMES}
 					PATHS ENV PATH

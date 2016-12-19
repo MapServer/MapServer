@@ -31,6 +31,17 @@
 
 #include "php_mapscript.h"
 
+#if PHP_VERSION_ID >= 50625
+#undef ZVAL_STRING
+#define ZVAL_STRING(z, s, duplicate) do {       \
+    const char *__s=(s);                            \
+    zval *__z = (z);                                        \
+    Z_STRLEN_P(__z) = strlen(__s);          \
+    Z_STRVAL_P(__z) = (duplicate?estrndup(__s, Z_STRLEN_P(__z)):(char*)__s);\
+    Z_TYPE_P(__z) = IS_STRING;                      \
+} while (0)
+#endif
+
 zend_class_entry *mapscript_ce_error;
 
 ZEND_BEGIN_ARG_INFO_EX(error___get_args, 0, 0, 1)
