@@ -824,15 +824,44 @@ static char* msWFSGetStoredQuery(mapObj *map, const char* pszURN)
         FILE* f = fopen(value, "rb");
         if( f != NULL )
         {
-            char* pszBuffer = (char*) msSmallMalloc(32000);
-            int nread = fread(pszBuffer, 1, 32000-1, f);
-            fclose(f);
-            if( nread > 0 )
+            char* pszBuffer;
+            int nread;
+            long length;
+
+            fseek(f, 0, SEEK_END);
+            length = ftell(f);
+            if( length > 1000000 )
             {
-                pszBuffer[nread-1] = '\0';
-                return pszBuffer;
+                msSetError(MS_WFSERR, "%s: too big (%ld bytes > 1000000)",
+                           "msWFSGetStoredQuery()", value, length);
+                fclose(f);
             }
-            msFree(pszBuffer);
+            else
+            {
+                fseek(f, 0, SEEK_SET);
+                pszBuffer = (char*) malloc((int)length + 1);
+                if( pszBuffer == NULL )
+                {
+                    msSetError(MS_WFSERR, "Cannot allocate %d bytes to read %s",
+                               "msWFSGetStoredQuery()",
+                               (int)length + 1, value);
+                    fclose(f);
+                }
+                else
+                {
+                    nread = (int)fread(pszBuffer, 1, length, f);
+                    fclose(f);
+                    if( nread == length )
+                    {
+                        pszBuffer[nread] = '\0';
+                        return pszBuffer;
+                    }
+                    msSetError(MS_WFSERR, "Could only read %d bytes / %d of %s",
+                               "msWFSGetStoredQuery()",
+                               nread, (int)length, value);
+                    msFree(pszBuffer);
+                }
+            }
         }
         else
         {
