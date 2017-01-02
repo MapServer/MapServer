@@ -1123,6 +1123,107 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     }
   }
 
+  /* -------------------------------------------------------------------- */
+  /*      Deal with discontinuities related to lon_wrap=XXX in source     */
+  /*      projection. In that case we must check if the points at         */
+  /*      lon_wrap +/- 180deg are in the output raster.                   */
+  /* -------------------------------------------------------------------- */
+  if( bOutInit && pj_is_latlong(psSrcProj->proj) )
+  {
+      int bHasLonWrap = MS_FALSE;
+      double dfLonWrap = 0;
+      for( i = 0; i < psSrcProj->numargs; i++ )
+      {
+          if( strncmp(psSrcProj->args[i], "lon_wrap=",
+                      strlen("lon_wrap=")) == 0 )
+          {
+              bHasLonWrap = MS_TRUE;
+              dfLonWrap = atof( psSrcProj->args[i] + strlen("lon_wrap=") );
+              break;
+          }
+      }
+
+      if( bHasLonWrap )
+      {
+          double x2[2], y2[2], z2[2];
+          int nCountY = 0;
+          double dfY = 0.0;
+          double dfXMinOut = 0.0;
+          double dfYMinOut = 0.0;
+          double dfXMaxOut = 0.0;
+          double dfYMaxOut = 0.0;
+
+          /* Find out average y coordinate in src projection */
+          for( i = 0; i < nSamples; i++ ) {
+              if( y[i] != HUGE_VAL ) {
+                  dfY += y[i];
+                  nCountY ++;
+              }
+          }
+          dfY /= nCountY;
+
+          /* Compute bounds of output raster */
+          for( i = 0; i < 4; i ++ )
+          {
+              double dfX = adfDstGeoTransform[0] +
+                ((i == 1 || i == 2) ? nDstXSize : 0) * adfDstGeoTransform[1] +
+                ((i == 1 || i == 3 ) ? nDstYSize : 0) * adfDstGeoTransform[2];
+              double dfY = adfDstGeoTransform[3] +
+                ((i == 1 || i == 2) ? nDstXSize : 0) * adfDstGeoTransform[4] +
+                ((i == 1 || i == 3 ) ? nDstYSize : 0) * adfDstGeoTransform[5];
+              if( i == 0 || dfX < dfXMinOut ) dfXMinOut = dfX;
+              if( i == 0 || dfY < dfYMinOut ) dfYMinOut = dfY;
+              if( i == 0 || dfX > dfXMaxOut ) dfXMaxOut = dfX;
+              if( i == 0 || dfY > dfYMaxOut ) dfYMaxOut = dfY;
+          }
+
+          x2[0] = dfLonWrap-180+1e-7;
+          y2[0] = dfY;
+          z2[0] = 0.0;
+
+          x2[1] = dfLonWrap+180-1e-7;
+          y2[1] = dfY;
+          z2[1] = 0.0;
+
+          msAcquireLock( TLOCK_PROJ );
+          pj_transform( psSrcProj->proj, psDstProj->proj,
+                        2, 1, x2, y2, z2 );
+          msReleaseLock( TLOCK_PROJ );
+
+          if( x2[0] >= dfXMinOut && x2[0] <= dfXMaxOut &&
+              y2[0] >= dfYMinOut && y2[0] <= dfYMaxOut )
+          {
+                double x_out =      adfInvSrcGeoTransform[0]
+                            +   (dfLonWrap-180)*adfInvSrcGeoTransform[1]
+                            +   dfY*adfInvSrcGeoTransform[2];
+                double y_out =      adfInvSrcGeoTransform[3]
+                            +   (dfLonWrap-180)*adfInvSrcGeoTransform[4]
+                            +   dfY*adfInvSrcGeoTransform[5];
+
+                psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
+                psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+                psSrcExtent->miny = MS_MIN(psSrcExtent->miny, y_out);
+                psSrcExtent->maxy = MS_MAX(psSrcExtent->maxy, y_out);
+          }
+
+          if( x2[1] >= dfXMinOut && x2[1] <= dfXMaxOut &&
+              x2[1] >= dfYMinOut && y2[1] <= dfYMaxOut )
+          {
+                double x_out =      adfInvSrcGeoTransform[0]
+                            +   (dfLonWrap+180)*adfInvSrcGeoTransform[1]
+                            +   dfY*adfInvSrcGeoTransform[2];
+                double y_out =      adfInvSrcGeoTransform[3]
+                            +   (dfLonWrap+180)*adfInvSrcGeoTransform[4]
+                            +   dfY*adfInvSrcGeoTransform[5];
+
+                psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
+                psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+                psSrcExtent->miny = MS_MIN(psSrcExtent->miny, y_out);
+                psSrcExtent->maxy = MS_MAX(psSrcExtent->maxy, y_out);
+          }
+      }
+  }
+
   if( !bOutInit )
     return MS_FALSE;
 
