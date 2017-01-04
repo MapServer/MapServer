@@ -1440,7 +1440,12 @@ int msClusterLayerOpen(layerObj *layer)
     return MS_FAILURE;
 
   if (layer->layerinfo)
-    return MS_SUCCESS;  /* already open */
+  {
+    if (layer->vtable->LayerOpen != msClusterLayerOpen)
+        msLayerClose(layer);
+    else
+      return MS_SUCCESS;  /* already open */
+  }
 
   layerinfo = msClusterInitialize(layer);
 
