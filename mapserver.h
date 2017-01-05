@@ -2589,6 +2589,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color, int colormap_index);
   MS_DLL_EXPORT int msGetClass_FloatRGB(layerObj *layer, float fValue,
                                         int red, int green, int blue );
+  int msGetClass_FloatRGB_WithFirstClassToTry(layerObj *layer, float fValue, int red, int green, int blue, int firstClassToTry );
 
   /* in mapdrawgdal.c */
   MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb, void *hDSVoid );
