@@ -1,0 +1,38 @@
+# RUN_PARMS: legend_raster_gradient.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=png" > [RESULT_DEMIME]
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24_t
+
+OUTPUTFORMAT
+  NAME png24_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE RGBA
+  TRANSPARENT ON
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA ../gdal/data/rgba.tif
+  PROCESSING "BANDS=1,2,3"
+
+  CLASS
+    NAME ""
+    EXPRESSION ([pixel] >= 0.01 AND [pixel] < 0.05)
+    STYLE
+      COLORRANGE 0 0 0 255 255 255
+      DATARANGE 0.01 0.05
+    END
+  END
+
+END
+
+END # of map file
