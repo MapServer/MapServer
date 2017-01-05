@@ -1891,6 +1891,9 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
 
+    /* The creation of buckets takes a significant time when they are many, and many classes
+       as well. When iterating over buckets, a faster strategy is to reuse first the last used
+       class index. */
     c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) dfOriginalValue, -1, -1, -1, lastC);
     lastC = c;
     if( c != -1 ) {
