@@ -1,0 +1,36 @@
+# Test behaviour with a projection with lon_wrap=180
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 40 20
+EXTENT -180 -89.9999 180 90
+IMAGECOLOR 0 0 0
+
+ PROJECTION
+  "init=epsg:4326"
+ END
+
+OUTPUTFORMAT
+  NAME "png"
+  DRIVER AGG/PNG
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  EXTENSION "png"
+END
+
+LAYER
+  NAME test
+  TYPE RASTER
+  STATUS default
+  DATA "data/lon_wrap_180.asc"
+  PROJECTION
+    "proj=longlat"
+    "datum=WGS84"
+    "lon_wrap=180"
+    "no_defs"
+  END
+END
+
+END # of map file
