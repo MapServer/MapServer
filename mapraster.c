@@ -60,7 +60,7 @@ extern parseResultObj yypresult; /* result of parsing, true/false */
 /*                         msGetClass_String()                          */
 /************************************************************************/
 
-static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixel_value )
+static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixel_value, int firstClassToTry )
 
 {
   int i;
@@ -80,9 +80,18 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
   /*      Setup values list for expressions.                              */
   /* -------------------------------------------------------------------- */
   numitems = 4;
-  sprintf( red_value, "%d", color->red );
-  sprintf( green_value, "%d", color->green );
-  sprintf( blue_value, "%d", color->blue );
+  if( color->red == -1 && color->green == -1 && color->blue == -1 )
+  {
+    strcpy(red_value, "-1");
+    strcpy(green_value, "-1");
+    strcpy(blue_value, "-1");
+  }
+  else
+  {
+    sprintf( red_value, "%d", color->red );
+    sprintf( green_value, "%d", color->green );
+    sprintf( blue_value, "%d", color->blue );
+  }
 
   item_values[0] = (char *)pixel_value;
   item_values[1] = red_value;
@@ -92,18 +101,24 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
   /* -------------------------------------------------------------------- */
   /*      Loop over classes till we find a match.                         */
   /* -------------------------------------------------------------------- */
-  for(i=0; i<layer->numclasses; i++) {
+  for(i= (firstClassToTry < 0 ) ? 0 : -1; i<layer->numclasses; i++) {
+
+    int idx = i;
+    if( i < 0 )
+        idx = firstClassToTry;
+    else if( i == firstClassToTry )
+        continue;
 
     /* check for correct classgroup, if set */
-    if ( layer->class[i]->group && layer->classgroup &&
-         strcasecmp(layer->class[i]->group, layer->classgroup) != 0 )
+    if ( layer->class[idx]->group && layer->classgroup &&
+         strcasecmp(layer->class[idx]->group, layer->classgroup) != 0 )
       continue;
 
     /* Empty expression - always matches */
-    if (layer->class[i]->expression.string == NULL)
+    if (layer->class[idx]->expression.string == NULL)
       return(i);
 
-    switch(layer->class[i]->expression.type) {
+    switch(layer->class[idx]->expression.type) {
 
         /* -------------------------------------------------------------------- */
         /*      Simple string match                                             */
@@ -114,22 +129,22 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
         while( *tmpstr1 == ' ' )
           tmpstr1++;
 
-        if(strcmp(layer->class[i]->expression.string, tmpstr1) == 0) return(i); /* matched */
+        if(strcmp(layer->class[idx]->expression.string, tmpstr1) == 0) return(idx); /* matched */
         break;
 
         /* -------------------------------------------------------------------- */
         /*      Regular expression.  Rarely used for raster.                    */
         /* -------------------------------------------------------------------- */
       case(MS_REGEX):
-        if(!layer->class[i]->expression.compiled) {
-          if(ms_regcomp(&(layer->class[i]->expression.regex), layer->class[i]->expression.string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression  */
+        if(!layer->class[idx]->expression.compiled) {
+          if(ms_regcomp(&(layer->class[idx]->expression.regex), layer->class[idx]->expression.string, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) { /* compile the expression  */
             msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
             return(-1);
           }
-          layer->class[i]->expression.compiled = MS_TRUE;
+          layer->class[idx]->expression.compiled = MS_TRUE;
         }
 
-        if(ms_regexec(&(layer->class[i]->expression.regex), pixel_value, 0, NULL, 0) == 0) return(i); /* got a match */
+        if(ms_regexec(&(layer->class[idx]->expression.regex), pixel_value, 0, NULL, 0) == 0) return(idx); /* got a match */
         break;
 
         /* -------------------------------------------------------------------- */
@@ -139,7 +154,7 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
         int status;
         parseObj p;
         shapeObj dummy_shape;
-        expressionObj *expression = &(layer->class[i]->expression);
+        expressionObj *expression = &(layer->class[idx]->expression);
 
         dummy_shape.numvalues = numitems;
         dummy_shape.values = item_values;
@@ -160,7 +175,7 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
         }
 
         if( p.result.intval )
-          return i;
+          return idx;
         break;
       }
     }
@@ -179,7 +194,7 @@ int msGetClass(layerObj *layer, colorObj *color, int colormap_index)
 
   snprintf( pixel_value, sizeof(pixel_value), "%d", colormap_index );
 
-  return msGetClass_String( layer, color, pixel_value );
+  return msGetClass_String( layer, color, pixel_value, -1 );
 }
 
 /************************************************************************/
@@ -191,6 +206,13 @@ int msGetClass(layerObj *layer, colorObj *color, int colormap_index)
 
 int msGetClass_FloatRGB(layerObj *layer, float fValue, int red, int green, int blue )
 {
+    return msGetClass_FloatRGB_WithFirstClassToTry(
+                layer, fValue, red, green, blue, -1);
+}
+
+
+int msGetClass_FloatRGB_WithFirstClassToTry(layerObj *layer, float fValue, int red, int green, int blue, int firstClassToTry )
+{
   char pixel_value[100];
   colorObj color;
 
@@ -200,7 +222,7 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue, int red, int green, int b
 
   snprintf( pixel_value, sizeof(pixel_value), "%18g", fValue );
 
-  return msGetClass_String( layer, &color, pixel_value );
+  return msGetClass_String( layer, &color, pixel_value, firstClassToTry );
 }
 
 #if defined(USE_GDAL)
