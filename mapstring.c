@@ -728,8 +728,9 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
     abslen = strlen(abs_path);
 
   if((pathlen + abslen + 2) > MS_MAXPATHLEN) {
-    msSetError(MS_IOERR, "(%s%s): path is too long", "msBuildPath()",
-               abs_path, path);
+    msSetError(MS_IOERR, "Path is too long.  Check server logs.",
+               "msBuildPath()");
+    msDebug("msBuildPath(): (%s%s): path is too long.\n", abs_path, path);
     return NULL;
   }
 
