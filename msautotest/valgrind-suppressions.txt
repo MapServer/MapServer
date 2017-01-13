@@ -213,3 +213,11 @@
    fun:_GLOBAL__I_GeometryFactory.cpp
    ...
 }
+
+{
+   <FCGI>
+   Memcheck:Leak
+   fun:malloc
+   fun:OS_LibInit
+   ...
+}
