@@ -146,7 +146,9 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
-    
+    if( 1 + 2 * nLength + 1 + 1 >= sizeof(szTmp) )
+        return NULL;   
+        
     iTmp =0;
     if (nLength > 0 && pszValue[0] != pszWild[0] && 
         pszValue[0] != pszSingle[0] &&
