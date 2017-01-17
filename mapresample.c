@@ -1509,6 +1509,18 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   adfSrcGeoTransform[4] *= (sDummyMap.cellsize / dfNominalCellSize);
   adfSrcGeoTransform[5] *= (sDummyMap.cellsize / dfNominalCellSize);
 
+  /* In the non-rotated case, make sure that the geotransform exactly */
+  /* matches the sSrcExtent, even if that generates non-square pixels (#1715) */
+  /* The rotated case should ideally be dealt with, but not for now... */
+  if( adfSrcGeoTransform[2] == 0 && adfSrcGeoTransform[4] == 0 &&
+      adfSrcGeoTransform[5] < 0 )
+  {
+      adfSrcGeoTransform[1] = (sSrcExtent.maxx - sSrcExtent.minx) *
+                                            dfNominalCellSize / nLoadImgXSize;
+      adfSrcGeoTransform[5] = -(sSrcExtent.maxy - sSrcExtent.miny) *
+                                            dfNominalCellSize / nLoadImgYSize;
+  }
+
   papszAlteredProcessing = CSLDuplicate( layer->processing );
   papszAlteredProcessing =
     CSLSetNameValue( papszAlteredProcessing, "RAW_WINDOW",
