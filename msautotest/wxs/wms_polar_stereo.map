@@ -1,0 +1,48 @@
+#
+# Tests support for images in polar stereographic projection
+#
+# REQUIRES: SUPPORTS=WMS
+#
+#
+# GetMap
+# RUN_PARMS: wms_polar_stereo.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=test&STYLES=&CRS=EPSG:4326&BBOX=-89,-180,90,180&WIDTH=200&HEIGHT=200&FORMAT=image/png" > [RESULT_DEMIME]
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 200
+EXTENT -180 -89 180 90
+IMAGECOLOR 0 0 0
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+WEB
+  METADATA
+    "ows_enable_request" "*"
+    "wms_srs" "EPSG:4326"
+  END
+END
+
+LAYER
+  NAME test
+  TYPE raster
+  STATUS default
+  DATA data/polar_stereo.tif
+  PROJECTION
+    AUTO
+  END
+END
+END # of map file
+
