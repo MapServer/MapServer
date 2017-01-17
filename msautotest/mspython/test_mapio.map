@@ -1,0 +1,35 @@
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+MAP
+NAME TEST
+STATUS ON
+SIZE 80 40
+EXTENT -180 -90 180 90
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+OUTPUTFORMAT
+  NAME png24_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE RGBA
+END
+
+WEB
+  METADATA
+    "ows_enable_request" "*"
+    "wms_srs" "EPSG:4326"
+    "ows_http_max_age" "86400"
+  END
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA ../gdal/data/grey.tif
+END
+
+
+END # of map file
