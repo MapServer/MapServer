@@ -37,6 +37,7 @@
 */
 
 #include <stdarg.h>
+#include "maphash.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -105,7 +106,8 @@ extern "C" {
   void MS_DLL_EXPORT msIO_Cleanup(void);
   char MS_DLL_EXPORT *msIO_stripStdoutBufferContentType(void);
   void MS_DLL_EXPORT msIO_stripStdoutBufferContentHeaders(void);
-  
+  hashTableObj MS_DLL_EXPORT *msIO_getAndStripStdoutBufferMimeHeaders(void);
+
   msIOContext *msIO_pushStdoutToBufferAndGetOldContext(void);
   void msIO_restoreOldStdoutContext(msIOContext *context_to_restore);
 

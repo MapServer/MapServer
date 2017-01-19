@@ -35,6 +35,54 @@
 #define VMARGIN 5 /* margin at top and bottom of legend graphic */
 #define HMARGIN 5 /* margin at left and right of legend graphic */
 
+
+static int msDrawGradientSymbol(rendererVTableObj* renderer,
+                                imageObj* image_draw,
+                                double x_center,
+                                double y_center,
+                                int width,
+                                int height,
+                                styleObj* style)
+{
+    int i, j;
+    unsigned char *r,*g,*b,*a;
+    symbolObj symbol;
+    rasterBufferObj* rb;
+    symbolStyleObj symbolStyle;
+    int ret;
+
+    initSymbol(&symbol);
+    rb = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
+    symbol.pixmap_buffer = rb;
+    rb->type = MS_BUFFER_BYTE_RGBA;
+    rb->width = width;
+    rb->height = height;
+    rb->data.rgba.row_step = rb->width * 4;
+    rb->data.rgba.pixel_step = 4;
+    rb->data.rgba.pixels = (unsigned char*)malloc(
+                                rb->width*rb->height*4*sizeof(unsigned char));
+    b = rb->data.rgba.b = &rb->data.rgba.pixels[0];
+    g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
+    r = rb->data.rgba.r = &rb->data.rgba.pixels[2];
+    a = rb->data.rgba.a = &rb->data.rgba.pixels[3];
+    for( j = 0; j < rb->height; j++ )
+    {
+        for( i = 0; i < rb->width; i++ )
+        {
+            msValueToRange(style, style->minvalue +
+                (double)i / rb->width * (style->maxvalue - style->minvalue), MS_COLORSPACE_RGB);
+            b[4*(j * rb->width + i)] = style->color.blue;
+            g[4*(j * rb->width + i)] = style->color.green;
+            r[4*(j * rb->width + i)] = style->color.red;
+            a[4*(j * rb->width + i)] = style->color.alpha;
+        }
+    }
+    INIT_SYMBOL_STYLE(symbolStyle);
+    ret = renderer->renderPixmapSymbol(image_draw, x_center, y_center, &symbol, &symbolStyle);
+    msFreeSymbol(&symbol);
+    return ret;
+}
+
 /*
  * generic function for drawing a legend icon. (added for bug #2348)
  * renderer specific drawing functions shouldn't be called directly, but through
@@ -262,8 +310,22 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE ||
             theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
             theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
-          ret = msDrawShadeSymbol(map, image_draw, &box, theclass->styles[i], lp->scalefactor * image_draw->resolutionfactor);
-          if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
+
+            if (MS_VALID_COLOR(theclass->styles[i]->mincolor))
+            {
+                ret = msDrawGradientSymbol(renderer,
+                                           image_draw,
+                                           dstX + width / 2.,
+                                           dstY + height / 2.0,
+                                           width - 2 * polygon_contraction,
+                                           height - 2 * polygon_contraction,
+                                           theclass->styles[i]);
+            }
+            else
+            {
+                ret = msDrawShadeSymbol(map, image_draw, &box, theclass->styles[i], lp->scalefactor * image_draw->resolutionfactor);
+            }
+            if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
         }
         else {
           ret = msDrawTransformedShape(map, image_draw, &box,
@@ -393,7 +455,6 @@ legend_icon_cleanup:
   }
   return ret;
 }
-
 
 imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height, int scale_independant)
 {

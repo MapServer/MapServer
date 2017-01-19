@@ -1440,7 +1440,12 @@ int msClusterLayerOpen(layerObj *layer)
     return MS_FAILURE;
 
   if (layer->layerinfo)
-    return MS_SUCCESS;  /* already open */
+  {
+    if (layer->vtable->LayerOpen != msClusterLayerOpen)
+        msLayerClose(layer);
+    else
+      return MS_SUCCESS;  /* already open */
+  }
 
   layerinfo = msClusterInitialize(layer);
 
@@ -1506,7 +1511,10 @@ int msClusterLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
     return MS_FAILURE;
   }
 
-  return layerinfo->srcLayer.vtable->LayerTranslateFilter(&layerinfo->srcLayer, filter, filteritem);
+  if (layerinfo->srcLayer.filter.type == MS_EXPRESSION && layerinfo->srcLayer.filter.tokens == NULL)
+    msTokenizeExpression(&(layerinfo->srcLayer.filter), layer->items, &(layer->numitems));
+
+  return layerinfo->srcLayer.vtable->LayerTranslateFilter(&layerinfo->srcLayer, &layerinfo->srcLayer.filter, filteritem);
 }
 
 char* msClusterLayerEscapeSQLParam(layerObj *layer, const char* pszString)

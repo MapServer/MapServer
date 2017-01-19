@@ -504,6 +504,9 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
 
 // Special field index codes for handling text string and angle coming from
 // OGR style strings.
+
+#define MSOGR_FID_INDEX            -99
+
 #define MSOGR_LABELNUMITEMS        21
 #define MSOGR_LABELFONTNAMENAME    "OGR:LabelFont"
 #define MSOGR_LABELFONTNAMEINDEX   -100
@@ -602,6 +605,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
     if (itemindexes[i] >= 0) {
       // Extract regular attributes
       values[i] = msStrdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
+    } else if (itemindexes[i] == MSOGR_FID_INDEX ) {
+      values[i] = msStrdup(CPLSPrintf(CPL_FRMT_GIB,
+                                      (GIntBig) OGR_F_GetFID(hFeature)));
     } else {
       // Handle special OGR attributes coming from StyleString
       if (!hStyleMgr) {
@@ -1283,6 +1289,16 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   psInfo->last_record_index_read = -1;
   psInfo->dialect = NULL;
 
+  psInfo->pszSelect = NULL;
+  psInfo->pszSpatialFilterTableName = NULL;
+  psInfo->pszSpatialFilterGeometryColumn = NULL;
+  psInfo->pszMainTableName = NULL;
+  psInfo->pszRowId = NULL;
+  psInfo->bIsOKForSQLCompose = true;
+  psInfo->bPaging = false;
+  psInfo->bHasSpatialIndex = false;
+  psInfo->pszTablePrefix = NULL;
+
     // GDAL 1.x API
   OGRSFDriverH dr = OGR_DS_GetDriver(hDS);
   const char *name = OGR_Dr_GetName(dr);
@@ -1321,18 +1337,60 @@ msOGRFileOpen(layerObj *layer, const char *connection )
     psInfo->dialect = "PostgreSQL";
     // todo: PostgreSQL not yet tested
 
-  } // todo: other dialects, for example OGR SQL
+  } else if (strcmp(name, "GPKG") == 0 && nLayerIndex >= 0 &&
+             atoi(GDALVersionInfo("VERSION_NUM")) >= 2000000) {
 
+    bool has_rtree = false;
+    const char* test_rtree =
+        CPLSPrintf("SELECT 1 FROM sqlite_master WHERE name = 'rtree_%s_%s'",
+                   OGR_L_GetName(hLayer), OGR_L_GetGeometryColumn(hLayer));
+    OGRLayerH l = OGR_DS_ExecuteSQL(hDS, test_rtree, NULL, NULL);
+    if( l )
+    {
+        if( OGR_L_GetFeatureCount(l, TRUE) == 1 )
+        {
+            has_rtree = true;
+        }
+        OGR_DS_ReleaseResultSet(hDS, l);
+    }
+    if( has_rtree )
+    {
+        bool have_gpkg_spatialite = false;
 
-  psInfo->pszSelect = NULL;
-  psInfo->pszSpatialFilterTableName = NULL;
-  psInfo->pszSpatialFilterGeometryColumn = NULL;
-  psInfo->pszMainTableName = NULL;
-  psInfo->pszRowId = NULL;
-  psInfo->bIsOKForSQLCompose = true;
-  psInfo->bPaging = false;
-  psInfo->bHasSpatialIndex = false;
-  psInfo->pszTablePrefix = NULL;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+
+        // test for Spatialite >= 4.3 support in driver
+        const char *test_spatialite = "SELECT spatialite_version()";
+        l = OGR_DS_ExecuteSQL(hDS, test_spatialite, NULL, NULL);
+        if (l) {
+            OGRFeatureH hFeat = OGR_L_GetNextFeature(l);
+            if( hFeat )
+            {
+                const char* pszVersion = OGR_F_GetFieldAsString(hFeat, 0);
+                have_gpkg_spatialite = atof(pszVersion) >= 4.3;
+                OGR_F_Destroy(hFeat);
+            }
+            OGR_DS_ReleaseResultSet(hDS, l);
+        }
+        CPLPopErrorHandler();
+
+        if( have_gpkg_spatialite )
+        {
+            psInfo->pszMainTableName = msStrdup( OGR_L_GetName(hLayer) );
+            psInfo->pszSpatialFilterTableName = msStrdup( OGR_L_GetName(hLayer) );
+            psInfo->pszSpatialFilterGeometryColumn = msStrdup( OGR_L_GetGeometryColumn(hLayer) );
+            psInfo->dialect = "GPKG";
+            psInfo->bPaging = true;
+            psInfo->bHasSpatialIndex = true;
+        }
+        else
+            msDebug("msOGRFileOpen: Spatialite support in GPKG not enabled\n");
+    }
+    else
+    {
+        msDebug("msOGRFileOpen: RTree index not available\n");
+    }
+  }
 
   if( psInfo->dialect != NULL && EQUAL(psInfo->dialect, "Spatialite") )
     msOGRFileOpenSpatialite(layer, pszLayerDef, psInfo);
@@ -1806,7 +1864,7 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
         char wild_any =  '%';
         char wild_one = '_';
 
-        if (EQUAL(info->dialect, "Spatialite")) {
+        if (EQUAL(info->dialect, "Spatialite") || EQUAL(info->dialect, "GPKG")) {
             if (case_sensitive) {
                 op = "GLOB";
                 wild_any = '*';
@@ -1926,7 +1984,7 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
         else
         {
             const char *SQLtype = "float(16)";
-            if (EQUAL(info->dialect, "Spatialite"))
+            if (EQUAL(info->dialect, "Spatialite") || EQUAL(info->dialect, "GPKG"))
                 SQLtype = "REAL";
             else if (EQUAL(info->dialect, "PostgreSQL"))
                 SQLtype = "double precision";
@@ -2205,17 +2263,19 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         }
         psInfo->rect = rect;
 
-        bool bSpatialiteAddOrderByFID = false;
+        bool bSpatialiteOrGPKGAddOrderByFID = false;
 
-        if( psInfo->dialect && EQUAL(psInfo->dialect, "Spatialite") &&
-            psInfo->pszMainTableName != NULL && psInfo->bHasSpatialIndex &&
+        if( psInfo->dialect && psInfo->pszMainTableName != NULL && 
+            ( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
+              || EQUAL(psInfo->dialect, "GPKG") ) &&
             bIsValidRect )
         {
             select = msStringConcatenate(select, " JOIN ");
 
             char szSpatialIndexName[256];
             snprintf( szSpatialIndexName, sizeof(szSpatialIndexName),
-                        "idx_%s_%s",
+                        "%s_%s_%s",
+                        EQUAL(psInfo->dialect, "Spatialite") ? "idx" : "rtree",
                         psInfo->pszSpatialFilterTableName,
                         psInfo->pszSpatialFilterGeometryColumn );
             char* pszEscapedSpatialIndexName = msLayerEscapePropertyName(
@@ -2240,20 +2300,35 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             }
             else
                 select = msStringConcatenate(select, "ROWID");
-            select = msStringConcatenate(select, " = ms_spat_idx.pkid AND ");
+            if( EQUAL(psInfo->dialect, "Spatialite") )
+                select = msStringConcatenate(select, " = ms_spat_idx.pkid AND ");
+            else
+                select = msStringConcatenate(select, " = ms_spat_idx.id AND ");
 
             char szCond[256];
-            snprintf(szCond, sizeof(szCond),
+            if( EQUAL(psInfo->dialect, "Spatialite") )
+            {
+                snprintf(szCond, sizeof(szCond),
                         "ms_spat_idx.xmin <= %.15g AND ms_spat_idx.xmax >= %.15g AND "
                         "ms_spat_idx.ymin <= %.15g AND ms_spat_idx.ymax >= %.15g",
                         rect.maxx, rect.minx, rect.maxy, rect.miny);
+            }
+            else
+            {
+                snprintf(szCond, sizeof(szCond),
+                        "ms_spat_idx.minx <= %.15g AND ms_spat_idx.maxx >= %.15g AND "
+                        "ms_spat_idx.miny <= %.15g AND ms_spat_idx.maxy >= %.15g",
+                        rect.maxx, rect.minx, rect.maxy, rect.miny);
+            }
             select = msStringConcatenate(select, szCond);
 
-            bSpatialiteAddOrderByFID = true;
+            bSpatialiteOrGPKGAddOrderByFID = true;
         }
 
         if (psInfo->dialect) {
-            if (EQUAL(psInfo->dialect, "Spatialite") || EQUAL(psInfo->dialect, "PostgreSQL")) {
+            if (EQUAL(psInfo->dialect, "Spatialite") ||
+                EQUAL(psInfo->dialect, "GPKG") ||
+                EQUAL(psInfo->dialect, "PostgreSQL")) {
                 const char *sql = layer->filter.native_string;
                 if (sql && *sql != '\0') {
                     if (filter) filter = msStringConcatenate(filter, "AND ");
@@ -2318,7 +2393,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             }
         }
 
-        if( bSpatialiteAddOrderByFID )
+        if( bSpatialiteOrGPKGAddOrderByFID )
         {
             if( sort == NULL )
                 sort = msStringConcatenate(NULL, " ORDER BY ");
@@ -3577,7 +3652,16 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
         itemindexes[i] = MSOGR_SYMBOLPARAMINDEX 
                           + atoi(layer->items[i] + MSOGR_SYMBOLPARAMNAMELEN);
     else
+    {
       itemindexes[i] = OGR_FD_GetFieldIndex( hDefn, layer->items[i] );
+      if( itemindexes[i] == -1 )
+      {
+          if( EQUAL( layer->items[i], OGR_L_GetFIDColumn( psInfo->hLayer ) ) )
+          {
+              itemindexes[i] = MSOGR_FID_INDEX;
+          }
+      }
+    }
     if(itemindexes[i] == -1) {
       msSetError(MS_OGRERR,
                  "Invalid Field name: %s",

@@ -32,7 +32,7 @@
 #include "mapserver.h"
 #include "mapresample.h"
 #include "mapthread.h"
-
+#include "maptime.h"
 
 
 extern int InvGeoTransform( double *gt_in, double *gt_out );
@@ -1932,6 +1932,9 @@ msDrawRasterLayerGDAL_16BitClassification(
   CPLErr eErr;
   rasterBufferObj *mask_rb = NULL;
   rasterBufferObj s_mask_rb;
+  int lastC;
+  struct mstimeval starttime, endtime;
+
   if(layer->mask) {
     int ret;
     layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
@@ -2092,6 +2095,12 @@ msDrawRasterLayerGDAL_16BitClassification(
   rb_cmap[2] = (unsigned char *) msSmallCalloc(1,nBucketCount);
   rb_cmap[3] = (unsigned char *) msSmallCalloc(1,nBucketCount);
 
+
+  if(layer->debug >= MS_DEBUGLEVEL_TUNING) {
+    msGettimeofday(&starttime, NULL);
+  }
+
+  lastC = -1;
   for(i=0; i < nBucketCount; i++) {
     double dfOriginalValue;
 
@@ -2099,7 +2108,11 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
 
-    c = msGetClass_FloatRGB(layer, (float) dfOriginalValue, -1, -1, -1);
+    /* The creation of buckets takes a significant time when they are many, and many classes
+       as well. When iterating over buckets, a faster strategy is to reuse first the last used
+       class index. */
+    c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) dfOriginalValue, -1, -1, -1, lastC);
+    lastC = c;
     if( c != -1 ) {
       int s;
 
@@ -2119,6 +2132,13 @@ msDrawRasterLayerGDAL_16BitClassification(
         rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
       }
     }
+  }
+
+  if(layer->debug >= MS_DEBUGLEVEL_TUNING) {
+    msGettimeofday(&endtime, NULL);
+    msDebug("msDrawRasterGDAL_16BitClassification() bucket creation time: %.3fs\n",
+            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
 
   /* ==================================================================== */
