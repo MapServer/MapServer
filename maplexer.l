@@ -161,7 +161,7 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
-<INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
+<INITIAL>\/\/|#.*                              { if (msyyreturncomments) return(MS_COMMENT); }
 
 <INITIAL>\/\*                                  { BEGIN(MULTILINE_COMMENT); }
 <MULTILINE_COMMENT>\*\/                        { BEGIN(INITIAL); }
