@@ -19,6 +19,7 @@ set (MapServer_VERSION_MAJOR 6)
 set (MapServer_VERSION_MINOR 4)
 set (MapServer_VERSION_REVISION 5)
 set (MapServer_VERSION_SUFFIX "")
+set (MapServer_SOVERSION 1)
 
 set(TARGET_VERSION_MAJOR ${MapServer_VERSION_MAJOR})
 set(TARGET_VERSION_MINOR ${MapServer_VERSION_MINOR})
@@ -233,13 +234,13 @@ mapogr.cpp mapcontour.c mapsmoothing.c ${REGEX_SOURCES})
 add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
 set_target_properties( mapserver  PROPERTIES
   VERSION ${MapServer_VERSION_STRING}
-  SOVERSION 1
+  SOVERSION ${MapServer_SOVERSION}
 ) 
 if(BUILD_STATIC)
   add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 1
+    SOVERSION ${MapServer_SOVERSION}
   ) 
 endif(BUILD_STATIC)
 
