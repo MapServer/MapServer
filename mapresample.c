@@ -1471,7 +1471,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     sqrt(adfSrcGeoTransform[1] * adfSrcGeoTransform[1]
          + adfSrcGeoTransform[2] * adfSrcGeoTransform[2]);
 
-  if( (sOrigSrcExtent.maxx - sOrigSrcExtent.minx) > dfOversampleRatio * nDstXSize
+  /* Check first that the requested extent is not greater than the source */
+  /* raster. This might be the case for example if asking to visualize */
+  /* -180,-89,180,90 in EPSG:4326 from a raster in Arctic Polar Stereographic */
+  if( !(sOrigSrcExtent.minx <= -nSrcXSize  && sOrigSrcExtent.miny <= -nSrcYSize &&
+        sOrigSrcExtent.maxx >= 2 * nSrcXSize && sOrigSrcExtent.maxy >= 2 * nSrcYSize)
+      && (sOrigSrcExtent.maxx - sOrigSrcExtent.minx) > dfOversampleRatio * nDstXSize
       && !CSLFetchBoolean( layer->processing, "LOAD_FULL_RES_IMAGE", FALSE ))
     sDummyMap.cellsize =
       (dfNominalCellSize * (sOrigSrcExtent.maxx - sOrigSrcExtent.minx))
@@ -1508,6 +1513,18 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     + adfSrcGeoTransform[5] * sSrcExtent.miny;
   adfSrcGeoTransform[4] *= (sDummyMap.cellsize / dfNominalCellSize);
   adfSrcGeoTransform[5] *= (sDummyMap.cellsize / dfNominalCellSize);
+
+  /* In the non-rotated case, make sure that the geotransform exactly */
+  /* matches the sSrcExtent, even if that generates non-square pixels (#1715) */
+  /* The rotated case should ideally be dealt with, but not for now... */
+  if( adfSrcGeoTransform[2] == 0 && adfSrcGeoTransform[4] == 0 &&
+      adfSrcGeoTransform[5] < 0 )
+  {
+      adfSrcGeoTransform[1] = (sSrcExtent.maxx - sSrcExtent.minx) *
+                                            dfNominalCellSize / nLoadImgXSize;
+      adfSrcGeoTransform[5] = -(sSrcExtent.maxy - sSrcExtent.miny) *
+                                            dfNominalCellSize / nLoadImgYSize;
+  }
 
   papszAlteredProcessing = CSLDuplicate( layer->processing );
   papszAlteredProcessing =

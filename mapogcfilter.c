@@ -168,7 +168,8 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
       if (paszElements && numelements > 0) {
         if (forcecharcter)
           bIscharacter = MS_TRUE;
-        bIscharacter= !FLTIsNumeric(paszElements[0]);
+        else
+          bIscharacter= !FLTIsNumeric(paszElements[0]);
 
         pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
         for (i=0; i<numelements; i++) {
