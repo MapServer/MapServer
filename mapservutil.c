@@ -1520,7 +1520,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
         mapserv->map->query.type = MS_QUERY_BY_RECT;
         mapserv->map->query.mode = MS_QUERY_MULTIPLE;
         mapserv->map->query.rect = mapserv->map->extent;
-        // if((status = msExecuteQuery(mapserv->map)) != MS_SUCCESS) return MS_FAILURE;
+        // if((status = msExecuteQuery(mapserv->map)) != MS_SUCCESS) return MS_FAILURE;        
         msExecuteQuery(mapserv->map); // ignore error?
         if((status = msMVTWriteFromQuery(mapserv->map, mapserv->map->outputformat, mapserv->sendheaders)) != MS_SUCCESS) return MS_FAILURE;
         return MS_SUCCESS;
