@@ -46,7 +46,7 @@ ADD_CUSTOM_COMMAND(TARGET csharpmapscript
                       POST_BUILD
 					  COMMAND set MAPSCRIPT_SNK=${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk          
 					  COMMAND set MAPSCRIPT_SNK=%MAPSCRIPT_SNK:/=\\%          
-					  COMMAND copy /Y %MAPSCRIPT_SNK%
+					  COMMAND copy /Y \"%MAPSCRIPT_SNK%\"
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll ${KEYFILE_SPEC} *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shpdump.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shpdump.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawmap.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmap.cs
