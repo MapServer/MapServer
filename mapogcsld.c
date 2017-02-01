@@ -2209,9 +2209,6 @@ int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                               styleObj *psStyle,  mapObj *map)
 {
-  /* needed for libcurl function msHTTPGetFile in maphttp.c */
-#if defined(USE_CURL)
-
   char *pszFormat = NULL;
   CPLXMLNode *psURL=NULL, *psFormat=NULL, *psTmp=NULL;
   char *pszURL=NULL;
@@ -2223,12 +2220,13 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
   if (psFormat && psFormat->psChild && psFormat->psChild->pszValue)
     pszFormat = psFormat->psChild->pszValue;
 
-  /* supports GIF and PNG */
+  /* supports GIF and PNG and SVG */
   if (pszFormat &&
       (strcasecmp(pszFormat, "GIF") == 0 ||
        strcasecmp(pszFormat, "image/gif") == 0 ||
        strcasecmp(pszFormat, "PNG") == 0 ||
-       strcasecmp(pszFormat, "image/png") == 0)) {
+       strcasecmp(pszFormat, "image/png") == 0 ||
+       strcasecmp(pszFormat, "image/svg+xml") == 0)) {
 
     /* <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/> */
     psURL = CPLGetXMLNode(psExternalGraphic, "OnlineResource");
@@ -2242,14 +2240,26 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
       if (psTmp && psTmp->psChild) {
         pszURL = (char*)psTmp->psChild->pszValue;
 
+        /* manage ALLOW_REMOTE_ASSETS option to allow loading remote symbols */
+        if ( !msTestConfigOption( map, "ALLOW_REMOTE_ASSETS", MS_FALSE ) )
+        {
+          /* avoid using remote symbol */
+          if (strncasecmp(pszURL, "http", 4) == 0) {
+            return MS_SUCCESS;
+          }
+        }
+
         /*external symbols using http will be automaticallly downloaded. The file should be
           saved in a temporary directory (msAddImageSymbol) #2305*/
         psStyle->symbol = msGetSymbolIndex(&map->symbolset,
                                            pszURL,
                                            MS_TRUE);
 
-        if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
+        if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols) {
           psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
+        } else {
+          return MS_FAILURE;
+        }
 
         /* set the color parameter if not set. Does not make sense */
         /* for pixmap but mapserver needs it. */
@@ -2263,9 +2273,6 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
   }
 
   return MS_SUCCESS;
-#else
-  return MS_FAILURE;
-#endif
 }
 
 
