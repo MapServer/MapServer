@@ -305,29 +305,53 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers,sizeof(VectorTile__Tile__Layer*));
 
-  // TODO: convert to work without a query...
   for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
     int status=MS_SUCCESS;
-    int i;
     layerObj *layer = GET_LAYER(map, iLayer);
-    shapeObj resultshape;
+    int i;
+    shapeObj shape;
     gmlItemListObj *item_list = NULL;
     int  reproject = MS_FALSE;
     VectorTile__Tile__Layer *mvt_layer;
     value_lookup_table value_lookup_cache = {NULL};
     value_lookup *cur_value_lookup, *tmp_value_lookup;
+    rectObj rect;
 
-    if( !layer->resultcache || layer->resultcache->numresults == 0 )
-      continue;
+    fprintf(stderr, "working on layer %s\n", layer->name);
+
+    if(!msLayerIsVisible(map, layer)) continue;
 
     if(layer->type != MS_LAYER_POINT && layer->type != MS_LAYER_POLYGON && layer->type != MS_LAYER_LINE)
       continue;
 
+    status = msLayerOpen(layer);
+    if(status != MS_SUCCESS) {
+      retcode = status;
+      goto layer_cleanup;
+    }
+
+    status = msLayerWhichItems(layer, MS_TRUE, NULL); /* we want all items - behaves like a query in that sense */
+    if(status != MS_SUCCESS) {
+      retcode = status;
+      goto layer_cleanup;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Will we need to reproject?                                      */
     /* -------------------------------------------------------------------- */
-    if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-      reproject = MS_TRUE;
+    layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
+
+    rect = map->extent;
+    if(layer->project) msProjectRect(&(map->projection), &(layer->projection), &rect);
+
+    status = msLayerWhichShapes(layer, rect, MS_TRUE);
+    if(status == MS_DONE) { /* no overlap - that's ok */
+      retcode = MS_SUCCESS;
+      goto layer_cleanup;
+    } else if(status != MS_SUCCESS) {
+      retcode = status;
+      goto layer_cleanup;
+    }
 
     mvt_tile.layers[mvt_tile.n_layers++] = msSmallMalloc(sizeof(VectorTile__Tile__Layer));
     mvt_layer = mvt_tile.layers[mvt_tile.n_layers-1];
@@ -372,33 +396,17 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
     }
 
-    mvt_layer->features = msSmallCalloc(layer->resultcache->numresults, sizeof(VectorTile__Tile__Feature*));
+    // mvt_layer->features = msSmallCalloc(layer->resultcache->numresults, sizeof(VectorTile__Tile__Feature*));
+    mvt_layer->features = msSmallCalloc(1000, sizeof(VectorTile__Tile__Feature*));
 
-    msInitShape( &resultshape );
+    msInitShape(&shape);
+    while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
-    /* -------------------------------------------------------------------- */
-    /*      Loop over all the shapes in the resultcache.                    */
-    /* -------------------------------------------------------------------- */
-    for(i=0; i < layer->resultcache->numresults; i++) {
-
-      msFreeShape(&resultshape); /* init too */
-
-      /*
-      ** Read the shape.
-      */
-      status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
-      if(status != MS_SUCCESS) {
-        retcode = status;
-        goto feature_cleanup;
-      }
+      fprintf(stderr, "in while loop...\n");
 
       if(layer->numclasses > 0) {
-        /*
-        ** Perform classification, and some annotation related magic.
-        */
-        resultshape.classindex = msShapeGetClass(layer, map, &resultshape, NULL, -1);
-
-        if(resultshape.classindex < 0)
+        shape.classindex = msShapeGetClass(layer, map, &shape, NULL, -1); /* Perform classification, and some annotation related magic. */
+        if(shape.classindex < 0)
           goto feature_cleanup; /* no matching CLASS found, skip this feature */
       }
 
@@ -410,41 +418,54 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
         for(j=0; j < layer->numjoins; j++) {
           if(layer->joins[j].type == MS_JOIN_ONE_TO_ONE) {
-            msJoinPrepare(&(layer->joins[j]), &resultshape);
+            msJoinPrepare(&(layer->joins[j]), &shape);
             msJoinNext(&(layer->joins[j])); /* fetch the first row */
           }
         }
       }
 
-      if( reproject ) {
-        status = msProjectShape(&layer->projection, &layer->map->projection, &resultshape);
+      if( layer->project ) {
+        status = msProjectShape(&layer->projection, &layer->map->projection, &shape);
+      }
+      if( status == MS_SUCCESS ) {
+        status = mvtWriteShape( layer, &shape, mvt_layer, item_list, &value_lookup_cache, &map->extent, buffer );
       }
 
-      if( status == MS_SUCCESS )
-        status = mvtWriteShape( layer, &resultshape, mvt_layer, item_list, &value_lookup_cache, &map->query.rect, buffer );
-
-      if(status != MS_SUCCESS) {
-        retcode = status;
-        goto feature_cleanup;
-      }
+      //if(status != MS_SUCCESS) {
+      //  retcode = status;
+      //  goto feature_cleanup;
+      //}
 
       feature_cleanup:
-      msFreeShape(&resultshape);
-      if(retcode != MS_SUCCESS)
-        goto layer_cleanup;
-    }
+      fprintf(stderr, "feature_cleanup (%d)\n", status);
+      msFreeShape(&shape);
+      if(retcode != MS_SUCCESS) goto layer_cleanup;
+    } /* next shape */
     layer_cleanup:
+    fprintf(stderr, "layer_cleanup (%d)\n", retcode);    
+    msLayerClose(layer);
     msGMLFreeItems(item_list);
     UT_HASH_ITER(hh, value_lookup_cache.cache, cur_value_lookup, tmp_value_lookup) {
       free(cur_value_lookup->value);
       UT_HASH_DEL(value_lookup_cache.cache,cur_value_lookup);
       free(cur_value_lookup);
     }
-    if(retcode != MS_SUCCESS)
-      goto cleanup;
+    if(retcode != MS_SUCCESS) goto cleanup;
+  } /* next layer */
+
+  {
+    int i;
+    fprintf(stderr, "writing... %lu\n", sizeof(size_t));
+    fprintf(stderr, "  n_layers=%zu\n", mvt_tile.n_layers);
+    for(i=0; i<mvt_tile.n_layers; i++) {
+      fprintf(stderr, "  layer %d has %zu features\n", i, mvt_tile.layers[i]->n_features);
+    }
   }
 
   len = vector_tile__tile__get_packed_size(&mvt_tile); // This is the calculated packing length
+
+  fprintf(stderr, "...packed length=%d\n", len);
+
   buf = msSmallMalloc(len); // Allocate memory
   vector_tile__tile__pack(&mvt_tile, buf);
   if( sendheaders ) {
