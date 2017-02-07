@@ -156,6 +156,9 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   VectorTile__Tile__Feature *mvt_feature;
   int i,j,iout;
   value_lookup *value;
+  long int n_geometry;
+
+  /* could consider an intersection test here */
 
   if(mvtTransformShape(shape, unbuffered_bbox, layer->type, mvt_layer->extent) != MS_SUCCESS) {
     return MS_SUCCESS; /* degenerate shape */
@@ -163,6 +166,23 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   if(mvtClipShape(shape, layer->type, buffer, mvt_layer->extent) != MS_SUCCESS) {
     return MS_SUCCESS; /* no features left after clipping */
   }
+
+  n_geometry = 0;
+  if(layer->type == MS_LAYER_POINT) {
+    for(i=0;i<shape->numlines;i++)
+      n_geometry += shape->line[i].numpoints * 2;
+    if(mvt_feature->n_geometry)
+      n_geometry++; /* one MOVETO */
+  } else if(layer->type == MS_LAYER_LINE) {
+    for(i=0;i<shape->numlines;i++)
+      if(shape->line[i].numpoints >= 2) n_geometry += 2 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO */
+  } else {
+    for(i=0;i<shape->numlines;i++)
+      if(shape->line[i].numpoints >= 4) n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
+  }
+
+  fprintf(stderr, "n_geometry=%ld\n", n_geometry);
+  if(n_geometry == 0) return MS_SUCCESS;
 
   mvt_layer->features[mvt_layer->n_features++] = msSmallMalloc(sizeof(VectorTile__Tile__Feature));
   mvt_feature = mvt_layer->features[mvt_layer->n_features-1];
@@ -222,22 +242,22 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   }
 
   /* output geom */
-  mvt_feature->n_geometry = 0;
-  if(layer->type == MS_LAYER_POINT) {
-    for(i=0;i<shape->numlines;i++)
-      mvt_feature->n_geometry += shape->line[i].numpoints * 2;
-    if(mvt_feature->n_geometry)
-      mvt_feature->n_geometry++; /* one MOVETO */
-  } else if(layer->type == MS_LAYER_LINE) {
-    for(i=0;i<shape->numlines;i++)
-      if(shape->line[i].numpoints >= 2) mvt_feature->n_geometry += 2 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO */
-  } else {
-    for(i=0;i<shape->numlines;i++)
-      if(shape->line[i].numpoints >= 4) mvt_feature->n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
-  }
-  mvt_feature->geometry = msSmallMalloc(mvt_feature->n_geometry * sizeof(uint32_t));
+  // mvt_feature->n_geometry = 0;
+  // if(layer->type == MS_LAYER_POINT) {
+  //   for(i=0;i<shape->numlines;i++)
+  //     mvt_feature->n_geometry += shape->line[i].numpoints * 2;
+  //   if(mvt_feature->n_geometry)
+  //     mvt_feature->n_geometry++; /* one MOVETO */
+  // } else if(layer->type == MS_LAYER_LINE) {
+  //   for(i=0;i<shape->numlines;i++)
+  //     if(shape->line[i].numpoints >= 2) mvt_feature->n_geometry += 2 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO */
+  // } else {
+  //   for(i=0;i<shape->numlines;i++)
+  //     if(shape->line[i].numpoints >= 4) mvt_feature->n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
+  // }
 
-  fprintf(stderr, "n_geometry=%ld\n", mvt_feature->n_geometry);
+  mvt_feature->n_geometry = n_geometry;
+  mvt_feature->geometry = msSmallMalloc(mvt_feature->n_geometry * sizeof(uint32_t));
 
   if(layer->type == MS_LAYER_POINT) {
     int idx=0, lastx=0, lasty=0;
@@ -304,6 +324,8 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   int buffer = MS_ABS(atoi(mvt_buffer));
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers,sizeof(VectorTile__Tile__Layer*));
+
+  fprintf(stderr, "tile center: %0.6f %0.6f\n", (map->extent.minx+map->extent.maxx)/2, (map->extent.miny+map->extent.maxy)/2); 
 
   for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
     int status=MS_SUCCESS;
