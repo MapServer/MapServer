@@ -156,8 +156,18 @@ RUN cd /build  \
 # Force buit libraries dependencies
 RUN ldconfig
 
+# Apache configuration for mapcache
+RUN echo "LoadModule mapcache_module    /usr/lib/apache2/modules/mod_mapcache.so" >  /etc/apache2/mods-available/mapcache.load
+RUN echo '<IfModule mapcache_module> \n\
+   <Directory /msconfig/mapcache> \n\
+      Require all granted \n\
+   </Directory> \n\
+   MapCacheAlias /mapcache "/msconfig/mapcache/mapcache.xml" \n\
+</IfModule> \n'\
+> /etc/apache2/mods-available/mapcache.conf
+
 # Enable these Apache modules
-RUN  a2enmod actions cgi alias headers
+RUN  a2enmod actions cgi alias headers mapcache
 
 RUN chmod o+x /usr/local/bin/mapserv
 RUN ln -s /usr/local/bin/mapserv /usr/lib/cgi-bin/mapserv

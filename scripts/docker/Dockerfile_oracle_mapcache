@@ -1,13 +1,18 @@
 FROM ubuntu:xenial
 MAINTAINER Michael Smith <Michael.smith.erdc@gmail.com>
 
+# Set up Instant Client
+COPY instantclient_12_1 /opt/instantclient/
+RUN ln -s /opt/instantclient/ /opt/instantclient/lib
+
 #Setup user
 ARG UID
 ARG GID
 RUN addgroup --gid $GID msgroup
 RUN adduser --no-create-home --disabled-login msuser  --gecos "" --uid $UID --gid $GID
 
-ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
+ENV ORACLE_HOME=/opt/instantclient
+ENV LD_LIBRARY_PATH=${ORACLE_HOME}:/usr/lib:/usr/local/lib
 ENV LIBKML_DOWNLOAD=install-libkml-r864-64bit.tar.gz
 ENV FILEGDBAPI_DOWNLOAD=FileGDB_API_1_2-64.tar.gz
 ENV MRSID_DIR=MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44
@@ -69,6 +74,8 @@ RUN cd /build && \
         --with-liblzma \
         --with-ogdi \
         --with-webp \
+        --with-oci-include=${ORACLE_HOME}/sdk/include \
+        --with-oci-lib=${ORACLE_HOME} \
         --with-pg \
         --with-mrsid=/usr/local \
         --with-fgdb=/usr/local \
@@ -85,6 +92,9 @@ RUN apt-get update && apt-get install -y --fix-missing --no-install-recommends b
     libaprutil1-dev libapr1-dev libpng12-dev  libjpeg-dev libcurl4-gnutls-dev libpcre3-dev libpixman-1-dev libgeos-dev libsqlite3-dev libdb-dev libtiff-dev sudo \
   && rm -rf /var/lib/apt/lists/partial/* /tmp/* /var/tmp/*
 RUN echo "msuser ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+ENV ORACLE_HOME=/opt/instantclient
+ENV LD_LIBRARY_PATH=${ORACLE_HOME}:/usr/lib
 
 ARG MAPSERVER_VERSION
 RUN cd /build && \
@@ -105,6 +115,7 @@ RUN cd /build && \
       -DWITH_KML=ON \
       -DWITH_LIBXML2=ON \
       -DWITH_OGR=ON \
+      -DWITH_ORACLESPATIAL=ON \
       -DWITH_POINT_Z_M=ON \
       -DWITH_PROJ=ON \
       -DWITH_SOS=ON  \
@@ -115,6 +126,7 @@ RUN cd /build && \
       -DWITH_FCGI=ON \
       -DWITH_FRIBIDI=ON \
       -DWITH_CAIRO=ON \
+      -DWITH_POSTGRES=ON \
       -DWITH_HARFBUZZ=ON \
       -DWITH_POSTGIS=on \
       -DWITH_V8=OFF \
@@ -156,8 +168,18 @@ RUN cd /build  \
 # Force buit libraries dependencies
 RUN ldconfig
 
+# Apache configuration for mapcache
+RUN echo "LoadModule mapcache_module    /usr/lib/apache2/modules/mod_mapcache.so" >  /etc/apache2/mods-available/mapcache.load
+RUN echo '<IfModule mapcache_module> \n\
+   <Directory /msconfig/mapcache> \n\
+      Require all granted \n\
+   </Directory> \n\
+   MapCacheAlias /mapcache "/msconfig/mapcache/mapcache.xml" \n\
+</IfModule> \n'\
+> /etc/apache2/mods-available/mapcache.conf
+
 # Enable these Apache modules
-RUN  a2enmod actions cgi alias headers
+RUN  a2enmod actions cgi alias headers mapcache
 
 RUN chmod o+x /usr/local/bin/mapserv
 RUN ln -s /usr/local/bin/mapserv /usr/lib/cgi-bin/mapserv
