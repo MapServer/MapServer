@@ -256,15 +256,14 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       msInitializeRendererVTable(outputFormat);
     }
     
-    if( MS_RENDERER_MVT(outputFormat) ) {
+    /* if( MS_RENDERER_MVT(outputFormat) ) {
       if( mapserv != NULL )
 	checkWebScale(mapserv);
 
       status = msMVTWriteFromQuery(map, outputFormat, mapserv->sendheaders);
 
       return status;
-
-    }
+      } */
 
     if( MS_RENDERER_OGR(outputFormat) ) {
       if( mapserv != NULL )

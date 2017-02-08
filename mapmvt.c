@@ -39,6 +39,8 @@
 #define LINETO 2
 #define CLOSEPATH 7
 
+#define FEATURES_INCREMENT_SIZE 5
+
 typedef struct {
   char *value;
   unsigned int index;
@@ -54,32 +56,24 @@ typedef struct {
 
 static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, int mvt_layer_extent) {
   double scale_x,scale_y;
-  int i,j,outi,outj;
+  int i,j,outj;
 
   scale_x = (double)mvt_layer_extent/(extent->maxx - extent->minx);
   scale_y = (double)mvt_layer_extent/(extent->maxy - extent->miny);
 
-  for(i=0,outi=0;i<shape->numlines;i++) {
+  for(i=0;i<shape->numlines;i++) {
     for(j=0,outj=0;j<shape->line[i].numpoints;j++) {
 
-      shape->line[outi].point[outj].x = (int)((shape->line[i].point[j].x - extent->minx)*scale_x);
-      shape->line[outi].point[outj].y = mvt_layer_extent - (int)((shape->line[i].point[j].y - extent->miny)*scale_y);
+      shape->line[i].point[outj].x = (int)((shape->line[i].point[j].x - extent->minx)*scale_x);
+      shape->line[i].point[outj].y = mvt_layer_extent - (int)((shape->line[i].point[j].y - extent->miny)*scale_y);
 
-      if(!outj || shape->line[outi].point[outj].x != shape->line[outi].point[outj-1].x || shape->line[outi].point[outj].y != shape->line[outi].point[outj-1].y)
-        /* add the point to the shape only if it's the first one or if it's dofferent than the previous one */
-        outj++;
+      if(!outj || shape->line[i].point[outj].x != shape->line[i].point[outj-1].x || shape->line[i].point[outj].y != shape->line[i].point[outj-1].y)
+        outj++; /* add the point to the shape only if it's the first one or if it's different than the previous one */
     }
-    if((layer_type == MS_LAYER_POLYGON && outj>=4) || (layer_type == MS_LAYER_LINE && outj>=2) || (layer_type == MS_LAYER_POINT && outj >= 1)) {
-      /* only add the shape if it's not degenerate */
-      shape->line[outi].numpoints = outj;
-      outi++;
-    }
+    shape->line[i].numpoints = outj;
   }
 
-  /* free points of unused lines */
-  while(shape->numlines > outi)
-    free(shape->line[--shape->numlines].point);
-  msComputeBounds(shape);
+  msComputeBounds(shape); // might need to limit this to just valid parts...
 
   return (shape->numlines == 0)?MS_FAILURE:MS_SUCCESS; /* sucess if at least one line */
 }
@@ -94,19 +88,6 @@ static int mvtClipShape(shapeObj *shape, int layer_type, int buffer, int mvt_lay
   } else if(layer_type == MS_LAYER_LINE) {
     msClipPolylineRect(shape, tile_rect);
   }
-
-  /* fprintf(stderr, "%d\n", shape->numlines);
-  {
-    int i,j;
-
-    fprintf(stderr, "Shape contains %d parts.\n",  shape->numlines);
-    for (i=0; i<shape->numlines; i++) {
-      fprintf(stderr, "\tPart %d contains %d points.\n", i, shape->line[i].numpoints);
-      for (j=0; j<shape->line[i].numpoints; j++) {
-	fprintf(stderr, "\t\t%d: (%f, %f)\n", j, shape->line[i].point[j].x, shape->line[i].point[j].y);
-      }
-    }
-    } */
 
   if(shape->numlines>0)
     return MS_SUCCESS;
@@ -181,7 +162,6 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
       if(shape->line[i].numpoints >= 4) n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
   }
 
-  // fprintf(stderr, "n_geometry=%ld\n", n_geometry);
   if(n_geometry == 0) return MS_SUCCESS;
 
   mvt_layer->features[mvt_layer->n_features++] = msSmallMalloc(sizeof(VectorTile__Tile__Feature));
@@ -242,20 +222,6 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   }
 
   /* output geom */
-  // mvt_feature->n_geometry = 0;
-  // if(layer->type == MS_LAYER_POINT) {
-  //   for(i=0;i<shape->numlines;i++)
-  //     mvt_feature->n_geometry += shape->line[i].numpoints * 2;
-  //   if(mvt_feature->n_geometry)
-  //     mvt_feature->n_geometry++; /* one MOVETO */
-  // } else if(layer->type == MS_LAYER_LINE) {
-  //   for(i=0;i<shape->numlines;i++)
-  //     if(shape->line[i].numpoints >= 2) mvt_feature->n_geometry += 2 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO */
-  // } else {
-  //   for(i=0;i<shape->numlines;i++)
-  //     if(shape->line[i].numpoints >= 4) mvt_feature->n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
-  // }
-
   mvt_feature->n_geometry = n_geometry;
   mvt_feature->geometry = msSmallMalloc(mvt_feature->n_geometry * sizeof(uint32_t));
 
@@ -275,32 +241,24 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
     for(i=0;i<shape->numlines;i++) {
 
       if((layer->type == MS_LAYER_LINE && !(shape->line[i].numpoints >= 2)) || 
-         (layer->type == MS_LAYER_POLYGON && !(shape->line[i].numpoints >= 4))) {
-        // fprintf(stderr, "skipping part %d\n", i);
+         (layer->type == MS_LAYER_POLYGON && !(shape->line[i].numpoints >= 4))) {        
         continue; /* skip malformed parts */
       }
-      // fprintf(stderr, "working on part %d\n", i);
 
       for(j=0;j<shape->line[i].numpoints;j++) {
         if(j==0) {
           mvt_feature->geometry[idx++] = COMMAND(MOVETO, 1);
-          // fprintf(stderr, "%d ", mvt_feature->geometry[idx-1]);
         } else if(j==1) {
           mvt_feature->geometry[idx++] = COMMAND(LINETO, shape->line[i].numpoints-1);
-          // fprintf(stderr, "%d ", mvt_feature->geometry[idx-1]);
         }
         mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].x)-lastx);
-        // fprintf(stderr, "%d ", mvt_feature->geometry[idx-1]);
 	mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].y)-lasty);
-	// fprintf(stderr, "%d ", mvt_feature->geometry[idx-1]);
 	lastx = MS_NINT(shape->line[i].point[j].x);
 	lasty = MS_NINT(shape->line[i].point[j].y);
       }
       if(layer->type == MS_LAYER_POLYGON) {
         mvt_feature->geometry[idx++] = COMMAND(CLOSEPATH, 1);
-        // fprintf(stderr, "%d ", mvt_feature->geometry[idx-1]);
       }
-      // fprintf(stderr, "\n");
     }
   }
 
@@ -316,7 +274,7 @@ static void freeMvtTile( VectorTile__Tile *mvt_tile ) {
   free(mvt_tile->layers);
 }
 
-int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders ) {
+int msMVTWriteTile( mapObj *map, outputFormatObj *format, int sendheaders ) {
   int iLayer,retcode=MS_SUCCESS;
   unsigned len;
   void *buf;
@@ -324,8 +282,6 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   int buffer = MS_ABS(atoi(mvt_buffer));
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers,sizeof(VectorTile__Tile__Layer*));
-
-  // fprintf(stderr, "tile center: %0.6f %0.6f\n", (map->extent.minx+map->extent.maxx)/2, (map->extent.miny+map->extent.maxy)/2); 
 
   for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
     int status=MS_SUCCESS;
@@ -339,7 +295,7 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     value_lookup *cur_value_lookup, *tmp_value_lookup;
     rectObj rect;
 
-    // fprintf(stderr, "working on layer %s\n", layer->name);
+    int features_size = 0;
 
     if(!msLayerIsVisible(map, layer)) continue;
 
@@ -418,14 +374,12 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
     }
 
-    // mvt_layer->features = msSmallCalloc(layer->resultcache->numresults, sizeof(VectorTile__Tile__Feature*));
-    mvt_layer->features = msSmallCalloc(1000, sizeof(VectorTile__Tile__Feature*));
+    mvt_layer->features = msSmallCalloc(FEATURES_INCREMENT_SIZE, sizeof(VectorTile__Tile__Feature*));
+    features_size = FEATURES_INCREMENT_SIZE;
 
     msInitShape(&shape);
     while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-
-      // fprintf(stderr, "in while loop...\n");
-
+      
       if(layer->numclasses > 0) {
         shape.classindex = msShapeGetClass(layer, map, &shape, NULL, -1); /* Perform classification, and some annotation related magic. */
         if(shape.classindex < 0)
@@ -446,25 +400,22 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         }
       }
 
+      if(mvt_layer->n_features == features_size) { /* need to allocate more space */
+        features_size += FEATURES_INCREMENT_SIZE;
+        mvt_layer->features = msSmallRealloc(mvt_layer->features, sizeof(VectorTile__Tile__Feature*)*(features_size));
+      }
+
       if( layer->project ) {
         status = msProjectShape(&layer->projection, &layer->map->projection, &shape);
-      }
-      if( status == MS_SUCCESS ) {
+      }      if( status == MS_SUCCESS ) {
         status = mvtWriteShape( layer, &shape, mvt_layer, item_list, &value_lookup_cache, &map->extent, buffer );
       }
 
-      //if(status != MS_SUCCESS) {
-      //  retcode = status;
-      //  goto feature_cleanup;
-      //}
-
       feature_cleanup:
-      // fprintf(stderr, "feature_cleanup (%d)\n", status);
       msFreeShape(&shape);
       if(retcode != MS_SUCCESS) goto layer_cleanup;
     } /* next shape */
     layer_cleanup:
-    // fprintf(stderr, "layer_cleanup (%d)\n", retcode);    
     msLayerClose(layer);
     msGMLFreeItems(item_list);
     UT_HASH_ITER(hh, value_lookup_cache.cache, cur_value_lookup, tmp_value_lookup) {
@@ -475,18 +426,7 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if(retcode != MS_SUCCESS) goto cleanup;
   } /* next layer */
 
-  {
-    int i;
-    // fprintf(stderr, "writing... %lu\n", sizeof(size_t));
-    // fprintf(stderr, "  n_layers=%zu\n", mvt_tile.n_layers);
-    for(i=0; i<mvt_tile.n_layers; i++) {
-      // fprintf(stderr, "  layer %d has %zu features\n", i, mvt_tile.layers[i]->n_features);
-    }
-  }
-
   len = vector_tile__tile__get_packed_size(&mvt_tile); // This is the calculated packing length
-
-  // fprintf(stderr, "...packed length=%d\n", len);
 
   buf = msSmallMalloc(len); // Allocate memory
   vector_tile__tile__pack(&mvt_tile, buf);
