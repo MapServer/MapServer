@@ -42,6 +42,8 @@
 
 #define FEATURES_INCREMENT_SIZE 5
 
+enum MS_RING_DIRECTION { MS_DIRECTION_INVALID_RING, MS_DIRECTION_CLOCKWISE, MS_DIRECTION_COUNTERCLOCKWISE };
+
 typedef struct {
   char *value;
   unsigned int index;
@@ -55,9 +57,38 @@ typedef struct {
 #define COMMAND(id, count) (((id) & 0x7) | ((count) << 3))
 #define PARAMETER(n) (((n) << 1) ^ ((n) >> 31))
 
+static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
+  int i, sum=0;
+
+  if(ring->numpoints < 4) return MS_DIRECTION_INVALID_RING;
+
+  /* step throught the edges */
+  for(i=0; i<ring->numpoints-1; i++) {
+    sum += (ring->point[i+1].x - ring->point[i].x)*(ring->point[i+1].y + ring->point[i].y); /* (x2 − x1)*(y2 + y1) */
+  }
+
+  return (sum >= 0)?MS_DIRECTION_CLOCKWISE:MS_DIRECTION_COUNTERCLOCKWISE;
+}
+
+static void mvtReverseRingDirection(lineObj *ring) {
+  pointObj temp;
+  int start=1, end=ring->numpoints-2; /* first and last points are the same so skip 'em */
+  int i;
+
+  while (start < end) {
+    temp.x = ring->point[start].x; temp.y = ring->point[start].y;
+    ring->point[start].x = ring->point[end].x; ring->point[start].y = ring->point[end].y;
+    ring->point[end].x = temp.x; ring->point[end].y = temp.y;
+    start++;
+    end--;
+  }
+}
+
 static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, int mvt_layer_extent) {
   double scale_x,scale_y;
   int i,j,outj;
+
+  int ring_direction, is_outer_ring;
 
   scale_x = (double)mvt_layer_extent/(extent->maxx - extent->minx);
   scale_y = (double)mvt_layer_extent/(extent->maxy - extent->miny);
@@ -72,6 +103,12 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, i
         outj++; /* add the point to the shape only if it's the first one or if it's different than the previous one */
     }
     shape->line[i].numpoints = outj;
+
+    is_outer_ring = msIsOuterRing(shape, i);
+    ring_direction = mvtGetRingDirection(&shape->line[i]);
+
+    if(((ring_direction != MS_DIRECTION_INVALID_RING) && ((is_outer_ring && ring_direction != MS_DIRECTION_CLOCKWISE) || (!is_outer_ring && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))))
+      mvtReverseRingDirection(&shape->line[i]);
   }
 
   msComputeBounds(shape); /* TODO: might need to limit this to just valid parts... */
