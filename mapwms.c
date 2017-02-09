@@ -3668,8 +3668,20 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
         msDrawLayer(map, GET_LAYER(map, i), img);
     }
 
-  } else
+  } else {
+
+    /* intercept requests for Mapbox vector tiles */
+    if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/x-protobuf")) {
+      int status=0;
+
+      if((status = msMVTSetup(map)) != MS_SUCCESS) return MS_FAILURE;
+      if((status = msMVTWriteTile(map, MS_TRUE)) != MS_SUCCESS) return MS_FAILURE;
+      return MS_SUCCESS;
+    }
+
     img = msDrawMap(map, MS_FALSE);
+  }
+
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 

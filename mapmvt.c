@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 #include "mapserver.h"
+#include "maptile.h"
 
 #ifdef USE_PBF
 #include "vector_tile.pb-c.h"
@@ -73,7 +74,7 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, i
     shape->line[i].numpoints = outj;
   }
 
-  msComputeBounds(shape); // might need to limit this to just valid parts...
+  msComputeBounds(shape); /* TODO: might need to limit this to just valid parts... */
 
   return (shape->numlines == 0)?MS_FAILURE:MS_SUCCESS; /* sucess if at least one line */
 }
@@ -274,7 +275,21 @@ static void freeMvtTile( VectorTile__Tile *mvt_tile ) {
   free(mvt_tile->layers);
 }
 
-int msMVTWriteTile( mapObj *map, outputFormatObj *format, int sendheaders ) {
+int msMVTSetup(mapObj *map)
+{
+  /* Ensure all the LAYERs have a projection. */
+  if( msMapSetLayerProjections(map) != 0 ) return(MS_FAILURE);
+
+  /* Set output projection to spherical Mercator. */
+  if( msLoadProjectionString(&(map->projection), SPHEREMERC_PROJ4) != 0 ) {
+    msSetError(MS_CGIERR, "Unable to load projection string.", "msMVTSetup()");
+    return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
+}
+
+int msMVTWriteTile( mapObj *map, int sendheaders ) {
   int iLayer,retcode=MS_SUCCESS;
   unsigned len;
   void *buf;
@@ -455,9 +470,9 @@ int msPopulateRendererVTableMVT(rendererVTableObj * renderer) {
   return MS_FAILURE;
 }
 
-int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders ) {
+int msMVTWriteTile( mapObj *map, int sendheaders ) {
   msSetError(MS_MISCERR, "Vector Tile support is not available.",
-             "msMVTWriteFromQuery()");
+             "msMVTWriteTile()");
   return MS_FAILURE;
 }
 #endif
