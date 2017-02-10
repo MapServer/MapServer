@@ -2240,78 +2240,6 @@ static int msWFSRunBasicGetFeature(mapObj* map,
     return MS_SUCCESS;
 }
 
-/*
-** msWFSSplitFilters()
-*/
-static char** msWFSSplitFilters(const char* pszStr, int* pnTokens)
-{
-    const char* pszTokenBegin;
-    char** papszRet = NULL;
-    int nTokens = 0;
-    char chStringQuote = '\0';
-    int nXMLIndent = 0;
-    int bInBracket = FALSE;
-
-    if( *pszStr != '(' )
-    {
-        *pnTokens = 0;
-        return NULL;
-    }
-    pszStr ++;
-    pszTokenBegin = pszStr;
-    while( *pszStr != '\0' )
-    {
-        /* Ignore any character until end of quoted string */
-        if( chStringQuote != '\0' )
-        {
-            if( *pszStr == chStringQuote )
-                chStringQuote = 0;
-        }
-        /* Detect begin of quoted string only for an XML attribute, i.e. between < and > */
-        else if( bInBracket && (*pszStr == '\'' || *pszStr == '"') )
-        {
-            chStringQuote = *pszStr;
-        }
-        /* Begin of XML element */
-        else if( *pszStr == '<' )
-        {
-            bInBracket = TRUE;
-            if( pszStr[1] == '/' )
-                nXMLIndent --;
-            else if( pszStr[1] != '!' )
-                nXMLIndent ++;
-        }
-        /* <something /> case */
-        else if (*pszStr == '/' && pszStr[1] == '>' )
-        {
-            bInBracket = FALSE;
-            nXMLIndent --;
-            pszStr ++;
-        }
-        /* End of XML element */
-        else if( *pszStr == '>' )
-        {
-            bInBracket = FALSE;
-        }
-        /* Only detect and of filter when XML indentation goes back to zero */
-        else if( nXMLIndent == 0 && *pszStr == ')' )
-        {
-            papszRet = (char**) msSmallRealloc(papszRet, sizeof(char*) * (nTokens + 1));
-            papszRet[nTokens] = msStrdup(pszTokenBegin);
-            papszRet[nTokens][pszStr - pszTokenBegin] = '\0';
-            nTokens ++;
-            if( pszStr[1] != '(' )
-            {
-                break;
-            }
-            pszStr ++;
-            pszTokenBegin = pszStr + 1;
-        }
-        pszStr ++;
-    }
-    *pnTokens = nTokens;
-    return papszRet;
-}
 
 /*
 ** msWFSRetrieveFeatures()
@@ -2397,7 +2325,7 @@ static int msWFSRetrieveFeatures(mapObj* map,
     /* -------------------------------------------------------------------- */
     nFilters = 0;
     if (strlen(pszFilter) > 0 && pszFilter[0] == '(') {
-      paszFilter = msWFSSplitFilters(pszFilter, &nFilters);
+      paszFilter = FLTSplitFilters(pszFilter, &nFilters);
 
       if ( paszFilter && nFilters > 0 && numlayers != nFilters ) {
         msFreeCharArray(paszFilter, nFilters);
