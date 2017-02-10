@@ -3023,7 +3023,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableMVT( rendererVTableObj *renderer );
 
-  MS_DLL_EXPORT int msMVTSetup( mapObj *map );
   MS_DLL_EXPORT int msMVTWriteTile( mapObj *map, int sendheaders );
 
 #ifdef USE_CAIRO

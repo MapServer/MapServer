@@ -312,20 +312,6 @@ static void freeMvtTile( VectorTile__Tile *mvt_tile ) {
   free(mvt_tile->layers);
 }
 
-int msMVTSetup( mapObj *map )
-{
-  /* Ensure all the LAYERs have a projection. */
-  if( msMapSetLayerProjections(map) != 0 ) return(MS_FAILURE);
-
-  /* Set output projection to spherical Mercator. */
-  if( msLoadProjectionString(&(map->projection), SPHEREMERC_PROJ4) != 0 ) {
-    msSetError(MS_MISCERR, "Unable to load projection string.", "msMVTSetup()");
-    return MS_FAILURE;
-  }
-
-  return MS_SUCCESS;
-}
-
 int msMVTWriteTile( mapObj *map, int sendheaders ) {
   int iLayer,retcode=MS_SUCCESS;
   unsigned len;
@@ -502,11 +488,6 @@ int msPopulateRendererVTableMVT(rendererVTableObj * renderer) {
 #else
 int msPopulateRendererVTableMVT(rendererVTableObj * renderer) {
   msSetError(MS_MISCERR, "Vector Tile Driver requested but support is not compiled in", "msPopulateRendererVTableMVT()");
-  return MS_FAILURE;
-}
-
-int msMVTSetup( mapObj *map ) {
-  msSetError(MS_MISCERR, "Vector Tile support is not available.", "msMVTSetup()");
   return MS_FAILURE;
 }
 

@@ -1515,7 +1515,6 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
       msTileSetExtent(mapserv);
 
       if(!strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/x-protobuf")) {
-	// if((status = msMVTSetup(mapserv->map)) != MS_SUCCESS) return MS_FAILURE;
         if((status = msMVTWriteTile(mapserv->map, mapserv->sendheaders)) != MS_SUCCESS) return MS_FAILURE;
         return MS_SUCCESS;
       }
