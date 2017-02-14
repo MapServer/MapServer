@@ -91,7 +91,7 @@ double msSymbolGetDefaultSize(symbolObj *s)
 #endif
       break;
     default: /* vector and ellipses, scalable */
-      size = s->sizey;
+      size = (s->sizey<=0)?s->sizex:s->sizey;
       break;
   }
 
