@@ -791,7 +791,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           const char *wms_request, owsRequestObj *ows_request)
 {
   int i, adjust_extent = MS_FALSE, nonsquare_enabled = MS_FALSE;
-  int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
   int bbox_pixel_is_point = MS_FALSE;
   outputFormatObj *format = NULL;
@@ -869,6 +868,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
     if (strcasecmp(names[i], "LAYERS") == 0) {
       int  j, k, iLayer, *layerOrder;
+      int nLayerOrder = 0;
       char ***nestedGroups = NULL;
       int *numNestedGroups = NULL;
       int *isUsedInNestedGroup = NULL;
