@@ -2624,8 +2624,8 @@ int msSHPLayerOpen(layerObj *layer)
             }
             OSRDestroySpatialReference(hSRS);
         }
+      fclose(fp);
     }
-    fclose(fp);
 
     if( bOK != MS_TRUE )
     {
