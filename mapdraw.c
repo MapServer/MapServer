@@ -55,6 +55,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     return(NULL);
   }
 
+  msFreeLabelCache(&(map->labelcache));
   msInitLabelCache(&(map->labelcache)); /* this clears any previously allocated cache */
 
   /* clear any previously created mask layer images */
