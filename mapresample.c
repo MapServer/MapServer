@@ -83,7 +83,8 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
                           int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
-                          int debug, rasterBufferObj *mask_rb )
+                          int debug, rasterBufferObj *mask_rb,
+                          int bWrapAtLeftRight )
 
 {
   double  *x, *y;
@@ -121,6 +122,9 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
       nSrcX = (int) x[nDstX];
       nSrcY = (int) y[nDstX];
+
+      if( bWrapAtLeftRight && nSrcX >= nSrcXSize && nSrcX < 2 * nSrcXSize )
+          nSrcX -= nSrcXSize;
 
       /*
        * We test the original floating point values to
@@ -302,7 +306,8 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                            imageObj *psDstImage, rasterBufferObj *dst_rb,
                            int *panCMap,
                            SimpleTransformer pfnTransform, void *pCBData,
-                           int debug, rasterBufferObj *mask_rb )
+                           int debug, rasterBufferObj *mask_rb,
+                           int bWrapAtLeftRight )
 
 {
   double  *x, *y;
@@ -359,31 +364,32 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       dfRatioY2 = y[nDstX] - nSrcY;
 
       /* If we are right off the source, skip this pixel */
-      if( nSrcX2 < 0 || nSrcX >= nSrcXSize
+      if( nSrcX2 < 0 || (!bWrapAtLeftRight && nSrcX >= nSrcXSize)
           || nSrcY2 < 0 || nSrcY >= nSrcYSize )
         continue;
 
       /* Trim in stuff one pixel off the edge */
       nSrcX = MS_MAX(nSrcX,0);
       nSrcY = MS_MAX(nSrcY,0);
-      nSrcX2 = MS_MIN(nSrcX2,nSrcXSize-1);
+      if( !bWrapAtLeftRight )
+        nSrcX2 = MS_MIN(nSrcX2,nSrcXSize-1);
       nSrcY2 = MS_MIN(nSrcY2,nSrcYSize-1);
 
       memset( padfPixelSum, 0, sizeof(double) * bandCount);
 
-      msSourceSample( psSrcImage, src_rb, nSrcX, nSrcY, padfPixelSum,
+      msSourceSample( psSrcImage, src_rb, nSrcX % nSrcXSize, nSrcY, padfPixelSum,
                       (1.0 - dfRatioX2) * (1.0 - dfRatioY2),
                       &dfWeightSum );
 
-      msSourceSample( psSrcImage, src_rb, nSrcX2, nSrcY, padfPixelSum,
+      msSourceSample( psSrcImage, src_rb, nSrcX2 % nSrcXSize, nSrcY, padfPixelSum,
                       (dfRatioX2) * (1.0 - dfRatioY2),
                       &dfWeightSum );
 
-      msSourceSample( psSrcImage, src_rb, nSrcX, nSrcY2, padfPixelSum,
+      msSourceSample( psSrcImage, src_rb, nSrcX % nSrcXSize, nSrcY2, padfPixelSum,
                       (1.0 - dfRatioX2) * (dfRatioY2),
                       &dfWeightSum );
 
-      msSourceSample( psSrcImage, src_rb, nSrcX2, nSrcY2, padfPixelSum,
+      msSourceSample( psSrcImage, src_rb, nSrcX2 % nSrcXSize, nSrcY2, padfPixelSum,
                       (dfRatioX2) * (dfRatioY2),
                       &dfWeightSum );
 
@@ -1200,8 +1206,17 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                             +   (dfLonWrap-180)*adfInvSrcGeoTransform[4]
                             +   dfY*adfInvSrcGeoTransform[5];
 
-                psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
-                psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+                /* Does the raster cover a whole 360 deg range ? */
+                if( nSrcXSize == (int)(adfInvSrcGeoTransform[1] * 360 + 0.5) )
+                {
+                    psSrcExtent->minx = 0;
+                    psSrcExtent->maxx = nSrcXSize;
+                }
+                else
+                {
+                    psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
+                    psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+                }
                 psSrcExtent->miny = MS_MIN(psSrcExtent->miny, y_out);
                 psSrcExtent->maxy = MS_MAX(psSrcExtent->maxy, y_out);
           }
@@ -1216,8 +1231,17 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                             +   (dfLonWrap+180)*adfInvSrcGeoTransform[4]
                             +   dfY*adfInvSrcGeoTransform[5];
 
-                psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
-                psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+                /* Does the raster cover a whole 360 deg range ? */
+                if( nSrcXSize == (int)(adfInvSrcGeoTransform[1] * 360 + 0.5) )
+                {
+                    psSrcExtent->minx = 0;
+                    psSrcExtent->maxx = nSrcXSize;
+                }
+                else
+                {
+                    psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
+                    psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+                }
                 psSrcExtent->miny = MS_MIN(psSrcExtent->miny, y_out);
                 psSrcExtent->maxy = MS_MAX(psSrcExtent->maxy, y_out);
           }
@@ -1282,6 +1306,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   double      dfOversampleRatio;
   rasterBufferObj src_rb, *psrc_rb = NULL, *mask_rb = NULL;
   int         bAddPixelMargin = MS_TRUE;
+  int         bWrapAtLeftRight = MS_FALSE;
 
 
   const char *resampleMode = CSLFetchNameValue( layer->processing,
@@ -1646,6 +1671,13 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   pACBData = msInitApproxTransformer( msProjTransformer, pTCBData, 0.333 );
 
+  if( pj_is_latlong(layer->projection.proj) )
+  {
+      /* Does the raster cover a whole 360 deg range ? */
+      if( nSrcXSize == (int)(adfInvSrcGeoTransform[1] * 360 + 0.5) )
+          bWrapAtLeftRight = MS_TRUE;
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Perform the resampling.                                         */
   /* -------------------------------------------------------------------- */
@@ -1658,12 +1690,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     result =
       msBilinearRasterResampler( srcImage, psrc_rb, image, rb,
                                  anCMap, msApproxTransformer, pACBData,
-                                 layer->debug, mask_rb );
+                                 layer->debug, mask_rb, bWrapAtLeftRight );
   else
     result =
       msNearestRasterResampler( srcImage, psrc_rb, image, rb,
                                 anCMap, msApproxTransformer, pACBData,
-                                layer->debug, mask_rb );
+                                layer->debug, mask_rb, bWrapAtLeftRight );
 
   /* -------------------------------------------------------------------- */
   /*      cleanup                                                         */
