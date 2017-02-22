@@ -187,10 +187,14 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
       status = MS_SUCCESS;
       if (prev_tp) {
         prev_tp->next = tp->next;
+        msFree(tp->key);
+        msFree(tp->data);
         free(tp);
         break;
       } else {
         table->items[hash(key)] = tp->next;
+        msFree(tp->key);
+        msFree(tp->data);
         free(tp);
         break;
       }
