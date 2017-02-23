@@ -954,6 +954,40 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   char *over = "+over";
   int ret;
   projectionObj in_over,out_over,*inp,*outp;
+
+#if USE_PROJ
+  /* Detect projecting from north polar stereographic to longlat */
+  if( in && !in->gt.need_geotransform &&
+      out && !out->gt.need_geotransform &&
+      !pj_is_latlong(in->proj) && pj_is_latlong(out->proj) )
+  {
+      pointObj p;
+      p.x = 0.0;
+      p.y = 0.0;
+      if( msProjectPoint(in, out, &p) == MS_SUCCESS &&
+          fabs(p.y - 90) < 1e-8 )
+      {
+        /* Is the pole in the rectangle ? */
+        if( 0 >= rect->minx && 0 >= rect->miny &&
+            0 <= rect->maxx && 0 <= rect->maxy )
+        {
+            if( msProjectRectAsPolygon(in, out, rect ) == MS_SUCCESS )
+            {
+                rect->minx = -180.0;
+                rect->maxx = 180.0;
+                rect->maxy = 90.0;
+                return MS_SUCCESS;
+            }
+        }
+        /* Are we sure the dateline is not enclosed ? */
+        else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
+        {
+            return msProjectRectAsPolygon(in, out, rect );
+        }
+      }
+  }
+#endif
+
   /* 
    * Issue #4892: When projecting a rectangle we do not want proj to wrap resulting
    * coordinates around the dateline, as in practice a requested bounding box of
