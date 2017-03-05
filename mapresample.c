@@ -1496,11 +1496,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     sqrt(adfSrcGeoTransform[1] * adfSrcGeoTransform[1]
          + adfSrcGeoTransform[2] * adfSrcGeoTransform[2]);
 
-  /* Check first that the requested extent is not greater than the source */
+  /* Check first that the requested extent is not well beyond than the source */
   /* raster. This might be the case for example if asking to visualize */
   /* -180,-89,180,90 in EPSG:4326 from a raster in Arctic Polar Stereographic */
-  if( !(sOrigSrcExtent.minx <= -nSrcXSize  && sOrigSrcExtent.miny <= -nSrcYSize &&
-        sOrigSrcExtent.maxx >= 2 * nSrcXSize && sOrigSrcExtent.maxy >= 2 * nSrcYSize)
+  if( !(sOrigSrcExtent.minx <= -4 * nSrcXSize  && sOrigSrcExtent.miny <= -4 * nSrcYSize &&
+        sOrigSrcExtent.maxx >= 5 * nSrcXSize && sOrigSrcExtent.maxy >= 5 * nSrcYSize)
       && (sOrigSrcExtent.maxx - sOrigSrcExtent.minx) > dfOversampleRatio * nDstXSize
       && !CSLFetchBoolean( layer->processing, "LOAD_FULL_RES_IMAGE", FALSE ))
     sDummyMap.cellsize =
