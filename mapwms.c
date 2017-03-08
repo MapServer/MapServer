@@ -2686,6 +2686,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   const char *updatesequence=NULL;
   const char *sldenabled=NULL;
   const char *layerlimit=NULL;
+  const char *rootlayer_name=NULL;
   char *pszTmp=NULL;
   int i;
   const char *format_list=NULL;
@@ -3100,8 +3101,20 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
                    "invalid characters or may start with a number. This could lead to potential problems. -->\n",
                    map->name);
-    msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
-                          "    <Name>%s</Name>\n", NULL);
+
+    rootlayer_name = msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_name");
+
+    if (rootlayer_name) {
+        if (strlen(rootlayer_name) > 0) {
+            msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_name",
+                                     OWS_NOERR, "    <Name>%s</Name>\n",
+                                     NULL);
+        }
+    }
+    else {
+        msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
+                              "    <Name>%s</Name>\n", NULL);
+    }
 
     if (msOWSLookupMetadataWithLanguage(&(map->web.metadata), "MO", "rootlayer_title", validated_language))
       msOWSPrintEncodeMetadata2(stdout, &(map->web.metadata), "MO", "rootlayer_title", OWS_WARN, "    <Title>%s</Title>\n", map->name, validated_language);
