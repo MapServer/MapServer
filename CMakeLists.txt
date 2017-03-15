@@ -273,6 +273,16 @@ mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
 mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h)
 
+if(WIN32)
+	configure_file(
+	  ${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in
+	  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	  @ONLY)
+	set(mapserver_SOURCES ${mapserver_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif(WIN32)
+
+
+
 if(BUILD_DYNAMIC)
   add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver  PROPERTIES
