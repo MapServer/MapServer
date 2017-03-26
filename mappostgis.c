@@ -3637,7 +3637,10 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           break;
         case MS_TOKEN_LITERAL_NUMBER:
 	  strtmpl = "%lf";
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          if (node->tokenval.dblval>MS_MAX_DOUBLE || node->tokenval.dblval<MS_MIN_DOUBLE)
+            snippet = (char *) msSmallMalloc(318);
+          else 
+            snippet = (char *) msSmallMalloc(80);
           sprintf(snippet, strtmpl, node->tokenval.dblval);
           native_string = msStringConcatenate(native_string, snippet);
           msFree(snippet);
@@ -3705,7 +3708,10 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           break;
         case MS_TOKEN_BINDING_MAP_CELLSIZE:
           strtmpl = "%lf";
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          if (layer->map->cellsize>MS_MAX_DOUBLE || layer->map->cellsize<MS_MIN_DOUBLE)
+            snippet = (char *) msSmallMalloc(318);
+          else 
+            snippet = (char *) msSmallMalloc(80);
           sprintf(snippet, strtmpl, layer->map->cellsize);
           native_string = msStringConcatenate(native_string, snippet);
           msFree(snippet);

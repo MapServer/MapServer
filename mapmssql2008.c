@@ -2389,7 +2389,10 @@ int process_node(layerObj* layer, expressionObj *filter)
     case MS_TOKEN_LITERAL_BOOLEAN:
     case MS_TOKEN_LITERAL_NUMBER:
       strtmpl = "%lf";
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+      if (layerinfo->current_node->tokenval.dblval>MS_MAX_DOUBLE || layerinfo->current_node->tokenval.dblval<MS_MIN_DOUBLE)
+        snippet = (char *) msSmallMalloc(318);
+      else 
+        snippet = (char *) msSmallMalloc(80);
       sprintf(snippet, strtmpl, layerinfo->current_node->tokenval.dblval);
       filter->native_string = msStringConcatenate(filter->native_string, snippet);
       msFree(snippet);
@@ -2476,7 +2479,10 @@ int process_node(layerObj* layer, expressionObj *filter)
       break;
     case MS_TOKEN_BINDING_MAP_CELLSIZE:
       strtmpl = "%lf";
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+      if (layer->map->cellsize>MS_MAX_DOUBLE || layer->map->cellsize<MS_MIN_DOUBLE)
+        snippet = (char *) msSmallMalloc(318);
+      else 
+        snippet = (char *) msSmallMalloc(80);
       sprintf(snippet, strtmpl, layer->map->cellsize);
       filter->native_string = msStringConcatenate(filter->native_string, snippet);
       msFree(snippet);

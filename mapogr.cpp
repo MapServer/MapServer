@@ -1783,6 +1783,9 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
         out = msStrdup(" NOT ");
         break;
     case MS_TOKEN_LITERAL_NUMBER:
+		if (n->tokenval.dblval>MS_MAX_DOUBLE || n->tokenval.dblval<MS_MIN_DOUBLE)
+          nOutSize = 318;
+	    else
         nOutSize = 80;
         out = (char *)msSmallMalloc(nOutSize);
         snprintf(out, nOutSize, "%lf",  n->tokenval.dblval);
