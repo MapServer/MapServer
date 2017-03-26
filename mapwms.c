@@ -2260,6 +2260,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
   }
 
   if(nVersion >= OWS_1_1_0)
+    if (! msOWSLookupMetadata(&(lp->metadata), "MO", "metadataurl_href"))
+      msMetadataSetGetMetadataURL(lp, script_url_encoded);
+
     msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl",
                       OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"",
                       NULL, NULL, ">\n          <Format>%s</Format",

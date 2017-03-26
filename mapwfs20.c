@@ -711,7 +711,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
         if (msWFSIsLayerSupported(lp))
         {
           if( psFtNode != NULL ) {
-            xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language));
+            xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language, script_url));
           }
 
           /* As soon as at least one layer supports sorting, advertize sorting */

@@ -115,6 +115,10 @@ Content-Type: text/xml; charset=UTF-8
         <BoundingBox CRS="EPSG:4326"
                     minx="33.65" miny="-131.02" maxx="48.39" maxy="-119.85" />
         <Dimension name="time" units="ISO8601" nearestValue="0">2004-01-01/2004-02-01</Dimension>
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms_time?request=GetMetadata&amp;layer=pattern4"/>
+        </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

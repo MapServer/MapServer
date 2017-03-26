@@ -11,13 +11,14 @@ Content-Type: text/xml; charset=UTF-8
 
 <Service>
   <Name>MapServer WFS</Name>
-  <Title>Test simple wfs</Title>
-  <Abstract>Test WFS Abstract</Abstract>
+  <Title>Test simple OWS</Title>
+  <Abstract>Test OWS Abstract</Abstract>
   <Keywords>
     ogc
+    wms
     wfs
-    gml
-    om
+    wcs
+    metadata
   </Keywords>
   <OnlineResource>http://localhost</OnlineResource>
   <Fees>none</Fees>
@@ -29,12 +30,12 @@ Content-Type: text/xml; charset=UTF-8
     <GetCapabilities>
       <DCPType>
         <HTTP>
-          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+          <Get onlineResource="http://localhost/ows?" />
         </HTTP>
       </DCPType>
       <DCPType>
         <HTTP>
-          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+          <Post onlineResource="http://localhost/ows?" />
         </HTTP>
       </DCPType>
     </GetCapabilities>
@@ -44,12 +45,12 @@ Content-Type: text/xml; charset=UTF-8
       </SchemaDescriptionLanguage>
       <DCPType>
         <HTTP>
-          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+          <Get onlineResource="http://localhost/ows?" />
         </HTTP>
       </DCPType>
       <DCPType>
         <HTTP>
-          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+          <Post onlineResource="http://localhost/ows?" />
         </HTTP>
       </DCPType>
     </DescribeFeatureType>
@@ -59,12 +60,12 @@ Content-Type: text/xml; charset=UTF-8
       </ResultFormat>
       <DCPType>
         <HTTP>
-          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+          <Get onlineResource="http://localhost/ows?" />
         </HTTP>
       </DCPType>
       <DCPType>
         <HTTP>
-          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+          <Post onlineResource="http://localhost/ows?" />
         </HTTP>
       </DCPType>
     </GetFeature>
@@ -76,11 +77,20 @@ Content-Type: text/xml; charset=UTF-8
     <Query/>
   </Operations>
     <FeatureType>
+        <Name>road</Name>
+        <Title>road</Title>
+        <Abstract>Roads of I.P.E.</Abstract>
+        <SRS>EPSG:4326</SRS>
+        <LatLongBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <MetadataURL type="TC211" format="text/xml">http://localhost/md</MetadataURL>
+    </FeatureType>
+    <FeatureType>
         <Name>province</Name>
         <Title>province</Title>
+        <Abstract>province</Abstract>
         <SRS>EPSG:4326</SRS>
         <LatLongBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
-        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=province</MetadataURL>
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/ows?request=GetMetadata&amp;layer=province</MetadataURL>
     </FeatureType>
 </FeatureTypeList>
 

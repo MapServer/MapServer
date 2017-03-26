@@ -153,6 +153,10 @@
                     minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
         <BoundingBox SRS="EPSG:3035"
                     minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;request=GetMetadata&amp;layer=TN.RoadTransportNetwork.RoadLink"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -189,6 +193,10 @@
                     minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
         <BoundingBox SRS="EPSG:3035"
                     minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;request=GetMetadata&amp;layer=TN.RailTransportNetwork.RailwayLink"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -213,6 +221,10 @@
                     minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
         <BoundingBox SRS="EPSG:3035"
                     minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;request=GetMetadata&amp;layer=TN.AirTransportNetwork.AirLink"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>

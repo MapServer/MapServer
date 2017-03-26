@@ -819,7 +819,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
 /*             msWCSGetCapabilities_CoverageOfferingBrief()             */
 /************************************************************************/
 
-static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params)
+static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params, char *script_url_encoded)
 {
   coverageMetadataObj cm;
   int status;
@@ -833,6 +833,9 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   msIO_printf("  <CoverageOfferingBrief>\n"); /* is this tag right? (I hate schemas without ANY examples) */
 
   /* optional metadataLink */
+  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
+    msMetadataSetGetMetadataURL(layer, script_url_encoded);
+
   msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
                     OWS_NOERR,
                     "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
@@ -869,9 +872,12 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 /*                msWCSGetCapabilities_ContentMetadata()                */
 /************************************************************************/
 
-static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
+static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request, cgiRequestObj *req)
 {
   int i;
+  char *script_url_encoded=NULL;
+
+  script_url_encoded = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "CO", "onlineresource", req));
 
   /* start the ContentMetadata section, only need the full start tag if this is the only section requested */
   /* TODO: add Xlink attributes for other sources of this information  */
@@ -894,7 +900,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
       if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
         continue;
 
-      if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
+      if(msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params, script_url_encoded) != MS_SUCCESS ) {
         msIO_printf("</ContentMetadata>\n");
         return MS_FAILURE;
       }
@@ -1006,12 +1012,12 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       msWCSGetCapabilities_Capability(map, params, req);
 
     if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
-      msWCSGetCapabilities_ContentMetadata(map, params, ows_request);
+      msWCSGetCapabilities_ContentMetadata(map, params, ows_request, req);
 
     if(params->section && strcasecmp(params->section, "/")  == 0) {
       msWCSGetCapabilities_Service(map, params);
       msWCSGetCapabilities_Capability(map, params, req);
-      msWCSGetCapabilities_ContentMetadata(map, params, ows_request);
+      msWCSGetCapabilities_ContentMetadata(map, params, ows_request, req);
     }
 
     /* done */
@@ -1094,7 +1100,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 /*               msWCSDescribeCoverage_CoverageOffering()               */
 /************************************************************************/
 
-static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params)
+static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params, char *script_url_encoded)
 {
   char **tokens;
   int numtokens;
@@ -1119,6 +1125,9 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("  <CoverageOffering>\n");
 
   /* optional metadataLink */
+  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
+    msMetadataSetGetMetadataURL(layer, script_url_encoded);
+
   msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
                     OWS_NOERR,
                     "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
@@ -1306,7 +1315,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 /*                       msWCSDescribeCoverage()                        */
 /************************************************************************/
 
-static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
+static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request, cgiRequestObj *req)
 {
   int i = 0,j = 0, k = 0;
   const char *updatesequence=NULL;
@@ -1314,6 +1323,9 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
   int numcoverages=0;
 
   char *coverageName=NULL;
+  char *script_url_encoded=NULL;
+
+  script_url_encoded = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "CO", "onlineresource", req));
 
   /* -------------------------------------------------------------------- */
   /*      1.1.x is sufficiently different we have a whole case for        */
@@ -1384,7 +1396,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
           }
           msFree(coverageName);
         }
-        msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+        msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params, script_url_encoded);
       }
       msFreeCharArray(coverages,numcoverages);
     }
@@ -1393,7 +1405,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
       if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
         continue;
 
-      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params, script_url_encoded);
     }
   }
 
@@ -2242,7 +2254,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     if (operation == MS_WCS_GET_CAPABILITIES) {
       retVal = msWCSGetCapabilities(map, params, request, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {
-      retVal = msWCSDescribeCoverage(map, params, ows_request);
+      retVal = msWCSDescribeCoverage(map, params, ows_request, request);
     } else if (operation == MS_WCS_GET_COVERAGE) {
       retVal = msWCSGetCoverage(map, request, params, ows_request);
     }

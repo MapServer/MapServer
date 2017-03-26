@@ -134,6 +134,10 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <LatLonBoundingBox minx="-117.546" miny="44.6656" maxx="-117.387" maxy="44.7671" />
         <BoundingBox SRS="EPSG:32611"
                     minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=road"/>
+        </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>grey</Name>
@@ -144,6 +148,10 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <LatLonBoundingBox minx="-121.489" miny="0" maxx="-121.485" maxy="0.0027058" />
         <BoundingBox SRS="EPSG:32611"
                     minx="0" miny="0" maxx="400" maxy="300" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=grey"/>
+        </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

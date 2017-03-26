@@ -94,7 +94,8 @@ int msWFSException11(mapObj *map, const char *locator,
 /*                            msWFSDumpLayer11                          */
 /************************************************************************/
 xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
-                            int nWFSVersion, const char* validate_language)
+                            int nWFSVersion, const char* validate_language,
+                            char *script_url)
 {
   rectObj ext;
 
@@ -222,6 +223,8 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
                   xmlNewComment(BAD_CAST "WARNING: Optional WGS84BoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement"));
   }
 
+  if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
+    msMetadataSetGetMetadataURL(lp, script_url);
   value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href");
 
   if (value) {
@@ -454,7 +457,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     /* List only vector layers in which DUMP=TRUE */
     if (msWFSIsLayerSupported(lp))
-      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0, NULL));
+      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0, NULL, script_url));
   }
 
 

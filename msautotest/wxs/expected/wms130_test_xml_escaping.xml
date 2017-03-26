@@ -137,6 +137,10 @@
             <southBoundLatitude>41.7705</southBoundLatitude>
             <northBoundLatitude>48.4773</northBoundLatitude>
         </EX_GeographicBoundingBox>
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows_test_xml_escaping?myparam=something&amp;request=GetMetadata&amp;layer=province"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
