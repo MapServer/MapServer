@@ -3418,7 +3418,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           }
         } else
           bGenerateDefaultSymbol =1;
-      } else if (psSymbol->type == MS_SYMBOL_PIXMAP) {
+      } else if (psSymbol->type == MS_SYMBOL_PIXMAP || psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
           pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
           if (!pszURL)
@@ -3455,8 +3455,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                 snprintf(szTmp, sizeof(szTmp), "<%sFormat>image/png</%sFormat>\n",
                          sNameSpace, sNameSpace);
             } else
-              snprintf(szTmp, sizeof(szTmp), "<%sFormat>%s</%sFormat>\n", "image/gif",
-                       sNameSpace, sNameSpace);
+              snprintf(szTmp, sizeof(szTmp), "<%sFormat>%s</%sFormat>\n", sNameSpace,
+                            (psSymbol->type ==MS_SYMBOL_SVG)?"image/svg+xml":"image/gif",sNameSpace);
 
             pszSLD = msStringConcatenate(pszSLD, szTmp);
 

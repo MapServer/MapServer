@@ -673,6 +673,7 @@ int msQueryByFilter(mapObj *map)
   const rectObj invalid_rect = MS_INIT_INVALID_RECT;
 
   shapeObj shape;
+  int paging;
 
   int nclasses = 0;
   int *classgroup = NULL;
@@ -732,12 +733,14 @@ int msQueryByFilter(mapObj *map)
       if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
+    paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
+    msLayerEnablePaging(lp, paging);
 
     /* disable driver paging */
-    msLayerEnablePaging(lp, MS_FALSE);
+    // msLayerEnablePaging(lp, MS_FALSE);
         
     old_filteritem = lp->filteritem; /* cache the existing filter/filteritem */
     msInitExpression(&old_filter);
@@ -815,7 +818,7 @@ int msQueryByFilter(mapObj *map)
 #endif
 
       /* Should we skip this feature? */
-      if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+      if (!paging && map->query.startindex > 1) {
         --map->query.startindex;
         msFreeShape(&shape);
         continue;

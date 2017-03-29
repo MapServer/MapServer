@@ -3636,12 +3636,13 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
             native_string = msStringConcatenate(native_string, "FALSE");
           break;
         case MS_TOKEN_LITERAL_NUMBER:
-	  strtmpl = "%lf";
-          if (node->tokenval.dblval>MS_MAX_DOUBLE || node->tokenval.dblval<MS_MIN_DOUBLE)
-            snippet = (char *) msSmallMalloc(318);
-          else 
-            snippet = (char *) msSmallMalloc(80);
-          sprintf(snippet, strtmpl, node->tokenval.dblval);
+          snippet = (char *) msSmallMalloc(32);
+          if( node->tokenval.dblval >= INT_MIN &&
+              node->tokenval.dblval <= INT_MAX &&
+              node->tokenval.dblval == (int)node->tokenval.dblval )
+              sprintf(snippet, "%d", (int)node->tokenval.dblval);
+          else
+              sprintf(snippet, "%.18g", node->tokenval.dblval);
           native_string = msStringConcatenate(native_string, snippet);
           msFree(snippet);
           break;
