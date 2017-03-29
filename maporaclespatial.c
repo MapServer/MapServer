@@ -3593,12 +3593,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
            native_string = msStringConcatenate(native_string, " )");  
            break;   
         case MS_TOKEN_LITERAL_NUMBER:
-          strtmpl = "%lf";
-          if (node->tokenval.dblval>MS_MAX_DOUBLE || node->tokenval.dblval<MS_MIN_DOUBLE)
-            snippet = (char *) msSmallMalloc(318);
-          else 
-            snippet = (char *) msSmallMalloc(80);
-          sprintf(snippet, strtmpl, node->tokenval.dblval);  // TODO: escape strval
+          snippet =  msDoubleToString(node->tokenval.dblval, MS_TRUE);
           if (dwithin == MS_TRUE) {
             dfDistance = node->tokenval.dblval;
             if (layer->units == MS_DD){
@@ -3707,12 +3702,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           native_string = msStringConcatenate(native_string, geom_column_name);
           break;
         case MS_TOKEN_BINDING_MAP_CELLSIZE:
-          strtmpl = "%lf";
-          if (layer->map->cellsize>MS_MAX_DOUBLE || layer->map->cellsize<MS_MIN_DOUBLE)
-            snippet = (char *) msSmallMalloc(318);
-          else 
-            snippet = (char *) msSmallMalloc(80);
-          sprintf(snippet, strtmpl, layer->map->cellsize);
+          snippet =  msDoubleToString(layer->map->cellsize, MS_TRUE);
           native_string = msStringConcatenate(native_string, snippet);
           free(snippet);
           break;
