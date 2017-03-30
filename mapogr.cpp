@@ -60,6 +60,7 @@ typedef struct ms_ogr_file_info_t {
   OGRFeatureH hLastFeature;
 
   int         nTileId;                  /* applies on the tiles themselves. */
+  projectionObj sTileProj;              /* applies on the tiles themselves. */
 
   struct ms_ogr_file_info_t *poCurTile; /* exists on tile index, -> tiles */
   bool        rect_is_defined;
@@ -1286,6 +1287,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   psInfo->hLayer = hLayer;
 
   psInfo->nTileId = 0;
+  msInitProjection(&(psInfo->sTileProj));
   psInfo->poCurTile = NULL;
   psInfo->rect_is_defined = false;
   psInfo->rect.minx = psInfo->rect.maxx = 0;
@@ -1693,7 +1695,8 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   // Free current tile if there is one.
   if( psInfo->poCurTile != NULL )
     msOGRFileClose( layer, psInfo->poCurTile );
-  
+
+  msFreeProjection(&(psInfo->sTileProj));
   msFree(psInfo->pszSelect);
   msFree(psInfo->pszSpatialFilterTableName);
   msFree(psInfo->pszSpatialFilterGeometryColumn);
@@ -3047,6 +3050,16 @@ NextFile:
   connection = msStrdup( OGR_F_GetFieldAsString( hFeature,
                          layer->tileitemindex ));
 
+  char* pszSRS = NULL;
+  if( layer->tilesrs != NULL )
+  {
+      int idx = OGR_F_GetFieldIndex( hFeature, layer->tilesrs);
+      if( idx >= 0 )
+      {
+          pszSRS = msStrdup( OGR_F_GetFieldAsString( hFeature, idx ));
+      }
+  }
+
   nFeatureId = (int)OGR_F_GetFID( hFeature ); // FIXME? GetFID() is a 64bit integer in GDAL 2.0
 
   OGR_F_Destroy( hFeature );
@@ -3066,7 +3079,21 @@ NextFile:
 #endif
 
   if( psTileInfo == NULL )
+  {
+    msFree(pszSRS);
     return MS_FAILURE;
+  }
+  
+  if( pszSRS != NULL )
+  {
+    if( msOGCWKT2ProjectionObj( pszSRS, &(psInfo->sTileProj),
+                                layer->debug ) != MS_SUCCESS )
+    {
+        msFree(pszSRS);
+        return MS_FAILURE;
+    }
+    msFree(pszSRS);
+  }
 
   psTileInfo->nTileId = nFeatureId;
 
@@ -3074,7 +3101,16 @@ NextFile:
   /*      Initialize the spatial query on this file.                      */
   /* -------------------------------------------------------------------- */
   if( psInfo->rect.minx != 0 || psInfo->rect.maxx != 0 ) {
-    status = msOGRFileWhichShapes( layer, psInfo->rect, psTileInfo );
+    rectObj rect = psInfo->rect;
+
+#ifdef USE_PROJ
+    if( layer->tileindex != NULL && psInfo->sTileProj.numargs > 0 )
+    {
+      msProjectRect(&(layer->projection), &(psInfo->sTileProj), &rect);
+    }
+#endif
+
+    status = msOGRFileWhichShapes( layer, rect, psTileInfo );
     if( status != MS_SUCCESS )
       return status;
   }
@@ -3975,23 +4011,10 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
     if( layer->layerinfo == NULL )
       return MS_FAILURE;
 
-    if( layer->tilesrs != NULL ) {
-      msSetError(MS_OGRERR,
-                 "TILESRS not supported in vector layers.",
-                 "msOGRLayerOpen()");
-      return MS_FAILURE;
-    }
-
     // Identify TILEITEM
-
     OGRFeatureDefnH hDefn = OGR_L_GetLayerDefn( psInfo->hLayer );
-    for( layer->tileitemindex = 0;
-         layer->tileitemindex < OGR_FD_GetFieldCount( hDefn )
-         && !EQUAL( OGR_Fld_GetNameRef( OGR_FD_GetFieldDefn( hDefn, layer->tileitemindex) ),
-                    layer->tileitem);
-         layer->tileitemindex++ ) {}
-
-    if( layer->tileitemindex == OGR_FD_GetFieldCount( hDefn ) ) {
+    layer->tileitemindex = OGR_FD_GetFieldIndex(hDefn, layer->tileitem);
+    if( layer->tileitemindex < 0 ) {
       msSetError(MS_OGRERR,
                  "Can't identify TILEITEM %s field in TILEINDEX `%s'.",
                  "msOGRLayerOpen()",
@@ -3999,6 +4022,29 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
       msOGRFileClose( layer, psInfo );
       layer->layerinfo = NULL;
       return MS_FAILURE;
+    }
+
+    // Identify TILESRS
+    if( layer->tilesrs != NULL &&
+        OGR_FD_GetFieldIndex(hDefn, layer->tilesrs) < 0 ) {
+      msSetError(MS_OGRERR,
+                 "Can't identify TILESRS %s field in TILEINDEX `%s'.",
+                 "msOGRLayerOpen()",
+                 layer->tilesrs, layer->tileindex );
+      msOGRFileClose( layer, psInfo );
+      layer->layerinfo = NULL;
+      return MS_FAILURE;
+    }
+    if( layer->tilesrs != NULL && layer->projection.numargs == 0 )
+    {
+        msSetError(MS_OGRERR,
+                 "A layer with TILESRS set in TILEINDEX `%s' must have a "
+                 "projection set on itself.",
+                 "msOGRLayerOpen()",
+                 layer->tileindex );
+        msOGRFileClose( layer, psInfo );
+        layer->layerinfo = NULL;
+        return MS_FAILURE;
     }
   }
 
@@ -4420,7 +4466,16 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
     // Try getting a shape from this tile.
     status = msOGRFileNextShape( layer, shape, psInfo->poCurTile );
     if( status != MS_DONE )
+    {
+#ifdef USE_PROJ
+      if( psInfo->sTileProj.numargs > 0 )
+      {
+        msProjectShape(&(psInfo->sTileProj), &(layer->projection), shape);
+      }
+#endif
+
       return status;
+    }
 
     // try next tile.
     status = msOGRFileReadTile( layer, psInfo );
@@ -4477,7 +4532,14 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
         return MS_FAILURE;
     }
 
-    return msOGRFileGetShape(layer, shape, shapeindex, psInfo->poCurTile, record_is_fid );
+    int status = msOGRFileGetShape(layer, shape, shapeindex, psInfo->poCurTile, record_is_fid );
+#ifdef USE_PROJ
+    if( status == MS_SUCCESS && psInfo->sTileProj.numargs > 0 )
+    {
+      msProjectShape(&(psInfo->sTileProj), &(layer->projection), shape);
+    }
+#endif
+    return status;
   }
 #else
   /* ------------------------------------------------------------------
