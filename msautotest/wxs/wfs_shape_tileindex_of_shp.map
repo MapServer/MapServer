@@ -4,7 +4,7 @@
 # REQUIRES: INPUT=OGR SUPPORTS=WFS
 #
 # In the logs, point_3_50.shp shouldn't appear
-# RUN_PARMS: wfs_shp_tileindex_of_shp_bbox_filter.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetFeature&SERVICE=WFS&TYPENAMES=ms:test&VERSION=2.0.0&FILTER=<Filter><BBOX><Envelope srsName='urn:ogc:def:crs:EPSG::4326'><lowerCorner>48.9 1.9</lowerCorner><upperCorner>49.1 2.1</upperCorner></Envelope></BBOX></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_shape_tileindex_of_shp_bbox_filter.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetFeature&SERVICE=WFS&TYPENAMES=ms:test&VERSION=2.0.0&FILTER=<Filter><BBOX><Envelope srsName='urn:ogc:def:crs:EPSG::4326'><lowerCorner>48.9 1.9</lowerCorner><upperCorner>49.1 2.1</upperCorner></Envelope></BBOX></Filter>" > [RESULT_DEVERSION]
 
 MAP
 
@@ -64,7 +64,6 @@ END
 
 LAYER
   NAME test
-  CONNECTIONTYPE OGR
   TILEINDEX "shp_tileindex_of_shp.shp"
   TILEITEM "LOCATION"
   METADATA
