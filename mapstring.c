@@ -386,6 +386,7 @@ char *msDoubleToString(double value, int force_f)
     buffer = (char*)msSmallMalloc(32);
     sprintf(buffer, ".18%g", value);
   }
+   return(buffer);
 }
 
 char *msIntToString(int value)
