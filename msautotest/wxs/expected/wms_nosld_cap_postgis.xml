@@ -80,6 +80,10 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <LatLonBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
         <BoundingBox SRS="EPSG:3978"
                     minx="2.25336e+06" miny="-76361.8" maxx="2.74765e+06" maxy="515489" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=province"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -96,6 +100,10 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <LatLonBoundingBox minx="-66.3286" miny="42.5631" maxx="-59.6882" maxy="47.9413" />
         <BoundingBox SRS="EPSG:3978"
                     minx="2.2794e+06" miny="-55344.5" maxx="2.60038e+06" maxy="461587" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=popplace"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -112,6 +120,10 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
         <BoundingBox SRS="EPSG:3978"
                     minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=road"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>

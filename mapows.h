@@ -119,6 +119,13 @@ typedef  struct {
   char         *httpcookiedata;
 } wmsParamsObj;
 
+/* metadataParamsObj: Represent a metadata specific request with its enabled layers */
+typedef struct {
+  char *pszRequest;
+  char *pszLayer;
+  char *pszOutputSchema;
+} metadataParamsObj;
+
 /* owsRequestObj: Represent a OWS specific request with its enabled layers */
 typedef struct {
   int numlayers;
@@ -461,6 +468,16 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
                              int nFeatureCount, const char *pszInfoFormat, int type);
 
 /*====================================================================
+ *   mapmetadata.c
+ *====================================================================*/
+metadataParamsObj *msMetadataCreateParamsObj(void);
+void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
+int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+                      metadataParamsObj *metadataparams);
+int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
+void msMetadataSetGetMetadataURL(layerObj *lp, const char *url);
+
+/*====================================================================
  *   mapwfs.c
  *====================================================================*/
 
@@ -484,7 +501,8 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams,
                            cgiRequestObj *req, owsRequestObj *ows_request);
 #ifdef USE_LIBXML2
 xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
-                          int nWFSVersion, const char* validate_language);
+                            int nWFSVersion, const char* validate_language,
+                            char *script_url);
 #endif
 char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, int nWFSVersion);
 

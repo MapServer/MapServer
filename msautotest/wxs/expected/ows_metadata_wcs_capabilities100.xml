@@ -1,0 +1,101 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<WCS_Capabilities
+   version="1.0.0" 
+   updateSequence="123" 
+   xmlns="http://www.opengis.net/wcs" 
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:gml="http://www.opengis.net/gml" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/wcsCapabilities.xsd">
+<Service>
+  <description>Test simple OWS</description>
+  <name>MapServer WCS</name>
+  <label>Test simple OWS</label>
+  <keywords>
+    <keyword>ogc</keyword>
+    <keyword>wms</keyword>
+    <keyword>wfs</keyword>
+    <keyword>wcs</keyword>
+    <keyword>metadata</keyword>
+  </keywords>
+<responsibleParty>
+    <individualName>Tom Kralidis</individualName>
+    <organisationName>MapServer</organisationName>
+    <positionName>self</positionName>
+  <contactInfo>
+    <phone>
+    <voice>+xx-xxx-xxx-xxxx</voice>
+    <facsimile>+xx-xxx-xxx-xxxx</facsimile>
+    </phone>
+    <address>
+    <deliveryPoint>123 SomeRoad Road</deliveryPoint>
+    <city>Toronto</city>
+    <administrativeArea>Ontario</administrativeArea>
+    <postalCode>xxx-xxx</postalCode>
+    <country>Canada</country>
+    <electronicMailAddress>tomkralidis@xxxxxxx.xxx</electronicMailAddress>
+    </address>
+    <onlineResource xlink:type="simple" xlink:href="http://localhost"/>
+  </contactInfo>
+</responsibleParty>
+  <fees>none</fees>
+  <accessConstraints>
+    none
+  </accessConstraints>
+</Service>
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/ows?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/ows?" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/ows?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/ows?" /></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeCoverage>
+    <GetCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/ows?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/ows?" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCoverage>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+  </Exception>
+</Capability>
+<ContentMetadata>
+  <CoverageOfferingBrief>
+  <metadataLink metadataType="ISOTC211/19115" xlink:type="simple" xlink:href="http://localhost/ows?request=GetMetadata&amp;layer=toronto"/>    <name>toronto</name>
+    <label>Toronto</label>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos>-117.54590357301 44.665615181923</gml:pos>
+      <gml:pos>-117.38727661816 44.767083018813</gml:pos>
+    </lonLatEnvelope>
+  </CoverageOfferingBrief>
+</ContentMetadata>
+</WCS_Capabilities>

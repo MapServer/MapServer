@@ -545,7 +545,7 @@ static layerObj* msWFSGetLayerByName(mapObj* map, owsRequestObj *ows_request, co
 /*
 ** msWFSDumpLayer()
 */
-int msWFSDumpLayer(mapObj *map, layerObj *lp)
+int msWFSDumpLayer(mapObj *map, layerObj *lp, const char *script_url_encoded)
 {
   rectObj ext;
   char *pszWfsSrs = NULL;
@@ -613,8 +613,11 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
     msIO_printf("<!-- WARNING: Optional LatLongBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement -->\n");
   }
 
+  if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
+    msMetadataSetGetMetadataURL(lp, script_url_encoded);
+
   msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl",
-                    OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"",
+                    OWS_WARN, NULL, "MetadataURL", " type=\"%s\"",
                     NULL, NULL, " format=\"%s\"", "%s",
                     MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                     NULL, NULL, NULL, NULL, NULL, "        ");
@@ -869,7 +872,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       continue;
 
     if (msWFSIsLayerAllowed(lp, ows_request)) {
-      msWFSDumpLayer(map, lp);
+      msWFSDumpLayer(map, lp, script_url_encoded);
     }
   }
 
