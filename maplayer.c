@@ -1564,7 +1564,7 @@ int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int 
 int msLayerSupportsSorting(layerObj *layer)
 {
   if (layer && (
-         (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL)
+    (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL) || ((layer->connectiontype == MS_PLUGIN) && (strstr(layer->plugin_library,"msplugin_oracle") != NULL))
                )
      )
     return MS_TRUE;
@@ -1604,7 +1604,8 @@ char* msLayerBuildSQLOrderBy(layerObj *layer)
   if( layer->sortBy.nProperties > 0 ) {
     int i;
     for(i=0;i<layer->sortBy.nProperties;i++) {
-      char* escaped = msLayerEscapePropertyName(layer, layer->sortBy.properties[i].item);
+      char* escaped = msSmallMalloc(strlen(layer->sortBy.properties[i].item) + 3);
+      sprintf(escaped, "\"%s\"", layer->sortBy.properties[i].item);
       if( i > 0 )
         strOrderBy = msStringConcatenate(strOrderBy, ", ");
       strOrderBy = msStringConcatenate(strOrderBy, escaped);
