@@ -242,11 +242,11 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
     int patt_length = 0;
     for (int i = 0; i < style->patternlength; i += 2) {
       if (i < style->patternlength - 1) {
-        r->dash->add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
-                      MS_MAX(1,MS_NINT(style->pattern[i + 1])));
+        r->dash->add_dash(MS_MAX(0.1,style->pattern[i]),
+                      MS_MAX(0.1,style->pattern[i + 1]));
         if(style->patternoffset) {
-          patt_length += MS_MAX(1,MS_NINT(style->pattern[i])) +
-                         MS_MAX(1,MS_NINT(style->pattern[i + 1]));
+          patt_length += MS_MAX(0.1,style->pattern[i]) +
+                         MS_MAX(0.1,style->pattern[i + 1]);
         }
       }
     }
