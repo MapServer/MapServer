@@ -613,20 +613,18 @@ void KmlRenderer::renderLine(imageObj*, shapeObj *p, strokeStyleObj *style)
   /*p->index > CurrentDrawnShapeIndexneed to be reviewd. Added since the hight
     level code caches shapes when rendering lines*/
   if (CurrentDrawnShapeIndex == -1 || p->index > CurrentDrawnShapeIndex) {
-    xmlNodePtr geomNode = getGeomParentNode("LineString");
-    addAddRenderingSpecifications(geomNode);
-    addCoordsNode(geomNode, p->line[0].point, p->line[0].numpoints);
-
-    /* more than one line => MultiGeometry*/
     if (p->numlines > 1) {
-      geomNode = getGeomParentNode("LineString"); // returns MultiGeom Node
-      for (int i=1; i<p->numlines; i++) {
-        xmlNodePtr lineStringNode = xmlNewChild(geomNode, NULL, BAD_CAST "LineString", NULL);
+      GeomNode = xmlNewNode(NULL, BAD_CAST "MultiGeometry");
+      for (int i=0; i<p->numlines; i++) {
+        xmlNodePtr lineStringNode = xmlNewChild(GeomNode, NULL, BAD_CAST "LineString", NULL);
         addAddRenderingSpecifications(lineStringNode);
         addCoordsNode(lineStringNode, p->line[i].point, p->line[i].numpoints);
       }
+    } else {
+      GeomNode = getGeomParentNode("LineString");
+      addAddRenderingSpecifications(GeomNode);
+      addCoordsNode(GeomNode, p->line[0].point, p->line[0].numpoints);
     }
-
     CurrentDrawnShapeIndex = p->index;
   }
 
