@@ -5000,7 +5000,8 @@ static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
 
       msFree(pszFontNameEscaped);
 
-      if (!bFont) {
+      // change from "!bFont" to "bFont" to allow work correctly with TTF font otherwise with TTF fonts the size is locked
+      if (bFont) {
         c->labels[0]->size = MS_MEDIUM;
       }
 
