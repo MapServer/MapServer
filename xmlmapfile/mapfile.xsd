@@ -348,6 +348,8 @@
 						</xs:simpleType>
 					</xs:union>
 				</xs:simpleType>
+		    <xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
+		    <xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			</xs:element>
 			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
