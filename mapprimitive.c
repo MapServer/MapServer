@@ -1322,7 +1322,7 @@ int msGetPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 /*
 ** Find a label point in a polygon.
 */
-int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
+int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension, int ignore_edge_distance)
 {
   double slope;
   pointObj *point1=NULL, *point2=NULL, cp;
@@ -1368,6 +1368,8 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
 
   if(msIntersectPointPolygon(lp, p) == MS_TRUE) {
     double dist, min_dist=-1;
+
+    if(ignore_edge_distance == MS_TRUE) return(MS_SUCCESS);
 
     /* compute a distance to the polygon */
     for(j=0; j<p->numlines; j++) {

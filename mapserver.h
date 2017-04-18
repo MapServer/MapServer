@@ -2384,7 +2384,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int WARN_UNUSED msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *label, struct label_auto_result *lar, double resolutionfactor);
   MS_DLL_EXPORT int WARN_UNUSED msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_follow_result *lfr, labelObj *lbl);
   MS_DLL_EXPORT int WARN_UNUSED msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_auto_result *lar, labelObj *lbl, double resolutionfactor);
-  MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension);
+  MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension, int ignore_edge_distance);
   MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
   MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
   MS_DLL_EXPORT int msAddPointToLine(lineObj *line, pointObj *point );

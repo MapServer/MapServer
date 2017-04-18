@@ -1668,7 +1668,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         msOffsetShapeRelativeTo(shape, layer);
 
       if(shape->numlines > 0) {
-        if(msPolygonLabelPoint(shape, &labelPos, -1) == MS_SUCCESS) {
+	int ignore_edge_distance = CSLFetchBoolean(layer->processing, "LABEL_IGNORE_EDGE_DISTANCE", FALSE);
+        if(msPolygonLabelPoint(shape, &labelPos, -1, ignore_edge_distance) == MS_SUCCESS) {
           if(labelPos.x == -1 && labelPos.y == -1)
             labelposvalid = MS_FALSE;
           else

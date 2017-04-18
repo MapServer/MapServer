@@ -1779,7 +1779,8 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
   if(MS_DRAW_LABELS(drawmode)) {
     if (layer->class[c]->numlabels > 0) {
       double minfeaturesize = layer->class[c]->labels[0]->minfeaturesize * image->resolutionfactor;
-      if (msPolygonLabelPoint(anno_shape, &annopnt, minfeaturesize) == MS_SUCCESS) {
+      int ignore_edge_distance = CSLFetchBoolean(layer->processing, "LABEL_IGNORE_EDGE_DISTANCE", FALSE);
+      if (msPolygonLabelPoint(anno_shape, &annopnt, minfeaturesize, ignore_edge_distance) == MS_SUCCESS) {
         for (i = 0; i < layer->class[c]->numlabels; i++)
           if (layer->class[c]->labels[i]->angle != 0) layer->class[c]->labels[i]->angle -= map->gt.rotation_angle; /* TODO: is this correct ??? */
         if (layer->labelcache) {
