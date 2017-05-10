@@ -2585,7 +2585,12 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
             CPLErrorReset();
             if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter ) != OGRERR_NONE ) {
+                msSetError(MS_OGRERR, "SetAttributeFilter() failed on layer %s. Check logs.", "msOGRFileWhichShapes()", layer->name?layer->name:"(null)");
                 msDebug("SetAttributeFilter(%s) failed on layer %s.\n%s\n", pszOGRFilter, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
+                RELEASE_OGR_LOCK;
+                msFree(pszOGRFilter);
+                msFree(select);
+                return MS_FAILURE;
             }
             msFree(pszOGRFilter);
         } else
