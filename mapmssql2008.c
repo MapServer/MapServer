@@ -2463,7 +2463,11 @@ int process_node(layerObj* layer, expressionObj *filter)
     case MS_TOKEN_BINDING_DOUBLE:
     case MS_TOKEN_BINDING_INTEGER:
     case MS_TOKEN_BINDING_STRING:
-      strtmpl = "%s";
+      if(layerinfo->current_node->next->token == MS_TOKEN_COMPARISON_IRE)
+        strtmpl = "LOWER(%s)";
+      else
+        strtmpl = "%s";
+
       stresc = msMSSQL2008LayerEscapePropertyName(layer, layerinfo->current_node->tokenval.bindval.item);
       snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
       sprintf(snippet, strtmpl, stresc);
@@ -2486,9 +2490,85 @@ int process_node(layerObj* layer, expressionObj *filter)
     case MS_TOKEN_COMPARISON_IN:
       filter->native_string = msStringConcatenate(filter->native_string, " IN ");
       break;
-    case MS_TOKEN_COMPARISON_LIKE:
-      filter->native_string = msStringConcatenate(filter->native_string, " LIKE ");
-      break;
+    case MS_TOKEN_COMPARISON_RE: 
+    case MS_TOKEN_COMPARISON_IRE: 
+    case MS_TOKEN_COMPARISON_LIKE: {
+      /* process regexp */
+      size_t i = 0, j = 0;
+      char c;
+      char c_next;
+      int bCaseInsensitive = (layerinfo->current_node->token == MS_TOKEN_COMPARISON_IRE);
+      int nEscapeLen = 0;
+      if (bCaseInsensitive)
+        filter->native_string = msStringConcatenate(filter->native_string, " LIKE LOWER(");
+      else
+        filter->native_string = msStringConcatenate(filter->native_string, " LIKE ");
+
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (layerinfo->current_node->token != MS_TOKEN_LITERAL_STRING) return 0;
+
+      strtmpl = msStrdup(layerinfo->current_node->tokenval.strval);
+      if (strtmpl[0] == '/') {
+        stresc = strtmpl + 1;
+        strtmpl[strlen(strtmpl) - 1] = '\0';
+      }
+      else if (strtmpl[0] == '^')
+        stresc = strtmpl + 1;
+      else
+        stresc = strtmpl;
+
+      while (*stresc) {
+        c = stresc[i];
+        if (c == '%' || c == '_' || c == '[' || c == ']' || c == '^') {
+           nEscapeLen++;
+        }
+        stresc++;
+      }
+      snippet = (char *)msSmallMalloc(strlen(strtmpl) + nEscapeLen + 3);
+      snippet[j++] = '\'';
+      while (i < strlen(strtmpl)) {
+        c = strtmpl[i];
+        c_next = strtmpl[i+1];
+
+        if (i == 0 && c == '^') {
+          i++;
+          continue;
+        }
+
+        if (c == '\\') {
+          i++;
+          c = c_next;
+        }
+         
+        if (c == '%' || c == '_' || c == '[' || c == ']' || c == '^') {
+           snippet[j++] = '\\';
+        }
+        
+        if (c == '.' && c_next == '*') {
+          i++;
+          c = '%';
+        }
+        else if (c == '.')
+          c = '_';
+
+        
+        snippet[j++] = c;
+        i++;          
+      }
+      snippet[j++] = '\'';
+      snippet[j] = '\0';
+
+      filter->native_string = msStringConcatenate(filter->native_string, snippet);
+      msFree(strtmpl);
+      msFree(snippet);
+
+      if (bCaseInsensitive)
+        filter->native_string = msStringConcatenate(filter->native_string, ")");
+
+      if (nEscapeLen > 0)
+        filter->native_string = msStringConcatenate(filter->native_string, " ESCAPE '\\'");
+    }
+    break;
     case MS_TOKEN_COMPARISON_EQ:
       filter->native_string = msStringConcatenate(filter->native_string, " = ");
       break;
