@@ -81,6 +81,12 @@
 #define HAS_Z   0x1
 #define HAS_M   0x2
 
+#if TRANSFER_ENCODING == 256
+#define RESULTSET_TYPE 1
+#else
+#define RESULTSET_TYPE 0
+#endif
+
 #ifdef USE_POSTGIS
 
 
@@ -1696,6 +1702,8 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     char *force2d = "";
 #if TRANSFER_ENCODING == 64
     const char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+#elif TRANSFER_ENCODING == 256
+    const char *strGeomTemplate = "ST_AsBinary(%s(\"%s\"),'%s') as geom,\"%s\"::text";
 #else
     const char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
@@ -1710,6 +1718,8 @@ char *msPostGISBuildSQLItems(layerObj *layer)
         /* Use AsEWKB() to get 3D */
 #if TRANSFER_ENCODING == 64
         strGeomTemplate = "encode(AsEWKB(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+#elif TRANSFER_ENCODING == 256
+        strGeomTemplate = "AsEWKB(%s(\"%s\"),'%s') as geom,\"%s\"::text";
 #else
         strGeomTemplate = "encode(AsEWKB(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
@@ -1736,13 +1746,20 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     int t;
     for ( t = 0; t < layer->numitems; t++ ) {
       length += strlen(layer->items[t]) + 3; /* itemname + "", */
+#if TRANSFER_ENCODING == 256
+      length +=6; /*add a ::text*/
+#endif
     }
     strItems = (char*)msSmallMalloc(length);
     strItems[0] = '\0';
     for ( t = 0; t < layer->numitems; t++ ) {
       strlcat(strItems, "\"", length);
       strlcat(strItems, layer->items[t], length);
+#if TRANSFER_ENCODING == 256
+      strlcat(strItems, "\"::text,", length);
+#else
       strlcat(strItems, "\",", length);
+#endif
     }
     strlcat(strItems, strGeom, length);
   }
@@ -2185,7 +2202,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
   wkbstrlen = PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems);
 
   if ( ! wkbstr ) {
-    msSetError(MS_QUERYERR, "Base64 WKB returned is null!", "msPostGISReadShape()");
+    msSetError(MS_QUERYERR, "WKB returned is null!", "msPostGISReadShape()");
     return MS_FAILURE;
   }
 
@@ -2196,8 +2213,14 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
   }
 #if TRANSFER_ENCODING == 64
   result = msPostGISBase64Decode(wkb, wkbstr, wkbstrlen - 1);
+  w.size = (wkbstrlen - 1)/2;
+#elif TRANSFER_ENCODING == 256
+  result = 1;
+  memcpy(wkb, wkbstr, wkbstrlen);
+  w.size = wkbstrlen;
 #else
   result = msPostGISHexDecode(wkb, wkbstr, wkbstrlen);
+  w.size = (wkbstrlen - 1)/2;
 #endif
 
   if( ! result ) {
@@ -2208,7 +2231,6 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
   /* Initialize our wkbObj */
   w.wkb = (char*)wkb;
   w.ptr = w.wkb;
-  w.size = (wkbstrlen - 1)/2;
 
   /* Set the type map according to what version of PostGIS we are dealing with */
   if( layerinfo->version >= 20000 ) /* PostGIS 2.0+ */
@@ -2665,9 +2687,9 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   // fprintf(stderr, "SQL: %s\n", strSQL);
 
   if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, 1);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, RESULTSET_TYPE);
   } else {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
   }
 
   /* free bind values */
@@ -2855,7 +2877,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
       msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
     }
 
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
 
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
