@@ -421,7 +421,7 @@ void msStringToLower(char *string)
 void msStringInitCap(char *string)
 {
   int i;
-  int start = 1; 
+  int start = 1;
   if (string != NULL) {
     for (i = 0; i < (int)strlen(string); i++) {
       if (string[i] == ' ')
@@ -444,7 +444,7 @@ void msStringInitCap(char *string)
 void msStringFirstCap(char *string)
 {
   int i;
-  int start = 1; 
+  int start = 1;
   if (string != NULL) {
     for (i = 0; i < (int)strlen(string); i++) {
       if (string[i] != ' ') {
@@ -1163,7 +1163,7 @@ char* msEscapeJSonString(const char* pszJSonString)
     char* pszRet;
     int i = 0, j = 0;
     static const char* pszHex = "0123456789ABCDEF";
-    
+
     pszRet = (char*) msSmallMalloc(strlen(pszJSonString) * 6 + 1);
     /* From http://www.json.org/ */
     for(i = 0; pszJSonString[i] != '\0'; i++)
@@ -1531,7 +1531,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
   */
   if( (tmp_ptr = (char *) strcasestr(str, old)) == NULL)
     return(str);
-  
+
   if(new == NULL)
     new = "";
 
@@ -2156,7 +2156,7 @@ char* msStringEscape( const char * pszString )
 
   for (i=0; pszString[i]; i++)
     ncharstoescape += ((pszString[i] == '\"')||(pszString[i] == '\''));
-  
+
   if(!ncharstoescape) {
     return (char*)pszString;
   }
