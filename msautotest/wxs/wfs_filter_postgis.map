@@ -96,6 +96,10 @@
 # Verify INTERSECTS Results:  Canso, Port Hawkesbury
 # RUN_PARMS: wfs_filter_postgis_intersects.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.63,45.04 -60.78,45.04 -60.78,46.08 -61.63,46.08</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersects></Filter>" > [RESULT]
 #
+# Verify INTERSECTS with different MAP EXTENT Results:  Canso, Port Hawkesbury
+# RUN_PARMS: wfs_filter_postgis_intersects_good_extent.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.63,45.04 -60.78,45.04 -60.78,46.08 -61.63,46.08</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersects></Filter>&map_extent=-62+45+-60+47" > [RESULT]
+# RUN_PARMS: wfs_filter_postgis_intersects_bad_extent.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.63,45.04 -60.78,45.04 -60.78,46.08 -61.63,46.08</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersects></Filter>&map_extent=-64+45+-62+47" > [RESULT]
+#
 # Verify DWITHIN Result:  Sydney
 # RUN_PARMS: wfs_filter_postgis_dwithin.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><DWithin><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>-60.18,46.10</gml:coordinates></gml:Point><Distance units='dd'>0.05</Distance></DWithin></Filter>" > [RESULT]
 #
@@ -213,7 +217,6 @@ LAYER
     OUTLINECOLOR 120 120 120
   END
 END # Layer
-
 
 LAYER
   NAME popplace
