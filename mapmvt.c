@@ -107,7 +107,7 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, i
     is_outer_ring = msIsOuterRing(shape, i);
     ring_direction = mvtGetRingDirection(&shape->line[i]);
 
-    if(((ring_direction != MS_DIRECTION_INVALID_RING) && ((is_outer_ring && ring_direction != MS_DIRECTION_CLOCKWISE) || (!is_outer_ring && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))))
+    if( (layer_type==MS_LAYER_POLYGON) && ((ring_direction != MS_DIRECTION_INVALID_RING) && ((is_outer_ring && ring_direction != MS_DIRECTION_CLOCKWISE) || (!is_outer_ring && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))))
       mvtReverseRingDirection(&shape->line[i]);
   }
 
