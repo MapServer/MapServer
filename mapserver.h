@@ -2889,7 +2889,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     MS_GEOMTRANSFORM_BUFFER,
     MS_GEOMTRANSFORM_CONVEXHULL,
     MS_GEOMTRANSFORM_LABELPOINT,
-    MS_GEOMTRANSFORM_LABELPOLY
+    MS_GEOMTRANSFORM_LABELPOLY,
+    MS_GEOMTRANSFORM_LABELCENTER
   };
 
   MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor);

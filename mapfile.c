@@ -2952,6 +2952,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
                  MS_GEOMTRANSFORM_LABELPOLY, "\"labelpoly\"",
+                 MS_GEOMTRANSFORM_LABELCENTER, "\"labelcenter\"",
                  MS_GEOMTRANSFORM_START, "\"start\"",
                  MS_GEOMTRANSFORM_VERTICES, "\"vertices\"",
                  MS_GEOMTRANSFORM_CENTROID, "\"centroid\""
