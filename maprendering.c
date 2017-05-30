@@ -996,6 +996,7 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
   colorObj *c = NULL, *oc = NULL;
   int ow;
   assert(ts->textpath);
+  if(!renderer->renderGlyphs) return MS_FAILURE;
 
   if(!ts->textpath->absolute) {
     int g;
@@ -1019,12 +1020,44 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
       }
     }
   }
+
+  if(MS_VALID_COLOR(ts->label->shadowcolor)) {
+    textSymbolObj *ts_shadow;
+    int g;
+    double ox, oy;
+    double cosa,sina;
+    if(ts->rotation != 0) {
+      cosa = cos(ts->rotation);
+      sina = sin(ts->rotation);
+      ox = ts->scalefactor * (cosa * ts->label->shadowsizex + 
+          sina * ts->label->shadowsizey);
+      oy = ts->scalefactor * (-sina * ts->label->shadowsizex + 
+          cosa * ts->label->shadowsizey);
+    }
+    else {
+      ox = ts->scalefactor * ts->label->shadowsizex;
+      oy = ts->scalefactor * ts->label->shadowsizey;
+    }
+
+    ts_shadow = msSmallMalloc(sizeof(textSymbolObj));
+    initTextSymbol(ts_shadow);
+    msCopyTextSymbol(ts_shadow,ts);
+
+    for(g=0;g<ts_shadow->textpath->numglyphs;g++) {
+      ts_shadow->textpath->glyphs[g].pnt.x += ox;
+      ts_shadow->textpath->glyphs[g].pnt.y += oy;
+    }
+
+    renderer->renderGlyphs(image,ts_shadow->textpath,&ts->label->shadowcolor,NULL,0);
+    freeTextSymbol(ts_shadow);
+    msFree(ts_shadow);
+  }
+
   if(MS_VALID_COLOR(ts->label->color))
     c = &ts->label->color;
   if(MS_VALID_COLOR(ts->label->outlinecolor))
     oc = &ts->label->outlinecolor;
   ow = MS_NINT((double)ts->label->outlinewidth * ((double)ts->textpath->glyph_size / (double)ts->label->size));
-  if(!renderer->renderGlyphs) return MS_FAILURE;
   return renderer->renderGlyphs(image,ts->textpath,c,oc,ow);
   
 }
