@@ -217,6 +217,7 @@ void msCopyTextPath(textPathObj *dst, textPathObj *src) {
   if(src->bounds.poly) {
     dst->bounds.poly = msSmallMalloc(sizeof(lineObj));
     dst->bounds.poly->numpoints = src->bounds.poly->numpoints;
+    dst->bounds.poly->point = msSmallMalloc(src->bounds.poly->numpoints * sizeof(pointObj));
     for(i=0; i<src->bounds.poly->numpoints; i++) {
       dst->bounds.poly->point[i] = src->bounds.poly->point[i];
     }
