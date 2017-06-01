@@ -1518,14 +1518,21 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   nLoadImgYSize = MS_MAX(1, (int) (sSrcExtent.maxy - sSrcExtent.miny)
                       * (dfNominalCellSize / sDummyMap.cellsize));
 
-  /*
-  ** Because the previous calculation involved some round off, we need
-  ** to fixup the cellsize to ensure the map region represents the whole
-  ** RAW_WINDOW (at least in X).  Re: bug 1715.
-  */
-  sDummyMap.cellsize =
-    ((sSrcExtent.maxx - sSrcExtent.minx) * dfNominalCellSize)
-    / nLoadImgXSize;
+  {
+    /*
+    ** Because the previous calculation involved some round off, we need
+    ** to fixup the cellsize to ensure the map region represents the whole
+    ** RAW_WINDOW (at least in X).  Re: bug 1715.
+    */
+    double tmp_cellsize;
+    tmp_cellsize = ((sSrcExtent.maxy - sSrcExtent.miny) * dfNominalCellSize)
+      / nLoadImgYSize;
+    sDummyMap.cellsize = ((sSrcExtent.maxx - sSrcExtent.minx) * dfNominalCellSize)
+      / nLoadImgXSize;
+    if(tmp_cellsize < sDummyMap.cellsize)
+      sDummyMap.cellsize = tmp_cellsize;
+  }
+
 
   if( layer->debug )
     msDebug( "msResampleGDALToMap in effect: cellsize = %f\n",
