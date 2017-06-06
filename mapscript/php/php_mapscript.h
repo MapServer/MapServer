@@ -403,6 +403,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferString);
 PHP_FUNCTION(ms_ioResetHandlers);
 PHP_FUNCTION(ms_ioStripStdoutBufferContentType);
 PHP_FUNCTION(ms_ioStripStdoutBufferContentHeaders);
+PHP_FUNCTION(ms_ioGetAndStripStdoutBufferMimeHeaders);
 PHP_FUNCTION(ms_ioGetStdoutBufferBytes);
 
 /* object constructors */
