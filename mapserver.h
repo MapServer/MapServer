@@ -243,6 +243,10 @@ extern "C" {
 #define MS_DEG_TO_RAD .0174532925199432958
 #define MS_RAD_TO_DEG   57.29577951
 
+// The values of MAX_DOUBLE and MIN_DOUBLE are matched so, that the string, received by the function sprintf (str,"%f",doubleValue), is 48 bytes.
+#define MS_MAX_DOUBLE  9.999999e+38
+#define MS_MIN_DOUBLE -9.999999e+39
+
 #define MS_DEFAULT_RESOLUTION 72
 
 #define MS_RED 0

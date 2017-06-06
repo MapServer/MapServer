@@ -371,14 +371,21 @@ char *msLongToString(long value)
 
 char *msDoubleToString(double value, int force_f)
 {
-  size_t bufferSize = 256;
-  char *buffer = (char*)msSmallMalloc(bufferSize);
-
-  if (force_f == MS_TRUE)
-    snprintf(buffer, bufferSize, "%f", value);
-  else
-    snprintf(buffer, bufferSize, "%g", value);
-  return(buffer);
+  char *buffer;
+  if (value==(int)value && value>=INT_MIN && value<=INT_MAX) {
+    buffer = (char*)msSmallMalloc(16);
+    sprintf(buffer, "%d", (int)value);
+  }
+  else if (force_f == MS_TRUE) {
+    if (value>MS_MAX_DOUBLE || value<MS_MIN_DOUBLE)
+      buffer = (char*)msSmallMalloc(318);
+    else
+      buffer = (char*)msSmallMalloc(48);
+    sprintf(buffer, "%lf", value);
+  } else {
+    buffer = (char*)msSmallMalloc(32);
+    sprintf(buffer, ".18%g", value);
+  }
 }
 
 char *msIntToString(int value)
