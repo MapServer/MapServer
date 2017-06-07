@@ -788,7 +788,7 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *o
     }
     if (layer != NULL && msOWSLookupMetadata(&(layer->metadata), "MFCO", "metadataurl_href")) {
       msIO_setHeader("Status", "301 Moved Permanently");
-      msIO_setHeader("Location", msOWSLookupMetadata(&(layer->metadata), "MFCO", "metadataurl_href"));
+      msIO_setHeader("Location", "%s", msOWSLookupMetadata(&(layer->metadata), "MFCO", "metadataurl_href"));
       msIO_sendHeaders();
     }
     else {
@@ -803,7 +803,7 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *o
     msIO_sendHeaders();
 
     xmlDocDumpFormatMemory(xml_document, &xml_buffer, &buffersize, 1);
-    msIO_printf((char *) xml_buffer);
+    msIO_printf("%s", (char *) xml_buffer);
 
     xmlFree(xml_buffer);
     xmlFreeDoc(xml_document);
