@@ -423,7 +423,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
         e.string = msReplaceSubstring(e.string, tag, "0");
     }
 
-    free(tag);
+    msFree(tag);
   }
 
   msTokenizeExpression(&e, NULL, NULL);
@@ -1478,7 +1478,7 @@ char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
   }
 
   fullPath = msBuildPath(szPath, mappath, tmpBase);
-  return strdup(fullPath);
+  return msStrdup(fullPath);
 }
 
 /**********************************************************************
@@ -1505,7 +1505,7 @@ char *msTmpFilename(const char *ext)
   snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpId, tmpCount++, ext);
   msReleaseLock( TLOCK_TMPFILE );
 
-  fullFname = strdup(tmpFname);
+  fullFname = msStrdup(tmpFname);
   free(tmpFname);
 
   return fullFname;

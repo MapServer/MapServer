@@ -280,9 +280,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"KMZ") == 0 ) {
     if(!name) name="kmz";
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = strdup("application/vnd.google-earth.kmz");
+    format->mimetype = msStrdup("application/vnd.google-earth.kmz");
     format->imagemode = MS_IMAGEMODE_RGB;
-    format->extension = strdup("kmz");
+    format->extension = msStrdup("kmz");
     format->renderer = MS_RENDER_WITH_KML;
     msSetOutputFormatOption( format, "ATTACHMENT", "mapserver.kmz");
   }

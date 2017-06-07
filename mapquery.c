@@ -598,7 +598,7 @@ static char *filterTranslateToLogical(expressionObj *filter, char *filteritem) {
   char *string = NULL;
 
   if(filter->type == MS_STRING && filteritem) {
-    string = strdup("'[");
+    string = msStrdup("'[");
     string = msStringConcatenate(string, filteritem);
     string = msStringConcatenate(string, "]'");
     if(filter->flags & MS_EXP_INSENSITIVE)
@@ -608,7 +608,7 @@ static char *filterTranslateToLogical(expressionObj *filter, char *filteritem) {
     string = msStringConcatenate(string, filter->string);
     string = msStringConcatenate(string, "'");
   } else if(filter->type == MS_REGEX && filteritem) {
-    string = strdup("'[");
+    string = msStrdup("'[");
     string = msStringConcatenate(string, filteritem);
     string = msStringConcatenate(string, "]'");
     if(filter->flags & MS_EXP_INSENSITIVE)
@@ -644,7 +644,7 @@ static expressionObj mergeFilters(expressionObj *filter1, char *filteritem1, exp
     return filter; /* should only happen if the filter was a native filter */
   }
 
-  filter.string = strdup(tmpstr1);
+  filter.string = msStrdup(tmpstr1);
   filter.string = msStringConcatenate(filter.string, " AND ");
   filter.string = msStringConcatenate(filter.string, tmpstr2);
 

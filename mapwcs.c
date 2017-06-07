@@ -368,7 +368,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
     root = xmlDocGetRootElement(doc);
 
     /* Get service, version and request from root */
-    params->request = strdup((char *) root->name);
+    params->request = msStrdup((char *) root->name);
     if ((tmp = (char *) xmlGetProp(root, BAD_CAST "service")) != NULL)
       params->service = tmp;
     if ((tmp = (char *) xmlGetProp(root, BAD_CAST "version")) != NULL)
