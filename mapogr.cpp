@@ -1556,7 +1556,10 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
   // side evaluation by unsetting it.
   if( !psInfo->bIsOKForSQLCompose && psInfo->dialect != NULL )
   {
-      msDebug("msOGRFileOpen(): Falling back to MapServer only evaluation\n");
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+      {
+        msDebug("msOGRFileOpen(): Falling back to MapServer only evaluation\n");
+      }
       psInfo->dialect = NULL;
   }
 
@@ -1564,8 +1567,11 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
   if (msLayerGetProcessingKey(layer, "USE_SPATIAL_INDEX") != NULL &&
       !CSLTestBoolean(msLayerGetProcessingKey(layer, "USE_SPATIAL_INDEX")) )
   {
-      msDebug("msOGRFileOpen(): Layer %s has spatial index disabled by processing option\n",
-              pszLayerDef);
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+      {
+        msDebug("msOGRFileOpen(): Layer %s has spatial index disabled by processing option\n",
+                pszLayerDef);
+      }
   }
   // Test if spatial index is available
   else if( psInfo->dialect != NULL )
@@ -1599,8 +1605,11 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
 
       if( !psInfo->bHasSpatialIndex )
       {
-          msDebug("msOGRFileOpen(): Layer %s has no spatial index table\n",
-                  pszLayerDef);
+          if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          {
+            msDebug("msOGRFileOpen(): Layer %s has no spatial index table\n",
+                    pszLayerDef);
+          }
       }
       else
       {
@@ -1631,13 +1640,19 @@ static void msOGRFileOpenSpatialite( layerObj *layer,
 
           if( !psInfo->bHasSpatialIndex )
           {
-            msDebug("msOGRFileOpen(): Layer %s has spatial index disabled\n",
-                    pszLayerDef);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+            {
+              msDebug("msOGRFileOpen(): Layer %s has spatial index disabled\n",
+                      pszLayerDef);
+            }
           }
           else
           {
-            msDebug("msOGRFileOpen(): Layer %s has spatial index enabled\n",
-                    pszLayerDef);
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+            {
+              msDebug("msOGRFileOpen(): Layer %s has spatial index enabled\n",
+                      pszLayerDef);
+            }
 
             psInfo->pszTablePrefix = msStrdup( psInfo->pszMainTableName );
           }
