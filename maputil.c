@@ -1759,6 +1759,8 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
    if that is the case.*/
   if(ret)
     return ret;
+  /* clear error raised by geos in this case */
+  msResetErrorList();
 #endif
   /*
   ** For offset corner point calculation 1/sin() is used
