@@ -1547,7 +1547,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* matches the sSrcExtent, even if that generates non-square pixels (#1715) */
   /* The rotated case should ideally be dealt with, but not for now... */
   if( adfSrcGeoTransform[2] == 0 && adfSrcGeoTransform[4] == 0 &&
-      adfSrcGeoTransform[5] < 0 )
+      adfSrcGeoTransform[5] < 0 &&
+      /* But do that only if the pixels were square before, otherwise */
+      /* this is going to mess with source rasters whose pixels aren't at */
+      /* all square (#5445) */
+      fabs(fabs(adfSrcGeoTransform[1]) - fabs(adfSrcGeoTransform[5])) <
+                                        0.01 * fabs(adfSrcGeoTransform[1]) )
   {
       adfSrcGeoTransform[1] = (sSrcExtent.maxx - sSrcExtent.minx) *
                                             dfNominalCellSize / nLoadImgXSize;
