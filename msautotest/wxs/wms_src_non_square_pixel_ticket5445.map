@@ -1,0 +1,85 @@
+#
+# Test WMS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# RUN_PARMS: wms_src_non_square_pixel_ticket5445.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&BBOX=-7.21916,48.40401621621622,-3.4696399999999996,50.43078378378378&SERVICE=WMS&REQUEST=GetMap&FORMAT=image/png&styles=&layers=continent&width=1000&height=541&srs=EPSG:4326&EXCEPTIONS=application/vnd.ogc.se_inimage&TRANSPARENT=TRUE&VERSION=1.1.1" > [RESULT_DEMIME]
+
+
+MAP
+
+NAME WMS_TEST
+STATUS ON
+SIZE 400 300
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+
+EXTENT -803633.215155169 6142218.69849575 -386238.558035974 6488409.59450128
+PROJECTION
+  "init=epsg:3395"
+END
+
+OUTPUTFORMAT
+  NAME GDPNG
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png"
+  EXTENSION "png"
+END
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:42304 EPSG:42101 EPSG:4269 EPSG:4326"
+    "ows_schemas_location" "http://schemas.opengis.net"
+    "ows_keywordlist" "ogc,wms,mapserver"
+    "ows_service_onlineresource" "http://www.mapserver.org/"
+    "ows_fees" "None"
+    "ows_accessconstraints" "None"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+
+    "ows_rootlayer_title" "My Layers"
+    "ows_rootlayer_abstract" "These are my layers"
+    "ows_rootlayer_keywordlist" "layers,list"
+    "ows_layerlimit" "1"
+    "ows_enable_request" "*" 
+    "wms_getmap_formatlist" "image/png,image/png; mode=24bit,image/jpeg,image/gif,image/png; mode=8bit,image/tiff"
+  END
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+        NAME            "continent"
+        PROJECTION
+            "init=epsg:3395"
+        END
+        TYPE            RASTER
+
+        DATA            "ticket5445.tif"
+END
+
+END # Map File
