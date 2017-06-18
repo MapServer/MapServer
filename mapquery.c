@@ -1125,6 +1125,7 @@ int msQueryByRect(mapObj *map)
       /* whole layer extent, but expressed in a map SRS different from the layer SRS */
       /* In the case, we can directly request against the layer extent in its native SRS */
       if( lp->project &&
+          memcmp( &searchrect, &invalid_rect, sizeof(searchrect) ) != 0 &&
           msProjectionsDiffer(&(lp->projection), &(map->projection)) )
       {
         rectObj layerExtent;
