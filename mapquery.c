@@ -881,6 +881,7 @@ int msQueryByRect(mapObj *map)
   char status;
   shapeObj shape, searchshape;
   rectObj searchrect, searchrectInMapProj;
+  const rectObj invalid_rect = MS_INIT_INVALID_RECT;
   double layer_tolerance = 0, tolerance = 0;
 
   int paging;
@@ -982,7 +983,8 @@ int msQueryByRect(mapObj *map)
 
 #ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
-    if(lp->project)
+    if(lp->project &&
+       memcmp( &searchrect, &invalid_rect, sizeof(searchrect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
 #endif
 

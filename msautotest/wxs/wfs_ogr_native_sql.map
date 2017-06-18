@@ -94,6 +94,7 @@
 # RUN_PARMS: wfs_ogr_native_sql_41.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsNotEqualTo><PropertyName>name</PropertyName><Literal>Fanano</Literal></PropertyIsNotEqualTo></Filter>&SORTBY=name" > [RESULT_DEVERSION]
 
 # RUN_PARMS: wfs_ogr_native_sql_42.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=towns_disable_default_extent_for_getfeature&OUTPUTFORMAT=GML2&COUNT=1" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_ogr_native_sql_43.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=towns_disable_default_extent_for_getfeature&OUTPUTFORMAT=GML2&COUNT=1&SRSNAME=EPSG:4326" > [RESULT_DEVERSION]
 
 MAP
 
@@ -116,7 +117,7 @@ WEB
   METADATA
     "wfs_title"		   "Test simple wfs"
     "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
-    "wfs_srs"		   "EPSG:32632"
+    "wfs_srs"		   "EPSG:32632 EPSG:4326"
     "wfs_enable_request"   "*" 
   END
 END
