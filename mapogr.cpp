@@ -3319,6 +3319,7 @@ static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
         {
             if( node->next && node->next->token == '(' )
             {
+                int node_token = node->token;
                 msExprNode* subExpr = BuildExprTree(node->next->next, &node,
                                                     nParenthesisLevel + 1);
                 if( subExpr == NULL )
@@ -3326,7 +3327,7 @@ static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
                     goto fail;
                 }
                 msExprNode* newNode = new msExprNode;
-                newNode->m_nToken = node->token;
+                newNode->m_nToken = node_token;
                 if( subExpr->m_nToken == 0 )
                 {
                     newNode->m_aoChildren = subExpr->m_aoChildren;
@@ -3444,6 +3445,8 @@ fail:
 
 /**********************************************************************
  *                 msOGRExtractTopSpatialFilter()
+ * 
+ * Recognize expressions like "Intersects([shape], wkt) == TRUE [AND ....]"
  **********************************************************************/
 static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
                                           const msExprNode* expr,
@@ -3451,6 +3454,15 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
 {
   if( expr == NULL )
       return MS_FALSE;
+
+  if( expr->m_nToken == MS_TOKEN_COMPARISON_EQ &&
+      expr->m_aoChildren.size() == 2 &&
+      expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_BOOLEAN &&
+      expr->m_aoChildren[1]->m_dfVal == 1.0 )
+  {
+      return msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[0],
+                                          pSpatialFilterNode);
+  }
 
   if( expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS &&
       expr->m_aoChildren.size() == 2 &&
