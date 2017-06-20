@@ -3058,6 +3058,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                 }
 
                 for(i=0; i<npositions; i++) {
+
                   // RFC 77 TODO: take label_marker_offset_x/y into account
                   labelPtr->annopoint = get_metrics_line(&(cachePtr->point), positions[i], r,
                                                          marker_offset_x + label_offset_x, marker_offset_y + label_offset_y,

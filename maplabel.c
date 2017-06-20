@@ -33,9 +33,6 @@
 
 #include "mapserver.h"
 
-
-
-
 /**
  * replace wrap characters with \n , respecting maximal line length.
  *
@@ -1210,16 +1207,16 @@ pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int o
 
   switch(position) {
     case MS_UL:
-      x1 = -w - ox;
-      y1 = -oy;
+      x1 = -w - ox - MARKER_SLOP;
+      y1 = -oy - MARKER_SLOP;
       break;
     case MS_UC:
       x1 = -(w/2.0);
       y1 = -oy - MARKER_SLOP;
       break;
     case MS_UR:
-      x1 = ox;
-      y1 = -oy;
+      x1 = ox + MARKER_SLOP;
+      y1 = -oy - MARKER_SLOP;
       break;
     case MS_CL:
       x1 = -w - ox - MARKER_SLOP;
@@ -1234,16 +1231,16 @@ pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int o
       y1 = (h/2.0);
       break;
     case MS_LL:
-      x1 = -w - ox;
-      y1 = h + oy;
+      x1 = -w - ox - MARKER_SLOP;
+      y1 = h + oy + MARKER_SLOP;
       break;
     case MS_LC:
       x1 = -(w/2.0);
       y1 = h + oy + MARKER_SLOP;
       break;
     case MS_LR:
-      x1 = ox;
-      y1 = h + oy;
+      x1 = ox + MARKER_SLOP;
+      y1 = h + oy + MARKER_SLOP;
       break;
   }
 
@@ -1322,13 +1319,17 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2)
   }
 
   /* STEP 1: look for intersecting line segments */
-  for(c1=0; c1<p1->numlines; c1++)
-    for(v1=1; v1<p1->line[c1].numpoints; v1++)
-      for(c2=0; c2<p2->numlines; c2++)
-        for(v2=1; v2<p2->line[c2].numpoints; v2++)
+  for(c1=0; c1<p1->numlines; c1++) {
+    for(v1=1; v1<p1->line[c1].numpoints; v1++) {
+      for(c2=0; c2<p2->numlines; c2++) {
+        for(v2=1; v2<p2->line[c2].numpoints; v2++) {
           if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE) {
             return(MS_TRUE);
           }
+        }
+      }
+    }
+  }
 
   /* STEP 2: polygon one completely contains two (only need to check one point from each part) */
   for(c2=0; c2<p2->numlines; c2++) {
