@@ -29,10 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
-#ifdef what_the_fxxx_is_this_for
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_labelcachemember;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_labelcachemember_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(labelcachemember___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -66,21 +68,21 @@ PHP_METHOD(labelCacheMemberObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_labelcachemember = MAPSCRIPT_OBJ_P(php_labelcachemember_object, zobj);
 
   IF_GET_LONG("classindex", php_labelcachemember->labelcachemember->classindex)
-  else IF_GET_LONG("featuresize", php_labelcachemember->labelcachemember->featuresize)
+  /* else IF_GET_LONG("featuresize", php_labelcachemember->labelcachemember->featuresize) */
     else IF_GET_LONG("layerindex", php_labelcachemember->labelcachemember->layerindex)
-      else IF_GET_LONG("numstyles", php_labelcachemember->labelcachemember->numstyles)
-        else IF_GET_LONG("numlabels", php_labelcachemember->labelcachemember->numlabels)
+      /* else IF_GET_LONG("numstyles", php_labelcachemember->labelcachemember->numstyles) */
+        /* else IF_GET_LONG("numlabels", php_labelcachemember->labelcachemember->numlabels) */
           /* else IF_GET_LONG("shapeindex", php_labelcachemember->labelcachemember->shapeindex) */
           else IF_GET_LONG("status", php_labelcachemember->labelcachemember->status)
             else IF_GET_LONG("markerid", php_labelcachemember->labelcachemember->markerid)
               /* else IF_GET_LONG("tileindex", php_labelcachemember->labelcachemember->tileindex) */
               else IF_GET_OBJECT("point", mapscript_ce_point, php_labelcachemember->point, &php_labelcachemember->labelcachemember->point)
-                else IF_GET_OBJECT("labels", mapscript_ce_label, php_labelcachemember->labels, &php_labelcachemember->labelcachemember->labels)
-                  else IF_GET_OBJECT("styles", mapscript_ce_style, php_labelcachemember->styles, php_labelcachemember->labelcachemember->styles)
-                    else IF_GET_OBJECT("poly", mapscript_ce_shape, php_labelcachemember->poly, php_labelcachemember->labelcachemember->poly)
+                /* else IF_GET_OBJECT("labels", mapscript_ce_label, php_labelcachemember->labels, &php_labelcachemember->labelcachemember->labels) */
+                  /* else IF_GET_OBJECT("styles", mapscript_ce_style, php_labelcachemember->styles, php_labelcachemember->labelcachemember->styles) */
+                    /* else IF_GET_OBJECT("poly", mapscript_ce_shape, php_labelcachemember->poly, php_labelcachemember->labelcachemember->poly) */
                       else {
                         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
                       }
@@ -91,8 +93,8 @@ PHP_METHOD(labelCacheMemberObj, __set)
   char *property;
   long property_len = 0;
   zval *value;
-  zval *zobj = getThis();
-  php_labelcachemember_object *php_labelcachemember;
+  /* zval *zobj = getThis(); */
+  /* php_labelcachemember_object *php_labelcachemember; */
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -102,20 +104,20 @@ PHP_METHOD(labelCacheMemberObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  /* php_labelcachemember = MAPSCRIPT_OBJ_P(php_labelcachemember_object, zobj); */
 
   if ( (STRING_EQUAL("classindex", property)) ||
-       (STRING_EQUAL("featuresize", property)) ||
+       /* (STRING_EQUAL("featuresize", property)) || */
        (STRING_EQUAL("layerindex", property)) ||
-       (STRING_EQUAL("numstyles", property)) ||
-       (STRING_EQUAL("numlabels", property)) ||
-       (STRING_EQUAL("shapeindex", property)) ||
+       /* (STRING_EQUAL("numstyles", property)) || */
+       /* (STRING_EQUAL("numlabels", property)) || */
+       /* (STRING_EQUAL("shapeindex", property)) || */
        (STRING_EQUAL("status", property)) ||
        (STRING_EQUAL("markerid", property)) ||
-       (STRING_EQUAL("tileindex", property)) ||
-       (STRING_EQUAL("labels", property)) ||
-       (STRING_EQUAL("styles", property)) ||
-       (STRING_EQUAL("poly", property)) ||
+       /* (STRING_EQUAL("tileindex", property)) || */
+       /* (STRING_EQUAL("labels", property)) || */
+       /* (STRING_EQUAL("styles", property)) || */
+       /* (STRING_EQUAL("poly", property)) || */
        (STRING_EQUAL("point", property))) {
     mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
   } else {
@@ -137,7 +139,7 @@ PHP_METHOD(labelCacheMemberObj, free)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_labelcachemember = MAPSCRIPT_OBJ_P(php_labelcachemember_object, zobj);
 
   MAPSCRIPT_DELREF(php_labelcachemember->point);
   MAPSCRIPT_DELREF(php_labelcachemember->labels);
@@ -162,13 +164,72 @@ void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember,
 {
   php_labelcachemember_object * php_labelcachemember;
   object_init_ex(return_value, mapscript_ce_labelcachemember);
-  php_labelcachemember = (php_labelcachemember_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_labelcachemember = MAPSCRIPT_OBJ_P(php_labelcachemember_object, return_value);
   php_labelcachemember->labelcachemember = labelcachemember;
 
   php_labelcachemember->parent = parent;
 
   MAPSCRIPT_ADDREF(parent.val);
 }
+
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_labelcachemember_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_labelcachemember_object *php_labelcachemember;
+
+  php_labelcachemember = ecalloc(1, sizeof(*php_labelcachemember) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_labelcachemember->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_labelcachemember->zobj, ce);
+
+  php_labelcachemember->zobj.handlers = &mapscript_labelcachemember_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_labelcachemember->parent);
+  ZVAL_UNDEF(&php_labelcachemember->point);
+  ZVAL_UNDEF(&php_labelcachemember->labels);
+  ZVAL_UNDEF(&php_labelcachemember->styles);
+  ZVAL_UNDEF(&php_labelcachemember->poly);
+
+
+  return &php_labelcachemember->zobj;
+}
+
+static void mapscript_labelcachemember_free_object(zend_object *object)
+{
+  php_labelcachemember_object *php_labelcachemember;
+
+  php_labelcachemember = (php_labelcachemember_object *)((char *)object - XtOffsetOf(php_labelcachemember_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_labelcachemember->parent);
+  MAPSCRIPT_DELREF(php_labelcachemember->point);
+  MAPSCRIPT_DELREF(php_labelcachemember->labels);
+  MAPSCRIPT_DELREF(php_labelcachemember->styles);
+  MAPSCRIPT_DELREF(php_labelcachemember->poly);
+
+  /* We don't need to free the labelCacheMemberObj, the mapObj will do it */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(labelcachemember)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "labelCacheMemberObj", labelcachemember_functions);
+  mapscript_ce_labelcachemember = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_labelcachemember->create_object = mapscript_labelcachemember_create_object;
+  mapscript_ce_labelcachemember->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_labelcachemember_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_labelcachemember_object_handlers));
+  mapscript_labelcachemember_object_handlers.free_obj = mapscript_labelcachemember_free_object;
+  mapscript_labelcachemember_object_handlers.offset   = XtOffsetOf(php_labelcachemember_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 
 static void mapscript_labelcachemember_object_destroy(void *object TSRMLS_DC)
 {
@@ -220,4 +281,3 @@ PHP_MINIT_FUNCTION(labelcachemember)
   return SUCCESS;
 }
 #endif
-

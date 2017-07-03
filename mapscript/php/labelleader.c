@@ -30,6 +30,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_labelleader;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_labelleader_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(labelleader___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -63,7 +66,7 @@ PHP_METHOD(labelLeaderObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_labelleader = (php_labelleader_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_labelleader = MAPSCRIPT_OBJ_P(php_labelleader_object, zobj);
 
   IF_GET_LONG("maxdistance", php_labelleader->labelleader->maxdistance)
   else IF_GET_LONG("gridstep", php_labelleader->labelleader->gridstep)
@@ -106,12 +109,62 @@ void mapscript_create_labelleader(labelLeaderObj *labelleader, parent_object par
 {
   php_labelleader_object * php_labelleader;
   object_init_ex(return_value, mapscript_ce_labelleader);
-  php_labelleader = (php_labelleader_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_labelleader = MAPSCRIPT_OBJ_P(php_labelleader_object, return_value);
   php_labelleader->labelleader = labelleader;
 
   php_labelleader->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
+
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_labelleader_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_labelleader_object *php_labelleader;
+
+  php_labelleader = ecalloc(1, sizeof(*php_labelleader) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_labelleader->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_labelleader->zobj, ce);
+
+  php_labelleader->zobj.handlers = &mapscript_labelleader_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_labelleader->parent);
+
+  return &php_labelleader->zobj;
+}
+
+static void mapscript_labelleader_free_object(zend_object *object)
+{
+  php_labelleader_object *php_labelleader;
+
+  php_labelleader = (php_labelleader_object *)((char *)object - XtOffsetOf(php_labelleader_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_labelleader->parent);
+
+  /* We don't need to free the labelLeaderObj */
+
+  zend_object_std_dtor(object); 
+}
+
+PHP_MINIT_FUNCTION(labelleader)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "labelLeaderObj", labelleader_functions);
+  mapscript_ce_labelleader = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_labelleader->create_object = mapscript_labelleader_create_object;
+  mapscript_ce_labelleader->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_labelleader_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_labelleader_object_handlers));
+  mapscript_labelleader_object_handlers.free_obj = mapscript_labelleader_free_object;
+  mapscript_labelleader_object_handlers.offset   = XtOffsetOf(php_labelleader_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 
 static void mapscript_labelleader_object_destroy(void *object TSRMLS_DC)
 {
@@ -154,3 +207,4 @@ PHP_MINIT_FUNCTION(labelleader)
 
   return SUCCESS;
 }
+#endif

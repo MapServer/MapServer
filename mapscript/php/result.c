@@ -30,6 +30,9 @@
  **********************************************************************/
 
 #include "php_mapscript.h"
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_result_object_handlers;
+#endif  
 
 zend_class_entry *mapscript_ce_result;
 
@@ -62,7 +65,7 @@ PHP_METHOD(resultObj, __construct)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_result = (php_result_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  php_result = MAPSCRIPT_OBJ_P(php_result_object, getThis());
 
   if ((php_result->result = resultObj_new()) == NULL) {
     mapscript_throw_exception("Unable to construct resultObj." TSRMLS_CC);
@@ -88,7 +91,7 @@ PHP_METHOD(resultObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_result = (php_result_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_result = MAPSCRIPT_OBJ_P(php_result_object, zobj);
 
   IF_GET_LONG("shapeindex", php_result->result->shapeindex)
   else IF_GET_LONG("tileindex", php_result->result->tileindex)
@@ -136,13 +139,62 @@ void mapscript_create_result(resultObj *result, parent_object parent,
 {
   php_result_object * php_result;
   object_init_ex(return_value, mapscript_ce_result);
-  php_result = (php_result_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_result = MAPSCRIPT_OBJ_P(php_result_object, return_value);
   php_result->result = result;
 
   php_result->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_result_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_result_object *php_result;
+
+  php_result = ecalloc(1, sizeof(*php_result) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_result->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_result->zobj, ce);
+
+  php_result->zobj.handlers = &mapscript_result_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_result->parent);
+
+  return &php_result->zobj;
+}
+
+static void mapscript_result_free_object(zend_object *object)
+{
+  php_result_object *php_result;
+
+  php_result = (php_result_object *)((char *)object - XtOffsetOf(php_result_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_result->parent);
+
+  /* We don't need to free the resultObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(result)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "resultObj", result_functions);
+  mapscript_ce_result = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_result->create_object = mapscript_result_create_object;
+  mapscript_ce_result->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_result_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_result_object_handlers));
+  mapscript_result_object_handlers.free_obj = mapscript_result_free_object;
+  mapscript_result_object_handlers.offset   = XtOffsetOf(php_result_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_result_object_destroy(void *object TSRMLS_DC)
 {
   php_result_object *php_result = (php_result_object *)object;
@@ -184,3 +236,4 @@ PHP_MINIT_FUNCTION(result)
 
   return SUCCESS;
 }
+#endif
