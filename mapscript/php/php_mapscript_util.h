@@ -36,6 +36,8 @@
 #include "php_globals.h"
 #include "php_mapscript.h"
 
+#if PHP_VERSION_ID < 70000
+
 #if ZEND_MODULE_API_NO < 20010901
 #define TSRMLS_D  void
 #define TSRMLS_DC
@@ -141,9 +143,30 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
 #define MAPSCRIPT_FREE_OBJECT(zobj) \
     zend_hash_destroy(zobj->std.properties); \
     FREE_HASHTABLE(zobj->std.properties);
+#endif /* PHP_VERSION_ID < 70000 */
 
+#if PHP_VERSION_ID >= 70000
+#define MAPSCRIPT_ADDREF(zv) if(!(Z_ISUNDEF(zv))) GC_REFCOUNT(Z_COUNTED(zv))++;
+#define MAPSCRIPT_ADDREF_P(zv) if(!(Z_ISUNDEF(*zv))) GC_REFCOUNT(Z_COUNTED_P(zv))++;
+#else
 #define MAPSCRIPT_ADDREF(zobj) if (zobj) Z_ADDREF_P(zobj)
+#define MAPSCRIPT_ADDREF_P(zv) MAPSCRIPT_ADDREF(zv)
+#endif
 
+#if PHP_VERSION_ID >= 70000
+#ifndef _zval_dtor_func_for_ptr
+//use _zval_dtor_func in PHP7.1 instead
+#define _zval_dtor_func_for_ptr _zval_dtor_func
+#endif
+#define MAPSCRIPT_DELREF(zv)                            \
+    if (!(Z_ISUNDEF(zv)))                               \
+    {                                                   \
+		zend_refcounted *_gc = Z_COUNTED_P(&zv);        \
+		if(--GC_REFCOUNT(_gc) == 0)                     \
+            _zval_dtor_func_for_ptr(_gc);               \
+        ZVAL_UNDEF(&zv);                                \
+    }
+#else
 #define MAPSCRIPT_DELREF(zobj) \
     if (zobj) \
     { \
@@ -155,11 +178,25 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         } \
         zobj = NULL; \
     }
+#endif
 
+#if PHP_VERSION_ID >= 70000
+#define MAPSCRIPT_FREE_PARENT(parent) \
+    if (parent.child_ptr) \
+        ZVAL_UNDEF(parent.child_ptr); \
+    MAPSCRIPT_DELREF(parent.val);
+
+#define MAPSCRIPT_MAKE_PARENT(zobj, ptr) \
+    if(zobj == NULL) \
+        ZVAL_UNDEF(&parent.val); \
+	else \
+	    ZVAL_COPY_VALUE(&parent.val, zobj); \
+    parent.child_ptr = ptr;
 
 #define MAPSCRIPT_INIT_PARENT(parent) \
-    parent.val = NULL; \
+    ZVAL_UNDEF(&parent.val); \
     parent.child_ptr = NULL;
+#else
 
 #define MAPSCRIPT_FREE_PARENT(parent) \
     if (parent.child_ptr) \
@@ -170,11 +207,34 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
     parent.val = zobj; \
     parent.child_ptr = ptr;
 
+#define MAPSCRIPT_INIT_PARENT(parent) \
+    parent.val = NULL; \
+    parent.child_ptr = NULL;
+#endif
+
+#if PHP_VERSION_ID >= 70000
+
+#define MAPSCRIPT_CALL_METHOD_1(zobj, function_name, retval, arg1) \
+    zend_call_method_with_1_params(&zobj, Z_OBJCE(zobj), NULL, function_name, &retval, arg1);
+
+#define MAPSCRIPT_CALL_METHOD_2(zobj, function_name, retval, arg1, arg2) \
+    zend_call_method_with_2_params(&zobj, Z_OBJCE(zobj), NULL, function_name, &retval, arg1, arg2);
+
+#define MAPSCRIPT_CALL_METHOD_2_P(zobj, function_name, retval, arg1, arg2) \
+    zend_call_method_with_2_params(zobj, Z_OBJCE_P(zobj), NULL, function_name, &retval, arg1, arg2);
+
+#else
+
 #define MAPSCRIPT_CALL_METHOD_1(zobj, function_name, retval, arg1) \
     zend_call_method_with_1_params(&zobj, Z_OBJCE_P(zobj), NULL, function_name, &retval, arg1);
 
 #define MAPSCRIPT_CALL_METHOD_2(zobj, function_name, retval, arg1, arg2) \
     zend_call_method_with_2_params(&zobj, Z_OBJCE_P(zobj), NULL, function_name, &retval, arg1, arg2);
+
+#define MAPSCRIPT_CALL_METHOD_2_P(zobj, function_name, retval, arg1, arg2) \
+    MAPSCRIPT_CALL_METHOD_2(zobj, function_name, retval, arg1, arg2) 
+
+#endif /* PHP_VERSION_ID */
 
 #define STRING_EQUAL(string1, string2) \
     strcmp(string1, string2) == 0
@@ -183,7 +243,7 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
 #define IF_GET_STRING(property_name, value)  \
     if (strcmp(property, property_name)==0) \
     { \
-        RETVAL_STRING( (value ? value:"") , 1);    \
+        MAPSCRIPT_RETVAL_STRING( (value ? value:"") , 1);    \
     } \
  
 #define IF_GET_LONG(property_name, value)  \
@@ -198,6 +258,17 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         RETVAL_DOUBLE(value); \
     } \
  
+#if PHP_VERSION_ID >= 70000
+#define IF_GET_OBJECT(property_name, mapscript_ce, php_object_storage, internal_object) \
+    if (strcmp(property, property_name)==0)  \
+    {   \
+        if (Z_ISUNDEF(php_object_storage)) {                             \
+            mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
+                                   &php_object_storage TSRMLS_CC); \
+        }                                                               \
+        RETURN_ZVAL(&php_object_storage, 1, 0);                          \
+    }
+#else
 #define IF_GET_OBJECT(property_name, mapscript_ce, php_object_storage, internal_object) \
     if (strcmp(property, property_name)==0)  \
     {   \
@@ -207,12 +278,21 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         }                                                               \
         RETURN_ZVAL(php_object_storage, 1, 0);                          \
     }
+#endif
 
+#if PHP_VERSION_ID >= 70000
 #define CHECK_OBJECT(mapscript_ce, php_object_storage, internal_object) \
-    if (!php_object_storage) {                                          \
+    if (Z_ISUNDEF(php_object_storage)) {                             \
         mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
                            &php_object_storage TSRMLS_CC); \
     }
+#else
+#define CHECK_OBJECT(mapscript_ce, php_object_storage, internal_object) \
+    if (!php_object_storage) {                             \
+        mapscript_fetch_object(mapscript_ce, zobj, NULL, (void*)internal_object, \
+                           &php_object_storage TSRMLS_CC); \
+    }
+#endif
 
 /* helpers for setters */
 #define IF_SET_STRING(property_name, internal, value)        \
@@ -257,10 +337,11 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         internal = Z_LVAL_P(value);             \
     }
 
-
+#if PHP_VERSION_ID < 70000
 zend_object_value mapscript_object_new(zend_object *zobj,
                                        zend_class_entry *ce,
                                        void (*zend_objects_free_object) TSRMLS_DC);
+#endif /* PHP_VERSION_ID < 70000 */
 
 int mapscript_extract_associative_array(HashTable *php, char **array);
 

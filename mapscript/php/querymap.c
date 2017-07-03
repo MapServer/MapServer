@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_querymap;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_querymap_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(querymap___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -69,7 +72,7 @@ PHP_METHOD(queryMapObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_querymap = MAPSCRIPT_OBJ_P(php_querymap_object, zobj);
 
   IF_GET_LONG("width", php_querymap->querymap->width)
   else IF_GET_LONG("height", php_querymap->querymap->height)
@@ -97,7 +100,7 @@ PHP_METHOD(queryMapObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_querymap = MAPSCRIPT_OBJ_P(php_querymap_object, zobj);
 
   IF_SET_LONG("width", php_querymap->querymap->width, value)
   else IF_SET_LONG("height", php_querymap->querymap->height, value)
@@ -128,7 +131,7 @@ PHP_METHOD(queryMapObj, updateFromString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_querymap = MAPSCRIPT_OBJ_P(php_querymap_object, zobj);
 
   status =  queryMapObj_updateFromString(php_querymap->querymap, snippet);
 
@@ -156,14 +159,14 @@ PHP_METHOD(queryMapObj, convertToString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_querymap = MAPSCRIPT_OBJ_P(php_querymap_object, zobj);
 
   value =  queryMapObj_convertToString(php_querymap->querymap);
 
   if (value == NULL)
-    RETURN_STRING("", 1);
+    MAPSCRIPT_RETURN_STRING("", 1);
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -182,7 +185,7 @@ PHP_METHOD(queryMapObj, free)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_querymap = MAPSCRIPT_OBJ_P(php_querymap_object, zobj);
 
   MAPSCRIPT_DELREF(php_querymap->color);
 }
@@ -204,7 +207,7 @@ void mapscript_create_querymap(queryMapObj *querymap, parent_object parent, zval
 {
   php_querymap_object * php_querymap;
   object_init_ex(return_value, mapscript_ce_querymap);
-  php_querymap = (php_querymap_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_querymap = MAPSCRIPT_OBJ_P(php_querymap_object, return_value);
   php_querymap->querymap = querymap;
 
   php_querymap->parent = parent;
@@ -212,6 +215,59 @@ void mapscript_create_querymap(queryMapObj *querymap, parent_object parent, zval
 
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_querymap_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_querymap_object *php_querymap;
+
+  php_querymap = ecalloc(1, sizeof(*php_querymap) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_querymap->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_querymap->zobj, ce);
+
+  php_querymap->zobj.handlers = &mapscript_querymap_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_querymap->parent);
+  ZVAL_UNDEF(&php_querymap->color);
+
+  return &php_querymap->zobj;
+}
+
+static void mapscript_querymap_free_object(zend_object *object)
+{
+  php_querymap_object *php_querymap;
+
+  php_querymap = (php_querymap_object *)((char *)object - XtOffsetOf(php_querymap_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_querymap->parent);
+
+  MAPSCRIPT_FREE_PARENT(php_querymap->parent);
+  MAPSCRIPT_DELREF(php_querymap->color);
+
+  /* We don't need to free the queryMapObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(querymap)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "queryMapObj", querymap_functions);
+  mapscript_ce_querymap = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_querymap->create_object = mapscript_querymap_create_object;
+  mapscript_ce_querymap->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_querymap_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_querymap_object_handlers));
+  mapscript_querymap_object_handlers.free_obj = mapscript_querymap_free_object;
+  mapscript_querymap_object_handlers.offset   = XtOffsetOf(php_querymap_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_querymap_object_destroy(void *object TSRMLS_DC)
 {
   php_querymap_object *php_querymap = (php_querymap_object *)object;
@@ -255,3 +311,4 @@ PHP_MINIT_FUNCTION(querymap)
 
   return SUCCESS;
 }
+#endif
