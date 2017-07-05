@@ -159,8 +159,8 @@ IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 # ----------------------------------------------------------------------
 # If you want to use shape Z and M parameter this option must be set.
 # It's OFF by default.
-#USE_POINT_Z_M=-DUSE_POINT_Z_M
-USE_POINT_Z_M=
+USE_POINT_Z_M=-DUSE_POINT_Z_M
+#USE_POINT_Z_M=
 
 
 ########################################################################
