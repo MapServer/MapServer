@@ -112,7 +112,7 @@ WEB
   "wms_contactorganization" "MapServer"                                         #responsible organisation
   "wms_contactposition" "owner"                                                 #responsible organisation, value according "INSPIRE Metadata Regulation" (part D6)
   "wms_rootlayer_title.eng" "Transport networks: Road Area"
-  "wms_rootlayer_title.ger" "Verkehrsnetze: Straﬂenfl‰che"
+  "wms_rootlayer_title.ger" "Verkehrsnetze: Stra√üenfl√§che"
   "wms_rootlayer_abstract" "myroadarealayerabstract"                            #to test fallback
   "wms_rootlayer_abstract.ger" "myroadareaabstractger"
   "wms_rootlayer_keywordlist" "myroadareakeyword1,myroadareakeyword2"
@@ -140,7 +140,7 @@ LAYER
  DATA "road_%language%"
  METADATA
   "wms_title.eng" "Transport networks: Road Link"
-  "wms_title.ger" "Verkehrsnetze: Straﬂensegment"
+  "wms_title.ger" "Verkehrsnetze: Stra√üensegment"
   "wms_abstract" "myroadlinklayerabstract"                                      #to test fallback
   "wms_abstract.ger" "myroadlinklayerabstractger"
   "wms_keywordlist" "myroadlinklayerkeyword1,myroadlinklayerkeyword2"

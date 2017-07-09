@@ -108,7 +108,7 @@
   </inspire_vs:ExtendedCapabilities>
   <Layer>
     <Name>TN.RoadTransportNetwork.RoadArea</Name>
-    <Title>Verkehrsnetze: Straßenfläche</Title>
+    <Title>Verkehrsnetze: StraÃŸenflÃ¤che</Title>
     <Abstract>myroadareaabstractger</Abstract>
     <KeywordList>
         <Keyword>myroadareakeyword1</Keyword>
@@ -139,7 +139,7 @@
     </Style>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>TN.RoadTransportNetwork.RoadLink</Name>
-        <Title>Verkehrsnetze: Straßensegment</Title>
+        <Title>Verkehrsnetze: StraÃŸensegment</Title>
         <Abstract>myroadlinklayerabstractger</Abstract>
         <KeywordList>
             <Keyword>myroadlinklayerkeyword1</Keyword>
