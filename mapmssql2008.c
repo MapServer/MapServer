@@ -40,6 +40,10 @@
 #include "maptime.h"
 #include "mapows.h"
 
+#ifndef FLT_MAX
+#define FLT_MAX 25000000.0
+#endif
+
 #ifdef USE_MSSQL2008
 
 /*#include <windows.h>*/
