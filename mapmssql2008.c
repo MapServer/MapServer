@@ -42,7 +42,7 @@
 
 #ifdef USE_MSSQL2008
 
-#include <windows.h>
+/*#include <windows.h>*/
 #include <sql.h>
 #include <sqlext.h>
 #include <sqltypes.h>
