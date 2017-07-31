@@ -115,7 +115,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"kmz","KMZ","application/vnd.google-earth.kmz"},
 #endif
 #ifdef USE_PBF
-  {"mvt","MVT","application/x-protobuf"},
+  {"mvt","MVT","application/vnd.mapbox-vector-tile"},
 #endif
   {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
