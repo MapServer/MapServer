@@ -135,37 +135,37 @@ static int mvtClipShape(shapeObj *shape, int layer_type, int buffer, int mvt_lay
 
 static void freeMvtFeature( VectorTile__Tile__Feature *mvt_feature ) {
   if(mvt_feature->tags)
-    free(mvt_feature->tags);
+    msFree(mvt_feature->tags);
   if(mvt_feature->geometry)
-    free(mvt_feature->geometry);
+    msFree(mvt_feature->geometry);
 }
 
 static void freeMvtValue( VectorTile__Tile__Value *mvt_value ) {
   if(mvt_value->string_value)
-    free(mvt_value->string_value);
+    msFree(mvt_value->string_value);
 }
 
 static void freeMvtLayer( VectorTile__Tile__Layer *mvt_layer ) {
   int i;
   if(mvt_layer->keys) {
     for(i=0;i<mvt_layer->n_keys; i++) {
-      free(mvt_layer->keys[i]);
+      msFree(mvt_layer->keys[i]);
     }
-    free(mvt_layer->keys);
+    msFree(mvt_layer->keys);
   }
   if(mvt_layer->values) {
     for(i=0;i<mvt_layer->n_values; i++) {
         freeMvtValue(mvt_layer->values[i]);
-        free(mvt_layer->values[i]);
+        msFree(mvt_layer->values[i]);
     }
-    free(mvt_layer->values);
+    msFree(mvt_layer->values);
   }
   if(mvt_layer->features) {
     for(i=0;i<mvt_layer->n_features; i++) {
         freeMvtFeature(mvt_layer->features[i]);
-        free(mvt_layer->features[i]);
+        msFree(mvt_layer->features[i]);
     }
-    free(mvt_layer->features);
+    msFree(mvt_layer->features);
   }
 }
 
@@ -307,9 +307,9 @@ static void freeMvtTile( VectorTile__Tile *mvt_tile ) {
   int iLayer;
   for(iLayer=0;iLayer<mvt_tile->n_layers;iLayer++) {
     freeMvtLayer(mvt_tile->layers[iLayer]);
-    free(mvt_tile->layers[iLayer]);
+    msFree(mvt_tile->layers[iLayer]);
   }
-  free(mvt_tile->layers);
+  msFree(mvt_tile->layers);
 }
 
 int msMVTWriteTile( mapObj *map, int sendheaders ) {
@@ -457,9 +457,9 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
     msLayerClose(layer);
     msGMLFreeItems(item_list);
     UT_HASH_ITER(hh, value_lookup_cache.cache, cur_value_lookup, tmp_value_lookup) {
-      free(cur_value_lookup->value);
+      msFree(cur_value_lookup->value);
       UT_HASH_DEL(value_lookup_cache.cache,cur_value_lookup);
-      free(cur_value_lookup);
+      msFree(cur_value_lookup);
     }
     if(retcode != MS_SUCCESS) goto cleanup;
   } /* next layer */
