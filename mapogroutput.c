@@ -767,6 +767,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Create a subdirectory to handle this request.                   */
   /* -------------------------------------------------------------------- */
   if( !EQUAL(storage,"stream") ) {
+    const char* dir_to_create;
     if (strlen(base_dir) > 0)
       request_dir = msTmpFile(map, NULL, base_dir, "" );
     else
@@ -775,11 +776,19 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( request_dir[strlen(request_dir)-1] == '.' )
       request_dir[strlen(request_dir)-1] = '\0';
 
-    if( VSIMkdir( request_dir, 0777 ) != 0 ) {
+    dir_to_create = request_dir;
+    /* Workaround issue in GDAL versions released at this time :
+     * GDAL issue fixed per https://trac.osgeo.org/gdal/ticket/6991 */
+    if( EQUAL(storage,"memory") && EQUAL(format->driver+4, "ESRI Shapefile") )
+    {
+        dir_to_create = base_dir;
+    }
+
+    if( VSIMkdir( dir_to_create, 0777 ) != 0 ) {
       msSetError( MS_MISCERR,
                   "Attempt to create directory '%s' failed.",
                   "msOGRWriteFromQuery()",
-                  request_dir );
+                  dir_to_create );
       return MS_FAILURE;
     }
   } else
