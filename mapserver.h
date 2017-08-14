@@ -1123,6 +1123,16 @@ extern "C" {
 
     labelLeaderObj *leader;
   };
+  
+#ifdef SWIG
+#ifdef	__cplusplus
+extern "C" {
+#endif
+typedef struct labelObj labelObj;
+#ifdef	__cplusplus
+}
+#endif
+#endif
 
 #ifndef SWIG
   /* lightweight structure containing information to render a labelObj */
