@@ -2615,7 +2615,11 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       map->query.mode = MS_QUERY_MULTIPLE;
       map->query.rect = bbox;
 
-      if(map->outputformat && MS_DRIVER_MVT(map->outputformat)) {
+      /*
+        Retaining this block of code in case we want to setup a rendering path through
+        the query code at some point.
+      */
+      /* if(map->outputformat && MS_DRIVER_MVT(map->outputformat)) {
         const char *mvt_buffer = msGetOutputFormatOption(map->outputformat, "EDGE_BUFFER", "10");
         int buffer = MS_ABS(atoi(mvt_buffer));
         double res = (bbox.maxx - bbox.minx)/(double)map->width;
@@ -2627,8 +2631,8 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         map->width += buffer*2;
         map->height += buffer*2;
         msCalculateScale(bbox,map->units,map->width,map->height, map->resolution, &map->scaledenom);
-      map->query.rect = bbox;
-      }
+        map->query.rect = bbox;
+      } */
 
       if(msQueryByRect(map) != MS_SUCCESS) {
         errorObj   *ms_error;
