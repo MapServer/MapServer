@@ -418,6 +418,30 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 }
 
 /*
+** Returns the number of shapes that match the potential filter and extent.
+ * rectProjection is the projection in which rect is expressed, or can be NULL if
+ * rect should be considered in the layer projection.
+ * This should be equivalent to calling msLayerWhichShapes() and counting the
+ * number of shapes returned by msLayerNextShape(), honouring layer->maxfeatures
+ * limitation if layer->maxfeatures>=0, and honouring layer->startindex if
+ * layer->startindex >= 1 and paging is enabled.
+ * Returns -1 in case of failure.
+ */
+int msLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+  int rv;
+
+  if( ! layer->vtable) {
+    rv = msInitializeVirtualTable(layer);
+    if(rv != MS_SUCCESS)
+      return -1;
+  }
+
+  return layer->vtable->LayerGetShapeCount(layer, rect, rectProjection);
+}
+
+
+/*
 ** Closes resources used by a particular layer.
 */
 void msLayerClose(layerObj *layer)
@@ -1522,6 +1546,83 @@ int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   return MS_FAILURE;
 }
 
+int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+  int status;
+  shapeObj shape, searchshape;
+  int nShapeCount = 0;
+  rectObj searchrect = rect;
+
+  msInitShape(&searchshape);
+  msRectToPolygon(searchrect, &searchshape);
+
+#ifdef USE_PROJ
+  if( rectProjection != NULL ) 
+  {
+    if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
+      msProjectRect(rectProjection, &(layer->projection), &searchrect); /* project the searchrect to source coords */
+    else
+      layer->project = MS_FALSE;
+  }
+#endif
+
+  status = msLayerWhichShapes(layer, searchrect, MS_TRUE) ;
+  if( status == MS_FAILURE )
+  {
+    msFreeShape(&searchshape);
+    return -1;
+  }
+  else if( status == MS_DONE )
+  {
+    msFreeShape(&searchshape);
+    return 0;
+  }
+
+  msInitShape(&shape);
+  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS)
+  {
+    if( rectProjection != NULL ) 
+    {
+#ifdef USE_PROJ
+      if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
+        msProjectShape(&(layer->projection), rectProjection, &shape);
+      else
+        layer->project = MS_FALSE;
+#endif
+
+      if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */
+        status = MS_TRUE;
+      } else {
+        switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
+          case MS_SHAPE_POINT:
+            status = msIntersectMultipointPolygon(&shape, &searchshape);
+            break;
+          case MS_SHAPE_LINE:
+            status = msIntersectPolylinePolygon(&shape, &searchshape);
+            break;
+          case MS_SHAPE_POLYGON:
+            status = msIntersectPolygons(&shape, &searchshape);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    else
+      status = MS_TRUE;
+
+    if( status == MS_TRUE )
+      nShapeCount++ ;
+    msFreeShape(&shape);
+    if(layer->maxfeatures > 0 && layer->maxfeatures == nShapeCount)
+      break;
+  }
+
+  msFreeShape(&searchshape);
+
+  return nShapeCount;
+}
+
 int LayerDefaultClose(layerObj *layer)
 {
   return MS_SUCCESS;
@@ -1825,6 +1926,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerNextShape = LayerDefaultNextShape;
   /* vtable->LayerResultsGetShape = LayerDefaultResultsGetShape; */
   vtable->LayerGetShape = LayerDefaultGetShape;
+  vtable->LayerGetShapeCount = LayerDefaultGetShapeCount;
   vtable->LayerClose = LayerDefaultClose;
   vtable->LayerGetItems = LayerDefaultGetItems;
   vtable->LayerGetExtent = LayerDefaultGetExtent;
@@ -2131,6 +2233,7 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
   layer->vtable->LayerWhichShapes = msINLINELayerWhichShapes;
   layer->vtable->LayerNextShape = msINLINELayerNextShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerGetShape = msINLINELayerGetShape;
   layer->vtable->LayerClose = msINLINELayerClose;
   /* layer->vtable->LayerGetItems, use default */

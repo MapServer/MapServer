@@ -3048,6 +3048,7 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
   layer->vtable->LayerNextShape = msMSSQL2008LayerNextShape;
   layer->vtable->LayerGetShape = msMSSQL2008LayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
 
   layer->vtable->LayerClose = msMSSQL2008LayerClose;
 

@@ -12,6 +12,13 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.2 release (FUTURE)
+--------------------
+
+- Reposition follow labels on maxoverlapangle colisions (RFC112)
+
+- Implement chainable compositing filters (RFC113)
+
 7.0.0 release (2015/07/24)
 --------------------------
 

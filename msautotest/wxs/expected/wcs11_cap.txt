@@ -119,6 +119,8 @@ Content-Type: text/xml; charset=UTF-8
           <ows:Value>image/x-aaigrid</ows:Value>
           <ows:Value>image/png</ows:Value>
           <ows:Value>image/jpeg</ows:Value>
+          <ows:Value>image/vnd.jpeg-png</ows:Value>
+          <ows:Value>image/vnd.jpeg-png8</ows:Value>
         </ows:AllowedValues>
       </ows:Parameter>
       <ows:Parameter name="store">

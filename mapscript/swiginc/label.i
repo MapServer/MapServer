@@ -94,7 +94,7 @@
       self->numbindings--;
     }
 
-    self->bindings[binding].item = strdup(item); 
+    self->bindings[binding].item = msStrdup(item); 
     self->numbindings++;
 
     return MS_SUCCESS;

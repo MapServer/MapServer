@@ -124,33 +124,33 @@
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="expressionType">
-          <xs:simpleContent>
-	    <xs:extension base="xs:string">
-	      <xs:attribute name="type" default="CONSTANT">
-                <xs:simpleType>
-	          <xs:restriction base="xs:string">
-	            <xs:enumeration value="CONSTANT"/>
-	            <xs:enumeration value="REGEX"/>
-                    <xs:enumeration value="MSEXPR"/>
-		  </xs:restriction>
-                </xs:simpleType>
-              </xs:attribute>
-	    </xs:extension>
-	  </xs:simpleContent>
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="type" default="CONSTANT">
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:enumeration value="CONSTANT"/>
+							<xs:enumeration value="REGEX"/>
+							<xs:enumeration value="MSEXPR"/>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:attribute>
+			</xs:extension>
+		</xs:simpleContent>
 	</xs:complexType>
 	<xs:complexType name="symbolType">
-          <xs:simpleContent>
-	    <xs:extension base="xs:string">
-	      <xs:attribute name="type" default="ID">
-                <xs:simpleType>
-	          <xs:restriction base="xs:string">
-	            <xs:enumeration value="ID"/>
-                    <xs:enumeration value="NAME"/>
-		  </xs:restriction>
-                </xs:simpleType>
-              </xs:attribute>
-	    </xs:extension>
-	  </xs:simpleContent>
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="type" default="ID">
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:enumeration value="ID"/>
+							<xs:enumeration value="NAME"/>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:attribute>
+			</xs:extension>
+		</xs:simpleContent>
 	</xs:complexType>
 	<!-- Definition of Mapfile elements -->
 	<!-- QUERYMAP Definition -->
@@ -234,13 +234,13 @@
 	<!-- SCALEBAR Definition -->
 	<xs:complexType name="ScaleBar">
 		<xs:sequence>
-			<xs:element name="align" type="ms:alignEnum"/>
+			<xs:element name="align" type="ms:alignEnum" minOccurs="0" default="CENTER"/>
 			<xs:element name="backgroundColor" type="ms:rgbColorType" minOccurs="0"/>
 			<xs:element name="color" type="ms:rgbColorType" minOccurs="0"/>
 			<xs:element name="imageColor" type="ms:rgbColorType" minOccurs="0"/>
 			<xs:element name="intervals" type="xs:positiveInteger" default="4" minOccurs="0"/>
 			<xs:element name="Label" type="ms:Label" minOccurs="0"/>
-			<xs:element name="outlineColor" type="ms:rgbColorType"/>
+			<xs:element name="outlineColor" type="ms:rgbColorType" minOccurs="0"/>
 			<xs:element name="position" type="ms:positionEnum" default="LR" minOccurs="0"/>
 			<xs:element name="postLabelCache" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
 			<xs:element name="size" type="ms:sizeType" minOccurs="0"/>
@@ -285,6 +285,7 @@
 			<xs:element name="force" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
 			<xs:element name="maxLength" type="xs:integer" default="0" minOccurs="0"/>
 			<xs:element name="maxOverlapAngle" type="xs:float" minOccurs="0"/>
+			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:integer" default="256" minOccurs="0"/>
 			<xs:element name="minDistance" type="xs:integer" minOccurs="0"/>
 			<xs:element name="minFeatureSize" minOccurs="0">
@@ -298,13 +299,14 @@
 					</xs:union>
 				</xs:simpleType>
 			</xs:element>
+			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minSize" type="xs:integer" default="4" minOccurs="0"/>
 			<xs:element name="offset" type="ms:sizeType" minOccurs="0"/>
 			<xs:choice minOccurs="0">
 				<xs:element name="outlineColor" type="ms:rgbColorType"/>
 				<xs:element name="outlineColorAttribute" type="ms:attributeType"/>
 			</xs:choice>
-			<xs:element name="outlineWidth" type="xs:integer" default="1" minOccurs="0"/>
+			<xs:element name="outlineWidth" type="xs:double" default="1" minOccurs="0"/>
 			<xs:element name="partials" type="ms:booleanEnum" minOccurs="0"/>
 			<xs:element name="position" minOccurs="0">
 				<xs:simpleType>
@@ -347,11 +349,11 @@
 					</xs:union>
 				</xs:simpleType>
 			</xs:element>
-                        <xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
-                        <xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>                        
+			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
+			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
-		        <xs:element name="text" type="xs:string" minOccurs="0"/>                
-		        <xs:element name="wrap" type="xs:string" minOccurs="0"/>
+			<xs:element name="text" type="xs:string" minOccurs="0"/>
+			<xs:element name="wrap" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="type" use="required">
 			<xs:simpleType>
@@ -362,14 +364,14 @@
 			</xs:simpleType>
 		</xs:attribute>
 	</xs:complexType>
-    <!-- LABELLEADER Definition -->
-    <xs:complexType name="LabelLeader">
-        <xs:sequence>
-            <xs:element name="gridstep" type="xs:positiveInteger" minOccurs="0"/>
-            <xs:element name="maxdistance" type="xs:positiveInteger" minOccurs="0"/>
-            <xs:element name="Style"  type="ms:Style" minOccurs="0" maxOccurs="unbounded" />
-        </xs:sequence>
-    </xs:complexType>
+	<!-- LABELLEADER Definition -->
+	<xs:complexType name="LabelLeader">
+		<xs:sequence>
+			<xs:element name="gridstep" type="xs:positiveInteger" minOccurs="0"/>
+			<xs:element name="maxdistance" type="xs:positiveInteger" minOccurs="0"/>
+			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
 	<!-- STYLE Definition -->
 	<xs:complexType name="Style">
 		<xs:sequence>
@@ -403,7 +405,7 @@
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
-            <xs:element name="initialGap" type="xs:double" minOccurs="0"/>
+			<xs:element name="initialGap" type="xs:double" minOccurs="0"/>
 			<xs:element name="lineCap" default="BUTT" minOccurs="0">
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
@@ -411,7 +413,7 @@
 						<xs:enumeration value="ROUND"/>
 						<xs:enumeration value="SQUARE"/>
 						<xs:enumeration value="TRIANGLE"/>
-				                <xs:enumeration value="SVG"/>
+						<xs:enumeration value="SVG"/>
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
@@ -425,8 +427,10 @@
 				</xs:simpleType>
 			</xs:element>
 			<xs:element name="lineJoinMaxSize" type="xs:integer" default="3" minOccurs="0"/>
+			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:float" default="500" minOccurs="0"/>
 			<xs:element name="maxWidth" type="xs:float" default="32" minOccurs="0"/>
+			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minSize" type="xs:float" default="0" minOccurs="0"/>
 			<xs:element name="minWidth" type="xs:float" default="0" minOccurs="0"/>
 			<xs:element name="offset" type="ms:sizeType" minOccurs="0"/>
@@ -440,11 +444,12 @@
 					<xs:list itemType="xs:float"/>
 				</xs:simpleType>
 			</xs:element>
-            <xs:element name="polarOffset" minOccurs="0">
-                <xs:simpleType>
-                    <xs:union memberTypes="xs:positiveInteger ms:attributeType xs:positiveInteger ms:attributeType"/>
-                </xs:simpleType>
-            </xs:element>
+			<xs:element name="polarOffset" minOccurs="0">
+				<xs:simpleType>
+					<xs:union
+						memberTypes="xs:positiveInteger ms:attributeType xs:positiveInteger ms:attributeType"/>
+				</xs:simpleType>
+			</xs:element>
 			<xs:element name="size" default="1" minOccurs="0">
 				<xs:simpleType>
 					<xs:union memberTypes="xs:double ms:attributeType"/>
@@ -458,7 +463,7 @@
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
-	<!--  CLASS Definition -->
+	<!-- CLASS Definition -->
 	<xs:complexType name="Class">
 		<xs:sequence>
 			<xs:element name="backgroundColor" type="ms:rgbColorType" minOccurs="0"/>
@@ -468,10 +473,8 @@
 			<xs:element name="group" type="xs:string" minOccurs="0"/>
 			<xs:element name="keyImage" type="xs:string" minOccurs="0"/>
 			<xs:element name="Label" type="ms:Label" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="LabelLeader" type="ms:LabelLeader" minOccurs="0"/>
-			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
+			<xs:element name="LabelLeader" type="ms:LabelLeader" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:integer" default="50" minOccurs="0"/>
-			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minSize" type="xs:integer" default="0" minOccurs="0"/>
 			<xs:choice minOccurs="0">
 				<xs:element name="outlineColor" type="ms:rgbColorType"/>
@@ -489,7 +492,7 @@
 	<!-- SYMBOL Definition -->
 	<xs:complexType name="Symbol">
 		<xs:sequence>
-            <xs:element name="anchorPoint" type="ms:pointType" minOccurs="0"/>
+			<xs:element name="anchorPoint" type="ms:pointType" minOccurs="0"/>
 			<xs:element name="antialias" type="ms:booleanEnum" minOccurs="0"/>
 			<xs:element name="character" type="xs:string" minOccurs="0"/>
 			<xs:element name="filled" type="ms:booleanEnum" minOccurs="0"/>
@@ -504,7 +507,7 @@
 			</xs:element>
 			<xs:element name="transparent" type="xs:integer" minOccurs="0"/>
 		</xs:sequence>
-	        <xs:attribute name="name" type="xs:string"/>
+		<xs:attribute name="name" type="xs:string"/>
 		<xs:attribute name="type" use="required">
 			<xs:simpleType>
 				<xs:restriction base="xs:string">
@@ -598,7 +601,7 @@
 		</xs:sequence>
 		<xs:attribute name="status" type="ms:stateEnum" default="OFF"/>
 	</xs:complexType>
-        <!-- CLUSTER Definition -->
+	<!-- CLUSTER Definition -->
 	<xs:complexType name="Cluster">
 		<xs:sequence>
 			<xs:element name="buffer" type="xs:float" minOccurs="0"/>

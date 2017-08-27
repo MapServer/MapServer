@@ -29,6 +29,8 @@ Content-Type: text/xml; charset=UTF-8
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
       <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
       <Format>image/tiff</Format>
@@ -85,6 +87,10 @@ Content-Type: text/xml; charset=UTF-8
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:43204"
                     minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows?request=GetMetadata&amp;layer=road2"/>
+        </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>

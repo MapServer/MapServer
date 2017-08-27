@@ -303,7 +303,7 @@
         map->query.type = MS_QUERY_BY_FILTER;
         map->query.mode = MS_QUERY_MULTIPLE;
 
-        map->query.filter.string = strdup(string);
+        map->query.filter.string = msStrdup(string);
         map->query.filter.type = MS_EXPRESSION;
         
         map->query.layer = self->index;

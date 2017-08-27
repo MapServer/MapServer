@@ -782,8 +782,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                   request_dir );
       return MS_FAILURE;
     }
-  } else
-    /* handled later */;
+  }
+  /*  else handled later */
 
   /* -------------------------------------------------------------------- */
   /*      Setup the full datasource name.                                 */
@@ -1079,13 +1079,21 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       /*
       ** Read the shape.
       */
-      status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
-      if(status != MS_SUCCESS) {
-        OGR_DS_Destroy( hDS );
-        msOGRCleanupDS( datasource_name );
-        msGMLFreeItems(item_list);
-        msFreeShape(&resultshape);
-        return status;
+      if( layer->resultcache->results[i].shape )
+      {
+          /* msDebug("Using cached shape %ld\n", layer->resultcache->results[i].shapeindex); */
+          msCopyShape(layer->resultcache->results[i].shape, &resultshape);
+      }
+      else
+      {
+        status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
+        if(status != MS_SUCCESS) {
+            OGR_DS_Destroy( hDS );
+            msOGRCleanupDS( datasource_name );
+            msGMLFreeItems(item_list);
+            msFreeShape(&resultshape);
+            return status;
+        }
       }
 
       /*

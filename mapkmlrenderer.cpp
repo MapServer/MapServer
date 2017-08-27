@@ -754,6 +754,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
 int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *symstyle)
 {
   pointObj p;
+  int status;
 
   imageObj *tmpImg = NULL;
 
@@ -770,8 +771,9 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
   p.z = 0.0;
 #endif
 
-  if(msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1) != MS_SUCCESS)
-    return MS_FAILURE;
+  status = msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
+  if( status != MS_SUCCESS )
+    return status;
 
   return msSaveImage(map, tmpImg, fileName);
 }

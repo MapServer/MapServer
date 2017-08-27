@@ -135,7 +135,7 @@ layer
         end
     end
     feature
-        points 50 250 end
+        points 20 270 end
         text "GianT#label"
     end
 end

@@ -1016,6 +1016,7 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
   struct svg_symbol_cache *svg_cache;
   symbolStyleObj pixstyle;
   symbolObj pixsymbol;
+  int status;
 
   if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
     return MS_FAILURE;
@@ -1083,10 +1084,9 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
   pixsymbol.pixmap_buffer = svg_cache->pixmap_buffer;
   pixsymbol.type = MS_SYMBOL_PIXMAP;
 
-  if(MS_SUCCESS != MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img,x,y,&pixsymbol,&pixstyle))
-    return MS_FAILURE;
+  status = MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img,x,y,&pixsymbol,&pixstyle);
   MS_IMAGE_RENDERER(img)->freeSymbol(&pixsymbol);
-  return MS_SUCCESS;
+  return status;
 #else
   msSetError(MS_MISCERR, "SVG Symbols requested but MapServer is not built with libsvgcairo",
              "renderSVGSymbolCairo()");
