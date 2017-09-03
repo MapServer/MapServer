@@ -45,7 +45,7 @@
 /*Need to specify this so that mapregex.h doesn't defined constants and
   doesn't #define away our ms_*/
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(__CYGWIN__) && _MSC_VER < 1900
 #define off_t  long
 #endif
 
