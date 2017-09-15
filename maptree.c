@@ -33,6 +33,18 @@
 
 #include <limits.h>
 
+#ifdef __BYTE_ORDER__
+/* GCC/clang predefined macro */
+#define bBigEndian (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#elif defined(_MSC_VER)
+/* MSVC doesn't support the C99 trick below, but all Microsoft
+   platforms are little-endian */
+#define bBigEndian false
+#else
+/* generic check */
+#define bBigEndian (((union{int in;char out;}){1}).out)
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      If the following is 0.5, nodes will be split in half.  If it    */
 /*      is 0.6 then each subnode will contain 60% of the parent         */
@@ -89,17 +101,6 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
 
   char    pabyBuf[16];
   int     i;
-  char    bBigEndian;
-
-  /* -------------------------------------------------------------------- */
-  /*  Establish the byte order on this machine.         */
-  /* -------------------------------------------------------------------- */
-  i = 1;
-  /* cppcheck-suppress knownConditionTrueFalse */
-  if( *((uchar *) &i) == 1 )
-    bBigEndian = MS_FALSE;
-  else
-    bBigEndian = MS_TRUE;
 
   /* -------------------------------------------------------------------- */
   /*  Initialize the info structure.              */

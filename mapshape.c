@@ -52,7 +52,17 @@
 
 #define ByteCopy( a, b, c )     memcpy( b, a, c )
 
-static int      bBigEndian;
+#ifdef __BYTE_ORDER__
+/* GCC/clang predefined macro */
+#define bBigEndian (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#elif defined(_MSC_VER)
+/* MSVC doesn't support the C99 trick below, but all Microsoft
+   platforms are little-endian */
+#define bBigEndian false
+#else
+/* generic check */
+#define bBigEndian (((union{int in;char out;}){1}).out)
+#endif
 
 /* SHX reading */
 static int msSHXLoadAll( SHPHandle psSHP );
@@ -214,16 +224,6 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     pszAccess = "r+b";
   else
     pszAccess = "rb";
-
-  /* -------------------------------------------------------------------- */
-  /*  Establish the byte order on this machine.         */
-  /* -------------------------------------------------------------------- */
-  i = 1;
-  /* cppcheck-suppress knownConditionTrueFalse */
-  if( *((uchar *) &i) == 1 )
-    bBigEndian = MS_FALSE;
-  else
-    bBigEndian = MS_TRUE;
 
   /* -------------------------------------------------------------------- */
   /*  Initialize the info structure.              */
@@ -463,16 +463,6 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   uchar abyHeader[100];
   ms_int32 i32;
   double dValue;
-
-  /* -------------------------------------------------------------------- */
-  /*      Establish the byte order on this system.                        */
-  /* -------------------------------------------------------------------- */
-  i = 1;
-  /* cppcheck-suppress knownConditionTrueFalse */
-  if( *((uchar *) &i) == 1 )
-    bBigEndian = MS_FALSE;
-  else
-    bBigEndian = MS_TRUE;
 
   /* -------------------------------------------------------------------- */
   /*  Compute the base (layer) name.  If there is any extension       */
