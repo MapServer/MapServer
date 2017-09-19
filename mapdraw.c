@@ -2680,28 +2680,60 @@ int computeMarkerBounds(mapObj *map, pointObj *annopoint, textSymbolObj *ts, lab
     return MS_TRUE;
 }
 
+
 /* check that the current entry does not fall close to a label with identical text, if configured so.
  * Currently only checks the first label/text */
 
-int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc) {
-  double sqmindistance;
+int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc)
+{
   int i;
+  pointObj p;
   textSymbolObj *s; /* shortcut */
-  if(lc->numtextsymbols == 0) return MS_FALSE; /* no label with text */
+  if (lc->numtextsymbols == 0)
+    return MS_FALSE; /* no label with text */
   s = lc->textsymbols[0];
-  if(!s->annotext || s->label->mindistance <= 0.0 || s->label->force == MS_TRUE) return MS_FALSE; /*  min distance is not checked */
-  sqmindistance = s->label->mindistance * s->label->mindistance * s->resolutionfactor * s->resolutionfactor;
-  for(i=0;i<map->labelcache.num_rendered_members;i++) {
+
+  if (!s->annotext || s->label->mindistance <= 0.0 || s->label->force == MS_TRUE)
+    return MS_FALSE; /*  min distance is not checked */
+
+  /* we buffer the label and check for intersection instead of calculating
+     the distance of two textpaths. we also buffer only the bbox of lc for 
+     faster computation (it is still compared to the full textpath
+     of the label cache members). 
+  */
+  rectObj buffered = lc->bbox;
+  buffered.minx -= s->label->mindistance * s->resolutionfactor;
+  buffered.miny -= s->label->mindistance * s->resolutionfactor;
+  buffered.maxx += s->label->mindistance * s->resolutionfactor;
+  buffered.maxy += s->label->mindistance * s->resolutionfactor;
+
+  for (i = 0; i < map->labelcache.num_rendered_members; i++) {
     labelCacheMemberObj *ilc = map->labelcache.rendered_text_symbols[i];
-    double sqdistance;
-    if(ilc->numtextsymbols == 0 || !ilc->textsymbols[0]->annotext) continue;
-    sqdistance = (lc->point.x - ilc->point.x)*(lc->point.x - ilc->point.x)+
-                 (lc->point.y - ilc->point.y)*(lc->point.y - ilc->point.y);
-    if(sqdistance < sqmindistance) {
-      if(!strcmp(s->annotext,ilc->textsymbols[0]->annotext)) {
+    if (ilc->numtextsymbols == 0 || !ilc->textsymbols[0]->annotext)
+       continue;
+
+    textSymbolObj *ts = ilc->textsymbols[0];
+    if (strcmp(s->annotext, ts->annotext) != 0) {
+      /* only check min distance against same label */
+      continue;
+    }
+
+    if (msPointInRect(&ilc->point, &buffered) == MS_TRUE) {
+      return MS_TRUE;
+    }
+
+    if(ts->textpath && ts->textpath->absolute) {
+      if (intersectLabelPolygons(ts->textpath->bounds.poly, &ilc->bbox, NULL, &buffered) == MS_TRUE) {
         return MS_TRUE;
       }
+      continue;
     }
+
+
+    if (intersectLabelPolygons(NULL, &ilc->bbox, NULL, &buffered) == MS_TRUE) {
+        return MS_TRUE;
+    }
+
   }
   return MS_FALSE;
 }
@@ -2792,29 +2824,33 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
           layerPtr = (GET_LAYER(map, cachePtr->layerindex)); /* set a couple of other pointers, avoids nasty references */
           classPtr = (GET_CLASS(map, cachePtr->layerindex, cachePtr->classindex));
 
-          /* before going any futher (and maybe even computing label size for performance,
-           check that mindistance is respected */ 
-          if(cachePtr->numtextsymbols && cachePtr->textsymbols[0]->label->mindistance > 0.0 && cachePtr->textsymbols[0]->annotext) {
-            if(msCheckLabelMinDistance(map, cachePtr) == MS_TRUE) {
-              cachePtr->status = MS_DELETE;
-              MS_DEBUG(MS_DEBUGLEVEL_DEVDEBUG,map,
-                  "Skipping labelgroup %d \"%s\" in layer \"%s\": too close to an identical label (mindistance)\n",
-                  l, cachePtr->textsymbols[0]->annotext, layerPtr->name);
-              continue; /* move on to next entry, this one is too close to an already placed one */
-            }
-          }
           if(cachePtr->textsymbols[0]->textpath && cachePtr->textsymbols[0]->textpath->absolute) {
             /* we have an angle follow label */
+            cachePtr->bbox = cachePtr->textsymbols[0]->textpath->bounds.bbox;
+
+            /* before going any futher, check that mindistance is respected */
+            if (cachePtr->numtextsymbols && cachePtr->textsymbols[0]->label->mindistance > 0.0 && cachePtr->textsymbols[0]->annotext) {
+              if (msCheckLabelMinDistance(map, cachePtr) == MS_TRUE) {
+                cachePtr->status = MS_DELETE;
+                MS_DEBUG(MS_DEBUGLEVEL_DEVDEBUG, map,
+                          "Skipping labelgroup %d \"%s\" in layer \"%s\": too close to an identical label (mindistance)\n",
+                          l, cachePtr->textsymbols[0]->annotext, layerPtr->name);
+                continue; /* move on to next entry, this one is too close to an already placed one */
+              }
+            }
+
             if(!cachePtr->textsymbols[0]->label->force)
               cachePtr->status = msTestLabelCacheCollisions(map,cachePtr,&cachePtr->textsymbols[0]->textpath->bounds, priority, l);
             else
               cachePtr->status = MS_ON;
             if(cachePtr->status) {
-                if(UNLIKELY(MS_FAILURE == msDrawTextSymbol(map,image,cachePtr->textsymbols[0]->annopoint /*not used*/,cachePtr->textsymbols[0]))) {
-                  return MS_FAILURE;
-                }
-                cachePtr->bbox = cachePtr->textsymbols[0]->textpath->bounds.bbox;
-                insertRenderedLabelMember(map, cachePtr);
+
+
+              if (UNLIKELY(MS_FAILURE == msDrawTextSymbol(map, image, cachePtr->textsymbols[0]->annopoint /*not used*/, cachePtr->textsymbols[0])))
+              {
+                return MS_FAILURE;
+              }
+              insertRenderedLabelMember(map, cachePtr);
             } else {
               MS_DEBUG(MS_DEBUGLEVEL_DEVDEBUG,map,
                   "Skipping follow labelgroup %d \"%s\" in layer \"%s\": text collided\n",
@@ -3131,6 +3167,16 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                     }
                   }
                 }
+              }
+            }
+
+            /* check that mindistance is respected */
+            if (cachePtr->numtextsymbols && cachePtr->textsymbols[0]->label->mindistance > 0.0 && cachePtr->textsymbols[0]->annotext) {
+              if (msCheckLabelMinDistance(map, cachePtr) == MS_TRUE) {
+                cachePtr->status = MS_DELETE;
+                MS_DEBUG(MS_DEBUGLEVEL_DEVDEBUG, map,
+                         "Skipping labelgroup %d \"%s\" in layer \"%s\": too close to an identical label (mindistance)\n",
+                         l, cachePtr->textsymbols[0]->annotext, layerPtr->name);
               }
             }
 

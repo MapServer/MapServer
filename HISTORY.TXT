@@ -15,6 +15,8 @@ http://mapserver.org/development/changelog/
 7.2 release (FUTURE)
 --------------------
 
+- Calculate MINDISTANCE from label bounds instead of label center (#5369)
+
 - Reposition follow labels on maxoverlapangle colisions (RFC112)
 
 - Implement chainable compositing filters (RFC113)
