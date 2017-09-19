@@ -30,8 +30,3 @@ coding style and guidelines, memory management, and working with Git.
 
 The MapServer documentation is stored in a [seperate repository](https://github.com/mapserver/docs). Please submit any documentation
 issues or changes there. See the [Documentation Development Guide](http://mapserver.org/development/documentation.html) for further details. 
-
-
-
-
-
