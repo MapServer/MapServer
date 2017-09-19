@@ -64,13 +64,13 @@
     void setExtension( const char *extension ) 
     {
         msFree( self->extension );
-        self->extension = strdup(extension);
+        self->extension = msStrdup(extension);
     }
 
     void setMimetype( const char *mimetype ) 
     {
         msFree( self->mimetype );
-        self->mimetype = strdup(mimetype);
+        self->mimetype = msStrdup(mimetype);
     }
 #endif
 
@@ -87,13 +87,13 @@
     %newobject getOption;
     char *getOption(const char *key, const char *value="") 
     {
-        return strdup(msGetOutputFormatOption(self, key, value));
+        return msStrdup(msGetOutputFormatOption(self, key, value));
     }
 
     %newobject getOptionAt;
     char* getOptionAt(int i) {
        if( i >= 0 && i < self->numformatoptions ) {
-          return strdup(self->formatoptions[i]);
+          return msStrdup(self->formatoptions[i]);
        }
        return NULL;
     }

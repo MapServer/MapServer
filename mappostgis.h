@@ -40,8 +40,8 @@
 #define BIG_ENDIAN 2
 #endif
 
-/* HEX = 16 or BASE64 = 64*/
-#define TRANSFER_ENCODING 16
+/* HEX = 16, BASE64 = 64, RAW = 256*/
+#define TRANSFER_ENCODING 256
 
 /* Substitution token for box hackery */
 #define BOXTOKEN "!BOX!"
@@ -161,7 +161,7 @@ static int wkb_postgis20[WKB_TYPE_COUNT] = {
 */
 void msPostGISFreeLayerInfo(layerObj *layer);
 msPostGISLayerInfo *msPostGISCreateLayerInfo(void);
-char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid);
+char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid, rectObj *rectInOtherSRID, int rectOtherSRID);
 int msPostGISParseData(layerObj *layer);
 int arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line, int pnZMFlag);
 int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);

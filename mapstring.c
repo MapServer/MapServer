@@ -278,22 +278,6 @@ char *strcasestr(const char *s, const char *find)
 }
 #endif
 
-#ifndef HAVE_STRDUP
-char  *strdup(char *s)
-{
-  char  *s1;
-
-  if(!s)
-    return(NULL);
-  s1 = (char *)malloc(strlen(s) + 1);
-  if(!s1)
-    return(NULL);
-
-  strcpy(s1,s);
-  return(s1);
-}
-#endif
-
 #ifndef HAVE_STRNCASECMP
 int strncasecmp(const char *s1, const char *s2, int len)
 {

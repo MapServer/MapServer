@@ -1,0 +1,153 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wcs/1.1" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" version="1.1.0" updateSequence="123" xsi:schemaLocation="http://www.opengis.net/wcs/1.1 http://schemas.opengis.net/wcs/1.1/wcsGetCapabilities.xsd http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsAll.xsd">
+  <ows:ServiceIdentification>
+    <ows:Title>Test simple OWS</ows:Title>
+    <ows:Abstract>Test OWS Abstract</ows:Abstract>
+    <ows:Keywords>
+      <ows:Keyword>ogc</ows:Keyword>
+      <ows:Keyword>wms</ows:Keyword>
+      <ows:Keyword>wfs</ows:Keyword>
+      <ows:Keyword>wcs</ows:Keyword>
+      <ows:Keyword>metadata</ows:Keyword>
+    </ows:Keywords>
+    <ows:ServiceType codeSpace="OGC">OGC WCS</ows:ServiceType>
+    <ows:ServiceTypeVersion>2.0.1</ows:ServiceTypeVersion>
+    <ows:ServiceTypeVersion>1.1.1</ows:ServiceTypeVersion>
+    <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+    <ows:Fees>none</ows:Fees>
+    <ows:AccessConstraints>none</ows:AccessConstraints>
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName>MapServer</ows:ProviderName>
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://localhost"/>
+    <ows:ServiceContact>
+      <ows:IndividualName>Tom Kralidis</ows:IndividualName>
+      <ows:PositionName>self</ows:PositionName>
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice>+xx-xxx-xxx-xxxx</ows:Voice>
+          <ows:Facsimile>+xx-xxx-xxx-xxxx</ows:Facsimile>
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint>123 SomeRoad Road</ows:DeliveryPoint>
+          <ows:City>Toronto</ows:City>
+          <ows:AdministrativeArea>Ontario</ows:AdministrativeArea>
+          <ows:PostalCode>xxx-xxx</ows:PostalCode>
+          <ows:Country>Canada</ows:Country>
+          <ows:ElectronicMailAddress>tomkralidis@xxxxxxx.xxx</ows:ElectronicMailAddress>
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://localhost"/>
+        <ows:HoursOfService>0800h - 1600h EST</ows:HoursOfService>
+        <ows:ContactInstructions>during hours of service</ows:ContactInstructions>
+      </ows:ContactInfo>
+      <ows:Role>pointOfContact</ows:Role>
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/ows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/ows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/ows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/ows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="identifiers">
+        <ows:AllowedValues>
+          <ows:Value>toronto</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/ows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/ows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="Identifier">
+        <ows:AllowedValues>
+          <ows:Value>toronto</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="InterpolationType">
+        <ows:AllowedValues>
+          <ows:Value>NEAREST_NEIGHBOUR</ows:Value>
+          <ows:Value>BILINEAR</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="format">
+        <ows:AllowedValues>
+          <ows:Value>image/tiff</ows:Value>
+          <ows:Value>image/png</ows:Value>
+          <ows:Value>image/jpeg</ows:Value>
+          <ows:Value>image/png; mode=8bit</ows:Value>
+          <ows:Value>image/vnd.jpeg-png</ows:Value>
+          <ows:Value>image/vnd.jpeg-png8</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="store">
+        <ows:AllowedValues>
+          <ows:Value>false</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="GridBaseCRS">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:def:crs:epsg::4326</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <Contents>
+    <CoverageSummary>
+      <ows:Title>Toronto</ows:Title>
+      <ows:Abstract>Toronto</ows:Abstract>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>-117.54590357301 44.665615181923</ows:LowerCorner>
+        <ows:UpperCorner>-117.38727661816 44.767083018813</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::32611</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>toronto</Identifier>
+    </CoverageSummary>
+  </Contents>
+</Capabilities>

@@ -45,6 +45,8 @@
 #  define safe_fseek fseek
 #endif
 
+static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+
 /************************************************************************/
 /*                             SfRealloc()                              */
 /*                                                                      */
@@ -199,7 +201,12 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   /*  Read Table Header info                                              */
   /* -------------------------------------------------------------------- */
   pabyBuf = (uchar *) msSmallMalloc(500);
-  fread( pabyBuf, 32, 1, psDBF->fp );
+  if( fread( pabyBuf, 32, 1, psDBF->fp ) != 1 )
+  {
+    msFree(psDBF);
+    msFree(pabyBuf);
+    return( NULL );
+  }
 
   psDBF->nRecords = nRecords =
                       pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + pabyBuf[7]*256*256*256;
@@ -218,7 +225,13 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   psDBF->pszHeader = (char *) pabyBuf;
 
   fseek( psDBF->fp, 32, 0 );
-  fread( pabyBuf, nHeadLen, 1, psDBF->fp );
+  if( fread( pabyBuf, nHeadLen - 32, 1, psDBF->fp ) != 1 )
+  {
+    msFree(psDBF->pszCurrentRecord);
+    msFree(psDBF);
+    msFree(pabyBuf);
+    return( NULL );
+  }
 
   psDBF->panFieldOffset = (int *) msSmallMalloc(sizeof(int) * nFields);
   psDBF->panFieldSize = (int *) msSmallMalloc(sizeof(int) * nFields);
@@ -271,7 +284,7 @@ void  msDBFClose(DBFHandle psDBF)
     uchar   abyFileHeader[32];
 
     fseek( psDBF->fp, 0, 0 );
-    fread( abyFileHeader, 32, 1, psDBF->fp );
+    IGUR_sizet(fread( abyFileHeader, 32, 1, psDBF->fp ));
 
     abyFileHeader[1] = 95;      /* YY */
     abyFileHeader[2] = 7;     /* MM */
@@ -524,7 +537,11 @@ static const char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
 
     safe_fseek( psDBF->fp, nRecordOffset, 0 );
-    fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
+    if( fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp ) != 1 )
+    {
+      msSetError(MS_DBFERR, "Cannot read record %d.", "msDBFReadAttribute()",hEntity );
+      return( NULL );
+    }
 
     psDBF->nCurrentRecord = hEntity;
   }
@@ -711,7 +728,8 @@ static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * 
     nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
 
     safe_fseek( psDBF->fp, nRecordOffset, 0 );
-    fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
+    if( fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp ) != 1 )
+      return MS_FALSE;
 
     psDBF->nCurrentRecord = hEntity;
   }

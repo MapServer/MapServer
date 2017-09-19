@@ -1,7 +1,7 @@
 #!/bin/bash
 
 msa_commit=`git log -n1 | grep  "msautotest=" | sed 's/msautotest=//'`
-branch=branch-7-0
+branch=master
 repo=git://github.com/mapserver/msautotest.git
 if [ -n "$msa_commit" ]; then
   repo=`echo "$msa_commit" | grep -o '^[^@]*'`

@@ -94,13 +94,13 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         for (i=0; i<self->NumParams; i++) {
             if (strcasecmp(self->ParamNames[i], name) == 0) {
                 free(self->ParamValues[i]);
-                self->ParamValues[i] = strdup(value);
+                self->ParamValues[i] = msStrdup(value);
                 break;
             }
         }
         if (i == self->NumParams) {
-            self->ParamNames[self->NumParams] = strdup(name);
-            self->ParamValues[self->NumParams] = strdup(value);
+            self->ParamNames[self->NumParams] = msStrdup(name);
+            self->ParamValues[self->NumParams] = msStrdup(value);
             self->NumParams++;
         }
     }
@@ -110,8 +110,8 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
             msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "addParameter()", MS_DEFAULT_CGI_PARAMS);
         }
-        self->ParamNames[self->NumParams] = strdup(name);
-        self->ParamValues[self->NumParams] = strdup(value);
+        self->ParamNames[self->NumParams] = msStrdup(name);
+        self->ParamValues[self->NumParams] = msStrdup(value);
         self->NumParams++;
     }
 

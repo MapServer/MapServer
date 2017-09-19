@@ -221,7 +221,7 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         convert_to_string(value); \
         if (internal) free(internal);    \
         if (Z_STRVAL_P(value))                        \
-            internal = strdup(Z_STRVAL_P(value));     \
+            internal = msStrdup(Z_STRVAL_P(value));     \
     }
 
 #define IF_SET_LONG(property_name, internal, value)        \

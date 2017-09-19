@@ -46,6 +46,10 @@
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
 #endif
 
+#if !(defined(_WIN32) && !defined(__CYGWIN__))
+static inline void IGUR_double(double ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+#endif
+
 int FLTIsNumeric(const char *pszValue)
 {
   if (pszValue != NULL && *pszValue != '\0' && !isspace(*pszValue)) {
@@ -70,7 +74,7 @@ int FLTIsNumeric(const char *pszValue)
       return MS_TRUE;
 #else
     char * p;
-    strtod(pszValue, &p);
+    IGUR_double(strtod(pszValue, &p));
     if ( p != pszValue && *p == '\0') return MS_TRUE;
 #endif
   }

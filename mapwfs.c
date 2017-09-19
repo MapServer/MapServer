@@ -55,6 +55,7 @@ static int msWFSAnalyzeStoredQuery(mapObj* map,
 #endif
 static void msWFSSimplifyPropertyNameAndFilter(wfsParamsObj *wfsparams);
 static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsObj *paramsObj,
+                                                  int bIsHits,
                                                   int *pmaxfeatures, int* pstartindex);
 static int msWFSRunBasicGetFeature(mapObj* map,
                                    layerObj* lp,
@@ -359,8 +360,7 @@ int msWFSLocateSRSInList(const char *pszList, const char *srs)
 */
 static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion)
 {
-  const char *pszLayerSRS=NULL;
-  const char *pszMapSRS=NULL;
+  char *pszMapSRS=NULL;
   char *pszOutputSRS=NULL;
   layerObj *lp;
   int i;
@@ -375,7 +375,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
    * make sure we reproject the map extent if a projection was 
    * already set 
    */
-  pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
+  msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE, &pszMapSRS);
   if(pszMapSRS && nWFSVersion >  OWS_1_0_0){
     projectionObj proj;
     msInitProjection(&proj);
@@ -388,6 +388,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
 
   if (srs == NULL || nWFSVersion == OWS_1_0_0) {
     for (i=0; i<map->numlayers; i++) {
+      char *pszLayerSRS;
       lp = GET_LAYER(map, i);
       if (lp->status != MS_ON)
         continue;
@@ -395,7 +396,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
       if (pszMapSRS)
         pszLayerSRS = pszMapSRS;
       else
-        pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
+        msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE, &pszLayerSRS);
 
       if (pszLayerSRS == NULL) {
         msSetError(MS_WFSERR,
@@ -403,6 +404,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
                    "msWFSGetFeature()");
         if (pszOutputSRS)
           msFree(pszOutputSRS);
+        /*pszMapSrs would also be NULL, no use freeing*/
         return MS_FAILURE;
       }
       if (pszOutputSRS == NULL)
@@ -413,39 +415,49 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
                    "msWFSGetFeature()");
         if (pszOutputSRS)
           msFree(pszOutputSRS);
+        if(pszLayerSRS != pszMapSRS)
+          msFree(pszLayerSRS);
+        msFree(pszMapSRS);
         return MS_FAILURE;
       }
-
+      if(pszLayerSRS != pszMapSRS)
+        msFree(pszLayerSRS);
     }
   } else { /*srs is given so it should be valid for all layers*/
     /*get all the srs defined at the map level and check them aginst the srsName passed
       as argument*/
-    pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_FALSE);
+    msFree(pszMapSRS);
+    msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_FALSE, &pszMapSRS);
     if (pszMapSRS) {
       if (!msWFSLocateSRSInList(pszMapSRS, srs)) {
         msSetError(MS_WFSERR,
                    "Invalid GetFeature Request:Invalid SRS.  Please check the capabilities and reformulate your request.",
                    "msWFSGetFeature()");
+        msFree(pszMapSRS);
         return MS_FAILURE;
       }
       pszOutputSRS = msStrdup(srs);
     } else {
       for (i=0; i<map->numlayers; i++) {
+        char *pszLayerSRS=NULL;
         lp = GET_LAYER(map, i);
         if (lp->status != MS_ON)
           continue;
 
-        pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_FALSE);
+        msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_FALSE, &pszLayerSRS);
         if (!pszLayerSRS) {
           msSetError(MS_WFSERR,
                      "Server config error: SRS must be set at least at the map or at the layer level.",
                      "msWFSGetFeature()");
+          msFree(pszMapSRS);
           return MS_FAILURE;
         }
         if (!msWFSLocateSRSInList(pszLayerSRS, srs)) {
           msSetError(MS_WFSERR,
                      "Invalid GetFeature Request:Invalid SRS.  Please check the capabilities and reformulate your request.",
                      "msWFSGetFeature()");
+          msFree(pszMapSRS);
+          msFree(pszLayerSRS);
           return MS_FAILURE;
         }
       }
@@ -482,8 +494,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
     }
   }
 
-  if (pszOutputSRS)
-    msFree(pszOutputSRS);
+  msFree(pszOutputSRS);
+  msFree(pszMapSRS);
   return MS_SUCCESS;
 }
 
@@ -533,10 +545,10 @@ static layerObj* msWFSGetLayerByName(mapObj* map, owsRequestObj *ows_request, co
 /*
 ** msWFSDumpLayer()
 */
-int msWFSDumpLayer(mapObj *map, layerObj *lp)
+int msWFSDumpLayer(mapObj *map, layerObj *lp, const char *script_url_encoded)
 {
   rectObj ext;
-  const char *pszWfsSrs = NULL;
+  char *pszWfsSrs = NULL;
   projectionObj poWfs;
 
   msIO_printf("    <FeatureType>\n");
@@ -572,12 +584,12 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
   /* each layer is advertized in its own projection as defined in the */
   /* layer's projection object or wfs_srs metadata. */
   /*  */
-  if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE) != NULL) {
-    /* Map has a SRS.  Use it for all layers. */
-    pszWfsSrs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata), "FO", MS_TRUE);
-  } else {
+  
+  /* if Map has a SRS,  Use it for all layers. */
+  msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE, &pszWfsSrs);
+  if(!pszWfsSrs) {
     /* Map has no SRS.  Use layer SRS or produce a warning. */
-    pszWfsSrs = msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "FO", MS_TRUE);
+    msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "FO", MS_TRUE, &pszWfsSrs);
   }
 
   msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata",
@@ -601,8 +613,11 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
     msIO_printf("<!-- WARNING: Optional LatLongBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement -->\n");
   }
 
+  if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
+    msMetadataSetGetMetadataURL(lp, script_url_encoded);
+
   msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl",
-                    OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"",
+                    OWS_WARN, NULL, "MetadataURL", " type=\"%s\"",
                     NULL, NULL, " format=\"%s\"", "%s",
                     MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                     NULL, NULL, NULL, NULL, NULL, "        ");
@@ -613,6 +628,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 
   msIO_printf("    </FeatureType>\n");
 
+  msFree(pszWfsSrs);
   return MS_SUCCESS;
 }
 
@@ -856,7 +872,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       continue;
 
     if (msWFSIsLayerAllowed(lp, ows_request)) {
-      msWFSDumpLayer(map, lp);
+      msWFSDumpLayer(map, lp, script_url_encoded);
     }
   }
 
@@ -2047,15 +2063,17 @@ static int msWFSRunFilter(mapObj* map,
     if( nWFSVersion >= OWS_1_1_0 )
     {
           int bDefaultSRSNeedsAxisSwapping = MS_FALSE;
-          const char* srs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE);
+          char* srs;
+          msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE,&srs);
           if (!srs)
           {
-              srs = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
+              msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE, &srs);
           }
           if ( srs && strncasecmp(srs, "EPSG:", 5) == 0 )
           {
               bDefaultSRSNeedsAxisSwapping = msIsAxisInverted(atoi(srs+5));
           }
+          msFree(srs);
           FLTDoAxisSwappingIfNecessary(psNode, bDefaultSRSNeedsAxisSwapping);
     }
 
@@ -2136,7 +2154,6 @@ static int msWFSRunBasicGetFeature(mapObj* map,
                                    const wfsParamsObj *paramsObj,
                                    int nWFSVersion)
 {
-    const char *pszMapSRS=NULL, *pszLayerSRS=NULL;
     rectObj ext;
     int status;
     const char* pszUseDefaultExtent;
@@ -2146,10 +2163,6 @@ static int msWFSRunBasicGetFeature(mapObj* map,
     map->query.rect = map->extent;
     map->query.layer = lp->index;
 
-    /*if srsName was given for wfs 1.1.0, It is at this point loaded into the
-    map object and should be used*/
-    if(!paramsObj->pszSrs)
-        pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
 
     pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
                                               "use_default_extent_for_getfeature");
@@ -2160,6 +2173,12 @@ static int msWFSRunBasicGetFeature(mapObj* map,
         map->query.rect = rectInvalid;
     }
     else if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
+        char *pszMapSRS=NULL;
+        
+        /*if srsName was given for wfs 1.1.0, It is at this point loaded into the
+        map object and should be used*/
+        if(!paramsObj->pszSrs)
+          msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE, &pszMapSRS);
 
         /* For a single point layer, to avoid numerical precision issues */
         /* when reprojection is involved */
@@ -2178,16 +2197,19 @@ static int msWFSRunBasicGetFeature(mapObj* map,
             if (status != 0) {
                 msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s",
                             "msWFSGetFeature()", pszMapSRS);
+                msFree(pszMapSRS);
                 return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE,
                                 paramsObj->pszVersion);
             }
+            msFree(pszMapSRS);
 
         }
 
         /*make sure that the layer projection is loaded.
             It could come from a ows/wfs_srs metadata*/
         if (lp->projection.numargs == 0) {
-            pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
+            char *pszLayerSRS;
+            msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE, &pszLayerSRS);
             if (pszLayerSRS) {
                 if (strncmp(pszLayerSRS, "EPSG:", 5) == 0) {
                     if( nWFSVersion >= OWS_1_1_0 )
@@ -2196,6 +2218,7 @@ static int msWFSRunBasicGetFeature(mapObj* map,
                         msLoadProjectionString(&(lp->projection), pszLayerSRS);
                 }
             }
+            msFree(pszLayerSRS);
         }
 
         if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
@@ -2512,7 +2535,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
     }
 
     if( map->query.only_cache_result_count == MS_FALSE )
-        msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, NULL, NULL);
+        msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, FALSE, NULL, NULL);
 
     if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, nWFSVersion) == MS_FAILURE)
         return msWFSException(map, "srsname", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
@@ -2587,13 +2610,10 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       /* issue at that point, since it can influence axis ordering */
       if( nWFSVersion >= OWS_2_0_0 && sBBoxSrs == NULL )
       {
-          const char* srsConst;
           projectionObj sProjTmp;
 
           msInitProjection(&sProjTmp);
-          srsConst = msOWSGetEPSGProj(&sProjTmp,&(map->web.metadata),"FO",MS_TRUE);
-          if( srsConst != NULL )
-              sBBoxSrs = msStrdup(srsConst);
+          msOWSGetEPSGProj(&sProjTmp,&(map->web.metadata),"FO",MS_TRUE, &sBBoxSrs);
           msFreeProjection(&sProjTmp);
       }
 
@@ -2852,6 +2872,7 @@ static outputFormatObj* msWFSGetOtherOutputFormat(mapObj *map, wfsParamsObj *par
 }
 
 static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsObj *paramsObj,
+                                                  int bIsHits,
                                                   int *pmaxfeatures, int* pstartindex)
 {
   const char *tmpmaxfeatures = NULL;
@@ -2864,6 +2885,36 @@ static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsOb
   tmpmaxfeatures = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
   if (tmpmaxfeatures)
     maxfeatures = atoi(tmpmaxfeatures);
+
+  if( bIsHits )
+  {
+    const char* ignoreMaxFeaturesForHits =
+        msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures_ignore_for_resulttype_hits");
+
+    /* For PostGIS where we have an efficient implementation of hits, default to true */
+    if( ignoreMaxFeaturesForHits == NULL )
+    {
+        int bHasEfficientHits = MS_TRUE;
+        for(j=0; j<map->numlayers; j++) {
+            layerObj *lp;
+            lp = GET_LAYER(map, j);
+            if (lp->status == MS_ON) {
+                if( lp->connectiontype != MS_POSTGIS )
+                {
+                    bHasEfficientHits = MS_FALSE;
+                    break;
+                }
+            }
+        }
+
+        if (bHasEfficientHits )
+            ignoreMaxFeaturesForHits = "true";
+    }
+
+    if( ignoreMaxFeaturesForHits != NULL && strcasecmp(ignoreMaxFeaturesForHits, "true") == 0 )
+        maxfeatures = -1;
+  }
+
   if (paramsObj->nMaxFeatures >= 0) {
     if (maxfeatures < 0 || (maxfeatures > 0 && paramsObj->nMaxFeatures < maxfeatures))
       maxfeatures = paramsObj->nMaxFeatures;
@@ -3061,8 +3112,6 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
             map->query.startindex = -1;
             map->query.only_cache_result_count = MS_TRUE;
 
-            /* TODO: use a to-be-defined virtual layer method to get the feature */
-            /* count without iterating over the features */
             nMatchingFeatures = 0;
             msWFSRetrieveFeatures(map,
                                   ows_request,
@@ -3288,6 +3337,31 @@ static int msWFSApplySortBy(mapObj* map, wfsParamsObj *paramsObj, layerObj* lp,
     }
 
     return MS_SUCCESS;
+}
+
+static void msWFSSetShapeCache(mapObj* map)
+{
+    const char* pszFeaturesCacheCount =
+                msOWSLookupMetadata(&(map->web.metadata), "F",
+                                                "features_cache_count");
+    const char* pszFeaturesCacheSize =
+                msOWSLookupMetadata(&(map->web.metadata), "F",
+                                                "features_cache_size");
+    if( pszFeaturesCacheCount )
+    {
+        map->query.cache_shapes = MS_TRUE;
+        map->query.max_cached_shape_count = atoi(pszFeaturesCacheCount);
+        msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
+    }
+
+    if( pszFeaturesCacheSize )
+    {
+        map->query.cache_shapes = MS_TRUE;
+        map->query.max_cached_shape_ram_amount = atoi(pszFeaturesCacheSize);
+        if( strstr(pszFeaturesCacheSize, "mb") || strstr(pszFeaturesCacheSize, "MB") )
+             map->query.max_cached_shape_ram_amount *= 1024 * 1024;
+        msDebug("Caching up to %d bytes of shapes\n", map->query.max_cached_shape_ram_amount);
+    }
 }
 
 /*
@@ -3720,7 +3794,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     outputformat = (OWSGMLVersion) status;
   }
   
-  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj,
+  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, iResultTypeHits,
                                         &maxfeatures, &startindex);
 
   status = msWFSAnalyzeBBOX(map, paramsObj, &bbox, &sBBoxSrs);
@@ -3737,7 +3811,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   {
       map->query.only_cache_result_count = MS_TRUE;
   }
-
+  else
+  {
+      msWFSSetShapeCache(map);
+  }
 
   status = msWFSRetrieveFeatures(map,
                                  ows_request,
@@ -4228,7 +4305,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
     outputformat = (OWSGMLVersion) status;
   }
 
-  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj,
+  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, iResultTypeHits,
                                         &maxfeatures, &startindex);
 
   status = msWFSAnalyzeBBOX(map, paramsObj, &bbox, &sBBoxSrs);
@@ -4242,6 +4319,10 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
   if( iResultTypeHits == 1 )
   {
       map->query.only_cache_result_count = MS_TRUE;
+  }
+  else
+  {
+      msWFSSetShapeCache(map);
   }
 
   status = msWFSRetrieveFeatures(map,

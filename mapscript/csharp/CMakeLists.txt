@@ -34,14 +34,14 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/csharp)
 SET (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}")
 SET( CMAKE_SWIG_FLAGS -namespace OSGeo.MapServer ${MAPSERVER_COMPILE_DEFINITIONS} -DWIN32)
-SWIG_ADD_MODULE(csharpmapscript csharp ../mapscript.i)
+SWIG_ADD_MODULE(mapscript csharp ../mapscript.i)
 
-set_target_properties(csharpmapscript PROPERTIES OUTPUT_NAME "mapscript")
+set_target_properties(mapscript PROPERTIES OUTPUT_NAME "mapscript")
 
-SWIG_LINK_LIBRARIES(csharpmapscript ${MAPSERVER_LIBMAPSERVER})
+SWIG_LINK_LIBRARIES(mapscript ${MAPSERVER_LIBMAPSERVER})
 
 
-ADD_CUSTOM_COMMAND(TARGET csharpmapscript
+ADD_CUSTOM_COMMAND(TARGET mapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                       POST_BUILD
 					  COMMAND set MAPSCRIPT_SNK=${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk          

@@ -714,7 +714,7 @@ int msUnionLayerCopyVirtualTable(layerVTableObj* vtable)
   vtable->LayerWhichShapes = msUnionLayerWhichShapes;
   vtable->LayerNextShape = msUnionLayerNextShape;
   vtable->LayerGetShape = msUnionLayerGetShape;
-
+  /* layer->vtable->LayerGetShapeCount, use default */
   vtable->LayerClose = msUnionLayerClose;
 
   vtable->LayerGetItems = msUnionLayerGetItems;

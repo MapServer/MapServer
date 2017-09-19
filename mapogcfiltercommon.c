@@ -702,14 +702,23 @@ int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, 
   int save_startindex;
   int save_maxfeatures;
   int save_only_cache_result_count;
+  int save_cache_shapes;
+  int save_max_cached_shape_count;
+  int save_max_cached_shape_ram_amount;
 
   save_startindex = map->query.startindex;
   save_maxfeatures = map->query.maxfeatures;
   save_only_cache_result_count = map->query.only_cache_result_count;
+  save_cache_shapes = map->query.cache_shapes;
+  save_max_cached_shape_count = map->query.max_cached_shape_count;
+  save_max_cached_shape_ram_amount = map->query.max_cached_shape_ram_amount;
   msInitQuery(&(map->query));
   map->query.startindex = save_startindex;
   map->query.maxfeatures = save_maxfeatures;
   map->query.only_cache_result_count = save_only_cache_result_count;
+  map->query.cache_shapes = save_cache_shapes;
+  map->query.max_cached_shape_count = save_max_cached_shape_count;
+  map->query.max_cached_shape_ram_amount = save_max_cached_shape_ram_amount;
 
   map->query.mode = MS_QUERY_MULTIPLE;
   map->query.layer = iLayerIndex;

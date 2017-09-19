@@ -73,7 +73,7 @@
         if ((_dst) != NULL)           \
             msFree((_dst));           \
         if ((_src))                   \
-            (_dst) = strdup((_src));  \
+            (_dst) = msStrdup((_src));  \
         else                          \
             (_dst) = NULL;            \
     MS_MACROEND

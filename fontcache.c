@@ -297,3 +297,11 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph) {
   }
   return oc;
 }
+
+int msIsGlyphASpace(glyphObj *glyph) {
+  /* space or tab, for now */
+  unsigned int space,tab;
+  space = msGetGlyphIndex(glyph->face,0x20);
+  tab = msGetGlyphIndex(glyph->face,0x9);
+  return glyph->glyph->key.codepoint == space || glyph->glyph->key.codepoint == tab;
+}
