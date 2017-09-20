@@ -376,6 +376,12 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     if (lp == NULL || lp->status != MS_ON)
       continue;
 
+    /* Skip empty filters */
+    if (paszFilters[curfilter][0] == '\0') {
+      curfilter++;
+      continue;
+    }
+    
     /* Force setting a template to enable query. */
     if (lp->template == NULL)
       lp->template = msStrdup("ttt.html");
@@ -460,9 +466,6 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 
   }/* for */
 
-    // TODO: Set query_map_mode w/ default style...
-
-    
     return MS_SUCCESS;
 }
 
@@ -3837,7 +3840,6 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   for (i=0; i<numentries; i++) {
     if ((strcasecmp(names[i], "FILTER") == 0 && values[i] && strlen(values[i]) > 0)) {
       drawquerymap = MS_TRUE;
-      // TODO: Do we want to allow both selected and hilite?
       map->querymap.status = MS_ON;
       map->querymap.style = MS_SELECTED;
       break;
