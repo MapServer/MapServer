@@ -907,6 +907,7 @@ void freeSVGCache(symbolObj *s) {
         free(cache->pixmap_buffer);
       }
       msFree(s->renderer_cache);
+      s->renderer_cache = NULL;
 #endif
 }
 
