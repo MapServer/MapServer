@@ -23,7 +23,7 @@ MAP
   LAYER
     NAME 'layer1'
     STATUS ON
-    DEBUG 10
+    DEBUG 1
     SCALETOKEN
       NAME "%shpfile%"
       VALUES
