@@ -5536,6 +5536,8 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; /* draw with labels */
   scalebar->align = MS_ALIGN_CENTER;
+  scalebar->offsetx = 0;
+  scalebar->offsety = 0;
 }
 
 void freeScalebar(scalebarObj *scalebar)
@@ -5602,6 +5604,10 @@ int loadScalebar(scalebarObj *scalebar)
         break;
       case(UNITS):
         if((scalebar->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES)) == -1) return(-1);
+        break;
+      case(OFFSET):
+        if(getInteger(&(scalebar->offsetx)) == -1) return(-1);
+        if(getInteger(&(scalebar->offsety)) == -1) return(-1);
         break;
       default:
         if(strlen(msyystring_buffer) > 0) {
