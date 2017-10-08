@@ -2689,6 +2689,8 @@ int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc)
   int i;
   pointObj p;
   textSymbolObj *s; /* shortcut */
+  textSymbolObj *ts;
+  rectObj buffered;
   if (lc->numtextsymbols == 0)
     return MS_FALSE; /* no label with text */
   s = lc->textsymbols[0];
@@ -2701,7 +2703,7 @@ int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc)
      faster computation (it is still compared to the full textpath
      of the label cache members). 
   */
-  rectObj buffered = lc->bbox;
+  buffered = lc->bbox;
   buffered.minx -= s->label->mindistance * s->resolutionfactor;
   buffered.miny -= s->label->mindistance * s->resolutionfactor;
   buffered.maxx += s->label->mindistance * s->resolutionfactor;
@@ -2712,7 +2714,7 @@ int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc)
     if (ilc->numtextsymbols == 0 || !ilc->textsymbols[0]->annotext)
        continue;
 
-    textSymbolObj *ts = ilc->textsymbols[0];
+    ts = ilc->textsymbols[0];
     if (strcmp(s->annotext, ts->annotext) != 0) {
       /* only check min distance against same label */
       continue;
