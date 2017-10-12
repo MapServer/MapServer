@@ -195,6 +195,8 @@ PHP_METHOD(OWSRequestObj, loadParams)
 #if PHP_VERSION_ID >= 50600
       php_stream *s = php_stream_temp_new();
       php_stream *input = php_stream_open_wrapper("php://input", "r", 0, NULL);
+      char *raw_post_data = NULL;
+      long raw_post_data_length = 0;
 
       /* php://input does not support stat */
       php_stream_copy_to_stream_ex(input, s, -1, NULL);
@@ -202,9 +204,6 @@ PHP_METHOD(OWSRequestObj, loadParams)
 
       php_stream_rewind(s);
       
-      char *raw_post_data = NULL;
-      long raw_post_data_length = 0;
-
       raw_post_data_length = php_stream_copy_to_mem(s, raw_post_data, -1, 0);
 
       cgirequestObj_loadParams(php_owsrequest->cgirequest, owsrequest_getenv,

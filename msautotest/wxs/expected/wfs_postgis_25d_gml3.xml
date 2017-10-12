@@ -1,0 +1,180 @@
+Content-Type: text/xml; subtype=gml/3.1.1; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=point3d,linestring3d,polygon3d,multipoint3d,multilinestring3d,multipolygon3d&amp;OUTPUTFORMAT=text/xml;%20subtype=gml/3.1.1  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+      <gml:boundedBy>
+      	<gml:Envelope srsName="EPSG:27700">
+      		<gml:lowerCorner>0.000000 0.000000</gml:lowerCorner>
+      		<gml:upperCorner>20.000000 20.000000</gml:upperCorner>
+      	</gml:Envelope>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:point3d gml:id="point3d.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>1.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>1.000000 2.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point srsName="EPSG:27700">
+            <gml:pos srsDimension="3">1.000000 2.000000 3.000000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+      </ms:point3d>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:multipoint3d gml:id="multipoint3d.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>1.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>4.000000 5.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:MultiPoint srsName="EPSG:27700">
+            <gml:pointMember>
+              <gml:Point>
+                <gml:pos srsDimension="3">1.000000 2.000000 3.000000</gml:pos>
+              </gml:Point>
+            </gml:pointMember>
+            <gml:pointMember>
+              <gml:Point>
+                <gml:pos srsDimension="3">4.000000 5.000000 6.000000</gml:pos>
+              </gml:Point>
+            </gml:pointMember>
+          </gml:MultiPoint>
+        </ms:msGeometry>
+      </ms:multipoint3d>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:linestring3d gml:id="linestring3d.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>1.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>4.000000 5.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:LineString srsName="EPSG:27700">
+            <gml:posList srsDimension="3">1.000000 2.000000 3.000000 4.000000 5.000000 6.000000 </gml:posList>
+          </gml:LineString>
+        </ms:msGeometry>
+      </ms:linestring3d>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:multilinestring3d gml:id="multilinestring3d.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>1.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>10.000000 11.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:MultiCurve srsName="EPSG:27700">
+            <gml:curveMember>
+              <gml:LineString>
+                <gml:posList srsDimension="3">1.000000 2.000000 3.000000 4.000000 5.000000 6.000000 </gml:posList>
+              </gml:LineString>
+            </gml:curveMember>
+            <gml:curveMember>
+              <gml:LineString>
+                <gml:posList srsDimension="3">7.000000 8.000000 9.000000 10.000000 11.000000 12.000000 </gml:posList>
+              </gml:LineString>
+            </gml:curveMember>
+          </gml:MultiCurve>
+        </ms:msGeometry>
+      </ms:multilinestring3d>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:polygon3d gml:id="polygon3d.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>0.000000 0.000000</gml:lowerCorner>
+        		<gml:upperCorner>10.000000 10.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Polygon srsName="EPSG:27700">
+            <gml:exterior>
+              <gml:LinearRing>
+                <gml:posList srsDimension="3">0.000000 0.000000 1.000000 10.000000 0.000000 2.000000 10.000000 10.000000 3.000000 0.000000 10.000000 4.000000 0.000000 0.000000 1.000000 </gml:posList>
+              </gml:LinearRing>
+            </gml:exterior>
+          </gml:Polygon>
+        </ms:msGeometry>
+      </ms:polygon3d>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:polygon3d gml:id="polygon3d.2">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>0.000000 0.000000</gml:lowerCorner>
+        		<gml:upperCorner>10.000000 10.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:MultiSurface srsName="EPSG:27700">
+            <gml:surfaceMember>
+              <gml:Polygon>
+                <gml:exterior>
+                  <gml:LinearRing>
+                    <gml:posList srsDimension="3">0.000000 0.000000 1.000000 10.000000 0.000000 2.000000 10.000000 10.000000 3.000000 0.000000 10.000000 4.000000 0.000000 0.000000 1.000000 </gml:posList>
+                  </gml:LinearRing>
+                </gml:exterior>
+                <gml:interior>
+                  <gml:LinearRing>
+                    <gml:posList srsDimension="3">1.000000 1.000000 2.000000 1.000000 9.000000 3.000000 9.000000 9.000000 4.000000 9.000000 1.000000 5.000000 1.000000 1.000000 2.000000 </gml:posList>
+                  </gml:LinearRing>
+                </gml:interior>
+              </gml:Polygon>
+            </gml:surfaceMember>
+          </gml:MultiSurface>
+        </ms:msGeometry>
+      </ms:polygon3d>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:multipolygon3d gml:id="multipolygon3d.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="EPSG:27700">
+        		<gml:lowerCorner>0.000000 0.000000</gml:lowerCorner>
+        		<gml:upperCorner>20.000000 20.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:MultiSurface srsName="EPSG:27700">
+            <gml:surfaceMember>
+              <gml:Polygon>
+                <gml:exterior>
+                  <gml:LinearRing>
+                    <gml:posList srsDimension="3">0.000000 0.000000 1.000000 10.000000 0.000000 2.000000 10.000000 10.000000 3.000000 0.000000 10.000000 4.000000 0.000000 0.000000 1.000000 </gml:posList>
+                  </gml:LinearRing>
+                </gml:exterior>
+                <gml:interior>
+                  <gml:LinearRing>
+                    <gml:posList srsDimension="3">1.000000 1.000000 2.000000 1.000000 9.000000 3.000000 9.000000 9.000000 4.000000 9.000000 1.000000 5.000000 1.000000 1.000000 2.000000 </gml:posList>
+                  </gml:LinearRing>
+                </gml:interior>
+              </gml:Polygon>
+            </gml:surfaceMember>
+            <gml:surfaceMember>
+              <gml:Polygon>
+                <gml:exterior>
+                  <gml:LinearRing>
+                    <gml:posList srsDimension="3">10.000000 10.000000 0.000000 10.000000 20.000000 1.000000 20.000000 20.000000 2.000000 20.000000 10.000000 3.000000 10.000000 10.000000 0.000000 </gml:posList>
+                  </gml:LinearRing>
+                </gml:exterior>
+              </gml:Polygon>
+            </gml:surfaceMember>
+          </gml:MultiSurface>
+        </ms:msGeometry>
+      </ms:multipolygon3d>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

@@ -1,0 +1,110 @@
+# RUN_PARMS: point_pixmap.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point_pixmap.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point_pixmap.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point_pixmap.json [SHP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
+# RUN_PARMS: point_pixmap.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+CONFIG MS_ERRORFILE "stderr"
+
+LAYER
+  NAME "symbol"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "gdalicon"
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+  END
+END
+
+LAYER
+  NAME "symbol rotated"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "gdalicon"
+        SIZE 55
+        ANGLE 45
+    END
+  END
+  FEATURE
+    POINTS
+        200 200
+    END
+  END
+END
+
+LAYER
+  NAME "symbol filename"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "../misc/data/gdalicon.png"
+    END
+  END
+  FEATURE
+    POINTS
+        50 200
+    END
+  END
+END
+
+LAYER
+  NAME "symbol url"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "http://localhost:8000/misc/data/gdalicon.png"
+    END
+  END
+  FEATURE
+    POINTS
+        200 50
+    END
+  END
+END
+
+LAYER
+    NAME "anchors"
+    TYPE POINT
+    STATUS on
+    CLASS
+        STYLE
+            COLOR 255 0 0
+            SIZE 8
+            WIDTH 1
+            SYMBOL "circle"
+        END
+    END
+    FEATURE POINTS 50 50 END END
+    FEATURE POINTS 200 200 END END
+END
+
+END

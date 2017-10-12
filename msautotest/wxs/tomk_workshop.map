@@ -1,0 +1,710 @@
+#
+# Start of map file
+#
+
+# the metadata entered here is what drives the OGC interfaces:
+# OGC:WMS
+# OGC:WFS
+# OGC:WCS
+# OGC:WMC
+#
+# Here are example URLs so you can see where the metadata entered
+# below fits in:
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS SUPPORTS=WFS SUPPORTS=WCS
+#
+# Generate WMS Capabilities
+# RUN_PARMS: wms_get_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WMS&version=1.1.1&request=GetCapabilities" > [RESULT_DEVERSION]
+#
+# Generate WMS DescribeLayer
+# RUN_PARMS: wms_describe_layer.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WMS&version=1.1.1&request=DescribeLayer&layers=rivers" > [RESULT]
+#
+# Generate WMS GetMap
+# RUN_PARMS: wms_getmap.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetMap&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300" > [RESULT_DEMIME]
+#
+# Generate WMS GetFeatureInfo HTML format on vector data
+# RUN_PARMS: wms_get_feature_info_vector.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&query_layers=rivers&info_format=text/html&x=141&y=91&radius=10" > [RESULT]
+#
+# Generate WMS GetFeatureInfo GML format on vector data
+# RUN_PARMS: wms_get_feature_info_vector.gml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&query_layers=rivers&info_format=application/vnd.ogc.gml&x=141&y=91&radius=10" > [RESULT]
+#
+# Generate WMS GetFeatureInfo HTML format on raster data
+# RUN_PARMS: wms_get_feature_info_raster.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&query_layers=land_shallow_topo_2048&info_format=text/html&x=141&y=91&radius=10" > [RESULT]
+#
+# Generate WMS GetFeatureInfo GML format on raster data
+# RUN_PARMS: wms_get_feature_info_raster.gml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&query_layers=land_shallow_topo_2048&info_format=application/vnd.ogc.gml&x=141&y=91&radius=10" > [RESULT]
+#
+# Generate WMS GetFeatureInfo GML format on raster data, feature_count=2
+# RUN_PARMS: wms_get_feature_info_raster_feature_count.gml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&query_layers=land_shallow_topo_2048&info_format=application/vnd.ogc.gml&x=141&y=91&radius=10&feature_count=2" > [RESULT]
+#
+# Generate WMS GetLegendGraphic
+# RUN_PARMS: wms_get_legend_graphic.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=rivers&format=image/png" > [RESULT_DEMIME]
+#
+# Generate WMS GetStyles
+# RUN_PARMS: wms_get_styles.sld [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetStyles&layers=rivers" > [RESULT]
+#
+#
+#
+# Generate WFS Capabilities
+# RUN_PARMS: wfs_get_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=1.0.0&request=GetCapabilities" > [RESULT_DEVERSION]
+#
+# Generate WFS DescribeFeatureType GML2 app schema
+# RUN_PARMS: wfs_describe_feature_type_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=1.0.0&request=DescribeFeatureType" > [RESULT]
+#
+# Generate WFS DescribeFeatureType GML3L0 app schema
+# RUN_PARMS: wfs_describe_feature_type_gml3l0.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=1.0.0&request=DescribeFeatureType&outputFormat=SFE_XMLSCHEMA" > [RESULT]
+#
+# Generate WFS GetFeature GML2
+# RUN_PARMS: wfs_get_feature_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.0.0&service=WFS&request=GetFeature&typename=rivers&filter=%3CFilter%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3ENAME%3C/PropertyName%3E%3CLiteral%3EGreat%20Bear%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E&outputFormat=GML2" > [RESULT]
+#
+# Generate WFS GetFeature GML3L0
+# RUN_PARMS: wfs_get_feature_gml3l0.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.0.0&service=WFS&request=GetFeature&typename=rivers&filter=%3CFilter%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3ENAME%3C/PropertyName%3E%3CLiteral%3EGreat%20Bear%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E&outputFormat=GML3" > [RESULT]
+
+
+# Generate WCS Capabilities
+# RUN_PARMS: wcs_get_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WCS&version=1.0.0&request=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
+ 
+MAP
+
+ # all temp files get prefixed with this string
+ NAME msautotest_wxs_
+
+ # background color of image if transparency
+ # is not requested
+ IMAGECOLOR 125 125 125
+
+ # default output image dimensions
+ SIZE 600 400
+
+ # always returns a map
+ STATUS ON
+
+ UNITS DD
+ # set top level projection
+ PROJECTION
+  "init=epsg:4326"
+ END
+
+ # image format options
+ OUTPUTFORMAT
+  NAME png
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  EXTENSION "png"
+ END
+
+ OUTPUTFORMAT
+  NAME GEOTIFF_RGB
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE RGB
+  EXTENSION "tif"
+ END
+
+ # minx miny maxx maxy
+ # sets:
+ # /WMT_MS_Capabilities/Capability/Layer/LatLonBoundingBox(@minx @miny @maxx @maxx)
+ EXTENT -180 -90 180 90 # World
+
+ #
+ # Start of web interface definition
+ WEB
+
+  # this is the real filepath to the temp dir for intermediate file creation
+  IMAGEPATH "tmp/"
+
+  # this is the web-accessible path to IMAGEPATH
+  IMAGEURL "tmp/"
+  
+  HEADER "./templates/query_header.html"
+  FOOTER "./templates/query_footer.html"
+
+  METADATA
+
+   "map" "/ms4w/apps/ms_ogc_workshop/service/config.map"
+
+   "ows_updateSequence" "123"
+   
+   # unified OWS tags
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/Title
+   # /WMT_MS_Capabilities/Capability/Layer/Title
+   # /WFS_Capabilities/Service/Title
+   "ows_title" "Sample OWS for MapServer OGC Web Services Workshop"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/Abstract
+   # /WFS_Capabilities/Service/Abstract
+   "ows_abstract" "Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!"
+   
+   # sets:
+   # /WMT_MS_Capabilities/Service/KeywordList/Keyword[]
+   # /WFS_Capabilities/Service/Keywords   
+   # /WCS_Capabilities/Service/keywords/keyword[]
+   "ows_keywordlist" "mapserver,ogc,workshop"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/OnlineResource
+   # /WFS_Capabilities/Service/OnlineResource
+   # /WCS_Capabilities/Service/responsibleParty/onlineResource/@xlink:href
+   "ows_service_onlineresource" "http://localhost/ms_ogc_workshop/index.html"
+   
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetMap/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetMap/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/DescribeLayer/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/DescribeLayer/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetLegendGraphic/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WMT_MS_Capabilities/Capability/Request/GetLegendGraphic/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WMS_DescribeLayerResponse/LayerDescription/@wfs is WFS is enabled
+   # /WFS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WFS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WFS_Capabilities/Capability/Request/DescribeFeatureType/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WFS_Capabilities/Capability/Request/DescribeFeatureType/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WFS_Capabilities/Capability/Request/GetFeature/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WFS_Capabilities/Capability/Request/GetFeature/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WCS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WCS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WCS_Capabilities/Capability/Request/DescribeFeatureType/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WCS_Capabilities/Capability/Request/DescribeFeatureType/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   # /WCS_Capabilities/Capability/Request/GetFeature/DCPType/HTTP/Get/OnlineResource/@xlink:href
+   # /WCS_Capabilities/Capability/Request/GetFeature/DCPType/HTTP/Post/OnlineResource/@xlink:href
+   "ows_onlineresource" "http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/Fees
+   # /WFS_Capabilities/Service/Fees
+   # /WCS_Capabilities/Service/fees
+   "ows_fees" "none"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/AccessConstraints
+   # /WFS_Capabilities/Service/AccessConstraints
+   # /WCS_Capabilities/Service/accessConstraints   
+   "ows_accessconstraints" "none"
+
+   # OGC:WMS specific tags
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactPersonPrimary/ContactPerson
+   # /WCS_Capabilities/Service/responsibleParty/individualName
+   "ows_contactperson" "Tom Kralidis"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactPersonPrimary/ContactOrganization
+   # /WCS_Capabilities/Service/responsibleParty/organisationName   
+   "ows_contactorganization" "Environment Canada"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactPosition
+   # /WCS_Capabilities/Service/responsibleParty/positionName   
+   "ows_contactposition" "Senior Systems Scientist"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactAddress/AddressType
+   "ows_addresstype" "postal"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactAddress/Address
+   # /WCS_Capabilities/Service/contactInfo/address/deliveryPoint 
+   "ows_address"     "867 Lakeshore Road"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactAddress/City
+   # /WCS_Capabilities/Service/contactInfo/address/city   
+   "ows_city" "Burlington"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactAddress/StateOrProvince
+   # /WCS_Capabilities/Service/contactInfo/address/administrativeArea   
+   "ows_stateorprovince" "Ontario"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactAddress/PostCode
+   # /WCS_Capabilities/Service/contactInfo/address/postalCode   
+   "ows_postcode" "L7R-4A6"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactAddress/Country
+   # /WCS_Capabilities/Service/contactInfo/address/country   
+   "ows_country" "Canada"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactVoiceTelephone
+   # /WCS_Capabilities/Service/contactInfo/phone/voice
+   "ows_contactvoicetelephone" "+01-905-336-4409"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactFacsimileTelephone
+   # /WCS_Capabilities/Service/contactInfo/phone/facsimile   
+   "ows_contactfacsimiletelephone" "+01-905-336-4499"
+
+   # sets:
+   # /WMT_MS_Capabilities/Service/ContactInformation/ContactElectronicMailAddress
+   # /WCS_Capabilities/Service/contactInfo/address/eletronicMailAddress
+   "ows_contactelectronicmailaddress" "tom.kralidis@ec.gc.ca"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/SRS
+   # /WMT_MS_Capabilities/Capability/Layer/Layer[*]/SRS
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/SRS
+   # unless differently defined in LAYER object
+   # if you are setting > 1 SRS for WMS, you need to define "wms_srs" and "wfs_srs"
+   # seperately because OGC:WFS only accepts one OUTPUT SRS
+   "ows_srs" "EPSG:4326"	
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/OnlineResource/@xlink:href
+   "wms_attribution_onlineresource" "http://www.ec.gc.ca/"
+   
+   # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/Title   
+   "wms_attribution_title" "Data from Environment Canada"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/LogoURL/@width
+   "wms_attribution_logourl_width" "655"
+   
+   # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/LogoURL/@height
+   "wms_attribution_logourl_height" "130"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/LogoURL/Format   
+   "wms_attribution_logourl_format" "image/png"
+   
+   # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/LogoURL/OnlineResource/@xlink:href
+   "wms_attribution_logourl_href" "http://mapserver.gis.umn.edu/mum/header_fsa.png"
+
+   # we support GetFeatureInfo text/html queries
+   # you NEED query headers, footers, and body templates
+   "wms_feature_info_mime_type"  "text/html"
+   
+   # sets namespace URI when performing a DescribeFeatureType or GetFeature
+   # in the root element of the XML response
+   "wfs_namespace_uri" "http://localhost/ms_ogc_workshop"
+
+   # sets the XML namespace prefix to be used when defining types for data
+   # in this mapfile
+   "wfs_namespace_prefix" "ms_ogc_workshop"
+
+   # OGC:WCS
+   
+   # sets:
+   # /WCS_Capabilities/Service/label
+   "wcs_label" "Sample OWS for MapServer OGC Web Services Workshop"
+
+   # sets:
+   # /WCS_Capabilities/Service/description
+   "wcs_description" "Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!"
+
+   # sets:
+   # /WCS_Capabilities/Service/metadataLink/@xlink:href
+   "wcs_metadatalink_href" "http://localhost/ms_ogc_workshop/index.html"
+
+    "ows_enable_request" "*" 
+    "wms_getmap_formatlist" "image/png,image/png; mode=24bit,image/jpeg,image/gif,image/png; mode=8bit,image/tiff"
+   END
+ END
+
+ # hilite map for GetFeatureInfo "info_format=text/html"
+ # requests
+
+ QUERYMAP
+  STATUS ON
+  SIZE 200 200
+  STYLE HILITE
+  COLOR 255 255 0
+ END
+
+
+ # set defaults for GetLegendGraphic requests 
+ LEGEND
+  LABEL
+   TYPE BITMAP
+   SIZE MEDIUM
+   COLOR 0 0 0
+  END
+ END
+
+
+ # start of layer definitions
+
+ LAYER
+  # name of layer
+  # sets:
+  # /WMT_MS_Capabilities/Capability/Layer/*/Name
+  # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/Name
+  NAME land_shallow_topo_2048
+
+  # group layer belongs to
+  # this is used to add an extra <Layer> nest
+  # to the output Capabilities XML
+  GROUP "Imagery"
+
+  # projection: if the data is NOT in the same projection as the global
+  # mapfile, you must explicitly give the native projection code of the data
+  # some common projections:
+  # lat/long: epsg:4326
+  # NRCan LCC: epsg:42304
+  PROJECTION
+   "init=epsg:4326"
+  END
+
+  # what type of data is this?
+  TYPE RASTER
+
+  # allow data access via query and WCS
+  DUMP TRUE
+  
+  # always returned with interface
+  STATUS ON
+
+  # actual data pointer
+  DATA ./data/land_shallow_topo_2048.tif
+
+
+  # for HTML queries
+  HEADER   ./templates/land_shallow_topo_2048_query_header.html
+  TEMPLATE ./templates/land_shallow_topo_2048_query_body.html
+  
+  METADATA
+
+   # OGC:WMS specific tags
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/Title
+   "ows_title"    "Land Surface, Shallow Water, and Shaded Topography"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/Abstract
+   "ows_abstract"    "Much of the information contained in this image came from a single remote-sensing device-NASA's Moderate Resolution Imaging Spectroradiometer, or MODIS. Flying over 700 km above the Earth onboard the Terra satellite, MODIS provides an integrated tool for observing a variety of terrestrial, oceanic, and atmospheric features of the Earth. The land and coastal ocean portions of these images are based on surface observations collected from June through September 2001 and combined, or composited, every eight days to compensate for clouds that might block the sensor's view of the surface on any single day. Two different types of ocean data were used in these images: shallow water true color data, and global ocean color (or chlorophyll) data. Topographic shading is based on the GTOPO 30 elevation dataset compiled by the U.S. Geological Survey's EROS Data Center. MODIS observations of polar sea ice were combined with observations of Antarctica made by the National Oceanic and Atmospheric Administration's AVHRR sensor - the Advanced Very High Resolution Radiometer. The cloud image is a composite of two days of imagery collected in visible light wavelengths and a third day of thermal infra-red imagery over the poles. Global city lights, derived from 9 months of observations from the Defense Meteorological Satellite Program, are superimposed on a darkened land surface map"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/KeywordList/Keyword[]
+   "ows_keywordlist"    "NASA,MODIS,AVHRR,EROS"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/@opaque
+   "wms_opaque"    "1"
+
+   # this positions this layer definition within the GROUP defined above
+   "wms_group_title" "Imagery"
+   
+   # this is the abstract text associated with "wms_group_title"
+   # you only need to define this once
+   "wms_group_abstract" "Imagery layers"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/BoundingBox/@resx
+   "wms_resx" "0.17578125"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/BoundingBox/@resy
+   "wms_resy" "0.17578125"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/LatLonBoundingBox
+   "ows_extent" "-180 -90 180 90"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/OnlineResource/@type
+   "ows_metadataurl_type" "FGDC"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/Format
+   "wms_metadataurl_format" "text/html"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/OnlineResource/@xlink:href
+   "ows_metadataurl_href" "http://earthobservatory.nasa.gov/Newsroom/BlueMarble/"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/DataURL/Format
+   "wms_dataurl_format" "image/tiff"
+   
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/DataURL/OnlineResource/@xlink:href
+   "wms_dataurl_href" "http://earthobservatory.nasa.gov/Newsroom/BlueMarble/Images/land_shallow_topo_2048.tif"
+
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/AuthorityURL@name
+   "wms_authorityurl_name" "nasa"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/AuthorityURL/OnlineResource/@xlink:href
+   "wms_authorityurl_href" "http://visibleearth.nasa.gov/view_set.php?categoryID=2355"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/Identifier/@authority
+   "wms_identifier_authority" "nasa"
+
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/Identifier
+   "wms_identifier_value" "bmng"
+
+   #To expose the RGB values
+   "gml_include_items" "all"
+
+   # OGC:WFS specific tags
+   # None!  This is raster data, not covered by OGC:WFS
+  END
+ END
+
+ LAYER
+  # name of layer
+  # sets:
+  # /WMT_MS_Capabilities/Capability/Layer/*/Name
+  # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/Name
+  # /WMS_DescribeLayerResponse/LayerDescription/@name
+  # /WMS_DescribeLayerResponse/LayerDescription/Query/@typeName
+  NAME rivers
+
+  # group layer belongs to
+  # this is used to add an extra <Layer> nest
+  # to the output Capabilities XML
+  GROUP "Vectors"
+
+  # projection: if the data is NOT in the same projection as the global
+  # mapfile, you must explicitly give the native projection code of the data
+  # some common projections:
+  # lat/long: epsg:4326
+  # NRCan LCC: epsg:42304
+  PROJECTION
+   "init=epsg:4326"
+  END
+
+  # what type of data is this?
+  TYPE LINE
+
+  # always returned with interface
+  STATUS ON
+
+  # actual data pointer
+  DATA ./data/rivers
+
+  METADATA
+
+   # OGC:WMS specific tags
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/Title
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/Title
+   "ows_title"    "Rivers"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/Abstract
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/Abstract   
+   "ows_abstract"    "These are rivers"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/KeywordList/Keyword[]
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/Keywords
+   "ows_keywordlist"    "Rivers,world"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/SRS   
+   "ows_srs" "EPSG:4326"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/@opaque
+   "wms_opaque"    "0"
+
+   # this positions this layer definition within the GROUP defined above
+   "wms_group_title" "Vectors"
+
+   # this is the abstract text associated with "wms_group_title"
+   # you only need to define this once
+   "wms_group_abstract" "Vector layers"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/DataURL/OnlineResource/@xlink:href
+   "wms_dataurl_href" "http://localhost/ms_ogc_workshop/data/"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/DataURL/Format
+   "wms_dataurl_format" "text/html"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/@type
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/MetadataURL/@type
+   "ows_metadataurl_type" "FGDC"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/OnlineResource/@xlink:href
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/MetadataURL
+   "ows_metadataurl_href" "http://localhost/ms_ogc_workshop/index.html"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/Format
+   "ows_metadataurl_format" "text/html"
+
+   # OGC:WFS specific tags
+   
+   # sets:
+   # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/MetadataURL/@format
+   "wfs_metadataurl_format" "TXT"
+
+   # specify which fields to include when returning queries
+   "gml_include_items" "all"
+
+   #For ID based lookups
+   "wfs_featureid"     "NAME"
+
+  END
+
+  # data is queryable
+  DUMP TRUE
+
+  # query templates for HTML-based queries
+  # responds to OGC:WMS request=GetFeatureInfo......&info_format=text/html
+  HEADER   ./templates/rivers_query_header.html
+  TEMPLATE ./templates/rivers_query_body.html
+
+  # fuzziness for querying
+  TOLERANCE 5
+
+  # how will this data look?
+  CLASS
+   NAME "Rivers"
+   COLOR 0 0 255
+   # if you want to use a canned graphic for the
+   # legend do it like this.
+   # this is what will show up when a user does either
+   # the WMS GetLegendGraphic request or the native
+   # MapServer mode=legend interfaces
+   #
+   # Can be a local file or URL
+   # KEYIMAGE "../graphics/refmap_world_4326.gif"
+  END
+ END
+ 
+ # WCS example
+ LAYER
+  NAME "toronto"
+  STATUS ON
+  TYPE RASTER
+  DUMP TRUE
+  DATA ./data/toronto.tif
+  PROJECTION
+   "init=epsg:26917"
+  END
+  METADATA
+   # OGC:WMS specific tags
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/Title
+   "wms_title"    "Toronto Landsat 5 TM"
+  
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/Abstract
+   "wms_abstract"    "Toronto Landsat 5 TM"
+  
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/KeywordList/Keyword[]
+   "wms_keywordlist"    "Toronto,Landsat,TM"
+  
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/SRS   
+   "wms_srs" "EPSG:26917 EPSG:4326"
+  
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/@opaque
+   "wms_opaque"    "1"
+  
+   # this positions this layer definition within the GROUP defined above
+   "wms_group_title" "Imagery"
+
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/BoundingBox/@resx
+   "wms_resx" "100"
+  
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/BoundingBox/@resy
+   "wms_resy" "100"
+  
+   # sets:
+   # /WMT_MS_Capabilities/Capability/Layer/*/LatLonBoundingBox
+   "wms_extent" "456850 4732100 706850 4957100"
+  
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/OnlineResource/@type
+   "wms_metadataurl_type" "FGDC"
+ 
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/Format
+   "wms_metadataurl_format" "text/html"
+  
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/MetadataURL/OnlineResource/@xlink:href
+   "wms_metadataurl_href" "http://rdx.glc.org/"
+  
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/DataURL/Format
+   "wms_dataurl_format" "text/html"
+     
+   # sets /WMT_MS_Capabilities/Capability/Layer/*/DataURL/OnlineResource/@xlink:href
+   "wms_dataurl_href" "http://rdx.glc.org/"
+     
+   # OGC:WFS specific tags
+   # None!  This is raster data, not covered by OGC:WFS
+  
+   # sets:
+   # /ViewContext/LayerList/Layer[*]/StyleList/Style/Title
+   "wms_style_default_title"    "default"
+  
+   # sets:
+   # /ViewContext/LayerList/Layer[*]/DataURL/@xlink:href
+   "wms_dataurl_href" "http://geogratis.cgdi.gc.ca/download/landsat/l5_city/toronto/toronto_500_nc.tif"
+  
+   # sets:
+   # /ViewContext/LayerList/Layer[*]/DataURL/format
+   "wms_dataurl_format" "image/tiff"
+  
+   # sets:
+   # /ViewContext/LayerList/Layer[*]/MetadataURL/OnlineResource/@xlink:href
+   "wms_metadataurl_href" "http://geogratis.cgdi.gc.ca/clf/en?action=fullMetadata&entryId=4373"
+  
+   # sets:
+   # /ViewContext/LayerList/Layer[*]/MetadataURL/@format
+   "wms_metadataurl_format" "text/html"
+  
+   # sets:
+   # /ViewContext/LayerList/Layer[*]/FormatList/Format(@current=1)
+   "wms_format" "image/gif"
+  
+   "wcs_label" "Landsat 5 TM - Toronto"
+
+   # supported SRSes
+   "ows_srs"    "EPSG:26917 EPSG:4326"
+  
+   # extent, in the native coordinate system
+   "ows_extent" "456850 4732100 706850 4957100"
+  
+   # x and y resolution of the data
+   "wcs_resolution" "100 100"
+   
+   # how many bands is the image?
+   "wcs_bandcount" "3"
+   
+   # what formats are supported?
+   "wcs_formats" "GEOTIFF_RGB"
+   
+   # what is the native format of the data?
+   "wcs_nativeformat" "raw binary"
+   
+   # abstract text
+   "wcs_description" "Toronto Landsat 5 TM"
+   
+   # url
+   "wcs_metadatalink_href" "http://geogratis.cgdi.gc.ca/clf/en?action=fullMetadata&entryId=4373"
+   
+   # keywords
+   "wcs_keywordlist" "landsat,toronto"
+   
+   # rangeset type
+   "wcs_rangeset_axes" "bands"
+   
+   # rangeset name
+   "wcs_rangeset_name" "Landsat 5 TM Bands"
+   
+   # rangeset title
+   "wcs_rangeset_label" "Bands"
+   
+   # rangeset description
+   "wcs_rangeset_description" "Bands for Landsat 5 TM"
+
+   # specify which fields to include when returning queries
+   "gml_include_items" "all"
+
+  END
+ END
+END

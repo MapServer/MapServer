@@ -163,7 +163,7 @@ xmlNodePtr msWFSConstraintDefaultValue(xmlNsPtr psNs, xmlNsPtr psNsOws, const ch
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
   xmlNewChild(psRootNode, psNsOws, BAD_CAST "NoValues", NULL );
-  xmlNewChild(psRootNode, psNsOws, BAD_CAST "DefaultValue", BAD_CAST value);
+  xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "DefaultValue", BAD_CAST value);
 
   return psRootNode;
 }
@@ -334,9 +334,9 @@ static void msWFSAddInspireDSID(mapObj *map,
         {
             xmlNodePtr pSDSI = xmlNewNode(psNsInspireDls, BAD_CAST "SpatialDataSetIdentifier");
             xmlAddChild(pDlsExtendedCapabilities, pSDSI);
-            xmlNewChild(pSDSI, psNsInspireCommon, BAD_CAST "Code", BAD_CAST tokensCode[i]);
+            xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Code", BAD_CAST tokensCode[i]);
             if( ntokensNS > 0 && tokensNS[i][0] != '\0' )
-                xmlNewChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
+                xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
         }
         msFreeCharArray(tokensCode, ntokensCode);
         if( ntokensNS > 0 )
@@ -711,7 +711,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
         if (msWFSIsLayerSupported(lp))
         {
           if( psFtNode != NULL ) {
-            xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language));
+            xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language, script_url));
           }
 
           /* As soon as at least one layer supports sorting, advertize sorting */
@@ -824,15 +824,44 @@ static char* msWFSGetStoredQuery(mapObj *map, const char* pszURN)
         FILE* f = fopen(value, "rb");
         if( f != NULL )
         {
-            char* pszBuffer = (char*) msSmallMalloc(32000);
-            int nread = fread(pszBuffer, 1, 32000-1, f);
-            fclose(f);
-            if( nread > 0 )
+            char* pszBuffer;
+            int nread;
+            long length;
+
+            fseek(f, 0, SEEK_END);
+            length = ftell(f);
+            if( length > 1000000 )
             {
-                pszBuffer[nread-1] = '\0';
-                return pszBuffer;
+                msSetError(MS_WFSERR, "%s: too big (%ld bytes > 1000000)",
+                           "msWFSGetStoredQuery()", value, length);
+                fclose(f);
             }
-            msFree(pszBuffer);
+            else
+            {
+                fseek(f, 0, SEEK_SET);
+                pszBuffer = (char*) malloc((int)length + 1);
+                if( pszBuffer == NULL )
+                {
+                    msSetError(MS_WFSERR, "Cannot allocate %d bytes to read %s",
+                               "msWFSGetStoredQuery()",
+                               (int)length + 1, value);
+                    fclose(f);
+                }
+                else
+                {
+                    nread = (int)fread(pszBuffer, 1, length, f);
+                    fclose(f);
+                    if( nread == length )
+                    {
+                        pszBuffer[nread] = '\0';
+                        return pszBuffer;
+                    }
+                    msSetError(MS_WFSERR, "Could only read %d bytes / %d of %s",
+                               "msWFSGetStoredQuery()",
+                               nread, (int)length, value);
+                    msFree(pszBuffer);
+                }
+            }
         }
         else
         {

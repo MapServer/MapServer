@@ -1,0 +1,88 @@
+#
+# Test WMS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+# Test Ex_GeographicBoundingBox in Capabilities
+# RUN_PARMS: wms_north_polar_stereo_extent.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+
+MAP
+
+ NAME WMS_TEST
+
+ EXTENT -180 -90 180 90
+ SIZE 500 300
+ PROJECTION
+  "init=epsg:4326"
+ END
+
+UNITS DD
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:4326"
+    "ows_schemas_location" "http://schemas.opengis.net"
+    "ows_keywordlist" "ogc,wms,mapserver"
+    "ows_service_onlineresource" "http://www.mapserver.org/"
+    "ows_fees" "None"
+    "ows_accessconstraints" "None"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+
+    "ows_enable_request" "*" 
+  END
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME fake
+  DATA fake
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "fake"
+    "wms_description" "fake"
+    "ows_extent" "-2099127.494 -5739388.521 4340872.506 -2099388.521"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+   "proj=stere"
+   "lat_0=90"
+   "lat_ts=60"
+   "lon_0=252"
+   "k=90"
+   "x_0=0"
+   "y_0=0"
+   "a=6371229"
+   "b=6371229"
+   "units=m"
+   "no_defs"
+  END
+
+END # Layer
+
+END # Map File

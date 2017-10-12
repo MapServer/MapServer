@@ -1,0 +1,30 @@
+#
+# OGR Rendering with autostyling.
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG
+#
+MAP
+
+EXTENT -1 -1 1 1
+SIZE 400 300
+IMAGECOLOR 255 255 255
+
+IMAGETYPE png
+SHAPEPATH "data/"
+#CONFIG "MS_ERRORFILE" "stderr"
+
+LAYER
+  NAME canada
+  TYPE point
+  CONNECTIONTYPE OGR
+  CONNECTION "quoted_text.TAB"
+  DATA "quoted_text"
+  STATUS default
+  STYLEITEM "AUTO"
+  LABELCACHE OFF
+  CLASS 
+     NAME "work"
+  END
+END
+
+END

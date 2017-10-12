@@ -1,0 +1,192 @@
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1" updateSequence="123">
+
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>Test simple OWS</Title>
+  <Abstract>Test OWS Abstract</Abstract>
+  <KeywordList>
+      <Keyword>ogc</Keyword>
+      <Keyword>wms</Keyword>
+      <Keyword>wfs</Keyword>
+      <Keyword>wcs</Keyword>
+      <Keyword>metadata</Keyword>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>Tom Kralidis</ContactPerson>
+      <ContactOrganization>MapServer</ContactOrganization>
+    </ContactPersonPrimary>
+      <ContactPosition>self</ContactPosition>
+    <ContactAddress>
+        <AddressType>postal</AddressType>
+        <Address>123 SomeRoad Road</Address>
+        <City>Toronto</City>
+        <StateOrProvince>Ontario</StateOrProvince>
+        <PostCode>xxx-xxx</PostCode>
+        <Country>Canada</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+xx-xxx-xxx-xxxx</ContactVoiceTelephone>
+      <ContactFacsimileTelephone>+xx-xxx-xxx-xxxx</ContactFacsimileTelephone>
+  <ContactElectronicMailAddress>tomkralidis@xxxxxxx.xxx</ContactElectronicMailAddress>
+  </ContactInformation>
+  <Fees>none</Fees>
+  <AccessConstraints>none</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/tiff</Format>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <Format>application/x-pdf</Format>
+      <Format>image/svg+xml</Format>
+      <Format>application/vnd.google-earth.kml+xml</Format>
+      <Format>application/vnd.google-earth.kmz</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeLayer>
+    <GetLegendGraphic>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetLegendGraphic>
+    <GetStyles>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ows?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetStyles>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <Layer>
+    <Name>OWS_METADATA_TEST</Name>
+    <Title>Test simple OWS</Title>
+    <Abstract>Test OWS Abstract</Abstract>
+    <KeywordList>
+        <Keyword>ogc</Keyword>
+        <Keyword>wms</Keyword>
+        <Keyword>wfs</Keyword>
+        <Keyword>wcs</Keyword>
+        <Keyword>metadata</Keyword>
+    </KeywordList>
+    <SRS>EPSG:4326</SRS>
+    <LatLonBoundingBox minx="-180" miny="-90" maxx="180" maxy="90" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="-180" miny="-90" maxx="180" maxy="90" />
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>road</Name>
+        <Title>road</Title>
+        <Abstract>Roads of I.P.E.</Abstract>
+        <SRS>EPSG:43204</SRS>
+        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:43204"
+                    minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/md"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="71" height="20">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ows?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=road&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>province</Name>
+        <Title>province</Title>
+        <Abstract>province</Abstract>
+        <LatLonBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ows?request=GetMetadata&amp;layer=province"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="85" height="20">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ows?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=province&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>toronto</Name>
+        <Title>Toronto</Title>
+        <Abstract>Toronto</Abstract>
+        <SRS>EPSG:32611</SRS>
+        <LatLonBoundingBox minx="-117.546" miny="44.6656" maxx="-117.387" maxy="44.7671" />
+        <BoundingBox SRS="EPSG:32611"
+                    minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ows?request=GetMetadata&amp;layer=toronto"/>
+        </MetadataURL>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

@@ -1,0 +1,45 @@
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+# Recipe to produce the tileindex :
+# wget http://svn.osgeo.org/gdal/trunk/autotest/gcore/data/utmsmall.tif
+# gdal_translate utmsmall.tif utmsmall_topleft_26711.tif -srcwin 0 0 50 50
+# gdal_translate utmsmall.tif utmsmall_topright_26711.tif -srcwin 50 0 50 50
+# gdal_translate utmsmall.tif utmsmall_bottomleft_26711.tif -srcwin 0 50 50 50
+# gdal_translate utmsmall.tif utmsmall_bottomright_26711.tif -srcwin 50 50 50 50
+# gdalwarp utmsmall_bottomleft_26711.tif utmsmall_bottomleft_4326.tif -t_srs EPSG:4326
+# gdalwarp utmsmall_topright_26711.tif utmsmall_topright_32611.tif -t_srs EPSG:32611
+# gdalwarp utmsmall_bottomright_26711.tif utmsmall_bottomright_3857.tif -t_srs EPSG:3857
+# gdaltindex -t_srs EPSG:4326 -src_srs_name src_srs tile_index_mixed_srs.shp utmsmall_topleft_26711.tif utmsmall_topright_32611.tif utmsmall_bottomleft_4326.tif utmsmall_bottomright_3857.tif
+# Just to test that we can also deduce the SRS from the GDAL file itself
+# ogrinfo tile_index_mixed_srs.shp -sql "UPDATE tile_index_mixed_srs SET src_srs = NULL WHERE location = 'utmsmall_topright_32611.tif'" -dialect SQLITE
+
+NAME TEST
+STATUS ON
+SIZE 100 100
+EXTENT 440720.000 3745320.000 446720.000 3751320.000
+IMAGECOLOR 0 0 0
+
+PROJECTION
+  "+proj=utm +zone=11 +datum=NAD27" 
+END
+
+IMAGETYPE PNG8
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DUMP TRUE
+  TEMPLATE "fake.html"
+  TILEINDEX "data/tile_index_mixed_srs.shp"
+  TILEITEM "location"
+  TILESRS "src_srs"
+  PROJECTION
+    "+proj=latlong +datum=WGS84" 
+  END
+END
+
+END # of map file

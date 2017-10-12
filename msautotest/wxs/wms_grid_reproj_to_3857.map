@@ -1,0 +1,75 @@
+#
+# Test WMS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+# 
+# Check that labels are in the left and right
+#
+# RUN_PARMS: wms_grid_reproj_to_3857_square_pixels_within_validity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=false&LAYERS=grid4326&CRS=EPSG:3857&STYLES=&WIDTH=2000&HEIGHT=1500&BBOX=-20000000,-15000000,20000000,15000000" > [RESULT_DEMIME]
+#
+# RUN_PARMS: wms_grid_reproj_to_3857_square_pixels_beyond_validity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=false&LAYERS=grid4326&CRS=EPSG:3857&STYLES=&WIDTH=2036&HEIGHT=739&BBOX=-39996745.16861447,-14460662.759102784,39683659.10075838,14460662.759102784" > [RESULT_DEMIME]
+#
+# RUN_PARMS: wms_grid_reproj_to_3857_non_square_pixels_beyond_validity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=false&LAYERS=grid4326&CRS=EPSG:3857&STYLES=&WIDTH=2036&HEIGHT=735&BBOX=-39996745.16861447,-14460662.759102784,39683659.10075838,14460662.759102784" > [RESULT_DEMIME]
+#
+
+MAP
+    NAME WMS_GRID_TEST
+    EXTENT -180 -90 180 90
+    UNITS DD
+    FONTSET "../misc/fonts.lst"
+
+    WEB
+        METADATA
+            wms_enable_request "*"	  
+        END
+    END
+
+    PROJECTION
+        "init=epsg:4326"
+    END
+
+    OUTPUTFORMAT
+        NAME GDPNG
+        DRIVER "GD/PNG"
+        MIMETYPE "image/png"
+        EXTENSION "png"
+    END
+
+    LAYER
+        NAME "grid4326"
+
+        METADATA
+            "wms_srs" "EPSG:4326 EPSG:3857"
+            "wms_extent"  "-180 -90 180 90"
+        END
+
+        TYPE LINE
+
+        CLASS
+            NAME "Graticule"
+            COLOR 255 153 0
+            LABEL
+            COLOR  0 0 0
+            FONT lucida
+            TYPE truetype
+            SIZE 8
+            POSITION AUTO
+            PARTIALS FALSE
+            BUFFER 5
+            OUTLINECOLOR 255 255 255
+            END
+        END
+
+        PROJECTION
+            "init=epsg:4326"
+        END
+
+        GRID
+            LABELFORMAT 'DDMMSS'  # nice if a projected SRS used
+            MININTERVAL 30
+            MAXINTERVAL 30
+        END
+
+    END # Layer
+
+END

@@ -1,0 +1,51 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://ogc.dmsolutions.ca/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://ogc.dmsolutions.ca/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>44.61104 -65.81602</gml:lowerCorner>
+      		<gml:upperCorner>44.61104 -65.81602</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+<!-- WARNING: No featureid defined for typename 'popplace'. Output will not validate. -->
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.61104 -65.81602</gml:lowerCorner>
+        		<gml:upperCorner>44.61104 -65.81602</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.61104 -65.81602</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0.000</ms:AREA>
+        <ms:PERIMETER>0.000</ms:PERIMETER>
+        <ms:POPPLACE_>118</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAJOA</ms:UNIQUE_KEY>
+        <ms:NAME>Digby</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>021A12</ms:NTS50>
+        <ms:LAT>443700</ms:LAT>
+        <ms:LONG>654600</ms:LONG>
+        <ms:SGC_CODE>1203006</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+</wfs:FeatureCollection>
+

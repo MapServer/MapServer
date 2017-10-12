@@ -92,7 +92,6 @@ endif(NOT(WIN32))
 check_function_exists("strrstr"          HAVE_STRRSTR)
 check_function_exists("strcasecmp"  HAVE_STRCASECMP)
 check_function_exists("strcasestr"  HAVE_STRCASESTR)
-check_function_exists("strdup"  HAVE_STRDUP)
 check_function_exists("strlcat"  HAVE_STRLCAT)
 check_function_exists("strlcpy"  HAVE_STRLCPY)
 check_function_exists("strlen"  HAVE_STRLEN)
@@ -154,7 +153,7 @@ option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
 option(WITH_V8 "include javacript v8 scripting" OFF)
-option(WITH_PIXMAN "use pixman for layer compositing operations" OFF)
+option(WITH_PIXMAN "use (experimental) support for pixman for layer compositing operations" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
@@ -167,8 +166,8 @@ option(WITH_GENERIC_NINT "generic rounding" OFF)
 
 # Add compiler flags for warnings
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror=format-security -Wdeclaration-after-statement")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror=format-security")
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
@@ -259,11 +258,16 @@ mapprojhack.c maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
-mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
+mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c mapmetadata.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
 mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
+<<<<<<< HEAD
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c mapmvt.c)
+=======
+mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c
+mapcompositingfilter.c)
+>>>>>>> master
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
@@ -274,6 +278,68 @@ mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
 mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h)
 
+<<<<<<< HEAD
+=======
+if(WIN32)
+	configure_file(
+	  ${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in
+	  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	  @ONLY)
+	set(mapserver_SOURCES ${mapserver_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif(WIN32)
+
+
+
+if(BUILD_DYNAMIC)
+  add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  set_target_properties( mapserver  PROPERTIES
+    VERSION ${MapServer_VERSION_STRING}
+    SOVERSION 2
+) 
+endif(BUILD_DYNAMIC)
+
+if(BUILD_STATIC)
+  add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  set_target_properties( mapserver_static PROPERTIES
+    VERSION ${MapServer_VERSION_STRING}
+    SOVERSION 2
+  ) 
+endif(BUILD_STATIC)
+
+#SOVERSION is not necessarily the same as the
+#major version. The rule is that any breakage of the ABI must be
+#indicated by incrementing the SOVERSION. So, adding e.g. functions is no
+#problem, modifying argument lists or removing functions would required
+#the SOVERSION to be incremented. Similar rules hold of course for
+#non-opaque data-structures.
+
+add_executable(mapserv mapserv.c)
+target_link_libraries(mapserv ${MAPSERVER_LIBMAPSERVER})
+add_executable(shp2img shp2img.c)
+target_link_libraries(shp2img ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptree shptree.c)
+target_link_libraries(shptree ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptreevis shptreevis.c)
+target_link_libraries(shptreevis ${MAPSERVER_LIBMAPSERVER})
+add_executable(sortshp sortshp.c)
+target_link_libraries(sortshp ${MAPSERVER_LIBMAPSERVER})
+add_executable(legend legend.c)
+target_link_libraries(legend ${MAPSERVER_LIBMAPSERVER})
+add_executable(scalebar scalebar.c)
+target_link_libraries(scalebar ${MAPSERVER_LIBMAPSERVER})
+add_executable(msencrypt msencrypt.c)
+target_link_libraries(msencrypt ${MAPSERVER_LIBMAPSERVER})
+add_executable(tile4ms tile4ms.c)
+target_link_libraries(tile4ms ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptreetst shptreetst.c)
+target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
+
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  set(USE_EXTENDED_DEBUG 1)
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+
+>>>>>>> master
 find_package(PNG)
 if(PNG_FOUND)
   list(APPEND ALL_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
@@ -925,7 +991,7 @@ ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-ms_link_libraries( ${MS_EXTERNAL_LIBS})
+ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
 endif (WIN32)
 
 configure_file (
@@ -938,9 +1004,11 @@ configure_file (
   "${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
 
-set_target_properties(mapserver PROPERTIES
-  PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
-)
+if(BUILD_DYNAMIC)
+  set_target_properties(mapserver PROPERTIES
+    PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
+  )
+endif(BUILD_DYNAMIC)
 
 macro(status_optional_component component enabled libpath)
   if("${enabled}" EQUAL "1")
@@ -1043,54 +1111,56 @@ endif(USE_MSSQL2008)
 INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv
         RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
 )
-INSTALL(TARGETS mapserver
-        EXPORT mapserverTargets
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
-        PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
-)
 
 if(BUILD_STATIC)
-   INSTALL(TARGETS mapserver_static DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS mapserver_static
+           DESTINATION ${INSTALL_LIB_DIR} COMPONENT staticlib
+   )
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
-   INSTALL(TARGETS mapserver DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS mapserver
+           EXPORT mapserverTargets
+           ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
+   )
+
+   # Add all targets to the build-tree export set
+   export(TARGETS mapserver
+          FILE "${PROJECT_BINARY_DIR}/mapserverTargets.cmake"
+   )
+
+   # Export the package for use from the build-tree
+   # (this registers the build-tree with a global CMake-registry)
+   export(PACKAGE mapserver)
+
+   list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
+   list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR}/mapserver)
+
+   list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
+
+   # Create the mapserver-config.cmake and mapserver-config-version files
+   file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${ALL_INCLUDE_DIRS}")
+
+   # ... for the build tree
+   set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+   configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config.cmake" @ONLY)
+
+   # ... for the install tree
+   set(CONF_INCLUDE_DIRS "\${MAPSERVER_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+   configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake" @ONLY)
+
+   # ... for both
+   configure_file(mapserver-config-version.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake" @ONLY)
+
+   # Install the mapserver-config.cmake and mapserver-config-version.cmake
+   install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
+                 "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
+           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+   )
+
+   # Install the export set for use with the install-tree
+   install(EXPORT mapserverTargets
+           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+   )
 endif(BUILD_DYNAMIC)
-
-# Add all targets to the build-tree export set
-export(TARGETS mapserver
-       FILE "${PROJECT_BINARY_DIR}/mapserverTargets.cmake"
-)
-
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export(PACKAGE mapserver)
-
-list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
-list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR}/mapserver)
-
-list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
-
-# Create the mapserver-config.cmake and mapserver-config-version files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${ALL_INCLUDE_DIRS}")
-
-# ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config.cmake" @ONLY)
-
-# ... for the install tree
-set(CONF_INCLUDE_DIRS "\${MAPSERVER_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake" @ONLY)
-
-# ... for both
-configure_file(mapserver-config-version.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake" @ONLY)
-
-# Install the mapserver-config.cmake and mapserver-config-version.cmake
-install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
-              "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)
-
-# Install the export set for use with the install-tree
-install(EXPORT mapserverTargets
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)

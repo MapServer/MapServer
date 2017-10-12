@@ -1,0 +1,247 @@
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1" updateSequence="123">
+
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>Sample OWS for MapServer OGC Web Services Workshop</Title>
+  <Abstract>Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!</Abstract>
+  <KeywordList>
+      <Keyword>mapserver</Keyword>
+      <Keyword>ogc</Keyword>
+      <Keyword>workshop</Keyword>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/ms_ogc_workshop/index.html"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>Tom Kralidis</ContactPerson>
+      <ContactOrganization>Environment Canada</ContactOrganization>
+    </ContactPersonPrimary>
+      <ContactPosition>Senior Systems Scientist</ContactPosition>
+    <ContactAddress>
+        <AddressType>postal</AddressType>
+        <Address>867 Lakeshore Road</Address>
+        <City>Burlington</City>
+        <StateOrProvince>Ontario</StateOrProvince>
+        <PostCode>L7R-4A6</PostCode>
+        <Country>Canada</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+01-905-336-4409</ContactVoiceTelephone>
+      <ContactFacsimileTelephone>+01-905-336-4499</ContactFacsimileTelephone>
+  <ContactElectronicMailAddress>tom.kralidis@ec.gc.ca</ContactElectronicMailAddress>
+  </ContactInformation>
+  <Fees>none</Fees>
+  <AccessConstraints>none</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/png; mode=24bit</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/tiff</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/html</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <Format>text/plain</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeLayer>
+    <GetLegendGraphic>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetLegendGraphic>
+    <GetStyles>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetStyles>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <Layer>
+    <Name>msautotest_wxs_</Name>
+    <Title>Sample OWS for MapServer OGC Web Services Workshop</Title>
+    <Abstract>Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!</Abstract>
+    <KeywordList>
+        <Keyword>mapserver</Keyword>
+        <Keyword>ogc</Keyword>
+        <Keyword>workshop</Keyword>
+    </KeywordList>
+    <SRS>EPSG:4326</SRS>
+    <LatLonBoundingBox minx="-180" miny="-90" maxx="180" maxy="90" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="-180" miny="-90" maxx="180" maxy="90" />
+    <Attribution>
+        <Title>Data from Environment Canada</Title>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ec.gc.ca/"/>
+        <LogoURL width="655" height="130">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://mapserver.gis.umn.edu/mum/header_fsa.png"/>
+          </LogoURL>
+    </Attribution>
+    <Layer>
+      <Name>Imagery</Name>
+      <Title>Imagery</Title>
+      <Abstract>Imagery layers</Abstract>
+    <Style>
+       <Name>default</Name>
+       <Title>default</Title>
+       <LegendURL width="35" height="5">
+          <Format>image/png</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Imagery&amp;format=image/png&amp;STYLE=default"/>
+       </LegendURL>
+    </Style>
+      <Layer queryable="1" opaque="1" cascaded="0">
+        <Name>land_shallow_topo_2048</Name>
+        <Title>Land Surface, Shallow Water, and Shaded Topography</Title>
+        <Abstract>Much of the information contained in this image came from a single remote-sensing device-NASA&#39;s Moderate Resolution Imaging Spectroradiometer, or MODIS. Flying over 700 km above the Earth onboard the Terra satellite, MODIS provides an integrated tool for observing a variety of terrestrial, oceanic, and atmospheric features of the Earth. The land and coastal ocean portions of these images are based on surface observations collected from June through September 2001 and combined, or composited, every eight days to compensate for clouds that might block the sensor&#39;s view of the surface on any single day. Two different types of ocean data were used in these images: shallow water true color data, and global ocean color (or chlorophyll) data. Topographic shading is based on the GTOPO 30 elevation dataset compiled by the U.S. Geological Survey&#39;s EROS Data Center. MODIS observations of polar sea ice were combined with observations of Antarctica made by the National Oceanic and Atmospheric Administration&#39;s AVHRR sensor - the Advanced Very High Resolution Radiometer. The cloud image is a composite of two days of imagery collected in visible light wavelengths and a third day of thermal infra-red imagery over the poles. Global city lights, derived from 9 months of observations from the Defense Meteorological Satellite Program, are superimposed on a darkened land surface map</Abstract>
+        <KeywordList>
+            <Keyword>NASA</Keyword>
+            <Keyword>MODIS</Keyword>
+            <Keyword>AVHRR</Keyword>
+            <Keyword>EROS</Keyword>
+        </KeywordList>
+        <SRS>EPSG:4326</SRS>
+        <LatLonBoundingBox minx="-180" miny="-90" maxx="180" maxy="90" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="-180" miny="-90" maxx="180" maxy="90"
+                    resx="0.1757812" resy="0.1757812" />
+        <AuthorityURL name="nasa">
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://visibleearth.nasa.gov/view_set.php?categoryID=2355"/>
+        </AuthorityURL>
+        <Identifier authority="nasa">bmng</Identifier>
+        <MetadataURL type="FGDC">
+          <Format>text/html</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://earthobservatory.nasa.gov/Newsroom/BlueMarble/"/>
+        </MetadataURL>
+        <DataURL>
+          <Format>image/tiff</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://earthobservatory.nasa.gov/Newsroom/BlueMarble/Images/land_shallow_topo_2048.tif"/>
+        </DataURL>
+      </Layer>
+    </Layer>
+    <Layer>
+      <Name>Vectors</Name>
+      <Title>Vectors</Title>
+      <Abstract>Vector layers</Abstract>
+    <Style>
+       <Name>default</Name>
+       <Title>default</Title>
+       <LegendURL width="71" height="20">
+          <Format>image/png</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Vectors&amp;format=image/png&amp;STYLE=default"/>
+       </LegendURL>
+    </Style>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>rivers</Name>
+        <Title>Rivers</Title>
+        <Abstract>These are rivers</Abstract>
+        <KeywordList>
+            <Keyword>Rivers</Keyword>
+            <Keyword>world</Keyword>
+        </KeywordList>
+        <SRS>EPSG:4326</SRS>
+        <LatLonBoundingBox minx="-164.625" miny="-36.9044" maxx="161.066" maxy="72.2342" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="-164.625" miny="-36.9044" maxx="161.066" maxy="72.2342" />
+        <MetadataURL type="FGDC">
+          <Format>text/html</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ms_ogc_workshop/index.html"/>
+        </MetadataURL>
+        <DataURL>
+          <Format>text/html</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ms_ogc_workshop/data/"/>
+        </DataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="71" height="20">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=rivers&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+    </Layer>
+    <Layer queryable="0" opaque="1" cascaded="0">
+        <Name>toronto</Name>
+        <Title>Toronto Landsat 5 TM</Title>
+        <Abstract>Toronto Landsat 5 TM</Abstract>
+        <KeywordList>
+            <Keyword>Toronto</Keyword>
+            <Keyword>Landsat</Keyword>
+            <Keyword>TM</Keyword>
+        </KeywordList>
+        <SRS>EPSG:26917</SRS>
+        <SRS>EPSG:4326</SRS>
+        <LatLonBoundingBox minx="-81.5453" miny="42.7136" maxx="-78.3874" maxy="44.7673" />
+        <BoundingBox SRS="EPSG:26917"
+                    minx="456850" miny="4.7321e+06" maxx="706850" maxy="4.9571e+06"
+                    resx="100" resy="100" />
+        <MetadataURL type="FGDC">
+          <Format>text/html</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/clf/en?action=fullMetadata&amp;entryId=4373"/>
+        </MetadataURL>
+        <DataURL>
+          <Format>image/tiff</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/download/landsat/l5_city/toronto/toronto_500_nc.tif"/>
+        </DataURL>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

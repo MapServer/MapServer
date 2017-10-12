@@ -188,7 +188,7 @@ void msThreadInit()
 void* msGetThreadId()
 
 {
-  return pthread_self();
+  return (void*) pthread_self();
 }
 
 /************************************************************************/

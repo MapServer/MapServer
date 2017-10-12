@@ -1,0 +1,91 @@
+# RUN_PARMS: point-polaroffset.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point-polaroffset.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point-polaroffset.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point-polaroffset.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+MAP
+  SIZE 150 100
+  IMAGETYPE png   # gif|png|jpeg|wbmp]
+  EXTENT 0 0 300 200
+  UNITS meters
+  SYMBOL
+    NAME "circlef"
+    TYPE ellipse
+    FILLED true
+    POINTS
+      1 1
+    END
+  END
+  SYMBOL
+    NAME "line"
+    TYPE vector
+    POINTS
+      0 0
+      1 0
+    END
+  END
+  SYMBOL
+    NAME "arrowhead"
+    TYPE vector
+    POINTS
+      0 2
+      4 1
+      0 0
+    END
+    #ANCHORPOINT 0 0.5
+  END
+###########################################################
+  LAYER  # Points - vectors
+    STATUS DEFAULT
+    TYPE POINT
+    PROCESSING "ITEMS=length,rotation,length_2"
+    FEATURE
+      POINTS
+        20 20
+      END # Points
+      ITEMS "10;45;5"
+    END # Feature
+    FEATURE
+      POINTS
+        160 20
+      END # Points
+      ITEMS "20;30;10"
+    END # Feature
+    FEATURE
+      POINTS
+        100 100
+      END # Points
+      ITEMS "40;120;20"
+    END # Feature
+    CLASS
+      STYLE  # right offset rel. to line direction
+        SYMBOL "line"
+        COLOR 0 0 0 # black
+        SIZE [length]
+        ANGLE [rotation]
+        WIDTH 2
+      END # STYLE
+      STYLE  # polaroffset
+        SYMBOL "arrowhead"
+        COLOR 0 0 0   # black
+        ANGLE [rotation]
+        SIZE 8
+        #POLAROFFSET [length] [rotation]
+        POLAROFFSET [length_2] [rotation]
+        #POLAROFFSET [0] [rotation]
+      END # STYLE
+      STYLE  # red dot at the point's location
+        SYMBOL "circlef"
+        COLOR 255 0 0   # red
+        SIZE 4
+      END # STYLE
+      STYLE  # green dot at the polaroffset point
+        SYMBOL "circlef"
+        COLOR 0 255 0   # green
+        SIZE 4
+        #POLAROFFSET [length_2] [rotation]
+        POLAROFFSET [length] [rotation]
+      END # STYLE
+    END # CLASS
+  END # LAYER
+END # MAP`

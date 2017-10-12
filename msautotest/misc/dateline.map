@@ -1,0 +1,32 @@
+# Test dateline wrapping.  All but one of the rectangles
+# cross the dateline in mercator, and will need some points adjusted
+# to stay near their fellow points.  But one wide rect goes across
+# the globe without crossing the dateline and it needs to remain 
+# that way.  This test excersises the msNeedsWrap() test in mapproject.c.
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG SUPPORTS=PROJ
+#
+MAP
+  NAME 'DATELINE'
+  IMAGETYPE PNG
+  EXTENT -200 -90 200 90
+  SIZE 400 180
+  
+  PROJECTION
+    "+proj=latlong +datum=WGS84 +over"
+  END
+
+  LAYER
+    NAME "boxes"
+    TYPE POLYGON
+    STATUS DEFAULT
+    DATA "data/dateline_boxes.shp"
+    PROJECTION
+      "+proj=merc +datum=WGS84 +over"
+    END
+    CLASS
+      OUTLINECOLOR 0 0 0 
+      COLOR 255 255 0 
+    END
+  END
+END

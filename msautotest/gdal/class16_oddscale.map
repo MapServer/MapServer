@@ -1,0 +1,50 @@
+#
+# Test of classification methods on a floating point input with provided
+# scaling that causes merging of some original values throwing off results.
+# In particular, a substantial chunk of data that should have fallen into the
+# last class will be ignored because it is outside the scaling range.  Also, 
+# values like -4 will now fall into the green class because the fall into the
+# 0 to -5.25 bucket which is averaged to -2.675 for classification purposes. 
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT ON
+END
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/float.tif
+  PROCESSING "SCALE=-10.5,10.5"
+  PROCESSING "SCALE_BUCKETS=4"
+  CLASS 
+    NAME "red"
+    EXPRESSION ([pixel] < -3)
+    STYLE  COLOR 255 0 0  END
+  END
+  CLASS 
+    NAME "green"
+    EXPRESSION ([pixel] >= -3 and [pixel] < 3)
+    COLOR 0 255 0
+  END
+  CLASS 
+    NAME "blue"
+    EXPRESSION ([pixel] >= 3)
+    COLOR 0 0 255
+  END
+END
+
+END # of map file

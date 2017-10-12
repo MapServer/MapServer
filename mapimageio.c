@@ -210,7 +210,7 @@ int saveAsJPEG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
       /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
       /* that at least the image size will be used before creating the temporary file */
       cinfo.mem->max_memory_to_use =
-        MAX(cinfo.mem->max_memory_to_use, cinfo.input_components * rb->width * rb->height);
+        MS_MAX(cinfo.mem->max_memory_to_use, cinfo.input_components * rb->width * rb->height);
     }
   }
 

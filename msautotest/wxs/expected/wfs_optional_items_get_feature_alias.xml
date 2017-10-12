@@ -1,0 +1,144 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="21">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>43.41231 -66.43267</gml:lowerCorner>
+      		<gml:upperCorner>47.79644 -59.70969</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:province gml:id="province.977">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Quebec</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.978">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.982">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Quebec</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.988">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Quebec</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.989">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1000">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Quebec</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1009">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1010">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1011">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1015">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Ile-du-Prince-Edouard</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1016">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1017">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1018">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Ile-du-Prince-Edouard</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1019">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1020">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1021">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1023">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1025">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1041">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1043">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1046">
+        <ms:NAME></ms:NAME>
+        <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+      </ms:province>
+    </wfs:member>
+</wfs:FeatureCollection>
+

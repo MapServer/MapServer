@@ -110,6 +110,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
         unlink(pszSLDTmpFile);
         msSetError(MS_WMSERR, "Could not open SLD %s and save it in a temporary file. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL);
       }
+      msFree(pszSLDTmpFile);
       if (pszSLDbuf)
         nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
@@ -201,9 +202,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                    map->numlayers);
           if (psTmpLayer->name)
             msFree(psTmpLayer->name);
-          psTmpLayer->name = strdup(tmpId);
+          psTmpLayer->name = msStrdup(tmpId);
           msFree(pasLayers[l].name);
-          pasLayers[l].name = strdup(tmpId);
+          pasLayers[l].name = msStrdup(tmpId);
           msInsertLayer(map, psTmpLayer, -1);
           MS_REFCNT_DECR(psTmpLayer);
         }
@@ -3359,7 +3360,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           }
         } else
           bGenerateDefaultSymbol =1;
-      } else if (psSymbol->type == MS_SYMBOL_PIXMAP) {
+      } else if (psSymbol->type == MS_SYMBOL_PIXMAP || psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
           pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
           if (!pszURL)
@@ -3396,8 +3397,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                 snprintf(szTmp, sizeof(szTmp), "<%sFormat>image/png</%sFormat>\n",
                          sNameSpace, sNameSpace);
             } else
-              snprintf(szTmp, sizeof(szTmp), "<%sFormat>%s</%sFormat>\n", "image/gif",
-                       sNameSpace, sNameSpace);
+              snprintf(szTmp, sizeof(szTmp), "<%sFormat>%s</%sFormat>\n", sNameSpace,
+                            (psSymbol->type ==MS_SYMBOL_SVG)?"image/svg+xml":"image/gif",sNameSpace);
 
             pszSLD = msStringConcatenate(pszSLD, szTmp);
 

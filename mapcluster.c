@@ -1440,7 +1440,12 @@ int msClusterLayerOpen(layerObj *layer)
     return MS_FAILURE;
 
   if (layer->layerinfo)
-    return MS_SUCCESS;  /* already open */
+  {
+    if (layer->vtable->LayerOpen != msClusterLayerOpen)
+        msLayerClose(layer);
+    else
+      return MS_SUCCESS;  /* already open */
+  }
 
   layerinfo = msClusterInitialize(layer);
 
@@ -1497,6 +1502,55 @@ int msClusterLayerOpen(layerObj *layer)
   return MS_SUCCESS;
 }
 
+int msClusterLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
+{
+  msClusterLayerInfo* layerinfo = layer->layerinfo;
+
+  if (!layerinfo) {
+    msSetError(MS_MISCERR, "Layer is not open: %s", "msClusterLayerTranslateFilter()", layer->name);
+    return MS_FAILURE;
+  }
+
+  if (layerinfo->srcLayer.filter.type == MS_EXPRESSION && layerinfo->srcLayer.filter.tokens == NULL)
+    msTokenizeExpression(&(layerinfo->srcLayer.filter), layer->items, &(layer->numitems));
+
+  return layerinfo->srcLayer.vtable->LayerTranslateFilter(&layerinfo->srcLayer, &layerinfo->srcLayer.filter, filteritem);
+}
+
+char* msClusterLayerEscapeSQLParam(layerObj *layer, const char* pszString)
+{
+  msClusterLayerInfo* layerinfo = layer->layerinfo;
+
+  if (!layerinfo) {
+    msSetError(MS_MISCERR, "Layer is not open: %s", "msClusterLayerEscapeSQLParam()", layer->name);
+    return msStrdup("");
+  }
+
+  return layerinfo->srcLayer.vtable->LayerEscapeSQLParam(&layerinfo->srcLayer, pszString);
+}
+
+int msClusterLayerGetAutoProjection(layerObj *layer, projectionObj* projection)
+{
+  msClusterLayerInfo* layerinfo = layer->layerinfo;
+
+  if (!layerinfo) {
+    msSetError(MS_MISCERR, "Layer is not open: %s", "msClusterLayerGetAutoProjection()", layer->name);
+    return MS_FAILURE;
+  }
+
+  return layerinfo->srcLayer.vtable->LayerGetAutoProjection(&layerinfo->srcLayer, projection);
+}
+
+int msClusterLayerGetPaging(layerObj *layer)
+{
+  return MS_FALSE;
+}
+
+void msClusterLayerEnablePaging(layerObj *layer, int value)
+{
+  return;
+}
+
 void msClusterLayerCopyVirtualTable(layerVTableObj* vtable)
 {
   vtable->LayerInitItemInfo = msClusterLayerInitItemInfo;
@@ -1506,6 +1560,7 @@ void msClusterLayerCopyVirtualTable(layerVTableObj* vtable)
   vtable->LayerWhichShapes = msClusterLayerWhichShapes;
   vtable->LayerNextShape = msClusterLayerNextShape;
   vtable->LayerGetShape = msClusterLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
 
   vtable->LayerClose = msClusterLayerClose;
 
@@ -1514,6 +1569,14 @@ void msClusterLayerCopyVirtualTable(layerVTableObj* vtable)
 
   vtable->LayerGetNumFeatures = msClusterLayerGetNumFeatures;
   vtable->LayerGetAutoStyle = msClusterLayerGetAutoStyle;
+  vtable->LayerTranslateFilter = msClusterLayerTranslateFilter;
+  /* vtable->LayerSupportsCommonFilters, use driver implementation */
+  vtable->LayerEscapeSQLParam = msClusterLayerEscapeSQLParam;
+  /* vtable->LayerEscapePropertyName, use driver implementation */
+
+  vtable->LayerEnablePaging = msClusterLayerEnablePaging;
+  vtable->LayerGetPaging = msClusterLayerGetPaging;
+  vtable->LayerGetAutoProjection = msClusterLayerGetAutoProjection;
 }
 
 #ifdef USE_CLUSTER_PLUGIN
@@ -1531,8 +1594,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
 
 #endif
 
-int
-msClusterLayerInitializeVirtualTable(layerObj *layer)
+int msClusterLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);

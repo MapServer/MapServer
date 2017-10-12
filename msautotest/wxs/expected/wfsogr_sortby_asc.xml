@@ -1,0 +1,75 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="unknown" numberReturned="3">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
+      		<gml:lowerCorner>2281604.25000 135734.70312</gml:lowerCorner>
+      		<gml:upperCorner>2402416.50000 461586.81250</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:popplace gml:id="popplace.BACMK">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
+        		<gml:lowerCorner>2281604.25000 340848.93750</gml:lowerCorner>
+        		<gml:upperCorner>2281604.25000 340848.93750</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace.BACMK.1" srsName="urn:ogc:def:crs:EPSG::3978">
+            <gml:pos>2281604.25000 340848.93750</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:UNIQUE_KEY>BACMK</ms:UNIQUE_KEY>
+        <ms:NAME>&quot;Tignish</ms:NAME>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_CLASS>1</ms:POP_CLASS>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace gml:id="popplace.EGIIG">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
+        		<gml:lowerCorner>2402416.50000 461586.81250</gml:lowerCorner>
+        		<gml:upperCorner>2402416.50000 461586.81250</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace.EGIIG.1" srsName="urn:ogc:def:crs:EPSG::3978">
+            <gml:pos>2402416.50000 461586.81250</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:UNIQUE_KEY>EGIIG</ms:UNIQUE_KEY>
+        <ms:NAME>Fatima</ms:NAME>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_CLASS>2</ms:POP_CLASS>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace gml:id="popplace.CBPAK">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
+        		<gml:lowerCorner>2377598.00000 135734.70312</gml:lowerCorner>
+        		<gml:upperCorner>2377598.00000 135734.70312</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace.CBPAK.1" srsName="urn:ogc:def:crs:EPSG::3978">
+            <gml:pos>2377598.00000 135734.70312</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:UNIQUE_KEY>CBPAK</ms:UNIQUE_KEY>
+        <ms:NAME>&quot;Wind&quot;sor</ms:NAME>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_CLASS>2</ms:POP_CLASS>
+      </ms:popplace>
+    </wfs:member>
+</wfs:FeatureCollection>
+

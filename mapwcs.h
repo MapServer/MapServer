@@ -56,7 +56,7 @@ enum {
 ** Structure to hold metadata taken from the image or image tile index
 */
 typedef struct {
-  const char *srs;
+  char *srs_epsg;
   char srs_urn[500];
   rectObj extent, llextent;
   double geotransform[6];
@@ -97,6 +97,7 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
                    const char *version);
 int msWCSIsLayerSupported(layerObj *layer);
 int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm );
+void msWCSFreeCoverageMetadata(coverageMetadataObj *cm);
 void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
                                        coverageMetadataObj *cm,
                                        layerObj *lp );
@@ -210,7 +211,7 @@ typedef wcs20rasterbandMetadataObj * wcs20rasterbandMetadataObjPtr;
 
 typedef struct {
   char *native_format;    /* mime type of the native format */
-  const char *srs;
+  char *srs_epsg;
   char srs_uri[200];
   rectObj extent;
   double geotransform[6];

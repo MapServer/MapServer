@@ -1,0 +1,45 @@
+#
+# Test supports for image reprojection.
+#
+# This also incidentally tests the EXTENT keyword for a layer as a source
+# of georeferencing (#3402). 
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 200 
+EXTENT 500001 3762155.98 536808.88 3795492.60
+IMAGECOLOR 255 255 0
+
+PROJECTION
+  "proj=utm"
+  "zone=11"
+  "datum=WGS84"
+END
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/grey_raw.tif
+  PROJECTION
+    "proj=latlong"
+    "datum=WGS84"
+  END
+  EXTENT -117 34 -116.6 34.3
+END
+END # of map file
+

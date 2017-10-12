@@ -1,0 +1,45 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://127.0.0.0.1?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=test5299&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>676763.746000,252977.057000 676992.160000,253159.650000</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:test5299>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>676763.746000,252977.057000 676992.160000,253159.650000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:MultiPolygon srsName="EPSG:4326">
+        <gml:polygonMember>
+          <gml:Polygon>
+            <gml:outerBoundaryIs>
+              <gml:LinearRing>
+                <gml:coordinates>676881.746000,253159.650000 676952.500000,253142.812000 676984.539000,253076.568000 676992.160000,253047.552000 676907.575000,252978.182000 676793.971000,252977.057000 676763.746000,253101.446000 676881.746000,253159.650000 </gml:coordinates>
+              </gml:LinearRing>
+            </gml:outerBoundaryIs>
+            <gml:innerBoundaryIs>
+              <gml:LinearRing>
+                <gml:coordinates>676881.746000,253159.650000 676835.762000,253108.566000 676841.704000,253079.649000 676870.271000,253078.765000 676924.143000,253120.438000 676881.746000,253159.650000 </gml:coordinates>
+              </gml:LinearRing>
+            </gml:innerBoundaryIs>
+          </gml:Polygon>
+        </gml:polygonMember>
+        </gml:MultiPolygon>
+        </ms:msGeometry>
+      </ms:test5299>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

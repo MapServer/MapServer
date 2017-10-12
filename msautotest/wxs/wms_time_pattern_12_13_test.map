@@ -1,0 +1,144 @@
+# Test WMS TIME SUPPORT
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+#
+#Pattern12 : "T%H:%M:%SZ"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern12a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern12&&Time=T14:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern12b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern12&Time=T14:10:00Z,T15:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern12c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern12&Time=T14:10:00Z/T15:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern12d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern12&Time=T14:10:00Z/T15:10:00Z,T16:10:00Z/T17:10:00Z" > [RESULT_DEMIME]
+#
+#Pattern13 : "T%H:%M:%S"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern13a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern13&&Time=T14:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern13b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern13&Time=T14:10:00,T15:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern13c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern13&Time=T14:10:00/T15:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern13d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern13&Time=T14:10:00/T15:10:00,T16:10:00/T17:10:00" > [RESULT_DEMIME]
+#
+MAP
+
+NAME WMS_TIME_SPECIFIC_PATTERN
+STATUS ON
+SIZE 400 300
+SYMBOLSET ./etc/symbols.sym
+EXTENT -131 5 -68 68
+UNITS DD
+SHAPEPATH "./data"
+IMAGECOLOR 255 255 255
+FONTSET ./etc/fonts.txt
+
+# Start of web interface definition
+#
+WEB
+  MINSCALE 2000000
+  MAXSCALE 50000000
+
+  IMAGEPATH "/tmp/ms_tmp/" 
+  IMAGEURL "/ms_tmp/"
+
+
+    METADATA
+      "WMS_TITLE"            "Test WMS time support"
+      "WMS_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
+      "WMS_SRS"              "EPSG:4326"
+      "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
+      "WMS_ACCESSCONTRAINTS" "none"
+      "WMS_FEES"             "none"      
+      "wms_timeformat"       "THH:MM:SS,THH:MM,THH"
+      "ows_enable_request"   "*"
+   END
+END
+
+QUERYMAP
+#  STYLE SELECTED
+#  STYLE NORMAL
+  COLOR 255 0 0
+END
+
+PROJECTION
+ "init=epsg:4326"
+END 
+
+#
+# Start of layer definitions
+#
+
+
+LAYER
+  NAME pattern12
+  METADATA
+    "DESCRIPTION" "pattern12"
+    "wms_title" "pattern12"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "T14:00:00Z/T18:00:00Z"   
+    "wms_timedefault"  "T15:10:00Z"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern12
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern13
+  METADATA
+    "DESCRIPTION" "pattern13"
+    "wms_title" "pattern13"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "T14:00:00/T18:00:00"   
+   END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern13
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+
+END

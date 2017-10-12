@@ -38,6 +38,7 @@
 
 #include "mapserver.h"
 #include "maptime.h" 
+#include "mapows.h"
 #include <assert.h>
 
 
@@ -399,8 +400,10 @@ static int msSplitData( char *data, char **geometry_column_name, char **table_na
       break; /* stop on spaces */
     /* double the size of the table_name array if necessary */
     if (i == table_name_size) {
+      size_t tgt_offset = tgt - *table_name;
       table_name_size *= 2;
       *table_name = (char *) realloc(*table_name,sizeof(char *) * table_name_size);
+      tgt = *table_name + tgt_offset;
     }
     *tgt = *src;
   }
@@ -1019,10 +1022,10 @@ static void osFilteritem(layerObj *layer, int function, char *query_str, size_t 
     else
       strlcat( query_str, " AND ", size);
 
-    if (layer->filteritem != NULL) {
-      snprintf (query_str + strlen(query_str), size-strlen(query_str), " %s = ", layer->filteritem);
+   /* if (layer->filteritem != NULL) {
+      snprintf (query_str + strlen(query_str), size-strlen(query_str), " %s = ", layer->filteritem); */
       /* snprintf (query_str + strlen(query_str), " %s = ", layer->filteritem); */
-    }
+  /*  } */
 
     snprintf (query_str + strlen(query_str), size-strlen(query_str), " %s ", layer->filter.native_string);
     /* snprintf(buffer, n, "gfdg %s %s %s", layer->filter.native_string, (layer->filteritem != NULL ? layer->filteritem : ""), ); */
@@ -1704,7 +1707,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
   } /* end of not-null-object if */
 
   if (compound_type){
-    if(gtype == 2003)
+    if (gtype == 2003 || gtype == 2007)
       shape->type = MS_SHAPE_POLYGON;
     msFreeShape(&newshape);
   }
@@ -2016,7 +2019,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   /* define SQL query */
   for( i=0; i < layer->numitems; ++i ) {
       
-      snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), "%s, ", layer->items[i] );
+      snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), "\"%s\", ", layer->items[i] );
   }
 
   /*we add the uniqueid if it was not part of the current item list*/
@@ -2945,17 +2948,17 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
   }
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-  if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+  if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == 0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
   if( strlen(gml_width) > 0
-      && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+      && msOWSLookupMetadata(&(layer->metadata), "G", "width") == 0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
   if( strlen(gml_precision) > 0
-      && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+      && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
 }
 
@@ -3953,7 +3956,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
   assert(layer != NULL);
   assert(vtable != NULL);
 
-  layer->vtable->LayerTranslateFilter = msOracleSpatialLayerTranslateFilter;
+  vtable->LayerTranslateFilter = msOracleSpatialLayerTranslateFilter;
 
 
   vtable->LayerInitItemInfo = msOracleSpatialLayerInitItemInfo;
@@ -3998,6 +4001,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
   layer->vtable->LayerNextShape = msOracleSpatialLayerNextShape;
   layer->vtable->LayerGetShape = msOracleSpatialLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msOracleSpatialLayerClose;
   layer->vtable->LayerGetItems = msOracleSpatialLayerGetItems;
   layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;

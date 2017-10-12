@@ -1,0 +1,61 @@
+#
+# Tests overlaying an RGB image with a transparent value on a greyscale image
+# into an RGB output. 
+#
+# NOTE: with resampling. Also tests the new default PNG24 output format, and
+#       the change where default formats are still created even if there is
+#       a user defined format.
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+PROJECTION
+  "proj=utm"
+  "zone=12"
+  "datum=WGS84"
+END
+
+IMAGETYPE png24
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE RGB
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/pct22.tif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+    "towgs84=1,0,0"
+  END
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA data/rgb.tif
+  OFFSITE 111 222 111
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+    "towgs84=1,0,0"
+  END
+END
+
+END # of map file

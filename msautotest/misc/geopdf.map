@@ -1,0 +1,54 @@
+# RUN_PARMS: geopdf-iso.pdf [SHP2IMG] -m [MAPFILE] -i geopdfiso -o [RESULT]
+# RUN_PARMS: geopdf-ogc.pdf [SHP2IMG] -m [MAPFILE] -i geopdfogc -o [RESULT]
+
+MAP
+  IMAGECOLOR 255 255 255
+  IMAGETYPE "png"
+  NAME "mf"
+  SIZE 256 256
+  EXTENT -111.096824 60.728514 -106.92812 64.897218
+  STATUS ON
+  UNITS DD
+
+  PROJECTION
+    "init=epsg:4326"
+  END # PROJECTION
+
+  OUTPUTFORMAT
+    NAME "geopdfiso"
+    DRIVER "cairo/pdf"
+    IMAGEMODE RGB
+    FORMATOPTION "GEO_ENCODING=ISO32000"
+    FORMATOPTION "METADATA_ITEM:CREATOR=MapServer, with GDAL >= 1.10"
+  END
+  OUTPUTFORMAT
+    NAME "geopdfogc"
+    DRIVER "cairo/pdf"
+    IMAGEMODE RGB
+    FORMATOPTION "GEO_ENCODING=OGC_BP"
+  END
+
+  LAYER
+    NAME "STNRY WK"
+    TYPE LINE
+    STATUS DEFAULT
+    FEATURE
+      POINTS
+        -101.0 61.0
+        -103.0 61.0
+        -106.0 61.0
+        -112.0 61.0
+        -115.0 61.0
+        -119.0 61.0
+        -123.0 61.0
+      END #POINTS
+    END #FEATURE
+    CLASS
+      STYLE
+        COLOR 255 0 0
+        WIDTH 2
+        PATTERN 30 30 END
+      END
+    END
+  END
+END #MAP

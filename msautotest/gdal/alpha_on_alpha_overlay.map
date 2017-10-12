@@ -1,0 +1,38 @@
+#
+# This tests overlaying an RGBA image on an RGBA image (itself).  This is
+# intended to test the general mixing case in msAlphaBlend().  The resulting
+# image should be essentially the same as the source, except in areas of
+# partial alpha the alpha will "densify" somewhat.
+#
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+OUTPUTFORMAT
+  NAME png24_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE RGBA
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+  OFFSITE 111 222 111
+END
+
+LAYER
+  NAME rgb2
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+  OFFSITE 111 222 111
+END
+
+END # of map file

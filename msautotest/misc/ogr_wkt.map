@@ -1,0 +1,76 @@
+
+#
+# Test WKT inline features, likely processed via OGR.
+#
+# REQUIRES: OUTPUT=PNG INPUT=OGR
+#
+MAP
+  NAME test
+
+  IMAGETYPE png
+
+  TRANSPARENT OFF
+
+  SIZE 400 300 
+  EXTENT 0 0 4000 3000
+  UNITS meters
+
+  SYMBOL
+   NAME "cross"
+   TYPE vector
+   POINTS
+    2 0
+    2 4
+    -99 -99
+    0 2
+    4 2
+   END 
+  END
+
+  LAYER
+    NAME background
+    TYPE POLYGON
+    STATUS DEFAULT
+    FEATURE
+      WKT "POLYGON((500 500, 3500 500, 3500 2500, 500 2500, 500 500),(1000 1000,1000 1500,1500 1500, 1500 1000, 1000 1000))"
+    END
+    FEATURE
+      WKT "MULTIPOLYGON(((50 50, 350 50, 350 250, 50 250, 50 50)),((250 150, 550 150, 550 350, 250 350, 250 150)))"
+    END
+    CLASS
+      COLOR 0 255 0
+    END # CLASS
+  END
+
+  LAYER
+    NAME fonttest
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      WKT "POINT(2000 2500)"
+    END
+    FEATURE
+      WKT "MULTIPOINT(2000 2000, 2000 1900)"
+    END
+    CLASS
+      COLOR 0 0 255
+      SYMBOL 'cross'
+      SIZE 5
+    END # CLASS
+  END
+
+  LAYER
+    NAME fonttest3
+    TYPE LINE
+    STATUS DEFAULT
+    FEATURE
+      WKT "LINESTRING(500 1500, 1500 2500)"
+    END
+    FEATURE
+      WKT "MULTILINESTRING((600 1500, 1600 2500),(700 1500,1700 2500))"
+    END
+    CLASS
+      COLOR 255 0 0
+    END # CLASS
+  END
+END

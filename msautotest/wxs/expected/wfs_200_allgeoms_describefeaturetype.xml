@@ -1,0 +1,99 @@
+Content-Type: application/gml+xml; version=3.2; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<schema
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://www.w3.org/2001/XMLSchema"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   elementFormDefault="qualified" version="0.1" >
+
+  <import namespace="http://www.opengis.net/gml/3.2"
+          schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd" />
+
+  <element name="point" 
+           type="ms:pointType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="pointType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:PointPropertyType" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <element name="multipoint" 
+           type="ms:multipointType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="multipointType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:MultiPointPropertyType" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <element name="linestring" 
+           type="ms:linestringType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="linestringType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:CurvePropertyType" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <element name="multilinestring" 
+           type="ms:multilinestringType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="multilinestringType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:MultiCurvePropertyType" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <element name="polygon" 
+           type="ms:polygonType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="polygonType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:SurfacePropertyType" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <element name="multipolygon" 
+           type="ms:multipolygonType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="multipolygonType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:MultiSurfacePropertyType" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

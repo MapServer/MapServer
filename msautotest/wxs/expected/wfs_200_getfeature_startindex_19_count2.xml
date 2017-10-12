@@ -1,0 +1,57 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="2"
+   previous="http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=province&amp;COUNT=2&amp;STARTINDEX=17">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>43.41231 -66.43267</gml:lowerCorner>
+      		<gml:upperCorner>44.25705 -65.61648</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:province gml:id="province.1043">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.21850 -66.43267</gml:lowerCorner>
+        		<gml:upperCorner>44.25705 -66.37969</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Polygon gml:id="province.1043.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:exterior>
+              <gml:LinearRing>
+                <gml:posList srsDimension="2">44.22686 -66.43267 44.23618 -66.42797 44.25705 -66.40008 44.25302 -66.38496 44.23929 -66.37969 44.22341 -66.39285 44.21850 -66.40752 44.22686 -66.43267 </gml:posList>
+              </gml:LinearRing>
+            </gml:exterior>
+          </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1046">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>43.41231 -65.68783</gml:lowerCorner>
+        		<gml:upperCorner>43.47638 -65.61648</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Polygon gml:id="province.1046.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:exterior>
+              <gml:LinearRing>
+                <gml:posList srsDimension="2">43.41231 -65.65685 43.43182 -65.68286 43.44554 -65.68783 43.47369 -65.65616 43.47638 -65.64022 43.46618 -65.61648 43.44388 -65.61842 43.42851 -65.62655 43.41583 -65.63808 43.41231 -65.65685 </gml:posList>
+              </gml:LinearRing>
+            </gml:exterior>
+          </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </wfs:member>
+</wfs:FeatureCollection>
+

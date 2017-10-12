@@ -247,7 +247,7 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
 
 static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                             shapeObj *shape, gmlItemListObj *item_list,
-                            int nFirstOGRFieldIndex )
+                            int nFirstOGRFieldIndex, const char *pszFeatureid )
 
 {
   OGRGeometryH hGeom = NULL;
@@ -489,6 +489,15 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   for( i = 0; i < item_list->numitems; i++ ) {
     gmlItemObj *item = item_list->items + i;
 
+    if(pszFeatureid && !strcmp(pszFeatureid, item->name)) {
+      char *endptr;
+      long feature_id = strtol(shape->values[i],&endptr,10);
+      if(endptr && *endptr==0) {
+        /* only set the featureid if it is numeric */
+        OGR_F_SetFID(hFeat, feature_id);
+      }
+    }
+
     if( !item->visible )
       continue;
 
@@ -497,7 +506,11 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     if( shape->values[i][0] == '\0' ) {
       OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
       OGRFieldType eFieldType = OGR_Fld_GetType(hFieldDefn);
-      if( eFieldType == OFTInteger || eFieldType == OFTReal )
+      if( eFieldType == OFTInteger || eFieldType == OFTReal
+#if GDAL_VERSION_MAJOR >= 2
+          || eFieldType == OFTInteger64
+#endif
+          )
       {
         out_field++;
         continue;
@@ -685,6 +698,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   char **file_list = NULL;
   int iLayer, i;
   int bDataSourceNameIsRequestDir = FALSE;
+  int bUseFeatureId = MS_FALSE;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
@@ -708,6 +722,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( strncasecmp(format->formatoptions[i],"DSCO:",5) == 0 )
       ds_options = CSLAddString( ds_options,
                                  format->formatoptions[i] + 5 );
+  }
+  if(!strcasecmp("true",msGetOutputFormatOption(format,"USE_FEATUREID","false"))) {
+    bUseFeatureId = MS_TRUE;
   }
 
   /* ==================================================================== */
@@ -750,6 +767,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Create a subdirectory to handle this request.                   */
   /* -------------------------------------------------------------------- */
   if( !EQUAL(storage,"stream") ) {
+    const char* dir_to_create;
     if (strlen(base_dir) > 0)
       request_dir = msTmpFile(map, NULL, base_dir, "" );
     else
@@ -758,15 +776,23 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( request_dir[strlen(request_dir)-1] == '.' )
       request_dir[strlen(request_dir)-1] = '\0';
 
-    if( VSIMkdir( request_dir, 0777 ) != 0 ) {
+    dir_to_create = request_dir;
+    /* Workaround issue in GDAL versions released at this time :
+     * GDAL issue fixed per https://trac.osgeo.org/gdal/ticket/6991 */
+    if( EQUAL(storage,"memory") && EQUAL(format->driver+4, "ESRI Shapefile") )
+    {
+        dir_to_create = base_dir;
+    }
+
+    if( VSIMkdir( dir_to_create, 0777 ) != 0 ) {
       msSetError( MS_MISCERR,
                   "Attempt to create directory '%s' failed.",
                   "msOGRWriteFromQuery()",
-                  request_dir );
+                  dir_to_create );
       return MS_FAILURE;
     }
-  } else
-    /* handled later */;
+  }
+  /*  else handled later */
 
   /* -------------------------------------------------------------------- */
   /*      Setup the full datasource name.                                 */
@@ -866,20 +892,18 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     gmlItemListObj *item_list = NULL;
     const char *value;
     char *pszWKT;
-    int  reproject = MS_FALSE;
     int  nFirstOGRFieldIndex = -1;
+    const char *pszFeatureid = NULL;
 
-    if( !layer->resultcache || layer->resultcache->numresults == 0 )
+    if( !layer->resultcache )
       continue;
 
     /* -------------------------------------------------------------------- */
     /*      Will we need to reproject?                                      */
     /* -------------------------------------------------------------------- */
-    if(layer->transform == MS_TRUE
-        && layer->project
-        && msProjectionsDiffer(&(layer->projection),
-                               &(layer->map->projection)) )
-      reproject = MS_TRUE;
+    if(layer->transform == MS_TRUE)
+        layer->project = msProjectionsDiffer(&(layer->projection),
+                               &(layer->map->projection));
 
     /* -------------------------------------------------------------------- */
     /*      Establish the geometry type to use for the created layer.       */
@@ -897,6 +921,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       else
         value = "Geometry";
     }
+
+    if(bUseFeatureId)
+      pszFeatureid = msOWSLookupMetadata(&(layer->metadata), "FOG", "featureid");
 
     if( strcasecmp(value,"Point") == 0 )
       eGeomType = wkbPoint;
@@ -960,7 +987,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     }
 
     if( srs != NULL )
-      OSRDestroySpatialReference( srs );
+      OSRRelease( srs );
 
     /* -------------------------------------------------------------------- */
     /*      Create appropriate attributes on this layer.                    */
@@ -987,6 +1014,12 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         eType = OFTString;
       else if( EQUAL(item->type,"Integer") )
         eType = OFTInteger;
+      else if( EQUAL(item->type,"Long") )
+#if GDAL_VERSION_MAJOR >= 2
+        eType = OFTInteger64;
+#else
+        eType = OFTReal;
+#endif
       else if( EQUAL(item->type,"Real") )
         eType = OFTReal;
       else if( EQUAL(item->type,"Character") )
@@ -1017,6 +1050,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
         OGR_DS_Destroy( hDS );
         msOGRCleanupDS( datasource_name );
+        msGMLFreeItems(item_list);
         return MS_FAILURE;
       }
 
@@ -1054,13 +1088,21 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       /*
       ** Read the shape.
       */
-      status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
-      if(status != MS_SUCCESS) {
-        OGR_DS_Destroy( hDS );
-        msOGRCleanupDS( datasource_name );
-        msGMLFreeItems(item_list);
-        msFreeShape(&resultshape);
-        return status;
+      if( layer->resultcache->results[i].shape )
+      {
+          /* msDebug("Using cached shape %ld\n", layer->resultcache->results[i].shapeindex); */
+          msCopyShape(layer->resultcache->results[i].shape, &resultshape);
+      }
+      else
+      {
+        status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
+        if(status != MS_SUCCESS) {
+            OGR_DS_Destroy( hDS );
+            msOGRCleanupDS( datasource_name );
+            msGMLFreeItems(item_list);
+            msFreeShape(&resultshape);
+            return status;
+        }
       }
 
       /*
@@ -1091,7 +1133,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         }
       }
 
-      if( reproject ) {
+      if( layer->project ) {
         status =
           msProjectShape(&layer->projection, &layer->map->projection,
                          &resultshape);
@@ -1103,7 +1145,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       if( status == MS_SUCCESS )
         status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
-                                  item_list, nFirstOGRFieldIndex );
+                                  item_list, nFirstOGRFieldIndex, pszFeatureid );
 
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );

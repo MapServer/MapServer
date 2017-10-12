@@ -53,6 +53,8 @@ void msStyleSetGeomTransform(styleObj *s, char *transform)
     s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
   } else if(!strncasecmp("labelpoly",transform,9)) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOLY;
+  } else if(!strncasecmp("labelcenter",transform,11)) {
+    s->_geomtransform.type = MS_GEOMTRANSFORM_LABELCENTER;
   } else if(!strncasecmp("centroid",transform,8)) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_CENTROID;
   } else {
@@ -83,12 +85,30 @@ double calcOrientation(pointObj *p1, pointObj *p2)
 
 double calcMidAngle(pointObj *p1, pointObj *p2, pointObj *p3)
 {
-  double theta1,theta2;
-  theta1 = atan2(p1->x-p2->x,p1->y-p2->y);
-  if(theta1<0) theta1 += MS_2PI;
-  theta2 = atan2(p3->x-p2->x,p3->y-p2->y);
-  if(theta2<0) theta2 += MS_2PI;
-  return MS_RAD_TO_DEG*((theta1+theta2)/2.0);
+  pointObj p1n;
+  double dx12, dy12, dx23, dy23, l12, l23;
+
+  /* We treat both segments as vector 1-2 and vector 2-3 and 
+   * compute their dx,dy and length 
+   */
+  dx12 = p2->x - p1->x;
+  dy12 = p2->y - p1->y;
+  l12 = sqrt(dx12*dx12 + dy12*dy12);
+  dx23 = p3->x - p2->x;
+  dy23 = p3->y - p2->y;
+  l23 = sqrt(dx23*dx23 + dy23*dy23);
+
+  /* Normalize length of vector 1-2 to same as length of vector 2-3 */
+  if (l12 > 0.0)
+  {
+    p1n.x = p2->x - dx12*(l23/l12);
+    p1n.y = p2->y - dy12*(l23/l12);
+  }
+  else
+    p1n = *p2;  /* segment 1-2 is 0-length, use segment 2-3 for orientation */
+
+  /* Return the orientation defined by the sum of the normalized vectors */
+  return calcOrientation(&p1n, p3);
 }
 
 /*
@@ -180,6 +200,15 @@ int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleO
 
       p.shape = shape; /* set a few parser globals (hence the lock) */
       p.expr = &(style->_geomtransform);
+
+      if(p.expr->tokens == NULL) { /* this could happen if drawing originates from legend code (#5193) */
+        status = msTokenizeExpression(p.expr, NULL, NULL);
+        if(status != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "Unable to tokenize expression.", "msDrawTransformedShape()");
+          return MS_FAILURE;
+        }
+      }
+
       p.expr->curtoken = p.expr->tokens; /* reset */
       p.type = MS_PARSE_TYPE_SHAPE;
 

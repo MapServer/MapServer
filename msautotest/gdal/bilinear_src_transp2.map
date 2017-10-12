@@ -1,0 +1,36 @@
+# Test bilinear resampling(over-sampling) with source that has alpha
+# gradient from red opaque on the left to transparent on the right
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 40
+EXTENT 0.5 0.5 39.5 1.5
+IMAGECOLOR 0 0 0
+
+OUTPUTFORMAT
+  NAME "png"
+  DRIVER AGG/PNG
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  EXTENSION "png"
+END
+
+OUTPUTFORMAT
+  NAME "tif"
+  DRIVER GDAL/GTiff
+  MIMETYPE "image/tif"
+  IMAGEMODE RGBA
+  EXTENSION "tif"
+END
+
+LAYER
+  NAME test
+  TYPE RASTER
+  STATUS default
+  DATA data/redtranspgradient.tif
+  PROCESSING "RESAMPLE=BILINEAR"
+END
+
+END # of map file

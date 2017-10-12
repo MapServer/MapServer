@@ -1,0 +1,42 @@
+#
+# Test TRANSPARENCY flag on layer for overlaying 24bit image(s).
+#
+# In this case the final output image is RGB but the temporary results include
+# alpha values. 
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png_24
+
+OUTPUTFORMAT
+  NAME png_24
+  DRIVER "GD/PNG"
+  IMAGEMODE RGB
+  TRANSPARENT OFF
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME backdrop
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+END
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS ON
+  DATA data/grid.gif
+  TRANSPARENCY 33
+END
+
+END # of map file

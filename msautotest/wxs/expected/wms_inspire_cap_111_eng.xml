@@ -1,0 +1,879 @@
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+<!ELEMENT VendorSpecificCapabilities (inspire_vs:ExtendedCapabilities)><!ELEMENT inspire_vs:ExtendedCapabilities ((inspire_common:MetadataUrl, inspire_common:SupportedLanguages, inspire_common:ResponseLanguage) | (inspire_common:ResourceLocator+, inspire_common:ResourceType, inspire_common:TemporalReference+, inspire_common:Conformity+, inspire_common:MetadataPointOfContact+, inspire_common:MetadataDate, inspire_common:SpatialDataServiceType, inspire_common:MandatoryKeyword+, inspire_common:Keyword*, inspire_common:SupportedLanguages, inspire_common:ResponseLanguage, inspire_common:MetadataUrl?))><!ATTLIST inspire_vs:ExtendedCapabilities xmlns:inspire_vs CDATA #FIXED "http://inspire.ec.europa.eu/schemas/inspire_vs/1.0" ><!ELEMENT inspire_common:MetadataUrl (inspire_common:URL, inspire_common:MediaType*)><!ATTLIST inspire_common:MetadataUrl xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" xmlns:xsi CDATA #FIXED "http://www.w3.org/2001/XMLSchema-instance" xsi:type CDATA #FIXED "inspire_common:resourceLocatorType" ><!ELEMENT inspire_common:URL (#PCDATA)><!ATTLIST inspire_common:URL xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:MediaType (#PCDATA)><!ATTLIST inspire_common:MediaType xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:SupportedLanguages (inspire_common:DefaultLanguage, inspire_common:SupportedLanguage*)><!ATTLIST inspire_common:SupportedLanguages xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:DefaultLanguage (inspire_common:Language)><!ATTLIST inspire_common:DefaultLanguage xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:SupportedLanguage (inspire_common:Language)><!ATTLIST inspire_common:SupportedLanguage xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:ResponseLanguage (inspire_common:Language)><!ATTLIST inspire_common:ResponseLanguage xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Language (#PCDATA)><!ATTLIST inspire_common:Language xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:ResourceLocator (inspire_common:URL, inspire_common:MediaType*)><!ATTLIST inspire_common:ResourceLocator xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:ResourceType (#PCDATA)> <!ATTLIST inspire_common:ResourceType xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:TemporalReference (inspire_common:DateOfCreation?, inspire_common:DateOfLastRevision?, inspire_common:DateOfPublication*, inspire_common:TemporalExtent*)><!ATTLIST inspire_common:TemporalReference xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:DateOfCreation (#PCDATA)> <!ATTLIST inspire_common:DateOfCreation xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:DateOfLastRevision (#PCDATA)><!ATTLIST inspire_common:DateOfLastRevision xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:DateOfPublication (#PCDATA)><!ATTLIST inspire_common:DateOfPublication xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:TemporalExtent (inspire_common:IndividualDate | inspire_common:IntervalOfDates)><!ATTLIST inspire_common:TemporalExtent xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:IndividualDate (#PCDATA)> <!ATTLIST inspire_common:IndividualDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:IntervalOfDates (inspire_common:StartingDate, inspire_common:EndDate)><!ATTLIST inspire_common:IntervalOfDates xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:StartingDate (#PCDATA)><!ATTLIST inspire_common:StartingDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:EndDate (#PCDATA)><!ATTLIST inspire_common:EndDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Conformity (inspire_common:Specification, inspire_common:Degree)><!ATTLIST inspire_common:Conformity xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Specification (inspire_common:Title, (inspire_common:DateOfPublication | inspire_common:DateOfCreation | inspire_common:DateOfLastRevision), inspire_common:URI*, inspire_common:ResourceLocator*)><!ATTLIST inspire_common:Specification xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Title (#PCDATA)><!ATTLIST inspire_common:Title xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:URI (#PCDATA)><!ATTLIST inspire_common:URI xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Degree (#PCDATA)><!ATTLIST inspire_common:Degree xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:MetadataPointOfContact (inspire_common:OrganisationName, inspire_common:EmailAddress)><!ATTLIST inspire_common:MetadataPointOfContact xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:OrganisationName (#PCDATA)><!ATTLIST inspire_common:OrganisationName  xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:EmailAddress (#PCDATA)><!ATTLIST inspire_common:EmailAddress xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:MetadataDate (#PCDATA)><!ATTLIST inspire_common:MetadataDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:SpatialDataServiceType (#PCDATA)><!ATTLIST inspire_common:SpatialDataServiceType xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:MandatoryKeyword (inspire_common:KeywordValue)><!ATTLIST inspire_common:MandatoryKeyword xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:KeywordValue (#PCDATA)><!ATTLIST inspire_common:KeywordValue xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Keyword (inspire_common:OriginatingControlledVocabulary?, inspire_common:KeywordValue)><!ATTLIST inspire_common:Keyword xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" xmlns:xsi CDATA #FIXED "http://www.w3.org/2001/XMLSchemainstance" xsi:type (inspire_common:inspireTheme_bul | inspire_common:inspireTheme_cze | inspire_common:inspireTheme_dan | inspire_common:inspireTheme_dut | inspire_common:inspireTheme_eng | inspire_common:inspireTheme_est | inspire_common:inspireTheme_fin | inspire_common:inspireTheme_fre | inspire_common:inspireTheme_ger | inspire_common:inspireTheme_gre | inspire_common:inspireTheme_hun | inspire_common:inspireTheme_gle | inspire_common:inspireTheme_ita | inspire_common:inspireTheme_lav | inspire_common:inspireTheme_lit | inspire_common:inspireTheme_mlt | inspire_common:inspireTheme_pol | inspire_common:inspireTheme_por | inspire_common:inspireTheme_rum | inspire_common:inspireTheme_slo | inspire_common:inspireTheme_slv | inspire_common:inspireTheme_spa | inspire_common:inspireTheme_swe) #IMPLIED ><!ELEMENT inspire_common:OriginatingControlledVocabulary (inspire_common:Title, (inspire_common:DateOfPublication | inspire_common:DateOfCreation | inspire_common:DateOfLastRevision), inspire_common:URI*, inspire_common:ResourceLocator*)><!ATTLIST inspire_common:OriginatingControlledVocabulary xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0">
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1">
+
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>INSPIRE test service</Title>
+  <Abstract>INSPIRE test service used during software develeopment.</Abstract>
+  <KeywordList>
+      <Keyword>infoMapAccessService</Keyword>
+      <Keyword>WMS</Keyword>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.mapserver.org/"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>Martin Kofahl</ContactPerson>
+      <ContactOrganization>DVZ M-V GmbH</ContactOrganization>
+    </ContactPersonPrimary>
+      <ContactPosition>pointOfContact</ContactPosition>
+    <ContactAddress>
+        <AddressType>contact</AddressType>
+        <Address>Lübecker Straße 283</Address>
+        <City>Schwerin</City>
+        <StateOrProvince>Mecklenburg-Vorpommern</StateOrProvince>
+        <PostCode>19059</PostCode>
+        <Country>Germany</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+49 385 4800 0</ContactVoiceTelephone>
+  <ContactElectronicMailAddress>geoportal.mv@dvz-mv.de</ContactElectronicMailAddress>
+  </ContactInformation>
+  <Fees>no conditions apply</Fees>
+  <AccessConstraints>None</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <Format>application/x-pdf</Format>
+      <Format>image/svg+xml</Format>
+      <Format>image/tiff</Format>
+      <Format>application/vnd.google-earth.kml+xml</Format>
+      <Format>application/vnd.google-earth.kmz</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities>
+  <inspire_vs:ExtendedCapabilities>
+    <inspire_common:MetadataUrl xsi:type="inspire_common:resourceLocatorType">
+      <inspire_common:URL>http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=4d5f1402-5b2b-43ec-949f-92d125179318</inspire_common:URL>
+      <inspire_common:MediaType>application/vnd.ogc.csw.capabilities.response_xml</inspire_common:MediaType>
+    </inspire_common:MetadataUrl>
+    <inspire_common:SupportedLanguages>
+      <inspire_common:DefaultLanguage><inspire_common:Language>ger</inspire_common:Language></inspire_common:DefaultLanguage>
+      <inspire_common:SupportedLanguage><inspire_common:Language>eng</inspire_common:Language></inspire_common:SupportedLanguage>
+    </inspire_common:SupportedLanguages>
+    <inspire_common:ResponseLanguage><inspire_common:Language>eng</inspire_common:Language></inspire_common:ResponseLanguage>
+  </inspire_vs:ExtendedCapabilities>
+  </VendorSpecificCapabilities>
+  <Layer>
+    <Name>TN</Name>
+    <Title>Transport networks: Road and Railway</Title>
+    <Abstract>Examples from the dataspecification transport networks</Abstract>
+    <KeywordList>
+        <Keyword>Verkehrsnetz</Keyword>
+    </KeywordList>
+    <SRS>EPSG:25833</SRS>
+    <SRS>EPSG:4326</SRS>
+    <SRS>EPSG:4269</SRS>
+    <SRS>EPSG:3035</SRS>
+    <SRS>EPSG:4258</SRS>
+    <SRS>EPSG:3038</SRS>
+    <SRS>EPSG:3039</SRS>
+    <SRS>EPSG:3040</SRS>
+    <SRS>EPSG:3041</SRS>
+    <SRS>EPSG:3042</SRS>
+    <SRS>EPSG:3043</SRS>
+    <SRS>EPSG:3044</SRS>
+    <SRS>EPSG:3045</SRS>
+    <SRS>EPSG:3046</SRS>
+    <SRS>EPSG:3047</SRS>
+    <LatLonBoundingBox minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+    <BoundingBox SRS="EPSG:25833"
+                minx="341250" miny="5.9214e+06" maxx="351100" maxy="5.9236e+06" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+    <BoundingBox SRS="EPSG:4269"
+                minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+    <BoundingBox SRS="EPSG:3035"
+                minx="4.49443e+06" miny="3.37089e+06" maxx="4.50441e+06" maxy="3.37376e+06" />
+    <BoundingBox SRS="EPSG:4258"
+                minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+    <BoundingBox SRS="EPSG:3038"
+                minx="3.05452e+06" miny="6.67975e+06" maxx="3.06457e+06" maxy="6.68787e+06" />
+    <BoundingBox SRS="EPSG:3039"
+                minx="2.68864e+06" miny="6.46103e+06" maxx="2.69884e+06" maxy="6.46827e+06" />
+    <BoundingBox SRS="EPSG:3040"
+                minx="2.31099e+06" miny="6.28132e+06" maxx="2.32126e+06" maxy="6.28768e+06" />
+    <BoundingBox SRS="EPSG:3041"
+                minx="1.92495e+06" miny="6.13912e+06" maxx="1.93521e+06" maxy="6.14463e+06" />
+    <BoundingBox SRS="EPSG:3042"
+                minx="1.53312e+06" miny="6.03303e+06" maxx="1.54333e+06" maxy="6.0377e+06" />
+    <BoundingBox SRS="EPSG:3043"
+                minx="1.13752e+06" miny="5.96188e+06" maxx="1.14765e+06" maxy="5.96572e+06" />
+    <BoundingBox SRS="EPSG:3044"
+                minx="739771" miny="5.92482e+06" maxx="749775" maxy="5.92784e+06" />
+    <BoundingBox SRS="EPSG:3045"
+                minx="341250" miny="5.9214e+06" maxx="351100" maxy="5.9236e+06" />
+    <BoundingBox SRS="EPSG:3046"
+                minx="-56946.5" miny="5.95075e+06" maxx="-46911.6" maxy="5.95378e+06" />
+    <BoundingBox SRS="EPSG:3047"
+                minx="-453292" miny="6.01406e+06" maxx="-443103" maxy="6.01793e+06" />
+    <AuthorityURL name="GeoPortal.MV">
+      <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.geodaten-mv.de/geomis/"/>
+    </AuthorityURL>
+    <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+    <MetadataURL type="TC211">
+      <Format>text/xml</Format>
+      <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=4d5f1402-5b2b-43ec-949f-92d125179318"/>
+    </MetadataURL>
+    <Style>
+       <Name>inspire_common:DEFAULT</Name>
+       <Title>INSPIRE Default Style</Title>
+       <LegendURL width="309" height="221">
+          <Format>image/png</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN&amp;format=image/png&amp;STYLE=inspire_common:DEFAULT"/>
+       </LegendURL>
+    </Style>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>TN.CommonTransportElements</Name>
+        <Title>TN.CommonTransportElements</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:4326</SRS>
+        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.0544e+06" miny="6.67979e+06" maxx="3.06467e+06" maxy="6.68784e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.68855e+06" miny="6.46107e+06" maxx="2.69891e+06" maxy="6.46824e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31092e+06" miny="6.28137e+06" maxx="2.3213e+06" maxy="6.28765e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TestStyle</Name>
+          <Title>TestStyle</Title>
+          <LegendURL width="309" height="77">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.CommonTransportElements&amp;format=image/png&amp;STYLE=TestStyle"/>
+          </LegendURL>
+        </Style>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.CommonTransportElements.TransportArea</Name>
+        <Title>Common transport area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341297" miny="5.92146e+06" maxx="351043" maxy="5.92357e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49448e+06" miny="3.37094e+06" maxx="4.50435e+06" maxy="3.37373e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05459e+06" miny="6.67983e+06" maxx="3.06448e+06" maxy="6.68781e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.6887e+06" miny="6.46111e+06" maxx="2.69876e+06" maxy="6.46821e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31105e+06" miny="6.28139e+06" maxx="2.32118e+06" maxy="6.28763e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.925e+06" miny="6.13919e+06" maxx="1.93514e+06" maxy="6.14458e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53317e+06" miny="6.0331e+06" maxx="1.54326e+06" maxy="6.03765e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13757e+06" miny="5.96194e+06" maxx="1.14758e+06" maxy="5.96567e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739820" miny="5.92488e+06" maxx="749713" maxy="5.9278e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341297" miny="5.92146e+06" maxx="351043" maxy="5.92357e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56895.1" miny="5.95081e+06" maxx="-46971.9" maxy="5.95374e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453236" miny="6.01412e+06" maxx="-443166" maxy="6.01789e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.CommonTransportElements.TransportArea.Default</Name>
+          <Title>Generic Area Default Style</Title>
+          <LegendURL width="306" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.CommonTransportElements.TransportArea&amp;format=image/png&amp;STYLE=TN.CommonTransportElements.TransportArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.CommonTransportElements.TransportLink</Name>
+        <Title>Common transport link</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341301" miny="5.92148e+06" maxx="351041" maxy="5.92356e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49449e+06" miny="3.37096e+06" maxx="4.50435e+06" maxy="3.37372e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.0546e+06" miny="6.67985e+06" maxx="3.06447e+06" maxy="6.6878e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.68871e+06" miny="6.46113e+06" maxx="2.69874e+06" maxy="6.4682e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31106e+06" miny="6.28141e+06" maxx="2.32117e+06" maxy="6.28762e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92501e+06" miny="6.13922e+06" maxx="1.93513e+06" maxy="6.14457e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53318e+06" miny="6.03312e+06" maxx="1.54326e+06" maxy="6.03764e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13758e+06" miny="5.96196e+06" maxx="1.14757e+06" maxy="5.96566e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739825" miny="5.9249e+06" maxx="749710" maxy="5.92779e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341301" miny="5.92148e+06" maxx="351041" maxy="5.92356e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56889.2" miny="5.95083e+06" maxx="-46974.7" maxy="5.95373e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453228" miny="6.01414e+06" maxx="-443170" maxy="6.01788e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.CommonTransportElements.TransportLink.Default</Name>
+          <Title>Generic Link Default Style</Title>
+          <LegendURL width="303" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.CommonTransportElements.TransportLink&amp;format=image/png&amp;STYLE=TN.CommonTransportElements.TransportLink.Default"/>
+          </LegendURL>
+        </Style>
+        <ScaleHint min="2.5673540580189" max="0" />
+        <!-- WARNING: Only MINSCALEDENOM and no MAXSCALEDENOM specified in the mapfile. A default value of 0 has been returned for the Max ScaleHint but this is probably not what you want. -->
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.CommonTransportElements.TransportNode</Name>
+        <Title>Common transport node</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341301" miny="5.92148e+06" maxx="351049" maxy="5.92333e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.4945e+06" miny="3.37096e+06" maxx="4.50436e+06" maxy="3.37349e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05474e+06" miny="6.67985e+06" maxx="3.06447e+06" maxy="6.6876e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.68883e+06" miny="6.46113e+06" maxx="2.69875e+06" maxy="6.46799e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31115e+06" miny="6.28141e+06" maxx="2.32117e+06" maxy="6.28741e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92509e+06" miny="6.13922e+06" maxx="1.93514e+06" maxy="6.14435e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53323e+06" miny="6.03312e+06" maxx="1.54326e+06" maxy="6.03742e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13761e+06" miny="5.96196e+06" maxx="1.14758e+06" maxy="5.96544e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739844" miny="5.9249e+06" maxx="749718" maxy="5.92757e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341301" miny="5.92148e+06" maxx="351049" maxy="5.92333e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56889.2" miny="5.95083e+06" maxx="-46985.9" maxy="5.95351e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453228" miny="6.01414e+06" maxx="-443201" maxy="6.01765e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.CommonTransportElements.TransportNode.Default</Name>
+          <Title>Generic Node Default Style</Title>
+          <LegendURL width="309" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.CommonTransportElements.TransportNode&amp;format=image/png&amp;STYLE=TN.CommonTransportElements.TransportNode.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>TN.RoadTransportNetwork</Name>
+        <Title>TN.RoadTransportNetwork</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:4326</SRS>
+        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.0544e+06" miny="6.67979e+06" maxx="3.06467e+06" maxy="6.68784e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.68855e+06" miny="6.46107e+06" maxx="2.69891e+06" maxy="6.46824e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31092e+06" miny="6.28137e+06" maxx="2.3213e+06" maxy="6.28765e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RoadTransportNetwork.RoadLink</Name>
+        <Title>Road link</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="342669" miny="5.92148e+06" maxx="351041" maxy="5.92308e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49588e+06" miny="3.37106e+06" maxx="4.50435e+06" maxy="3.37325e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05609e+06" miny="6.68071e+06" maxx="3.06447e+06" maxy="6.68738e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.69021e+06" miny="6.46185e+06" maxx="2.69874e+06" maxy="6.46776e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31255e+06" miny="6.28201e+06" maxx="2.32117e+06" maxy="6.28717e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92649e+06" miny="6.13969e+06" maxx="1.93513e+06" maxy="6.14411e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53464e+06" miny="6.03347e+06" maxx="1.54326e+06" maxy="6.03718e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13901e+06" miny="5.96219e+06" maxx="1.14757e+06" maxy="5.9652e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="741229" miny="5.92501e+06" maxx="749710" maxy="5.92732e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="342669" miny="5.92148e+06" maxx="351041" maxy="5.92308e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-55520.7" miny="5.95083e+06" maxx="-47014.5" maxy="5.95315e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-451865" miny="6.01414e+06" maxx="-443250" maxy="6.01717e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RoadTransportNetwork.RoadLink.Default</Name>
+          <Title>RoadLink Default Style</Title>
+          <LegendURL width="247" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RoadTransportNetwork.RoadLink&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.RoadLink.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RoadTransportNetwork.VehicleTrafficArea</Name>
+        <Title>Traffic area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="342660" miny="5.92147e+06" maxx="351042" maxy="5.92309e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49587e+06" miny="3.37105e+06" maxx="4.50435e+06" maxy="3.37326e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05608e+06" miny="6.68069e+06" maxx="3.06447e+06" maxy="6.68739e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.6902e+06" miny="6.46184e+06" maxx="2.69875e+06" maxy="6.46777e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31254e+06" miny="6.282e+06" maxx="2.32117e+06" maxy="6.28718e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92648e+06" miny="6.13967e+06" maxx="1.93514e+06" maxy="6.14412e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53463e+06" miny="6.03346e+06" maxx="1.54326e+06" maxy="6.03719e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.139e+06" miny="5.96218e+06" maxx="1.14758e+06" maxy="5.96521e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="741219" miny="5.925e+06" maxx="749712" maxy="5.92733e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="342660" miny="5.92147e+06" maxx="351042" maxy="5.92309e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-55531.1" miny="5.95082e+06" maxx="-47012.7" maxy="5.95316e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-451876" miny="6.01413e+06" maxx="-443248" maxy="6.01718e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RoadTransportNetwork.VehicleTrafficArea.Default</Name>
+          <Title>Vehicle Traffic Area Default Style</Title>
+          <LegendURL width="301" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RoadTransportNetwork.VehicleTrafficArea&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.VehicleTrafficArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RoadTransportNetwork.RoadServiceArea</Name>
+        <Title>Road service area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="345178" miny="5.92262e+06" maxx="345604" maxy="5.92285e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.4984e+06" miny="3.37238e+06" maxx="4.49884e+06" maxy="3.37263e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05845e+06" miny="6.68329e+06" maxx="3.05897e+06" maxy="6.68376e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.69264e+06" miny="6.46423e+06" maxx="2.69315e+06" maxy="6.46466e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31503e+06" miny="6.28418e+06" maxx="2.31553e+06" maxy="6.28458e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.929e+06" miny="6.14165e+06" maxx="1.92949e+06" maxy="6.14202e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53716e+06" miny="6.03523e+06" maxx="1.53763e+06" maxy="6.03556e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.14153e+06" miny="5.96375e+06" maxx="1.142e+06" maxy="5.96405e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="743750" miny="5.92637e+06" maxx="744194" maxy="5.92663e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="345178" miny="5.92262e+06" maxx="345604" maxy="5.92285e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-52915.4" miny="5.95244e+06" maxx="-52469.9" maxy="5.9527e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-449170" miny="6.01621e+06" maxx="-448706" maxy="6.01651e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RoadTransportNetwork.RoadServiceArea.Default</Name>
+          <Title>Road Service Area Default Style</Title>
+          <LegendURL width="294" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RoadTransportNetwork.RoadServiceArea&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.RoadServiceArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RoadTransportNetwork.RoadArea</Name>
+        <Title>Road area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="342650" miny="5.92146e+06" maxx="351043" maxy="5.9231e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49586e+06" miny="3.37104e+06" maxx="4.50435e+06" maxy="3.37327e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05606e+06" miny="6.68068e+06" maxx="3.06448e+06" maxy="6.6874e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.69019e+06" miny="6.46182e+06" maxx="2.69876e+06" maxy="6.46778e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31253e+06" miny="6.28198e+06" maxx="2.32118e+06" maxy="6.28719e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92647e+06" miny="6.13966e+06" maxx="1.93514e+06" maxy="6.14413e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53461e+06" miny="6.03345e+06" maxx="1.54326e+06" maxy="6.0372e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13899e+06" miny="5.96217e+06" maxx="1.14758e+06" maxy="5.96522e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="741208" miny="5.92499e+06" maxx="749713" maxy="5.92734e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="342650" miny="5.92146e+06" maxx="351043" maxy="5.9231e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-55541.4" miny="5.95081e+06" maxx="-47010.8" maxy="5.95317e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-451887" miny="6.01412e+06" maxx="-443245" maxy="6.0172e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RoadTransportNetwork.RoadArea.Default</Name>
+          <Title>Road Area Default Style</Title>
+          <LegendURL width="251" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RoadTransportNetwork.RoadArea&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.RoadArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>TN.RailTransportNetwork</Name>
+        <Title>TN.RailTransportNetwork</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:4326</SRS>
+        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.0544e+06" miny="6.67979e+06" maxx="3.06467e+06" maxy="6.68784e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.68855e+06" miny="6.46107e+06" maxx="2.69891e+06" maxy="6.46824e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31092e+06" miny="6.28137e+06" maxx="2.3213e+06" maxy="6.28765e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RailTransportNetwork.RailwayLink</Name>
+        <Title>Railway link</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341301" miny="5.92254e+06" maxx="348436" maxy="5.92356e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49449e+06" miny="3.37203e+06" maxx="4.50167e+06" maxy="3.37354e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.0546e+06" miny="6.68078e+06" maxx="3.0615e+06" maxy="6.68616e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.68871e+06" miny="6.4621e+06" maxx="2.69579e+06" maxy="6.46681e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31106e+06" miny="6.28242e+06" maxx="2.31824e+06" maxy="6.28648e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92501e+06" miny="6.14025e+06" maxx="1.93225e+06" maxy="6.14367e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53318e+06" miny="6.03417e+06" maxx="1.54043e+06" maxy="6.03698e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13758e+06" miny="5.96302e+06" maxx="1.14481e+06" maxy="5.96523e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739825" miny="5.92596e+06" maxx="747023" maxy="5.92757e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341301" miny="5.92254e+06" maxx="348436" maxy="5.92356e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56798.9" miny="5.95212e+06" maxx="-49578.9" maxy="5.95373e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453046" miny="6.01565e+06" maxx="-445765" maxy="6.01788e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RailTransportNetwork.RailwayLink.Default</Name>
+          <Title>Railway Link Default Style</Title>
+          <LegendURL width="255" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RailTransportNetwork.RailwayLink&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayLink.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RailTransportNetwork.RailwayStationArea</Name>
+        <Title>Railway station area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="346051" miny="5.92265e+06" maxx="346769" maxy="5.92303e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49926e+06" miny="3.37247e+06" maxx="4.5e+06" maxy="3.37289e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.0591e+06" miny="6.68386e+06" maxx="3.05997e+06" maxy="6.68465e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.69334e+06" miny="6.46472e+06" maxx="2.6942e+06" maxy="6.46545e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31577e+06" miny="6.28459e+06" maxx="2.31662e+06" maxy="6.28526e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92978e+06" miny="6.14198e+06" maxx="1.9306e+06" maxy="6.14259e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53797e+06" miny="6.03548e+06" maxx="1.53877e+06" maxy="6.03604e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.14237e+06" miny="5.96393e+06" maxx="1.14314e+06" maxy="5.96442e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="744605" miny="5.92647e+06" maxx="745352" maxy="5.92691e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="346051" miny="5.92265e+06" maxx="346769" maxy="5.92303e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-52040" miny="5.95237e+06" maxx="-51290.2" maxy="5.95281e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-448295" miny="6.01604e+06" maxx="-447515" maxy="6.01654e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RailTransportNetwork.RailwayStationArea.Default</Name>
+          <Title>Railway Station Area Default Style</Title>
+          <LegendURL width="300" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RailTransportNetwork.RailwayStationArea&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayStationArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RailTransportNetwork.RailwayYardArea</Name>
+        <Title>Railway yard area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="346124" miny="5.92272e+06" maxx="346697" maxy="5.92292e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49934e+06" miny="3.37254e+06" maxx="4.49993e+06" maxy="3.37278e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05923e+06" miny="6.68397e+06" maxx="3.05987e+06" maxy="6.68451e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.69347e+06" miny="6.46482e+06" maxx="2.6941e+06" maxy="6.46531e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31589e+06" miny="6.28468e+06" maxx="2.31652e+06" maxy="6.28513e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.92988e+06" miny="6.14207e+06" maxx="1.93051e+06" maxy="6.14247e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53807e+06" miny="6.03557e+06" maxx="1.53868e+06" maxy="6.03592e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.14246e+06" miny="5.964e+06" maxx="1.14306e+06" maxy="5.96431e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="744686" miny="5.92654e+06" maxx="745276" maxy="5.9268e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="346124" miny="5.92272e+06" maxx="346697" maxy="5.92292e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-51961.8" miny="5.95244e+06" maxx="-51370.6" maxy="5.95269e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-448211" miny="6.01612e+06" maxx="-447604" maxy="6.01642e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RailTransportNetwork.RailwayYardArea.Default</Name>
+          <Title>Railway Yard Area Default Style</Title>
+          <LegendURL width="285" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RailTransportNetwork.RailwayYardArea&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayYardArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>TN.RailTransportNetwork.RailwayArea</Name>
+        <Title>Railway area</Title>
+        <KeywordList>
+            <Keyword>no-keyword here</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25833</SRS>
+        <LatLonBoundingBox minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+        <BoundingBox SRS="EPSG:25833"
+                    minx="341297" miny="5.92253e+06" maxx="348436" maxy="5.92357e+06" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="4.49448e+06" miny="3.37202e+06" maxx="4.50168e+06" maxy="3.37355e+06" />
+        <BoundingBox SRS="EPSG:4258"
+                    minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+        <BoundingBox SRS="EPSG:3038"
+                    minx="3.05459e+06" miny="6.68077e+06" maxx="3.06151e+06" maxy="6.68617e+06" />
+        <BoundingBox SRS="EPSG:3039"
+                    minx="2.6887e+06" miny="6.46209e+06" maxx="2.69579e+06" maxy="6.46682e+06" />
+        <BoundingBox SRS="EPSG:3040"
+                    minx="2.31105e+06" miny="6.28241e+06" maxx="2.31824e+06" maxy="6.28649e+06" />
+        <BoundingBox SRS="EPSG:3041"
+                    minx="1.925e+06" miny="6.14023e+06" maxx="1.93225e+06" maxy="6.14368e+06" />
+        <BoundingBox SRS="EPSG:3042"
+                    minx="1.53317e+06" miny="6.03416e+06" maxx="1.54043e+06" maxy="6.03699e+06" />
+        <BoundingBox SRS="EPSG:3043"
+                    minx="1.13757e+06" miny="5.96301e+06" maxx="1.14482e+06" maxy="5.96523e+06" />
+        <BoundingBox SRS="EPSG:3044"
+                    minx="739820" miny="5.92595e+06" maxx="747024" maxy="5.92758e+06" />
+        <BoundingBox SRS="EPSG:3045"
+                    minx="341297" miny="5.92253e+06" maxx="348436" maxy="5.92357e+06" />
+        <BoundingBox SRS="EPSG:3046"
+                    minx="-56804" miny="5.95211e+06" maxx="-49578" maxy="5.95374e+06" />
+        <BoundingBox SRS="EPSG:3047"
+                    minx="-453052" miny="6.01564e+06" maxx="-445763" maxy="6.01789e+06" />
+        <Identifier authority="GeoPortal.MV">http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+        </MetadataURL>
+        <Style>
+          <Name>TN.RailTransportNetwork.RailwayArea.Default</Name>
+          <Title>Railway Area Default Style</Title>
+          <LegendURL width="258" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RailTransportNetwork.RailwayArea&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayArea.Default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

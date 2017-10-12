@@ -17,22 +17,31 @@ SET(PHP5_POSSIBLE_INCLUDE_PATHS
   /usr/include/php
   /usr/local/include/php
   /usr/local/apache/php
+  ${PHP5_INCLUDES}
   )
 
 SET(PHP5_POSSIBLE_LIB_PATHS
   /usr/lib
+if(WIN32)
+  ${PHP5_INCLUDES}/Release_TS
+endif(WIN32)
   )
 
-#FIND_PATH(PHP5_FOUND_INCLUDE_PATH main/php.h
-#  ${PHP5_POSSIBLE_INCLUDE_PATHS})
-#
-#IF(PHP5_FOUND_INCLUDE_PATH)
-#  SET(php5_paths "${PHP5_POSSIBLE_INCLUDE_PATHS}")
-#  FOREACH(php5_path Zend main TSRM)
-#    SET(php5_paths ${php5_paths} "${PHP5_FOUND_INCLUDE_PATH}/${php5_path}")
-#  ENDFOREACH(php5_path Zend main TSRM)
-#  SET(PHP5_INCLUDE_PATH "${php5_paths}" INTERNAL "PHP5 include paths")
-#ENDIF(PHP5_FOUND_INCLUDE_PATH)
+find_library(PHP5_LIBRARY
+   NAMES php5ts.lib
+   PATHS /sw /opt/local ${PHP5_INCLUDES}/Release_TS
+)
+  
+FIND_PATH(PHP5_FOUND_INCLUDE_PATH main/php.h
+  ${PHP5_POSSIBLE_INCLUDE_PATHS})
+
+IF(PHP5_FOUND_INCLUDE_PATH)
+  SET(php5_paths "${PHP5_POSSIBLE_INCLUDE_PATHS}")
+  FOREACH(php5_path Zend main TSRM)
+    SET(php5_paths ${php5_paths} "${PHP5_FOUND_INCLUDE_PATH}/${php5_path}")
+  ENDFOREACH(php5_path Zend main TSRM)
+  SET(PHP5_INCLUDE_PATH "${php5_paths}" INTERNAL "PHP5 include paths")
+ENDIF(PHP5_FOUND_INCLUDE_PATH)
 
 FIND_PROGRAM(PHP5_EXECUTABLE
   NAMES php5 php
@@ -76,6 +85,10 @@ IF(PHP5_CONFIG_EXECUTABLE)
   set(PHP5_STANDARD_INCLUDE_DIR ${PHP5_INCLUDE_DIR}/ext/standard)
 
   MESSAGE(STATUS ${PHP5_MAIN_INCLUDE_DIR})
+
+  IF(NOT PHP5_INCLUDE_PATH)
+    set(PHP5_INCLUDE_PATH ${PHP5_INCLUDES})
+  ENDIF(NOT PHP5_INCLUDE_PATH)
 
   IF(PHP5_VERSION LESS 5)
     MESSAGE(FATAL_ERROR "PHP version is not 5 or later")

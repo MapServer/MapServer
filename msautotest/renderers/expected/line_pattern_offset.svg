@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400pt" height="400pt" viewBox="0 0 400 400" version="1.1">
+<g id="surface2">
+<rect x="0" y="0" width="400" height="400" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
+<path style="fill:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(100%,0%,0%);stroke-opacity:1;stroke-dasharray:45,5;stroke-miterlimit:10;" d="M 19.949219 349.125 L 369.222656 -5 "/>
+<path style="fill:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(100%,100%,100%);stroke-opacity:1;stroke-dasharray:25,25;stroke-miterlimit:10;" d="M 20.660156 349.828125 L 369.9375 -4.296875 "/>
+<path style="fill:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-dasharray:45,5;stroke-miterlimit:10;" d="M 19.949219 379.050781 L 379.050781 19.949219 "/>
+<path style="fill:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(100%,100%,100%);stroke-opacity:1;stroke-dasharray:25,25;stroke-dashoffset:35;stroke-miterlimit:10;" d="M 20.65625 379.757812 L 379.757812 20.65625 "/>
+<path style="fill:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-dasharray:45,5;stroke-miterlimit:10;" d="M 19.949219 394.011719 L 379.050781 34.914062 "/>
+<path style="fill:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(100%,100%,100%);stroke-opacity:1;stroke-dasharray:25,25;stroke-dashoffset:40;stroke-miterlimit:10;" d="M 20.65625 394.71875 L 379.757812 35.621094 "/>
+<path style="fill:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-dasharray:45,5;stroke-miterlimit:10;" d="M 19.949219 364.085938 L 379.050781 4.988281 "/>
+<path style="fill:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(100%,100%,100%);stroke-opacity:1;stroke-dasharray:25,25;stroke-dashoffset:45;stroke-miterlimit:10;" d="M 20.65625 364.792969 L 379.757812 5.695312 "/>
+</g>
+</svg>

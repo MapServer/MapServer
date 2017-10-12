@@ -1,0 +1,158 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:ValueCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="21">
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Quebec</ms:NAME_E>
+          <ms:NomFrancais>Quebec</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Quebec</ms:NAME_E>
+          <ms:NomFrancais>Quebec</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Quebec</ms:NAME_E>
+          <ms:NomFrancais>Quebec</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Quebec</ms:NAME_E>
+          <ms:NomFrancais>Quebec</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Prince Edward Island</ms:NAME_E>
+          <ms:NomFrancais>Ile-du-Prince-Edouard</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Prince Edward Island</ms:NAME_E>
+          <ms:NomFrancais>Ile-du-Prince-Edouard</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+    <wfs:member>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+          <ms:NAME_E>Nova Scotia</ms:NAME_E>
+          <ms:NomFrancais>Nouvelle-Ecosse</ms:NomFrancais>
+        </ms:namegroup>
+    </wfs:member>
+</wfs:ValueCollection>

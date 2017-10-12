@@ -1,0 +1,265 @@
+# RUN_PARMS: poly-label-multiline-pos-auto.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: poly-label-multiline-pos-auto.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: poly-label-multiline-pos-auto.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: poly-label-multiline-pos-auto.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+  name "label-position-auto"
+  status on
+  size 200 200
+  extent -50 -50 350 350
+  imagetype "png"
+  imagecolor "#a5bfdd"
+  fontset "data/fonts.lst"
+
+  symbol
+    name "circle"
+    type ellipse
+    filled true
+    points 1 1 end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 0 0 100 0 100 100 0 100 0 0 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+LL'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position ll
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 100 0 200 0 200 100 100 100 100 0 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+LC'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position lc
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 200 0 300 0 300 100 200 100 200 0 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+LR'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position lr
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 0 100 100 100 100 200 0 200 0 100 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+CL'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position cl
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 100 100 200 100 200 200 100 200 100 100 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+AUTO'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position auto
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 200 100 300 100 300 200 200 200 200 100 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+CR'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position cr
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 0 200 100 200 100 300 0 300 0 200 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+UL'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position ul
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 100 200 200 200 200 300 100 300 100 200 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+UC'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position uc
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+  layer
+    status default
+    type polygon
+    feature
+      points 200 200 300 200 300 300 200 300 200 200 end
+    end
+    class
+    style
+      color "#888888"
+      outlinecolor "#000000"
+    end
+    label
+      text 'LABEL
+UR'
+      style
+        symbol "circle"
+        size 10
+        color "#ff0000"
+      end
+      type truetype size 8 font "default"
+      position ur
+      color "#000000"
+      buffer 3
+    end
+    end
+  end
+
+end

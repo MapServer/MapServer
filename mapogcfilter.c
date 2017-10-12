@@ -40,8 +40,11 @@
 #include "mapowscommon.h"
 #include "maptime.h"
 #include "mapows.h"
+#include <ctype.h>
 
+#if 0
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
+#endif
 
 #if !(defined(_WIN32) && !defined(__CYGWIN__))
 static inline void IGUR_double(double ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
@@ -165,7 +168,8 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
       if (paszElements && numelements > 0) {
         if (forcecharcter)
           bIscharacter = MS_TRUE;
-        bIscharacter= !FLTIsNumeric(paszElements[0]);
+        else
+          bIscharacter= !FLTIsNumeric(paszElements[0]);
 
         pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
         for (i=0; i<numelements; i++) {
@@ -566,14 +570,87 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
 }
 
 /************************************************************************/
+/*                            FLTSplitFilters                           */
+/*                                                                      */
+/*    Split filters separated by parentheses into an array of strings.  */
+/************************************************************************/
+char** FLTSplitFilters(const char* pszStr, int* pnTokens)
+{
+    const char* pszTokenBegin;
+    char** papszRet = NULL;
+    int nTokens = 0;
+    char chStringQuote = '\0';
+    int nXMLIndent = 0;
+    int bInBracket = FALSE;
+
+    if( *pszStr != '(' )
+    {
+        *pnTokens = 0;
+        return NULL;
+    }
+    pszStr ++;
+    pszTokenBegin = pszStr;
+    while( *pszStr != '\0' )
+    {
+        /* Ignore any character until end of quoted string */
+        if( chStringQuote != '\0' )
+        {
+            if( *pszStr == chStringQuote )
+                chStringQuote = 0;
+        }
+        /* Detect begin of quoted string only for an XML attribute, i.e. between < and > */
+        else if( bInBracket && (*pszStr == '\'' || *pszStr == '"') )
+        {
+            chStringQuote = *pszStr;
+        }
+        /* Begin of XML element */
+        else if( *pszStr == '<' )
+        {
+            bInBracket = TRUE;
+            if( pszStr[1] == '/' )
+                nXMLIndent --;
+            else if( pszStr[1] != '!' )
+                nXMLIndent ++;
+        }
+        /* <something /> case */
+        else if (*pszStr == '/' && pszStr[1] == '>' )
+        {
+            bInBracket = FALSE;
+            nXMLIndent --;
+            pszStr ++;
+        }
+        /* End of XML element */
+        else if( *pszStr == '>' )
+        {
+            bInBracket = FALSE;
+        }
+        /* Only detect and of filter when XML indentation goes back to zero */
+        else if( nXMLIndent == 0 && *pszStr == ')' )
+        {
+            papszRet = (char**) msSmallRealloc(papszRet, sizeof(char*) * (nTokens + 1));
+            papszRet[nTokens] = msStrdup(pszTokenBegin);
+            papszRet[nTokens][pszStr - pszTokenBegin] = '\0';
+            nTokens ++;
+            if( pszStr[1] != '(' )
+            {
+                break;
+            }
+            pszStr ++;
+            pszTokenBegin = pszStr + 1;
+        }
+        pszStr ++;
+    }
+    *pnTokens = nTokens;
+    return papszRet;
+}
+
+/************************************************************************/
 /*                            FLTIsSimpleFilter                         */
 /*                                                                      */
 /*      Filter encoding with only attribute queries and only one bbox.  */
 /************************************************************************/
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 {
-  return MS_FALSE;
-
   if (FLTValidForBBoxFilter(psNode)) {
     if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
         FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
@@ -617,17 +694,43 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerInd
 /************************************************************************/
 int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex)
 {
-  /* ==================================================================== */
-  /*      Check here to see if it is a simple filter and if that is       */
-  /*      the case, we are going to use the FILTER element on             */
-  /*      the layer.                                                      */
-  /* ==================================================================== */
-  layerObj* lp = GET_LAYER(map, iLayerIndex);
-  if (FLTIsSimpleFilter(psNode) && !(lp->connectiontype == MS_OGR && !FLTHasUniqueTopLevelDuringFilter(psNode)) ) {
-    return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
-  }
-
   return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
+}
+
+
+/************************************************************************/
+/*                           FLTGetTopBBOX                              */
+/*                                                                      */
+/* Return the "top" BBOX if there's a unique one.                       */
+/************************************************************************/
+static int FLTGetTopBBOXInternal(FilterEncodingNode *psNode, FilterEncodingNode** ppsTopBBOX, int *pnCount)
+{
+  if (psNode->pszValue && strcasecmp(psNode->pszValue, "BBOX") == 0) {
+    (*pnCount) ++;
+    if( *pnCount == 1 )
+    {
+      *ppsTopBBOX = psNode;
+      return TRUE;
+    }
+    *ppsTopBBOX = NULL;
+    return FALSE;
+  }
+  else if (psNode->pszValue && strcasecmp(psNode->pszValue, "AND") == 0) {
+    return FLTGetTopBBOXInternal(psNode->psLeftNode, ppsTopBBOX, pnCount) &&
+           FLTGetTopBBOXInternal(psNode->psRightNode, ppsTopBBOX, pnCount);
+  }
+  else
+  {
+    return TRUE;
+  }
+}
+
+static FilterEncodingNode* FLTGetTopBBOX(FilterEncodingNode *psNode)
+{
+  int nCount = 0;
+  FilterEncodingNode* psTopBBOX = NULL;
+  FLTGetTopBBOXInternal(psNode, &psTopBBOX, &nCount);
+  return psTopBBOX;
 }
 
 /************************************************************************/
@@ -640,12 +743,66 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 {
   char *pszExpression  =NULL;
   int status =MS_FALSE;
+  layerObj* lp = GET_LAYER(map, iLayerIndex);
 
-  pszExpression = FLTGetCommonExpression(psNode,  GET_LAYER(map, iLayerIndex));
-  if(map->debug == MS_DEBUGLEVEL_VVV)
-    msDebug("FLTLayerApplyPlainFilterToLayer(): %s\n", pszExpression);
+  pszExpression = FLTGetCommonExpression(psNode,  lp);
   if (pszExpression) {
-    status = FLTApplyFilterToLayerCommonExpression(map, iLayerIndex, pszExpression);
+    const char* pszUseDefaultExtent;
+    FilterEncodingNode* psTopBBOX;
+    rectObj rect = map->extent;
+
+    pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
+                                              "use_default_extent_for_getfeature");
+    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
+        lp->connectiontype == MS_OGR )
+    {
+        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+        rect = rectInvalid;
+    }
+
+    psTopBBOX = FLTGetTopBBOX(psNode);
+    if( psTopBBOX )
+    {
+      int can_remove_expression = MS_TRUE;
+      const char* pszEPSG = FLTGetBBOX(psNode, &rect);
+      if(pszEPSG && map->projection.numargs > 0) {
+        projectionObj sProjTmp;
+        msInitProjection(&sProjTmp);
+        /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+        if (msLoadProjectionString(&sProjTmp, pszEPSG) == 0) {
+          rectObj oldRect = rect;
+          msProjectRect(&sProjTmp, &map->projection, &rect);
+          /* If reprojection is involved, do not remove the expression */
+          if( rect.minx != oldRect.minx ||
+              rect.miny != oldRect.miny ||
+              rect.maxx != oldRect.maxx ||
+              rect.maxy != oldRect.maxy )
+          {
+            can_remove_expression = MS_FALSE;
+          }
+        }
+        msFreeProjection(&sProjTmp);
+      }
+
+      /* Small optimization: if the query is just a BBOX, then do a */
+      /* msQueryByRect() */
+      if( psTopBBOX == psNode && can_remove_expression )
+      {
+        msFree(pszExpression);
+        pszExpression = NULL;
+      }
+    }
+
+    if(map->debug == MS_DEBUGLEVEL_VVV)
+    {
+      if( pszExpression )
+        msDebug("FLTLayerApplyPlainFilterToLayer(): %s, rect=%.15g,%.15g,%.15g,%.15g\n", pszExpression, rect.minx, rect.miny, rect.maxx, rect.maxy);
+      else
+        msDebug("FLTLayerApplyPlainFilterToLayer(): rect=%.15g,%.15g,%.15g,%.15g\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
+    }
+
+    status = FLTApplyFilterToLayerCommonExpressionWithRect(map, iLayerIndex,
+                                                           pszExpression, rect);
     msFree(pszExpression);
   }
 
@@ -1787,6 +1944,7 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
   return 0;
 }
 
+#if 0
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode)
 {
   int nCount = 0;
@@ -1812,7 +1970,7 @@ static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode)
 
   return 0;
 }
-
+#endif
 
 int FLTIsLineFilter(FilterEncodingNode *psFilterNode)
 {
@@ -2926,6 +3084,8 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 
   pszValue = psFilterNode->psRightNode->pszValue;
   nLength = strlen(pszValue);
+  if( 1 + 2 * nLength + 1 + 1 >= sizeof(szTmp) )
+      return NULL;
 
   iTmp =0;
   if (nLength > 0 && pszValue[0] != pszWild[0] &&
@@ -3594,6 +3754,57 @@ int FLTCheckInvalidOperand(FilterEncodingNode *psFilterNode)
       {
         if (psFilterNode->psRightNode)
             status = FLTCheckInvalidOperand(psFilterNode->psRightNode);
+      }
+    }
+    return status;
+}
+
+/************************************************************************/
+/*                       FLTProcessPropertyIsNull                       */
+/*                                                                      */
+/*      HACK for PropertyIsNull processing. PostGIS & Spatialite only   */
+/*      for now.                                                        */
+/************************************************************************/
+int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
+                            mapObj *map, int i)
+{
+    int status = MS_SUCCESS;
+
+    if (psFilterNode->eType == FILTER_NODE_TYPE_COMPARISON &&
+        psFilterNode->psLeftNode != NULL &&
+        psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME &&
+        strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 &&
+        !FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) )
+    {
+        layerObj* lp;
+        int layerWasOpened;
+
+        lp = GET_LAYER(map, i);
+        layerWasOpened = msLayerIsOpen(lp);
+
+        /* Horrible HACK to compensate for the lack of null testing in MapServer */
+        if( (lp->connectiontype == MS_POSTGIS ||
+             (lp->connectiontype == MS_OGR && msOGRIsSpatialite(lp))) &&
+            strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 )
+        {
+            msFree(psFilterNode->pszValue);
+            psFilterNode->pszValue = msStrdup("PropertyIsEqualTo");
+            psFilterNode->psRightNode = FLTCreateBinaryCompFilterEncodingNode();
+            psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
+            psFilterNode->psRightNode->pszValue = msStrdup("_MAPSERVER_NULL_");
+        }
+
+        if (!layerWasOpened) /* do not close the layer if it has been opened somewhere else (paging?) */
+          msLayerClose(lp);
+    }
+
+    if (psFilterNode->psLeftNode)
+    {
+      status = FLTProcessPropertyIsNull(psFilterNode->psLeftNode, map, i);
+      if( status == MS_SUCCESS )
+      {
+        if (psFilterNode->psRightNode)
+            status = FLTProcessPropertyIsNull(psFilterNode->psRightNode, map, i);
       }
     }
     return status;

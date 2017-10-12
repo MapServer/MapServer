@@ -1,0 +1,70 @@
+Content-Type: multipart/related; boundary=wcs
+
+
+--wcs
+Content-Type: image/x-aaigrid
+Content-Description: coverage data
+Content-Transfer-Encoding: binary
+Content-ID: coverage/result.grd
+Content-Disposition: INLINE; filename=result.grd
+
+ncols        40
+nrows        30
+xllcorner    0.000000000000
+yllcorner    0.000000000000
+cellsize     10.000000000000
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 140 115 132 123 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 123 115 123 115 123 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 115 115 115 123 148 123 165 0 0 0 0 0 0 0 0 0 0 99 123 99 0 0 0 0 115 90 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 148 123 107 132 115 132 156 0 0 0 0 0 0 0 0 0 90 107 123 99 115 0 90 99 99 99 99 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 99 132 123 115 140 132 132 0 0 0 0 0 0 0 0 99 107 132 107 123 99 107 107 99 115 99 99 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 140 123 107 115 132 115 0 0 0 0 0 0 0 0 123 107 99 132 99 99 115 90 123 115 107 115 115 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 132 132 123 123 0 0 0 0 0 0 0 0 0 132 99 115 99 74 123 115 90 115 107 115 107 115 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 132 107 115 107 115 99 115 132 107 140 132 107 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 107 115 123 107 148 115 123 123 99 123 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 107 99 123 99 132 123 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 115 115 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 99 115 99 99 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 115 132 0 99 115 90 99 99 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 132 99 115 123 74 115 99 123 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 132 107 140 123 148 132 165 165 148 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 156 156 156 181 132 148 115 132 107 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 148 165 181 132 123 115 90 99 115 90 0 0 0 0 0 0 0 0 0 0 0 0 0 206 181 0 0 0 148 0 0 0 0 0 0 0
+ 0 0 0 0 0 107 123 132 173 148 123 123 107 0 0 0 0 0 0 0 0 0 0 0 0 197 173 255 173 0 197 173 156 156 0 0 0 0 0 0
+ 0 0 0 0 0 255 222 239 148 148 222 156 0 0 0 0 0 0 0 0 0 0 0 0 0 189 206 239 222 222 222 189 255 140 0 0 0 0 0 0
+ 0 0 0 0 0 189 222 255 206 255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 173 165 173 214 197 189 214 222 239 148 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 148 156 140 173 156 230 197 214 230 132 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 123 173 132 148 148 197 239 214 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 148 148 140 148 181 156 206 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 140 156 165 165 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+--wcs
+Content-Type: application/octet-stream
+Content-Description: coverage data
+Content-Transfer-Encoding: binary
+Content-ID: coverage/result.grd.aux.xml
+Content-Disposition: INLINE; filename=result.grd.aux.xml
+
+<PAMDataset>
+  <Metadata>
+    <MDI key="TIFFTAG_RESOLUTIONUNIT">2</MDI>
+    <MDI key="TIFFTAG_XRESOLUTION">72.000000</MDI>
+    <MDI key="TIFFTAG_YRESOLUTION">72.000000</MDI>
+  </Metadata>
+</PAMDataset>
+
+--wcs
+Content-Type: application/octet-stream
+Content-Description: coverage data
+Content-Transfer-Encoding: binary
+Content-ID: coverage/result.prj
+Content-Disposition: INLINE; filename=result.prj
+
+PROJCS["WGS_1984_UTM_Zone_11N",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]
+--wcs--

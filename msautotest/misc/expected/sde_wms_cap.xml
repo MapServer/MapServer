@@ -1,0 +1,98 @@
+Content-type: application/vnd.ogc.wms_xml
+
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://ogc.dmsolutions.ca/wms/1.1.0/capabilities_1_1_0.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.0">
+
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>Test simple wms</Title>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/>
+  <ContactInformation>
+  </ContactInformation>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/gif</Format>
+      <Format>image/png</Format>
+      <Format>image/png; mode=24bit</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/vnd.wap.wbmp</Format>
+      <Format>image/tiff</Format>
+      <Format>image/svg+xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeLayer>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <Layer>
+    <Name>MS</Name>
+    <Title>Test simple wms</Title>
+    <SRS>EPSG:42304 EPSG:42101 EPSG:4269 EPSG:4326</SRS>
+    <LatLonBoundingBox minx="1.28336e+06" miny="457671" maxx="1.33043e+06" maxy="495314" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="1.28336e+06" miny="457671" maxx="1.33043e+06" maxy="495314" />
+<!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>shppoly</Name>
+<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+        <Title>shppoly</Title>
+        <LatLonBoundingBox minx="1.28336e+06" miny="457671" maxx="1.33043e+06" maxy="495314" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="1.28336e+06" miny="457671" maxx="1.33043e+06" maxy="495314" />
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="20" height="10">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=shppoly&amp;format=image/png"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

@@ -65,6 +65,13 @@ void msLayerFreeItemInfo(layerObj *layer)
       return;
   }
   layer->vtable->LayerFreeItemInfo(layer);
+
+  /*
+   * Layer expressions with attribute binding hold a numeric index pointing
+   * to an iteminfo (node->tokenval.bindval.index). If iteminfo changes,
+   * an expression may be no longer valid. (#5161)
+   */
+  msLayerFreeExpressions(layer);
 }
 
 int msLayerRestoreFromScaletokens(layerObj *layer)
@@ -330,6 +337,14 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     if(rv != MS_SUCCESS) return rv;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
+    
+    /* attributes need to be iconv'd to UTF-8 before any filter logic is applied */
+    if(layer->encoding) {
+      rv = msLayerEncodeShapeAttributes(layer,shape);
+      if(rv != MS_SUCCESS)
+        return rv;
+    }
+    
     // if(layer->numitems > 0 && layer->iteminfo) {
       filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
     // }
@@ -344,11 +359,6 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
       return rv;
   }
 
-  if(layer->encoding) {
-    rv = msLayerEncodeShapeAttributes(layer,shape);
-    if(rv != MS_SUCCESS)
-      return rv;
-  }
   
   return rv;
 }
@@ -408,12 +418,34 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 }
 
 /*
+** Returns the number of shapes that match the potential filter and extent.
+ * rectProjection is the projection in which rect is expressed, or can be NULL if
+ * rect should be considered in the layer projection.
+ * This should be equivalent to calling msLayerWhichShapes() and counting the
+ * number of shapes returned by msLayerNextShape(), honouring layer->maxfeatures
+ * limitation if layer->maxfeatures>=0, and honouring layer->startindex if
+ * layer->startindex >= 1 and paging is enabled.
+ * Returns -1 in case of failure.
+ */
+int msLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+  int rv;
+
+  if( ! layer->vtable) {
+    rv = msInitializeVirtualTable(layer);
+    if(rv != MS_SUCCESS)
+      return -1;
+  }
+
+  return layer->vtable->LayerGetShapeCount(layer, rect, rectProjection);
+}
+
+
+/*
 ** Closes resources used by a particular layer.
 */
 void msLayerClose(layerObj *layer)
 {
-  int i,j,k;
-
   /* no need for items once the layer is closed */
   msLayerFreeItemInfo(layer);
   if(layer->items) {
@@ -423,6 +455,21 @@ void msLayerClose(layerObj *layer)
   }
 
   /* clear out items used as part of expressions (bug #2702) -- what about the layer filter? */
+  msLayerFreeExpressions(layer);
+
+  if (layer->vtable) {
+    layer->vtable->LayerClose(layer);
+  }
+  msLayerRestoreFromScaletokens(layer);
+}
+
+/*
+** Clear out items used as part of expressions.
+*/
+void msLayerFreeExpressions(layerObj *layer)
+{
+  int i,j,k;
+
   msFreeExpressionTokens(&(layer->filter));
   msFreeExpressionTokens(&(layer->cluster.group));
   msFreeExpressionTokens(&(layer->cluster.filter));
@@ -436,11 +483,6 @@ void msLayerClose(layerObj *layer)
       msFreeExpressionTokens(&(layer->class[i]->labels[k]->text));
     }
   }
-
-  if (layer->vtable) {
-    layer->vtable->LayerClose(layer);
-  }
-  msLayerRestoreFromScaletokens(layer);
 }
 
 /*
@@ -1504,6 +1546,83 @@ int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   return MS_FAILURE;
 }
 
+int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+  int status;
+  shapeObj shape, searchshape;
+  int nShapeCount = 0;
+  rectObj searchrect = rect;
+
+  msInitShape(&searchshape);
+  msRectToPolygon(searchrect, &searchshape);
+
+#ifdef USE_PROJ
+  if( rectProjection != NULL ) 
+  {
+    if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
+      msProjectRect(rectProjection, &(layer->projection), &searchrect); /* project the searchrect to source coords */
+    else
+      layer->project = MS_FALSE;
+  }
+#endif
+
+  status = msLayerWhichShapes(layer, searchrect, MS_TRUE) ;
+  if( status == MS_FAILURE )
+  {
+    msFreeShape(&searchshape);
+    return -1;
+  }
+  else if( status == MS_DONE )
+  {
+    msFreeShape(&searchshape);
+    return 0;
+  }
+
+  msInitShape(&shape);
+  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS)
+  {
+    if( rectProjection != NULL ) 
+    {
+#ifdef USE_PROJ
+      if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
+        msProjectShape(&(layer->projection), rectProjection, &shape);
+      else
+        layer->project = MS_FALSE;
+#endif
+
+      if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */
+        status = MS_TRUE;
+      } else {
+        switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
+          case MS_SHAPE_POINT:
+            status = msIntersectMultipointPolygon(&shape, &searchshape);
+            break;
+          case MS_SHAPE_LINE:
+            status = msIntersectPolylinePolygon(&shape, &searchshape);
+            break;
+          case MS_SHAPE_POLYGON:
+            status = msIntersectPolygons(&shape, &searchshape);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    else
+      status = MS_TRUE;
+
+    if( status == MS_TRUE )
+      nShapeCount++ ;
+    msFreeShape(&shape);
+    if(layer->maxfeatures > 0 && layer->maxfeatures == nShapeCount)
+      break;
+  }
+
+  msFreeShape(&searchshape);
+
+  return nShapeCount;
+}
+
 int LayerDefaultClose(layerObj *layer)
 {
   return MS_SUCCESS;
@@ -1546,7 +1665,7 @@ int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int 
 int msLayerSupportsSorting(layerObj *layer)
 {
   if (layer && (
-         (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL)
+    (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL) || ((layer->connectiontype == MS_PLUGIN) && (strstr(layer->plugin_library,"msplugin_oracle") != NULL))
                )
      )
     return MS_TRUE;
@@ -1587,7 +1706,18 @@ char* msLayerBuildSQLOrderBy(layerObj *layer)
     int i;
     for(i=0;i<layer->sortBy.nProperties;i++) {
       char* escaped = msLayerEscapePropertyName(layer, layer->sortBy.properties[i].item);
-      if( i > 0 )
+      //Enclose property name in double quotes (if it isn't yet) to ensure that mixed case property names are supported
+      if (escaped[0] != '"')
+      {
+        size_t propertyLen = strlen(escaped);
+        escaped = msSmallRealloc(escaped, propertyLen + 3);
+        memmove(escaped + 1, escaped, propertyLen);
+        escaped[0] = '\"';
+        escaped[propertyLen+1] = '\"';
+        escaped[propertyLen + 2] = 0;
+
+      }
+      if (i > 0)
         strOrderBy = msStringConcatenate(strOrderBy, ", ");
       strOrderBy = msStringConcatenate(strOrderBy, escaped);
       if( layer->sortBy.properties[i].sortOrder == SORT_DESC )
@@ -1807,6 +1937,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerNextShape = LayerDefaultNextShape;
   /* vtable->LayerResultsGetShape = LayerDefaultResultsGetShape; */
   vtable->LayerGetShape = LayerDefaultGetShape;
+  vtable->LayerGetShapeCount = LayerDefaultGetShapeCount;
   vtable->LayerClose = LayerDefaultClose;
   vtable->LayerGetItems = LayerDefaultGetItems;
   vtable->LayerGetExtent = LayerDefaultGetExtent;
@@ -2113,6 +2244,7 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
   layer->vtable->LayerWhichShapes = msINLINELayerWhichShapes;
   layer->vtable->LayerNextShape = msINLINELayerNextShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerGetShape = msINLINELayerGetShape;
   layer->vtable->LayerClose = msINLINELayerClose;
   /* layer->vtable->LayerGetItems, use default */

@@ -1,0 +1,73 @@
+# RUN_PARMS: point_svg.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point_svg.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point_svg.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point_svg.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG SUPPORTS=SVG_SYMBOLS
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+LAYER
+  NAME "symbol"
+  TYPE point
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "svgicon"
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+  END
+END
+
+LAYER
+  NAME "symbol rotated"
+  TYPE point
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "svgicon"
+        SIZE 55
+        ANGLE 45
+    END
+  END
+  FEATURE
+    POINTS
+        200 200
+    END
+  END
+END
+
+LAYER
+    NAME "anchors"
+    TYPE POINT
+    STATUS default
+    CLASS
+        STYLE
+            COLOR 255 0 0
+            SIZE 8
+            WIDTH 1
+            SYMBOL "circle"
+        END
+    END
+    FEATURE POINTS 50 50 END END
+    FEATURE POINTS 200 200 END END
+END
+
+END

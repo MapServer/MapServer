@@ -84,6 +84,7 @@ char path[MS_MAXPATHLEN];
 %s EXPRESSION_STRING
 %s INCLUDE
 %s MSSTRING
+%s MULTILINE_COMMENT
 
 %%
        if (msyystring_buffer == NULL)
@@ -160,7 +161,13 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
-<INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
+<INITIAL>(\/\/|#).*                              { if (msyyreturncomments) return(MS_COMMENT); }
+
+<INITIAL>\/\*                                  { BEGIN(MULTILINE_COMMENT); }
+<MULTILINE_COMMENT>\*\/                        { BEGIN(INITIAL); }
+<MULTILINE_COMMENT>[^*\n]+                     ;
+<MULTILINE_COMMENT>\*                          ;
+<MULTILINE_COMMENT>\n                          { msyylineno++; }
 
 <URL_VARIABLE>_|\.                             ;
 
@@ -225,6 +232,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>backgroundcolor            { MS_LEXER_RETURN_TOKEN(BACKGROUNDCOLOR); }
 <INITIAL>bandsitem                             { MS_LEXER_RETURN_TOKEN(BANDSITEM); }
 <INITIAL>bindvals                              { MS_LEXER_RETURN_TOKEN(BINDVALS); }
+<INITIAL>\xEF\xBB\xBF                          { MS_LEXER_RETURN_TOKEN(BOM); }
 <INITIAL>browseformat                          { MS_LEXER_RETURN_TOKEN(BROWSEFORMAT); }
 <INITIAL>buffer                                { MS_LEXER_RETURN_TOKEN(BUFFER); }
 <INITIAL>character                             { MS_LEXER_RETURN_TOKEN(CHARACTER); }
@@ -354,7 +362,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>partials                              { MS_LEXER_RETURN_TOKEN(PARTIALS); }
 <INITIAL,URL_STRING>pattern                    { MS_LEXER_RETURN_TOKEN(PATTERN); }
 <INITIAL,URL_STRING>points                     { MS_LEXER_RETURN_TOKEN(POINTS); }
-<INITIAL>items                                 { MS_LEXER_RETURN_TOKEN(ITEMS); }
+<INITIAL,URL_STRING>items                      { MS_LEXER_RETURN_TOKEN(ITEMS); }
 <INITIAL,URL_STRING>position                   { MS_LEXER_RETURN_TOKEN(POSITION); }
 <INITIAL>postlabelcache                        { MS_LEXER_RETURN_TOKEN(POSTLABELCACHE); }
 <INITIAL>priority                              { MS_LEXER_RETURN_TOKEN(PRIORITY); }
@@ -581,7 +589,7 @@ char path[MS_MAXPATHLEN];
   return(MS_TOKEN_LITERAL_TIME);
 }
 
-<INITIAL,URL_STRING>\/[^\/]*\/i                {
+<INITIAL,URL_STRING>\/[^\/*]*\/i               {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
@@ -590,7 +598,7 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_IREGEX);
                                                }
 
-<INITIAL,URL_STRING>\/[^\/]*\/                 {
+<INITIAL,URL_STRING>\/[^\/*]*\/                {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 

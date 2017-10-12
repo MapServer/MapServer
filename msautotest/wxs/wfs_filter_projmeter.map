@@ -1,0 +1,213 @@
+#
+# Test WFS spatial filter with projection set in meter
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WFS GEOS
+#
+#
+#
+#
+# Verify BBOX Result:  Digby
+# RUN_PARMS: wfs_filter_projmeter_bbox.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:3347%22><coordinates>8248452.40362,1355480.23963 8250459.10342,1371169.93927</coordinates></Box></BBOX></Filter>" > [RESULT]
+#
+# Verify INTERSECTS Results:  Canso, Port Hawkesbury
+# RUN_PARMS: wfs_filter_projmeter_intersects.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersect><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>2536072.75,292073.09375 2578914.25,292073.09375 2578914.25,311524.96875 2536072.75,311524.96875 2536072.75,292073.09375</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersect></Filter>" > [RESULT]
+#
+# Verify DWITHIN Result:  Sydney
+# RUN_PARMS: wfs_filter_projmeter_dwithin.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><DWithin><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>-60.18,46.10</gml:coordinates></gml:Point><Distance units='m'>0.05</Distance></DWithin></Filter>" > [RESULT]
+#
+
+# Verify BEYOND Results:  all but Sydney excluded
+# RUN_PARMS: wfs_filter_projmeter_beyond.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Beyond><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>-60.18,46.10</gml:coordinates></gml:Point><Distance units='dd'>0.05</Distance></Beyond></Filter>" > [RESULT]
+#
+# Verify EQUALS Result:  Cheticamp
+# RUN_PARMS: wfs_filter_projmeter_equals.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Equals><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>8492658.348687229678035 1738696.303504159906879</gml:coordinates></gml:Point></Equals></Filter>" > [RESULT]
+#
+# Verify OVERLAPS Result:  Prince Edward Island
+# RUN_PARMS: wfs_filter_projmeter_overlaps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Overlaps><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-64.75,46.08 -63.53,46.08 -63.53,47.29 -64.75,47.29</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Overlaps></Filter>" > [RESULT]
+
+
+# Verify WITHIN Results:  Quebec, Iles de la Madeleine (3 islands)
+# RUN_PARMS: wfs_filter_projmeter_within.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Within><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-62.16,47.07 -61.33,47.07 -61.33,47.75 -62.16,47.75</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Within></Filter>" > [RESULT]
+
+# Verify CONTAINS Result:  Quebec, Iles de la Madeleine
+# RUN_PARMS: wfs_filter_projmeter_contains.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Contains><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.99,47.35 -61.95,47.35 -61.95,47.38 -61.99,47.38</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Contains></Filter>" > [RESULT]
+
+# Verify CROSSES Result:  Nova Scotia, Sable Island
+# RUN_PARMS: wfs_filter_projmeter_crosses.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Crosses><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-60.25,43.79 -59.95,43.79 -59.95,44.09 -60.25,44.09</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Crosses></Filter>" > [RESULT]
+
+# Verify TOUCHES Result:  Quebec, Iles de la Madeleine (AREA:  4833029.500)
+# RUN_PARMS: wfs_filter_projmeter_touches.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Touches><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.719829698475976,47.269592918433993 -61.732190995311512,47.25507337571689 -61.72,47.24 -61.71,47.26</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Touches></Filter>" > [RESULT]
+
+# Verify EQUALS Result:  Quebec, Iles de la Madeleine (AREA:  4833029.500)
+# RUN_PARMS: wfs_filter_projmeter_equals_poly.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Equals><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>8410956.098654299974442 1768109.725878723198548,8409940.00935111194849 1769747.433919136179611,8411004.338610056787729 1771119.001025118166581,8412355.509184662252665 1770236.240134362364188,8412258.990663964301348 1768359.747731325216591,8410956.098654299974442 1768109.725878723198548</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Equals></Filter>" > [RESULT]
+
+# Verify DISJOINT Result:  Nova Scotia, Sable Island
+# RUN_PARMS: wfs_filter_projmeter_disjoint.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Disjoint><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-66.23,42.50 -58.95,45.67 -58.97,48.52 -67.01,47.13</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Disjoint></Filter>" > [RESULT]
+
+# Verify INTERSECTS Results:  Prince Edward Island
+# RUN_PARMS: wfs_filter_projmeter_intersects_line.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Intersect><PropertyName>Geometry</PropertyName><gml:LineString><gml:coordinates>-62.94,46.61 -62.74,45.83</gml:coordinates></gml:LineString></Intersect></Filter>" > [RESULT]
+#
+MAP
+
+NAME WFS_FILTER
+STATUS ON
+SIZE 400 300
+EXTENT 7981913 1175787 8935478 1892753
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+
+OUTPUTFORMAT
+  NAME GDPNG
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGB
+  EXTENSION "png"
+END
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:3347 EPSG:4269"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:3347"
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wfs_title"         "province"
+    "wfs_description"   "province"
+    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+    "gml_include_items" "all"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+LAYER
+  NAME park
+  DATA park
+  METADATA
+    "wfs_title"             "park"
+    "wfs_version"           "1.0.0"
+    "wfs_description"	    "Parks"
+    "wfs_result_fields"     "NAME_E YEAR_EST AREA_KMSQ"
+    "gml_include_items" "all"
+   END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+  CLASS
+    NAME "Parks"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+
+LAYER
+  NAME popplace
+  DATA popplace
+  METADATA
+    "wfs_title"         "popplace"
+    "wfs_description"   "Cities"
+    "wfs_result_fields" "NAME"
+    "gml_include_items" "all"
+   END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Capital" 
+
+  CLASS
+    EXPRESSION /./  
+    SYMBOL 2
+    SIZE 8
+    NAME "Cities"
+    LABEL
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road
+  DATA road
+  METADATA
+    "wfs_title"       "road"
+    "wfs_description" "Roads"
+    "gml_include_items" "all"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+END # Map File

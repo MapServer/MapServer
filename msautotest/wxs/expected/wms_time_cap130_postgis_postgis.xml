@@ -1,0 +1,125 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<WMS_Capabilities version="1.3.0" updateSequence="123"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://ogc.dmsolutions.ca/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://ogc.dmsolutions.ca/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/mswms_time?service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
+
+<Service>
+  <Name>WMS</Name>
+  <Title>Test WMS time support</Title>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/>
+  <ContactInformation>
+  </ContactInformation>
+  <Fees>none</Fees>
+  <MaxWidth>4096</MaxWidth>
+  <MaxHeight>4096</MaxHeight>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/png; mode=24bit</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/tiff</Format>
+      <Format>image/svg+xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <sld:DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Post>
+        </HTTP>
+      </DCPType>
+    </sld:DescribeLayer>
+    <sld:GetLegendGraphic>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Post>
+        </HTTP>
+      </DCPType>
+    </sld:GetLegendGraphic>
+    <ms:GetStyles>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms_time?"/></Post>
+        </HTTP>
+      </DCPType>
+    </ms:GetStyles>
+  </Request>
+  <Exception>
+    <Format>XML</Format>
+    <Format>INIMAGE</Format>
+    <Format>BLANK</Format>
+  </Exception>
+  <sld:UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0" InlineFeature="0" RemoteWCS="0"/>
+  <Layer>
+    <Name>WMS_TIME_EXTENTS_RESOLUTION_NO_DEFAULT</Name>
+    <Title>Test WMS time support</Title>
+    <Abstract>WMS_TIME_EXTENTS_RESOLUTION_NO_DEFAULT</Abstract>
+    <CRS>EPSG:4326</CRS>
+    <EX_GeographicBoundingBox>
+        <westBoundLongitude>-131</westBoundLongitude>
+        <eastBoundLongitude>-68</eastBoundLongitude>
+        <southBoundLatitude>5</southBoundLatitude>
+        <northBoundLatitude>68</northBoundLatitude>
+    </EX_GeographicBoundingBox>
+    <BoundingBox CRS="EPSG:4326"
+                minx="5" miny="-131" maxx="68" maxy="-68" />
+    <MinScaleDenominator>2e+06</MinScaleDenominator>
+    <MaxScaleDenominator>5e+07</MaxScaleDenominator>
+<!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>pattern4</Name>
+        <Title>pattern4</Title>
+        <CRS>EPSG:4326</CRS>
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>-131.02</westBoundLongitude>
+            <eastBoundLongitude>-119.85</eastBoundLongitude>
+            <southBoundLatitude>33.65</southBoundLatitude>
+            <northBoundLatitude>48.39</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:4326"
+                    minx="33.65" miny="-131.02" maxx="48.39" maxy="-119.85" />
+        <Dimension name="time" units="ISO8601" nearestValue="0">2004-01-01/2004-02-01</Dimension>
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms_time?request=GetMetadata&amp;layer=pattern4"/>
+        </MetadataURL>
+    </Layer>
+  </Layer>
+</Capability>
+</WMS_Capabilities>

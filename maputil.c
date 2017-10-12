@@ -485,9 +485,10 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
       }
       {
         char *start,*end;
+        int value_len = strlen(shape->values[itemindex]);
         start = expression->string;
         while((end = strchr(start,',')) != NULL) {
-          if(!strncmp(start,shape->values[itemindex],end-start)) return MS_TRUE;
+          if(value_len == end-start && !strncmp(start,shape->values[itemindex],end-start)) return MS_TRUE;
           start = end+1;
         }
         if(!strcmp(start,shape->values[itemindex])) return MS_TRUE;
@@ -1477,7 +1478,7 @@ char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
   }
 
   fullPath = msBuildPath(szPath, mappath, tmpBase);
-  return strdup(fullPath);
+  return msStrdup(fullPath);
 }
 
 /**********************************************************************
@@ -1504,7 +1505,7 @@ char *msTmpFilename(const char *ext)
   snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpId, tmpCount++, ext);
   msReleaseLock( TLOCK_TMPFILE );
 
-  fullFname = strdup(tmpFname);
+  fullFname = msStrdup(tmpFname);
   free(tmpFname);
 
   return fullFname;
@@ -1711,12 +1712,13 @@ static pointObj point_norm(const pointObj a)
 {
   double lenmul;
   pointObj retv;
+  int norm_vector;
 
+  norm_vector = a.x==0 && a.y==0;
 #ifdef USE_POINT_Z_M
-  if (a.x==0 && a.y==0 && a.z==0 && a.m==0)
-#else
-  if (a.x==0 && a.y==0)
+  norm_vector = norm_vector && a.z==0 && a.m==0;
 #endif
+  if (norm_vector)
     return a;
 
   lenmul=1.0/sqrt(point_abs2(a));  /* this seems to be the costly operation */
@@ -1757,6 +1759,8 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
    if that is the case.*/
   if(ret)
     return ret;
+  /* clear error raised by geos in this case */
+  msResetErrorList();
 #endif
   /*
   ** For offset corner point calculation 1/sin() is used
@@ -2255,6 +2259,14 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
   ** in the same projection. */
   if( ! (layer->projection.numargs > 0) )
     return msRectOverlap( &(map->extent), &(layer->extent) );
+
+  /* In the case where map and layer projections are identical, and the */
+  /* bounding boxes don't cross the dateline, do simple rectangle comparison */
+  if( map->extent.minx < map->extent.maxx &&
+      layer->extent.minx < layer->extent.maxx &&
+      !msProjectionsDiffer(&(map->projection), &(layer->projection)) ) {
+    return msRectOverlap( &(map->extent), &(layer->extent) );
+  }
 
   /* We need to transform our rectangles for comparison,
   ** so we will work with copies and leave the originals intact. */

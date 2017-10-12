@@ -1,0 +1,90 @@
+Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>47.191069,-62.076968 47.796447,-61.433227</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>47.767892,-61.510511 47.796447,-61.457648</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>47.774240,-61.510511 47.788606,-61.508947 47.796447,-61.492725 47.787438,-61.457648 47.767892,-61.459987 47.769615,-61.483502 47.774240,-61.510511 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>47.191069,-62.076968 47.627593,-61.433227</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>47.241088,-62.010515 47.246040,-61.966742 47.238311,-61.947548 47.228257,-61.932708 47.222202,-61.906997 47.233116,-61.864694 47.242674,-61.842210 47.238572,-61.828736 47.227311,-61.828048 47.215824,-61.838414 47.191069,-61.895286 47.195878,-61.910866 47.207300,-61.930279 47.211466,-61.943690 47.200682,-61.980541 47.202105,-62.009180 47.211273,-62.057130 47.219864,-62.073040 47.230193,-62.076968 47.300625,-62.025236 47.327971,-62.012584 47.354223,-62.014128 47.381572,-62.001451 47.406325,-61.974280 47.460730,-61.875844 47.556462,-61.744027 47.596818,-61.659750 47.619458,-61.589874 47.620068,-61.532104 47.626271,-61.492444 47.627593,-61.467016 47.625790,-61.443646 47.617067,-61.433227 47.602653,-61.440203 47.584451,-61.482632 47.571983,-61.501965 47.546702,-61.527322 47.531009,-61.554237 47.524411,-61.580413 47.536685,-61.602124 47.546644,-61.592755 47.564103,-61.553676 47.583872,-61.540355 47.596569,-61.575318 47.581754,-61.628933 47.560421,-61.673230 47.537886,-61.707530 47.502438,-61.771983 47.463236,-61.811839 47.439850,-61.843632 47.428764,-61.867341 47.413176,-61.888445 47.379589,-61.910824 47.354617,-61.919309 47.343351,-61.918598 47.328320,-61.947480 47.315363,-61.983069 47.257309,-62.021449 47.241088,-62.010515 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>47.375784,-61.850201 47.535418,-61.624632</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>47.390774,-61.850201 47.405273,-61.837726 47.417160,-61.816375 47.429451,-61.802704 47.444334,-61.779258 47.465873,-61.759440 47.484545,-61.730626 47.498723,-61.704819 47.527379,-61.666427 47.535418,-61.644700 47.532866,-61.624632 47.522259,-61.631801 47.511145,-61.655676 47.458309,-61.729072 47.438230,-61.753441 47.415897,-61.776498 47.379975,-61.803218 47.375784,-61.819462 47.390774,-61.850201 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>47.255073,-61.750964 47.282116,-61.719830</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>47.258394,-61.748897 47.275550,-61.750964 47.282116,-61.730322 47.269593,-61.719830 47.255073,-61.732191 47.258394,-61.748897 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

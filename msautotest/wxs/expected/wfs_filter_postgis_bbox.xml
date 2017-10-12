@@ -1,0 +1,50 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://ogc.dmsolutions.ca/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-65.816024,44.611049 -65.816024,44.611049</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-65.816024,44.611049 -65.816024,44.611049</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-65.816024,44.611049</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>13</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>118</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAJOA</ms:unique_key>
+        <ms:name>Digby</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021A12</ms:nts50>
+        <ms:lat>443700</ms:lat>
+        <ms:long>654600</ms:long>
+        <ms:sgc_code>1203006</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

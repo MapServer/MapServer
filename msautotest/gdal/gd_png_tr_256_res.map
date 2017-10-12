@@ -1,0 +1,44 @@
+#
+# Tests transparent 8bit output via GD with resampling.
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 500 500
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+TRANSPARENT ON
+
+PROJECTION
+  "proj=utm"
+  "zone=12"
+  "datum=WGS84"
+END
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE PC256
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/grid.gif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+    "towgs84=1,0,0"
+  END
+END
+
+END # of map file

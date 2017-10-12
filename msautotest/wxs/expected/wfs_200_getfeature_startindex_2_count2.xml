@@ -1,0 +1,58 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="2"
+   previous="http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=province&amp;COUNT=2"
+   next="http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=province&amp;COUNT=2&amp;STARTINDEX=4">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>47.19106 -62.07696</gml:lowerCorner>
+      		<gml:upperCorner>47.62759 -61.43322</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:province gml:id="province.982">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>47.19106 -62.07696</gml:lowerCorner>
+        		<gml:upperCorner>47.62759 -61.43322</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Polygon gml:id="province.982.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:exterior>
+              <gml:LinearRing>
+                <gml:posList srsDimension="2">47.24108 -62.01051 47.24604 -61.96674 47.23831 -61.94754 47.22825 -61.93270 47.22220 -61.90699 47.23311 -61.86469 47.24267 -61.84221 47.23857 -61.82873 47.22731 -61.82804 47.21582 -61.83841 47.19106 -61.89528 47.19587 -61.91086 47.20730 -61.93027 47.21146 -61.94369 47.20068 -61.98054 47.20210 -62.00918 47.21127 -62.05713 47.21986 -62.07304 47.23019 -62.07696 47.30062 -62.02523 47.32797 -62.01258 47.35422 -62.01412 47.38157 -62.00145 47.40632 -61.97428 47.46073 -61.87584 47.55646 -61.74402 47.59681 -61.65975 47.61945 -61.58987 47.62006 -61.53210 47.62627 -61.49244 47.62759 -61.46701 47.62579 -61.44364 47.61706 -61.43322 47.60265 -61.44020 47.58445 -61.48263 47.57198 -61.50196 47.54670 -61.52732 47.53100 -61.55423 47.52441 -61.58041 47.53668 -61.60212 47.54664 -61.59275 47.56410 -61.55367 47.58387 -61.54035 47.59656 -61.57531 47.58175 -61.62893 47.56042 -61.67323 47.53788 -61.70753 47.50243 -61.77198 47.46323 -61.81183 47.43985 -61.84363 47.42876 -61.86734 47.41317 -61.88844 47.37958 -61.91082 47.35461 -61.91930 47.34335 -61.91859 47.32832 -61.94748 47.31536 -61.98306 47.25730 -62.02144 47.24108 -62.01051 </gml:posList>
+              </gml:LinearRing>
+            </gml:exterior>
+          </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.988">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>47.37578 -61.85020</gml:lowerCorner>
+        		<gml:upperCorner>47.53541 -61.62463</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Polygon gml:id="province.988.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:exterior>
+              <gml:LinearRing>
+                <gml:posList srsDimension="2">47.39077 -61.85020 47.40527 -61.83772 47.41716 -61.81637 47.42945 -61.80270 47.44433 -61.77925 47.46587 -61.75944 47.48454 -61.73062 47.49872 -61.70481 47.52737 -61.66642 47.53541 -61.64470 47.53286 -61.62463 47.52225 -61.63180 47.51114 -61.65567 47.45830 -61.72907 47.43823 -61.75344 47.41589 -61.77649 47.37997 -61.80321 47.37578 -61.81946 47.39077 -61.85020 </gml:posList>
+              </gml:LinearRing>
+            </gml:exterior>
+          </gml:Polygon>
+        </ms:msGeometry>
+      </ms:province>
+    </wfs:member>
+</wfs:FeatureCollection>
+

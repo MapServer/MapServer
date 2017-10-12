@@ -1,0 +1,29 @@
+#
+# Test rawmode nodata handling when going through a resampler. 
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 40 30
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE grid
+
+OUTPUTFORMAT
+  NAME grid
+  DRIVER "GDAL/AAIGRID"
+  IMAGEMODE INT16
+END
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  PROCESSING "NODATA=24"
+  PROCESSING "RESAMPLE=BILINEAR"
+  DATA data/float.tif
+END
+
+END # of map file

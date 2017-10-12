@@ -1,0 +1,41 @@
+#
+# Test fix for #5299
+#
+# REQUIRES: SUPPORTS=WFS INPUT=OGR
+#
+# Generate dump to gml2
+# RUN_PARMS: wfs_test5299.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test5299" > [RESULT]
+
+MAP
+    NAME test
+    EXTENT 0 0 10 10
+    SIZE    200 200
+
+    PROJECTION
+        "init=epsg:4326"
+    END
+
+    WEB
+        METADATA
+            OWS_ONLINERESOURCE "http://127.0.0.0.1"
+            OWS_SRS "EPSG:4326"
+            OWS_ENABLE_REQUEST "*"
+        END
+    END
+
+    LAYER
+        NAME test5299
+        TYPE POLYGON
+        STATUS ON
+        CONNECTIONTYPE OGR
+        CONNECTION "data/test5299.csv"
+
+        METADATA
+            "ows_geomtype" "MultiPolygon"
+        END
+
+        STYLEITEM "AUTO"
+        CLASS
+        END
+    END
+END

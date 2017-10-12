@@ -1,0 +1,65 @@
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS SUPPORTS=PROJ
+#
+# RUN_PARMS: wms_get_capabilities_tileindexmixedsrs.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: wms_get_map_tileindexmixedsrs.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:26711&BBOX=440720.000,3745320.000,446720.000,3751320.000&FORMAT=image/tiff&WIDTH=100&HEIGHT=100&STYLES=&LAYERS=grey" > [RESULT_DEMIME]
+
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 100 100
+# To make GetCapabilities happy
+EXTENT 440720.000 3745320.000 446720.000 3751320.000
+IMAGECOLOR 0 0 0
+
+PROJECTION
+    "+init=epsg:26711" 
+END
+
+OUTPUTFORMAT
+  NAME GEOTIFF_BYTE
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE BYTE
+  EXTENSION "tif"
+END
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_onlineresource"   "http://localhost/path/to/?"
+    "wms_srs"              "EPSG:26711 EPSG:4326"
+    "wms_title"            "title"
+    "ows_enable_request"   "*"
+  END
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  TILEINDEX "../gdal/data/tile_index_mixed_srs.shp"
+  TILEITEM "location"
+  TILESRS "src_srs"
+  PROJECTION
+    AUTO
+  END
+  METADATA   
+   "wms_title"       "grey"
+   # For GetCapabilities
+   "wms_srs"         "EPSG:26711"
+  END
+END
+
+
+END # of map file

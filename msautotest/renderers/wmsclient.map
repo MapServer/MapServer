@@ -1,0 +1,41 @@
+# RUN_PARMS: wmsclient.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: wmsclient.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: wmsclient.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: wmsclient.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Simple test of WMS client support.
+#
+# REQUIRES: SUPPORTS=WMS_CLIENT
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 360 145
+EXTENT -180 -60 180 85
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png
+
+WEB
+  IMAGEPATH "./tmp/"
+END
+
+LAYER
+  NAME "pop"
+  TYPE RASTER
+  STATUS DEFAULT
+  #CONNECTION "http://mstest.tiles.osgeo.org/wms/vmap0?"
+  CONNECTION "http://demo.mapserver.org/cgi-bin/mapserv?map=/osgeo/mapserver/msautotest/world/world.map&"
+  CONNECTIONTYPE WMS
+  METADATA
+    "wms_srs"             "EPSG:4326"
+    "wms_name"            "world_merc"
+    "wms_server_version"  "1.1.1"
+    "wms_format"          "image/gif"
+  END
+END
+
+END # of map file
+

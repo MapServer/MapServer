@@ -1,0 +1,34 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms_ogc_workshop="http://localhost/ms_ogc_workshop"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://localhost/ms_ogc_workshop http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=rivers&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-125.383850,64.878967 -117.252357,67.112030</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms_ogc_workshop:rivers fid="rivers.Great Bear">
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-125.383850,64.878967 -117.252357,67.112030</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms_ogc_workshop:msGeometry>
+        <gml:LineString srsName="EPSG:4326">
+          <gml:coordinates>-123.263069,65.212860 -121.827896,65.003967 -121.377907,65.140091 -121.316246,65.455078 -120.294296,65.664246 -120.122627,65.567581 -120.346497,65.331757 -121.298203,64.990082 -120.956520,64.878967 -119.673737,65.401749 -119.263176,65.386749 -119.891243,65.686737 -119.381233,65.772583 -119.479843,65.858963 -118.717056,65.857025 -118.288193,65.687576 -117.588448,65.793137 -117.787071,65.844803 -117.569023,65.921463 -118.053177,65.925079 -117.918167,66.083694 -117.564018,66.091187 -117.814293,66.161743 -117.477348,66.241470 -117.590126,66.278137 -117.252357,66.506454 -117.692909,66.480362 -117.402626,66.740631 -118.346230,66.396194 -120.256523,66.456467 -119.908730,66.730087 -118.740410,66.945068 -119.594841,67.112030 -123.783463,66.374802 -124.764023,66.371735 -124.911781,66.225082 -124.578453,65.973969 -124.528450,66.111740 -124.341789,66.073700 -124.387352,66.211197 -123.063744,66.235916 -122.894836,66.105911 -122.725121,66.243958 -122.849007,66.307571 -122.519836,66.325912 -121.017632,66.144257 -121.256798,65.995361 -122.574013,66.031479 -121.928177,65.848969 -122.730133,65.555359 -122.518463,65.413422 -122.652901,65.326752 -123.263069,65.212860 -125.383850,64.955276 </gml:coordinates>
+        </gml:LineString>
+        </ms_ogc_workshop:msGeometry>
+        <ms_ogc_workshop:NAME>Great Bear</ms_ogc_workshop:NAME>
+        <ms_ogc_workshop:SYSTEM>Mackenzie</ms_ogc_workshop:SYSTEM>
+      </ms_ogc_workshop:rivers>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

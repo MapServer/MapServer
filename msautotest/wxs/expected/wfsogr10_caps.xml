@@ -1,0 +1,156 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<WFS_Capabilities 
+   version="1.0.0" 
+   updateSequence="123" 
+   xmlns="http://www.opengis.net/wfs" 
+   xmlns:ogc="http://www.opengis.net/ogc" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd">
+
+<Service>
+  <Name>MapServer WFS</Name>
+  <Title>Test simple wfs</Title>
+  <Abstract>Test WFS Abstract</Abstract>
+  <Keywords>
+    ogc
+    wfs
+    gml
+    om
+  </Keywords>
+  <OnlineResource>http://localhost</OnlineResource>
+  <Fees>none</Fees>
+  <AccessConstraints>none</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeFeatureType>
+      <SchemaDescriptionLanguage>
+        <XMLSCHEMA/>
+      </SchemaDescriptionLanguage>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+    </DescribeFeatureType>
+    <GetFeature>
+      <ResultFormat>
+        <GML2/>
+        <CSV/>
+        <CSVSTREAM/>
+        <OGRGML/>
+        <OGRGPX/>
+        <OGRBNAZIP/>
+        <SHAPEZIP/>
+        <MIDMIF/>
+        <MultiMIDMIF/>
+        <geojson/>
+      </ResultFormat>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+    </GetFeature>
+  </Request>
+</Capability>
+
+<FeatureTypeList>
+  <Operations>
+    <Query/>
+  </Operations>
+    <FeatureType>
+        <Name>road</Name>
+        <Title>road</Title>
+        <SRS>EPSG:3978</SRS>
+        <LatLongBoundingBox minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road</MetadataURL>
+    </FeatureType>
+    <FeatureType>
+        <Name>popplace</Name>
+        <Title>popplace</Title>
+        <SRS>EPSG:3978</SRS>
+        <LatLongBoundingBox minx="2.2794e+06" miny="-55344.5" maxx="2.60038e+06" maxy="461587" />
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=popplace</MetadataURL>
+    </FeatureType>
+    <FeatureType>
+        <Name>road_with_addfiles</Name>
+        <Title>road_with_addfiles</Title>
+        <SRS>EPSG:3978</SRS>
+        <LatLongBoundingBox minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road_with_addfiles</MetadataURL>
+    </FeatureType>
+    <FeatureType>
+        <Name>road2_with_addfiles</Name>
+        <Title>road2_with_addfiles</Title>
+        <SRS>EPSG:3978</SRS>
+        <LatLongBoundingBox minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road2_with_addfiles</MetadataURL>
+    </FeatureType>
+    <FeatureType>
+        <Name>multi</Name>
+        <Title>multi</Title>
+        <SRS>EPSG:27700</SRS>
+        <LatLongBoundingBox minx="0" miny="0" maxx="100" maxy="100" />
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=multi</MetadataURL>
+    </FeatureType>
+    <FeatureType>
+        <Name>withnullvalues</Name>
+        <Title>withnullvalues</Title>
+        <SRS>EPSG:27700</SRS>
+        <LatLongBoundingBox minx="10" miny="30" maxx="10" maxy="30" />
+        <MetadataURL type="ISOTC211/19115" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=withnullvalues</MetadataURL>
+    </FeatureType>
+</FeatureTypeList>
+
+<ogc:Filter_Capabilities>
+  <ogc:Spatial_Capabilities>
+    <ogc:Spatial_Operators>
+      <ogc:Equals/>
+      <ogc:Disjoint/>
+      <ogc:Touches/>
+      <ogc:Within/>
+      <ogc:Overlaps/>
+      <ogc:Crosses/>
+      <ogc:Intersect/>
+      <ogc:Contains/>
+      <ogc:DWithin/>
+      <ogc:BBOX/>
+    </ogc:Spatial_Operators>
+  </ogc:Spatial_Capabilities>
+  <ogc:Scalar_Capabilities>
+    <ogc:Logical_Operators />
+    <ogc:Comparison_Operators>
+      <ogc:Simple_Comparisons />
+      <ogc:Like />
+      <ogc:Between />
+    </ogc:Comparison_Operators>
+  </ogc:Scalar_Capabilities>
+</ogc:Filter_Capabilities>
+
+</WFS_Capabilities>

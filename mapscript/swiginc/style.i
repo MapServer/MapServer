@@ -125,7 +125,7 @@
     {
         self->symbol = msGetSymbolIndex(&map->symbolset, symbolname, MS_TRUE);
         if (self->symbolname) free((char*)self->symbolname);
-        if (symbolname) self->symbolname = strdup(symbolname);
+        if (symbolname) self->symbolname = msStrdup(symbolname);
         else self->symbolname = 0;
         return self->symbol;
     }
@@ -156,7 +156,7 @@
       self->numbindings--;
     }
 
-    self->bindings[binding].item = strdup(item);
+    self->bindings[binding].item = msStrdup(item);
     self->numbindings++;
 
     return MS_SUCCESS;

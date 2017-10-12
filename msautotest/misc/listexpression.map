@@ -1,0 +1,51 @@
+#
+# Test on RFC95 list expressions
+#
+#
+MAP
+
+NAME DEMO
+STATUS ON
+SIZE 150 150
+EXTENT 2253355.750000 -76361.773438 2447648.500000 515489.031250
+UNITS METERS
+SHAPEPATH "data"
+IMAGECOLOR 255 255 255
+IMAGETYPE png
+
+
+LAYER
+  NAME charts
+
+  TYPE POLYGON
+  STATUS DEFAULT
+  DATA chartlayer
+
+  CLASSITEM "V1"
+  LABELITEM "V1"
+
+  CLASS
+    EXPRESSION {70,960,00,17,13940}
+    STYLE
+      COLOR 255 0 0
+    END
+    LABEL
+      COLOR 0 0 0
+      SIZE tiny
+    END
+  END
+  CLASS
+    STYLE
+      COLOR 0 255 0
+    END
+    LABEL
+      COLOR 0 0 0
+      SIZE tiny
+    END
+  END
+ END
+
+
+
+
+END # Map File

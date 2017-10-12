@@ -1,0 +1,138 @@
+#
+# Test WMS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# The following test exists primarily to test the ability of displaying
+# layer extents in capabilities derived from the underlying raster file 
+# without the user having to include in the file using EXTENT keyword.  #79
+#
+# Capabilities
+# RUN_PARMS: wms_rast_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_rast_featureinfo_reproj.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetFeatureInfo&SRS=EPSG%3A4326&BBOX=-117.5459036,44.6653607,-117.3871721,44.7670830&WIDTH=142&HEIGHT=91&LAYERS=road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&QUERY_LAYERS=road&INFO_FORMAT=application%2Fvnd.ogc.gml&I=90&J=50" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_rast_featureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetFeatureInfo&SRS=EPSG%3A32611&BBOX=456800.000,4945950.000,469300.000,4957150.000&WIDTH=125&HEIGHT=112&LAYERS=road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&QUERY_LAYERS=road&INFO_FORMAT=application%2Fvnd.ogc.gml&I=90&J=50" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_rast_empty.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&layers=road&FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&QUERY_LAYERS=road&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&srs=epsg:4326&BBOX=-104.06,44.65,-93.93,44.7&WIDTH=1200&HEIGHT=600&x=100&y=100" > [RESULT_DEVERSION]
+
+# Test image/vnd.jpeg-png 
+# RUN_PARMS: wms_raster_jpeg_png.jpg [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:32611&BBOX=0,0,400,300&FORMAT=image/vnd.jpeg-png&TRANSPARENT=true&WIDTH=40&HEIGHT=30&STYLES=&LAYERS=grey" > [RESULT_DEMIME]
+# RUN_PARMS: wms_raster_jpeg_png.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:32611&BBOX=0,0,410,310&FORMAT=image/vnd.jpeg-png&TRANSPARENT=true&WIDTH=41&HEIGHT=31&STYLES=&LAYERS=grey" > [RESULT_DEMIME]
+
+
+MAP
+
+NAME WMS_TEST
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -117.5459036  44.6653607 -117.3871721  44.7670830 
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+
+OUTPUTFORMAT
+  NAME GDPNG
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png"
+  EXTENSION "png"
+END
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:32611 EPSG:42101 EPSG:4269 EPSG:4326"
+    "ows_schemas_location" "http://schemas.opengis.net"
+    "ows_keywordlist" "ogc,wms,mapserver"
+    "ows_service_onlineresource" "http://www.mapserver.org/"
+    "ows_fees" "None"
+    "ows_accessconstraints" "None"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+    "ows_enable_request" "*"
+    "wms_getmap_formatlist" "image/png,image/jpeg,image/gif,image/png; mode=8bit,image/vnd.jpeg-png"
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME road
+  DATA toronto.tif
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:32611"
+    "gml_include_items" "all"
+  END
+  TYPE RASTER
+  STATUS ON
+  TEMPLATE "foo"
+  PROJECTION
+    "init=epsg:32611"
+  END
+
+  DUMP TRUE
+
+END # Layer
+
+LAYER 
+  NAME grey
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  TILEINDEX "wcs_index.shp"
+  TILEITEM "location"
+
+  PROJECTION
+    "init=epsg:32611"
+  END
+  METADATA   
+   "wcs_label" "Test label"
+   "ows_srs"	"EPSG:32611 EPSG:4326"
+   "wcs_resolution" "10 10"
+   "wcs_bandcount" "1"
+   "wcs_formats" "GEOTIFF_16 GDPNG AAIGRID"
+   "wcs_nativeformat" "GeoTIFF"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "Category: Image
+Product: IKONOS-2 PAN/MSI
+Acquisition: 1999-10-11 18:47"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "Landsat 5 TM Bands"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "Bands for Landsat 5 TM"
+  END
+END
+END # Map File

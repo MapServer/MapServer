@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<WCS_Capabilities
+   version="1.0.0" 
+   updateSequence="0" 
+   xmlns="http://www.opengis.net/wcs" 
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:gml="http://www.opengis.net/gml" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/wcsCapabilities.xsd">
+<Service>
+  <name>MapServer WCS</name>
+  <label>WCS label</label>
+  <fees>NONE</fees>
+  <accessConstraints>
+    NONE
+  </accessConstraints>
+</Service>
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?" /></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeCoverage>
+    <GetCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCoverage>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+  </Exception>
+</Capability>
+<ContentMetadata>
+  <!-- WARNING: No WCS layers are enabled. Check wcs/ows_enable_request settings. -->
+</ContentMetadata>
+</WCS_Capabilities>

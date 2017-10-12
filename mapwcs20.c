@@ -331,6 +331,7 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
   }
   msFree(params->axes);
   CSLDestroy(params->range_subset);
+  CSLDestroy(params->format_options);
   msFree(params);
 }
 
@@ -700,6 +701,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   return MS_SUCCESS;
 }
 
+#if defined(USE_LIBXML2)
 /*
   Utility function to get the first child of a node with a given node name
   */
@@ -739,6 +741,7 @@ xmlNodePtr msLibXml2GetFirstChildNs(xmlNodePtr parent, const char *name, xmlNsPt
   }
   return NULL;
 }
+#endif /* defined(USE_LIBXML2) */
 
 /************************************************************************/
 /*                   msWCSParseRequest20_XMLGetCapabilities()           */
@@ -958,14 +961,17 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
       if(NULL == (axis = msWCSFindAxis20(params, axisName))) {
         if(NULL == (axis = msWCSCreateAxisObj20())) {
+          xmlFree(axisName);
           return MS_FAILURE;
         }
         axis->name = msStrdup(axisName);
         msWCSInsertAxisObj20(params, axis);
       }
+      xmlFree(axisName);
 
       content = (char *)xmlNodeGetContent(child);
       if(msStringParseInteger(content, &(axis->size)) != MS_SUCCESS) {
+        xmlFree(content);
         msSetError(MS_WCSERR, "Value of element 'Size' could not "
                    "be parsed to a valid integer.",
                    "msWCSParseRequest20_XMLGetCoverage()");
@@ -986,11 +992,13 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
       if(NULL == (axis = msWCSFindAxis20(params, axisName))) {
         if(NULL == (axis = msWCSCreateAxisObj20())) {
+          xmlFree(axisName);
           return MS_FAILURE;
         }
         axis->name = msStrdup(axisName);
         msWCSInsertAxisObj20(params, axis);
       }
+      xmlFree(axisName);
 
       axis->resolutionUOM = (char *) xmlGetProp(child, BAD_CAST "uom");
 
@@ -2273,6 +2281,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
   /*      output a single "stock" filename.                               */
   /* -------------------------------------------------------------------- */
   if( filename == NULL ) {
+    msOutputFormatResolveFromImage( map, image );
     if(multipart) {
       msIO_fprintf( stdout, "\r\n--wcs\r\n" );
       msIO_fprintf(
@@ -2463,10 +2472,11 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
   if ( msCheckParentPointer(layer->map,"map") == MS_FAILURE )
     return MS_FAILURE;
 
-  if((cm->srs = msOWSGetEPSGProj(&(layer->projection),
-                                 &(layer->metadata), "CO", MS_TRUE)) == NULL) {
-    if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection),
-                                   &(layer->map->web.metadata), "CO", MS_TRUE)) == NULL) {
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE, &(cm->srs_epsg));
+  if(!cm->srs_epsg) {
+    msOWSGetEPSGProj(&(layer->map->projection),
+                                   &(layer->map->web.metadata), "CO", MS_TRUE, &cm->srs_epsg);
+    if(!cm->srs_epsg) {
       msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, "
                  "no projection defined and no metadata available.",
                  "msWCSGetCoverageMetadata20()");
@@ -2943,6 +2953,7 @@ static int msWCSClearCoverageMetadata20(wcs20coverageMetadataObj *cm)
     }
   }
   msFree(cm->bands);
+  msFree(cm->srs_epsg);
   return MS_SUCCESS;
 }
 
@@ -3336,7 +3347,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 
     /* Report the supported CRSs */
     {
-      char *crs_list;
+      char *crs_list = NULL;
       xmlNodePtr crsMetadataNode = xmlNewChild(psExtensionNode, psCrsNs,
                                                BAD_CAST "CrsMetadata", NULL);
 
@@ -3345,6 +3356,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                                         "CO", MS_FALSE)) != NULL ) {
         msLibXml2GenerateList(crsMetadataNode, psCrsNs, "crsSupported",
                               crs_list, ' ');
+        msFree(crs_list);
       } else {
         /* could not determine list of CRSs */
       }
@@ -4123,11 +4135,12 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /************************************************************************/
 
   msInitProjection(&imageProj);
-  if (msLoadProjectionString(&imageProj, cm.srs) == -1) {
+  if (msLoadProjectionString(&imageProj, cm.srs_epsg) == -1) {
+    msFreeProjection(&imageProj);
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
-               "msWCSGetCoverage20()", cm.srs);
+               "msWCSGetCoverage20()", cm.srs_epsg);
     return msWCSException(map, "InvalidParameterValue",
                           "projection", params->version);
   }
@@ -4136,11 +4149,15 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   for(i = 0; i < params->numaxes; ++i) {
     if(params->axes[i]->subset != NULL) {
       if(params->axes[i]->subset->timeOrScalar == MS_WCS20_TIME_VALUE) {
+        msFreeProjection(&imageProj);
+        msWCSClearCoverageMetadata20(&cm);
         msSetError(MS_WCSERR, "Time values for subsets are not supported. ",
                    "msWCSGetCoverage20()");
         return msWCSException(map, "InvalidSubsetting", "subset", params->version);
       }
       if(params->axes[i]->subset->operation == MS_WCS20_SLICE) {
+        msFreeProjection(&imageProj);
+        msWCSClearCoverageMetadata20(&cm);
         msSetError(MS_WCSERR, "Subset operation 'slice' is not supported.",
                    "msWCSGetCoverage20()");
         return msWCSException(map, "InvalidSubsetting", "subset", params->version);
@@ -4152,11 +4169,13 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     wcs20AxisObjPtr *axes;
     axes = msSmallMalloc(sizeof(wcs20AxisObjPtr) * 2);
     if(msWCSValidateAndFindAxes20(params, axes) == MS_FAILURE) {
+      msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
       msFree(axes);
       return msWCSException(map, "InvalidAxisLabel", "subset", params->version);
     }
     if(msWCSGetCoverage20_FinalizeParamsObj(params, axes) == MS_FAILURE) {
+      msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
       msFree(axes);
       return msWCSException(map, "InvalidParameterValue", "extent", params->version);
@@ -4169,7 +4188,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* if no subsetCRS was specified use the coverages CRS 
      (Requirement 27 of the WCS 2.0 specification) */
   if (!params->subsetcrs) {
-    params->subsetcrs = msStrdup(cm.srs);
+    params->subsetcrs = msStrdup(cm.srs_epsg);
   }
 
   if(EQUAL(params->subsetcrs, "imageCRS")) {
@@ -4187,8 +4206,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
             + (orig_bbox.maxx+1) * cm.geotransform[1]
             + (orig_bbox.maxy+1) * cm.geotransform[2];
 
-      subsets.minx = MIN(x_1, x_2);
-      subsets.maxx = MAX(x_1, x_2);
+      subsets.minx = MS_MIN(x_1, x_2);
+      subsets.maxx = MS_MAX(x_1, x_2);
     }
     if(subsets.miny != -DBL_MAX || subsets.maxy != DBL_MAX) {
       y_1 = cm.geotransform[3]
@@ -4199,8 +4218,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
             + orig_bbox.minx * cm.geotransform[4]
             + orig_bbox.miny * cm.geotransform[5];
 
-      subsets.miny = MIN(y_1, y_2);
-      subsets.maxy = MAX(y_1, y_2);
+      subsets.miny = MS_MIN(y_1, y_2);
+      subsets.maxy = MS_MAX(y_1, y_2);
     }
   } else { /* if crs is not the 'imageCRS' */
     projectionObj subsetProj;
@@ -4208,6 +4227,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
+      msFreeProjection(&subsetProj);
+      msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
       msSetError(MS_WCSERR,
                  "Error loading CRS %s.",
@@ -4239,10 +4260,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   /* write combined bounding box */
-  bbox.minx = MAX(subsets.minx, map->extent.minx);
-  bbox.miny = MAX(subsets.miny, map->extent.miny);
-  bbox.maxx = MIN(subsets.maxx, map->extent.maxx);
-  bbox.maxy = MIN(subsets.maxy, map->extent.maxy);
+  bbox.minx = MS_MAX(subsets.minx, map->extent.minx);
+  bbox.miny = MS_MAX(subsets.miny, map->extent.miny);
+  bbox.maxx = MS_MIN(subsets.maxx, map->extent.maxx);
+  bbox.maxy = MS_MIN(subsets.maxy, map->extent.maxy);
 
   /* check if we are overspecified  */
   if ((params->width != 0 &&  params->resolutionX != MS_WCS20_UNBOUNDED)
@@ -4333,6 +4354,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       /* recalculate resolutions, needed if UOM changes (e.g: deg -> m) */
       params->resolutionX = (bbox.maxx - bbox.minx) / params->width;
       params->resolutionY = (bbox.maxy - bbox.miny) / params->height;
+    }
+    else {
+      msFreeProjection(&outputProj);
     }
   }
 
@@ -4618,10 +4642,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     tmpCm.xresolution = map->gt.geotransform[1];
     tmpCm.yresolution = map->gt.geotransform[5];
 
-    tmpCm.extent.minx = MIN(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
-    tmpCm.extent.miny = MIN(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
-    tmpCm.extent.maxx = MAX(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
-    tmpCm.extent.maxy = MAX(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
+    tmpCm.extent.minx = MS_MIN(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
+    tmpCm.extent.miny = MS_MIN(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
+    tmpCm.extent.maxx = MS_MAX(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
+    tmpCm.extent.maxy = MS_MAX(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
 
     swapAxes = msWCSSwapAxes20(srs_uri);
     msFree(srs_uri);

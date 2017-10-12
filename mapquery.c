@@ -28,6 +28,22 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "mapows.h"
+
+/* This object is used by the various mapQueryXXXXX() functions. It stores
+ * the total amount of shapes and their RAM footprint, when they are cached
+ * in the resultCacheObj* of layers. This is the total number accross all queried
+ * layers. However this is isn't persistant accross several calls to
+ * mapQueryXXXXX(), if the resultCacheObj* objects weren't cleaned up. This
+ * is not needed in the context of WFS, for which this is used for now.
+ */
+typedef struct
+{
+    int cachedShapeCountWarningEmitted;
+    int cachedShapeCount;
+    int cachedShapeRAMWarningEmitted;
+    int cachedShapeRAM;
+} queryCacheObj;
 
 int msInitQuery(queryObj *query) {
   if(!query) return MS_FAILURE;
@@ -55,6 +71,10 @@ int msInitQuery(queryObj *query) {
   
   query->filteritem = NULL;
   msInitExpression(&query->filter);
+  
+  query->cache_shapes = MS_FALSE;
+  query->max_cached_shape_count = 0;
+  query->max_cached_shape_ram_amount = 0;
 
   return MS_SUCCESS;
 }
@@ -132,9 +152,60 @@ int msIsLayerQueryable(layerObj *lp)
   return MS_FALSE;
 }
 
-static int addResult(resultCacheObj *cache, shapeObj *shape)
+static void initQueryCache(queryCacheObj* queryCache)
+{
+    queryCache->cachedShapeCountWarningEmitted = MS_FALSE;
+    queryCache->cachedShapeCount = 0;
+    queryCache->cachedShapeRAMWarningEmitted = MS_FALSE;
+    queryCache->cachedShapeRAM = 0;
+}
+
+/** Check whether we should store the shape in resultCacheObj* given the
+ * limits allowed in map->query.max_cached_shape_count and
+ * map->query.max_cached_shape_ram_amount.
+ */
+static int canCacheShape(mapObj* map, queryCacheObj *queryCache,
+                         shapeObj* shape, int shape_ram_size)
+{
+  if( !map->query.cache_shapes )
+      return MS_FALSE;
+  if( queryCache->cachedShapeCountWarningEmitted ||
+      (map->query.max_cached_shape_count > 0 &&
+      queryCache->cachedShapeCount >= map->query.max_cached_shape_count) )
+  {
+      if( !queryCache->cachedShapeCountWarningEmitted )
+      {
+          queryCache->cachedShapeCountWarningEmitted = MS_TRUE;
+          msDebug("map->query.max_cached_shape_count = %d reached. "
+                  "Next features will not be cached.\n",
+                  map->query.max_cached_shape_count);
+      }
+      return MS_FALSE;
+  }
+  if( queryCache->cachedShapeRAMWarningEmitted ||
+      (map->query.max_cached_shape_ram_amount > 0 &&
+       queryCache->cachedShapeRAM + shape_ram_size > map->query.max_cached_shape_ram_amount) )
+  {
+      if( !queryCache->cachedShapeRAMWarningEmitted )
+      {
+          queryCache->cachedShapeRAMWarningEmitted = MS_TRUE;
+          msDebug("map->query.max_cached_shape_ram_amount = %d reached after %d cached features. "
+                  "Next features will not be cached.\n",
+                  map->query.max_cached_shape_ram_amount,
+                  queryCache->cachedShapeCount);
+      }
+      return MS_FALSE;
+  }
+  return MS_TRUE;
+}
+
+static int addResult(mapObj* map, resultCacheObj *cache,
+                     queryCacheObj* queryCache, shapeObj *shape)
 {
   int i;
+  int shape_ram_size = (map->query.max_cached_shape_ram_amount > 0) ? 
+                                            msGetShapeRAMSize( shape ) : 0;
+  int store_shape = canCacheShape (map, queryCache, shape, shape_ram_size);
 
   if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)
@@ -154,6 +225,16 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
   cache->results[i].tileindex = shape->tileindex;
   cache->results[i].shapeindex = shape->index;
   cache->results[i].resultindex = shape->resultindex;
+  if( store_shape )
+  {
+      cache->results[i].shape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+      msInitShape(cache->results[i].shape);
+      msCopyShape(shape, cache->results[i].shape);
+      queryCache->cachedShapeCount ++;
+      queryCache->cachedShapeRAM += shape_ram_size;
+  }
+  else
+      cache->results[i].shape = NULL;
   cache->numresults++;
 
   cache->previousBounds = cache->bounds;
@@ -470,9 +551,12 @@ int msQueryByIndex(mapObj *map)
   int status;
 
   resultObj record;
+  queryCacheObj queryCache;
 
   shapeObj shape;
   double minfeaturesize = -1;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_INDEX) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByIndex()");
@@ -493,7 +577,7 @@ int msQueryByIndex(mapObj *map)
 
   if(map->query.clear_resultcache) {
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
+      cleanupResultCache(lp->resultcache);
       free(lp->resultcache);
       lp->resultcache = NULL;
     }
@@ -567,7 +651,7 @@ int msQueryByIndex(mapObj *map)
     return(MS_FAILURE);
   }
   
-  addResult(lp->resultcache, &shape);
+  addResult(map, lp->resultcache, &queryCache, &shape);
 
   msFreeShape(&shape);
   /* msLayerClose(lp); */
@@ -575,30 +659,11 @@ int msQueryByIndex(mapObj *map)
   return(MS_SUCCESS);
 }
 
-void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, char *old_filterstring)
-{
-  msFreeExpression(&(lp->filter));
-  if(lp->filteritem) {
-    free(lp->filteritem);
-    lp->filteritem = NULL;
-    lp->filteritemindex = -1;
-  }
-
-  /* restore any previously defined filter */
-  if(old_filterstring) {
-    lp->filter.type = old_filtertype;
-    lp->filter.string = old_filterstring;
-    if(old_filteritem) {
-      lp->filteritem = old_filteritem;
-    }
-  }
-}
-
 static char *filterTranslateToLogical(expressionObj *filter, char *filteritem) {
   char *string = NULL;
 
   if(filter->type == MS_STRING && filteritem) {
-    string = strdup("'[");
+    string = msStrdup("'[");
     string = msStringConcatenate(string, filteritem);
     string = msStringConcatenate(string, "]'");
     if(filter->flags & MS_EXP_INSENSITIVE)
@@ -608,7 +673,7 @@ static char *filterTranslateToLogical(expressionObj *filter, char *filteritem) {
     string = msStringConcatenate(string, filter->string);
     string = msStringConcatenate(string, "'");
   } else if(filter->type == MS_REGEX && filteritem) {
-    string = strdup("'[");
+    string = msStrdup("'[");
     string = msStringConcatenate(string, filteritem);
     string = msStringConcatenate(string, "]'");
     if(filter->flags & MS_EXP_INSENSITIVE)
@@ -644,7 +709,7 @@ static expressionObj mergeFilters(expressionObj *filter1, char *filteritem1, exp
     return filter; /* should only happen if the filter was a native filter */
   }
 
-  filter.string = strdup(tmpstr1);
+  filter.string = msStrdup(tmpstr1);
   filter.string = msStringConcatenate(filter.string, " AND ");
   filter.string = msStringConcatenate(filter.string, tmpstr2);
 
@@ -670,12 +735,17 @@ int msQueryByFilter(mapObj *map)
   expressionObj old_filter;
 
   rectObj search_rect;
+  const rectObj invalid_rect = MS_INIT_INVALID_RECT;
 
   shapeObj shape;
+  int paging;
 
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_FILTER) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByFilter()");
@@ -731,12 +801,14 @@ int msQueryByFilter(mapObj *map)
       if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
+    paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
+    msLayerEnablePaging(lp, paging);
 
     /* disable driver paging */
-    msLayerEnablePaging(lp, MS_FALSE);
+    // msLayerEnablePaging(lp, MS_FALSE);
         
     old_filteritem = lp->filteritem; /* cache the existing filter/filteritem */
     msInitExpression(&old_filter);
@@ -761,11 +833,70 @@ int msQueryByFilter(mapObj *map)
     if(status != MS_SUCCESS) goto query_error;
 
     search_rect = map->query.rect;
+
+    /* If only result count is needed, we can use msLayerGetShapeCount() */
+    /* that has optimizations to avoid retrieving individual features */
+    if( map->query.only_cache_result_count &&
+        lp->template != NULL && /* always TRUE for WFS case */
+        lp->minfeaturesize <= 0 )
+    {
+      int bUseLayerSRS = MS_FALSE;
+      int numFeatures = -1;
+
+#if defined(USE_PROJ) && (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR))
+      /* Optimization to detect the case where a WFS query uses in fact the */
+      /* whole layer extent, but expressed in a map SRS different from the layer SRS */
+      /* In the case, we can directly request against the layer extent in its native SRS */
+      if( lp->project &&
+          memcmp( &search_rect, &invalid_rect, sizeof(search_rect) ) != 0 &&
+          msProjectionsDiffer(&(lp->projection), &(map->projection)) )
+      {
+        rectObj layerExtent;
+        if ( msOWSGetLayerExtent(map, lp, "FO", &layerExtent) == MS_SUCCESS)
+        {
+            rectObj ext = layerExtent;
+            ext.minx -= 1e-5;
+            ext.miny -= 1e-5;
+            ext.maxx += 1e-5;
+            ext.maxy += 1e-5;
+            msProjectRect(&(lp->projection), &(map->projection), &ext);
+            if( fabs(ext.minx - search_rect.minx) <= 2e-5 &&
+                fabs(ext.miny - search_rect.miny) <= 2e-5 &&
+                fabs(ext.maxx - search_rect.maxx) <= 2e-5 &&
+                fabs(ext.maxy - search_rect.maxy) <= 2e-5 )
+            {
+              bUseLayerSRS = MS_TRUE;
+              numFeatures = msLayerGetShapeCount(lp, layerExtent, &(lp->projection));
+            }
+        }
+      }
+#endif
+
+      if( !bUseLayerSRS )
+          numFeatures = msLayerGetShapeCount(lp, search_rect, &(map->projection));
+      if( numFeatures >= 0 )
+      {
+        lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+        MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
+        initResultCache( lp->resultcache);
+        lp->resultcache->numresults = numFeatures;
+        if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+           lp->resultcache->numresults -= (map->query.startindex-1);
+        }
+
+        lp->filteritem = old_filteritem; /* point back to original value */
+        msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+        msFreeExpression(&old_filter);
+
+        continue;
+      }
+      // Fallback in case of error (should not happen normally)
+    }
+
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project && memcmp( &search_rect, &invalid_rect, sizeof(search_rect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
-    } else
-      lp->project = MS_FALSE;
 #endif
 
     status = msLayerWhichShapes(lp, search_rect, MS_TRUE);
@@ -809,14 +940,12 @@ int msQueryByFilter(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       /* Should we skip this feature? */
-      if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+      if (!paging && map->query.startindex > 1) {
         --map->query.startindex;
         msFreeShape(&shape);
         continue;
@@ -825,7 +954,7 @@ int msQueryByFilter(mapObj *map)
       if( map->query.only_cache_result_count )
         lp->resultcache->numresults ++;
       else
-        addResult(lp->resultcache, &shape);
+        addResult(map, lp->resultcache, &queryCache, &shape);
       msFreeShape(&shape);
 
       if(map->query.mode == MS_QUERY_SINGLE) { /* no need to look any further */
@@ -879,12 +1008,16 @@ int msQueryByRect(mapObj *map)
   char status;
   shapeObj shape, searchshape;
   rectObj searchrect, searchrectInMapProj;
+  const rectObj invalid_rect = MS_INIT_INVALID_RECT;
   double layer_tolerance = 0, tolerance = 0;
 
   int paging;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_RECT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByRect()");
@@ -978,11 +1111,66 @@ int msQueryByRect(mapObj *map)
       return(MS_FAILURE);
     }
 
+    /* If only result count is needed, we can use msLayerGetShapeCount() */
+    /* that has optimizations to avoid retrieving individual features */
+    if( map->query.only_cache_result_count &&
+        lp->template != NULL && /* always TRUE for WFS case */
+        lp->minfeaturesize <= 0 )
+    {
+      int bUseLayerSRS = MS_FALSE;
+      int numFeatures = -1;
+
+#if defined(USE_PROJ) && (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR))
+      /* Optimization to detect the case where a WFS query uses in fact the */
+      /* whole layer extent, but expressed in a map SRS different from the layer SRS */
+      /* In the case, we can directly request against the layer extent in its native SRS */
+      if( lp->project &&
+          memcmp( &searchrect, &invalid_rect, sizeof(searchrect) ) != 0 &&
+          msProjectionsDiffer(&(lp->projection), &(map->projection)) )
+      {
+        rectObj layerExtent;
+        if ( msOWSGetLayerExtent(map, lp, "FO", &layerExtent) == MS_SUCCESS)
+        {
+            rectObj ext = layerExtent;
+            ext.minx -= 1e-5;
+            ext.miny -= 1e-5;
+            ext.maxx += 1e-5;
+            ext.maxy += 1e-5;
+            msProjectRect(&(lp->projection), &(map->projection), &ext);
+            if( fabs(ext.minx - searchrect.minx) <= 2e-5 &&
+                fabs(ext.miny - searchrect.miny) <= 2e-5 &&
+                fabs(ext.maxx - searchrect.maxx) <= 2e-5 &&
+                fabs(ext.maxy - searchrect.maxy) <= 2e-5 )
+            {
+              bUseLayerSRS = MS_TRUE;
+              numFeatures = msLayerGetShapeCount(lp, layerExtent, &(lp->projection));
+            }
+        }
+      }
+#endif
+
+      if( !bUseLayerSRS )
+          numFeatures = msLayerGetShapeCount(lp, searchrect, &(map->projection));
+      if( numFeatures >= 0 )
+      {
+        lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+        MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
+        initResultCache( lp->resultcache);
+        lp->resultcache->numresults = numFeatures;
+        if (!paging && map->query.startindex > 1) {
+           lp->resultcache->numresults -= (map->query.startindex-1);
+        }
+        msFreeShape(&searchshape);
+        continue;
+      }
+      // Fallback in case of error (should not happen normally)
+    }
+
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project &&
+       memcmp( &searchrect, &invalid_rect, sizeof(searchrect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
 #endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
@@ -1031,10 +1219,8 @@ int msQueryByRect(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
@@ -1065,7 +1251,7 @@ int msQueryByRect(mapObj *map)
         if( map->query.only_cache_result_count )
             lp->resultcache->numresults ++;
         else
-            addResult(lp->resultcache, &shape);
+            addResult(map, lp->resultcache, &queryCache, &shape);
         --map->query.maxfeatures;
       }
       msFreeShape(&shape);
@@ -1127,6 +1313,10 @@ int msQueryByFeatures(mapObj *map)
   int *classgroup = NULL;
   double minfeaturesize = -1;
 
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
+
   if(map->debug) msDebug("in msQueryByFeatures()\n");
 
   /* is the selection layer valid and has it been queried */
@@ -1142,7 +1332,7 @@ int msQueryByFeatures(mapObj *map)
 
   /* conditions may have changed since this layer last drawn, so set
      layer->project true to recheck projection needs (Bug #673) */
-  slp->project = MS_TRUE;
+  slp->project = msProjectionsDiffer(&(slp->projection), &(map->projection));
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers)
     start = map->numlayers-1;
@@ -1171,7 +1361,7 @@ int msQueryByFeatures(mapObj *map)
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
-    lp->project = MS_TRUE;
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1234,11 +1424,8 @@ int msQueryByFeatures(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(slp->project && msProjectionsDiffer(&(slp->projection), &(map->projection))) {
+      if(slp->project)
         msProjectShape(&(slp->projection), &(map->projection), &selectshape);
-        msComputeBounds(&selectshape); /* recompute the bounding box AFTER projection */
-      } else
-        slp->project = MS_FALSE;
 #endif
 
       /* identify target shapes */
@@ -1250,10 +1437,8 @@ int msQueryByFeatures(mapObj *map)
       searchrect.maxy += tolerance;
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-      else
-        lp->project = MS_FALSE;
 #endif
 
       status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
@@ -1309,10 +1494,8 @@ int msQueryByFeatures(mapObj *map)
         }
 
 #ifdef USE_PROJ
-        if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+        if(lp->project)
           msProjectShape(&(lp->projection), &(map->projection), &shape);
-        else
-          lp->project = MS_FALSE;
 #endif
 
         switch(selectshape.type) { /* may eventually support types other than polygon on line */
@@ -1390,7 +1573,7 @@ int msQueryByFeatures(mapObj *map)
             msFreeShape(&shape);
             continue;
           }
-          addResult(lp->resultcache, &shape);
+          addResult(map, lp->resultcache, &queryCache, &shape);
         }
         msFreeShape(&shape);
 
@@ -1453,6 +1636,10 @@ int msQueryByPoint(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_POINT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByPoint()");
@@ -1545,10 +1732,9 @@ int msQueryByPoint(mapObj *map)
     /* identify target shapes */
     searchrect = rect;
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
@@ -1595,10 +1781,8 @@ int msQueryByPoint(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       d = msDistancePointToShape(&(map->query.point), &shape);
@@ -1612,11 +1796,12 @@ int msQueryByPoint(mapObj *map)
         }
 
         if(map->query.mode == MS_QUERY_SINGLE) {
-          lp->resultcache->numresults = 0;
-          addResult(lp->resultcache, &shape);
+          cleanupResultCache(lp->resultcache);
+          initQueryCache(&queryCache);
+          addResult(map, lp->resultcache, &queryCache, &shape);
           t = d; /* next one must be closer */
         } else {
-          addResult(lp->resultcache, &shape);
+          addResult(map, lp->resultcache, &queryCache, &shape);
         }
       }
 
@@ -1667,6 +1852,9 @@ int msQueryByShape(mapObj *map)
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
+  queryCacheObj queryCache;
+
+  initQueryCache(&queryCache);
 
   if(map->query.type != MS_QUERY_BY_SHAPE) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByShape()");
@@ -1767,10 +1955,9 @@ int msQueryByShape(mapObj *map)
     searchrect.maxy += tolerance;
 
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
 #endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
@@ -1817,10 +2004,8 @@ int msQueryByShape(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       switch(qshape->type) { /* may eventually support types other than polygon or line */
@@ -1903,7 +2088,7 @@ int msQueryByShape(mapObj *map)
           msFreeShape(&shape);
           continue;
         }
-        addResult(lp->resultcache, &shape);
+        addResult(map, lp->resultcache, &queryCache, &shape);
       }
       msFreeShape(&shape);
 

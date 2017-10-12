@@ -1,0 +1,19 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<wfs:WFS_Capabilities xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" xmlns="http://www.opengis.net/wfs/2.0" version="2.0.0" updateSequence="123" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+  <ows:ServiceIdentification>
+    <ows:Title>Test simple wfs</ows:Title>
+    <ows:Abstract>Test WFS Abstract</ows:Abstract>
+    <ows:Keywords>
+      <ows:Keyword>ogc</ows:Keyword>
+      <ows:Keyword>wfs</ows:Keyword>
+      <ows:Keyword>gml</ows:Keyword>
+      <ows:Keyword>om</ows:Keyword>
+    </ows:Keywords>
+    <ows:ServiceType codeSpace="OGC">WFS</ows:ServiceType>
+    <ows:ServiceTypeVersion>2.0.0</ows:ServiceTypeVersion>
+    <ows:Fees>none</ows:Fees>
+    <ows:AccessConstraints>none</ows:AccessConstraints>
+  </ows:ServiceIdentification>
+</wfs:WFS_Capabilities>

@@ -1,0 +1,38 @@
+Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=towns_disable_default_extent_for_getfeature&amp;OUTPUTFORMAT=XMLSCHEMA http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml http://schemas.opengis.net/gml/2.1.2/feature.xsd"
+   timeStamp="" numberMatched="unknown" numberReturned="1"
+   next="http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAME=towns_disable_default_extent_for_getfeature&amp;OUTPUTFORMAT=GML2&amp;COUNT=1&amp;SRSNAME=EPSG%3A4326&amp;STARTINDEX=1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>44.25795,11.15631 44.25795,11.15631</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+<!-- WARNING: FeatureId item 'ID' not found in typename 'towns_disable_default_extent_for_getfeature'. -->
+    <wfs:member>
+      <ms:towns_disable_default_extent_for_getfeature>
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>44.25795,11.15631 44.25795,11.15631</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:coordinates>44.25795,11.15631</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Grizzana Morandi</ms:name>
+        <ms:peoples>3694</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns_disable_default_extent_for_getfeature>
+    </wfs:member>
+</wfs:FeatureCollection>
+

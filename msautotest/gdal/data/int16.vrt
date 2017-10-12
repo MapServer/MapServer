@@ -1,0 +1,15 @@
+<VRTDataset rasterXSize="40" rasterYSize="30">
+  <GeoTransform>  0.0000000000000000e+00,  1.0000000000000000e+01,  0.0000000000000000e+00,  3.0000000000000000e+02,  0.0000000000000000e+00, -1.0000000000000000e+01</GeoTransform>
+  <Metadata/>
+  <VRTRasterBand dataType="Int16" band="1">
+    <Metadata/>
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">float.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="40" RasterYSize="30" DataType="Float32" BlockXSize="40" BlockYSize="30"/>
+      <SrcRect xOff="0" yOff="0" xSize="40" ySize="30"/>
+      <DstRect xOff="0" yOff="0" xSize="40" ySize="30"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

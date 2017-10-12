@@ -907,7 +907,7 @@ PHP_METHOD(mapObj, getColorByIndex)
     color.green = palette.colors[index].green;
     color.blue = palette.colors[index].blue;
   } else {
-    mapscript_throw_mapserver_exception("Index shoud not be higher than %d\n" TSRMLS_CC, palette.numcolors-1);
+    mapscript_throw_mapserver_exception("Index should not be higher than %d\n" TSRMLS_CC, palette.numcolors-1);
     return;
   }
 
@@ -3162,7 +3162,7 @@ PHP_METHOD(mapObj, loadOwsParameters)
   php_request = (php_owsrequest_object *) zend_object_store_get_object(zrequest TSRMLS_CC);
 
   if (!version) {
-    version = strdup("1.1.1");
+    version = msStrdup("1.1.1");
     isZval = 0;
   }
 

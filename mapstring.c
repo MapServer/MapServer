@@ -135,7 +135,7 @@ char *strrstr(char *string, char *find)
  * Appends src to string dst of size siz (unlike strncat, siz is the
  * full size of dst, not space left).  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
- * Returns strlen(src) + MIN(siz, strlen(initial dst)).
+ * Returns strlen(src) + MS_MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
 size_t strlcat(char *dst, const char *src, size_t siz)
@@ -275,22 +275,6 @@ char *strcasestr(const char *s, const char *find)
     s--;
   }
   return ((char *)s);
-}
-#endif
-
-#ifndef HAVE_STRDUP
-char  *strdup(char *s)
-{
-  char  *s1;
-
-  if(!s)
-    return(NULL);
-  s1 = (char *)malloc(strlen(s) + 1);
-  if(!s1)
-    return(NULL);
-
-  strcpy(s1,s);
-  return(s1);
 }
 #endif
 
@@ -728,8 +712,9 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
     abslen = strlen(abs_path);
 
   if((pathlen + abslen + 2) > MS_MAXPATHLEN) {
-    msSetError(MS_IOERR, "(%s%s): path is too long", "msBuildPath()",
-               abs_path, path);
+    msSetError(MS_IOERR, "Path is too long.  Check server logs.",
+               "msBuildPath()");
+    msDebug("msBuildPath(): (%s%s): path is too long.\n", abs_path, path);
     return NULL;
   }
 
@@ -1135,9 +1120,7 @@ char *msEncodeUrlExcept(const char *data, const char except)
   code = (char*)msSmallMalloc(strlen(data)+inc+1);
 
   for (j=code, i=data; *i!='\0'; i++, j++) {
-    if (*i == ' ')
-      *j = '+';
-    else if ( except != '\0' && *i == except ) {
+    if ( except != '\0' && *i == except ) {
       *j = except;
     } else if (msEncodeChar(*i)) {
       ch = *i;
@@ -2198,12 +2181,10 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, iconv_status;
   int i;
-#endif
 
   if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
     return MS_SUCCESS;
 
-#ifdef USE_ICONV
   cd = iconv_open("UTF-8", layer->encoding);
   if(cd == (iconv_t)-1) {
     msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
@@ -2241,6 +2222,8 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
   return MS_SUCCESS;
 #else
+  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+    return MS_SUCCESS;
   msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msGetEncodedString()");
   return MS_FAILURE;
 #endif

@@ -1,0 +1,75 @@
+# 
+# Test for label and style attribute binding.
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG
+#
+# RUN_PARMS: attrbind_test001.png [SHP2IMG] -m [MAPFILE] -l test001 -o [RESULT]
+MAP
+  NAME 'attrbind'
+  EXTENT -1.5 0.1 -0.6 1.0
+  SIZE 500 500
+
+  IMAGETYPE PNG
+
+  FONTSET fonts.lst
+
+  SYMBOL
+    NAME 'triangle'
+    TYPE VECTOR
+    POINTS
+      0 4
+      2 0
+      4 4
+      0 4
+    END
+    FILLED TRUE
+  END
+
+  SYMBOL
+    NAME 'square'
+    TYPE VECTOR
+    POINTS 0 0 1 0 1 1 0 1 0 0 END
+    FILLED TRUE
+  END
+
+  SYMBOL
+    NAME 'circle'
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+  END
+
+  LAYER
+    NAME 'test001'
+    TYPE POINT
+    DATA 'data/attrbind'
+    STATUS OFF
+    LABELITEM 'text'
+    CLASS
+      STYLE # a shadow
+        COLOR 151 151 151
+        SYMBOL [symbol]
+        OFFSET 2 2
+        SIZE [size]
+      END
+      STYLE
+	COLOR [color]
+
+      	SYMBOL [symbol]
+      	SIZE [size]
+      END
+      LABEL
+        STYLE
+          GEOMTRANSFORM "labelpoly"
+          COLOR [color]
+        END
+        TYPE TRUETYPE
+        FONT 'default'
+        COLOR [lcolor]
+        SIZE [lsize]
+        POSITION UR
+      END 
+   END
+  END
+END
+ 

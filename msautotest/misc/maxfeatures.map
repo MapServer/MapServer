@@ -1,0 +1,76 @@
+# RUN_PARMS: maxfeatures.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: maxfeatures-of.png [SHP2IMG] -m [MAPFILE] -i pngmf -o [RESULT]
+
+MAP
+  IMAGECOLOR 255 255 255
+  IMAGETYPE "png"
+  NAME "mf"
+  SIZE 50 50
+  EXTENT 0 0 100 100
+  STATUS ON
+  UNITS DD
+
+  outputformat
+    name "pngmf"
+    driver "agg/png"
+    imagemode rgb
+    formatoption "MAXFEATURESTODRAW=1"
+  end
+
+  symbol
+    name "circle"
+    type ellipse
+    points 1 1 end
+    filled true
+  end 
+
+  LAYER
+    NAME "layer_max"
+    TYPE POINT
+    STATUS DEFAULT
+    maxfeatures 1
+    FEATURE POINTS 10 10 END END
+    FEATURE POINTS 15 15 END END
+    CLASS
+      STYLE
+        COLOR 255 0 0
+        SIZE 3
+        symbol "circle"
+      END
+    END
+  END
+  
+  LAYER
+    NAME "metadata_max"
+    TYPE POINT
+    STATUS DEFAULT
+    metadata
+      "maxfeaturestodraw" "1"
+    end
+    FEATURE POINTS 90 90 END END
+    FEATURE POINTS 95 95 END END
+    CLASS
+      STYLE
+        COLOR 255 0 0
+        SIZE 3
+        symbol "circle"
+      END
+    END
+  END
+
+  LAYER
+    NAME "global_max"
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE POINTS 10 90 END END
+    FEATURE POINTS 10 85 END END
+    FEATURE POINTS 10 95 END END
+    CLASS
+      STYLE
+        COLOR 255 0 0
+        SIZE 3
+        symbol "circle"
+      END
+    END
+  END
+END #MAP

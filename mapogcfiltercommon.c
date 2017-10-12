@@ -68,7 +68,7 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   /*      Use operand with regular expressions.                           */
   /* -------------------------------------------------------------------- */
   szBuffer[0] = '\0';
-  sprintf(szTmp, "%s", " (\"[");
+  sprintf(szTmp, "%s", "(\"[");
   szTmp[4] = '\0';
 
   strlcat(szBuffer, szTmp, bufferSize);
@@ -88,6 +88,8 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 
   pszValue = psFilterNode->psRightNode->pszValue;
   nLength = strlen(pszValue);
+  if( 1 + 2 * nLength + 1 + 1 >= sizeof(szTmp) )
+      return NULL;
 
   iTmp =0;
   if (nLength > 0 && pszValue[0] != pszWild[0] && pszValue[0] != pszSingle[0] && pszValue[0] != pszEscape[0]) {
@@ -174,9 +176,9 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   /* -------------------------------------------------------------------- */
   /* attribute */
   if (bString)
-    sprintf(szBuffer, "%s", " (\"[");
+    sprintf(szBuffer, "%s", "(\"[");
   else
-    sprintf(szBuffer, "%s", " ([");
+    sprintf(szBuffer, "%s", "([");
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
   
   pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
@@ -288,9 +290,9 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
 
   /* attribute */
   if (bString)
-    sprintf(szTmp, "%s", " (\"[");
+    sprintf(szTmp, "%s", "(\"[");
   else
-    sprintf(szTmp,  "%s"," ([");
+    sprintf(szTmp,  "%s","([");
   pszExpression = msStringConcatenate(pszExpression, szTmp);
   pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
   
@@ -307,19 +309,20 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
     else
       sprintf(szTmp,  "%s", "=");
   } else if (strcasecmp(psFilterNode->pszValue, "PropertyIsNotEqualTo") == 0)
-    sprintf(szTmp,  "%s", " != ");
+    sprintf(szTmp,  "%s", "!=");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLessThan") == 0)
-    sprintf(szTmp,  "%s", " < ");
+    sprintf(szTmp,  "%s", "<");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsGreaterThan") == 0)
-    sprintf(szTmp,  "%s", " > ");
+    sprintf(szTmp,  "%s", ">");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLessThanOrEqualTo") == 0)
-    sprintf(szTmp,  "%s", " <= ");
+    sprintf(szTmp,  "%s", "<=");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsGreaterThanOrEqualTo") == 0)
-    sprintf(szTmp,  "%s", " >= ");
+    sprintf(szTmp,  "%s", ">=");
   else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-    sprintf(szTmp,  "%s", " ~ ");
+    sprintf(szTmp,  "%s", "~");
 
   pszExpression = msStringConcatenate(pszExpression, szTmp);
+  pszExpression = msStringConcatenate(pszExpression, " ");
 
   /* value */
   if (bString) {
@@ -356,7 +359,6 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
 {
   char *pszExpression = NULL;
   char *pszTmp = NULL;
-  char szBuffer[256];
 
   if (!psFilterNode || !FLTIsLogicalFilterType(psFilterNode->pszValue))
     return NULL;
@@ -369,17 +371,16 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
     if (!pszTmp)
       return NULL;
 
-    sprintf(szBuffer, "%s", " (");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "(");
 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);
 
-    sprintf(szBuffer, "%s", " ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, " ");
 
     pszExpression = msStringConcatenate(pszExpression, psFilterNode->pszValue);
-    sprintf(szBuffer, "%s", " ");
+
+    pszExpression = msStringConcatenate(pszExpression, " ");
 
     pszTmp = FLTGetCommonExpression(psFilterNode->psRightNode, lp);
     if (!pszTmp) {
@@ -390,8 +391,7 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);
 
-    sprintf(szBuffer, "%s", ") ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, ")");
   }
   /* -------------------------------------------------------------------- */
   /*      NOT                                                             */
@@ -401,14 +401,12 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
     if (!pszTmp)
       return NULL;
 
-    sprintf(szBuffer, "%s", " (NOT ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "(NOT ");
 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);
 
-    sprintf(szBuffer, "%s", ") ");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, ")");
   }
 
   return pszExpression;
@@ -694,31 +692,53 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 
 int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression)
 {
+  return FLTApplyFilterToLayerCommonExpressionWithRect(map, iLayerIndex, pszExpression, map->extent);
+}
+
+/* rect must be in map->projection */
+int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect)
+{
   int retval;
   int save_startindex;
   int save_maxfeatures;
   int save_only_cache_result_count;
+  int save_cache_shapes;
+  int save_max_cached_shape_count;
+  int save_max_cached_shape_ram_amount;
 
   save_startindex = map->query.startindex;
   save_maxfeatures = map->query.maxfeatures;
   save_only_cache_result_count = map->query.only_cache_result_count;
+  save_cache_shapes = map->query.cache_shapes;
+  save_max_cached_shape_count = map->query.max_cached_shape_count;
+  save_max_cached_shape_ram_amount = map->query.max_cached_shape_ram_amount;
   msInitQuery(&(map->query));
   map->query.startindex = save_startindex;
   map->query.maxfeatures = save_maxfeatures;
   map->query.only_cache_result_count = save_only_cache_result_count;
+  map->query.cache_shapes = save_cache_shapes;
+  map->query.max_cached_shape_count = save_max_cached_shape_count;
+  map->query.max_cached_shape_ram_amount = save_max_cached_shape_ram_amount;
 
-  map->query.type = MS_QUERY_BY_FILTER;
   map->query.mode = MS_QUERY_MULTIPLE;
-
-  msInitExpression(&map->query.filter);
-  map->query.filter.string = msStrdup(pszExpression);
-  map->query.filter.type = MS_EXPRESSION; /* a logical expression */
   map->query.layer = iLayerIndex;
 
-  /* TODO: if there is a bbox in the node, get it and set the map extent (projected to map->projection */
-  map->query.rect = map->extent;
+  map->query.rect = rect;
 
-  retval = msQueryByFilter(map);
+  if( pszExpression )
+  {
+    map->query.type = MS_QUERY_BY_FILTER;
+    msInitExpression(&map->query.filter);
+    map->query.filter.string = msStrdup(pszExpression);
+    map->query.filter.type = MS_EXPRESSION; /* a logical expression */
+
+    retval = msQueryByFilter(map);
+  }
+  else
+  {
+    map->query.type = MS_QUERY_BY_RECT;
+    retval = msQueryByRect(map);
+  }
 
   return retval;
 }

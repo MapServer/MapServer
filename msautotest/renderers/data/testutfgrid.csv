@@ -1,0 +1,7 @@
+ID,TEXT,WKT
+1,"normal ascii","POINT(2 49)"
+"a""a2","a""a","POINT(2 48)"
+3,"a\a","POINT(2.5 49)"
+4,"a
+a","POINT(2.5 48)"
+5,"a	b","POINT(2.5 48.5)"

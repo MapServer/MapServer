@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
+<defs>
+<image id="image9" width="32" height="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAABz0lEQVRYhcVX0ZLDIAhcbvpf55/VTyNfxj1EIiLEpNdp6WQSBbPrKtQAXzYCgFqrlFIAAKUU+jgBAFJrVQKH8xNkfjLHp5SwILsKTQm1Osa83R6rgAqIa7+V0KAAAFJABfIEEjJRzCWiU5AnkPkje0p3EQ3DUzKnIBkJAAIIauJ+ioBAACkhSrHSLMiBd/CdoKA6ParAgUPDBYF6qTR1VkH8eKvAQYQchjgIGnGXWZATpHY3MntwJSTU7959DnKoADv7AzzbjhERS8KocHEP3ABXsDNSfU+sc7UeKsgsewQUAcYBAEB3s+DttlJgyvdqMyFTYDn7Dv91BVYmgAggUs3zcEW/KC68IC/XgdAuS2+GLPxT9YujaCYwVcD4D3NSgJmHSD2hMW/T8FJ++8uFhphi37kxwFuPz6yBDxczS9SvPl1PH8PMAsHQb+NbX88CZj5OxswMZm6ztHOZfZEyd+wRgeuB1C9HZswb3Pi9fWF0Wgeugp8S2zjx9ANKmIZWkdb+L5cQHEgUKKXQHVD3MRM+Z/YwgKJr96r8lnQG3mJEcb0zSTXA9yNIUU2zuW8eq76pEs6FKM8Iu/P3di80mp5N0VCNUgotDyQX7eUPkz8nQVfVub1LtgAAAABJRU5ErkJggg=="/>
+<clipPath id="clip1">
+  <rect width="15" height="15"/>
+</clipPath>
+<g id="surface10" clip-path="url(#clip1)">
+<use xlink:href="#image9" transform="matrix(0.331456,-0.331456,0.331456,0.331456,-3.106602,7.5)"/>
+</g>
+<pattern id="pattern0" patternUnits="userSpaceOnUse" width="15" height="15">
+<use xlink:href="#surface10"/>
+</pattern>
+<clipPath id="clip2">
+  <rect width="32" height="32"/>
+</clipPath>
+<g id="surface14" clip-path="url(#clip2)">
+<use xlink:href="#image9"/>
+</g>
+<pattern id="pattern1" patternUnits="userSpaceOnUse" width="32" height="32">
+<use xlink:href="#surface14"/>
+</pattern>
+<clipPath id="clip3">
+  <rect width="15" height="15"/>
+</clipPath>
+<g id="surface15" clip-path="url(#clip3)">
+<use xlink:href="#image9" transform="matrix(0.331456,-0.331456,0.331456,0.331456,-3.106602,7.5)"/>
+</g>
+<pattern id="pattern2" patternUnits="userSpaceOnUse" width="15" height="15">
+<use xlink:href="#surface15"/>
+</pattern>
+<clipPath id="clip4">
+  <rect width="15" height="15"/>
+</clipPath>
+<g id="surface16" clip-path="url(#clip4)">
+<use xlink:href="#image9" transform="matrix(0.331456,-0.331456,0.331456,0.331456,-3.106602,7.5)"/>
+</g>
+<pattern id="pattern3" patternUnits="userSpaceOnUse" width="15" height="15">
+<use xlink:href="#surface16"/>
+</pattern>
+</defs>
+<g id="surface2">
+<rect x="0" y="0" width="200" height="150" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 Z M 101.480469 54.453125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern0);" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 L 101.480469 54.453125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,70.588235%);fill-opacity:1;" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 Z M 167.320312 37.125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern1);" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 L 167.320312 37.125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 Z M 16.335938 61.382812 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern2);" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 L 16.335938 61.382812 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 Z M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 Z M 67.324219 90.09375 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern3);" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 L 76.234375 81.183594 M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 L 67.324219 90.09375 "/>
+</g>
+</svg>

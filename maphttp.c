@@ -113,11 +113,6 @@ void msHTTPCleanup()
  * Should be called on a new array of httpRequestObj to initialize them
  * for use with msHTTPExecuteRequest(), etc.
  *
- * Note that users of this module should always allocate and init one
- * more instance of httpRequestObj in their array than what they plan to
- * use because the terminate_handler() needs the last entry in the array
- * to have reqObj->request == NULL
- *
  **********************************************************************/
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
 {
@@ -688,6 +683,10 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
       curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS,
                        pasReqInfo[i].pszPostRequest);
+      if( debug )
+      {
+          msDebug("HTTP: POST = %s", pasReqInfo[i].pszPostRequest);
+      }
       curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
       /* curl_slist_free_all(headers); */ /* free the header list */
     }

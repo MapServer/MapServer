@@ -241,6 +241,11 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %typemap(in) SWIG_CSharpByteArrayHelperCallback %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) SWIG_CSharpByteArrayHelperCallback "$csinput"
 
+%typemap(imtype) (unsigned char* pixels) "IntPtr"
+%typemap(cstype) (unsigned char* pixels) "IntPtr"
+%typemap(in) (unsigned char* pixels) %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (unsigned char* pixels) "$csinput"
+
 %csmethodmodifiers getBytes "private";
 %ignore imageObj::getBytes();
 %extend imageObj 
@@ -259,11 +264,29 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
         }
         callback(buffer.data, buffer.size);
         msFree(buffer.data);
-	}
+    }
+
+    int getRawPixels(unsigned char* pixels) {
+      if (MS_RENDERER_PLUGIN(self->format)) {
+        rendererVTableObj *renderer = self->format->vtable;
+        if(renderer->supports_pixel_buffer) {
+          rasterBufferObj rb;
+          int status = MS_SUCCESS;
+          int size = self->width * self->height * 4 * sizeof(unsigned char);
+          
+          status = renderer->getRasterBufferHandle(self,&rb);
+          if(UNLIKELY(status == MS_FAILURE)) {
+            return MS_FAILURE;
+          }
+          memcpy(pixels, rb.data.rgba.pixels, size);
+          return status;
+        }
+      }
+      return MS_FAILURE;
+    }
 }
 
 %ignore imageObj::write;
-
 %typemap(cscode) imageObj, struct imageObj %{
   private byte[] gdbuffer;
   private void CreateByteArray(IntPtr data, int size)
@@ -290,7 +313,9 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %csmethodmodifiers processLegendTemplate "private";
 %csmethodmodifiers processQueryTemplate "private";
 
-%typemap(cscode) mapObj, struct mapObj %{
+%typemap(csinterfaces) mapObj "IDisposable, System.Runtime.Serialization.ISerializable"; 
+%typemap(csattributes) mapObj  "[Serializable]"
+%typemap(cscode) mapObj, struct mapObj %{  
   public string processTemplate(int bGenerateImages, string[] names, string[] values)
   {
 	if (names.Length != values.Length)
@@ -311,6 +336,18 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 	    throw new ArgumentException("Invalid array length specified!");
 	return processQueryTemplate(names, values, values.Length);
   }
+ 
+  public mapObj(
+      System.Runtime.Serialization.SerializationInfo info
+      , System.Runtime.Serialization.StreamingContext context) : this(info.GetString("mapText"), 1)
+  {       
+        //this constructor is needed for ISerializable interface
+  }
+  
+  public void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) 
+    {    
+        info.AddValue( "mapText", this.convertToString() );        
+    }
 %}
 
 
@@ -405,6 +442,12 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
     }
     %}
 %typemap(csvarin, excode="") (double pattern[ANY]) %{$excode%}
+
+/* Typemaps for int array */
+%typemap(imtype, out="IntPtr") int *panIndexes "int[]"
+%typemap(cstype) int *panIndexes %{int[]%}
+%typemap(in) int *panIndexes %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (int *panIndexes)  "$csinput"
 
 /* Typemaps for device handle */
 %typemap(imtype) (void* device)  %{IntPtr%}

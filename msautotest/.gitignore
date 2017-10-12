@@ -1,0 +1,6 @@
+*.pyc
+gdal/result
+misc/result
+renderers/result
+wxs/result
+mspython/result

@@ -1,0 +1,50 @@
+
+#
+# Tests non-transparent 8bit output via GD with resampling.
+#
+# NOTE: Input is transparent, but we see through to the opaque background
+# set via IMAGECOLOR directive.
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 500 500
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+PROJECTION
+  "proj=utm"
+  "zone=12"
+  "datum=WGS84"
+END
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/grid.gif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+    "towgs84=1,0,0"
+  END
+END
+
+END # of map file

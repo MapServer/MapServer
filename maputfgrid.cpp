@@ -284,10 +284,10 @@ band_type addToTable(UTFGridRenderer *r, shapeObj *p)
   /* Simple operation so we don't have unavailable char in the JSON */
   utfvalue = encodeForRendering(utfvalue);
 
-  /* Datas are added to the table */
+  /* Data added to the table */
   r->data->table[r->data->counter].datavalues = msEvalTextExpressionJSonEscape(&r->utflayer->utfdata, p);
 
-  /* If UTFITEM is set in the mapfiles we add its value to the table */
+  /* If UTFITEM is set in the mapfile we add its value to the table */
   if(r->useutfitem)
     r->data->table[r->data->counter].itemvalue =  msStrdup(p->values[r->utflayer->utfitemindex]);
 
@@ -463,7 +463,7 @@ int utfgridCleanData(imageObj *img)
 }
 
 /*
- * Print the renderer datas as a JSON.
+ * Print the renderer data as JSON.
  */
 int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)
 {
@@ -481,75 +481,81 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
   imgheight = img->height/renderer->utfresolution;
   imgwidth = img->width/renderer->utfresolution;
 
-  fprintf(fp,"{\"grid\":[");
+  msIO_fprintf(fp,"{\"grid\":[");
 
-  /* Print the buffer, also */
+  /* Print the buffer */
   for(row=0; row<imgheight; row++) {
 
     wchar_t *string = (wchar_t*) msSmallMalloc ((imgwidth + 1) * sizeof(wchar_t));
     wchar_t *stringptr;
     stringptr = string;
-    /* Needs comma between each lines but JSON must not start with a comma. */
+    /* Need a comma between each line but JSON must not start with a comma. */
     if(row!=0)
-      fprintf(fp,",");
-    fprintf(fp,"\"");
+      msIO_fprintf(fp,",");
+    msIO_fprintf(fp,"\"");
     for(col=0; col<img->width/renderer->utfresolution; col++) {
-      /* Get the datas from buffer. */
+      /* Get the data from buffer. */
       pixelid = renderer->buffer[(row*imgwidth)+col];
 
       *stringptr = pixelid;
       stringptr++;
     }
 
-    /* Convertion to UTF-8 encoding */
+    /* Conversion to UTF-8 encoding */
     *stringptr = '\0';
     char * utf8;
-    utf8 = msConvertWideStringToUTF8 (string, "UCS-4LE");
-    fprintf(fp,"%s", utf8);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	const char* encoding = "UCS-2LE";
+#else
+	const char* encoding = "UCS-4LE";
+#endif
+
+	  utf8 = msConvertWideStringToUTF8(string, encoding);
+    msIO_fprintf(fp,"%s", utf8);
     msFree(utf8);
     msFree(string);
-    fprintf(fp,"\"");
+    msIO_fprintf(fp,"\"");
   }
 
-  fprintf(fp,"],\"keys\":[\"\"");
+  msIO_fprintf(fp,"],\"keys\":[\"\"");
 
-  /* Prints the key specified */
+  /* Print the specified key */
   for(i=0;i<renderer->data->counter;i++) {
-      fprintf(fp,",");
+      msIO_fprintf(fp,",");
 
     if(renderer->useutfitem)
     {
       pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
-      fprintf(fp,"\"%s\"", pszEscaped);
+      msIO_fprintf(fp,"\"%s\"", pszEscaped);
       msFree(pszEscaped);
     }
     /* If no UTFITEM specified use the serial ID as the key */
     else
-      fprintf(fp,"\"%i\"", renderer->data->table[i].serialid);
+      msIO_fprintf(fp,"\"%i\"", renderer->data->table[i].serialid);
   }
 
-  fprintf(fp,"],\"data\":{");
+  msIO_fprintf(fp,"],\"data\":{");
 
-  /* Print the datas */
+  /* Print the data */
   if(renderer->useutfdata) {
     for(i=0;i<renderer->data->counter;i++) {
       if(i!=0)
-        fprintf(fp,",");
+        msIO_fprintf(fp,",");
 
       if(renderer->useutfitem)
       {
         pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
-        fprintf(fp,"\"%s\":", pszEscaped);
+        msIO_fprintf(fp,"\"%s\":", pszEscaped);
         msFree(pszEscaped);
       }
       /* If no UTFITEM specified use the serial ID as the key */
       else
-        fprintf(fp,"\"%i\":", renderer->data->table[i].serialid);
+        msIO_fprintf(fp,"\"%i\":", renderer->data->table[i].serialid);
 
-      fprintf(fp,"%s", renderer->data->table[i].datavalues);
+      msIO_fprintf(fp,"%s", renderer->data->table[i].datavalues);
     }
   }
-  fprintf(fp,"}}");
+  msIO_fprintf(fp,"}}");
 
   return MS_SUCCESS;
 }
@@ -606,7 +612,7 @@ int utfgridEndLayer(imageObj *img, mapObj *map, layerObj *layer)
 }
 
 /*
- * Do the table operations on the shapes. Allow multiple type of data to be rendered.
+ * Do the table operations on the shapes. Allow multiple types of data to be rendered.
  */
 int utfgridStartShape(imageObj *img, shapeObj *shape)
 {
@@ -633,7 +639,7 @@ int utfgridEndShape(imageObj *img, shapeObj *shape)
 }
 
 /*
- * Function that render polygons into UTFGrid.
+ * Function that renders polygons into UTFGrid.
  */
 int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *color)
 {
@@ -652,8 +658,8 @@ int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *color)
 }
 
 /*
- * Function that render lines into UTFGrid. Starts by looking if the line is a polygon
- * outline. Then draw it if it's not.
+ * Function that renders lines into UTFGrid. Starts by looking if the line is a polygon
+ * outline, draw it if it's not.
  */
 int utfgridRenderLine(imageObj *img, shapeObj *lineshape, strokeStyleObj *linestyle)
 {
@@ -710,7 +716,7 @@ int utfgridRenderVectorSymbol(imageObj *img, double x, double y, symbolObj *symb
 }
 
 /*
- * Function that render Pixmap type symbols into UTFGrid.
+ * Function that renders Pixmap type symbols into UTFGrid.
  */
 int utfgridRenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj * style)
 {

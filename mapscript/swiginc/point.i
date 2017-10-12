@@ -130,7 +130,7 @@
 #endif /* USE_POINT_Z_M */
 	
         msPointToFormattedString(self, fmt, (char *) &buffer, 256);
-        return strdup(buffer);
+        return msStrdup(buffer);
     }
 
     %newobject toShape;

@@ -1,0 +1,171 @@
+#
+# Test both 2.5D support in PostGIS input and GML/WFS output
+#
+# REQUIRES: SUPPORTS=WFS SUPPORTS=POINT_Z_M INPUT=POSTGIS
+#
+#
+# RUN_PARMS: wfs_postgis_25d_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=point3d,linestring3d,polygon3d,multipoint3d,multilinestring3d,multipolygon3d" > [RESULT]
+# RUN_PARMS: wfs_postgis_25d_gml3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=point3d,linestring3d,polygon3d,multipoint3d,multilinestring3d,multipolygon3d" > [RESULT]
+
+MAP
+
+STATUS ON
+SIZE 400 300
+EXTENT 0 0 100 100
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "tmp/"
+
+  METADATA
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "ows_enable_request" "*" 
+  END
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME point3d
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from point3d order by id) as foo using srid=27700 using unique id"
+  
+  METADATA
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,spatialite,shapezip"
+    "gml_exclude_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "Point25d"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+LAYER
+  NAME multipoint3d
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from multipoint3d order by id) as foo using srid=27700 using unique id"
+  
+  METADATA
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,spatialite,shapezip"
+    "gml_exclude_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "MultiPoint25d"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+
+LAYER
+  NAME linestring3d
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from linestring3d order by id) as foo using srid=27700 using unique id"
+  
+  METADATA
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,spatialite,shapezip"
+    "gml_exclude_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "LineString25d"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+
+LAYER
+  NAME multilinestring3d
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from multilinestring3d order by id) as foo using srid=27700 using unique id"
+  
+  METADATA
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,spatialite,shapezip"
+    "gml_exclude_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "MultiLineString25d"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+LAYER
+  NAME polygon3d
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from polygon3d order by id) as foo using srid=27700 using unique id"
+  
+  METADATA
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,spatialite,shapezip"
+    "gml_exclude_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "Polygon25d"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+LAYER
+  NAME multipolygon3d
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from multipolygon3d order by id) as foo using srid=27700 using unique id"
+  
+  METADATA
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,spatialite,shapezip"
+    "gml_exclude_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "MultiPolygon25d"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+
+END # Map File

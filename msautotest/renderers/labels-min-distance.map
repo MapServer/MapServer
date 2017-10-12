@@ -1,0 +1,234 @@
+# RUN_PARMS: labels-min-distance.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labels-min-distance.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labels-min-distance.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labels-min-distance.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 600 800
+extent 0 0 600 800
+fontset  "data/fonts.lst"
+debug 0
+config "MS_ERRORFILE" "stderr"
+
+
+layer
+    type point
+    status default
+    name "points"
+    class
+        label
+            type truetype
+            size 6
+            color 0 0 0
+            mindistance 10
+        end
+    end
+
+    feature
+      points
+         50 500   50 520   50 540
+         75 500   75 520   75 540
+        100 500  100 520  100 540
+        125 500  125 520  125 540
+        150 500  150 520  150 540
+        175 500  175 520  175 540
+        200 500  200 520  200 540
+      end
+      text "X"
+    end
+
+    feature
+      points
+         50 580   50 600   50 620
+         75 580   75 600   75 620
+        100 580  100 600  100 620
+        125 580  125 600  125 620
+        150 580  150 600  150 620
+        175 580  175 600  175 620
+        200 580  200 600  200 620
+      end
+      text "X X X"
+    end
+
+    feature
+      points
+         50 660   50 680   50 700
+         75 660   75 680   75 700
+        100 660  100 680  100 700
+        125 660  125 680  125 700
+        150 660  150 680  150 700
+        175 660  175 680  175 700
+        200 660  200 680  200 700
+      end
+      text "XX XX XX"
+    end
+end
+
+layer
+    type point
+    status default
+    name "points"
+    class
+        label
+            type truetype
+            size 6
+            color 0 0 0
+            mindistance 20
+        end
+    end
+
+    feature
+      points
+        350 500  350 520  350 540
+        375 500  375 520  375 540
+        400 500  400 520  400 540
+        425 500  425 520  425 540
+        450 500  450 520  450 540
+        475 500  475 520  475 540
+        500 500  500 520  500 540
+      end
+      text "X"
+    end
+
+    feature
+      points
+        350 580  350 600  350 620
+        375 580  375 600  375 620
+        400 580  400 600  400 620
+        425 580  425 600  425 620
+        450 580  450 600  450 620
+        475 580  475 600  475 620
+        500 580  500 600  500 620
+      end
+      text "X X X"
+    end
+
+    feature
+      points
+        350 660  350 680  350 700
+        375 660  375 680  375 700
+        400 660  400 680  400 700
+        425 660  425 680  425 700
+        450 660  450 680  450 700
+        475 660  475 680  475 700
+        500 660  500 680  500 700
+      end
+      text "XX XX XX"
+    end
+end
+
+
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+            color 0 0 255
+            width 1
+        end
+        label
+            type truetype
+            size 8
+            angle follow
+            color 0 0 0
+            mindistance 20
+            repeatdistance 10
+        end
+    end
+
+    feature
+      points
+        50 200 150 200 550 360
+      end
+      text "ZZZZ"
+    end
+
+    feature
+      points
+        50 230 150 230 550 330
+      end
+      text "ZZZZ"
+    end
+
+    feature
+      points
+        50 260 150 260 550 360
+      end
+      text "ZZZZ"
+    end
+
+
+   feature
+     points
+       50 110 350 110
+     end
+     text "XXXXXX"
+   end
+
+   feature
+     points
+       50 130 350 130
+     end
+     text "XXXXXX"
+   end
+
+   feature
+     points
+       50 150 350 150
+     end
+     text "XXXXXX"
+   end
+
+   feature
+     points
+       50 170 350 170
+     end
+     text "XXXXXX"
+   end
+
+   feature
+     points
+       100 50 200 50
+     end
+     text "Test text"
+   end
+   feature
+     points
+       201 50 300 50
+     end
+     text "Test text"
+   end
+
+   feature
+     points
+       50 70 200 70
+     end
+     text "text2"
+   end
+   feature
+     points
+       201 70 350 70
+     end
+     text "text2"
+   end
+
+   feature
+     points
+       120 90 200 90
+     end
+     text "Test text3"
+   end
+   feature
+     points
+       201 90 280 90
+     end
+     text "Test text3"
+   end
+
+end
+
+end

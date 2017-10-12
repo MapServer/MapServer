@@ -1,0 +1,36 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<schema
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://www.w3.org/2001/XMLSchema"
+   xmlns:gml="http://www.opengis.net/gml"
+   elementFormDefault="qualified" version="0.1" >
+
+  <import namespace="http://www.opengis.net/gml"
+          schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd" />
+
+  <element name="multi" 
+           type="ms:multiType" 
+           substitutionGroup="gml:_Feature" />
+
+  <complexType name="multiType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <choice>
+            <element name="mypolygon" type="gml:PolygonPropertyType" minOccurs="0" maxOccurs="1"/>
+            <element name="mymultipolygon" type="gml:MultiPolygonPropertyType" minOccurs="0" maxOccurs="1"/>
+          </choice>
+          <element name="ID" minOccurs="0" type="string"/>
+          <element name="NAME" minOccurs="0" type="string"/>
+          <element name="WKT" minOccurs="0" type="string"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

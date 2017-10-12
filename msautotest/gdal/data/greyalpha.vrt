@@ -1,0 +1,21 @@
+<VRTDataset rasterXSize="400" rasterYSize="300">
+  <GeoTransform>  0.0000000000000000e+00,  1.0000000000000000e+00,  0.0000000000000000e+00,  3.0000000000000000e+02,  0.0000000000000000e+00, -1.0000000000000000e+00</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">rgba.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="400" ySize="300"/>
+      <DstRect xOff="0" yOff="0" xSize="400" ySize="300"/>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Alpha</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">rgba.tif</SourceFilename>
+      <SourceBand>4</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="400" ySize="300"/>
+      <DstRect xOff="0" yOff="0" xSize="400" ySize="300"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

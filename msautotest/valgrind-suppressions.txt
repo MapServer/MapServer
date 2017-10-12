@@ -1,0 +1,223 @@
+{
+   _dl_init memory leaks
+   Memcheck:Leak
+   ...
+   fun:_dl_init
+   ...
+}
+
+{
+   CPLCreateMutex
+   Memcheck:Leak
+   fun:malloc
+   fun:CPLCreateMutex
+   ...
+}
+
+{
+   <CPLCreateOrAcquireMutex>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:CPLCreateOrAcquireMutex
+   ...
+}
+
+{
+   png/zlib inflate
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   ...
+}
+
+{
+   libcurl global init
+   Memcheck:Cond
+   ...
+   fun:curl_global_init
+   ...
+}
+
+{
+   <invalid_free_at_main_exit>
+   Memcheck:Free
+   fun:free
+   fun:free_mem
+   fun:__libc_freeres
+   fun:_vgnU_freeres
+   fun:exit
+   fun:main
+}
+
+{
+   <gdal_jvm_still_reachable>
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/jvm/java-6-openjdk/jre/lib/amd64/server/libjvm.so
+}
+
+{
+   <geos_still_reachable>
+   Memcheck:Leak
+   ...
+   fun:_ZN4geos4geom15GeometryFactory18getDefaultInstanceEv
+   ...
+   fun:initGEOS_r
+   ...
+}
+
+{
+   <postgresql_leak>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:getpwuid_r*
+   ...
+}
+
+{
+   rasdaman_constructor_leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z13initTextTablev
+   fun:_ZN6RMInitC1Ec
+   fun:_GLOBAL__I_rpcclientcomm.cc
+   ...
+}
+
+{
+   pixman_constructor_leak
+   Memcheck:Leak
+   ...
+   fun:pixman_constructor
+   ...
+}
+
+{
+   <libc_invalid_free_at_exit>
+   Memcheck:Free
+   fun:free
+   obj:/lib/libc-2.11.1.so
+   obj:/lib/libc-2.11.1.so
+   fun:_vgnU_freeres
+   fun:exit
+   fun:main
+}
+
+{
+   <H5P_init>
+   Memcheck:Leak
+   ...
+   fun:H5P_init
+   ...
+}
+
+{
+   <H5D_init>
+   Memcheck:Leak
+   ...
+   fun:H5D_init
+   ...
+}
+
+{
+   <H5E_init>
+   Memcheck:Leak
+   ...
+   fun:H5E_init
+   ...
+}
+
+{
+   <H5T_init>
+   Memcheck:Leak
+   ...
+   fun:H5T_init
+   ...
+}
+
+{
+   <H5L_init>
+   Memcheck:Leak
+   ...
+   fun:H5L_init
+   ...
+}
+
+{
+   <H5Tcopy>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:H5FL_reg_malloc
+   fun:H5E_get_stack
+   fun:H5E_clear_stack
+   fun:H5Tcopy
+   ...
+}
+
+{
+   <H5TS_cancel_count_inc>
+   Memcheck:Leak
+   fun:calloc
+   fun:H5TS_cancel_count_inc
+   fun:H5open
+   ...
+}
+
+
+{
+   <poppler_leak>
+   Memcheck:Leak
+   fun:malloc
+   fun:gmalloc
+   fun:copyString
+   fun:_ZN6Object8initNameEPKc
+   fun:_GLOBAL__I_StructElement.cc
+}
+
+{
+   <mongo>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN5mongo3TSPINS_18OwnedPointerVectorISt19basic_ostringstreamIcSt11char_traitsIcESaIcEEEEED1Ev
+   fun:__cxa_finalize
+   ...
+}
+
+{
+   <mongo>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_GLOBAL__I_message_port.cpp
+   ...
+}
+
+{
+   <geos>
+   Memcheck:Leak
+   ...
+   fun:_ZN4geos4geom15GeometryFactoryC1Ev
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_GeometryFactory.cpp
+   ...
+}
+
+{
+   <geos>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_GeometryFactory.cpp
+   ...
+}
+
+{
+   <FCGI>
+   Memcheck:Leak
+   fun:malloc
+   fun:OS_LibInit
+   ...
+}

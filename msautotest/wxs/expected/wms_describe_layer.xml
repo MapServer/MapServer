@@ -1,0 +1,9 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8"?>
+<!DOCTYPE WMS_DescribeLayerResponse SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_DescribeLayerResponse.dtd">
+<WMS_DescribeLayerResponse version="1.1.1" >
+<LayerDescription name="rivers" wfs="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map" owsType="WFS" owsURL="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map">
+<Query typeName="rivers" />
+</LayerDescription>
+</WMS_DescribeLayerResponse>

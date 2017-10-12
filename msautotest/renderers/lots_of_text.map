@@ -1,0 +1,38 @@
+# RUN_PARMS: lots_of_text.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: lots_of_text.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 400 400
+extent 0 0 1 1
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+
+layer
+    type point
+    status default
+    name "text"
+    class
+        label
+            type truetype
+            font "default"
+            size 8
+            color 0 0 0
+            outlinecolor 255 255 0
+            outlinewidth 3
+            wrap " "
+            maxlength 50
+            align center
+            angle 0
+        end
+    end
+    feature
+      points 0.5 0.5 end
+      text "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+    end
+end
+
+end

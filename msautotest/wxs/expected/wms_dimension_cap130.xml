@@ -1,0 +1,189 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<WMS_Capabilities version="1.3.0"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/mswms?service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
+
+<Service>
+  <Name>WMS</Name>
+<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+  <Title>wms_dimesion</Title>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/>
+  <ContactInformation>
+  </ContactInformation>
+  <MaxWidth>4096</MaxWidth>
+  <MaxHeight>4096</MaxHeight>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <Format>application/x-pdf</Format>
+      <Format>image/svg+xml</Format>
+      <Format>image/tiff</Format>
+      <Format>application/vnd.google-earth.kml+xml</Format>
+      <Format>application/vnd.google-earth.kmz</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <sld:DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Post>
+        </HTTP>
+      </DCPType>
+    </sld:DescribeLayer>
+    <sld:GetLegendGraphic>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Post>
+        </HTTP>
+      </DCPType>
+    </sld:GetLegendGraphic>
+    <ms:GetStyles>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Post>
+        </HTTP>
+      </DCPType>
+    </ms:GetStyles>
+  </Request>
+  <Exception>
+    <Format>XML</Format>
+    <Format>INIMAGE</Format>
+    <Format>BLANK</Format>
+  </Exception>
+  <sld:UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0" InlineFeature="0" RemoteWCS="0"/>
+  <Layer>
+    <Name>wms_dimesion</Name>
+<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+    <Title>wms_dimesion</Title>
+    <Abstract>wms_dimesion</Abstract>
+    <CRS>EPSG:4326</CRS>
+    <EX_GeographicBoundingBox>
+        <westBoundLongitude>0.00017</westBoundLongitude>
+        <eastBoundLongitude>0.00342</eastBoundLongitude>
+        <southBoundLatitude>-0.00213</southBoundLatitude>
+        <northBoundLatitude>0.00031</northBoundLatitude>
+    </EX_GeographicBoundingBox>
+    <BoundingBox CRS="EPSG:4326"
+                minx="-0.00213" miny="0.00017" maxx="0.00031" maxy="0.00342" />
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>lakes_elev</Name>
+        <Title>Lakes</Title>
+        <CRS>EPSG:4326</CRS>
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>0.00017826</westBoundLongitude>
+            <eastBoundLongitude>0.003420</eastBoundLongitude>
+            <southBoundLatitude>-0.00213</southBoundLatitude>
+            <northBoundLatitude>0.00031377</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:4326"
+                    minx="-0.00213" miny="0.00017826" maxx="0.00031377" maxy="0.003420" />
+        <Dimension name="elevation" units="meters" default="500" multipleValues="1" nearestValue="0">500, 490, 480</Dimension>
+        <Dimension name="text_dimension" units="my_units"  multipleValues="1"  nearestValue="0">first, second, third</Dimension>
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="155" height="20">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=lakes_elev&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>lakes_elev_range</Name>
+        <Title>Lakes</Title>
+        <CRS>EPSG:4326</CRS>
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>0.00017826</westBoundLongitude>
+            <eastBoundLongitude>0.003420</eastBoundLongitude>
+            <southBoundLatitude>-0.00213</southBoundLatitude>
+            <northBoundLatitude>0.00031377</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:4326"
+                    minx="-0.00213" miny="0.00017826" maxx="0.00031377" maxy="0.003420" />
+        <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">490/800</Dimension>
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_range"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="155" height="20">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=lakes_elev_range&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>lakes_elev_multi_range</Name>
+        <Title>Lakes</Title>
+        <CRS>EPSG:4326</CRS>
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>0.00017826</westBoundLongitude>
+            <eastBoundLongitude>0.003420</eastBoundLongitude>
+            <southBoundLatitude>-0.00213</southBoundLatitude>
+            <northBoundLatitude>0.00031377</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:4326"
+                    minx="-0.00213" miny="0.00017826" maxx="0.00031377" maxy="0.003420" />
+        <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">480/500,800/900</Dimension>
+        <MetadataURL type="ISOTC211/19115">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_multi_range"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="155" height="20">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=lakes_elev_multi_range&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+  </Layer>
+</Capability>
+</WMS_Capabilities>

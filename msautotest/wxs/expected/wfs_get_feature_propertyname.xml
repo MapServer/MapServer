@@ -1,0 +1,123 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-66.432672,43.412311 -59.709694,47.796447</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <ms:NAME_E>Quebec</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <ms:NAME_E>Quebec</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <ms:NAME_E>Quebec</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Quebec">
+        <ms:NAME_E>Quebec</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Prince Edward Island">
+        <ms:NAME_E>Prince Edward Island</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Prince Edward Island">
+        <ms:NAME_E>Prince Edward Island</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:province fid="province.Nova Scotia">
+        <ms:NAME_E>Nova Scotia</ms:NAME_E>
+      </ms:province>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+
