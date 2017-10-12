@@ -500,6 +500,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
   MS_COPYSTELEM(offsetx);
   MS_COPYSTELEM(offsety);
   MS_COPYSTELEM(angle);
+  MS_COPYSTELEM(autoangle);
   MS_COPYSTELEM(minvalue);
   MS_COPYSTELEM(maxvalue);
   MS_COPYSTELEM(opacity);

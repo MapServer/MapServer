@@ -1026,6 +1026,7 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
     int g;
     double ox, oy;
     double cosa,sina;
+    int ret;
     if(ts->rotation != 0) {
       cosa = cos(ts->rotation);
       sina = sin(ts->rotation);
@@ -1048,9 +1049,11 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
       ts_shadow->textpath->glyphs[g].pnt.y += oy;
     }
 
-    renderer->renderGlyphs(image,ts_shadow->textpath,&ts->label->shadowcolor,NULL,0);
+    ret = renderer->renderGlyphs(image,ts_shadow->textpath,&ts->label->shadowcolor,NULL,0);
     freeTextSymbol(ts_shadow);
     msFree(ts_shadow);
+    if( ret != MS_SUCCESS )
+      return ret;
   }
 
   if(MS_VALID_COLOR(ts->label->color))

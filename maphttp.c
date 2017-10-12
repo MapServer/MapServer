@@ -113,11 +113,6 @@ void msHTTPCleanup()
  * Should be called on a new array of httpRequestObj to initialize them
  * for use with msHTTPExecuteRequest(), etc.
  *
- * Note that users of this module should always allocate and init one
- * more instance of httpRequestObj in their array than what they plan to
- * use because the terminate_handler() needs the last entry in the array
- * to have reqObj->request == NULL
- *
  **********************************************************************/
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
 {
