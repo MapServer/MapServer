@@ -594,6 +594,25 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
   if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_FALSE);
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
 
+  /* Do comparisons of layer scale vs map scale now, since msExtentsOverlap() */
+  /* can be slow */
+  if(map->scaledenom > 0) {
+
+    /* layer scale boundaries should be checked first */
+    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) {
+      if( layer->debug >= MS_DEBUGLEVEL_V ) {
+        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MAXSCALE is too small for this MAP scale\n", layer->name);
+      }
+      return(MS_FALSE);
+    }
+    if(/*(layer->minscaledenom > 0) &&*/ (map->scaledenom <= layer->minscaledenom)) {
+      if( layer->debug >= MS_DEBUGLEVEL_V ) {
+        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MINSCALE is too large for this MAP scale\n", layer->name);
+      }
+      return(MS_FALSE);
+    }
+  }
+
   /* Only return MS_FALSE if it is definitely false. Sometimes it will return MS_UNKNOWN, which we
   ** consider true, for this use case (it might be visible, try and draw it, see what happens). */
   if ( msExtentsOverlap(map, layer) == MS_FALSE ) {
@@ -607,20 +626,6 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   if(map->scaledenom > 0) {
 
-    /* layer scale boundaries should be checked first */
-    if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) {
-      if( layer->debug >= MS_DEBUGLEVEL_V ) {
-        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MAXSCALE is too small for this MAP scale\n", layer->name);
-      }
-      return(MS_FALSE);
-    }
-    if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) {
-      if( layer->debug >= MS_DEBUGLEVEL_V ) {
-        msDebug("msLayerIsVisible(): Skipping layer (%s) because LAYER.MINSCALE is too large for this MAP scale\n", layer->name);
-      }
-      return(MS_FALSE);
-    }
-  
     /* now check class scale boundaries (all layers *must* pass these tests) */
     if(layer->numclasses > 0) {
       for(i=0; i<layer->numclasses; i++) {
