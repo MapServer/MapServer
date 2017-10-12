@@ -2260,6 +2260,14 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
   if( ! (layer->projection.numargs > 0) )
     return msRectOverlap( &(map->extent), &(layer->extent) );
 
+  /* In the case where map and layer projections are identical, and the */
+  /* bounding boxes don't cross the dateline, do simple rectangle comparison */
+  if( map->extent.minx < map->extent.maxx &&
+      layer->extent.minx < layer->extent.maxx &&
+      !msProjectionsDiffer(&(map->projection), &(layer->projection)) ) {
+    return msRectOverlap( &(map->extent), &(layer->extent) );
+  }
+
   /* We need to transform our rectangles for comparison,
   ** so we will work with copies and leave the originals intact. */
   MS_COPYRECT(&map_extent, &(map->extent) );
