@@ -1132,7 +1132,11 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
     int ret;
 
     ret = msProjectionsDifferInternal(proj1, proj2); 
-    if( ret ) 
+    if( ret &&
+        /* to speed up things, do normalization only if one proj is */
+        /* likely of the form init=epsg:XXX and the other proj=XXX datum=YYY... */
+        ( (proj1->numargs == 1 && proj2->numargs > 1) ||
+          (proj1->numargs > 1 && proj2->numargs == 1) ) )
     {
         projectionObj* p1normalized;
         projectionObj* p2normalized;
