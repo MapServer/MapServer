@@ -206,11 +206,16 @@ int saveAsJPEG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
     cinfo.optimize_coding = TRUE;
 
   if( arithmetic || optimized ) {
-    if (map == NULL || msGetConfigOption(map, "JPEGMEM") == NULL) {
-      /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
-      /* that at least the image size will be used before creating the temporary file */
-      cinfo.mem->max_memory_to_use =
-        MS_MAX(cinfo.mem->max_memory_to_use, cinfo.input_components * rb->width * rb->height);
+    /* libjpeg turbo 1.5.2 honours max_memory_to_use, but has no backing */
+    /* store implementation, so better not set max_memory_to_use ourselves. */
+    /* See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/162 */
+    if( cinfo.mem->max_memory_to_use > 0 ) {
+      if (map == NULL || msGetConfigOption(map, "JPEGMEM") == NULL) {
+        /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
+        /* that at least the image size will be used before creating the temporary file */
+        cinfo.mem->max_memory_to_use =
+          MS_MAX(cinfo.mem->max_memory_to_use, cinfo.input_components * rb->width * rb->height);
+      }
     }
   }
 
