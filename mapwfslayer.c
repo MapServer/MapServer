@@ -445,7 +445,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 		 } else {
 			 snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
 					 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s",
-					 bbox->minx, bbox->miny, bbox->maxy, bbox->maxy,
+					 bbox->minx, bbox->miny, bbox->maxx, bbox->maxy,
 					 projUrn, projUrn);
 		 }
 	  } else {
