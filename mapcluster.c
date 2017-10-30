@@ -854,9 +854,9 @@ static int collectClusterShapes2(layerObj* layer, msClusterLayerInfo* layerinfo,
       while(current) {
         UpdateShapeAttributes(layer, s, current);
 
-        /* setting the average position to the same value */
-        current->avgx = layerinfo->current->avgx;
-        current->avgy = layerinfo->current->avgy;
+        /* setting the average position to the cluster position */
+        current->avgx = s->x;
+        current->avgy = s->y;
 
         if (current->next == NULL) {
           if (layerinfo->get_all_shapes == MS_TRUE) {
@@ -1034,10 +1034,8 @@ int RebuildClusters(layerObj *layer, int isQuery)
   else
     layerinfo->get_all_shapes = MS_FALSE;
 
-  /* check whether the location of the shapes should be preserved (no averaging) */
-  pszProcessing = msLayerGetProcessingKey(layer, "CLUSTER_KEEP_LOCATIONS");
-  if((pszProcessing && !strncasecmp(pszProcessing,"TRUE",4))
-      || (!pszProcessing && layerinfo->algorithm == MSCLUSTER_ALGORITHM_SIMPLE))    
+  /* check whether the location of the shapes should be preserved */
+  if(msLayerGetProcessingKey(layer, "CLUSTER_KEEP_LOCATIONS") != NULL)
     layerinfo->keep_locations = MS_TRUE;
   else
     layerinfo->keep_locations = MS_FALSE; 
@@ -1180,7 +1178,6 @@ int RebuildClusters(layerObj *layer, int isQuery)
     }
     else if (layerinfo->algorithm == MSCLUSTER_ALGORITHM_SIMPLE) {
       /* find a related cluster and try to assign */
-      //layerinfo->rank = maxDistanceX * maxDistanceX + maxDistanceY * maxDistanceY;
       layerinfo->rank = 0;
       layerinfo->current = NULL;
       findRelatedShapes2(layerinfo, layerinfo->root, current);
@@ -1339,14 +1336,6 @@ int RebuildClusters(layerObj *layer, int isQuery)
         layerinfo->finalizedSiblings = current->next;
         current->next = s->siblings;
         s->siblings = current;
-        /* calculating the average positions */
-        s->avgx = (s->avgx * s->numsiblings + current->x) / (s->numsiblings + 1);
-        s->avgy = (s->avgy * s->numsiblings + current->y) / (s->numsiblings + 1);
-        /* calculating the variance */
-        s->varx = s->varx * s->numsiblings / (s->numsiblings + 1) +
-                  (current->x - s->avgx) * (current->x - s->avgx) / (s->numsiblings + 1);
-        s->vary = s->vary * s->numsiblings / (s->numsiblings + 1) +
-                  (current->y - s->avgy) * (current->y - s->avgy) / (s->numsiblings + 1);
       }
       else {
         /* this appears to be a bug */
