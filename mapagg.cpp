@@ -89,6 +89,7 @@ typedef mapserver::rendering_buffer rendering_buffer;
 typedef mapserver::renderer_base<pixel_format> renderer_base;
 typedef mapserver::renderer_base<compop_pixel_format> compop_renderer_base;
 typedef mapserver::renderer_scanline_aa_solid<renderer_base> renderer_scanline;
+typedef mapserver::renderer_scanline_bin_solid<renderer_base> renderer_scanline_aliased;
 typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 typedef mapserver::font_engine_freetype_int16 font_engine_type;
 typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
@@ -146,6 +147,7 @@ public:
   renderer_base m_renderer_base;
   compop_renderer_base m_compop_renderer_base;
   renderer_scanline m_renderer_scanline;
+  renderer_scanline_aliased m_renderer_scanline_aliased;
 #ifdef AGG_ALIASED_ENABLED
   renderer_primitives m_renderer_primitives;
   rasterizer_outline m_rasterizer_primitives;
@@ -200,7 +202,8 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
 
   AGG2Renderer *r = AGG_RENDERER(img);
   line_adaptor lines = line_adaptor(p);
-
+  
+ 
 #ifdef AGG_ALIASED_ENABLED
   r->m_rasterizer_primitives.reset();
   r->m_renderer_primitives.line_color(aggColor(style->color));
@@ -210,7 +213,12 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
 
   r->m_rasterizer_aa.reset();
   r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-  r->m_renderer_scanline.color(aggColor(style->color));
+  if (style->antialiased== MS_FALSE)
+  {
+	r->m_renderer_scanline_aliased.color(aggColor(style->color));
+  }
+  else
+  	r->m_renderer_scanline.color(aggColor(style->color));
 
   if (style->patternlength <= 0) {
     if(!r->stroke) {
@@ -262,7 +270,10 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
     }
     r->m_rasterizer_aa.add_path(*r->stroke_dash);
   }
-  mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
+  if (style->antialiased == MS_FALSE)
+  	mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline_aliased);
+  else 
+  	mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   return MS_SUCCESS;
 }
 
@@ -841,6 +852,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   r->m_renderer_base.attach(r->m_pixel_format);
   r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
   r->m_renderer_scanline.attach(r->m_renderer_base);
+  r->m_renderer_scanline_aliased.attach(r->m_renderer_base);
   r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
   if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
     r->default_gamma = 0.75;

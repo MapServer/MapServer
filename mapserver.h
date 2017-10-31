@@ -982,6 +982,9 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
     /*should an angle be automatically computed*/
     int autoangle;
 
+    /* should lines be drawn with antialiasing (default)? */
+    int antialiased;
+
     colorObj color;
     colorObj backgroundcolor;
     colorObj outlinecolor;
@@ -3033,9 +3036,10 @@ extern "C" {
     int linecap; /* MS_CJC_TRIANGLE, MS_CJC_SQUARE, MS_CJC_ROUND, MS_CJC_BUTT */
     int linejoin; /* MS_CJC_BEVEL MS_CJC_ROUND MS_CJC_MITER */
     double linejoinmaxsize;
+    int antialiased;
   } strokeStyleObj;
 
-#define INIT_STROKE_STYLE(s) { (s).width=0; (s).patternlength=0; (s).color=NULL; (s).linecap=MS_CJC_ROUND; (s).linejoin=MS_CJC_ROUND; (s).linejoinmaxsize=0;}
+#define INIT_STROKE_STYLE(s) { (s).width=0; (s).patternlength=0; (s).color=NULL; (s).linecap=MS_CJC_ROUND; (s).linejoin=MS_CJC_ROUND; (s).linejoinmaxsize=0; (s).antialiased=MS_TRUE; }
 
 
   /*

@@ -597,6 +597,7 @@ int msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p,
         s.linecap = style->linecap;
         s.linejoin = style->linejoin;
         s.linejoinmaxsize = style->linejoinmaxsize;
+        s.antialiased = style->antialiased;
         s.width = width;
         s.patternlength = style->patternlength;
         for(i=0; i<s.patternlength; i++)

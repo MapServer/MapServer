@@ -2364,6 +2364,7 @@ int initStyle(styleObj *style)
   style->polaroffsetpixel = style->polaroffsetangle = 0; /* no polar offset */
   style->angle = 0;
   style->autoangle= MS_FALSE;
+  style->antialiased = MS_TRUE;
   style->opacity = 100; /* fully opaque */
 
   msInitExpression(&(style->_geomtransform));
@@ -2426,8 +2427,10 @@ int loadStyle(styleObj *style)
           style->autoangle=MS_TRUE;
         }
         break;
-      case(ANTIALIAS): /*ignore*/
-        msyylex();
+      case(ANTIALIAS):
+		if ((symbol = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+        if (symbol == MS_FALSE)
+        	style->antialiased = MS_FALSE;
         break;
       case(BACKGROUNDCOLOR):
         if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
