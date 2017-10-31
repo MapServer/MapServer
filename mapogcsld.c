@@ -329,7 +329,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
 
           /* opacity for sld raster */
           if (GET_LAYER(map, i)->type == MS_LAYER_RASTER &&
-              pasLayers[i].compositer && pasLayers[j].compositer->opacity != 100)
+              pasLayers[j].compositer && pasLayers[j].compositer->opacity != 100)
             msSetLayerOpacity(GET_LAYER(map, i), pasLayers[j].compositer->opacity);
 
           /* mark as auto-generate SLD */
