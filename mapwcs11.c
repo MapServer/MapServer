@@ -735,7 +735,6 @@ msWCSDescribeCoverage_CoverageDescription11(
 
     psGridCRS = xmlNewChild( psSD, NULL, BAD_CAST "GridCRS", NULL );
 
-
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridBaseCRS", BAD_CAST cm.srs_urn );
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridType",
                  BAD_CAST "urn:ogc:def:method:WCS:1.1:2dSimpleGrid" );
