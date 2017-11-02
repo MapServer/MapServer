@@ -1136,18 +1136,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
   /* -------------------------------------------------------------------- */
   if( bOutInit && pj_is_latlong(psSrcProj->proj) )
   {
-      int bHasLonWrap = MS_FALSE;
       double dfLonWrap = 0;
-      for( i = 0; i < psSrcProj->numargs; i++ )
-      {
-          if( strncmp(psSrcProj->args[i], "lon_wrap=",
-                      strlen("lon_wrap=")) == 0 )
-          {
-              bHasLonWrap = MS_TRUE;
-              dfLonWrap = atof( psSrcProj->args[i] + strlen("lon_wrap=") );
-              break;
-          }
-      }
+      int bHasLonWrap = msProjectHasLonWrap(psSrcProj, &dfLonWrap);
 
       if( bHasLonWrap )
       {
