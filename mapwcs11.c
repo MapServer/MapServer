@@ -721,21 +721,29 @@ msWCSDescribeCoverage_CoverageDescription11(
   /* -------------------------------------------------------------------- */
   {
     char format_buf[500];
+    projectionObj proj;
+    double x0 = cm.geotransform[0]+cm.geotransform[1]/2+cm.geotransform[2]/2;
+    double y0 = cm.geotransform[3]+cm.geotransform[4]/2+cm.geotransform[5]/2;
+    double resx = cm.geotransform[1];
+    double resy = cm.geotransform[5];
+
+    msInitProjection( &proj );
+    if( msLoadProjectionString( &proj, cm.srs_urn ) == 0 ) {
+      msAxisNormalizePoints( &proj, 1, &x0, &y0 );
+      msAxisNormalizePoints( &proj, 1, &resx, &resy );
+    }
+    msFreeProjection( &proj );
 
     psGridCRS = xmlNewChild( psSD, NULL, BAD_CAST "GridCRS", NULL );
-
 
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridBaseCRS", BAD_CAST cm.srs_urn );
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridType",
                  BAD_CAST "urn:ogc:def:method:WCS:1.1:2dSimpleGrid" );
 
-    sprintf( format_buf, "%.15g %.15g",
-             cm.geotransform[0]+cm.geotransform[1]/2+cm.geotransform[2]/2,
-             cm.geotransform[3]+cm.geotransform[4]/2+cm.geotransform[5]/2);
+    sprintf( format_buf, "%.15g %.15g", x0, y0 );
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridOrigin", BAD_CAST format_buf );
 
-    sprintf( format_buf, "%.15g %.15g",
-             cm.geotransform[1], cm.geotransform[5] );
+    sprintf( format_buf, "%.15g %.15g", resx, resy );
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridOffsets", BAD_CAST format_buf );
 
     xmlNewChild( psGridCRS, NULL, BAD_CAST "GridCS",

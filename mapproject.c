@@ -930,7 +930,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /*      logic.                                                          */
   /* -------------------------------------------------------------------- */
   if( out && pj_is_latlong(out->proj) && in && !pj_is_latlong(in->proj)
-      && rect->maxx - rect->minx > 360.0 ) {
+      && rect->maxx - rect->minx > 360.0 && !out->gt.need_geotransform ) {
     rect->maxx = 180;
     rect->minx = -180;
   }
@@ -940,6 +940,32 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
   return(MS_FAILURE);
 #endif
+}
+
+/************************************************************************/
+/*                        msProjectHasLonWrap()                         */
+/************************************************************************/
+
+int msProjectHasLonWrap(projectionObj *in, double* pdfLonWrap)
+{
+    int i;
+    if( pdfLonWrap )
+        *pdfLonWrap = 0;
+#if USE_PROJ
+    if( !pj_is_latlong(in->proj) )
+        return MS_FALSE;
+#endif
+    for( i = 0; i < in->numargs; i++ )
+    {
+        if( strncmp(in->args[i], "lon_wrap=",
+                    strlen("lon_wrap=")) == 0 )
+        {
+            if( pdfLonWrap )
+                *pdfLonWrap = atof(in->args[i] + strlen("lon_wrap="));
+            return MS_TRUE;
+        }
+    }
+    return MS_FALSE;
 }
 
 /************************************************************************/
@@ -953,7 +979,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #else
   char *over = "+over";
   int ret;
+  int bFreeInOver = MS_FALSE;
+  int bFreeOutOver = MS_FALSE;
   projectionObj in_over,out_over,*inp,*outp;
+  double dfLonWrap = 0.0;
 
 #if USE_PROJ
   /* Detect projecting from north polar stereographic to longlat */
@@ -988,6 +1017,14 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   }
 #endif
 
+  if(in && msProjectHasLonWrap(in, &dfLonWrap) && dfLonWrap == 180.0) {
+    inp = in;
+    outp = out;
+    if( rect->maxx > 180.0 ) {
+      rect->minx = -180.0;
+      rect->maxx = 180.0;
+    }
+  }
   /* 
    * Issue #4892: When projecting a rectangle we do not want proj to wrap resulting
    * coordinates around the dateline, as in practice a requested bounding box of
@@ -997,24 +1034,28 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
    *  To enforce this, we clone the input projections and add the "+over" proj 
    *  parameter in order to disable dateline wrapping.
    */ 
-  if(out) {
-    msInitProjection(&out_over);
-    msCopyProjectionExtended(&out_over,out,&over,1);
-    outp = &out_over;
-  } else {
-    outp = out;
-  }
-  if(in) {
-    msInitProjection(&in_over);
-    msCopyProjectionExtended(&in_over,in,&over,1);
-    inp = &in_over;
-  } else {
-    inp = in;
+  else {
+    if(out) {
+      bFreeOutOver = MS_TRUE;
+      msInitProjection(&out_over);
+      msCopyProjectionExtended(&out_over,out,&over,1);
+      outp = &out_over;
+    } else {
+      outp = out;
+    }
+    if(in) {
+      bFreeInOver = MS_TRUE;
+      msInitProjection(&in_over);
+      msCopyProjectionExtended(&in_over,in,&over,1);
+      inp = &in_over;
+    } else {
+      inp = in;
+    }
   }
   ret = msProjectRectAsPolygon(inp,outp, rect );
-  if(in)
+  if(bFreeInOver)
     msFreeProjection(&in_over);
-  if(out)
+  if(bFreeOutOver)
     msFreeProjection(&out_over);
   return ret;
 #endif

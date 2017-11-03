@@ -229,7 +229,8 @@ int msLayerOpen(layerObj *layer)
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
-  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
+  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS
+      && layer->connectiontype != MS_KERNELDENSITY)
     layer->connectiontype = MS_RASTER;
 
   if ( ! layer->vtable) {
@@ -1993,7 +1994,8 @@ int msInitializeVirtualTable(layerObj *layer)
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
-  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
+  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS
+      && layer->connectiontype != MS_KERNELDENSITY)
     layer->connectiontype = MS_RASTER;
 
   switch(layer->connectiontype) {
@@ -2014,6 +2016,10 @@ int msInitializeVirtualTable(layerObj *layer)
       break;
     case(MS_WMS):
       /* WMS should be treated as a raster layer */
+      return(msRASTERLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_KERNELDENSITY):
+      /* KERNELDENSITY should be treated as a raster layer */
       return(msRASTERLayerInitializeVirtualTable(layer));
       break;
     case(MS_ORACLESPATIAL):

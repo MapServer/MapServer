@@ -345,7 +345,8 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   int width, height, u_src_off, v_src_off, i, x, y;
   char   **alteredProcessing = NULL, *saved_layer_mask;
   char **savedProcessing = NULL;
-
+  int bHasLonWrap = MS_FALSE;
+  double dfLonWrap = 0.0;
   
   if (layer->debug)
     msDebug("Entering msUVRASTERLayerWhichShapes().\n");
@@ -389,10 +390,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx,layer->map->width),
                         MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height));
   map_tmp->cellsize = map_cellsize*spacing;
-  
-  if (layer->debug)
-    msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
-            width, height, map_tmp->cellsize);
 
   /* Initialize our dummy map */
   MS_INIT_COLOR(map_tmp->imagecolor, 255,255,255,255);
@@ -419,7 +416,55 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   map_tmp->extent.maxy = map_tmp->extent.miny+((height-1)*map_tmp->cellsize);
   map_tmp->gt.rotation_angle = 0.0;
 
-   msCopyProjection(&map_tmp->projection, &layer->projection);
+  /* Custom msCopyProjection() that removes lon_wrap parameter */
+  {
+#ifdef USE_PROJ
+    int i;
+
+    map_tmp->projection.numargs = 0;
+    map_tmp->projection.gt = layer->projection.gt;
+    map_tmp->projection.automatic = layer->projection.automatic;
+
+    for (i = 0; i < layer->projection.numargs; i++) {
+      if( strncmp(layer->projection.args[i], "lon_wrap=",
+                  strlen("lon_wrap=")) == 0 ) {
+        bHasLonWrap = MS_TRUE;
+        dfLonWrap = atof( layer->projection.args[i] + strlen("lon_wrap=") );
+      }
+      else {
+        map_tmp->projection.args[map_tmp->projection.numargs ++] =
+            msStrdup(layer->projection.args[i]);
+      }
+    }
+    if (map_tmp->projection.numargs != 0) {
+      msProcessProjection(&(map_tmp->projection));
+    }
+#endif
+    map_tmp->projection.wellknownprojection = layer->projection.wellknownprojection;
+  }
+
+  if( bHasLonWrap && dfLonWrap == 180.0) {
+    if( map_tmp->extent.minx >= 180 ) {
+      /* Request on the right half of the shifted raster (= western hemisphere) */
+      map_tmp->extent.minx -= 360;
+      map_tmp->extent.maxx -= 360;
+    }
+    else if( map_tmp->extent.maxx >= 180.0 ) {
+      /* Request spanning on the 2 hemispheres => drawing whole planet */
+      /* Take only into account vertical resolution, as horizontal one */
+      /* will be unreliable (assuming square pixels...) */
+      map_cellsize = MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height);
+      map_tmp->cellsize = map_cellsize*spacing;
+
+      width = 360.0 / map_tmp->cellsize;
+      map_tmp->extent.minx = -180.0+(0.5*map_tmp->cellsize);
+      map_tmp->extent.maxx = 180.0-(0.5*map_tmp->cellsize);
+    }
+  }
+
+  if (layer->debug)
+    msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
+            width, height, map_tmp->cellsize);
 
   if (layer->debug == 5)
     msDebug("msUVRASTERLayerWhichShapes(): extent: %g %g %g %g\n",
@@ -652,6 +697,8 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
   decrypted_path = msDecryptStringTokens( map, szPath );
+
+  GDALAllRegister();
 
   msAcquireLock( TLOCK_GDAL );
   if( decrypted_path ) {
