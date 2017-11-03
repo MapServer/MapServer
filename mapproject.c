@@ -979,6 +979,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #else
   char *over = "+over";
   int ret;
+  int bFreeInOver = MS_FALSE;
+  int bFreeOutOver = MS_FALSE;
   projectionObj in_over,out_over,*inp,*outp;
   double dfLonWrap = 0.0;
 
@@ -1034,6 +1036,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
    */ 
   else {
     if(out) {
+      bFreeOutOver = MS_TRUE;
       msInitProjection(&out_over);
       msCopyProjectionExtended(&out_over,out,&over,1);
       outp = &out_over;
@@ -1041,6 +1044,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       outp = out;
     }
     if(in) {
+      bFreeInOver = MS_TRUE;
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
       inp = &in_over;
@@ -1049,9 +1053,9 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     }
   }
   ret = msProjectRectAsPolygon(inp,outp, rect );
-  if(in)
+  if(bFreeInOver)
     msFreeProjection(&in_over);
-  if(out)
+  if(bFreeOutOver)
     msFreeProjection(&out_over);
   return ret;
 #endif
