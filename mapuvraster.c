@@ -698,6 +698,8 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
   decrypted_path = msDecryptStringTokens( map, szPath );
 
+  GDALAllRegister();
+
   msAcquireLock( TLOCK_GDAL );
   if( decrypted_path ) {
     hDS = GDALOpen(decrypted_path, GA_ReadOnly );

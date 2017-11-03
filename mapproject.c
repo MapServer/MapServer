@@ -930,7 +930,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /*      logic.                                                          */
   /* -------------------------------------------------------------------- */
   if( out && pj_is_latlong(out->proj) && in && !pj_is_latlong(in->proj)
-      && rect->maxx - rect->minx > 360.0 ) {
+      && rect->maxx - rect->minx > 360.0 && !out->gt.need_geotransform ) {
     rect->maxx = 180;
     rect->minx = -180;
   }
