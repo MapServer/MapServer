@@ -623,7 +623,7 @@ const char *msExpressionTokenToString(int token) {
     case MS_TOKEN_COMPARISON_GE: return " >= ";
     case MS_TOKEN_COMPARISON_LT: return " < ";
     case MS_TOKEN_COMPARISON_LE: return " <= ";
-    case MS_TOKEN_COMPARISON_IEQ: return "";
+    case MS_TOKEN_COMPARISON_IEQ: return " ilike ";
     case MS_TOKEN_COMPARISON_RE: return " ~ ";
     case MS_TOKEN_COMPARISON_IRE: return " ~* ";
     case MS_TOKEN_COMPARISON_IN: return " in ";
