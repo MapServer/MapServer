@@ -2038,17 +2038,9 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
       }
 
       if(projection->proj != NULL && pj_is_latlong(projection->proj)) {
-        if (swapAxes == MS_FALSE) {
-          strlcpy(axisLabels, "long lat", sizeof(axisLabels));
-        } else {
-          strlcpy(axisLabels, "lat long", sizeof(axisLabels));
-        }
+        strlcpy(axisLabels, "long lat", sizeof(axisLabels));
       } else {
-        if (swapAxes == MS_FALSE) {
-          strlcpy(axisLabels, "x y", sizeof(axisLabels));
-        } else {
-          strlcpy(axisLabels, "y x", sizeof(axisLabels));
-        }
+        strlcpy(axisLabels, "x y", sizeof(axisLabels));
       }
 
       xmlNewChild(psGrid, psGmlNs, BAD_CAST "axisLabels", BAD_CAST axisLabels);
