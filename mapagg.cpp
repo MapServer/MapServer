@@ -67,11 +67,6 @@
 #include <pixman.h>
 #endif
 
-#ifdef AGG_ALIASED_ENABLED
-#include "renderers/agg/include/agg_renderer_primitives.h"
-#include "renderers/agg/include/agg_rasterizer_outline.h"
-#endif
-
 typedef mapserver::order_bgra band_order;
 
 #define AGG_LINESPACE 1.33
@@ -96,10 +91,6 @@ typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
 typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
 
-#ifdef AGG_ALIASED_ENABLED
-typedef mapserver::renderer_primitives<renderer_base> renderer_primitives;
-typedef mapserver::rasterizer_outline<renderer_primitives> rasterizer_outline;
-#endif
 static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
 
 #define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
@@ -117,11 +108,6 @@ class AGG2Renderer
 public:
 
   AGG2Renderer()
-#ifdef AGG_ALIASED_ENABLED
-    :
-    m_renderer_primitives(m_renderer_base),
-    m_rasterizer_primitives(m_renderer_primitives)
-#endif
   {
     stroke = NULL;
     dash = NULL;
@@ -148,10 +134,6 @@ public:
   compop_renderer_base m_compop_renderer_base;
   renderer_scanline m_renderer_scanline;
   renderer_scanline_aliased m_renderer_scanline_aliased;
-#ifdef AGG_ALIASED_ENABLED
-  renderer_primitives m_renderer_primitives;
-  rasterizer_outline m_rasterizer_primitives;
-#endif
   rasterizer_scanline m_rasterizer_aa;
   rasterizer_scanline m_rasterizer_aa_gamma;
   mapserver::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger
@@ -202,14 +184,6 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
 
   AGG2Renderer *r = AGG_RENDERER(img);
   line_adaptor lines = line_adaptor(p);
-  
- 
-#ifdef AGG_ALIASED_ENABLED
-  r->m_rasterizer_primitives.reset();
-  r->m_renderer_primitives.line_color(aggColor(style->color));
-  r->m_rasterizer_primitives.add_path(lines);
-  return MS_SUCCESS;
-#endif
 
   r->m_rasterizer_aa.reset();
   r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);

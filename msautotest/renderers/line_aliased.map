@@ -1,0 +1,35 @@
+# RUN_PARMS: line_aliased.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+#
+map
+
+imagetype png
+size 400 300
+extent -166.245673 -55.551347 174.019748 53.883753
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+OUTPUTFORMAT
+      NAME "png"
+	  DRIVER AGG/PNG
+	  MIMETYPE "image/png"
+	  IMAGEMODE RGBA
+	  EXTENSION "png"
+	  FORMATOPTION "GAMMA=1.0"
+END
+
+layer
+    type line
+    data "testlines"
+    status default
+    name "lines"
+    class
+        style
+            color 128 128 128
+            width 5
+            ANTIALIAS FALSE            
+        end
+    end
+end
+
+end
