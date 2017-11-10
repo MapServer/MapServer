@@ -2009,12 +2009,18 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
 {
   xmlNodePtr psDomainSet, psGrid, psLimits, psGridEnvelope, psOrigin,
              psOffsetX, psOffsetY;
-  char low[100], high[100], id[100], point[100], resx[100], resy[100], axisLabels[100];
+  char low[100], high[100], id[100], point[100];
+  char offsetVector1[100], offsetVector2[100], axisLabels[100];
 
   psDomainSet = xmlNewChild( psRoot, psGmlNs, BAD_CAST "domainSet", NULL);
   {
     psGrid = xmlNewChild(psDomainSet, psGmlNs, BAD_CAST "RectifiedGrid", NULL);
     {
+      double x0 = cm->geotransform[0]+cm->geotransform[1]/2+cm->geotransform[2]/2;
+      double y0 = cm->geotransform[3]+cm->geotransform[4]/2+cm->geotransform[5]/2;
+      double resx = cm->geotransform[1];
+      double resy = cm->geotransform[5];
+
       xmlNewProp(psGrid, BAD_CAST "dimension", BAD_CAST "2");
       snprintf(id, sizeof(id), "grid_%s", layer->name);
       xmlNewNsProp(psGrid, psGmlNs, BAD_CAST "id", BAD_CAST id);
@@ -2032,17 +2038,9 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
       }
 
       if(projection->proj != NULL && pj_is_latlong(projection->proj)) {
-        if (swapAxes == MS_FALSE) {
-          strlcpy(axisLabels, "long lat", sizeof(axisLabels));
-        } else {
-          strlcpy(axisLabels, "lat long", sizeof(axisLabels));
-        }
+        strlcpy(axisLabels, "long lat", sizeof(axisLabels));
       } else {
-        if (swapAxes == MS_FALSE) {
-          strlcpy(axisLabels, "x y", sizeof(axisLabels));
-        } else {
-          strlcpy(axisLabels, "y x", sizeof(axisLabels));
-        }
+        strlcpy(axisLabels, "x y", sizeof(axisLabels));
       }
 
       xmlNewChild(psGrid, psGmlNs, BAD_CAST "axisLabels", BAD_CAST axisLabels);
@@ -2050,9 +2048,9 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
       psOrigin = xmlNewChild(psGrid, psGmlNs, BAD_CAST "origin", NULL);
       {
         if (swapAxes == MS_FALSE) {
-          snprintf(point, sizeof(point), "%f %f", cm->extent.minx, cm->extent.maxy);
+          snprintf(point, sizeof(point), "%f %f", x0, y0);
         } else {
-          snprintf(point, sizeof(point), "%f %f", cm->extent.maxy, cm->extent.minx);
+          snprintf(point, sizeof(point), "%f %f", y0, x0);
         }
         psOrigin = xmlNewChild(psOrigin, psGmlNs, BAD_CAST "Point", NULL);
         snprintf(id, sizeof(id), "grid_origin_%s", layer->name);
@@ -2063,14 +2061,14 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
       }
 
       if (swapAxes == MS_FALSE) {
-        snprintf(resx, sizeof(resx), "%f 0", cm->xresolution);
-        snprintf(resy, sizeof(resy), "0 %f", -fabs(cm->yresolution));
+        snprintf(offsetVector1, sizeof(offsetVector1), "%f 0", resx);
+        snprintf(offsetVector2, sizeof(offsetVector2), "0 %f", resy);
       } else {
-        snprintf(resx, sizeof(resx), "0 %f", cm->xresolution);
-        snprintf(resy, sizeof(resy), "%f 0", -fabs(cm->yresolution));
+        snprintf(offsetVector1, sizeof(offsetVector1), "0 %f", resx);
+        snprintf(offsetVector2, sizeof(offsetVector2), "%f 0", resy);
       }
-      psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
-      psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
+      psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST offsetVector1);
+      psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST offsetVector2);
 
       xmlNewProp(psOffsetX, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
       xmlNewProp(psOffsetY, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
