@@ -736,7 +736,7 @@ int msQueryByFilter(mapObj *map)
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
-    if(status != MS_SUCCESS) goto query_error;
+    if(status != MS_SUCCESS) return MS_FAILURE;
     msLayerEnablePaging(lp, paging);
 
     /* disable driver paging */
