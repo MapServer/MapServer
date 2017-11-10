@@ -864,10 +864,10 @@ int msQueryByFilter(mapObj *map)
 
 query_error:
   // msFree(lp->filteritem);
-  // lp->filteritem = old_filteritem;
-  // msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-  // msFreeExpression(&old_filter);
-  // msLayerClose(lp);
+  lp->filteritem = old_filteritem;
+  msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+  msFreeExpression(&old_filter);
+  msLayerClose(lp);
   return MS_FAILURE;
 }
 
