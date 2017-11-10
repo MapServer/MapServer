@@ -7140,6 +7140,25 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
   return;
 }
 
+static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableObj *table)
+{
+	int i;
+	const char *default_key = msFirstKeyFromHashTable(table);
+	while (default_key) {
+		if (!strncmp(default_key, "default_", 8)) {
+			size_t buffer_size = (strlen(default_key) - 5);
+			char *to = msLookupHashTable(table, default_key);
+			char *tag = (char *)msSmallMalloc(buffer_size);
+			snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+
+			hashTableSubstituteString(hashTab, tag, to);
+			free(tag);
+		}
+		default_key = msNextKeyFromHashTable(table, default_key);
+	}
+	return;
+}
+
 /*
 ** Loop through layer metadata for keys that have a default_%key% pattern to replace
 ** remaining %key% entries by their default value.
@@ -7165,6 +7184,7 @@ void msApplyDefaultSubstitutions(mapObj *map)
     applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* ...then layer settings... */
     applyLayerDefaultSubstitutions(layer, &(map->web.validation)); /* ...and finally web settings */
   }
+  applyHashTableDefaultSubstitutions(&map->web.metadata, &(map->web.validation));
 }
 
 char *_get_param_value(const char *key, char **names, char **values, int npairs) {
