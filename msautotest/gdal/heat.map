@@ -92,26 +92,26 @@ layer
     type POINT
     data "data/pnts.shp"
     CLASS
-     MAXSCALE 255000000
+     MAXSCALEDENOM 255000000
      STYLE
       SIZE [VAL]
      END
     END
     CLASS
-     MAXSCALE 265000000
+     MAXSCALEDENOM 265000000
      STYLE
       SIZE 0.1
      END
     END
     CLASS
-     MAXSCALE 275000000
+     MAXSCALEDENOM 275000000
      EXPRESSION ([VAL]>1)
      STYLE
       SIZE 1
      END
     END
     CLASS
-     MAXSCALE 275000000
+     MAXSCALEDENOM 275000000
      STYLE
       SIZE 2
      END
