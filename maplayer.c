@@ -1606,18 +1606,7 @@ char* msLayerBuildSQLOrderBy(layerObj *layer)
     int i;
     for(i=0;i<layer->sortBy.nProperties;i++) {
       char* escaped = msLayerEscapePropertyName(layer, layer->sortBy.properties[i].item);
-      //Enclose property name in double quotes (if it isn't yet) to ensure that mixed case property names are supported
-      if (escaped[0] != '"')
-      {
-        size_t propertyLen = strlen(escaped);
-        escaped = msSmallRealloc(escaped, propertyLen + 3);
-        memmove(escaped + 1, escaped, propertyLen);
-        escaped[0] = '\"';
-        escaped[propertyLen+1] = '\"';
-        escaped[propertyLen + 2] = 0;
-
-      }
-      if (i > 0)
+      if( i > 0 )
         strOrderBy = msStringConcatenate(strOrderBy, ", ");
       strOrderBy = msStringConcatenate(strOrderBy, escaped);
       if( layer->sortBy.properties[i].sortOrder == SORT_DESC )
