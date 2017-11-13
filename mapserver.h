@@ -1422,6 +1422,8 @@ typedef struct labelObj labelObj;
 #endif /* not SWIG */
     int postlabelcache;
     int align;
+    int offsetx;
+    int offsety;
   } scalebarObj;
 
   /************************************************************************/
