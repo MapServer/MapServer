@@ -736,7 +736,7 @@ int msQueryByFilter(mapObj *map)
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
-    if(status != MS_SUCCESS) goto query_error;
+    if(status != MS_SUCCESS) return MS_FAILURE;
     msLayerEnablePaging(lp, paging);
 
     /* disable driver paging */
@@ -864,10 +864,10 @@ int msQueryByFilter(mapObj *map)
 
 query_error:
   // msFree(lp->filteritem);
-  // lp->filteritem = old_filteritem;
-  // msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-  // msFreeExpression(&old_filter);
-  // msLayerClose(lp);
+  lp->filteritem = old_filteritem;
+  msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+  msFreeExpression(&old_filter);
+  msLayerClose(lp);
   return MS_FAILURE;
 }
 
