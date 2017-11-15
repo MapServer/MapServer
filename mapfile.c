@@ -305,7 +305,10 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
 {
   char szLibPath[MS_MAXPATHLEN] = { '\0' };
   char szLibPathExt[MS_MAXPATHLEN] = { '\0' };
-  const char *plugin_dir = msLookupHashTable( &(map->configoptions), "MS_PLUGIN_DIR");
+  const char *plugin_dir = NULL;
+  
+  if (map)
+    plugin_dir = msLookupHashTable(&(map->configoptions), "MS_PLUGIN_DIR");
 
   /* do nothing on windows, filename without .dll will be loaded by default*/
 #if !defined(_WIN32)
