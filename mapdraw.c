@@ -959,6 +959,14 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
       int bDone = MS_FALSE;
 
+      if( layer->connectiontype == MS_UVRASTER )
+      {
+          /* Nasty hack to make msUVRASTERLayerWhichShapes() aware that the */
+          /* original area of interest is (map->extent, map->projection)... */
+          /* Useful when dealin with UVRASTER that extend beyond 180 deg */
+          msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, map );
+      }
+
       /* For UVRaster, it is important that the searchrect is not too large */
       /* to avoid insufficient intermediate raster resolution, which could */
       /* happen if we use the default code path, given potential reprojection */
@@ -1058,6 +1066,12 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
+
+  if( layer->connectiontype == MS_UVRASTER )
+  {
+    msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, NULL );
+  }
+
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);
     return MS_SUCCESS;
