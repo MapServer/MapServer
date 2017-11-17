@@ -2516,6 +2516,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
 
   int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
+  void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj* layer, mapObj* map);
 
   /* ==================================================================== */
   /*      Prototypes for functions in mapdraw.c                           */

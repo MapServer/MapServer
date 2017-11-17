@@ -690,14 +690,23 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     }
 
     if(layer->connectiontype != MS_KERNELDENSITY) {
+      char* pszPath;
       if(strlen(filename) == 0) continue;
 
       if(layer->debug == MS_TRUE)
         msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
 
-      msDrawRasterBuildRasterPath(map, layer, filename, szPath);
+      if( strncmp(filename, "<VRTDataset", strlen("<VRTDataset")) == 0 )
+      {
+        pszPath = filename;
+      }
+      else
+      {
+        msDrawRasterBuildRasterPath(map, layer, filename, szPath);
+        pszPath = szPath;
+      }
       if(layer->debug == MS_TRUE)
-        msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
+        msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, pszPath);
 
       /*
        ** Note: because we do decryption after the above path expansion
@@ -706,7 +715,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
        ** components. But that is mostly ok, since stuff like sde,postgres and
        ** oracle georaster do not use real paths.
        */
-      decrypted_path = msDecryptStringTokens( map, szPath );
+      decrypted_path = msDecryptStringTokens( map, pszPath );
       if( decrypted_path == NULL )
         return MS_FAILURE;
 

@@ -3975,7 +3975,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
   vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   //vtable->LayerSetTimeFilter = msOracleSpatialLayerSetTimeFilter;
-  vtable->LayerEscapePropertyName = msOracleSpatialEscapePropertyName;
+  //vtable->LayerEscapePropertyName = msOracleSpatialEscapePropertyName;
   /* layer->vtable->LayerGetNumFeatures, use default */
   /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
   vtable->LayerEnablePaging = msOracleSpatialEnablePaging;
@@ -4010,7 +4010,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   //layer->vtable->LayerSetTimeFilter = msOracleSpatialLayerSetTimeFilter;
-  layer->vtable->LayerEscapePropertyName = msOracleSpatialEscapePropertyName;
+  //layer->vtable->LayerEscapePropertyName = msOracleSpatialEscapePropertyName;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
   /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
