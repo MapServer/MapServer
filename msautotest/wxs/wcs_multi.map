@@ -120,7 +120,7 @@ LAYER
    "wcs_imagemode" "BYTE"
 
    "wcs_bandcount" "9"
-   "wcs_rangeset_axes" "Band1 Band2 Band3 Band4 Band5 Band6 Band7 Band8 Band9"
+   "wcs_rangeset_axes" "bands"
    "wcs_rangeset_name" "Landsat 5 TM Bands"
    "wcs_rangeset_label" "Bands"
    "wcs_rangeset_description" "Bands for Landsat 5 TM"
@@ -153,6 +153,7 @@ LAYER
    "wcs_imagemode" "BYTE"
 
    "wcs_bandcount" "9"
+   "wcs_rangeset_axes" "bands"
    "wcs_band_names" "Band1 Band2 Band3 Band4 Band5 Band6 Band7 Band8 Band9"
 
     #default values

@@ -30,7 +30,7 @@ Content-Type: text/xml; charset=UTF-8
     </gml:domainSet>
     <gmlcov:rangeType>
       <swe:DataRecord>
-        <swe:field name="bands">
+        <swe:field name="Band1">
           <swe:Quantity>
             <swe:description>Test description</swe:description>
             <swe:nilValues>
