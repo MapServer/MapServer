@@ -1630,7 +1630,7 @@ Version 5.4.0-beta1 (2009-2-18):
 
 - Fixed a scalebar rounding problem causing to draw zero scalebar width (#2890)
 
-- SLD: if it conatins a Filer Encoding tag, try to always set the
+- SLD: if it contains a Filter Encoding tag, try to always set the
   layer's FILTER element (#2889)
 
 - Add support for rendering INLINE layers with layer attributes (items) (#2870)
