@@ -2681,7 +2681,26 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       } else if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", wcs11_band_names_key)) != NULL ) {
         keys = wcs11_keys;
         interval_key = wcs11_interval_key;
-        band_names = msStringSplit(value, ' ', &num_band_names);
+        /* "bands" has a special processing in WCS 1.0. See */
+        /* msWCSSetDefaultBandsRangeSetInfo */
+        if( EQUAL(value, "bands") )
+        {
+            num_band_names = cm->numbands;
+            band_names = (char**) msSmallMalloc( sizeof(char*) * num_band_names );
+            for( i = 0; i < num_band_names; i++ )
+            {
+                char szName[30];
+                snprintf(szName, sizeof(szName), "Band%d", i+1);
+                band_names[i] = msStrdup(szName);
+            }
+        }
+        else
+        {
+            /* WARNING: in WCS 1.x,, "rangeset_axes" has never been intended */
+            /* to contain the list of band names... This code should probably */
+            /* be removed */
+            band_names = msStringSplit(value, ' ', &num_band_names);
+        }
       }
 
       /* return with error when number of bands does not match    */
@@ -3752,13 +3771,29 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   maxlen = cm->numbands * 4 * sizeof(char);
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
 
-  if (NULL == (tmp = msOWSGetEncodeMetadata(&layer->metadata,
-                     "CO", "rangeset_axes", NULL))) {
-    tmp = msOWSGetEncodeMetadata(&layer->metadata,
+  /* Use WCS 2.0 metadata items in priority */
+  tmp = msOWSGetEncodeMetadata(&layer->metadata,
                                  "CO", "band_names", NULL);
+  if( NULL == tmp ) {
+      /* Otherwise default to WCS 1.x*/
+      tmp = msOWSGetEncodeMetadata(&layer->metadata,
+                     "CO", "rangeset_axes", NULL);
+      /* "bands" has a special processing in WCS 1.0. See */
+      /* msWCSSetDefaultBandsRangeSetInfo */
+      if( tmp != NULL && EQUAL(tmp, "bands") )
+      {
+        int num_band_names = cm->numbands;
+        band_ids = (char**) msSmallCalloc( sizeof(char*), (num_band_names + 1) );
+        for( i = 0; i < num_band_names; i++ )
+        {
+            char szName[30];
+            snprintf(szName, sizeof(szName), "Band%d", i+1);
+            band_ids[i] = msStrdup(szName);
+        }
+      }
   }
 
-  if(NULL != tmp) {
+  if(NULL != tmp && band_ids == NULL) {
     band_ids = CSLTokenizeString2(tmp, " ", 0);
     msFree(tmp);
   }
