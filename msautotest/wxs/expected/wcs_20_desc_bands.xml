@@ -352,7 +352,7 @@
             </swe:constraint>
           </swe:Quantity>
         </swe:field>
-        <swe:field name="Band9">
+        <swe:field name="myBand9">
           <swe:Quantity definition="DefaultDefinition">
             <swe:description>Default description</swe:description>
             <swe:nilValues>
