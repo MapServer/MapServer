@@ -3132,9 +3132,9 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
         pszEscapedStr[j++] = '\\';
       } else
         pszEscapedStr[j++] = c;
-    } else if  (c == pszSingle[0]) {
+    } else if (c == pszSingle[0]) {
       pszEscapedStr[j++] = '_';
-    } else if  (c == pszEscape[0]) {
+    } else if (c == pszEscape[0]) {
       pszEscapedStr[j++] = pszEscape[0];
       if (i+1<nLength) {
         char nextC = pszValue[i+1];
@@ -3142,6 +3142,9 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
         if (nextC == '\'') {
           pszEscapedStr[j++] = '\'';
           pszEscapedStr[j++] = '\'';
+        } else if (nextC == '\\') {
+          pszEscapedStr[j++] = '\\';
+          pszEscapedStr[j++] = '\\';
         } else
           pszEscapedStr[j++] = nextC;
       }
