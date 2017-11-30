@@ -837,7 +837,7 @@ static int FLTIsGeometryFilterNodeType(int eType)
 /************************************************************************/
 /*                          FLTFreeFilterEncodingNode                   */
 /*                                                                      */
-/*      recursive freeing of Filer Encoding nodes.                      */
+/*      recursive freeing of Filter Encoding nodes.                      */
 /************************************************************************/
 void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
 {
@@ -884,7 +884,7 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 /*                         FLTCreateFilterEncodingNode                  */
 /*                                                                      */
-/*      return a FilerEncoding node.                                    */
+/*      return a FilterEncoding node.                                    */
 /************************************************************************/
 FilterEncodingNode *FLTCreateFilterEncodingNode(void)
 {
@@ -1010,7 +1010,7 @@ static CPLXMLNode* FLTGetNextSibblingNode(CPLXMLNode* psXMLNode)
 /*                           FLTInsertElementInNode                     */
 /*                                                                      */
 /*      Utility function to parse an XML node and transfter the         */
-/*      contents into the Filer Encoding node structure.               */
+/*      contents into the Filter Encoding node structure.               */
 /************************************************************************/
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode)
@@ -2076,7 +2076,7 @@ const char* FLTGetDuring(FilterEncodingNode *psFilterNode, const char** ppszTime
 /************************************************************************/
 /*                          GetMapserverExpression                      */
 /*                                                                      */
-/*      Return a mapserver expression base on the Filer encoding nodes. */
+/*      Return a mapserver expression base on the Filter encoding nodes. */
 /************************************************************************/
 char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
