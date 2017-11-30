@@ -1009,7 +1009,7 @@ static CPLXMLNode* FLTGetNextSibblingNode(CPLXMLNode* psXMLNode)
 /************************************************************************/
 /*                           FLTInsertElementInNode                     */
 /*                                                                      */
-/*      Utility function to parse an XML node and transfter the         */
+/*      Utility function to parse an XML node and transfer the          */
 /*      contents into the Filter Encoding node structure.               */
 /************************************************************************/
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
