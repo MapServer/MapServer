@@ -2107,7 +2107,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   /* mapfile.c */
 
-  MS_DLL_EXPORT int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4);
+  MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4);
   MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
   MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
@@ -2260,7 +2260,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msStringInArray( const char * pszString, char **array, int numelements);
 
 #ifndef HAVE_STRRSTR
-  MS_DLL_EXPORT char *strrstr(char *string, char *find);
+  MS_DLL_EXPORT char *strrstr(const char *string, const char *find);
 #endif /* NEED_STRRSTR */
 
 #ifndef HAVE_STRCASESTR

@@ -342,7 +342,7 @@ int isOn(mapservObj *mapserv, char *name, char *group)
 /*                                                                      */
 /*      sorth the displaying in ascending or descending order.          */
 /************************************************************************/
-int sortLayerByOrder(mapObj *map, char* pszOrder)
+int sortLayerByOrder(mapObj *map, const char* pszOrder)
 {
   int *panCurrentOrder = NULL;
   int i = 0;
@@ -381,12 +381,10 @@ int sortLayerByOrder(mapObj *map, char* pszOrder)
  * This function set the map->layerorder
  * index order by the metadata collumn name
 */
-int sortLayerByMetadata(mapObj *map, char* pszMetadata)
+static int sortLayerByMetadata(mapObj *map, const char* pszMetadata)
 {
   int nLegendOrder1;
   int nLegendOrder2;
-  char *pszLegendOrder1;
-  char *pszLegendOrder2;
   int i, j;
   int tmp;
 
@@ -432,8 +430,8 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
   */
   for (i=0; i<map->numlayers-1; i++) {
     for (j=0; j<map->numlayers-1-i; j++) {
-      pszLegendOrder1 = msLookupHashTable(&(GET_LAYER(map, map->layerorder[j+1])->metadata), pszMetadata);
-      pszLegendOrder2 = msLookupHashTable(&(GET_LAYER(map, map->layerorder[j])->metadata), pszMetadata);
+      const char* pszLegendOrder1 = msLookupHashTable(&(GET_LAYER(map, map->layerorder[j+1])->metadata), pszMetadata);
+      const char* pszLegendOrder2 = msLookupHashTable(&(GET_LAYER(map, map->layerorder[j])->metadata), pszMetadata);
 
       if(!pszLegendOrder1 || !pszLegendOrder2)
         continue;
@@ -683,7 +681,8 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
 {
   /*   char *pszNextInstr = pszInstr; */
   char *pszStart, *pszEnd=NULL;
-  char *pszName, *pszValue, *pszOperator, *pszThen=NULL, *pszHTValue;
+  const char *pszName, *pszValue, *pszOperator, *pszHTValue;
+  char *pszThen=NULL;
   char *pszIfTag;
   char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
   int nInst = 0;
@@ -850,12 +849,12 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 {
   char *preTag, *postTag; /* text before and after the tag */
 
-  char *argValue;
+  const char *argValue;
   char *tag, *tagInstance, *tagStart;
   hashTableObj *tagArgs=NULL;
 
   int limit=-1;
-  char *trimLast=NULL;
+  const char *trimLast=NULL;
 
   int i, j, status;
 
@@ -995,8 +994,8 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   char *tag, *tagStart;
   hashTableObj *tagArgs=NULL;
 
-  char *layerName=NULL;
-  char *nodata=NULL;
+  const char *layerName=NULL;
+  const char *nodata=NULL;
 
   int layerIndex=-1;
   layerObj *lp;
@@ -1107,7 +1106,8 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
-  char *content=NULL, *processedContent=NULL, *src=NULL;
+  char *content=NULL, *processedContent=NULL;
+  const char *src=NULL;
 
   FILE *includeStream;
   char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
@@ -1195,10 +1195,10 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
   int tagLength;
   char *encodedTagValue=NULL, *tagValue=NULL;
 
-  char *argValue=NULL;
+  const char *argValue=NULL;
 
-  char *name=NULL, *pattern=NULL;
-  char *format=NULL, *nullFormat=NULL;
+  const char *name=NULL, *pattern=NULL;
+  const char *format=NULL, *nullFormat=NULL;
   int precision;
   int uc, lc, commify;
   int escape;
@@ -1360,8 +1360,6 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 */
 static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent, projectionObj *rectProj)
 {
-  char *argValue;
-
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
@@ -1369,16 +1367,10 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   char *encodedTagValue=NULL, *tagValue=NULL;
 
   rectObj tempExtent;
-  double xExpand, yExpand;
+  int escape;
 
   char number[64]; /* holds a single number in the extent */
   char numberFormat[16];
-  char *format;
-
-  int precision;
-  int escape;
-
-  char *projectionString=NULL;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processExtentTag()");
@@ -1394,21 +1386,22 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   if(strstr(name, "_esc")) escape = ESCAPE_URL;
 
   while(tagStart) {
-    xExpand = yExpand = 0; /* set tag argument defaults */
-    precision = -1;
-    format = "$minx $miny $maxx $maxy";
+    double xExpand = 0, yExpand = 0; /* set tag argument defaults */
+    int precision = -1;
+    const char* format = "$minx $miny $maxx $maxy";
+    const char* projectionString = NULL;
+
     if(strstr(name, "_esc"))
       escape = ESCAPE_URL;
     else
       escape = ESCAPE_HTML;
-    projectionString = NULL;
 
     tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
     if(getTagArgs(name, tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "expand");
+      const char* argValue = msLookupHashTable(tagArgs, "expand");
       if(argValue) {
         if(strchr(argValue, '%') != NULL) {
           float f;
@@ -1531,9 +1524,9 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
   char *tagValue=NULL;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
-  char *format;
-  char *argValue=NULL;
-  char *projectionString=NULL;
+  const char *format;
+  const char *argValue=NULL;
+  const char *projectionString=NULL;
   shapeObj tShape;
   int precision=0;
   int clip_to_map=MS_TRUE;
@@ -1850,8 +1843,8 @@ static int processDateTag(char **line)
   int tagOffset, tagLength;
 #define DATE_BUFLEN 1024
   char datestr[DATE_BUFLEN];
-  char *argValue=NULL;
-  char *format, *tz; /* tag parameters */
+  const char *argValue=NULL;
+  const char *format, *tz; /* tag parameters */
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processDateTag()");
@@ -1937,7 +1930,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
-  char *argValue=NULL;
+  const char *argValue=NULL;
   char *pointFormat1=NULL, *pointFormat2=NULL;
   int pointFormatLength;
 
@@ -1946,19 +1939,19 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring, or=outer ring
   **   last char - h=header, f=footer, s=seperator
   */
-  char *xh, *xf, *yh, *yf;
-  char *cs;
-  char *ph, *pf, *ps;
-  char *sh, *sf;
-  char *irh, *irf; /* inner ring: necessary for complex polygons */
-  char *orh, *orf; /* outer ring */
+  const char *xh, *xf, *yh, *yf;
+  const char *cs;
+  const char *ph, *pf, *ps;
+  const char *sh, *sf;
+  const char *irh, *irf; /* inner ring: necessary for complex polygons */
+  const char *orh, *orf; /* outer ring */
 
   int centroid;
   int precision;
 
   double scale_x, scale_y;
 
-  char *projectionString=NULL;
+  const char *projectionString=NULL;
 
   shapeObj tShape;
   char *coords=NULL, point[128];
@@ -2289,8 +2282,8 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
   /* char *pszNextInstr = pszInstr; */
   char *pszEnd, *pszStart;
   char *pszMetadataTag;
-  char *pszHashName;
-  char *pszHashValue;
+  const char *pszHashName;
+  const char *pszHashValue;
   int nLength, nOffset;
 
   hashTableObj *metadataArgs = NULL;
@@ -2505,7 +2498,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
   hashTableObj *myHashTable;
   char pszStatus[3];
   char *pszClassImg;
-  char *pszOptFlag = NULL;
+  const char *pszOptFlag = NULL;
   int i, j;
   int nOptFlag = 15;
   int bShowGroup;
@@ -2659,7 +2652,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
   char szType[10];
 
   int nOptFlag=0;
-  char *pszOptFlag = NULL;
+  const char *pszOptFlag = NULL;
   char *pszClassImg;
 
   char szTmpstr[128]; /* easily big enough for the couple of instances we need */
@@ -2796,7 +2789,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
 
   char *pszClassImg;
   int nOptFlag=0;
-  char *pszOptFlag = NULL;
+  const char *pszOptFlag = NULL;
 
   char szTmpstr[128]; /* easily big enough for the couple of instances we need */
 
@@ -2944,15 +2937,15 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
   struct stat tmpStat;
 
-  char *pszOrderMetadata = NULL;
-  char *pszOrder = NULL;
+  const char *pszOrderMetadata = NULL;
+  const char *pszOrder = NULL;
 
   int i,j,k;
   char **papszGroups = NULL;
   int nGroupNames = 0;
 
   int nLegendOrder = 0;
-  char *pszOrderValue;
+  const char *pszOrderValue;
 
   hashTableObj *groupArgs = NULL;
   hashTableObj *layerArgs = NULL;

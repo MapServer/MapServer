@@ -204,7 +204,7 @@ face_element* msGetFontFace(char *key, fontSetObj *fontset) {
   }
   UT_HASH_FIND_STR(cache->face_cache,key,fc);
   if(!fc) {
-    char *fontfile = NULL;
+    const char *fontfile = NULL;
     fc = msSmallCalloc(1,sizeof(face_element));
     if(fontset && strcmp(key,MS_DEFAULT_FONT_KEY)) {
       fontfile = msLookupHashTable(&(fontset->fonts),key);

@@ -2440,7 +2440,8 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 static const char *msWCSLookupRangesetAxisMetadata20(hashTableObj *table,
     const char *axis, const char *item)
 {
-  char buf[500], *value;
+  char buf[500];
+  const char* value;
 
   if(table == NULL || axis == NULL || item == NULL) {
     return NULL;

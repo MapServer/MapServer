@@ -280,7 +280,7 @@ int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
       /* data_cellsize is only set with contour layer */
       if (layer->connectiontype == MS_CONTOUR)
       {
-        char *value = msLookupHashTable(&layer->metadata, "__data_cellsize__");
+        const char *value = msLookupHashTable(&layer->metadata, "__data_cellsize__");
         if (value)
           p.dblval2 = atof(value);
       }

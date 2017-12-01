@@ -94,7 +94,7 @@ char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL"
 ** Validates a string (value) against a series of patterns. We support up to four to allow cascading from classObj to
 ** layerObj to webObj plus a legacy pattern like TEMPLATEPATTERN.
 */
-int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4)
+int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4)
 {
   if(msEvalRegex(pattern1, value) == MS_TRUE) return MS_SUCCESS;
   if(msEvalRegex(pattern2, value) == MS_TRUE) return MS_SUCCESS;
@@ -7141,7 +7141,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
   while(default_key) {
     if(!strncmp(default_key,"default_",8)) {
       size_t buffer_size = (strlen(default_key)-5);
-      char *to = msLookupHashTable(table, default_key);
+      const char *to = msLookupHashTable(table, default_key);
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
@@ -7163,7 +7163,7 @@ static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableO
 	while (default_key) {
 		if (!strncmp(default_key, "default_", 8)) {
 			size_t buffer_size = (strlen(default_key) - 5);
-			char *to = msLookupHashTable(table, default_key);
+			const char *to = msLookupHashTable(table, default_key);
 			char *tag = (char *)msSmallMalloc(buffer_size);
 			snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 

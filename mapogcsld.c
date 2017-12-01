@@ -3187,7 +3187,6 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
   int nSymbol = -1;
   symbolObj *psSymbol = NULL;
   char szTmp[512];
-  char *pszURL = NULL;
   char szFormat[4];
   int i = 0, nLength = 0;
   int bFillColor = 0, bColorAvailable=0;
@@ -3362,7 +3361,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           bGenerateDefaultSymbol =1;
       } else if (psSymbol->type == MS_SYMBOL_PIXMAP || psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
-          pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
+          const char *pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
           if (!pszURL)
             pszURL = msLookupHashTable(&(psLayer->map->web.metadata), "WMS_SLD_SYMBOL_URL");
 
