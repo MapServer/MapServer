@@ -2810,7 +2810,6 @@ int computeMarkerBounds(mapObj *map, pointObj *annopoint, textSymbolObj *ts, lab
 int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc)
 {
   int i;
-  pointObj p;
   textSymbolObj *s; /* shortcut */
   textSymbolObj *ts;
   rectObj buffered;
