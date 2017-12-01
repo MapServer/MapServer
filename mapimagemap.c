@@ -641,7 +641,7 @@ int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, la
  * Save an image to a file named filename, if filename is NULL it goes to stdout
  */
 
-int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
+int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
 
 {
   FILE *stream;

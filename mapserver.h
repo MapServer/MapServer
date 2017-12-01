@@ -1991,7 +1991,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 #endif /*SWIG*/
 
   /* Function prototypes, wrapable */
-  MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
+  MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, const char *filename);
   MS_DLL_EXPORT void msFreeImage(imageObj *img);
   MS_DLL_EXPORT int msSetup(void);
   MS_DLL_EXPORT void msCleanup(void);
@@ -2592,7 +2592,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
   MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
-  MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
+  MS_DLL_EXPORT int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format);
   MS_DLL_EXPORT void msFreeImageIM(imageObj* img);
   MS_DLL_EXPORT void msDrawMarkerSymbolIM(mapObj *map, imageObj* img, pointObj *p, styleObj *style, double scalefactor);
   MS_DLL_EXPORT void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
@@ -2770,7 +2770,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   /*      prototypes for functions in mapgdal.c                           */
   /* ==================================================================== */
-  MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename );
+  MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filename );
   MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 
   /* ==================================================================== */

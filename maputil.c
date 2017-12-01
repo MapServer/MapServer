@@ -826,7 +826,7 @@ int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay)
 ** The filename is NULL when the image is supposed to be written to stdout.
 */
 
-int msSaveImage(mapObj *map, imageObj *img, char *filename)
+int msSaveImage(mapObj *map, imageObj *img, const char *filename)
 {
   int nReturnVal = MS_FAILURE;
   char szPath[MS_MAXPATHLEN];

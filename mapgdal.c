@@ -143,7 +143,7 @@ void CleanVSIDir( const char *pszDir )
 /*                          msSaveImageGDAL()                           */
 /************************************************************************/
 
-int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
+int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
 
 {
   int  bFileIsTemporary = MS_FALSE;
@@ -157,6 +157,8 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   rasterBufferObj rb;
   GDALDataType eDataType = GDT_Byte;
   int bUseXmp = MS_FALSE;
+  const char   *filename = NULL;
+  char         *filenameToFree = NULL;
 
   msGDALInitialize();
   memset(&rb,0,sizeof(rasterBufferObj));
@@ -187,7 +189,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   /*      memory, otherwise we try to put it in a reasonable temporary    */
   /*      file location.                                                  */
   /* -------------------------------------------------------------------- */
-  if( filename == NULL ) {
+  if( filenameIn == NULL ) {
     const char *pszExtension = format->extension;
     if( pszExtension == NULL )
       pszExtension = "img.tmp";
@@ -195,16 +197,20 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     if( bUseXmp == MS_FALSE && GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL )
         != NULL ) {
       CleanVSIDir( "/vsimem/msout" );
-      filename = msTmpFile(map, NULL, "/vsimem/msout/", pszExtension );
+      filenameToFree = msTmpFile(map, NULL, "/vsimem/msout/", pszExtension );
     }
 
-    if( filename == NULL && map != NULL)
-      filename = msTmpFile(map, map->mappath,NULL,pszExtension);
-    else if( filename == NULL ) {
-      filename = msTmpFile(map, NULL, NULL, pszExtension );
+    if( filenameToFree == NULL && map != NULL)
+      filenameToFree = msTmpFile(map, map->mappath,NULL,pszExtension);
+    else if( filenameToFree == NULL ) {
+      filenameToFree = msTmpFile(map, NULL, NULL, pszExtension );
     }
+    filename = filenameToFree;
 
     bFileIsTemporary = MS_TRUE;
+  }
+  else {
+    filename = filenameIn;
   }
 
   /* -------------------------------------------------------------------- */
@@ -503,7 +509,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     VSIUnlink( filename );
     CleanVSIDir( "/vsimem/msout" );
 
-    free( filename );
+    msFree( filenameToFree );
   }
 
   return MS_SUCCESS;
