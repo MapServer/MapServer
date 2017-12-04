@@ -1554,6 +1554,81 @@ static int msWCSGetCoverage_ImageCRSSetup(
 }
 
 /************************************************************************/
+/*                    msWCSApplyLayerCreationOptions()                  */
+/************************************************************************/
+
+void msWCSApplyLayerCreationOptions(layerObj* lp,
+                                    outputFormatObj* format,
+                                    const char* bandlist)
+
+{
+    const char* pszKey;
+    char szKeyBeginning[256];
+    size_t nKeyBeginningLength;
+    int nBands = 0;
+    char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+
+    snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+             "wcs_outputformat_%s_creationoption_", format->name);
+    nKeyBeginningLength = strlen(szKeyBeginning);
+
+    pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+    for( ; pszKey != NULL;
+           pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+    {
+        if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+        {
+            const char* pszValue = msLookupHashTable( &(lp->metadata), pszKey);
+            const char* pszGDALKey = pszKey + nKeyBeginningLength;
+            if( EQUALN(pszGDALKey, "BAND_", strlen("BAND_")) )
+            {
+                /* Remap BAND specific creation option to the real output
+                 * band number, given the band subset of the request */
+                int nKeyOriBandNumber = atoi(pszGDALKey + strlen("BAND_"));
+                int nTargetBandNumber = -1;
+                int i;
+                for(i = 0; i < nBands; i++ )
+                {
+                    if( nKeyOriBandNumber == atoi(papszBandNumbers[i]) )
+                    {
+                        nTargetBandNumber = i + 1;
+                        break;
+                    }
+                }
+                if( nTargetBandNumber > 0 )
+                {
+                    char szModKey[256];
+                    const char* pszAfterBand =
+                        strchr(pszGDALKey + strlen("BAND_"), '_');
+                    if( pszAfterBand != NULL )
+                    {
+                        snprintf(szModKey, sizeof(szModKey),
+                                 "BAND_%d%s",
+                                 nTargetBandNumber,
+                                 pszAfterBand);
+                        if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                            msDebug("Setting GDAL %s=%s creation option\n",
+                                    szModKey, pszValue);
+                        }
+                        msSetOutputFormatOption(format, szModKey, pszValue);
+                    }
+                }
+            }
+            else
+            {
+                if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                    msDebug("Setting GDAL %s=%s creation option\n",
+                            pszGDALKey, pszValue);
+                }
+                msSetOutputFormatOption(format, pszGDALKey, pszValue);
+            }
+        }
+    }
+
+    msFreeCharArray( papszBandNumbers, nBands );
+}
+
+/************************************************************************/
 /*                          msWCSGetCoverage()                          */
 /************************************************************************/
 
@@ -1952,6 +2027,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
   snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
+
+  msWCSApplyLayerCreationOptions(lp, map->outputformat, bandlist);
+
   free( bandlist );
 
   if(lp->mask) {
