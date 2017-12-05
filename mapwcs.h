@@ -102,6 +102,9 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
                                        coverageMetadataObj *cm,
                                        layerObj *lp );
 const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name);
+void msWCSApplyLayerCreationOptions(layerObj* lp,
+                                    outputFormatObj* format,
+                                    const char* bandlist);
 
 /* -------------------------------------------------------------------- */
 /*      Some WCS 1.1 specific functions from mapwcs11.c                 */

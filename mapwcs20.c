@@ -4486,6 +4486,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
 
+  msWCSApplyLayerCreationOptions(layer, map->outputformat, bandlist);
+
   /* check for the interpolation */
   /* Defaults to NEAREST */
   if(params->interpolation != NULL) {
