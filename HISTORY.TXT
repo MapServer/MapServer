@@ -21,6 +21,8 @@ http://mapserver.org/development/changelog/
 
 - Implement chainable compositing filters (RFC113)
 
+- WMS layer groups are now requestable
+
 7.0.0 release (2015/07/24)
 --------------------------
 
