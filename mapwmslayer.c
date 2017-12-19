@@ -1255,7 +1255,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   if ( !MS_HTTP_SUCCESS( pasReqInfo[iReq].nStatus ) ) {
     /* ====================================================================
           Failed downloading layer... we log an error but we still return
-          SUCCESS here so that the layer is only skipped intead of aborting
+          SUCCESS here so that the layer is only skipped instead of aborting
           the whole draw map.
           If the layer is essential the map is not to be drawn.
      ==================================================================== */
@@ -1275,7 +1275,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
    * Check the Content-Type of the response to see if we got an exception,
    * if yes then try to parse it and pass the info to msSetError().
    * We log an error but we still return SUCCESS here so that the layer
-   * is only skipped intead of aborting the whole draw map.
+   * is only skipped instead of aborting the whole draw map.
    * If the layer is essential the map is not to be drawn.
    * ------------------------------------------------------------------ */
   if (pasReqInfo[iReq].pszContentType &&
