@@ -74,6 +74,7 @@ Content-Type: text/xml; charset=UTF-8
     <BoundingBox CRS="EPSG:4326"
                 minx="-1" miny="-1" maxx="-1" maxy="-1" />
     <Layer>
+      <Name>roadgroup</Name>
       <Title>roadgroup</Title>
       <Layer queryable="1" opaque="0" cascaded="0">
         <Name>road2</Name>
