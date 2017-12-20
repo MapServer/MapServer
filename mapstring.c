@@ -1659,7 +1659,13 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     ltov = NULL;
     vtol = NULL;
     levels = NULL;
-
+    
+    if (strchr(logical, '\n') != NULL) {
+      msSetError(MS_IDENTERR, "Inputted string is a multi-line paragraph.",
+                 "msGetFriBidiEncodedString()");
+      return NULL;
+    }
+    
     /* Create a bidi string. */
     log2vis = fribidi_log2vis (logical, len, &base,
                                /* output */
