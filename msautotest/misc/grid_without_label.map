@@ -1,0 +1,38 @@
+#
+# REQUIRES: OUTPUT=PNG SUPPORTS=PROJ
+#
+
+MAP
+  NAME "testMap"
+
+  STATUS ON
+  SIZE 200 100
+  EXTENT 0 0 2000 1000
+  UNITS METERS
+  IMAGETYPE png
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  LAYER
+    NAME "grid"
+    PROJECTION
+      "init=epsg:3857"
+    END
+    STATUS ON
+    TYPE LINE
+    UNITS METERS
+    CLASS
+      STYLE
+        COLOR "#000000"
+        OPACITY 100
+      END
+    END
+    GRID
+      MAXINTERVAL 500
+      MININTERVAL 500
+    END
+  END
+
+END
