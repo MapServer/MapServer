@@ -33,10 +33,7 @@ SCALEBAR
   UNITS kilometers
   INTERVALS 3
   STATUS EMBED
-
-  OFFSET
-    5 5
-  END
+  OFFSET 5 5
 END
 
 END
