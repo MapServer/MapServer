@@ -1894,6 +1894,17 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
 
 int msSetup()
 {
+#ifdef _WIN32
+  char* maxfiles = getenv("MS_MAX_OPEN_FILES");
+  if (maxfiles) {
+    int res = _getmaxstdio();
+    if (res < 2048) {
+      res = _setmaxstdio(atoi(maxfiles));
+      assert(res != -1);
+    }
+  }
+#endif
+
 #ifdef USE_THREAD
   msThreadInit();
 #endif
