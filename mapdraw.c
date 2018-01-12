@@ -959,6 +959,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
       int bDone = MS_FALSE;
 
+#ifdef USE_GDAL
       if( layer->connectiontype == MS_UVRASTER )
       {
           /* Nasty hack to make msUVRASTERLayerWhichShapes() aware that the */
@@ -966,6 +967,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
           /* Useful when dealin with UVRASTER that extend beyond 180 deg */
           msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, map );
       }
+#endif
 
       /* For UVRaster, it is important that the searchrect is not too large */
       /* to avoid insufficient intermediate raster resolution, which could */
@@ -1041,10 +1043,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
             {
               /* otherwise clip the map extent with the reprojected layer */
               /* extent */
-              searchrect.minx = MAX( map_extent_minx, layer_extent.minx );
-              searchrect.maxx = MIN( map_extent_maxx, layer_extent.maxx );
-              searchrect.miny = MAX( map_extent_miny, layer_extent.miny );
-              searchrect.maxy = MIN( map_extent_maxy, layer_extent.maxy );
+              searchrect.minx = MS_MAX( map_extent_minx, layer_extent.minx );
+              searchrect.maxx = MS_MIN( map_extent_maxx, layer_extent.maxx );
+              searchrect.miny = MS_MAX( map_extent_miny, layer_extent.miny );
+              searchrect.maxy = MS_MIN( map_extent_maxy, layer_extent.maxy );
               /* and reproject into the layer projection */
               msProjectRect(&map_proj, &layer->projection, &searchrect);
             }
@@ -1067,10 +1069,12 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
 
+#ifdef USE_GDAL
   if( layer->connectiontype == MS_UVRASTER )
   {
     msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, NULL );
   }
+#endif
 
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);
