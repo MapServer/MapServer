@@ -3885,7 +3885,6 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
         msDrawLayer(map, GET_LAYER(map, i), img);
     }
 
-<<<<<<< HEAD
   } else {
 
     /* intercept requests for Mapbox vector tiles */
@@ -3898,10 +3897,6 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     img = msDrawMap(map, MS_FALSE);
   }
 
-=======
-  } else
-    img = msDrawMap(map, drawquerymap);
->>>>>>> master
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 
