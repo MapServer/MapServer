@@ -94,7 +94,7 @@ char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL"
 ** Validates a string (value) against a series of patterns. We support up to four to allow cascading from classObj to
 ** layerObj to webObj plus a legacy pattern like TEMPLATEPATTERN.
 */
-int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4)
+int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4)
 {
   if(msEvalRegex(pattern1, value) == MS_TRUE) return MS_SUCCESS;
   if(msEvalRegex(pattern2, value) == MS_TRUE) return MS_SUCCESS;
@@ -305,7 +305,10 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
 {
   char szLibPath[MS_MAXPATHLEN] = { '\0' };
   char szLibPathExt[MS_MAXPATHLEN] = { '\0' };
-  const char *plugin_dir = msLookupHashTable( &(map->configoptions), "MS_PLUGIN_DIR");
+  const char *plugin_dir = NULL;
+  
+  if (map)
+    plugin_dir = msLookupHashTable(&(map->configoptions), "MS_PLUGIN_DIR");
 
   /* do nothing on windows, filename without .dll will be loaded by default*/
 #if !defined(_WIN32)
@@ -5536,6 +5539,8 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; /* draw with labels */
   scalebar->align = MS_ALIGN_CENTER;
+  scalebar->offsetx = 0;
+  scalebar->offsety = 0;
 }
 
 void freeScalebar(scalebarObj *scalebar)
@@ -5602,6 +5607,10 @@ int loadScalebar(scalebarObj *scalebar)
         break;
       case(UNITS):
         if((scalebar->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES)) == -1) return(-1);
+        break;
+      case(OFFSET):
+        if(getInteger(&(scalebar->offsetx)) == -1) return(-1);
+        if(getInteger(&(scalebar->offsety)) == -1) return(-1);
         break;
       default:
         if(strlen(msyystring_buffer) > 0) {
@@ -7132,7 +7141,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
   while(default_key) {
     if(!strncmp(default_key,"default_",8)) {
       size_t buffer_size = (strlen(default_key)-5);
-      char *to = msLookupHashTable(table, default_key);
+      const char *to = msLookupHashTable(table, default_key);
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
@@ -7145,6 +7154,24 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
     default_key = msNextKeyFromHashTable(table, default_key);
   }
   return;
+}
+
+static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableObj *table)
+{
+	const char *default_key = msFirstKeyFromHashTable(table);
+	while (default_key) {
+		if (!strncmp(default_key, "default_", 8)) {
+			size_t buffer_size = (strlen(default_key) - 5);
+			const char *to = msLookupHashTable(table, default_key);
+			char *tag = (char *)msSmallMalloc(buffer_size);
+			snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+
+			hashTableSubstituteString(hashTab, tag, to);
+			free(tag);
+		}
+		default_key = msNextKeyFromHashTable(table, default_key);
+	}
+	return;
 }
 
 /*
@@ -7172,6 +7199,7 @@ void msApplyDefaultSubstitutions(mapObj *map)
     applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* ...then layer settings... */
     applyLayerDefaultSubstitutions(layer, &(map->web.validation)); /* ...and finally web settings */
   }
+  applyHashTableDefaultSubstitutions(&map->web.metadata, &(map->web.validation));
 }
 
 char *_get_param_value(const char *key, char **names, char **values, int npairs) {

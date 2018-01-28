@@ -19,7 +19,7 @@
         <gml:axisLabels>x y</gml:axisLabels>
         <gml:origin>
           <gml:Point gml:id="grid_origin_grey" srsName="http://www.opengis.net/def/crs/EPSG/0/32611">
-            <gml:pos>0.000000 300.000000</gml:pos>
+            <gml:pos>5.000000 295.000000</gml:pos>
           </gml:Point>
         </gml:origin>
         <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/32611">10.000000 0</gml:offsetVector>
@@ -28,7 +28,7 @@
     </gml:domainSet>
     <gmlcov:rangeType>
       <swe:DataRecord>
-        <swe:field name="bands">
+        <swe:field name="Band1">
           <swe:Quantity>
             <swe:description>Test description</swe:description>
             <swe:nilValues>

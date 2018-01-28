@@ -965,8 +965,108 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->transform == MS_TRUE) {
     searchrect = map->extent;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+      int bDone = MS_FALSE;
+
+      if( layer->connectiontype == MS_UVRASTER )
+      {
+          /* Nasty hack to make msUVRASTERLayerWhichShapes() aware that the */
+          /* original area of interest is (map->extent, map->projection)... */
+          /* Useful when dealin with UVRASTER that extend beyond 180 deg */
+          msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, map );
+      }
+
+      /* For UVRaster, it is important that the searchrect is not too large */
+      /* to avoid insufficient intermediate raster resolution, which could */
+      /* happen if we use the default code path, given potential reprojection */
+      /* issues when using a map extent that is not in the validity area of */
+      /* the layer projection. */
+      if( layer->connectiontype == MS_UVRASTER &&
+          !layer->projection.gt.need_geotransform &&
+          !(pj_is_latlong(map->projection.proj) &&
+            pj_is_latlong(layer->projection.proj)) ) {
+        rectObj layer_ori_extent;
+
+        if( msLayerGetExtent(layer, &layer_ori_extent) == MS_SUCCESS ) {
+          projectionObj map_proj;
+
+          double map_extent_minx = map->extent.minx;
+          double map_extent_miny = map->extent.miny;
+          double map_extent_maxx = map->extent.maxx;
+          double map_extent_maxy = map->extent.maxy;
+          rectObj layer_extent = layer_ori_extent;
+
+          /* Create a variant of map->projection without geotransform for */
+          /* conveniency */
+          msInitProjection(&map_proj);
+          msCopyProjection(&map_proj, &map->projection);
+          map_proj.gt.need_geotransform = MS_FALSE;
+          if( map->projection.gt.need_geotransform ) {
+            map_extent_minx = map->projection.gt.geotransform[0]
+                + map->projection.gt.geotransform[1] * map->extent.minx
+                + map->projection.gt.geotransform[2] * map->extent.miny;
+            map_extent_miny = map->projection.gt.geotransform[3]
+                + map->projection.gt.geotransform[4] * map->extent.minx
+                + map->projection.gt.geotransform[5] * map->extent.miny;
+            map_extent_maxx = map->projection.gt.geotransform[0]
+                + map->projection.gt.geotransform[1] * map->extent.maxx
+                + map->projection.gt.geotransform[2] * map->extent.maxy;
+            map_extent_maxy = map->projection.gt.geotransform[3]
+                + map->projection.gt.geotransform[4] * map->extent.maxx
+                + map->projection.gt.geotransform[5] * map->extent.maxy;
+          }
+
+          /* Reproject layer extent to map projection */
+          msProjectRect(&layer->projection, &map_proj, &layer_extent);
+
+          if( layer_extent.minx <= map_extent_minx &&
+              layer_extent.miny <= map_extent_miny &&
+              layer_extent.maxx >= map_extent_maxx &&
+              layer_extent.maxy >= map_extent_maxy ) {
+            /* do nothing special if area to map is inside layer extent */
+          }
+          else {
+            if( layer_extent.minx >= map_extent_minx &&
+                layer_extent.maxx <= map_extent_maxx &&
+                layer_extent.miny >= map_extent_miny &&
+                layer_extent.maxy <= map_extent_maxy ) {
+              /* if the area to map is larger than the layer extent, then */
+              /* use full layer extent and add some margin to reflect the */
+              /* proportion of the useful area over the requested bbox */
+              double extra_x =
+                (map_extent_maxx - map_extent_minx) /
+                  (layer_extent.maxx - layer_extent.minx) *
+                  (layer_ori_extent.maxx -  layer_ori_extent.minx);
+              double extra_y =
+                 (map_extent_maxy - map_extent_miny) /
+                  (layer_extent.maxy - layer_extent.miny) *
+                  (layer_ori_extent.maxy -  layer_ori_extent.miny);
+              searchrect.minx = layer_ori_extent.minx - extra_x / 2;
+              searchrect.maxx = layer_ori_extent.maxx + extra_x / 2;
+              searchrect.miny = layer_ori_extent.miny - extra_y / 2;
+              searchrect.maxy = layer_ori_extent.maxy + extra_y / 2;
+            }
+            else
+            {
+              /* otherwise clip the map extent with the reprojected layer */
+              /* extent */
+              searchrect.minx = MAX( map_extent_minx, layer_extent.minx );
+              searchrect.maxx = MIN( map_extent_maxx, layer_extent.maxx );
+              searchrect.miny = MAX( map_extent_miny, layer_extent.miny );
+              searchrect.maxy = MIN( map_extent_maxy, layer_extent.maxy );
+              /* and reproject into the layer projection */
+              msProjectRect(&map_proj, &layer->projection, &searchrect);
+            }
+            bDone = MS_TRUE;
+          }
+
+          msFreeProjection(&map_proj);
+        }
+      }
+
+      if( !bDone )
+        msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+    }
 #endif
   } else {
     searchrect.minx = searchrect.miny = 0;
@@ -975,6 +1075,12 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
+
+  if( layer->connectiontype == MS_UVRASTER )
+  {
+    msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, NULL );
+  }
+
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);
     return MS_SUCCESS;
@@ -2704,7 +2810,6 @@ int computeMarkerBounds(mapObj *map, pointObj *annopoint, textSymbolObj *ts, lab
 int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc)
 {
   int i;
-  pointObj p;
   textSymbolObj *s; /* shortcut */
   textSymbolObj *ts;
   rectObj buffered;

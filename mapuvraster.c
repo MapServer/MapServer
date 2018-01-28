@@ -84,7 +84,16 @@ typedef struct {
   int     next_shape;
   int x, y; /* used internally in msUVRasterLayerNextShape() */
 
+  mapObj* mapToUseForWhichShapes; /* set if the map->extent and map->projection are valid in msUVRASTERLayerWhichShapes() */
+
 } uvRasterLayerInfo;
+
+void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj* layer,
+                                                                mapObj* map)
+{
+  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
+  uvlinfo->mapToUseForWhichShapes = map;
+}
 
 static int msUVRASTERLayerInitItemInfo(layerObj *layer)
 {
@@ -345,8 +354,13 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   int width, height, u_src_off, v_src_off, i, x, y;
   char   **alteredProcessing = NULL, *saved_layer_mask;
   char **savedProcessing = NULL;
+  int bHasLonWrap = MS_FALSE;
+  double dfLonWrap = 0.0;
+  rectObj oldLayerExtent;
+  char* oldLayerData = NULL;
+  projectionObj oldLayerProjection;
+  int ret;
 
-  
   if (layer->debug)
     msDebug("Entering msUVRASTERLayerWhichShapes().\n");
 
@@ -386,13 +400,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   width = (int)ceil(layer->map->width/spacing);
   height = (int)ceil(layer->map->height/spacing);
-  map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx,layer->map->width),
-                        MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height));
-  map_tmp->cellsize = map_cellsize*spacing;
-  
-  if (layer->debug)
-    msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
-            width, height, map_tmp->cellsize);
 
   /* Initialize our dummy map */
   MS_INIT_COLOR(map_tmp->imagecolor, 255,255,255,255);
@@ -413,13 +420,175 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   msCopyHashTable(&map_tmp->configoptions, &layer->map->configoptions);
   map_tmp->mappath = msStrdup(layer->map->mappath);
   map_tmp->shapepath = msStrdup(layer->map->shapepath);
+  map_tmp->gt.rotation_angle = 0.0;
+
+  /* Custom msCopyProjection() that removes lon_wrap parameter */
+  {
+#ifdef USE_PROJ
+    int i;
+
+    map_tmp->projection.numargs = 0;
+    map_tmp->projection.gt = layer->projection.gt;
+    map_tmp->projection.automatic = layer->projection.automatic;
+
+    for (i = 0; i < layer->projection.numargs; i++) {
+      if( strncmp(layer->projection.args[i], "lon_wrap=",
+                  strlen("lon_wrap=")) == 0 ) {
+        bHasLonWrap = MS_TRUE;
+        dfLonWrap = atof( layer->projection.args[i] + strlen("lon_wrap=") );
+      }
+      else {
+        map_tmp->projection.args[map_tmp->projection.numargs ++] =
+            msStrdup(layer->projection.args[i]);
+      }
+    }
+    if (map_tmp->projection.numargs != 0) {
+      msProcessProjection(&(map_tmp->projection));
+    }
+#endif
+    map_tmp->projection.wellknownprojection = layer->projection.wellknownprojection;
+  }
+
+  /* Very special case to improve quality for rasters referenced from lon=0 to 360 */
+  /* We create a temporary VRT that swiches the 2 hemispheres, and then we */
+  /* modify the georeferncing to be in the more standard [-180, 180] range */
+  /* and we adjust the layer->data, extent and projection accordingly */
+  if( layer->tileindex == NULL &&
+      uvlinfo->mapToUseForWhichShapes && bHasLonWrap && dfLonWrap == 180.0 )
+  {
+      rectObj layerExtent;
+      msLayerGetExtent(layer, &layerExtent);
+      if( layerExtent.minx == 0 && layerExtent.maxx == 360 )
+      {
+          GDALDatasetH hDS = NULL;
+          char* decrypted_path;
+
+          if( strncmp(layer->data, "<VRTDataset", strlen("<VRTDataset")) == 0 )
+          {
+            decrypted_path = msStrdup(layer->data);
+          }
+          else
+          {
+            char szPath[MS_MAXPATHLEN];
+            msTryBuildPath3(szPath, layer->map->mappath,
+                            layer->map->shapepath, layer->data);
+            decrypted_path = msDecryptStringTokens( layer->map, szPath );
+          }
+
+          if( decrypted_path )
+          {
+              GDALAllRegister();
+              hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+          }
+          if( hDS != NULL )
+          {
+              int iBand;
+              int nXSize = GDALGetRasterXSize( hDS );
+              int nYSize = GDALGetRasterYSize( hDS );
+              int nBands = GDALGetRasterCount( hDS );
+              int nMaxLen = 100 + nBands * (800 + 2 * strlen(decrypted_path));
+              int nOffset = 0;
+              char* pszInlineVRT = msSmallMalloc( nMaxLen );
+
+              snprintf(pszInlineVRT, nMaxLen,
+                "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">",
+                nXSize, nYSize);
+              nOffset = strlen(pszInlineVRT);
+              for( iBand = 1; iBand <= nBands; iBand++ )
+              {
+                  const char* pszDataType = "Byte";
+                  switch( GDALGetRasterDataType(GDALGetRasterBand(hDS, iBand)) )
+                  {
+                      case GDT_Byte: pszDataType = "Byte"; break;
+                      case GDT_Int16: pszDataType = "Int16"; break;
+                      case GDT_UInt16: pszDataType = "UInt16"; break;
+                      case GDT_Int32: pszDataType = "Int32"; break;
+                      case GDT_UInt32: pszDataType = "UInt32"; break;
+                      case GDT_Float32: pszDataType = "Float32"; break;
+                      case GDT_Float64: pszDataType = "Float64"; break;
+                      default: break;
+                  }
+
+                  snprintf( pszInlineVRT + nOffset, nMaxLen - nOffset,
+                    "    <VRTRasterBand dataType=\"%s\" band=\"%d\">"
+                    "        <SimpleSource>"
+                    "            <SourceFilename relativeToVrt=\"1\"><![CDATA[%s]]></SourceFilename>"
+                    "            <SourceBand>%d</SourceBand>"
+                    "            <SrcRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" ySize=\"%d\"/>"
+                    "            <DstRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" ySize=\"%d\"/>"
+                    "        </SimpleSource>"
+                    "        <SimpleSource>"
+                    "            <SourceFilename relativeToVrt=\"1\"><![CDATA[%s]]></SourceFilename>"
+                    "            <SourceBand>%d</SourceBand>"
+                    "            <SrcRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" ySize=\"%d\"/>"
+                    "            <DstRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" ySize=\"%d\"/>"
+                    "        </SimpleSource>"
+                    "    </VRTRasterBand>",
+                    pszDataType, iBand,
+                    decrypted_path, iBand,
+                    nXSize / 2, 0, nXSize - nXSize / 2, nYSize,
+                    0,          0, nXSize - nXSize / 2, nYSize,
+                    decrypted_path, iBand,
+                    0,                   0, nXSize / 2, nYSize,
+                    nXSize - nXSize / 2, 0, nXSize / 2, nYSize );
+
+                  nOffset += strlen(pszInlineVRT + nOffset);
+              }
+              snprintf(pszInlineVRT + nOffset, nMaxLen - nOffset,
+                "</VRTDataset>");
+
+              oldLayerExtent = layer->extent;
+              oldLayerData = layer->data;
+              oldLayerProjection = layer->projection;
+              layer->extent.minx = -180;
+              layer->extent.maxx = 180;
+              layer->data = pszInlineVRT;
+              layer->projection = map_tmp->projection;
+
+
+              /* map_tmp->projection is actually layer->projection without lon_wrap */
+              rect = uvlinfo->mapToUseForWhichShapes->extent;
+              msProjectRect(&uvlinfo->mapToUseForWhichShapes->projection,
+                            &map_tmp->projection, &rect);
+              bHasLonWrap = MS_FALSE;
+
+              GDALClose(hDS);
+          }
+          msFree( decrypted_path );
+      }
+  }
+
+
+  map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx,layer->map->width),
+                        MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height));
+  map_tmp->cellsize = map_cellsize*spacing;
   map_tmp->extent.minx = rect.minx-(0.5*map_cellsize)+(0.5*map_tmp->cellsize);
   map_tmp->extent.miny = rect.miny-(0.5*map_cellsize)+(0.5*map_tmp->cellsize);
   map_tmp->extent.maxx = map_tmp->extent.minx+((width-1)*map_tmp->cellsize);
   map_tmp->extent.maxy = map_tmp->extent.miny+((height-1)*map_tmp->cellsize);
-  map_tmp->gt.rotation_angle = 0.0;
 
-   msCopyProjection(&map_tmp->projection, &layer->projection);
+  if( bHasLonWrap && dfLonWrap == 180.0) {
+    if( map_tmp->extent.minx >= 180 ) {
+      /* Request on the right half of the shifted raster (= western hemisphere) */
+      map_tmp->extent.minx -= 360;
+      map_tmp->extent.maxx -= 360;
+    }
+    else if( map_tmp->extent.maxx >= 180.0 ) {
+      /* Request spanning on the 2 hemispheres => drawing whole planet */
+      /* Take only into account vertical resolution, as horizontal one */
+      /* will be unreliable (assuming square pixels...) */
+      map_cellsize = MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height);
+      map_tmp->cellsize = map_cellsize*spacing;
+
+      width = 360.0 / map_tmp->cellsize;
+      map_tmp->extent.minx = -180.0+(0.5*map_tmp->cellsize);
+      map_tmp->extent.maxx = 180.0-(0.5*map_tmp->cellsize);
+    }
+  }
+
+  if (layer->debug)
+    msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
+            width, height, map_tmp->cellsize);
 
   if (layer->debug == 5)
     msDebug("msUVRASTERLayerWhichShapes(): extent: %g %g %g %g\n",
@@ -458,17 +627,15 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
    */
   saved_layer_mask = layer->mask;
   layer->mask = NULL;
-  if (msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
-    msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
-    layer->mask = saved_layer_mask;
+  ret = msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL );
 
-    if (alteredProcessing != NULL) {
-      layer->processing = savedProcessing;
-      CSLDestroy(alteredProcessing);
-    }
-    msFreeMap(map_tmp);
-    msFreeImage(image_tmp);
-    return MS_FAILURE;
+  /* restore layer attributes if we went through the above on-the-fly VRT */
+  if( oldLayerData )
+  {
+      msFree(layer->data);
+      layer->data = oldLayerData;
+      layer->extent = oldLayerExtent;
+      layer->projection = oldLayerProjection;
   }
 
   /* restore layer mask */
@@ -478,6 +645,15 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   if (alteredProcessing != NULL) {
     layer->processing = savedProcessing;
     CSLDestroy(alteredProcessing);
+  }
+
+  if( ret == MS_FAILURE) {
+    msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
+
+    msFreeMap(map_tmp);
+    msFreeImage(image_tmp);
+
+    return MS_FAILURE;
   }
 
   /* free old query arrays */
@@ -652,6 +828,8 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
   decrypted_path = msDecryptStringTokens( map, szPath );
+
+  GDALAllRegister();
 
   msAcquireLock( TLOCK_GDAL );
   if( decrypted_path ) {

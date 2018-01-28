@@ -1425,6 +1425,8 @@ typedef struct labelObj labelObj;
 #endif /* not SWIG */
     int postlabelcache;
     int align;
+    int offsetx;
+    int offsety;
   } scalebarObj;
 
   /************************************************************************/
@@ -1992,7 +1994,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 #endif /*SWIG*/
 
   /* Function prototypes, wrapable */
-  MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
+  MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, const char *filename);
   MS_DLL_EXPORT void msFreeImage(imageObj *img);
   MS_DLL_EXPORT int msSetup(void);
   MS_DLL_EXPORT void msCleanup(void);
@@ -2108,7 +2110,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   /* mapfile.c */
 
-  MS_DLL_EXPORT int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4);
+  MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4);
   MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
   MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
@@ -2261,7 +2263,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msStringInArray( const char * pszString, char **array, int numelements);
 
 #ifndef HAVE_STRRSTR
-  MS_DLL_EXPORT char *strrstr(char *string, char *find);
+  MS_DLL_EXPORT char *strrstr(const char *string, const char *find);
 #endif /* NEED_STRRSTR */
 
 #ifndef HAVE_STRCASESTR
@@ -2517,6 +2519,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
 
   int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
+  void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj* layer, mapObj* map);
 
   /* ==================================================================== */
   /*      Prototypes for functions in mapdraw.c                           */
@@ -2592,7 +2595,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
   MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
-  MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
+  MS_DLL_EXPORT int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format);
   MS_DLL_EXPORT void msFreeImageIM(imageObj* img);
   MS_DLL_EXPORT void msDrawMarkerSymbolIM(mapObj *map, imageObj* img, pointObj *p, styleObj *style, double scalefactor);
   MS_DLL_EXPORT void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
@@ -2770,7 +2773,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   /*      prototypes for functions in mapgdal.c                           */
   /* ==================================================================== */
-  MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename );
+  MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filename );
   MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 
   /* ==================================================================== */

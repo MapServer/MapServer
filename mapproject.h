@@ -108,6 +108,8 @@ extern "C" {
 
   /*utility functions */
   MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
+
+  int msProjectHasLonWrap(projectionObj *in, double* pdfLonWrap);
 #endif
 
 #ifdef __cplusplus

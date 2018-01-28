@@ -115,7 +115,7 @@ extern "C" {
    * RETURNS:
    *     string value of item
    */
-  MS_DLL_EXPORT char *msLookupHashTable( hashTableObj *table, const char *key);
+  MS_DLL_EXPORT const char *msLookupHashTable( hashTableObj *table, const char *key);
 
   /* msRemoveHashTable - remove item from table at key
    * ARGS:

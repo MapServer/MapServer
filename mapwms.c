@@ -2821,6 +2821,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       }
     } else {
       msIO_printf("%s    <Layer>\n", indent);
+      msIO_printf("%s      <Name>%s</Name>\n", indent, nestedGroups[index][level]);
       msIO_printf("%s      <Title>%s</Title>\n", indent, nestedGroups[index][level]);
       groupAdded = 1;
     }

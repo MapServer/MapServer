@@ -331,7 +331,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
 
           /* opacity for sld raster */
           if (GET_LAYER(map, i)->type == MS_LAYER_RASTER &&
-              pasLayers[i].compositer && pasLayers[j].compositer->opacity != 100)
+              pasLayers[j].compositer && pasLayers[j].compositer->opacity != 100)
             msSetLayerOpacity(GET_LAYER(map, i), pasLayers[j].compositer->opacity);
 
           /* mark as auto-generate SLD */
@@ -3187,7 +3187,6 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
   int nSymbol = -1;
   symbolObj *psSymbol = NULL;
   char szTmp[512];
-  char *pszURL = NULL;
   char szFormat[4];
   int i = 0, nLength = 0;
   int bFillColor = 0, bColorAvailable=0;
@@ -3362,7 +3361,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           bGenerateDefaultSymbol =1;
       } else if (psSymbol->type == MS_SYMBOL_PIXMAP || psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
-          pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
+          const char *pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
           if (!pszURL)
             pszURL = msLookupHashTable(&(psLayer->map->web.metadata), "WMS_SLD_SYMBOL_URL");
 

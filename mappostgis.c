@@ -2719,8 +2719,8 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   msPostGISLayerInfo *layerinfo = NULL;
   char *strSQL = NULL;
   PGresult *pgresult = NULL;
-  char** layer_bind_values = NULL;
-  char* bind_value;
+  const char** layer_bind_values = NULL;
+  const char* bind_value;
   char* bind_key = NULL;
 
   int num_bind_values = 0;
@@ -2738,7 +2738,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   /* try to get the first bind value */
-  layer_bind_values = (char**)msSmallMalloc(sizeof(char*) * 1000);
+  layer_bind_values = (const char**)msSmallMalloc(sizeof(const char*) * 1000);
   bind_key = (char*)msSmallMalloc(3);
   bind_value = msLookupHashTable(&layer->bindvals, "1");
   while(bind_value != NULL) {
@@ -2772,7 +2772,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   // fprintf(stderr, "SQL: %s\n", strSQL);
 
   if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, RESULTSET_TYPE);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, layer_bind_values, NULL, NULL, RESULTSET_TYPE);
   } else {
     pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
   }
@@ -2881,8 +2881,8 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
   char *strSQL = NULL;
   char *strSQLCount = NULL;
   PGresult *pgresult = NULL;
-  char** layer_bind_values = NULL;
-  char* bind_value;
+  const char** layer_bind_values = NULL;
+  const char* bind_value;
   char* bind_key = NULL;
   int num_bind_values = 0;
   int nCount = 0;
@@ -2929,7 +2929,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
   }
 
   /* try to get the first bind value */
-  layer_bind_values = (char**)msSmallMalloc(sizeof(char*) * 1000);
+  layer_bind_values = (const char**)msSmallMalloc(sizeof(const char*) * 1000);
   bind_value = msLookupHashTable(&layer->bindvals, "1");
   bind_key = (char*)msSmallMalloc(3);
   while(bind_value != NULL) {
@@ -2969,7 +2969,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
   }
 
   if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, 1);
+    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount, num_bind_values, NULL, layer_bind_values, NULL, NULL, 1);
   } else {
     pgresult = PQexecParams(layerinfo->pgconn, strSQLCount,0, NULL, NULL, NULL, NULL, 0);
   }

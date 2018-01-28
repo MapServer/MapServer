@@ -1347,6 +1347,8 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
             break;
         }
 
+        lp = (GET_LAYER(map, j));
+
         /*description*/
         value = msOWSLookupMetadata(&(lp->metadata), "S",
                                     "offering_description");
@@ -1356,7 +1358,6 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
           xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"sos_offering_description\" missing for gml:description"));
 
         /*name*/
-        lp = (GET_LAYER(map, j)); /*first layer*/
         value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_name");
         if (value)
           psNode = xmlNewChild(psOfferingNode, psNsGml, BAD_CAST "name", BAD_CAST value);

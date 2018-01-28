@@ -16,10 +16,10 @@
             <gml:high>104 60</gml:high>
           </gml:GridEnvelope>
         </gml:limits>
-        <gml:axisLabels>lat long</gml:axisLabels>
+        <gml:axisLabels>long lat</gml:axisLabels>
         <gml:origin>
           <gml:Point gml:id="grid_origin_multi" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
-            <gml:pos>49.891143 14.470271</gml:pos>
+            <gml:pos>49.874157 14.487132</gml:pos>
           </gml:Point>
         </gml:origin>
         <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">0 0.033722</gml:offsetVector>
@@ -204,10 +204,10 @@
             <gml:high>104 60</gml:high>
           </gml:GridEnvelope>
         </gml:limits>
-        <gml:axisLabels>lat long</gml:axisLabels>
+        <gml:axisLabels>long lat</gml:axisLabels>
         <gml:origin>
           <gml:Point gml:id="grid_origin_multi_new" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
-            <gml:pos>49.891143 14.470271</gml:pos>
+            <gml:pos>49.874157 14.487132</gml:pos>
           </gml:Point>
         </gml:origin>
         <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">0 0.033722</gml:offsetVector>
@@ -352,7 +352,7 @@
             </swe:constraint>
           </swe:Quantity>
         </swe:field>
-        <swe:field name="Band9">
+        <swe:field name="myBand9">
           <swe:Quantity definition="DefaultDefinition">
             <swe:description>Default description</swe:description>
             <swe:nilValues>

@@ -74,6 +74,11 @@ typedef struct {
              Translate as MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB and
              MS_IMAGEMODE_RGBA.
 
+             For "GDAL/" drivers, the following extra imagemodes are supported:
+                "BYTE" / MS_IMAGEMODE_BYTE
+                "INT16" / MS_IMAGEMODE_INT16
+                "FLOAT32" / MS_IMAGEMODE_FLOAT32
+
              Not too sure what this should be set to for output formats like
              flash and SVG.
 

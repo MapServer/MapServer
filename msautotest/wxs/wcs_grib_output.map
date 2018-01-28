@@ -1,0 +1,131 @@
+#
+# Test WCS with GRIB2 output
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS GDAL>=2.3.0
+
+# RUN_PARMS: wcs_grib_output_wcs10_get_coverage.grb2 [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=temperatures&CRS=EPSG:4326&BBOX=0,-90,180,90&RESX=2.4&RESY=2.4&FORMAT=GRIB" > [RESULT_DEMIME]
+
+# RUN_PARMS: wcs_grib_output_wcs11_get_coverage.grb2 [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.1.0&IDENTIFIER=temperatures&BOUNDINGBOX=-90,0,90,180,urn:ogc:def:crs:EPSG::4326&GridCS=urn:ogc:def:crs:OGC::imageCRS&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs&GridOrigin=90,0&GridOffsets=2.4,-2.4&FORMAT=GRIB" > [RESULT_DEMIME]
+
+# RUN_PARMS: wcs_grib_output_wcs20_get_coverage.grb2 [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=2.0.1&COVERAGEID=temperatures&FORMAT=application/x-grib2&SUBSET=long(0,180)&SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/4326" > [RESULT_DEMIME]
+
+MAP
+
+NAME TEST
+SIZE 400 300
+EXTENT -180 -90 180 90
+MAXSIZE 5000
+
+IMAGETYPE PNG
+TRANSPARENT OFF
+SHAPEPATH "data"
+
+OUTPUTFORMAT
+  NAME GEOTIFF_FLOAT32
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE Float32
+  EXTENSION "tif"
+END
+
+OUTPUTFORMAT
+  NAME GRIB
+  DRIVER "GDAL/GRIB"
+  MIMETYPE "application/x-grib2"
+  IMAGEMODE Float32
+  EXTENSION "grib2"
+  FORMATOPTION "DATA_ENCODING=SIMPLE_PACKING"
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+WEB
+  METADATA
+   # OWS stuff for server
+   "ows_updatesequence"   "2007-10-30T14:23:38Z"
+   "ows_title"            "First Test Service"
+   "ows_fees"             "NONE"
+   "ows_accessconstraints" "NONE"
+   "ows_abstract"         "Test Abstract"
+   "ows_keywordlist"      "keyword,list"
+   "ows_service_onlineresource" "http://198.202.74.215/cgi-bin/wcs_demo"
+   "ows_contactorganization" "OSGeo"
+   "ows_contactperson"    "Frank Warmerdam"
+   "ows_contactposition"  "Software Developer"
+   "ows_contactvoicetelephone" "(613) 754-2041"
+   "ows_contactfacsimiletelephone" "(613) 754-2041x343"
+   "ows_address" "3594 Foymount Rd"
+   "ows_city" "Eganville"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "K0J 1T0"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "warmerdam@pobox.com"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_enable_request" "*"
+   "ows_srs"	"EPSG:4326"
+
+   # OGC:WCS
+   "wcs_label"    "Test Label"
+   "wcs_description" "Test description"
+   "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
+   "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+   "wcs_formats" "GEOTIFF_FLOAT32 GRIB"
+  END
+END
+
+LAYER
+  NAME temperatures
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  DATA "temperatures.tif"
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+  METADATA
+   "ows_extent" "-180 -90 180 90"
+   "wcs_label" "Test label"
+   "ows_srs"	"EPSG:4326"
+   "wcs_resolution" "2.4 2.4"
+   "wcs_bandcount" "1"
+   "wcs_imagemode" "Float32"
+   "wcs_formats" "GEOTIFF_FLOAT32 GRIB"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "abstract"
+
+   # GDAL creation options for the GRIB output format
+   "wcs_outputformat_GRIB_creationoption_DISCIPLINE" "0(Meteorological)"
+   "wcs_outputformat_GRIB_creationoption_IDS" "Normally this will never be used given the BAND_1_IDS override"
+   "wcs_outputformat_GRIB_creationoption_BAND_1_IDS" "CENTER=54(Montreal) SUBCENTER=0 MASTER_TABLE=4 LOCAL_TABLE=0 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2017-01-05T00:00:00Z PROD_STATUS=0(Operational) TYPE=2(Analysis_and_forecast)"
+   "wcs_outputformat_GRIB_creationoption_PDS_PDTN" "0"
+   "wcs_outputformat_GRIB_creationoption_PDS_TEMPLATE_ASSEMBLED_VALUES" "0 0 2 47 47 0 0 1 0 103 0 2 255 -127 -2147483647"
+
+   # WCS 2.0 stuff
+   "wcs_native_format" "application/x-grib2"
+   "wcs_band_names" "Temperature_2m"
+   "Temperature_2m_band_interpretation" "interp"
+   "Temperature_2m_band_uom" "Celcius"
+   "Temperature_2m_band_definition"       "Temperature at 2m above ground"
+   "Temperature_2m_band_description"      "Temperature at 2m above ground"
+   "Temperature_2m_interval" "-100 100"
+   "Temperature_2m_significant_figures" "1"
+
+   # WCS 1.x stuff
+   "wcs_nativeformat" "GRIB"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "Temperatures"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "Temperatures"
+
+   # "wcs_rangeset_nullvalue" "-99"
+  END
+END
+
+END

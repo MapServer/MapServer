@@ -229,7 +229,8 @@ int msLayerOpen(layerObj *layer)
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
-  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
+  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS
+      && layer->connectiontype != MS_KERNELDENSITY)
     layer->connectiontype = MS_RASTER;
 
   if ( ! layer->vtable) {
@@ -1706,18 +1707,7 @@ char* msLayerBuildSQLOrderBy(layerObj *layer)
     int i;
     for(i=0;i<layer->sortBy.nProperties;i++) {
       char* escaped = msLayerEscapePropertyName(layer, layer->sortBy.properties[i].item);
-      //Enclose property name in double quotes (if it isn't yet) to ensure that mixed case property names are supported
-      if (escaped[0] != '"')
-      {
-        size_t propertyLen = strlen(escaped);
-        escaped = msSmallRealloc(escaped, propertyLen + 3);
-        memmove(escaped + 1, escaped, propertyLen);
-        escaped[0] = '\"';
-        escaped[propertyLen+1] = '\"';
-        escaped[propertyLen + 2] = 0;
-
-      }
-      if (i > 0)
+      if( i > 0 )
         strOrderBy = msStringConcatenate(strOrderBy, ", ");
       strOrderBy = msStringConcatenate(strOrderBy, escaped);
       if( layer->sortBy.properties[i].sortOrder == SORT_DESC )
@@ -1993,7 +1983,8 @@ int msInitializeVirtualTable(layerObj *layer)
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
-  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS)
+  if(layer->type == MS_LAYER_RASTER && layer->connectiontype != MS_WMS
+      && layer->connectiontype != MS_KERNELDENSITY)
     layer->connectiontype = MS_RASTER;
 
   switch(layer->connectiontype) {
@@ -2014,6 +2005,10 @@ int msInitializeVirtualTable(layerObj *layer)
       break;
     case(MS_WMS):
       /* WMS should be treated as a raster layer */
+      return(msRASTERLayerInitializeVirtualTable(layer));
+      break;
+    case(MS_KERNELDENSITY):
+      /* KERNELDENSITY should be treated as a raster layer */
       return(msRASTERLayerInitializeVirtualTable(layer));
       break;
     case(MS_ORACLESPATIAL):

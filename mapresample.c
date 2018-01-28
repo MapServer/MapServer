@@ -1136,18 +1136,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
   /* -------------------------------------------------------------------- */
   if( bOutInit && pj_is_latlong(psSrcProj->proj) )
   {
-      int bHasLonWrap = MS_FALSE;
       double dfLonWrap = 0;
-      for( i = 0; i < psSrcProj->numargs; i++ )
-      {
-          if( strncmp(psSrcProj->args[i], "lon_wrap=",
-                      strlen("lon_wrap=")) == 0 )
-          {
-              bHasLonWrap = MS_TRUE;
-              dfLonWrap = atof( psSrcProj->args[i] + strlen("lon_wrap=") );
-              break;
-          }
-      }
+      int bHasLonWrap = msProjectHasLonWrap(psSrcProj, &dfLonWrap);
 
       if( bHasLonWrap )
       {
@@ -1366,14 +1356,47 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   if( CSLFetchBoolean( layer->processing, "LOAD_WHOLE_IMAGE", FALSE ) )
     bSuccess = FALSE;
-  else
+  else {
     bSuccess =
       msTransformMapToSource( nDstXSize, nDstYSize, adfDstGeoTransform,
                               &(map->projection),
                               nSrcXSize, nSrcYSize,adfInvSrcGeoTransform,
                               &(layer->projection),
                               &sSrcExtent, FALSE );
+      if (bSuccess) {
+    /* -------------------------------------------------------------------- */
+    /*      Repeat transformation for a rectangle interior to the output    */
+    /*      requested region.  If the latter results in a more extreme y    */
+    /*      extent, then extend extents in source layer projection to       */
+    /*      southern/northing bounds and entire x extent.                   */
+    /* -------------------------------------------------------------------- */
+      memcpy( &sOrigSrcExtent, &sSrcExtent, sizeof(sSrcExtent) );
+      adfDstGeoTransform[0] = adfDstGeoTransform[0] + adfDstGeoTransform[1];
+      adfDstGeoTransform[3] = adfDstGeoTransform[3] + adfDstGeoTransform[5];
+      bSuccess =
+          msTransformMapToSource( nDstXSize-2, nDstYSize-2, adfDstGeoTransform,
+                                  &(map->projection),
+                                  nSrcXSize, nSrcYSize,adfInvSrcGeoTransform,
+                                  &(layer->projection),
+                                  &sSrcExtent, FALSE );
+      /* Reset this array to its original value! */
+      memcpy( adfDstGeoTransform, map->gt.geotransform, sizeof(double)*6 );
 
+      if (bSuccess) {
+          if (sSrcExtent.maxy > sOrigSrcExtent.maxy || sSrcExtent.miny < sOrigSrcExtent.miny) {
+              msDebug( "msTransformMapToSource(): extending bounds.\n");
+              sOrigSrcExtent.minx = 0;
+              sOrigSrcExtent.maxx = nSrcXSize;
+              if (sSrcExtent.maxy > sOrigSrcExtent.maxy)
+                  sOrigSrcExtent.maxy = nSrcYSize;
+              if (sSrcExtent.miny < sOrigSrcExtent.miny)
+                  sOrigSrcExtent.miny = 0;
+          }
+      }
+      memcpy( &sSrcExtent, &sOrigSrcExtent, sizeof(sOrigSrcExtent) );
+      bSuccess = TRUE;
+    }
+  }
   /* -------------------------------------------------------------------- */
   /*      If the transformation failed, it is likely that we have such    */
   /*      broad extents that the projection transformation failed at      */

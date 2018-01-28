@@ -17,13 +17,13 @@ MAP
   SHAPEPATH "."
 
   IMAGETYPE PNG
-  #DEBUG 10
+  #DEBUG 1
   #CONFIG "MS_ERRORFILE" "stderr"
 
   LAYER
     NAME 'layer1'
     STATUS ON
-    DEBUG 10
+    DEBUG 1
     SCALETOKEN
       NAME "%shpfile%"
       VALUES
@@ -41,7 +41,7 @@ MAP
   LAYER
     NAME 'layer2'
     STATUS ON
-    DEBUG 10
+    DEBUG 1
     DATA "data/shppoly/poly.shp"
     SCALETOKEN
       NAME "%filter%"
@@ -60,7 +60,7 @@ MAP
   LAYER
     NAME 'layer3'
     STATUS ON
-    DEBUG 10
+    DEBUG 1
     DATA "data/shppoly/poly.shp"
     SCALETOKEN
       NAME "%filteritem%"
