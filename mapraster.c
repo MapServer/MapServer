@@ -564,50 +564,148 @@ int msDrawRasterLoadProjection(layerObj *layer,
 }
 #endif // defined(USE_GDAL)
 
+#if defined(USE_GDAL)
+
+typedef enum
+{
+    CDRT_OK,
+    CDRT_RETURN_MS_FAILURE,
+    CDRT_CONTINUE_NEXT_TILE
+} CheckDatasetReturnType;
+
 /************************************************************************/
-/*                        msDrawRasterLayerLow()                        */
-/*                                                                      */
-/*      Check for various file types and act appropriately.  Handle     */
-/*      tile indexing.                                                  */
+/*              msDrawRasterLayerLowCheckDataset()                      */
 /************************************************************************/
 
-int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
-                         rasterBufferObj *rb )
+static
+CheckDatasetReturnType msDrawRasterLayerLowCheckDataset(mapObj *map,
+                                     layerObj *layer,
+                                     GDALDatasetH hDS,
+                                     const char* decrypted_path,
+                                     const char* szPath)
 {
-  /* -------------------------------------------------------------------- */
-  /*      As of MapServer 6.0 GDAL is required for rendering raster       */
-  /*      imagery.                                                        */
-  /* -------------------------------------------------------------------- */
+    /*
+    ** If GDAL doesn't recognise it, and it wasn't successfully opened
+    ** Generate an error.
+    */
+    if(hDS == NULL) {
+      int ignore_missing = msMapIgnoreMissingData(map);
+      const char *cpl_error_msg = msDrawRasterGetCPLErrorMsg(decrypted_path, szPath);
+
+      if(ignore_missing == MS_MISSING_DATA_FAIL) {
+        msSetError(MS_IOERR, "Corrupt, empty or missing file '%s' for layer '%s'. %s", "msDrawRasterLayerLow()", szPath, layer->name, cpl_error_msg );
+        return(CDRT_RETURN_MS_FAILURE);
+      } else if( ignore_missing == MS_MISSING_DATA_LOG ) {
+        if( layer->debug || layer->map->debug ) {
+          msDebug( "Corrupt, empty or missing file '%s' for layer '%s' ... ignoring this missing data.  %s\n", szPath, layer->name, cpl_error_msg );
+        }
+        return(CDRT_CONTINUE_NEXT_TILE);
+      } else if( ignore_missing == MS_MISSING_DATA_IGNORE ) {
+        return(CDRT_CONTINUE_NEXT_TILE);
+      } else {
+        /* never get here */
+        msSetError(MS_IOERR, "msIgnoreMissingData returned unexpected value.", "msDrawRasterLayerLow()");
+        return(CDRT_RETURN_MS_FAILURE);
+      }
+    }
+
+    return CDRT_OK;
+}
+#endif
+
+/************************************************************************/
+/*              msDrawRasterLayerLowOpenDataset()                       */
+/************************************************************************/
+
+void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
+                                      const char* filename,
+                                      char szPath[MS_MAXPATHLEN],
+                                      char** p_decrypted_path)
+{
 #if !defined(USE_GDAL)
   msSetError(MS_MISCERR,
              "Attempt to render a RASTER (or WMS) layer but without\n"
              "GDAL support enabled.  Raster rendering requires GDAL.",
              "msDrawRasterLayerLow()" );
-  return MS_FAILURE;
-
+  *p_decrypted_path = NULL;
+  return NULL;
 #else /* defined(USE_GDAL) */
-  int status, done;
-  char *filename=NULL, tilename[MS_MAXPATHLEN], tilesrsname[1024];
-
-  layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
-  int tileitemindex=-1, tilelayerindex=-1, tilesrsindex=-1;
-  shapeObj tshp;
-
-  char szPath[MS_MAXPATHLEN];
-  char *decrypted_path = NULL;
-  int final_status = MS_SUCCESS;
-
-  rectObj searchrect;
-  GDALDatasetH  hDS;
-  double  adfGeoTransform[6];
-  const char *close_connection;
-  void *kernel_density_cleanup_ptr = NULL;
+  const char* pszPath;
 
   msGDALInitialize();
 
-  if(layer->debug > 0 || map->debug > 1)
-    msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
+  if(layer->debug == MS_TRUE)
+    msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
 
+  if( strncmp(filename, "<VRTDataset", strlen("<VRTDataset")) == 0 )
+  {
+    pszPath = filename;
+  }
+  else
+  {
+    msDrawRasterBuildRasterPath(map, layer, filename, szPath);
+    pszPath = szPath;
+  }
+  if(layer->debug == MS_TRUE)
+    msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, pszPath);
+
+    /*
+    ** Note: because we do decryption after the above path expansion
+    ** which depends on actually finding a file, it essentially means that
+    ** fancy path manipulation is essentially disabled when using encrypted
+    ** components. But that is mostly ok, since stuff like sde,postgres and
+    ** oracle georaster do not use real paths.
+    */
+  *p_decrypted_path = msDecryptStringTokens( map, pszPath );
+  if( *p_decrypted_path == NULL )
+    return NULL;
+
+  msAcquireLock( TLOCK_GDAL );
+  return GDALOpenShared( *p_decrypted_path, GA_ReadOnly );
+#endif
+}
+
+/************************************************************************/
+/*                msDrawRasterLayerLowCloseDataset()                    */
+/************************************************************************/
+
+void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
+{
+#if !defined(USE_GDAL)
+    (void)hDS;
+#else
+    if( hDS )
+    {
+      const char *close_connection;
+      close_connection = msLayerGetProcessingKey( layer,
+                       "CLOSE_CONNECTION" );
+
+      if( close_connection == NULL && layer->tileindex == NULL )
+        close_connection = "DEFER";
+
+      if( close_connection != NULL
+          && strcasecmp(close_connection,"DEFER") == 0 ) {
+        GDALDereferenceDataset( (GDALDatasetH)hDS );
+      } else {
+        GDALClose( (GDALDatasetH)hDS );
+      }
+      msReleaseLock( TLOCK_GDAL );
+    }
+#endif
+}
+
+
+/************************************************************************/
+/*                msDrawRasterLayerLowCheckIfMustDraw()                 */
+/*                                                                      */
+/*      Return 1 if the layer should be drawn.                          */
+/************************************************************************/
+
+int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer)
+{
+#if !defined(USE_GDAL)
+  return 0;
+#else
   if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY)) {
     if(layer->debug == MS_TRUE)
       msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
@@ -650,6 +748,63 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     }
   }
 
+  return 1;
+#endif
+}
+
+/************************************************************************/
+/*                        msDrawRasterLayerLow()                        */
+/*                                                                      */
+/*      Check for various file types and act appropriately.  Handle     */
+/*      tile indexing.                                                  */
+/************************************************************************/
+
+int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
+                         rasterBufferObj *rb )
+{
+    return msDrawRasterLayerLowWithDataset(map, layer, image, rb, NULL);
+}
+
+int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *image,
+                                    rasterBufferObj *rb, void* hDatasetIn )
+{
+  /* -------------------------------------------------------------------- */
+  /*      As of MapServer 6.0 GDAL is required for rendering raster       */
+  /*      imagery.                                                        */
+  /* -------------------------------------------------------------------- */
+#if !defined(USE_GDAL)
+  msSetError(MS_MISCERR,
+             "Attempt to render a RASTER (or WMS) layer but without\n"
+             "GDAL support enabled.  Raster rendering requires GDAL.",
+             "msDrawRasterLayerLow()" );
+  return MS_FAILURE;
+
+#else /* defined(USE_GDAL) */
+  int status, done;
+  char *filename=NULL, tilename[MS_MAXPATHLEN], tilesrsname[1024];
+
+  layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
+  int tileitemindex=-1, tilelayerindex=-1, tilesrsindex=-1;
+  shapeObj tshp;
+
+  char szPath[MS_MAXPATHLEN] = { 0 };
+  char *decrypted_path = NULL;
+  int final_status = MS_SUCCESS;
+
+  rectObj searchrect;
+  GDALDatasetH  hDS;
+  double  adfGeoTransform[6];
+  void *kernel_density_cleanup_ptr = NULL;
+
+  if(layer->debug > 0 || map->debug > 1)
+    msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
+
+  if( hDatasetIn == NULL &&
+      !msDrawRasterLayerLowCheckIfMustDraw(map, layer) ) {
+    return MS_SUCCESS;
+  }
+
+  msGDALInitialize();
 
   if(layer->tileindex) { /* we have an index file */
     msInitShape(&tshp);
@@ -688,40 +843,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
       filename = layer->data;
       done = MS_TRUE; /* only one image so we're done after this */
     }
-
-    if(layer->connectiontype != MS_KERNELDENSITY) {
-      char* pszPath;
-      if(strlen(filename) == 0) continue;
-
-      if(layer->debug == MS_TRUE)
-        msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
-
-      if( strncmp(filename, "<VRTDataset", strlen("<VRTDataset")) == 0 )
-      {
-        pszPath = filename;
-      }
-      else
-      {
-        msDrawRasterBuildRasterPath(map, layer, filename, szPath);
-        pszPath = szPath;
-      }
-      if(layer->debug == MS_TRUE)
-        msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, pszPath);
-
-      /*
-       ** Note: because we do decryption after the above path expansion
-       ** which depends on actually finding a file, it essentially means that
-       ** fancy path manipulation is essentially disabled when using encrypted
-       ** components. But that is mostly ok, since stuff like sde,postgres and
-       ** oracle georaster do not use real paths.
-       */
-      decrypted_path = msDecryptStringTokens( map, pszPath );
-      if( decrypted_path == NULL )
-        return MS_FAILURE;
-
-      msAcquireLock( TLOCK_GDAL );
-      hDS = GDALOpenShared( decrypted_path, GA_ReadOnly );
-    } else {
+    
+    if(layer->connectiontype == MS_KERNELDENSITY) {
       msAcquireLock( TLOCK_GDAL );
       status = msComputeKernelDensityDataset(map, image, layer, &hDS, &kernel_density_cleanup_ptr);
       if(status != MS_SUCCESS) {
@@ -742,46 +865,46 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
         }
         free(mapProjStr);
       }
-    }
-
-
-    /*
-    ** If GDAL doesn't recognise it, and it wasn't successfully opened
-    ** Generate an error.
-    */
-    if(hDS == NULL) {
-      int ignore_missing = msMapIgnoreMissingData(map);
-      const char *cpl_error_msg = msDrawRasterGetCPLErrorMsg(decrypted_path, szPath);
-
-      msFree( decrypted_path );
-      decrypted_path = NULL;
-
-      msReleaseLock( TLOCK_GDAL );
-
-      if(ignore_missing == MS_MISSING_DATA_FAIL) {
-        msSetError(MS_IOERR, "Corrupt, empty or missing file '%s' for layer '%s'. %s", "msDrawRasterLayerLow()", szPath, layer->name, cpl_error_msg );
-        return(MS_FAILURE);
-      } else if( ignore_missing == MS_MISSING_DATA_LOG ) {
-        if( layer->debug || layer->map->debug ) {
-          msDebug( "Corrupt, empty or missing file '%s' for layer '%s' ... ignoring this missing data.  %s\n", szPath, layer->name, cpl_error_msg );
-        }
-        continue;
-      } else if( ignore_missing == MS_MISSING_DATA_IGNORE ) {
-        continue;
-      } else {
-        /* never get here */
-        msSetError(MS_IOERR, "msIgnoreMissingData returned unexpected value.", "msDrawRasterLayerLow()");
-        return(MS_FAILURE);
+    } else {
+      if(strlen(filename) == 0) continue;
+      if( hDatasetIn )
+      {
+        hDS = (GDALDatasetH)hDatasetIn;
+      }
+      else
+      {
+        hDS = (GDALDatasetH)msDrawRasterLayerLowOpenDataset(
+                                map, layer, filename, szPath, &decrypted_path);
       }
     }
 
-    msFree( decrypted_path );
-    decrypted_path = NULL;
+    if( hDatasetIn == NULL )
+    {
+        CheckDatasetReturnType eRet =
+            msDrawRasterLayerLowCheckDataset(map,layer,hDS,decrypted_path,szPath);
+
+        msFree( decrypted_path );
+        decrypted_path = NULL;
+
+        if( eRet == CDRT_CONTINUE_NEXT_TILE )
+        {
+            msReleaseLock( TLOCK_GDAL );
+            continue;
+        }
+        if( eRet == CDRT_RETURN_MS_FAILURE )
+        {
+            msReleaseLock( TLOCK_GDAL );
+            return MS_FAILURE;
+        }
+    }
 
     if( msDrawRasterLoadProjection(layer, hDS, filename, tilesrsindex, tilesrsname) != MS_SUCCESS )
     {
-        GDALClose( hDS );
-        msReleaseLock( TLOCK_GDAL );
+        if( hDatasetIn == NULL )
+        {
+          GDALClose( hDS );
+          msReleaseLock( TLOCK_GDAL );
+        }
         final_status = MS_FAILURE;
         break;
     }
@@ -817,8 +940,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     }
 
     if( status == -1 ) {
-      GDALClose( hDS );
-      msReleaseLock( TLOCK_GDAL );
+      if( hDatasetIn == NULL )
+      {
+        GDALClose( hDS );
+        msReleaseLock( TLOCK_GDAL );
+      }
       final_status = MS_FAILURE;
       break;
     }
@@ -839,22 +965,13 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
       ** CLOSE_CONNECTION=ALWAYS on the kerneldensity layer.
       */
       GDALClose( hDS );
+      msReleaseLock( TLOCK_GDAL );
     }
     else {
-      close_connection = msLayerGetProcessingKey( layer,
-                       "CLOSE_CONNECTION" );
-
-      if( close_connection == NULL && layer->tileindex == NULL )
-        close_connection = "DEFER";
-
-      if( close_connection != NULL
-          && strcasecmp(close_connection,"DEFER") == 0 ) {
-        GDALDereferenceDataset( hDS );
-      } else {
-        GDALClose( hDS );
-      }
+      if( hDatasetIn == NULL)
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
     }
-    msReleaseLock( TLOCK_GDAL );
+
   } /* next tile */
 
 cleanup:

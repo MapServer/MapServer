@@ -1629,6 +1629,85 @@ void msWCSApplyLayerCreationOptions(layerObj* lp,
 }
 
 /************************************************************************/
+/*               msWCSApplyDatasetMetadataAsCreationOptions()           */
+/************************************************************************/
+
+void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
+                                                outputFormatObj* format,
+                                                const char* bandlist,
+                                                void* hDSIn)
+{
+    /* Requires GDAL 2.3 in practice. */
+    /* Automatic forwarding of input dataset metadata if it is GRIB and the */
+    /* output is GRIB as well, and wcs_outputformat_GRIB_creationoption* are */
+    /* not defined. */
+    GDALDatasetH hDS = (GDALDatasetH)hDSIn;
+    if( hDS && GDALGetDatasetDriver(hDS) &&
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hDS)), "GRIB") &&
+        EQUAL(format->driver, "GDAL/GRIB") )
+    {
+        const char* pszKey;
+        char szKeyBeginning[256];
+        size_t nKeyBeginningLength;
+        int bWCSMetadataFound = MS_FALSE;
+
+        snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+                "wcs_outputformat_%s_creationoption_", format->name);
+        nKeyBeginningLength = strlen(szKeyBeginning);
+
+        for( pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+             pszKey != NULL;
+             pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+        {
+            if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+            {
+                bWCSMetadataFound = MS_TRUE;
+                break;
+            }
+        }
+        if( !bWCSMetadataFound )
+        {
+            int nBands = 0;
+            char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+            int i;
+            for(i = 0; i < nBands; i++ )
+            {
+                int nSrcBand = atoi(papszBandNumbers[i]);
+                int nDstBand = i + 1;
+                GDALRasterBandH hBand = GDALGetRasterBand(hDS, nSrcBand);
+                if( hBand )
+                {
+                    char** papszMD = GDALGetMetadata(hBand, NULL);
+                    const char* pszMDI = CSLFetchNameValue(papszMD, "GRIB_IDS");
+                    // Make sure it is a GRIB2 band
+                    if( pszMDI )
+                    {
+                        char szKey[256];
+                        sprintf(szKey, "BAND_%d_IDS", nDstBand);
+                        msSetOutputFormatOption(format, szKey, pszMDI);
+
+                        sprintf(szKey, "BAND_%d_DISCIPLINE", nDstBand);
+                        msSetOutputFormatOption(format, szKey, 
+                                CSLFetchNameValue(papszMD, "DISCIPLINE"));
+
+                        sprintf(szKey, "BAND_%d_PDS_PDTN", nDstBand);
+                        msSetOutputFormatOption(format, szKey, 
+                                CSLFetchNameValue(papszMD, "GRIB_PDS_PDTN"));
+
+                        sprintf(szKey, "BAND_%d_PDS_TEMPLATE_NUMBERS",
+                                nDstBand);
+                        msSetOutputFormatOption(format, szKey, 
+                                CSLFetchNameValue(papszMD,
+                                                  "GRIB_PDS_TEMPLATE_NUMBERS"));
+                    }
+                }
+            }
+            msFreeCharArray( papszBandNumbers, nBands );
+        }
+    }
+}
+
+/************************************************************************/
 /*                          msWCSGetCoverage()                          */
 /************************************************************************/
 
@@ -1647,6 +1726,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   rectObj reqextent;
   rectObj covextent;
   rasterBufferObj rb;
+  int doDrawRasterLayerDraw = MS_TRUE;
+  GDALDatasetH hDS = NULL;
 
   char *coverageName;
 
@@ -2030,6 +2111,26 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   msWCSApplyLayerCreationOptions(lp, map->outputformat, bandlist);
 
+  if( lp->tileindex == NULL && lp->data != NULL &&
+      strlen(lp->data) > 0 &&
+      lp->connectiontype != MS_KERNELDENSITY )
+  {
+      if( msDrawRasterLayerLowCheckIfMustDraw(map, lp) )
+      {
+          char* decrypted_path = NULL;
+          char szPath[MS_MAXPATHLEN];
+          hDS = (GDALDatasetH)msDrawRasterLayerLowOpenDataset(
+                                    map, lp, lp->data, szPath, &decrypted_path);
+          msFree(decrypted_path);
+          if( hDS )
+            msWCSApplyDatasetMetadataAsCreationOptions(lp, map->outputformat, bandlist, hDS);
+      }
+      else
+      {
+          doDrawRasterLayerDraw = MS_FALSE;
+      }
+  }
+
   free( bandlist );
 
   if(lp->mask) {
@@ -2040,6 +2141,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       msWCSFreeCoverageMetadata(&cm);
       msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
                  lp->name,lp->mask);
+      msDrawRasterLayerLowCloseDataset(lp, hDS);
       return msWCSException(map, NULL, NULL, params->version );
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
@@ -2056,6 +2158,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
         msWCSFreeCoverageMetadata(&cm);
         msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
         msFree(origImageType);
+        msDrawRasterLayerLowCloseDataset(lp, hDS);
         return msWCSException(map, NULL, NULL, params->version );
       }
 
@@ -2078,6 +2181,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
         /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
         msFree(map->imagetype);
         map->imagetype = origImageType;
+        msDrawRasterLayerLowCloseDataset(lp, hDS);
         return msWCSException(map, NULL, NULL, params->version );
       }
       /*
@@ -2106,31 +2210,45 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   if(!map->outputformat) {
     msWCSFreeCoverageMetadata(&cm);
     msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
+    msDrawRasterLayerLowCloseDataset(lp, hDS);
     return msWCSException(map, NULL, NULL, params->version );
   } else if( MS_RENDERER_RAWDATA(map->outputformat) || MS_RENDERER_PLUGIN(map->outputformat) ) {
     image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
   } else {
     msWCSFreeCoverageMetadata(&cm);
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
+    msDrawRasterLayerLowCloseDataset(lp, hDS);
     return msWCSException(map, NULL, NULL, params->version );
   }
 
   if( image == NULL ) {
     msWCSFreeCoverageMetadata(&cm);
+    msDrawRasterLayerLowCloseDataset(lp, hDS);
     return msWCSException(map, NULL, NULL, params->version );
   }
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    status = msDrawRasterLayerLow( map, lp, image, NULL );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, lp, image, NULL, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   } else {
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
     if(UNLIKELY(status == MS_FAILURE)) {
       msWCSFreeCoverageMetadata(&cm);
+      msDrawRasterLayerLowCloseDataset(lp, hDS);
       return MS_FAILURE;
     }
 
     /* Actually produce the "grid". */
-    status = msDrawRasterLayerLow( map, lp, image, &rb );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, lp, image, &rb, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   }
+  msDrawRasterLayerLowCloseDataset(lp, hDS);
+
   if( status != MS_SUCCESS ) {
     msWCSFreeCoverageMetadata(&cm);
     msFreeImage(image);

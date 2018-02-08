@@ -105,6 +105,10 @@ const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name);
 void msWCSApplyLayerCreationOptions(layerObj* lp,
                                     outputFormatObj* format,
                                     const char* bandlist);
+void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
+                                                outputFormatObj* format,
+                                                const char* bandlist,
+                                                void* hDSIn);
 
 /* -------------------------------------------------------------------- */
 /*      Some WCS 1.1 specific functions from mapwcs11.c                 */

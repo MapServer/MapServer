@@ -2610,6 +2610,14 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msJoinClose(joinObj *join);
 
   /*in mapraster.c */
+  int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer);
+  void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
+                                      const char* filename,
+                                      char szPath[MS_MAXPATHLEN],
+                                      char** p_decrypted_path);
+  void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDataset);
+  int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb, void* hDatasetIn );
+
   MS_DLL_EXPORT int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb );
   MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color, int colormap_index);
   MS_DLL_EXPORT int msGetClass_FloatRGB(layerObj *layer, float fValue,

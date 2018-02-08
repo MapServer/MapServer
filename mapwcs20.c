@@ -4111,6 +4111,9 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
   double x_1, x_2, y_1, y_2;
   char *coverageName, *bandlist=NULL, numbands[8];
 
+  int doDrawRasterLayerDraw = MS_TRUE;
+  GDALDatasetH hDS = NULL;
+
   /* number of coverage ids should be 1 */
   if (params->ids == NULL || params->ids[0] == NULL) {
     msSetError(MS_WCSERR, "Required parameter CoverageID was not supplied.",
@@ -4516,12 +4519,33 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msLayerSetProcessingKey(layer, "CLOSE_CONNECTION", "NORMAL");
   }
 
+  if( layer->tileindex == NULL && layer->data != NULL &&
+      strlen(layer->data) > 0 &&
+      layer->connectiontype != MS_KERNELDENSITY )
+  {
+      if( msDrawRasterLayerLowCheckIfMustDraw(map, layer) )
+      {
+          char* decrypted_path = NULL;
+          char szPath[MS_MAXPATHLEN];
+          hDS = (GDALDatasetH)msDrawRasterLayerLowOpenDataset(
+                                    map, layer, layer->data, szPath, &decrypted_path);
+          msFree(decrypted_path);
+          if( hDS )
+            msWCSApplyDatasetMetadataAsCreationOptions(layer, map->outputformat, bandlist, hDS);
+      }
+      else
+      {
+          doDrawRasterLayerDraw = MS_FALSE;
+      }
+  }
+
   /* create the image object  */
   if (!map->outputformat) {
     msWCSClearCoverageMetadata20(&cm);
     msFree(bandlist);
     msSetError(MS_WCSERR, "The map outputformat is missing!",
                "msWCSGetCoverage20()");
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,
@@ -4536,12 +4560,14 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!",
                "msWCSGetCoverage20()");
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   }
 
   if (image == NULL) {
     msFree(bandlist);
     msWCSClearCoverageMetadata20(&cm);
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   }
 
@@ -4555,6 +4581,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       msFreeImage(image);
       msFree(bandlist);
       msWCSClearCoverageMetadata20(&cm);
+      msDrawRasterLayerLowCloseDataset(layer, hDS);
       return msWCSException(map, NULL, NULL, params->version);
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
@@ -4572,6 +4599,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
         return msWCSException(map, NULL, NULL, params->version);
       }
 
@@ -4594,6 +4622,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
         return msWCSException(map, NULL, NULL, params->version);
       }
       /*
@@ -4620,13 +4649,24 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* Actually produce the "grid". */
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    status = msDrawRasterLayerLow( map, layer, image, NULL );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, layer, image, NULL, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   } else {
     rasterBufferObj rb;
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(LIKELY(status == MS_SUCCESS))
-      status = msDrawRasterLayerLow( map, layer, image, &rb );
+    if(LIKELY(status == MS_SUCCESS)) {
+      if( doDrawRasterLayerDraw ) {
+        status = msDrawRasterLayerLowWithDataset( map, layer, image, &rb, hDS );
+      } else {
+        status = MS_SUCCESS;
+      }
+    }
   }
+
+  msDrawRasterLayerLowCloseDataset(layer, hDS);
 
   if( status != MS_SUCCESS ) {
     msFree(bandlist);
