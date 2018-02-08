@@ -1552,7 +1552,7 @@ void msPolylineComputeLineSegments(shapeObj *shape, struct polyline_lengths *pll
 
   pll->ll = msSmallMalloc(shape->numlines * sizeof(struct line_lengths));
   pll->total_length = 0;
-  
+  pll->longest_line_index = 0;
 
 
   for(i=0; i<shape->numlines; i++) {
