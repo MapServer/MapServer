@@ -86,7 +86,7 @@ void msFreeWmsParamsObj(wmsParamsObj *wmsparams)
 #ifdef USE_WMS_LYR
 static int msSetWMSParamString(wmsParamsObj *psWMSParams,
                                const char *name, const char * value,
-                               int urlencode)
+                               int urlencode, int nVersion)
 {
   if (urlencode) {
     char *pszTmp;
@@ -96,8 +96,8 @@ static int msSetWMSParamString(wmsParamsObj *psWMSParams,
      *  says should not be encoded, when they occur in certain
      *  parameters.
      *
-     *  TODO: WMS 1.3 removes SRS and FORMAT from the set of
-     *        exceptional cases.
+     *  Note: WMS 1.3 removes SRS and FORMAT from the set of
+     *        exceptional cases, but renames SRS as CRS in any case.
      */
     if( strcmp(name,"LAYERS") == 0 ||
         strcmp(name,"STYLES") == 0 ||
@@ -105,7 +105,7 @@ static int msSetWMSParamString(wmsParamsObj *psWMSParams,
       pszTmp = msEncodeUrlExcept(value,',');
     } else if ( strcmp(name,"SRS") == 0 ) {
       pszTmp = msEncodeUrlExcept(value,':');
-    } else if ( strcmp(name,"FORMAT") == 0 ) {
+    } else if ( nVersion < OWS_1_3_0 && strcmp(name,"FORMAT") == 0 ) {
       pszTmp = msEncodeUrlExcept(value,'/');
     } else {
       pszTmp = msEncodeUrl(value);
@@ -226,6 +226,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
   const char *pszSLD=NULL, *pszStyleSLDBody=NULL, *pszVersionKeyword=NULL;
   const char *pszSLDBody=NULL, *pszSLDURL = NULL;
   char *pszSLDGenerated = NULL;
+  int nVersion=OWS_VERSION_NOTSET;
 
   /* If lp->connection is not set then use wms_onlineresource metadata */
   pszOnlineResource = lp->connection;
@@ -262,9 +263,13 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
   else
     pszVersionKeyword = "VERSION";
 
-  msSetWMSParamString(psWMSParams, pszVersionKeyword, pszVersion, MS_FALSE);
-  msSetWMSParamString(psWMSParams, "SERVICE", "WMS",     MS_FALSE);
-  msSetWMSParamString(psWMSParams, "LAYERS",  pszName,   MS_TRUE);
+  nVersion = msOWSParseVersionString(pszVersion);
+  /* WMS 1.0.8 is really just 1.1.0 */
+  if (nVersion == OWS_1_0_8) nVersion = OWS_1_1_0;
+
+  msSetWMSParamString(psWMSParams, pszVersionKeyword, pszVersion, MS_FALSE, nVersion);
+  msSetWMSParamString(psWMSParams, "SERVICE", "WMS",     MS_FALSE, nVersion);
+  msSetWMSParamString(psWMSParams, "LAYERS",  pszName,   MS_TRUE, nVersion);
 
   if (pszFormat==NULL && pszFormatList==NULL) {
     msSetError(MS_WMSCONNERR,
@@ -277,7 +282,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
   }
 
   if (pszFormat != NULL) {
-    msSetWMSParamString(psWMSParams, "FORMAT",  pszFormat, MS_TRUE);
+    msSetWMSParamString(psWMSParams, "FORMAT",  pszFormat, MS_TRUE, nVersion);
   } else {
     /* Look for the first format in list that matches */
     char **papszTok;
@@ -300,7 +305,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     }
 
     if (pszFormat) {
-      msSetWMSParamString(psWMSParams, "FORMAT",  pszFormat, MS_TRUE);
+      msSetWMSParamString(psWMSParams, "FORMAT",  pszFormat, MS_TRUE, nVersion);
       msFreeCharArray(papszTok, n);
     } else {
       msSetError(MS_WMSCONNERR,
@@ -338,21 +343,21 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
    *  styles is a required param of WMS
    */
 
-  msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
+  msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE, nVersion);
 
   if (pszSLD != NULL) {
     /* Only SLD is set */
-    msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
+    msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE, nVersion);
   } else if (pszStyleSLDBody != NULL) {
     /* SLDBODY are set */
-    msSetWMSParamString(psWMSParams, "SLD_BODY", pszStyleSLDBody, MS_TRUE);
+    msSetWMSParamString(psWMSParams, "SLD_BODY", pszStyleSLDBody, MS_TRUE, nVersion);
   }
 
   if (msIsLayerQueryable(lp)) {
-    msSetWMSParamString(psWMSParams, "QUERY_LAYERS", pszName, MS_TRUE);
+    msSetWMSParamString(psWMSParams, "QUERY_LAYERS", pszName, MS_TRUE, nVersion);
   }
   if (pszTime && strlen(pszTime) > 0) {
-    msSetWMSParamString(psWMSParams, "TIME",   pszTime,  MS_TRUE);
+    msSetWMSParamString(psWMSParams, "TIME",   pszTime,  MS_TRUE, nVersion);
   }
 
   /* if  the metadata wms_sld_body is set to AUTO, we generate
@@ -369,27 +374,27 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
       if (pszSLDGenerated) {
         msSetWMSParamString(psWMSParams, "SLD_BODY",
-                            pszSLDGenerated, MS_TRUE);
+                            pszSLDGenerated, MS_TRUE, nVersion);
         free(pszSLDGenerated);
       }
     } else {
-      msSetWMSParamString(psWMSParams, "SLD_BODY", pszSLDBody, MS_TRUE);
+      msSetWMSParamString(psWMSParams, "SLD_BODY", pszSLDBody, MS_TRUE, nVersion);
     }
 
   }
 
   if (pszSLDURL) {
-    msSetWMSParamString(psWMSParams, "SLD", pszSLDURL, MS_TRUE);
+    msSetWMSParamString(psWMSParams, "SLD", pszSLDURL, MS_TRUE, nVersion);
   }
 
   if (pszBgColor) {
-    msSetWMSParamString(psWMSParams, "BGCOLOR", pszBgColor, MS_TRUE);
+    msSetWMSParamString(psWMSParams, "BGCOLOR", pszBgColor, MS_TRUE, nVersion);
   }
 
   if (pszTransparent) {
-    msSetWMSParamString(psWMSParams, "TRANSPARENT", pszTransparent, MS_TRUE);
+    msSetWMSParamString(psWMSParams, "TRANSPARENT", pszTransparent, MS_TRUE, nVersion);
   } else {
-    msSetWMSParamString(psWMSParams, "TRANSPARENT", "TRUE", MS_TRUE);
+    msSetWMSParamString(psWMSParams, "TRANSPARENT", "TRUE", MS_TRUE, nVersion);
   }
 
   return MS_SUCCESS;
@@ -417,10 +422,13 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 #ifdef USE_WMS_LYR
   char *pszEPSG = NULL, *pszTmp;
   const char *pszVersion, *pszRequestParam, *pszExceptionsParam,
-        *pszLayer=NULL, *pszQueryLayers=NULL;
+        *pszSrsParamName="SRS", *pszLayer=NULL, *pszQueryLayers=NULL,
+        *pszUseStrictAxisOrder;
   rectObj bbox;
   int bbox_width = map->width, bbox_height = map->height;
   int nVersion=OWS_VERSION_NOTSET;
+  int bUseStrictAxisOrder = MS_FALSE; /* this is the assumption up to 1.1.0 */
+  int bFlipAxisOrder = MS_FALSE;
 
   if (lp->connectiontype != MS_WMS) {
     msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
@@ -472,9 +480,14 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     case OWS_1_1_1:
       /* All is good, this is a supported version. */
       break;
+    case OWS_1_3_0:
+      /* 1.3.0 introduces a few changes... */
+      pszSrsParamName = "CRS";
+      bUseStrictAxisOrder = MS_TRUE; /* this is the assumption for 1.3.0 */
+      break;
     default:
       /* Not a supported version */
-      msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.1 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
+      msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.3.0 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
       return MS_FAILURE;
   }
 
@@ -576,6 +589,25 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     pszNewEPSG[100]='\0';
     free(pszEPSG);
     pszEPSG=pszNewEPSG;
+  }
+
+  /*
+   * Work out whether we'll be wanting to flip the axis order for the request
+   */
+  pszUseStrictAxisOrder = msOWSLookupMetadata(&(lp->metadata), "MO", "strict_axis_order");
+  if (pszUseStrictAxisOrder != NULL) {
+    if (strncasecmp(pszUseStrictAxisOrder, "1", 1) == 0 ||
+        strncasecmp(pszUseStrictAxisOrder, "true", 4) == 0) {
+      bUseStrictAxisOrder = MS_TRUE;
+    } else if (strncasecmp(pszUseStrictAxisOrder, "0", 1) == 0 ||
+        strncasecmp(pszUseStrictAxisOrder, "false", 5) == 0) {
+      bUseStrictAxisOrder = MS_FALSE;
+    }
+  }
+  if (bUseStrictAxisOrder == MS_TRUE && pszEPSG &&
+      strncasecmp(pszEPSG, "EPSG:", 5) == 0 &&
+      msIsAxisInverted(atoi(pszEPSG + 5))) {
+    bFlipAxisOrder = MS_TRUE;
   }
 
   /* ------------------------------------------------------------------
@@ -726,12 +758,12 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    * Build the request URL.
    * At this point we set only the following parameters for GetMap:
    *   REQUEST
-   *   SRS
+   *   SRS (or CRS)
    *   BBOX
    *
    * And for GetFeatureInfo:
-   *   X
-   *   Y
+   *   X (I for 1.3.0)
+   *   Y (J for 1.3.0)
    *   INFO_FORMAT
    *   FEATURE_COUNT (only if nFeatureCount > 0)
    *
@@ -753,30 +785,43 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     else
       pszRequestParam = "feature_info";
 
-    if (nVersion >= OWS_1_1_0)
+    if (nVersion >= OWS_1_3_0)
+      pszExceptionsParam = "XML";
+    else if (nVersion >= OWS_1_1_0) /* 1.1.0 to 1.1.0 */
       pszExceptionsParam = "application/vnd.ogc.se_xml";
     else if (nVersion > OWS_1_0_0)  /* 1.0.1 to 1.0.7 */
       pszExceptionsParam = "SE_XML";
     else
       pszExceptionsParam = "WMS_XML";
 
-    msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
+    msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
     msSetWMSParamInt(   psWMSParams, "WIDTH",   bbox_width);
     msSetWMSParamInt(   psWMSParams, "HEIGHT",  bbox_height);
-    msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-    snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g",
-             bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
-    msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
+    msSetWMSParamString(psWMSParams, pszSrsParamName, pszEPSG, MS_FALSE, nVersion);
 
-    msSetWMSParamInt(   psWMSParams, "X",       nClickX);
-    msSetWMSParamInt(   psWMSParams, "Y",       nClickY);
+    if (bFlipAxisOrder == MS_TRUE) {
+      snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g",
+               bbox.miny, bbox.minx, bbox.maxy, bbox.maxx);
+    } else {
+      snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g",
+               bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+    }
+    msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE, nVersion);
 
-    msSetWMSParamString(psWMSParams, "EXCEPTIONS", pszExceptionsParam, MS_FALSE);
-    msSetWMSParamString(psWMSParams, "INFO_FORMAT", pszInfoFormat, MS_TRUE);
+    if (nVersion >= OWS_1_3_0) {
+      msSetWMSParamInt(   psWMSParams, "I",       nClickX);
+      msSetWMSParamInt(   psWMSParams, "J",       nClickY);
+    } else {
+      msSetWMSParamInt(   psWMSParams, "X",       nClickX);
+      msSetWMSParamInt(   psWMSParams, "Y",       nClickY);
+    }
+
+    msSetWMSParamString(psWMSParams, "EXCEPTIONS", pszExceptionsParam, MS_FALSE, nVersion);
+    msSetWMSParamString(psWMSParams, "INFO_FORMAT", pszInfoFormat, MS_TRUE, nVersion);
 
     if (pszQueryLayers) { /* not set in CONNECTION string */
-      msSetWMSParamString(psWMSParams, "QUERY_LAYERS", pszQueryLayers, MS_FALSE);
+      msSetWMSParamString(psWMSParams, "QUERY_LAYERS", pszQueryLayers, MS_FALSE, nVersion);
     }
 
     /* If FEATURE_COUNT <= 0 then don't pass this parameter */
@@ -793,25 +838,25 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       msCalculateScale(map->extent, map->units, map->width, map->height,
                      map->resolution, &scaledenom);
       snprintf(szBuf, 20, "%g",scaledenom);
-      msSetWMSParamString(psWMSParams, "SCALE", szBuf, MS_FALSE);
+      msSetWMSParamString(psWMSParams, "SCALE", szBuf, MS_FALSE, nVersion);
     }
     pszRequestParam = "GetLegendGraphic";
 
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
     if (pszExceptionsParam == NULL) {
-      if (nVersion >= OWS_1_1_0)
+      if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
         pszExceptionsParam = "application/vnd.ogc.se_inimage";
       else
         pszExceptionsParam = "INIMAGE";
     }
 
     if (pszLayer) { /* not set in CONNECTION string */
-      msSetWMSParamString(psWMSParams, "LAYER", pszLayer, MS_FALSE);
+      msSetWMSParamString(psWMSParams, "LAYER", pszLayer, MS_FALSE, nVersion);
     }
 
-    msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
-    msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
+    msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
+    msSetWMSParamString(psWMSParams, pszSrsParamName, pszEPSG, MS_FALSE, nVersion);
 
   } else { /* if (nRequestType == WMS_GETMAP) */
     char szBuf[100] = "";
@@ -824,21 +869,26 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
     if (pszExceptionsParam == NULL) {
-      if (nVersion >= OWS_1_1_0)
+      if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
         pszExceptionsParam = "application/vnd.ogc.se_inimage";
       else
         pszExceptionsParam = "INIMAGE";
     }
 
-    msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
+    msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
     msSetWMSParamInt(   psWMSParams, "WIDTH",   bbox_width);
     msSetWMSParamInt(   psWMSParams, "HEIGHT",  bbox_height);
-    msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
+    msSetWMSParamString(psWMSParams, pszSrsParamName, pszEPSG, MS_FALSE, nVersion);
 
-    snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g",
-             bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
-    msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
-    msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE);
+    if (bFlipAxisOrder == MS_TRUE) {
+      snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g",
+               bbox.miny, bbox.minx, bbox.maxy, bbox.maxx);
+    } else {
+      snprintf(szBuf, sizeof(szBuf), "%.15g,%.15g,%.15g,%.15g",
+               bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+    }
+    msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE, nVersion);
+    msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE, nVersion);
   }
 
   free(pszEPSG);
@@ -1120,7 +1170,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         MS_CHECK_ALLOC(pszBuf, nLen, MS_FAILURE);
 
         snprintf(pszBuf, nLen, "%s,%s", value1, value2);
-        msSetWMSParamString(&sThisWMSParams, keys[i], pszBuf,MS_FALSE);
+        /* TODO should really send the server request version here */
+        msSetWMSParamString(&sThisWMSParams, keys[i], pszBuf,MS_FALSE, OWS_VERSION_NOTSET);
 
         /* This key existed already, we don't want it counted twice */
         sThisWMSParams.numparams--;
