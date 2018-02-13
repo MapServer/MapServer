@@ -1,0 +1,58 @@
+#
+# Test WMS 1.1.1 Client
+# 
+# REQUIRES: OUTPUT=PNG SUPPORTS=WMS_CLIENT
+#
+#
+# GetMap
+# RUN_PARMS: wms_client_111.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=client&STYLES=&WIDTH=300&HEIGHT=200&FORMAT=image/png&SRS=EPSG:4326&BBOX=-180,-90,180,90" > [RESULT_DEMIME]
+#
+# GetFeatureInfo
+# RUN_PARMS: wms_client_111.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=client&STYLES=&WIDTH=300&HEIGHT=200&FORMAT=image/png&SRS=EPSG:4326&BBOX=-180,-90,180,90&QUERY_LAYERS=client&I=100&J=150&INFO_FORMAT=text/html&FEATURE_COUNT=5" > [RESULT]
+
+
+MAP
+	NAME WMS_CLIENT_TEST_111
+	STATUS ON
+	SIZE 400 300
+	EXTENT -180 -90 180 90
+	UNITS DD
+	PROJECTION
+		"init=epsg:4326"
+	END
+	IMAGECOLOR 255 255 255
+	SYMBOLSET etc/symbols.sym
+	FONTSET etc/fonts.txt
+
+	RESOLUTION 96
+	IMAGETYPE png24
+
+	WEB
+		IMAGEPATH "/tmp/ms_tmp/"
+		IMAGEURL "/ms_tmp/"
+		METADATA
+			"ows_updatesequence"	"123"
+			"wms_title"	"Test WMS 1.1.1 client"
+			"wms_srs"	"EPSG:4326"
+			"ows_enable_request"	"*"
+			"wms_getmap_formatlist"	"image/png,image/png; mode=24bit"
+			"ows_onlineresource" "http://localhost/wmsclient?"
+		END
+	END
+
+	LAYER
+		NAME client
+		TYPE RASTER
+		STATUS ON
+		CONNECTION "http://demo.mapserver.org/cgi-bin/wms?"
+		CONNECTIONTYPE WMS
+		TEMPLATE "dummy"
+		METADATA
+			"wms_srs"	"EPSG:4326"
+			"wms_name"	"cities"
+			"wms_server_version"	"1.1.1"
+			"wms_format"	"image/png"
+			"wms_enable_request" "*"
+		END
+	END
+END		
