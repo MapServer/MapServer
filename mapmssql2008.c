@@ -2387,6 +2387,11 @@ int process_node(layerObj* layer, expressionObj *filter)
        break;
     /* literal tokens */
     case MS_TOKEN_LITERAL_BOOLEAN:
+      if(layerinfo->current_node->tokenval.dblval == MS_TRUE)
+        filter->native_string = msStringConcatenate(filter->native_string, "1");
+      else
+        filter->native_string = msStringConcatenate(filter->native_string, "0");
+      break;
     case MS_TOKEN_LITERAL_NUMBER:
       strtmpl = "%lf";
       snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
