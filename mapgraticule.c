@@ -995,6 +995,7 @@ int msGraticuleLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerNextShape = msGraticuleLayerNextShape;
   /* layer->vtable->LayerResultsGetShape, use default */
   layer->vtable->LayerGetShape = msGraticuleLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msGraticuleLayerClose;
   layer->vtable->LayerGetItems = msGraticuleLayerGetItems;
   layer->vtable->LayerGetExtent = msGraticuleLayerGetExtent;

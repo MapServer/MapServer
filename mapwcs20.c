@@ -2279,6 +2279,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
   /*      output a single "stock" filename.                               */
   /* -------------------------------------------------------------------- */
   if( filename == NULL ) {
+    msOutputFormatResolveFromImage( map, image );
     if(multipart) {
       msIO_fprintf( stdout, "\r\n--wcs\r\n" );
       msIO_fprintf(
@@ -2439,7 +2440,8 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 static const char *msWCSLookupRangesetAxisMetadata20(hashTableObj *table,
     const char *axis, const char *item)
 {
-  char buf[500], *value;
+  char buf[500];
+  const char* value;
 
   if(table == NULL || axis == NULL || item == NULL) {
     return NULL;
@@ -2469,10 +2471,11 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
   if ( msCheckParentPointer(layer->map,"map") == MS_FAILURE )
     return MS_FAILURE;
 
-  if((cm->srs = msOWSGetEPSGProj(&(layer->projection),
-                                 &(layer->metadata), "CO", MS_TRUE)) == NULL) {
-    if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection),
-                                   &(layer->map->web.metadata), "CO", MS_TRUE)) == NULL) {
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE, &(cm->srs_epsg));
+  if(!cm->srs_epsg) {
+    msOWSGetEPSGProj(&(layer->map->projection),
+                                   &(layer->map->web.metadata), "CO", MS_TRUE, &cm->srs_epsg);
+    if(!cm->srs_epsg) {
       msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, "
                  "no projection defined and no metadata available.",
                  "msWCSGetCoverageMetadata20()");
@@ -2968,6 +2971,7 @@ static int msWCSClearCoverageMetadata20(wcs20coverageMetadataObj *cm)
     }
   }
   msFree(cm->bands);
+  msFree(cm->srs_epsg);
   return MS_SUCCESS;
 }
 
@@ -4107,6 +4111,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
   double x_1, x_2, y_1, y_2;
   char *coverageName, *bandlist=NULL, numbands[8];
 
+  int doDrawRasterLayerDraw = MS_TRUE;
+  GDALDatasetH hDS = NULL;
 
   int widthFromComputationInImageCRS = 0;
   int heightFromComputationInImageCRS = 0;
@@ -4169,12 +4175,12 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /************************************************************************/
 
   msInitProjection(&imageProj);
-  if (msLoadProjectionString(&imageProj, cm.srs) == -1) {
+  if (msLoadProjectionString(&imageProj, cm.srs_epsg) == -1) {
     msFreeProjection(&imageProj);
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
-               "msWCSGetCoverage20()", cm.srs);
+               "msWCSGetCoverage20()", cm.srs_epsg);
     return msWCSException(map, "InvalidParameterValue",
                           "projection", params->version);
   }
@@ -4222,7 +4228,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* if no subsetCRS was specified use the coverages CRS 
      (Requirement 27 of the WCS 2.0 specification) */
   if (!params->subsetcrs) {
-    params->subsetcrs = msStrdup(cm.srs);
+    params->subsetcrs = msStrdup(cm.srs_epsg);
   }
 
   if(EQUAL(params->subsetcrs, "imageCRS")) {
@@ -4526,6 +4532,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
 
+  msWCSApplyLayerCreationOptions(layer, map->outputformat, bandlist);
+
   /* check for the interpolation */
   /* Defaults to NEAREST */
   if(params->interpolation != NULL) {
@@ -4554,12 +4562,33 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msLayerSetProcessingKey(layer, "CLOSE_CONNECTION", "NORMAL");
   }
 
+  if( layer->tileindex == NULL && layer->data != NULL &&
+      strlen(layer->data) > 0 &&
+      layer->connectiontype != MS_KERNELDENSITY )
+  {
+      if( msDrawRasterLayerLowCheckIfMustDraw(map, layer) )
+      {
+          char* decrypted_path = NULL;
+          char szPath[MS_MAXPATHLEN];
+          hDS = (GDALDatasetH)msDrawRasterLayerLowOpenDataset(
+                                    map, layer, layer->data, szPath, &decrypted_path);
+          msFree(decrypted_path);
+          if( hDS )
+            msWCSApplyDatasetMetadataAsCreationOptions(layer, map->outputformat, bandlist, hDS);
+      }
+      else
+      {
+          doDrawRasterLayerDraw = MS_FALSE;
+      }
+  }
+
   /* create the image object  */
   if (!map->outputformat) {
     msWCSClearCoverageMetadata20(&cm);
     msFree(bandlist);
     msSetError(MS_WCSERR, "The map outputformat is missing!",
                "msWCSGetCoverage20()");
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,
@@ -4574,12 +4603,14 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!",
                "msWCSGetCoverage20()");
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   }
 
   if (image == NULL) {
     msFree(bandlist);
     msWCSClearCoverageMetadata20(&cm);
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   }
 
@@ -4593,6 +4624,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       msFreeImage(image);
       msFree(bandlist);
       msWCSClearCoverageMetadata20(&cm);
+      msDrawRasterLayerLowCloseDataset(layer, hDS);
       return msWCSException(map, NULL, NULL, params->version);
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
@@ -4610,6 +4642,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
         return msWCSException(map, NULL, NULL, params->version);
       }
 
@@ -4632,6 +4665,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
         return msWCSException(map, NULL, NULL, params->version);
       }
       /*
@@ -4658,13 +4692,24 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* Actually produce the "grid". */
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    status = msDrawRasterLayerLow( map, layer, image, NULL );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, layer, image, NULL, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   } else {
     rasterBufferObj rb;
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(LIKELY(status == MS_SUCCESS))
-      status = msDrawRasterLayerLow( map, layer, image, &rb );
+    if(LIKELY(status == MS_SUCCESS)) {
+      if( doDrawRasterLayerDraw ) {
+        status = msDrawRasterLayerLowWithDataset( map, layer, image, &rb, hDS );
+      } else {
+        status = MS_SUCCESS;
+      }
+    }
   }
+
+  msDrawRasterLayerLowCloseDataset(layer, hDS);
 
   if( status != MS_SUCCESS ) {
     msFree(bandlist);

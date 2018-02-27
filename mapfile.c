@@ -94,7 +94,7 @@ char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL"
 ** Validates a string (value) against a series of patterns. We support up to four to allow cascading from classObj to
 ** layerObj to webObj plus a legacy pattern like TEMPLATEPATTERN.
 */
-int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4)
+int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4)
 {
   if(msEvalRegex(pattern1, value) == MS_TRUE) return MS_SUCCESS;
   if(msEvalRegex(pattern2, value) == MS_TRUE) return MS_SUCCESS;
@@ -305,7 +305,10 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
 {
   char szLibPath[MS_MAXPATHLEN] = { '\0' };
   char szLibPathExt[MS_MAXPATHLEN] = { '\0' };
-  const char *plugin_dir = msLookupHashTable( &(map->configoptions), "MS_PLUGIN_DIR");
+  const char *plugin_dir = NULL;
+  
+  if (map)
+    plugin_dir = msLookupHashTable(&(map->configoptions), "MS_PLUGIN_DIR");
 
   /* do nothing on windows, filename without .dll will be loaded by default*/
 #if !defined(_WIN32)
@@ -1654,7 +1657,7 @@ void initLabel(labelObj *label)
   label->mindistance = -1; /* no limit */
   label->repeatdistance = 0; /* no repeat */
   label->maxoverlapangle = 22.5; /* default max overlap angle */
-  label->partials = MS_TRUE;
+  label->partials = MS_FALSE;
   label->wrap = '\0';
   label->maxlength = 0;
   label->minlength = 0;
@@ -1909,7 +1912,7 @@ static int loadLabel(labelObj *label)
         if(label->position == MS_BINDING) {
           if(label->bindings[MS_LABEL_BINDING_POSITION].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_POSITION].item);
-          label->bindings[MS_LABEL_BINDING_POSITION].item = strdup(msyystring_buffer);
+          label->bindings[MS_LABEL_BINDING_POSITION].item = msStrdup(msyystring_buffer);
           label->numbindings++;
         }
         break;
@@ -2106,7 +2109,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   else  writeColor(stream, indent, "OUTLINECOLOR", NULL, &(label->outlinecolor));
 
   writeNumber(stream, indent, "OUTLINEWIDTH", 1, label->outlinewidth);
-  writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_FALSE, "FALSE");
+  writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_TRUE, "TRUE");
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_POSITION].item)
     writeAttributeBinding(stream, indent, "POSITION", &(label->bindings[MS_LABEL_BINDING_POSITION]));
@@ -2952,6 +2955,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
                  MS_GEOMTRANSFORM_LABELPOLY, "\"labelpoly\"",
+                 MS_GEOMTRANSFORM_LABELCENTER, "\"labelcenter\"",
                  MS_GEOMTRANSFORM_START, "\"start\"",
                  MS_GEOMTRANSFORM_VERTICES, "\"vertices\"",
                  MS_GEOMTRANSFORM_CENTROID, "\"centroid\""
@@ -3699,7 +3703,16 @@ char* msWriteClassToString(classObj *class)
 
 int initCompositingFilter(CompositingFilter *filter) {
   filter->filter = NULL;
+  filter->next = NULL;
   return MS_SUCCESS;
+}
+
+void freeCompositingFilter(CompositingFilter *filter) {
+  if(!filter) return;
+  if(filter->next)
+    freeCompositingFilter(filter->next);
+  free(filter->filter);
+  free(filter);
 }
 
 int initLayerCompositer(LayerCompositer *compositer) {
@@ -3710,19 +3723,12 @@ int initLayerCompositer(LayerCompositer *compositer) {
   return MS_SUCCESS;
 }
 
-int freeLayerCompositers(LayerCompositer * item) {
-  while(item) {
-    LayerCompositer * next = item->next;
-
-    if (item->filter) {
-      msFree(item->filter->filter);
-      msFree(item->filter);
-      }
-    msFree(item);
-
-    item=next;
-    }
-  return MS_SUCCESS;
+void freeLayerCompositer(LayerCompositer *compositer) {
+  if(!compositer) return;
+  if(compositer->next)
+    freeLayerCompositer(compositer->next);
+  freeCompositingFilter(compositer->filter);
+  free(compositer);
 }
 
 /*
@@ -3951,7 +3957,7 @@ int freeLayer(layerObj *layer)
     freeFeatureList(layer->features);
 
   if(layer->resultcache) {
-    if(layer->resultcache->results) free(layer->resultcache->results);
+    cleanupResultCache(layer->resultcache);
     msFree(layer->resultcache);
   }
 
@@ -3981,6 +3987,10 @@ int freeLayer(layerObj *layer)
   if(layer->maskimage) {
     msFreeImage(layer->maskimage);
   }
+  
+  if(layer->compositer) {
+    freeLayerCompositer(layer->compositer);    
+  }
 
   if (layer->grid) {
     freeGrid(layer->grid);
@@ -3993,8 +4003,6 @@ int freeLayer(layerObj *layer)
   for(i=0;i<layer->sortBy.nProperties;i++)
       msFree(layer->sortBy.properties[i].item);
   msFree(layer->sortBy.properties);
-
-  freeLayerCompositers(layer->compositer);
 
   return MS_SUCCESS;
 }
@@ -4123,14 +4131,15 @@ int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
 int loadLayerCompositer(LayerCompositer *compositer) {
   for(;;) {
     switch(msyylex()) {
-      case COMPFILTER:
-        compositer->filter = msSmallMalloc(sizeof(CompositingFilter));
-        initCompositingFilter(compositer->filter);
-        if(getString(&compositer->filter->filter) == MS_FAILURE) {
-          msFree(compositer->filter);
-          compositer->filter=NULL;
-          return(MS_FAILURE);
-          }
+      case COMPFILTER: {
+        CompositingFilter **filter = &compositer->filter;
+        while(*filter) {
+          filter = &((*filter)->next);
+        }
+        *filter = msSmallMalloc(sizeof(CompositingFilter));
+        initCompositingFilter(*filter);
+        if(getString(&((*filter)->filter)) == MS_FAILURE) return(MS_FAILURE);
+      }
         break;
       case COMPOP: {
         char *compop=NULL;
@@ -4742,8 +4751,9 @@ int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
 }
 
 static void writeCompositingFilter(FILE *stream, int indent, CompositingFilter *filter) {
-  if(filter) {
+  while(filter) {
     writeString(stream, indent, "COMPFILTER", "", filter->filter);
+    filter = filter->next;
   }
 }
 
@@ -5529,6 +5539,8 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; /* draw with labels */
   scalebar->align = MS_ALIGN_CENTER;
+  scalebar->offsetx = 0;
+  scalebar->offsety = 0;
 }
 
 void freeScalebar(scalebarObj *scalebar)
@@ -5595,6 +5607,10 @@ int loadScalebar(scalebarObj *scalebar)
         break;
       case(UNITS):
         if((scalebar->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES)) == -1) return(-1);
+        break;
+      case(OFFSET):
+        if(getInteger(&(scalebar->offsetx)) == -1) return(-1);
+        if(getInteger(&(scalebar->offsety)) == -1) return(-1);
         break;
       default:
         if(strlen(msyystring_buffer) > 0) {
@@ -7125,7 +7141,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
   while(default_key) {
     if(!strncmp(default_key,"default_",8)) {
       size_t buffer_size = (strlen(default_key)-5);
-      char *to = msLookupHashTable(table, default_key);
+      const char *to = msLookupHashTable(table, default_key);
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
@@ -7142,12 +7158,11 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
 
 static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableObj *table)
 {
-	int i;
 	const char *default_key = msFirstKeyFromHashTable(table);
 	while (default_key) {
 		if (!strncmp(default_key, "default_", 8)) {
 			size_t buffer_size = (strlen(default_key) - 5);
-			char *to = msLookupHashTable(table, default_key);
+			const char *to = msLookupHashTable(table, default_key);
 			char *tag = (char *)msSmallMalloc(buffer_size);
 			snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
@@ -7422,6 +7437,28 @@ void initResultCache(resultCacheObj *resultcache)
     resultcache->usegetshape = MS_FALSE;
   }
 }
+
+void cleanupResultCache(resultCacheObj *resultcache)
+{
+  if(resultcache) {
+    if(resultcache->results)
+    {
+        int i;
+        for( i = 0; i < resultcache->numresults; i++ )
+        {
+            if( resultcache->results[i].shape )
+            {
+                msFreeShape( resultcache->results[i].shape );
+                msFree( resultcache->results[i].shape );
+            }
+        }
+        free(resultcache->results);
+    }
+    resultcache->results = NULL;
+    initResultCache(resultcache);
+  }
+}
+
 
 static int resolveSymbolNames(mapObj* map)
 {

@@ -225,6 +225,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-131.020004 33.650002</ows:LowerCorner>
         <ows:UpperCorner>-119.849998 48.389999</ows:UpperCorner>
       </ows:WGS84BoundingBox>
+      <MetadataURL xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;request=GetMetadata&amp;layer=time"/>
     </FeatureType>
   </FeatureTypeList>
   <fes:Filter_Capabilities>

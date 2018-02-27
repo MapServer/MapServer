@@ -26,7 +26,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
 #include "mapserver.h"
 #include "mapprimitive.h"
 #include <assert.h>
@@ -168,6 +167,27 @@ void msFreeShape(shapeObj *shape)
 #endif
 
   msInitShape(shape); /* now reset */
+}
+
+int msGetShapeRAMSize(shapeObj* shape)
+{
+    int i;
+    int size = 0;
+    size += sizeof(shapeObj);
+    size += shape->numlines * sizeof(lineObj);
+    for (i = 0; i < shape->numlines; i++)
+    {
+        size += shape->line[i].numpoints * sizeof(pointObj);
+    }
+    size += shape->numvalues * sizeof(char*);
+    for( i = 0; i < shape->numvalues; i++ )
+    {
+        if( shape->values[i] )
+            size += strlen( shape->values[i] ) + 1;
+    }
+    if( shape->text )
+        size += strlen( shape->text ) + 1;
+    return size;
 }
 
 void msFreeLabelPathObj(labelPathObj *path)
@@ -1004,6 +1024,8 @@ void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double c
           snap = 0;
         }
       }
+      else
+        snap = 0;
       if(snap) {
         shape->line[i].point[0].x = x0;
         shape->line[i].point[0].y = y0;
@@ -1815,6 +1837,70 @@ int msPolylineLabelPath(mapObj *map, imageObj *image, shapeObj *p, textSymbolObj
   return ret;
 }
 
+static double compute_retry_offset(textSymbolObj *ts, int fail_idx, double retried_offset, double max_dec_offset, double max_inc_offset) {
+/* fail_idx: the glyph index in the textpath that originally failed (i.e. before any displacement was tested */
+/* retried_offset: the last offset that was tried and is failing, so we can return the next one (or 0 if none left)*/
+  int inc = 1,dec_found=0, inc_found=0;
+  double inc_offset = 0, dec_offset = 0;
+
+  retried_offset = fabs(retried_offset);
+  do {
+    if(fail_idx - inc - 1 >= 0) {
+      dec_offset += ts->textpath->glyphs[fail_idx - inc].glyph->metrics.advance;
+      if(dec_offset > max_dec_offset)
+        break;
+      if(dec_offset > retried_offset && msIsGlyphASpace(&ts->textpath->glyphs[fail_idx - inc - 1])) {
+        dec_found = 1;
+        dec_offset += ts->textpath->glyphs[fail_idx - inc -1].glyph->metrics.advance / 2.0;
+        break;
+      }
+    }
+    inc++;
+  } while(dec_offset<max_dec_offset && fail_idx-inc>0);
+  
+  if(!dec_found) {
+    /* try the starting position */
+    dec_offset += ts->textpath->glyphs[0].glyph->metrics.advance;
+    if(dec_offset > retried_offset && dec_offset<max_dec_offset) {
+      dec_found = 1;
+    }
+  }
+  
+  inc = 1;
+  inc_offset = ts->textpath->glyphs[fail_idx].glyph->metrics.advance;
+  do{
+    if(fail_idx + inc < ts->textpath->numglyphs - 1) {
+      if(inc_offset > retried_offset && msIsGlyphASpace(&ts->textpath->glyphs[fail_idx + inc])) {
+        inc_offset += ts->textpath->glyphs[fail_idx + inc].glyph->metrics.advance / 2;
+        if(inc_offset < max_inc_offset)
+          inc_found = 1;
+        break;
+      }
+      inc_offset += ts->textpath->glyphs[fail_idx + inc].glyph->metrics.advance;
+    }
+    inc++;
+  } while(inc_offset<max_inc_offset && fail_idx+inc<ts->textpath->numglyphs-1);
+  if(!inc_found) {
+    inc_offset += ts->textpath->glyphs[ts->textpath->numglyphs-1].glyph->metrics.advance;
+    if(inc_offset > retried_offset && inc_offset<max_inc_offset) {
+      inc_found = 1;
+    }
+  }
+  
+  if(!inc_found && !dec_found)
+    return 0.0;
+  if(inc_found && dec_found) {
+    if(inc_offset<dec_offset)
+      return -inc_offset;
+    else
+      return dec_offset;
+  }
+  if(inc_found)
+    return -inc_offset;
+  else
+    return dec_offset;
+            
+}
 /*
  * Calculate a series of label points for each character in the label for a
  * given line. The resultant series of points is stored in *labelpath,
@@ -1826,10 +1912,10 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
 {
   double distance_along_segment;
   double repeat_distance = label->repeatdistance * ts->resolutionfactor;
-  double segment_length, fwd_line_length, rev_line_length, text_length, text_start_length, label_buffer, text_end_length;
-  double right_label_position, left_label_position, center_label_position;
+  double segment_length, fwd_line_length, rev_line_length, text_length, text_start_length, label_buffer, text_end_length, cur_label_position, first_label_position;
+  double max_retry_offset;
 
-  int j,k,l,n, inc, final_j, label_repeat;
+  int j,k,l,inc, final_j, label_repeat;
   double direction;
   rectObj bbox;
   lineObj *bounds;
@@ -1848,7 +1934,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
     return MS_FAILURE;
   }
   if(p->numpoints == 2) /* use the regular angled text algorithm */
-    goto ANGLEFOLLOW_FAILURE;
+    return msLineLabelPoint(map,p,ts,ll,&lfr->lar,label, img->resolutionfactor);
   
   if(!ts->textpath) {
     if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
@@ -1858,7 +1944,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
   
   /* skip the label and use the normal algorithm if it has fewer than 2 characters */
   if(ts->textpath->numglyphs < 2)
-    goto ANGLEFOLLOW_FAILURE;
+    return msLineLabelPoint(map,p,ts,ll,&lfr->lar,label, img->resolutionfactor);
 
 
   text_length = letterspacing * ts->textpath->bounds.bbox.maxx;
@@ -1867,84 +1953,90 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
   ** if the text length is way longer than the line, skip adding the
   ** label if it isn't forced (long extrapolated labels tend to be ugly)
   */
-  if ( text_length > 1.5 * ll->total_length && ts->label->force == MS_FALSE ) {
-    return MS_SUCCESS;
+  if ( text_length > 1.5 * ll->total_length ) {
+    if(ts->label->force == MS_FALSE ) {
+      return MS_SUCCESS;
+    } else {
+      repeat_distance = 0; /* disable repetition */
+    }
   }
 
-  /* We compute the number of labels we can repeat in the line */
-  text_end_length = 0;
-  left_label_position = right_label_position = center_label_position = (ll->total_length - text_length) / 2.0;
-  label_repeat = (ll->total_length / (text_length + repeat_distance));
-  label_buffer = (ll->total_length / label_repeat);
-  if (repeat_distance > 0 && label_repeat > 1) {
-    if (label_repeat % 2 == 0) {
-      label_repeat -= 1;
-    }
-    /* text_start_length = (label_buffer / 2) - (text_length / 2); */
-
-    /* initial point position */
-    left_label_position -= ((label_repeat-1)/2 * label_buffer);
-    right_label_position += ((label_repeat-1)/2 * label_buffer);
-
-    label_repeat = (label_repeat-1)/2+1;
+  /* We compute the number of labels we can repeat in the line:
+     - space occupied by one label
+     - plus N times space occupied by one label + repeat_distance interspacing
+   */
+  label_buffer = text_length + repeat_distance; /* distance occupied by one label + inter-repeat spacing */
+  if( repeat_distance > 0 && ll->total_length > text_length) {
+    label_repeat = 1 + (int)((ll->total_length - text_length) / label_buffer);
+    max_retry_offset = repeat_distance / 2.1;
   } else {
     label_repeat = 1;
-    center_label_position = (ll->total_length - text_length) / 2.0;
+    max_retry_offset = (ll->total_length - text_length) / 2.1;
   }
-  
+  /* compute the starting point of where we'll be placing the first label */
+  if(label_repeat % 2) {
+    /* odd number of labels: account for the center label that will be centered on the line
+     * ----llll_____llll_____llll----
+     */
+    first_label_position = (ll->total_length - text_length) / 2.0 - (label_repeat / 2) * label_buffer;
+  } else {
+    /* even number of labels:
+     * repeat_distance is centered on the line
+     * space for one label
+     * eventually space for label_repeat*2-1 labels+spacing
+     * ----llll_____llll----
+     * --llll_____llll_____llll_____llll--
+     */
+    first_label_position = (ll->total_length - repeat_distance) / 2.0 - text_length - (label_repeat/2 - 1) * label_buffer;
+  }
   if(label->maxoverlapangle > 0)
     maxoverlapangle = label->maxoverlapangle * MS_DEG_TO_RAD; /* radian */
   
+  cur_label_position = first_label_position;
   for (l=0; l < label_repeat; l++) {
-    if (l == label_repeat-1) { /* last label to place is always the center label */
-      text_start_length = center_label_position;
-      n = 1;
-    } else {
-      text_start_length = right_label_position;
-      n = 0;
-    }
+    
+    double retry_offset = 0.0;
+    int first_retry_idx = 0;
+    //max_dec_retry_offset = max_inc_retry_offset = max_retry_offset;
+    textPathObj *tp = msSmallCalloc(1,sizeof(textPathObj));
+    /* copy the textPath, we will be overriding the copy's positions and angles */
+    msCopyTextPath(tp,ts->textpath);
+    tp->bounds.poly = msSmallMalloc(sizeof(lineObj));
+    bounds = tp->bounds.poly;
+
+
+    /*
+    ** The bounds will have two points for each character plus an endpoint:
+    ** the UL corners of each bbox will be tied together and the LL corners
+    ** will be tied together.
+    */
+    bounds->numpoints = 2*tp->numglyphs + 1;
+    bounds->point = (pointObj *) msSmallMalloc(sizeof(pointObj) * bounds->numpoints);
 
     do {
-      textPathObj *tp = msSmallCalloc(1,sizeof(textPathObj));
-      /* copy the textPath, we will be overriding the copy's positions and angles */
-      msCopyTextPath(tp,ts->textpath);
-      tp->bounds.poly = msSmallMalloc(sizeof(lineObj));
+      int overlap_collision_detected = 0;
+      text_start_length = cur_label_position + retry_offset;
+      text_end_length = 0;
+      
       for(k=0;k<tp->numglyphs;k++) {
         tp->glyphs[k].pnt.x = 0;
         tp->glyphs[k].pnt.y = 0;
       }
-      bounds = tp->bounds.poly;
-
-
-      /*
-      ** The bounds will have two points for each character plus an endpoint:
-      ** the UL corners of each bbox will be tied together and the LL corners
-      ** will be tied together.
-      */
-      bounds->numpoints = 2*tp->numglyphs + 1;
-      bounds->point = (pointObj *) msSmallMalloc(sizeof(pointObj) * bounds->numpoints);
-
+      
       /* the points start at (line_length - text_length) / 2 in order to be centred */
       /* text_start_length = (line_length - text_length) / 2.0; */
-
-      /* the text is longer than the line: extrapolate the first and last segments */
-      if(text_start_length < 0.0) {
-        j = 0;
-        final_j = p->numpoints - 1;
-        fwd_line_length = rev_line_length = 0;
-      } else {
-        /* proceed until we've traversed text_start_length in distance */
-        fwd_line_length = 0;
-        j = 0;
+      
+      j = 0;
+      fwd_line_length = 0;
+      if(text_start_length >= 0.0) {
         while ( fwd_line_length < text_start_length )
           fwd_line_length += ll->segment_lengths[j++];
-
+        
         j--;
-
-        /* determine the last segment */
-        rev_line_length = 0;
-        final_j = p->numpoints - 1;
-
+      }
+      final_j = p->numpoints - 1;
+      rev_line_length = 0;
+      if(text_start_length+text_length <= ll->total_length) {
         text_end_length = ll->total_length - (text_start_length + text_length);
         while(rev_line_length < text_end_length) {
           rev_line_length += ll->segment_lengths[final_j - 1];
@@ -1952,20 +2044,20 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
         }
         final_j++;
       }
-
+      
       if(final_j == 0)
         final_j = 1;
-
+      
       /* determine if the line is mostly left to right or right to left,
-         see bug 1620 discussion by Steve Woodbridge */
+       see bug 1620 discussion by Steve Woodbridge */
       direction = p->point[final_j].x - p->point[j].x;
-
+      
       if(direction > 0) {
         inc = 1; /* j is already correct */
-
+        
         /* length of the segment containing the starting point */
         segment_length = ll->segment_lengths[j];
-
+        
         /* determine how far along the segment we need to go */
         if(text_start_length < 0.0)
           t = text_start_length / segment_length;
@@ -1974,7 +2066,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
       } else {
         j = final_j;
         inc = -1;
-
+        
         /* length of the segment containing the starting point */
         segment_length = ll->segment_lengths[j-1];
         if(text_start_length < 0.0)
@@ -1982,60 +2074,61 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
         else
           t = 1 - (rev_line_length - text_end_length) / segment_length;
       }
-
+      
       distance_along_segment = t * segment_length; /* starting point */
-
+      
       theta = 0;
       k = 0;
       w = 0;
       while ( k < tp->numglyphs ) {
         double x,y;
-
+        
         x = t * (p->point[j+inc].x - p->point[j].x) + p->point[j].x;
         y = t * (p->point[j+inc].y - p->point[j].y) + p->point[j].y;
         tp->glyphs[k].pnt.x = x;
         tp->glyphs[k].pnt.y = y;
-
-
+        
+        
         w = letterspacing*tp->glyphs[k].glyph->metrics.advance;
-
+        
         /* add the character's width to the distance along the line */
         distance_along_segment += w;
-
+        
         /* if we still have segments left and we've past the current segment, move to the next one */
         if(inc == 1 && j < p->numpoints - 2) {
-
+          
           while ( j < p->numpoints - 2 && distance_along_segment > ll->segment_lengths[j] ) {
             distance_along_segment -= ll->segment_lengths[j];
             j += inc; /* move to next segment */
           }
-
+          
           segment_length = ll->segment_lengths[j];
-
+          
         } else if( inc == -1 && j > 1 ) {
-
+          
           while ( j > 1 && distance_along_segment > ll->segment_lengths[j-1] ) {
             distance_along_segment -= ll->segment_lengths[j-1];
             j += inc; /* move to next segment */
           }
-
+          
           segment_length = ll->segment_lengths[j-1];
         }
-
+        
         /* Recalculate interpolation parameter */
         t = distance_along_segment / segment_length;
-
+        
         k++;
       }
-
+      
       /* pre-calc the character's centre y value.  Used for rotation adjustment. */
       cy = -ts->textpath->glyph_size / 2.0;
 #ifdef USE_KERNEL
       tp->glyphs[0].pnt.x /= kernel_normal;
       tp->glyphs[0].pnt.y /= kernel_normal;
 #endif
-
+      
       /* Average the points and calculate each angle */
+      overlap_collision_detected = 0;
       for (k = 1; k <= tp->numglyphs; k++) {
         double anglediff;
         if ( k < tp->numglyphs ) {
@@ -2050,18 +2143,62 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
           dx = t * (p->point[j+inc].x - p->point[j].x) + p->point[j].x - tp->glyphs[k-1].pnt.x;
           dy = t * (p->point[j+inc].y - p->point[j].y) + p->point[j].y - tp->glyphs[k-1].pnt.y;
         }
-
+        
+        
         if(dx || dy || k==1) {
+          
           theta = -atan2(dy,dx);
-
+          
           if (maxoverlapangle > 0 && k > 1) {
-            /* If the difference between the last char angle and the current one
-             is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
-             , bail the label */
-            anglediff = fabs(theta - tp->glyphs[k-2].rot);
-            anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
-            if(anglediff > maxoverlapangle ) {
-              goto LABEL_FAILURE;
+            /* no use testing for overlap if glyph or previous glyph is a space */
+            if(!msIsGlyphASpace(&tp->glyphs[k-1]) && !msIsGlyphASpace(&tp->glyphs[k-2])) {
+              /* If the difference between the last char angle and the current one
+               is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
+               , bail the label */
+              anglediff = fabs(theta - tp->glyphs[k-2].rot);
+              anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
+              if(anglediff > maxoverlapangle ) {
+                double max_dec_retry_offset;
+                double max_inc_retry_offset;
+                if(label_repeat == 1) {
+                  max_dec_retry_offset = max_inc_retry_offset = first_label_position;
+                } else if(l==0) {
+                  if(direction>0) {
+                    max_dec_retry_offset = MS_MIN(first_label_position, max_retry_offset);
+                    max_inc_retry_offset = max_retry_offset;
+                  } else {
+                    max_dec_retry_offset = max_retry_offset;
+                    max_inc_retry_offset = MS_MIN(first_label_position, max_retry_offset);
+                    //max_inc_retry_offset = MS_MIN(ll->total_length-cur_label_position-text_length, max_retry_offset);
+                  }
+                } else if(l == label_repeat-1) {
+                  if(direction>0) {
+                    max_inc_retry_offset = MS_MIN(first_label_position, max_retry_offset);
+                    max_dec_retry_offset = max_retry_offset;
+                  } else {
+                    max_inc_retry_offset = max_retry_offset;
+                    max_dec_retry_offset = MS_MIN(first_label_position, max_retry_offset);
+                    //max_inc_retry_offset = MS_MIN(ll->total_length-cur_label_position-text_length, max_retry_offset);
+                  }
+                } else {
+                  max_dec_retry_offset = max_inc_retry_offset = max_retry_offset;
+                }
+
+                overlap_collision_detected = 1;
+                if(retry_offset == 0.0) {
+                  first_retry_idx = k-1;
+                }
+                retry_offset = compute_retry_offset(ts, first_retry_idx, retry_offset, max_inc_retry_offset, max_dec_retry_offset);
+                if(retry_offset == 0.0) { /* no offsetted position to try */
+                  freeTextPath(tp);
+                  free(tp);
+                } else {
+                  if(direction<0) {
+                    retry_offset = -retry_offset;
+                  }
+                }
+                break;
+              }
             }
           }
         } else {
@@ -2071,79 +2208,73 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
            */
           theta = tp->glyphs[k-2].rot;
         }
-
+        
         /* msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
-
+        
         tp->glyphs[k-1].rot = theta;
-
-
+        
+        
         /* Move the previous point so that when the character is rotated and
-           placed it is centred on the line */
+         placed it is centred on the line */
         cos_t = cos(theta);
         sin_t = sin(theta);
-
+        
         w = letterspacing*tp->glyphs[k-1].glyph->metrics.advance;
-
+        
         cx = 0; /* Center the character vertically only */
-
+        
         dx = - (cx * cos_t + cy * sin_t);
         dy = - (cy * cos_t - cx * sin_t);
-
+        
         tp->glyphs[k-1].pnt.x += dx;
         tp->glyphs[k-1].pnt.y += dy;
-
+        
         /* Calculate the bounds */
         bbox.minx = 0;
         bbox.maxx = w;
         bbox.maxy = 0;
         bbox.miny = -ts->textpath->glyph_size;
-
+        
         /* Add the label buffer to the bounds */
         bbox.maxx += ts->label->buffer * ts->resolutionfactor;
         bbox.maxy += ts->label->buffer * ts->resolutionfactor;
         bbox.minx -= ts->label->buffer * ts->resolutionfactor;
         bbox.miny -= ts->label->buffer * ts->resolutionfactor;
-
+        
         if ( k < tp->numglyphs ) {
           /* Transform the bbox too.  We take the UL and LL corners and rotate
-             then translate them. */
+           then translate them. */
           bounds->point[k-1].x = (bbox.minx * cos_t + bbox.maxy * sin_t) + tp->glyphs[k-1].pnt.x;
           bounds->point[k-1].y = (bbox.maxy * cos_t - bbox.minx * sin_t) + tp->glyphs[k-1].pnt.y;
-
+          
           /* Start at end and work towards the half way point */
           bounds->point[bounds->numpoints - k - 1].x = (bbox.minx * cos_t + bbox.miny * sin_t) + tp->glyphs[k-1].pnt.x;
           bounds->point[bounds->numpoints - k - 1].y = (bbox.miny * cos_t - bbox.minx * sin_t) + tp->glyphs[k-1].pnt.y;
-
+          
         } else {
-
+          
           /* This is the last character in the string so we take the UR and LR
-             corners of the bbox */
+           corners of the bbox */
           bounds->point[k-1].x = (bbox.maxx * cos_t + bbox.maxy * sin_t) + tp->glyphs[k-1].pnt.x;
           bounds->point[k-1].y = (bbox.maxy * cos_t - bbox.maxx * sin_t) + tp->glyphs[k-1].pnt.y;
-
+          
           bounds->point[bounds->numpoints - k - 1].x = (bbox.maxx * cos_t + bbox.miny * sin_t) + tp->glyphs[k-1].pnt.x;
           bounds->point[bounds->numpoints - k - 1].y = (bbox.miny * cos_t - bbox.maxx * sin_t) + tp->glyphs[k-1].pnt.y;
         }
-
       }
-
+      if(overlap_collision_detected) {
+        continue;
+      }
+      
+      
       /* Close the bounds */
       bounds->point[bounds->numpoints - 1].x = bounds->point[0].x;
       bounds->point[bounds->numpoints - 1].y = bounds->point[0].y;
-
+      
       /* compute the bounds */
       fastComputeBounds(bounds,&tp->bounds.bbox);
-
-      goto LABEL_END;
-
-LABEL_FAILURE:
-
       
-      freeTextPath(tp);
-      free(tp);
-      goto NEXT_REPEAT;
-
-LABEL_END:
+      
       {
         textPathObj *tmptp;
         textSymbolObj *tsnew;
@@ -2159,23 +2290,14 @@ LABEL_END:
         tsnew->textpath = tp;
         tsnew->textpath->absolute = 1;
       }
-NEXT_REPEAT:
-      text_start_length = left_label_position;
-      n++;
-    } while (n<2);
-
-    right_label_position -= label_buffer;
-    left_label_position += label_buffer;
-
+      
+      cur_label_position += label_buffer;
+      retry_offset = 0;
+    } while(retry_offset);
   }
-
-  goto END; /* normal exit */
-
-ANGLEFOLLOW_FAILURE: /* Angle follow failure: compute angle auto labels */
-  return msLineLabelPoint(map,p,ts,ll,&lfr->lar,label, img->resolutionfactor);
-
-END:
   return MS_SUCCESS;
+
+
 }
 
 /* ===========================================================================

@@ -1,0 +1,265 @@
+# RUN_PARMS: line_label_follow_retry.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_label_follow_retry.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_label_follow_retry.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_label_follow_retry.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 400 1000
+extent 0 0 400 1000
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+#debug 10
+#config "MS_ERRORFILE" "stderr"
+
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+            color 0 0 255
+            width 1
+        end
+        label
+            type truetype
+            font "default"
+            size 8
+            angle follow
+            color 0 0 0
+            maxoverlapangle 30
+        end
+    end
+    feature
+      points
+        0 0 200 150 400 0
+      end
+      text "   starting_spaces"
+    end
+    feature
+      points
+        0 20 200 170 400 20
+      end
+      text "ending_spaces   "
+    end
+    feature
+      points
+        0 40 200 190 400 40
+      end
+      text "aa   multiple_space   b"
+    end
+    feature
+      points
+        0 60 200 210 400 60
+      end
+      text "aa   multiple_space   bbbbb"
+    end
+    feature
+      points
+        0 80 200 230 400 80
+      end
+      text "a b"
+    end
+    feature
+      points
+        0 100 200 250 400 100
+      end
+      text "abc def ghijk"
+    end
+    feature
+      points
+        0 120 200 270 400 120
+      end
+      text "abcdefghijk lm"
+    end
+    feature
+      points
+        0 140 200 290 400 140
+      end
+      text "ab cdefghijklmnopqrstuvwxyz"
+    end
+    feature
+      points
+        0 160 200 310 400 160
+      end
+      text "abcdefghijkl mnopq rs tuvwxyz"
+    end
+    feature
+      points
+        10 190 200 330 400 190
+      end
+      text "after_bendfoobarfoobarfoobarfoobar b"
+    end
+    feature
+      points
+        0 200 200 350 390 220
+      end
+      text "f barbaz_before_bend"
+    end
+    feature
+      points
+        0 220 200 370 280 320 400 420
+      end
+      text "colision after retry because of second bend"
+    end
+    feature
+      points
+        0 240 200 390 280 340 400 440
+      end
+      text "this one has multiple spaces    to allow for second bend"
+    end
+
+    
+
+    feature
+      points
+        400 500 200 650 0 500
+      end
+      text "   starting_spaces"
+    end
+    feature
+      points
+        400 520 200 670 0 520
+      end
+      text "ending_spaces   "
+    end
+    feature
+      points
+        400 540 200 690 0 540
+      end
+      text "aa   multiple_space   b"
+    end
+    feature
+      points
+        400 560 200 710 0 560
+      end
+      text "aa   multiple_space   bbbbb"
+    end
+    feature
+      points
+        400 580 200 730 0 580
+      end
+      text "a b"
+    end
+    feature
+      points
+        400 600 200 750 0 600
+      end
+      text "abc def ghijk"
+    end
+    feature
+      points
+        400 620 200 770 0 620
+      end
+      text "abcdefghijk lm"
+    end
+    feature
+      points
+        400 640 200 790 0 640
+      end
+      text "ab cdefghijklmnopqrstuvwxyz"
+    end
+    feature
+      points
+        400 660 200 810 0 660
+      end
+      text "abcdefghijkl mnopq rs tuvwxyz"
+    end
+    feature
+      points
+        400 690 200 830 10 690
+      end
+      text "after_bendfoobarfoobarfoobarfoobar b"
+    end
+    feature
+      points
+        390 720 200 850 0 700
+      end
+      text "f barbaz_before_bend"
+    end
+    feature
+      points
+        400 920 280 820 200 870 0 720
+      end
+      text "colision after retry because of second bend"
+    end
+    feature
+      points
+        400 940 280 840 200 890 0 740
+      end
+      text "this one has multiple spaces    to allow for second bend"
+    end
+end
+
+layer
+    type line
+    status default
+    name "lines-repeat"
+    class
+        style
+            color 0 0 255
+            width 1
+        end
+        label
+            type truetype
+            font "default"
+            size 8
+            angle follow
+            color 0 0 0
+            maxoverlapangle 10
+            repeatdistance 135
+        end
+    end
+    feature
+      points
+        10 270 200 410 220 400
+      end
+      text "foob arbaz"
+    end
+    feature
+      points
+        180 420 200 430 390 290
+      end
+      text "zabar boof"
+    end
+    feature
+      points
+        180 440 200 450 390 310
+      end
+      text "too long to fit this label along the line even if we apply displacements"
+    end
+    feature
+      points
+        250 430 300 405 340 390
+      end
+      text "simple overshoot test"
+    end
+    feature
+      points
+        220 900 200 910 10 770
+      end
+      text "foob arbaz"
+    end
+    feature
+      points
+        390 790 200 930 180 920
+      end
+      text "zabar boof"
+    end
+    feature
+      points
+       390 810 200 950 180 940 
+      end
+      text "too long to fit this label along the line even if we apply displacements"
+    end
+    feature
+      points
+       340 890 300 905 250 930 
+      end
+      text "simple overshoot test"
+    end
+  end
+
+end

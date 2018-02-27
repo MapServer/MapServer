@@ -13,36 +13,41 @@ AUTOCLOSE_MESSAGE = """\
 
 This issue has been closed due to lack of activity. This doesn't mean the \
 issue is invalid, it simply got no attention within the last year. Please \
-reopen if still valid.
+reopen with missing/relevant information if still valid.
+
+Typically, issues fall in this state for one of the following reasons:
+- Hard, impossible or not enough information to reproduce
+- Missing test case
+- Lack of a champion with interest and/or funding to address the issue
 """
 
 AUTOCLOSE_LABEL = "No Recent Activity"
 
 
-def fetch_issues(github_auth):
+def fetch_issues(headers):
     issues = []
-    url = ("https://api.github.com/repos/mapserver/mapserver-import/issues?"
+    url = ("https://api.github.com/repos/mapserver/mapserver/issues?"
             "per_page=100")
-    
+
     while url:
         print "Fetching %s" % url
-        r = requests.get(url, auth=github_auth)
+        r = requests.get(url, headers=headers)
         r.raise_for_status()
         time.sleep(1)
         issues.extend(r.json())
-        
+
         match = re.match(r'<(.*?)>; rel="next"', r.headers['Link'] or '')
         url = match.group(1) if match else None
-    
+
     return issues
 
 
-def close_issue(issue, github_auth):
+def close_issue(issue, headers):
     """Attempt to close an issue and return whether it succeeded."""
-    r = requests.post("https://api.github.com/repos/mapserver/mapserver-import/"
+    r = requests.post("https://api.github.com/repos/mapserver/mapserver/"
             "issues/%s" % issue['number'],
-            data=json.dumps({'state': 'closed'}), auth=github_auth)
-    
+            data=json.dumps({'state': 'closed'}), headers=headers)
+
     try:
         r.raise_for_status()
         time.sleep(1)
@@ -51,12 +56,12 @@ def close_issue(issue, github_auth):
         return False
 
 
-def post_issue_comment(issue, comment_text, github_auth):
+def post_issue_comment(issue, comment_text, headers):
     """Attempt to post an issue comment and return whether it succeeded."""
-    r = requests.post("https://api.github.com/repos/mapserver/mapserver-import/"
+    r = requests.post("https://api.github.com/repos/mapserver/mapserver/"
             "issues/%s/comments" % issue['number'],
-            data=json.dumps({'body': comment_text}), auth=github_auth)
-    
+            data=json.dumps({'body': comment_text}), headers=headers)
+
     try:
         r.raise_for_status()
         time.sleep(1)
@@ -65,12 +70,12 @@ def post_issue_comment(issue, comment_text, github_auth):
         return False
 
 
-def add_issue_label(issue, label, github_auth):
+def add_issue_label(issue, label, headers):
     """Attempt to add a label to the issue and return whether it succeeded."""
-    r = requests.post("https://api.github.com/repos/mapserver/mapserver-import/"
+    r = requests.post("https://api.github.com/repos/mapserver/mapserver/"
             "issues/%s/labels" % issue['number'],
-            data=json.dumps([label]), auth=github_auth)
-    
+            data=json.dumps([label]), headers=headers)
+
     try:
         r.raise_for_status()
         time.sleep(1)
@@ -79,28 +84,28 @@ def add_issue_label(issue, label, github_auth):
         return False
 
 
-def close_old_issues(close_before, github_auth):
-    all_issues = fetch_issues(github_auth)
-    
+def close_old_issues(close_before, headers):
+    all_issues = fetch_issues(headers)
+
     for issue in all_issues:
         issue_last_activity = datetime.datetime.strptime(
             issue['updated_at'], "%Y-%m-%dT%H:%M:%SZ")
-        
+
         print "Processing issue %s with last activity at %s" % (issue['number'], issue_last_activity)
-        
-        if issue_last_activity < close_before:
-            if post_issue_comment(issue, AUTOCLOSE_MESSAGE, github_auth):
+
+        if issue_last_activity < close_before and issue["state"] == "open":
+            if post_issue_comment(issue, AUTOCLOSE_MESSAGE, headers):
                 print "    Added comment to old issue %s" % issue['number']
             else:
                 print "    Error adding comment to old issue %s" % issue['number']
                 continue
-            
-            if add_issue_label(issue, AUTOCLOSE_LABEL, github_auth):
+
+            if add_issue_label(issue, AUTOCLOSE_LABEL, headers):
                 print "    Added label to old issue %s" % issue['number']
             else:
                 print "    Error adding label to old issue %s" % issue['number']
-            
-            if close_issue(issue, github_auth):
+
+            if close_issue(issue, headers):
                 print "    Closed old issue %s" % issue['number']
             else:
                 print "    Error closing old issue %s" % issue['number']
@@ -108,16 +113,13 @@ def close_old_issues(close_before, github_auth):
 
 if __name__ == '__main__':
     close_before = datetime.datetime.today() - datetime.timedelta(days=366)
-    
+
     print
-    print "This script will close all issues with no activity for a year."
+    print "This script closes all issues with no activity within the last year."
     print
-    
-    default_user = "mapserver-bot"
-    github_user = (raw_input("GitHub username [%s]: " % default_user)
-            or default_user)
-    github_pass = getpass.getpass()
+
+    github_token = getpass.getpass("Please provide an oauth token: ")
     print
-    github_auth = (github_user, github_pass)
-    
-    close_old_issues(close_before, github_auth)
+
+    headers = {"Authorization": "token %s" % github_token}
+    close_old_issues(close_before, headers)

@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include "mapprimitive.h"
+#include "mapproject.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -165,7 +166,6 @@ extern "C" {
     int lastshape;
 
     ms_bitarray status;
-    rectObj statusbounds; /* holds extent associated with the status vector */
 
     int isopen;
 #ifdef SWIG
@@ -179,6 +179,8 @@ extern "C" {
     shapefileObj *shpfile;
     shapefileObj *tileshpfile;
     int tilelayerindex;
+    projectionObj sTileProj;
+    rectObj searchrect;
   } msTiledSHPLayerInfo;
 
   /* shapefileObj function prototypes  */

@@ -84,7 +84,7 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
   int status,layer_idx, i,j, nclasses=0, have_sample=0;
   rectObj searchrect;
   shapeObj shape;
-  layerObj *layer;
+  layerObj *layer = NULL;
   float *values = NULL;
   int radius = 10, im_width = image->width, im_height = image->height;
   int expand_searchrect=1;

@@ -264,7 +264,8 @@ int msLoadMapContextListInMetadata( CPLXMLNode *psRoot, hashTableObj *metadata,
                                     char *pszXMLName, char *pszMetadataName,
                                     char *pszHashDelimiter)
 {
-  char *pszHash, *pszXMLValue, *pszMetadata;
+  const char *pszHash, *pszXMLValue;
+  char *pszMetadata;
 
   if(psRoot == NULL || psRoot->psChild == NULL ||
       metadata == NULL || pszMetadataName == NULL || pszXMLName == NULL)
@@ -350,7 +351,9 @@ int msLoadMapContextContactInfo( CPLXMLNode *psRoot, hashTableObj *metadata )
 */
 int msLoadMapContextLayerFormat(CPLXMLNode *psFormat, layerObj *layer)
 {
-  char *pszValue, *pszValue1, *pszHash;
+  const char *pszValue;
+  char *pszValue1;
+  const char* pszHash;
 
   if(psFormat->psChild != NULL &&
       strcasecmp(psFormat->pszValue, "Format") == 0 ) {
@@ -442,7 +445,9 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
                                int nStyle)
 {
   char *pszValue, *pszValue1, *pszValue2;
-  char *pszHash, *pszStyle=NULL, *pszStyleName;
+  const char *pszHash;
+  char* pszStyle=NULL;
+  char *pszStyleName;
   CPLXMLNode *psStyleSLDBody;
 
   pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
@@ -576,7 +581,8 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
 
 int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
 {
-  char *pszValue, *pszHash;
+  char *pszValue;
+  const char *pszHash;
   char *pszDimension=NULL, *pszDimensionName=NULL;
 
   pszDimensionName =(char*)CPLGetXMLValue(psDimension,"name",NULL);
@@ -805,7 +811,8 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
 {
   char *pszProj=NULL;
   char *pszValue;
-  char *pszHash, *pszName=NULL;
+  const char *pszHash;
+  char *pszName=NULL;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psExtension;
   CPLXMLNode *psDimensionList, *psDimension;
   int nStyle;
@@ -1302,9 +1309,10 @@ int msSaveMapContext(mapObj *map, char *filename)
 int msWriteMapContext(mapObj *map, FILE *stream)
 {
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
-  const char * version, *value;
-  char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem, *pszSLDBody;
+  const char * version;
+  char *pszEPSG;
+  char * tabspace=NULL, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
+  char *pszStyle, *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
   int i, nValue, nVersion=OWS_VERSION_NOTSET;
   /* Dimension element */
@@ -1407,18 +1415,19 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   if(tabspace)
     free(tabspace);
   tabspace = msStrdup("    ");
-  value = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE);
+  msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE, &pszEPSG);
   msIO_fprintf( stream,
                 "%s<!-- Bounding box corners and spatial reference system -->\n",
                 tabspace );
-  if(!value || (strcasecmp(value, "(null)") == 0))
+  if(!pszEPSG || (strcasecmp(pszEPSG, "(null)") == 0))
     msIO_fprintf(stream, "<!-- WARNING: Mandatory data 'projection' was missing in this context. -->\n");
 
-  pszEncodedVal = msEncodeHTMLEntities(value);
+  pszEncodedVal = msEncodeHTMLEntities(pszEPSG);
   msIO_fprintf( stream, "%s<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n",
                 tabspace, pszEncodedVal, map->extent.minx, map->extent.miny,
                 map->extent.maxx, map->extent.maxy );
   msFree(pszEncodedVal);
+  msFree(pszEPSG);
 
   /* Title, name */
   if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 ) {
@@ -1441,7 +1450,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       char **papszKeywords;
       int nKeywords, iKey;
 
-      pszValue = msLookupHashTable(&(map->web.metadata),
+      const char* pszValue = msLookupHashTable(&(map->web.metadata),
                                    "wms_keywordlist");
       papszKeywords = msStringSplit(pszValue, ',', &nKeywords);
       if(nKeywords > 0 && papszKeywords) {
@@ -1509,6 +1518,9 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   /* Loop on all layer   */
   for(i=0; i<map->numlayers; i++) {
     if(GET_LAYER(map, i)->status != MS_DELETE && GET_LAYER(map, i)->connectiontype == MS_WMS) {
+      const char* pszValue;
+      char* pszValueMod;
+      const char* pszCurrent;
       if(GET_LAYER(map, i)->status == MS_OFF)
         nValue = 1;
       else
@@ -1547,21 +1559,21 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
       /* Get base url of the online resource to be the default value */
       if(GET_LAYER(map, i)->connection)
-        pszValue = msStrdup( GET_LAYER(map, i)->connection );
+        pszValueMod = msStrdup( GET_LAYER(map, i)->connection );
       else
-        pszValue = msStrdup( "" );
-      pszChar = strchr(pszValue, '?');
+        pszValueMod = msStrdup( "" );
+      pszChar = strchr(pszValueMod, '?');
       if( pszChar )
-        pszValue[pszChar - pszValue] = '\0';
+        pszValueMod[pszChar - pszValueMod] = '\0';
       if(msOWSPrintEncodeMetadata(stream, &(GET_LAYER(map, i)->metadata),
                                   NULL, "wms_onlineresource", OWS_WARN,
                                   "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
-                                  pszValue) == OWS_WARN)
+                                  pszValueMod) == OWS_WARN)
         msIO_fprintf(stream, "<!-- wms_onlineresource not set, using base URL"
                      " , but probably not what you want -->\n");
       msIO_fprintf(stream, "      </Server>\n");
-      if(pszValue)
-        free(pszValue);
+      if(pszValueMod)
+        free(pszValueMod);
 
       /*  */
       /* Layer information */
@@ -1625,14 +1637,15 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                      GET_LAYER(map, i)->maxscaledenom);
 
       /* Layer SRS */
-      pszValue = (char*)msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
+      msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
                                          &(GET_LAYER(map, i)->metadata),
-                                         "MO", MS_FALSE);
-      if(pszValue && (strcasecmp(pszValue, "(null)") != 0)) {
-        pszEncodedVal = msEncodeHTMLEntities(pszValue);
+                                         "MO", MS_FALSE, &pszEPSG);
+      if(pszEPSG && (strcasecmp(pszEPSG, "(null)") != 0)) {
+        pszEncodedVal = msEncodeHTMLEntities(pszEPSG);
         msIO_fprintf(stream, "      <SRS>%s</SRS>\n", pszEncodedVal);
         msFree(pszEncodedVal);
       }
+      msFree(pszEPSG);
 
       /* Format */
       if(msLookupHashTable(&(GET_LAYER(map, i)->metadata),"wms_formatlist")==NULL &&
@@ -1642,17 +1655,17 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           pszURL = msStrdup( GET_LAYER(map, i)->connection );
         else
           pszURL = msStrdup( "" );
-        pszValue = pszURL;
-        pszValue = strstr( pszValue, "FORMAT=" );
-        if( pszValue ) {
-          pszValue += 7;
-          pszChar = strchr(pszValue, '&');
+        pszValueMod = pszURL;
+        pszValueMod = strstr( pszValueMod, "FORMAT=" );
+        if( pszValueMod ) {
+          pszValueMod += 7;
+          pszChar = strchr(pszValueMod, '&');
           if( pszChar )
-            pszValue[pszChar - pszValue] = '\0';
-          if(strcasecmp(pszValue, "") != 0) {
-            pszEncodedVal = msEncodeHTMLEntities(pszValue);
+            pszValueMod[pszChar - pszValueMod] = '\0';
+          if(strcasecmp(pszValueMod, "") != 0) {
+            pszEncodedVal = msEncodeHTMLEntities(pszValueMod);
             msIO_fprintf( stream, "      <FormatList>\n");
-            msIO_fprintf(stream,"        <Format>%s</Format>\n",pszValue);
+            msIO_fprintf(stream,"        <Format>%s</Format>\n",pszValueMod);
             msIO_fprintf( stream, "      </FormatList>\n");
             msFree(pszEncodedVal);
           }
@@ -1695,21 +1708,23 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       /* First check the stylelist */
       pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata),
                                    "wms_stylelist");
-      if(pszValue == NULL || strlen(msStringTrimLeft(pszValue)) < 1) {
+      while( pszValue && *pszValue == ' ' )
+          pszValue ++;
+      if(pszValue == NULL || strlen(pszValue) < 1) {
         /* Check if the style is in the connection URL */
         pszURL = "";
         if(GET_LAYER(map, i)->connection)
           pszURL = msStrdup( GET_LAYER(map, i)->connection );
         else
           pszURL = msStrdup( "" );
-        pszValue = pszURL;
+        pszValueMod = pszURL;
         /* Grab the STYLES in the URL */
-        pszValue = strstr( pszValue, "STYLES=" );
-        if( pszValue ) {
-          pszValue += 7;
-          pszChar = strchr(pszValue, '&');
+        pszValueMod = strstr( pszValueMod, "STYLES=" );
+        if( pszValueMod ) {
+          pszValueMod += 7;
+          pszChar = strchr(pszValueMod, '&');
           if( pszChar )
-            pszValue[pszChar - pszValue] = '\0';
+            pszValueMod[pszChar - pszValueMod] = '\0';
 
           /* Check the SLD string from the URL */
           if(GET_LAYER(map, i)->connection)
@@ -1737,14 +1752,14 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               pszSLDBody[pszChar - pszSLDBody] = '\0';
             pszSLDBody += 9;
           }
-          if( (pszValue && (strcasecmp(pszValue, "") != 0)) ||
+          if( (pszValueMod && (strcasecmp(pszValueMod, "") != 0)) ||
               (pszSLD && (strcasecmp(pszSLD, "") != 0)) ||
               (pszSLDBody && (strcasecmp(pszSLDBody, "") != 0))) {
             /* Write Name and Title */
             msIO_fprintf( stream, "      <StyleList>\n");
             msIO_fprintf( stream, "        <Style current=\"1\">\n");
-            if( pszValue && (strcasecmp(pszValue, "") != 0)) {
-              pszEncodedVal = msEncodeHTMLEntities(pszValue);
+            if( pszValueMod && (strcasecmp(pszValueMod, "") != 0)) {
+              pszEncodedVal = msEncodeHTMLEntities(pszValueMod);
               msIO_fprintf(stream, "          <Name>%s</Name>\n",
                            pszEncodedVal);
               msIO_fprintf(stream,"          <Title>%s</Title>\n",
@@ -1779,6 +1794,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           pszURL = NULL;
         }
       } else {
+        const char* pszCurrent;
         /* If the style information is not in the connection URL, */
         /* read the metadata. */
         pszValue = msLookupHashTable(&(GET_LAYER(map, i)->metadata),

@@ -350,17 +350,21 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
 /*      possible.                                                       */
 /************************************************************************/
 void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParent, mapObj *map, layerObj *lp, shapeObj *psShape,
-                           const char *pszEpsg)
+                           const char *pszEpsg_in)
 {
   char *pszTmp = NULL;
   int i,j = 0;
   xmlNodePtr psPointNode, psNode, psLineNode, psPolygonNode;
   int *panOuterList = NULL, *panInnerList = NULL;
+  const char *pszEpsg = pszEpsg_in;
+  char *pszEpsg_buf = NULL;
+  
 
   if (psParent && psShape) {
     if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
       msProjectShape(&lp->projection, &map->projection, psShape);
-      pszEpsg = msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE);
+      msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg_buf);
+      pszEpsg = pszEpsg_buf;
     }
     switch(psShape->type) {
       case(MS_SHAPE_POINT):
@@ -508,6 +512,7 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
     }
 
   }
+  msFree(pszEpsg_buf);
 
 }
 
@@ -626,7 +631,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                         int iFeatureId, const char *script_url, const char *opLayerName)
 {
   xmlNodePtr psObsNode, psNode, psLayerNode = NULL;
-  const char *pszEpsg = NULL, *pszValue = NULL;
+  const char *pszValue = NULL;
+  char *pszEpsg = NULL;
   int status,i,j;
   shapeObj sShape;
   char szTmp[256];
@@ -785,9 +791,9 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
     /*bbox*/
 #ifdef USE_PROJ
-    pszEpsg = msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE);
+    msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg);
     if (!pszEpsg)
-      pszEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE);
+      msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg);
 
     if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE)
       msProjectRect(&lp->projection, &map->projection, &sShape.bounds);
@@ -796,6 +802,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
     /*geometry*/
     msSOSAddGeometryNode(psNsGml, psNsMs, psLayerNode, map, lp, &sShape, pszEpsg);
+    msFree(pszEpsg);
 
     /*attributes */
     /* TODO only output attributes where there is a sos_%s_alias (to be discussed)*/
@@ -1370,7 +1377,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                  Check also what happen if epsg not present */
         value = msOWSLookupMetadata(&(lp->metadata), "S", "offering_extent");
         if (value) {
-          char **tokens;
+          char **tokens,*pszLayerEPSG;
           int n;
           tokens = msStringSplit(value, ',', &n);
           if (tokens==NULL || n != 4) {
@@ -1378,10 +1385,11 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
                        "msSOSGetCapabilities()");
             return msSOSException(map, "sos_offering_extent", "InvalidParameterValue");
           }
-          value = msOWSGetEPSGProj(&(lp->projection),
-                                   &(lp->metadata), "SO", MS_TRUE);
-          if (value)
-            psNode = xmlAddChild(psOfferingNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value));
+          msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "SO", MS_TRUE,&pszLayerEPSG);
+          if (pszLayerEPSG) {
+            psNode = xmlAddChild(psOfferingNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), pszLayerEPSG));
+            msFree(pszLayerEPSG);
+          }
           msFreeCharArray(tokens, n);
 
         }
@@ -2285,10 +2293,11 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
 
   if (pszTmp) {
     char **tokens;
+    char *pszMapEpsg;
     int n;
     rectObj envelope;
 
-    pszTmp2 = msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE);
+    msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszMapEpsg);
 
     tokens = msStringSplit(pszTmp, ',', &n);
     if (tokens==NULL || n != 4) {
@@ -2309,8 +2318,9 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
       }
     }
 
-    psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, envelope.minx, envelope.miny, envelope.maxx, envelope.maxy, pszTmp2));
+    psNode = xmlAddChild(psRootNode, msGML3BoundedBy(psNsGml, envelope.minx, envelope.miny, envelope.maxx, envelope.maxy, pszMapEpsg));
     msFreeCharArray(tokens, n);
+    msFree(pszMapEpsg);
   }
 
   /* time

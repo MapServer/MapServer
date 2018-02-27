@@ -173,7 +173,7 @@ int msComputeTextPath(mapObj *map, textSymbolObj *ts) {
   tgret->line_height = ceil(tgret->glyph_size * 1.33);
   return msLayoutTextSymbol(map,ts,tgret);
 }
- 
+
 void initTextSymbol(textSymbolObj *ts) {
   memset(ts,0,sizeof(*ts));
 }
@@ -292,7 +292,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
   classPtr = layer->class[classindex];
 
   if(classPtr->numlabels == 0) return MS_SUCCESS; /* not an error just nothing to do */
-  
+
   /* check that the label intersects the layer mask */
   if(layerPtr->mask) {
     int maskLayerIdx = msGetLayerIndex(map,layerPtr->mask);
@@ -308,7 +308,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
       x = MS_NINT(point->x);
       y = MS_NINT(point->y);
       /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
-      if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {      
+      if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
         assert(rb.type == MS_BUFFER_BYTE_RGBA);
         alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
         if(!*alphapixptr) {
@@ -324,9 +324,9 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
       return (MS_FAILURE);
     }
   }
-  
+
   textsymbols = msSmallMalloc(classPtr->numlabels * sizeof(textSymbolObj*));
-  
+
   for(l=0; l<classPtr->numlabels; l++) {
     labelObj *lbl = classPtr->labels[l];
     char *annotext;
@@ -346,7 +346,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
     ts = msSmallMalloc(sizeof(textSymbolObj));
     initTextSymbol(ts);
     msPopulateTextSymbolForLabelAndString(ts,lbl,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
-  
+
     if(annotext && *annotext && lbl->autominfeaturesize && featuresize > 0) {
       if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
         return MS_FAILURE;
@@ -360,12 +360,12 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
     textsymbols[numtextsymbols] = ts;
     numtextsymbols++;
   }
-  
+
   if(numtextsymbols == 0) {
     free(textsymbols);
     return MS_SUCCESS;
   }
-  
+
   /* Validate label priority value and get ref on label cache for it */
   priority = classPtr->labels[0]->priority; /* take priority from the first label */
   if (priority < 1)
@@ -439,10 +439,10 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
 
   layerPtr=GET_LAYER(map,layerindex);
   assert(layerPtr);
-  
+
   assert(classindex < layerPtr->numclasses);
   classPtr = layerPtr->class[classindex];
-  
+
   assert(label);
 
   if(ts)
@@ -508,7 +508,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
         for (i = 0; i < ts->textpath->numglyphs; i++) {
           int x = MS_NINT(ts->textpath->glyphs[i].pnt.x);
           int y = MS_NINT(ts->textpath->glyphs[i].pnt.y);
-          if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {          
+          if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
             alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
               freeTextSymbol(ts);
@@ -534,7 +534,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     initTextSymbol(ts);
     msPopulateTextSymbolForLabelAndString(ts,label,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
   }
-  
+
   if(annotext && label->autominfeaturesize && featuresize > 0) {
     if(!ts->textpath) {
       if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
@@ -1096,7 +1096,7 @@ int intersectLabelPolygons(lineObj *l1, rectObj *r1, lineObj *l2, rectObj *r2)
   pointObj *point;
   lineObj *p1,*p2,sp1,sp2;
   pointObj pnts1[5],pnts2[5];
-  
+
 
   /* STEP 0: check bounding boxes */
   if(!msRectOverlap(r1,r2)) { /* from alans@wunderground.com */

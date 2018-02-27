@@ -74,6 +74,11 @@ typedef struct {
              Translate as MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB and
              MS_IMAGEMODE_RGBA.
 
+             For "GDAL/" drivers, the following extra imagemodes are supported:
+                "BYTE" / MS_IMAGEMODE_BYTE
+                "INT16" / MS_IMAGEMODE_INT16
+                "FLOAT32" / MS_IMAGEMODE_FLOAT32
+
              Not too sure what this should be set to for output formats like
              flash and SVG.
 
@@ -102,6 +107,8 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"jpeg","AGG/JPEG","image/jpeg"},
   {"png8","AGG/PNG8","image/png; mode=8bit"},
   {"png24","AGG/PNG","image/png; mode=24bit"},
+  {"jpegpng", "AGG/MIXED", "image/vnd.jpeg-png"},
+  {"jpegpng8", "AGG/MIXED", "image/vnd.jpeg-png8"},
 #ifdef USE_CAIRO
   {"pdf","CAIRO/PDF","application/x-pdf"},
   {"svg","CAIRO/SVG","image/svg+xml"},
@@ -203,6 +210,37 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->renderer = MS_RENDER_WITH_AGG;
   }
 
+  else if( strcasecmp(driver,"AGG/MIXED") == 0 &&
+           name != NULL && strcasecmp(name,"jpegpng") == 0 ) {
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/vnd.jpeg-png");
+    format->imagemode = MS_IMAGEMODE_RGBA;
+    format->extension = msStrdup("XXX");
+    format->renderer = MS_RENDER_WITH_AGG;
+    msSetOutputFormatOption( format, "OPAQUE_FORMAT", "jpeg");
+    msSetOutputFormatOption( format, "TRANSPARENT_FORMAT", "png24");
+  }
+
+  else if( strcasecmp(driver,"AGG/MIXED") == 0 &&
+           name != NULL && strcasecmp(name,"jpegpng8") == 0 ) {
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/vnd.jpeg-png8");
+    format->imagemode = MS_IMAGEMODE_RGBA;
+    format->extension = msStrdup("XXX");
+    format->renderer = MS_RENDER_WITH_AGG;
+    msSetOutputFormatOption( format, "OPAQUE_FORMAT", "jpeg");
+    msSetOutputFormatOption( format, "TRANSPARENT_FORMAT", "png8");
+  }
+
+  else if( strcasecmp(driver,"AGG/MIXED") == 0 ) {
+    if(!name) name="mixed";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/mixed");
+    format->imagemode = MS_IMAGEMODE_RGBA;
+    format->extension = msStrdup("XXX");
+    format->renderer = MS_RENDER_WITH_AGG;
+  }
+
 #if defined(USE_CAIRO)
   else if( strcasecmp(driver,"CAIRO/PNG") == 0 ) {
     if(!name) name="cairopng";
@@ -280,9 +318,9 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"KMZ") == 0 ) {
     if(!name) name="kmz";
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = strdup("application/vnd.google-earth.kmz");
+    format->mimetype = msStrdup("application/vnd.google-earth.kmz");
     format->imagemode = MS_IMAGEMODE_RGB;
-    format->extension = strdup("kmz");
+    format->extension = msStrdup("kmz");
     format->renderer = MS_RENDER_WITH_KML;
     msSetOutputFormatOption( format, "ATTACHMENT", "mapserver.kmz");
   }
@@ -607,6 +645,7 @@ void msApplyOutputFormat( outputFormatObj **target,
   if( format == NULL ) {
     if( formatToFree )
       msFreeOutputFormat( formatToFree );
+    *target = NULL;
     return;
   }
 
@@ -740,6 +779,9 @@ void msSetOutputFormatOption( outputFormatObj *format,
 {
   char *newline;
   int   i, len;
+
+  if( value == NULL )
+    return;
 
   /* -------------------------------------------------------------------- */
   /*      Format the name=value pair into a newly allocated string.       */
@@ -998,6 +1040,32 @@ int msOutputFormatValidate( outputFormatObj *format, int issue_error )
       format->renderer = MS_RENDER_WITH_RAWDATA;
   }
 
+  if( !strcasecmp(format->driver,"AGG/MIXED") )
+  {
+    if( !msGetOutputFormatOption(format, "TRANSPARENT_FORMAT", NULL) )
+    {
+      result = MS_FALSE;
+      if( issue_error )
+        msSetError( MS_MISCERR,
+                    "OUTPUTFORMAT %s lacks a 'TRANSPARENT_FORMAT' FORMATOPTION.",
+                    "msOutputFormatValidate()", format->name );
+      else
+        msDebug( "OUTPUTFORMAT %s lacks a 'TRANSPARENT_FORMAT' FORMATOPTION.",
+                 format->name );
+    }
+    if( !msGetOutputFormatOption(format, "OPAQUE_FORMAT", NULL) )
+    {
+      result = MS_FALSE;
+      if( issue_error )
+        msSetError( MS_MISCERR,
+                    "OUTPUTFORMAT %s lacks a 'OPAQUE_FORMAT' FORMATOPTION.",
+                    "msOutputFormatValidate()", format->name );
+      else
+        msDebug( "OUTPUTFORMAT %s lacks a 'OPAQUE_FORMAT' FORMATOPTION.",
+                 format->name );
+    }
+  }
+
   return result;
 }
 
@@ -1049,3 +1117,87 @@ int msInitializeRendererVTable(outputFormatObj *format)
   return MS_FAILURE;
 }
 
+/************************************************************************/
+/*                    msOutputFormatResolveFromImage()                  */
+/************************************************************************/
+
+void msOutputFormatResolveFromImage( mapObj *map, imageObj* img )
+{
+  outputFormatObj* format = map->outputformat;
+  assert( img->format == format );
+  assert( img->format->refcount >= 2 );
+
+  if( format->renderer == MS_RENDER_WITH_AGG &&
+      strcmp(format->driver, "AGG/MIXED") == 0 &&
+      (format->imagemode == MS_IMAGEMODE_RGB ||
+       format->imagemode == MS_IMAGEMODE_RGBA) )
+  {
+    outputFormatObj * new_format;
+    int has_non_opaque_pixels = MS_FALSE;
+    const char* underlying_driver_type = NULL;
+    const char* underlying_driver_name = NULL;
+
+    // Check if the image has non opaque pixels
+    if( format->imagemode == MS_IMAGEMODE_RGBA )
+    {
+      rasterBufferObj rb;
+      int ret;
+
+      ret = format->vtable->getRasterBufferHandle(img,&rb);
+      assert( ret == MS_SUCCESS );
+      if( rb.data.rgba.a )
+      {
+        int row;
+        for(row=0; row<rb.height && !has_non_opaque_pixels; row++) {
+          int col;
+          unsigned char *a;
+          a=rb.data.rgba.a+row*rb.data.rgba.row_step;
+          for(col=0; col<rb.width && !has_non_opaque_pixels; col++) {
+            if(*a < 255) {
+              has_non_opaque_pixels = MS_TRUE;
+            }
+            a+=rb.data.rgba.pixel_step;
+          }
+        }
+      }
+    }
+
+    underlying_driver_type = ( has_non_opaque_pixels ) ?
+                                    "TRANSPARENT_FORMAT" : "OPAQUE_FORMAT";
+    underlying_driver_name = msGetOutputFormatOption(format, underlying_driver_type,
+                                                NULL);
+    if( underlying_driver_name == NULL ) {
+      msSetError(MS_MISCERR,
+                 "Missing %s format option on %s.",
+                 "msOutputFormatResolveFromImage()",
+                 underlying_driver_type, format->name );
+      return;
+    }
+    new_format = msSelectOutputFormat( map, underlying_driver_name );
+    if( new_format == NULL ) {
+      msSetError(MS_MISCERR,
+                 "Cannot find %s output format.",
+                 "msOutputFormatResolveFromImage()",
+                 underlying_driver_name );
+      return;
+    }
+    if( new_format->renderer != MS_RENDER_WITH_AGG )
+    {
+      msSetError(MS_MISCERR,
+                 "%s cannot be used as the %s format of %s since it is not AGG based.",
+                 "msOutputFormatResolveFromImage()",
+                 underlying_driver_name, underlying_driver_type, format->name );
+      return;
+    }
+
+    msApplyOutputFormat( &(map->outputformat),
+                         new_format,
+                         has_non_opaque_pixels,
+                         MS_NOOVERRIDE,
+                         MS_NOOVERRIDE );
+
+    msFreeOutputFormat( format );
+    img->format = map->outputformat;
+    img->format->refcount ++;
+  }
+}

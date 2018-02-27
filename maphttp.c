@@ -683,6 +683,10 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
       curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS,
                        pasReqInfo[i].pszPostRequest);
+      if( debug )
+      {
+          msDebug("HTTP: POST = %s", pasReqInfo[i].pszPostRequest);
+      }
       curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
       /* curl_slist_free_all(headers); */ /* free the header list */
     }

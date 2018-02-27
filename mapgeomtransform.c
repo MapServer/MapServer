@@ -53,6 +53,8 @@ void msStyleSetGeomTransform(styleObj *s, char *transform)
     s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
   } else if(!strncasecmp("labelpoly",transform,9)) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOLY;
+  } else if(!strncasecmp("labelcenter",transform,11)) {
+    s->_geomtransform.type = MS_GEOMTRANSFORM_LABELCENTER;
   } else if(!strncasecmp("centroid",transform,8)) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_CENTROID;
   } else {
@@ -278,7 +280,7 @@ int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
       /* data_cellsize is only set with contour layer */
       if (layer->connectiontype == MS_CONTOUR)
       {
-        char *value = msLookupHashTable(&layer->metadata, "__data_cellsize__");
+        const char *value = msLookupHashTable(&layer->metadata, "__data_cellsize__");
         if (value)
           p.dblval2 = atof(value);
       }

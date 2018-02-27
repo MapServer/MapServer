@@ -46,7 +46,7 @@ private:
   int nIncludeItems;
   char **papszLayerExcludeItems;
   int nExcludeItems;
-  char *pszLayerNameAttributeMetadata;
+  const char *pszLayerNameAttributeMetadata;
 
 protected:
 
@@ -116,7 +116,7 @@ protected:
   xmlNodePtr createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer);
   xmlNodePtr createDescriptionNode(shapeObj *shape);
 
-  char* lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *style);
+  const char* lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *style);
 
   void addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts);
 
@@ -135,7 +135,7 @@ protected:
   void renderPolygonVector(imageObj *img, shapeObj *p, colorObj *color);
   void renderGlyphsVector(imageObj *img, double x, double y, labelStyleObj *style, char *text);
 
-  char* lookupPlacemarkStyle();
+  const char* lookupPlacemarkStyle();
   void flushPlacemark();
   xmlNodePtr getGeomParentNode(const char *geomName);
   char* getLayerName(layerObj *layer);

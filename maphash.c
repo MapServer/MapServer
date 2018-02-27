@@ -149,7 +149,7 @@ struct hashObj *msInsertHashTable(hashTableObj *table,
   return tp;
 }
 
-char *msLookupHashTable(hashTableObj *table, const char *key)
+const char *msLookupHashTable(hashTableObj *table, const char *key)
 {
   struct hashObj *tp;
 

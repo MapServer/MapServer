@@ -1,0 +1,123 @@
+
+# Test WMS rootlayer_name
+#
+# REQUIRES: SUPPORTS=WMS
+#
+# The following tests exists primarily to test the ability of enabling/disabling
+# WMS service (see https://github.com/mapserver/mapserver/issues/5404).
+#
+
+# RUN_PARMS: ows_wms_rootlayer_name_capabilities.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+
+# Results expected
+# getcapabilities: root <Layer> element emits <Name>foo</Name> element
+
+MAP
+
+NAME WMS_TEST
+SHAPEPATH ./data
+
+WEB
+  METADATA
+    "wms_onlineresource"   "http://localhost/path/to/ows?"
+    "ows_enable_request" "DescribeLayer" 
+    "wms_enable_request" "!GetCapabilities !GetFeatureInfo GetMap"
+    "wms_rootlayer_name" "foo"
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+LAYER
+  NAME road
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:43204"
+    "wms_include_items" "all"
+    "wms_ROAD_ID_alias" "ROAD_NAME"
+    "ows_enable_request" "GetFeatureInfo"
+    "wms_enable_request" "!GetCapabilities !GetMap"
+    "wms_layer_group" "/roadgroup"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+LAYER
+  NAME road2
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:43204"
+    "wms_include_items" "all"
+    "gml_ROAD_ID_alias" "ROAD_NAME"
+    "ows_enable_request" "GetFeatureInfo"
+    "wms_enable_request" "GetCapabilities !GetMap"
+    "wms_layer_group" "/roadgroup"
+  END
+  MINSCALEDENOM 1500
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+LAYER
+  NAME road3
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:43204"
+    "gml_include_items" "all"
+    "ows_enable_request" "GetFeatureInfo"
+    "wms_enable_request" "!GetCapabilities GetMap"
+    "wms_layer_group" "/roadgroup"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+END # Map File

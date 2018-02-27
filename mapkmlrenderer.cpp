@@ -419,7 +419,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
   }
 
 
-  char* elevationAttribute = msLookupHashTable(&layer->metadata, "kml_elevation_attribute");
+  const char* elevationAttribute = msLookupHashTable(&layer->metadata, "kml_elevation_attribute");
   if( elevationAttribute ) {
     mElevationFromAttribute = true;
     for( int i = 0; i < layer->numitems; ++i ) {
@@ -497,7 +497,7 @@ void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
   Extrude = 0;
   Tessellate = 0;
 
-  char *altitudeModeVal = msLookupHashTable(layerMetadata, "kml_altitudeMode");
+  const char *altitudeModeVal = msLookupHashTable(layerMetadata, "kml_altitudeMode");
   if (altitudeModeVal) {
     if(strcasecmp(altitudeModeVal, "absolute") == 0)
       AltitudeMode = absolute;
@@ -507,12 +507,12 @@ void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
       AltitudeMode = clampToGround;
   }
 
-  char *extrudeVal = msLookupHashTable(layerMetadata, "kml_extrude");
+  const char *extrudeVal = msLookupHashTable(layerMetadata, "kml_extrude");
   if (altitudeModeVal) {
     Extrude = atoi(extrudeVal);
   }
 
-  char *tessellateVal = msLookupHashTable(layerMetadata, "kml_tessellate");
+  const char *tessellateVal = msLookupHashTable(layerMetadata, "kml_tessellate");
   if (tessellateVal) {
     Tessellate = atoi(tessellateVal);
   }
@@ -754,6 +754,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
 int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *symstyle)
 {
   pointObj p;
+  int status;
 
   imageObj *tmpImg = NULL;
 
@@ -770,8 +771,9 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
   p.z = 0.0;
 #endif
 
-  if(msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1) != MS_SUCCESS)
-    return MS_FAILURE;
+  status = msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
+  if( status != MS_SUCCESS )
+    return status;
 
   return msSaveImage(map, tmpImg, fileName);
 }
@@ -953,7 +955,7 @@ xmlNodePtr KmlRenderer::getGeomParentNode(const char *geomName)
   }
 }
 
-char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *symstyle)
+const char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *symstyle)
 {
   char  symbolHexColor[32];
   /*
@@ -973,7 +975,7 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
           symstyle->style->color.green, symstyle->style->color.red);
   snprintf(SymbolName, sizeof(SymbolName), "symbol_%s_%.1f_%s", symbol->name, symstyle->scale, symbolHexColor);
 
-  char *symbolUrl = msLookupHashTable(StyleHashTable, SymbolName);
+  const char *symbolUrl = msLookupHashTable(StyleHashTable, SymbolName);
   if (!symbolUrl) {
     char iconFileName[MS_MAXPATHLEN];
     char iconUrl[MS_MAXPATHLEN];
@@ -1003,7 +1005,7 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
   return symbolUrl;
 }
 
-char* KmlRenderer::lookupPlacemarkStyle()
+const char* KmlRenderer::lookupPlacemarkStyle()
 {
   char  lineHexColor[32];
   char  polygonHexColor[32];
@@ -1105,7 +1107,7 @@ char* KmlRenderer::lookupPlacemarkStyle()
     styleName = msStringConcatenate(styleName, SymbolName);
   }
 
-  char *styleUrl = msLookupHashTable(StyleHashTable, styleName);
+  const char *styleUrl = msLookupHashTable(StyleHashTable, styleName);
   if (!styleUrl) {
     char *styleValue=NULL;
     styleValue = msStringConcatenate(styleValue, "#");
@@ -1174,7 +1176,7 @@ char* KmlRenderer::lookupPlacemarkStyle()
 void KmlRenderer::flushPlacemark()
 {
   if (PlacemarkNode) {
-    char *styleUrl = lookupPlacemarkStyle();
+    const char *styleUrl = lookupPlacemarkStyle();
     xmlNewChild(PlacemarkNode, NULL, BAD_CAST "styleUrl", BAD_CAST styleUrl);
 
     if (DescriptionNode)

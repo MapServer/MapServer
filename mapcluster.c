@@ -64,6 +64,10 @@ typedef int (*clusterCompareRegionFunc)(clusterInfo* current, clusterInfo* other
 #define SPLITRATIO  0.55
 #define TREE_MAX_DEPTH  10
 
+/* cluster algorithm */
+#define MSCLUSTER_ALGORITHM_FULL 0
+#define MSCLUSTER_ALGORITHM_SIMPLE 1
+
 /* cluster data */
 struct cluster_info {
   double x;    /* x position of the current point */
@@ -135,6 +139,8 @@ struct cluster_layer_info {
   clusterCompareRegionFunc fnCompare;
   /* diagnostics */
   int depth;
+  /* processing algorithm */
+  int algorithm;
 };
 
 
@@ -435,6 +441,50 @@ static void findRelatedShapes(msClusterLayerInfo* layerinfo,
   for (i = 0; i < 4; i++) {
     if (node->subnode[i])
       findRelatedShapes(layerinfo, node->subnode[i], current);
+  }
+}
+
+/* traverse the quadtree to find the neighbouring clusters and update data on the cluster*/
+static void findRelatedShapes2(msClusterLayerInfo* layerinfo,
+                              clusterTreeNode *node, clusterInfo* current)
+{
+  int i;
+  clusterInfo* s;
+  
+  /* -------------------------------------------------------------------- */
+  /*      Does this node overlap the area of interest at all?  If not,    */
+  /*      return without adding to the list at all.                       */
+  /* -------------------------------------------------------------------- */
+  if(!msRectOverlap(&node->rect, &current->bounds))
+    return;
+
+  /* Modify the feature count of the related shapes */
+  s = node->shapes;
+  while (s) {
+    if (layerinfo->fnCompare(s, current)) {
+      if (layerinfo->rank > 0) {
+        double r = (current->x - s->x) * (current->x - s->x) + (current->y - s->y) * (current->y - s->y);
+        if (r < layerinfo->rank) {
+          layerinfo->current = s;
+          layerinfo->rank = r;
+        }
+      }
+      else {
+        /* no rank was specified, return immediately */
+        layerinfo->current = s;
+        return;
+      }      
+    }
+    s = s->next;
+  }
+
+  if (node->subnode[0] == NULL)
+    return;
+
+  /* Recurse to subnodes if they exist */
+  for (i = 0; i < 4; i++) {
+    if (node->subnode[i])
+      findRelatedShapes2(layerinfo, node->subnode[i], current);
   }
 }
 
@@ -773,6 +823,72 @@ static int collectClusterShapes(msClusterLayerInfo* layerinfo, clusterTreeNode *
           && !node->subnode[2] && !node->subnode[3]);
 }
 
+/* collecting the cluster shapes, returns true if this subnode must be removed */
+static int collectClusterShapes2(layerObj* layer, msClusterLayerInfo* layerinfo, clusterTreeNode *node)
+{
+  int i;
+  clusterInfo* current = NULL;
+  clusterInfo* s;
+
+  while (node->shapes) {
+    s = node->shapes;
+    /* removing from the list */
+    node->shapes = s->next;
+
+    InitShapeAttributes(layer, s);
+
+    if (s->filter) {
+        s->next = layerinfo->finalized;
+        layerinfo->finalized = s;
+        ++layerinfo->numFinalized;
+    } else {
+        /* this shape is filtered */
+        s->next = layerinfo->filtered;
+        layerinfo->filtered = s;
+        ++layerinfo->numFiltered;
+    }
+
+    /* update the parameters of the related shapes if any */
+    if (s->siblings) {
+      current = s->siblings;
+      while(current) {
+        UpdateShapeAttributes(layer, s, current);
+
+        /* setting the average position to the cluster position */
+        current->avgx = s->x;
+        current->avgy = s->y;
+
+        if (current->next == NULL) {
+          if (layerinfo->get_all_shapes == MS_TRUE) {
+            /* insert the siblings into the finalization list */
+            current->next = layerinfo->finalized;
+            layerinfo->finalized = s->siblings;
+            s->siblings = NULL;
+          }
+          break;
+        }
+
+        current = current->next;
+      }
+    }
+  }
+
+  /* Recurse to subnodes if they exist */
+  for (i = 0; i < 4; i++) {
+    if (node->subnode[i] && collectClusterShapes2(layer, layerinfo, node->subnode[i])) {
+      /* placing this empty node to the finalization queue */
+      node->subnode[i]->subnode[0] = layerinfo->finalizedNodes;
+      layerinfo->finalizedNodes = node->subnode[i];
+      node->subnode[i] = NULL;
+      ++layerinfo->numFinalizedNodes;
+    }
+  }
+
+  /* returns true is this subnode must be removed */
+  return (!node->shapes && !node->subnode[0] && !node->subnode[1]
+          && !node->subnode[2] && !node->subnode[3]);
+}
+
 int selectClusterShape(layerObj* layer, long shapeindex)
 {
   int i;
@@ -881,6 +997,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
   int status;
   clusterInfo* current;
   int depth;
+  char *pszProcessing;
 #ifdef USE_CLUSTER_EXTERNAL
   int layerIndex;
 #endif
@@ -904,17 +1021,24 @@ int RebuildClusters(layerObj *layer, int isQuery)
 
   layerinfo->current = layerinfo->finalized; /* restart */
 
+  /* check whether the simplified algorithm was selected */
+  pszProcessing = msLayerGetProcessingKey(layer, "CLUSTER_ALGORITHM");
+  if(pszProcessing && !strncasecmp(pszProcessing,"SIMPLE",6))
+      layerinfo->algorithm = MSCLUSTER_ALGORITHM_SIMPLE;
+  else
+      layerinfo->algorithm = MSCLUSTER_ALGORITHM_FULL;
+
   /* check whether all shapes should be returned from a query */
   if(msLayerGetProcessingKey(layer, "CLUSTER_GET_ALL_SHAPES") != NULL)
     layerinfo->get_all_shapes = MS_TRUE;
   else
     layerinfo->get_all_shapes = MS_FALSE;
 
-  /* check whether the location of the shapes should be preserved (no averaging) */
+  /* check whether the location of the shapes should be preserved */
   if(msLayerGetProcessingKey(layer, "CLUSTER_KEEP_LOCATIONS") != NULL)
     layerinfo->keep_locations = MS_TRUE;
   else
-    layerinfo->keep_locations = MS_FALSE;
+    layerinfo->keep_locations = MS_FALSE; 
 
   /* check whether the maxdistance and the buffer parameters 
   are specified in map units (scale independent clustering) */
@@ -1042,13 +1166,33 @@ int RebuildClusters(layerObj *layer, int isQuery)
     if (layer->cluster.group.string)
       current->group = msClusterGetGroupText(&layer->cluster.group, &current->shape);
 
-    /*start a query for the related shapes */
-    findRelatedShapes(layerinfo, layerinfo->root, current);
+    if (layerinfo->algorithm == MSCLUSTER_ALGORITHM_FULL) {
+      /*start a query for the related shapes */
+      findRelatedShapes(layerinfo, layerinfo->root, current);
 
-    /* add this shape to the tree */
-    if (treeNodeAddShape(layerinfo, layerinfo->root, current, depth) != MS_SUCCESS) {
-      clusterInfoDestroyList(layerinfo, current);
-      return MS_FAILURE;
+      /* add this shape to the tree */
+      if (treeNodeAddShape(layerinfo, layerinfo->root, current, depth) != MS_SUCCESS) {
+        clusterInfoDestroyList(layerinfo, current);
+        return MS_FAILURE;
+      }
+    }
+    else if (layerinfo->algorithm == MSCLUSTER_ALGORITHM_SIMPLE) {
+      /* find a related cluster and try to assign */
+      layerinfo->rank = 0;
+      layerinfo->current = NULL;
+      findRelatedShapes2(layerinfo, layerinfo->root, current);
+      if (layerinfo->current) {
+        /* store these points until all clusters are created */
+        current->next = layerinfo->finalizedSiblings;
+        layerinfo->finalizedSiblings = current;
+      }
+      else {
+        /* if not found add this shape as a new cluster */
+        if (treeNodeAddShape(layerinfo, layerinfo->root, current, depth) != MS_SUCCESS) {
+          clusterInfoDestroyList(layerinfo, current);
+          return MS_FAILURE;
+        }
+      }
     }
 
     if ((current = clusterInfoCreate(layerinfo)) == NULL) {
@@ -1059,121 +1203,151 @@ int RebuildClusters(layerObj *layer, int isQuery)
 
   clusterInfoDestroyList(layerinfo, current);
 
-  while (layerinfo->root) {
+  if (layerinfo->algorithm == MSCLUSTER_ALGORITHM_FULL) {
+    while (layerinfo->root) {
 #ifdef TESTCOUNT
-    int n;
-    double avgx, avgy;
+      int n;
+      double avgx, avgy;
 #endif
 
-    /* pick up the best cluster from the tree and do the finalization */
-    /* the initial rank must be big enough */
-    layerinfo->rank = (searchrect.maxx - searchrect.minx) * (searchrect.maxx - searchrect.minx) +
-                      (searchrect.maxy - searchrect.miny) * (searchrect.maxy - searchrect.miny) + 1;
+      /* pick up the best cluster from the tree and do the finalization */
+      /* the initial rank must be big enough */
+      layerinfo->rank = (searchrect.maxx - searchrect.minx) * (searchrect.maxx - searchrect.minx) +
+                        (searchrect.maxy - searchrect.miny) * (searchrect.maxy - searchrect.miny) + 1;
+      
+      layerinfo->current = NULL;
+      findBestCluster(layer, layerinfo, layerinfo->root);
+      
+      if (layerinfo->current == NULL) {
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug("Clustering terminated.\n");
+        break; /* completed */
+      }
 
-    layerinfo->current = NULL;
-    findBestCluster(layer, layerinfo, layerinfo->root);
+      /* Update the feature count of the shape */
+      InitShapeAttributes(layer, layerinfo->current);
+      
+      /* collecting the shapes of the cluster */
+      collectClusterShapes(layerinfo, layerinfo->root, layerinfo->current);
 
-    if (layerinfo->current == NULL) {
-      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-        msDebug("Clustering terminated.\n");
-      break; /* completed */
-    }
-
-    /* Update the feature count of the shape */
-    InitShapeAttributes(layer, layerinfo->current);
-
-    /* collecting the shapes of the cluster */
-    collectClusterShapes(layerinfo, layerinfo->root, layerinfo->current);
-
-    if (layer->debug >= MS_DEBUGLEVEL_VVV) {
-      msDebug("processing cluster %p: rank=%lf fcount=%d ncoll=%d nfin=%d nfins=%d nflt=%d bounds={%lf %lf %lf %lf}\n", layerinfo->current, layerinfo->rank, layerinfo->current->numsiblings + 1,
+      if (layer->debug >= MS_DEBUGLEVEL_VVV) {
+        msDebug("processing cluster %p: rank=%lf fcount=%d ncoll=%d nfin=%d nfins=%d nflt=%d bounds={%lf %lf %lf %lf}\n", layerinfo->current, layerinfo->rank, layerinfo->current->numsiblings + 1,
               layerinfo->current->numcollected, layerinfo->numFinalized, layerinfo->numFinalizedSiblings,
               layerinfo->numFiltered, layerinfo->current->bounds.minx, layerinfo->current->bounds.miny,
               layerinfo->current->bounds.maxx, layerinfo->current->bounds.maxy);
-      if (layerinfo->current->node) {
-        char pszBuffer[TREE_MAX_DEPTH + 1];
-        clusterTreeNode* node = layerinfo->current->node;
-        int position = node->position;
-        int i = 1;
-        while (position > 0 && i <= TREE_MAX_DEPTH) {
-          pszBuffer[TREE_MAX_DEPTH - i] = '0' + (position % 4);
-          position = position >> 2;
-          ++i;
-        }
-        pszBuffer[TREE_MAX_DEPTH] = 0;
-
-        msDebug(" ->node %p: count=%d index=%d pos=%s subn={%p %p %p %p} rect={%lf %lf %lf %lf}\n",
-                node, node->numshapes, node->index, pszBuffer + TREE_MAX_DEPTH - i + 1,
-                node->subnode[0], node->subnode[1], node->subnode[2], node->subnode[3],
+        if (layerinfo->current->node) {
+          char pszBuffer[TREE_MAX_DEPTH + 1];
+          clusterTreeNode* node = layerinfo->current->node;
+          int position = node->position;
+          int i = 1;
+          while (position > 0 && i <= TREE_MAX_DEPTH) {
+            pszBuffer[TREE_MAX_DEPTH - i] = '0' + (position % 4);
+            position = position >> 2;
+            ++i;
+          }
+          pszBuffer[TREE_MAX_DEPTH] = 0;
+        
+          msDebug(" ->node %p: count=%d index=%d pos=%s subn={%p %p %p %p} rect={%lf %lf %lf %lf}\n",
+                  node, node->numshapes, node->index, pszBuffer + TREE_MAX_DEPTH - i + 1,
+                  node->subnode[0], node->subnode[1], node->subnode[2], node->subnode[3],
                 node->rect.minx, node->rect.miny, node->rect.maxx, node->rect.maxy);
-      }
-    }
-
-#ifdef TESTCOUNT
-    avgx = layerinfo->current->x;
-    avgy = layerinfo->current->y;
-    n = 0;
-#endif
-
-    if (layerinfo->current->numsiblings > 0) {
-      /* update the parameters due to the shape removal */
-      findRelatedShapesRemove(layerinfo, layerinfo->root, layerinfo->current);
-
-      if (layerinfo->current->filter == 0) {
-        /* filtered shapes has no siblings */
-        layerinfo->current->numsiblings = 0;
-        layerinfo->current->avgx = layerinfo->current->x;
-        layerinfo->current->avgy = layerinfo->current->y;
+        }
       }
 
-      /* update the parameters of the related shapes if any */
-      if (layerinfo->finalizedSiblings) {
-        current = layerinfo->finalizedSiblings;
-        while(current) {
-          /* update the parameters due to the shape removal */
-          findRelatedShapesRemove(layerinfo, layerinfo->root, current);
-          UpdateShapeAttributes(layer, layerinfo->current, current);
 #ifdef TESTCOUNT
-          avgx += current->x;
-          avgy += current->y;
-          ++n;
+      avgx = layerinfo->current->x;
+      avgy = layerinfo->current->y;
+      n = 0;
 #endif
-          /* setting the average position to the same value */
-          current->avgx = layerinfo->current->avgx;
-          current->avgy = layerinfo->current->avgy;
 
-          if (current->next == NULL) {
-            if (layerinfo->get_all_shapes == MS_TRUE) {
-              /* insert the siblings into the finalization list */
-              current->next = layerinfo->finalized;
-              layerinfo->finalized = layerinfo->finalizedSiblings;
-            } else {
+      if (layerinfo->current->numsiblings > 0) {
+        /* update the parameters due to the shape removal */
+        findRelatedShapesRemove(layerinfo, layerinfo->root, layerinfo->current);
+  
+        if (layerinfo->current->filter == 0) {
+          /* filtered shapes has no siblings */
+          layerinfo->current->numsiblings = 0;
+          layerinfo->current->avgx = layerinfo->current->x;
+          layerinfo->current->avgy = layerinfo->current->y;
+        }
+
+        /* update the parameters of the related shapes if any */
+        if (layerinfo->finalizedSiblings) {
+          current = layerinfo->finalizedSiblings;
+          while(current) {
+            /* update the parameters due to the shape removal */
+            findRelatedShapesRemove(layerinfo, layerinfo->root, current);
+            UpdateShapeAttributes(layer, layerinfo->current, current);
+#ifdef TESTCOUNT
+            avgx += current->x;
+            avgy += current->y;
+            ++n;
+#endif
+            /* setting the average position to the same value */
+            current->avgx = layerinfo->current->avgx;
+            current->avgy = layerinfo->current->avgy;
+
+            if (current->next == NULL) {
+              if (layerinfo->get_all_shapes == MS_TRUE) {
+                /* insert the siblings into the finalization list */
+                current->next = layerinfo->finalized;
+                layerinfo->finalized = layerinfo->finalizedSiblings;
+              } else {
               /* preserve the clustered siblings for later use */
-              layerinfo->current->siblings = layerinfo->finalizedSiblings;
+                layerinfo->current->siblings = layerinfo->finalizedSiblings;
+              }
+              break;
             }
-            break;
+
+            current = current->next;
           }
 
-          current = current->next;
+          layerinfo->finalizedSiblings = NULL;
         }
-
-        layerinfo->finalizedSiblings = NULL;
       }
-    }
 
 #ifdef TESTCOUNT
-    avgx /= (n + 1);
-    avgy /= (n + 1);
+      avgx /= (n + 1);
+      avgy /= (n + 1);
 
-    if (layerinfo->current->numsiblings != n)
-      layerinfo->current->numsiblings = n;
+      if (layerinfo->current->numsiblings != n)
+        layerinfo->current->numsiblings = n;
 
-    if (fabs(layerinfo->current->avgx - avgx) / avgx > 0.000000001 ||
-        fabs(layerinfo->current->avgy - avgy) / avgy > 0.000000001) {
-      layerinfo->current->avgx = avgx;
-      layerinfo->current->avgy = avgy;
-    }
+      if (fabs(layerinfo->current->avgx - avgx) / avgx > 0.000000001 ||
+          fabs(layerinfo->current->avgy - avgy) / avgy > 0.000000001) {
+        layerinfo->current->avgx = avgx;
+        layerinfo->current->avgy = avgy;
+      }
 #endif
+    }
+  }
+  else if (layerinfo->algorithm == MSCLUSTER_ALGORITHM_SIMPLE) {
+    /* assingn stired points to clusters */
+    while (layerinfo->finalizedSiblings) {
+      current = layerinfo->finalizedSiblings;
+      layerinfo->rank = maxDistanceX * maxDistanceX + maxDistanceY * maxDistanceY;
+      layerinfo->current = NULL;      
+      findRelatedShapes2(layerinfo, layerinfo->root, current);
+      if (layerinfo->current) {
+        clusterInfo* s = layerinfo->current;
+        /* found a matching cluster */
+        ++s->numsiblings;
+        /* assign to cluster */
+        layerinfo->finalizedSiblings = current->next;
+        current->next = s->siblings;
+        s->siblings = current;
+      }
+      else {
+        /* this appears to be a bug */
+        layerinfo->finalizedSiblings = current->next;
+        current->next = layerinfo->filtered;
+        layerinfo->filtered = current;
+        ++layerinfo->numFiltered;
+      }     
+    }
+    
+    /* collecting the shapes of the cluster */
+    collectClusterShapes2(layer, layerinfo, layerinfo->root);
   }
 
   /* set the pointer to the first shape */
@@ -1560,6 +1734,7 @@ void msClusterLayerCopyVirtualTable(layerVTableObj* vtable)
   vtable->LayerWhichShapes = msClusterLayerWhichShapes;
   vtable->LayerNextShape = msClusterLayerNextShape;
   vtable->LayerGetShape = msClusterLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
 
   vtable->LayerClose = msClusterLayerClose;
 

@@ -35,6 +35,10 @@
 #include "cpl_string.h"
 #endif
 
+#if defined(USE_OGR) && defined(USE_CURL)
+static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+#endif
+
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
 #define SLD_LINE_SYMBOL_DASH_NAME "sld_line_symbol_dash"
 #define SLD_MARK_SYMBOL_SQUARE "sld_mark_symbol_square"
@@ -94,7 +98,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
           if(nBufsize > 0) {
             rewind(fp);
             pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
-            fread(pszSLDbuf, 1, nBufsize, fp);
+            IGUR_sizet(fread(pszSLDbuf, 1, nBufsize, fp));
             pszSLDbuf[nBufsize] = '\0';
           } else {
             msSetError(MS_WMSERR, "Could not open SLD %s as it appears empty", "msSLDApplySLDURL", szURL);
@@ -150,8 +154,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
   int i, j, k, z, iClass;
   int bUseSpecificLayer = 0;
   const char *pszTmp = NULL;
-  int bFreeTemplate = 0;
-  int nLayerStatus = 0;
   int nStatus = MS_SUCCESS;
   /*const char *pszSLDNotSupported = NULL;*/
   char *tmpfilename = NULL;
@@ -200,9 +202,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                    map->numlayers);
           if (psTmpLayer->name)
             msFree(psTmpLayer->name);
-          psTmpLayer->name = strdup(tmpId);
+          psTmpLayer->name = msStrdup(tmpId);
           msFree(pasLayers[l].name);
-          pasLayers[l].name = strdup(tmpId);
+          pasLayers[l].name = msStrdup(tmpId);
           msInsertLayer(map, psTmpLayer, -1);
           MS_REFCNT_DECR(psTmpLayer);
         }
@@ -336,73 +338,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
           if (GET_LAYER(map, i)->connectiontype == MS_WMS)
             msInsertHashTable(&(GET_LAYER(map, i)->metadata),
                               "wms_sld_body", "auto" );
-          /* ==================================================================== */
-          /*      if the SLD contained a spatial feature, the layerinfo           */
-          /*      parameter contains the node. Extract it and do a query on       */
-          /*      the layer. Insert also a metadata that will be used when        */
-          /*      rendering the final image.                                      */
-          /* ==================================================================== */
-          if (pasLayers[j].layerinfo &&
-              (GET_LAYER(map, i)->type ==  MS_LAYER_POINT ||
-               GET_LAYER(map, i)->type == MS_LAYER_LINE ||
-               GET_LAYER(map, i)->type == MS_LAYER_POLYGON ||
-               GET_LAYER(map, i)->type == MS_LAYER_TILEINDEX)) {
-            FilterEncodingNode *psNode = NULL;
 
-            msInsertHashTable(&(GET_LAYER(map, i)->metadata),
-                              "tmp_wms_sld_query", "true" );
-            psNode = (FilterEncodingNode *)pasLayers[j].layerinfo;
+          lp = GET_LAYER(map, i);
 
-            /* -------------------------------------------------------------------- */
-            /*      set the template on the classes so that the query works         */
-            /*      using classes. If there are no classes, set it at the layer level.*/
-            /* -------------------------------------------------------------------- */
-            if (GET_LAYER(map, i)->numclasses > 0) {
-              for (k=0; k<GET_LAYER(map, i)->numclasses; k++) {
-                if (!GET_LAYER(map, i)->class[k]->template)
-                  GET_LAYER(map, i)->class[k]->template = msStrdup("ttt.html");
-              }
-            } else if (!GET_LAYER(map, i)->template) {
-              bFreeTemplate = 1;
-              GET_LAYER(map, i)->template = msStrdup("ttt.html");
-            }
-
-            nLayerStatus =  GET_LAYER(map, i)->status;
-            GET_LAYER(map, i)->status = MS_ON;
-
-            nStatus =
-            FLTApplyFilterToLayer(psNode, map,
-                                  GET_LAYER(map, i)->index);
-            /* -------------------------------------------------------------------- */
-            /*      nothing found is a valid, do not exit.                          */
-            /* -------------------------------------------------------------------- */
-            if (nStatus !=  MS_SUCCESS) {
-              errorObj   *ms_error;
-              ms_error = msGetErrorObj();
-              if(ms_error->code == MS_NOTFOUND)
-                nStatus =  MS_SUCCESS;
-            }
-
-
-            GET_LAYER(map, i)->status = nLayerStatus;
-            FLTFreeFilterEncodingNode(psNode);
-
-            if ( bFreeTemplate) {
-              free(GET_LAYER(map, i)->template);
-              GET_LAYER(map, i)->template = NULL;
-            }
-
-            pasLayers[j].layerinfo=NULL;
-
-            if( nStatus != MS_SUCCESS ) {
-              goto sld_cleanup;
-            }
-          } else {
-            lp = GET_LAYER(map, i);
-            
-            /* The SLD might have a FeatureTypeConstraint */
-            if( pasLayers[j].filter.type == MS_EXPRESSION )
-            {
+          /* The SLD might have a FeatureTypeConstraint */
+          if( pasLayers[j].filter.type == MS_EXPRESSION )
+          {
                 if( lp->filter.string && lp->filter.type == MS_EXPRESSION )
                 {
                     pszBuffer = msStringConcatenate(NULL, "((");
@@ -424,12 +365,13 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                     lp->filter.string = msStrdup(pasLayers[j].filter.string);
                     lp->filter.type = MS_EXPRESSION;
                 }
-            }
+          }
 
-            /*in some cases it would make sense to concatenate all the class
-              expressions and use it to set the filter on the layer. This
-              could increase performace. Will do it for db types layers #2840*/
-            if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
+
+          /*in some cases it would make sense to concatenate all the class
+            expressions and use it to set the filter on the layer. This
+            could increase performace. Will do it for db types layers #2840*/
+          if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
               if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL || lp->connectiontype == MS_PLUGIN) {
                 if (lp->numclasses > 0) {
                   /* check first that all classes have an expression type. That is
@@ -463,8 +405,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                   }
                 }
               }
-            }
-
           }
           break;
         }
@@ -494,7 +434,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
   
   nStatus = MS_SUCCESS;
 
+#ifdef notdef
 sld_cleanup:
+#endif
   for (i=0; i<nLayers; i++)
      freeLayer(&pasLayers[i]);
   msFree(pasLayers);
@@ -3245,7 +3187,6 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
   int nSymbol = -1;
   symbolObj *psSymbol = NULL;
   char szTmp[512];
-  char *pszURL = NULL;
   char szFormat[4];
   int i = 0, nLength = 0;
   int bFillColor = 0, bColorAvailable=0;
@@ -3420,7 +3361,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           bGenerateDefaultSymbol =1;
       } else if (psSymbol->type == MS_SYMBOL_PIXMAP || psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
-          pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
+          const char *pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
           if (!pszURL)
             pszURL = msLookupHashTable(&(psLayer->map->web.metadata), "WMS_SLD_SYMBOL_URL");
 

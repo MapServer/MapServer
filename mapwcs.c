@@ -368,7 +368,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
     root = xmlDocGetRootElement(doc);
 
     /* Get service, version and request from root */
-    params->request = strdup((char *) root->name);
+    params->request = msStrdup((char *) root->name);
     if ((tmp = (char *) xmlGetProp(root, BAD_CAST "service")) != NULL)
       params->service = tmp;
     if ((tmp = (char *) xmlGetProp(root, BAD_CAST "version")) != NULL)
@@ -819,7 +819,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
 /*             msWCSGetCapabilities_CoverageOfferingBrief()             */
 /************************************************************************/
 
-static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params)
+static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params, char *script_url_encoded)
 {
   coverageMetadataObj cm;
   int status;
@@ -833,6 +833,9 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   msIO_printf("  <CoverageOfferingBrief>\n"); /* is this tag right? (I hate schemas without ANY examples) */
 
   /* optional metadataLink */
+  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
+    msMetadataSetGetMetadataURL(layer, script_url_encoded);
+
   msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
                     OWS_NOERR,
                     "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
@@ -859,6 +862,8 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 
   /* done */
   msIO_printf("  </CoverageOfferingBrief>\n");
+  
+  msWCSFreeCoverageMetadata(&cm);
 
   return MS_SUCCESS;
 }
@@ -867,9 +872,12 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 /*                msWCSGetCapabilities_ContentMetadata()                */
 /************************************************************************/
 
-static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
+static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request, cgiRequestObj *req)
 {
   int i;
+  char *script_url_encoded=NULL;
+
+  script_url_encoded = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "CO", "onlineresource", req));
 
   /* start the ContentMetadata section, only need the full start tag if this is the only section requested */
   /* TODO: add Xlink attributes for other sources of this information  */
@@ -892,7 +900,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
       if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
         continue;
 
-      if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
+      if(msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params, script_url_encoded) != MS_SUCCESS ) {
         msIO_printf("</ContentMetadata>\n");
         return MS_FAILURE;
       }
@@ -1004,12 +1012,12 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       msWCSGetCapabilities_Capability(map, params, req);
 
     if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
-      msWCSGetCapabilities_ContentMetadata(map, params, ows_request);
+      msWCSGetCapabilities_ContentMetadata(map, params, ows_request, req);
 
     if(params->section && strcasecmp(params->section, "/")  == 0) {
       msWCSGetCapabilities_Service(map, params);
       msWCSGetCapabilities_Capability(map, params, req);
-      msWCSGetCapabilities_ContentMetadata(map, params, ows_request);
+      msWCSGetCapabilities_ContentMetadata(map, params, ows_request, req);
     }
 
     /* done */
@@ -1092,11 +1100,12 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 /*               msWCSDescribeCoverage_CoverageOffering()               */
 /************************************************************************/
 
-static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params)
+static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params, char *script_url_encoded)
 {
   char **tokens;
   int numtokens;
   const char *value;
+  char *epsg_buf, *encoded_format;
   coverageMetadataObj cm;
   int i, status;
 
@@ -1116,6 +1125,9 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("  <CoverageOffering>\n");
 
   /* optional metadataLink */
+  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
+    msMetadataSetGetMetadataURL(layer, script_url_encoded);
+
   msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
                     OWS_NOERR,
                     "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
@@ -1153,12 +1165,16 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("        </gml:Envelope>\n");
 
   /* envelope in the native srs */
-  if((value = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE)) != NULL)
-    msIO_printf("        <gml:Envelope srsName=\"%s\">\n", value);
-  else if((value = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_TRUE)) != NULL)
-    msIO_printf("        <gml:Envelope srsName=\"%s\">\n", value);
-  else
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE, &epsg_buf);
+  if(!epsg_buf) {
+    msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_TRUE, &epsg_buf);
+  }
+  if(epsg_buf) {
+    msIO_printf("        <gml:Envelope srsName=\"%s\">\n", epsg_buf);
+    msFree(epsg_buf);
+  } else {
     msIO_printf("        <!-- NativeCRSs ERROR: missing required information, no SRSs defined -->\n");
+  }
   msIO_printf("          <gml:pos>%.15g %.15g</gml:pos>\n", cm.extent.minx, cm.extent.miny);
   msIO_printf("          <gml:pos>%.15g %.15g</gml:pos>\n", cm.extent.maxx, cm.extent.maxy);
   msIO_printf("        </gml:Envelope>\n");
@@ -1181,6 +1197,8 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("        </gml:RectifiedGrid>\n");
 
   msIO_printf("      </spatialDomain>\n");
+  
+  msWCSFreeCoverageMetadata(&cm);
 
   /* TemporalDomain */
 
@@ -1232,30 +1250,33 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msIO_printf("    <supportedCRSs>\n");
 
   /* requestResposeCRSs: check the layer metadata/projection, and then the map metadata/projection if necessary (should never get to the error message) */
-  if((value = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_FALSE)) != NULL) {
-    tokens = msStringSplit(value, ' ', &numtokens);
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_FALSE, &epsg_buf);
+  if(!epsg_buf) {
+    msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_FALSE, &epsg_buf);
+  }
+  if(epsg_buf) {
+    tokens = msStringSplit(epsg_buf, ' ', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
       msFreeCharArray(tokens, numtokens);
     }
-  } else if((value = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_FALSE)) != NULL) {
-    tokens = msStringSplit(value, ' ', &numtokens);
-    if(tokens && numtokens > 0) {
-      for(i=0; i<numtokens; i++)
-        msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
-      msFreeCharArray(tokens, numtokens);
-    }
-  } else
+    msFree(epsg_buf);
+  } else {
     msIO_printf("      <!-- requestResponseCRSs ERROR: missing required information, no SRSs defined -->\n");
+  }
 
   /* nativeCRSs (only one in our case) */
-  if((value = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE)) != NULL)
-    msIO_printf("      <nativeCRSs>%s</nativeCRSs>\n", value);
-  else if((value = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_TRUE)) != NULL)
-    msIO_printf("      <nativeCRSs>%s</nativeCRSs>\n", value);
-  else
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE, &epsg_buf);
+  if(!epsg_buf) {
+    msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_TRUE, &epsg_buf);
+  }
+  if(epsg_buf) {
+    msIO_printf("      <nativeCRSs>%s</nativeCRSs>\n", epsg_buf);
+    msFree(epsg_buf);
+  } else {
     msIO_printf("      <!-- nativeCRSs ERROR: missing required information, no SRSs defined -->\n");
+  }
 
   msIO_printf("    </supportedCRSs>\n");
 
@@ -1265,15 +1286,15 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "CO", "nativeformat", OWS_NOERR, " nativeFormat=\"%s\"", NULL);
   msIO_printf(">\n");
 
-  if( (value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", "formats",
+  if( (encoded_format = msOWSGetEncodeMetadata( &(layer->metadata), "CO", "formats",
                                        "GTiff" )) != NULL ) {
-    tokens = msStringSplit(value, ' ', &numtokens);
+    tokens = msStringSplit(encoded_format, ' ', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <formats>%s</formats>\n", tokens[i]);
       msFreeCharArray(tokens, numtokens);
     }
-    msFree((char*)value);
+    msFree(encoded_format);
   }
   msIO_printf("    </supportedFormats>\n");
 
@@ -1294,7 +1315,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 /*                       msWCSDescribeCoverage()                        */
 /************************************************************************/
 
-static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request)
+static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestObj *ows_request, cgiRequestObj *req)
 {
   int i = 0,j = 0, k = 0;
   const char *updatesequence=NULL;
@@ -1302,6 +1323,9 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
   int numcoverages=0;
 
   char *coverageName=NULL;
+  char *script_url_encoded=NULL;
+
+  script_url_encoded = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "CO", "onlineresource", req));
 
   /* -------------------------------------------------------------------- */
   /*      1.1.x is sufficiently different we have a whole case for        */
@@ -1372,7 +1396,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
           }
           msFree(coverageName);
         }
-        msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+        msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params, script_url_encoded);
       }
       msFreeCharArray(coverages,numcoverages);
     }
@@ -1381,7 +1405,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
       if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
         continue;
 
-      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
+      msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params, script_url_encoded);
     }
   }
 
@@ -1530,6 +1554,160 @@ static int msWCSGetCoverage_ImageCRSSetup(
 }
 
 /************************************************************************/
+/*                    msWCSApplyLayerCreationOptions()                  */
+/************************************************************************/
+
+void msWCSApplyLayerCreationOptions(layerObj* lp,
+                                    outputFormatObj* format,
+                                    const char* bandlist)
+
+{
+    const char* pszKey;
+    char szKeyBeginning[256];
+    size_t nKeyBeginningLength;
+    int nBands = 0;
+    char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+
+    snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+             "wcs_outputformat_%s_creationoption_", format->name);
+    nKeyBeginningLength = strlen(szKeyBeginning);
+
+    pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+    for( ; pszKey != NULL;
+           pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+    {
+        if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+        {
+            const char* pszValue = msLookupHashTable( &(lp->metadata), pszKey);
+            const char* pszGDALKey = pszKey + nKeyBeginningLength;
+            if( EQUALN(pszGDALKey, "BAND_", strlen("BAND_")) )
+            {
+                /* Remap BAND specific creation option to the real output
+                 * band number, given the band subset of the request */
+                int nKeyOriBandNumber = atoi(pszGDALKey + strlen("BAND_"));
+                int nTargetBandNumber = -1;
+                int i;
+                for(i = 0; i < nBands; i++ )
+                {
+                    if( nKeyOriBandNumber == atoi(papszBandNumbers[i]) )
+                    {
+                        nTargetBandNumber = i + 1;
+                        break;
+                    }
+                }
+                if( nTargetBandNumber > 0 )
+                {
+                    char szModKey[256];
+                    const char* pszAfterBand =
+                        strchr(pszGDALKey + strlen("BAND_"), '_');
+                    if( pszAfterBand != NULL )
+                    {
+                        snprintf(szModKey, sizeof(szModKey),
+                                 "BAND_%d%s",
+                                 nTargetBandNumber,
+                                 pszAfterBand);
+                        if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                            msDebug("Setting GDAL %s=%s creation option\n",
+                                    szModKey, pszValue);
+                        }
+                        msSetOutputFormatOption(format, szModKey, pszValue);
+                    }
+                }
+            }
+            else
+            {
+                if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                    msDebug("Setting GDAL %s=%s creation option\n",
+                            pszGDALKey, pszValue);
+                }
+                msSetOutputFormatOption(format, pszGDALKey, pszValue);
+            }
+        }
+    }
+
+    msFreeCharArray( papszBandNumbers, nBands );
+}
+
+/************************************************************************/
+/*               msWCSApplyDatasetMetadataAsCreationOptions()           */
+/************************************************************************/
+
+void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
+                                                outputFormatObj* format,
+                                                const char* bandlist,
+                                                void* hDSIn)
+{
+    /* Requires GDAL 2.3 in practice. */
+    /* Automatic forwarding of input dataset metadata if it is GRIB and the */
+    /* output is GRIB as well, and wcs_outputformat_GRIB_creationoption* are */
+    /* not defined. */
+    GDALDatasetH hDS = (GDALDatasetH)hDSIn;
+    if( hDS && GDALGetDatasetDriver(hDS) &&
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hDS)), "GRIB") &&
+        EQUAL(format->driver, "GDAL/GRIB") )
+    {
+        const char* pszKey;
+        char szKeyBeginning[256];
+        size_t nKeyBeginningLength;
+        int bWCSMetadataFound = MS_FALSE;
+
+        snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+                "wcs_outputformat_%s_creationoption_", format->name);
+        nKeyBeginningLength = strlen(szKeyBeginning);
+
+        for( pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+             pszKey != NULL;
+             pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+        {
+            if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+            {
+                bWCSMetadataFound = MS_TRUE;
+                break;
+            }
+        }
+        if( !bWCSMetadataFound )
+        {
+            int nBands = 0;
+            char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+            int i;
+            for(i = 0; i < nBands; i++ )
+            {
+                int nSrcBand = atoi(papszBandNumbers[i]);
+                int nDstBand = i + 1;
+                GDALRasterBandH hBand = GDALGetRasterBand(hDS, nSrcBand);
+                if( hBand )
+                {
+                    char** papszMD = GDALGetMetadata(hBand, NULL);
+                    const char* pszMDI = CSLFetchNameValue(papszMD, "GRIB_IDS");
+                    // Make sure it is a GRIB2 band
+                    if( pszMDI )
+                    {
+                        char szKey[256];
+                        sprintf(szKey, "BAND_%d_IDS", nDstBand);
+                        msSetOutputFormatOption(format, szKey, pszMDI);
+
+                        sprintf(szKey, "BAND_%d_DISCIPLINE", nDstBand);
+                        msSetOutputFormatOption(format, szKey, 
+                                CSLFetchNameValue(papszMD, "DISCIPLINE"));
+
+                        sprintf(szKey, "BAND_%d_PDS_PDTN", nDstBand);
+                        msSetOutputFormatOption(format, szKey, 
+                                CSLFetchNameValue(papszMD, "GRIB_PDS_PDTN"));
+
+                        sprintf(szKey, "BAND_%d_PDS_TEMPLATE_NUMBERS",
+                                nDstBand);
+                        msSetOutputFormatOption(format, szKey, 
+                                CSLFetchNameValue(papszMD,
+                                                  "GRIB_PDS_TEMPLATE_NUMBERS"));
+                    }
+                }
+            }
+            msFreeCharArray( papszBandNumbers, nBands );
+        }
+    }
+}
+
+/************************************************************************/
 /*                          msWCSGetCoverage()                          */
 /************************************************************************/
 
@@ -1548,6 +1726,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   rectObj reqextent;
   rectObj covextent;
   rasterBufferObj rb;
+  int doDrawRasterLayerDraw = MS_TRUE;
+  GDALDatasetH hDS = NULL;
 
   char *coverageName;
 
@@ -1649,8 +1829,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
         return msWCSException( map, NULL, NULL,params->version);
     } else if( strcasecmp(crs_to_use,"imageCRS") == 0 ) {
       /* use layer native CRS, and rework bounding box accordingly */
-      if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp ) != MS_SUCCESS )
+      if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp ) != MS_SUCCESS ) {
+        msWCSFreeCoverageMetadata(&cm);
         return MS_FAILURE;
+      }
     } else {  /* should we support WMS style AUTO: projections? (not for now) */
       msSetError(MS_WCSERR, "Unsupported SRS namespace (only EPSG currently supported).", "msWCSGetCoverage()");
       return msWCSException(map, "InvalidParameterValue", "srs", params->version);
@@ -1670,10 +1852,12 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
     /* check format of TIME parameter */
     if(strchr(params->time, ',')) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "Temporal lists are not supported, only individual values.", "msWCSGetCoverage()" );
       return msWCSException(map, "InvalidParameterValue", "time", params->version);
     }
     if(strchr(params->time, '/')) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "Temporal ranges are not supported, only individual values.", "msWCSGetCoverage()" );
       return msWCSException(map, "InvalidParameterValue", "time", params->version);
     }
@@ -1681,23 +1865,27 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     /* TODO: will need to expand this check if a time period is supported */
     value = msOWSLookupMetadata(&(lp->metadata), "CO", "timeposition");
     if(!value) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
       return msWCSException(map, "InvalidParameterValue", "time", params->version );
     }
 
     /* check if timestamp is covered by the wcs_timeposition definition */
     if (msValidateTimeValue(params->time, value) == MS_FALSE) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "The coverage does not have a time position of %s.", "msWCSGetCoverage()", params->time );
       return msWCSException(map, "InvalidParameterValue", "time", params->version);
     }
 
     /* make sure layer is tiled appropriately */
     if(!lp->tileindex) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "Underlying layer is not tiled, unable to do temporal subsetting.", "msWCSGetCoverage()" );
       return msWCSException(map, NULL, NULL, params->version);
     }
     tli = msGetLayerIndex(map, lp->tileindex);
     if(tli == -1) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "Underlying layer does not use appropriate tiling mechanism.", "msWCSGetCoverage()" );
       return msWCSException(map, NULL, NULL, params->version);
     }
@@ -1707,6 +1895,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     /* make sure there is enough information to filter */
     value = msOWSLookupMetadata(&(lp->metadata), "CO", "timeitem");
     if(!tlp->filteritem && !value) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "Not enough information available to filter.", "msWCSGetCoverage()" );
       return msWCSException(map, NULL, NULL, params->version);
     }
@@ -1726,8 +1915,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     status = msWCSGetCoverageBands10( map, request, params, lp, &bandlist );
   else
     status = msWCSGetCoverageBands11( map, request, params, lp, &bandlist );
-  if( status != MS_SUCCESS )
+  if( status != MS_SUCCESS ) {
+    msWCSFreeCoverageMetadata(&cm);
     return status;
+  }
 
   /* did we get BBOX values? if not use the exent stored in the coverageMetadataObj */
   if( fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001  || fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001 ) {
@@ -1755,8 +1946,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     projectionObj tmp_proj;
 
     msInitProjection(&tmp_proj);
-    if (msLoadProjectionString(&tmp_proj, (char *) params->crs) != 0)
+    if (msLoadProjectionString(&tmp_proj, (char *) params->crs) != 0) {
+      msWCSFreeCoverageMetadata(&cm);
       return msWCSException( map, NULL, NULL, params->version);
+    }
     msProjectRect(&tmp_proj, &map->projection, &(params->bbox));
     msFreeProjection(&tmp_proj);
   }
@@ -1794,6 +1987,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   /* are we still underspecified?  */
   if( (params->width == 0 || params->height == 0) && (params->resx == 0.0 || params->resy == 0.0 )) {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
     return msWCSException(map, "MissingParameterValue", "width/height/resx/resy", params->version);
   }
@@ -1815,6 +2009,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     else if( strcasecmp(params->interpolation,"AVERAGE") == 0 )
       msLayerSetProcessingKey(lp, "RESAMPLE", "AVERAGE");
     else {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError( MS_WCSERR, "INTERPOLATION=%s specifies an unsupported interpolation method.", "msWCSGetCoverage()", params->interpolation );
       return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
     }
@@ -1826,6 +2021,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   /* Are we exceeding the MAXSIZE limit on result size? */
   if(map->width > map->maxsize || map->height > map->maxsize ) {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError(MS_WCSERR, "Raster size out of range, width and height of resulting coverage must be no more than MAXSIZE=%d.", "msWCSGetCoverage()", map->maxsize);
 
     return msWCSException(map, "InvalidParameterValue",
@@ -1870,6 +2066,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   covextent.maxy = cm.extent.maxy;
 
   if(msRectOverlap(&reqextent, &covextent) == MS_FALSE) {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError(MS_WCSERR, "Requested BBOX (%.15g,%.15g,%.15g,%.15g) is outside requested coverage BBOX (%.15g,%.15g,%.15g,%.15g)",
                "msWCSGetCoverage()",
                reqextent.minx, reqextent.miny, reqextent.maxx, reqextent.maxy,
@@ -1879,11 +2076,13 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   /* check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata) */
   if(!params->format) {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
     return msWCSException(map, "MissingParameterValue", "format", params->version);
   }
   msApplyDefaultOutputFormats(map);
   if(msGetOutputFormatIndex(map,params->format) == -1) {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
     return msWCSException(map, "InvalidParameterValue", "format",
                           params->version );
@@ -1909,6 +2108,29 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
   snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
+
+  msWCSApplyLayerCreationOptions(lp, map->outputformat, bandlist);
+
+  if( lp->tileindex == NULL && lp->data != NULL &&
+      strlen(lp->data) > 0 &&
+      lp->connectiontype != MS_KERNELDENSITY )
+  {
+      if( msDrawRasterLayerLowCheckIfMustDraw(map, lp) )
+      {
+          char* decrypted_path = NULL;
+          char szPath[MS_MAXPATHLEN];
+          hDS = (GDALDatasetH)msDrawRasterLayerLowOpenDataset(
+                                    map, lp, lp->data, szPath, &decrypted_path);
+          msFree(decrypted_path);
+          if( hDS )
+            msWCSApplyDatasetMetadataAsCreationOptions(lp, map->outputformat, bandlist, hDS);
+      }
+      else
+      {
+          doDrawRasterLayerDraw = MS_FALSE;
+      }
+  }
+
   free( bandlist );
 
   if(lp->mask) {
@@ -1916,8 +2138,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     layerObj *maskLayer;
     outputFormatObj *altFormat;
     if(maskLayerIdx == -1) {
+      msWCSFreeCoverageMetadata(&cm);
       msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
                  lp->name,lp->mask);
+      msDrawRasterLayerLowCloseDataset(lp, hDS);
       return msWCSException(map, NULL, NULL, params->version );
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
@@ -1931,8 +2155,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       maskLayer->maskimage= msImageCreate(map->width, map->height, altFormat,
                                           map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
       if (!maskLayer->maskimage) {
+        msWCSFreeCoverageMetadata(&cm);
         msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
         msFree(origImageType);
+        msDrawRasterLayerLowCloseDataset(lp, hDS);
         return msWCSException(map, NULL, NULL, params->version );
       }
 
@@ -1951,9 +2177,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       maskLayer->status = origstatus;
       maskLayer->labelcache = origlabelcache;
       if(retcode != MS_SUCCESS) {
+        msWCSFreeCoverageMetadata(&cm);
         /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
         msFree(map->imagetype);
         map->imagetype = origImageType;
+        msDrawRasterLayerLowCloseDataset(lp, hDS);
         return msWCSException(map, NULL, NULL, params->version );
       }
       /*
@@ -1980,29 +2208,49 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   
   /* create the image object  */
   if(!map->outputformat) {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
+    msDrawRasterLayerLowCloseDataset(lp, hDS);
     return msWCSException(map, NULL, NULL, params->version );
   } else if( MS_RENDERER_RAWDATA(map->outputformat) || MS_RENDERER_PLUGIN(map->outputformat) ) {
     image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
   } else {
+    msWCSFreeCoverageMetadata(&cm);
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
+    msDrawRasterLayerLowCloseDataset(lp, hDS);
     return msWCSException(map, NULL, NULL, params->version );
   }
 
-  if( image == NULL )
+  if( image == NULL ) {
+    msWCSFreeCoverageMetadata(&cm);
+    msDrawRasterLayerLowCloseDataset(lp, hDS);
     return msWCSException(map, NULL, NULL, params->version );
+  }
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    status = msDrawRasterLayerLow( map, lp, image, NULL );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, lp, image, NULL, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   } else {
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
     if(UNLIKELY(status == MS_FAILURE)) {
+      msWCSFreeCoverageMetadata(&cm);
+      msDrawRasterLayerLowCloseDataset(lp, hDS);
       return MS_FAILURE;
     }
 
     /* Actually produce the "grid". */
-    status = msDrawRasterLayerLow( map, lp, image, &rb );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, lp, image, &rb, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   }
+  msDrawRasterLayerLowCloseDataset(lp, hDS);
+
   if( status != MS_SUCCESS ) {
+    msWCSFreeCoverageMetadata(&cm);
     msFreeImage(image);
     return msWCSException(map, NULL, NULL, params->version );
   }
@@ -2020,6 +2268,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
                      fo_filename );
 
     /* Emit back to client. */
+    msOutputFormatResolveFromImage( map, image );
     msIO_setHeader("Content-Type","%s",MS_IMAGE_MIME_TYPE(map->outputformat));
     msIO_sendHeaders();
     status = msSaveImage(map, image, NULL);
@@ -2028,6 +2277,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       /* unfortunately, the image content type will have already been sent
          but that is hard for us to avoid.  The main error that could happen
          here is a misconfigured tmp directory or running out of space. */
+      msWCSFreeCoverageMetadata(&cm);
       return msWCSException(map, NULL, NULL, params->version );
     }
   }
@@ -2037,6 +2287,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
   /* msFreeOutputFormat(format); */
 
+  msWCSFreeCoverageMetadata(&cm);
   return status;
 }
 #endif /* def USE_WCS_SVR */
@@ -2199,7 +2450,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     if (operation == MS_WCS_GET_CAPABILITIES) {
       retVal = msWCSGetCapabilities(map, params, request, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {
-      retVal = msWCSDescribeCoverage(map, params, ows_request);
+      retVal = msWCSDescribeCoverage(map, params, ows_request, request);
     } else if (operation == MS_WCS_GET_COVERAGE) {
       retVal = msWCSGetCoverage(map, request, params, ows_request);
     }
@@ -2281,6 +2532,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
 /************************************************************************/
 
 #ifdef USE_WCS_SVR
+
+void msWCSFreeCoverageMetadata(coverageMetadataObj *cm) {
+  msFree(cm->srs_epsg);
+}
+
 int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
   char  *srs_urn = NULL;
@@ -2291,8 +2547,10 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
   /* -------------------------------------------------------------------- */
   /*      Get the SRS in WCS 1.0 format (eg. EPSG:n)                      */
   /* -------------------------------------------------------------------- */
-  if((cm->srs = msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE)) == NULL) {
-    if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_TRUE)) == NULL) {
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE, &(cm->srs_epsg));
+  if(!cm->srs_epsg) {
+    msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_TRUE, &(cm->srs_epsg));
+    if(!cm->srs_epsg) {
       msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, no projection defined and no metadata available.", "msWCSGetCoverageMetadata()");
       return MS_FAILURE;
     }
@@ -2534,7 +2792,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 
     msInitProjection(&proj); /* or bad things happen */
 
-    snprintf(projstring, sizeof(projstring), "init=epsg:%.20s", cm->srs+5);
+    snprintf(projstring, sizeof(projstring), "init=epsg:%.20s", cm->srs_epsg+5);
     if (msLoadProjectionString(&proj, projstring) != 0) return MS_FAILURE;
     msProjectRect(&proj, NULL, &(cm->llextent));
   }

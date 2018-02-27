@@ -58,6 +58,11 @@
 #include "pygdioctx/pygdioctx.h"
 #endif
 
+#if defined(WIN32) && defined(SWIGCSHARP)
+/* <windows.h> is needed for GetExceptionCode() for unhandled exception */
+#include <windows.h>
+#endif
+
 %}
 
 /* Problem with SWIG CSHARP typemap for pointers */

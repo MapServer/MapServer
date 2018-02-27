@@ -46,6 +46,10 @@
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
 #endif
 
+#if !(defined(_WIN32) && !defined(__CYGWIN__))
+static inline void IGUR_double(double ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+#endif
+
 int FLTIsNumeric(const char *pszValue)
 {
   if (pszValue != NULL && *pszValue != '\0' && !isspace(*pszValue)) {
@@ -70,7 +74,7 @@ int FLTIsNumeric(const char *pszValue)
       return MS_TRUE;
 #else
     char * p;
-    strtod(pszValue, &p);
+    IGUR_double(strtod(pszValue, &p));
     if ( p != pszValue && *p == '\0') return MS_TRUE;
 #endif
   }
@@ -563,6 +567,81 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
   return msQueryByRect(map);
 
   /* return MS_SUCCESS; */
+}
+
+/************************************************************************/
+/*                            FLTSplitFilters                           */
+/*                                                                      */
+/*    Split filters separated by parentheses into an array of strings.  */
+/************************************************************************/
+char** FLTSplitFilters(const char* pszStr, int* pnTokens)
+{
+    const char* pszTokenBegin;
+    char** papszRet = NULL;
+    int nTokens = 0;
+    char chStringQuote = '\0';
+    int nXMLIndent = 0;
+    int bInBracket = FALSE;
+
+    if( *pszStr != '(' )
+    {
+        *pnTokens = 0;
+        return NULL;
+    }
+    pszStr ++;
+    pszTokenBegin = pszStr;
+    while( *pszStr != '\0' )
+    {
+        /* Ignore any character until end of quoted string */
+        if( chStringQuote != '\0' )
+        {
+            if( *pszStr == chStringQuote )
+                chStringQuote = 0;
+        }
+        /* Detect begin of quoted string only for an XML attribute, i.e. between < and > */
+        else if( bInBracket && (*pszStr == '\'' || *pszStr == '"') )
+        {
+            chStringQuote = *pszStr;
+        }
+        /* Begin of XML element */
+        else if( *pszStr == '<' )
+        {
+            bInBracket = TRUE;
+            if( pszStr[1] == '/' )
+                nXMLIndent --;
+            else if( pszStr[1] != '!' )
+                nXMLIndent ++;
+        }
+        /* <something /> case */
+        else if (*pszStr == '/' && pszStr[1] == '>' )
+        {
+            bInBracket = FALSE;
+            nXMLIndent --;
+            pszStr ++;
+        }
+        /* End of XML element */
+        else if( *pszStr == '>' )
+        {
+            bInBracket = FALSE;
+        }
+        /* Only detect and of filter when XML indentation goes back to zero */
+        else if( nXMLIndent == 0 && *pszStr == ')' )
+        {
+            papszRet = (char**) msSmallRealloc(papszRet, sizeof(char*) * (nTokens + 1));
+            papszRet[nTokens] = msStrdup(pszTokenBegin);
+            papszRet[nTokens][pszStr - pszTokenBegin] = '\0';
+            nTokens ++;
+            if( pszStr[1] != '(' )
+            {
+                break;
+            }
+            pszStr ++;
+            pszTokenBegin = pszStr + 1;
+        }
+        pszStr ++;
+    }
+    *pnTokens = nTokens;
+    return papszRet;
 }
 
 /************************************************************************/

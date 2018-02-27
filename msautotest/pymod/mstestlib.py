@@ -68,14 +68,52 @@ def get_mapfile_list( argv ):
     return map_files
 
 ###############################################################################
+# compare_version()
+# Returns 1 if a > b, 0 if a == b, -1 if a < b
+
+def compare_version(version_a, version_b):
+
+    a = version_a.split('.')
+    b = version_b.split('.')
+    while len(a) < 3:
+        a += [ '0' ]
+    while len(b) < 3:
+        b += [ '0' ]
+    a_x, a_y, a_z = int(a[0]), int(a[1]), int(a[2])
+    b_x, b_y, b_z = int(b[0]), int(b[1]), int(b[2])
+    if a_x > b_x:
+        return 1
+    if a_x < b_x:
+        return -1
+    if a_y > b_y:
+        return 1
+    if a_y < b_y:
+        return -1
+    if a_z > b_z:
+        return 1
+    if a_z < b_z:
+        return -1
+    return 0
+
+###############################################################################
 # has_requires()
 
-def has_requires( version_info, requires_list ):
+def has_requires( version_info, gdal_version, requires_list ):
 
     for item in requires_list:
-        if version_info.find( item ) == -1:
+        if item.startswith('GDAL>='):
+            if gdal_version is None:
+                return 0
+            if compare_version(gdal_version, item[len('GDAL>='):]) < 0:
+                return 0
+        elif item.startswith('GDAL=='):
+            if gdal_version is None:
+                return 0
+            if compare_version(gdal_version, item[len('GDAL=='):]) != 0:
+                return 0
+        elif version_info.find( item ) == -1:
             return 0
-        
+
     return 1
 
 ###############################################################################
@@ -408,6 +446,28 @@ def crlf( filename ):
         else:
             f.write(newdata)
         f.close()
+
+###############################################################################
+def get_gdal_version():
+
+    # First try with GDAL Python bindings, otherwise with gdalinfo binary
+    try:
+        from osgeo import gdal
+        gdal_version = gdal.VersionInfo('VERSION_INFO')
+    except:
+        gdal_version = os.popen( 'gdalinfo --version').read()
+
+    # Parse something like "GDAL x.y.zdev, released..." to extract "x.y.z"
+    if gdal_version.startswith('GDAL '):
+        gdal_version = gdal_version[len('GDAL '):]
+        pos = gdal_version.find('dev')
+        if pos >= 0:
+            return gdal_version[0:pos]
+        pos = gdal_version.find(',')
+        if pos >= 0:
+            return gdal_version[0:pos]
+    return None
+
 ###############################################################################
 # run_tests()
 
@@ -473,12 +533,15 @@ def run_tests( argv ):
     # Get version info.
     version_info = os.popen( shp2img + ' -v' ).read()
     print('version = %s' % version_info)
-    
+
+    gdal_version = get_gdal_version()
+    #print('GDAL version = %s' % gdal_version)
+
     ###########################################################################
     # Check directory wide requirements.
     try:
         (runparms_list, requires_list) = read_test_directives( 'all_require.txt' )
-        if not has_requires( version_info, requires_list ):
+        if not has_requires( version_info, gdal_version, requires_list ):
             print('Some or all of the following requirements for this directory of tests\nare not available:')
             print(requires_list)
             return
@@ -511,7 +574,7 @@ def run_tests( argv ):
                 else:
                    runparms_list[i] = ("%s.%s%s"%(resultbase,renderer,resultext),runparms_list[i][1])
 
-        if not has_requires( version_info, requires_list ):
+        if not has_requires( version_info, gdal_version, requires_list ):
             if not quiet:
                 print('    missing some or all of required components, skip.')
             else:

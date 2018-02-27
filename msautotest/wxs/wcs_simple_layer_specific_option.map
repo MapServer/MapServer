@@ -1,0 +1,109 @@
+#
+# Test WCS.
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
+#
+# GetCoverage 2.0 image/tiff full and format optional
+# RUN_PARMS: wcs_simple_layer_specif_option.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey" > [RESULT_DEMIME]
+#
+
+MAP
+
+NAME TEST
+SIZE 400 300
+EXTENT 0 0 400 300
+MAXSIZE 5000
+
+#CONFIG  "MS_ERRORFILE" "stderr"
+
+IMAGETYPE PNG
+TRANSPARENT OFF
+SHAPEPATH "data"
+
+OUTPUTFORMAT
+  NAME GEOTIFF
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE BYTE
+  EXTENSION "tif"
+END
+
+PROJECTION
+  "init=epsg:32611"
+END
+
+WEB
+  METADATA
+   # OWS stuff for server
+   "ows_updatesequence"   "2007-10-30T14:23:38Z"
+   "ows_title"            "First Test Service"
+   "ows_fees"             "NONE"
+   "ows_accessconstraints" "NONE"
+   "ows_abstract"         "Test Abstract"
+   "ows_keywordlist"      "keyword,list"
+   "ows_service_onlineresource" "http://198.202.74.215/cgi-bin/wcs_demo"
+   "ows_contactorganization" "OSGeo"
+   "ows_contactperson"    "Frank Warmerdam"
+   "ows_contactposition"  "Software Developer"
+   "ows_contactvoicetelephone" "(613) 754-2041"
+   "ows_contactfacsimiletelephone" "(613) 754-2041x343"
+   "ows_address" "3594 Foymount Rd"
+   "ows_city" "Eganville"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "K0J 1T0"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "warmerdam@pobox.com"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_enable_request" "*"
+   "ows_srs"	"EPSG:32611 EPSG:4326"
+
+   # OGC:WCS
+   "wcs_label"    "Test Label"
+   "wcs_description" "Test description"
+   "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
+   "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+  END
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  DATA "grey.tif"
+
+  PROJECTION
+    "init=epsg:32611"
+  END
+  METADATA
+   "ows_extent" "0 0 400 300"
+   "wcs_label" "Test label"
+   "ows_srs"	"EPSG:32611 EPSG:4326"
+   "wcs_resolution" "10 10"
+   "wcs_bandcount" "1"
+   "wcs_formats" "GEOTIFF"
+   "wcs_nativeformat" "GeoTIFF"
+   "wcs_native_format" "image/tiff"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "Category: Image
+Product: IKONOS-2 PAN/MSI
+Acquisition: 1999-10-11 18:47"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "Landsat 5 TM Bands"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "Bands for Landsat 5 TM"
+   "wcs_rangeset_nullvalue" "-99"
+   "wcs_imagemode" "BYTE"
+
+   "wcs_outputformat_GEOTIFF_creationoption_COMPRESS" "LZW"
+   # Will not do anything useful as only the GRIB driver of GDAL 2.3.0 has BAND specific creation option, but at least exercices the code
+   "wcs_outputformat_GEOTIFF_creationoption_BAND_1_foo" "bar"
+   "wcs_outputformat_GEOTIFF_creationoption_BAND_10_foo" "bar"
+  END
+END
+
+END

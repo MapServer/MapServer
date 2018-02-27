@@ -3162,7 +3162,7 @@ PHP_METHOD(mapObj, loadOwsParameters)
   php_request = (php_owsrequest_object *) zend_object_store_get_object(zrequest TSRMLS_CC);
 
   if (!version) {
-    version = strdup("1.1.1");
+    version = msStrdup("1.1.1");
     isZval = 0;
   }
 

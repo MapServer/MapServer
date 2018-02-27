@@ -424,9 +424,9 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 	   * take care about the axis order for WFS 1.1
 	   */
 	  char *projUrn;
-	  const char *projEpsg;
+	  char *projEpsg;
 	  projUrn = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", 1);
-	  projEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", 1);
+	  msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", 1, &projEpsg);
 
 	  /*
 	   * WFS 1.1 supports including the SRS in the BBOX parameter, should
@@ -455,6 +455,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 	  }
 
 	  msFree(projUrn);
+	  msFree(projEpsg);
   }
 
   if (psParams->nMaxFeatures > 0)
@@ -1279,6 +1280,7 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
   layer->vtable->LayerNextShape = msWFSLayerNextShape;
   /* layer->vtable->LayerResultsGetShape = msWFSLayerResultGetShape; */
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerGetShape = msWFSLayerGetShape;
   layer->vtable->LayerClose = msWFSLayerClose;
   layer->vtable->LayerGetItems = msWFSLayerGetItems;

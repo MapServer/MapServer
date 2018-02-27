@@ -1,0 +1,39 @@
+# RUN_PARMS: embed_sb_rgba_offset.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: embed_sb_rgba_offset.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Test embedded scalebar with an offset.
+#
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+EXTENT -180 -90 180 90
+SIZE 160 40
+IMAGECOLOR 0 0 0 
+fontset "../misc/fonts.lst"
+									
+TRANSPARENT ON
+
+IMAGETYPE png
+
+SCALEBAR
+  TRANSPARENT OFF
+  LABEL
+    COLOR 0 0 0
+    size 9
+    type truetype
+    font "default"
+    
+  END
+  SIZE 150 3
+  COLOR 0 0 0
+  BACKGROUNDCOLOR 255 255 255
+  OUTLINECOLOR 0 0 0
+  UNITS kilometers
+  INTERVALS 3
+  STATUS EMBED
+  OFFSET 5 5
+END
+
+END

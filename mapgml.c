@@ -1390,7 +1390,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   FILE *stream=stdout; /* defaults to stdout */
   char szPath[MS_MAXPATHLEN];
   char *value;
-  const char *pszMapSRS = NULL;
+  char *pszMapSRS = NULL;
 
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
@@ -1423,11 +1423,11 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "description", OWS_NOERR, "\t<gml:description>%s</gml:description>\n", NULL);
 
   /* Look up map SRS. We need an EPSG code for GML, if not then we get null and we'll fall back on the layer's SRS */
-  pszMapSRS = msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE);
+  msOWSGetEPSGProj(&(map->projection), NULL, namespaces, MS_TRUE, &pszMapSRS);
 
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
-    const char *pszOutputSRS = NULL;
+    char *pszOutputSRS = NULL;
     int nSRSDimension = 2;
     const char* geomtype;
 
@@ -1438,7 +1438,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 #ifdef USE_PROJ
       /* Determine output SRS, if map has none, then try using layer's native SRS */
       if ((pszOutputSRS = pszMapSRS) == NULL) {
-        pszOutputSRS = msOWSGetEPSGProj(&(lp->projection), NULL, namespaces, MS_TRUE);
+        msOWSGetEPSGProj(&(lp->projection), NULL, namespaces, MS_TRUE, &pszOutputSRS);
         if (pszOutputSRS == NULL) {
           msSetError(MS_WMSERR, "No valid EPSG code in map or layer projection for GML output", "msGMLWriteQuery()");
           continue;  /* No EPSG code, cannot output this layer */
@@ -1557,12 +1557,16 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       /* msLayerClose(lp); */
     }
+    if(pszOutputSRS!=pszMapSRS) {
+      msFree(pszOutputSRS);
+    }
   } /* next layer */
 
   /* end this document */
   msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname", OWS_NOERR, "</%s>\n", "msGMLOutput");
 
   if(filename && strlen(filename) > 0) fclose(stream);
+  msFree(pszMapSRS);
 
   return(MS_SUCCESS);
 
@@ -1604,12 +1608,9 @@ void msGMLWriteWFSBounds(mapObj *map, FILE *stream, const char *tab,
     }
     else
     {
-        const char* constsrs;
-        constsrs = msOWSGetEPSGProj(&(map->projection), NULL, "FGO", MS_TRUE);
-        if (!constsrs)
-            constsrs = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE);
-        if (constsrs)
-            srs = msStrdup(constsrs);
+        msOWSGetEPSGProj(&(map->projection), NULL, "FGO", MS_TRUE, &srs);
+        if (!srs)
+            msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE, &srs);
     }
 
     gmlWriteBounds(stream, outputformat, &resultBounds, srs, tab,
@@ -1733,28 +1734,33 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       }
       else
       {
-          const char* constsrs;
-          constsrs = msOWSGetEPSGProj(&(map->projection), NULL, "FGO", MS_TRUE);
-          if (!constsrs)
-            constsrs = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE);
-          if (!constsrs)
-            constsrs = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE);
-          if (constsrs)
-            srs = msStrdup(constsrs);
+          msOWSGetEPSGProj(&(map->projection), NULL, "FGO", MS_TRUE, &srs);
+          if (!srs)
+            msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE, &srs);
+          if (!srs)
+            msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE, &srs);
       }
 #endif
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         char* pszFID;
 
-        status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
-        if(status != MS_SUCCESS) {
-          msGMLFreeGroups(groupList);
-          msGMLFreeConstants(constantList);
-          msGMLFreeItems(itemList);
-          msGMLFreeGeometries(geometryList);
-          msFree(layerName);
-          return(status);
+        if( lp->resultcache->results[j].shape )
+        {
+            /* msDebug("Using cached shape %ld\n", lp->resultcache->results[j].shapeindex); */
+            msCopyShape(lp->resultcache->results[j].shape, &shape);
+        }
+        else
+        {
+            status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
+            if(status != MS_SUCCESS) {
+                msGMLFreeGroups(groupList);
+                msGMLFreeConstants(constantList);
+                msGMLFreeItems(itemList);
+                msGMLFreeGeometries(geometryList);
+                msFree(layerName);
+                return(status);
+            }
         }
 
 #ifdef USE_PROJ

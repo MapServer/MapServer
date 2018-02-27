@@ -428,28 +428,28 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 
   switch(map->scalebar.position) {
     case(MS_LL):
-      point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0) + map->scalebar.offsetx;
+      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0) - map->scalebar.offsety;
       break;
     case(MS_LR):
-      point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0) - map->scalebar.offsetx;
+      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0) - map->scalebar.offsety;
       break;
     case(MS_LC):
-      point.x = MS_NINT(map->width/2.0);
-      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      point.x = MS_NINT(map->width/2.0) + map->scalebar.offsetx;
+      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0) - map->scalebar.offsety;
       break;
     case(MS_UR):
-      point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0) - map->scalebar.offsetx;
+      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0) + map->scalebar.offsety;
       break;
     case(MS_UL):
-      point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0) + map->scalebar.offsetx;
+      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0) + map->scalebar.offsety;
       break;
     case(MS_UC):
-      point.x = MS_NINT(map->width/2.0);
-      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      point.x = MS_NINT(map->width/2.0) + map->scalebar.offsetx;
+      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0) + map->scalebar.offsety;
       break;
   }
 

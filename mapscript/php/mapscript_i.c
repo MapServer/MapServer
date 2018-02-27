@@ -215,7 +215,7 @@ int mapObj_queryByFilter(mapObj* self, char *string)
   self->query.type = MS_QUERY_BY_FILTER;
   self->query.mode = MS_QUERY_MULTIPLE;
 
-  self->query.filter.string = strdup(string);
+  self->query.filter.string = msStrdup(string);
   self->query.filter.type = MS_EXPRESSION;
 
   self->query.rect = self->extent;
@@ -351,7 +351,7 @@ int mapObj_setSymbolSet(mapObj *self,
   msInitSymbolSet(&self->symbolset);
 
   // Set symbolset filename
-  self->symbolset.filename = strdup(szFileName);
+  self->symbolset.filename = msStrdup(szFileName);
 
   // Symbolset shares same fontset as main mapfile
   self->symbolset.fontset = &(self->fontset);
@@ -370,7 +370,7 @@ int mapObj_setFontSet(mapObj *self, char *szFileName)
   msInitFontSet(&(self->fontset));
 
   // Set fontset filename
-  self->fontset.filename = strdup(szFileName);
+  self->fontset.filename = msStrdup(szFileName);
 
   return msLoadFontSet(&(self->fontset), self);
 }
@@ -711,7 +711,7 @@ int layerObj_queryByFilter(layerObj *self, mapObj *map, char *string)
   map->query.type = MS_QUERY_BY_FILTER;
   map->query.mode = MS_QUERY_MULTIPLE;
 
-  map->query.filter.string = strdup(string);
+  map->query.filter.string = msStrdup(string);
   map->query.filter.type = MS_EXPRESSION;
 
   map->query.layer = self->index;
@@ -1551,7 +1551,7 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
   shape.classindex = classindex;
 
   if(text && layer->class[classindex]->numlabels > 0) {
-    shape.text = strdup(text);
+    shape.text = msStrdup(text);
   }
   
   if(MS_SUCCESS != msDrawShape(map, layer, &shape, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS)) {
@@ -1837,13 +1837,13 @@ void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value)
   for (i=0; i<self->NumParams; i++) {
     if (strcasecmp(self->ParamNames[i], name) == 0) {
       free(self->ParamValues[i]);
-      self->ParamValues[i] = strdup(value);
+      self->ParamValues[i] = msStrdup(value);
       break;
     }
   }
   if (i == self->NumParams) {
-    self->ParamNames[self->NumParams] = strdup(name);
-    self->ParamValues[self->NumParams] = strdup(value);
+    self->ParamNames[self->NumParams] = msStrdup(name);
+    self->ParamValues[self->NumParams] = msStrdup(value);
     self->NumParams++;
   }
 }
@@ -1853,8 +1853,8 @@ void cgirequestObj_addParameter(cgiRequestObj *self, char *name, char *value)
   if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
     msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "addParameter()", MS_DEFAULT_CGI_PARAMS);
   }
-  self->ParamNames[self->NumParams] = strdup(name);
-  self->ParamValues[self->NumParams] = strdup(value);
+  self->ParamNames[self->NumParams] = msStrdup(name);
+  self->ParamValues[self->NumParams] = msStrdup(value);
   self->NumParams++;
 }
 

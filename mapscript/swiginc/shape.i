@@ -214,7 +214,7 @@
         if (i >= 0 && i < self->numvalues)
         {
             msFree(self->values[i]);
-            self->values[i] = strdup(value);
+            self->values[i] = msStrdup(value);
             if (!self->values[i])
             {
                 return MS_FAILURE;
@@ -243,7 +243,7 @@
                 msSetError(MS_MEMERR, "Failed to allocate memory for values", "shapeObj()");
                 return;
             } else {
-                for (i=0; i<numvalues; i++) self->values[i] = strdup("");
+                for (i=0; i<numvalues; i++) self->values[i] = msStrdup("");
             }
             self->numvalues = numvalues;
         }

@@ -39,7 +39,7 @@
         symbolset = (symbolSetObj *) malloc(sizeof(symbolSetObj));
         msInitSymbolSet(symbolset);
         if (symbolfile) {
-            symbolset->filename = strdup(symbolfile);
+            symbolset->filename = msStrdup(symbolfile);
             temp_map = msNewMapObj();
             msLoadSymbolSet(symbolset, temp_map);
             symbolset->map = NULL;

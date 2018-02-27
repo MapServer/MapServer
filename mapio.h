@@ -56,7 +56,7 @@ extern "C" {
   int MS_DLL_EXPORT msIO_fprintf( FILE *stream, const char *format, ... ) MS_PRINT_FUNC_FORMAT(2,3);
   int MS_DLL_EXPORT msIO_fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream );
   int MS_DLL_EXPORT msIO_fread( void *ptr, size_t size, size_t nmemb, FILE *stream );
-  int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
+  int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap ) MS_PRINT_FUNC_FORMAT(2,0);
 
   /*
   ** Definitions for the callback function and the details of the IO
