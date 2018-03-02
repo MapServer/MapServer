@@ -30,6 +30,10 @@
  ****************************************************************************/
 
 /*
+** Nothing
+*/
+
+/*
 ** Some theory of operation:
 **
 ** Build SQL from DATA statement and LAYER state. SQL is always of the form:
