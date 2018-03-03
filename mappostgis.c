@@ -1314,6 +1314,8 @@ int msPostGISParseData(layerObj *layer)
   dsize = strlen ( layer->data ) + 1;
   data = (char*)msSmallMalloc(dsize);
   strlcpy ( data, layer->data, dsize );
+  for ( tmp = data; *tmp; tmp++ )
+    if ( strchr ( "\t\n\r", *tmp ) ) *tmp = ' ';
 
   /*
   ** Clean up any existing strings first, as we will be populating these fields.
