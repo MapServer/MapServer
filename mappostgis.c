@@ -1352,6 +1352,11 @@ int msPostGISParseData(layerObj *layer)
   };
 
   /*
+  ** What clause appear after 2nd 'using'?
+  */
+  for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
+
+  /*
   ** Look for the optional ' using unique ID' string first.
   */
   pos_uid = strcasestr(data, " using unique ");
