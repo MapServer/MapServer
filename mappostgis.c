@@ -1294,8 +1294,7 @@ msPostGISRetrievePK(layerObj *layer)
 */
 int msPostGISParseData(layerObj *layer)
 {
-
-	char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *pos_geom, *data;
+  char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *pos_geom, *data;
   int slength;
   msPostGISLayerInfo *layerinfo;
 
@@ -1440,6 +1439,8 @@ int msPostGISParseData(layerObj *layer)
   }
   return MS_SUCCESS;
 }
+
+
 
 
 /*
