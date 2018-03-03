@@ -1311,7 +1311,9 @@ int msPostGISParseData(layerObj *layer)
     msSetError(MS_QUERYERR, "Missing DATA clause. DATA statement must contain 'geometry_column from table_name' or 'geometry_column from (sub-query) as sub'.", "msPostGISParseData()");
     return MS_FAILURE;
   }
-  data = layer->data;
+  dsize = strlen ( layer->data ) + 1;
+  data = (char*)msSmallMalloc(dsize);
+  strlcpy ( data, layer->data, dsize );
 
   /*
   ** Clean up any existing strings first, as we will be populating these fields.
