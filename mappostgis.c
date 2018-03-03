@@ -1296,6 +1296,7 @@ int msPostGISParseData(layerObj *layer)
 {
   char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *pos_geom, *data;
   int slength, dsize;
+  char *pos_use_1st, *pos_use_2nd;
   msPostGISLayerInfo *layerinfo;
 
   assert(layer != NULL);
@@ -1336,6 +1337,12 @@ int msPostGISParseData(layerObj *layer)
     free(layerinfo->fromsource);
     layerinfo->fromsource = NULL;
   }
+
+  /*
+  ** Look for the optional ' using ' clauses.
+  */
+  pos_srid = pos_uid = NULL;
+  pos_use_1st = pos_use_2nd = NULL;
 
   /*
   ** Look for the optional ' using unique ID' string first.
