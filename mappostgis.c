@@ -1363,6 +1363,7 @@ int msPostGISParseData(layerObj *layer)
   } else {
     slength = strspn(pos_srid + 12, "-0123456789");
     if (!slength) {
+      free ( data );
       msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", data);
       return MS_FAILURE;
     } else {
@@ -1402,6 +1403,7 @@ int msPostGISParseData(layerObj *layer)
   /* Find the end of the geom column name */
   pos_scn = strcasestr(data, " from ");
   if (!pos_scn) {
+    free ( data );
     msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
     return MS_FAILURE;
   }
@@ -1418,6 +1420,7 @@ int msPostGISParseData(layerObj *layer)
 
   /* Something is wrong, our goemetry column and table references are not there. */
   if (strlen(layerinfo->fromsource) < 1 || strlen(layerinfo->geomcolumn) < 1) {
+    free ( data );
     msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
     return MS_FAILURE;
   }
@@ -1428,6 +1431,7 @@ int msPostGISParseData(layerObj *layer)
   */
   if ( ! (layerinfo->uid) ) {
     if ( strstr(layerinfo->fromsource, " ") ) {
+      free ( data );
       msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  You must specify 'using unique' when supplying a subselect in the data definition.", "msPostGISParseData()");
       return MS_FAILURE;
     }
@@ -1441,6 +1445,7 @@ int msPostGISParseData(layerObj *layer)
   if (layer->debug) {
     msDebug("msPostGISParseData: unique_column=%s, srid=%s, geom_column_name=%s, table_name=%s\n", layerinfo->uid, layerinfo->srid, layerinfo->geomcolumn, layerinfo->fromsource);
   }
+  free ( data );
   return MS_SUCCESS;
 }
 
