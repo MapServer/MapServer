@@ -1302,6 +1302,7 @@ int msPostGISParseData(layerObj *layer)
   assert(layer != NULL);
   assert(layer->layerinfo != NULL);
 
+/*+*
   layerinfo = (msPostGISLayerInfo*)(layer->layerinfo);
 
   if (layer->debug) {
@@ -1317,10 +1318,12 @@ int msPostGISParseData(layerObj *layer)
   strlcpy ( data, layer->data, dsize );
   for ( tmp = data; *tmp; tmp++ )
     if ( strchr ( "\t\n\r", *tmp ) ) *tmp = ' ';
+ *.*/
 
   /*
   ** Clean up any existing strings first, as we will be populating these fields.
   */
+/*+*
   if( layerinfo->srid ) {
     free(layerinfo->srid);
     layerinfo->srid = NULL;
@@ -1337,10 +1340,12 @@ int msPostGISParseData(layerObj *layer)
     free(layerinfo->fromsource);
     layerinfo->fromsource = NULL;
   }
+ *-*/
 
   /*
   ** Look for the optional ' using ' clauses.
   */
+/*+*
   pos_srid = pos_uid = NULL;
   pos_use_1st = pos_use_2nd = NULL;
   tmp = strcasestr(data, " using ");
@@ -1350,10 +1355,12 @@ int msPostGISParseData(layerObj *layer)
     pos_use_2nd = tmp + 1;
     tmp = strcasestr(tmp+1, " using ");
   };
+ *-*/
 
   /*
   ** What clause appear after 2nd 'using'?
   */
+/*+*
   for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
   if ( strncmp ( tmp, "unique ", 7 ) == 0 )
   {
@@ -1363,10 +1370,12 @@ int msPostGISParseData(layerObj *layer)
   {
     if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
   };
+ *-*/
 
   /*
   ** What clause appear after 1st 'using'?
   */
+/*+*
   if ( !pos_uid )
   {
     for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
@@ -1377,14 +1386,20 @@ int msPostGISParseData(layerObj *layer)
   {
     if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
   };
+ *-*/
 
   /*
   ** Look for the optional ' using unique ID' string first.
   */
+/*+*
   if (pos_uid) {
+ *-*/
     /* Find the end of this case 'using unique ftab_id using srid=33' */
+/*+*
     tmp = strstr(pos_uid, " ");
+ *-*/
     /* Find the end of this case 'using srid=33 using unique ftab_id' */
+/*+*
     if (!tmp) {
       tmp = pos_uid + strlen(pos_uid);
     }
@@ -1392,10 +1407,12 @@ int msPostGISParseData(layerObj *layer)
     strlcpy(layerinfo->uid, pos_uid, (tmp - pos_uid) + 1 );
     msStringTrim(layerinfo->uid);
   }
+ *-*/
 
   /*
   ** Look for the optional ' using srid=333 ' string next.
   */
+/*+*
   if (!pos_srid) {
     layerinfo->srid = (char*) msSmallMalloc(1);
     (layerinfo->srid)[0] = '\0'; /* no SRID, so return just null terminator*/
@@ -1411,6 +1428,7 @@ int msPostGISParseData(layerObj *layer)
       msStringTrim(layerinfo->srid);
     }
   }
+ *-*/
 
   /*
   ** This is a little hack so the rest of the code works.
@@ -1421,60 +1439,79 @@ int msPostGISParseData(layerObj *layer)
   /*
   ** If pos_use_1st set, then it smaller.
   */
+/*+*
   if (pos_use_1st) {
     pos_opt = pos_use_1st;
   }
+ *-*/
   /* If one or none is set, return the larger one. */
+/*+*
   else {
     pos_opt = pos_use_2nd;
   }
+ *-*/
   /* No pos_opt? Move it to the end of the string. */
+/*+*
   if (!pos_opt) {
     pos_opt = data + strlen(data);
   }
+ *-*/
   /* Back the last non-space character. */
+/*+*
   for ( --pos_opt; *pos_opt != ' '; pos_opt-- );
+ *-*/
 
   /*
   ** Scan for the 'geometry from table' or 'geometry from () as foo' clause.
   */
 
   /* Find the first non-white character to start from */
+/*+*
   pos_geom = data;
   while( *pos_geom == ' ' || *pos_geom == '\t' || *pos_geom == '\n' || *pos_geom == '\r' )
     pos_geom++;
+ *-*/
 
   /* Find the end of the geom column name */
+/*+*
   pos_scn = strcasestr(data, " from ");
   if (!pos_scn) {
     free ( data );
     msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
     return MS_FAILURE;
   }
+ *-*/
 
   /* Copy the geometry column name */
+/*+*
   layerinfo->geomcolumn = (char*) msSmallMalloc((pos_scn - pos_geom) + 1);
   strlcpy(layerinfo->geomcolumn, pos_geom, pos_scn - pos_geom + 1);
   msStringTrim(layerinfo->geomcolumn);
+ *-*/
 
   /* Copy the table name or sub-select clause */
+/*+*
   pos_scn += 6;
   while ( *pos_scn == ' ' ) pos_scn++;
   layerinfo->fromsource = (char*) msSmallMalloc((pos_opt + 1) - pos_scn);
   strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, pos_opt - pos_scn + 1);
   msStringTrim(layerinfo->fromsource);
+ *-*/
 
   /* Something is wrong, our goemetry column and table references are not there. */
+/*+*
   if (strlen(layerinfo->fromsource) < 1 || strlen(layerinfo->geomcolumn) < 1) {
     free ( data );
     msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
     return MS_FAILURE;
   }
+ *-*/
 
   /*
   ** We didn't find a ' using unique ' in the DATA string so try and find a
   ** primary key on the table.
   */
+/*+*
   if ( ! (layerinfo->uid) ) {
     if ( strstr(layerinfo->fromsource, " ") ) {
       free ( data );
@@ -1482,16 +1519,21 @@ int msPostGISParseData(layerObj *layer)
       return MS_FAILURE;
     }
     if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
+ *-*/
       /* No user specified unique id so we will use the PostgreSQL oid */
       /* TODO: Deprecate this, oids are deprecated in PostgreSQL */
+/*+*
       layerinfo->uid = msStrdup("oid");
     }
   }
+ *-*/
 
+/*+*
   if (layer->debug) {
     msDebug("msPostGISParseData: unique_column=%s, srid=%s, geom_column_name=%s, table_name=%s\n", layerinfo->uid, layerinfo->srid, layerinfo->geomcolumn, layerinfo->fromsource);
   }
   free ( data );
+ *-*/
   return MS_SUCCESS;
 }
 
