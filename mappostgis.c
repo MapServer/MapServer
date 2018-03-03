@@ -1343,6 +1343,13 @@ int msPostGISParseData(layerObj *layer)
   */
   pos_srid = pos_uid = NULL;
   pos_use_1st = pos_use_2nd = NULL;
+  tmp = strcasestr(data, " using ");
+  while ( tmp )
+  {
+    pos_use_1st = pos_use_2nd;
+    pos_use_2nd = tmp + 1;
+    tmp = strcasestr(tmp+1, " using ");
+  };
 
   /*
   ** Look for the optional ' using unique ID' string first.
