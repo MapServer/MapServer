@@ -1416,6 +1416,7 @@ int msPostGISParseData(layerObj *layer)
   if (!pos_srid) {
     layerinfo->srid = (char*) msSmallMalloc(1);
     (layerinfo->srid)[0] = '\0'; /* no SRID, so return just null terminator*/
+/*+*
   } else {
     slength = strspn(pos_srid, "-0123456789");
     if (!slength) {
