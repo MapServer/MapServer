@@ -1352,16 +1352,19 @@ int msPostGISParseData(layerObj *layer)
   };
 
   /*
-  ** What clause appear after 2nd 'using'?
+  ** What clause appear after 2nd 'using', if set?
   */
-  for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
-  if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+  if ( pos_use_2nd )
   {
-    for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
-  }
-  else
-  {
-    if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+    for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
+    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+    {
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
+    }
+    else
+    {
+      if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+    };
   };
 
   /*
