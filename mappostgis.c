@@ -1382,14 +1382,14 @@ int msPostGISParseData(layerObj *layer)
     };
     if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
     {
+/***
       if ( pos_srid )
       {
         free ( data );
-/***
         msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING SRID' found! %s", "msPostGISParseData()", layer->data);
- ***/
         return MS_FAILURE;
       };
+ ***/
       pos_srid = tmp + 5;
     };
   };
