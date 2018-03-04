@@ -1365,10 +1365,10 @@ int msPostGISParseData(layerObj *layer)
   /*
   ** What clause appear after 1st 'using', if set?
   */
-/***
   if ( pos_use_1st )
   {
     for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
+/***
     if ( strncmp ( tmp, "unique ", 7 ) == 0 )
     {
       if ( pos_uid )
@@ -1389,8 +1389,8 @@ int msPostGISParseData(layerObj *layer)
       };
       pos_srid = tmp + 5;
     };
-  };
  ***/
+  };
 
   /*
   ** Look for the optional ' using unique ID' string first.
