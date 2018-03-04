@@ -787,7 +787,7 @@ hashTableObj* msIO_getAndStripStdoutBufferMimeHeaders()
   /*      Loop over all headers.                                          */
   /* -------------------------------------------------------------------- */
   current_pos = 0;
-  while( TRUE ) {
+  while( MS_TRUE ) {
     int pos_of_column = -1;
     char* key, *value;
 

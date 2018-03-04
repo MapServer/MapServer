@@ -793,6 +793,9 @@ void msSetOutputFormatOption( outputFormatObj *format,
   char *newline;
   int   i, len;
 
+  if( value == NULL )
+    return;
+
   /* -------------------------------------------------------------------- */
   /*      Format the name=value pair into a newly allocated string.       */
   /* -------------------------------------------------------------------- */

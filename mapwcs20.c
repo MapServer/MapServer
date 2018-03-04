@@ -4111,6 +4111,12 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
   double x_1, x_2, y_1, y_2;
   char *coverageName, *bandlist=NULL, numbands[8];
 
+  int doDrawRasterLayerDraw = MS_TRUE;
+  GDALDatasetH hDS = NULL;
+
+  int widthFromComputationInImageCRS = 0;
+  int heightFromComputationInImageCRS = 0;
+
   /* number of coverage ids should be 1 */
   if (params->ids == NULL || params->ids[0] == NULL) {
     msSetError(MS_WCSERR, "Required parameter CoverageID was not supplied.",
@@ -4272,6 +4278,42 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     }
 
     if(msProjectionsDiffer(&imageProj, &subsetProj)) {
+#ifdef USE_PROJ
+      /* Reprojection of source raster extent of (-180,-90,180,90) to any */
+      /* projected CRS is going to exhibit strong anomalies. So instead */
+      /* do the reverse, project the subset extent to the layer CRS, and */
+      /* see how much the subset extent takes with respect to the source */
+      /* raster extent. This is only used if output width and resolutionX (or */
+      /* (height and resolutionY) are unknown. */
+      if( ((params->width == 0 && params->resolutionX == MS_WCS20_UNBOUNDED) ||
+           (params->height == 0 && params->resolutionY == MS_WCS20_UNBOUNDED)) &&
+          (pj_is_latlong(imageProj.proj) &&
+           !pj_is_latlong(subsetProj.proj) &&
+           fabs(layer->extent.minx - -180.0) < 1e-5 &&
+           fabs(layer->extent.miny - -90.0) < 1e-5 &&
+           fabs(layer->extent.maxx - 180.0) < 1e-5 &&
+           fabs(layer->extent.maxy - 90.0) < 1e-5) )
+      {
+          rectObj subsetInImageProj = subsets;
+          if( msProjectRect(&subsetProj, &imageProj, &(subsetInImageProj)) == MS_SUCCESS )
+          {
+            subsetInImageProj.minx = MS_MAX(subsetInImageProj.minx, layer->extent.minx);
+            subsetInImageProj.miny = MS_MAX(subsetInImageProj.miny, layer->extent.miny);
+            subsetInImageProj.maxx = MS_MIN(subsetInImageProj.maxx, layer->extent.maxx);
+            subsetInImageProj.maxy = MS_MIN(subsetInImageProj.maxy, layer->extent.maxy);
+            {
+                double total = ABS(layer->extent.maxx - layer->extent.minx);
+                double part = ABS(subsetInImageProj.maxx - subsetInImageProj.minx);
+                widthFromComputationInImageCRS = MS_NINT((part * map->width) / total);
+            }
+            {
+                double total = ABS(layer->extent.maxy - layer->extent.miny);
+                double part = ABS(subsetInImageProj.maxy - subsetInImageProj.miny);
+                heightFromComputationInImageCRS = MS_NINT((part * map->height) / total);
+            }
+          }
+      }
+#endif
       msProjectRect(&imageProj, &subsetProj, &(layer->extent));
       map->extent = layer->extent;
       msFreeProjection(&(map->projection));
@@ -4322,7 +4364,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   } else if(params->resolutionX != MS_WCS20_UNBOUNDED) {
     params->width = MS_NINT((bbox.maxx - bbox.minx) / params->resolutionX);
   } else {
-    if(ABS(bbox.maxx - bbox.minx) != ABS(map->extent.maxx - map->extent.minx)) {
+    if( widthFromComputationInImageCRS != 0 ) {
+      params->width = widthFromComputationInImageCRS;
+    } else if(ABS(bbox.maxx - bbox.minx) != ABS(map->extent.maxx - map->extent.minx)) {
       double total = ABS(map->extent.maxx - map->extent.minx),
              part = ABS(bbox.maxx - bbox.minx);
       params->width = MS_NINT((part * map->width) / total);
@@ -4344,7 +4388,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   } else if(params->resolutionY != MS_WCS20_UNBOUNDED) {
     params->height = MS_NINT((bbox.maxy - bbox.miny) / params->resolutionY);
   } else {
-    if(ABS(bbox.maxy - bbox.miny) != ABS(map->extent.maxy - map->extent.miny)) {
+    if( heightFromComputationInImageCRS != 0 ) {
+      params->height = heightFromComputationInImageCRS;
+    } else if(ABS(bbox.maxy - bbox.miny) != ABS(map->extent.maxy - map->extent.miny)) {
       double total = ABS(map->extent.maxy - map->extent.miny),
              part = ABS(bbox.maxy - bbox.miny);
       params->height = MS_NINT((part * map->height) / total);
@@ -4516,12 +4562,33 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msLayerSetProcessingKey(layer, "CLOSE_CONNECTION", "NORMAL");
   }
 
+  if( layer->tileindex == NULL && layer->data != NULL &&
+      strlen(layer->data) > 0 &&
+      layer->connectiontype != MS_KERNELDENSITY )
+  {
+      if( msDrawRasterLayerLowCheckIfMustDraw(map, layer) )
+      {
+          char* decrypted_path = NULL;
+          char szPath[MS_MAXPATHLEN];
+          hDS = (GDALDatasetH)msDrawRasterLayerLowOpenDataset(
+                                    map, layer, layer->data, szPath, &decrypted_path);
+          msFree(decrypted_path);
+          if( hDS )
+            msWCSApplyDatasetMetadataAsCreationOptions(layer, map->outputformat, bandlist, hDS);
+      }
+      else
+      {
+          doDrawRasterLayerDraw = MS_FALSE;
+      }
+  }
+
   /* create the image object  */
   if (!map->outputformat) {
     msWCSClearCoverageMetadata20(&cm);
     msFree(bandlist);
     msSetError(MS_WCSERR, "The map outputformat is missing!",
                "msWCSGetCoverage20()");
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,
@@ -4536,12 +4603,14 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!",
                "msWCSGetCoverage20()");
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   }
 
   if (image == NULL) {
     msFree(bandlist);
     msWCSClearCoverageMetadata20(&cm);
+    msDrawRasterLayerLowCloseDataset(layer, hDS);
     return msWCSException(map, NULL, NULL, params->version);
   }
 
@@ -4555,6 +4624,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       msFreeImage(image);
       msFree(bandlist);
       msWCSClearCoverageMetadata20(&cm);
+      msDrawRasterLayerLowCloseDataset(layer, hDS);
       return msWCSException(map, NULL, NULL, params->version);
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
@@ -4572,6 +4642,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
         return msWCSException(map, NULL, NULL, params->version);
       }
 
@@ -4594,6 +4665,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);
+        msDrawRasterLayerLowCloseDataset(layer, hDS);
         return msWCSException(map, NULL, NULL, params->version);
       }
       /*
@@ -4620,13 +4692,24 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* Actually produce the "grid". */
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-    status = msDrawRasterLayerLow( map, layer, image, NULL );
+    if( doDrawRasterLayerDraw ) {
+      status = msDrawRasterLayerLowWithDataset( map, layer, image, NULL, hDS );
+    } else {
+      status = MS_SUCCESS;
+    }
   } else {
     rasterBufferObj rb;
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(LIKELY(status == MS_SUCCESS))
-      status = msDrawRasterLayerLow( map, layer, image, &rb );
+    if(LIKELY(status == MS_SUCCESS)) {
+      if( doDrawRasterLayerDraw ) {
+        status = msDrawRasterLayerLowWithDataset( map, layer, image, &rb, hDS );
+      } else {
+        status = MS_SUCCESS;
+      }
+    }
   }
+
+  msDrawRasterLayerLowCloseDataset(layer, hDS);
 
   if( status != MS_SUCCESS ) {
     msFree(bandlist);

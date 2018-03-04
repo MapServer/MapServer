@@ -811,13 +811,32 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   double dx, dy;
 
   /* If projecting from longlat to projected */
+  /* This hack was introduced for WFS 2.0 compliance testing, but is far */
+  /* from being perfect */
   if( out && !pj_is_latlong(out->proj) && in && pj_is_latlong(in->proj) &&
       fabs(rect->minx - -180.0) < 1e-5 && fabs(rect->miny - -90.0) < 1e-5 &&
       fabs(rect->maxx - 180.0) < 1e-5 && fabs(rect->maxy - 90.0) < 1e-5) {
-    rect->minx = -1e15;
-    rect->miny = -1e15;
-    rect->maxx = 1e15;
-    rect->maxy = 1e15;
+    pointObj pointTest;
+    pointTest.x = -180;
+    pointTest.y = 85;
+    msProjectPoint(in, out, &pointTest);
+    /* Detect if we are reprojecting from EPSG:4326 to EPSG:3857 */
+    /* and if so use more plausible bounds to avoid issues with computed */
+    /* resolution for WCS */
+    if (fabs(pointTest.x - -20037508.3427892) < 1e-5 && fabs(pointTest.y - 19971868.8804086) )
+    {
+        rect->minx = -20037508.3427892;
+        rect->miny = -20037508.3427892;
+        rect->maxx = 20037508.3427892;
+        rect->maxy = 20037508.3427892;
+    }
+    else
+    {
+        rect->minx = -1e15;
+        rect->miny = -1e15;
+        rect->maxx = 1e15;
+        rect->maxy = 1e15;
+    }
     return MS_SUCCESS;
   }
 
