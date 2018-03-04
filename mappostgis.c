@@ -1442,8 +1442,8 @@ int msPostGISParseData(layerObj *layer)
   if (!pos_opt) {
     pos_opt = data + strlen(data);
   }
-  /* Back the last non-space character. */
-  for ( --pos_opt; *pos_opt == ' '; pos_opt-- );
+  /* Back after the last non-space character. */
+  for ( pos_opt; *(pos_opt-1) == ' '; pos_opt-- );
 
   /*
   ** Scan for the 'geometry from table' or 'geometry from () as foo' clause.
@@ -1467,8 +1467,8 @@ int msPostGISParseData(layerObj *layer)
 
   /* Copy the table name or sub-select clause */
   for ( pos_scn += 6; *pos_scn == ' '; pos_scn++ );
-  layerinfo->fromsource = (char*) msSmallMalloc((pos_opt + 1) - pos_scn + 1);
-  strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, (pos_opt + 1) - pos_scn + 1);
+  layerinfo->fromsource = (char*) msSmallMalloc(pos_opt - pos_scn + 1);
+  strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, pos_opt - pos_scn + 1);
   msStringTrim(layerinfo->fromsource);
 
   /* Something is wrong, our goemetry column and table references are not there. */
