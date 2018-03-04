@@ -1358,12 +1358,35 @@ int msPostGISParseData(layerObj *layer)
   {
     for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
     if ( strncmp ( tmp, "unique ", 7 ) == 0 )
-    {
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
-    }
-    else
+    if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+  };
+
+  /*
+  ** What clause appear after 1st 'using', if set?
+  */
+  if ( pos_use_1st )
+  {
+    for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
+    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
     {
-      if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+      if ( pos_uid )
+      {
+        free ( data );
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING UNIQUE' found! %s", "msPostGISParseData()", layer->data);
+        return MS_FAILURE;
+      };
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
+    };
+    if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+    {
+      if ( pos_srid )
+      {
+        free ( data );
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING SRID' found! %s", "msPostGISParseData()", layer->data);
+        return MS_FAILURE;
+      };
+      pos_srid = tmp + 5;
     };
   };
 
@@ -1394,7 +1417,7 @@ int msPostGISParseData(layerObj *layer)
     slength = strspn(pos_srid + 12, "-0123456789");
     if (!slength) {
       free ( data );
-      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", data);
+      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", layer->data);
       return MS_FAILURE;
     } else {
       layerinfo->srid = (char*) msSmallMalloc(slength + 1);
@@ -1434,7 +1457,7 @@ int msPostGISParseData(layerObj *layer)
   pos_scn = strcasestr(data, " from ");
   if (!pos_scn) {
     free ( data );
-    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
     return MS_FAILURE;
   }
 
@@ -1451,7 +1474,7 @@ int msPostGISParseData(layerObj *layer)
   /* Something is wrong, our goemetry column and table references are not there. */
   if (strlen(layerinfo->fromsource) < 1 || strlen(layerinfo->geomcolumn) < 1) {
     free ( data );
-    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
     return MS_FAILURE;
   }
 
