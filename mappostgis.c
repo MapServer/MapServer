@@ -1443,7 +1443,7 @@ int msPostGISParseData(layerObj *layer)
     pos_opt = data + strlen(data);
   }
   /* Back after the last non-space character. */
-  for ( pos_opt; *(pos_opt-1) == ' '; pos_opt-- );
+  for ( pos_opt; ( pos_opt > data ) && ( *(pos_opt-1) == ' ' ); pos_opt-- );
 
   /*
   ** Scan for the 'geometry from table' or 'geometry from () as foo' clause.
@@ -1467,6 +1467,12 @@ int msPostGISParseData(layerObj *layer)
 
   /* Copy the table name or sub-select clause */
   for ( pos_scn += 6; *pos_scn == ' '; pos_scn++ );
+  if ( pos_opt - pos_scn < 1 )
+  {
+    free ( data );
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
+    return MS_FAILURE;
+  };
   layerinfo->fromsource = (char*) msSmallMalloc(pos_opt - pos_scn + 1);
   strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, pos_opt - pos_scn + 1);
   msStringTrim(layerinfo->fromsource);
