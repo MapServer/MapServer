@@ -1370,26 +1370,26 @@ int msPostGISParseData(layerObj *layer)
     for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
     if ( strncmp ( tmp, "unique ", 7 ) == 0 )
     {
-/***
       if ( pos_uid )
       {
         free ( data );
+/***
         msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING UNIQUE' found! %s", "msPostGISParseData()", layer->data);
+ ***/
         return MS_FAILURE;
       };
- ***/
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
     };
     if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
     {
-/***
       if ( pos_srid )
       {
         free ( data );
+/***
         msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING SRID' found! %s", "msPostGISParseData()", layer->data);
+ ***/
         return MS_FAILURE;
       };
- ***/
       pos_srid = tmp + 5;
     };
   };
