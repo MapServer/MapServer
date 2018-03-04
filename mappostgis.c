@@ -1401,7 +1401,7 @@ int msPostGISParseData(layerObj *layer)
       tmp = pos_uid + strlen(pos_uid);
     }
     layerinfo->uid = (char*) msSmallMalloc((tmp - pos_uid) + 1);
-    strlcpy(layerinfo->uid, pos_uid + 14, (tmp - pos_uid) + 1);
+    strlcpy(layerinfo->uid, pos_uid, (tmp - pos_uid) + 1);
     msStringTrim(layerinfo->uid);
   }
 
@@ -1412,7 +1412,7 @@ int msPostGISParseData(layerObj *layer)
     layerinfo->srid = (char*) msSmallMalloc(1);
     (layerinfo->srid)[0] = '\0'; /* no SRID, so return just null terminator*/
   } else {
-    slength = strspn(pos_srid + 12, "-0123456789");
+    slength = strspn(pos_srid, "-0123456789");
     if (!slength) {
       free ( data );
       msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", layer->data);
@@ -1443,7 +1443,7 @@ int msPostGISParseData(layerObj *layer)
     pos_opt = data + strlen(data);
   }
   /* Back the last non-space character. */
-  for ( --pos_opt; *pos_opt != ' '; pos_opt-- );
+  for ( --pos_opt; *pos_opt == ' '; pos_opt-- );
 
   /*
   ** Scan for the 'geometry from table' or 'geometry from () as foo' clause.
@@ -1462,13 +1462,13 @@ int msPostGISParseData(layerObj *layer)
 
   /* Copy the geometry column name */
   layerinfo->geomcolumn = (char*) msSmallMalloc((pos_scn - pos_geom) + 1);
-  strlcpy(layerinfo->geomcolumn, pos_geom, pos_scn - pos_geom + 1);
+  strlcpy(layerinfo->geomcolumn, pos_geom, (pos_scn - pos_geom) + 1);
   msStringTrim(layerinfo->geomcolumn);
 
   /* Copy the table name or sub-select clause */
   for ( pos_scn += 6; *pos_scn == ' '; pos_scn++ );
-  layerinfo->fromsource = (char*) msSmallMalloc((pos_opt + 1) - pos_scn);
-  strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, pos_opt - pos_scn + 1);
+  layerinfo->fromsource = (char*) msSmallMalloc((pos_opt + 1) - pos_scn + 1);
+  strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, (pos_opt + 1) - pos_scn + 1);
   msStringTrim(layerinfo->fromsource);
 
   /* Something is wrong, our goemetry column and table references are not there. */
