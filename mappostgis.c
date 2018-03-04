@@ -1358,30 +1358,42 @@ int msPostGISParseData(layerObj *layer)
   };
 
   /*
-  ** What clause appear after 2nd 'using'?
+  ** What clause appear after 2nd 'using', if set?
   */
-  for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
-  if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+  if ( pos_use_2nd )
   {
-    for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
-  }
-  else
-  {
+    for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
+    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
     if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
   };
 
   /*
-  ** What clause appear after 1st 'using'?
+  ** What clause appear after 1st 'using', if set?
   */
-  if ( !pos_uid )
+  if ( pos_use_1st )
   {
     for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
     if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+    {
+      if ( pos_uid )
+      {
+        free ( data );
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING UNIQUE' found! %s", "msPostGISParseData()", layer->data);
+        return MS_FAILURE;
+      };
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
-  };
-  if ( !pos_srid )
-  {
-    if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+    };
+    if ( strncmp ( tmp, "srid=", 5 ) == 0 )
+    {
+      if ( pos_srid )
+      {
+        free ( data );
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING SRID' found! %s", "msPostGISParseData()", layer->data);
+        return MS_FAILURE;
+      };
+      pos_srid = tmp + 5;
+    };
   };
 
   /*
@@ -1395,7 +1407,7 @@ int msPostGISParseData(layerObj *layer)
       tmp = pos_uid + strlen(pos_uid);
     }
     layerinfo->uid = (char*) msSmallMalloc((tmp - pos_uid) + 1);
-    strlcpy(layerinfo->uid, pos_uid, (tmp - pos_uid) + 1 );
+    strlcpy(layerinfo->uid, pos_uid, (tmp - pos_uid) + 1);
     msStringTrim(layerinfo->uid);
   }
 
@@ -1409,7 +1421,7 @@ int msPostGISParseData(layerObj *layer)
     slength = strspn(pos_srid, "-0123456789");
     if (!slength) {
       free ( data );
-      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didnt have any numbers! %s", "msPostGISParseData()", layer->data);
+      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", layer->data);
       return MS_FAILURE;
     } else {
       layerinfo->srid = (char*) msSmallMalloc(slength + 1);
@@ -1423,8 +1435,6 @@ int msPostGISParseData(layerObj *layer)
   ** pos_opt should point to the start of the optional blocks.
   **
   ** If they are both set, return the smaller one.
-  */
-  /*
   ** If pos_use_1st set, then it smaller.
   */
   if (pos_use_1st) {
@@ -1438,17 +1448,15 @@ int msPostGISParseData(layerObj *layer)
   if (!pos_opt) {
     pos_opt = data + strlen(data);
   }
-  /* Back the last non-space character. */
-  for ( --pos_opt; *pos_opt != ' '; pos_opt-- );
+  /* Back after the last non-space character. */
+  for ( pos_opt; ( pos_opt > data ) && ( *(pos_opt-1) == ' ' ); pos_opt-- );
 
   /*
   ** Scan for the 'geometry from table' or 'geometry from () as foo' clause.
   */
 
   /* Find the first non-white character to start from */
-  pos_geom = data;
-  while( *pos_geom == ' ' || *pos_geom == '\t' || *pos_geom == '\n' || *pos_geom == '\r' )
-    pos_geom++;
+  for ( pos_geom = data; *pos_geom == ' '; pos_geom++ );
 
   /* Find the end of the geom column name */
   pos_scn = strcasestr(data, " from ");
@@ -1460,13 +1468,18 @@ int msPostGISParseData(layerObj *layer)
 
   /* Copy the geometry column name */
   layerinfo->geomcolumn = (char*) msSmallMalloc((pos_scn - pos_geom) + 1);
-  strlcpy(layerinfo->geomcolumn, pos_geom, pos_scn - pos_geom + 1);
+  strlcpy(layerinfo->geomcolumn, pos_geom, (pos_scn - pos_geom) + 1);
   msStringTrim(layerinfo->geomcolumn);
 
   /* Copy the table name or sub-select clause */
-  pos_scn += 6;
-  while ( *pos_scn == ' ' ) pos_scn++;
-  layerinfo->fromsource = (char*) msSmallMalloc((pos_opt + 1) - pos_scn);
+  for ( pos_scn += 6; *pos_scn == ' '; pos_scn++ );
+  if ( pos_opt - pos_scn < 1 )
+  {
+    free ( data );
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
+    return MS_FAILURE;
+  };
+  layerinfo->fromsource = (char*) msSmallMalloc(pos_opt - pos_scn + 1);
   strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, pos_opt - pos_scn + 1);
   msStringTrim(layerinfo->fromsource);
 
