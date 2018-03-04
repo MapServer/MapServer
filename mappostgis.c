@@ -1373,8 +1373,8 @@ int msPostGISParseData(layerObj *layer)
       if ( pos_uid )
       {
         free ( data );
-/***
         msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING UNIQUE' found! %s", "msPostGISParseData()", layer->data);
+/***
  ***/
         return MS_FAILURE;
       };
