@@ -1357,10 +1357,8 @@ int msPostGISParseData(layerObj *layer)
   if ( pos_use_2nd )
   {
     for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
-/***
     if ( strncmp ( tmp, "unique ", 7 ) == 0 )
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
- ***/
     if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
   };
 
