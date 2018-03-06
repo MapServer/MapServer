@@ -1333,6 +1333,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
     }
 
     CPLPopErrorHandler();
+    CPLErrorReset();
 
     if (have_spatialite)
         psInfo->dialect = "Spatialite";
@@ -1378,6 +1379,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
             OGR_DS_ReleaseResultSet(hDS, l);
         }
         CPLPopErrorHandler();
+        CPLErrorReset();
 
         if( have_gpkg_spatialite )
         {
