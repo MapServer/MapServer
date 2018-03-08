@@ -904,7 +904,8 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
             strcasecmp(map->outputformatlist[i]->driver, "CAIRO/SVG")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "CAIRO/PDF")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "kml")==0 ||
-            strcasecmp(map->outputformatlist[i]->driver, "kmz")==0))
+            strcasecmp(map->outputformatlist[i]->driver, "kmz")==0 ||
+            strcasecmp(map->outputformatlist[i]->driver, "UTFGRID")==0))
         mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
   }
