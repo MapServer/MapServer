@@ -1778,7 +1778,7 @@ static int msWCSValidateAndFindAxes20(
 /*      structure.                                                      */
 /************************************************************************/
 
-static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapObj* map)
+static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapObj* map, int addInspire)
 {
   xmlNsPtr psXsiNs;
   char *schemaLocation = NULL;
@@ -1795,6 +1795,11 @@ static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapO
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_GMLCOV_10_NAMESPACE_URI,     BAD_CAST MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX);
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_SWE_20_NAMESPACE_URI,        BAD_CAST MS_OWSCOMMON_SWE_NAMESPACE_PREFIX);
 
+  if (addInspire) {
+    xmlNewNs(psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_URI, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX);
+    xmlNewNs(psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_URI, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX);
+  }
+
   psXsiNs = xmlSearchNs(pDoc, psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
 
   schemaLocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -1803,6 +1808,10 @@ static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapO
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WCS_20_SCHEMAS_LOCATION);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+
+  if (addInspire) {
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_INSPIRE_DLS_NAMESPACE_URI " " MS_INSPIRE_DLS_SCHEMA_LOCATION);
+  }
 
   xmlNewNsProp(psRootNode, psXsiNs, BAD_CAST "schemaLocation", BAD_CAST xsi_schemaLocation);
 
@@ -3213,6 +3222,8 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
 
+  const char *inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_capabilities");
+
   /* -------------------------------------------------------------------- */
   /*      Create document.                                                */
   /* -------------------------------------------------------------------- */
@@ -3226,7 +3237,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /*      Name spaces                                                     */
   /* -------------------------------------------------------------------- */
 
-  msWCSPrepareNamespaces20(psDoc, psRootNode, map);
+  msWCSPrepareNamespaces20(psDoc, psRootNode, map, inspire_capabilities != NULL);
 
   /* lookup namespaces */
   psOwsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX );
@@ -3330,6 +3341,78 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       xmlAddChild(psOperationsNode, psNode);
     }
     msFree(script_url_encoded);
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Extended Capabilities for inspire                               */
+    /* -------------------------------------------------------------------- */
+
+    if (inspire_capabilities) {
+      xmlNsPtr psInspireCommonNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX );
+      xmlNsPtr psIDLNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX );
+      xmlNodePtr psExtendedCapabilitiesNode =  xmlAddChild(
+        xmlAddChild(
+          psOperationsNode,
+          xmlAddChild(psOperationsNode, xmlNewNode(psOwsNs, BAD_CAST "ExtendedCapabilities"))
+        ),
+        xmlNewNode(psInspireCommonNs, BAD_CAST "ExtendedCapabilities")
+      );
+
+      /* ------------------------------------------------------------------ */
+      /*      Scenario 1: URL reference to inspire docs                     */
+      /* ------------------------------------------------------------------ */
+
+      if (EQUAL(inspire_capabilities, "url")) {
+        const char *href = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_metadataurl_href");
+        const char *format = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_metadataurl_format");
+        xmlNodePtr psMetadataUrl = xmlAddChild(
+          psExtendedCapabilitiesNode,
+          xmlNewNode(psInspireCommonNs, BAD_CAST "MetadataUrl")
+        );
+
+        if (href) {
+          xmlNodePtr psUrlNode = xmlAddChild(
+            psMetadataUrl,
+            xmlNewNode(psInspireCommonNs, BAD_CAST "URL")
+          );
+          xmlNodeSetContent(psUrlNode, BAD_CAST href);
+        } else {
+          xmlAddChild(
+            psMetadataUrl,
+            xmlNewComment(BAD_CAST "Missing 'inspire_metadataurl_href'.")
+          );
+        }
+
+        if (format) {
+          xmlNodePtr psUrlNode = xmlAddChild(
+            psMetadataUrl,
+            xmlNewNode(psInspireCommonNs, BAD_CAST "MediaType")
+          );
+          xmlNodeSetContent(psUrlNode, BAD_CAST format);
+        } else {
+          xmlAddChild(
+            psMetadataUrl,
+            xmlNewComment(BAD_CAST "Missing 'inspire_metadataurl_format'.")
+          );
+        }
+      }
+
+      /* ------------------------------------------------------------------ */
+      /*      Scenario 2: Directly embedded metadata                        */
+      /* ------------------------------------------------------------------ */
+
+      else if (EQUAL(inspire_capabilities, "embed")) {
+
+      }
+
+      else {
+        xmlAddChild(
+          psExtendedCapabilitiesNode,
+          xmlNewComment(BAD_CAST "Invalid setting for 'inspire_capabilities'. Must be either 'url' or 'embed'.")
+        );
+      }
+
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -3589,7 +3672,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
   xmlDocSetRootElement(psDoc, psRootNode);
 
   /* prepare initial namespace definitions */
-  msWCSPrepareNamespaces20(psDoc, psRootNode, map);
+  msWCSPrepareNamespaces20(psDoc, psRootNode, map, MS_FALSE);
 
   psWcsNs = xmlSearchNs(psDoc, psRootNode,
                         BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX);
@@ -4738,7 +4821,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     psRootNode = xmlNewNode(NULL, BAD_CAST MS_WCS_GML_COVERAGETYPE_RECTIFIED_GRID_COVERAGE);
     xmlDocSetRootElement(psDoc, psRootNode);
 
-    msWCSPrepareNamespaces20(psDoc, psRootNode, map);
+    msWCSPrepareNamespaces20(psDoc, psRootNode, map, MS_FALSE);
 
     psGmlNs    = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
     psGmlcovNs = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX);
