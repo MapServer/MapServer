@@ -37,6 +37,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Format>image/tiff</Format>
       <Format>application/vnd.google-earth.kml+xml</Format>
       <Format>application/vnd.google-earth.kmz</Format>
+      <Format>application/json</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/mswms?"/></Get>

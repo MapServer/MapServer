@@ -55,6 +55,7 @@
       <Format>image/tiff</Format>
       <Format>application/vnd.google-earth.kml+xml</Format>
       <Format>application/vnd.google-earth.kmz</Format>
+      <Format>application/json</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=eng&amp;"/></Get>
