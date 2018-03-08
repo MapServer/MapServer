@@ -21,7 +21,7 @@ ADD_CUSTOM_COMMAND(TARGET javamapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                       POST_BUILD
                       COMMAND ${Java_JAVAC_EXECUTABLE} edu/umn/gis/mapscript/*.java
-                      COMMAND ${Java_JAR_EXECUTABLE} cf mapscript.jar edu
+                      COMMAND ${Java_JAR_EXECUTABLE} cf mapscript.jar edu/umn/gis/mapscript/*.class
                       COMMENT "Compiling java source files, creating mapscript.jar"
                       )
 
