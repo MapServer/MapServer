@@ -47,12 +47,12 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjConstructorNoArgs(self):
         """a color can be initialized with no arguments"""
         c = mapscript.colorObj()
-        assert (c.red, c.green, c.blue, c.pen) == (0, 0, 0, -4)
+        assert (c.red, c.green, c.blue, c.alpha) == (0, 0, 0, 255)
     
     def testColorObjConstructorArgs(self):
         """a color can be initialized with arguments"""
-        c = mapscript.colorObj(1, 2, 3)
-        assert (c.red, c.green, c.blue, c.pen) == (1, 2, 3, -4)
+        c = mapscript.colorObj(1, 2, 3, 4)
+        assert (c.red, c.green, c.blue, c.alpha) == (1, 2, 3, 4)
     
     def testColorObjToHex(self):
         """a color can be outputted as hex"""
@@ -67,14 +67,14 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjSetRGB(self):
         """a color can be set using setRGB method"""
         c = mapscript.colorObj()
-        c.setRGB(255, 255, 255)
-        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
+        c.setRGB(255, 255, 255, 100)
+        assert (c.red, c.green, c.blue, c.alpha) == (255, 255, 255, 100)
     
     def testColorObjSetHexLower(self):
         """a color can be set using lower case hex"""
         c = mapscript.colorObj()
-        c.setHex('#ffffff')
-        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
+        c.setHex('#ffffff64')
+        assert (c.red, c.green, c.blue, c.alpha) == (255, 255, 255, 100)
     
     def testColorObjSetHexUpper(self):
         """a color can be set using upper case hex"""
