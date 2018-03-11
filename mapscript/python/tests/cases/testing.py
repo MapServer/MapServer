@@ -68,9 +68,8 @@ class MapscriptTestCase(unittest.TestCase):
     def assertAlmostEqual(self, first, second, places=7):
         """Copied from unittest for use with Python 2.1 or 2.2"""
         if round(second-first, places) != 0:
-            raise AssertionError, \
-                '%s != %s within %s places' % (`first`, `second`, `places`)
-        
+            raise AssertionError('%s != %s within %s places' % (`first`, `second`, `places`))
+
 class MapPrimitivesTestCase(MapscriptTestCase):
     """Base class for testing primitives (points, lines, shapes)
     in stand-alone mode"""
@@ -164,4 +163,3 @@ class MapZoomTestCase(MapPrimitivesTestCase):
 class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
     pass
-
