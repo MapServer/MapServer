@@ -182,6 +182,7 @@ MS_DLL_EXPORT const char *msOWSGetInspireSchemasLocation(mapObj *map);
 MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 MS_DLL_EXPORT char **msOWSGetLanguageList(mapObj *map, const char *namespaces, int *numitems);
 MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *requested_language);
+MS_DLL_EXPORT char *msOWSLanguageNegotiation(mapObj *map, const char *namespaces, char **accept_languages, int num_accept_languages);
 
 
 /* OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata() */
@@ -193,7 +194,8 @@ MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces
 typedef enum
 {
     OWS_WMS = 1,
-    OWS_WFS = 2
+    OWS_WFS = 2,
+    OWS_WCS = 3
 } OWSServiceType;
 
 MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
