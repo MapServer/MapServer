@@ -3788,13 +3788,13 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
     return MS_SUCCESS;
   }
 
-  count = CSLCount(params->range_subset);
   maxlen = cm->numbands * 4 * sizeof(char);
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
 
   /* Use WCS 2.0 metadata items in priority */
   tmp = msOWSGetEncodeMetadata(&layer->metadata,
-                                 "CO", "band_names", NULL);
+                               "CO", "band_names", NULL);
+
   if( NULL == tmp ) {
       /* Otherwise default to WCS 1.x*/
       tmp = msOWSGetEncodeMetadata(&layer->metadata,
@@ -3819,6 +3819,16 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
     msFree(tmp);
   }
 
+  /* If we still don't have band names, use the band names from the coverage metadata */
+  if (band_ids == NULL) {
+    band_ids = (char**) msSmallCalloc(sizeof(char*), (cm->numbands + 1));
+    for (i = 0; i < cm->numbands; ++i) {
+      band_ids[i] = msStrdup(cm->bands[i].name);
+    }
+  }
+
+  /* Iterate over all supplied range */
+  count = CSLCount(params->range_subset);
   for(i = 0; i < count; ++i) {
     /* RangeInterval case: defined as "<start>:<stop>" */
     if ((interval_stop = strchr(params->range_subset[i], ':')) != NULL) {
