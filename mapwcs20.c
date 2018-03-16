@@ -818,7 +818,15 @@ static int msWCSParseRequest20_XMLGetCapabilities(
       /* Maybe not necessary, since only format is xml.   */
       /* At least ignore it, to not generate an error.    */
     } else if(EQUAL((char *)child->name, "AcceptLanguages")) {
-      params->accept_languages = CSLAddString(params->accept_languages, content);
+      xmlNodePtr languageNode;
+      XML_FOREACH_CHILD(child, languageNode) {
+        XML_LOOP_IGNORE_COMMENT_OR_TEXT(languageNode)
+        XML_ASSERT_NODE_NAME(languageNode, "Language");
+
+        content = (char *)xmlNodeGetContent(languageNode);
+        params->accept_languages = CSLAddString(params->accept_languages, content);
+        xmlFree(content);
+      }
     } else {
       XML_UNKNOWN_NODE_ERROR(child);
     }
