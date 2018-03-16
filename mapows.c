@@ -1315,7 +1315,7 @@ char *msOWSLanguageNegotiation(mapObj *map, const char *namespaces, char **accep
 
   if (languages && num_languages > 0) {
     for (int i = 0; i < num_accept_languages; ++i) {
-      const char *accept_language = accept_languages[0];
+      const char *accept_language = accept_languages[i];
 
       /* '*' means any language */
       if (EQUAL(accept_language, "*")) {
