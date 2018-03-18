@@ -284,7 +284,7 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph) {
     matrix.xy = matrix.yx = 0x00000L;
     pen.x = pen.y = 0;
     FT_Set_Transform(face->face, &matrix, &pen);
-    error = FT_Load_Glyph(face->face,glyph->key.codepoint,FT_LOAD_DEFAULT/*|FT_LOAD_IGNORE_TRANSFORM*/|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
+    error = FT_Load_Glyph(face->face,glyph->key.codepoint,FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP/*|FT_LOAD_IGNORE_TRANSFORM*/|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
     if(error) {
       msSetError(MS_MISCERR, "unable to load glyph %ud for font \"%s\"", "msGetGlyphByIndex()",glyph->key.codepoint, face->font);
       return NULL;
