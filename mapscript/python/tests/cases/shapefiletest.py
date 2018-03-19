@@ -33,9 +33,10 @@
 # ===========================================================================
 
 import unittest
+import os
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
+from testing import mapscript, TESTS_PATH
 
 class AddShapeTestCase(unittest.TestCase):
 
@@ -47,12 +48,13 @@ class AddShapeTestCase(unittest.TestCase):
         self.assertRaises(mapscript.MapServerError, sf.add, so)
     
     def testGetDBFInfo(self):
-	"""Fetch dbf information from shapefile"""
-        sf = mapscript.shapefileObj('../../../../tests/polygon.shp')
-	assert sf.getDBF() != None, sf.getDBF()
-	assert sf.getDBF().nFields == 2, sf.getDBF().nFields
-	assert sf.getDBF().getFieldName(0) == 'FID', sf.getDBF().getFieldName(0)
-	assert sf.getDBF().getFieldName(1) == 'FNAME', sf.getDBF().getFieldName(1)
+        """Fetch dbf information from shapefile"""
+        pth = os.path.join(TESTS_PATH, "polygon.shp")
+        sf = mapscript.shapefileObj(pth)
+        assert sf.getDBF() != None, sf.getDBF()
+        assert sf.getDBF().nFields == 2, sf.getDBF().nFields
+        assert sf.getDBF().getFieldName(0) == 'FID', sf.getDBF().getFieldName(0)
+        assert sf.getDBF().getFieldName(1) == 'FNAME', sf.getDBF().getFieldName(1)
     
     
 if __name__ == '__main__':
