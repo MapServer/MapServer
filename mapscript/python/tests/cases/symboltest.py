@@ -55,9 +55,8 @@ class SymbolTestCase(unittest.TestCase):
         """create new instance of symbolObj from an image"""
         symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
         assert symbol.name == 'xmarks'
-        print(symbol.type)
-        assert symbol.type == mapscript.MS_SYMBOL_PIXMAP # now MS_SYMBOL_VECTOR? MS_SYMBOL_VECTOR
-        format = mapscript.outputFormatObj('AGG/PNG')
+        assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
+        format = mapscript.outputFormatObj('GD/PNG')
         img = symbol.getImage(format)
         img.save('sym-%s.%s' % (symbol.name, img.format.extension))
 
@@ -84,7 +83,7 @@ class DynamicGraphicSymbolTestCase(MapTestCase):
         """set image of new symbolObj"""
         assert self.h_symbol.name == 'house'
         assert self.h_symbol.type == mapscript.MS_SYMBOL_PIXMAP
-        format = mapscript.outputFormatObj('AGG/PNG')
+        format = mapscript.outputFormatObj('GD/PNG')
         format.transparent = mapscript.MS_ON
         img = self.h_symbol.getImage(format)
         img.save('set-%s.%s' % (self.h_symbol.name, img.format.extension))
@@ -106,7 +105,7 @@ class DynamicGraphicSymbolTestCase(MapTestCase):
         """set image of new symbolObj"""
         assert self.x_symbol.name == 'xmarks'
         assert self.x_symbol.type == mapscript.MS_SYMBOL_PIXMAP
-        format = mapscript.outputFormatObj('AGG/PNG')
+        format = mapscript.outputFormatObj('GD/PNG')
         img = self.x_symbol.getImage(format)
         img.save('set-%s.%s' % (self.x_symbol.name, img.format.extension))
 
@@ -149,7 +148,7 @@ class MapSymbolTestCase(MapTestCase):
     def testSetStyle(self):
         """expect success after setting an existing symbol's style"""
         symbol = self.map.symbolset.getSymbol(1)
-        assert symbol.setPoints(0, 1) == mapscript.MS_SUCCESS
+        assert symbol.setPattern(0, 1) == mapscript.MS_SUCCESS
 
     def testRGBASymbolInPNG24(self):
         """draw a RGBA PNG pixmap on PNG canvas"""
