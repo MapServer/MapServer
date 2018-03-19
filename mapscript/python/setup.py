@@ -136,7 +136,7 @@ class ms_ext(build_ext):
     ])
 
     def initialize_options(self):
-        print "LD_RUN_PATH set"
+        print("LD_RUN_PATH set")
         os.environ["LD_RUN_PATH"] = os.getcwd()+"/../../.libs"
         build_ext.initialize_options(self)
         self.gdaldir = None
