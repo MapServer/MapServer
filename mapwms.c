@@ -2635,7 +2635,20 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
         groupAdded = 1;
       }
     } else {
-      msIO_printf("%s    <Layer>\n", indent);
+      int queryable = MS_TRUE;
+      for (j = 0; j < map->numlayers; j++)
+      {
+        if( !pabLayerProcessed[j] &&
+            msWMSIsSubGroup(nestedGroups[index], level, nestedGroups[j], numNestedGroups[j]) )
+        {
+            if( !msIsLayerQueryable(GET_LAYER(map, j)) )
+            {
+                queryable = MS_FALSE;
+                break;
+            }
+        }
+      }
+      msIO_printf("%s    <Layer queryable=\"%d\">\n", indent, queryable);
       msIO_printf("%s      <Title>%s</Title>\n", indent, nestedGroups[index][level]);
       groupAdded = 1;
     }
@@ -3351,8 +3364,23 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
             pabLayerProcessed[i] = 1;
           }
         } else {
+          int bAllSubLayersQueryiable = MS_TRUE;
+
           /* Beginning of a new group... enclose the group in a layer block */
-          msIO_printf("    <Layer>\n");
+
+          for(j=i; j<map->numlayers; j++) {
+            if (!pabLayerProcessed[j] &&
+                GET_LAYER(map, j)->group &&
+                strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
+                msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers)) {
+                if( !msIsLayerQueryable(lp) )
+                {
+                    bAllSubLayersQueryiable = MS_FALSE;
+                    break;
+                }
+            }
+          }
+          msIO_printf("    <Layer queryable=\"%d\">\n", bAllSubLayersQueryiable);
 
           /* Layer Name is optional but title is mandatory. */
           if (lp->group &&  strlen(lp->group) > 0 &&
