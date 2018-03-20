@@ -51,6 +51,10 @@ build_script:
   - cmake --build . --config Release
 
 test_script:
-  - echo test_script
+  - set PATH="%APPVEYOR_BUILD_FOLDER%\build\Release";%APPVEYOR_BUILD_FOLDER%\sdk\%SDK%\bin;%PATH%
+  - set PROJ_LIB="%APPVEYOR_BUILD_FOLDER%\sdk\%SDK%\bin\proj\SHARE"
+  - set PYTHON_PATH=%APPVEYOR_BUILD_FOLDER%\build\mapscript\python\Release
+  - cd %APPVEYOR_BUILD_FOLDER%\mapscript\python
+  - tox
 
 deploy: off
