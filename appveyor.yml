@@ -51,7 +51,7 @@ build_script:
   - cmake --build . --config Release
 
 install:
-  - "%PYTHON%\\python.exe -m pip install tox"
+  - "python -m pip install tox"
 
 test_script:
   - set PATH="%APPVEYOR_BUILD_FOLDER%\build\Release";%APPVEYOR_BUILD_FOLDER%\sdk\%SDK%\bin;%PATH%
