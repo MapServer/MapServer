@@ -3895,7 +3895,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       return MS_SUCCESS;
     }
 
-    img = msDrawMap(map, MS_FALSE);
+    img = msDrawMap(map, drawquerymap);
   }
 
   if (img == NULL)
