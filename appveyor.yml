@@ -53,7 +53,7 @@ build_script:
 install:
   - if "%platform%" == "x86" SET PYTHON_FOLDER=c:\python27\Scripts
   - if "%platform%" == "x64" SET PYTHON_FOLDER=c:\python27-x64\Scripts
-  - "%PYTHON_FOLDER%\\pip install tox"
+  - "%PYTHON_FOLDER%\\pip install requirements-dev.txt"
 
 test_script:
   - if "%platform%" == "x86" SET PYTHON_FOLDER=c:\python27
@@ -62,6 +62,6 @@ test_script:
   - set PROJ_LIB=%APPVEYOR_BUILD_FOLDER%\sdk\%SDK%\bin\proj\SHARE
   - set PYTHONPATH=%APPVEYOR_BUILD_FOLDER%\build\mapscript\python\Release;%APPVEYOR_BUILD_FOLDER%\build\mapscript\python
   - cd %APPVEYOR_BUILD_FOLDER%\mapscript\python
-  - tox
+  - pytest --ignore=tests/cases/pgtest.py --ignore=tests/cases/threadtest.py tests/cases
 
 deploy: off
