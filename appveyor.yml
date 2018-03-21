@@ -12,7 +12,10 @@ environment:
 #  - VS_VERSION: Visual Studio 11
 #
 # VS 2013
-  - VS_VERSION: Visual Studio 12
+#  - VS_VERSION: Visual Studio 12
+#
+# VS 2017
+  - VS_VERSION: Visual Studio 15
 
 shallow_clone: true
 
