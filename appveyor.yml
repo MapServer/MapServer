@@ -53,7 +53,7 @@ build_script:
 install:
   - if "%platform%" == "x86" SET PYTHON_FOLDER=c:\python27\Scripts
   - if "%platform%" == "x64" SET PYTHON_FOLDER=c:\python27-x64\Scripts
-  - %PYTHON_FOLDER%\pip install tox
+  - "%PYTHON_FOLDER%\pip install tox"
 
 test_script:
   - if "%platform%" == "x86" SET PYTHON_FOLDER=c:\python27\python.exe
