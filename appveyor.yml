@@ -56,7 +56,7 @@ install:
 test_script:
   - set PATH="%APPVEYOR_BUILD_FOLDER%\build\Release";%APPVEYOR_BUILD_FOLDER%\sdk\%SDK%\bin;%PATH%
   - set PROJ_LIB="%APPVEYOR_BUILD_FOLDER%\sdk\%SDK%\bin\proj\SHARE"
-  - set PYTHONPATH=%APPVEYOR_BUILD_FOLDER%\build\mapscript\python\Release
+  - set PYTHONPATH=%APPVEYOR_BUILD_FOLDER%\build\mapscript\python\Release;%APPVEYOR_BUILD_FOLDER%\build\mapscript\python
   - echo %PATH%
   - echo %PROJ_LIB%
   - echo %PYTHONPATH%
