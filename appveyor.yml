@@ -54,6 +54,7 @@ install:
   - if "%platform%" == "x86" SET PYTHON_EXECUTABLE=c:\python27\python.exe
   - if "%platform%" == "x64" SET PYTHON_EXECUTABLE=c:\python27-x64\python.exe
   - "%PYTHON_EXECUTABLE% -m pip install --upgrade pip"
+  - cd %APPVEYOR_BUILD_FOLDER%\mapscript\python
   - "%PYTHON_EXECUTABLE% -m pip install -r requirements-dev.txt"
 
 test_script:
