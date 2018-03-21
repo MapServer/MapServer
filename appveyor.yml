@@ -22,7 +22,7 @@ environment:
 shallow_clone: true
 
 install:
-    choco install swig --version 1.3.40 --yes --limit-output
+    choco install swig --version 3.0.9 --yes --limit-output
 
 build_script:
   - echo build_script
