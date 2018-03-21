@@ -168,6 +168,7 @@ typedef struct {
   char *request;      /* GetCapabilities|DescribeCoverage|GetCoverage */
   char *service;      /* MUST be WCS */
   char **accept_versions; /* NULL terminated list of Accepted versions */
+  char **accept_languages; /* NULL terminated list of Accepted versions */
   char **sections;    /* NULL terminated list of GetCapabilities sections */
   char *updatesequence; /* GetCapabilities updatesequence */
   char **ids;         /* NULL terminated list of coverages (in the case of a GetCoverage there will only be 1) */

@@ -1298,6 +1298,46 @@ char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *
   return language;
 }
 
+
+/* msOWSLanguageNegotiation
+**
+** Returns a language according to the accepted languages requested by the client
+**
+** Returns a malloced char* which must be freed by the caller, or NULL
+*/
+char *msOWSLanguageNegotiation(mapObj *map, const char *namespaces, char **accept_languages, int num_accept_languages)
+{
+  int num_languages = 0;
+  char **languages = NULL;
+  char *result_language = NULL;
+
+  languages = msOWSGetLanguageList(map, namespaces, &num_languages);
+
+  if (languages && num_languages > 0) {
+    int i;
+    for (i = 0; i < num_accept_languages; ++i) {
+      const char *accept_language = accept_languages[i];
+
+      /* '*' means any language */
+      if (EQUAL(accept_language, "*")) {
+        result_language = msStrdup(languages[0]);
+        break;
+      } else if (msStringInArray(accept_language, languages, num_languages)) {
+        result_language = msStrdup(accept_language);
+        break;
+      }
+    }
+
+    if (result_language == NULL) {
+      result_language = msStrdup(languages[0]);
+    }
+  }
+
+  msFreeCharArray(languages, num_languages);
+  return result_language;
+}
+
+
 /* msOWSPrintInspireCommonExtendedCapabilities
 **
 ** Output INSPIRE common extended capabilities items to stream
@@ -1381,7 +1421,7 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_mpoc_email", OWS_WARN, "      <inspire_common:EmailAddress>%s</inspire_common:EmailAddress>\n", "");
     msIO_fprintf(stream, "    </inspire_common:MetadataPointOfContact>\n");
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_metadatadate", OWS_WARN, "      <inspire_common:MetadataDate>%s</inspire_common:MetadataDate>\n", "");
-    if( service == OWS_WFS )
+    if( service == OWS_WFS || service == OWS_WCS )
         msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>download</inspire_common:SpatialDataServiceType>\n");
     else
         msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
