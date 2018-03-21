@@ -51,10 +51,10 @@ build_script:
   - cmake --build . --config Release
 
 install:
-  - if "%platform%" == "x86" SET PYTHON_FOLDER=c:\python27\Scripts
-  - if "%platform%" == "x64" SET PYTHON_FOLDER=c:\python27-x64\Scripts
-  - "%PYTHON_FOLDER%\\pip install --upgrade pip"
-  - "%PYTHON_FOLDER%\\pip install -r requirements-dev.txt"
+  - if "%platform%" == "x86" SET PYTHON_EXECUTABLE=c:\python27\python.exe
+  - if "%platform%" == "x64" SET PYTHON_EXECUTABLE=c:\python27-x64\python.exe
+  - "%PYTHON_EXECUTABLE% -m pip install --upgrade pip"
+  - "%PYTHON_EXECUTABLE% -m pip install -r requirements-dev.txt"
 
 test_script:
   - if "%platform%" == "x86" SET PYTHON_FOLDER=c:\python27
