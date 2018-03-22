@@ -3821,9 +3821,9 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 
   /* If we still don't have band names, use the band names from the coverage metadata */
   if (band_ids == NULL) {
-    band_ids = (char**) msSmallCalloc(sizeof(char*), (cm->numbands + 1));
+    band_ids = (char**) CPLCalloc(sizeof(char*), (cm->numbands + 1));
     for (i = 0; i < cm->numbands; ++i) {
-      band_ids[i] = msStrdup(cm->bands[i].name);
+      band_ids[i] = CPLStrdup(cm->bands[i].name);
     }
   }
 
