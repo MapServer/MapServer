@@ -36,16 +36,19 @@
 #
 # Updated API
 #
+# RUN_PARMS: wcs_20_getcov_bands_single.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2:Band5" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2:Band5,Band7:myBand9" > [RESULT_DEMIME]
 #
 # Using band indices
 #
+# RUN_PARMS: wcs_20_getcov_bands_single.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=2" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=2:5" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=2:5,7:9" > [RESULT_DEMIME]
 #
 # Using default band names
 #
+# RUN_PARMS: wcs_20_getcov_bands_single.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=band2" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi&FORMAT=image/tiff&RANGESUBSET=band2:band5" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi&FORMAT=image/tiff&RANGESUBSET=band2:band5,band7:band9" > [RESULT_DEMIME]
 #
