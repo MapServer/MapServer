@@ -36,11 +36,35 @@
 #
 # Updated API
 #
+# RUN_PARMS: wcs_20_getcov_bands_single.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2:Band5" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2:Band5,Band7:myBand9" > [RESULT_DEMIME]
 #
+# Using band indices
+#
+# RUN_PARMS: wcs_20_getcov_bands_single.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=2" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=2:5" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=2:5,7:9" > [RESULT_DEMIME]
+#
+# Using default band names
+#
+# RUN_PARMS: wcs_20_getcov_bands_single.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=band2" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi&FORMAT=image/tiff&RANGESUBSET=band2:band5" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi&FORMAT=image/tiff&RANGESUBSET=band2:band5,band7:band9" > [RESULT_DEMIME]
+#
+# Updated API for POST/XML
+#
+# Using band names when supplied
 #
 # RUN_PARMS: wcs_20_post_bands_interval_component.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:rsub="http://www.opengis.net/wcs/range-subsetting/1.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:Extension><rsub:RangeSubset><rsub:RangeItem><rsub:RangeComponent>Band1</rsub:RangeComponent></rsub:RangeItem><rsub:RangeItem><rsub:RangeInterval><rsub:startComponent>Band3</rsub:startComponent><rsub:endComponent>Band8</rsub:endComponent></rsub:RangeInterval></rsub:RangeItem></rsub:RangeSubset></wcs:Extension></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Using band indices
+#
+# RUN_PARMS: wcs_20_post_bands_interval_component.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:rsub="http://www.opengis.net/wcs/range-subsetting/1.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:Extension><rsub:RangeSubset><rsub:RangeItem><rsub:RangeComponent>1</rsub:RangeComponent></rsub:RangeItem><rsub:RangeItem><rsub:RangeInterval><rsub:startComponent>3</rsub:startComponent><rsub:endComponent>8</rsub:endComponent></rsub:RangeInterval></rsub:RangeItem></rsub:RangeSubset></wcs:Extension></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Using default band names
+#
+# RUN_PARMS: wcs_20_post_bands_interval_component.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:rsub="http://www.opengis.net/wcs/range-subsetting/1.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:Extension><rsub:RangeSubset><rsub:RangeItem><rsub:RangeComponent>band1</rsub:RangeComponent></rsub:RangeItem><rsub:RangeItem><rsub:RangeInterval><rsub:startComponent>band3</rsub:startComponent><rsub:endComponent>band8</rsub:endComponent></rsub:RangeInterval></rsub:RangeItem></rsub:RangeSubset></wcs:Extension></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
 MAP
 
 NAME TEST
@@ -173,6 +197,23 @@ LAYER
     "Band1_band_definition"     "SomeDefinition"
     "Band1_band_description"     "This is some description"
     "Band1_interval"             "0 255"
+  END
+END
+
+
+LAYER
+  NAME multi_no_metadata
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+
+  DATA data/multiband.tif
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+  METADATA
+    # as the name implies, no metadata
   END
 END
 
