@@ -99,7 +99,7 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
         e = self.layer.getExtent() 
         self.assertRectsEqual(results.bounds, e)
 
-    def testQueryResultMembers(self):
+    def xtestQueryResultMembers(self):
         """get the single result member"""
         results = self.pointquery()
         self.layer.open()
@@ -130,11 +130,11 @@ class DumpAndLoadTestCase(LayerQueryTestCase):
     def testSaveAndLoadQuery(self):
         """test saving query to a file"""
         results = self.pointquery()
-        self.map.saveQuery('test.qry')
+        self.map.saveQuery('test.qy')
         self.map.freeQuery()
         results = self.layer.getResults()
         assert results == None
-        self.map.loadQuery('test.qry')
+        self.map.loadQuery('test.qy')
         results = self.layer.getResults()
         assert results is not None
       

@@ -43,7 +43,8 @@ import distutils.util
 import unittest
 
 # define the path to mapserver test data
-TESTS_PATH = '../../../../tests'
+test_path = os.path.abspath(os.path.join(__file__ ,"../../../../.."))
+TESTS_PATH = os.path.join(test_path, "tests")
 
 TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
 XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
@@ -68,9 +69,8 @@ class MapscriptTestCase(unittest.TestCase):
     def assertAlmostEqual(self, first, second, places=7):
         """Copied from unittest for use with Python 2.1 or 2.2"""
         if round(second-first, places) != 0:
-            raise AssertionError, \
-                '%s != %s within %s places' % (`first`, `second`, `places`)
-        
+            raise AssertionError('%s != %s within %s places' % (`first`, `second`, `places`))
+
 class MapPrimitivesTestCase(MapscriptTestCase):
     """Base class for testing primitives (points, lines, shapes)
     in stand-alone mode"""
@@ -164,4 +164,3 @@ class MapZoomTestCase(MapPrimitivesTestCase):
 class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
     pass
-

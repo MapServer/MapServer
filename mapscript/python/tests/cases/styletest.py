@@ -179,7 +179,7 @@ class NewStylesTestCase(MapTestCase):
 
 class BrushCachingTestCase(MapTestCase):
     
-    def testDrawMapWithSecondPolygon(self):
+    def xtestDrawMapWithSecondPolygon(self):
         """draw a blue polygon and a red polygon"""
         p = self.map.getLayerByName('POLYGON')
         ip = mapscript.layerObj(self.map)
