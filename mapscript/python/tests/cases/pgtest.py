@@ -44,8 +44,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
-from testing import MapTestCase
+from .testing import MapTestCase, mapscript
 
 PG_CONNECTION_STRING="dbname=mapserver_test user=postgres"
 

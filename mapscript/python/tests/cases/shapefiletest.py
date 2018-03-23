@@ -36,7 +36,7 @@ import unittest
 import os
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, TESTS_PATH
+from .testing import mapscript, TESTS_PATH
 
 class AddShapeTestCase(unittest.TestCase):
 

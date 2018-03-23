@@ -8,7 +8,7 @@ import os
 import sys
 import timeit
 from random import random
-from testing import mapscript
+from .testing import mapscript
 
 # Get Number of shapes from the command line
 try:
@@ -31,7 +31,7 @@ ilayer.setProjection('init=epsg:4326')
 ilayer.status = mapscript.MS_DEFAULT
 ilayer.connectiontype = mapscript.MS_INLINE
 
-print numshapes, "shapes"
+print(numshapes, "shapes")
 
 i = 0
 while i < numshapes:
@@ -77,18 +77,18 @@ img.save('timing-inline.png')
 # =========================================================================
 # Test 1A: Draw all shapes at once using map.draw()
 
-print "Test 1A: draw map, all shapes at once"
+print("Test 1A: draw map, all shapes at once")
 s = """\
 img = m.draw()
 """
 t = timeit.Timer(stmt=s, setup='from __main__ import m')
-print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
+print("%.2f usec/pass" % (1000000 * t.timeit(number=100)/100))
 
 
 # =========================================================================
 # Test 1B: Draw shape by shape from the shapefileObj
 
-print "Test 1B: draw shapes one at a time"
+print("Test 1B: draw shapes one at a time")
 s = """\
 img = m.prepareImage()
 for i in range(shpfile.numshapes):
@@ -97,17 +97,17 @@ for i in range(shpfile.numshapes):
     s.draw(m, l, img)
 """
 t = timeit.Timer(stmt=s, setup='from __main__ import m, l, shpfile')
-print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
+print("%.2f usec/pass" % (1000000 * t.timeit(number=100)/100))
 
 
 # =========================================================================
 # Test 1C: Draw shapes after pushing them into an inline layer
 
-print "Test 1C: draw inline layer shapes"
+print("Test 1C: draw inline layer shapes")
 s = """\
 img = m.prepareImage()
 ilayer.draw(m, img)
 """
 t = timeit.Timer(stmt=s, setup='from __main__ import m, ilayer')
-print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
+print("%.2f usec/pass" % (1000000 * t.timeit(number=100)/100))
 

@@ -36,9 +36,8 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapTestCase
-from testing import MapPrimitivesTestCase, ShapeObjTestCase
-from testing import MapscriptTestCase
+from .testing import mapscript, MapTestCase
+from .testing import MapPrimitivesTestCase, ShapeObjTestCase
 
 class ShapePointTestCase(ShapeObjTestCase):
     """Test point type shapeObj in stand-alone mode"""

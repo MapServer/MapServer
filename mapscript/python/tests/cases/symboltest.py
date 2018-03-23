@@ -34,11 +34,11 @@
 
 import os, sys
 import unittest
-import StringIO
+from io import BytesIO
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapTestCase
-from testing import TESTMAPFILE, XMARKS_IMAGE, HOME_IMAGE
+from .testing import mapscript, MapTestCase
+from .testing import TESTMAPFILE, XMARKS_IMAGE, HOME_IMAGE
 
 # ===========================================================================
 # Test begins now
@@ -65,16 +65,14 @@ class DynamicGraphicSymbolTestCase():
 
     def setUp(self):
         MapTestCase.setUp(self)
-        f = open(HOME_IMAGE, 'rb')
-        s = StringIO.StringIO(f.read())
-        f.close()
+        with open(HOME_IMAGE, 'rb') as fh:
+            s = BytesIO(fh.read())
         symb_img = mapscript.imageObj(s)
         self.h_symbol = mapscript.symbolObj('house')
         self.h_symbol.type = mapscript.MS_SYMBOL_PIXMAP
         self.h_symbol.setImage(symb_img)
-        f = open(XMARKS_IMAGE, 'rb')
-        s = StringIO.StringIO(f.read())
-        f.close()
+        with open(XMARKS_IMAGE, 'rb') as fh:
+            s = BytesIO(fh.read())
         symb_img = mapscript.imageObj(s)
         self.x_symbol = mapscript.symbolObj('xmarks')
         self.x_symbol.type = mapscript.MS_SYMBOL_PIXMAP

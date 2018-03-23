@@ -36,8 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
-from testing import MapTestCase, MapPrimitivesTestCase
+from .testing import MapTestCase, MapPrimitivesTestCase, mapscript
 
 # Base class
 class LayerQueryTestCase(MapTestCase):

@@ -33,7 +33,7 @@
 #
 # All test case modules should import mapscript from testing
 #
-#     from testing import mapscript
+#     from .testing import mapscript
 #
 # ===========================================================================
 
@@ -64,14 +64,7 @@ import mapscript
 # ==========================================================================
 # Base testing classes
 
-class MapscriptTestCase(unittest.TestCase):
-
-    def assertAlmostEqual(self, first, second, places=7):
-        """Copied from unittest for use with Python 2.1 or 2.2"""
-        if round(second-first, places) != 0:
-            raise AssertionError('%s != %s within %s places' % (`first`, `second`, `places`))
-
-class MapPrimitivesTestCase(MapscriptTestCase):
+class MapPrimitivesTestCase(unittest.TestCase):
     """Base class for testing primitives (points, lines, shapes)
     in stand-alone mode"""
 

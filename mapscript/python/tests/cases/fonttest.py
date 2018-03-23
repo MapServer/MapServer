@@ -36,7 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, TESTMAPFILE, TESTS_PATH
+from .testing import mapscript, TESTMAPFILE, TESTS_PATH
 
 
 class FontTestCase(unittest.TestCase):

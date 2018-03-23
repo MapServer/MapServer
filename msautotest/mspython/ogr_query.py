@@ -48,11 +48,11 @@ def dumpResultSet( layer ):
         if result is None:
             break
         
-        print '(%d,%d)' % (result.shapeindex, result.tileindex)
+        print('(%d,%d)' % (result.shapeindex, result.tileindex))
         
         s = layer.getShape( result )
         for i in range(layer.numitems):
-            print '%s: %s' % (layer.getItem(i), s.getValue(i))
+            print('%s: %s' % (layer.getItem(i), s.getValue(i)))
             
     layer.close()
 
@@ -158,7 +158,7 @@ def ogr_query_3():
         p = l.get(5)
 
     if abs(p.x-480984.25) > 0.01 or abs(p.y-4764875.0) > 0.01:
-        print p.x, p.y
+        print(p.x, p.y)
         pmstestlib.post_reason( 'got wrong location.' )
         return 'fail'
     
@@ -249,7 +249,7 @@ def ogr_query_5():
         p = l.get(5)
 
     if abs(p.x-480984.25) > 0.01 or abs(p.y-4764875.0) > 0.01:
-        print p.x, p.y
+        print(p.x, p.y)
         pmstestlib.post_reason( 'got wrong location.' )
         return 'fail'
     

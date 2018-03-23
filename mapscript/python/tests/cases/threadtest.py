@@ -37,7 +37,7 @@ import unittest
 import threading
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, TESTMAPFILE, INCOMING
+from .testing import mapscript, TESTMAPFILE, INCOMING
 
 def draw_map(name, save=0):
     #print "making map in thread %s" % (name)
@@ -51,7 +51,7 @@ def trigger_exception(name):
     mo = mapscript.mapObj(TESTMAPFILE)
     try:
         mo.setExtent(1, 50, -1, 51)
-        raise Exception, "We expected a MapServer exception"
+        raise Exception("We expected a MapServer exception")
     except mapscript.MapServerError:
         pass
 

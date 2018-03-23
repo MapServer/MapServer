@@ -60,31 +60,31 @@ def run_tests( test_list ):
 
         try:
             (func, name) = test_item
-	    sys.stdout.write( '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' )
-	except:
+            sys.stdout.write( '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' )
+        except:
             func = test_item
             name = func.__name__
-	    sys.stdout.write( '  TEST: ' + name + ' ... ' )
+            sys.stdout.write( '  TEST: ' + name + ' ... ' )
 
         sys.stdout.flush()
             
         reason = None
         try:
             result = func()
-            print result
+            print(result)
         except:
             result = 'blowup'
-            print result
+            print(result)
             
             import traceback
             traceback.print_exc()
 
 
         if reason is not None:
-            print '    ' + reason
+            print('    ' + reason)
 
         if post_test_msg is not None:
-            print post_test_msg
+            print(post_test_msg)
             post_test_msg = None
 
         if result == 'success':
@@ -105,13 +105,13 @@ def summarize():
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
     
-    print
-    print 'Test Script: %s' % cur_name
-    print 'Succeeded: %d' % success_counter
-    print 'Failed:    %d (%d blew exceptions)' \
-          % (failure_counter+blow_counter, blow_counter)
-    print 'Skipped:   %d' % skip_counter
-    print
+    print()
+    print('Test Script: %s' % cur_name)
+    print('Succeeded: %d' % success_counter)
+    print('Failed:    %d (%d blew exceptions)' \
+          % (failure_counter+blow_counter, blow_counter))
+    print('Skipped:   %d' % skip_counter)
+    print()
 
     return failure_counter + blow_counter
 
@@ -153,33 +153,32 @@ def run_all( dirlist, option_list = [] ):
             if not file[-3:] == '.py':
                 continue
 
-            module = file[:-3]
+            module_name = file[:-3]
             try:
                 wd = os.getcwd()
                 os.chdir( dir_name )
                 
                 xtest_list = None
-                exec "import " + module
+                module = __import__(module_name)
 
                 try:
-                    exec "xtest_list = " + module + ".test_list"
-                except:
+                    xtest_list = module.test_list
+                except AttributeError:
                     pass
 
                 if xtest_list is not None:
                     try:
-                        print 'Running tests from %s/%s' % (dir_name,file)
+                        print('Running tests from %s/%s' % (dir_name,file))
                         run_tests( xtest_list )
                     except:
                         import traceback
                         traceback.print_exc()
-                        pass
                 
                 os.chdir( wd )
 
             except:
                 os.chdir( wd )
-                print '... failed to load %s ... skipping.' % file
+                print('... failed to load %s ... skipping.' % file)
 
                 import traceback
                 traceback.print_exc()

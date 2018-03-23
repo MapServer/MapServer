@@ -759,9 +759,8 @@ def run_tests( argv ):
                     print('%s: results dont match, TEST FAILED.'%(out_file))
 
             elif cmp == 'noresult':
-                f = open('result/'+out_file,"w")
-                print >>f, "Segmentation fault or other serious error"
-                f.close()
+                with open('result/' + out_file, 'w') as fh:
+                    fh.write("Segmentation fault or other serious error\n")
                 fail_count = fail_count + 1
                 noresult_count += 1
                 if not quiet:

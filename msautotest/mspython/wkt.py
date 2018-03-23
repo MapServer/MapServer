@@ -36,7 +36,6 @@
 #
 
 import sys
-import string
 
 sys.path.append( '../pymod' )
 import pmstestlib
@@ -48,19 +47,20 @@ import mapscript
 
 def wkt_test_1():
 
-    if string.find(mapscript.msGetVersion(),'SUPPORTS=GEOS') != -1 \
-       or string.find(mapscript.msGetVersion(),'INPUT=OGR') == -1:
+    if ('SUPPORTS=GEOS' in mapscript.msGetVersion() or
+            'INPUT=OGR' not in mapscript.msGetVersion()):
         return 'skip'
 
     wkt_list = [ 'POINT (5 7)',
-                 'LINESTRING (5 7,7 9,9 -1)',
-                 'POLYGON ((500 500,3500 500,3500 2500,500 2500,500 500),(1000 1000,1000 1500,1500 1500,1500 1000,1000 1000))',
-                 'MULTIPOINT (2000 2000,2000 1900)',
-                 'MULTILINESTRING ((600 1500,1600 2500),(700 1500,1700 2500))']
+                 'LINESTRING (5 7, 7 9, 9 -1)',
+                 'POLYGON ((500 500, 3500 500, 3500 2500, 500 2500, 500 500), '
+                 '(1000 1000, 1000 1500, 1500 1500, 1500 1000, 1000 1000))',
+                 'MULTIPOINT (2000 2000, 2000 1900)',
+                 'MULTILINESTRING ((600 1500, 1600 2500), (700 1500, 1700 2500))']
 
     for orig_wkt in wkt_list:
         shp = mapscript.shapeObj.fromWKT( orig_wkt )
-        new_wkt = shp.toWKT()
+        new_wkt = shp.toWKT().replace('.0000000000000000', '')
 
         if new_wkt != orig_wkt:
             pmstestlib.post_reason( 'WKT "%s" converted to "%s".' \
@@ -76,15 +76,15 @@ def wkt_test_1():
 
 def wkt_test_2():
 
-    if string.find(mapscript.msGetVersion(),'SUPPORTS=GEOS') != -1 \
-       or string.find(mapscript.msGetVersion(),'INPUT=OGR') == -1:
+    if ('SUPPORTS=GEOS' in mapscript.msGetVersion() or
+            'INPUT=OGR' not in mapscript.msGetVersion()):
         return 'skip'
 
     orig_wkt = 'MULTIPOLYGON(((50 50, 350 50, 350 250, 50 250, 50 50)),((250 150, 550 150, 550 350, 250 350, 250 150)))'
-    expected_wkt = 'POLYGON ((50 50,350 50,350 250,50 250,50 50),(250 150,550 150,550 350,250 350,250 150))'
+    expected_wkt = 'POLYGON ((50 50, 350 50, 350 250, 50 250, 50 50), (250 150, 550 150, 550 350, 250 350, 250 150))'
     
     shp = mapscript.shapeObj.fromWKT( orig_wkt )
-    new_wkt = shp.toWKT()
+    new_wkt = shp.toWKT().replace('.0000000000000000', '')
 
     if new_wkt != expected_wkt:
         pmstestlib.post_reason( 'WKT "%s" converted to "%s".' \
@@ -99,7 +99,7 @@ def wkt_test_2():
 
 def wkt_test_3():
 
-    if string.find(mapscript.msGetVersion(),'SUPPORTS=GEOS') == -1:
+    if 'SUPPORTS=GEOS' not in mapscript.msGetVersion():
         return 'skip'
 
     wkt_list = [ 'POINT (5.0000000000000000 7.0000000000000000)',

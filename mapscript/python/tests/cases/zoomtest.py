@@ -36,7 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapZoomTestCase
+from .testing import mapscript, MapZoomTestCase
 
 # ===========================================================================
 # Test begins now

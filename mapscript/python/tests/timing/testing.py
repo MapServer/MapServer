@@ -33,7 +33,7 @@
 #
 # All test case modules should import mapscript from testing
 #
-#     from testing import mapscript
+#     from .testing import mapscript
 #
 # ===========================================================================
 

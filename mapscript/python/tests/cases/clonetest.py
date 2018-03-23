@@ -37,14 +37,13 @@ import unittest
 
 # the testing module helps us import the pre-installed mapscript
 
-from testing import mapscript
-from testing import TESTMAPFILE
-from testing import MapscriptTestCase
+from .testing import mapscript
+from .testing import TESTMAPFILE
 
 # ===========================================================================
 # Base class
 
-class MapCloneTestCase(MapscriptTestCase):
+class MapCloneTestCase(unittest.TestCase):
     """Base class for testing with a map fixture"""
 
     def setUp(self):

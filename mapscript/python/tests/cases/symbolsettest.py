@@ -36,7 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapTestCase, TESTMAPFILE, XMARKS_IMAGE, TESTS_PATH
+from .testing import mapscript, MapTestCase, TESTMAPFILE, XMARKS_IMAGE, TESTS_PATH
 
 SYMBOLSET = os.path.join(TESTS_PATH, "symbols.txt")
 
