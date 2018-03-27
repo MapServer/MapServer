@@ -7142,7 +7142,6 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
 
 static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableObj *table)
 {
-	int i;
 	const char *default_key = msFirstKeyFromHashTable(table);
 	while (default_key) {
 		if (!strncmp(default_key, "default_", 8)) {
