@@ -153,7 +153,7 @@ option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
 option(WITH_V8 "include javacript v8 scripting" OFF)
-option(WITH_PIXMAN "use pixman for layer compositing operations" OFF)
+option(WITH_PIXMAN "use (experimental) support for pixman for layer compositing operations" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
@@ -166,8 +166,8 @@ option(WITH_GENERIC_NINT "generic rounding" OFF)
 
 # Add compiler flags for warnings
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror=format-security -Wdeclaration-after-statement")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror=format-security")
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
@@ -274,37 +274,13 @@ mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
 mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h)
 
-find_package(PNG)
-if(PNG_FOUND)
-  list(APPEND ALL_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
-  set(USE_PNG 1)
-else(PNG_FOUND)
-  report_mandatory_not_found(PNG)
-endif(PNG_FOUND)
-
-find_package(JPEG)
-if(JPEG_FOUND)
-  list(APPEND ALL_INCLUDE_DIRS ${JPEG_INCLUDE_DIR})
-  set(USE_JPEG 1)
-else(JPEG_FOUND)
-  report_mandatory_not_found(JPEG)
-endif(JPEG_FOUND)
-
-find_package(Freetype)
-if(NOT FREETYPE_FOUND)
-  report_mandatory_not_found(FREETYPE)
-endif(NOT FREETYPE_FOUND)
-list(APPEND ALL_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIR})
-
-if(WITH_PROJ)
-  find_package(Proj)
-  if(NOT PROJ_FOUND)
-    report_optional_not_found(PROJ)
- else(NOT PROJ_FOUND)
-    list(APPEND ALL_INCLUDE_DIRS ${PROJ_INCLUDE_DIR})
-    set (USE_PROJ 1)
- endif(NOT PROJ_FOUND)
-endif (WITH_PROJ)
+if(WIN32)
+	configure_file(
+	  ${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in
+	  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	  @ONLY)
+	set(mapserver_SOURCES ${mapserver_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif(WIN32)
 
 if(WITH_PROTOBUFC)
   find_package(ProtobufC)
@@ -328,9 +304,108 @@ if(WITH_PROTOBUFC)
  endif(NOT PROTOBUFC_FOUND)
 endif (WITH_PROTOBUFC)
 
+
+if(BUILD_DYNAMIC)
+  add_library(mapserver SHARED ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  set_target_properties( mapserver  PROPERTIES
+    VERSION ${MapServer_VERSION_STRING}
+    SOVERSION 2
+) 
+endif(BUILD_DYNAMIC)
+
+if(BUILD_STATIC)
+  add_library(mapserver_static STATIC ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  set_target_properties( mapserver_static PROPERTIES
+    VERSION ${MapServer_VERSION_STRING}
+    SOVERSION 2
+  ) 
+endif(BUILD_STATIC)
+
+#SOVERSION is not necessarily the same as the
+#major version. The rule is that any breakage of the ABI must be
+#indicated by incrementing the SOVERSION. So, adding e.g. functions is no
+#problem, modifying argument lists or removing functions would required
+#the SOVERSION to be incremented. Similar rules hold of course for
+#non-opaque data-structures.
+
+add_executable(mapserv mapserv.c)
+target_link_libraries(mapserv ${MAPSERVER_LIBMAPSERVER})
+add_executable(shp2img shp2img.c)
+target_link_libraries(shp2img ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptree shptree.c)
+target_link_libraries(shptree ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptreevis shptreevis.c)
+target_link_libraries(shptreevis ${MAPSERVER_LIBMAPSERVER})
+add_executable(sortshp sortshp.c)
+target_link_libraries(sortshp ${MAPSERVER_LIBMAPSERVER})
+add_executable(legend legend.c)
+target_link_libraries(legend ${MAPSERVER_LIBMAPSERVER})
+add_executable(scalebar scalebar.c)
+target_link_libraries(scalebar ${MAPSERVER_LIBMAPSERVER})
+add_executable(msencrypt msencrypt.c)
+target_link_libraries(msencrypt ${MAPSERVER_LIBMAPSERVER})
+add_executable(tile4ms tile4ms.c)
+target_link_libraries(tile4ms ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptreetst shptreetst.c)
+target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
+
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  set(USE_EXTENDED_DEBUG 1)
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+
+find_package(PNG)
+if(PNG_FOUND)
+  include_directories(${PNG_INCLUDE_DIR})
+  ms_link_libraries( ${PNG_LIBRARIES})
+  list(APPEND ALL_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
+  set(USE_PNG 1)
+else(PNG_FOUND)
+  report_mandatory_not_found(PNG)
+endif(PNG_FOUND)
+
+find_package(JPEG)
+if(JPEG_FOUND)
+  include_directories(${JPEG_INCLUDE_DIR})
+  ms_link_libraries( ${JPEG_LIBRARY})
+  list(APPEND ALL_INCLUDE_DIRS ${JPEG_INCLUDE_DIR})
+  set(USE_JPEG 1)
+else(JPEG_FOUND)
+  report_mandatory_not_found(JPEG)
+endif(JPEG_FOUND)
+
+find_package(Freetype)
+if(NOT FREETYPE_FOUND)
+  report_mandatory_not_found(FREETYPE)
+endif(NOT FREETYPE_FOUND)
+include_directories(${FREETYPE_INCLUDE_DIR})
+ms_link_libraries( ${FREETYPE_LIBRARY})
+list(APPEND ALL_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIR})
+
+
+if(WITH_PROJ)
+  find_package(Proj)
+  if(NOT PROJ_FOUND)
+    report_optional_not_found(PROJ)
+ else(NOT PROJ_FOUND)
+    include_directories(${PROJ_INCLUDE_DIR})
+    ms_link_libraries( ${PROJ_LIBRARY})
+    list(APPEND ALL_INCLUDE_DIRS ${PROJ_INCLUDE_DIR})
+    set (USE_PROJ 1)
+ endif(NOT PROJ_FOUND)
+endif (WITH_PROJ)
+
+if(USE_PBF)
+    include_directories(${PROJECT_BINARY_DIR}/renderers/mvt)
+    include_directories(${PROTOBUFC_INCLUDE_DIR})
+    ms_link_libraries( ${PROTOBUFC_LIBRARY})
+endif()
+
 if(WITH_PIXMAN)
   find_package(Pixman)
   if(PIXMAN_FOUND)
+    include_directories(${PIXMAN_INCLUDE_DIR})
+    ms_link_libraries(${PIXMAN_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${PIXMAN_INCLUDE_DIR})
     set (USE_PIXMAN 1)
   else(PIXMAN_FOUND)
@@ -351,6 +426,8 @@ if(WITH_FRIBIDI)
   if(NOT FRIBIDI_FOUND)
     report_optional_not_found(FRIBIDI)
  else(NOT FRIBIDI_FOUND)
+    include_directories(${FRIBIDI_INCLUDE_DIR})
+    ms_link_libraries( ${FRIBIDI_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${FRIBIDI_INCLUDE_DIR})
     set (USE_FRIBIDI 1)
     if(FRIBIDI_LEGACY)
@@ -364,6 +441,8 @@ if(WITH_HARFBUZZ)
   if(NOT HARFBUZZ_FOUND)
     report_optional_not_found(HARFBUZZ)
  else(NOT HARFBUZZ_FOUND)
+    include_directories(${HARFBUZZ_INCLUDE_DIR})
+    ms_link_libraries( ${HARFBUZZ_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${HARFBUZZ_INCLUDE_DIR})
     set (USE_HARFBUZZ 1)
  endif(NOT HARFBUZZ_FOUND)
@@ -376,9 +455,12 @@ if( USE_FRIBIDI AND NOT(USE_HARFBUZZ) )
   report_dependency_error(FRIBIDI HARFBUZZ)
 endif( USE_FRIBIDI AND NOT(USE_HARFBUZZ) )
 
+
 if(WITH_ICONV)
   find_package(ICONV)
   if(ICONV_FOUND)
+    include_directories(${ICONV_INCLUDE_DIR})
+    ms_link_libraries( ${ICONV_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${ICONV_INCLUDE_DIR})
     set (USE_ICONV 1)
   else(ICONV_FOUND)
@@ -390,9 +472,12 @@ if(WITH_GENERIC_NINT)
    set(USE_GENERIC_MS_NINT 1)
 endif(WITH_GENERIC_NINT)
 
+
 if(WITH_CAIRO)
   find_package(Cairo)
   if(CAIRO_FOUND)
+    include_directories(${CAIRO_INCLUDE_DIRS})
+    ms_link_libraries( ${CAIRO_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${CAIRO_INCLUDE_DIR})
     set (USE_CAIRO 1)
   else(CAIRO_FOUND)
@@ -403,6 +488,8 @@ endif (WITH_CAIRO)
 if(WITH_MYSQL)
   find_package(MySQL)
   if(MYSQL_FOUND)
+    include_directories(${MYSQL_INCLUDE_DIR})
+    ms_link_libraries( ${MYSQL_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${MYSQL_INCLUDE_DIR})
     set (USE_MYSQL 1)
   else(MYSQL_FOUND)
@@ -430,6 +517,7 @@ if(WITH_ORACLESPATIAL OR WITH_ORACLE_PLUGIN)
 endif(WITH_ORACLESPATIAL OR WITH_ORACLE_PLUGIN)
 
 if(ORACLE_FOUND AND WITH_ORACLESPATIAL)
+    ms_link_libraries( ${ORACLE_LIBRARY})
     set (USE_ORACLESPATIAL 1)
 endif(ORACLE_FOUND AND WITH_ORACLESPATIAL)
 
@@ -457,6 +545,8 @@ endif(WITH_MSSQL2008)
 if(WITH_FCGI)
   find_package(FCGI)
   if(FCGI_FOUND)
+    include_directories(${FCGI_INCLUDE_DIR})
+    target_link_libraries(mapserv ${FCGI_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${FCGI_INCLUDE_DIR})
     set (USE_FASTCGI 1)
   else(FCGI_FOUND)
@@ -467,6 +557,8 @@ endif (WITH_FCGI)
 if(WITH_GEOS)
   find_package(GEOS)
   if(GEOS_FOUND)
+    include_directories(${GEOS_INCLUDE_DIR})
+    ms_link_libraries( ${GEOS_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${GEOS_INCLUDE_DIR})
     set (USE_GEOS 1)
   else(GEOS_FOUND)
@@ -484,6 +576,8 @@ if(WITH_POSTGIS)
     if ( NOT DEFINED POSTGRESQL_INCLUDE_DIR )
       set( POSTGRESQL_INCLUDE_DIR ${PostgreSQL_INCLUDE_DIR})
     endif()
+    include_directories(${POSTGRESQL_INCLUDE_DIR})
+    ms_link_libraries( ${POSTGRESQL_LIBRARY})
     CHECK_LIBRARY_EXISTS(pq "PQserverVersion" POSTGRESQL_LIBRARY POSTGIS_HAS_SERVER_VERSION)
     list(APPEND ALL_INCLUDE_DIRS ${POSTGRESQL_INCLUDE_DIR})
     set (USE_POSTGIS 1)
@@ -495,6 +589,8 @@ endif (WITH_POSTGIS)
 if(WITH_GDAL)
   find_package(GDAL)
   if(GDAL_FOUND)
+    include_directories(${GDAL_INCLUDE_DIR})
+    ms_link_libraries( ${GDAL_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${GDAL_INCLUDE_DIR})
     set (USE_GDAL 1)
   else(GDAL_FOUND)
@@ -508,6 +604,8 @@ if(WITH_SVGCAIRO)
   endif(WITH_RSVG)
   find_package(SVGCairo)
   if(SVGCAIRO_FOUND)
+    include_directories(${SVG_INCLUDE_DIR} ${SVGCAIRO_INCLUDE_DIR})
+    ms_link_libraries( ${SVG_LIBRARY} ${SVGCAIRO_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${SVG_INCLUDE_DIR} ${SVGCAIRO_INCLUDE_DIR})
     set (USE_SVG_CAIRO 1)
   else(SVGCAIRO_FOUND)
@@ -521,7 +619,11 @@ if(WITH_RSVG)
   endif(WITH_SVGCAIRO)
   find_package(RSVG)
   if(RSVG_FOUND AND GOBJECT_FOUND)
+    include_directories(${RSVG_INCLUDE_DIRS})
+    ms_link_libraries( ${RSVG_LIBRARY} )
     list(APPEND ALL_INCLUDE_DIRS ${RSVG_INCLUDE_DIRS})
+    include_directories(${GOBJECT_INCLUDE_DIRS})
+    ms_link_libraries( ${GOBJECT_LIBRARY} )
     list(APPEND ALL_INCLUDE_DIRS ${GOBJECT_INCLUDE_DIRS})
     set (USE_RSVG 1)
   else(RSVG_FOUND AND GOBJECT_FOUND)
@@ -535,6 +637,8 @@ if(WITH_OGR)
   else(GDAL_FOUND)
     find_package(GDAL)
     if(GDAL_FOUND)
+      include_directories(${GDAL_INCLUDE_DIR})
+      ms_link_libraries( ${GDAL_LIBRARY})
       list(APPEND ALL_INCLUDE_DIRS ${GDAL_INCLUDE_DIR})
       set (USE_OGR 1)
     else(GDAL_FOUND)
@@ -553,6 +657,8 @@ endif(WITH_CLIENT_WMS OR WITH_CLIENT_WFS)
 if(WITH_CURL)
    find_package(CURL)
    if(CURL_FOUND)
+     include_directories(${CURL_INCLUDE_DIR})
+     ms_link_libraries( ${CURL_LIBRARY})
      list(APPEND ALL_INCLUDE_DIRS ${CURL_INCLUDE_DIR})
      set(USE_CURL 1)
    else(CURL_FOUND)
@@ -627,9 +733,11 @@ endif(WITH_WCS)
 if(WITH_LIBXML2)
   find_package(LibXml2)
   if(LIBXML2_FOUND)
+    include_directories(${LIBXML2_INCLUDE_DIR})
     if(NOT DEFINED LIBXML2_LIBRARY)
       set(LIBXML2_LIBRARY ${LIBXML2_LIBRARIES})
     endif()
+    ms_link_libraries( ${LIBXML2_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${LIBXML2_INCLUDE_DIR})
     set (USE_LIBXML2 1)
   else(LIBXML2_FOUND)
@@ -677,6 +785,7 @@ if(WITH_THREAD_SAFETY)
   set( CMAKE_THREAD_PREFER_PTHREAD 1 )
   find_package(Threads)
   if (THREADS_FOUND)
+    ms_link_libraries( ${CMAKE_THREAD_LIBS_INIT})
     set(USE_THREAD 1)
   endif (THREADS_FOUND)
 endif(WITH_THREAD_SAFETY)
@@ -692,6 +801,8 @@ if(WITH_XMLMAPFILE)
     if(NOT DEFINED LIBXSLT_LIBRARY)
       set(LIBXSLT_LIBRARY ${LIBXSLT_LIBRARIES})
     endif()
+    include_directories(${LIBXSLT_INCLUDE_DIR})
+    ms_link_libraries( ${LIBXSLT_LIBRARY} ${LIBXSLT_EXSLT_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${LIBXSLT_INCLUDE_DIR})
     set(USE_XMLMAPFILE 1)
   else(LIBXSLT_FOUND)
@@ -706,6 +817,8 @@ endif(WITH_XMLMAPFILE)
 if(WITH_GIF)
   find_package(GIF)
   if(GIF_FOUND)
+    include_directories(${GIF_INCLUDE_DIR})
+    ms_link_libraries( ${GIF_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${GIF_INCLUDE_DIR})
     set(USE_GIF 1)
   else(GIF_FOUND)
@@ -716,12 +829,19 @@ endif(WITH_GIF)
 if(WITH_EXEMPI)
   find_package(Exempi)
   if(LIBEXEMPI_FOUND)
+    include_directories(${LIBEXEMPI_INCLUDE_DIR})
+    ms_link_libraries( ${LIBEXEMPI_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${LIBEXEMPI_INCLUDE_DIR})
     set(USE_EXEMPI 1)
   else(LIBEXEMPI_FOUND)
     report_optional_not_found(EXEMPI)
   endif(LIBEXEMPI_FOUND)
 endif(WITH_EXEMPI)
+
+if(WITH_PYTHON)
+   add_subdirectory("mapscript/python")
+   set(USE_PYTHON_MAPSCRIPT 1)
+endif(WITH_PYTHON)
 
 if(WITH_V8)
   FIND_PACKAGE(V8)
@@ -739,160 +859,16 @@ if(WITH_V8)
   ENDIF()
 ENDIF(WITH_V8)
 
-if(BUILD_DYNAMIC)
-  add_library(mapserver SHARED ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
-  set_target_properties( mapserver  PROPERTIES
-    VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 2
-)
-endif(BUILD_DYNAMIC)
-
-if(BUILD_STATIC)
-  add_library(mapserver_static STATIC ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
-  set_target_properties( mapserver_static PROPERTIES
-    VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 2
-  )
-endif(BUILD_STATIC)
-
-if(USE_PBF)
-    include_directories(${PROJECT_BINARY_DIR}/renderers/mvt)
-    include_directories(${PROTOBUFC_INCLUDE_DIR})
-    ms_link_libraries( ${PROTOBUFC_LIBRARY})
-endif()
-if(USE_PIXMAN)
-    include_directories(${PIXMAN_INCLUDE_DIR})
-    ms_link_libraries(${PIXMAN_LIBRARY})
-endif()
-if(USE_FRIBIDI)
-    include_directories(${FRIBIDI_INCLUDE_DIR})
-    ms_link_libraries( ${FRIBIDI_LIBRARY})
-endif()
-if(USE_HARFBUZZ)
-    include_directories(${HARFBUZZ_INCLUDE_DIR})
-    ms_link_libraries( ${HARFBUZZ_LIBRARY})
-endif()
-if(USE_ICONV)
-    include_directories(${ICONV_INCLUDE_DIR})
-    ms_link_libraries( ${ICONV_LIBRARY})
-endif()
-if(USE_CAIRO)
-    include_directories(${CAIRO_INCLUDE_DIRS})
-    ms_link_libraries( ${CAIRO_LIBRARY})
-endif()
-if(USE_MYSQL)
-    include_directories(${MYSQL_INCLUDE_DIR})
-    ms_link_libraries( ${MYSQL_LIBRARY})
-endif()
-if(USE_ORACLESPATIAL)
-    ms_link_libraries( ${ORACLE_LIBRARY})
-endif()
-if(USE_GEOS)
-    include_directories(${GEOS_INCLUDE_DIR})
-    ms_link_libraries( ${GEOS_LIBRARY})
-endif()
-if(USE_POSTGIS)
-    include_directories(${POSTGRESQL_INCLUDE_DIR})
-    ms_link_libraries( ${POSTGRESQL_LIBRARY})
-endif()
-if(USE_SVG_CAIRO)
-    include_directories(${SVG_INCLUDE_DIR} ${SVGCAIRO_INCLUDE_DIR})
-    ms_link_libraries( ${SVG_LIBRARY} ${SVGCAIRO_LIBRARY})
-endif()
-if(USE_RSVG)
-    include_directories(${RSVG_INCLUDE_DIRS})
-    ms_link_libraries( ${RSVG_LIBRARY} )
-    include_directories(${GOBJECT_INCLUDE_DIRS})
-    ms_link_libraries( ${GOBJECT_LIBRARY} )
-endif()
-if(USE_GDAL OR USE_OGR)
-      include_directories(${GDAL_INCLUDE_DIR})
-      ms_link_libraries( ${GDAL_LIBRARY})
-endif()
-if(USE_CURL)
-     include_directories(${CURL_INCLUDE_DIR})
-     ms_link_libraries( ${CURL_LIBRARY})
-endif()
-if(USE_LIBXML2)
-    include_directories(${LIBXML2_INCLUDE_DIR})
-    ms_link_libraries( ${LIBXML2_LIBRARY})
-endif()
-if(USE_THREAD)
-    ms_link_libraries( ${CMAKE_THREAD_LIBS_INIT})
-endif()
-if(USE_XMLMAPFILE)
-    include_directories(${LIBXSLT_INCLUDE_DIR})
-    ms_link_libraries( ${LIBXSLT_LIBRARY} ${LIBXSLT_EXSLT_LIBRARY})
-endif()
-if(USE_GIF)
-    include_directories(${GIF_INCLUDE_DIR})
-    ms_link_libraries( ${GIF_LIBRARY})
-endif()
-if(USE_EXEMPI)
-    include_directories(${LIBEXEMPI_INCLUDE_DIR})
-    ms_link_libraries( ${LIBEXEMPI_LIBRARY})
-endif()
-if(USE_PROJ)
-    include_directories(${PROJ_INCLUDE_DIR})
-    ms_link_libraries( ${PROJ_LIBRARY})
-endif()
-include_directories(${PNG_INCLUDE_DIR})
-ms_link_libraries( ${PNG_LIBRARIES})
-include_directories(${JPEG_INCLUDE_DIR})
-ms_link_libraries( ${JPEG_LIBRARY})
-include_directories(${FREETYPE_INCLUDE_DIR})
-ms_link_libraries( ${FREETYPE_LIBRARY})
-
-#SOVERSION is not necessarily the same as the
-#major version. The rule is that any breakage of the ABI must be
-#indicated by incrementing the SOVERSION. So, adding e.g. functions is no
-#problem, modifying argument lists or removing functions would required
-#the SOVERSION to be incremented. Similar rules hold of course for
-#non-opaque data-structures.
-
-add_executable(mapserv mapserv.c)
-target_link_libraries(mapserv ${MAPSERVER_LIBMAPSERVER})
-add_executable(shp2img shp2img.c)
-target_link_libraries(shp2img ${MAPSERVER_LIBMAPSERVER})
-add_executable(shptree shptree.c)
-target_link_libraries(shptree ${MAPSERVER_LIBMAPSERVER})
-add_executable(shptreevis shptreevis.c)
-target_link_libraries(shptreevis ${MAPSERVER_LIBMAPSERVER})
-add_executable(sortshp sortshp.c)
-target_link_libraries(sortshp ${MAPSERVER_LIBMAPSERVER})
-add_executable(legend legend.c)
-target_link_libraries(legend ${MAPSERVER_LIBMAPSERVER})
-add_executable(scalebar scalebar.c)
-target_link_libraries(scalebar ${MAPSERVER_LIBMAPSERVER})
-add_executable(msencrypt msencrypt.c)
-target_link_libraries(msencrypt ${MAPSERVER_LIBMAPSERVER})
-add_executable(tile4ms tile4ms.c)
-target_link_libraries(tile4ms ${MAPSERVER_LIBMAPSERVER})
-add_executable(shptreetst shptreetst.c)
-target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
-if(USE_FASTCGI)
-    include_directories(${FCGI_INCLUDE_DIR})
-    target_link_libraries(mapserv ${FCGI_LIBRARY})
-endif()
-
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(USE_EXTENDED_DEBUG 1)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
 if(WITH_PHP)
    add_subdirectory("mapscript/php")
    set(USE_PHP_MAPSCRIPT 1)
 endif(WITH_PHP)
 
-if(WITH_PYTHON)
-   add_subdirectory("mapscript/python")
-   set(USE_PYTHON_MAPSCRIPT 1)
-endif(WITH_PYTHON)
-
 if(WITH_APACHE_MODULE)
    add_subdirectory("apache")
    set(USE_APACHE_MODULE 1)
 endif(WITH_APACHE_MODULE)
+
 
 if(WITH_PERL)
    add_subdirectory("mapscript/perl")
@@ -919,7 +895,7 @@ ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-ms_link_libraries( ${MS_EXTERNAL_LIBS})
+ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
 endif (WIN32)
 
 configure_file (
@@ -932,9 +908,11 @@ configure_file (
   "${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
 
-set_target_properties(mapserver PROPERTIES
-  PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
-)
+if(BUILD_DYNAMIC)
+  set_target_properties(mapserver PROPERTIES
+    PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
+  )
+endif(BUILD_DYNAMIC)
 
 macro(status_optional_component component enabled libpath)
   if("${enabled}" EQUAL "1")
@@ -1015,12 +993,14 @@ message(STATUS "")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Will install libraries to ${INSTALL_LIB_DIR}")
 
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 if(WIN32)
 set(REGEX_MALLOC 1)
 set(USE_GENERIC_MS_NINT 1)
 endif(WIN32)
+
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
@@ -1031,57 +1011,60 @@ if(USE_MSSQL2008)
    INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${INSTALL_LIB_DIR})
 endif(USE_MSSQL2008)
 
+
 INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv
         RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
 )
-INSTALL(TARGETS mapserver
-        EXPORT mapserverTargets
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
-        PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
-)
 
 if(BUILD_STATIC)
-   INSTALL(TARGETS mapserver_static DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS mapserver_static
+           DESTINATION ${INSTALL_LIB_DIR} COMPONENT staticlib
+   )
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
-   INSTALL(TARGETS mapserver DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS mapserver
+           EXPORT mapserverTargets
+           ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
+   )
+
+   # Add all targets to the build-tree export set
+   export(TARGETS mapserver
+          FILE "${PROJECT_BINARY_DIR}/mapserverTargets.cmake"
+   )
+
+   # Export the package for use from the build-tree
+   # (this registers the build-tree with a global CMake-registry)
+   export(PACKAGE mapserver)
+
+   list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
+   list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR}/mapserver)
+
+   list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
+
+   # Create the mapserver-config.cmake and mapserver-config-version files
+   file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${ALL_INCLUDE_DIRS}")
+
+   # ... for the build tree
+   set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+   configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config.cmake" @ONLY)
+
+   # ... for the install tree
+   set(CONF_INCLUDE_DIRS "\${MAPSERVER_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+   configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake" @ONLY)
+
+   # ... for both
+   configure_file(mapserver-config-version.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake" @ONLY)
+
+   # Install the mapserver-config.cmake and mapserver-config-version.cmake
+   install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
+                 "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
+           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+   )
+
+   # Install the export set for use with the install-tree
+   install(EXPORT mapserverTargets
+           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+   )
 endif(BUILD_DYNAMIC)
-
-# Add all targets to the build-tree export set
-export(TARGETS mapserver
-       FILE "${PROJECT_BINARY_DIR}/mapserverTargets.cmake"
-)
-
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export(PACKAGE mapserver)
-
-list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
-list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR}/mapserver)
-
-list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
-
-# Create the mapserver-config.cmake and mapserver-config-version files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${ALL_INCLUDE_DIRS}")
-
-# ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config.cmake" @ONLY)
-
-# ... for the install tree
-set(CONF_INCLUDE_DIRS "\${MAPSERVER_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake" @ONLY)
-
-# ... for both
-configure_file(mapserver-config-version.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake" @ONLY)
-
-# Install the mapserver-config.cmake and mapserver-config-version.cmake
-install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
-              "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)
-
-# Install the export set for use with the install-tree
-install(EXPORT mapserverTargets
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)
