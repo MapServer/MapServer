@@ -3830,13 +3830,25 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     }
   }
 
+  {
+    int i;
+    for(i=0;i<map->numlayers;i++)
+    {
+      layerObj* lp = GET_LAYER(map, i);
+      if( papszGMLGroups[i] )
+          msInsertHashTable(&(lp->metadata), "GML_GROUPS", papszGMLGroups[i]);
+      if( papszGMLIncludeItems[i] )
+          msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszGMLIncludeItems[i]);
+      if( papszGMLGeometries[i] )
+          msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", papszGMLGeometries[i]);
+    }
+  }
+
   /* handle case of maxfeatures = 0 */
   /*internally use a start index that start with 0 as the first index*/
   if( psFormat == NULL ) {
     if(maxfeatures != 0 && iResultTypeHits == 0)
     {
-      layerObj* lp;
-      int i;
       int bWFS2MultipleFeatureCollection = MS_FALSE;
 
       /* Would make sense for WFS 1.1.0 too ! See #3576 */
@@ -3847,24 +3859,14 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
       else if (useurn && strcasecmp(useurn, "false") == 0)
         bUseURN = 0;
 
-      for(i=0;i<map->numlayers;i++)
-      {
-        lp = GET_LAYER(map, i);
-        if( papszGMLGroups[i] )
-            msInsertHashTable(&(lp->metadata), "GML_GROUPS", papszGMLGroups[i]);
-        if( papszGMLIncludeItems[i] )
-            msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszGMLIncludeItems[i]);
-        if( papszGMLGeometries[i] )
-            msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", papszGMLGeometries[i]);
-      }
-
       /* For WFS 2.0, when we request several types, we must present each type */
       /* in its own FeatureCollection (§ 11.3.3.5 ) */
       if( nWFSVersion >= OWS_2_0_0 && iResultTypeHits != 1 )
       {
+          int i;
           int nLayersWithFeatures = 0;
           for(i=0; i<map->numlayers; i++) {
-              lp = GET_LAYER(map, i);
+              layerObj* lp = GET_LAYER(map, i);
               if(lp->resultcache && lp->resultcache->numresults > 0)
                   nLayersWithFeatures ++;
           }
@@ -3883,7 +3885,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             /* Save the result cache that contains the features that we want to */
             /* emit in the response */
             for(i=0; i<map->numlayers; i++) {
-              lp = GET_LAYER(map, i);
+              layerObj* lp = GET_LAYER(map, i);
               saveResultCache[i] = lp->resultcache;
               if( lp->resultcache  && lp->resultcache->numresults > 0) {
                   iLastNonEmptyLayer = i;
@@ -3893,7 +3895,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
             /* Just dump one layer at a time */
             for(i=0;i<map->numlayers;i++) {
-              lp = GET_LAYER(map, i);
+              layerObj* lp = GET_LAYER(map, i);
               lp->resultcache = saveResultCache[i];
               if( lp->resultcache  && lp->resultcache->numresults > 0) {
                 msIO_fprintf(stdout, "  <wfs:member>\n");
@@ -3918,7 +3920,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
             /* Restore for later cleanup */
             for(i=0; i<map->numlayers; i++) {
-              lp = GET_LAYER(map, i);
+              layerObj* lp = GET_LAYER(map, i);
               lp->resultcache = saveResultCache[i];
             }
             msFree(saveResultCache);
