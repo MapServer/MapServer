@@ -176,6 +176,17 @@ zend_function_entry grid_functions[] = {
   }
 };
 
+void mapscript_create_grid(graticuleObj *grid, parent_object parent, zval *return_value TSRMLS_DC)
+{
+  php_grid_object * php_grid;
+  object_init_ex(return_value, mapscript_ce_grid);
+  php_grid = MAPSCRIPT_OBJ_P(php_grid_object, return_value);
+  php_grid->grid = grid;
+
+  php_grid->parent = parent;
+  MAPSCRIPT_ADDREF(parent.val);
+}
+
 #if PHP_VERSION_ID >= 70000
 /* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
 static zend_object *mapscript_grid_create_object(zend_class_entry *ce TSRMLS_DC)
@@ -225,17 +236,6 @@ PHP_MINIT_FUNCTION(grid)
 }
 #else
 /* PHP5 */
-void mapscript_create_grid(graticuleObj *grid, parent_object parent, zval *return_value TSRMLS_DC)
-{
-  php_grid_object * php_grid;
-  object_init_ex(return_value, mapscript_ce_grid);
-  php_grid = MAPSCRIPT_OBJ_P(php_grid_object, return_value);
-  php_grid->grid = grid;
-
-  php_grid->parent = parent;
-  MAPSCRIPT_ADDREF(parent.val);
-}
-
 static void mapscript_grid_object_destroy(void *object TSRMLS_DC)
 {
   php_grid_object *php_grid = (php_grid_object *)object;
