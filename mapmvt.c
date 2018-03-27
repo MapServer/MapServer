@@ -73,7 +73,6 @@ static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
 static void mvtReverseRingDirection(lineObj *ring) {
   pointObj temp;
   int start=1, end=ring->numpoints-2; /* first and last points are the same so skip 'em */
-  int i;
 
   while (start < end) {
     temp.x = ring->point[start].x; temp.y = ring->point[start].y;
@@ -327,7 +326,6 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
     int i;
     shapeObj shape;
     gmlItemListObj *item_list = NULL;
-    int  reproject = MS_FALSE;
     VectorTile__Tile__Layer *mvt_layer;
     value_lookup_table value_lookup_cache = {NULL};
     value_lookup *cur_value_lookup, *tmp_value_lookup;
