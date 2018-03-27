@@ -220,6 +220,17 @@ zend_function_entry legend_functions[] = {
   }
 };
 
+void mapscript_create_legend(legendObj *legend, parent_object parent, zval *return_value TSRMLS_DC)
+{
+  php_legend_object * php_legend;
+  object_init_ex(return_value, mapscript_ce_legend);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, return_value);
+  php_legend->legend = legend;
+
+  php_legend->parent = parent;
+  MAPSCRIPT_ADDREF(parent.val);
+}
+
 
 #if PHP_VERSION_ID >= 70000
 /* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
@@ -276,17 +287,6 @@ PHP_MINIT_FUNCTION(legend)
 }
 #else
 /* PHP5 */
-void mapscript_create_legend(legendObj *legend, parent_object parent, zval *return_value TSRMLS_DC)
-{
-  php_legend_object * php_legend;
-  object_init_ex(return_value, mapscript_ce_legend);
-  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, return_value);
-  php_legend->legend = legend;
-
-  php_legend->parent = parent;
-  MAPSCRIPT_ADDREF(parent.val);
-}
-
 static void mapscript_legend_object_destroy(void *object TSRMLS_DC)
 {
   php_legend_object *php_legend = (php_legend_object *)object;
