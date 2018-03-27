@@ -57,6 +57,37 @@
 
 
 
+
+
+/************************************************************************/
+/*                          msXMLStripIndentation                       */
+/************************************************************************/
+
+static void msXMLStripIndentation(char* ptr)
+{
+    /* Remove spaces between > and < to get properly indented result */
+    char* afterLastClosingBracket = NULL;
+    if( *ptr == ' ' )
+        afterLastClosingBracket = ptr;
+    while( *ptr != '\0' )
+    {
+        if( *ptr == '<' && afterLastClosingBracket != NULL )
+        {
+            memmove(afterLastClosingBracket, ptr, strlen(ptr) + 1);
+            ptr = afterLastClosingBracket;
+        }
+        else if( *ptr == '>' )
+        {
+            afterLastClosingBracket = ptr + 1;
+        }
+        else if( *ptr != ' ' &&  *ptr != '\n' )
+            afterLastClosingBracket = NULL;
+        ptr ++;
+    }
+}
+
+
+
 /************************************************************************/
 /*                   msStringParseInteger()                             */
 /*                                                                      */
@@ -275,6 +306,7 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
   params->request         = NULL;
   params->service         = NULL;
   params->accept_versions = NULL;
+  params->accept_languages = NULL;
   params->sections        = NULL;
   params->updatesequence  = NULL;
   params->ids             = NULL;
@@ -317,6 +349,7 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
   msFree(params->request);
   msFree(params->service);
   CSLDestroy(params->accept_versions);
+  CSLDestroy(params->accept_languages);
   CSLDestroy(params->sections);
   msFree(params->updatesequence);
   CSLDestroy(params->ids);
@@ -785,7 +818,15 @@ static int msWCSParseRequest20_XMLGetCapabilities(
       /* Maybe not necessary, since only format is xml.   */
       /* At least ignore it, to not generate an error.    */
     } else if(EQUAL((char *)child->name, "AcceptLanguages")) {
-      /* ignore */
+      xmlNodePtr languageNode;
+      XML_FOREACH_CHILD(child, languageNode) {
+        XML_LOOP_IGNORE_COMMENT_OR_TEXT(languageNode)
+        XML_ASSERT_NODE_NAME(languageNode, "Language");
+
+        content = (char *)xmlNodeGetContent(languageNode);
+        params->accept_languages = CSLAddString(params->accept_languages, content);
+        xmlFree(content);
+      }
     } else {
       XML_UNKNOWN_NODE_ERROR(child);
     }
@@ -1467,7 +1508,10 @@ int msWCSParseRequest20(mapObj *map,
     } else if (EQUAL(key, "ACCEPTFORMATS")) {
       /* ignore */
     } else if (EQUAL(key, "ACCEPTLANGUAGES")) {
-      /* ignore */
+      if (params->accept_languages != NULL) {
+        CSLDestroy(params->accept_languages);
+      }
+      params->accept_languages = CSLTokenizeString2(value, ",", 0);
     } else if (EQUAL(key, "COVERAGEID")) {
       if (params->ids != NULL) {
         msSetError(MS_WCSERR, "Parameter 'CoverageID' is already set. "
@@ -1778,7 +1822,7 @@ static int msWCSValidateAndFindAxes20(
 /*      structure.                                                      */
 /************************************************************************/
 
-static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapObj* map)
+static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapObj* map, int addInspire)
 {
   xmlNsPtr psXsiNs;
   char *schemaLocation = NULL;
@@ -1795,6 +1839,11 @@ static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapO
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_GMLCOV_10_NAMESPACE_URI,     BAD_CAST MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX);
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_SWE_20_NAMESPACE_URI,        BAD_CAST MS_OWSCOMMON_SWE_NAMESPACE_PREFIX);
 
+  if (addInspire) {
+    xmlNewNs(psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_URI, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX);
+    xmlNewNs(psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_URI, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX);
+  }
+
   psXsiNs = xmlSearchNs(pDoc, psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
 
   schemaLocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
@@ -1803,6 +1852,10 @@ static void msWCSPrepareNamespaces20(xmlDocPtr pDoc, xmlNodePtr psRootNode, mapO
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WCS_20_SCHEMAS_LOCATION);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+
+  if (addInspire) {
+    xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_INSPIRE_DLS_NAMESPACE_URI " " MS_INSPIRE_DLS_SCHEMA_LOCATION);
+  }
 
   xmlNewNsProp(psRootNode, psXsiNs, BAD_CAST "schemaLocation", BAD_CAST xsi_schemaLocation);
 
@@ -3189,6 +3242,55 @@ static int msWCSGetCapabilities20_CoverageSummary(
   return MS_SUCCESS;
 }
 
+
+/************************************************************************/
+/*                          msWCSAddInspireDSID20                       */
+/************************************************************************/
+
+static void msWCSAddInspireDSID20(mapObj *map,
+                                  xmlNsPtr psNsInspireDls,
+                                  xmlNsPtr psNsInspireCommon,
+                                  xmlNodePtr pDlsExtendedCapabilities)
+{
+    const char* dsid_code = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_dsid_code");
+    const char* dsid_ns = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_dsid_ns");
+    if( dsid_code == NULL )
+    {
+        xmlAddChild(pDlsExtendedCapabilities, xmlNewComment(BAD_CAST "WARNING: Required metadata \"inspire_dsid_code\" missing"));
+    }
+    else
+    {
+        int ntokensCode = 0, ntokensNS = 0;
+        char** tokensCode;
+        char** tokensNS = NULL;
+        int i;
+
+        tokensCode = msStringSplit(dsid_code, ',', &ntokensCode);
+        if( dsid_ns != NULL )
+            tokensNS = msStringSplitComplex( dsid_ns, ",", &ntokensNS, MS_ALLOWEMPTYTOKENS);
+        if( ntokensNS > 0 && ntokensNS != ntokensCode )
+        {
+            xmlAddChild(pDlsExtendedCapabilities,
+                        xmlNewComment(BAD_CAST "WARNING: \"inspire_dsid_code\" and \"inspire_dsid_ns\" have not the same number of elements. Ignoring inspire_dsid_ns"));
+            msFreeCharArray(tokensNS, ntokensNS);
+            tokensNS = NULL;
+            ntokensNS = 0;
+        }
+        for(i = 0; i<ntokensCode; i++ )
+        {
+            xmlNodePtr pSDSI = xmlNewNode(psNsInspireDls, BAD_CAST "SpatialDataSetIdentifier");
+            xmlAddChild(pDlsExtendedCapabilities, pSDSI);
+            xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Code", BAD_CAST tokensCode[i]);
+            if( ntokensNS > 0 && tokensNS[i][0] != '\0' )
+                xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
+        }
+        msFreeCharArray(tokensCode, ntokensCode);
+        if( ntokensNS > 0 )
+            msFreeCharArray(tokensNS, ntokensNS);
+    }
+}
+
+
 /************************************************************************/
 /*                   msWCSGetCapabilities20()                           */
 /*                                                                      */
@@ -3213,6 +3315,10 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
 
+  const char *inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_capabilities");
+
+  char *validated_language = msOWSLanguageNegotiation(map, "CO", params->accept_languages, CSLCount(params->accept_languages));
+
   /* -------------------------------------------------------------------- */
   /*      Create document.                                                */
   /* -------------------------------------------------------------------- */
@@ -3226,7 +3332,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /*      Name spaces                                                     */
   /* -------------------------------------------------------------------- */
 
-  msWCSPrepareNamespaces20(psDoc, psRootNode, map);
+  msWCSPrepareNamespaces20(psDoc, psRootNode, map, inspire_capabilities != NULL);
 
   /* lookup namespaces */
   psOwsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX );
@@ -3267,14 +3373,14 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceIdentification") ) {
     psNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                           psOwsNs, map, "OGC WCS", "2.0.1,1.1.1,1.0.0", "CO", NULL));
+                           psOwsNs, map, "OGC WCS", "2.0.1,1.1.1,1.0.0", "CO", validated_language));
     msWCSGetCapabilities20_CreateProfiles(map, psNode, psOwsNs);
   }
 
   /* Service Provider */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceProvider") ) {
     xmlAddChild(psRootNode,
-                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO", NULL));
+                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO", validated_language));
   }
 
   /* -------------------------------------------------------------------- */
@@ -3330,6 +3436,64 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       xmlAddChild(psOperationsNode, psNode);
     }
     msFree(script_url_encoded);
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Extended Capabilities for inspire                               */
+    /* -------------------------------------------------------------------- */
+
+    if (inspire_capabilities) {
+      msIOContext* old_context;
+      msIOContext* new_context;
+      msIOBuffer* buffer;
+
+      xmlNodePtr pRoot;
+      xmlNodePtr pOWSExtendedCapabilities;
+      xmlNodePtr pDlsExtendedCapabilities;
+      xmlNodePtr pChild;
+
+      xmlDocPtr pInspireTmpDoc = NULL;
+
+      xmlNsPtr psInspireCommonNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX );
+      xmlNsPtr psInspireDlsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX );
+
+
+      old_context = msIO_pushStdoutToBufferAndGetOldContext();
+      msOWSPrintInspireCommonExtendedCapabilities(stdout, map, "CO", OWS_WARN,
+                                                  "foo",
+                                                  "xmlns:" MS_INSPIRE_COMMON_NAMESPACE_PREFIX "=\"" MS_INSPIRE_COMMON_NAMESPACE_URI "\" "
+                                                  "xmlns:" MS_INSPIRE_DLS_NAMESPACE_PREFIX "=\"" MS_INSPIRE_DLS_NAMESPACE_URI "\" "
+                                                  "xmlns:xsi=\"" MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI "\"", validated_language, OWS_WCS);
+
+      new_context = msIO_getHandler(stdout);
+      buffer = (msIOBuffer *) new_context->cbData;
+
+      /* Remove spaces between > and < to get properly indented result */
+      msXMLStripIndentation( (char*) buffer->data );
+
+      pInspireTmpDoc = xmlParseDoc((const xmlChar *)buffer->data);
+      pRoot = xmlDocGetRootElement(pInspireTmpDoc);
+      xmlReconciliateNs(psDoc, pRoot);
+
+      pOWSExtendedCapabilities = xmlNewNode(psOwsNs, BAD_CAST "ExtendedCapabilities");
+      xmlAddChild(psOperationsNode, pOWSExtendedCapabilities);
+
+      pDlsExtendedCapabilities = xmlNewNode(psInspireDlsNs, BAD_CAST "ExtendedCapabilities");
+      xmlAddChild(pOWSExtendedCapabilities, pDlsExtendedCapabilities);
+
+      pChild = pRoot->children;
+      while(pChild != NULL)
+      {
+          xmlNodePtr pNext = pChild->next;
+          xmlUnlinkNode(pChild);
+          xmlAddChild(pDlsExtendedCapabilities, pChild);
+          pChild = pNext;
+      }
+
+      msWCSAddInspireDSID20(map, psInspireDlsNs, psInspireCommonNs, pDlsExtendedCapabilities);
+
+      msIO_restoreOldStdoutContext(old_context);
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -3416,6 +3580,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /*      Write out the document and clean up.                            */
   /* -------------------------------------------------------------------- */
   msWCSWriteDocument20(map, psDoc);
+  msFree(validated_language);
   xmlFreeDoc(psDoc);
   xmlCleanupParser();
   return MS_SUCCESS;
@@ -3589,7 +3754,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
   xmlDocSetRootElement(psDoc, psRootNode);
 
   /* prepare initial namespace definitions */
-  msWCSPrepareNamespaces20(psDoc, psRootNode, map);
+  msWCSPrepareNamespaces20(psDoc, psRootNode, map, MS_FALSE);
 
   psWcsNs = xmlSearchNs(psDoc, psRootNode,
                         BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX);
@@ -4738,7 +4903,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     psRootNode = xmlNewNode(NULL, BAD_CAST MS_WCS_GML_COVERAGETYPE_RECTIFIED_GRID_COVERAGE);
     xmlDocSetRootElement(psDoc, psRootNode);
 
-    msWCSPrepareNamespaces20(psDoc, psRootNode, map);
+    msWCSPrepareNamespaces20(psDoc, psRootNode, map, MS_FALSE);
 
     psGmlNs    = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
     psGmlcovNs = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX);

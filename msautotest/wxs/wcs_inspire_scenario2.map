@@ -1,0 +1,152 @@
+#
+# Test Inspire Download Service WCS 2.0 - Scenario 2 - Directly embedded metadata
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
+#
+# GetCapabilities via HTTP GET/KVP
+#
+# RUN_PARMS: wcs_20_cap_inspire_embed.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_default.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities&ACCEPTLANGUAGES=eng" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_unknown.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities&ACCEPTLANGUAGES=unk" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_secondary.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities&ACCEPTLANGUAGES=ger" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_multiple.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities&ACCEPTLANGUAGES=unk,ger" > [RESULT_DEMIME]
+#
+# GetCapabilities via HTTP POST/XML
+#
+# RUN_PARMS: wcs_20_cap_inspire_embed.xml [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"/>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_default.xml [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><AcceptLanguages xmlns:ows="http://www.opengis.net/ows/2.0"><Language>eng</Language></AcceptLanguages></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_unknown.xml [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><AcceptLanguages xmlns:ows="http://www.opengis.net/ows/2.0"><Language>unk</Language></AcceptLanguages></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_secondary.xml [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><AcceptLanguages xmlns:ows="http://www.opengis.net/ows/2.0"><Language>ger</Language></AcceptLanguages></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_cap_inspire_embed_acceptlanguage_multiple.xml [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><AcceptLanguages xmlns:ows="http://www.opengis.net/ows/2.0"><Language>unk</Language><Language>ger</Language></AcceptLanguages></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+#
+
+MAP
+
+NAME TEST
+SIZE 400 300
+EXTENT 0 0 400 300
+MAXSIZE 5000
+
+#CONFIG  "MS_ERRORFILE" "stderr"
+
+IMAGETYPE PNG
+TRANSPARENT OFF
+SHAPEPATH "data"
+
+OUTPUTFORMAT
+  NAME GEOTIFF_BYTE
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE BYTE
+  EXTENSION "tif"
+END
+OUTPUTFORMAT
+  NAME GDPNGGREY
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png; mode=8bit"
+  IMAGEMODE PC256
+  EXTENSION "png"
+END
+OUTPUTFORMAT
+  NAME AAIGRID
+  DRIVER "GDAL/AAIGRID"
+  MIMETYPE "image/x-aaigrid"
+  IMAGEMODE INT16
+  EXTENSION "grd"
+  FORMATOPTION "FILENAME=result.grd"
+END
+
+PROJECTION
+  "init=epsg:32611"
+END
+
+WEB
+  METADATA
+   "ows_languages" "eng,fre,ger"                                                 #first default, values according ISO 639-2/B
+
+   # OWS stuff for server
+   "ows_updatesequence"         "2007-10-30T14:23:38Z"
+   "ows_title"                  "First Test Service"
+   "ows_title.ger"              "Erstes Test Service"
+   "ows_fees"                   "NONE"
+   "ows_fees.ger"               "KEINE"
+   "ows_accessconstraints"      "NONE"
+   "ows_accessconstraints.ger"  "KEINE"
+   "ows_abstract"               "Test Abstract"
+   "ows_abstract.ger"           "Test Beschreibung"
+   "ows_keywordlist"            "keyword,list"
+   "ows_keywordlist.ger"        "schluesselwort,liste"
+   "ows_service_onlineresource" "http://198.202.74.215/cgi-bin/wcs_demo"
+   "ows_contactorganization"    "OSGeo"
+   "ows_contactperson"          "Frank Warmerdam"
+   "ows_contactposition"        "Software Developer"
+   "ows_contactvoicetelephone"  "(613) 754-2041"
+   "ows_contactfacsimiletelephone" "(613) 754-2041x343"
+   "ows_address"                "3594 Foymount Rd"
+   "ows_city"                   "Eganville"
+   "ows_stateorprovince"        "Ontario"
+   "ows_postcode"               "K0J 1T0"
+   "ows_country"                "Canada"
+   "ows_contactelectronicmailaddress" "warmerdam@pobox.com"
+   "ows_hoursofservice"         "0800h - 1600h EST"
+   "ows_contactinstructions"    "during hours of service"
+   "ows_role"                   "staff"
+
+   "ows_enable_request"         "*"
+   "ows_srs"	                "EPSG:32611 EPSG:4326"
+
+   # OGC:WCS
+   "wcs_label"    "Test Label"
+   "wcs_description" "Test description"
+   "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
+   "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+
+   # INSPIRE dl service related metadata
+   "wcs_inspire_capabilities"       "embed"
+   "wcs_inspire_temporal_reference" "2011-09-19"                                 #date of last revision, value according YYYY-MM-DD
+   "wcs_inspire_mpoc_name"          "mympocname"                                 #point of contact
+   "wcs_inspire_mpoc_email"         "mympoc@e.mail"                              #point of contact
+   "wcs_inspire_metadatadate"       "2011-09-19"
+   "wcs_inspire_resourcelocator"    "http://myinspireresource"                   #URL for ResourceLocator
+   "wcs_inspire_keyword"            "infoCoverageAccessService"                  #value according "classification of spatial data services"
+   "wcs_inspire_dsid_code"          "mycode,mycode2,mycode3"
+   "wcs_inspire_dsid_ns"            "http://mycode,,http://mycode3"
+  END
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  TILEINDEX "wcs_index.shp"
+  TILEITEM "location"
+
+  PROJECTION
+    "init=epsg:32611"
+  END
+  METADATA
+   "ows_extent" "0 0 400 300"
+   "wcs_label" "Test label"
+   "ows_srs"	"EPSG:32611 EPSG:4326"
+   "wcs_resolution" "10 10"
+   "wcs_bandcount" "1"
+   "wcs_formats" "GEOTIFF_BYTE PNG AAIGRID"
+   "wcs_nativeformat" "GeoTIFF"
+   "wcs_native_format" "image/tiff"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "Category: Image
+Product: IKONOS-2 PAN/MSI
+Acquisition: 1999-10-11 18:47"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "Landsat 5 TM Bands"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "Bands for Landsat 5 TM"
+   "wcs_rangeset_nullvalue" "-99"
+   "wcs_imagemode" "BYTE"
+  END
+END
+
+END
