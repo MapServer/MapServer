@@ -1250,7 +1250,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         } else {
           format = msSelectOutputFormat( map, values[i] );
           if( format == NULL ||
-              (strncasecmp(format->driver, "GD/", 3) != 0 &&
+              (strncasecmp(format->driver, "MVT", 3) != 0 &&
                strncasecmp(format->driver, "GDAL/", 5) != 0 &&
                strncasecmp(format->driver, "AGG/", 4) != 0 &&
                strncasecmp(format->driver, "UTFGRID", 7) != 0 &&
@@ -3886,8 +3886,18 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
         msDrawLayer(map, GET_LAYER(map, i), img);
     }
 
-  } else
+  } else {
+
+    /* intercept requests for Mapbox vector tiles */
+    if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/x-protobuf")) {
+      int status=0;
+      if((status = msMVTWriteTile(map, MS_TRUE)) != MS_SUCCESS) return MS_FAILURE;
+      return MS_SUCCESS;
+    }
+
     img = msDrawMap(map, drawquerymap);
+  }
+
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 

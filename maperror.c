@@ -594,6 +594,9 @@ char *msGetVersion()
 #ifdef USE_V8_MAPSCRIPT
   strcat(version, " SUPPORTS=V8");
 #endif
+#ifdef USE_PBF
+  strcat(version, " SUPPORTS=PBF");
+#endif
 #ifdef USE_JPEG
   strcat(version, " INPUT=JPEG");
 #endif

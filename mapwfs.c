@@ -492,6 +492,11 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
     } else {
       msLoadProjectionString(&(map->projection), pszOutputSRS);
     }
+
+    nTmp = GetMapserverUnitUsingProj(&(map->projection));
+    if( nTmp != -1 ) {
+      map->units = nTmp;
+    }
   }
 
   msFree(pszOutputSRS);
@@ -2571,6 +2576,25 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       map->query.type = MS_QUERY_BY_RECT; /* setup the query */
       map->query.mode = MS_QUERY_MULTIPLE;
       map->query.rect = bbox;
+
+      /*
+        Retaining this block of code in case we want to setup a rendering path through
+        the query code at some point.
+      */
+      /* if(map->outputformat && MS_DRIVER_MVT(map->outputformat)) {
+        const char *mvt_buffer = msGetOutputFormatOption(map->outputformat, "EDGE_BUFFER", "10");
+        int buffer = MS_ABS(atoi(mvt_buffer));
+        double res = (bbox.maxx - bbox.minx)/(double)map->width;
+        bbox.minx -= buffer * res;
+        bbox.maxx += buffer * res;
+        res = (bbox.maxy - bbox.miny)/(double)map->height;
+        bbox.miny -= buffer * res;
+        bbox.maxy += buffer * res;
+        map->width += buffer*2;
+        map->height += buffer*2;
+        msCalculateScale(bbox,map->units,map->width,map->height, map->resolution, &map->scaledenom);
+        map->query.rect = bbox;
+      } */
 
       if(msQueryByRect(map) != MS_SUCCESS) {
         errorObj   *ms_error;

@@ -121,6 +121,9 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"kml","KML","application/vnd.google-earth.kml+xml"},
   {"kmz","KMZ","application/vnd.google-earth.kmz"},
 #endif
+#ifdef USE_PBF
+  {"mvt","MVT","application/vnd.mapbox-vector-tile"},
+#endif
   {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
 };
@@ -209,6 +212,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("jpg");
     format->renderer = MS_RENDER_WITH_AGG;
   }
+#if defined(USE_PBF)
+  else if( strcasecmp(driver,"MVT") == 0 ) {
+    if(!name) name="mvt";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("application/x-protobuf");
+    format->imagemode = MS_IMAGEMODE_FEATURE;
+    format->extension = msStrdup("pbf");
+    format->renderer = MS_RENDER_WITH_MVT;
+  }
+#endif
 
   else if( strcasecmp(driver,"AGG/MIXED") == 0 &&
            name != NULL && strcasecmp(name,"jpegpng") == 0 ) {
@@ -947,6 +960,7 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
             strcasecmp(map->outputformatlist[i]->driver, "CAIRO/PDF")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "kml")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "kmz")==0 ||
+            strcasecmp(map->outputformatlist[i]->driver, "mvt")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "UTFGRID")==0))
         mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
@@ -1089,6 +1103,10 @@ int msInitializeRendererVTable(outputFormatObj *format)
       return msPopulateRendererVTableAGG(format->vtable);
     case MS_RENDER_WITH_UTFGRID:
       return msPopulateRendererVTableUTFGrid(format->vtable);
+#ifdef USE_PBF
+    case MS_RENDER_WITH_MVT:
+      return msPopulateRendererVTableMVT(format->vtable);
+#endif
 #ifdef USE_CAIRO
     case MS_RENDER_WITH_CAIRO_RASTER:
       return msPopulateRendererVTableCairoRaster(format->vtable);
