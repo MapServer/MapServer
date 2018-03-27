@@ -63,6 +63,9 @@
 #
 # Exception when requesting layers with different SRS
 # RUN_PARMS: wfsogr_exception_not_same_srs.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=multi,withnullvalues,popplace,road" > [RESULT]
+#
+# PropertyName and OGR output format (#5573)
+# RUN_PARMS: wfsogr_ogroutput_propertyname.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=road&PROPERTYNAME=name_e&MAXFEATURES=1&OUTPUTFORMAT=multimidmif" > [RESULT]
 # 
 # WMS 1.1 - GetFeatureInfo
 #

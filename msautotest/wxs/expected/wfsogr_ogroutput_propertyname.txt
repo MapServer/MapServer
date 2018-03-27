@@ -1,0 +1,40 @@
+Content-Type: multipart/mixed; boundary=xxOGRBoundaryxx
+
+--xxOGRBoundaryxx
+Content-Disposition: attachment; filename=road.mid
+Content-Type: application/binary
+Content-Transfer-Encoding: binary
+
+""
+
+--xxOGRBoundaryxx
+Content-Disposition: attachment; filename=road.mif
+Content-Type: application/binary
+Content-Transfer-Encoding: binary
+
+Version 300
+Charset "Neutral"
+Delimiter ","
+CoordSys Earth Projection 3, 74, "m", -95, 49, 49, 77, 0, 0
+Columns 1
+  NAME_E Char(26)
+Data
+
+Pline 14
+2577257 430271.1875
+2577292 420127.65625
+2577297.5 418604.78125
+2577491.75 417462.90625
+2578069 415941.46875
+2578836.5 414230.25
+2579413.25 412899.1875
+2580247.5 412070.84375
+2580693.5 411149.46875
+2580978.5 408984.375
+2580750.5 407559.96875
+2580066.75 405736.6875
+2579326 403970.4375
+2578927.5 402717.03125
+    Pen (1,2,0)
+
+--xxOGRBoundaryxx--
