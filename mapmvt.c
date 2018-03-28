@@ -473,6 +473,7 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
                   len);
   }
   msIO_fwrite(buf,len,1,stdout);
+  msFree(buf);
 
   cleanup:
   freeMvtTile(&mvt_tile);
