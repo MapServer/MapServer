@@ -219,7 +219,7 @@ class ms_ext(build_ext):
 
     
 mapserver_module = Extension('_mapscript',
-                        sources=["mapscript_wrap.c", "pygdioctx/pygdioctx.c"],
+                        sources=["mapscript_wrap.c"],
 #                        define_macros = define_macros,
                         extra_compile_args = extra_compile_args,
                         extra_link_args = extra_link_args)
