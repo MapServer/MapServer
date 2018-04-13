@@ -7,11 +7,12 @@
 # RUN_PARMS: wms_layer_groups_caps111.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
 
 # GetMap all
-# RUN_PARMS: wms_layer_groups_map_all.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,100,100&WIDTH=100&HEIGHT=100&LAYERS=TESTGROUP&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_layer_groups_map_all.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,150,100&WIDTH=100&HEIGHT=150&LAYERS=TESTGROUP&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
 # RUN_PARMS: wms_layer_groups_map_g1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,100,100&WIDTH=100&HEIGHT=100&LAYERS=g1&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
 # RUN_PARMS: wms_layer_groups_map_sg1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,100,100&WIDTH=100&HEIGHT=100&LAYERS=sg1&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
 # RUN_PARMS: wms_layer_groups_map_sg2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,100,100&WIDTH=100&HEIGHT=100&LAYERS=sg2&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
 # RUN_PARMS: wms_layer_groups_map_g2sg3l1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,100,100&WIDTH=100&HEIGHT=100&LAYERS=g2sg3l1&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_layer_groups_map_g3.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,150,100&WIDTH=100&HEIGHT=150&LAYERS=g3&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
 
 MAP
 
@@ -21,7 +22,7 @@ MAP
     MAXSIZE 2048
     SIZE 100 100
     
-    EXTENT 0 0 100 100
+    EXTENT 0 0 100 150
     UNITS dd
 	WEB
 	 METADATA
@@ -102,6 +103,42 @@ MAP
 		END
 	  END
 	  FEATURE POINTS 50 70 END END
+    END
+
+    LAYER
+        TYPE POINT
+        NAME "g3"
+        STATUS ON
+        METADATA
+            "wms_title" "My g3"
+        END
+        CLASS
+            LABEL
+                TEXT "g3"
+                COLOR 0 0 0
+                SIZE 8
+                POSITION cc
+                END
+        END
+        FEATURE POINTS 50 90 END END
+    END
+
+    LAYER
+        TYPE POINT
+        NAME "g3sg4"
+        STATUS ON
+        METADATA
+            "wms_layer_group" "/g3/sg4"
+        END
+        CLASS
+            LABEL
+                TEXT "g3/sg4/l1"
+                COLOR 0 0 0
+                SIZE 8
+                POSITION cc
+                END
+        END
+        FEATURE POINTS 50 110 END END
     END
 
 END
