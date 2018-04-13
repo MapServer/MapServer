@@ -29,7 +29,7 @@ INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
-SWIG_ADD_MODULE(pythonmapscript python ../mapscript.i pygdioctx/pygdioctx.c)
+SWIG_ADD_MODULE(pythonmapscript python ../mapscript.i)
 
 SWIG_LINK_LIBRARIES(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
 
