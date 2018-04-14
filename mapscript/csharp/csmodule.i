@@ -126,10 +126,10 @@ inner exceptions. Otherwise the exception message will be concatenated*/
  *****************************************************************************/
  
 %pragma(csharp) imclasscode=%{
-  public class StringArrayMarshal : IDisposable {
-    public readonly IntPtr[] _ar;
+  public class StringArrayMarshal : System.IDisposable {
+    public readonly System.IntPtr[] _ar;
     public StringArrayMarshal(string[] ar) {
-      _ar = new IntPtr[ar.Length];
+      _ar = new System.IntPtr[ar.Length];
       for (int cx = 0; cx < _ar.Length; cx++) {
 	      _ar[cx] = System.Runtime.InteropServices.Marshal.StringToHGlobalAnsi(ar[cx]);
       }
@@ -143,7 +143,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
   }
 %}
 
-%typemap(imtype, out="IntPtr") char** "IntPtr[]"
+%typemap(imtype, out="System.IntPtr") char** "System.IntPtr[]"
 %typemap(cstype) char** %{string[]%}
 %typemap(in) char** %{ $1 = ($1_ltype)$input; %}
 %typemap(out) char** %{ $result = $1; %}
@@ -161,12 +161,12 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 /* specializations */
 %typemap(csvarout, excode=SWIGEXCODE2) char** formatoptions %{
     get {
-        IntPtr cPtr = $imcall;
-        IntPtr objPtr;
+        System.IntPtr cPtr = $imcall;
+        System.IntPtr objPtr;
 	    string[] ret = new string[this.numformatoptions];
         for(int cx = 0; cx < this.numformatoptions; cx++) {
-            objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-            ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
+            objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(System.IntPtr)));
+            ret[cx]= (objPtr == System.IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
         }
         $excode
         return ret;
@@ -174,12 +174,12 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 %}
 %typemap(csvarout, excode=SWIGEXCODE2) char** values %{
     get {
-        IntPtr cPtr = $imcall;
-        IntPtr objPtr;
+        System.IntPtr cPtr = $imcall;
+        System.IntPtr objPtr;
 	    string[] ret = new string[this.numvalues];
         for(int cx = 0; cx < this.numvalues; cx++) {
-            objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-            ret[cx]= (objPtr == IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
+            objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(System.IntPtr)));
+            ret[cx]= (objPtr == System.IntPtr.Zero) ? null : System.Runtime.InteropServices.Marshal.PtrToStringAnsi(objPtr);
         }
         $excode
         return ret;
@@ -191,16 +191,16 @@ inner exceptions. Otherwise the exception message will be concatenated*/
  *****************************************************************************/
 
 %typemap(ctype) outputFormatObj** "void*"
-%typemap(imtype) outputFormatObj** "IntPtr"
+%typemap(imtype) outputFormatObj** "System.IntPtr"
 %typemap(cstype) outputFormatObj** "outputFormatObj[]"
 %typemap(out) outputFormatObj** %{ $result = $1; %}
 %typemap(csout, excode=SWIGEXCODE) outputFormatObj** {
-      IntPtr cPtr = $imcall;
-	  IntPtr objPtr;
+      System.IntPtr cPtr = $imcall;
+      System.IntPtr objPtr;
       outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
       for(int cx = 0; cx < this.numoutputformats; cx++) {
-          objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false, ThisOwn_false());
+          objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(System.IntPtr)));
+          ret[cx] = (objPtr == System.IntPtr.Zero) ? null : new outputFormatObj(objPtr, false, ThisOwn_false());
       }
       $excode
       return ret;
@@ -208,12 +208,12 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 
 %typemap(csvarout, excode=SWIGEXCODE2) outputFormatObj** %{
     get {
-	  IntPtr cPtr = $imcall;
-	  IntPtr objPtr;
+	  System.IntPtr cPtr = $imcall;
+	  System.IntPtr objPtr;
       outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
       for(int cx = 0; cx < this.numoutputformats; cx++) {
-          objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-          ret[cx] = (objPtr == IntPtr.Zero) ? null : new outputFormatObj(objPtr, false, ThisOwn_false());
+          objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(System.IntPtr)));
+          ret[cx] = (objPtr == System.IntPtr.Zero) ? null : new outputFormatObj(objPtr, false, ThisOwn_false());
       }
       $excode
       return ret;
@@ -225,7 +225,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
  *****************************************************************************/
 
 %pragma(csharp) imclasscode=%{
-  public delegate void SWIGByteArrayDelegate(IntPtr data, int size);
+  public delegate void SWIGByteArrayDelegate(System.IntPtr data, int size);
 %}
 
 %insert(runtime) %{
@@ -241,8 +241,8 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %typemap(in) SWIG_CSharpByteArrayHelperCallback %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) SWIG_CSharpByteArrayHelperCallback "$csinput"
 
-%typemap(imtype) (unsigned char* pixels) "IntPtr"
-%typemap(cstype) (unsigned char* pixels) "IntPtr"
+%typemap(imtype) (unsigned char* pixels) "System.IntPtr"
+%typemap(cstype) (unsigned char* pixels) "System.IntPtr"
 %typemap(in) (unsigned char* pixels) %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) (unsigned char* pixels) "$csinput"
 
@@ -289,7 +289,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %ignore imageObj::write;
 %typemap(cscode) imageObj, struct imageObj %{
   private byte[] gdbuffer;
-  private void CreateByteArray(IntPtr data, int size)
+  private void CreateByteArray(System.IntPtr data, int size)
   {
       gdbuffer = new byte[size];
       Marshal.Copy(data, gdbuffer, 0, size);
@@ -313,7 +313,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %csmethodmodifiers processLegendTemplate "private";
 %csmethodmodifiers processQueryTemplate "private";
 
-%typemap(csinterfaces) mapObj "IDisposable, System.Runtime.Serialization.ISerializable"; 
+%typemap(csinterfaces) mapObj "System.IDisposable, System.Runtime.Serialization.ISerializable"; 
 %typemap(csattributes) mapObj  "[Serializable]"
 %typemap(cscode) mapObj, struct mapObj %{  
   public string processTemplate(int bGenerateImages, string[] names, string[] values)
@@ -375,13 +375,13 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %pragma(csharp) imclasscode=%{
   protected class SWIGByteArrayHelper 
 	{
-		public delegate void SWIGByteArrayDelegate(IntPtr data, int size);
+		public delegate void SWIGByteArrayDelegate(System.IntPtr data, int size);
 		static SWIGByteArrayDelegate bytearrayDelegate = new SWIGByteArrayDelegate(CreateByteArray);
 
-		[DllImport("$dllimport", EntryPoint="SWIGRegisterByteArrayCallback_$module")]
+		[System.Runtime.InteropServices.DllImport("$dllimport", System.Runtime.InteropServices.EntryPoint="SWIGRegisterByteArrayCallback_$module")]
 		public static extern void SWIGRegisterByteArrayCallback_mapscript(SWIGByteArrayDelegate bytearrayDelegate);
 
-		static void CreateByteArray(IntPtr data, int size) 
+		static void CreateByteArray(System.IntPtr data, int size)
 		{
 			arraybuffer = new byte[size];
 			Marshal.Copy(data, arraybuffer, 0, size);
@@ -418,13 +418,13 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 %}
 
 /* Typemaps for pattern array */
-%typemap(imtype) (double pattern[ANY]) "IntPtr"
+%typemap(imtype) (double pattern[ANY]) "System.IntPtr"
 %typemap(cstype) (double pattern[ANY]) "double[]"
 %typemap(in) (double pattern[ANY]) %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) (double pattern[ANY]) "$csinput"
 %typemap(csvarout, excode=SWIGEXCODE2) (double pattern[ANY]) %{
     get {
-      IntPtr cPtr = $imcall;
+        System.IntPtr cPtr = $imcall;
       double[] ret = new double[patternlength];
       if (patternlength > 0) {       
 	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, patternlength);
@@ -433,7 +433,7 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
       return ret;
     } 
     set {
-      IntPtr cPtr = $imcall;
+        System.IntPtr cPtr = $imcall;
       if (value.Length > 0) {       
 	        System.Runtime.InteropServices.Marshal.Copy(value, 0, cPtr, value.Length);
       }
@@ -444,14 +444,14 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 %typemap(csvarin, excode="") (double pattern[ANY]) %{$excode%}
 
 /* Typemaps for int array */
-%typemap(imtype, out="IntPtr") int *panIndexes "int[]"
+%typemap(imtype, out="System.IntPtr") int *panIndexes "int[]"
 %typemap(cstype) int *panIndexes %{int[]%}
 %typemap(in) int *panIndexes %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) (int *panIndexes)  "$csinput"
 
 /* Typemaps for device handle */
-%typemap(imtype) (void* device)  %{IntPtr%}
-%typemap(cstype) (void* device) %{IntPtr%}
+%typemap(imtype) (void* device)  %{ System.IntPtr%}
+%typemap(cstype) (void* device) %{ System.IntPtr%}
 %typemap(in) (void* device) %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) (void* device)  "$csinput"
 
@@ -474,7 +474,7 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 %}
 
 %typemap(csout, excode=SWIGEXCODE) classObj* getClass, layerObj* getLayer, layerObj *getLayerByName, styleObj* getStyle {
-    IntPtr cPtr = $imcall;
-    $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_false());$excode
+    System.IntPtr cPtr = $imcall;
+    $csclassname ret = (cPtr == System.IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_false());$excode
     return ret;
   }
