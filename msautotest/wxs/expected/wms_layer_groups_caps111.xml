@@ -95,7 +95,7 @@
   </Exception>
   <VendorSpecificCapabilities />
   <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
-  <Layer>
+  <Layer queryable="1">
     <Name>TESTGROUP</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
     <Title>TESTGROUP</Title>
@@ -146,13 +146,13 @@
         </Layer>
       </Layer>
     </Layer>
-    <Layer>
+    <Layer queryable="1">
       <Name>g2</Name>
       <Title>g2</Title>
-      <Layer>
+      <Layer queryable="1">
         <Name>sg3</Name>
         <Title>sg3</Title>
-        <Layer queryable="0" opaque="0" cascaded="0">
+        <Layer queryable="1" opaque="0" cascaded="0">
         <Name>g2sg3l1</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>g2sg3l1</Title>
@@ -164,7 +164,7 @@
         </Layer>
       </Layer>
     </Layer>
-    <Layer queryable="0" opaque="0" cascaded="0">
+    <Layer queryable="1" opaque="0" cascaded="0">
         <Name>g3</Name>
         <Title>My g3</Title>
         <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
@@ -172,17 +172,17 @@
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3"/>
         </MetadataURL>
-      <Layer>
+      <Layer queryable="1">
         <Name>sg4</Name>
         <Title>sg4</Title>
-        <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>g3sg4</Name>
+        <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>g3sg4l1</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
-        <Title>g3sg4</Title>
+        <Title>g3sg4l1</Title>
         <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
         <MetadataURL type="ISOTC211/19115">
           <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3sg4"/>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3sg4l1"/>
         </MetadataURL>
         </Layer>
       </Layer>

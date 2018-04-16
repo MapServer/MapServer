@@ -96,7 +96,7 @@
     <inspire_common:ResponseLanguage><inspire_common:Language>eng</inspire_common:Language></inspire_common:ResponseLanguage>
   </inspire_vs:ExtendedCapabilities>
   </VendorSpecificCapabilities>
-  <Layer>
+  <Layer queryable="1">
     <Name>TN</Name>
     <Title>Transport networks: Road and Railway</Title>
     <Abstract>Examples from the dataspecification transport networks</Abstract>
@@ -165,7 +165,7 @@
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN&amp;format=image/png&amp;STYLE=inspire_common:DEFAULT"/>
        </LegendURL>
     </Style>
-    <Layer queryable="0" opaque="0" cascaded="0">
+    <Layer queryable="1" opaque="0" cascaded="0">
         <Name>TN.CommonTransportElements</Name>
         <Title>TN.CommonTransportElements</Title>
         <KeywordList>
@@ -374,7 +374,7 @@
         </Style>
       </Layer>
     </Layer>
-    <Layer queryable="0" opaque="0" cascaded="0">
+    <Layer queryable="1" opaque="0" cascaded="0">
         <Name>TN.RoadTransportNetwork</Name>
         <Title>TN.RoadTransportNetwork</Title>
         <KeywordList>
@@ -625,7 +625,7 @@
         </Style>
       </Layer>
     </Layer>
-    <Layer queryable="0" opaque="0" cascaded="0">
+    <Layer queryable="1" opaque="0" cascaded="0">
         <Name>TN.RailTransportNetwork</Name>
         <Title>TN.RailTransportNetwork</Title>
         <KeywordList>

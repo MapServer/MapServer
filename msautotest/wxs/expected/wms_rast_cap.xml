@@ -111,7 +111,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
   </Exception>
   <VendorSpecificCapabilities />
   <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
-  <Layer>
+  <Layer queryable="1">
     <Name>WMS_TEST</Name>
     <Title>Test simple wms</Title>
     <Abstract>WMS_TEST</Abstract>

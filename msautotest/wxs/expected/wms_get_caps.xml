@@ -114,7 +114,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
   </Exception>
   <VendorSpecificCapabilities />
   <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
-  <Layer>
+  <Layer queryable="1">
     <Name>msautotest_wxs_</Name>
     <Title>Sample OWS for MapServer OGC Web Services Workshop</Title>
     <Abstract>Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!</Abstract>
@@ -135,7 +135,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://mapserver.gis.umn.edu/mum/header_fsa.png"/>
           </LogoURL>
     </Attribution>
-    <Layer>
+    <Layer queryable="1">
       <Name>Imagery</Name>
       <Title>Imagery</Title>
       <Abstract>Imagery layers</Abstract>
@@ -176,7 +176,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         </DataURL>
       </Layer>
     </Layer>
-    <Layer>
+    <Layer queryable="1">
       <Name>Vectors</Name>
       <Title>Vectors</Title>
       <Abstract>Vector layers</Abstract>
