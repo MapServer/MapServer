@@ -320,6 +320,12 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers,sizeof(VectorTile__Tile__Layer*));
 
+  /* expand the map->extent so it goes from pixel center (MapServer) to pixel edge (OWS) */
+  map->extent.minx -= map->cellsize * 0.5;
+  map->extent.maxx += map->cellsize * 0.5;
+  map->extent.miny -= map->cellsize * 0.5;
+  map->extent.maxy += map->cellsize * 0.5;
+
   for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
     int status=MS_SUCCESS;
     layerObj *layer = GET_LAYER(map, iLayer);
