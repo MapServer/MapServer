@@ -20,9 +20,9 @@ The mapscript family tree looks like this:
                  /  \    
                 /    \ 
      PHPMapScript     \  SWIGMapScript
-         PHP4      +----+-----+----+----+----+
-                   |    |     |    |    |    |
-                 Perl Python Ruby Java Tcl  ...
+         PHP4      +----+-----+----+----+----+------------+
+                   |    |     |    |    |    |            |
+                 Perl Python Ruby Java Tcl  PHP7 (PHPNG) ...
 
 
 The Perl, Python, Ruby flavors are like brothers and sisters and the PHP3
