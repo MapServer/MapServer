@@ -24,7 +24,7 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/phpng)
 if(WIN32)
 include_directories(${PHP7_FOUND_INCLUDE_PATH}/win32)
 endif(WIN32)
-SWIG_ADD_LIBRARY(php_mapscript TYPE MODULE LANGUAGE php7 SOURCES ../mapscript.i)
+SWIG_ADD_MODULE(php_mapscript php7 ../mapscript.i)
 
 if(WIN32)
 target_compile_options(php_mapscript PRIVATE /D_WIN32 /D_WINDOWS /DWINDOWS=1 /DZEND_WIN32=1 /DPHP_WIN32=1 /DWIN32 /DNDebug /DNDEBUG /DZEND_DEBUG=0)
