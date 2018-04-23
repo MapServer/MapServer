@@ -109,13 +109,13 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     const char* val = msLookupHashTable(hashTable, key);
     if( val )
     {
-#if PY_VERSION_HEX >= 0x03000000
+%#if PY_VERSION_HEX >= 0x03000000
         PyObject *py_key = PyUnicode_FromString(key);
         PyObject *py_val = PyUnicode_FromString(val);
-#else
+%#else
         PyObject *py_key = PyString_FromString(key);
         PyObject *py_val = PyString_FromString(val);
-#endif
+%#endif
 
         PyDict_SetItem($result, py_key, py_val );
         Py_DECREF(py_key);

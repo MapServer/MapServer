@@ -95,55 +95,55 @@ from cases.resultcachetest import DumpAndLoadTestCase
 suite = unittest.TestSuite()
 
 # Add tests to the suite
-suite.addTests([RectObjTestCase])
+suite.addTests([RectObjTestCase()])
 
-suite.addTests([HashTableTestCase, WebMetadataTestCase,
-                LayerMetadataTestCase, ClassMetadataTestCase])
+suite.addTests([HashTableTestCase(), WebMetadataTestCase(),
+                LayerMetadataTestCase(), ClassMetadataTestCase()])
 
-suite.addTests([MapCloningTestCase])
-suite.addTests([OWSRequestTestCase])
+suite.addTests([MapCloningTestCase()])
+suite.addTests([OWSRequestTestCase()])
 
-suite.addTests([ImageObjTestCase, ImageWriteTestCase,
-                SaveToStringTestCase])
+suite.addTests([ImageObjTestCase(), ImageWriteTestCase(),
+                SaveToStringTestCase()])
 
-suite.addTests([MapConstructorTestCase,
-                MapLayersTestCase,
-                MapExtentTestCase,
-                MapExceptionTestCase,
-                EmptyMapExceptionTestCase,
-                MapMetaDataTestCase])
+suite.addTests([MapConstructorTestCase(),
+                MapLayersTestCase(),
+                MapExtentTestCase(),
+                MapExceptionTestCase(),
+                EmptyMapExceptionTestCase(),
+                MapMetaDataTestCase()])
 
-suite.addTests([LayerConstructorTestCase,
-                LayerExtentTestCase,
-                LayerRasterProcessingTestCase,
-                RemoveLayerTestCase])
+suite.addTests([LayerConstructorTestCase(),
+                LayerExtentTestCase(),
+                LayerRasterProcessingTestCase(),
+                RemoveLayerTestCase()])
 
-suite.addTests([LineObjTestCase,
-                ShapePointTestCase,
-                PointObjTestCase,
-                InlineFeatureTestCase])
+suite.addTests([LineObjTestCase(),
+                ShapePointTestCase(),
+                PointObjTestCase(),
+                InlineFeatureTestCase()])
 
 
-suite.addTests([DrawProgrammedStylesTestCase,
-                NewStylesTestCase, BrushCachingTestCase,
-                ColorObjTestCase])
+suite.addTests([DrawProgrammedStylesTestCase(),
+                NewStylesTestCase(), BrushCachingTestCase(),
+                ColorObjTestCase()])
                 
-suite.addTests([SymbolTestCase,
-                MapSymbolTestCase])
+suite.addTests([SymbolTestCase(),
+                MapSymbolTestCase()])
 
-suite.addTests([SymbolSetTestCase,
-                MapSymbolSetTestCase])
+suite.addTests([SymbolSetTestCase(),
+                MapSymbolSetTestCase()])
 
-suite.addTests([ZoomPointTestCase,
-                ZoomRectangleTestCase,
-                ZoomScaleTestCase])
+suite.addTests([ZoomPointTestCase(),
+                ZoomRectangleTestCase(),
+                ZoomScaleTestCase()])
                 
-suite.addTests([OutputFormatTestCase, MapOutputFormatTestCase])
+suite.addTests([OutputFormatTestCase(), MapOutputFormatTestCase()])
 
-suite.addTest(LabelCacheMemberTestCase)
+suite.addTest(LabelCacheMemberTestCase())
 
-suite.addTests([ResultCacheTestCase, PointQueryResultsTestCase,
-                DumpAndLoadTestCase])
+suite.addTests([ResultCacheTestCase(), PointQueryResultsTestCase(),
+                DumpAndLoadTestCase()])
 
 # ============================================================================
 # If module is run as a script, execute every test case in the suite

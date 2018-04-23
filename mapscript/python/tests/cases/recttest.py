@@ -36,8 +36,8 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
-from testing import MapPrimitivesTestCase
+from .testing import mapscript
+from .testing import MapPrimitivesTestCase
 
 # ===========================================================================
 # Test begins now
@@ -85,7 +85,7 @@ class RectObjTestCase(MapPrimitivesTestCase):
         """test formatted error message"""
         try:
             r = mapscript.rectObj(1.0, -2.0, -3.0, 4.0)
-        except mapscript.MapServerError, msg:
+        except mapscript.MapServerError as msg:
             assert str(msg) == "rectObj(): Invalid rectangle. { 'minx': 1.000000 , 'miny': -2.000000 , 'maxx': -3.000000 , 'maxy': 4.000000 }", msg
 
     def testRect__str__(self):

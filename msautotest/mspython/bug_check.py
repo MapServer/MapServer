@@ -29,14 +29,13 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 import pmstestlib
 
 import mapscript
-import os
 
 ###############################################################################
 # Attempt to verify that bug673 remains fixed.  This bug is trigger if
@@ -49,8 +48,7 @@ import os
 
 def bug_673():
 
-    
-    if string.find(mapscript.msGetVersion(),'SUPPORTS=PROJ') == -1:
+    if 'SUPPORTS=PROJ' not in mapscript.msGetVersion():
         return 'skip'
 
     map = mapscript.mapObj('../misc/ogr_direct.map')
@@ -106,21 +104,21 @@ def test_pattern():
         si.pattern = [1.0]
         pmstestlib.post_reason('fail 5')
         return 'fail'
-    except mapscript.MapServerError, e:
+    except mapscript.MapServerError:
         pass
 
     try:
         si.pattern = [i for i in range(11)]
         pmstestlib.post_reason('fail 6')
         return 'fail'
-    except mapscript.MapServerError, e:
+    except mapscript.MapServerError:
         pass
 
     try:
         si.patternlength = 0
         pmstestlib.post_reason('fail 7')
         return 'fail'
-    except mapscript.MapServerError, e:
+    except mapscript.MapServerError:
         pass
 
     return 'success'

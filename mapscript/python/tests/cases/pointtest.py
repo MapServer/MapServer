@@ -36,10 +36,9 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
-from testing import MapscriptTestCase
+from .testing import mapscript
 
-class PointObjTestCase(MapscriptTestCase):
+class PointObjTestCase(unittest.TestCase):
     
     def testPointObjConstructorNoArgs(self):
         """point can be created with no arguments"""

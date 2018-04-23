@@ -29,23 +29,22 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 import pmstestlib
 
 import mapscript
-import os
 
 ###############################################################################
 #
 
 def test_xmp():
 
-    if string.find(mapscript.msGetVersion(),'INPUT=GDAL') == -1:
+    if 'INPUT=GDAL' not in mapscript.msGetVersion():
         return 'skip'
-    if string.find(mapscript.msGetVersion(),'SUPPORTS=XMP') == -1:
+    if 'SUPPORTS=XMP' not in mapscript.msGetVersion():
         return 'skip'
 
     map = mapscript.mapObj('test_xmp.map')

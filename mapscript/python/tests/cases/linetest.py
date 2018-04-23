@@ -36,8 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
-from testing import MapPrimitivesTestCase
+from .testing import MapPrimitivesTestCase, mapscript
 
 class LineObjTestCase(MapPrimitivesTestCase):
     """Testing the lineObj class in stand-alone mode"""

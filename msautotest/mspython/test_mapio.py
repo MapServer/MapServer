@@ -30,22 +30,20 @@
 ###############################################################################
 
 import sys
-import string
 
 sys.path.append( '../pymod' )
 import pmstestlib
 
 import mapscript
-import os
 
 ###############################################################################
 #
 
 def test_msIO_getAndStripStdoutBufferMimeHeaders():
 
-    if string.find(mapscript.msGetVersion(),'INPUT=GDAL') == -1:
+    if 'INPUT=GDAL' not in mapscript.msGetVersion():
         return 'skip'
-    if string.find(mapscript.msGetVersion(),'SUPPORTS=WMS') == -1:
+    if 'SUPPORTS=WMS' not in mapscript.msGetVersion():
         return 'skip'
 
     map = mapscript.mapObj('test_mapio.map')
@@ -70,7 +68,7 @@ def test_msIO_getAndStripStdoutBufferMimeHeaders():
         return 'fail'
 
     result = mapscript.msIO_getStdoutBufferBytes()
-    if result is None or result[1:4] != 'PNG':
+    if result is None or result[1:4] != b'PNG':
         pmstestlib.post_reason( 'wrong data' )
         return 'fail'
 

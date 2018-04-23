@@ -21,7 +21,7 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:], "t:v")
     except getopt.GetoptError:
-        print "Usage: python runalldoctests.py [-t GLOB_PATTERN]"
+        print("Usage: python runalldoctests.py [-t GLOB_PATTERN]")
         sys.exit(2)
     pattern = None
     for o, a in opts:

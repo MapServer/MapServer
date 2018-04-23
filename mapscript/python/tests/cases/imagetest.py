@@ -34,15 +34,11 @@
 
 import os, sys
 import unittest
-
+from io import BytesIO
 # the testing module helps us import the pre-installed mapscript
 
-from testing import mapscript
-from testing import TEST_IMAGE as test_image
-from testing import TESTMAPFILE
-from testing import MapTestCase
-from StringIO import StringIO
-import cStringIO
+from .testing import TESTMAPFILE, TEST_IMAGE as test_image, mapscript
+from .testing import MapTestCase
 import urllib
 
 
@@ -115,12 +111,11 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.height == 200
         assert imgobj.width == 200
     
-    def xtestConstructorStringIO(self):
-        """imageObj with a cStringIO works"""
-        f = open(test_image, 'rb')
-        data = f.read()
-        f.close()
-        s = cStringIO.StringIO(data)
+    def xtestConstructorBytesIO(self):
+        """imageObj with a BytesIO works"""
+        with open(test_image, 'rb') as f:
+            data = f.read()
+        s = BytesIO(data)
         imgobj = mapscript.imageObj(s)
         assert imgobj.thisown == 1
         assert imgobj.height == 200
@@ -153,18 +148,17 @@ class ImageWriteTestCase(MapTestCase):
         else:
             assert 1
 
-    def testImageWriteStringIO(self):
-        """image writes data to a StringIO instance"""
+    def testImageWriteBytesIO(self):
+        """image writes data to a BytesIO instance"""
         image = self.map.draw()
         assert image.thisown == 1
         
-        s = cStringIO.StringIO()
+        s = BytesIO()
         image.write(s)
 
-        filename = 'testImageWriteStringIO.png'
-        fh = open(filename, 'wb')
-        fh.write(s.getvalue())
-        fh.close()
+        filename = 'testImageWriteBytesIO.png'
+        with open(filename, 'wb') as fh:
+            fh.write(s.getvalue())
         if have_image:
             pyimg = Image.open(filename)
             assert pyimg.format == 'PNG'
@@ -178,12 +172,11 @@ class ImageWriteTestCase(MapTestCase):
         image = self.map.draw()
         assert image.thisown == 1
          
-        s = cStringIO.StringIO(image.getBytes())
+        s = BytesIO(image.getBytes())
         
         filename = 'testImageGetBytes.png'
-        fh = open(filename, 'wb')
-        fh.write(s.getvalue())
-        fh.close()
+        with open(filename, 'wb') as fh:
+            fh.write(s.getvalue())
         if have_image:
             pyimg = Image.open(filename)
             assert pyimg.format == 'PNG'

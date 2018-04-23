@@ -36,7 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapTestCase
+from .testing import mapscript, MapTestCase
 
 # ===========================================================================
 # Test begins now

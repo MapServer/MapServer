@@ -47,12 +47,12 @@ def dumpResultSet( layer ):
         if result is None:
             break
         
-        print '(%d,%d)' % (result.shapeindex, result.tileindex)
+        print('(%d,%d)' % (result.shapeindex, result.tileindex))
 
         s = layer.getShape( result )
 
         for i in range(layer.numitems):
-            print '%s: %s' % (layer.getItem(i), s.getValue(i))
+            print('%s: %s' % (layer.getItem(i), s.getValue(i)))
             
     layer.close()
 
