@@ -1500,15 +1500,16 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
   /* Generate the http request */
   for (i=0; i<map->numlayers; i++) {
     if (GET_LAYER(map,map->layerorder[i])->status == MS_ON) {
-      if (type == WMS_GETFEATUREINFO &&
-          msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]),
+      if (type == WMS_GETFEATUREINFO ) {
+        if( msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]),
                                    WMS_GETFEATUREINFO,
                                    MS_WMS, &sLastWMSParams,
                                    nClickX, nClickY, nFeatureCount, pszInfoFormat,
                                    pasReqInfo, &numReq) == MS_FAILURE) {
-        msFreeWmsParamsObj(&sLastWMSParams);
-        msFree(pasReqInfo);
-        return MS_FAILURE;
+          msFreeWmsParamsObj(&sLastWMSParams);
+          msFree(pasReqInfo);
+          return MS_FAILURE;
+        }
       } else if (msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]),
                                           WMS_GETLEGENDGRAPHIC,
                                           MS_WMS, &sLastWMSParams,
