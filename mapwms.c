@@ -2210,7 +2210,11 @@ void msWMSPrintKeywordlist(FILE *stream, const char *tabspace,
 /*
 ** msDumpLayer()
 */
-int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_encoded, const char *indent, const char *validated_language, int grouplayer)
+static
+int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
+                const char *script_url_encoded, const char *indent,
+                const char *validated_language, int grouplayer,
+                int hasQueryableSubLayers)
 {
   rectObj ext;
   const char *value;
@@ -2230,7 +2234,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
   if (nVersion <= OWS_1_0_7) {
     msIO_printf("%s    <Layer queryable=\"%d\">\n",
-                indent, msIsLayerQueryable(lp));
+                indent, hasQueryableSubLayers || msIsLayerQueryable(lp));
   } else {
     /* 1.1.0 and later: opaque and cascaded are new. */
     int cascaded=0, opaque=0;
@@ -2240,7 +2244,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
       cascaded = 1;
 
     msIO_printf("%s    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
-                indent, msIsLayerQueryable(lp), opaque, cascaded);
+                indent, hasQueryableSubLayers || msIsLayerQueryable(lp), opaque, cascaded);
   }
 
   if (lp->name && strlen(lp->name) > 0 &&
@@ -2771,6 +2775,22 @@ int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, 
   return MS_TRUE;
 }
 
+/*
+ * msWMSHasQueryableSubLayers
+ */
+static int msWMSHasQueryableSubLayers(mapObj* map, int index, int level,
+                                      char*** nestedGroups, int* numNestedGroups)
+{
+    int j;
+    for (j = index; j < map->numlayers; j++) {
+      if (msWMSIsSubGroup(nestedGroups[index], level, nestedGroups[j], numNestedGroups[j])) {
+          if( msIsLayerQueryable( GET_LAYER(map,j) ) )
+              return MS_TRUE;
+      }
+    }
+    return MS_FALSE;
+}
+
 /***********************************************************************************
  * msWMSPrintNestedGroups()                                                        *
  *                                                                                 *
@@ -2802,7 +2822,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
   if (numNestedGroups[index] <= level) { /* no more subgroups */
     if ((!pabLayerProcessed[index]) && (!isUsedInNestedGroup[index])) {
       /* we are at the deepest level of the group branchings, so add layer now. */
-      msDumpLayer(map, GET_LAYER(map, index), nVersion, script_url_encoded, indent, validated_language, MS_FALSE);
+      msDumpLayer(map, GET_LAYER(map, index), nVersion, script_url_encoded, indent, validated_language, MS_FALSE, MS_FALSE);
       pabLayerProcessed[index] = 1; /* done */
     }
   } else { /* not yet there, we have to deal with this group and possible subgroups and layers. */
@@ -2815,12 +2835,17 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
     /* Beginning of a new group... enclose the group in a layer block */
     if ( j < map->numlayers ) {
       if (!pabLayerProcessed[j]) {
-        msDumpLayer(map, GET_LAYER(map, j), nVersion, script_url_encoded, indent, validated_language, MS_TRUE);
+        msDumpLayer(map, GET_LAYER(map, j), nVersion, script_url_encoded,
+                    indent, validated_language, MS_TRUE,
+                    msWMSHasQueryableSubLayers(map, index, level,
+                            nestedGroups, numNestedGroups));
         pabLayerProcessed[j] = 1; /* done */
         groupAdded = 1;
       }
     } else {
-      msIO_printf("%s    <Layer>\n", indent);
+      msIO_printf("%s    <Layer%s>\n", indent,
+        msWMSHasQueryableSubLayers(map, index, level,
+                    nestedGroups, numNestedGroups) ? " queryable=\"1\"" : "");
       msIO_printf("%s      <Name>%s</Name>\n", indent, nestedGroups[index][level]);
       msIO_printf("%s      <Title>%s</Title>\n", indent, nestedGroups[index][level]);
       groupAdded = 1;
@@ -3278,7 +3303,24 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   if (ows_request->numlayers == 0) {
     msIO_fprintf(stdout, "  <!-- WARNING: No WMS layers are enabled. Check wms/ows_enable_request settings. -->\n");
   } else {
-    msIO_printf("  <Layer>\n");
+    int root_is_queryable = MS_FALSE;
+
+    rootlayer_name = msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_name");
+
+    /* Root layer is queryable if it has a valid name and at list one layer */
+    /* is queryable */
+    if( !rootlayer_name || strlen(rootlayer_name) > 0 ) {
+      int j;
+      for(j=0; j<map->numlayers; j++) {
+        layerObj* layer = GET_LAYER(map, j);
+        if( msIsLayerQueryable(layer) &&
+            msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers) ) {
+          root_is_queryable = MS_TRUE;
+          break;
+        }
+      }
+    }
+    msIO_printf("  <Layer%s>\n",root_is_queryable ? " queryable=\"1\"" : "");
 
     /* Layer Name is optional but title is mandatory. */
     if (map->name && strlen(map->name) > 0 &&
@@ -3286,8 +3328,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
                    "invalid characters or may start with a number. This could lead to potential problems. -->\n",
                    map->name);
-
-    rootlayer_name = msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_name");
 
     if (rootlayer_name) {
         if (strlen(rootlayer_name) > 0) {
@@ -3545,12 +3585,24 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           /* Don't dump layer if it is used in wms_group_layer. */
           if (!isUsedInNestedGroup[i]) {
             /* This layer is not part of a group... dump it directly */
-            msDumpLayer(map, lp, nVersion, script_url_encoded, "", validated_language, MS_FALSE);
+            msDumpLayer(map, lp, nVersion, script_url_encoded, "", validated_language, MS_FALSE, MS_FALSE);
             pabLayerProcessed[i] = 1;
           }
         } else {
+          int group_is_queryable = MS_FALSE;
+          /* Group is queryable as soon as its member layers is. */
+          for(j=i; j<map->numlayers; j++) {
+            if (GET_LAYER(map, j)->group &&
+                strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
+                msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers) &&
+                msIsLayerQueryable(GET_LAYER(map, j)) ) {
+                group_is_queryable = MS_TRUE;
+                break;
+            }
+          }
           /* Beginning of a new group... enclose the group in a layer block */
-          msIO_printf("    <Layer>\n");
+          msIO_printf("    <Layer%s>\n",
+                      group_is_queryable ? " queryable=\"1\"" : "");
 
           /* Layer Name is optional but title is mandatory. */
           if (lp->group &&  strlen(lp->group) > 0 &&
@@ -3680,7 +3732,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                 GET_LAYER(map, j)->group &&
                 strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
                 msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers)) {
-              msDumpLayer(map, (GET_LAYER(map, j)), nVersion, script_url_encoded, "  ", validated_language, MS_FALSE);
+              msDumpLayer(map, (GET_LAYER(map, j)), nVersion, script_url_encoded, "  ", validated_language, MS_FALSE, MS_FALSE);
               pabLayerProcessed[j] = 1;
             }
           }
@@ -4073,6 +4125,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       char **layers;
       int numlayers, j, k;
+      const char* rootlayer_name;
 
       query_layer = 1; /* flag set if QUERY_LAYERS is the request */
 
@@ -4082,27 +4135,48 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
         return msWMSException(map, nVersion, "LayerNotDefined", wms_exception_format);
       }
 
-
-
       for(j=0; j<map->numlayers; j++) {
         /* Force all layers OFF by default */
         GET_LAYER(map, j)->status = MS_OFF;
-        for(k=0; k<numlayers; k++) {
-          if (((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
-               (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-               (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0) ||
-               ((numNestedGroups[j] >0) && msStringInArray(layers[k], nestedGroups[j], numNestedGroups[j]))) &&
-              (msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
-            if (GET_LAYER(map, j)->connectiontype == MS_WMS) {
+      }
+
+      /* Special case for root layer */
+      rootlayer_name = msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_name");
+      if( !rootlayer_name )
+          rootlayer_name = map->name;
+      if( rootlayer_name && msStringInArray(rootlayer_name, layers, numlayers) ) {
+        for(j=0; j<map->numlayers; j++) {
+          layerObj* layer = GET_LAYER(map, j);
+          if( msIsLayerQueryable(layer) &&
+              msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers) ) {
+            if (layer->connectiontype == MS_WMS) {
               wms_layer = MS_TRUE;
-              wms_connection = GET_LAYER(map, j)->connection;
+              wms_connection = layer->connection;
             }
 
-            /* Don't turn on layers that are not queryable but have sublayers. */
-            if ((msIsLayerQueryable(GET_LAYER(map, j))) || isUsedInNestedGroup[j] == 0) {
-              numlayers_found++;
-              GET_LAYER(map, j)->status = MS_ON;
+            numlayers_found++;
+            layer->status = MS_ON;
+          }
+        }
+      }
+
+      for(j=0; j<map->numlayers; j++) {
+        layerObj* layer = GET_LAYER(map, j);
+        if( !msIsLayerQueryable(layer) )
+            continue;
+        for(k=0; k<numlayers; k++) {
+          if (((layer->name && strcasecmp(layer->name, layers[k]) == 0) ||
+               (layer->group && strcasecmp(layer->group, layers[k]) == 0) ||
+               ((numNestedGroups[j] >0) && msStringInArray(layers[k], nestedGroups[j], numNestedGroups[j]))) &&
+              (msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
+
+            if (layer->connectiontype == MS_WMS) {
+              wms_layer = MS_TRUE;
+              wms_connection = layer->connection;
             }
+
+            numlayers_found++;
+            layer->status = MS_ON;
           }
         }
       }
@@ -4172,10 +4246,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   /* If a layer of type WMS was found... all layers have to be of that type and with the same connection */
   for (i=0; i<map->numlayers; i++) {
     if (GET_LAYER(map, i)->status == MS_ON) {
-      if (!msIsLayerQueryable(GET_LAYER(map, i))) {
-        msSetError(MS_WMSERR, "Requested layer(s) are not queryable.", "msWMSFeatureInfo()");
-        return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
-      } else if (wms_layer == MS_TRUE) {
+      if (wms_layer == MS_TRUE) {
         if ( (GET_LAYER(map, i)->connectiontype != MS_WMS) || (strcasecmp(wms_connection, GET_LAYER(map, i)->connection) != 0) ) {
           msSetError(MS_WMSERR, "Requested WMS layer(s) are not queryable: type or connection differ", "msWMSFeatureInfo()");
           return msWMSException(map, nVersion, "LayerNotQueryable", wms_exception_format);
