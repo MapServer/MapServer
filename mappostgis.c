@@ -3401,9 +3401,11 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
 #ifdef USE_POSTGIS
   msPostGISLayerInfo *layerinfo = NULL;
   char *strSQL = NULL;
+  char *strFilter1 = 0, *strFilter2 = 0;
   char *f_table_name;
   static char *sqlExtentTemplate = "SELECT ST_Extent(%s) FROM %s";
   size_t buffer_len;
+  size_t strFilterLength1 = 0, strFilterLength2 = 0;
   PGresult *pgresult = NULL;
   
   if (layer->debug) {
@@ -3429,10 +3431,44 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
     return MS_FAILURE;
   }
 
-  buffer_len = strlen(layerinfo->geomcolumn) + strlen(f_table_name) + strlen(sqlExtentTemplate);
+  /* Handle a translated filter (RFC91). */
+  if (layer->filter.native_string) {
+      static char *strFilterTemplate = "(%s)";
+      strFilter1 = (char *)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.native_string) + 1);
+      sprintf(strFilter1, strFilterTemplate, layer->filter.native_string);
+      strFilterLength1 = strlen(strFilter1) + 7;
+  }
+
+  /* Handle a native filter set as a PROCESSING option (#5001). */
+  if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+      static char *strFilterTemplate = "(%s)";
+      char *native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+      strFilter2 = (char *)msSmallMalloc(strlen(strFilterTemplate) + strlen(native_filter) + 1);
+      sprintf(strFilter2, strFilterTemplate, native_filter);
+      strFilterLength2 = strlen(strFilter2) + 7;
+  }
+
+  buffer_len = strlen(layerinfo->geomcolumn) + strlen(f_table_name) + strlen(sqlExtentTemplate)
+      + strFilterLength1 + strFilterLength2;
   strSQL = (char*)msSmallMalloc(buffer_len+1); /* add space for terminating NULL */
   snprintf(strSQL, buffer_len, sqlExtentTemplate, layerinfo->geomcolumn, f_table_name);  
   msFree(f_table_name);
+
+  if (strFilter1) {
+      strlcat(strSQL, " where ", buffer_len);
+      strlcat(strSQL, strFilter1, buffer_len);
+      msFree(strFilter1);
+      if (strFilter2) {
+          strlcat(strSQL, " and ", buffer_len);
+          strlcat(strSQL, strFilter2, buffer_len);
+          msFree(strFilter2);
+      }
+  }
+  else if (strFilter2) {
+      strlcat(strSQL, " where ", buffer_len);
+      strlcat(strSQL, strFilter2, buffer_len);
+      msFree(strFilter2);
+  }
 
   if (layer->debug) {
     msDebug("msPostGISLayerGetExtent executing SQL: %s\n", strSQL);
