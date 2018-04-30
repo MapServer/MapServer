@@ -4640,6 +4640,45 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
 #endif /* USE_OGR */
 }
 
+/**********************************************************************
+*                     msOGRLayerGetNumFeatures()
+*
+* Returns the layer feature count.
+*
+* Returns the number of features on success, -1 on error
+**********************************************************************/
+int msOGRLayerGetNumFeatures(layerObj *layer)
+{
+#ifdef USE_OGR
+    msOGRFileInfo *psInfo = (msOGRFileInfo*)layer->layerinfo;
+    int result;
+
+    if (psInfo == NULL || psInfo->hLayer == NULL) {
+        msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!",
+            "msOGRLayerGetNumFeatures()");
+        return -1;
+    }
+
+    /* ------------------------------------------------------------------
+    * Call OGR's GetFeatureCount()... note that for some formats this will
+    * result in a scan of the whole layer and can be an expensive call.
+    * ------------------------------------------------------------------ */
+    ACQUIRE_OGR_LOCK;
+    result = (int)OGR_L_GetFeatureCount(psInfo->hLayer, TRUE);
+    RELEASE_OGR_LOCK;
+
+    return result;
+#else
+    /* ------------------------------------------------------------------
+    * OGR Support not included...
+    * ------------------------------------------------------------------ */
+
+    msSetError(MS_MISCERR, "OGR support is not available.",
+        "msOGRLayerGetNumFeatures()");
+    return -1;
+
+#endif /* USE_OGR */
+}
 
 /**********************************************************************
  *                     msOGRGetSymbolId()
@@ -5602,7 +5641,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
-  /* layer->vtable->LayerGetNumFeatures, use default */
+  layer->vtable->LayerGetNumFeatures = msOGRLayerGetNumFeatures;
   /* layer->vtable->LayerGetAutoProjection, use defaut*/
 
   layer->vtable->LayerEscapeSQLParam = msOGREscapeSQLParam;

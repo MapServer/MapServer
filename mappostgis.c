@@ -3521,6 +3521,139 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
 }
 
 /*
+** msPostGISLayerGetNumFeatures()
+**
+** Registered vtable->LayerGetNumFeatures function. Query the database for
+** the feature count of the requested layer.
+*/
+int msPostGISLayerGetNumFeatures(layerObj *layer)
+{
+#ifdef USE_POSTGIS
+    msPostGISLayerInfo *layerinfo = NULL;
+    char *strSQL = NULL;
+    char *strFilter1 = 0, *strFilter2 = 0;
+    char *f_table_name;
+    static char *sqlNumFeaturesTemplate = "SELECT count(*) FROM %s";
+    size_t buffer_len;
+    size_t strFilterLength1 = 0, strFilterLength2 = 0;
+    PGresult *pgresult = NULL;
+    int result;
+    char *tmp;
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetNumFeatures called.\n");
+    }
+
+    assert(layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+    if (msPostGISParseData(layer) != MS_SUCCESS) {
+        return -1;
+    }
+
+    /* if we have !BOX! substitution then we use just the table name */
+    if (strstr(layerinfo->fromsource, BOXTOKEN))
+        f_table_name = msPostGISFindTableName(layerinfo->fromsource);
+    else
+        f_table_name = msStrdup(layerinfo->fromsource);
+
+    if (!f_table_name) {
+        msSetError(MS_MISCERR, "Failed to get table name.", "msPostGISLayerGetExtent()");
+        return -1;
+    }
+
+    /* Handle a translated filter (RFC91). */
+    if (layer->filter.native_string) {
+        static char *strFilterTemplate = "(%s)";
+        strFilter1 = (char *)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.native_string) + 1);
+        sprintf(strFilter1, strFilterTemplate, layer->filter.native_string);
+        strFilterLength1 = strlen(strFilter1) + 7;
+    }
+
+    /* Handle a native filter set as a PROCESSING option (#5001). */
+    if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+        static char *strFilterTemplate = "(%s)";
+        char *native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+        strFilter2 = (char *)msSmallMalloc(strlen(strFilterTemplate) + strlen(native_filter) + 1);
+        sprintf(strFilter2, strFilterTemplate, native_filter);
+        strFilterLength2 = strlen(strFilter2) + 7;
+    }
+
+    buffer_len = strlen(f_table_name) + strlen(sqlNumFeaturesTemplate)
+        + strFilterLength1 + strFilterLength2;
+    strSQL = (char*)msSmallMalloc(buffer_len + 1); /* add space for terminating NULL */
+    snprintf(strSQL, buffer_len, sqlNumFeaturesTemplate, f_table_name);
+    msFree(f_table_name);
+
+    if (strFilter1) {
+        strlcat(strSQL, " where ", buffer_len);
+        strlcat(strSQL, strFilter1, buffer_len);
+        msFree(strFilter1);
+        if (strFilter2) {
+            strlcat(strSQL, " and ", buffer_len);
+            strlcat(strSQL, strFilter2, buffer_len);
+            msFree(strFilter2);
+        }
+    }
+    else if (strFilter2) {
+        strlcat(strSQL, " where ", buffer_len);
+        strlcat(strSQL, strFilter2, buffer_len);
+        msFree(strFilter2);
+    }
+
+    if (layer->debug) {
+        msDebug("msPostGISLayerGetNumFeatures executing SQL: %s\n", strSQL);
+    }
+
+    /* executing the query */
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, 0, NULL, NULL, NULL, NULL, 0);
+
+    msFree(strSQL);
+
+    if ((!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK)) {
+        msDebug("Error executing SQL: (%s) in msPostGISLayerGetNumFeatures()", PQerrorMessage(layerinfo->pgconn));
+        msSetError(MS_MISCERR, "Error executing SQL. Check server logs.", "msPostGISLayerGetNumFeatures()");
+        if (pgresult)
+            PQclear(pgresult);
+
+        return -1;
+    }
+
+    /* process results */
+    if (PQntuples(pgresult) < 1) {
+        msSetError(MS_MISCERR, "msPostGISLayerGetNumFeatures: No results found.",
+            "msPostGISLayerGetNumFeatures()");
+        PQclear(pgresult);
+        return -1;
+    }
+
+    if (PQgetisnull(pgresult, 0, 0)) {
+        msSetError(MS_MISCERR, "msPostGISLayerGetNumFeatures: Null result returned.",
+            "msPostGISLayerGetNumFeatures()");
+        PQclear(pgresult);
+        return -1;
+    }
+
+    tmp = PQgetvalue(pgresult, 0, 0);
+    if (tmp) {
+        result = strtol(tmp, NULL, 10);
+    }
+    else {
+        result = 0;
+    }
+
+    /* cleanup */
+    PQclear(pgresult);
+
+    return result;
+#else
+    msSetError(MS_MISCERR, "PostGIS support is not available.", "msPostGISLayerGetNumFeatures()");
+    return -1;
+#endif
+}
+
+/*
  * make sure that the timestring is complete and acceptable
  * to the date_trunc function :
  * - if the resolution is year (2004) or month (2004-01),
@@ -4098,7 +4231,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   // layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
-  /* layer->vtable->LayerGetNumFeatures, use default */
+  layer->vtable->LayerGetNumFeatures = msPostGISLayerGetNumFeatures;
 
   /* layer->vtable->LayerGetAutoProjection, use defaut*/
 
