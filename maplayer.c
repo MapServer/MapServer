@@ -1120,12 +1120,26 @@ Returns the number of inline feature of a layer
 */
 int msLayerGetNumFeatures(layerObj *layer)
 {
-  if ( ! layer->vtable) {
-    int rv =  msInitializeVirtualTable(layer);
-    if (rv != MS_SUCCESS)
-      return rv;
-  }
-  return layer->vtable->LayerGetNumFeatures(layer);
+    int need_to_close = MS_FALSE, result = -1;
+
+    if (!msLayerIsOpen(layer)) {
+        if (msLayerOpen(layer) != MS_SUCCESS)
+            return result;
+        need_to_close = MS_TRUE;
+    }
+
+    if (!layer->vtable) {
+        int rv = msInitializeVirtualTable(layer);
+        if (rv != MS_SUCCESS)
+            return result;
+    }
+
+    result = layer->vtable->LayerGetNumFeatures(layer);
+
+    if (need_to_close)
+        msLayerClose(layer);
+
+    return(result);
 }
 
 void
@@ -1781,8 +1795,43 @@ int LayerDefaultCreateItems(layerObj *layer, const int nt)
 
 int LayerDefaultGetNumFeatures(layerObj *layer)
 {
-  msSetError(MS_SHPERR, "Not an inline layer", "msLayerGetNumFeatures()");
-  return MS_FAILURE;
+    rectObj extent;
+    int status;
+    int result;
+    shapeObj shape;
+
+    /* calculate layer extent */
+    if (!MS_VALID_EXTENT(layer->extent)) {
+        if (msLayerGetExtent(layer, &extent) != MS_SUCCESS) {
+            msSetError(MS_MISCERR, "Unable to get layer extent", "LayerDefaultGetNumFeatures()");
+            return -1;
+        }
+    }
+    else
+        extent = layer->extent;
+
+    /* Cleanup any previous item selection */
+    msLayerFreeItemInfo(layer);
+    if (layer->items) {
+        msFreeCharArray(layer->items, layer->numitems);
+        layer->items = NULL;
+        layer->numitems = 0;
+    }
+
+    status = msLayerWhichShapes(layer, extent, MS_FALSE);
+    if (status == MS_DONE) { /* no overlap */
+        return 0;
+    }
+    else if (status != MS_SUCCESS) {
+        return -1;
+    }
+
+    result = 0;
+    while ((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
+        ++result;
+    }
+
+    return result;
 }
 
 int LayerDefaultAutoProjection(layerObj *layer, projectionObj* projection)
