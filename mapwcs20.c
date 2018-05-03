@@ -1673,6 +1673,7 @@ int msWCSParseRequest20(mapObj *map,
         axis->size = max - min;
       }
       msFreeCharArray(tokens, num);
+      /* We explicitly don't test for strict equality as the parameter name is supposed to be unique */
     } else if (EQUALN(key, "SIZE", 4)) {
       /* Deprecated scaling */
       wcs20AxisObjPtr axis = NULL;
@@ -1698,6 +1699,7 @@ int msWCSParseRequest20(mapObj *map,
         return MS_FAILURE;
       }
       axis->size = size;
+    /* We explicitly don't test for strict equality as the parameter name is supposed to be unique */
     } else if (EQUALN(key, "RESOLUTION", 10)) {
       wcs20AxisObjPtr axis = NULL;
       char axisName[500];
@@ -1723,6 +1725,7 @@ int msWCSParseRequest20(mapObj *map,
         return MS_FAILURE;
       }
       axis->resolution = resolution;
+    /* We explicitly don't test for strict equality as the parameter name is supposed to be unique */
     } else if (EQUALN(key, "SUBSET", 6)) {
       wcs20AxisObjPtr axis = NULL;
       wcs20SubsetObjPtr subset = msWCSCreateSubsetObj20();
