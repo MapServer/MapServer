@@ -12,8 +12,10 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
-7.2 release (FUTURE)
+7.2.0-beta1 release (2018-5-9)
 --------------------
+
+- Support for Enhanced Layer Metadata Management (RFC82)
 
 - Calculate MINDISTANCE from label bounds instead of label center (#5369)
 
@@ -21,7 +23,21 @@ http://mapserver.org/development/changelog/
 
 - Implement chainable compositing filters (RFC113)
 
+- Faster retrieval of shape count (RFC114)
+
 - WMS layer groups are now requestable
+
+- Support C-style multi-line content types (#5362)
+
+- PHP 7 MapScript Support Through SWIG (RFC117)
+
+- Python 3.x support (#5561)
+
+- Support Vendor-Specific OGC FILTER parameter in WMS requests (RFC118)
+
+- Mapbox Vector Tile (MVT) Support (RFC119)
+
+- INSPIRE download service support for WCS 2.0 (RFC120)
 
 7.0.0 release (2015/07/24)
 --------------------------
