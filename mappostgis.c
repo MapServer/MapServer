@@ -2003,7 +2003,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
     char *strBox = 0;
     char *strSRID = 0;
     size_t strBoxLength = 0;
-    static const char *strRectTemplate = "%s && %s";
+    static const char *strRectTemplate = "\"%s\" && %s";
 
     /* We see to set the SRID on the box, but to what SRID? */
     strSRID = msPostGISBuildSQLSRID(layer);
