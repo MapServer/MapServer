@@ -39,14 +39,15 @@ def update_dirs(list1, list2):
 
 # 
 # # Function needed to make unique lists.
-def unique(list):
-    ret_list = []
-    dict = {}
-    for item in list:
-        if not item in dict:
-            dict[item] = ''
-            ret_list.append( item )
-    return ret_list
+def unique(_list):
+    """
+    Function needed to make unique lists.
+    
+    :param list _list: a list of items
+    :rtype: list
+    :return: a list with unique elements.
+    """
+    return list(set(_list))
 
 
 # ---------------------------------------------------------------------------
