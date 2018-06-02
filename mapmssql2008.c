@@ -193,15 +193,15 @@ typedef struct msODBCconn_t {
 } msODBCconn;
 
 typedef struct ms_MSSQL2008_layer_info_t {
-  char        *sql;           /* sql query to send to DB */
-  long        row_num;        /* what row is the NEXT to be read (for random access) */
-  char    *geom_column; /* name of the actual geometry column parsed from the LAYER's DATA field */
-  char    *geom_column_type;  /* the type of the geometry column */
-  char    *geom_table;  /* the table name or sub-select decalred in the LAYER's DATA field */
-  char        *urid_name;     /* name of user-specified unique identifier or OID */
-  char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
-  char    *index_name;  /* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
-  char    *sort_spec;  /* the sort by specification which should be applied to the generated select statement */
+  char *sql;           /* sql query to send to DB */
+  long row_num;        /* what row is the NEXT to be read (for random access) */
+  char *geom_column; /* name of the actual geometry column parsed from the LAYER's DATA field */
+  char *geom_column_type;  /* the type of the geometry column */
+  char *geom_table;  /* the table name or sub-select decalred in the LAYER's DATA field */
+  char *urid_name;     /* name of user-specified unique identifier or OID */
+  char *user_srid;     /* zero length = calculate, non-zero means using this value! */
+  char *index_name;  /* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
+  char *sort_spec;  /* the sort by specification which should be applied to the generated select statement */
   SQLSMALLINT *itemtypes; /* storing the sql field types for further reference */
 
   msODBCconn * conn;          /* Connection to db */
@@ -908,7 +908,8 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
 int msMSSQL2008LayerGetNumFeatures(layerObj *layer)
 {
     msMSSQL2008LayerInfo *layerinfo;
-    char query_string_temp[10000];       /* Should be big enough */
+    char *query = 0;
+    char result_data[256];
     SQLLEN retLen;
     SQLRETURN rc;
 
@@ -924,20 +925,27 @@ int msMSSQL2008LayerGetNumFeatures(layerObj *layer)
     }
 
     /* set up statement */
+    query = msStringConcatenate(query, "SELECT count(*) FROM ");
+    query = msStringConcatenate(query, layerinfo->geom_table);
+
+    /* adding attribute filter */
     if (layer->filter.native_string) {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT count(*) from %s WHERE (%s)", layerinfo->geom_table, layer->filter.native_string);
+        query = msStringConcatenate(query, " WHERE (");
+        query = msStringConcatenate(query, layer->filter.native_string);
+        query = msStringConcatenate(query, ")");
     }
-    else if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT count(*) from %s", layerinfo->geom_table);
-    }
-    else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT count(*) from %s WHERE (%s)", layerinfo->geom_table, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+    else if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+        query = msStringConcatenate(query, " WHERE (");
+        query = msStringConcatenate(query, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+        query = msStringConcatenate(query, ")");
     }
 
-    if (!executeSQL(layerinfo->conn, query_string_temp)) {
-
+    if (!executeSQL(layerinfo->conn, query)) {
+        msFree(query);
         return -1;
     }
+
+    msFree(query);
 
     rc = SQLFetch(layerinfo->conn->hstmt);
 
@@ -949,37 +957,37 @@ int msMSSQL2008LayerGetNumFeatures(layerObj *layer)
         return -1;
     }
 
-    rc = SQLGetData(layerinfo->conn->hstmt, 1, SQL_C_CHAR, query_string_temp, sizeof(query_string_temp), &retLen);
+    rc = SQLGetData(layerinfo->conn->hstmt, 1, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
 
     if (rc == SQL_ERROR) {
         msSetError(MS_QUERYERR, "Failed to get feature count", "msMSSQL2008LayerGetNumFeatures()");
         return -1;
     }
 
-    query_string_temp[retLen] = 0;
+    result_data[retLen] = 0;
 
-    return atoi(query_string_temp);
+    return atoi(result_data);
 }
 
 /* Prepare and execute the SQL statement for this layer */
 static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 {
   msMSSQL2008LayerInfo *layerinfo;
-  char        *columns_wanted = 0;
-  char        *data_source = 0;
-  char        *f_table_name = 0;
-  char    *geom_table = 0;
+  char *query = 0;
+  char *data_source = 0;
+  char *f_table_name = 0;
+  char *geom_table = 0;
   /*
     "Geometry::STGeomFromText('POLYGON(())',)" + terminator = 40 chars
     Plus 10 formatted doubles (15 digits of precision, a decimal point, a space/comma delimiter each = 17 chars each)
     Plus SRID + comma - if SRID is a long...we'll be safe with 10 chars
   */
   char        box3d[40 + 10 * 22 + 11];
-  char        query_string_temp[10000];       /* Should be big enough */
   int         t;
 
   char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
   rectObj     extent;
+  int hasFilter = MS_FALSE;
 
   layerinfo =  getMSSQL2008LayerInfo(layer);
 
@@ -1025,143 +1033,161 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     }
   }
 
-  if(layer->numitems == 0) {
-    char buffer[1000];
-
-    if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      snprintf(buffer, sizeof(buffer), "[%s],convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
-    else
-      snprintf(buffer, sizeof(buffer), "[%s].STAsBinary(),convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
-
-    columns_wanted = msStrdup(buffer);
-  } else {
-    char buffer[10000] = "";
-
-    for(t = 0; t < layer->numitems; t++) {
-      if (layerinfo->itemtypes && (layerinfo->itemtypes[t] == SQL_BINARY || layerinfo->itemtypes[t] == SQL_VARBINARY)) {
-#ifdef USE_ICONV
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(nvarchar(max), convert(varbinary(max),[%s]),2),", layer->items[t]);
-#else
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), convert(varbinary(max),[%s]),2),", layer->items[t]);
-#endif
-      } else {
-#ifdef USE_ICONV
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(nvarchar(max), [%s]),", layer->items[t]);
-#else
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), [%s]),", layer->items[t]);
-#endif
-      }
-    }
-
-    if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "[%s],convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
-    else
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "[%s].STAsBinary(),convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
-
-    columns_wanted = msStrdup(buffer);
-  }
-
   if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
-    /* create point shape for rectangles with zero area */
-    sprintf(box3d, "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
-            layerinfo->geom_column_type, rect.minx, rect.miny, layerinfo->user_srid);
-  } else {
-    sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
-            layerinfo->geom_column_type,
-            rect.minx, rect.miny,
-            rect.maxx, rect.miny,
-            rect.maxx, rect.maxy,
-            rect.minx, rect.maxy,
-            rect.minx, rect.miny,
-            layerinfo->user_srid
-           );
+      /* create point shape for rectangles with zero area */
+      sprintf(box3d, "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
+          layerinfo->geom_column_type, rect.minx, rect.miny, layerinfo->user_srid);
+  }
+  else {
+      sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+          layerinfo->geom_column_type,
+          rect.minx, rect.miny,
+          rect.maxx, rect.miny,
+          rect.maxx, rect.maxy,
+          rect.minx, rect.maxy,
+          rect.minx, rect.miny,
+          layerinfo->user_srid
+      );
   }
 
   /* substitute token '!BOX!' in geom_table with the box3d - do an unlimited # of subs */
   /* to not undo the work here, we need to make sure that data_source is malloc'd here */
 
-  if(!strstr(geom_table, "!BOX!")) {
-    data_source = (char *) msSmallMalloc(strlen(geom_table) + 1);
-    strcpy(data_source, geom_table);
-  } else {
-    char* result = NULL;
+  if (!strstr(geom_table, "!BOX!")) {
+      data_source = (char *)msSmallMalloc(strlen(geom_table) + 1);
+      strcpy(data_source, geom_table);
+  }
+  else {
+      char* result = NULL;
 
-    while (strstr(geom_table,"!BOX!")) {
-      /* need to do a substition */
-      char    *start, *end;
-      char    *oldresult = result;
-      start = strstr(geom_table,"!BOX!");
-      end = start+5;
+      while (strstr(geom_table, "!BOX!")) {
+          /* need to do a substition */
+          char    *start, *end;
+          char    *oldresult = result;
+          start = strstr(geom_table, "!BOX!");
+          end = start + 5;
 
-      result = (char *)msSmallMalloc((start - geom_table) + strlen(box3d) + strlen(end) +1);
+          result = (char *)msSmallMalloc((start - geom_table) + strlen(box3d) + strlen(end) + 1);
 
-      strlcpy(result, geom_table, start - geom_table + 1);
-      strcpy(result + (start - geom_table), box3d);
-      strcat(result, end);
+          strlcpy(result, geom_table, start - geom_table + 1);
+          strcpy(result + (start - geom_table), box3d);
+          strcat(result, end);
 
-      geom_table= result;
-      msFree(oldresult);
-    }
+          geom_table = result;
+          msFree(oldresult);
+      }
 
-    /* if we're here, this will be a malloc'd string, so no need to copy it */
-    data_source = (char *)geom_table;
+      /* if we're here, this will be a malloc'd string, so no need to copy it */
+      data_source = (char *)geom_table;
   }
 
-  /* use the index hint if provided */
-  if ( layerinfo->index_name ) {
-    /* given the template - figure out how much to malloc and malloc it */
-    char *with_template = "%s WITH (INDEX(%s))";
-    int need_len = strlen(data_source) + strlen(with_template) + strlen(layerinfo->index_name);
-    char *tmp = (char*) msSmallMalloc( need_len + 1 );
-    sprintf( tmp, with_template, data_source, layerinfo->index_name );
-    msFree(data_source);
-    data_source = tmp;
+  /* start creating the query */
+
+  query = msStringConcatenate(query, "SELECT ");
+
+  /* adding items to the select list */
+  for (t = 0; t < layer->numitems; t++) {
+#ifdef USE_ICONV
+      /* no conversion applied at the database */
+      query = msStringConcatenate(query, "[");
+      query = msStringConcatenate(query, layer->items[t]);
+      query = msStringConcatenate(query, "],");
+#else
+      query = msStringConcatenate(query, "convert(varchar(max), [");
+      query = msStringConcatenate(query, layer->items[t]);
+      query = msStringConcatenate(query, "]),");
+#endif
   }
 
-  /* test whether we should omit spatial filtering */
-  /* TODO: once this driver supports expression translation then filter->native_string will need to be considered here */
-  msMSSQL2008LayerGetExtent(layer, &extent);
-  if (rect.minx <= extent.minx && rect.miny <= extent.miny && rect.maxx >= extent.maxx && rect.maxy >= extent.maxy) {
-      /* no spatial filter used */
-      if ( layer->filter.native_string ) { 
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, layer->filter.native_string );
-      }
-      else if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s", columns_wanted, data_source );
-      } else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
-      }
-  } else {
-      if ( layer->filter.native_string ) { 
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layer->filter.native_string, layerinfo->geom_column, box3d );
-      }
-      else if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layerinfo->geom_column, box3d );
-      } else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, msLayerGetProcessingKey(layer, "NATIVE_FILTER"), layerinfo->geom_column, box3d );
-      }
-  }
+  /* adding geometry column */
+  query = msStringConcatenate(query, "[");
+  query = msStringConcatenate(query, layerinfo->geom_column);
+  if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
+      query = msStringConcatenate(query, "],");
+  else
+      query = msStringConcatenate(query, "].STAsBinary(),");
 
-  if (layerinfo->sort_spec) {
-      strcat(query_string_temp, layerinfo->sort_spec);
-  }
+  /* adding id column */
+  query = msStringConcatenate(query, "convert(varchar(36), [");
+  query = msStringConcatenate(query, layerinfo->urid_name);
+  query = msStringConcatenate(query, "]) FROM ");
 
+  /* adding the source */
+  query = msStringConcatenate(query, data_source);
   msFree(data_source);
   msFree(f_table_name);
-  msFree(columns_wanted);
 
-  if(layer->debug) {
-    msDebug("query_string_temp:%s\n", query_string_temp);
+  /* use the index hint if provided */
+  if (layerinfo->index_name) {
+      query = msStringConcatenate(query, " WITH (INDEX(");
+      query = msStringConcatenate(query, layerinfo->index_name);
+      query = msStringConcatenate(query, "))");
   }
 
-  if (executeSQL(layerinfo->conn, query_string_temp)) {
-    *query_string = msStrdup(query_string_temp);
+  /* adding attribute filter */
+  if (layer->filter.native_string) {
+      query = msStringConcatenate(query, " WHERE (");
+      query = msStringConcatenate(query, layer->filter.native_string);
+      query = msStringConcatenate(query, ")");
+      hasFilter = MS_TRUE;
+  }
+  else if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+      query = msStringConcatenate(query, " WHERE (");
+      query = msStringConcatenate(query, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+      query = msStringConcatenate(query, ")");
+      hasFilter = MS_TRUE;
+  }
 
-    return MS_SUCCESS;
-  } else {
-    msSetError(MS_QUERYERR, "Error executing MSSQL2008 SQL statement: %s\n-%s\n", "msMSSQL2008LayerGetShape()", query_string_temp, layerinfo->conn->errorMessage);
+  /* adding spatial filter */
+  msMSSQL2008LayerGetExtent(layer, &extent);
+  if (rect.minx > extent.minx || rect.miny > extent.miny ||
+      rect.maxx < extent.maxx || rect.maxy < extent.maxy) {
+      if (hasFilter == MS_FALSE)
+          query = msStringConcatenate(query, " WHERE ");
+      else
+          query = msStringConcatenate(query, " AND ");
 
-    return MS_FAILURE;
+      query = msStringConcatenate(query, layerinfo->geom_column);
+      query = msStringConcatenate(query, ".STIntersects(");
+      query = msStringConcatenate(query, box3d);
+      query = msStringConcatenate(query, ") = 1 ");
+  }
+
+  if (layerinfo->sort_spec)
+      query = msStringConcatenate(query, layerinfo->sort_spec);
+
+  if (layer->debug) {
+      msDebug("query:%s\n", query);
+  }
+
+  if (executeSQL(layerinfo->conn, query)) {
+      char pass_field_def = 0;
+      int t;
+      const char *value;
+      *query_string = query;
+      /* collect result information */
+      if ((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+          && strcasecmp(value, "auto") == 0)
+          pass_field_def = 1;
+
+      msFree(layerinfo->itemtypes);
+      layerinfo->itemtypes = msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
+      for (t = 0; t < layer->numitems; t++) {
+          char colBuff[256];
+          SQLSMALLINT itemType;
+
+          columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff), layer, pass_field_def, &itemType);
+          layerinfo->itemtypes[t] = itemType;
+      }
+
+      return MS_SUCCESS;
+  }
+  else {
+      msSetError(MS_QUERYERR, "Error executing MSSQL2008 SQL statement: %s\n-%s\n", "msMSSQL2008LayerGetShape()", query, layerinfo->conn->errorMessage);
+
+      msFree(query);
+
+      return MS_FAILURE;
   }
 }
 
