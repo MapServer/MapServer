@@ -315,10 +315,11 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
   int iLayer,retcode=MS_SUCCESS;
   unsigned len;
   void *buf;
+  const char *mvt_extent = msGetOutputFormatOption(map->outputformat, "EXTENT", "4096");
   const char *mvt_buffer = msGetOutputFormatOption(map->outputformat, "EDGE_BUFFER", "10");
   int buffer = MS_ABS(atoi(mvt_buffer));
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
-  mvt_tile.layers = msSmallCalloc(map->numlayers,sizeof(VectorTile__Tile__Layer*));
+  mvt_tile.layers = msSmallCalloc(map->numlayers, sizeof(VectorTile__Tile__Layer*));
 
   /* expand the map->extent so it goes from pixel center (MapServer) to pixel edge (OWS) */
   map->extent.minx -= map->cellsize * 0.5;
@@ -378,8 +379,8 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
     vector_tile__tile__layer__init(mvt_layer);
     mvt_layer->version = 2;
     mvt_layer->name = layer->name;
-    mvt_buffer = msGetOutputFormatOption(map->outputformat, "EXTENT", "4096");
-    mvt_layer->extent = MS_ABS(atoi(mvt_buffer));
+
+    mvt_layer->extent = MS_ABS(atoi(mvt_extent));
     mvt_layer->has_extent = 1;
 
     /* -------------------------------------------------------------------- */
