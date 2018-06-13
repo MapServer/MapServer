@@ -12,6 +12,11 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.2.0-beta2 release (2018-6-13)
+
+- Update beta1 release notes to remove reference to PHP7 support
+- No other major changes, see detailed changelog for bug fixes
+
 7.2.0-beta1 release (2018-5-9)
 --------------------
 
@@ -28,8 +33,6 @@ http://mapserver.org/development/changelog/
 - WMS layer groups are now requestable
 
 - Support C-style multi-line content types (#5362)
-
-- PHP 7 MapScript Support Through SWIG (RFC117)
 
 - Python 3.x support (#5561)
 
