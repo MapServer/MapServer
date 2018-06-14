@@ -2110,15 +2110,17 @@ char *msStrdup( const char * pszString )
   if( pszString == NULL )
     pszString = "";
 
-  pszReturn = strdup( pszString );
+  pszReturn = msSmallMalloc(strlen(pszString)+1);
 
   if( pszReturn == NULL ) {
-    fprintf(stderr, "msSmallMsStrdup(): Out of memory allocating %ld bytes.\n",
+    /*should never be here*/
+    fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
             (long) strlen(pszString) );
     exit(1);
   }
+  strcpy( pszReturn, pszString);
 
-  return( pszReturn );
+  return pszReturn;
 }
 
 
