@@ -2105,19 +2105,19 @@ int msStringIsInteger(const char *string)
 
 char *msStrdup(const char * pszString)
 {
+    size_t nStringLength = strlen(pszString) + 1; /* null terminated byte*/
+    char *pszReturn = malloc(nStringLength);
 
     if (pszString == NULL)
         pszString = "";
-
-    unsigned int nStringLength = strlen(pszString);
-    char *pszReturn = malloc(nStringLength + 1);
-    memcpy(pszReturn, pszString, nStringLength + 1); /* null terminated byte*/
 
     if (pszReturn == NULL) {
         fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
             (long)strlen(pszString));
         exit(1);
     }
+
+    memcpy(pszReturn, pszString, nStringLength);
 
     return pszReturn;
 }
