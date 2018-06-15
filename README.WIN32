@@ -25,7 +25,7 @@ IMPORTANT - READ THIS FIRST:
 The easyest way to build Mapserver on Windows on your own is to use the
 build-system from http://gisinternals.com/.
 GISInternals provide a complete set of sources and dependencies and even
-makefiles for the full version of Visual Studio (not Express oder Community).
+makefiles for the full version of Visual Studio (not Express or Community).
 You don't have to download and compile them all by your own.
 
 If you are not using full version of Visual Studio you can not use the makefiles

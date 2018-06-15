@@ -6,3 +6,4 @@ tags
 tests/map.png
 .vagrant
 
+.vscode/

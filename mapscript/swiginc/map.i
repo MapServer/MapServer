@@ -52,7 +52,7 @@
         msFreeMap(self);
     }
 
-#ifdef SWIGJAVA
+#if defined (SWIGJAVA) || defined (SWIGPHP)
     %newobject cloneMap;
     mapObj *cloneMap() 
 #else
