@@ -2103,22 +2103,26 @@ int msStringIsInteger(const char *string)
 
 /* Safe version of msStrdup(). This function is taken from gdal/cpl. */
 
-char *msStrdup( const char * pszString )
+char *msStrdup(const char * pszString)
 {
-  char        *pszReturn;
+    size_t nStringLength; 
+    char *pszReturn;
 
-  if( pszString == NULL )
-    pszString = "";
+    if (pszString == NULL)
+        pszString = "";
 
-  pszReturn = strdup( pszString );
+    nStringLength = strlen(pszString) + 1; /* null terminated byte */
+    pszReturn = malloc(nStringLength);
 
-  if( pszReturn == NULL ) {
-    fprintf(stderr, "msSmallMsStrdup(): Out of memory allocating %ld bytes.\n",
-            (long) strlen(pszString) );
-    exit(1);
-  }
+    if (pszReturn == NULL) {
+        fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
+            (long)strlen(pszString));
+        exit(1);
+    }
 
-  return( pszReturn );
+    memcpy(pszReturn, pszString, nStringLength);
+
+    return pszReturn;
 }
 
 
