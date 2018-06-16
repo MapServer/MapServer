@@ -105,11 +105,11 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     def __setitem__(self, key, value):
         return self.set(key, value)
 
-    def __delitem__(self, k) :
+    def __delitem__(self, key) :
         return self.remove(key)
 
-    def __contains__(self, k):
-        return k.lower() in [key.lower() for k in self.keys()]
+    def __contains__(self, key):
+        return key.lower() in [k.lower() for k in self.keys()]
 
     def __len__(self):
         return self.numitems
@@ -125,7 +125,8 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
                 keys.append(k)
             else :
                 break
-                return keys
+
+        return keys
             
     %}
 };
