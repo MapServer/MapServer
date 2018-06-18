@@ -91,7 +91,7 @@
         return;
     }
 
-#ifdef SWIGJAVA
+#if defined (SWIGJAVA) || defined (SWIGPHP)
     %newobject cloneShape;
     shapeObj *cloneShape()
 #else
