@@ -1,41 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
 <defs>
-<clipPath id="clip1">
-  <rect width="12" height="8"/>
-</clipPath>
-<g id="surface8" clip-path="url(#clip1)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 4 L 12 4 M 8 0 L 12 4 L 8 8 "/>
-</g>
-<pattern id="pattern0" patternUnits="userSpaceOnUse" width="12" height="8">
-<use xlink:href="#surface8"/>
+<image id="image8" width="12" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAICAYAAADN5B7xAAAABmJLR0QA/wD/AP+gvaeTAAAAR0lEQVQYlWNgwA+sGBgYXjMwMDgRUIcCrBkYGN4wMDD4kqWJkYGBoYNITVYMDAzGLAwMDO+J1PCZFCf5Qp1kRXXFlgxowQoAMHMLeEI3yPAAAAAASUVORK5CYII="/>
+<pattern id="pattern0" patternUnits="userSpaceOnUse" width="12" height="8" >
+  <use xlink:href="#image8"/>
 </pattern>
-<clipPath id="clip2">
-  <rect width="12" height="8"/>
-</clipPath>
-<g id="surface9" clip-path="url(#clip2)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 4 L 12 4 M 8 0 L 12 4 L 8 8 "/>
-</g>
-<pattern id="pattern1" patternUnits="userSpaceOnUse" width="12" height="8">
-<use xlink:href="#surface9"/>
+<pattern id="pattern1" patternUnits="userSpaceOnUse" width="12" height="8" >
+  <use xlink:href="#image8"/>
 </pattern>
-<clipPath id="clip3">
-  <rect width="12" height="8"/>
-</clipPath>
-<g id="surface10" clip-path="url(#clip3)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 4 L 12 4 M 8 0 L 12 4 L 8 8 "/>
-</g>
-<pattern id="pattern2" patternUnits="userSpaceOnUse" width="12" height="8">
-<use xlink:href="#surface10"/>
+<pattern id="pattern2" patternUnits="userSpaceOnUse" width="12" height="8" >
+  <use xlink:href="#image8"/>
 </pattern>
-<clipPath id="clip4">
-  <rect width="12" height="8"/>
-</clipPath>
-<g id="surface11" clip-path="url(#clip4)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 4 L 12 4 M 8 0 L 12 4 L 8 8 "/>
-</g>
-<pattern id="pattern3" patternUnits="userSpaceOnUse" width="12" height="8">
-<use xlink:href="#surface11"/>
+<pattern id="pattern3" patternUnits="userSpaceOnUse" width="12" height="8" >
+  <use xlink:href="#image8"/>
 </pattern>
 </defs>
 <g id="surface2">

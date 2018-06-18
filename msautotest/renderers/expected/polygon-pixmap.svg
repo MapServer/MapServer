@@ -1,42 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
 <defs>
-<image id="image9" width="32" height="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAABz0lEQVRYhcVX0ZLDIAhcbvpf55/VTyNfxj1EIiLEpNdp6WQSBbPrKtQAXzYCgFqrlFIAAKUU+jgBAFJrVQKH8xNkfjLHp5SwILsKTQm1Osa83R6rgAqIa7+V0KAAAFJABfIEEjJRzCWiU5AnkPkje0p3EQ3DUzKnIBkJAAIIauJ+ioBAACkhSrHSLMiBd/CdoKA6ParAgUPDBYF6qTR1VkH8eKvAQYQchjgIGnGXWZATpHY3MntwJSTU7959DnKoADv7AzzbjhERS8KocHEP3ABXsDNSfU+sc7UeKsgsewQUAcYBAEB3s+DttlJgyvdqMyFTYDn7Dv91BVYmgAggUs3zcEW/KC68IC/XgdAuS2+GLPxT9YujaCYwVcD4D3NSgJmHSD2hMW/T8FJ++8uFhphi37kxwFuPz6yBDxczS9SvPl1PH8PMAsHQb+NbX88CZj5OxswMZm6ztHOZfZEyd+wRgeuB1C9HZswb3Pi9fWF0Wgeugp8S2zjx9ANKmIZWkdb+L5cQHEgUKKXQHVD3MRM+Z/YwgKJr96r8lnQG3mJEcb0zSTXA9yNIUU2zuW8eq76pEs6FKM8Iu/P3di80mp5N0VCNUgotDyQX7eUPkz8nQVfVub1LtgAAAABJRU5ErkJggg=="/>
-<clipPath id="clip1">
-  <rect width="15" height="15"/>
-</clipPath>
-<g id="surface10" clip-path="url(#clip1)">
-<use xlink:href="#image9" transform="matrix(0.331456,-0.331456,0.331456,0.331456,-3.106602,7.5)"/>
-</g>
-<pattern id="pattern0" patternUnits="userSpaceOnUse" width="15" height="15">
-<use xlink:href="#surface10"/>
+<image id="image10" width="15" height="15" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAABmJLR0QA/wD/AP+gvaeTAAACcElEQVQokaWSSUiUcRjGf5/fzKjozNgo44AK4TaJy8RYBokZaRk0OhCoYOCliyMUQR3ykEggtNFykQ4mBIFgHkoFF7L0YBqWuY/rGJpGuJtbn+P8O5ggaV16r8/ze98Hnhf+Y+R/y9ojhChRpHCZdRTAH4W5XVX6C2U+k5Fe8PZTRgG3G70I8tYw7KfQoPPQtlULz4uBoYPA8Evp6c6XlaVCn/VOED0siBoRqBUBQsBPATecgHlvbKkEwmMh2zTzJbfO97M0MFAIwgtGzODZtcrAqSDocquqqqrkwZwcGSgVcLqb/KMBCYPSkDEYGs+DYQGsXeCMgXAXcWHbMB9If39ugZw6M3N3fWrKAYgmKHrPtYvBsybtWFkt7ohvoHKDRoEuK6oGGykbfagXq4iKOufxmu/svCJBhQEK29Fugc4guwXa4gJQNDtJVW7S4hUyu82oL6iQ1dt4PPc1coxOp/fb3Dy7AdknUfycHLccEt5a2RnJ7LOHIAlk4zxW0UZv2UdGXo1gS7MxPf0VCZBLdio7LEHmGoH2OWJSVwihmkqSk7+zurbOiaQhmpuvYjKZWFn5QVxcrLKvZxUBqT7cbArFrIlIiyYw5BHT0xMkJh5jYsLF0tI6Pj5PkKTXj73+hN0sta5yx7EW5ucOCu2gpaWJvLw8+vp60ev1+PqqRX//vaGamutPD3zPurrqhOXlF1l6/SLx8fFSeXk5drudyclJpaenu8jlenMLGNt3WQgh1dfX2w2GgA8Wi6W+o6MDq9W60N7evpafn+8YHx9/ALgA9sG/FzA6Oprk7++vi4yMXDEaja0Oh8Nqs9kq9vp+AdKo6z4Vixe0AAAAAElFTkSuQmCC"/>
+<pattern id="pattern0" patternUnits="userSpaceOnUse" width="15" height="15" >
+  <use xlink:href="#image10"/>
 </pattern>
-<clipPath id="clip2">
-  <rect width="32" height="32"/>
-</clipPath>
-<g id="surface14" clip-path="url(#clip2)">
-<use xlink:href="#image9"/>
-</g>
-<pattern id="pattern1" patternUnits="userSpaceOnUse" width="32" height="32">
-<use xlink:href="#surface14"/>
+<image id="image14" width="32" height="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAABz0lEQVRYhcVX0ZLDIAhcbvpf55/VTyNfxj1EIiLEpNdp6WQSBbPrKtQAXzYCgFqrlFIAAKUU+jgBAFJrVQKH8xNkfjLHp5SwILsKTQm1Osa83R6rgAqIa7+V0KAAAFJABfIEEjJRzCWiU5AnkPkje0p3EQ3DUzKnIBkJAAIIauJ+ioBAACkhSrHSLMiBd/CdoKA6ParAgUPDBYF6qTR1VkH8eKvAQYQchjgIGnGXWZATpHY3MntwJSTU7959DnKoADv7AzzbjhERS8KocHEP3ABXsDNSfU+sc7UeKsgsewQUAcYBAEB3s+DttlJgyvdqMyFTYDn7Dv91BVYmgAggUs3zcEW/KC68IC/XgdAuS2+GLPxT9YujaCYwVcD4D3NSgJmHSD2hMW/T8FJ++8uFhphi37kxwFuPz6yBDxczS9SvPl1PH8PMAsHQb+NbX88CZj5OxswMZm6ztHOZfZEyd+wRgeuB1C9HZswb3Pi9fWF0Wgeugp8S2zjx9ANKmIZWkdb+L5cQHEgUKKXQHVD3MRM+Z/YwgKJr96r8lnQG3mJEcb0zSTXA9yNIUU2zuW8eq76pEs6FKM8Iu/P3di80mp5N0VCNUgotDyQX7eUPkz8nQVfVub1LtgAAAABJRU5ErkJggg=="/>
+<pattern id="pattern1" patternUnits="userSpaceOnUse" width="32" height="32" >
+  <use xlink:href="#image14"/>
 </pattern>
-<clipPath id="clip3">
-  <rect width="15" height="15"/>
-</clipPath>
-<g id="surface15" clip-path="url(#clip3)">
-<use xlink:href="#image9" transform="matrix(0.331456,-0.331456,0.331456,0.331456,-3.106602,7.5)"/>
-</g>
-<pattern id="pattern2" patternUnits="userSpaceOnUse" width="15" height="15">
-<use xlink:href="#surface15"/>
+<pattern id="pattern2" patternUnits="userSpaceOnUse" width="15" height="15" >
+  <use xlink:href="#image10"/>
 </pattern>
-<clipPath id="clip4">
-  <rect width="15" height="15"/>
-</clipPath>
-<g id="surface16" clip-path="url(#clip4)">
-<use xlink:href="#image9" transform="matrix(0.331456,-0.331456,0.331456,0.331456,-3.106602,7.5)"/>
-</g>
-<pattern id="pattern3" patternUnits="userSpaceOnUse" width="15" height="15">
-<use xlink:href="#surface16"/>
+<pattern id="pattern3" patternUnits="userSpaceOnUse" width="15" height="15" >
+  <use xlink:href="#image10"/>
 </pattern>
 </defs>
 <g id="surface2">
