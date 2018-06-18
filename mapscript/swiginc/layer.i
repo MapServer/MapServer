@@ -92,7 +92,7 @@
         }
     }
 
-#ifdef SWIGJAVA
+#if defined (SWIGJAVA) || defined(SWIGPHP)
     %newobject cloneLayer;
     layerObj *cloneLayer() 
 #else
