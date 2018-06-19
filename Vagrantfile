@@ -7,8 +7,7 @@ require 'socket'
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "precise64"
-  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+  config.vm.box = "ubuntu/trusty64"
 
   config.vm.hostname = "mapserver-vagrant"
 
@@ -19,6 +18,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
      v.customize ["modifyvm", :id, "--ioapic", "on", "--largepages", "off", "--vtxvpid", "off"]
      v.name = "mapserver-vagrant"
    end
+
+  # Unless explicitly declined, use the VM host's file system to cache
+  # .deb files to avoid repeated downloads on each vagrant up
+  unless File.exists?("../.no_apt_cache")
+    cache_dir = "../apt-cache/#{config.vm.box}"
+    FileUtils.mkdir_p(cache_dir) unless Dir.exists?(cache_dir)
+    puts "Using local apt cache, #{cache_dir}"
+    config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
+  end
 
   config.vm.provision "shell", path: "scripts/vagrant/virtualbox-fix.sh"
   config.vm.provision "shell", path: "scripts/vagrant/packages.sh"

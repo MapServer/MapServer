@@ -1,41 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
 <defs>
-<clipPath id="clip1">
-  <rect width="24" height="16"/>
-</clipPath>
-<g id="surface8" clip-path="url(#clip1)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 2.808594 15.714844 L 21.191406 0.285156 M 9.921875 -0.699219 L 21.191406 0.285156 L 20.207031 11.558594 "/>
-</g>
-<pattern id="pattern0" patternUnits="userSpaceOnUse" width="24" height="16">
-<use xlink:href="#surface8"/>
+<image id="image8" width="24" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAYAAAAMJL+VAAAABmJLR0QA/wD/AP+gvaeTAAAA/0lEQVQ4ja3UvytGYRjG8c+RH71lMPCeUSIlFoNIyqyUZLIblMFoNdsVSlaT/0DJ34BSUgj1kkEGizI859Sr3s4v56p7uZ/r+dZz31dPpLz60UxqEENJxZjAEk6xXoGdqUnc4xb7abO7JvgqjrCFKfzUxBVhFy+YTXoH2EwN/3lBAycYwwyek36MVmrqqgiPcY4+LLbBCctvdbpUVNN4EkYTdTi/w3hV+AreZEfwEwNV4DvCMuczPA18lwX34hhXGMnxDuOxvZGXoibO8IE5fOX4/ySI7BSN4gLXWCsAJ6TqoYDPMt6xUcRcVtt4xULd4B4c4kYYT+3aw6Xw9damX3AWJ9VAJFB5AAAAAElFTkSuQmCC"/>
+<pattern id="pattern0" patternUnits="userSpaceOnUse" width="24" height="16" >
+  <use xlink:href="#image8"/>
 </pattern>
-<clipPath id="clip2">
-  <rect width="12" height="8"/>
-</clipPath>
-<g id="surface12" clip-path="url(#clip2)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 4 L 12 4 M 8 0 L 12 4 L 8 8 "/>
-</g>
-<pattern id="pattern1" patternUnits="userSpaceOnUse" width="12" height="8">
-<use xlink:href="#surface12"/>
+<image id="image12" width="12" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAICAYAAADN5B7xAAAABmJLR0QA/wD/AP+gvaeTAAAAR0lEQVQYlWNgwA+sGBgYXjMwMDgRUIcCrBkYGN4wMDD4kqWJkYGBoYNITVYMDAzGLAwMDO+J1PCZFCf5Qp1kRXXFlgxowQoAMHMLeEI3yPAAAAAASUVORK5CYII="/>
+<pattern id="pattern1" patternUnits="userSpaceOnUse" width="12" height="8" >
+  <use xlink:href="#image12"/>
 </pattern>
-<clipPath id="clip3">
-  <rect width="24" height="16"/>
-</clipPath>
-<g id="surface13" clip-path="url(#clip3)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 2.808594 15.714844 L 21.191406 0.285156 M 9.921875 -0.699219 L 21.191406 0.285156 L 20.207031 11.558594 "/>
-</g>
-<pattern id="pattern2" patternUnits="userSpaceOnUse" width="24" height="16">
-<use xlink:href="#surface13"/>
+<pattern id="pattern2" patternUnits="userSpaceOnUse" width="24" height="16" >
+  <use xlink:href="#image8"/>
 </pattern>
-<clipPath id="clip4">
-  <rect width="24" height="16"/>
-</clipPath>
-<g id="surface14" clip-path="url(#clip4)">
-<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 2.808594 15.714844 L 21.191406 0.285156 M 9.921875 -0.699219 L 21.191406 0.285156 L 20.207031 11.558594 "/>
-</g>
-<pattern id="pattern3" patternUnits="userSpaceOnUse" width="24" height="16">
-<use xlink:href="#surface14"/>
+<pattern id="pattern3" patternUnits="userSpaceOnUse" width="24" height="16" >
+  <use xlink:href="#image8"/>
 </pattern>
 </defs>
 <g id="surface2">

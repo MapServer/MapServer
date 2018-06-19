@@ -19,8 +19,8 @@ CoordSys Earth Projection 3, 74, "m", -95, 49, 49, 77, 0, 0
 Columns 4
   UNIQUE_KEY Char(5)
   NAME Char(50)
-  CAPITAL Integer(3)
-  POP_CLASS Integer(3)
+  CAPITAL Integer
+  POP_CLASS Integer
 Data
 
 Point 2279399 39858
@@ -45,13 +45,13 @@ Charset "Neutral"
 Delimiter ","
 CoordSys Earth Projection 3, 74, "m", -95, 49, 49, 77, 0, 0
 Columns 9
-  FNODE_ Integer(11)
-  TNODE_ Integer(11)
-  LPOLY_ Integer(11)
-  RPOLY_ Integer(11)
+  FNODE_ Integer
+  TNODE_ Integer
+  LPOLY_ Integer
+  RPOLY_ Integer
   LENGTH Decimal(15,3)
-  ROAD_ID Integer(11)
-  F_CODE Integer(5)
+  ROAD_ID Integer
+  F_CODE Integer
   NAME_E Char(26)
   NAME_F Char(26)
 Data
