@@ -3,14 +3,6 @@
 NUMTHREADS=2 # we have 2 cpus configured
 export NUMTHREADS
 
-cd /tmp
-wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-0.9.38.tar.bz2
-tar xjf harfbuzz-0.9.38.tar.bz2
-cd harfbuzz-0.9.38
-./configure --without-cairo --without-glib --without-icu
-make -j $NUMTHREADS
-sudo make install && sudo ldconfig
-
 cd /vagrant
 
 cd msautotest

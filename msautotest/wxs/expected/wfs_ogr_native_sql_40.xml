@@ -8,32 +8,8 @@ Content-Type: text/xml; subtype=gml/3.1.1; charset=UTF-8
    xmlns:ogc="http://www.opengis.net/ogc"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=towns_with_null&amp;OUTPUTFORMAT=text/xml;%20subtype=gml/3.1.1  http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
-      <gml:boundedBy>
-      	<gml:Envelope srsName="EPSG:32632">
-      		<gml:lowerCorner>653901.530000 4866278.050000</gml:lowerCorner>
-      		<gml:upperCorner>653901.530000 4866278.050000</gml:upperCorner>
-      	</gml:Envelope>
-      </gml:boundedBy>
-<!-- WARNING: FeatureId item 'ID' not found in typename 'towns_with_null'. -->
-    <gml:featureMember>
-      <ms:towns_with_null>
-        <gml:boundedBy>
-        	<gml:Envelope srsName="EPSG:32632">
-        		<gml:lowerCorner>653901.530000 4866278.050000</gml:lowerCorner>
-        		<gml:upperCorner>653901.530000 4866278.050000</gml:upperCorner>
-        	</gml:Envelope>
-        </gml:boundedBy>
-        <ms:msGeometry>
-          <gml:Point srsName="EPSG:32632">
-            <gml:pos>653901.530000 4866278.050000</gml:pos>
-          </gml:Point>
-        </ms:msGeometry>
-        <ms:name></ms:name>
-        <ms:peoples>84274</ms:peoples>
-        <ms:localcounc>1</ms:localcounc>
-        <ms:county>1</ms:county>
-        <ms:region>0</ms:region>
-      </ms:towns_with_null>
-    </gml:featureMember>
+   <gml:boundedBy>
+      <gml:Null>missing</gml:Null>
+   </gml:boundedBy>
 </wfs:FeatureCollection>
 

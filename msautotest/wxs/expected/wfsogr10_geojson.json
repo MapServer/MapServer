@@ -2,6 +2,7 @@ Content-Type: application/json; subtype=geojson; charset=utf-8
 
 {
 "type": "FeatureCollection",
+"name": "popplace_fid",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3978" } },
 "features": [
 { "type": "Feature", "id": 0, "properties": { "UNIQUE_KEY": "BACMK", "NAME": "\"Tignish", "CAPITAL": 0, "POP_CLASS": 1 }, "geometry": { "type": "Point", "coordinates": [ 2281604.25, 340848.9375 ] } },

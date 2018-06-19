@@ -12,7 +12,7 @@
 <clipPath id="clip1">
   <rect width="200" height="150"/>
 </clipPath>
-<g id="surface6" clip-path="url(#clip1)">
+<g id="surface5" clip-path="url(#clip1)">
 <path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 103.628906 67.21875 L 98.011719 63.859375 L 101.480469 54.449219 L 112.671875 58.179688 Z M 103.628906 67.21875 "/>
 <path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 144.851562 62.78125 L 169.878906 37.75 L 185.839844 41.578125 L 179.550781 47.871094 L 157.421875 54.449219 L 170.609375 56.808594 L 164.96875 62.449219 Z M 144.851562 62.78125 "/>
 <path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 173.609375 62.300781 L 177.820312 58.089844 L 194.609375 61.101562 L 193.738281 61.96875 Z M 173.609375 62.300781 "/>
@@ -34,6 +34,6 @@
 <path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,0%,0%);fill-opacity:1;" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 Z M 167.320312 37.125 "/>
 <path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,0%,0%);fill-opacity:1;" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 Z M 16.335938 61.382812 "/>
 <path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,0%,0%);fill-opacity:1;" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 Z M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 Z M 67.324219 90.09375 "/>
-<use xlink:href="#surface6" mask="url(#mask0)"/>
+<use xlink:href="#surface5" mask="url(#mask0)"/>
 </g>
 </svg>

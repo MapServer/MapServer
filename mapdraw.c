@@ -1683,14 +1683,29 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
 {
   int l, c = shape->classindex, j, i, s;
   pointObj *point;
+  int ret = MS_FAILURE;
 
 #ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
     msProjectShape(&layer->projection, &map->projection, shape);
 #endif
 
-  for (l = 0; l < layer->class[c]->numlabels; l++)
-    if (layer->class[c]->labels[l]->angle != 0) layer->class[c]->labels[l]->angle -= map->gt.rotation_angle; /* TODO: is this right???? */
+  // Only take into account map rotation if the label and style angles are
+  // non-zero.
+  if( map->gt.rotation_angle )
+  {
+    for (l = 0; l < layer->class[c]->numlabels; l++)
+    {
+        if( layer->class[c]->labels[l]->angle != 0 )
+            layer->class[c]->labels[l]->angle -= map->gt.rotation_angle;
+    }
+
+    for (s = 0; s < layer->class[c]->numstyles; s++)
+    {
+        if( layer->class[c]->styles[s]->angle != 0 )
+            layer->class[c]->styles[s]->angle -= map->gt.rotation_angle;
+    }
+  }
 
   for (j = 0; j < shape->numlines; j++) {
     for (i = 0; i < shape->line[j].numpoints; i++) {
@@ -1707,26 +1722,44 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
               layer->class[c]->styles[s]->minscaledenom,
               layer->class[c]->styles[s]->maxscaledenom))
             if(UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, image, point, layer->class[c]->styles[s], layer->scalefactor))) {
-              return MS_FAILURE;
+              goto end;
             }
         }
       }
       if(MS_DRAW_LABELS(drawmode)) {
         if (layer->labelcache) {
-          if (msAddLabelGroup(map, image, layer, c, shape, point, -1) != MS_SUCCESS) return (MS_FAILURE);
+          if (msAddLabelGroup(map, image, layer, c, shape, point, -1) != MS_SUCCESS) goto end;
         } else {
           for (l = 0; l < layer->class[c]->numlabels; l++)
             if(msGetLabelStatus(map,layer,shape,layer->class[c]->labels[l]) == MS_ON) {
               char *annotext = msShapeGetLabelAnnotation(layer,shape,layer->class[c]->labels[l]);
               if(UNLIKELY(MS_FAILURE == msDrawLabel(map, image, *point, annotext, layer->class[c]->labels[l], layer->scalefactor))) {
-                return MS_FAILURE;
+                goto end;
               }
             }
         }
       }
     }
   }
-  return MS_SUCCESS;
+  ret = MS_SUCCESS;
+
+end:
+  if( map->gt.rotation_angle )
+  {
+    for (l = 0; l < layer->class[c]->numlabels; l++)
+    {
+        if( layer->class[c]->labels[l]->angle != 0 )
+            layer->class[c]->labels[l]->angle += map->gt.rotation_angle;
+    }
+
+    for (s = 0; s < layer->class[c]->numstyles; s++)
+    {
+        if( layer->class[c]->styles[s]->angle != 0 )
+            layer->class[c]->styles[s]->angle += map->gt.rotation_angle;
+    }
+  }
+
+  return ret;
 }
 
 int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *shape,
