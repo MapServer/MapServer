@@ -86,7 +86,7 @@
         return msWriteClassToString(self);
     }
 
-#ifdef SWIGJAVA
+#if defined (SWIGJAVA) || defined (SWIGPHP)
     %newobject cloneClass;
     classObj *cloneClass() 
 #else
