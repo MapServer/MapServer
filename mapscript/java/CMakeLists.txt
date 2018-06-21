@@ -13,9 +13,14 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/java)
 SET (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
 SET(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
-SWIG_ADD_MODULE(javamapscript java ../mapscript.i)
 
-SWIG_LINK_LIBRARIES(javamapscript ${MAPSERVER_LIBMAPSERVER})
+if(${CMAKE_VERSION} VERSION_GREATER "3.11.0") 
+    swig_add_library(javamapscript TYPEMODULE LANGUAGE java SOURCES ../mapscript.i)
+    target_link_libraries(javamapscript ${MAPSERVER_LIBMAPSERVER})
+else()
+    SWIG_ADD_MODULE(javamapscript java ../mapscript.i)
+    SWIG_LINK_LIBRARIES(javamapscript ${MAPSERVER_LIBMAPSERVER})
+endif()
 
 ADD_CUSTOM_COMMAND(TARGET javamapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

@@ -34,11 +34,16 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/csharp)
 SET (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}")
 SET( CMAKE_SWIG_FLAGS -namespace OSGeo.MapServer ${MAPSERVER_COMPILE_DEFINITIONS} -DWIN32)
-SWIG_ADD_MODULE(mapscript csharp ../mapscript.i)
+
+if(${CMAKE_VERSION} VERSION_GREATER "3.11.0") 
+    swig_add_library(mapscript TYPEMODULE LANGUAGE csharp SOURCES ../mapscript.i)
+    target_link_libraries(mapscript ${MAPSERVER_LIBMAPSERVER})
+else()
+    SWIG_ADD_MODULE(mapscript csharp ../mapscript.i)
+    SWIG_LINK_LIBRARIES(mapscript ${MAPSERVER_LIBMAPSERVER})
+endif()
 
 set_target_properties(mapscript PROPERTIES OUTPUT_NAME "mapscript")
-
-SWIG_LINK_LIBRARIES(mapscript ${MAPSERVER_LIBMAPSERVER})
 
 
 ADD_CUSTOM_COMMAND(TARGET mapscript
