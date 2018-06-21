@@ -42,6 +42,7 @@ build_script:
   - cd swig
   - mkdir build
   - cd build
+  - cmake -version
   - cmake .. -G "NMake Makefiles"  -DCMAKE_BUILD_TYPE=Release
   - cmake --build .
   - set SWIG_EXECUTABLE=%BASEDIR%\build\swig.exe
