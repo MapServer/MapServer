@@ -22,7 +22,7 @@ SET(PHP7_POSSIBLE_INCLUDE_PATHS
 
 if(WIN32)
   string(SUBSTRING $ENV{VSCMD_VER} 0 2 VSCMD_VER)
-  SET(PHP7_POSSIBLE_INCLUDE_PATHS C:/php-sdk/phpmaster/vc${VSCMD_VER}/$ENV{VSCMD_ARG_TGT_ARCH}/php-src C:/dev/work/php-sdk/phpmaster/vc${VSCMD_VER}/$ENV{VSCMD_ARG_TGT_ARCH}/php-src)
+  SET(PHP7_POSSIBLE_INCLUDE_PATHS C:/php-sdk/phpmaster/vc${VSCMD_VER}/$ENV{VSCMD_ARG_TGT_ARCH}/php-src C:/projects/mapserver/php-sdk/phpmaster/vc${VSCMD_VER}/$ENV{VSCMD_ARG_TGT_ARCH}/php-src)
 endif(WIN32)
 
 FIND_PATH(PHP7_FOUND_INCLUDE_PATH main/php.h ${PHP7_POSSIBLE_INCLUDE_PATHS})
