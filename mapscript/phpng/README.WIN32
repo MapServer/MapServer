@@ -67,10 +67,8 @@ git clone git://git.savannah.gnu.org/gnulib.git
 Step 6: Build Mapserver with php_mapscriptng
 --------------------------------------------------------------------
 cd C:\projects\mapserver
-git clone https://github.com/AlexanderGabriel/mapserver
+git clone https://github.com/mapserver/mapserver
 cd mapserver
-git fetch origin
-git checkout -b master-mapscriptng origin/master-mapscriptng
 mkdir build
 cd build
 cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver\gnulib\lib;C:\projects\mapserver\gnulib\include;C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12
