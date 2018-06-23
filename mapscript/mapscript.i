@@ -231,6 +231,12 @@ typedef struct {
 %include "tclmodule.i"
 #endif /* SWIGTCL8 */
 
+/* PHP7 */
+#ifdef SWIGPHP7
+%include "php7module.i"
+#endif /* SWIGPHP7 */
+
+
 /* 
 =============================================================================
  Wrap MapServer structs into mapscript classes
