@@ -12,14 +12,14 @@ rem --------------------------------------------------------------------
 rem Step 1: Create Directories
 rem --------------------------------------------------------------------
 mkdir C:\projects
-mkdir C:\projects\mapserver
+mkdir C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
 
 rem --------------------------------------------------------------------
 rem Step 2: Build PHP
 rem --------------------------------------------------------------------
-cd C:\projects\mapserver
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
 git clone https://github.com/Microsoft/php-sdk-binary-tools.git php-sdk
-cd C:\projects\mapserver\php-sdk
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\php-sdk
 set VS_VERSION=%VSCMD_VER:~0,2%
 phpsdk-vc%VS_VERSION%-%VSCMD_ARG_TGT_ARCH%.bat
 phpsdk_buildtree phpmaster
@@ -33,7 +33,7 @@ nmake snap
 rem --------------------------------------------------------------------
 rem Step 3: Get GISInternals SDK
 rem --------------------------------------------------------------------
-cd C:\projects\mapserver
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
 mkdir packages
 mkdir packages\gisinternals%VSCMD_ARG_TGT_ARCH%\
 mkdir gisinternals%VSCMD_ARG_TGT_ARCH%
@@ -52,7 +52,7 @@ rem --------------------------------------------------------------------
 rem Step 4: Other Dependencies
 rem --------------------------------------------------------------------
 rem ### SWIG ###
-cd C:\projects\mapserver
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
 git clone https://github.com/AlexanderGabriel/swig
 mkdir swig\build
 cd swig\build
@@ -60,20 +60,20 @@ cmake .. -G "NMake Makefiles"  -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 move swig.exe ..
 rem ### gnulib ###
-cd C:\projects\mapserver
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
 git clone git://git.savannah.gnu.org/gnulib.git
 
 --------------------------------------------------------------------
-Step 6: Build Mapserver with php_mapscriptng
+Step 5: Build Mapserver with php_mapscriptng
 --------------------------------------------------------------------
-cd C:\projects\mapserver
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
 git clone https://github.com/mapserver/mapserver
 cd mapserver
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver\gnulib\lib;C:\projects\mapserver\gnulib\include;C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12
+cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\include;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12
 cmake .. -DWITH_POSTGIS=0 -DWITH_PROTOBUFC=0 -DWITH_THREAD_SAFETY=1
-cmake .. -DWITH_PHPNG=0 -DSWIG_EXECUTABLE=C:\projects\mapserver\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver\swig
+cmake .. -DWITH_PHPNG=0 -DSWIG_EXECUTABLE=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig
 cmake --build .
 
 
