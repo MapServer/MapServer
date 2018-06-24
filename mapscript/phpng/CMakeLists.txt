@@ -36,4 +36,6 @@ endif(WIN32)
 target_link_libraries(php_mapscriptng mapserver)
 
 set_target_properties(${SWIG_MODULE_mapscript_REAL_NAME} PROPERTIES PREFIX "")
+if(NOT WIN32)
 install(TARGETS php_mapscriptng DESTINATION ${PHP7_EXTENSION_DIR})
+endif()
