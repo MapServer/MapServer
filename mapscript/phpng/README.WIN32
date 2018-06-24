@@ -73,7 +73,7 @@ mkdir build
 cd build
 cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\include;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12
 cmake .. -DWITH_POSTGIS=0 -DWITH_PROTOBUFC=0 -DWITH_THREAD_SAFETY=1
-cmake .. -DWITH_PHPNG=0 -DSWIG_EXECUTABLE=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig
+cmake .. -DWITH_PHPNG=1 -DSWIG_EXECUTABLE=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig
 cmake --build .
 
 
