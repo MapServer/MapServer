@@ -25,7 +25,7 @@ phpsdk-vc%VS_VERSION%-%VSCMD_ARG_TGT_ARCH%.bat
 phpsdk_buildtree phpmaster
 git clone https://github.com/php/php-src.git
 cd php-src
-phpsdk_deps --update --branch master
+phpsdk_deps --update --branch 7.2
 buildconf
 configure --enable-snapshot-build
 nmake snap
