@@ -46,22 +46,19 @@ class MapConstructorTestCase(unittest.TestCase):
     def testMapConstructorNoArg(self):
         """MapConstructorTestCase.testMapConstructorNoArg: test map constructor with no argument"""
         test_map = mapscript.mapObj()
-        maptype = type(test_map)
-        assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
+        assert test_map.__class__.__name__ == "mapObj"
         assert test_map.thisown == 1
     
     def testMapConstructorEmptyStringArg(self):
         """MapConstructorTestCase.testMapConstructorEmptyStringArg: test map constructor with old-style empty string argument"""
         test_map = mapscript.mapObj('')
-        maptype = type(test_map)
-        assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
+        assert test_map.__class__.__name__ == "mapObj"
         assert test_map.thisown == 1
         
     def testMapConstructorFilenameArg(self):
         """MapConstructorTestCasetest.testMapConstructorEmptyStringArg: map constructor with filename argument"""
         test_map = mapscript.mapObj(TESTMAPFILE)
-        maptype = type(test_map)
-        assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
+        assert test_map.__class__.__name__ == "mapObj"
         assert test_map.thisown == 1
 
 class MapExtentTestCase(MapTestCase):
