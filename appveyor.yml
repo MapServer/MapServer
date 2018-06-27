@@ -51,7 +51,8 @@ test_script:
   - set PATH=%BUILD_FOLDER%/build/Release;%BUILD_FOLDER%/sdk/%SDK%/bin;%PATH%
   - set PROJ_LIB=%BUILD_FOLDER%/sdk/%SDK%/bin/proj/SHARE
   - set PYTHONPATH=%BUILD_FOLDER%/build/mapscript/python/Release;%BUILD_FOLDER%/build/mapscript/python
-  - cd %BUILD_FOLDER%/mapscript/python
-  - "%PYTHON_EXECUTABLE% -m pytest --ignore=tests/cases/fonttest.py --ignore=tests/cases/hashtest.py --ignore=tests/cases/pgtest.py --ignore=tests/cases/threadtest.py tests/cases"
+  - cd %BUILD_FOLDER%
+  - set TESTS_FOLDER=%BUILD_FOLDER%/mapscript/python/tests/cases
+  - "%PYTHON_EXECUTABLE% -m pytest --ignore=%TESTS_FOLDER%/fonttest.py --ignore=%TESTS_FOLDER%/hashtest.py --ignore=%TESTS_FOLDER%/pgtest.py --ignore=%TESTS_FOLDER%/threadtest.py %TESTS_FOLDER%"
 
 deploy: off
