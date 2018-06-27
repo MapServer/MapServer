@@ -28,7 +28,12 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
-swig_add_library(pythonmapscript TYPE MODULE LANGUAGE python SOURCES ../mapscript.i)
+if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} greater 3.7)
+    swig_add_library(pythonmapscript TYPE MODULE LANGUAGE python SOURCES ../mapscript.i)
+else (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} greater 3.7)
+    swig_add_module(pythonmapscript python ../mapscript.i)
+endif (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} greater 3.7)
+
 swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
 
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
