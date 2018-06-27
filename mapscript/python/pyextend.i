@@ -80,8 +80,8 @@ def fromstring(data, mappath=None):
         return self.toString()
         
     def __contains__(self, item):
-        item_type = str(type(item))
-        if item_type == "<class 'mapscript.pointObj'>":
+        item_type = item.__class__.__name__
+        if item_type == "pointObj":
             if item.x >= self.minx and item.x <= self.maxx \
             and item.y >= self.miny and item.y <= self.maxy:
                 return True
