@@ -194,9 +194,9 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   } else if(layer->type == MS_LAYER_LINE) {
     for(i=0;i<shape->numlines;i++)
       if(shape->line[i].numpoints >= 2) n_geometry += 2 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO */
-  } else {
+  } else { /* MS_LAYER_POLYGON */
     for(i=0;i<shape->numlines;i++)
-      if(shape->line[i].numpoints >= 4) n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
+      if(shape->line[i].numpoints >= 4) n_geometry += 3 + (shape->line[i].numpoints-1) * 2; /* one MOVETO, one LINETO, one CLOSEPATH (don't consider last duplicate point) */
   }
 
   if(n_geometry == 0) return MS_SUCCESS;
@@ -274,6 +274,7 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
       }
     }
   } else { /* MS_LAYER_LINE or MS_LAYER_POLYGON */
+    int numpoints;
     int idx=0, lastx=0, lasty=0;
     for(i=0;i<shape->numlines;i++) {
 
@@ -282,11 +283,12 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
         continue; /* skip malformed parts */
       }
 
-      for(j=0;j<shape->line[i].numpoints;j++) {
+      numpoints = (layer->type == MS_LAYER_LINE)?shape->line[i].numpoints:(shape->line[i].numpoints-1); /* don't consider last point for polygons */
+      for(j=0;j<numpoints;j++) {
         if(j==0) {
           mvt_feature->geometry[idx++] = COMMAND(MOVETO, 1);
         } else if(j==1) {
-          mvt_feature->geometry[idx++] = COMMAND(LINETO, shape->line[i].numpoints-1);
+          mvt_feature->geometry[idx++] = COMMAND(LINETO, numpoints-1);
         }
         mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].x)-lastx);
 	mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].y)-lasty);
