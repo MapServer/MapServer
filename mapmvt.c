@@ -64,10 +64,11 @@ static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
 
   /* step throught the edges */
   for(i=0; i<ring->numpoints-1; i++) {
-    sum += (ring->point[i+1].x - ring->point[i].x)*(ring->point[i+1].y + ring->point[i].y); /* (x2 − x1)*(y2 + y1) */
+    sum += ring->point[i].x * ring->point[i+1].y - ring->point[i+1].x * ring->point[i].y;
   }
 
-  return (sum >= 0)?MS_DIRECTION_CLOCKWISE:MS_DIRECTION_COUNTERCLOCKWISE;
+  return sum > 0 ? MS_DIRECTION_CLOCKWISE :
+         sum < 0 ? MS_DIRECTION_COUNTERCLOCKWISE : MS_DIRECTION_INVALID_RING;
 }
 
 static void mvtReverseRingDirection(lineObj *ring) {
@@ -83,14 +84,41 @@ static void mvtReverseRingDirection(lineObj *ring) {
   }
 }
 
+static void mvtReorderRings(shapeObj *shape, int *outers) {
+  int i, j;
+  int t1;
+  lineObj t2; 
+
+  for(i=0; i<(shape->numlines-1); i++) {
+    for(j=0; j<(shape->numlines-i-1); j++) {
+      if(outers[j] < outers[j+1]) {
+        /* swap */
+	t1 = outers[j];
+        outers[j] = outers[j+1];
+	outers[j+1] = t1;
+
+	t2 = shape->line[j];
+        shape->line[j] = shape->line[j+1];
+	shape->line[j+1] = t2;
+      }
+    }
+  }
+}
+
 static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, int mvt_layer_extent) {
   double scale_x,scale_y;
   int i,j,outj;
 
-  int ring_direction, is_outer_ring;
+  int *outers=NULL, ring_direction;
 
   scale_x = (double)mvt_layer_extent/(extent->maxx - extent->minx);
   scale_y = (double)mvt_layer_extent/(extent->maxy - extent->miny);
+
+  if(layer_type == MS_LAYER_POLYGON) {
+    outers = msGetOuterList(shape); /* compute before we muck with the shape */
+    if(outers[0] == 0) /* first ring must be an outer */
+      mvtReorderRings(shape, outers);
+  }
 
   for(i=0;i<shape->numlines;i++) {
     for(j=0,outj=0;j<shape->line[i].numpoints;j++) {
@@ -103,14 +131,17 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, i
     }
     shape->line[i].numpoints = outj;
 
-    is_outer_ring = msIsOuterRing(shape, i);
-    ring_direction = mvtGetRingDirection(&shape->line[i]);
-
-    if( (layer_type==MS_LAYER_POLYGON) && ((ring_direction != MS_DIRECTION_INVALID_RING) && ((is_outer_ring && ring_direction != MS_DIRECTION_CLOCKWISE) || (!is_outer_ring && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))))
-      mvtReverseRingDirection(&shape->line[i]);
+    if(layer_type == MS_LAYER_POLYGON) {
+      ring_direction = mvtGetRingDirection(&shape->line[i]);
+      if(ring_direction == MS_DIRECTION_INVALID_RING)
+        shape->line[i].numpoints = 0; /* so it's not considered anymore */
+      else if((outers[i] && ring_direction != MS_DIRECTION_CLOCKWISE) || (!outers[i] && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))
+        mvtReverseRingDirection(&shape->line[i]);
+    }
   }
 
   msComputeBounds(shape); /* TODO: might need to limit this to just valid parts... */
+  msFree(outers);
 
   return (shape->numlines == 0)?MS_FAILURE:MS_SUCCESS; /* sucess if at least one line */
 }
