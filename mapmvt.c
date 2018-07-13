@@ -157,7 +157,8 @@ static int mvtClipShape(shapeObj *shape, int layer_type, int buffer, int mvt_lay
     msClipPolylineRect(shape, tile_rect);
   }
 
-  if(shape->numlines>0)
+  /* success if at least one line and not a degenerate bounding box */
+  if(shape->numlines > 0 && (shape->bounds.minx != shape->bounds.maxx || shape->bounds.miny != shape->bounds.maxy))
     return MS_SUCCESS;
   else
     return MS_FAILURE;
