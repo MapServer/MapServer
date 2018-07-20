@@ -84,12 +84,14 @@ The build process works as follows.
   ``_mapscript.pyd`` file on Windows, and a ``_mapscript.so`` file on Windows. 
 
 ``CMakeLists.txt`` is setup so that all files required to make a Python wheel are copied into the output build folder. The wheel can then be built
-with the following command:
+with the following commands. 
 
 .. code-block:: bat
 
+    python -m pip install --upgrade pip
+    pip install wheel
     cd C:\Projects\MapServer\build\mapscript\python
-    C:\Python27\python setup.py bdist_wheel --plat-name=win-amd64
+    python setup.py bdist_wheel --plat-name=win-amd64
 
 SWIG can be run manually, without using CMake. This may allow further optimizations and control on the output. 
 
