@@ -128,13 +128,13 @@ mapscript installation.
 Credits
 -------
 
-Steve Lime (developer)
-Sean Gillies (developer)
-Frank Warmerdam (developer)
-Howard Butler (developer)
-Norman Vine (cygwin and distutils guru)
-Tim Cera (install)
-Michael Schultz (documentation)
-Even Rouault (developer)
-Seth Girvin (Python3 migration, documentation and builds)
-Claude Paroz (Python3 migration)
++ Steve Lime (developer)
++ Sean Gillies (developer)
++ Frank Warmerdam (developer)
++ Howard Butler (developer)
++ Norman Vine (cygwin and distutils guru)
++ Tim Cera (install)
++ Michael Schultz (documentation)
++ Even Rouault (developer)
++ Seth Girvin (Python3 migration, documentation and builds)
++ Claude Paroz (Python3 migration)
