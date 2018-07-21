@@ -519,7 +519,8 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
 char* msWFSGetResolvedStoredQuery20(mapObj *map,
                                     wfsParamsObj *wfsparams,
                                     const char* id,
-                                    hashTableObj* hashTable);
+                                    hashTableObj* parameterValues,
+                                    hashTableObj* storedQueryParametersOut);
 
 #endif
 

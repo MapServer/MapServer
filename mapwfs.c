@@ -1618,7 +1618,8 @@ static void msWFSGetFeature_PrintBasePrevNextURI(cgiRequestObj *req,
                                                  wfsParamsObj *paramsObj,
                                                  const char* encoded_version,
                                                  const char* encoded_typename,
-                                                 const char* encoded_mime_type)
+                                                 const char* encoded_mime_type,
+                                                 hashTableObj* storedQueryParameters)
 {
     int i;
     int bFirstArg = MS_TRUE;
@@ -1666,14 +1667,30 @@ static void msWFSGetFeature_PrintBasePrevNextURI(cgiRequestObj *req,
         }
         if( paramsObj->nMaxFeatures >= 0 )
             msIO_printf("&amp;COUNT=%d", paramsObj->nMaxFeatures);
+
+        // FIXME stored queries are not handled
     }
     else
     {
         for(i=0; i<req->NumParams; i++) {
             if (req->ParamNames[i] && req->ParamValues[i] &&
-                strcasecmp(req->ParamNames[i], "MAP") != 0 &&
-                strcasecmp(req->ParamNames[i], "STARTINDEX") != 0 &&
-                strcasecmp(req->ParamNames[i], "RESULTTYPE") != 0) {
+                (strcasecmp(req->ParamNames[i], "SERVICE") == 0 ||
+                 strcasecmp(req->ParamNames[i], "VERSION") == 0 ||
+                 strcasecmp(req->ParamNames[i], "REQUEST") == 0 ||
+                 strcasecmp(req->ParamNames[i], "TYPENAME") == 0 ||
+                 strcasecmp(req->ParamNames[i], "TYPENAMES") == 0 ||
+                 strcasecmp(req->ParamNames[i], "OUTPUTFORMAT") == 0 ||
+                 strcasecmp(req->ParamNames[i], "BBOX") == 0 ||
+                 strcasecmp(req->ParamNames[i], "SRSNAME") == 0 ||
+                 strcasecmp(req->ParamNames[i], "FILTER") == 0 ||
+                 strcasecmp(req->ParamNames[i], "PROPERTYNAME") == 0 ||
+                 strcasecmp(req->ParamNames[i], "VALUEREFERENCE") == 0 ||
+                 strcasecmp(req->ParamNames[i], "SORTBY") == 0 ||
+                 strcasecmp(req->ParamNames[i], "STOREDQUERY_ID") == 0 ||
+                 strcasecmp(req->ParamNames[i], "RESOURCEID") == 0 ||
+                 strcasecmp(req->ParamNames[i], "COUNT") == 0 ||
+                 strcasecmp(req->ParamNames[i], "LANGUAGE") == 0 ||
+                 msLookupHashTable(storedQueryParameters, req->ParamNames[i]) != NULL)) {
                 if( !bFirstArg )
                     msIO_printf("&amp;");
                 bFirstArg = MS_FALSE;
@@ -1706,7 +1723,8 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
                                         int nMatchingFeatures,
                                         int maxfeatures,
                                         int bHasNextFeatures,
-                                        int nWFSVersion )
+                                        int nWFSVersion,
+                                        hashTableObj* storedQueryParameters)
 
 {
   const char *value;
@@ -1839,7 +1857,8 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
             msWFSGetFeature_PrintBasePrevNextURI(req,gmlinfo, paramsObj,
                                                 encoded_version,
                                                 encoded_typename,
-                                                encoded_mime_type);
+                                                encoded_mime_type,
+                                                storedQueryParameters);
 
             nPrevStartIndex = paramsObj->nStartIndex - maxfeatures;
             if( nPrevStartIndex > 0 )
@@ -1859,7 +1878,8 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
             msWFSGetFeature_PrintBasePrevNextURI(req,gmlinfo, paramsObj,
                                                 encoded_version,
                                                 encoded_typename,
-                                                encoded_mime_type);
+                                                encoded_mime_type,
+                                                storedQueryParameters);
 
             if( iResultTypeHits != 1 )
                 nNextStartIndex += iNumberOfFeatures;
@@ -3099,28 +3119,30 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
   return nMatchingFeatures;
 }
 
-static int msWFSResolveStoredQuery(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
+static int msWFSResolveStoredQuery(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
+                                   hashTableObj* storedQueryParameters)
 {
 #ifdef USE_OGR
   if (paramsObj->pszStoredQueryId != NULL )
   {
       int i;
       int status;
-      hashTableObj* hashTable = msCreateHashTable();
+      hashTableObj* parameterValues = msCreateHashTable();
       char* pszResolvedQuery;
 
       if (req->NumParams > 0 && req->postrequest == NULL ) {
         for(i=0; i<req->NumParams; i++) {
             if (req->ParamNames[i] && req->ParamValues[i]) {
-                msInsertHashTable(hashTable, req->ParamNames[i], req->ParamValues[i]);
+                msInsertHashTable(parameterValues, req->ParamNames[i], req->ParamValues[i]);
             }
         }
       }
 
       pszResolvedQuery = msWFSGetResolvedStoredQuery20(map, paramsObj,
                                                        paramsObj->pszStoredQueryId,
-                                                       hashTable);
-      msFreeHashTable(hashTable);
+                                                       parameterValues,
+                                                       storedQueryParameters);
+      msFreeHashTable(parameterValues);
 
       if( pszResolvedQuery == NULL )
           return MS_FAILURE;
@@ -3348,6 +3370,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   
   msIOContext* old_context = NULL;
 
+  hashTableObj* storedQueryParameters = msCreateHashTable();
+
   /* Initialize gml options */
   msWFSInitGMLInfo(&gmlinfo);
 
@@ -3356,9 +3380,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
       iResultTypeHits = 1;
   }
 
-  status = msWFSResolveStoredQuery(map, paramsObj, req);
+  status = msWFSResolveStoredQuery(map, paramsObj, req, storedQueryParameters);
   if( status != MS_SUCCESS )
+  {
+      msFreeHashTable(storedQueryParameters);
       return status;
+  }
 
   /* typename is mandatory unless featureid is specfied. We do not
      support featureid */
@@ -3367,6 +3394,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                "Incomplete WFS request: %s parameter missing",
                "msWFSGetFeature()",
                (nWFSVersion >= OWS_2_0_0 ) ? "TYPENAMES": "TYPENAME" );
+    msFreeHashTable(storedQueryParameters);
     return msWFSException(map, (nWFSVersion >= OWS_2_0_0 ) ? "typenames": "typename",
                           MS_OWS_ERROR_MISSING_PARAMETER_VALUE, paramsObj->pszVersion);
   }
@@ -3392,6 +3420,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         {
             msSetError(MS_WFSERR, "Invalid rid '%s'", "msWFSGetFeature()", rid);
             CPLDestroyXMLNode(psDoc);
+            msFreeHashTable(storedQueryParameters);
             return msWFSException(map, NULL, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED,
                                   paramsObj->pszVersion );
         }
@@ -3428,6 +3457,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     if (layers==NULL || numlayers < 1) {
       msSetError(MS_WFSERR, "At least one type name required in %s parameter.", "msWFSGetFeature()",
                  (nWFSVersion >= OWS_2_0_0 ) ? "TYPENAMES": "TYPENAME" );
+      msFreeHashTable(storedQueryParameters);
       return msWFSException(map, (nWFSVersion >= OWS_2_0_0 ) ? "typenames": "typename" ,
                             MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
@@ -3451,6 +3481,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         msSetError(MS_WFSERR,
                     "Optional PROPERTYNAME parameter. A list of properties may be specified for each type name. Example TYPENAME=name1,name2&PROPERTYNAME=(prop1,prop2)(prop1)",
                     "msWFSGetFeature()");
+        msFreeHashTable(storedQueryParameters);
         return msWFSException(map, "PROPERTYNAME", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
     
@@ -3464,6 +3495,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         msSetError(MS_WFSERR,
                     "Optional SORTBY parameter. A list may be specified for each type name. Example TYPENAME=name1,name2&SORTBY=(prop1,prop2)(prop1)",
                     "msWFSGetFeature()");
+        msFreeHashTable(storedQueryParameters);
         return msWFSException(map, "SORTBY", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
@@ -3502,6 +3534,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     msFreeCharArray(papszGMLGeometries, map->numlayers);
                     msGMLFreeItems(itemList);
                     msGMLFreeGroups(groupList);
+                    msFreeHashTable(storedQueryParameters);
                     return status;
                   }
               }
@@ -3546,6 +3579,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     msFreeCharArray(papszGMLGroups, map->numlayers);
                     msFreeCharArray(papszGMLIncludeItems, map->numlayers);
                     msFreeCharArray(papszGMLGeometries, map->numlayers);
+                    msFreeHashTable(storedQueryParameters);
                     return msWFSException(map, "PROPERTYNAME", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
                   }
                 }
@@ -3699,6 +3733,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                 msGMLFreeItems(itemList);
                 msGMLFreeGroups(groupList);
                 msGMLFreeGeometries(geometryList);
+                msFreeHashTable(storedQueryParameters);
                 return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, paramsObj->pszVersion);
             }
 
@@ -3720,6 +3755,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         msFreeCharArray(papszGMLGroups, map->numlayers);
         msFreeCharArray(papszGMLIncludeItems, map->numlayers);
         msFreeCharArray(papszGMLGeometries, map->numlayers);
+        msFreeHashTable(storedQueryParameters);
         return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
       }
     }
@@ -3737,6 +3773,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
       msFreeCharArray(papszGMLGroups, map->numlayers);
       msFreeCharArray(papszGMLIncludeItems, map->numlayers);
       msFreeCharArray(papszGMLGeometries, map->numlayers);
+      msFreeHashTable(storedQueryParameters);
       return msWFSException(map, "outputformat",
                             MS_OWS_ERROR_INVALID_PARAMETER_VALUE,
                             paramsObj->pszVersion );
@@ -3756,6 +3793,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
       msFreeCharArray(papszGMLGroups, map->numlayers);
       msFreeCharArray(papszGMLIncludeItems, map->numlayers);
       msFreeCharArray(papszGMLGeometries, map->numlayers);
+      msFreeHashTable(storedQueryParameters);
       return status;
   }
 
@@ -3790,6 +3828,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
       msFreeCharArray(papszGMLGroups, map->numlayers);
       msFreeCharArray(papszGMLIncludeItems, map->numlayers);
       msFreeCharArray(papszGMLGeometries, map->numlayers);
+      msFreeHashTable(storedQueryParameters);
       return status;
   }
 
@@ -3842,7 +3881,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                                  nMatchingFeatures,
                                  maxfeatures,
                                  bHasNextFeatures,
-                                 nWFSVersion );
+                                 nWFSVersion,
+                                 storedQueryParameters );
+
+    msFreeHashTable(storedQueryParameters);
+
     if(status != MS_SUCCESS) {
       if( old_context != NULL )
           msIO_restoreOldStdoutContext(old_context);
@@ -3852,6 +3895,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
       msFreeCharArray(papszGMLGeometries, map->numlayers);
       return MS_FAILURE;
     }
+  }
+  else
+  {
+    msFreeHashTable(storedQueryParameters);
   }
 
   {
@@ -4095,14 +4142,20 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
   char* pszGMLIncludeItems = NULL;
   char* pszGMLGeometries = NULL;
 
-  status = msWFSResolveStoredQuery(map, paramsObj, req);
+  hashTableObj* storedQueryParameters = msCreateHashTable();
+
+  status = msWFSResolveStoredQuery(map, paramsObj, req, storedQueryParameters);
   if( status != MS_SUCCESS )
+  {
+      msFreeHashTable(storedQueryParameters);
       return status;
+  }
 
   if (paramsObj->pszTypeName==NULL) {
     msSetError(MS_WFSERR,
                "Incomplete WFS request: TYPENAMES parameter missing",
                "msWFSGetPropertyValue()");
+    msFreeHashTable(storedQueryParameters);
     return msWFSException(map, "typenames",
                           MS_OWS_ERROR_MISSING_PARAMETER_VALUE, paramsObj->pszVersion);
   }
@@ -4111,6 +4164,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
     msSetError(MS_WFSERR,
                "Incomplete WFS request: VALUEREFERENCE parameter missing",
                "msWFSGetPropertyValue()");
+    msFreeHashTable(storedQueryParameters);
     return msWFSException(map, "valuereference",
                           MS_OWS_ERROR_MISSING_PARAMETER_VALUE, paramsObj->pszVersion);
   }
@@ -4151,6 +4205,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
               {
                 msGMLFreeItems(itemList);
                 msGMLFreeGroups(groupList);
+                msFreeHashTable(storedQueryParameters);
                 return status;
               }
             }
@@ -4198,6 +4253,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                   msGMLFreeItems(itemList);
                   msGMLFreeGroups(groupList);
                   msGMLFreeGeometries(geometryList);
+                  msFreeHashTable(storedQueryParameters);
                   return msWFSException(map, "valuereference", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
                 }
                 else {
@@ -4228,6 +4284,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
         msFree(pszGMLGroups);
         msFree(pszGMLIncludeItems);
         msFree(pszGMLGeometries);
+        msFreeHashTable(storedQueryParameters);
         return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
   }
 
@@ -4251,6 +4308,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
     msFree(pszGMLGroups);
     msFree(pszGMLIncludeItems);
     msFree(pszGMLGeometries);
+    msFreeHashTable(storedQueryParameters);
     return msWFSException(map, "outputformat",
                         MS_OWS_ERROR_INVALID_PARAMETER_VALUE,
                         paramsObj->pszVersion );
@@ -4267,6 +4325,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
       msFree(pszGMLGroups);
       msFree(pszGMLIncludeItems);
       msFree(pszGMLGeometries);
+      msFreeHashTable(storedQueryParameters);
       return status;
       }
 
@@ -4300,6 +4359,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
       msFree(pszGMLGroups);
       msFree(pszGMLIncludeItems);
       msFree(pszGMLGeometries);
+      msFreeHashTable(storedQueryParameters);
       return status;
   }
 
@@ -4333,7 +4393,10 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                                  nMatchingFeatures,
                                  maxfeatures,
                                  bHasNextFeatures,
-                                 nWFSVersion );
+                                 nWFSVersion,
+                                 storedQueryParameters );
+
+  msFreeHashTable(storedQueryParameters);
 
   if(status == MS_SUCCESS && maxfeatures != 0 && iResultTypeHits == 0)
   {
@@ -4963,7 +5026,7 @@ static int msWFSParseXMLStoredQueryNode(mapObj* map,
         psIter = psIter->psNext;
     }
 
-    pszResolvedQuery = msWFSGetResolvedStoredQuery20(map, wfsparams, id, hashTable);
+    pszResolvedQuery = msWFSGetResolvedStoredQuery20(map, wfsparams, id, hashTable, NULL);
     msFreeHashTable(hashTable);
     if( pszResolvedQuery == NULL)
         return MS_FAILURE;
