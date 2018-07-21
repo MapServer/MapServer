@@ -883,7 +883,8 @@ static char* msWFSGetStoredQuery(mapObj *map, const char* pszURN)
 char* msWFSGetResolvedStoredQuery20(mapObj *map,
                                     wfsParamsObj *wfsparams,
                                     const char* id,
-                                    hashTableObj* hashTable)
+                                    hashTableObj* parameterValues,
+                                    hashTableObj* storedQueryParametersOut)
 {
     char* storedQuery;
     xmlDocPtr psStoredQueryDoc;
@@ -920,7 +921,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
             if( parameterName != NULL )
             {
                 char szTmp[256];
-                const char* value = msLookupHashTable(hashTable, (const char*)parameterName);
+                const char* value = msLookupHashTable(parameterValues, (const char*)parameterName);
                 if( value == NULL )
                 {
                     msSetError(MS_WFSERR, "Stored query '%s' requires parameter '%s'", "msWFSParseRequest()",
@@ -930,6 +931,11 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
                     xmlFree(parameterName);
                     xmlFreeDoc(psStoredQueryDoc);
                     return NULL;
+                }
+                if( storedQueryParametersOut )
+                {
+                    msInsertHashTable(storedQueryParametersOut,
+                                      (const char*)parameterName, "1");
                 }
 
                 snprintf(szTmp, sizeof(szTmp), "${%s}", (const char*)parameterName);
@@ -1405,7 +1411,8 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
 char* msWFSGetResolvedStoredQuery20(mapObj *map,
                                     wfsParamsObj *params,
                                     const char* id,
-                                    hashTableObj* hashTable)
+                                    hashTableObj* parameterValues,
+                                    hashTableObj* storedQueryParameters)
 {
   msSetError( MS_WFSERR,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
