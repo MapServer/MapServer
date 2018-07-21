@@ -1701,6 +1701,7 @@ static void msWFSGetFeature_PrintBasePrevNextURI(cgiRequestObj *req,
     }
 }
 
+
 static void msWFSGetFeature_GetTimeStamp(char* timestring, size_t timestringlen)
 {
     struct tm *now;
