@@ -28,6 +28,10 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
+if (${PYTHON_VERSION_MAJOR} GREATER 2)
+    set_property(SOURCE ../mapscript.i PROPERTY SWIG_FLAGS "-py3")
+endif (${PYTHON_VERSION_MAJOR} GREATER 2)
+
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.7)
     swig_add_library(pythonmapscript TYPE MODULE LANGUAGE python SOURCES ../mapscript.i)
 else (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.7)
@@ -50,13 +54,24 @@ file(READ ${SETUP_PY_TEMP} SETUP_CONTENT)
 
 file(GENERATE OUTPUT $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/setup.py INPUT ${SETUP_PY_TEMP})
 
-# copy all Python files to the output folder following build
-add_custom_command(TARGET ${SWIG_MODULE_pythonmapscript_REAL_NAME} POST_BUILD
+set(BUILD_TIMESTAMP "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
+set(TESTS_FOLDER ${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases)
+
+add_custom_target(pythonmapscript-wheel DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME} )
+
+# copy all Python files to the output folder following build, and create a wheel
+add_custom_command(
+    TARGET pythonmapscript-wheel POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
+    COMMAND ${PYTHON_EXECUTABLE} -m pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mapscript.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}>" "$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/$<TARGET_FILE_NAME:${SWIG_MODULE_pythonmapscript_REAL_NAME}>"
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/README.rst" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
+    COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+    #COMMAND ${PYTHON_EXECUTABLE} -m pip install --no-index --find-links=${CMAKE_CURRENT_BINARY_DIR}/dist mapscript
+    #COMMAND ${PYTHON_EXECUTABLE} -m pytest --ignore=${TESTS_FOLDER}/fonttest.py --ignore=${TESTS_FOLDER}/hashtest.py --ignore=${TESTS_FOLDER}/pgtest.py --ignore=${TESTS_FOLDER}/threadtest.py ${TESTS_FOLDER}/
     )
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py)
