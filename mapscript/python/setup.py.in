@@ -1,15 +1,18 @@
 from io import open
 from setuptools import setup, find_packages, Distribution
 
-# Force creation of a platform specific wheel
-# https://stackoverflow.com/questions/24071491/how-can-i-make-a-python-wheel-from-an-existing-native-library
 
 class BinaryDistribution(Distribution):
     """
     Distribution which always forces a binary package with platform name
+    See http://lucumr.pocoo.org/2014/1/27/python-on-wheels/
+    and https://stackoverflow.com/questions/24071491/how-can-i-make-a-python-wheel-from-an-existing-native-library
     """
     def has_ext_modules(foo):
         return True
+    def is_pure(self):
+        return False
+
 
 def readme():
     with open('README.rst', "r", encoding="utf-8") as f:
@@ -25,7 +28,8 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Programming Language :: C',
         'Programming Language :: C++',
         'Topic :: Scientific/Engineering :: GIS',
@@ -36,6 +40,6 @@ setup(
     url="http://www.mapserver.org",
     version="@MapServer_VERSION_MAJOR@.@MapServer_VERSION_MINOR@",
     packages=find_packages(),
-    package_data={'mapscript': '$<TARGET_FILE_NAME:@SWIG_MODULE_pythonmapscript_REAL_NAME@>'},
+    package_data={'mapscript': ['$<TARGET_FILE_NAME:@SWIG_MODULE_pythonmapscript_REAL_NAME@>']},
     distclass=BinaryDistribution    
 )
