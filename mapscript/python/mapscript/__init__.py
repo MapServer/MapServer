@@ -1,1 +1,1 @@
-from mapscript import *
+from .mapscript import *
