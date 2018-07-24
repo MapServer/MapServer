@@ -1,7 +1,7 @@
 MapServer
 =========
 
-|Build Status|
+| |Build Status| |Appveyor Build Status|
 
 -------
 Summary
@@ -94,5 +94,5 @@ License
 .. |Build Status| image:: https://travis-ci.org/mapserver/mapserver.svg?branch=master
    :target: https://travis-ci.org/mapserver/mapserver
 
-.. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/mk33l07478gfytwh?svg=true
+.. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true
    :target: https://ci.appveyor.com/project/mapserver/mapserver
