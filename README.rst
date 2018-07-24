@@ -1,7 +1,7 @@
 MapServer
 =========
 
-|Build Status||Appveyor Build Status|
+| |Build Status| |Appveyor Build Status|
 
 -------
 Summary
