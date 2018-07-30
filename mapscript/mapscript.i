@@ -30,7 +30,11 @@
 ============================================================================
 */
 
+#ifdef SWIGPHP
+%module mapscriptng
+#else
 %module mapscript
+#endif
 
 #ifdef SWIGCSHARP
 %ignore frompointer;
@@ -226,6 +230,12 @@ typedef struct {
 #ifdef SWIGTCL8
 %include "tclmodule.i"
 #endif /* SWIGTCL8 */
+
+/* PHP7 */
+#ifdef SWIGPHP7
+%include "php7module.i"
+#endif /* SWIGPHP7 */
+
 
 /* 
 =============================================================================
