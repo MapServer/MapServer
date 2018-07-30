@@ -12,6 +12,8 @@ environment:
 shallow_clone: true
 
 build_script:
+  - echo "Show environment variables"
+  - set
   - set "BUILD_FOLDER=%APPVEYOR_BUILD_FOLDER:\=/%"
   - if "%platform%" == "x64" SET VS_FULL=%VS_VERSION% Win64
   - if "%platform%" == "x86" SET VS_FULL=%VS_VERSION%
@@ -36,10 +38,72 @@ build_script:
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/regex-0.12
   - if "%platform%" == "x86" SET PYTHON_EXECUTABLE=c:/python27/python.exe
   - if "%platform%" == "x64" SET PYTHON_EXECUTABLE=c:/python27-x64/python.exe
-  - cd %BUILD_FOLDER%  
+  - echo "Show environment variables again"
+  - set
+
+#Build Mapserver
+  - cd %BUILD_FOLDER%
+  - rem First build with old SWIG vom SDK and CSHARP
   - mkdir build
   - cd build
   - cmake -G "%VS_FULL%" .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DFREETYPE_INCLUDE_DIR_freetype2=%SDK_INC%/freetype -DFREETYPE_INCLUDE_DIR_ft2build=%SDK_INC%/freetype -DFREETYPE_LIBRARY=%SDK_LIB%/freetype.lib -DZLIB_INCLUDE_DIR=%SDK_INC% -DZLIB_LIBRARY=%SDK_LIB%/zlib.lib -DPNG_PNG_INCLUDE_DIR=%SDK_INC% -DPNG_LIBRARY=%SDK_LIB%/libpng.lib -DPNG_LIBRARIES=%SDK_LIB%/libpng.lib -DJPEG_INCLUDE_DIR=%SDK_INC% -DJPEG_LIBRARY=%SDK_LIB%/libjpeg.lib -DWITH_PROJ=1 -DPROJ_INCLUDE_DIR=%SDK_INC% -DPROJ_LIBRARY=%SDK_LIB%/proj_i.lib -DFRIBIDI_INCLUDE_DIR=%SDK_INC% -DFRIBIDI_LIBRARY=%SDK_LIB%/fribidi.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DHARFBUZZ_LIBRARY=%SDK_LIB%/harfbuzz.lib -DICONV_INCLUDE_DIR=%SDK_INC% -DICONV_LIBRARY=%SDK_LIB%/iconv.lib -DICONV_DLL=%SDK_BIN%/iconv.dll -DCAIRO_INCLUDE_DIR=%SDK_INC% -DCAIRO_LIBRARY=%SDK_LIB%/cairo.lib -DFCGI_INCLUDE_DIR=%SDK_INC% -DFCGI_LIBRARY=%SDK_LIB%/libfcgi.lib -DGEOS_INCLUDE_DIR=%SDK_INC% -DGEOS_LIBRARY=%SDK_LIB%/geos_c.lib -DPOSTGRESQL_INCLUDE_DIR=%SDK_INC% -DPOSTGRESQL_LIBRARY=%SDK_LIB%/libpqdll.lib -DGDAL_INCLUDE_DIR=%SDK_INC% -DGDAL_LIBRARY=%SDK_LIB%/gdal_i.lib -DLIBXML2_INCLUDE_DIR=%SDK_INC%/libxml -DLIBXML2_LIBRARIES=%SDK_LIB%/libxml2.lib -DGIF_INCLUDE_DIR=%SDK_INC% -DGIF_LIBRARY=%SDK_LIB%/giflib.lib -DWITH_CURL=1 -DCURL_INCLUDE_DIR=%SDK_INC% -DCURL_LIBRARY=%SDK_LIB%/libcurl_imp.lib -DMS_EXTERNAL_LIBS=wsock32.lib -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1 -DSVG_INCLUDE_DIR=%SDK_INC% -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_INCLUDE_DIR=%SDK_INC% -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DWITH_SVGCAIRO=1 -DREGEX_DIR=%REGEX_DIR% -DWITH_POINT_Z_M=1 -DWITH_KML=1 -DWITH_THREAD_SAFETY=1 -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DWITH_PYTHON=1 -DPYTHON_EXECUTABLE=%PYTHON_EXECUTABLE% -DWITH_CSHARP=1 -DWITH_PROTOBUFC=0
+  - cmake --build . --config Release
+
+#Build PHP
+  - move C:\cygwin C:\cygwin_disabled
+  - cd C:\
+  - git clone https://github.com/Microsoft/php-sdk-binary-tools.git php-sdk
+  - cd php-sdk
+  - set VS_VERSION=%VSCMD_VER:~0,2%
+  - set PATH=C:\php-sdk\bin;C:\php-sdk\msys2\usr\bin;%PATH%
+  - set PHP_SDK_ARCH=%platform%
+  - set PHP_SDK_BIN_PATH=C:\php-sdk\bin
+  - set PHP_SDK_MSYS2_PATH=C:\php-sdk\msys2\usr\bin
+  - set PHP_SDK_OS_ARCH=%platform%
+  - set PHP_SDK_PHP_CMD=C:\php-sdk\bin\php\do_php.bat
+  - set PHP_SDK_ROOT_PATH=C:\php-sdk
+  - set PHP_SDK_VC=vc15
+  - set PHP_SDK_VC_DIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC
+  - set PHP_SDK_VC_NUM=15
+  - set INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\ATLMFC\include;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\include;C:\Program Files (x86)\Windows Kits\10\include\10.0.17134.0\ucrt;C:\Program Files (x86)\Windows Kits\10\include\10.0.17134.0\shared;C:\Program Files (x86)\Windows Kits\10\include\10.0.17134.0\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.17134.0\winrt;C:\Program Files (x86)\Windows Kits\10\include\10.0.17134.0\cppwinrt;%INCLUDE%
+  - if "%platform%" == "x64" set LIB=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\ATLMFC\lib\x64;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib\x64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.17134.0\ucrt\x64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.17134.0\um\x64;%LIB%
+  - if "%platform%" == "x64" set LIBPATH=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\ATLMFC\lib\x64;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib\x64;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib\x86\store\references;C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.17134.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.17134.0;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;
+  - if "%platform%" == "x86" set LIB=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\ATLMFC\lib;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib;C:\Program Files (x86)\Windows Kits\10\lib\10.0.17134.0\ucrt;C:\Program Files (x86)\Windows Kits\10\lib\10.0.17134.0\um;%LIB%
+  - if "%platform%" == "x86" set LIBPATH=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\ATLMFC\lib;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib;C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib\x86\store\references;C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.17134.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.17134.0;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;
+  - set VSCMD_ARG_no_logo=yes
+  - set __VSCMD_PREINIT_VCToolsVersion=14.14.26428
+  - set __VSCMD_PREINIT_VS150COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\
+  - if "%platform%" == "x86" set PHP_SDK_VC_SHELL_CMD="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
+  - if "%platform%" == "x64" set PHP_SDK_VC_SHELL_CMD="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64
+  - phpsdk_buildtree phpmaster
+  - cd C:\php-sdk\phpmaster\vc%VS_VERSION%\%VSCMD_ARG_TGT_ARCH%
+  - git clone https://github.com/php/php-src.git
+  - cd C:\php-sdk\phpmaster\vc%VS_VERSION%\%VSCMD_ARG_TGT_ARCH%\php-src
+  - git fetch
+  - git checkout tags/php-7.2.8
+  - phpsdk_deps --update --branch 7.2
+  - buildconf
+  - configure --enable-snapshot-build
+  - nmake snap
+
+#Build SWIG
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cd
+  - git clone https://github.com/AlexanderGabriel/swig
+  - mkdir %APPVEYOR_BUILD_FOLDER%\swig\build
+  - cd %APPVEYOR_BUILD_FOLDER%\swig\build
+  - cmake .. -G "NMake Makefiles"  -DCMAKE_BUILD_TYPE=Release
+  - cmake --build .
+  - move swig.exe ..
+
+#Build Mapserver with PHP
+  - cd %BUILD_FOLDER%
+  - rem Second build with new SWIG PHP/Mapscript-NG
+  - mkdir build-mapscriptng
+  - cd build-mapscriptng
+  - set SWIG_EXECUTABLE=%APPVEYOR_BUILD_FOLDER%\swig\swig.exe
+  - set SWIG_DIR=%APPVEYOR_BUILD_FOLDER%\swig
+  - cmake -G "%VS_FULL%" .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DFREETYPE_INCLUDE_DIR_freetype2=%SDK_INC%/freetype -DFREETYPE_INCLUDE_DIR_ft2build=%SDK_INC%/freetype -DFREETYPE_LIBRARY=%SDK_LIB%/freetype.lib -DZLIB_INCLUDE_DIR=%SDK_INC% -DZLIB_LIBRARY=%SDK_LIB%/zlib.lib -DPNG_PNG_INCLUDE_DIR=%SDK_INC% -DPNG_LIBRARY=%SDK_LIB%/libpng.lib -DPNG_LIBRARIES=%SDK_LIB%/libpng.lib -DJPEG_INCLUDE_DIR=%SDK_INC% -DJPEG_LIBRARY=%SDK_LIB%/libjpeg.lib -DWITH_PROJ=1 -DPROJ_INCLUDE_DIR=%SDK_INC% -DPROJ_LIBRARY=%SDK_LIB%/proj_i.lib -DFRIBIDI_INCLUDE_DIR=%SDK_INC% -DFRIBIDI_LIBRARY=%SDK_LIB%/fribidi.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DHARFBUZZ_LIBRARY=%SDK_LIB%/harfbuzz.lib -DICONV_INCLUDE_DIR=%SDK_INC% -DICONV_LIBRARY=%SDK_LIB%/iconv.lib -DICONV_DLL=%SDK_BIN%/iconv.dll -DCAIRO_INCLUDE_DIR=%SDK_INC% -DCAIRO_LIBRARY=%SDK_LIB%/cairo.lib -DFCGI_INCLUDE_DIR=%SDK_INC% -DFCGI_LIBRARY=%SDK_LIB%/libfcgi.lib -DGEOS_INCLUDE_DIR=%SDK_INC% -DGEOS_LIBRARY=%SDK_LIB%/geos_c.lib -DPOSTGRESQL_INCLUDE_DIR=%SDK_INC% -DPOSTGRESQL_LIBRARY=%SDK_LIB%/libpqdll.lib -DGDAL_INCLUDE_DIR=%SDK_INC% -DGDAL_LIBRARY=%SDK_LIB%/gdal_i.lib -DLIBXML2_INCLUDE_DIR=%SDK_INC%/libxml -DLIBXML2_LIBRARIES=%SDK_LIB%/libxml2.lib -DGIF_INCLUDE_DIR=%SDK_INC% -DGIF_LIBRARY=%SDK_LIB%/giflib.lib -DWITH_CURL=1 -DCURL_INCLUDE_DIR=%SDK_INC% -DCURL_LIBRARY=%SDK_LIB%/libcurl_imp.lib -DMS_EXTERNAL_LIBS=wsock32.lib -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1 -DSVG_INCLUDE_DIR=%SDK_INC% -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_INCLUDE_DIR=%SDK_INC% -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DWITH_SVGCAIRO=1 -DREGEX_DIR=%REGEX_DIR% -DWITH_POINT_Z_M=1 -DWITH_KML=1 -DWITH_THREAD_SAFETY=1 -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DWITH_PYTHON=1 -DPYTHON_EXECUTABLE=%PYTHON_EXECUTABLE% -DWITH_PROTOBUFC=0 -DWITH_PHPNG=1
   - cmake --build . --config Release
 
 before_test:
