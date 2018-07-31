@@ -1,7 +1,7 @@
 # How to contribute to MapServer
 
 Contributions to the MapServer project are most welcome, and can take many forms such as detailed bug reports, documentation, 
-tests, features, and patches.  Note that all contributions are managed by the MapServer [Project Steering Committee](https://mapserver.org/psc.html)
+tests, features, and patches.  Note that all contributions are managed by the MapServer [Project Steering Committee](https://mapserver.org/psc.html).
 
 ## Bugs and Help
 
