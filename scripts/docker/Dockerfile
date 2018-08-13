@@ -4,41 +4,38 @@ MAINTAINER Michael Smith <Michael.smith.erdc@gmail.com>
 #Setup user
 ARG UID
 ARG GID
+ARG MRSID_DOWNLOAD_URL
 RUN addgroup --gid $GID msgroup
 RUN adduser --no-create-home --disabled-login msuser  --gecos "" --uid $UID --gid $GID
 
-ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
 ENV LIBKML_DOWNLOAD=install-libkml-r864-64bit.tar.gz
 ENV FILEGDBAPI_DOWNLOAD=FileGDB_API_1_2-64.tar.gz
-ENV MRSID_DIR=MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44
-ENV MRSID_DOWNLOAD=MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
+ENV MRSID_DIR=MrSID_DSDK-9.5.4.4703-rhel6.x86-64.gcc482
+ENV MRSID_DOWNLOAD=MrSID_DSDK-9.5.4.4703-rhel6.x86-64.gcc482.tar.gz
 
 # Setup build env
 RUN mkdir /build
 RUN apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 16126D3A3E5C1192    \
   && apt-get update && apt-get install -y --fix-missing --no-install-recommends software-properties-common \
   && add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y    \
-  && apt-get update && apt-get install -y --fix-missing --no-install-recommends gcc-4.7 g++-4.7 build-essential ca-certificates curl wget git libaio1 make cmake python-dev \
+  && apt-get update && apt-get install -y --fix-missing --no-install-recommends gcc-4.9 g++-4.9  build-essential ca-certificates curl wget git make cmake python-dev \
       python-software-properties software-properties-common  libc6-dev openssh-client libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev \
       libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev swig  \
       libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev libwebp-dev libepsilon-dev libpcre3-dev gfortran libarpack2-dev \
       libpq-dev libflann-dev libhdf5-serial-dev libhdf5-dev libjsoncpp-dev clang-3.8  libhdf4-alt-dev libsqlite3-dev    \
-      libltdl-dev libcurl4-openssl-dev ninja cython python-pip libpng-dev  \
+      libltdl-dev libcurl4-openssl-dev ninja python-pip libpng-dev python-dev libprotobuf-c-dev protobuf-c-compiler\
       libboost-filesystem1.58-dev libboost-iostreams1.58-dev libboost-program-options1.58-dev  libboost-system1.58-dev libboost-thread1.58-dev libogdi3.2-dev time \
   && apt-get remove --purge -y $BUILD_PACKAGES  && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.7 20 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.7 20
-#RUN CXX=clang++ && CC=clang
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20 && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
 
-#RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y openjdk-8-jre:i386
-# Getting libKML
 RUN wget --no-verbose http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/${LIBKML_DOWNLOAD} -O /build/${LIBKML_DOWNLOAD} && \
  tar -C /build -xzf /build/${LIBKML_DOWNLOAD} && \
  cp -r /build/install-libkml/include/* /usr/local/include &&  \
  cp -r /build/install-libkml/lib/* /usr/local/lib \
  && rm -Rf /build/install-libkml
 
-RUN wget --no-verbose http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/${MRSID_DOWNLOAD} -O /build/${MRSID_DOWNLOAD} && \
+RUN curl -L ${$MRSID_DOWNLOAD_URL}/${MRSID_DOWNLOAD} -o /build/${MRSID_DOWNLOAD} && \
   tar -C /build -xzf /build/${MRSID_DOWNLOAD} && \
   cp -r /build/${MRSID_DIR}/Raster_DSDK/include/* /usr/local/include && \
   cp -r /build/${MRSID_DIR}/Raster_DSDK/lib/* /usr/local/lib \
@@ -49,6 +46,15 @@ RUN wget --no-verbose http://s3.amazonaws.com/etc-data.koordinates.com/gdal-trav
  cp -r /build/FileGDB_API/include/* /usr/local/include && \
  cp -r /build/FileGDB_API/lib/* /usr/local/lib \
  && rm -Rf /build/FileGDB_API
+
+RUN cd /build && curl -LO https://github.com/uclouvain/openjpeg/archive/v2.3.0.tar.gz && \
+  tar -zxf /build/v2.3.0.tar.gz && \
+  cd /build/openjpeg-2.3.0 && \
+  mkdir -v build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && \
+  make -j && make install && \
+  rm -Rf /build/openjpeg*
+
+RUN wget https://bootstrap.pypa.io/get-pip.py -O get-pip.py && python get-pip.py && pip install --upgrade pip wheel numpy
 
 ARG GDAL_VERSION
 RUN cd /build && \
@@ -66,16 +72,20 @@ RUN cd /build && \
         --with-libjson-c=internal \
         --with-poppler \
         --with-spatialite \
+        --with-python \
         --with-liblzma \
+        --with-openjpeg \
         --with-ogdi \
         --with-webp \
         --with-pg \
         --with-mrsid=/usr/local \
-        --with-fgdb=/usr/local \
         --with-libkml \
-        --with-hdf5 && \
+        --with-filegdb \
+        --with-hdf5=/usr/lib/x86_64-linux-gnu/hdf5/serial \
+        --with-openjpeg && \
     make && \
     make install && \
+    cd swig/python &&  python setup.py build && python setup.py install && \
     ldconfig && \
     rm -Rf /build/gdal
 
@@ -123,22 +133,6 @@ RUN cd /build && \
     && make install \
     && ldconfig \
     && rm -Rf /build/mapserver
-
-# Install Mapcache itself
-ARG MAPCACHE_VERSION
-RUN cd /build  \
-    && mkdir -p /msconfig/mapcache \
-    && git clone https://github.com/mapserver/mapcache/ \
-    && cd /build/mapcache  \
-    && git checkout ${MAPCACHE_VERSION} \
-    && mkdir /build/mapcache/build \
-    && cd /build/mapcache/build \
-    && cmake ../ \
-    -DWITH_FCGI=0 -DWITH_APACHE=1 -DWITH_PCRE=1 \
-    -DWITH_TIFF=1 -DWITH_BERKELEY_DB=1 -DWITH_MEMCACHE=1 \
-    -DCMAKE_PREFIX_PATH="/etc/apache2" && \
-    make && \
-    make install
 
 #RUN mkdir /vdatum \
 #    && cd /vdatum \
