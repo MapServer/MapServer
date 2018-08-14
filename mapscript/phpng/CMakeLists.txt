@@ -1,0 +1,38 @@
+FIND_PACKAGE(PHP7 REQUIRED)
+FIND_PACKAGE(SWIG 3.0.11 REQUIRED)
+INCLUDE(${SWIG_USE_FILE})
+
+if(WIN32)
+add_definitions(-D_WIN32 -D_WINDOWS -DWINDOWS=1 -DZEND_WIN32=1 -DPHP_WIN32=1 -DWIN32 -DNDebug -DNDEBUG -DZEND_DEBUG=0)
+if(NOT CMAKE_CL_64)
+add_definitions(-D_USE_32BIT_TIME_T)
+endif(NOT CMAKE_CL_64)
+if(WITH_THREAD_SAFETY)
+add_definitions(-DZTS=1)
+endif(WITH_THREAD_SAFETY)
+endif(WIN32)
+
+include_directories(${PHP7_FOUND_INCLUDE_PATH})
+include_directories(${PHP7_FOUND_INCLUDE_PATH}/main)
+include_directories(${PHP7_FOUND_INCLUDE_PATH}/Zend)
+include_directories(${PHP7_FOUND_INCLUDE_PATH}/TSRM)
+
+include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
+include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
+include_directories(${PROJECT_SOURCE_DIR}/mapscript/phpng)
+
+if(WIN32)
+include_directories(${PHP7_FOUND_INCLUDE_PATH}/win32)
+endif(WIN32)
+SWIG_ADD_MODULE(php_mapscriptng php7 ../mapscript.i)
+
+if(WIN32)
+target_compile_options(php_mapscriptng PRIVATE /D_WIN32 /D_WINDOWS /DWINDOWS=1 /DZEND_WIN32=1 /DPHP_WIN32=1 /DWIN32 /DNDebug /DNDEBUG /DZEND_DEBUG=0)
+if(WITH_THREAD_SAFETY)
+target_compile_options(php_mapscriptng PRIVATE /DZTS=1)
+endif(WITH_THREAD_SAFETY)
+SWIG_LINK_LIBRARIES(php_mapscriptng ${PHP7_LIBRARY})
+endif(WIN32)
+target_link_libraries(php_mapscriptng mapserver)
+
+set_target_properties(${SWIG_MODULE_mapscript_REAL_NAME} PROPERTIES PREFIX "")
