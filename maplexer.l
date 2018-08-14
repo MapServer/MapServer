@@ -161,7 +161,7 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
 
-<INITIAL>(\/\/|#).*                              { if (msyyreturncomments) return(MS_COMMENT); }
+<INITIAL>(\/\/|#).*                            { if (msyyreturncomments) return(MS_COMMENT); }
 
 <INITIAL>\/\*                                  { BEGIN(MULTILINE_COMMENT); }
 <MULTILINE_COMMENT>\*\/                        { BEGIN(INITIAL); }
@@ -589,7 +589,7 @@ char path[MS_MAXPATHLEN];
   return(MS_TOKEN_LITERAL_TIME);
 }
 
-<INITIAL,URL_STRING>\/[^\/*]*\/i               {
+<INITIAL,URL_STRING>\/[^*]{1}[^\/]*\/i         {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
@@ -598,7 +598,7 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_IREGEX);
                                                }
 
-<INITIAL,URL_STRING>\/[^\/*]*\/                {
+<INITIAL,URL_STRING>\/[^*]{1}[^\/]*\/          {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
