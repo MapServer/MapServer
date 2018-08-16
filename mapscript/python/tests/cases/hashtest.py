@@ -85,17 +85,28 @@ class HashTableBaseTestCase:
         key = self.table.nextKey(key)
         assert key == None, key
 
-# TODO
-#    def testKeys(self):
-#        "get sequence of keys"
-#        keys = self.table.keys()
-#        assert keys == self.keys, keys
-#
-#    def testValues(self):
-#        "get sequence of values"
-#        values = self.table.values()
-#        assert values == self.values, values
+    # tests using the Python dictionary access methods
 
+    def testDictKeys(self):
+        assert sorted(self.keys) ==  sorted(self.table.keys())
+
+    def testDictItems(self):
+        assert len(self.keys) ==  len(self.table)
+
+    def testCheckDictContains(self):
+        for key in self.keys:
+            assert key in self.table.keys()
+
+    def testGetDictValue(self):
+        for key, value in zip(self.keys, self.values):
+            assert self.table[key] == value
+            assert self.table[key.upper()] == value
+            assert self.table[key.capitalize()] == value
+
+    def testRemoveDictItem(self):
+        key = self.keys[0]
+        del self.table[key]
+        assert self.table[key] == None
 
 # ===========================================================================
 # Test begins now
