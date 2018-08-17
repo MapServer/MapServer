@@ -64,10 +64,11 @@ static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
 
   /* step throught the edges */
   for(i=0; i<ring->numpoints-1; i++) {
-    sum += (ring->point[i+1].x - ring->point[i].x)*(ring->point[i+1].y + ring->point[i].y); /* (x2 − x1)*(y2 + y1) */
+    sum += ring->point[i].x * ring->point[i+1].y - ring->point[i+1].x * ring->point[i].y;
   }
 
-  return (sum >= 0)?MS_DIRECTION_CLOCKWISE:MS_DIRECTION_COUNTERCLOCKWISE;
+  return sum > 0 ? MS_DIRECTION_CLOCKWISE :
+         sum < 0 ? MS_DIRECTION_COUNTERCLOCKWISE : MS_DIRECTION_INVALID_RING;
 }
 
 static void mvtReverseRingDirection(lineObj *ring) {
@@ -83,14 +84,41 @@ static void mvtReverseRingDirection(lineObj *ring) {
   }
 }
 
+static void mvtReorderRings(shapeObj *shape, int *outers) {
+  int i, j;
+  int t1;
+  lineObj t2; 
+
+  for(i=0; i<(shape->numlines-1); i++) {
+    for(j=0; j<(shape->numlines-i-1); j++) {
+      if(outers[j] < outers[j+1]) {
+        /* swap */
+	t1 = outers[j];
+        outers[j] = outers[j+1];
+	outers[j+1] = t1;
+
+	t2 = shape->line[j];
+        shape->line[j] = shape->line[j+1];
+	shape->line[j+1] = t2;
+      }
+    }
+  }
+}
+
 static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, int mvt_layer_extent) {
   double scale_x,scale_y;
   int i,j,outj;
 
-  int ring_direction, is_outer_ring;
+  int *outers=NULL, ring_direction;
 
   scale_x = (double)mvt_layer_extent/(extent->maxx - extent->minx);
   scale_y = (double)mvt_layer_extent/(extent->maxy - extent->miny);
+
+  if(layer_type == MS_LAYER_POLYGON) {
+    outers = msGetOuterList(shape); /* compute before we muck with the shape */
+    if(outers[0] == 0) /* first ring must be an outer */
+      mvtReorderRings(shape, outers);
+  }
 
   for(i=0;i<shape->numlines;i++) {
     for(j=0,outj=0;j<shape->line[i].numpoints;j++) {
@@ -103,14 +131,17 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, i
     }
     shape->line[i].numpoints = outj;
 
-    is_outer_ring = msIsOuterRing(shape, i);
-    ring_direction = mvtGetRingDirection(&shape->line[i]);
-
-    if( (layer_type==MS_LAYER_POLYGON) && ((ring_direction != MS_DIRECTION_INVALID_RING) && ((is_outer_ring && ring_direction != MS_DIRECTION_CLOCKWISE) || (!is_outer_ring && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))))
-      mvtReverseRingDirection(&shape->line[i]);
+    if(layer_type == MS_LAYER_POLYGON) {
+      ring_direction = mvtGetRingDirection(&shape->line[i]);
+      if(ring_direction == MS_DIRECTION_INVALID_RING)
+        shape->line[i].numpoints = 0; /* so it's not considered anymore */
+      else if((outers[i] && ring_direction != MS_DIRECTION_CLOCKWISE) || (!outers[i] && ring_direction != MS_DIRECTION_COUNTERCLOCKWISE))
+        mvtReverseRingDirection(&shape->line[i]);
+    }
   }
 
   msComputeBounds(shape); /* TODO: might need to limit this to just valid parts... */
+  msFree(outers);
 
   return (shape->numlines == 0)?MS_FAILURE:MS_SUCCESS; /* sucess if at least one line */
 }
@@ -126,7 +157,8 @@ static int mvtClipShape(shapeObj *shape, int layer_type, int buffer, int mvt_lay
     msClipPolylineRect(shape, tile_rect);
   }
 
-  if(shape->numlines>0)
+  /* success if at least one line and not a degenerate bounding box */
+  if(shape->numlines > 0 && (shape->bounds.minx != shape->bounds.maxx || shape->bounds.miny != shape->bounds.maxy))
     return MS_SUCCESS;
   else
     return MS_FAILURE;
@@ -194,9 +226,9 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   } else if(layer->type == MS_LAYER_LINE) {
     for(i=0;i<shape->numlines;i++)
       if(shape->line[i].numpoints >= 2) n_geometry += 2 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO */
-  } else {
+  } else { /* MS_LAYER_POLYGON */
     for(i=0;i<shape->numlines;i++)
-      if(shape->line[i].numpoints >= 4) n_geometry += 3 + shape->line[i].numpoints * 2; /* one MOVETO, one LINETO, one CLOSEPATH */
+      if(shape->line[i].numpoints >= 4) n_geometry += 3 + (shape->line[i].numpoints-1) * 2; /* one MOVETO, one LINETO, one CLOSEPATH (don't consider last duplicate point) */
   }
 
   if(n_geometry == 0) return MS_SUCCESS;
@@ -274,6 +306,7 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
       }
     }
   } else { /* MS_LAYER_LINE or MS_LAYER_POLYGON */
+    int numpoints;
     int idx=0, lastx=0, lasty=0;
     for(i=0;i<shape->numlines;i++) {
 
@@ -282,11 +315,12 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
         continue; /* skip malformed parts */
       }
 
-      for(j=0;j<shape->line[i].numpoints;j++) {
+      numpoints = (layer->type == MS_LAYER_LINE)?shape->line[i].numpoints:(shape->line[i].numpoints-1); /* don't consider last point for polygons */
+      for(j=0;j<numpoints;j++) {
         if(j==0) {
           mvt_feature->geometry[idx++] = COMMAND(MOVETO, 1);
         } else if(j==1) {
-          mvt_feature->geometry[idx++] = COMMAND(LINETO, shape->line[i].numpoints-1);
+          mvt_feature->geometry[idx++] = COMMAND(LINETO, numpoints-1);
         }
         mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].x)-lastx);
 	mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].y)-lasty);

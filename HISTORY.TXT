@@ -12,6 +12,12 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.2.0 release (2018/07/23)
+--------------------------
+
+- Fixed issue with ring handling with polygons in MVT support (#5626)
+- No other major changes, see detailed changelog for bug fixes
+
 7.2.0-beta2 release (2018-6-13)
 
 - Update beta1 release notes to remove reference to PHP7 support
