@@ -2,7 +2,7 @@ Python MapScript for MapServer 7.2 README
 =========================================
 
 :Author: MapServer Team
-:Last Updated: 2018-07-23
+:Last Updated: 2018-08-17
 
 Introduction
 ------------
@@ -55,7 +55,9 @@ On Windows you can use the following, replacing ``C:\MapServer\bin`` with the lo
     SET PATH=C:\MapServer\bin;%PATH%
 
 Window binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`. 
-When using these packages the MapServer path will be similar to `C:\release-1911-x64-gdal-mapserver\bin`. 
+To ensure compatibility with the wheels, please use ``release-1911-x64-gdal-2-3-mapserver-7-2``. 
+
+When using these packages the MapServer path will be similar to `C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin`. 
 
 The mapscript wheels have been compiled using Visual Studio 2017 version 15.3 (``MSVC++ 14.11 _MSC_VER == 1911``). 
 
@@ -91,7 +93,7 @@ Now you should be able to import mapscript:
 .. code-block:: python
 
     python -c "import mapscript;print(mapscript.msGetVersion())"
-    MapServer version 7.2.0-beta2 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
+    MapServer version 7.2.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
 
 If you failed to add the MapServer binaries to your system path you may see one of the following errors:
 
