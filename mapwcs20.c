@@ -2806,7 +2806,6 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       /* set default values for interval and significant figures */
       switch(cm->imagemode) {
         case MS_IMAGEMODE_BYTE:
-        case MS_IMAGEMODE_PC256:
           default_values.interval_min = 0.;
           default_values.interval_max = 255.;
           default_values.significant_figures = 3;
@@ -2820,6 +2819,11 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
           default_values.interval_min = -FLT_MAX;
           default_values.interval_max = FLT_MAX;
           default_values.significant_figures = 12;
+          break;
+        default:
+          // other imagemodes are invalid (see above), just keep the compiler happy
+          msFreeCharArray(band_names, num_band_names);
+          return MS_FAILURE;
           break;
       }
 
