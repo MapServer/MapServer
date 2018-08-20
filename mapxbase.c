@@ -689,9 +689,9 @@ DBFFieldType msDBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName
 static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pValue )
 {
   unsigned int          nRecordOffset;
-  int  i, j;
+  int  i, len;
   uchar *pabyRec;
-  char  szSField[40], szFormat[12];
+  char  szSField[40];
 
   /* -------------------------------------------------------------------- */
   /*  Is this a valid record?             */
@@ -740,28 +740,14 @@ static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * 
     case 'D':
     case 'N':
     case 'F':
-      if( psDBF->panFieldDecimals[iField] == 0 ) {
-        snprintf( szFormat, sizeof(szFormat), "%%%dd", psDBF->panFieldSize[iField] );
-        snprintf(szSField, sizeof(szSField), szFormat, (int) *((double *) pValue) );
-        if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
-          szSField[psDBF->panFieldSize[iField]] = '\0';
-        strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]), szSField, strlen(szSField) );
-      } else {
-        snprintf( szFormat, sizeof(szFormat), "%%%d.%df", psDBF->panFieldSize[iField], psDBF->panFieldDecimals[iField] );
-        snprintf(szSField, sizeof(szSField), szFormat, *((double *) pValue) );
-        if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
-          szSField[psDBF->panFieldSize[iField]] = '\0';
-        strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),  szSField, strlen(szSField) );
-      }
+      snprintf(szSField, sizeof(szSField), "%*.*f", psDBF->panFieldSize[iField], psDBF->panFieldDecimals[iField], *(double*) pValue); 
+      len = strlen((char *) szSField);
+      memcpy(pabyRec+psDBF->panFieldOffset[iField], szSField, MS_MIN(len, psDBF->panFieldSize[iField]));
       break;
 
     default:
-      if( (int) strlen((char *) pValue) > psDBF->panFieldSize[iField] )
-        j = psDBF->panFieldSize[iField];
-      else
-        j = strlen((char *) pValue);
-
-      strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]), (char *) pValue, j );
+      len = strlen((char *) pValue);
+      memcpy(pabyRec+psDBF->panFieldOffset[iField], pValue, MS_MIN(len, psDBF->panFieldSize[iField]));
       break;
   }
 
