@@ -1119,7 +1119,7 @@ msPostGISRetrieveVersion(PGconn *pgconn)
 
   ptr = strVersion;
   strParts[j++] = strVersion;
-  while( ptr != '\0' && j < 3 ) {
+  while( *ptr != '\0' && j < 3 ) {
     if ( *ptr == '.' ) {
       *ptr = '\0';
       strParts[j++] = ptr + 1;
