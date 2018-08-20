@@ -4013,7 +4013,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
       snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace );
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-      sprintf(szHexColor,"%02x%02x%02x",nColorRed,
+      sprintf(szHexColor,"%02hhx%02hhx%02hhx",nColorRed,
               nColorGreen, nColorBlue);
 
       snprintf(szTmp, sizeof(szTmp),
