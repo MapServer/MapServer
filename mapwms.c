@@ -2444,7 +2444,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
     msWMSPrintIdentifier(stdout, "        ", &(lp->metadata), "MO");
   }
 
-  if(nVersion >= OWS_1_1_0)
+  if(nVersion >= OWS_1_1_0) {
     if (! msOWSLookupMetadata(&(lp->metadata), "MO", "metadataurl_href"))
       msMetadataSetGetMetadataURL(lp, script_url_encoded);
 
@@ -2456,6 +2456,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                       "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
                       MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                       NULL, NULL, NULL, NULL, NULL, "        ");
+  }
 
   if(nVersion < OWS_1_1_0)
     msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "dataurl_href",
