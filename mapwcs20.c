@@ -3955,7 +3955,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   if(NULL == params->range_subset) {
     *bandlist = msStrdup("1");
     for(i = 1; i < cm->numbands; ++i) {
-      char strnumber[10];
+      char strnumber[12];
       snprintf(strnumber, sizeof(strnumber), ",%d", i + 1);
       *bandlist = msStringConcatenate(*bandlist, strnumber);
     }
@@ -4310,7 +4310,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
   int status, i;
   double x_1, x_2, y_1, y_2;
-  char *coverageName, *bandlist=NULL, numbands[8];
+  char *coverageName, *bandlist=NULL, numbands[12];
 
   int doDrawRasterLayerDraw = MS_TRUE;
   GDALDatasetH hDS = NULL;
