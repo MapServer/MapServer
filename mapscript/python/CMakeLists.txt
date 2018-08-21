@@ -62,7 +62,12 @@ add_custom_target(pythonmapscript-wheel DEPENDS ${SWIG_MODULE_pythonmapscript_RE
 # copy all Python files to the output folder following build, and create a wheel
 add_custom_command(
     TARGET pythonmapscript-wheel POST_BUILD
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
+    if (WIN32)
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
+    else()
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    endif()
+
     COMMAND ${PYTHON_EXECUTABLE} -m pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mapscript.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py
