@@ -47,7 +47,7 @@ java-testcase:
 	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../$(JAVA_MAPSCRIPT_PATH)" && cd mapscript/java && ./run_test.sh)
 
 test:  cmakebuild
-	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-wheel mspython-testcase
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-testcase
 	@./print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
 
