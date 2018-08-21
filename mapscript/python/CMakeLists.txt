@@ -70,8 +70,8 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/README.rst" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
     COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel
-    #COMMAND ${PYTHON_EXECUTABLE} -m pip install --no-index --find-links=${CMAKE_CURRENT_BINARY_DIR}/dist mapscript
-    #COMMAND ${PYTHON_EXECUTABLE} -m pytest --ignore=${TESTS_FOLDER}/fonttest.py --ignore=${TESTS_FOLDER}/hashtest.py --ignore=${TESTS_FOLDER}/pgtest.py --ignore=${TESTS_FOLDER}/threadtest.py ${TESTS_FOLDER}/
+    COMMAND ${PYTHON_EXECUTABLE} -m pip install --no-index --find-links=${CMAKE_CURRENT_BINARY_DIR}/dist mapscript
+    COMMAND ${PYTHON_EXECUTABLE} -m pytest --ignore=${TESTS_FOLDER}/fonttest.py --ignore=${TESTS_FOLDER}/hashtest.py --ignore=${TESTS_FOLDER}/pgtest.py --ignore=${TESTS_FOLDER}/threadtest.py ${TESTS_FOLDER}/
     )
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py)
