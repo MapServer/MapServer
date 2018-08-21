@@ -2,7 +2,7 @@ Python MapScript for MapServer 7.2 README
 =========================================
 
 :Author: MapServer Team
-:Last Updated: 2018-08-17
+:Last Updated: 2018-08-21
 
 Introduction
 ------------
@@ -24,9 +24,12 @@ Wheels and PyPI
 ---------------
 
 Python `wheels <https://wheel.readthedocs.io/en/stable/>`_ have been created for Windows and uploaded to 
-`PyPI <https://pypi.org/>`_ - the Python Package Index. This allows easy installation using `pip <https://pypi.org/project/pip/>`_. 
-Other advantages of ready-made wheels on PyPI are:
+`PyPI <https://pypi.org/>`_ - the Python Package Index. Note - MapServer binaries still need to be installed on the system, 
+and are not included in the wheel itself, see the *Installation* section below. 
 
+Advantages of ready-made wheels on PyPI include:
+
++ easy installation using `pip <https://pypi.org/project/pip/>`_
 + mapscript can be added as a dependency to `Requirements Files <https://pip.pypa.io/en/stable/user_guide/#id1>`_
 + mapscript can be easily added to a Python `Virtual Environment <https://docs.python-guide.org/dev/virtualenvs/>`_
 + Python2 or Python3 versions of mapscript can be installed and work with a single installation of MapServer
@@ -36,6 +39,7 @@ Currently the following wheels are built:
 + Python 2.7 x64 for MapServer 7.2
 + Python 3.6 x64 for MapServer 7.2
 
+The mapscript wheels have been compiled using Visual Studio 2017 version 15.3 (``MSVC++ 14.11 _MSC_VER == 1911``). 
 Linux wheels are also planned, using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
 
 No source distributions will be provided on PyPI - to build from source requires the full MapServer source code,
@@ -44,8 +48,8 @@ in which case it is easiest to take a copy of the full MapServer project and run
 ..
     py3 SWIG flag adds type annotations
 
-MapServer Versions
-------------------
+Installation
+------------
 
 To use mapscript you will need to add the MapServer binaries to your system path. 
 On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries. 
@@ -58,11 +62,6 @@ Window binary packages can be downloaded from `GIS Internals <https://www.gisint
 To ensure compatibility with the wheels, please use ``release-1911-x64-gdal-2-3-mapserver-7-2``. 
 
 When using these packages the MapServer path will be similar to `C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin`. 
-
-The mapscript wheels have been compiled using Visual Studio 2017 version 15.3 (``MSVC++ 14.11 _MSC_VER == 1911``). 
-
-Installation
-------------
 
 Prior to installing it is first recommended to update pip to the latest version with the following command:
 
@@ -139,11 +138,9 @@ Create a layer from a string:
 Building the Mapscript Module
 -----------------------------
 
-The mapscript module is built as part of the MapServer CMake build process, this 
-is configured using the ``mapserver/mapscript/CMakeLists.txt`` file. 
+The mapscript module is built as part of the MapServer CMake build process, this is configured using the ``mapserver/mapscript/CMakeLists.txt`` file. 
 
-Prior to the switch to using CMake to build MapServer mapscript was built using
-distutils and ``setup.py``. Now the ``setup.py.in`` file is used as a template that
+Prior to the switch to using CMake to build MapServer mapscript was built using distutils and ``setup.py``. Now the ``setup.py.in`` file is used as a template that
 is filled with the MapServer version number and used to created wheel files for distribution. 
 
 The build process works as follows. 
@@ -154,8 +151,14 @@ The build process works as follows.
   ``_mapscript.pyd`` file on Windows, and a ``_mapscript.so`` file on Windows. 
 
 ``CMakeLists.txt`` is configured so that all files required to make a Python wheel are copied into the output build folder. The wheel can then be built
-with the following commands. 
+using the following command:
 
+.. code-block:: bat
+
+    cmake --build . --target pythonmapscript-wheel
+
+The ``pythonmapscript-wheel`` target runs the following commands:
+ 
 .. code-block:: bat
 
     python -m pip install --upgrade pip
@@ -163,7 +166,7 @@ with the following commands.
     cd C:\Projects\MapServer\build\mapscript\python
     python setup.py bdist_wheel
 
-SWIG can be run manually, without using CMake. This may allow further optimizations and control on the output. 
+SWIG can also be run manually, without using CMake. This may allow further optimizations and control on the output. 
 
 .. code-block:: bat
 
@@ -171,7 +174,7 @@ SWIG can be run manually, without using CMake. This may allow further optimizati
     SET PATH=C:\MapServerBuild\swigwin-3.0.12;%PATH%
     swig -python -shadow -o mapscript_wrap.c ../mapscript.i
 
-SWIG has several command line options to control the output:
+SWIG has several command line options to control the output, examples of which are shown below:
 
 .. code-block:: bat
     
