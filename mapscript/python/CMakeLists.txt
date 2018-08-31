@@ -42,7 +42,11 @@ swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER
 
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT_NAME _mapscript)
-set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES LINK_FLAGS "/ignore:4244")
+
+if(MSVC)
+	set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES LINK_FLAGS "/ignore:4244")
+	set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES LINK_FLAGS "/ignore:4267")	
+endif()
 
 execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
