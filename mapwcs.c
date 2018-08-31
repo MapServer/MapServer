@@ -1721,7 +1721,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   outputFormatObj *format;
   char *bandlist=NULL;
   size_t bufferSize = 0;
-  char numbands[8]; /* should be large enough to hold the number of bands in the bandlist */
+  char numbands[12]; /* should be large enough to hold the number of bands in the bandlist */
   coverageMetadataObj cm;
   rectObj reqextent;
   rectObj covextent;

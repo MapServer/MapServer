@@ -2806,7 +2806,6 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       /* set default values for interval and significant figures */
       switch(cm->imagemode) {
         case MS_IMAGEMODE_BYTE:
-        case MS_IMAGEMODE_PC256:
           default_values.interval_min = 0.;
           default_values.interval_max = 255.;
           default_values.significant_figures = 3;
@@ -2820,6 +2819,11 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
           default_values.interval_min = -FLT_MAX;
           default_values.interval_max = FLT_MAX;
           default_values.significant_figures = 12;
+          break;
+        default:
+          // other imagemodes are invalid (see above), just keep the compiler happy
+          msFreeCharArray(band_names, num_band_names);
+          return MS_FAILURE;
           break;
       }
 
@@ -3955,7 +3959,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   if(NULL == params->range_subset) {
     *bandlist = msStrdup("1");
     for(i = 1; i < cm->numbands; ++i) {
-      char strnumber[10];
+      char strnumber[12];
       snprintf(strnumber, sizeof(strnumber), ",%d", i + 1);
       *bandlist = msStringConcatenate(*bandlist, strnumber);
     }
@@ -4310,7 +4314,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
   int status, i;
   double x_1, x_2, y_1, y_2;
-  char *coverageName, *bandlist=NULL, numbands[8];
+  char *coverageName, *bandlist=NULL, numbands[12];
 
   int doDrawRasterLayerDraw = MS_TRUE;
   GDALDatasetH hDS = NULL;
