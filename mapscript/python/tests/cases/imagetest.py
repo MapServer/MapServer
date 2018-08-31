@@ -63,7 +63,7 @@ class SaveToStringTestCase(MapTestCase):
             pyimg = Image.open(filename)
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'P'
+            assert pyimg.mode == 'RGB'
         else:
             assert 1
             
@@ -144,7 +144,7 @@ class ImageWriteTestCase(MapTestCase):
             pyimg = Image.open(filename)
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'P'
+            assert pyimg.mode == 'RGB'
         else:
             assert 1
 
@@ -163,7 +163,7 @@ class ImageWriteTestCase(MapTestCase):
             pyimg = Image.open(filename)
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'P'
+            assert pyimg.mode == 'RGB'
         else:
             assert 1
 
@@ -181,7 +181,7 @@ class ImageWriteTestCase(MapTestCase):
             pyimg = Image.open(filename)
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'P'
+            assert pyimg.mode == 'RGB'
         else:
             assert 1
 

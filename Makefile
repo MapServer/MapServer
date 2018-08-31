@@ -37,6 +37,9 @@ query-testcase:
 mspython-testcase:
 	test -f "$(PYTHON_MAPSCRIPT_PATH)/_mapscript.so" && (export PYTHONPATH="../../$(PYTHON_MAPSCRIPT_PATH)" && cd msautotest/mspython && python run_all_tests.py)
 
+mspython-wheel:
+	cd build && cmake --build . --target pythonmapscript-wheel
+
 php-testcase:
 	test -f "$(PHP_MAPSCRIPT)" && (export PHP_MAPSCRIPT_SO="../../$(PHP_MAPSCRIPT)" && cd msautotest/php && ./run_test.sh)
 

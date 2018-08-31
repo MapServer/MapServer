@@ -54,8 +54,7 @@ class LayerConstructorTestCase(MapLayerTestCase):
     def testLayerConstructorNoArg(self):
         """test layer constructor with no argument"""
         layer = mapscript.layerObj()
-        t = type(layer)
-        assert str(t) == "<class 'mapscript.layerObj'>", t
+        assert layer.__class__.__name__ == "layerObj"
         assert layer.thisown == 1
         assert layer.index == -1
         assert layer.map == None, layer.map
@@ -63,8 +62,7 @@ class LayerConstructorTestCase(MapLayerTestCase):
     def testLayerConstructorMapArg(self):
         """test layer constructor with map argument"""
         layer = mapscript.layerObj(self.map)
-        t = type(layer)
-        assert str(t) == "<class 'mapscript.layerObj'>", t
+        assert layer.__class__.__name__ == "layerObj"
         assert layer.thisown == 1
         l = self.map.getLayer(self.map.numlayers-1)
         # assert str(layer) == str(l) # TODO - check why these are not equal
