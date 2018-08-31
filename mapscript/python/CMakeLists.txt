@@ -42,6 +42,7 @@ swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER
 
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT_NAME _mapscript)
+set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES LINK_FLAGS "/ignore:4244")
 
 execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -62,14 +63,16 @@ add_custom_target(pythonmapscript-wheel DEPENDS ${SWIG_MODULE_pythonmapscript_RE
 
 # copy all Python files to the output folder following build, and create a wheel
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "")
+	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})
+else()
+	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+endif()
+
+	
 add_custom_command(
+	WORKING_DIRECTORY ${OUTPUT_FOLDER}
     TARGET pythonmapscript-wheel POST_BUILD
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
-    #if (WIN32)
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
-    #else()
-    #    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    #endif()
 
     COMMAND ${PYTHON_EXECUTABLE} -m pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript
@@ -86,6 +89,7 @@ set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TA
 install(FILES ${mapscript_files} DESTINATION ${PYTHON_SITE_PACKAGES})
 
 message(STATUS "CMake version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
-message(STATUS "Python MapScript output directory: ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
 message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
 message(STATUS "Python site packages: ${PYTHON_SITE_PACKAGES}")
