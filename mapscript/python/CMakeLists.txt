@@ -21,7 +21,7 @@ find_library(PYTHON_LIBRARIES
 #if that failed, fall back to the default cmake method of finding python dev files
 if(NOT PYTHON_INCLUDE_PATH OR NOT PYTHON_LIBRARIES)
   find_package(PythonLibs)
-endif(NOT PYTHON_INCLUDE_PATH OR NOT PYTHON_LIBRARIES)
+endif()
 
 include_directories(${PYTHON_INCLUDE_PATH})
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
@@ -30,13 +30,13 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
 if (${PYTHON_VERSION_MAJOR} GREATER 2)
     set_property(SOURCE ../mapscript.i PROPERTY SWIG_FLAGS "-py3")
-endif (${PYTHON_VERSION_MAJOR} GREATER 2)
+endif ()
 
-if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.7)
+if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
     swig_add_library(pythonmapscript TYPE MODULE LANGUAGE python SOURCES ../mapscript.i)
-else (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.7)
+else ()
     swig_add_module(pythonmapscript python ../mapscript.i)
-endif (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.7)
+endif ()
 
 swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
 
@@ -50,6 +50,7 @@ set(SETUP_PY_TEMP "${CMAKE_CURRENT_BINARY_DIR}/setup.py.temp")
 
 configure_file(${SETUP_PY_IN} ${SETUP_PY_TEMP} @ONLY)
 file(READ ${SETUP_PY_TEMP} SETUP_CONTENT)
+
 # each target (e.g. Debug, Release etc.) will have a copy of setup.py
 
 file(GENERATE OUTPUT $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/setup.py INPUT ${SETUP_PY_TEMP})
@@ -60,13 +61,18 @@ set(TESTS_FOLDER ${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases)
 add_custom_target(pythonmapscript-wheel DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME} )
 
 # copy all Python files to the output folder following build, and create a wheel
+
+if (MSVC)
+	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+else()
+	# for non-Windows builds there are no build type subfolders (e.g. Release, Debug etc.)
+	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})	
+endif()
+
+	
 add_custom_command(
+	WORKING_DIRECTORY ${OUTPUT_FOLDER}
     TARGET pythonmapscript-wheel POST_BUILD
-    if (WIN32)
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
-    else()
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    endif()
 
     COMMAND ${PYTHON_EXECUTABLE} -m pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript
@@ -77,8 +83,13 @@ add_custom_command(
     COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel
     COMMAND ${PYTHON_EXECUTABLE} -m pip install --no-index --find-links=${CMAKE_CURRENT_BINARY_DIR}/dist mapscript
     COMMAND ${PYTHON_EXECUTABLE} -m pytest --ignore=${TESTS_FOLDER}/fonttest.py --ignore=${TESTS_FOLDER}/hashtest.py --ignore=${TESTS_FOLDER}/pgtest.py --ignore=${TESTS_FOLDER}/threadtest.py ${TESTS_FOLDER}/
-    )
+)
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py)
 install(FILES ${mapscript_files} DESTINATION ${PYTHON_SITE_PACKAGES})
 
+message(STATUS "CMake version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
+message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
+message(STATUS "Python site packages: ${PYTHON_SITE_PACKAGES}")
