@@ -43,11 +43,6 @@ swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT_NAME _mapscript)
 
-if(MSVC)
-	set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES LINK_FLAGS "/ignore:4244")
-	set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES LINK_FLAGS "/ignore:4267")	
-endif()
-
 execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(SETUP_PY_IN "${PROJECT_SOURCE_DIR}/mapscript/python/setup.py.in")
@@ -67,10 +62,11 @@ add_custom_target(pythonmapscript-wheel DEPENDS ${SWIG_MODULE_pythonmapscript_RE
 
 # copy all Python files to the output folder following build, and create a wheel
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "")
-	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})
-else()
+if (MSVC)
 	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+else()
+	# for non-Windows builds there are no build type subfolders (e.g. Release, Debug etc.)
+	set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})	
 endif()
 
 	
