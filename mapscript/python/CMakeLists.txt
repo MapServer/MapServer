@@ -66,8 +66,10 @@ else()
 endif()
 
 if(WIN32)
+    set(PYTHON_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
     set(PYTHON_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
 else()
+    set(PYTHON_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
     set(PYTHON_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/bin)
 endif()
 
@@ -82,7 +84,7 @@ add_custom_command(
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMENT "Creating a Python virtual environment"
     COMMAND ${PYTHON_EXECUTABLE} -m pip install virtualenv
-    COMMAND C:/Python27/Scripts/virtualenv --python=${PYTHON_EXECUTABLE} mapscriptvenv
+    COMMAND ${PYTHON_EXECUTABLE} -m virtualenv mapscriptvenv
 )
 
 add_custom_command(
