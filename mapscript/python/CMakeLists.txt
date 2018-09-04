@@ -60,7 +60,7 @@ set(TESTS_FOLDER ${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases)
 
 if(MSVC)
     set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-else()$<TARGET_FILE_DIR:tgt>
+else()
     # for non-Windows builds there are no build type subfolders (e.g. Release, Debug etc.)
     set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})
 endif()
