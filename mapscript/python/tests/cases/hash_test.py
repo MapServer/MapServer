@@ -129,8 +129,7 @@ class HashTableTestCase(unittest.TestCase, HashTableBaseTestCase):
 
     def testConstructor(self):
         table = mapscript.hashTableObj()
-        tabletype = type(table)
-        assert str(tabletype) == "<class 'mapscript.hashTableObj'>", tabletype
+        assert table.__class__.__name__== "hashTableObj", table
 
 
 # ==============================================================================
