@@ -40,6 +40,9 @@ setup(
     url="http://www.mapserver.org",
     version="@MapServer_VERSION_MAJOR@.@MapServer_VERSION_MINOR@",
     packages=find_packages(),
-    package_data={'mapscript': ['$<TARGET_FILE_NAME:@SWIG_MODULE_pythonmapscript_REAL_NAME@>']},
-    distclass=BinaryDistribution    
+    package_data={
+        # list the files to include starting with the most deeply nested folder or they are overwritten
+        'mapscript': ['tests/data/vera/*.*', 'tests/data/*.*', '$<TARGET_FILE_NAME:@SWIG_MODULE_pythonmapscript_REAL_NAME@>']
+        },
+    distclass=BinaryDistribution
 )
