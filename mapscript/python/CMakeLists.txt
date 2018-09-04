@@ -59,13 +59,11 @@ set(BUILD_TIMESTAMP "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 set(TESTS_FOLDER ${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases)
 
 if(MSVC)
-    set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+    set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
 else()
     # for non-Windows builds there are no build type subfolders (e.g. Release, Debug etc.)
     set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})
 endif()
-
-set(OUTPUT_FOLDER $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>)
 
 if(WIN32)
     set(PYTHON_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
