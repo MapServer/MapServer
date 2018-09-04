@@ -41,22 +41,25 @@ import os
 import sys
 import distutils.util
 import unittest
+import tempfile
 
 # define the path to mapserver test data
-test_path = os.path.abspath(os.path.join(__file__ ,"../../../../.."))
-TESTS_PATH = os.path.join(test_path, "tests")
+TESTS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__ ),"data"))
+# TESTS_PATH = os.path.join(test_path, "tests")
 
 TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
 XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
 HOME_IMAGE = os.path.join(TESTS_PATH, 'home.png')
 TEST_IMAGE = os.path.join(TESTS_PATH, 'test.png')
 
-INCOMING = '/tmp/'
+INCOMING = tempfile.mkdtemp(prefix="mapscript")
+
+# INCOMING = '/tmp/'
 
 # Put local build directory on head of python path
-platformdir = '-'.join((distutils.util.get_platform(), 
-                        '.'.join(map(str, sys.version_info[0:2]))))
-sys.path.insert(0, os.path.join('../../build', 'lib.' + platformdir))
+#platformdir = '-'.join((distutils.util.get_platform(), 
+#                        '.'.join(map(str, sys.version_info[0:2]))))
+#sys.path.insert(0, os.path.join('../../build', 'lib.' + platformdir))
 
 # import mapscript from the local build directory
 import mapscript
