@@ -60,15 +60,16 @@ set(TESTS_FOLDER ${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases)
 add_custom_target(pythonmapscript-wheel DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME} )
 
 # copy all Python files to the output folder following build, and create a wheel
+if (WIN32)
+set(PYTHON_MAPSCRIPT_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+set(PYTHON_MAPSCRIPT_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 add_custom_command(
     TARGET pythonmapscript-wheel POST_BUILD
-    if (WIN32)
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}
-    else()
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    endif()
-
-    COMMAND ${PYTHON_EXECUTABLE} -m pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
+    WORKING_DIRECTORY ${PYTHON_MAPSCRIPT_WORKING_DIRECTORY}
+    COMMAND ${PYTHON_EXECUTABLE} -m pip install --user -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mapscript.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}>" "$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/$<TARGET_FILE_NAME:${SWIG_MODULE_pythonmapscript_REAL_NAME}>"
@@ -76,8 +77,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
     COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel
     COMMAND ${PYTHON_EXECUTABLE} -m pip install --no-index --find-links=${CMAKE_CURRENT_BINARY_DIR}/dist mapscript
-    COMMAND ${PYTHON_EXECUTABLE} -m pytest --ignore=${TESTS_FOLDER}/fonttest.py --ignore=${TESTS_FOLDER}/hashtest.py --ignore=${TESTS_FOLDER}/pgtest.py --ignore=${TESTS_FOLDER}/threadtest.py ${TESTS_FOLDER}/
-    )
+    COMMAND ${PYTHON_EXECUTABLE} -m pytest --ignore=${TESTS_FOLDER}/fonttest.py --ignore=${TESTS_FOLDER}/hashtest.py --ignore=${TESTS_FOLDER}/pgtest.py --ignore=${TESTS_FOLDER}/threadtest.py ${TESTS_FOLDER}/)
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py)
 install(FILES ${mapscript_files} DESTINATION ${PYTHON_SITE_PACKAGES})

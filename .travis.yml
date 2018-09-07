@@ -60,8 +60,9 @@ before_install:
 
 
 script:
-  - make -j4 test
+  - make cmakebuild
   - make mspython-wheel  
+  - make -j4 test
 
 after_success:
 # Only run coverage when it is safe to do so (not on pull requests), and only on master branch
