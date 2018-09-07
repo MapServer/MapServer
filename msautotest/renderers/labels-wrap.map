@@ -1,0 +1,102 @@
+# RUN_PARMS: labels-wrap.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+map
+
+imagetype png
+size 200 450
+extent 0 -450 200 0
+debug 0
+config "MS_ERRORFILE" "stderr"
+fontset "data/fonts.lst"
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+            color 230 230 230
+            width 1
+        end
+        label
+            type truetype
+            angle follow
+            font "dejavu"
+            size 8
+            color 0 0 0
+            wrap "-"
+            maxlength 8
+        end
+    end
+
+    feature
+      points
+        50 -50 150 -50
+      end
+      text "W: WrapDash-With-Dash" # should wrap, dashes should not be removed
+    end
+    feature
+      points
+        50 -100 150 -100
+      end
+      text "NW: WrapDash With Space" # should not wrap
+    end
+end
+
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+            color 230 230 230
+            width 1
+        end
+        label
+            type truetype
+            angle follow
+            font "dejavu"
+            size 8
+            color 0 0 0
+            maxlength 8
+            wrap " "
+        end
+    end
+
+    feature
+      points
+        50 -200 150 -200
+      end
+      text "W: WrapSpace With Space" # should wrap
+    end
+
+    feature
+      points
+        50 -250 150 -250
+      end
+      text "NW: WrapSpace-With-Dash" # should wrap, no dash removed
+    end
+
+    feature
+      points
+        50 -300 150 -300
+      end
+      text "W: WrapSpace​With​OnlyZeroSP" # should wrap, no space between words
+    end
+
+    feature
+      points
+        50 -350 150 -350
+      end
+      text "W: WrapSpace ​With ​ZeroSP ​and ​Space" # should wrap
+    end
+
+    feature
+      points
+        50 -400 150 -400
+      end
+      text "W: WrapSpace-​With-​Dash-​and-​ZeroSP" # should wrap, no dash removed
+    end
+end
+
+end

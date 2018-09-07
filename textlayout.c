@@ -521,7 +521,6 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     }
   }
 
-
   if(ts->label->wrap || ts->label->maxlength > 0) {
     if(ts->label->wrap && ts->label->maxlength == 0) {
       for(i=0;i<num_glyphs;i++) {
@@ -531,27 +530,17 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       }
     } else {
       assert(ts->label->maxlength > 0);
-      if(ts->label->wrap != ' '){
-        for(i=0;i<num_glyphs;i++) {
-          /* replace all occurences of the wrap character with a space */
-          if(glyphs.unicodes[i]== ts->label->wrap)
-            glyphs.unicodes[i]= ' ';
-        }
-      }
       if(num_glyphs > ts->label->maxlength) {
+        int num_cur_glyph_on_line = 0; /*count for the number of glyphs on the current line*/
         for(i=0; i<num_glyphs; i++) {
-          if(glyphs.unicodes[i]== ' ')
-            break;
-        }
-        if(i != num_glyphs) { /* we have at least one space on which we can break */
-          int num_cur_glyph_on_line = 0; /*count for the number of glyphs on the current line*/
-          for(i=0; i<num_glyphs; i++) {
-            if(glyphs.unicodes[i]== ' ' && num_cur_glyph_on_line >= ts->label->maxlength) {
-              glyphs.unicodes[i]= '\n';
-              num_cur_glyph_on_line = 0;
-            } else {
-              num_cur_glyph_on_line++;
-            }
+          /* wrap at wrap character or at ZERO WIDTH SPACE (unicode 0x200b), if
+           * current line is too long */
+          if((glyphs.unicodes[i] == ts->label->wrap || glyphs.unicodes[i] == 0x200b)
+              && num_cur_glyph_on_line >= ts->label->maxlength) {
+            glyphs.unicodes[i]= '\n';
+            num_cur_glyph_on_line = 0;
+          } else {
+            num_cur_glyph_on_line++;
           }
         }
       }
