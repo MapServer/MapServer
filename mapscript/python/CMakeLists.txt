@@ -39,6 +39,13 @@ set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT
 
 execute_process ( COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+# FIXME: this is to avoid the following error
+# CMake Error at mapscript/python/CMakeLists.txt:42 (get_target_property):
+#  The LOCATION property may not be read from target "_pythonmapscript".  Use
+#  the target name directly with add_custom_command, or use the generator
+#  expression $<TARGET_FILE>, as appropriate.
+cmake_policy(SET CMP0026 OLD)
+
 get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_pythonmapscript_REAL_NAME} LOCATION)
 set(mapscript_files ${LOC_MAPSCRIPT_LIB} ${CMAKE_CURRENT_BINARY_DIR}/mapscript.py)
 install(FILES ${mapscript_files} DESTINATION ${PYTHON_SITE_PACKAGES})
