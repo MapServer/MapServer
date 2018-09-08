@@ -1,8 +1,8 @@
-Python MapScript for MapServer 7.2 README
-=========================================
+Python MapScript for MapServer 7.2.1 README
+===========================================
 
 :Author: MapServer Team
-:Last Updated: 2018-08-21
+:Last Updated: 2018-09-04
 
 Introduction
 ------------
@@ -45,6 +45,9 @@ Linux wheels are also planned, using the `manylinux <https://github.com/pypa/man
 No source distributions will be provided on PyPI - to build from source requires the full MapServer source code,
 in which case it is easiest to take a copy of the full MapServer project and run the CMake process detailed below. 
 
+The wheels also contain a full test suite and sample data that can be run to check that the installed MapServer is
+running correctly. 
+
 ..
     py3 SWIG flag adds type annotations
 
@@ -52,7 +55,8 @@ Installation
 ------------
 
 To use mapscript you will need to add the MapServer binaries to your system path. 
-On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries. 
+On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries 
+(see also `MapServer Versions`_). 
 
 .. code-block::
 
@@ -80,12 +84,6 @@ If you already have mapscript installed and wish to upgrade it to a newer versio
 .. code-block::
 
     pip install mapscript --upgrade
-
-Add your MapSever binaries folder to your system path (see `MapServer Versions`_):
-
-.. code-block::
-
-    SET PATH=C:\MapServer\bin;%PATH%
 
 Now you should be able to import mapscript:
 
@@ -150,21 +148,25 @@ The build process works as follows.
 + CMake then uses the appropriate compiler on the system to compile the ``mapscriptPYTHON_wrap.c`` file into a Python binary module -
   ``_mapscript.pyd`` file on Windows, and a ``_mapscript.so`` file on Windows. 
 
-``CMakeLists.txt`` is configured so that all files required to make a Python wheel are copied into the output build folder. The wheel can then be built
-using the following command:
+``CMakeLists.txt`` is configured with a ``pythonmapscript-wheel`` target that copies all the required files to the output build folder where they are then packaged
+into a Python wheel. The wheel can be built using the following command:
 
 .. code-block:: bat
 
     cmake --build . --target pythonmapscript-wheel
 
-The ``pythonmapscript-wheel`` target runs the following commands:
+The ``pythonmapscript-wheel`` target creates a virtual environment, creates the Python wheel, installs it to the virtual environment and finally runs the test
+suite. This process runs commands similar to the following:
  
 .. code-block:: bat
 
+    python -m pip install virtualenv
+    virtualenv mapscriptvenv
     python -m pip install --upgrade pip
-    pip install wheel
-    cd C:\Projects\MapServer\build\mapscript\python
+    pip install -r requirements-dev.txt
     python setup.py bdist_wheel
+    pip install --no-index --find-links=dist mapscript
+    python -m pytest --pyargs mapscript.tests
 
 SWIG can also be run manually, without using CMake. This may allow further optimizations and control on the output. 
 
@@ -185,7 +187,7 @@ SWIG has several command line options to control the output, examples of which a
 Testing
 -------
 
-Once the mapscript module has been built there is a test suite to check the output. It is recommended
+The mapscript module includes a test suite and a small sample dataset to check the output and MapServer installation. It is recommended
 `pytest <https://docs.pytest.org/en/latest/>`_ is used to run the tests. This can be installed using:
 
 .. code-block:: bat
@@ -193,12 +195,11 @@ Once the mapscript module has been built there is a test suite to check the outp
     pip install pytest
 
 Change the directory to the mapscript output build folder and run the command below. Some tests are currently excluded, these will
-be fixed for upcoming releases. It is also planned to include the test suite in the Python wheels to allow easy testing of a 
-mapscript installation. 
+be fixed for upcoming releases. 
 
 .. code-block:: bat
 
-    python -m pytest --ignore=tests/cases/fonttest.py --ignore=tests/cases/hashtest.py --ignore=tests/cases/pgtest.py --ignore=tests/cases/threadtest.py tests/cases
+    pytest --pyargs mapscript.tests
 
 Credits
 -------
