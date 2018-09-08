@@ -158,7 +158,7 @@ static int mvtClipShape(shapeObj *shape, int layer_type, int buffer, int mvt_lay
   }
 
   /* success if at least one line and not a degenerate bounding box */
-  if(shape->numlines > 0 && (shape->bounds.minx != shape->bounds.maxx || shape->bounds.miny != shape->bounds.maxy))
+  if(shape->numlines > 0 && (layer_type == MS_LAYER_POINT || (shape->bounds.minx != shape->bounds.maxx || shape->bounds.miny != shape->bounds.maxy)))
     return MS_SUCCESS;
   else
     return MS_FAILURE;
