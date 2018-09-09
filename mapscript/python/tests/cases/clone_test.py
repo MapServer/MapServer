@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of map cloning
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,23 +23,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/clonetest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
-
-# the testing module helps us import the pre-installed mapscript
-
-from .testing import mapscript
+import mapscript
 from .testing import TESTMAPFILE
 
-# ===========================================================================
-# Base class
 
 class MapCloneTestCase(unittest.TestCase):
     """Base class for testing with a map fixture"""
@@ -49,13 +35,11 @@ class MapCloneTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj_orig = mapscript.mapObj(TESTMAPFILE)
         self.mapobj_clone = self.mapobj_orig.clone()
-        
+
     def tearDown(self):
         self.mapobj_orig = None
         self.mapobj_clone = None
 
-# ===========================================================================
-# Tests begin here
 
 class MapCloningTestCase(MapCloneTestCase):
 
@@ -72,12 +56,12 @@ class MapCloningTestCase(MapCloneTestCase):
     def testSetFontSet(self):
         """MapCloningTestCase.testSetFontSet: the number of fonts in a cloned map equal original"""
         assert self.mapobj_clone.fontset.numfonts == 2
-    
+
     def testSetSymbolSet(self):
         """MapCloningTestCase.testSetSymbolSet: the number of symbols in a cloned map equal original"""
         num = self.mapobj_clone.symbolset.numsymbols
         assert num == 5, num
-   
+
     def testDrawClone(self):
         """drawing a cloned map works properly"""
         msimg = self.mapobj_clone.draw()
@@ -112,6 +96,6 @@ class MapCloningTestCase(MapCloneTestCase):
         fh.write(data)
         fh.close()
 
+
 if __name__ == '__main__':
     unittest.main()
-

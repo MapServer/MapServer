@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of outputFormatObj
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,21 +23,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/outputformattest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
+import mapscript
+from .testing import MapTestCase
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import MapTestCase, mapscript
-
-# ===========================================================================
-# Test begins now
 
 class OutputFormatTestCase(unittest.TestCase):
     """http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511"""
@@ -48,6 +36,7 @@ class OutputFormatTestCase(unittest.TestCase):
         # assert new_format.refcount == 1, new_format.refcount
         assert new_format.name == 'gtiff'
         assert new_format.mimetype == 'image/tiff'
+
 
 class MapOutputFormatTestCase(MapTestCase):
 
@@ -65,7 +54,7 @@ class MapOutputFormatTestCase(MapTestCase):
         imgobj = self.map.draw()
         filename = 'testAppendNewOutputFormat.tif'
         imgobj.save(filename)
-        
+
     def testRemoveOutputFormat(self):
         """testRemoveOutputFormat may fail depending on GD options"""
         num = self.map.numoutputformats
@@ -100,7 +89,7 @@ class MapOutputFormatTestCase(MapTestCase):
         assert img.format.mimetype == 'image/jpeg'
         filename = 'testBuiltInJPEGFormat.jpg'
         img.save(filename)
-        
+
     def testSelectBuiltInJPEGFormat(self):
         """test selection of built-in JPEG format"""
         self.map.selectOutputFormat('JPEG')
@@ -116,9 +105,5 @@ class UnsupportedFormatTestCase(unittest.TestCase):
                           'PDF')
 
 
-# ===========================================================================
-# Run the tests outside of the main suite
-
 if __name__ == '__main__':
     unittest.main()
-    

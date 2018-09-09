@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of Point
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,33 +23,25 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/pointtest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
+import mapscript
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import mapscript
 
 class PointObjTestCase(unittest.TestCase):
-    
+
     def testPointObjConstructorNoArgs(self):
         """point can be created with no arguments"""
         p = mapscript.pointObj()
         self.assertAlmostEqual(p.x, 0.0)
         self.assertAlmostEqual(p.y, 0.0)
-    
+
     def testPointObjConstructorArgs(self):
         """point can be created with arguments"""
         p = mapscript.pointObj(1.0, 1.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 1.0)
-    
+
     def testSetXY(self):
         """point can have its x and y reset"""
         p = mapscript.pointObj()
@@ -60,7 +50,7 @@ class PointObjTestCase(unittest.TestCase):
         self.assertAlmostEqual(p.y, 1.0)
         if hasattr(p, 'm'):
             self.assertAlmostEqual(p.m, -2e38)
-    
+
     def testSetXYM(self):
         """point can have its x and y reset (with m value)"""
         p = mapscript.pointObj()
@@ -88,7 +78,7 @@ class PointObjTestCase(unittest.TestCase):
         else:
             p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
         assert str(p) == p_str, str(p)
- 
+
     def testPointToString(self):
         """return properly formatted string in toString()"""
         p = mapscript.pointObj(1.0, 1.0, 0.002, 15.0)
@@ -99,7 +89,6 @@ class PointObjTestCase(unittest.TestCase):
             p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
 
         assert p.toString() == p_str, p.toString()
-
 
 
 if __name__ == '__main__':

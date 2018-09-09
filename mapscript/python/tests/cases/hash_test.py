@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of hashTableObj
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,31 +23,24 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/hashtest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
+import mapscript
+from .testing import MapTestCase
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import mapscript, MapTestCase
 
 # ===========================================================================
 # Base class for hashtable tests.  Derived classes use these tests, but
 # defined different values for self.table.
 
-class HashTableBaseTestCase:
+class HashTableBaseTestCase(object):
 
     keys = ['key1', 'key2', 'key3', 'key4']
     values = ['value1', 'value2', 'value3', 'value4']
-        
+
     def testUseNonExistentKey(self):
-        assert self.table.get('bogus') == None
-    
+        assert self.table.get('bogus') is None
+
     def testUseNonExistentKeyWithDefault(self):
         assert self.table.get('bogus', 'default') == 'default'
 
@@ -64,16 +55,16 @@ class HashTableBaseTestCase:
             assert self.table.get(key, 'foo') == value
             assert self.table.get(key.upper(), 'foo') == value
             assert self.table.get(key.capitalize(), 'foo') == value
-            
+
     def testClear(self):
         self.table.clear()
         for key in self.keys:
-            assert self.table.get(key) == None
+            assert self.table.get(key) is None
 
     def testRemoveItem(self):
         key = self.keys[0]
         self.table.remove(key)
-        assert self.table.get(key) == None
+        assert self.table.get(key) is None
 
     def testNextKey(self):
         key = self.table.nextKey()
@@ -83,15 +74,15 @@ class HashTableBaseTestCase:
             assert key == self.keys[i], key
         # We're at the end, next should be None
         key = self.table.nextKey(key)
-        assert key == None, key
+        assert key is None, key
 
     # tests using the Python dictionary access methods
 
     def testDictKeys(self):
-        assert sorted(self.keys) ==  sorted(self.table.keys())
+        assert sorted(self.keys) == sorted(self.table.keys())
 
     def testDictItems(self):
-        assert len(self.keys) ==  len(self.table)
+        assert len(self.keys) == len(self.table)
 
     def testCheckDictContains(self):
         for key in self.keys:
@@ -106,7 +97,8 @@ class HashTableBaseTestCase:
     def testRemoveDictItem(self):
         key = self.keys[0]
         del self.table[key]
-        assert self.table[key] == None
+        assert self.table[key] is None
+
 
 # ===========================================================================
 # Test begins now
@@ -129,7 +121,7 @@ class HashTableTestCase(unittest.TestCase, HashTableBaseTestCase):
 
     def testConstructor(self):
         table = mapscript.hashTableObj()
-        assert table.__class__.__name__== "hashTableObj", table
+        assert table.__class__.__name__ == "hashTableObj", table
 
 
 # ==============================================================================
@@ -153,18 +145,14 @@ class LayerMetadataTestCase(WebMetadataTestCase):
     def setUp(self):
         MapTestCase.setUp(self)
         self.table = self.map.getLayer(1).metadata
-       
+
 
 class ClassMetadataTestCase(WebMetadataTestCase):
 
     def setUp(self):
         MapTestCase.setUp(self)
-        self.table = self.map.getLayer(1).getClass(0).metadata        
+        self.table = self.map.getLayer(1).getClass(0).metadata
 
-
-# ===========================================================================
-# Run the tests outside of the main suite
 
 if __name__ == '__main__':
     unittest.main()
-    

@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of Map "zooming"
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,22 +23,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/shapetest.py -v
-#
-# ===========================================================================
 
-import os, sys
+
 import unittest
+import mapscript
+from .testing import MapPrimitivesTestCase
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import MapPrimitivesTestCase, mapscript
 
 class LineObjTestCase(MapPrimitivesTestCase):
     """Testing the lineObj class in stand-alone mode"""
-    
+
     def setUp(self):
         """The test fixture is a line with two points"""
         self.points = (mapscript.pointObj(0.0, 1.0),
@@ -48,29 +40,30 @@ class LineObjTestCase(MapPrimitivesTestCase):
         self.line = mapscript.lineObj()
         self.addPointToLine(self.line, self.points[0])
         self.addPointToLine(self.line, self.points[1])
-    
+
     def testCreateLine(self):
         """created line has the correct number of points"""
         assert self.line.numpoints == 2
-    
+
     def testGetPointsFromLine(self):
         """points in the line share are the same that were input"""
         for i in range(len(self.points)):
             got_point = self.getPointFromLine(self.line, i)
             self.assertPointsEqual(got_point, self.points[i])
-    
+
     def testAddPointToLine(self):
         """adding a point to a line behaves correctly"""
         new_point = mapscript.pointObj(4.0, 5.0)
         self.addPointToLine(self.line, new_point)
         assert self.line.numpoints == 3
-    
+
     def xtestAlterNumPoints(self):
         """
         numpoints is immutable, this should raise error
         Currently no error is raised, but the numpoints is unchanged
         """
         self.assertRaises(AttributeError, setattr, self.line, 'numpoints', 3)
+
 
 if __name__ == '__main__':
     unittest.main()
