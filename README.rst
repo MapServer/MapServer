@@ -19,7 +19,7 @@ visit:
 
   http://www.mapserver.org/
 
-Bug reports and enhancment submissions can be reported in the MapServer 
+Bug reports and enhancement submissions can be reported in the MapServer 
 issue tracker at the following url.   If you do make changes and/or enhancements, 
 please let us know so that they might be incorporated into future releases.
 
