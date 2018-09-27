@@ -98,6 +98,14 @@ add_custom_command(
 
 add_custom_command(
     DEPENDS mapscriptvenvpop.stamp
+    OUTPUT mapscriptlinting.stamp
+    WORKING_DIRECTORY ${OUTPUT_FOLDER}
+    COMMENT "Linting test code files with flake8"
+    COMMAND ${PYTHON_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests --max-line-length=120
+)
+
+add_custom_command(
+    DEPENDS mapscriptlinting.stamp
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMENT "Copying files required to build Mapscript"
