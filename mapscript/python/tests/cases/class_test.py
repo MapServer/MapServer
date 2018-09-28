@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of classObj
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,37 +23,28 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/classtest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
+import mapscript
+from .testing import MapTestCase
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import mapscript, MapTestCase
-
-# ===========================================================================
-# Test begins now
 
 class ClassObjTestCase(unittest.TestCase):
-    
+
     def testConstructorNoArg(self):
         c = mapscript.classObj()
         assert c.thisown == 1
-        assert c.layer == None 
+        assert c.layer is None
         assert c.numstyles == 0
 
     def testConstructorWithArg(self):
-        l = mapscript.layerObj()
-        l.name = 'foo'
-        c = mapscript.classObj(l)
+        lyr = mapscript.layerObj()
+        lyr.name = 'foo'
+        c = mapscript.classObj(lyr)
         assert c.thisown == 1
-        assert c.layer.name == l.name
+        assert c.layer.name == lyr.name
         assert c.numstyles == 0
+
 
 class ClassCloningTestCase(unittest.TestCase):
 
@@ -69,7 +58,7 @@ class ClassCloningTestCase(unittest.TestCase):
 
 
 class ClassIconTestCase(MapTestCase):
-    
+
     """testing for bug 1250"""
 
     def testAlphaTransparentPixmap(self):
@@ -109,10 +98,6 @@ class ClassIconTestCase(MapTestCase):
         im = co.createLegendIcon(self.map, lo, 32, 32)
         im.save('testIndexedTransparentPixmapIcon.jpg')
 
-        
-# ===========================================================================
-# Run the tests outside of the main suite
 
 if __name__ == '__main__':
     unittest.main()
-    

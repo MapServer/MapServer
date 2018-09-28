@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of PostGIS Layer
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -37,16 +35,14 @@
 # $ shp2pgsql -s 4326 -I polygon.shp postgis.polygon > polygon.sql
 # $ su postgres
 # $ make -f makefile_postgis
-# 
+#
 # ===========================================================================
 
-import os, sys
 import unittest
+import mapscript
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import MapTestCase, mapscript
+PG_CONNECTION_STRING = "dbname=mapserver_test user=postgres"
 
-PG_CONNECTION_STRING="dbname=mapserver_test user=postgres"
 
 class TableTest(unittest.TestCase):
     def setUp(self):
@@ -59,12 +55,14 @@ class TableTest(unittest.TestCase):
         lo.data = "the_geom from polygon"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
+
     def test_getfeature(self):
         self.lo.open()
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
         self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+
 
 class ViewTest(unittest.TestCase):
     def setUp(self):
@@ -77,12 +75,14 @@ class ViewTest(unittest.TestCase):
         lo.data = "the_geom from polygon_v using unique gid using srid=4326"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
+
     def test_getfeature(self):
         self.lo.open()
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
         self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+
 
 class SubSelectTest(unittest.TestCase):
     def setUp(self):
@@ -95,12 +95,14 @@ class SubSelectTest(unittest.TestCase):
         lo.data = "the_geom from (select * from polygon) as foo using unique gid using srid=4326"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
+
     def test_getfeature(self):
         self.lo.open()
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
         self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+
 
 class SubSelectNoSRIDTest(unittest.TestCase):
     """SRID should be diagnosed from the selection"""
@@ -114,6 +116,7 @@ class SubSelectNoSRIDTest(unittest.TestCase):
         lo.data = "the_geom from (select * from polygon) as foo using unique gid"
         li = self.mo.insertLayer(lo)
         self.lo = self.mo.getLayer(li)
+
     def test_getfeature(self):
         self.lo.open()
         f = self.lo.getFeature(1, -1)
@@ -122,9 +125,5 @@ class SubSelectNoSRIDTest(unittest.TestCase):
         self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
 
 
-# ===========================================================================
-# Run the tests outside of the main suite
-
 if __name__ == '__main__':
     unittest.main()
-    

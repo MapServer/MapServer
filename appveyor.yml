@@ -4,6 +4,9 @@ platform:
 - x64
 - x86
 
+cache:
+  - '%LOCALAPPDATA%\pip\Cache'
+
 environment:
   matrix:
 # VS 2017

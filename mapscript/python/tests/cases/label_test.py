@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of Map
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,21 +23,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/labeltest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
+import mapscript
+from .testing import MapTestCase
 
-# the testing module helps us import the pre-installed mapscript
-from .testing import mapscript, MapTestCase
-
-# ===========================================================================
-# Test begins now
 
 class NewLabelsTestCase(MapTestCase):
 
@@ -47,8 +35,9 @@ class NewLabelsTestCase(MapTestCase):
         """attribute binding can be set and get"""
         new_label = mapscript.labelObj()
         assert (not new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR))
-        new_label.setBinding(mapscript.MS_LABEL_BINDING_COLOR,"NEW_BINDING")
+        new_label.setBinding(mapscript.MS_LABEL_BINDING_COLOR, "NEW_BINDING")
         assert (new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR) == "NEW_BINDING")
+
 
 class LabelCacheMemberTestCase(MapTestCase):
 
@@ -57,14 +46,11 @@ class LabelCacheMemberTestCase(MapTestCase):
         lo = self.map.getLayerByName('POINT')
         lo.status = mapscript.MS_ON
         img = self.map.draw()
+        assert img is not None
         assert self.map.labelcache.num_rendered_members == 1, self.map.labelcache.num_rendered_members
         # label = self.map.nextLabel()
         # assert label.text == 'A Point', label.text
-        
 
-# ===========================================================================
-# Run the tests outside of the main suite
 
 if __name__ == '__main__':
     unittest.main()
-    

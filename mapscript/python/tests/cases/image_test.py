@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript tests of map cloning
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -25,29 +23,23 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ===========================================================================
-#
-# Execute this module as a script from mapserver/mapscript/python
-#
-#     python tests/cases/clonetest.py -v
-#
-# ===========================================================================
 
-import os, sys
 import unittest
 from io import BytesIO
-# the testing module helps us import the pre-installed mapscript
-
-from .testing import TESTMAPFILE, TEST_IMAGE as test_image, mapscript
-from .testing import MapTestCase
 import urllib
+import mapscript
+from .testing import TEST_IMAGE as test_image
+from .testing import MapTestCase
 
 
 have_image = 0
+
 try:
     from PIL import Image
     have_image = 1
 except ImportError:
     pass
+
 
 class SaveToStringTestCase(MapTestCase):
     def testSaveToString(self):
@@ -66,16 +58,17 @@ class SaveToStringTestCase(MapTestCase):
             assert pyimg.mode == 'RGB'
         else:
             assert 1
-            
+
+
 class ImageObjTestCase(unittest.TestCase):
-    
+
     def xtestConstructor(self):
         """imageObj constructor works"""
         imgobj = mapscript.imageObj(10, 10)
         assert imgobj.thisown == 1
         assert imgobj.height == 10
         assert imgobj.width == 10
-    
+
     def xtestConstructorWithFormat(self):
         """imageObj with an optional driver works"""
         driver = 'AGG/PNG'
@@ -85,7 +78,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.format.driver == driver
         assert imgobj.height == 10
         assert imgobj.width == 10
-    
+
     def xtestConstructorFilename(self):
         """imageObj with a filename works"""
         imgobj = mapscript.imageObj(test_image)
@@ -93,7 +86,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.height == 200
         assert imgobj.width == 200
         imgobj.save('testConstructorFilename.png')
-    
+
     def xtestConstructorFilenameDriver(self):
         """imageObj with a filename and a driver works"""
         imgobj = mapscript.imageObj(test_image)
@@ -101,7 +94,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.height == 200
         assert imgobj.width == 200
         imgobj.save('testConstructorFilenameDriver.png')
-        
+
     def xtestConstructorStream(self):
         """imageObj with a file stream works"""
         f = open(test_image, 'rb')
@@ -110,7 +103,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
-    
+
     def xtestConstructorBytesIO(self):
         """imageObj with a BytesIO works"""
         with open(test_image, 'rb') as f:
@@ -120,7 +113,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
-    
+
     def xtestConstructorUrlStream(self):
         """imageObj with a URL stream works"""
         url = urllib.urlopen('http://mapserver.org/_static/banner.png')
@@ -129,6 +122,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.height == 68
         assert imgobj.width == 439
         imgobj.save('testConstructorUrlStream.jpg')
+
 
 class ImageWriteTestCase(MapTestCase):
 
@@ -152,7 +146,7 @@ class ImageWriteTestCase(MapTestCase):
         """image writes data to a BytesIO instance"""
         image = self.map.draw()
         assert image.thisown == 1
-        
+
         s = BytesIO()
         image.write(s)
 
@@ -171,9 +165,9 @@ class ImageWriteTestCase(MapTestCase):
         """image returns bytes"""
         image = self.map.draw()
         assert image.thisown == 1
-         
+
         s = BytesIO(image.getBytes())
-        
+
         filename = 'testImageGetBytes.png'
         with open(filename, 'wb') as fh:
             fh.write(s.getvalue())
@@ -188,4 +182,3 @@ class ImageWriteTestCase(MapTestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

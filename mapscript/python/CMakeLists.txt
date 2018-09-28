@@ -92,22 +92,34 @@ add_custom_command(
     OUTPUT mapscriptvenvpop.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMENT "Installing the required packages into the virtual environment"
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m pip install pip --upgrade
+    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m pip install pip --upgrade --force-reinstall
     COMMAND ${PYTHON_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt
 )
 
 add_custom_command(
     DEPENDS mapscriptvenvpop.stamp
+    OUTPUT mapscriptlinting.stamp
+    WORKING_DIRECTORY ${OUTPUT_FOLDER}
+    COMMENT "Linting test code files with flake8"
+    COMMAND ${PYTHON_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests --max-line-length=120
+)
+
+add_custom_command(
+    DEPENDS mapscriptlinting.stamp
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMENT "Building the mapscript Python wheel"
+    COMMENT "Copying files required to build Mapscript"
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript/__init__.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mapscript.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}>" "$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/$<TARGET_FILE_NAME:${SWIG_MODULE_pythonmapscript_REAL_NAME}>"
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/README.rst" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests
+    # now check the Python test code with flake8
+    COMMENT "Linting test code files"
+    COMMAND ${PYTHON_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests --max-line-length=120
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/tests" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests/data
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
+    COMMENT "Building the mapscript Python wheel"
     COMMAND ${PYTHON_VENV_SCRIPTS}/python setup.py bdist_wheel
 )
 
