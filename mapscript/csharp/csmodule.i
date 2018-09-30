@@ -378,7 +378,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 		public delegate void SWIGByteArrayDelegate(System.IntPtr data, int size);
 		static SWIGByteArrayDelegate bytearrayDelegate = new SWIGByteArrayDelegate(CreateByteArray);
 
-		[System.Runtime.InteropServices.DllImport("$dllimport", System.Runtime.InteropServices.EntryPoint="SWIGRegisterByteArrayCallback_$module")]
+		[System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="SWIGRegisterByteArrayCallback_$module")]
 		public static extern void SWIGRegisterByteArrayCallback_mapscript(SWIGByteArrayDelegate bytearrayDelegate);
 
 		static void CreateByteArray(System.IntPtr data, int size)
@@ -393,7 +393,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 		}
 	}
 	protected static SWIGByteArrayHelper bytearrayHelper = new SWIGByteArrayHelper();
-	[ThreadStatic] 
+	[System.ThreadStatic] 
 	private static byte[] arraybuffer;
 
 	internal static byte[] GetBytes()

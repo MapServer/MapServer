@@ -31,8 +31,8 @@
 
 // Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4 
 %pragma(csharp) imclasscode=%{
-  static $imclassname() {
-  }
+  //static $imclassname() {
+  //}
 
   public class UTF8Marshaler : System.Runtime.InteropServices.ICustomMarshaler {
     static UTF8Marshaler static_instance;
@@ -276,7 +276,7 @@
   protected static object ThisOwn_true() { return null; }
   protected static object ThisOwn_false() { return the$moduleObject; }
   
-  [System.Runtime.InteropServices.DllImport("$dllimport", System.Runtime.InteropServices.EntryPoint="SetEnvironmentVariable")]
+  [System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="SetEnvironmentVariable")]
   public static extern int SetEnvironmentVariable(string envstring);
 %}
 
