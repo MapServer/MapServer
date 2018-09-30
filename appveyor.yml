@@ -49,7 +49,7 @@ test_script:
 
 deploy: off
 
-after_build:
+after_test:
   - cd %BUILD_FOLDER%
   - 7z a mapserver.zip ./build/*
 
