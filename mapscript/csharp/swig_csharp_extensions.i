@@ -41,28 +41,28 @@
         if (managedObj == null)
             return System.IntPtr.Zero;
         if (!(managedObj is string))
-            throw new MarshalDirectiveException(
+            throw new System.Runtime.InteropServices.MarshalDirectiveException(
                    "UTF8Marshaler must be used on a string.");
 
         // not null terminated
         byte[] strbuf = System.Text.Encoding.UTF8.GetBytes((string)managedObj); 
-        System.IntPtr buffer = Marshal.AllocHGlobal(strbuf.Length + 1);
-        Marshal.Copy(strbuf, 0, buffer, strbuf.Length);
+        System.IntPtr buffer = System.Runtime.InteropServices.Marshal.AllocHGlobal(strbuf.Length + 1);
+        System.Runtime.InteropServices.Marshal.Copy(strbuf, 0, buffer, strbuf.Length);
 
         // write the terminating null
-        Marshal.WriteByte(buffer, strbuf.Length, 0); 
+        System.Runtime.InteropServices.Marshal.WriteByte(buffer, strbuf.Length, 0); 
         return buffer;
     }
 
     public object MarshalNativeToManaged(System.IntPtr pNativeData) {
-	    int len = Marshal.PtrToStringAnsi(pNativeData).Length;
+	    int len = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(pNativeData).Length;
         byte[] utf8data = new byte[len];
-        Marshal.Copy(pNativeData, utf8data, 0, len);
+        System.Runtime.InteropServices.Marshal.Copy(pNativeData, utf8data, 0, len);
         return System.Text.Encoding.UTF8.GetString(utf8data);
     }
 
     public void CleanUpNativeData(System.IntPtr pNativeData) {
-        Marshal.FreeHGlobal(pNativeData);            
+        System.Runtime.InteropServices.Marshal.FreeHGlobal(pNativeData);            
     }
 
     public void CleanUpManagedData(object managedObj) {
@@ -245,7 +245,7 @@
       }
       swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
       swigParentRef = null;
-      GC.SuppressFinalize(this);
+      System.GC.SuppressFinalize(this);
     }
   }
 
@@ -257,7 +257,7 @@
       }
       swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
       swigParentRef = null;
-      GC.SuppressFinalize(this);
+      System.GC.SuppressFinalize(this);
       base.Dispose();
     }
   }

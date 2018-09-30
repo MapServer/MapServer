@@ -138,7 +138,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 	  for (int cx = 0; cx < _ar.Length; cx++) {
           System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
       }
-      GC.SuppressFinalize(this);
+      System.GC.SuppressFinalize(this);
     }
   }
 %}
@@ -292,7 +292,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
   private void CreateByteArray(System.IntPtr data, int size)
   {
       gdbuffer = new byte[size];
-      Marshal.Copy(data, gdbuffer, 0, size);
+      System.Runtime.InteropServices.Marshal.Copy(data, gdbuffer, 0, size);
   }
   
   public byte[] getBytes()
@@ -319,21 +319,21 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
   public string processTemplate(int bGenerateImages, string[] names, string[] values)
   {
 	if (names.Length != values.Length)
-	    throw new ArgumentException("Invalid array length specified!");
+	    throw new System.ArgumentException("Invalid array length specified!");
 	return processTemplate(bGenerateImages, names, values, values.Length);
   }
   
   public string processLegendTemplate(string[] names, string[] values)
   {
 	if (names.Length != values.Length)
-	    throw new ArgumentException("Invalid array length specified!");
+	    throw new System.ArgumentException("Invalid array length specified!");
 	return processLegendTemplate(names, values, values.Length);
   }
   
   public string processQueryTemplate(string[] names, string[] values)
   {
 	if (names.Length != values.Length)
-	    throw new ArgumentException("Invalid array length specified!");
+	    throw new System.ArgumentException("Invalid array length specified!");
 	return processQueryTemplate(names, values, values.Length);
   }
  
@@ -384,7 +384,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 		static void CreateByteArray(System.IntPtr data, int size)
 		{
 			arraybuffer = new byte[size];
-			Marshal.Copy(data, arraybuffer, 0, size);
+			System.Runtime.InteropServices.Marshal.Copy(data, arraybuffer, 0, size);
 		}
 
 		static SWIGByteArrayHelper() 
