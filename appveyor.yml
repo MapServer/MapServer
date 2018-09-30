@@ -48,3 +48,12 @@ test_script:
   - cmake --build . --target pythonmapscript-wheel --config Release
 
 deploy: off
+
+after_build:
+  - cd %BUILD_FOLDER%
+  - 7z a mapserver.zip build/*
+		
+artifacts:
+  - path: mapserver.zip
+    name: mapserver
+    type: zip
