@@ -323,8 +323,13 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   char **paszFilters = NULL;
   FilterEncodingNode *psNode = NULL;
 
-  if (!map || !filter || strlen(filter)==0)
+  if (!map)
     return MS_FAILURE;  
+
+  if (!filter || strlen(filter) == 0) {
+    msSetError(MS_WMSERR, "The provided filter can not be empty.", "msWMSApplyFilter" );
+    return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
+  }
 
   /* Count number of requested layers 
    * Only layers with STATUS ON were in the LAYERS request param.
@@ -360,7 +365,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   }
 
   if (numlayers != numfilters) {
-    msSetError(MS_WFSERR, "Wrong number of filter elements, one filter must be specified for each requested layer.",
+    msSetError(MS_WMSERR, "Wrong number of filter elements, one filter must be specified for each requested layer.",
 	       "msWMSApplyFilter" );
     return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
   }
@@ -454,7 +459,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       errorObj* ms_error = msGetErrorObj();
 
       if(ms_error->code != MS_NOTFOUND) {
-	msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()");
+	msSetError(MS_WMSERR, "FLTApplyFilterToLayer() failed", "msWMSApplyFilter()");
 	FLTFreeFilterEncodingNode( psNode );
 	return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
       }
