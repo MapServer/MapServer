@@ -9,7 +9,12 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 add_definitions(${PERL_EXTRA_C_FLAGS})
 set(CMAKE_SWIG_FLAGS -shadow -w314)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/perl)
-SWIG_ADD_MODULE(perlmapscript perl5 ../mapscript.i)
+
+if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
+    swig_add_library(perlmapscript TYPE MODULE LANGUAGE perl5 SOURCES ../mapscript.i)
+else ()
+    swig_add_module(perlmapscript perl5 ../mapscript.i)
+endif ()
 
 SWIG_LINK_LIBRARIES(perlmapscript ${PERL_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
 set_target_properties(perlmapscript PROPERTIES OUTPUT_NAME mapscript)
@@ -21,3 +26,5 @@ endif(APPLE)
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_perlmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_perlmapscript_REAL_NAME}>/mapscript.pm)
 install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR}/auto/mapscript)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.pm DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR})
+
+
