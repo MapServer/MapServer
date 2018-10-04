@@ -29,7 +29,7 @@ build_script:
   - set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
   - echo "%SDK_ZIP%"
   - echo "%SDK_URL%"
-  - if not exist %SDK_ROOT% mkdir %SDK_ROOT%
+  - if not exist "%SDK_ROOT%" mkdir "%SDK_ROOT%"
   - if not exist %SDK_ROOT%/%SDK_ZIP% cd %SDK_ROOT% &&appveyor DownloadFile "%SDK_URL%"
   - if not exist %SDK_ROOT%/%SDK% cd %SDK_ROOT% && 7z x "%SDK_ZIP%" > nul
   - set SDK_PREFIX=%SDK_ROOT%/%SDK%
