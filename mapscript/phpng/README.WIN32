@@ -41,12 +41,6 @@ set GISInternalsArchitecture=-
 if %VSCMD_ARG_TGT_ARCH% == x64 set GISInternalsArchitecture=-%VSCMD_ARG_TGT_ARCH%-
 wget -O packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%dev.zip http://download.gisinternals.com/sdk/downloads/release-1911%GISInternalsArchitecture%dev.zip
 unzip -q -o packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%dev.zip -d gisinternals%VSCMD_ARG_TGT_ARCH%
-wget -O packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%gdal-mapserver-src.zip http://download.gisinternals.com/sdk/downloads/release-1911%GISInternalsArchitecture%gdal-mapserver-src.zip
-unzip -q -o packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%gdal-mapserver-src.zip -d gisinternals%VSCMD_ARG_TGT_ARCH%
-wget -O packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%gdal-mapserver-libs.zip http://download.gisinternals.com/sdk/downloads/release-1911%GISInternalsArchitecture%gdal-mapserver-libs.zip
-unzip -q -o packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%gdal-mapserver-libs.zip -d gisinternals%VSCMD_ARG_TGT_ARCH%
-wget -O packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%gdal-mapserver.zip http://download.gisinternals.com/sdk/downloads/release-1911%GISInternalsArchitecture%gdal-mapserver.zip
-unzip -q -o packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%gdal-mapserver.zip -d gisinternals%VSCMD_ARG_TGT_ARCH%
 
 rem --------------------------------------------------------------------
 rem Step 4: Other Dependencies
@@ -71,9 +65,7 @@ git clone https://github.com/mapserver/mapserver
 cd mapserver
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\include;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12
-cmake .. -DWITH_POSTGIS=0 -DWITH_PROTOBUFC=0 -DWITH_THREAD_SAFETY=1
-cmake .. -DWITH_PHPNG=1 -DSWIG_EXECUTABLE=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig
+cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911-%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\include;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911-%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911-%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12 -DWITH_POSTGIS=0 -DWITH_PROTOBUFC=0 -DWITH_THREAD_SAFETY=1 -DWITH_PHPNG=1 -DSWIG_EXECUTABLE=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig
 cmake --build .
 
 
