@@ -23,4 +23,4 @@ endif(APPLE)
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_rubymapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_rubymapscript_REAL_NAME}>)
 execute_process(COMMAND ${RUBY_EXECUTABLE} -r rbconfig -e "puts RbConfig::CONFIG['sitearchdir']" OUTPUT_VARIABLE RUBY_SITEARCHDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION ${RUBY_SITEARCHDIR})
+install(FILES ${mapscript_files} DESTINATION ${RUBY_SITEARCHDIR})
