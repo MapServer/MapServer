@@ -31,4 +31,4 @@ add_custom_command(TARGET javamapscript
                       )
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_javamapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_javamapscript_REAL_NAME}>)
-install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${mapscript_files} DESTINATION ${CMAKE_INSTALL_LIBDIR})
