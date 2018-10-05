@@ -24,7 +24,7 @@ if(APPLE)
 endif(APPLE)
 
 set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_perlmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_perlmapscript_REAL_NAME}>/mapscript.pm)
-install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR}/auto/mapscript)
+install(FILES ${mapscript_files} DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR}/auto/mapscript)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.pm DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR})
 
 
