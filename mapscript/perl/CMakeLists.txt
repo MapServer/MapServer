@@ -23,8 +23,5 @@ if(APPLE)
   set_target_properties(perlmapscript PROPERTIES SUFFIX ".bundle")
 endif(APPLE)
 
-set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_perlmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_perlmapscript_REAL_NAME}>/mapscript.pm)
-install(FILES ${mapscript_files} DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR}/auto/mapscript)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.pm DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR})
-
-
+install(FILES $<TARGET_FILE:${SWIG_MODULE_perlmapscript_REAL_NAME}> DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR}/auto/mapscript)
+install(FILES $<TARGET_FILE_DIR:${SWIG_MODULE_perlmapscript_REAL_NAME}>/mapscript.pm DESTINATION ${CUSTOM_PERL_SITE_ARCH_DIR})
