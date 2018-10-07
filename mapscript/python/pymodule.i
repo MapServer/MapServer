@@ -93,44 +93,6 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   $result = t_output_helper($result,r);
 }
 
-/*
-* Add dict methods to the hashTableObj object
-*/
-%extend hashTableObj{
-    %pythoncode %{
-
-    def __getitem__(self, key):
-        return self.get(key)
-
-    def __setitem__(self, key, value):
-        return self.set(key, value)
-
-    def __delitem__(self, key) :
-        return self.remove(key)
-
-    def __contains__(self, key):
-        return key.lower() in [k.lower() for k in self.keys()]
-
-    def __len__(self):
-        return self.numitems
-
-    def keys(self):
-
-        keys = []
-        k = None
-
-        while True :
-            k = self.nextKey(k)
-            if k :
-                keys.append(k)
-            else :
-                break
-
-        return keys
-            
-    %}
-};
-
 /**************************************************************************
  * MapServer Errors and Python Exceptions
  **************************************************************************
