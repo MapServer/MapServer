@@ -38,7 +38,7 @@ setup(
     author = "Steve Lime",
     license = "MIT",
     url="http://www.mapserver.org",
-    version="@MapServer_VERSION_MAJOR@.@MapServer_VERSION_MINOR@",
+    version="@MapServer_VERSION_MAJOR@.@MapServer_VERSION_MINOR@.@MapServer_VERSION_REVISION@",
     packages=find_packages(),
     package_data={
         # list the files to include starting with the most deeply nested folder or they are overwritten
