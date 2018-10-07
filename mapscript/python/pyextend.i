@@ -34,17 +34,17 @@ def fromstring(data, mappath=None):
     'test'
     """
     import re
-    if re.search("^\s*MAP", data, re.I): 
+    if re.search(r"^\s*MAP", data, re.I): 
         return msLoadMapFromString(data, mappath)
-    elif re.search("^\s*LAYER", data, re.I):
+    elif re.search(r"^\s*LAYER", data, re.I):
         ob = layerObj()
         ob.updateFromString(data)
         return ob
-    elif re.search("^\s*CLASS", data, re.I):
+    elif re.search(r"^\s*CLASS", data, re.I):
         ob = classObj()
         ob.updateFromString(data)
         return ob
-    elif re.search("^\s*STYLE", data, re.I):
+    elif re.search(r"^\s*STYLE", data, re.I):
         ob = styleObj()
         ob.updateFromString(data)
         return ob
@@ -358,9 +358,13 @@ def fromstring(data, mappath=None):
                 msSetError(MS_IMGERR, "failed to get image buffer", "write()");
                 return MS_FAILURE;
             }
-                
-            noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer,
-                                        imgsize);
+#if PY_MAJOR_VERSION >= 3
+            // see https://docs.python.org/3/c-api/arg.html
+            noerr = PyObject_CallMethod(file, "write", "y#", imgbuffer, imgsize);
+#else
+            noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer, imgsize);
+#endif
+
             free(imgbuffer);
             if (noerr == NULL)
                 return MS_FAILURE;
@@ -438,3 +442,43 @@ def fromstring(data, mappath=None):
 }
 
 }
+
+
+/******************************************************************************
+ * Extensions to hashTableObj - add dict methods
+ *****************************************************************************/
+
+%extend hashTableObj{
+    %pythoncode %{
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        return self.set(key, value)
+
+    def __delitem__(self, key) :
+        return self.remove(key)
+
+    def __contains__(self, key):
+        return key.lower() in [k.lower() for k in self.keys()]
+
+    def __len__(self):
+        return self.numitems
+
+    def keys(self):
+
+        keys = []
+        k = None
+
+        while True :
+            k = self.nextKey(k)
+            if k :
+                keys.append(k)
+            else :
+                break
+
+        return keys
+            
+    %}
+};
