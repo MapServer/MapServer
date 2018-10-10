@@ -46,7 +46,7 @@ class SymbolTestCase(unittest.TestCase):
         format = mapscript.outputFormatObj('AGG/PNG')
         img = symbol.getImage(format)
         img.save('sym-%s.%s' % (symbol.name, img.format.extension))
-        
+
 
 class DynamicGraphicSymbolTestCase():
 

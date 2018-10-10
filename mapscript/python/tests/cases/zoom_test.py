@@ -159,7 +159,7 @@ class ZoomScaleTestCase(MapZoomTestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        # self.assertRectsEqual(new_extent, mapscript.rectObj(-100, -100, 100, 100))  # old values        
+        # self.assertRectsEqual(new_extent, mapscript.rectObj(-100, -100, 100, 100))  # old values
         self.assertRectsEqual(new_extent, mapscript.rectObj(-99, -99, 99, 99))
 
     def testZoomOutPointConstrained(self):
