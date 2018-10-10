@@ -197,7 +197,7 @@ class BrushCachingTestCase(MapTestCase):
         # pull out the first feature from polygon layer, shift it
         # and use this as an inline feature in new layer
         p.open()
-        p.template = "FAKE" # set a template so the layer can be queried
+        p.template = "FAKE"  # set a template so the layer can be queried
         p.queryByIndex(self.map, -1, 0, mapscript.MS_TRUE)
         res = p.getResult(0)
         s0 = p.getShape(res)
