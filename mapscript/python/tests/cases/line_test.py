@@ -57,12 +57,12 @@ class LineObjTestCase(MapPrimitivesTestCase):
         self.addPointToLine(self.line, new_point)
         assert self.line.numpoints == 3
 
-    def xtestAlterNumPoints(self):
+    def testAlterNumPoints(self):
         """
         numpoints is immutable, this should raise error
-        Currently no error is raised, but the numpoints is unchanged
         """
-        self.assertRaises(AttributeError, setattr, self.line, 'numpoints', 3)
+        with self.assertRaises(AttributeError):
+            self.line.numpoints = 3
 
 
 if __name__ == '__main__':
