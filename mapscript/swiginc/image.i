@@ -30,10 +30,7 @@
 
 %extend imageObj {
    
-    /* imageObj constructor now takes filename as an optional argument.
-     * If the target language is Python, we ignore this constructor and
-     * instead use the one in python/pymodule.i. */
-#ifndef SWIGPYTHON
+    /* imageObj constructor now takes filename as an optional argument. */
     imageObj(int width, int height, outputFormatObj *input_format=NULL,
              const char *file=NULL,
              double resolution=MS_DEFAULT_RESOLUTION, double defresolution=MS_DEFAULT_RESOLUTION)
@@ -81,7 +78,6 @@
         image = msImageCreate(width, height, format, NULL, NULL, resolution, defresolution, NULL);
         return image;
     }
-#endif
 
     ~imageObj() 
     {

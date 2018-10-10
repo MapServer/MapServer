@@ -62,14 +62,14 @@ class SaveToStringTestCase(MapTestCase):
 
 class ImageObjTestCase(unittest.TestCase):
 
-    def xtestConstructor(self):
+    def testConstructor(self):
         """imageObj constructor works"""
         imgobj = mapscript.imageObj(10, 10)
         assert imgobj.thisown == 1
         assert imgobj.height == 10
         assert imgobj.width == 10
 
-    def xtestConstructorWithFormat(self):
+    def testConstructorWithFormat(self):
         """imageObj with an optional driver works"""
         driver = 'AGG/PNG'
         format = mapscript.outputFormatObj(driver)
