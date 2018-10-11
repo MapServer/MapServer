@@ -35,7 +35,9 @@ build_script:
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
-  - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/SWIG-1.3.39/swig.exe
+  - appveyor DownloadFile https://sourceforge.net/projects/swig/files/swigwin/swigwin-3.0.12/swigwin-3.0.12.zip
+  - 7z x swigwin-3.0.12.zip > nul
+  - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/swigwin-3.0.12/swig.exe
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/regex-0.12
   - if "%platform%" == "x86" SET PYTHON_EXECUTABLE=c:/python27/python.exe
   - if "%platform%" == "x64" SET PYTHON_EXECUTABLE=c:/python27-x64/python.exe
@@ -51,3 +53,12 @@ test_script:
   - cmake --build . --target pythonmapscript-wheel --config Release
 
 deploy: off
+
+after_test:
+  - cd %BUILD_FOLDER%
+  - 7z a mapserver.zip ./build/*
+
+artifacts:
+  - path: mapserver.zip
+    name: mapserver
+    type: zip
