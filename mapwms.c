@@ -326,7 +326,6 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   // Empty filter should be ignored
   if (!filter || strlen(filter) == 0)
     return MS_SUCCESS;
-  
 
   if (!map)
     return MS_FAILURE;  
@@ -459,7 +458,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       errorObj* ms_error = msGetErrorObj();
 
       if(ms_error->code != MS_NOTFOUND) {
-	msSetError(MS_WMSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()");
+	msSetError(MS_WMSERR, "FLTApplyFilterToLayer() failed", "msWMSApplyFilter()");
 	FLTFreeFilterEncodingNode( psNode );
 	return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
       }
