@@ -55,10 +55,9 @@ Installation
 ------------
 
 To use mapscript you will need to add the MapServer binaries to your system path. 
-On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries 
-(see also `MapServer Versions`_). 
+On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries. 
 
-.. code-block::
+.. code-block:: bat
 
     SET PATH=C:\MapServer\bin;%PATH%
 
@@ -70,19 +69,19 @@ When using these packages the MapServer path will be similar to `C:\release-1911
 
 Prior to installing mapscript it is recommended to update pip to the latest version with the following command:
 
-.. code-block::
+.. code-block:: bat
 
     python -m pip install --upgrade pip
 
 If there are binary wheels available for your system, mapscript can be installed using:
 
-.. code-block::
+.. code-block:: bat
 
     pip install mapscript
 
 If you already have mapscript installed and wish to upgrade it to a newer version you can use:
 
-.. code-block::
+.. code-block:: bat
 
     pip install mapscript --upgrade
 
@@ -195,7 +194,14 @@ The mapscript module includes a test suite and a small sample dataset to check t
 
     pip install pytest
 
-Next run the command below to run the test suite: 
+Make sure the MapServer binaries are on the system path, and that the PROJ_LIB variable has been set as this is required for many of the tests. 
+
+.. code-block:: bat
+
+    SET PATH=C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin;%PATH%
+    SET PROJ_LIB=C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin\proj\SHARE
+
+Finally run the command below to run the test suite: 
 
 .. code-block:: bat
 
