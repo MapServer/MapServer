@@ -33,7 +33,7 @@ from .testing import TESTMAPFILE, INCOMING
 
 def draw_map(name, save=0):
 
-    print("making map in thread %s" % (name))
+    # print("making map in thread %s" % (name))
     mo = mapscript.mapObj(TESTMAPFILE)
     im = mo.draw()
     if save:
@@ -42,7 +42,7 @@ def draw_map(name, save=0):
 
 def trigger_exception(name):
 
-    print("triggering exception in thread %s" % (name))
+    # print("triggering exception in thread %s" % (name))
     mo = mapscript.mapObj(TESTMAPFILE)
     try:
         mo.setExtent(1, 50, -1, 51)
@@ -97,7 +97,7 @@ class MultipleThreadsTestCase(unittest.TestCase):
 
 def draw_map_wfs(name, save=0):
 
-    print("making map in thread %s" % (name))
+    # print("making map in thread %s" % (name))
     mo = mapscript.mapObj(TESTMAPFILE)
 
     # WFS layer
@@ -145,7 +145,7 @@ def draw_map_wfs(name, save=0):
 
 def draw_map_wms(name, save=0):
 
-    print("making map in thread %s" % (name))
+    # print("making map in thread %s" % (name))
     mo = mapscript.mapObj(TESTMAPFILE)
     # WFS layer
     lo = mapscript.layerObj()
