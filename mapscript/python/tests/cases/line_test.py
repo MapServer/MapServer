@@ -61,8 +61,17 @@ class LineObjTestCase(MapPrimitivesTestCase):
         """
         numpoints is immutable, this should raise error
         """
-        with self.assertRaises(AttributeError):
+        # The following works locally but fails on Appveyor (error is not raised)
+        # with self.assertRaises(AttributeError):
+        #    self.line.numpoints = 3
+
+        error_thrown = False
+        try:
             self.line.numpoints = 3
+        except AttributeError:
+            error_thrown = True
+
+        assert error_thrown is True
 
 
 if __name__ == '__main__':
