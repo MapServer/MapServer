@@ -1,0 +1,71 @@
+This readme covers building Mapserver from scatch on Windows.
+We will download current development state of php.
+If you need MapscriptNG for a different version of php, you have to fit the commands below.
+For the first time, it is a good idea to build as shown below and after you have a working state, you can change whatever you want, knowing there is a working state you can return to.
+
+All you need is Visual Studio 2017 Express (latest Version, check for updates) and GIT installed.
+
+To begin, start x64 or x86 Native Tools Command Prompt for VS 2017 and just execute all Commands listed below.
+Please always stay inside PHP-SDK-Shell to have wget and unzip available.
+
+rem --------------------------------------------------------------------
+rem Step 1: Create Directories
+rem --------------------------------------------------------------------
+mkdir C:\projects
+mkdir C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
+
+rem --------------------------------------------------------------------
+rem Step 2: Build PHP
+rem --------------------------------------------------------------------
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
+git clone https://github.com/Microsoft/php-sdk-binary-tools.git php-sdk
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\php-sdk
+set VS_VERSION=%VSCMD_VER:~0,2%
+phpsdk-vc%VS_VERSION%-%VSCMD_ARG_TGT_ARCH%.bat
+phpsdk_buildtree phpmaster
+git clone https://github.com/php/php-src.git
+cd php-src
+phpsdk_deps --update --branch master
+buildconf
+configure --enable-snapshot-build
+nmake snap
+
+rem --------------------------------------------------------------------
+rem Step 3: Get GISInternals SDK
+rem --------------------------------------------------------------------
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
+mkdir packages
+mkdir packages\gisinternals%VSCMD_ARG_TGT_ARCH%\
+mkdir gisinternals%VSCMD_ARG_TGT_ARCH%
+set GISInternalsArchitecture=-
+if %VSCMD_ARG_TGT_ARCH% == x64 set GISInternalsArchitecture=-%VSCMD_ARG_TGT_ARCH%-
+wget -O packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%dev.zip http://download.gisinternals.com/sdk/downloads/release-1911%GISInternalsArchitecture%dev.zip
+unzip -q -o packages\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911%GISInternalsArchitecture%dev.zip -d gisinternals%VSCMD_ARG_TGT_ARCH%
+
+rem --------------------------------------------------------------------
+rem Step 4: Other Dependencies
+rem --------------------------------------------------------------------
+rem ### SWIG ###
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
+git clone https://github.com/AlexanderGabriel/swig
+mkdir swig\build
+cd swig\build
+cmake .. -G "NMake Makefiles"  -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+move swig.exe ..
+rem ### gnulib ###
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
+git clone git://git.savannah.gnu.org/gnulib.git
+
+--------------------------------------------------------------------
+Step 5: Build Mapserver with php_mapscriptng
+--------------------------------------------------------------------
+cd C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%
+git clone https://github.com/mapserver/mapserver
+cd mapserver
+mkdir build
+cd build
+cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -Wno-dev -DCMAKE_PREFIX_PATH=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911-%VSCMD_ARG_TGT_ARCH%;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gnulib\include;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911-%VSCMD_ARG_TGT_ARCH%\lib;C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\release-1911-%VSCMD_ARG_TGT_ARCH%\include -DREGEX_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\gisinternals%VSCMD_ARG_TGT_ARCH%\regex-0.12 -DWITH_POSTGIS=0 -DWITH_PROTOBUFC=0 -DWITH_THREAD_SAFETY=1 -DWITH_PHPNG=1 -DSWIG_EXECUTABLE=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig\swig.exe -DSWIG_DIR=C:\projects\mapserver%VSCMD_ARG_TGT_ARCH%\swig
+cmake --build .
+
+
