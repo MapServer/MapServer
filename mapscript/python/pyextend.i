@@ -187,12 +187,14 @@ def fromstring(data, mappath=None):
                 msSetError(MS_IMGERR, "failed to get image buffer", "write()");
                 return MS_FAILURE;
             }
-#if PY_MAJOR_VERSION >= 3
-            // see https://docs.python.org/3/c-api/arg.html
+
+%#if PY_MAJOR_VERSION >= 3
+            // https://docs.python.org/3/c-api/arg.html
             noerr = PyObject_CallMethod(file, "write", "y#", imgbuffer, imgsize);
-#else
+%#else
+            // https://docs.python.org/2/c-api/arg.html
             noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer, imgsize);
-#endif
+%#endif
 
             free(imgbuffer);
             if (noerr == NULL)
