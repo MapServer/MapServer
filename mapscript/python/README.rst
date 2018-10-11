@@ -2,7 +2,7 @@ Python MapScript for MapServer 7.2.1 README
 ===========================================
 
 :Author: MapServer Team
-:Last Updated: 2018-09-04
+:Last Updated: 2018-10-12
 
 Introduction
 ------------
@@ -18,7 +18,7 @@ many different programming languages.
 + Python specific documentation is available at http://mapserver.org/mapscript/python.html
 
 For working with Mapfiles in Python the `mappyfile <https://mappyfile.readthedocs.io/en/latest/>`_ project is 
-also available, this allows creating, parsing, formatting, and validating Mapfiles. 
+also available, this allows creating, parsing, formatting, and validating Mapfiles without any dependencies on MapServer. 
 
 Wheels and PyPI
 ---------------
@@ -45,7 +45,7 @@ Linux wheels are also planned, using the `manylinux <https://github.com/pypa/man
 No source distributions will be provided on PyPI - to build from source requires the full MapServer source code,
 in which case it is easiest to take a copy of the full MapServer project and run the CMake process detailed below. 
 
-The wheels also contain a full test suite and sample data that can be run to check that the installed MapServer is
+The wheels contain a full test suite and sample data that can be run to check that the installed MapServer is
 running correctly. 
 
 ..
@@ -62,18 +62,19 @@ On Windows you can use the following, replacing ``C:\MapServer\bin`` with the lo
 
     SET PATH=C:\MapServer\bin;%PATH%
 
-Window binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`. 
-To ensure compatibility with the wheels, please use ``release-1911-x64-gdal-2-3-mapserver-7-2``. 
+Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`. 
+To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1911-x64-gdal-2-3-mapserver-7-2``
+for mapscript 7.2. 
 
 When using these packages the MapServer path will be similar to `C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin`. 
 
-Prior to installing it is first recommended to update pip to the latest version with the following command:
+Prior to installing mapscript it is recommended to update pip to the latest version with the following command:
 
 .. code-block::
 
     python -m pip install --upgrade pip
 
-Next if there are binary wheels available for your system, mapscript can be installed using:
+If there are binary wheels available for your system, mapscript can be installed using:
 
 .. code-block::
 
@@ -109,8 +110,8 @@ If your version of mapscript does not match your version of MapServer you may in
 Quickstart
 ----------
 
-Prior to running any scripts using mapscript, you will need to add the MapServer binaries to your system path, see the
-*Installation* section above. 
+Some basic examples of what can be done with mapscript are shown below. Note - before running any scripts using mapscript, 
+you will need to add the MapServer binaries to your system path, see the *Installation* section above. 
 
 To open an existing Mapfile:
 
@@ -136,9 +137,9 @@ Create a layer from a string:
 Building the Mapscript Module
 -----------------------------
 
-The mapscript module is built as part of the MapServer CMake build process, this is configured using the ``mapserver/mapscript/CMakeLists.txt`` file. 
+The mapscript module is built as part of the MapServer CMake build process. This is configured using the ``mapserver/mapscript/CMakeLists.txt`` file. 
 
-Prior to the switch to using CMake to build MapServer mapscript was built using distutils and ``setup.py``. Now the ``setup.py.in`` file is used as a template that
+Before the switch to CMake MapServer mapscript was built using distutils and ``setup.py``. Now the ``setup.py.in`` file is used as a template that
 is filled with the MapServer version number and used to created wheel files for distribution. 
 
 The build process works as follows. 
@@ -194,8 +195,7 @@ The mapscript module includes a test suite and a small sample dataset to check t
 
     pip install pytest
 
-Change the directory to the mapscript output build folder and run the command below. Some tests are currently excluded, these will
-be fixed for upcoming releases. 
+Next run the command below to run the test suite: 
 
 .. code-block:: bat
 
