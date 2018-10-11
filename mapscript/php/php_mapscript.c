@@ -999,10 +999,6 @@ PHP_MINIT_FUNCTION(mapscript)
   memcpy(&mapscript_std_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   mapscript_std_object_handlers.clone_obj = NULL;
 
-  /* If you have defined globals, uncomment this line
-  ZEND_INIT_MODULE_GLOBALS(mapscript, phpms_init_globals, NULL);
-  */
-
   /* If you have INI entries, uncomment this line
   REGISTER_INI_ENTRIES();
   */

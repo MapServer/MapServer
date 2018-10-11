@@ -171,11 +171,7 @@ PHP_METHOD(OWSRequestObj, loadParams)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-#ifdef ZTS
-  thread_context = (void*)TSRMLS_C;
-#else
   thread_context = NULL;
-#endif
 
   php_owsrequest = MAPSCRIPT_OBJ_P(php_owsrequest_object, zobj);
 

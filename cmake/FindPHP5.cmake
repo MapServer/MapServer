@@ -17,6 +17,7 @@ SET(PHP5_POSSIBLE_INCLUDE_PATHS
   /usr/include/php
   /usr/local/include/php
   /usr/local/apache/php
+  C:/php-sdk/phpmaster/vc15/x64/php-src
   ${PHP5_INCLUDES}
   )
 
@@ -24,12 +25,15 @@ SET(PHP5_POSSIBLE_LIB_PATHS
   /usr/lib
 if(WIN32)
   ${PHP5_INCLUDES}/Release_TS
+  ${PHP5_INCLUDES}/Release
+  ${PHP5_INCLUDES}/x64/Release
+  ${PHP5_INCLUDES}/x64/Release_TS
 endif(WIN32)
   )
 
 find_library(PHP5_LIBRARY
-   NAMES php5ts.lib
-   PATHS /sw /opt/local ${PHP5_INCLUDES}/Release_TS
+   NAMES php5ts.lib php7ts.lib php5.lib php7.lib
+   PATHS /sw /opt/local C:/php-sdk/phpmaster/vc15/x64/php-src/Release_TS C:/php-sdk/phpmaster/vc15/x64/php-src/Release C:/php-sdk/phpmaster/vc15/x64/php-src/x64/Release C:/php-sdk/phpmaster/vc15/x64/php-src/x64/Release_TS
 )
   
 FIND_PATH(PHP5_FOUND_INCLUDE_PATH main/php.h
