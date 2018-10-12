@@ -43,7 +43,7 @@
 static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 static inline void IGUR_voidp(void* ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 
-static char *olUrl = "http://www.mapserver.org/lib/OpenLayers-ms60.js";
+static char *olUrl = "//www.mapserver.org/lib/OpenLayers-ms60.js";
 static char *olTemplate = \
                           "<html>\n"
                           "<head>\n"
