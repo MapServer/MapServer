@@ -62,6 +62,4 @@ ADD_CUSTOM_COMMAND(TARGET mapscript
                       COMMENT "Compiling c# source files"
                       )
 
-#get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_csharpmapscript_REAL_NAME} LOCATION)
-#install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION lib)
 

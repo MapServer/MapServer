@@ -1,23 +1,28 @@
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
+find_package(SWIG REQUIRED)
+include(${SWIG_USE_FILE})
 
-FIND_PACKAGE(JNI)
-FIND_PACKAGE(Java)
+find_package(JNI)
+find_package(Java)
 if(NOT JNI_INCLUDE_DIRS OR NOT Java_JAVAC_EXECUTABLE OR NOT Java_JAR_EXECUTABLE)
    message(SEND_ERROR "Could not find required Java componenents. Try setting the JAVA_HOME environment variable (required on e.g. Ubuntu)")
 endif(NOT JNI_INCLUDE_DIRS OR NOT Java_JAVAC_EXECUTABLE OR NOT Java_JAR_EXECUTABLE)
 
-INCLUDE_DIRECTORIES(${JNI_INCLUDE_DIRS})
+include_directories(${JNI_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/java)
-SET (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
-SET(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
-SWIG_ADD_MODULE(javamapscript java ../mapscript.i)
+set (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
+set(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
 
-SWIG_LINK_LIBRARIES(javamapscript ${MAPSERVER_LIBMAPSERVER})
+if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
+    swig_add_library(javamapscript TYPE MODULE LANGUAGE java SOURCES ../mapscript.i)
+else ()
+    swig_add_module(javamapscript java ../mapscript.i)
+endif ()
 
-ADD_CUSTOM_COMMAND(TARGET javamapscript
+swig_link_libraries(javamapscript ${MAPSERVER_LIBMAPSERVER})
+
+add_custom_command(TARGET javamapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                       POST_BUILD
                       COMMAND ${Java_JAVAC_EXECUTABLE} edu/umn/gis/mapscript/*.java
@@ -25,6 +30,5 @@ ADD_CUSTOM_COMMAND(TARGET javamapscript
                       COMMENT "Compiling java source files, creating mapscript.jar"
                       )
 
-get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_javamapscript_REAL_NAME} LOCATION)
-install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
+set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_javamapscript_REAL_NAME}>)
+install(FILES ${mapscript_files} DESTINATION ${CMAKE_INSTALL_LIBDIR})
