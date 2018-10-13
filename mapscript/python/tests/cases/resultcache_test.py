@@ -86,12 +86,12 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
         e = self.layer.getExtent()
         self.assertRectsEqual(results.bounds, e)
 
-    def xtestQueryResultMembers(self):
+    def testQueryResultMembers(self):
         """get the single result member"""
         results = self.pointquery()
         self.layer.open()
         res = results.getResult(0)
-        feature = self.layer.getFeature(res.shapeindex, res.tileindex)
+        feature = self.layer.getShape(res)
         self.layer.close()
         self.assertRectsEqual(results.bounds, feature.bounds)
         assert feature.getValue(1) == 'A Polygon'
@@ -103,7 +103,7 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
         assert len(result_list) == 1
         assert result_list[0].shapeindex == 0
 
-    def xtestQueryByIndex(self):
+    def testQueryByIndex(self):
         """pop a result into the result set"""
         self.layer.queryByIndex(self.map, -1, 0, mapscript.MS_FALSE)
         results = self.layer.getResults()
@@ -139,7 +139,6 @@ class LayerOffQueryTestCase(LayerQueryTestCase):
         """simple index query returns one result, even if layer is off"""
         self.layer.status = mapscript.MS_OFF
         results = self.indexquery()
-        print(results.numresults)
         assert results.numresults == 1
 
 

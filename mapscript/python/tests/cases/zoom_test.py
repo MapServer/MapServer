@@ -125,18 +125,20 @@ class ZoomRectangleTestCase(MapZoomTestCase):
 
 class ZoomScaleTestCase(MapZoomTestCase):
 
-    def xtestRecenter(self):
+    def testRecenter(self):
         """ZoomScaleTestCase.testRecenter: recentering map returns proper extent"""
-        w, h = (self.mapobj1.width, self.mapobj1.height)
+        w, h = (self.mapobj1.width, self.mapobj1.height)  # 100 by 100
         p = mapscript.pointObj()
         p.x, p.y = (50, 50)
         scale = 2834.6472
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+        assert self.mapobj1.scaledenom == scale
         new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-50, -50, 50, 50))
+        # self.assertRectsEqual(new_extent, mapscript.rectObj(-50, -50, 50, 50))  # old values
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-49.5, -49.5, 49.5, 49.5))
 
-    def xtestZoomInScale(self):
+    def testZoomInScale(self):
         """ZoomScaleTestCase.testZoomInScale: zooming in to a specified scale returns proper extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = mapscript.pointObj()
@@ -145,9 +147,10 @@ class ZoomScaleTestCase(MapZoomTestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-25, -25, 25, 25))
+        # self.assertRectsEqual(new_extent, mapscript.rectObj(-25, -25, 25, 25))  # old values
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-24.75, -24.75, 24.75, 24.75))
 
-    def xtestZoomOutScale(self):
+    def testZoomOutScale(self):
         """ZoomScaleTestCase.testZoomOutScale: zooming out to a specified scale returns proper extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = mapscript.pointObj()
@@ -156,7 +159,8 @@ class ZoomScaleTestCase(MapZoomTestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-100, -100, 100, 100))
+        # self.assertRectsEqual(new_extent, mapscript.rectObj(-100, -100, 100, 100))  # old values
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-99, -99, 99, 99))
 
     def testZoomOutPointConstrained(self):
         """ZoomScaleTestCase.testZoomOutPointConstrained: zooming out to a constrained extent returns proper extent"""

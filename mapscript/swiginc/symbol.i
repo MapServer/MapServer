@@ -53,26 +53,26 @@
 
     ~symbolObj() 
     {
-		if (self) {
+        if (self) {
             if (msFreeSymbol(self)==MS_SUCCESS) {
-            	free(self);
-				self=NULL;
-			}
+                free(self);
+                self=NULL;
+            }
         }
     }
 
     int setImagepath(const char *imagefile) {
-	return msLoadImageSymbol(self, imagefile);
+    return msLoadImageSymbol(self, imagefile);
     }
 
     int setPoints(lineObj *line) {
         int i;
-	self->sizex = 0;
-	self->sizey = 0;
+    self->sizex = 0;
+    self->sizey = 0;
         for (i=0; i<line->numpoints; i++) {
             MS_COPYPOINT(&(self->points[i]), &(line->point[i]));
-	    self->sizex = MS_MAX(self->sizex, self->points[i].x);
-	    self->sizey = MS_MAX(self->sizey, self->points[i].y);
+        self->sizex = MS_MAX(self->sizex, self->points[i].x);
+        self->sizey = MS_MAX(self->sizey, self->points[i].y);
         }
         self->numpoints = line->numpoints;
         return self->numpoints;
@@ -101,23 +101,13 @@
         outputFormatObj *format = NULL;
         rendererVTableObj *renderer = NULL;
 
-        if (self->type != MS_SYMBOL_PIXMAP)
-        {
-            msSetError(MS_SYMERR, "Can't return image from non-pixmap symbol",
-                       "getImage()");
-            return NULL;
-        }
-    
         if (input_format)
         {
             format = input_format;
         }
         else 
         {
-            format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
-            if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
-
+            format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "aggpng");
             if (format)
                 msInitializeRendererVTable(format);
         }
@@ -173,5 +163,3 @@
     }
 
 }
-
-

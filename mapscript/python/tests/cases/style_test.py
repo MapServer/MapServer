@@ -178,7 +178,7 @@ class NewStylesTestCase(MapTestCase):
 
 class BrushCachingTestCase(MapTestCase):
 
-    def xtestDrawMapWithSecondPolygon(self):
+    def testDrawMapWithSecondPolygon(self):
         """draw a blue polygon and a red polygon"""
         p = self.map.getLayerByName('POLYGON')
         ip = mapscript.layerObj(self.map)
@@ -197,7 +197,10 @@ class BrushCachingTestCase(MapTestCase):
         # pull out the first feature from polygon layer, shift it
         # and use this as an inline feature in new layer
         p.open()
-        s0 = p.getFeature(0)
+        p.template = "FAKE"  # set a template so the layer can be queried
+        p.queryByIndex(self.map, -1, 0, mapscript.MS_TRUE)
+        res = p.getResult(0)
+        s0 = p.getShape(res)
         p.close()
         r0 = s0.bounds
         r1 = mapscript.rectObj(r0.minx-0.1, r0.miny-0.1, r0.maxx-0.1, r0.maxy-0.1)

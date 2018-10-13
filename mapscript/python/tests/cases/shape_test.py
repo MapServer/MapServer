@@ -68,11 +68,14 @@ class InlineFeatureTestCase(MapTestCase):
         filename = 'testAddPointFeature.png'
         msimg.save(filename)
 
-    def xtestGetShape(self):
+    def testGetShape(self):
         """returning the shape from an inline feature works"""
         inline_layer = self.map.getLayerByName('INLINE')
         inline_layer.open()
-        s = inline_layer.getFeature(0)
+        inline_layer.template = "FAKE"
+        inline_layer.queryByIndex(self.map, -1, 0)
+        res = inline_layer.getResult(0)
+        s = inline_layer.getShape(res)
         lyr = self.getLineFromShape(s, 0)
         p = self.getPointFromLine(lyr, 0)
         self.assertAlmostEqual(p.x, -0.2)
@@ -112,8 +115,8 @@ class ShapeWKTTestCase(unittest.TestCase):
         so = mapscript.shapeObj.fromWKT(self.point_wkt)
 
         # expect one line with one point
-        self.assert_(so.numlines == 1, so.numlines)
-        self.assert_(so.get(0).numpoints == 1, so.get(0).numpoints)
+        self.assertTrue(so.numlines == 1, so.numlines)
+        self.assertTrue(so.get(0).numpoints == 1, so.get(0).numpoints)
 
         # expect shape's x and y values to be correct
         po = so.get(0).get(0)
@@ -130,7 +133,7 @@ class ShapeWKTTestCase(unittest.TestCase):
 
         # test output WKT
         wkt = so.toWKT()
-        self.assert_(wkt == self.point_wkt, wkt)
+        self.assertTrue(wkt == self.point_wkt, wkt)
 
 
 if __name__ == '__main__':

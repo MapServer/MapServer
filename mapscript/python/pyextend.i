@@ -34,17 +34,17 @@ def fromstring(data, mappath=None):
     'test'
     """
     import re
-    if re.search("^\s*MAP", data, re.I): 
+    if re.search(r"^\s*MAP", data, re.I): 
         return msLoadMapFromString(data, mappath)
-    elif re.search("^\s*LAYER", data, re.I):
+    elif re.search(r"^\s*LAYER", data, re.I):
         ob = layerObj()
         ob.updateFromString(data)
         return ob
-    elif re.search("^\s*CLASS", data, re.I):
+    elif re.search(r"^\s*CLASS", data, re.I):
         ob = classObj()
         ob.updateFromString(data)
         return ob
-    elif re.search("^\s*STYLE", data, re.I):
+    elif re.search(r"^\s*STYLE", data, re.I):
         ob = styleObj()
         ob.updateFromString(data)
         return ob
@@ -147,183 +147,12 @@ def fromstring(data, mappath=None):
     
 }
 
-/****************************************************************************
- * Support for bridging Python file-like objects and GD through IOCtx
- ***************************************************************************/
-
 /******************************************************************************
  * Extensions to imageObj
  *****************************************************************************/
     
 %extend imageObj {
 
-    /* New imageObj constructor taking an optional PyFile-ish object
-     * argument.
-     *
-     * Furthermore, we are defaulting width and height so that in case
-     * anyone wants to swig mapscript with the -keyword option, they can
-     * omit width and height.  Work done as part of Bugzilla issue 550. */
-
-    imageObj(PyObject *arg1=Py_None, PyObject *arg2=Py_None, 
-             PyObject *input_format=Py_None, PyObject *input_resolution=Py_None, PyObject *input_defresolution=Py_None)
-    {
-#ifdef FORCE_BROKEN_GD_CODE
-        imageObj *image=NULL;
-        outputFormatObj *format=NULL;
-        int width;
-        int height;
-        double resolution, defresolution;
-        PyObject *pybytes;
-        rendererVTableObj *renderer = NULL;
-        rasterBufferObj *rb = NULL;
-      
-        unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
-        unsigned char JPEGsig[3] = {255, 216, 255};
-
-        resolution = defresolution = MS_DEFAULT_RESOLUTION;
-
-        if ((PyInt_Check(arg1) && PyInt_Check(arg2)) || PyString_Check(arg1))
-        {
-            if (input_format == Py_None) {
-                format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
-                if (format == NULL)
-                    format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
-
-                if (format)
-                  msInitializeRendererVTable(format);
-            }
-            else if (PyString_Check(input_format)) {
-                format = msCreateDefaultOutputFormat(NULL, 
-                                                     PyString_AsString(input_format),
-                                                     NULL);
-            }
-            else {
-                if ((SWIG_ConvertPtr(input_format, (void **) &format,
-                                     SWIGTYPE_p_outputFormatObj,
-                                     SWIG_POINTER_EXCEPTION | 0 )) == -1) 
-                {
-                    msSetError(MS_IMGERR, "Can't convert format pointer",
-                               "imageObj()");
-                    return NULL;
-                }
-            }
-        
-            if (format == NULL) {
-                msSetError(MS_IMGERR, "Could not create output format",
-                           "imageObj()");
-                return NULL;
-            }
-        }
-
-        if (PyFloat_Check(input_resolution))
-            resolution = PyFloat_AsDouble(input_resolution);
-        if (PyFloat_Check(input_defresolution))
-            defresolution = PyFloat_AsDouble(input_defresolution);
-
-        if (PyInt_Check(arg1) && PyInt_Check(arg2)) 
-        {
-            /* Create from width, height, format/driver */
-            width = (int) PyInt_AsLong(arg1);
-            height = (int) PyInt_AsLong(arg2);
-
-            image = msImageCreate(width, height, format, NULL, NULL, resolution, defresolution, NULL);
-            return image;
-        }
-        
-        /* Is arg1 a filename? */
-        else if (PyString_Check(arg1)) 
-        {
-            renderer = format->vtable;
-            rb = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
-
-            if (!rb) {
-                msSetError(MS_MEMERR, NULL, "imageObj()");
-                return NULL;
-            }
-
-            if ( (renderer->loadImageFromFile(PyString_AsString(arg1), rb)) == MS_FAILURE)
-                return NULL;
-
-            image = msImageCreate(rb->width, rb->height, format, NULL, NULL, 
-                                  resolution, defresolution, NULL);
-            renderer->mergeRasterBuffer(image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height);
-
-            msFreeRasterBuffer(rb);
-            free(rb);
-
-            return image;
-        }
-        
-        /* Is a file-like object */
-        else if (arg1 != Py_None)
-        {
-
-            if (PyObject_HasAttrString(arg1, "seek"))
-            {
-                /* Detect image format */
-                pybytes = PyObject_CallMethod(arg1, "read", "i", 8);
-                PyObject_CallMethod(arg1, "seek", "i", 0);
-            
-                if (memcmp(PyString_AsString(pybytes),"GIF8",4)==0) 
-                {
-%#ifdef USE_GD_GIF
-                    image = createImageObjFromPyFile(arg1, "GD/GIF");
-%#else
-                    msSetError(MS_MISCERR, "Unable to load GIF image.",
-                               "imageObj()");
-%#endif
-                }
-                else if (memcmp(PyString_AsString(pybytes),PNGsig,8)==0) 
-                {
-%#ifdef USE_GD_PNG
-                    image = createImageObjFromPyFile(arg1, "GD/PNG");
-%#else
-                    msSetError(MS_MISCERR, "Unable to load PNG image.",
-                               "imageObj()");
-%#endif
-                }
-                else if (memcmp(PyString_AsString(pybytes),JPEGsig,3)==0) 
-                {
-%#ifdef USE_GD_JPEG
-                    image = createImageObjFromPyFile(arg1, "GD/JPEG");
-%#else
-                    msSetError(MS_MISCERR, "Unable to load JPEG image.", 
-                               "imageObj()");
-%#endif
-                }
-                else
-                {
-                    msSetError(MS_MISCERR, "Failed to detect image format.  Likely cause is invalid image or improper filemode.  On windows, Python files should be opened in 'rb' mode.", "imageObj()");
-                }
-
-                return image;
-            
-            }
-            else /* such as a url handle */
-            {
-                /* If there is no seek method, we absolutely must
-                   have a driver name */
-                if (!PyString_Check(arg2))
-                {
-                    msSetError(MS_MISCERR, "A driver name absolutely must accompany file objects which do not have a seek() method", "imageObj()");
-                    return NULL;
-                }    
-                return (imageObj *) createImageObjFromPyFile(arg1, 
-                        PyString_AsString(arg2));
-            }
-        }
-        else 
-        {
-            msSetError(MS_IMGERR, "Failed to create image", 
-                       "imageObj()");
-            return NULL;
-        }
-#else
-         msSetError(MS_IMGERR, "imageObj() is severely broken and should not be used","imageObj()");
-         return NULL;
-#endif
-    }
-  
     /* ======================================================================
        write()
 
@@ -358,9 +187,15 @@ def fromstring(data, mappath=None):
                 msSetError(MS_IMGERR, "failed to get image buffer", "write()");
                 return MS_FAILURE;
             }
-                
-            noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer,
-                                        imgsize);
+
+%#if PY_MAJOR_VERSION >= 3
+            // https://docs.python.org/3/c-api/arg.html
+            noerr = PyObject_CallMethod(file, "write", "y#", imgbuffer, imgsize);
+%#else
+            // https://docs.python.org/2/c-api/arg.html
+            noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer, imgsize);
+%#endif
+
             free(imgbuffer);
             if (noerr == NULL)
                 return MS_FAILURE;
@@ -438,3 +273,43 @@ def fromstring(data, mappath=None):
 }
 
 }
+
+
+/******************************************************************************
+ * Extensions to hashTableObj - add dict methods
+ *****************************************************************************/
+
+%extend hashTableObj{
+    %pythoncode %{
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        return self.set(key, value)
+
+    def __delitem__(self, key) :
+        return self.remove(key)
+
+    def __contains__(self, key):
+        return key.lower() in [k.lower() for k in self.keys()]
+
+    def __len__(self):
+        return self.numitems
+
+    def keys(self):
+
+        keys = []
+        k = None
+
+        while True :
+            k = self.nextKey(k)
+            if k :
+                keys.append(k)
+            else :
+                break
+
+        return keys
+            
+    %}
+};

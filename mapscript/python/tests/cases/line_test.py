@@ -60,9 +60,19 @@ class LineObjTestCase(MapPrimitivesTestCase):
     def xtestAlterNumPoints(self):
         """
         numpoints is immutable, this should raise error
-        Currently no error is raised, but the numpoints is unchanged
         """
-        self.assertRaises(AttributeError, setattr, self.line, 'numpoints', 3)
+        # The following works locally but fails on Appveyor (error is not raised)
+        # with self.assertRaises(AttributeError):
+        #    self.line.numpoints = 3
+
+        # the following approach also fails on appveyor
+        error_thrown = False
+        try:
+            self.line.numpoints = 3
+        except AttributeError:
+            error_thrown = True
+
+        assert error_thrown is True
 
 
 if __name__ == '__main__':

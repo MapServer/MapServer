@@ -1,16 +1,21 @@
 image: Visual Studio 2017
 
-platform:
-- x64
-- x86
-
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
 
 environment:
+  # VS 2017
+  VS_VERSION: Visual Studio 15 2017
   matrix:
-# VS 2017
-  - VS_VERSION: Visual Studio 15 2017
+  - platform: x86
+    PYTHON_EXECUTABLE: c:/python27/python.exe
+  - platform: x64
+    PYTHON_EXECUTABLE: c:/python27-x64/python.exe
+  - platform: x64
+    PYTHON_EXECUTABLE: c:/python36-x64/python.exe
+
+matrix:
+  fast_finish: true
 
 shallow_clone: true
 

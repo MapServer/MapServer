@@ -38,7 +38,7 @@ class SymbolTestCase(unittest.TestCase):
         assert symbol.name == 'test'
         assert symbol.thisown == 1
 
-    def xtestConstructorImage(self):
+    def testConstructorImage(self):
         """create new instance of symbolObj from an image"""
         symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
         assert symbol.name == 'xmarks'
@@ -48,7 +48,6 @@ class SymbolTestCase(unittest.TestCase):
         img.save('sym-%s.%s' % (symbol.name, img.format.extension))
 
 
-# TODO creating mapscript.imageObj objects throw errors
 class DynamicGraphicSymbolTestCase():
 
     def setUp(self):
@@ -110,7 +109,7 @@ class DynamicGraphicSymbolTestCase():
 
 class MapSymbolTestCase(MapTestCase):
 
-    def xtestGetPoints(self):
+    def testGetPoints(self):
         """get symbol points as line and test coords"""
         symbol = self.map.symbolset.getSymbol(1)
         assert symbol.name == 'circle'
@@ -133,11 +132,13 @@ class MapSymbolTestCase(MapTestCase):
         pt = self.getPointFromLine(line, 1)
         self.assertPointsEqual(pt, mapscript.pointObj(3.0, 3.0))
 
-    def xtestSetStyle(self):
+    def testSetStyle(self):
         """expect success after setting an existing symbol's style"""
         symbol = self.map.symbolset.getSymbol(1)
-        # TODO setPattern is no longer a method
-        assert symbol.setPattern(0, 1) == mapscript.MS_SUCCESS
+        # default MapScript API setPattern has been extended to allow lists
+        # assert symbol.setPattern(0, 1) == mapscript.MS_SUCCESS
+        symbol.pattern = [0, 1]
+        assert symbol.pattern == [0, 1]
 
     def testRGBASymbolInPNG24(self):
         """draw a RGBA PNG pixmap on PNG canvas"""
