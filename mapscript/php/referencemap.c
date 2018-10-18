@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_referencemap;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_referencemap_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(referenceMap___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -69,7 +72,7 @@ PHP_METHOD(referenceMapObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_referencemap = MAPSCRIPT_OBJ_P(php_referencemap_object, zobj);
 
   IF_GET_STRING("image", php_referencemap->referencemap->image)
   else IF_GET_LONG("width", php_referencemap->referencemap->width)
@@ -104,7 +107,7 @@ PHP_METHOD(referenceMapObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_referencemap = MAPSCRIPT_OBJ_P(php_referencemap_object, zobj);
 
   IF_SET_STRING("image", php_referencemap->referencemap->image, value)
   else IF_SET_LONG("width", php_referencemap->referencemap->width, value)
@@ -142,7 +145,7 @@ PHP_METHOD(referenceMapObj, updateFromString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_referencemap = MAPSCRIPT_OBJ_P(php_referencemap_object, zobj);
 
   status =  referenceMapObj_updateFromString(php_referencemap->referencemap, snippet);
 
@@ -170,14 +173,14 @@ PHP_METHOD(referenceMapObj, convertToString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_referencemap = MAPSCRIPT_OBJ_P(php_referencemap_object, zobj);
 
   value =  referenceMapObj_convertToString(php_referencemap->referencemap);
 
   if (value == NULL)
-    RETURN_STRING("", 1);
+    MAPSCRIPT_RETURN_STRING("", 1);
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -196,7 +199,7 @@ PHP_METHOD(referenceMapObj, free)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_referencemap = MAPSCRIPT_OBJ_P(php_referencemap_object, zobj);
 
   MAPSCRIPT_DELREF(php_referencemap->extent);
   MAPSCRIPT_DELREF(php_referencemap->color);
@@ -220,13 +223,68 @@ void mapscript_create_referencemap(referenceMapObj *referencemap, parent_object 
 {
   php_referencemap_object * php_referencemap;
   object_init_ex(return_value, mapscript_ce_referencemap);
-  php_referencemap = (php_referencemap_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_referencemap = MAPSCRIPT_OBJ_P(php_referencemap_object, return_value);
   php_referencemap->referencemap = referencemap;
 
   php_referencemap->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_referencemap_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_referencemap_object *php_referencemap;
+
+  php_referencemap = ecalloc(1, sizeof(*php_referencemap) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_referencemap->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_referencemap->zobj, ce);
+
+  php_referencemap->zobj.handlers = &mapscript_referencemap_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_referencemap->parent);
+  ZVAL_UNDEF(&php_referencemap->extent);
+  ZVAL_UNDEF(&php_referencemap->color);
+  ZVAL_UNDEF(&php_referencemap->outlinecolor);
+
+  return &php_referencemap->zobj;
+}
+
+static void mapscript_referencemap_free_object(zend_object *object)
+{
+  php_referencemap_object *php_referencemap;
+
+  php_referencemap = (php_referencemap_object *)((char *)object - XtOffsetOf(php_referencemap_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_referencemap->parent);
+  MAPSCRIPT_DELREF(php_referencemap->extent);
+  MAPSCRIPT_DELREF(php_referencemap->color);
+  MAPSCRIPT_DELREF(php_referencemap->outlinecolor);
+
+  /* We don't need to free the referenceMapObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(referencemap)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "referenceMapObj", referencemap_functions);
+  mapscript_ce_referencemap = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_referencemap->create_object = mapscript_referencemap_create_object;
+  mapscript_ce_referencemap->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_referencemap_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_referencemap_object_handlers));
+  mapscript_referencemap_object_handlers.free_obj = mapscript_referencemap_free_object;
+  mapscript_referencemap_object_handlers.offset   = XtOffsetOf(php_referencemap_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_referencemap_object_destroy(void *object TSRMLS_DC)
 {
   php_referencemap_object *php_referencemap = (php_referencemap_object *)object;
@@ -274,3 +332,4 @@ PHP_MINIT_FUNCTION(referencemap)
 
   return SUCCESS;
 }
+#endif

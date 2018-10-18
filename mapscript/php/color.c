@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_color;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_color_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(color___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -79,7 +82,7 @@ PHP_METHOD(colorObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_color = MAPSCRIPT_OBJ_P(php_color_object, zobj);
 
   IF_GET_LONG("red", php_color->color->red)
   else IF_GET_LONG("green", php_color->color->green)
@@ -106,7 +109,7 @@ PHP_METHOD(colorObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_color = MAPSCRIPT_OBJ_P(php_color_object, zobj);
 
   IF_SET_COLOR("red", php_color->color->red, value)
   else IF_SET_COLOR("green", php_color->color->green, value)
@@ -134,7 +137,7 @@ PHP_METHOD(colorObj, setRGB)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_color = MAPSCRIPT_OBJ_P(php_color_object, zobj);
 
 
   MS_INIT_COLOR(*(php_color->color), red, green, blue, alpha);
@@ -173,7 +176,7 @@ PHP_METHOD(colorObj, setHex)
       RETURN_LONG(MS_FAILURE);
     }
 
-    php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_color = MAPSCRIPT_OBJ_P(php_color_object, zobj);
 
     MS_INIT_COLOR(*(php_color->color), red, green, blue, alpha);
 
@@ -194,7 +197,7 @@ PHP_METHOD(colorObj, toHex)
   php_color_object *php_color;
   colorObj *color;
 
-  php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_color = MAPSCRIPT_OBJ_P(php_color_object, zobj);
   color = php_color->color;
 
   if (color->red < 0 || color->green < 0 || color->blue < 0) {
@@ -215,7 +218,7 @@ PHP_METHOD(colorObj, toHex)
     return;
   }
   
-  RETURN_STRINGL(hex, strlen(hex), 0);
+  MAPSCRIPT_RETURN_STRINGL(hex, strlen(hex), 0);
 }
 /* }}} */
 
@@ -235,7 +238,7 @@ void mapscript_create_color(colorObj *color, parent_object parent, zval *return_
 {
   php_color_object * php_color;
   object_init_ex(return_value, mapscript_ce_color);
-  php_color = (php_color_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_color = MAPSCRIPT_OBJ_P(php_color_object, return_value);
   php_color->color = color;
 
   php_color->parent = parent;
@@ -243,6 +246,55 @@ void mapscript_create_color(colorObj *color, parent_object parent, zval *return_
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_color_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_color_object *php_color;
+
+  php_color = ecalloc(1, sizeof(*php_color) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_color->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_color->zobj, ce);
+
+  php_color->zobj.handlers = &mapscript_color_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_color->parent);
+
+  return &php_color->zobj;
+}
+
+static void mapscript_color_free_object(zend_object *object)
+{
+  php_color_object *php_color;
+
+  php_color = (php_color_object *)((char *)object - XtOffsetOf(php_color_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_color->parent);
+
+  /* We don't need to free the colorObj, the mapObj will do it */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(color)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "colorObj", color_functions);
+  mapscript_ce_color = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_color->create_object = mapscript_color_create_object;
+  mapscript_ce_color->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_color_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_color_object_handlers));
+  mapscript_color_object_handlers.free_obj = mapscript_color_free_object;
+  mapscript_color_object_handlers.offset   = XtOffsetOf(php_color_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_color_object_destroy(void *object TSRMLS_DC)
 {
   php_color_object *php_color = (php_color_object *)object;
@@ -284,4 +336,4 @@ PHP_MINIT_FUNCTION(color)
 
   return SUCCESS;
 }
-
+#endif

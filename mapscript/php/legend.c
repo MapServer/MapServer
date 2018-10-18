@@ -30,6 +30,9 @@
  **********************************************************************/
 
 #include "php_mapscript.h"
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_legend_object_handlers;
+#endif  
 
 zend_class_entry *mapscript_ce_legend;
 
@@ -69,7 +72,7 @@ PHP_METHOD(legendObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, zobj);
 
   IF_GET_LONG("height", php_legend->legend->height)
   else IF_GET_LONG("width", php_legend->legend->width)
@@ -105,7 +108,7 @@ PHP_METHOD(legendObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, zobj);
 
   IF_SET_LONG("height", php_legend->legend->height, value)
   else IF_SET_LONG("width", php_legend->legend->width, value)
@@ -144,7 +147,7 @@ PHP_METHOD(legendObj, updateFromString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, zobj);
 
   status =  legendObj_updateFromString(php_legend->legend, snippet);
 
@@ -172,14 +175,14 @@ PHP_METHOD(legendObj, convertToString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, zobj);
 
   value =  legendObj_convertToString(php_legend->legend);
 
   if (value == NULL)
-    RETURN_STRING("", 1);
+    MAPSCRIPT_RETURN_STRING("", 1);
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -198,7 +201,7 @@ PHP_METHOD(legendObj, free)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, zobj);
 
   MAPSCRIPT_DELREF(php_legend->outlinecolor);
   MAPSCRIPT_DELREF(php_legend->imagecolor);
@@ -221,13 +224,69 @@ void mapscript_create_legend(legendObj *legend, parent_object parent, zval *retu
 {
   php_legend_object * php_legend;
   object_init_ex(return_value, mapscript_ce_legend);
-  php_legend = (php_legend_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_legend = MAPSCRIPT_OBJ_P(php_legend_object, return_value);
   php_legend->legend = legend;
 
   php_legend->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_legend_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_legend_object *php_legend;
+
+  php_legend = ecalloc(1, sizeof(*php_legend) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_legend->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_legend->zobj, ce);
+
+  php_legend->zobj.handlers = &mapscript_legend_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_legend->parent);
+  ZVAL_UNDEF(&php_legend->outlinecolor);
+  ZVAL_UNDEF(&php_legend->imagecolor);
+  ZVAL_UNDEF(&php_legend->label);
+
+  return &php_legend->zobj;
+}
+
+static void mapscript_legend_free_object(zend_object *object)
+{
+  php_legend_object *php_legend;
+
+  php_legend = (php_legend_object *)((char *)object - XtOffsetOf(php_legend_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_legend->parent);
+  MAPSCRIPT_DELREF(php_legend->outlinecolor);
+  MAPSCRIPT_DELREF(php_legend->imagecolor);
+  MAPSCRIPT_DELREF(php_legend->label);
+
+  /* We don't need to free the legendObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(legend)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "legendObj", legend_functions);
+  mapscript_ce_legend = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_legend->create_object = mapscript_legend_create_object;
+  mapscript_ce_legend->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_legend_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_legend_object_handlers));
+  mapscript_legend_object_handlers.free_obj = mapscript_legend_free_object;
+  mapscript_legend_object_handlers.offset   = XtOffsetOf(php_legend_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_legend_object_destroy(void *object TSRMLS_DC)
 {
   php_legend_object *php_legend = (php_legend_object *)object;
@@ -275,3 +334,4 @@ PHP_MINIT_FUNCTION(legend)
 
   return SUCCESS;
 }
+#endif

@@ -87,7 +87,7 @@ PHP_METHOD(lineObj, __construct)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, getThis());
 
   if ((php_line->line = lineObj_new()) == NULL) {
     mapscript_throw_exception("Unable to construct lineObj." TSRMLS_CC);
@@ -111,7 +111,7 @@ PHP_METHOD(lineObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
 
   IF_GET_LONG("numpoints", php_line->line->numpoints)
   else {
@@ -158,8 +158,8 @@ PHP_METHOD(lineObj, add)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-  php_point = (php_point_object *) zend_object_store_get_object(zobj_point TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
+  php_point = MAPSCRIPT_OBJ_P(php_point_object, zobj_point);
 
   status = lineObj_add(php_line->line, php_point->point);
 
@@ -185,7 +185,7 @@ PHP_METHOD(lineObj, addXY)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
 
   point.x = x;
   point.y = y;
@@ -220,7 +220,7 @@ PHP_METHOD(lineObj, addXYZ)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
 
   point.x = x;
   point.y = y;
@@ -255,9 +255,9 @@ PHP_METHOD(lineObj, project)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
-  php_proj_in = (php_projection_object *) zend_object_store_get_object(zobj_proj_in TSRMLS_CC);
-  php_proj_out = (php_projection_object *) zend_object_store_get_object(zobj_proj_out TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
+  php_proj_in = MAPSCRIPT_OBJ_P(php_projection_object, zobj_proj_in);
+  php_proj_out = MAPSCRIPT_OBJ_P(php_projection_object, zobj_proj_out);
 
   status = lineObj_project(php_line->line, php_proj_in->projection, php_proj_out->projection);
   if (status != MS_SUCCESS) {
@@ -284,7 +284,7 @@ PHP_METHOD(lineObj, point)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
 
   if ( (index < 0) || (index >= php_line->line->numpoints)) {
     mapscript_throw_exception("Point '%d' does not exist in this object." TSRMLS_CC, index);
@@ -314,14 +314,14 @@ PHP_METHOD(lineObj, set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, zobj);
 
   if ( (index < 0) || (index >= php_line->line->numpoints)) {
     mapscript_throw_exception("Point '%d' does not exist in this object." TSRMLS_CC, index);
     return;
   }
 
-  php_point = (php_point_object *) zend_object_store_get_object(zobj_point TSRMLS_CC);
+  php_point = MAPSCRIPT_OBJ_P(php_point_object, zobj_point);
 
   php_line->line->point[index].x = php_point->point->x;
   php_line->line->point[index].y = php_point->point->y;
@@ -350,16 +350,86 @@ void mapscript_create_line(lineObj *line, parent_object parent, zval *return_val
 {
   php_line_object * php_line;
   object_init_ex(return_value, mapscript_ce_line);
-  php_line = (php_line_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_line = MAPSCRIPT_OBJ_P(php_line_object, return_value);
   php_line->line = line;
 
-  if (parent.val)
+  if (ZVAL_NOT_UNDEF(parent.val))
     php_line->is_ref = 1;
 
   php_line->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_line_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_line_object *php_line;
+
+  php_line = ecalloc(1, sizeof(*php_line) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_line->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_line->zobj, ce);
+
+  php_line->zobj.handlers = &mapscript_line_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_line->parent);
+  php_line->is_ref = 0;
+
+  return &php_line->zobj;
+}
+
+static void mapscript_line_free_object(zend_object *object)
+{
+  php_line_object *php_line;
+
+  php_line = (php_line_object *)((char *)object - XtOffsetOf(php_line_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_line->parent);
+
+  if (php_line->line && !php_line->is_ref) {
+    lineObj_destroy(php_line->line);
+  }
+
+  zend_object_std_dtor(object);
+}
+
+static zend_object* mapscript_line_clone_object(zval *zobj)
+{
+  php_line_object *php_line_old, *php_line_new;
+  zend_object* zobj_new;
+
+  php_line_old = MAPSCRIPT_OBJ_P(php_line_object, zobj);
+
+  zobj_new = mapscript_line_create_object(mapscript_ce_line);
+  php_line_new = (php_line_object *)((char *)zobj_new - XtOffsetOf(php_line_object, zobj));
+
+  zend_objects_clone_members(&php_line_new->zobj, &php_line_old->zobj);
+
+  php_line_new->line = lineObj_clone(php_line_old->line);
+
+  return zobj_new;
+}
+
+PHP_MINIT_FUNCTION(line)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "lineObj", line_functions);
+  mapscript_ce_line = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_line->create_object = mapscript_line_create_object;
+  mapscript_ce_line->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_line_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_line_object_handlers));
+  mapscript_line_object_handlers.free_obj = mapscript_line_free_object;
+  mapscript_line_object_handlers.clone_obj = mapscript_line_clone_object;
+  mapscript_line_object_handlers.offset   = XtOffsetOf(php_line_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_line_object_destroy(void *object TSRMLS_DC)
 {
   php_line_object *php_line = (php_line_object *)object;
@@ -405,7 +475,7 @@ static zend_object_value mapscript_line_object_clone(zval *zobj TSRMLS_DC)
   php_line_object *php_line_old, *php_line_new;
   zend_object_value new_ov;
 
-  php_line_old = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_line_old = MAPSCRIPT_OBJ_P(php_line_object, zobj);
 
   new_ov = mapscript_line_object_new_ex(mapscript_ce_line, &php_line_new TSRMLS_CC);
   zend_objects_clone_members(&php_line_new->std, new_ov, &php_line_old->std, Z_OBJ_HANDLE_P(zobj) TSRMLS_CC);
@@ -432,3 +502,4 @@ PHP_MINIT_FUNCTION(line)
 
   return SUCCESS;
 }
+#endif
