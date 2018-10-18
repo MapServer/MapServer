@@ -1,5 +1,5 @@
-FIND_PACKAGE(PHP5 REQUIRED)
-INCLUDE_DIRECTORIES(${PHP5_INCLUDE_PATH})
+FIND_PACKAGE(PHP REQUIRED)
+INCLUDE_DIRECTORIES(${PHP_INCLUDE_PATH})
 
 if(WIN32)
 add_definitions(/DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DZEND_DEBUG=0)
@@ -37,13 +37,10 @@ add_library(php_mapscript MODULE
 
 
 if(WIN32)
-target_link_libraries(php_mapscript ${MAPSERVER_LIBMAPSERVER} ${PHP5_LIBRARY})
+target_link_libraries(php_mapscript ${MAPSERVER_LIBMAPSERVER} ${PHP_LIBRARY})
 ELSE(WIN32)
 target_link_libraries(php_mapscript ${MAPSERVER_LIBMAPSERVER})
 ENDIF(WIN32)
 
 set_target_properties(php_mapscript PROPERTIES PREFIX "")
-#install(TARGETS php_mapscript DESTINATION ${PHP5_EXTENSION_DIR})
-
-#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.py DESTINATION ${PYTHON_SITE_PACKAGES})
-#install(TARGETS mapscript DESTINATION ${PYTHON_SITE_PACKAGES})
+#install(TARGETS php_mapscript DESTINATION ${PHP_EXTENSION_DIR})
