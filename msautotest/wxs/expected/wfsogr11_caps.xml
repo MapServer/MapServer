@@ -122,7 +122,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-66.633317770969 42.382053788395</ows:LowerCorner>
         <ows:UpperCorner>-59.292113839180 48.295511938680</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road</MetadataURL>
     </FeatureType>
     <FeatureType>
       <Name>popplace</Name>
@@ -141,7 +141,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-66.328616887533 42.5631251681</ows:LowerCorner>
         <ows:UpperCorner>-59.688212172925 47.941250727064</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=popplace</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=popplace</MetadataURL>
     </FeatureType>
     <FeatureType>
       <Name>road_with_addfiles</Name>
@@ -162,7 +162,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-66.633317770969 42.382053788395</ows:LowerCorner>
         <ows:UpperCorner>-59.292113839180 48.295511938680</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road_with_addfiles</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road_with_addfiles</MetadataURL>
     </FeatureType>
     <FeatureType>
       <Name>road2_with_addfiles</Name>
@@ -183,7 +183,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-66.633317770969 42.382053788395</ows:LowerCorner>
         <ows:UpperCorner>-59.292113839180 48.295511938680</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road2_with_addfiles</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road2_with_addfiles</MetadataURL>
     </FeatureType>
     <FeatureType>
       <Name>multi</Name>
@@ -200,7 +200,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-7.5572625062256 49.76680723189</ows:LowerCorner>
         <ows:UpperCorner>-7.5557777787773 49.767768904154</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=multi</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=multi</MetadataURL>
     </FeatureType>
     <FeatureType>
       <Name>withnullvalues</Name>
@@ -218,7 +218,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-7.5570524339304 49.767082436309</ows:LowerCorner>
         <ows:UpperCorner>-7.5570524339304 49.767082436309</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=withnullvalues</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=withnullvalues</MetadataURL>
     </FeatureType>
   </FeatureTypeList>
   <ogc:Filter_Capabilities>

@@ -90,7 +90,7 @@ Content-Type: text/xml; charset=UTF-8
 </Capability>
 <ContentMetadata>
   <CoverageOfferingBrief>
-  <metadataLink metadataType="ISOTC211/19115" xlink:type="simple" xlink:href="http://localhost/ows?request=GetMetadata&amp;layer=toronto"/>    <name>toronto</name>
+  <metadataLink metadataType="TC211" xlink:type="simple" xlink:href="http://localhost/ows?request=GetMetadata&amp;layer=toronto"/>    <name>toronto</name>
     <label>Toronto</label>
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
       <gml:pos>-117.54590357301 44.665615181923</gml:pos>

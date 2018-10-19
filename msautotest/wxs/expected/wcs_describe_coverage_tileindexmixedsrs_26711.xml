@@ -10,7 +10,7 @@ Content-Type: text/xml; charset=UTF-8
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd">
   <CoverageOffering>
-  <metadataLink metadataType="ISOTC211/19115" xlink:type="simple" xlink:href="http://localhost/path/to/?request=GetMetadata&amp;layer=grey_26711"/>  <name>grey_26711</name>
+  <metadataLink metadataType="TC211" xlink:type="simple" xlink:href="http://localhost/path/to/?request=GetMetadata&amp;layer=grey_26711"/>  <name>grey_26711</name>
   <label>grey_26711</label>
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
       <gml:pos>-117.64116862079 33.848239887018</gml:pos>

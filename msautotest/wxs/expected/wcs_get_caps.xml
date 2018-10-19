@@ -86,7 +86,7 @@
 </Capability>
 <ContentMetadata>
   <CoverageOfferingBrief>
-  <metadataLink metadataType="ISOTC211/19115" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;request=GetMetadata&amp;layer=land_shallow_topo_2048"/>    <name>land_shallow_topo_2048</name>
+  <metadataLink metadataType="TC211" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;request=GetMetadata&amp;layer=land_shallow_topo_2048"/>    <name>land_shallow_topo_2048</name>
 <!-- WARNING: Mandatory metadata '..._label' was missing in this context. -->
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
       <gml:pos>-180.351562 -89.648437</gml:pos>
