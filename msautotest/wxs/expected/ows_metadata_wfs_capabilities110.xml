@@ -121,7 +121,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:LowerCorner>-66.724329085098 41.770507630784</ows:LowerCorner>
         <ows:UpperCorner>-57.721680231574 48.477313848494</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL format="text/xml" type="ISOTC211/19115">http://localhost/ows?request=GetMetadata&amp;layer=province</MetadataURL>
+      <MetadataURL format="text/xml" type="TC211">http://localhost/ows?request=GetMetadata&amp;layer=province</MetadataURL>
     </FeatureType>
   </FeatureTypeList>
   <ogc:Filter_Capabilities>

@@ -450,11 +450,10 @@ xmlNodePtr _msMetadataGetContact(xmlNsPtr namespace, char *contact_element, mapO
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "electronicMailAddress", value));
 
-  psORNode = xmlNewChild(psCINode2, namespace, BAD_CAST "onlineResource", NULL);
-  psORNode2 = xmlNewChild(psORNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
-
   value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "onlineresource");
   if (value)
+    psORNode = xmlNewChild(psCINode2, namespace, BAD_CAST "onlineResource", NULL);
+    psORNode2 = xmlNewChild(psORNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
     xmlAddChild(psORNode2, _msMetadataGetURL(namespace, "linkage", value));
 
   xmlAddChild(psCNode, _msMetadataGetCodeList(namespace, "role", "CI_RoleCode", "pointOfContact"));
@@ -604,9 +603,7 @@ xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layer
 
   /* WMS */
   xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/png", "PNG Format", url));
-
   xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/jpeg", "JPEG Format", url));
-  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/gif", "GIF Format", url));
 
   /* WCS */
   if (layer->type == MS_LAYER_RASTER) {
@@ -892,10 +889,10 @@ void msMetadataSetGetMetadataURL(layerObj *lp, const char *url)
   pszMetadataURL = msStringConcatenate(pszMetadataURL, lp->name);
 
   msInsertHashTable(&(lp->metadata), "ows_metadataurl_href", pszMetadataURL);
-  msInsertHashTable(&(lp->metadata), "ows_metadataurl_type", "ISOTC211/19115");
+  msInsertHashTable(&(lp->metadata), "ows_metadataurl_type", "TC211");
   msInsertHashTable(&(lp->metadata), "ows_metadataurl_format", "text/xml");
   msInsertHashTable(&(lp->metadata), "ows_metadatalink_href", pszMetadataURL);
-  msInsertHashTable(&(lp->metadata), "ows_metadatalink_type", "ISOTC211/19115");
+  msInsertHashTable(&(lp->metadata), "ows_metadatalink_type", "TC211");
   msInsertHashTable(&(lp->metadata), "ows_metadatalink_format", "text/xml");
   msFree(pszMetadataURL);
 }
