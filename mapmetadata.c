@@ -604,9 +604,7 @@ xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layer
 
   /* WMS */
   xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/png", "PNG Format", url));
-
   xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/jpeg", "JPEG Format", url));
-  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/gif", "GIF Format", url));
 
   /* WCS */
   if (layer->type == MS_LAYER_RASTER) {
