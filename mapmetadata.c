@@ -89,6 +89,7 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
   char *url = NULL;
   char buffer[32];
   char *epsg_str;
+  char *link_protocol;
 
   xmlNodePtr psNode = NULL;
   xmlNodePtr psORNode = NULL;
@@ -108,6 +109,7 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
     url = msStringConcatenate(url, msEncodeHTMLEntities("&crs="));
     msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "MFCSGO", MS_TRUE, &epsg_str);
     url = msStringConcatenate(url, msEncodeHTMLEntities(epsg_str));
+    link_protocol = "WWW:DOWNLOAD-1.0-http-get-map";
 
     status = msLayerGetExtent(layer, &rect);
 
@@ -127,12 +129,14 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
     }
   }
   else if (strcasecmp(service, "F") == 0) {
+    link_protocol = "WWW:DOWNLOAD-1.0-http--download";
     url = msStringConcatenate(url, msEncodeHTMLEntities("service=WFS&version=1.1.0&request=GetFeature&typename="));
     url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
     url = msStringConcatenate(url, msEncodeHTMLEntities("&outputformat="));
     url = msStringConcatenate(url, msEncodeHTMLEntities(format));
   }
   else if (strcasecmp(service, "C") == 0) {
+    link_protocol = "WWW:DOWNLOAD-1.0-http--download";
     url = msStringConcatenate(url, msEncodeHTMLEntities("service=WCS&version=2.0.1&request=GetCoverage&coverageid="));
     url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
     url = msStringConcatenate(url, msEncodeHTMLEntities("&format="));
@@ -141,7 +145,7 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
 
   xmlAddChild(psORNode, _msMetadataGetURL(namespace, "linkage", url));
 
-  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "protocol", "WWW:DOWNLOAD-1.0-http--download"));
+  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "protocol", link_protocol));
   xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "name", layer->name));
 
   xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "description", desc));
