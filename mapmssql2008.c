@@ -243,10 +243,21 @@ void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint)
   }
 
 #ifdef USE_POINT_Z_M
-  if ( gpi->chProps & SP_HASZVALUES )
+  if ((gpi->chProps & SP_HASZVALUES) && (gpi->chProps & SP_HASMVALUES))
+  {
     p->z = ReadZ(iPoint);
-  if ( gpi->chProps & SP_HASMVALUES )
-    p->z = ReadM(iPoint);
+    p->m = ReadM(iPoint);
+  }
+  else if (gpi->chProps & SP_HASZVALUES)
+  {
+      p->z = ReadZ(iPoint);
+      p->m = 0.0;
+  }
+  else if (gpi->chProps & SP_HASMVALUES)
+  {
+      p->z = 0.0;
+      p->m = ReadZ(iPoint);
+  }
 #endif
 }
 
@@ -271,12 +282,13 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
 
   gpi->chProps = ReadByte(5);
 
+  gpi->nPointSize = 16;
+
   if ( gpi->chProps & SP_HASMVALUES )
-    gpi->nPointSize = 32;
-  else if ( gpi->chProps & SP_HASZVALUES )
-    gpi->nPointSize = 24;
-  else
-    gpi->nPointSize = 16;
+    gpi->nPointSize += 8;
+
+  if ( gpi->chProps & SP_HASZVALUES )
+    gpi->nPointSize += 8;
 
   if ( gpi->chProps & SP_ISSINGLEPOINT ) {
     // single point geometry
