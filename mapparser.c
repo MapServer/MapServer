@@ -212,7 +212,7 @@ typedef union YYSTYPE
   shapeObj *shpval;
 }
 /* Line 193 of yacc.c.  */
-#line 216 "/Users/tbonfort/dev/mapserver/mapparser.c"
+#line 216 "/Users/sdlime/mapserver/sdlime/mapserver/mapparser.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -225,7 +225,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 229 "/Users/tbonfort/dev/mapserver/mapparser.c"
+#line 229 "/Users/sdlime/mapserver/sdlime/mapserver/mapparser.c"
 
 #ifdef short
 # undef short
@@ -2755,7 +2755,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 2759 "/Users/tbonfort/dev/mapserver/mapparser.c"
+#line 2759 "/Users/sdlime/mapserver/sdlime/mapserver/mapparser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3018,6 +3018,8 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_COMPARISON_GE: token = GE; break;
   case MS_TOKEN_COMPARISON_RE: token = RE; break;
   case MS_TOKEN_COMPARISON_IRE: token = IRE; break;
+
+  case MS_TOKEN_COMPARISON_IN: token = IN; break;
 
   case MS_TOKEN_COMPARISON_INTERSECTS: token = INTERSECTS; break;
   case MS_TOKEN_COMPARISON_DISJOINT: token = DISJOINT; break;

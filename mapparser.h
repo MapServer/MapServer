@@ -147,7 +147,7 @@ typedef union YYSTYPE
   shapeObj *shpval;
 }
 /* Line 1529 of yacc.c.  */
-#line 151 "/Users/tbonfort/dev/mapserver/mapparser.h"
+#line 151 "/Users/sdlime/mapserver/sdlime/mapserver/mapparser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
