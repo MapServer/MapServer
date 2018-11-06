@@ -3651,12 +3651,12 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 
           if(comparisonToken == MS_TOKEN_COMPARISON_IN) { /* issue 5490 */
             char **strings=NULL;
-            int nstrings=0;
+            int i, nstrings=0;
 
 	    strings = msStringSplit(node->tokenval.strval, ',', &nstrings);
             if(nstrings > 0) {
 	      native_string = msStringConcatenate(native_string, "(");
-              for(int i=0; i<nstrings; i++) {
+              for(i=0; i<nstrings; i++) {
                 if(i != 0) native_string = msStringConcatenate(native_string, ",");
                 strtmpl = "'%s'";
 		stresc = msPostGISEscapeSQLParam(layer, strings[i]);
