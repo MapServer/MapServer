@@ -4032,7 +4032,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
     if(layer->debug >= 2) msDebug("msPostGISLayerTranslateFilter. There are tokens to process... \n");
 
     node = filter->tokens;
-    while (node != NULL) {      
+    while (node != NULL) {
 
       /*
       ** Do any token caching/tracking here, easier to have it in one place.
@@ -4040,8 +4040,9 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
       if(node->token == MS_TOKEN_BINDING_TIME) {
         bindingToken = node->token;
       } else if(node->token == MS_TOKEN_COMPARISON_EQ || node->token == MS_TOKEN_COMPARISON_NE ||
-         node->token == MS_TOKEN_COMPARISON_GT || node->token == MS_TOKEN_COMPARISON_GE || 
-         node->token == MS_TOKEN_COMPARISON_LT || node->token == MS_TOKEN_COMPARISON_LE) {
+         node->token == MS_TOKEN_COMPARISON_GT || node->token == MS_TOKEN_COMPARISON_GE ||
+         node->token == MS_TOKEN_COMPARISON_LT || node->token == MS_TOKEN_COMPARISON_LE ||
+         node->token == MS_TOKEN_COMPARISON_IN) {
         comparisonToken = node->token;
       }
 
@@ -4066,13 +4067,38 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           msFree(snippet);
           break;
         case MS_TOKEN_LITERAL_STRING:
-          strtmpl = "'%s'";
-          stresc = msPostGISEscapeSQLParam(layer, node->tokenval.strval);
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
-          sprintf(snippet, strtmpl, stresc);
-          native_string = msStringConcatenate(native_string, snippet);
-          msFree(snippet);
-          msFree(stresc);
+
+          if(comparisonToken == MS_TOKEN_COMPARISON_IN) { /* issue 5490 */
+            char **strings=NULL;
+            int i, nstrings=0;
+
+	    strings = msStringSplit(node->tokenval.strval, ',', &nstrings);
+            if(nstrings > 0) {
+	      native_string = msStringConcatenate(native_string, "(");
+              for(i=0; i<nstrings; i++) {
+                if(i != 0) native_string = msStringConcatenate(native_string, ",");
+                strtmpl = "'%s'";
+		stresc = msPostGISEscapeSQLParam(layer, strings[i]);
+		snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+		sprintf(snippet, strtmpl, stresc);
+		native_string = msStringConcatenate(native_string, snippet);
+		msFree(snippet);
+		msFree(stresc);
+              }
+              native_string = msStringConcatenate(native_string, ")");
+            }
+
+            msFreeCharArray(strings, nstrings);
+          } else {
+            strtmpl = "'%s'";
+            stresc = msPostGISEscapeSQLParam(layer, node->tokenval.strval);
+            snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+            sprintf(snippet, strtmpl, stresc);
+            native_string = msStringConcatenate(native_string, snippet);
+            msFree(snippet);
+            msFree(stresc);
+          }
+
           break;
         case MS_TOKEN_LITERAL_TIME: {
 	  snippet = (char *) msSmallMalloc(512);
