@@ -74,6 +74,10 @@ class LineObjTestCase(MapPrimitivesTestCase):
 
         assert error_thrown is True
 
+    def testLineGeoInterface(self):
+        """return point using the  __geo_interface__ protocol"""
+        assert self.line.__geo_interface__ == {"type": "LineString", "coordinates": [(0.0, 1.0), (2.0, 3.0)]}
+
 
 if __name__ == '__main__':
     unittest.main()

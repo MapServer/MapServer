@@ -90,6 +90,14 @@ class PointObjTestCase(unittest.TestCase):
 
         assert p.toString() == p_str, p.toString()
 
+    def testPointGeoInterface(self):
+        """return point using the  __geo_interface__ protocol"""
+        p = mapscript.pointObj(1.0, 1.0, 0.002, 15.0)
+        if hasattr(p, 'z'):
+            assert p.__geo_interface__ == {"type": "Point", "coordinates": (1.0, 1.0, 0.002)}
+        else:
+            assert p.__geo_interface__ == {"type": "Point", "coordinates": (1.0, 1.0)}
+
 
 if __name__ == '__main__':
     unittest.main()
