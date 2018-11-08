@@ -39,21 +39,7 @@
 
 
 
-/**
- * replace wrap characters with \n , respecting maximal line length.
- *
- * returns a pointer to the newly allocated text. memory is controlled
- * inside this function, so the caller MUST use the pointer returned by
- * the function:
- * text = msWrapText(label,text);
- *
- * TODO/FIXME: function will produce erroneous/crashing? results
- * if the wrap character is encoded with multiple bytes
- *
- * see http://mapserver.org/development/rfc/ms-rfc-40.html
- * for a summary of how wrap/maxlength interact on the result
- * of the text transformation
- */
+
 
 
 void initTextPath(textPathObj *ts) {
