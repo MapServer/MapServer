@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_labelcache;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_labelcache_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(labelcache___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -75,7 +78,7 @@ PHP_METHOD(labelCacheObj, freeCache)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_labelcache = (php_labelcache_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_labelcache = MAPSCRIPT_OBJ_P(php_labelcache_object, zobj);
 
   labelCacheObj_freeCache(php_labelcache->labelcache);
 
@@ -96,13 +99,61 @@ void mapscript_create_labelcache(labelCacheObj *labelcache, parent_object parent
 {
   php_labelcache_object * php_labelcache;
   object_init_ex(return_value, mapscript_ce_labelcache);
-  php_labelcache = (php_labelcache_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_labelcache = MAPSCRIPT_OBJ_P(php_labelcache_object, return_value);
   php_labelcache->labelcache = labelcache;
 
   php_labelcache->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_labelcache_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_labelcache_object *php_labelcache;
+
+  php_labelcache = ecalloc(1, sizeof(*php_labelcache) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_labelcache->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_labelcache->zobj, ce);
+
+  php_labelcache->zobj.handlers = &mapscript_labelcache_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_labelcache->parent);
+
+  return &php_labelcache->zobj;
+}
+
+static void mapscript_labelcache_free_object(zend_object *object)
+{
+  php_labelcache_object *php_labelcache;
+
+  php_labelcache = (php_labelcache_object *)((char *)object - XtOffsetOf(php_labelcache_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_labelcache->parent);
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(labelcache)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "labelcacheObj", labelcache_functions);
+  mapscript_ce_labelcache = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_labelcache->create_object = mapscript_labelcache_create_object;
+  mapscript_ce_labelcache->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_labelcache_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_labelcache_object_handlers));
+  mapscript_labelcache_object_handlers.free_obj = mapscript_labelcache_free_object;
+  mapscript_labelcache_object_handlers.offset   = XtOffsetOf(php_labelcache_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_labelcache_object_destroy(void *object TSRMLS_DC)
 {
   php_labelcache_object *php_labelcache = (php_labelcache_object *)object;
@@ -144,3 +195,4 @@ PHP_MINIT_FUNCTION(labelcache)
 
   return SUCCESS;
 }
+#endif

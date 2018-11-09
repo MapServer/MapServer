@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_web;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_web_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(web___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -69,7 +72,7 @@ PHP_METHOD(webObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
   IF_GET_STRING("log", php_web->web->log)
   else IF_GET_STRING("imagepath", php_web->web->imagepath)
@@ -111,7 +114,7 @@ PHP_METHOD(webObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
   IF_SET_STRING("log", php_web->web->log, value)
   else IF_SET_STRING("imagepath", php_web->web->imagepath, value)
@@ -157,7 +160,7 @@ PHP_METHOD(webObj, updateFromString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
   status =  webObj_updateFromString(php_web->web, snippet);
 
@@ -185,14 +188,14 @@ PHP_METHOD(webObj, convertToString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
   value =  webObj_convertToString(php_web->web);
 
   if (value == NULL)
-    RETURN_STRING("", 1);
+    MAPSCRIPT_RETURN_STRING("", 1);
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -211,7 +214,7 @@ PHP_METHOD(webObj, free)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
   MAPSCRIPT_DELREF(php_web->extent);
   MAPSCRIPT_DELREF(php_web->metadata);
@@ -235,13 +238,68 @@ void mapscript_create_web(webObj *web, parent_object parent, zval *return_value 
 {
   php_web_object * php_web;
   object_init_ex(return_value, mapscript_ce_web);
-  php_web = (php_web_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_web = MAPSCRIPT_OBJ_P(php_web_object, return_value);
   php_web->web = web;
 
   php_web->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_web_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_web_object *php_web;
+
+  php_web = ecalloc(1, sizeof(*php_web) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_web->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_web->zobj, ce);
+
+  php_web->zobj.handlers = &mapscript_web_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_web->parent);
+  ZVAL_UNDEF(&php_web->extent);
+  ZVAL_UNDEF(&php_web->metadata);
+  ZVAL_UNDEF(&php_web->validation);
+
+  return &php_web->zobj;
+}
+
+static void mapscript_web_free_object(zend_object *object)
+{
+  php_web_object *php_web;
+
+  php_web = (php_web_object *)((char *)object - XtOffsetOf(php_web_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_web->parent);
+  MAPSCRIPT_DELREF(php_web->extent);
+  MAPSCRIPT_DELREF(php_web->metadata);
+  MAPSCRIPT_DELREF(php_web->validation);
+
+  /* We don't need to free the webObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(web)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "webObj", web_functions);
+  mapscript_ce_web = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_web->create_object = mapscript_web_create_object;
+  mapscript_ce_web->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_web_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_web_object_handlers));
+  mapscript_web_object_handlers.free_obj = mapscript_web_free_object;
+  mapscript_web_object_handlers.offset   = XtOffsetOf(php_web_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_web_object_destroy(void *object TSRMLS_DC)
 {
   php_web_object *php_web = (php_web_object *)object;
@@ -289,3 +347,4 @@ PHP_MINIT_FUNCTION(web)
 
   return SUCCESS;
 }
+#endif

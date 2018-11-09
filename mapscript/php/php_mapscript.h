@@ -61,6 +61,71 @@
 
 #define MAPSCRIPT_VERSION "($Revision$ $Date$)"
 
+#define MAPSCRIPT_VERSION "($Revision$ $Date$)"
+
+#if PHP_VERSION_ID >= 70000
+#define MAPSCRIPT_ZVAL zval
+#define MAPSCRIPT_ZVAL_P zval*
+
+#define Z_DVAL_PP(zv) Z_DVAL_P(zv)
+#define Z_LVAL_PP(zv) Z_LVAL_P(zv)
+#define Z_STRVAL_PP(zv) Z_STRVAL_P(zv)
+
+#define MAPSCRIPT_OBJ_P(t, o) (t *)((char *)(Z_OBJ_P(o)) - XtOffsetOf(t, zobj))
+#define MAPSCRIPT_OBJ(t, o) (t *)((char *)(Z_OBJ(o)) - XtOffsetOf(t, zobj))
+#define MAPSCRIPT_RETURN_STRINGL(a, b, c) RETURN_STRINGL(a, b)
+#define MAPSCRIPT_RETURN_STRING(a, b) RETURN_STRING(a)
+#define MAPSCRIPT_RETVAL_STRING(a, b) RETVAL_STRING(a)
+#define MAPSCRIPT_RETURN_STRINGL(a, b, c) RETURN_STRINGL(a, b)
+#define MAPSCRIPT_ZVAL_STRING(a, b, c) ZVAL_STRING(a, b)
+
+#define mapscript_is_auto_global(s, l) zend_is_auto_global_str(s, l)
+#define mapscript_array_init(zv) array_init(&zv)
+#define mapscript_add_next_index_string(a, b, c) add_next_index_string(a, b)
+#define mapscript_add_assoc_string(zv, b, c, d) add_assoc_string(&zv, b, c)
+#define mapscript_hash_get_current_key(a, b, c, d) zend_hash_get_current_key(a, b, c)
+#define mapscript_hash_update(ht, keyname, data) \
+  zend_hash_str_update(ht, keyname, strlen(keyname)+1, &data);
+
+#define MAPSCRIPT_TYPE(zv) Z_TYPE(zv)
+#define MAPSCRIPT_OBJCE(zv) Z_OBJCE(zv)
+#define MAKE_STD_ZVAL(zv) ZVAL_UNDEF(&zv)
+#define ZVAL_NOT_UNDEF(zv) !(Z_ISUNDEF(zv))
+#define ZVAL_IS_UNDEF(zv) (Z_ISUNDEF(zv))
+#define ZVAL_SET_UNDEF(zv) ZVAL_UNDEF(&zv)
+#define INIT_ZVAL(zv)
+#define INIT_PZVAL(a)
+
+#else
+
+#define MAPSCRIPT_ZVAL zval*
+#define MAPSCRIPT_ZVAL_P zval**
+
+#define MAPSCRIPT_OBJ_P(t, o) (t *) zend_object_store_get_object(o TSRMLS_CC)
+#define MAPSCRIPT_OBJ(t, o) (t *) zend_object_store_get_object(o TSRMLS_CC)
+#define MAPSCRIPT_RETURN_STRINGL(a, b, c) RETURN_STRINGL(a, b, c)
+#define MAPSCRIPT_RETURN_STRING(a, b) RETURN_STRING(a, b)
+#define MAPSCRIPT_RETVAL_STRING(a, b) RETVAL_STRING(a, b)
+#define MAPSCRIPT_RETVAL_STRINGL(a, b, c) RETURN_STRINGL(a, b, c)
+#define MAPSCRIPT_ZVAL_STRING(a, b, c) ZVAL_STRING(a, b, c)
+
+#define mapscript_is_auto_global(s, l) zend_is_auto_global(s, l)
+#define mapscript_array_init(zv) array_init(zv)
+#define mapscript_add_next_index_string(a, b, c) add_next_index_string(a, b, c)
+#define mapscript_add_assoc_string(a, b, c, d) add_assoc_string(a, b, c, d)
+#define mapscript_hash_get_current_key(a, b, c, d) zend_hash_get_current_key(a, b, c, d)
+#define mapscript_hash_update(ht, key, data) \
+  zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key)+1, &data, sizeof(data), NULL)
+
+#define MAPSCRIPT_TYPE(zv) Z_TYPE_P(zv)
+#define MAPSCRIPT_OBJCE(zv) Z_OBJCE_P(zv)
+#define ZVAL_NOT_UNDEF(zv) (zv != NULL)
+#define ZVAL_IS_UNDEF(zv) (zv == NULL)
+#define ZVAL_SET_UNDEF(zv) zv = NULL
+
+#endif
+
+
 extern zend_module_entry mapscript_module_entry;
 #define phpext_mapscript_ptr &mapscript_module_entry
 
@@ -104,6 +169,252 @@ extern zend_module_entry mapscript_module_entry;
 #endif
 
 /* MapScript objects */
+#if PHP_VERSION_ID >= 70000
+typedef struct _parent_object {
+  zval val; // the zval of the parent
+  zval *child_ptr; // a ptr to a parent property, which is the zval of the child object.
+  // should be set to NULL when the child is destroyed
+} parent_object;
+
+typedef struct _php_color_object {
+  parent_object parent;
+  colorObj *color;
+  zend_object zobj;
+} php_color_object;
+
+typedef struct _php_rect_object {
+  parent_object parent;
+  int is_ref;
+  rectObj *rect;
+  zend_object zobj;
+} php_rect_object;
+
+typedef struct _php_hashtable_object {
+  parent_object parent;
+  hashTableObj *hashtable;
+  zend_object zobj;
+} php_hashtable_object;
+
+typedef struct _php_symbol_object {
+  parent_object parent;
+  symbolObj *symbol;
+  zend_object zobj;
+} php_symbol_object;
+
+typedef struct _php_class_object {
+  parent_object parent; //old layer
+  zval metadata;
+  zval leader;
+  classObj *class;
+  zend_object zobj;
+} php_class_object;
+
+typedef struct _php_image_object {
+  imageObj *image;
+  zend_object zobj;
+} php_image_object;
+
+typedef struct _php_web_object {
+  parent_object parent;
+  zval extent;
+  zval metadata;
+  zval validation;
+  webObj *web;
+  zend_object zobj;
+} php_web_object;
+
+typedef struct _php_legend_object {
+  parent_object parent;
+  zval outlinecolor;
+  zval label;
+  zval imagecolor;
+  legendObj *legend;
+  zend_object zobj;
+} php_legend_object;
+
+typedef struct _php_outputformat_object {
+  parent_object parent;
+  int is_ref;
+  outputFormatObj *outputformat;
+  zend_object zobj;
+} php_outputformat_object;
+
+typedef struct _php_querymap_object {
+  parent_object parent;
+  zval color;
+  queryMapObj *querymap;
+  zend_object zobj;
+} php_querymap_object;
+
+typedef struct _php_grid_object {
+  parent_object parent;
+  graticuleObj *grid;
+  zend_object zobj;
+} php_grid_object;
+
+typedef struct _php_error_object {
+  errorObj *error;
+  zend_object zobj;
+} php_error_object;
+
+typedef struct _php_referencemap_object {
+  parent_object parent;
+  zval extent;
+  zval color;
+  zval outlinecolor;
+  referenceMapObj *referencemap;
+  zend_object zobj;
+} php_referencemap_object;
+
+typedef struct _php_label_object {
+  parent_object parent;
+  int is_ref;
+  zval color;
+  zval outlinecolor;
+  zval shadowcolor;
+  zval backgroundcolor;
+  zval backgroundshadowcolor;
+  zval leader;
+  labelObj *label;
+  zend_object zobj;
+} php_label_object;
+
+typedef struct _php_style_object {
+  parent_object parent;
+  zval color;
+  zval outlinecolor;
+  zval backgroundcolor;
+  zval mincolor;
+  zval maxcolor;
+  styleObj *style;
+  zend_object zobj;
+} php_style_object;
+
+typedef struct _php_projection_object {
+  parent_object parent;
+  int is_ref;
+  projectionObj *projection;
+  zend_object zobj;
+} php_projection_object;
+
+typedef struct _php_point_object {
+  parent_object parent;
+  int is_ref;
+  pointObj *point;
+  zend_object zobj;
+} php_point_object;
+
+typedef struct _php_line_object {
+  parent_object parent;
+  int is_ref;
+  lineObj *line;
+  zend_object zobj;
+} php_line_object;
+
+typedef struct _php_shape_object {
+  parent_object parent;
+  zval bounds;
+  zval values;
+  int is_ref;
+  shapeObj *shape;
+  zend_object zobj;
+} php_shape_object;
+
+typedef struct _php_shapefile_object {
+  zval bounds;
+  shapefileObj *shapefile;
+  zend_object zobj;
+} php_shapefile_object;
+
+#ifdef disabled
+typedef struct _php_labelcache_object {
+  parent_object parent;
+  labelCacheObj *labelcache;
+  zend_object zobj;
+} php_labelcache_object;
+#endif
+
+typedef struct _php_labelleader_object {
+  parent_object parent;
+  labelLeaderObj *labelleader;
+  zend_object zobj;
+} php_labelleader_object;
+
+#ifdef disabled
+typedef struct _php_labelcachemember_object {
+  parent_object parent;
+  zval labels; /* should be immutable */
+  zval point; /* should be immutable */
+  zval styles; /* should be immutable */
+  zval poly; /* should be immutable */
+  labelCacheMemberObj *labelcachemember;
+  zend_object zobj;
+} php_labelcachemember_object;
+#endif
+
+typedef struct _php_result_object {
+  parent_object parent;
+  resultObj *result;
+  zend_object zobj;
+} php_result_object;
+
+typedef struct _php_scalebar_object {
+  parent_object parent;
+  zval color;
+  zval backgroundcolor;
+  zval outlinecolor;
+  zval label;
+  zval imagecolor;
+  scalebarObj *scalebar;
+  zend_object zobj;
+} php_scalebar_object;
+
+typedef struct _php_owsrequest_object {
+  cgiRequestObj *cgirequest;
+  zend_object zobj;
+} php_owsrequest_object;
+
+typedef struct _php_layer_object {
+  parent_object parent; //old map
+  zval offsite;
+  zval grid;
+  zval metadata;
+  zval bindvals;
+  zval projection;
+  zval cluster;
+  zval extent;
+  int is_ref;
+  layerObj *layer;
+  zend_object zobj;
+} php_layer_object;
+
+typedef struct _php_map_object {
+  zval outputformat;
+  zval extent;
+  zval web;
+  zval reference;
+  zval imagecolor;
+  zval scalebar;
+  zval legend;
+  zval querymap;
+#ifdef disabled
+  zval labelcache;
+#endif
+  zval projection;
+  zval metadata;
+  zval configoptions;
+  mapObj *map;
+  zend_object zobj;
+} php_map_object;
+
+typedef struct _php_cluster_object {
+  parent_object parent;
+  int is_ref;
+  clusterObj *cluster;
+  zend_object zobj;
+} php_cluster_object;
+#else
+/* PHP5 object structs */
 typedef struct _parent_object {
   zval *val; // the zval of the parent
   zval **child_ptr; // a ptr to a parent property, which point to the child object.
@@ -347,6 +658,7 @@ typedef struct _php_cluster_object {
   int is_ref;
   clusterObj *cluster;
 } php_cluster_object;
+#endif
 
 /* Lifecyle functions*/
 PHP_MINIT_FUNCTION(mapscript);
@@ -403,6 +715,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferString);
 PHP_FUNCTION(ms_ioResetHandlers);
 PHP_FUNCTION(ms_ioStripStdoutBufferContentType);
 PHP_FUNCTION(ms_ioStripStdoutBufferContentHeaders);
+PHP_FUNCTION(ms_ioGetAndStripStdoutBufferMimeHeaders);
 PHP_FUNCTION(ms_ioGetStdoutBufferBytes);
 
 /* object constructors */
@@ -457,14 +770,17 @@ extern zend_class_entry *mapscript_ce_layer;
 extern zend_class_entry *mapscript_ce_map;
 extern zend_class_entry *mapscript_ce_cluster;
 
+#if PHP_VERSION_ID < 70000
 /* PHP Object constructors */
 extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
     void (*zend_objects_free_object) TSRMLS_DC);
 extern zend_object_value mapscript_object_new_ex(zend_object *zobj, zend_class_entry *ce,
     void (*zend_objects_free_object),
     zend_object_handlers *object_handlers TSRMLS_DC);
+#endif /* PHP_VERSION_ID < 70000 */
+
 extern void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer,
-                                   void *internal_object, zval **php_object_storage TSRMLS_DC);
+                                   void *internal_object, MAPSCRIPT_ZVAL_P php_object_storage TSRMLS_DC);
 extern void mapscript_create_color(colorObj *color, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_rect(rectObj *rect, parent_object php_parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_hashtable(hashTableObj *hashtable, parent_object parent, zval *return_value TSRMLS_DC);
@@ -504,9 +820,17 @@ extern void mapscript_create_cluster(clusterObj *cluster, parent_object php_pare
 
 /* Exported functions for PHP Mapscript API */
 /* throw a MapScriptException */
+#if  PHP_VERSION_ID >= 70000
+extern zend_object * mapscript_throw_exception(char *format TSRMLS_DC, ...);
+#else
 extern zval * mapscript_throw_exception(char *format TSRMLS_DC, ...);
+#endif
 /* print all MapServer errors (as Warning) and throw a MapScriptException */
+#if PHP_VERSION_ID >= 70000
+extern zend_object* mapscript_throw_mapserver_exception(char *format TSRMLS_DC, ...);
+#else
 extern zval* mapscript_throw_mapserver_exception(char *format TSRMLS_DC, ...);
+#endif
 extern void mapscript_report_mapserver_error(int error_type TSRMLS_DC);
 extern void mapscript_report_php_error(int error_type, char *format TSRMLS_DC, ...);
 
