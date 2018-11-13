@@ -1,0 +1,105 @@
+#
+# Test Filter Expressions
+#
+# REQUIRES: INPUT=POSTGIS OUTPUT=PNG
+#
+# RUN_PARMS: filters_postgis_test001.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test001 -o [RESULT]
+# RUN_PARMS: filters_postgis_test002.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test002 -o [RESULT]
+# RUN_PARMS: filters_postgis_test003.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test003 -o [RESULT]
+# RUN_PARMS: filters_postgis_test004.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test004 -o [RESULT]
+# RUN_PARMS: filters_postgis_test005.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test005 -o [RESULT]
+# RUN_PARMS: filters_postgis_test006.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test006 -o [RESULT]
+# RUN_PARMS: filters_postgis_test007.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test007 -o [RESULT]
+# RUN_PARMS: filters_postgis_test008.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test008 -o [RESULT]
+# RUN_PARMS: filters_postgis_test009.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test009 -o [RESULT]
+#
+MAP
+  NAME 'filters_postgis'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  
+  SIZE 300 300
+  IMAGETYPE png8
+
+  # Simple string comparison
+  LAYER
+    NAME 'filters_postgis_test001'
+    FILTER 'Aitkin'
+    FILTERITEM 'cty_name'
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Simple string comparison (case insensitive)
+  LAYER
+    NAME 'filters_postgis_test002'
+    FILTER 'aitkin'i
+    FILTERITEM 'cty_name'
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Simple regex comparison
+  LAYER
+    NAME 'filters_postgis_test003'
+    FILTER /^S/
+    FILTERITEM 'cty_name'
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Simple regex comparison (case insensitive)
+  LAYER
+    NAME 'filters_postgis_test004'
+    FILTER /^s/i
+    FILTERITEM 'cty_name'
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Logical expression, string equality
+  LAYER
+    NAME 'filters_postgis_test005'
+    FILTER ('[cty_name]' = 'Itasca')
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Logical expression, string equality (case insensitive)
+  LAYER
+    NAME 'filters_postgis_test006'
+    FILTER ('[cty_name]' =* 'wadena')
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Logical expression, regex
+  LAYER
+    NAME 'filters_postgis_test007'
+    FILTER ('[cty_name]' ~ '^A')
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Logical expression, regex (case insensitive)
+  LAYER
+    NAME 'filters_postgis_test008'
+    FILTER ('[cty_name]' ~* '^a')
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Logical expression, in operator
+  LAYER
+    NAME 'filters_postgis_test009'
+    FILTER ('[cty_abbr]' in 'ANOK,RAMS,CARL')
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  # Logical expression, time operands (need to get this test included)
+  LAYER
+    NAME 'filters_postgis_test010'
+    FILTER (`[lastmod]` > `2010-12-01`)
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  LAYER
+    NAME 'bdry_counpy2'
+    TYPE LINE
+    DATA 'data/bdry_counpy2.shp'
+    STATUS DEFAULT
+    CLASS COLOR 231 231 231 END
+  END
+END

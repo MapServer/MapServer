@@ -455,10 +455,11 @@ xmlNodePtr _msMetadataGetContact(xmlNsPtr namespace, char *contact_element, mapO
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "electronicMailAddress", value));
 
   value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "onlineresource");
-  if (value)
+  if (value) {
     psORNode = xmlNewChild(psCINode2, namespace, BAD_CAST "onlineResource", NULL);
     psORNode2 = xmlNewChild(psORNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
     xmlAddChild(psORNode2, _msMetadataGetURL(namespace, "linkage", value));
+  }
 
   xmlAddChild(psCNode, _msMetadataGetCodeList(namespace, "role", "CI_RoleCode", "pointOfContact"));
 
