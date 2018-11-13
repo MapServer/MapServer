@@ -556,7 +556,8 @@ static void setConnError(msODBCconn *conn)
 /* Connect to db */
 static msODBCconn * mssql2008Connect(const char * connString)
 {
-  SQLCHAR fullConnString[1024];
+  SQLCHAR outConnString[1024];
+  SQLSMALLINT outConnStringLen;
   SQLRETURN rc;
   msODBCconn * conn = msSmallMalloc(sizeof(msODBCconn));
 
@@ -568,13 +569,17 @@ static msODBCconn * mssql2008Connect(const char * connString)
 
   SQLAllocHandle(SQL_HANDLE_DBC, conn->henv, &conn->hdbc);
 
-  snprintf((char*)fullConnString, sizeof(fullConnString), "DRIVER=SQL Server;%s", connString);
-
+  if (strcasestr(connString, "DRIVER=") == 0)
   {
-    SQLCHAR outConnString[1024];
-    SQLSMALLINT outConnStringLen;
+      SQLCHAR fullConnString[1024];
 
-    rc = SQLDriverConnect(conn->hdbc, NULL, fullConnString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
+      snprintf((char*)fullConnString, sizeof(fullConnString), "DRIVER={SQL Server};%s", connString);
+
+      rc = SQLDriverConnect(conn->hdbc, NULL, fullConnString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
+  }
+  else
+  {
+      rc = SQLDriverConnect(conn->hdbc, NULL, connString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
   }
 
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
