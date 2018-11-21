@@ -986,7 +986,8 @@ int msQueryByFilter(mapObj *map)
       return MS_SUCCESS;
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()");
+  if( lp->debug >= MS_DEBUGLEVEL_V )
+    msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()");
   return MS_FAILURE;
 
 query_error:
@@ -1284,7 +1285,8 @@ int msQueryByRect(mapObj *map)
       return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()");
+  if( lp->debug >= MS_DEBUGLEVEL_V )
+    msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()");
   return(MS_FAILURE);
 }
 
@@ -1601,7 +1603,8 @@ int msQueryByFeatures(mapObj *map)
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0) return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()");
+  if( lp->debug >= MS_DEBUGLEVEL_V )
+    msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()");
   return(MS_FAILURE);
 }
 
@@ -1836,7 +1839,8 @@ int msQueryByPoint(mapObj *map)
       return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()");
+  if( lp->debug >= MS_DEBUGLEVEL_V )
+    msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()");
   return(MS_FAILURE);
 }
 
@@ -2115,7 +2119,8 @@ int msQueryByShape(mapObj *map)
       return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()");
+  if( lp->debug >= MS_DEBUGLEVEL_V )
+    msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()");
   return(MS_FAILURE);
 }
 
