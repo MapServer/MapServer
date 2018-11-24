@@ -30,10 +30,9 @@
 ============================================================================
 */
 
+%module mapscript
 #ifdef SWIGPHP
 %module mapscriptng
-#else
-%module mapscript
 #endif
 
 #ifdef SWIGCSHARP
