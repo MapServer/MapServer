@@ -1,6 +1,7 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 find_package(PythonInterp)
+find_python_module(setuptools REQUIRED)
 
 # Python library/header finding doesn't seem to honor the python
 # interpreter that was found beforehand, and defaults to the system
