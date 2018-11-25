@@ -144,7 +144,7 @@ add_custom_command(
 
 install(CODE "
   execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} setup.py install
+    COMMAND ${PYTHON_EXECUTABLE} setup.py install --root=${PYTHON_SITE_PACKAGES} 
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
   )
 ")
