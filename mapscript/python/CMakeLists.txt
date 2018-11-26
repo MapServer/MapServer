@@ -142,15 +142,35 @@ add_custom_command(
 # set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py)
 # install(FILES ${mapscript_files} DESTINATION ${PYTHON_SITE_PACKAGES})
 
-install(CODE "
+
+    
+install(  
+  CODE "
+  
+  if(DEFINED ENV{DESTDIR})
+    SET(PYTHON_ROOT \$ENV{DESTDIR}\)
+  else()
+    SET(PYTHON_ROOT \"${PYTHON_SITE_PACKAGES}\")
+  endif()
+
+  if(DEFINED CMAKE_INSTALL_PREFIX)
+    SET(PYTHON_INSTALL_LIB \${CMAKE_INSTALL_PREFIX})
+  else()
+    SET(PYTHON_INSTALL_LIB \${PYTHON_SITE_PACKAGES}\)
+  endif()
+
+  if(NOT WIN32)
+    SET(ENV{PYTHONPATH} \${PYTHON_ROOT}:\$ENV{PYTHONPATH})
+  endif()
+
   execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} setup.py install --root=${PYTHON_SITE_PACKAGES} 
+    COMMAND ${PYTHON_EXECUTABLE} setup.py install --root=\${PYTHON_ROOT} --install-lib=\${PYTHON_INSTALL_LIB}
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
   )
 ")
 
-message(STATUS "CMake version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
-message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
-message(STATUS "Python site packages: ${PYTHON_SITE_PACKAGES}")
+message(STATUS "Python Executable: ${PYTHON_EXECUTABLE}")
+message(STATUS "Python Site Packages: ${PYTHON_SITE_PACKAGES}")
