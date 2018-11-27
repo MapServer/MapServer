@@ -2,7 +2,7 @@ Python MapScript for MapServer 7.2.1 README
 ===========================================
 
 :Author: MapServer Team
-:Last Updated: 2018-10-12
+:Last Updated: 2018-11-28
 
 Introduction
 ------------
@@ -51,8 +51,8 @@ running correctly.
 ..
     py3 SWIG flag adds type annotations
 
-Installation
-------------
+Installation on Windows
+-----------------------
 
 To use mapscript you will need to add the MapServer binaries to your system path. 
 On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries. 
@@ -61,11 +61,11 @@ On Windows you can use the following, replacing ``C:\MapServer\bin`` with the lo
 
     SET PATH=C:\MapServer\bin;%PATH%
 
-Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`. 
+Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`_. 
 To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1911-x64-gdal-2-3-mapserver-7-2``
 for mapscript 7.2. 
 
-When using these packages the MapServer path will be similar to `C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin`. 
+When using these packages the MapServer path will be similar to ``C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin``. 
 
 Prior to installing mapscript it is recommended to update pip to the latest version with the following command:
 
@@ -106,6 +106,40 @@ If your version of mapscript does not match your version of MapServer you may in
     ImportError: DLL load failed: The specified module could not be found.
     ImportError: DLL load failed: The specified procedure could not be found.
 
+Installation on Unix
+--------------------
+
+For Unix users there are two approaches to installing mapscript. The first is to install the ``python-mapscript`` package using a package manager. For example on
+Ubuntu the following command can be used:
+
+.. code-block:: bat
+
+    sudo apt-get install python-mapscript
+
+The second approach is to build and install the Python mapscript module from source. Full details on compiling MapServer from source are detailed on the
+`Compiling on Unix <https://www.mapserver.org/installation/unix.html>`_ page. To make sure Python mapscript is built alongside MapServer the following flag needs to be set:
+
+.. code-block:: bat
+
+    -DWITH_PYTHON=ON
+
+To configure the path of the mapscript installation location ``-DCMAKE_INSTALL_PREFIX`` can be set, e.g. 
+
+.. code-block:: bat
+
+    sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+
+When installing the `DESTDIR <https://cmake.org/cmake/help/latest/envvar/DESTDIR.html>`_ variable can be set (note ``DESTDIR`` is not used on Windows)
+to install mapscript to a non-default location. E.g.
+
+.. code-block:: bat
+
+    make install DESTDIR=/tmp
+
+In summary the ``install`` target runs the ``setup.py install`` command using custom paths (when set) similar to below:
+
+    python setup.py install --root=${DESTDIR} --prefix={CMAKE_INSTALL_PREFIX}
+
 Quickstart
 ----------
 
@@ -118,19 +152,19 @@ To open an existing Mapfile:
 
     >>> import mapscript
     >>> test_map = mapscript.mapObj(r"C:\Maps\mymap.map")
-    >>> e = test_map.extent
+    >>> extent = test_map.extent
 
 Create a layer from a string:
 
 .. code-block:: python
 
     >>> import mapscript
-    >>> lo = mapscript.fromstring("""LAYER NAME "test" TYPE POINT END""")
-    >>> lo
+    >>> layer = mapscript.fromstring("""LAYER NAME "test" TYPE POINT END""")
+    >>> layer
     <mapscript.layerObj; proxy of C layerObj instance at ...>
-    >>> lo.name
+    >>> layer.name
     'test'
-    >>> lo.type == mapscript.MS_LAYER_POINT
+    >>> layer.type == mapscript.MS_LAYER_POINT
     True
 
 Building the Mapscript Module
@@ -139,14 +173,14 @@ Building the Mapscript Module
 The mapscript module is built as part of the MapServer CMake build process. This is configured using the ``mapserver/mapscript/CMakeLists.txt`` file. 
 
 Before the switch to CMake MapServer mapscript was built using distutils and ``setup.py``. Now the ``setup.py.in`` file is used as a template that
-is filled with the MapServer version number and used to created wheel files for distribution. 
+is filled with the MapServer version number and used to created wheel files for distribution, or install mapscript directly on the build machine.  
 
 The build process works as follows. 
 
 + CMake runs SWIG. This uses the SWIG interface files to create a ``mapscriptPYTHON_wrap.c`` file, 
   and a ``mapscript.py`` file containing the Python wrapper to the mapscript binary module. 
 + CMake then uses the appropriate compiler on the system to compile the ``mapscriptPYTHON_wrap.c`` file into a Python binary module -
-  ``_mapscript.pyd`` file on Windows, and a ``_mapscript.so`` file on Windows. 
+  ``_mapscript.pyd`` file on Windows, and a ``_mapscript.so`` file on Unix. 
 
 ``CMakeLists.txt`` is configured with a ``pythonmapscript-wheel`` target that copies all the required files to the output build folder where they are then packaged
 into a Python wheel. The wheel can be built using the following command:
