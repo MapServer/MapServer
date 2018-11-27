@@ -44,8 +44,6 @@ swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT_NAME _mapscript)
 
-execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 set(SETUP_PY_IN "${PROJECT_SOURCE_DIR}/mapscript/python/setup.py.in")
 set(SETUP_PY_TEMP "${CMAKE_CURRENT_BINARY_DIR}/setup.py.temp")
 
@@ -139,38 +137,26 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
 )
 
-# set(mapscript_files $<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}> $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py)
-# install(FILES ${mapscript_files} DESTINATION ${PYTHON_SITE_PACKAGES})
-
-
-    
 install(  
   CODE "
-  
-  if(DEFINED ENV{DESTDIR})
-    SET(PYTHON_ROOT \$ENV{DESTDIR}\)
-  else()
-    SET(PYTHON_ROOT \"${PYTHON_SITE_PACKAGES}\")
-  endif()
+    if(DEFINED ENV{DESTDIR})
+      SET(PYTHON_ROOT \"--root=\$ENV{DESTDIR}\")
+      SET(ENV{PYTHONPATH} \$ENV{DESTDIR}:\$ENV{PYTHONPATH})
+    endif()
 
-  if(DEFINED CMAKE_INSTALL_PREFIX)
-    SET(PYTHON_INSTALL_LIB \${CMAKE_INSTALL_PREFIX})
-  else()
-    SET(PYTHON_INSTALL_LIB \${PYTHON_SITE_PACKAGES}\)
-  endif()
+    if(DEFINED CMAKE_INSTALL_PREFIX)
+      SET(PYTHON_INSTALL_LIB \"--install-lib=\${CMAKE_INSTALL_PREFIX}\")
+      SET(ENV{PYTHONPATH} \${CMAKE_INSTALL_PREFIX}:\$ENV{PYTHONPATH})
+    endif()
 
-  if(NOT WIN32)
-    SET(ENV{PYTHONPATH} \${PYTHON_ROOT}:\$ENV{PYTHONPATH})
-  endif()
-
-  execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} setup.py install --root=\${PYTHON_ROOT} --install-lib=\${PYTHON_INSTALL_LIB}
-    WORKING_DIRECTORY ${OUTPUT_FOLDER}
-  )
-")
+    execute_process(
+      COMMAND ${PYTHON_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_INSTALL_LIB}
+      WORKING_DIRECTORY ${OUTPUT_FOLDER}
+    )
+  "
+)
 
 message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
 message(STATUS "Python Executable: ${PYTHON_EXECUTABLE}")
-message(STATUS "Python Site Packages: ${PYTHON_SITE_PACKAGES}")
