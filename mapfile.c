@@ -525,7 +525,7 @@ static void writeKeyword(FILE *stream, int indent, const char *name, int value, 
   va_end(argp);
 }
 
-static void writeDimension(FILE *stream, int indent, const char *name, int x, int y, char *bind_x, char *bind_y)
+static void writeDimension(FILE *stream, int indent, const char *name, double x, double y, char *bind_x, char *bind_y)
 {
   writeIndent(stream, ++indent);
   if(bind_x) msIO_fprintf(stream, "%s [%s] ", name, bind_x);
