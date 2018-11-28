@@ -7,8 +7,10 @@ find_python_module(setuptools REQUIRED)
 # interpreter that was found beforehand, and defaults to the system
 # python. We first try to find python.h and libpython.so ourselves
 # from the hints given by distutils and sys
-execute_process ( COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_inc; print(get_python_inc(True))" OUTPUT_VARIABLE PYTHON_INC OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process ( COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.prefix)" OUTPUT_VARIABLE PYTHON_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_inc; print(get_python_inc(True))" OUTPUT_VARIABLE PYTHON_INC OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.prefix)" OUTPUT_VARIABLE PYTHON_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 find_path(PYTHON_INCLUDE_PATH Python.h
   HINTS ${PYTHON_INC}
@@ -139,18 +141,19 @@ add_custom_command(
 
 install(  
   CODE "
+  
+    SET(ENV{PYTHONPATH} \${PYTHON_SITE_PACKAGES}:\$ENV{PYTHONPATH})
+      
     if(DEFINED ENV{DESTDIR})
       SET(PYTHON_ROOT \"--root=\$ENV{DESTDIR}\")
-      SET(ENV{PYTHONPATH} \$ENV{DESTDIR}:\$ENV{PYTHONPATH})
     endif()
-
+  
     if(DEFINED CMAKE_INSTALL_PREFIX)
-      SET(PYTHON_INSTALL_LIB \"--install-lib=\${CMAKE_INSTALL_PREFIX}\")
-      SET(ENV{PYTHONPATH} \${CMAKE_INSTALL_PREFIX}:\$ENV{PYTHONPATH})
+      SET(PYTHON_PREFIX \"--prefix=\${CMAKE_INSTALL_PREFIX}\")
     endif()
 
     execute_process(
-      COMMAND ${PYTHON_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_INSTALL_LIB}
+      COMMAND ${PYTHON_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_PREFIX}
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "
@@ -160,3 +163,4 @@ message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
 message(STATUS "Python Executable: ${PYTHON_EXECUTABLE}")
+message(STATUS "Python site packages: ${PYTHON_SITE_PACKAGES}")
