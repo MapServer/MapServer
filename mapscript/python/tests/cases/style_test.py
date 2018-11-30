@@ -203,6 +203,7 @@ class NewStylesTestCase(MapTestCase):
         assert new_style2.offsetx == 10.5
         assert new_style2.offsety == 20.75
 
+
 class BrushCachingTestCase(MapTestCase):
 
     def testDrawMapWithSecondPolygon(self):
