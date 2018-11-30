@@ -175,6 +175,33 @@ class NewStylesTestCase(MapTestCase):
         self.assertRaises(mapscript.MapServerChildError,
                           class0.insertStyle, None)
 
+    def testConvertToString(self):
+        """ensure styles can be created and output to strings
+        in a round trip"""
+        input_string = """
+            STYLE
+                SIZE 7.25
+                COLOR 255 0 0
+                OFFSET 10.5 20.75
+            END
+        """
+
+        new_style = mapscript.fromstring(input_string)
+        assert new_style.size == 7.25
+        assert new_style.color.red == 255
+        assert new_style.color.green == 0
+        assert new_style.color.blue == 0
+
+        assert new_style.offsetx == 10.5
+        assert new_style.offsety == 20.75
+
+        output_string = new_style.convertToString()
+        new_style2 = mapscript.fromstring(output_string)
+
+        # ensure attributes are output as doubles
+        assert new_style.size == 7.25
+        assert new_style2.offsetx == 10.5
+        assert new_style2.offsety == 20.75
 
 class BrushCachingTestCase(MapTestCase):
 
