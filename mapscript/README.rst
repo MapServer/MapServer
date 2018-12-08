@@ -39,11 +39,16 @@ SWIG MapScript
 --------------
 
 Installation instructions are located in the individual languages
-directories such as mapscript/perl, mapscript/python.  
+directories such as mapscript/perl, mapscript/python. 
 
 The main MapScript SWIG interface file is mapscript/mapscript.i.  This
 file includes specific class interface files from mapscript/swiginc and
 language specific code from the language directories.
+
+Note the **v8** folder contains files for `V8 MapScript Support <https://mapserver.org/installation/v8.html>`_. 
+This is not a JavaScript version of MapScript, but provides support for the use of JavaScript
+in `STYLEITEM <https://mapserver.org/mapfile/styleitem.html#styleitemjs>`_ and 
+`GEOTRANSFORM <https://mapserver.org/mapfile/geomtransform.html#geomtransformjs>`_. 
 
 Documentation
 -------------
