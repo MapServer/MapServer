@@ -32,17 +32,18 @@ custom written PHP module.
 PHPMapScript
 ------------
 
-Source code, detailed installation instructions, and module API are located
-under mapscript/php.
+Source code, detailed installation instructions are located in the ``mapscript/php``
+folder. Documentation can be found in the `PHP MapScript Documentation <https://www.mapserver.org/mapscript/php/index.html>`_
+section. 
 
 SWIG MapScript
 --------------
 
 Installation instructions are located in the individual languages
-directories such as mapscript/perl, mapscript/python. 
+directories such as ``mapscript/perl``, ``mapscript/python``. 
 
-The main MapScript SWIG interface file is mapscript/mapscript.i.  This
-file includes specific class interface files from mapscript/swiginc and
+The main MapScript SWIG interface file is ``mapscript/mapscript.i``.  This
+file includes specific class interface files from ``mapscript/swiginc`` and
 language specific code from the language directories.
 
 Note the **v8** folder contains files for `V8 MapScript Support <https://mapserver.org/installation/v8.html>`_. 
@@ -50,7 +51,5 @@ This is not a JavaScript version of MapScript, but provides support for the use 
 in `STYLEITEM <https://mapserver.org/mapfile/styleitem.html#styleitemjs>`_ and 
 `GEOTRANSFORM <https://mapserver.org/mapfile/geomtransform.html#geomtransformjs>`_. 
 
-Documentation
--------------
-
-+ `Shared SWIG MapScript Documentation <https://mapserver.org/mapscript/index.html>`_ 
+API Documentation can be found at the `Shared SWIG MapScript Documentation <https://mapserver.org/mapscript/index.html>`_ 
+page. 
