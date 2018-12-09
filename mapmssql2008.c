@@ -1105,10 +1105,9 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   /* adding items to the select list */
   for (t = 0; t < layer->numitems; t++) {
 #ifdef USE_ICONV
-      /* no conversion applied at the database */
-      query = msStringConcatenate(query, "[");
+      query = msStringConcatenate(query, "convert(nvarchar(max), [");
       query = msStringConcatenate(query, layer->items[t]);
-      query = msStringConcatenate(query, "],");
+      query = msStringConcatenate(query, "]),");
 #else
       query = msStringConcatenate(query, "convert(varchar(max), [");
       query = msStringConcatenate(query, layer->items[t]);
