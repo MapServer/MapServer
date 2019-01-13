@@ -1,7 +1,7 @@
 FIND_PACKAGE(SWIG REQUIRED)
 INCLUDE(${SWIG_USE_FILE})
 
-FIND_PROGRAM (CSHARP_COMPILER NAMES csc gmcs gmcs2)
+FIND_PROGRAM (CSHARP_COMPILER NAMES csc mcs gmcs gmcs2)
 
 IF (CSHARP_COMPILER)
 	MESSAGE(STATUS "Found CSharp compiler: ${CSHARP_COMPILER}")
@@ -34,7 +34,11 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/csharp)
 SET (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}")
 SET( CMAKE_SWIG_FLAGS -namespace OSGeo.MapServer ${MAPSERVER_COMPILE_DEFINITIONS} -DWIN32)
-SWIG_ADD_MODULE(mapscript csharp ../mapscript.i)
+if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
+    SWIG_ADD_MODULE(mapscript csharp ../mapscript.i)
+else()
+    SWIG_ADD_LIBRARY(mapscript LANGUAGE csharp SOURCES ../mapscript.i)
+endif()
 
 set_target_properties(mapscript PROPERTIES OUTPUT_NAME "mapscript")
 
