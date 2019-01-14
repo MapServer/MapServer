@@ -355,7 +355,8 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers, sizeof(VectorTile__Tile__Layer*));
 
-  /* make sure we have a scale computed */
+  /* make sure we have a scale and cellsize computed */
+  map->cellsize = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width);
   msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
 
   /* expand the map->extent so it goes from pixel center (MapServer) to pixel edge (OWS) */
