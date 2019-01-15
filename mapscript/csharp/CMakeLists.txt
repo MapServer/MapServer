@@ -53,48 +53,44 @@ SWIG_LINK_LIBRARIES(mapscript ${MAPSERVER_LIBMAPSERVER})
 if (WIN32)
 
 	ADD_CUSTOM_COMMAND(TARGET mapscript
-                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                      POST_BUILD
-					  COMMAND set MAPSCRIPT_SNK=${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk          
-					  COMMAND set MAPSCRIPT_SNK=%MAPSCRIPT_SNK:/=\\%          
-					  COMMAND copy /Y \"%MAPSCRIPT_SNK%\"
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll ${KEYFILE_SPEC} *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shpdump.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shpdump.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawmap.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmap.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shapeinfo.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shapeinfo.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawquery.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawquery.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\getbytes.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:HTMLtemplate.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\HTMLtemplate.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:RFC24.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\RFC24.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirect.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirect.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirectPrint.cs
-                      COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapGDIPlus.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapGDIPlus.cs
-					  #COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /lib:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF /r:mapscript_csharp.dll /r:System.Xaml.dll /r:WindowsBase.dll /r:PresentationCore.dll /out:drawmapWPF.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapWPF.cs
-                      COMMENT "Compiling c# source files"
-                      )
+						  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+						  POST_BUILD
+						  COMMAND set MAPSCRIPT_SNK=${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk
+						  COMMAND set MAPSCRIPT_SNK=%MAPSCRIPT_SNK:/=\\%
+						  COMMAND copy /Y \"%MAPSCRIPT_SNK%\"
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll ${KEYFILE_SPEC} *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shpdump.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shpdump.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawmap.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmap.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shapeinfo.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shapeinfo.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawquery.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawquery.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\getbytes.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:HTMLtemplate.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\HTMLtemplate.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:RFC24.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\RFC24.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirect.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirect.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirectPrint.cs
+						  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapGDIPlus.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapGDIPlus.cs
+						  #COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /lib:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF /r:mapscript_csharp.dll /r:System.Xaml.dll /r:WindowsBase.dll /r:PresentationCore.dll /out:drawmapWPF.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapWPF.cs
+						  COMMENT "Compiling c# source files"
+						  )
 else()
 	ADD_CUSTOM_COMMAND(TARGET mapscript
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			POST_BUILD
-			#COMMAND set MAPSCRIPT_SNK=${PROJECT_SOURCE_DIR}/mapscript/csharp/mapscript.snk
-			#COMMAND set MAPSCRIPT_SNK=%MAPSCRIPT_SNK:/=\\%
-			COMMAND cp -f ${PROJECT_SOURCE_DIR}/mapscript/csharp/mapscript.snk ./
-			COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -target:library -out:mapscript_csharp.dll ${KEYFILE_SPEC} *.cs ${PROJECT_SOURCE_DIR}/mapscript/csharp/config/AssemblyInfo.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shpdump.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shpdump.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawmap.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmap.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shapeinfo.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shapeinfo.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawquery.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawquery.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\getbytes.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:HTMLtemplate.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\HTMLtemplate.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:RFC24.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\RFC24.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirect.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirect.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirectPrint.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapGDIPlus.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapGDIPlus.cs
-			#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /lib:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF /r:mapscript_csharp.dll /r:System.Xaml.dll /r:WindowsBase.dll /r:PresentationCore.dll /out:drawmapWPF.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapWPF.cs
-			COMMENT "Compiling c# source files"
-			)
+						WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+						POST_BUILD
+						COMMAND cp -f ${PROJECT_SOURCE_DIR}/mapscript/csharp/mapscript.snk ./
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -target:library -out:mapscript_csharp.dll ${KEYFILE_SPEC} *.cs ${PROJECT_SOURCE_DIR}/mapscript/csharp/config/AssemblyInfo.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -out:shpdump.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/shpdump.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -out:drawmap.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/drawmap.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -out:shapeinfo.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/shapeinfo.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -out:drawquery.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/drawquery.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -reference:System.Drawing.dll -out:getbytes.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/getbytes.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -out:HTMLtemplate.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/HTMLtemplate.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -out:RFC24.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/RFC24.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -reference:System.Drawing.dll -out:drawmapDirect.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/drawmapDirect.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -reference:System.Drawing.dll -out:drawmapDirectPrint.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/drawmapDirectPrint.cs
+						COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} -reference:mapscript_csharp.dll -reference:System.Drawing.dll -out:drawmapGDIPlus.exe ${PROJECT_SOURCE_DIR}/mapscript/csharp/examples/drawmapGDIPlus.cs
+						#COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /lib:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF /r:mapscript_csharp.dll /r:System.Xaml.dll /r:WindowsBase.dll /r:PresentationCore.dll /out:drawmapWPF.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapWPF.cs
+						COMMENT "Compiling c# source files"
+						)
 endif()
 
-#get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_csharpmapscript_REAL_NAME} LOCATION)
-#install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION lib)
 
