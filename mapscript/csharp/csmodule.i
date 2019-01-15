@@ -126,7 +126,7 @@ inner exceptions. Otherwise the exception message will be concatenated*/
  *****************************************************************************/
  
 %pragma(csharp) imclasscode=%{
-  public class StringArrayMarshal : System.IDisposable {
+public class StringArrayMarshal : global::System.IDisposable {
     public readonly System.IntPtr[] _ar;
     public StringArrayMarshal(string[] ar) {
       _ar = new System.IntPtr[ar.Length];
@@ -208,8 +208,8 @@ inner exceptions. Otherwise the exception message will be concatenated*/
 
 %typemap(csvarout, excode=SWIGEXCODE2) outputFormatObj** %{
     get {
-	  System.IntPtr cPtr = $imcall;
-	  System.IntPtr objPtr;
+      System.IntPtr cPtr = $imcall;
+      System.IntPtr objPtr;
       outputFormatObj[] ret = new outputFormatObj[this.numoutputformats];
       for(int cx = 0; cx < this.numoutputformats; cx++) {
           objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(System.IntPtr)));
@@ -313,7 +313,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %csmethodmodifiers processLegendTemplate "private";
 %csmethodmodifiers processQueryTemplate "private";
 
-%typemap(csinterfaces) mapObj "System.IDisposable, System.Runtime.Serialization.ISerializable"; 
+%typemap(csinterfaces) mapObj "System.IDisposable, System.Runtime.Serialization.ISerializable";
 %typemap(csattributes) mapObj  "[Serializable]"
 %typemap(cscode) mapObj, struct mapObj %{  
   public string processTemplate(int bGenerateImages, string[] names, string[] values)
@@ -393,7 +393,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 		}
 	}
 	protected static SWIGByteArrayHelper bytearrayHelper = new SWIGByteArrayHelper();
-	[System.ThreadStatic] 
+	[System.ThreadStatic]
 	private static byte[] arraybuffer;
 
 	internal static byte[] GetBytes()
@@ -424,7 +424,7 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 %typemap(csin) (double pattern[ANY]) "$csinput"
 %typemap(csvarout, excode=SWIGEXCODE2) (double pattern[ANY]) %{
     get {
-        System.IntPtr cPtr = $imcall;
+      System.IntPtr cPtr = $imcall;
       double[] ret = new double[patternlength];
       if (patternlength > 0) {       
 	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, patternlength);
@@ -433,7 +433,7 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
       return ret;
     } 
     set {
-        System.IntPtr cPtr = $imcall;
+      System.IntPtr cPtr = $imcall;
       if (value.Length > 0) {       
 	        System.Runtime.InteropServices.Marshal.Copy(value, 0, cPtr, value.Length);
       }
@@ -450,8 +450,8 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 %typemap(csin) (int *panIndexes)  "$csinput"
 
 /* Typemaps for device handle */
-%typemap(imtype) (void* device)  %{ System.IntPtr%}
-%typemap(cstype) (void* device) %{ System.IntPtr%}
+%typemap(imtype) (void* device)  %{System.IntPtr%}
+%typemap(cstype) (void* device) %{System.IntPtr%}
 %typemap(in) (void* device) %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) (void* device)  "$csinput"
 
