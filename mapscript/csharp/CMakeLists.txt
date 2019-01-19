@@ -42,8 +42,11 @@ else()
 	SWIG_ADD_LIBRARY(mapscript LANGUAGE csharp SOURCES ../mapscript.i)
 endif()
 
-
-set_target_properties(mapscript PROPERTIES OUTPUT_NAME "mapscript")
+if (WIN32)
+	set_target_properties(mapscript PROPERTIES OUTPUT_NAME "mapscript")
+else()
+	set_target_properties(mapscript PROPERTIES OUTPUT_NAME "libmapscript")
+endif()
 
 SWIG_LINK_LIBRARIES(mapscript ${MAPSERVER_LIBMAPSERVER})
 
