@@ -905,8 +905,10 @@ ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
-    set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/wd4267 /wd4244 /wd4018")
+    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
+    if (MSVC)
+        set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/wd4267 /wd4244 /wd4018")
+    endif(MSVC)
 endif (WIN32)
 
 configure_file (
