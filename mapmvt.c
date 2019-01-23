@@ -69,7 +69,7 @@ static double getTriangleHeight(lineObj *ring)
     b = MS_MAX(b, msDistancePointToPoint(&ring->point[i], &ring->point[i+1]));
   }
 
-  return (s/b);
+  return (MS_ABS(s/b));
 }
 
 static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
