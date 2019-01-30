@@ -53,7 +53,10 @@
 # Verify PropertyIsLike
 # RUN_PARMS: wfs_filter_islike.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>NAME</PropertyName><Literal>Syd*</Literal></PropertyIsLike></Filter>" > [RESULT]
 #
-# RUN_PARMS: wfs_filter_islike_escaping.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_islike_escaping&FILTER=<Filter><PropertyIsLike+wildCard='*'+singleChar='.'+escape='^'><PropertyName>prop</PropertyName><Literal>()[]^..x*c</Literal></PropertyIsLike></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_islike_escaping.xml [MAPSERV] QUERY_STRING='map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_islike_escaping&FILTER=<Filter><PropertyIsLike+wildCard="*"+singleChar="."+escape="^"><PropertyName>prop</PropertyName><Literal>\^^${}[]()^.^*%2B-?|"a.*e</Literal></PropertyIsLike></Filter>' > [RESULT]
+#
+# Again but use as an escape character the regexp escape character
+# RUN_PARMS: wfs_filter_islike_escaping.xml [MAPSERV] QUERY_STRING='map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_islike_escaping&FILTER=<Filter><PropertyIsLike+wildCard="*"+singleChar="."+escape="\"><PropertyName>prop</PropertyName><Literal>\\^${}[]()\.\*%2B-?|"a.*e</Literal></PropertyIsLike></Filter>' > [RESULT]
 #
 #
 # RUN_PARMS: wfs_filter_200_islike.xml [MAPSERV] [POST]<?xml version="1.0"?><GetFeature service="WFS" version="2.0.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/fes/2.0 http://schemas.opengis.net/filter/2.0/filterAll.xsd http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"><Query typeNames="popplace"><fes:Filter><fes:PropertyIsLike wildCard='*' singleChar='.' escapeChar='!'><fes:ValueReference>NAME</fes:ValueReference><fes:Literal>Syd*</fes:Literal></fes:PropertyIsLike></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]

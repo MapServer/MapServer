@@ -41,7 +41,7 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 {
   const size_t bufferSize = 1024;
   char szBuffer[1024];
-  char szTmp[256];
+  char szTmp[512];
   char *pszValue = NULL;
 
   const char *pszWild = NULL;
@@ -52,9 +52,9 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 
   int nLength=0, i=0, iTmp=0;
 
-  /* From http://www.fon.hum.uva.nl/praat/manual/Regular_expressions_1__Special_characters.html */
+  /* From http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html#tag_09_04 */
   /* also add double quote because we are within a string */
-  const char* pszRegexSpecialCharsAndDoubleQuote = "\\^${}[]().*+?|<>-&\"";
+  const char* pszRegexSpecialCharsAndDoubleQuote = "\\^${[().*+?|\"";
 
   if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode || !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
     return NULL;
@@ -92,11 +92,12 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 
   pszValue = psFilterNode->psRightNode->pszValue;
   nLength = strlen(pszValue);
-  if( 1 + 2 * nLength + 1 + 1 >= sizeof(szTmp) )
+  /* The 4 factor is in case of \. See below */
+  if( 1 + 4 * nLength + 1 + 1 >= sizeof(szTmp) )
       return NULL;
 
   iTmp =0;
-  if (nLength > 0 && pszValue[0] != pszWild[0] && pszValue[0] != pszSingle[0] && pszValue[0] != pszEscape[0]) {
+  if (nLength > 0) {
     szTmp[iTmp]= '^';
     iTmp++;
   }
@@ -106,21 +107,33 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
       iTmp++;
       szTmp[iTmp] = '\0';
     /* The Filter escape character is supposed to only escape the single, wildcard and escape character */
-    /* As we replace single and wild by regular expression special characters, we indeed */
-    /* need to escape them */
-    } else if (pszValue[i] == pszEscape[0] && (pszValue[i+1] == pszSingle[0] || pszValue[i+1] == pszWild[0])) {
-      szTmp[iTmp] = '\\';
-      iTmp++;
-      szTmp[iTmp] = '\0';
-    /* If the Filter escape character is escaped, only regular-expression-escape-it */
-    /* if it is indeed a regular expression special character. Otherwise ignore it */
-    } else if (pszValue[i] == pszEscape[0] && pszValue[i+1] == pszEscape[0]) {
-      if( strchr(pszRegexSpecialCharsAndDoubleQuote, pszValue[i]) )
+    } else if (pszValue[i] == pszEscape[0] && (
+                    pszValue[i+1] == pszSingle[0] ||
+                    pszValue[i+1] == pszWild[0] ||
+                    pszValue[i+1] == pszEscape[0])) {
+      if( pszValue[i+1] == '\\' )
       {
-        szTmp[iTmp] = '\\';
-        iTmp++;
-        szTmp[iTmp] = '\0';
+          /* Tricky case: \ must be escaped ncce in the regular expression context
+             so that the regexp matches it as an ordinary character.
+             But as \ is also the escape character for MapServer string, we
+             must escape it again. */
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
       }
+      else
+      {
+        /* If the escaped character is itself a regular expression special character */
+        /* we need to regular-expression-escape-it ! */
+        if( strchr(pszRegexSpecialCharsAndDoubleQuote, pszValue[i+1]) )
+        {
+            szTmp[iTmp++] = '\\';
+        }
+        szTmp[iTmp++] = pszValue[i+1];
+      }
+      i++;
+      szTmp[iTmp] = '\0';
     } else if (pszValue[i] == pszWild[0]) {
       szTmp[iTmp++] = '.';
       szTmp[iTmp++] = '*';
@@ -129,10 +142,19 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
     /* Escape regular expressions special characters and double quote */
     else if (strchr(pszRegexSpecialCharsAndDoubleQuote, pszValue[i]))
     {
-       szTmp[iTmp] = '\\';
-      iTmp++;
-      szTmp[iTmp] = pszValue[i];
-      iTmp++;
+      if( pszValue[i] == '\\' )
+      {
+          /* See above explantation */
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+      }
+      else
+      {
+        szTmp[iTmp++] = '\\';
+        szTmp[iTmp++] = pszValue[i];
+      }
       szTmp[iTmp] = '\0';
     }
     else {
@@ -143,7 +165,10 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   }
   szTmp[iTmp] = '"';
   szTmp[++iTmp] = '\0';
-
+#if 0
+  msDebug("like: %s\n", pszValue);
+  msDebug("regexp (with \\ escaping for MapServer use): %s\n", szTmp);
+#endif
   strlcat(szBuffer, szTmp, bufferSize);
   strlcat(szBuffer, ")", bufferSize);
   return msStrdup(szBuffer);
