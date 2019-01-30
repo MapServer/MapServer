@@ -27,7 +27,7 @@ Content-Type: text/xml; charset=UTF-8
         </gml:LineString>
         </ms:msGeometry>
         <ms:id>1</ms:id>
-        <ms:prop>()[].yxabc</ms:prop>
+        <ms:prop>\^${}[]().*+-?|&quot;abcde</ms:prop>
       </ms:test_islike_escaping>
     </gml:featureMember>
 </wfs:FeatureCollection>

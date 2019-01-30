@@ -57,6 +57,21 @@ typedef struct {
 #define COMMAND(id, count) (((id) & 0x7) | ((count) << 3))
 #define PARAMETER(n) (((n) << 1) ^ ((n) >> 31))
 
+static double getTriangleHeight(lineObj *ring)
+{
+  int i;
+  double s=0, b=0;
+
+  if(ring->numpoints != 4) return -1; /* not a triangle */
+
+  for(i=0; i<ring->numpoints-1; i++) {
+    s += (ring->point[i].x*ring->point[i+1].y - ring->point[i+1].x*ring->point[i].y);
+    b = MS_MAX(b, msDistancePointToPoint(&ring->point[i], &ring->point[i+1]));
+  }
+
+  return (MS_ABS(s/b));
+}
+
 static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
   int i, sum=0;
 
@@ -132,6 +147,11 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, i
     shape->line[i].numpoints = outj;
 
     if(layer_type == MS_LAYER_POLYGON) {
+      if(shape->line[i].numpoints == 4 && getTriangleHeight(&shape->line[i]) < 1) {        
+        shape->line[i].numpoints = 0; /* so it's not considered anymore */
+        continue; /* next ring */
+      }
+
       ring_direction = mvtGetRingDirection(&shape->line[i]);
       if(ring_direction == MS_DIRECTION_INVALID_RING)
         shape->line[i].numpoints = 0; /* so it's not considered anymore */
@@ -355,7 +375,8 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers, sizeof(VectorTile__Tile__Layer*));
 
-  /* make sure we have a scale computed */
+  /* make sure we have a scale and cellsize computed */
+  map->cellsize = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width);
   msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
 
   /* expand the map->extent so it goes from pixel center (MapServer) to pixel edge (OWS) */
