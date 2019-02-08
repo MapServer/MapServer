@@ -1254,9 +1254,9 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
             psStyle->opacity =
               (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
           } else {
-            fprintf(stderr, "DEBUGJBO: je suis passé par là\n");
-            psStyle->outlinecolor.alpha =
-              (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+            fprintf(stderr, "DEBUGJBO: stroke-opacity (%p)\n", psStyle);
+            psStyle->opacity =
+              (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
           }
         }
       }
@@ -1546,7 +1546,8 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
       } else if (strcasecmp(psFillName, "fill-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
-          psStyle->color.alpha = (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          fprintf(stderr, "DEBUGJBO: fill-opacity (%p)\n", psStyle);
+          psStyle->opacity = (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
         }
       }
     }
