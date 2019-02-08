@@ -48,6 +48,8 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
 int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
 int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                      mapObj *map, int iColorParam);
+int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
+                            enum MS_STYLE_BINDING_ENUM binding);
 int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                           mapObj *map);
 

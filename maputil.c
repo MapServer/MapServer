@@ -186,15 +186,15 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
       style->outlinewidth = 1;
       bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
     }
-    if(style->opacity < 100 || style->color.alpha != 255 ) {
-      int alpha;
-      alpha = MS_NINT(style->opacity*2.55);
-      style->color.alpha = alpha;
-      style->outlinecolor.alpha = alpha;
-      style->backgroundcolor.alpha = alpha;
-      style->mincolor.alpha = alpha;
-      style->maxcolor.alpha = alpha;
-    }
+  }
+  if(style->opacity < 100 || style->color.alpha != 255 ) {
+    int alpha;
+    alpha = MS_NINT(style->opacity*2.55);
+    style->color.alpha = alpha;
+    style->outlinecolor.alpha = alpha;
+    style->backgroundcolor.alpha = alpha;
+    style->mincolor.alpha = alpha;
+    style->maxcolor.alpha = alpha;
   }
 }
 

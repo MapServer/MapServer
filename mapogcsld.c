@@ -1221,8 +1221,8 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
       } else if (strcasecmp(psStrkName, "stroke-width") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
-          psStyle->width =
-            atof(psCssParam->psChild->psNext->pszValue);
+          msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                                  psStyle, MS_STYLE_BINDING_WIDTH);
         }
       } else if (strcasecmp(psStrkName, "stroke-dasharray") == 0) {
         if(psCssParam->psChild && psCssParam->psChild->psNext &&
@@ -1251,9 +1251,10 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
           if (iColorParam == 0) {
-            psStyle->color.alpha =
-              (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+            psStyle->opacity =
+              (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
           } else {
+            fprintf(stderr, "DEBUGJBO: je suis passé par là\n");
             psStyle->outlinecolor.alpha =
               (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
           }
@@ -1279,6 +1280,55 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
     free(pszDashValue);
 
   return MS_SUCCESS;
+}
+
+
+
+/************************************************************************/
+/*  int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,  */
+/*                              enum MS_STYLE_BINDING_ENUM binding)     */
+/*                                                                      */
+/*              Parse an OGC expression in a <SvgParameter>             */
+/************************************************************************/
+int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
+                            enum MS_STYLE_BINDING_ENUM binding)
+{
+  int status = MS_FAILURE;
+
+  switch (psRoot->eType)
+  {
+    case CXT_Text:
+      // Parse a raw value
+      switch (binding)
+      {
+        case MS_STYLE_BINDING_WIDTH:
+          psStyle->width = atof(psRoot->pszValue);
+          status = MS_SUCCESS;
+          break;
+        default:
+          break;
+      }
+      break;
+    case CXT_Element:
+      if (strcasecmp(psRoot->pszValue,"Literal") == 0 && psRoot->psChild)
+      {
+        // Parse a <ogc:Literal> element
+        status = msSLDParseOgcExpression(psRoot->psChild, psStyle, binding);
+      }
+      else if (strcasecmp(psRoot->pszValue,"PropertyName") == 0
+               && psRoot->psChild)
+      {
+        // Parse a <ogc:PropertyName> element
+        psStyle->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
+        psStyle->numbindings++;
+        status = MS_SUCCESS;
+      }
+      break;
+    default:
+      break;
+  }
+
+  return status;
 }
 
 
