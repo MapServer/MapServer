@@ -1618,8 +1618,10 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 
     /*SLD 1.1.0 extract opacity, rotation, displacement*/
     psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
-    if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue)
+    if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue) {
+      fprintf(stderr, "DEBUGJBO: <Graphic> Opacity (%p)\n", psStyle);
       psStyle->opacity = (int)(atof(psOpacity->psChild->pszValue) * 100);
+    }
 
     psRotation = CPLGetXMLNode(psGraphic, "Rotation");
     if (psRotation) {
@@ -1717,6 +1719,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 psValue = psCssParam->psChild->psNext->pszValue;
 
               if (psValue) {
+                fprintf(stderr, "DEBUGJBO: <Graphic> fill-opacity (%p)\n", psStyle);
                 psStyle->color.alpha = (int)(atof(psValue)*255);
               }
             }
@@ -1757,6 +1760,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 psValue = psCssParam->psChild->psNext->pszValue;
 
               if (psValue) {
+                fprintf(stderr, "DEBUGJBO: <Graphic> stroke-opacity (%p)\n", psStyle);
                 psStyle->outlinecolor.alpha = (int)(atof(psValue)*255);
               }
             } else if (psName &&
