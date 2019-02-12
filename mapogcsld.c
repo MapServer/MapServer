@@ -1305,6 +1305,10 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
           psStyle->width = atof(psRoot->pszValue);
           status = MS_SUCCESS;
           break;
+        case MS_STYLE_BINDING_OPACITY:
+          psStyle->opacity = atof(psRoot->pszValue)*100;
+          status = MS_SUCCESS;
+          break;
         default:
           break;
       }
@@ -1620,7 +1624,9 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
     if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue) {
       fprintf(stderr, "DEBUGJBO: <Graphic> Opacity (%p)\n", psStyle);
-      psStyle->opacity = (int)(atof(psOpacity->psChild->pszValue) * 100);
+///   psStyle->opacity = (int)(atof(psOpacity->psChild->pszValue) * 100);
+      msSLDParseOgcExpression(psOpacity->psChild,
+                              psStyle, MS_STYLE_BINDING_OPACITY);
     }
 
     psRotation = CPLGetXMLNode(psGraphic, "Rotation");
