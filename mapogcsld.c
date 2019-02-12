@@ -1250,14 +1250,9 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
       } else if (strcasecmp(psStrkName, "stroke-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
-          if (iColorParam == 0) {
-            psStyle->opacity =
-              (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
-          } else {
-            fprintf(stderr, "DEBUGJBO: stroke-opacity (%p)\n", psStyle);
-            psStyle->opacity =
-              (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
-          }
+          fprintf(stderr, "DEBUGJBO: stroke-opacity (%p)\n", psStyle);
+          msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                                  psStyle, MS_STYLE_BINDING_OPACITY);
         }
       }
     }
