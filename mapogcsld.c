@@ -1619,7 +1619,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
     if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue) {
       fprintf(stderr, "DEBUGJBO: <Graphic> Opacity (%p)\n", psStyle);
-///   psStyle->opacity = (int)(atof(psOpacity->psChild->pszValue) * 100);
       msSLDParseOgcExpression(psOpacity->psChild,
                               psStyle, MS_STYLE_BINDING_OPACITY);
     }
@@ -1768,11 +1767,9 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                        strcasecmp(psName, "stroke-width") == 0) {
               if(psCssParam->psChild &&
                   psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
-                psValue = psCssParam->psChild->psNext->pszValue;
-
-              if (psValue) {
-                psStyle->width = atof(psValue);
+                  psCssParam->psChild->psNext->pszValue) {
+                msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                                        psStyle, MS_STYLE_BINDING_WIDTH);
               }
             }
 
