@@ -1175,8 +1175,6 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 {
   CPLXMLNode *psCssParam = NULL, *psGraphicFill=NULL;
   char *psStrkName = NULL;
-  char *psColor = NULL;
-  int nLength = 0;
   char *pszDashValue = NULL;
 
   if (!psStroke || !psStyle)
@@ -1197,26 +1195,16 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
       if (strcasecmp(psStrkName, "stroke") == 0) {
         if(psCssParam->psChild && psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue)
-          psColor = psCssParam->psChild->psNext->pszValue;
-
-        if (psColor) {
-          nLength = strlen(psColor);
-          /* expecting hexadecimal ex : #aaaaff */
-          if (iColorParam == 0) {
-            if (nLength == 7 && psColor[0] == '#') {
-              psStyle->color.red = msHexToInt(psColor+1);
-              psStyle->color.green = msHexToInt(psColor+3);
-              psStyle->color.blue= msHexToInt(psColor+5);
-            }
-          } else if (iColorParam == 1) {
-            msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                psStyle, MS_STYLE_BINDING_OUTLINECOLOR);
-          } else if (iColorParam == 2) {
-            if (nLength == 7 && psColor[0] == '#') {
-              psStyle->backgroundcolor.red = msHexToInt(psColor+1);
-              psStyle->backgroundcolor.green = msHexToInt(psColor+3);
-              psStyle->backgroundcolor.blue= msHexToInt(psColor+5);
-            }
+        {
+          switch (iColorParam) {
+            case 0:
+              msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                  psStyle, MS_STYLE_BINDING_COLOR);
+              break;
+            case 1:
+              msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                  psStyle, MS_STYLE_BINDING_OUTLINECOLOR);
+              break;
           }
         }
       } else if (strcasecmp(psStrkName, "stroke-width") == 0) {
@@ -1251,7 +1239,6 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
       } else if (strcasecmp(psStrkName, "stroke-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
-          fprintf(stderr, "DEBUGJBO: stroke-opacity (%p)\n", psStyle);
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
                                   psStyle, MS_STYLE_BINDING_OPACITY);
         }
@@ -1551,13 +1538,14 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
             psCssParam->psChild->psNext->pszValue)
         {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                                  psStyle, MS_STYLE_BINDING_COLOR);
+              psStyle, MS_STYLE_BINDING_COLOR);
         }
       } else if (strcasecmp(psFillName, "fill-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
-            psCssParam->psChild->psNext->pszValue) {
-          fprintf(stderr, "DEBUGJBO: fill-opacity (%p)\n", psStyle);
-          psStyle->opacity = (int)(atof(psCssParam->psChild->psNext->pszValue)*100);
+            psCssParam->psChild->psNext->pszValue)
+        {
+          msSLDParseOgcExpression(psCssParam->psChild->psNext,
+              psStyle, MS_STYLE_BINDING_OPACITY);
         }
       }
     }
@@ -1595,7 +1583,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
   CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
   CPLXMLNode *psOpacity=NULL, *psRotation=NULL;
   char *psName=NULL, *psValue = NULL;
-  int nLength = 0;
   char *pszSymbolName = NULL;
   int bFilled = 0;
   CPLXMLNode *psPropertyName=NULL;
@@ -1629,7 +1616,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     /*SLD 1.1.0 extract opacity, rotation, displacement*/
     psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
     if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue) {
-      fprintf(stderr, "DEBUGJBO: <Graphic> Opacity (%p)\n", psStyle);
       msSLDParseOgcExpression(psOpacity->psChild,
                               psStyle, MS_STYLE_BINDING_OPACITY);
     }
@@ -1713,14 +1699,9 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               if(psCssParam->psChild &&
                   psCssParam->psChild->psNext &&
                   psCssParam->psChild->psNext->pszValue)
-                psValue = psCssParam->psChild->psNext->pszValue;
-
-              if (psValue) {
-                nLength = strlen(psValue);
-                if (nLength == 7 && psValue[0] == '#') {
-                  msSLDSetColorObject(psValue,
-                                      &psStyle->color);
-                }
+              {
+                msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                    psStyle, MS_STYLE_BINDING_COLOR);
               }
             } else if (psName &&
                        strcasecmp(psName, "fill-opacity") == 0) {
@@ -1754,14 +1735,9 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               if(psCssParam->psChild &&
                   psCssParam->psChild->psNext &&
                   psCssParam->psChild->psNext->pszValue)
-                psValue = psCssParam->psChild->psNext->pszValue;
-
-              if (psValue) {
-                nLength = strlen(psValue);
-                if (nLength == 7 && psValue[0] == '#') {
-                  msSLDSetColorObject(psValue,
-                                      &psStyle->outlinecolor);
-                }
+              {
+                msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                    psStyle, MS_STYLE_BINDING_OUTLINECOLOR);
               }
             } else if (psName &&
                        strcasecmp(psName, "stroke-opacity") == 0) {
@@ -1778,9 +1754,10 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                        strcasecmp(psName, "stroke-width") == 0) {
               if(psCssParam->psChild &&
                   psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue) {
+                  psCssParam->psChild->psNext->pszValue)
+              {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                                        psStyle, MS_STYLE_BINDING_WIDTH);
+                    psStyle, MS_STYLE_BINDING_WIDTH);
               }
             }
 

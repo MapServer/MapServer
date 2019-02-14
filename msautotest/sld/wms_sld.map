@@ -4,93 +4,198 @@
 # REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
 #
 #
-# --- Styling without SLD: five pixels wide semi opaque yellow line
-# RUN_PARMS: map_w5o05cy.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy" > [RESULT_DEMIME]
+#    Three layers are defined, one for each <Line-, <Polygon- and <Point-
+#    -Symbolizer>:
+#     - lline   : This is a five pixel wide semi opaque yellow line which draws
+#                 an hexagon roughly around France country
+#     - lpolygon: This is a semi opaque cyan hexagon with one pixel wide semi
+#                 opaque magenta line roughly around "Centre-Val de Loire"
+#                 region
+#     - lpoint  : This is a semi opaque ten pixel wide blue circle with a one
+#                 pixel wide red line roughly on Lyon city
+#    All tests shall produce the same image.
 #
-# --- Styling without SLD: five pixels wide semi opaque yellow line
-#                          semi opaque blue circle plot with one pixel wide red line
-# RUN_PARMS: map_w5o05cy_w1o05cbrs10.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cbrs10" > [RESULT_DEMIME]
 #
-# --- Styling without SLD: five pixels wide semi opaque yellow outer line
-#                          cyan inner polygon with one pixel wide semi opaque magenta line
-# RUN_PARMS: map_w5o05cy_w1o05cmc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc" > [RESULT_DEMIME]
+# --- Reference output rendered with MapFile only
 #
-# --- Styling with SLD as of MapServer 7.2: five pixels wide semi opaque yellow line
-# RUN_PARMS: s72_w5o05cy.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: map_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint" > [RESULT_DEMIME]
 #
-# --- Styling with SLD as of MapServer 7.2: five pixels wide semi opaque yellow line
-#                          semi opaque blue circle plot with one pixel wide red line
-# RUN_PARMS: s72_w5o05cy_w1o05cbrs10.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cbrs10&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cbrs10</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Reference output rendered with SLD (compatible with MapServer 7.2)
 #
-# --- Styling with SLD as of MapServer 7.2: five pixels wide semi opaque yellow outer line
-#                          cyan inner polygon with one pixel wide semi opaque magenta line
-# RUN_PARMS: s72_w5o05cy_w1o05cmc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#  <StyledLayerDescriptor version="1.1.0">
+#    <NamedLayer>
+#      <Name>lline</Name>
+#      <UserStyle>
+#        <FeatureTypeStyle>
+#          <Rule>
+#            <LineSymbolizer>
+#              <Stroke>
+#                <SvgParameter name="stroke-width">5</SvgParameter>
+#                <SvgParameter name="stroke-opacity">0.5</SvgParameter>
+#                <SvgParameter name="stroke">#FFFF00</SvgParameter>
+#              </Stroke>
+#            </LineSymbolizer>
+#          </Rule>
+#        </FeatureTypeStyle>
+#      </UserStyle>
+#    </NamedLayer>
+#  
+#    <NamedLayer>
+#      <Name>lpolygon</Name>
+#      <UserStyle>
+#        <FeatureTypeStyle>
+#          <Rule>
+#            <PolygonSymbolizer>
+#              <Stroke>
+#                <SvgParameter name=%22stroke-width%22>1</SvgParameter>
+#                <SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter>
+#                <SvgParameter name=%22stroke%22>#FF00FF</SvgParameter>
+#              </Stroke>
+#              <Fill>
+#                <SvgParameter name=%22fill-opacity%22>0.5</SvgParameter>
+#                <SvgParameter name=%22fill%22>#00FFFF</SvgParameter>
+#              </Fill>
+#            </PolygonSymbolizer>
+#          </Rule>
+#        </FeatureTypeStyle>
+#      </UserStyle>
+#    </NamedLayer>
+#  
+#    <NamedLayer>
+#      <Name>lpoint</Name>
+#      <UserStyle>
+#        <FeatureTypeStyle>
+#          <Rule>
+#            <PointSymbolizer>
+#              <Graphic>
+#                <Mark>
+#                  <WellKnownName>circle</WellKnownName>
+#                  <Stroke>
+#                    <SvgParameter name="stroke">#FF0000</SvgParameter>
+#                    <SvgParameter name="stroke-opacity">1</SvgParameter>
+#                    <SvgParameter name="stroke-width">1</SvgParameter>
+#                  </Stroke>
+#                  <Fill>
+#                    <SvgParameter name="fill">#0000FF</SvgParameter>
+#                    <SvgParameter name="fill-opacity">0.1</SvgParameter>
+#                  </Fill>
+#                </Mark>
+#              <Size>10</Size>
+#              <Opacity>0.5</Opacity>
+#              </Graphic>
+#            </PointSymbolizer>
+#          </Rule>
+#        </FeatureTypeStyle>
+#      </UserStyle>
+#    </NamedLayer>
+#  
+#  </StyledLayerDescriptor>
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow line
-#       <SvgParameter name="stroke-width"><Literal>
-# RUN_PARMS: sld_wl5o05cy.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><Literal>5</Literal></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow line
-#       <SvgParameter name="stroke-width"><PropertyName>
-# RUN_PARMS: sld_wp5o05cy.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><PropertyName>w5</PropertyName></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Line with <Literal> on "stroke-width"
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow line
-#       <SvgParameter name="stroke-opacity"><Literal>
-# RUN_PARMS: sld_w5ol05cy.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22><Literal>0.5</Literal></SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_line_literal_strokewidth.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><Literal>5</Literal></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow line
-#       <SvgParameter name="stroke-opacity"><PropertyName>
-# RUN_PARMS: sld_w5op05cy.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22><PropertyName>semiopaque</PropertyName></SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Line with <PropertyName> on "stroke-width"
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       semi opaque blue circle plot with one pixel wide red line
-#       <Opacity><Literal>
-# RUN_PARMS: sld_w5o05cy_w1ol05cbrs10.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cbrs10&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cbrs10</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke></Mark><Size>10</Size><Opacity><Literal>0.5</Literal></Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_line_propertyname_strokewidth.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><PropertyName>w5</PropertyName></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       semi opaque blue circle plot with one pixel wide red line
-#       <Opacity><PropertyName>
-# RUN_PARMS: sld_w5o05cy_w1op05cbrs10.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cbrs10&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cbrs10</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke></Mark><Size>10</Size><Opacity><PropertyName>semiopaque</PropertyName></Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Line with <Literal> on "stroke-opacity"
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       cyan inner polygon with one pixel wide semi opaque magenta line
-#       <SvgParameter name="stroke-opacity"><Literal>
-# RUN_PARMS: sld_w5o05cy_w1ol05cmc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22><Literal>0.5</Literal></SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_line_literal_strokeopacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22><Literal>0.5</Literal></SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       cyan inner polygon with one pixel wide semi opaque magenta line
-#       <SvgParameter name="stroke-opacity"><PropertyName>
-# RUN_PARMS: sld_w5o05cy_w1op05cmc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22><PropertyName>semiopaque</PropertyName></SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Line with <PropertyName> on "stroke-opacity"
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       cyan inner polygon with one pixel wide semi opaque magenta line
-#       <SvgParameter name="stroke"><Literal>
-# RUN_PARMS: sld_w5o05cy_w1o05clmc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22><Literal>#FF00FF</Literal></SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_line_propertyname_strokeopacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22><PropertyName>semiopaque</PropertyName></SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       cyan inner polygon with one pixel wide semi opaque magenta line
-#       <SvgParameter name="stroke"><PropertyName>
-# RUN_PARMS: sld_w5o05cy_w1o05cpmc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22><PropertyName>magenta</PropertyName></SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Line with <Literal> on "stroke"
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       cyan inner polygon with one pixel wide semi opaque magenta line
-#       <SvgParameter name="fill"><Literal>
-# RUN_PARMS: sld_w5o05cy_w1o05cmlc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22><Literal>#00FFFF</Literal></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_line_literal_stroke.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22><Literal>#FFFF00</Literal></SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow outer line
-#                       cyan inner polygon with one pixel wide semi opaque magenta line
-#       <SvgParameter name="fill"><PropertyName>
-# RUN_PARMS: sld_w5o05cy_w1o05cmpc.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cmc&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cmc</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22><PropertyName>cyan</PropertyName></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Line with <PropertyName> on "stroke"
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow line
-#                       semi opaque blue circle plot with one pixel wide red line
-#       <SvgParameter name="stroke-width"><Literal>
-# RUN_PARMS: sld_w5o05cy_wl1o05cbrs10.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cbrs10&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cbrs10</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22><Literal>1</Literal></SvgParameter></Stroke></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_line_propertyname_stroke.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22><PropertyName>yellow</PropertyName></SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-# --- Styling with SLD: five pixels wide semi opaque yellow line
-#                       semi opaque blue circle plot with one pixel wide red line
-#       <SvgParameter name="stroke-width"><PropertyName>
-# RUN_PARMS: sld_w5o05cy_wp1o05cbrs10.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=w5o05cy,w1o05cbrs10&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>w5o05cy</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>w1o05cbrs10</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22><PropertyName>w1</PropertyName></SvgParameter></Stroke></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# --- Polygon with <Literal> on "stroke-width"
+#
+# RUN_PARMS: sld_polygon_literal_strokewidth.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><Literal>1</Literal></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <PropertyName> on "stroke-width"
+#
+# RUN_PARMS: sld_polygon_propertyname_strokewidth.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><PropertyName>w1</PropertyName></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <Literal> on "stroke-opacity"
+#
+# RUN_PARMS: sld_polygon_literal_strokeopacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22><Literal>0.5</Literal></SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <PropertyName> on "stroke-opacity"
+#
+# RUN_PARMS: sld_polygon_propertyname_strokeopacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22><PropertyName>semiopaque</PropertyName></SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <Literal> on "stroke"
+#
+# RUN_PARMS: sld_polygon_literal_stroke.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22><Literal>#FF00FF</Literal></SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <PropertyName> on "stroke"
+#
+# RUN_PARMS: sld_polygon_propertyname_stroke.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22><PropertyName>magenta</PropertyName></SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <Literal> on "fill-opacity"
+#
+# RUN_PARMS: sld_polygon_literal_fillopacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22><Literal>0.5</Literal></SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <PropertyName> on "fill-opacity"
+#
+# RUN_PARMS: sld_polygon_propertyname_fillopacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22><PropertyName>semiopaque</PropertyName></SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <Literal> on "fill"
+#
+# RUN_PARMS: sld_polygon_literal_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22><Literal>#00FFFF</Literal></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Polygon with <PropertyName> on "fill"
+#
+# RUN_PARMS: sld_polygon_propertyname_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22><PropertyName>cyan</PropertyName></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <Literal> on "stroke-width"
+#
+# RUN_PARMS: sld_point_literal_strokewidth.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22><Literal>1</Literal></SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <PropertyName> on "stroke-width"
+#
+# RUN_PARMS: sld_point_propertyname_strokewidth.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22><PropertyName>w1</PropertyName></SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <Literal> on "stroke-opacity"
+#
+# --- Point (Mark) with <PropertyName> on "stroke-opacity"
+#
+# --- Point (Mark) with <Literal> on "stroke"
+#
+# RUN_PARMS: sld_point_literal_stroke.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22><Literal>#FF0000</Literal></SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <PropertyName> on "stroke"
+#
+# RUN_PARMS: sld_point_propertyname_stroke.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22><PropertyName>red</PropertyName></SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <Literal> on "fill-opacity"
+#
+# --- Point (Mark) with <PropertyName> on "fill-opacity"
+#
+# --- Point (Mark) with <Literal> on "fill"
+#
+# RUN_PARMS: sld_point_literal_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22><Literal>#0000FF</Literal></SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <PropertyName> on "fill"
+#
+# RUN_PARMS: sld_point_propertyname_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22><PropertyName>blue</PropertyName></SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity>0.5</Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <Literal> on <Opacity>
+#
+# RUN_PARMS: sld_point_literal_opacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity><Literal>0.5</Literal></Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Point (Mark) with <PropertyName> on <Opacity>
+#
+# RUN_PARMS: sld_point_propertyname_opacity.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>10</Size><Opacity><PropertyName>semiopaque</PropertyName></Opacity></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
 
 
@@ -150,6 +255,54 @@ END
 
 LAYER
   NAME w1o05cbrs10
+  DATA plot
+  TYPE POINT
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      COLOR 0 0 255
+      OUTLINECOLOR 255 0 0
+      OPACITY 50
+      SYMBOL "circle"
+      SIZE 10
+    END
+  END
+END
+
+LAYER
+  NAME lline
+  DATA hexagon
+  TYPE LINE
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 5
+      OPACITY 50
+      COLOR 255 255 0
+    END
+  END
+END
+
+LAYER
+  NAME lpolygon
+  DATA inner
+  TYPE POLYGON
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 1
+      OPACITY 50
+      COLOR 0 255 255
+      OUTLINECOLOR 255 0 255
+    END
+  END
+END
+
+LAYER
+  NAME lpoint
   DATA plot
   TYPE POINT
   STATUS ON
