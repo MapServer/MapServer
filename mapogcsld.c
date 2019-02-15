@@ -597,22 +597,6 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 }
 
 
-double _msSLDParseSizeParameter(CPLXMLNode *psSize)
-{
-  double dSize = 0;
-  CPLXMLNode *psLiteral = NULL;
-
-  if (psSize) {
-    psLiteral = CPLGetXMLNode(psSize, "Literal");
-    if (psLiteral && psLiteral->psChild && psLiteral->psChild->pszValue)
-      dSize = atof(psLiteral->psChild->pszValue);
-    else if (psSize->psChild && psSize->psChild->pszValue)
-      dSize = atof(psSize->psChild->pszValue);
-  }
-
-  return dSize;
-}
-
 /************************************************************************/
 /*                           _SLDApplyRuleValues                        */
 /*                                                                      */
@@ -1193,8 +1177,7 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 
     if (psStrkName) {
       if (strcasecmp(psStrkName, "stroke") == 0) {
-        if(psCssParam->psChild && psCssParam->psChild->psNext &&
-            psCssParam->psChild->psNext->pszValue)
+        if(psCssParam->psChild && psCssParam->psChild->psNext)
         {
           switch (iColorParam) {
             case 0:
@@ -1208,8 +1191,8 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
           }
         }
       } else if (strcasecmp(psStrkName, "stroke-width") == 0) {
-        if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
-            psCssParam->psChild->psNext->pszValue) {
+        if(psCssParam->psChild &&  psCssParam->psChild->psNext)
+        {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
                                   psStyle, MS_STYLE_BINDING_WIDTH);
         }
@@ -1237,10 +1220,10 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
           msFreeCharArray(aszValues, nDash);
         }
       } else if (strcasecmp(psStrkName, "stroke-opacity") == 0) {
-        if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
-            psCssParam->psChild->psNext->pszValue) {
+        if(psCssParam->psChild &&  psCssParam->psChild->psNext)
+        {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                                  psStyle, MS_STYLE_BINDING_OPACITY);
+              psStyle, MS_STYLE_BINDING_OPACITY);
         }
       }
     }
@@ -1284,6 +1267,22 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
       // Parse a raw value
       switch (binding)
       {
+        case MS_STYLE_BINDING_OFFSET_X:
+          psStyle->offsetx = atoi(psRoot->pszValue);
+          status = MS_SUCCESS;
+          break;
+        case MS_STYLE_BINDING_OFFSET_Y:
+          psStyle->offsety = atoi(psRoot->pszValue);
+          status = MS_SUCCESS;
+          break;
+        case MS_STYLE_BINDING_ANGLE:
+          psStyle->angle = atof(psRoot->pszValue);
+          status = MS_SUCCESS;
+          break;
+        case MS_STYLE_BINDING_SIZE:
+          psStyle->size = atof(psRoot->pszValue);
+          status = MS_SUCCESS;
+          break;
         case MS_STYLE_BINDING_WIDTH:
           psStyle->width = atof(psRoot->pszValue);
           status = MS_SUCCESS;
@@ -1534,15 +1533,13 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
     psFillName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
     if (psFillName) {
       if (strcasecmp(psFillName, "fill") == 0) {
-        if(psCssParam->psChild && psCssParam->psChild->psNext &&
-            psCssParam->psChild->psNext->pszValue)
+        if(psCssParam->psChild && psCssParam->psChild->psNext)
         {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
               psStyle, MS_STYLE_BINDING_COLOR);
         }
       } else if (strcasecmp(psFillName, "fill-opacity") == 0) {
-        if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
-            psCssParam->psChild->psNext->pszValue)
+        if(psCssParam->psChild &&  psCssParam->psChild->psNext)
         {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
               psStyle, MS_STYLE_BINDING_OPACITY);
@@ -1585,8 +1582,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
   char *psName=NULL, *psValue = NULL;
   char *pszSymbolName = NULL;
   int bFilled = 0;
-  CPLXMLNode *psPropertyName=NULL;
-  char szTmp[256];
 
   if (!psRoot || !psStyle || !map)
     return MS_FAILURE;
@@ -1604,8 +1599,11 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
   if (psGraphic) {
     /* extract symbol size */
     psSize = CPLGetXMLNode(psGraphic, "Size");
-    if (psSize)
-      psStyle->size = _msSLDParseSizeParameter(psSize);
+    if (psSize && psSize->psChild)
+    {
+      msSLDParseOgcExpression(psSize->psChild,
+          psStyle, MS_STYLE_BINDING_SIZE);
+    }
     else {
       /*do not set a default for external symbols #2305*/
       psExternalGraphic =  CPLGetXMLNode(psGraphic, "ExternalGraphic");
@@ -1615,36 +1613,32 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 
     /*SLD 1.1.0 extract opacity, rotation, displacement*/
     psOpacity = CPLGetXMLNode(psGraphic, "Opacity");
-    if (psOpacity && psOpacity->psChild && psOpacity->psChild->pszValue) {
+    if (psOpacity && psOpacity->psChild)
+    {
       msSLDParseOgcExpression(psOpacity->psChild,
-                              psStyle, MS_STYLE_BINDING_OPACITY);
+          psStyle, MS_STYLE_BINDING_OPACITY);
     }
 
     psRotation = CPLGetXMLNode(psGraphic, "Rotation");
-    if (psRotation) {
-      psPropertyName = CPLGetXMLNode(psRotation, "PropertyName");
-      if (psPropertyName) {
-        snprintf(szTmp, sizeof(szTmp), "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
-        psStyle->bindings[MS_STYLE_BINDING_ANGLE].item = msStrdup(szTmp);
-        psStyle->numbindings++;
-      } else {
-        if (psRotation->psChild && psRotation->psChild->pszValue)
-          psStyle->angle = atof(psRotation->psChild->pszValue);
-      }
+    if (psRotation && psRotation->psChild)
+    {
+      msSLDParseOgcExpression(psRotation->psChild,
+          psStyle, MS_STYLE_BINDING_ANGLE);
     }
     psDisplacement = CPLGetXMLNode(psGraphic, "Displacement");
-    if (psDisplacement) {
+    if (psDisplacement && psDisplacement->psChild)
+    {
       psDisplacementX = CPLGetXMLNode(psDisplacement, "DisplacementX");
+      if (psDisplacementX && psDisplacementX->psChild)
+      {
+        msSLDParseOgcExpression(psDisplacementX->psChild,
+            psStyle, MS_STYLE_BINDING_OFFSET_X);
+      }
       psDisplacementY = CPLGetXMLNode(psDisplacement, "DisplacementY");
-      /* psCssParam->psChild->psNext->pszValue) */
-      if (psDisplacementX &&
-          psDisplacementX->psChild &&
-          psDisplacementX->psChild->pszValue &&
-          psDisplacementY &&
-          psDisplacementY->psChild &&
-          psDisplacementY->psChild->pszValue) {
-        psStyle->offsetx = atoi(psDisplacementX->psChild->pszValue);
-        psStyle->offsety = atoi(psDisplacementY->psChild->pszValue);
+      if (psDisplacementY && psDisplacementY->psChild)
+      {
+        msSLDParseOgcExpression(psDisplacementY->psChild,
+            psStyle, MS_STYLE_BINDING_OFFSET_Y);
       }
     }
     /* extract symbol */
@@ -1696,23 +1690,20 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               (char*)CPLGetXMLValue(psCssParam, "name", NULL);
             if (psName &&
                 strcasecmp(psName, "fill") == 0) {
-              if(psCssParam->psChild &&
-                  psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
                     psStyle, MS_STYLE_BINDING_COLOR);
               }
             } else if (psName &&
                        strcasecmp(psName, "fill-opacity") == 0) {
-              if(psCssParam->psChild &&
-                  psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
+              {
                 psValue = psCssParam->psChild->psNext->pszValue;
-
-              if (psValue) {
-                fprintf(stderr, "DEBUGJBO: <Graphic> fill-opacity (%p)\n", psStyle);
-                psStyle->color.alpha = (int)(atof(psValue)*255);
+                if (psValue) {
+                  fprintf(stderr, "DEBUGJBO: <Graphic> fill-opacity (%p)\n", psStyle);
+                  psStyle->color.alpha = (int)(atof(psValue)*255);
+                }
               }
             }
 
@@ -1732,29 +1723,24 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               (char*)CPLGetXMLValue(psCssParam, "name", NULL);
             if (psName &&
                 strcasecmp(psName, "stroke") == 0) {
-              if(psCssParam->psChild &&
-                  psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
                     psStyle, MS_STYLE_BINDING_OUTLINECOLOR);
               }
             } else if (psName &&
                        strcasecmp(psName, "stroke-opacity") == 0) {
-              if(psCssParam->psChild &&
-                  psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
+              {
                 psValue = psCssParam->psChild->psNext->pszValue;
-
-              if (psValue) {
-                fprintf(stderr, "DEBUGJBO: <Graphic> stroke-opacity (%p)\n", psStyle);
-                psStyle->outlinecolor.alpha = (int)(atof(psValue)*255);
+                if (psValue) {
+                  fprintf(stderr, "DEBUGJBO: <Graphic> stroke-opacity (%p)\n", psStyle);
+                  psStyle->outlinecolor.alpha = (int)(atof(psValue)*255);
+                }
               }
             } else if (psName &&
                        strcasecmp(psName, "stroke-width") == 0) {
-              if(psCssParam->psChild &&
-                  psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
                     psStyle, MS_STYLE_BINDING_WIDTH);
