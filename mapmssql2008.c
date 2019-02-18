@@ -194,7 +194,6 @@ SegmentType (1 byte)
 #define ReadM(iPoint) (ReadDouble(gpi->nPointPos + 24 * gpi->nNumPoints + 8 * (iPoint)))
 
 #define FP_EPSILON 1e-12
-#define FP_EQ(a, b) (fabs((a)-(b)) < FP_EPSILON)
 #define SEGMENT_ANGLE 5.0
 #define SEGMENT_MINPOINTS 10
 
@@ -304,6 +303,11 @@ void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint)
       p->z = 0.0;
       p->m = ReadZ(iPoint);
   }
+  else
+  {
+      p->z = 0.0;
+      p->m = 0.0;
+  }
 #endif
 }
 
@@ -313,6 +317,10 @@ int StrokeArcToLine(msGeometryParserInfo* gpi, lineObj* line, int index)
         double x, y, x1, y1, x2, y2, x3, y3, dxa, dya, sxa, sya, dxb, dyb;
         double d, sxb, syb, ox, oy, a1, a3, sa, da, a, radius;
         int numpoints;
+#ifdef USE_POINT_Z_M
+        double z;
+        z = line->point[index].z; /* must be equal for arc segments */
+#endif
         /* first point */
         x1 = line->point[index - 2].x;
         y1 = line->point[index - 2].y;
@@ -379,6 +387,9 @@ int StrokeArcToLine(msGeometryParserInfo* gpi, lineObj* line, int index)
         while (numpoints > 1) {
             line->point[index].x = x = ox + radius * cos(a);
             line->point[index].y = y = oy + radius * sin(a);
+#ifdef USE_POINT_Z_M
+            line->point[index].z = z;
+#endif
 
             /* calculate bounds */
             if (gpi->minx > x) gpi->minx = x;
@@ -393,6 +404,9 @@ int StrokeArcToLine(msGeometryParserInfo* gpi, lineObj* line, int index)
         /* set last point */
         line->point[index].x = x3;
         line->point[index].y = y3;
+#ifdef USE_POINT_Z_M
+        line->point[index].z = z;
+#endif
     }
     return index;
 }
