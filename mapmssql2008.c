@@ -2,8 +2,9 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  MS SQL 2008 (Katmai) Layer Connector
+ * Purpose:  MS SQL Server Layer Connector
  * Author:   Richard Hillman - based on PostGIS and SpatialDB connectors
+ *           Tamas Szekeres - maintenance
  *
  ******************************************************************************
  * Copyright (c) 2007 IS Consulting (www.mapdotnet.com)
@@ -50,7 +51,7 @@
 #include <string.h>
 #include <ctype.h> /* tolower() */
 
-/*   SqlGeometry serialization format
+/*   SqlGeometry/SqlGeography serialization format
 
 Simple Point (SerializationProps & IsSinglePoint)
   [SRID][0x01][SerializationProps][Point][z][m]
@@ -59,8 +60,16 @@ Simple Line Segment (SerializationProps & IsSingleLineSegment)
   [SRID][0x01][SerializationProps][Point1][Point2][z1][z2][m1][m2]
 
 Complex Geometries
-  [SRID][0x01][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
+  [SRID][VersionAttribute][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
   [NumFigures][Figure]..[Figure][NumShapes][Shape]..[Shape]
+
+Complex Geometries (FigureAttribute == Curve)
+  [SRID][VersionAttribute][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
+  [NumFigures][Figure]..[Figure][NumShapes][Shape]..[Shape][NumSegments][SegmentType]..[SegmentType]
+
+VersionAttribute (1 byte)
+  0x01 = Katmai (MSSQL2008+)
+  0x02 = Denali (MSSQL2012+)
 
 SRID
   Spatial Reference Id (4 bytes)
@@ -71,7 +80,7 @@ SerializationProps (bitmask) 1 byte
   0x04 = IsValid
   0x08 = IsSinglePoint
   0x10 = IsSingleLineSegment
-  0x20 = IsWholeGlobe
+  0x20 = IsLargerThanAHemisphere
 
 Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValues
   [x][y]                  - SqlGeometry
@@ -80,10 +89,16 @@ Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValue
 Figure
   [FigureAttribute][PointOffset]
 
-FigureAttribute (1 byte)
+FigureAttribute - Katmai (1 byte)
   0x00 = Interior Ring
   0x01 = Stroke
   0x02 = Exterior Ring
+
+FigureAttribute - Denali (1 byte)
+  0x00 = None
+  0x01 = Line
+  0x02 = Arc
+  0x03 = Curve
 
 Shape
   [ParentFigureOffset][FigureOffset][ShapeType]
@@ -97,6 +112,17 @@ ShapeType (1 byte)
   0x05 = MultiLineString
   0x06 = MultiPolygon
   0x07 = GeometryCollection
+  -- Denali
+  0x08 = CircularString
+  0x09 = CompoundCurve
+  0x0A = CurvePolygon
+  0x0B = FullGlobe
+
+SegmentType (1 byte)
+  0x00 = Line
+  0x01 = Arc
+  0x02 = FirstLine
+  0x03 = FirstArc
 
 */
 
@@ -125,7 +151,7 @@ ShapeType (1 byte)
 #define SP_ISVALID 4
 #define SP_ISSINGLEPOINT 8
 #define SP_ISSINGLELINESEGMENT 0x10
-#define SP_ISWHOLEGLOBE 0x20
+#define SP_ISLARGERTHANAHEMISPHERE 0x20
 
 #define ST_UNKNOWN 0
 #define ST_POINT 1
@@ -135,6 +161,15 @@ ShapeType (1 byte)
 #define ST_MULTILINESTRING 5
 #define ST_MULTIPOLYGON 6
 #define ST_GEOMETRYCOLLECTION 7
+#define ST_CIRCULARSTRING 8
+#define ST_COMPOUNDCURVE 9
+#define ST_CURVEPOLYGON 10
+#define ST_FULLGLOBE 11
+
+#define SMT_LINE 0
+#define SMT_ARC 1
+#define SMT_FIRSTLINE 2
+#define SMT_FIRSTARC 3
 
 #define ReadInt32(nPos) (*((unsigned int*)(gpi->pszData + (nPos))))
 
@@ -145,6 +180,7 @@ ShapeType (1 byte)
 #define ParentOffset(iShape) (ReadInt32(gpi->nShapePos + (iShape) * 9 ))
 #define FigureOffset(iShape) (ReadInt32(gpi->nShapePos + (iShape) * 9 + 4))
 #define ShapeType(iShape) (ReadByte(gpi->nShapePos + (iShape) * 9 + 8))
+#define SegmentType(iSegment) (ReadByte(gpi->nSegmentPos + (iSegment)))
 
 #define NextFigureOffset(iShape) (iShape + 1 < gpi->nNumShapes? FigureOffset((iShape) +1) : gpi->nNumFigures)
 
@@ -157,11 +193,17 @@ ShapeType (1 byte)
 #define ReadZ(iPoint) (ReadDouble(gpi->nPointPos + 16 * gpi->nNumPoints + 8 * (iPoint)))
 #define ReadM(iPoint) (ReadDouble(gpi->nPointPos + 24 * gpi->nNumPoints + 8 * (iPoint)))
 
+#define FP_EPSILON 1e-12
+#define SEGMENT_ANGLE 5.0
+#define SEGMENT_MINPOINTS 10
+
 /* Native geometry parser struct */
 typedef struct msGeometryParserInfo_t {
   unsigned char* pszData;
   int nLen;
-  /* serialization propeties */
+  /* version */
+  char chVersion;
+  /* serialization properties */
   char chProps;
   /* point array */
   int nPointSize;
@@ -175,6 +217,9 @@ typedef struct msGeometryParserInfo_t {
   int nShapePos;
   int nNumShapes;
   int nSRSId;
+  /* segment array */
+  int nSegmentPos;
+  int nNumSegments;
   /* geometry or geography */
   int nColType;
   /* bounds */
@@ -258,7 +303,112 @@ void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint)
       p->z = 0.0;
       p->m = ReadZ(iPoint);
   }
+  else
+  {
+      p->z = 0.0;
+      p->m = 0.0;
+  }
 #endif
+}
+
+int StrokeArcToLine(msGeometryParserInfo* gpi, lineObj* line, int index)
+{
+    if (index > 1) {
+        double x, y, x1, y1, x2, y2, x3, y3, dxa, dya, sxa, sya, dxb, dyb;
+        double d, sxb, syb, ox, oy, a1, a3, sa, da, a, radius;
+        int numpoints;
+#ifdef USE_POINT_Z_M
+        double z;
+        z = line->point[index].z; /* must be equal for arc segments */
+#endif
+        /* first point */
+        x1 = line->point[index - 2].x;
+        y1 = line->point[index - 2].y;
+        /* second point */
+        x2 = line->point[index - 1].x;
+        y2 = line->point[index - 1].y;
+        /* third point */
+        x3 = line->point[index].x;
+        y3 = line->point[index].y;
+
+        sxa = (x1 + x2);
+        sya = (y1 + y2);
+        dxa = x2 - x1;
+        dya = y2 - y1;
+
+        sxb = (x2 + x3);
+        syb = (y2 + y3);
+        dxb = x3 - x2;
+        dyb = y3 - y2;
+
+        d = (dxa * dyb - dya * dxb) * 2;
+
+        if (fabs(d) < FP_EPSILON) {
+            /* points are colinear, nothing to do here */
+            return index;
+        }
+
+        /* calculating the center of circle */
+        ox = ((sya - syb) * dya * dyb + sxa * dyb * dxa - sxb * dya * dxb) / d;
+        oy = ((sxb - sxa) * dxa * dxb + syb * dyb * dxa - sya * dya * dxb) / d;
+
+        radius = sqrt((x1 - ox) * (x1 - ox) + (y1 - oy) * (y1 - oy));
+
+        /* calculating the angle to be used */
+        a1 = atan2(y1 - oy, x1 - ox);
+        a3 = atan2(y3 - oy, x3 - ox);
+
+        if (d > 0) {
+            /* draw counterclockwise */
+            if (a3 > a1) /* Wrapping past 180? */
+                sa = a3 - a1;
+            else
+                sa = a3 - a1 + 2.0 * M_PI ;
+        }
+        else {
+            if (a3 > a1) /* Wrapping past 180? */
+                sa = a3 - a1 + 2.0 * M_PI;
+            else
+                sa = a3 - a1;
+        }
+
+        numpoints = (int)floor(fabs(sa) * 180 / SEGMENT_ANGLE / M_PI);
+        if (numpoints < SEGMENT_MINPOINTS)
+            numpoints = SEGMENT_MINPOINTS;
+
+        da = sa / numpoints;
+
+        /* extend the point array */
+        line->numpoints += numpoints - 2;
+        line->point = msSmallRealloc(line->point, sizeof(pointObj) * line->numpoints);
+        --index;
+
+        a = a1 + da;
+        while (numpoints > 1) {
+            line->point[index].x = x = ox + radius * cos(a);
+            line->point[index].y = y = oy + radius * sin(a);
+#ifdef USE_POINT_Z_M
+            line->point[index].z = z;
+#endif
+
+            /* calculate bounds */
+            if (gpi->minx > x) gpi->minx = x;
+            else if (gpi->maxx < x) gpi->maxx = x;
+            if (gpi->miny > y) gpi->miny = y;
+            else if (gpi->maxy < y) gpi->maxy = y;
+
+            a += da;
+            ++index;
+            --numpoints;
+        }
+        /* set last point */
+        line->point[index].x = x3;
+        line->point[index].y = y3;
+#ifdef USE_POINT_Z_M
+        line->point[index].z = z;
+#endif
+    }
+    return index;
 }
 
 int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
@@ -275,7 +425,9 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
   /* store the SRS id for further use */
   gpi->nSRSId = ReadInt32(0);
 
-  if ( ReadByte(4) != 1 ) {
+  gpi->chVersion = ReadByte(4);
+
+  if (gpi->chVersion > 2) {
     msDebug("ParseSqlGeometry CORRUPT_DATA\n");
     return CORRUPT_DATA;
   }
@@ -324,7 +476,7 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
     ReadPoint(gpi, &shape->line[0].point[0], 0);
     ReadPoint(gpi, &shape->line[0].point[1], 1);
   } else {
-    int iShape, iFigure;
+    int iShape, iFigure, iSegment;
     // complex geometries
     gpi->nNumPoints = ReadInt32(6);
 
@@ -380,10 +532,13 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
       if (shapeType == ST_POINT || shapeType == ST_MULTIPOINT) {
         shape->type = MS_SHAPE_POINT;
         break;
-      } else if (shapeType == ST_LINESTRING || shapeType == ST_MULTILINESTRING) {
+      } else if (shapeType == ST_LINESTRING || shapeType == ST_MULTILINESTRING || 
+                 shapeType == ST_CIRCULARSTRING || shapeType == ST_COMPOUNDCURVE) {
         shape->type = MS_SHAPE_LINE;
         break;
-      } else if (shapeType == ST_POLYGON || shapeType == ST_MULTIPOLYGON) {
+      } else if (shapeType == ST_POLYGON || shapeType == ST_MULTIPOLYGON || 
+                 shapeType == ST_CURVEPOLYGON)
+      {
         shape->type = MS_SHAPE_POLYGON;
         break;
       }
@@ -391,6 +546,8 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
 
     shape->line = (lineObj *) msSmallMalloc(sizeof(lineObj) * gpi->nNumFigures);
     shape->numlines = gpi->nNumFigures;
+    gpi->nNumSegments = 0;
+
     // read figures
     for (iFigure = 0; iFigure < gpi->nNumFigures; iFigure++) {
       int iPoint, iNextPoint, i;
@@ -398,15 +555,61 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
       iNextPoint = NextPointOffset(iFigure);
 
       shape->line[iFigure].point = (pointObj *) msSmallMalloc(sizeof(pointObj)*(iNextPoint - iPoint));
-
+      shape->line[iFigure].numpoints = iNextPoint - iPoint;
       i = 0;
-      while (iPoint < iNextPoint) {
-        ReadPoint(gpi, &shape->line[iFigure].point[i], iPoint);
-        ++iPoint;
-        ++i;
-      }
 
-      shape->line[iFigure].numpoints = i;
+      if (gpi->chVersion == 0x02 && FigureAttribute(iFigure) >= 0x02) {
+          int nPointPrepared = 0;
+          lineObj* line = &shape->line[iFigure];
+          if (FigureAttribute(iFigure) == 0x03) {
+              if (gpi->nNumSegments == 0) {
+                  /* position of the segment types */
+                  gpi->nSegmentPos = gpi->nShapePos + 9 * gpi->nNumShapes + 4;
+                  gpi->nNumSegments = ReadInt32(gpi->nSegmentPos - 4);
+                  if (gpi->nLen < gpi->nSegmentPos + gpi->nNumSegments) {
+                      msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
+                      return NOT_ENOUGH_DATA;
+                  }
+                  iSegment = 0;
+              }             
+             
+              while (iPoint < iNextPoint && iSegment < gpi->nNumSegments) {
+                  ReadPoint(gpi, &line->point[i], iPoint);
+                  ++iPoint;
+                  ++nPointPrepared;
+
+                  if (nPointPrepared == 2 && (SegmentType(iSegment) == SMT_FIRSTLINE || SegmentType(iSegment) == SMT_LINE)) {
+                      ++iSegment;
+                      nPointPrepared = 1;
+                  }
+                  else if (nPointPrepared == 3 && (SegmentType(iSegment) == SMT_FIRSTARC || SegmentType(iSegment) == SMT_ARC)) {
+                      i = StrokeArcToLine(gpi, line, i);
+                      ++iSegment;
+                      nPointPrepared = 1;
+                  }
+                  ++i;
+              }
+          }
+          else {
+              while (iPoint < iNextPoint) {
+                  ReadPoint(gpi, &line->point[i], iPoint);
+                  ++iPoint;
+                  ++nPointPrepared;
+                  if (nPointPrepared == 3) {
+                      i = StrokeArcToLine(gpi, line, i);
+                      nPointPrepared = 1;
+                  }
+                  ++i;
+              }
+          }
+      }
+      else {
+          while (iPoint < iNextPoint) {
+              ReadPoint(gpi, &shape->line[iFigure].point[i], iPoint);
+              ++iPoint;
+              ++i;
+          }
+      }
     }
   }
 
