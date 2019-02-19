@@ -550,13 +550,13 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
 
     // read figures
     for (iFigure = 0; iFigure < gpi->nNumFigures; iFigure++) {
-      int iPoint, iNextPoint;
+      int iPoint, iNextPoint, i;
       iPoint = PointOffset(iFigure);
       iNextPoint = NextPointOffset(iFigure);
 
       shape->line[iFigure].point = (pointObj *) msSmallMalloc(sizeof(pointObj)*(iNextPoint - iPoint));
       shape->line[iFigure].numpoints = iNextPoint - iPoint;
-      int i = 0;
+      i = 0;
 
       if (gpi->chVersion == 0x02 && FigureAttribute(iFigure) >= 0x02) {
           int nPointPrepared = 0;
