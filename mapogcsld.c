@@ -2715,7 +2715,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                          classObj *psClass)
 {
   char szFontName[100];
-  double  dfFontSize = 10;
 
   CPLXMLNode *psLabel=NULL, *psFont=NULL;
   CPLXMLNode *psCssParam = NULL;
@@ -2822,13 +2821,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             }
             /* default is 10 pix */
             else if (strcasecmp(pszName, "font-size") == 0) {
-
-///              if(psCssParam->psChild && psCssParam->psChild->psNext &&
-///                  psCssParam->psChild->psNext->pszValue)
-///                dfFontSize = atof(psCssParam->psChild->psNext->pszValue);
-///              if (dfFontSize <=0.0)
-///                dfFontSize = 10.0;
-///              psLabelObj->size = dfFontSize;
               if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
