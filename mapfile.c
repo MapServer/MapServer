@@ -6309,7 +6309,7 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   writeBlockBegin(stream, indent, "MAP");
   writeNumber(stream, indent, "ANGLE", 0, map->gt.rotation_angle);
   writeHashTableInline(stream, indent, "CONFIG", &(map->configoptions));
-  writeString(stream, indent, "DATAPATTERN", NULL, map->datapattern); /* depricated */
+  writeString(stream, indent, "DATAPATTERN", NULL, map->datapattern);
   writeNumber(stream, indent, "DEBUG", 0, map->debug);
   writeNumber(stream, indent, "DEFRESOLUTION", 72.0, map->defresolution);
   writeExtent(stream, indent, "EXTENT", map->extent);
@@ -6321,11 +6321,12 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   writeNumber(stream, indent, "MAXSIZE", MS_MAXIMAGESIZE_DEFAULT, map->maxsize);
   writeString(stream, indent, "NAME", NULL, map->name);
   writeNumber(stream, indent, "RESOLUTION", 72.0, map->resolution);
+  writeNumber(stream, indent, "SCALEDENOM", -1, map->scaledenom);
   writeString(stream, indent, "SHAPEPATH", NULL, map->shapepath);
   writeDimension(stream, indent, "SIZE", map->width, map->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", map->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeString(stream, indent, "SYMBOLSET", NULL, map->symbolset.filename);
-  writeString(stream, indent, "TEMPLATEPATTERN", NULL, map->templatepattern); /* depricated */
+  writeString(stream, indent, "TEMPLATEPATTERN", NULL, map->templatepattern);
   writeKeyword(stream, indent, "TRANSPARENT", map->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeKeyword(stream, indent, "UNITS", map->units, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeLineFeed(stream);
