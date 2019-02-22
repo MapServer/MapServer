@@ -1182,19 +1182,19 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
           switch (iColorParam) {
             case 0:
               msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                  psStyle, MS_STYLE_BINDING_COLOR);
+                  psStyle, MS_STYLE_BINDING_COLOR, MS_OBJ_STYLE);
               break;
             case 1:
               msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                  psStyle, MS_STYLE_BINDING_OUTLINECOLOR);
+                  psStyle, MS_STYLE_BINDING_OUTLINECOLOR, MS_OBJ_STYLE);
               break;
           }
         }
       } else if (strcasecmp(psStrkName, "stroke-width") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext)
         {
-          msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                                  psStyle, MS_STYLE_BINDING_WIDTH);
+          msSLDParseOgcExpression(psCssParam->psChild->psNext, psStyle,
+                                  MS_STYLE_BINDING_WIDTH, MS_OBJ_STYLE);
         }
       } else if (strcasecmp(psStrkName, "stroke-dasharray") == 0) {
         if(psCssParam->psChild && psCssParam->psChild->psNext &&
@@ -1223,7 +1223,7 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
         if(psCssParam->psChild &&  psCssParam->psChild->psNext)
         {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
-              psStyle, MS_STYLE_BINDING_OPACITY);
+              psStyle, MS_STYLE_BINDING_OPACITY, MS_OBJ_STYLE);
         }
       }
     }
@@ -1256,42 +1256,47 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 /*                                                                      */
 /*              Parse an OGC expression in a <SvgParameter>             */
 /************************************************************************/
-int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
-                            enum MS_STYLE_BINDING_ENUM binding)
+int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
+                            enum objType objtype)
 {
   int status = MS_FAILURE;
+  styleObj * psStyle = psObj;
+  labelObj * psLabel = psObj;
+  int lbinding = binding;
+  enum { MS_STYLE_BASE = 0, MS_LABEL_BASE = 100 };
+  if (objtype == MS_OBJ_LABEL) lbinding += MS_LABEL_BASE;
 
   switch (psRoot->eType)
   {
     case CXT_Text:
       // Parse a raw value
-      switch (binding)
+      switch (lbinding)
       {
-        case MS_STYLE_BINDING_OFFSET_X:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_OFFSET_X:
           psStyle->offsetx = atoi(psRoot->pszValue);
           status = MS_SUCCESS;
           break;
-        case MS_STYLE_BINDING_OFFSET_Y:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_OFFSET_Y:
           psStyle->offsety = atoi(psRoot->pszValue);
           status = MS_SUCCESS;
           break;
-        case MS_STYLE_BINDING_ANGLE:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_ANGLE:
           psStyle->angle = atof(psRoot->pszValue);
           status = MS_SUCCESS;
           break;
-        case MS_STYLE_BINDING_SIZE:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_SIZE:
           psStyle->size = atof(psRoot->pszValue);
           status = MS_SUCCESS;
           break;
-        case MS_STYLE_BINDING_WIDTH:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_WIDTH:
           psStyle->width = atof(psRoot->pszValue);
           status = MS_SUCCESS;
           break;
-        case MS_STYLE_BINDING_OPACITY:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_OPACITY:
           psStyle->opacity = atof(psRoot->pszValue)*100;
           status = MS_SUCCESS;
           break;
-        case MS_STYLE_BINDING_COLOR:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_COLOR:
           if (strlen(psRoot->pszValue) == 7 && psRoot->pszValue[0] == '#')
           {
             psStyle->color.red = msHexToInt(psRoot->pszValue+1);
@@ -1300,7 +1305,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
             status = MS_SUCCESS;
           }
           break;
-        case MS_STYLE_BINDING_OUTLINECOLOR:
+        case MS_STYLE_BASE + MS_STYLE_BINDING_OUTLINECOLOR:
           if (strlen(psRoot->pszValue) == 7 && psRoot->pszValue[0] == '#')
           {
             psStyle->outlinecolor.red = msHexToInt(psRoot->pszValue+1);
@@ -1308,6 +1313,15 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
             psStyle->outlinecolor.blue= msHexToInt(psRoot->pszValue+5);
             status = MS_SUCCESS;
           }
+          break;
+
+        case MS_LABEL_BASE + MS_LABEL_BINDING_SIZE:
+          psLabel->size = atof(psRoot->pszValue);
+          if (psLabel->size <= 0.0)
+          {
+            psLabel->size = 10.0;
+          }
+          status = MS_SUCCESS;
           break;
         default:
           break;
@@ -1317,15 +1331,25 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, styleObj *psStyle,
       if (strcasecmp(psRoot->pszValue,"Literal") == 0 && psRoot->psChild)
       {
         // Parse a <ogc:Literal> element
-        status = msSLDParseOgcExpression(psRoot->psChild, psStyle, binding);
+        status = msSLDParseOgcExpression(psRoot->psChild, psStyle, binding,
+                                         objtype);
       }
       else if (strcasecmp(psRoot->pszValue,"PropertyName") == 0
                && psRoot->psChild)
       {
         // Parse a <ogc:PropertyName> element
-        psStyle->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
-        psStyle->numbindings++;
-        status = MS_SUCCESS;
+        if (objtype == MS_OBJ_STYLE)
+        {
+          psStyle->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
+          psStyle->numbindings++;
+          status = MS_SUCCESS;
+        }
+        else if (objtype == MS_OBJ_LABEL)
+        {
+          psLabel->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
+          psLabel->numbindings++;
+          status = MS_SUCCESS;
+        }
       }
       break;
     default:
@@ -1536,13 +1560,13 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
         if(psCssParam->psChild && psCssParam->psChild->psNext)
         {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
-              psStyle, MS_STYLE_BINDING_COLOR);
+              psStyle, MS_STYLE_BINDING_COLOR, MS_OBJ_STYLE);
         }
       } else if (strcasecmp(psFillName, "fill-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext)
         {
           msSLDParseOgcExpression(psCssParam->psChild->psNext,
-              psStyle, MS_STYLE_BINDING_OPACITY);
+              psStyle, MS_STYLE_BINDING_OPACITY, MS_OBJ_STYLE);
         }
       }
     }
@@ -1602,7 +1626,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     if (psSize && psSize->psChild)
     {
       msSLDParseOgcExpression(psSize->psChild,
-          psStyle, MS_STYLE_BINDING_SIZE);
+          psStyle, MS_STYLE_BINDING_SIZE, MS_OBJ_STYLE);
     }
     else {
       /*do not set a default for external symbols #2305*/
@@ -1616,14 +1640,14 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     if (psOpacity && psOpacity->psChild)
     {
       msSLDParseOgcExpression(psOpacity->psChild,
-          psStyle, MS_STYLE_BINDING_OPACITY);
+          psStyle, MS_STYLE_BINDING_OPACITY, MS_OBJ_STYLE);
     }
 
     psRotation = CPLGetXMLNode(psGraphic, "Rotation");
     if (psRotation && psRotation->psChild)
     {
       msSLDParseOgcExpression(psRotation->psChild,
-          psStyle, MS_STYLE_BINDING_ANGLE);
+          psStyle, MS_STYLE_BINDING_ANGLE, MS_OBJ_STYLE);
     }
     psDisplacement = CPLGetXMLNode(psGraphic, "Displacement");
     if (psDisplacement && psDisplacement->psChild)
@@ -1632,13 +1656,13 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
       if (psDisplacementX && psDisplacementX->psChild)
       {
         msSLDParseOgcExpression(psDisplacementX->psChild,
-            psStyle, MS_STYLE_BINDING_OFFSET_X);
+            psStyle, MS_STYLE_BINDING_OFFSET_X, MS_OBJ_STYLE);
       }
       psDisplacementY = CPLGetXMLNode(psDisplacement, "DisplacementY");
       if (psDisplacementY && psDisplacementY->psChild)
       {
         msSLDParseOgcExpression(psDisplacementY->psChild,
-            psStyle, MS_STYLE_BINDING_OFFSET_Y);
+            psStyle, MS_STYLE_BINDING_OFFSET_Y, MS_OBJ_STYLE);
       }
     }
     /* extract symbol */
@@ -1693,7 +1717,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                    psStyle, MS_STYLE_BINDING_COLOR);
+                    psStyle, MS_STYLE_BINDING_COLOR, MS_OBJ_STYLE);
               }
             } else if (psName &&
                        strcasecmp(psName, "fill-opacity") == 0) {
@@ -1726,7 +1750,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                    psStyle, MS_STYLE_BINDING_OUTLINECOLOR);
+                    psStyle, MS_STYLE_BINDING_OUTLINECOLOR, MS_OBJ_STYLE);
               }
             } else if (psName &&
                        strcasecmp(psName, "stroke-opacity") == 0) {
@@ -1743,7 +1767,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext,
-                    psStyle, MS_STYLE_BINDING_WIDTH);
+                    psStyle, MS_STYLE_BINDING_WIDTH, MS_OBJ_STYLE);
               }
             }
 
@@ -2799,11 +2823,17 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             /* default is 10 pix */
             else if (strcasecmp(pszName, "font-size") == 0) {
 
-              if(psCssParam->psChild && psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
-                dfFontSize = atof(psCssParam->psChild->psNext->pszValue);
-              if (dfFontSize <=0.0)
-                dfFontSize = 10.0;
+///              if(psCssParam->psChild && psCssParam->psChild->psNext &&
+///                  psCssParam->psChild->psNext->pszValue)
+///                dfFontSize = atof(psCssParam->psChild->psNext->pszValue);
+///              if (dfFontSize <=0.0)
+///                dfFontSize = 10.0;
+///              psLabelObj->size = dfFontSize;
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
+              {
+                msSLDParseOgcExpression(psCssParam->psChild->psNext,
+                    psLabelObj, MS_LABEL_BINDING_SIZE, MS_OBJ_LABEL);
+              }
             }
           }
           psCssParam = psCssParam->psNext;
@@ -2847,7 +2877,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
           psLabelObj->font = msStrdup(szFontName);
         }
       }
-      psLabelObj->size = dfFontSize;
 
       /* -------------------------------------------------------------------- */
       /*      parse the halo parameter.                                       */
