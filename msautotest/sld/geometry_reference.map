@@ -94,12 +94,26 @@
 #                <PropertyName>name</PropertyName>
 #              </Label>
 #              <Font>
-#                <SvgParameter name="font-family">dejavu</SvgParameter>
+#                <SvgParameter name="font-family">vera</SvgParameter>
+#                <SvgParameter name=%22font-weight%22>bold</SvgParameter>
 #                <SvgParameter name="font-size">12</SvgParameter>
 #              </Font>
 #              <Fill>
 #                <SvgParameter name="fill">#FFFFFF</SvgParameter>
 #              </Fill>
+#              <LabelPlacement>
+#                <PointPlacement>
+#                  <Displacement>
+#                    <DisplacementX>2</DisplacementX>
+#                    <DisplacementY>2</DisplacementY>
+#                  </Displacement>
+#                </PointPlacement>
+#                <AnchorPoint>
+#                  <AnchorPointX>0.5</AnchorPointX>
+#                  <AnchorPointY>0.5</AnchorPointY>
+#                </AnchorPoint>
+#                <Rotation>15</Rotation>
+#              </LabelPlacement>
 #            </TextSymbolizer>
 #          </Rule>
 #        </FeatureTypeStyle>
@@ -108,7 +122,7 @@
 #  
 #  </StyledLayerDescriptor>
 #
-# RUN_PARMS: sld_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>dejavu</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#00FFFF</SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
 
 
@@ -173,7 +187,6 @@ LAYER
   TYPE POINT
   STATUS ON
   SIZEUNITS pixels
-  LABELITEM "name"
   CLASS
     STYLE
       COLOR 0 0 255
@@ -185,10 +198,13 @@ LAYER
       OFFSET 2 2
     END
     LABEL
+      TEXT "[name]"
       COLOR 255 255 255
       TYPE TRUETYPE
-      FONT dejavu
+      FONT vera-bold
       SIZE 12
+      OFFSET 2 2
+      ANGLE 15
     END
   END
 END

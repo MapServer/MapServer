@@ -103,7 +103,6 @@ LAYER
   TYPE POINT
   STATUS ON
   SIZEUNITS pixels
-  LABELITEM "name"
   CLASS
     STYLE
       COLOR 0 0 255
@@ -115,10 +114,13 @@ LAYER
       OFFSET 2 2
     END
     LABEL
+      TEXT "[name]"
       COLOR 255 255 255
       TYPE TRUETYPE
-      FONT dejavu
+      FONT vera-bold
       SIZE 12
+      OFFSET 2 2
+      ANGLE 15
     END
   END
 END
