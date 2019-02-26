@@ -1323,6 +1323,19 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           }
           status = MS_SUCCESS;
           break;
+        case MS_LABEL_BASE + MS_LABEL_BINDING_ANGLE:
+          psLabel->angle = atof(psRoot->pszValue);
+          status = MS_SUCCESS;
+          break;
+        case MS_LABEL_BASE + MS_LABEL_BINDING_COLOR:
+          if (strlen(psRoot->pszValue) == 7 && psRoot->pszValue[0] == '#')
+          {
+            psLabel->color.red = msHexToInt(psRoot->pszValue+1);
+            psLabel->color.green = msHexToInt(psRoot->pszValue+3);
+            psLabel->color.blue= msHexToInt(psRoot->pszValue+5);
+            status = MS_SUCCESS;
+          }
+          break;
         default:
           break;
       }
@@ -2929,19 +2942,23 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
           pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
           if (pszName) {
             if (strcasecmp(pszName, "fill") == 0) {
-              if(psCssParam->psChild && psCssParam->psChild->psNext &&
-                  psCssParam->psChild->psNext->pszValue)
-                pszColor = psCssParam->psChild->psNext->pszValue;
-
-              if (pszColor) {
-                nLength = strlen(pszColor);
-                /* expecting hexadecimal ex : #aaaaff */
-                if (nLength == 7 && pszColor[0] == '#') {
-                  psLabelObj->color.red = msHexToInt(pszColor+1);
-                  psLabelObj->color.green = msHexToInt(pszColor+3);
-                  psLabelObj->color.blue = msHexToInt(pszColor+5);
-                }
+              if(psCssParam->psChild && psCssParam->psChild->psNext) /// &&
+///               psCssParam->psChild->psNext->pszValue)
+              {
+                msSLDParseOgcExpression(psCssParam->psChild->psNext, psLabelObj,
+                    MS_LABEL_BINDING_COLOR, MS_OBJ_LABEL);
               }
+///             pszColor = psCssParam->psChild->psNext->pszValue;
+
+///           if (pszColor) {
+///             nLength = strlen(pszColor);
+///             /* expecting hexadecimal ex : #aaaaff */
+///             if (nLength == 7 && pszColor[0] == '#') {
+///               psLabelObj->color.red = msHexToInt(pszColor+1);
+///               psLabelObj->color.green = msHexToInt(pszColor+3);
+///               psLabelObj->color.blue = msHexToInt(pszColor+5);
+///             }
+///           }
             }
           }
           psCssParam = psCssParam->psNext;
@@ -2964,8 +2981,7 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
   CPLXMLNode *psAnchor, *psAnchorX, *psAnchorY;
   double dfAnchorX=0, dfAnchorY=0;
   CPLXMLNode *psDisplacement, *psDisplacementX, *psDisplacementY;
-  CPLXMLNode *psRotation=NULL, *psPropertyName=NULL;
-  char szTmp[100];
+  CPLXMLNode *psRotation=NULL;
   labelObj *psLabelObj = NULL;
 
   if (!psRoot || !psClass)
@@ -3047,16 +3063,10 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
   /*      parse rotation.                                                 */
   /* -------------------------------------------------------------------- */
   psRotation = CPLGetXMLNode(psRoot, "Rotation");
-  if (psRotation) {
-    psPropertyName = CPLGetXMLNode(psRotation, "PropertyName");
-    if (psPropertyName) {
-      snprintf(szTmp, sizeof(szTmp), "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
-      psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(szTmp);
-      psLabelObj->numbindings++;
-    } else {
-      if (psRotation->psChild && psRotation->psChild->pszValue)
-        psLabelObj->angle = atof(psRotation->psChild->pszValue);
-    }
+  if (psRotation && psRotation->psChild)
+  {
+    msSLDParseOgcExpression(psRotation->psChild, psLabelObj,
+        MS_LABEL_BINDING_ANGLE, MS_OBJ_LABEL);
   }
 
   return MS_SUCCESS;
