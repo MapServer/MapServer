@@ -116,10 +116,12 @@ LAYER
     LABEL
       TEXT "[name]"
       COLOR 255 255 255
+      OUTLINECOLOR 0 255 0
+      OUTLINEWIDTH 2
       TYPE TRUETYPE
       FONT vera-bold
       SIZE 12
-      OFFSET 2 2
+      OFFSET 2 20
       ANGLE 15
     END
   END
