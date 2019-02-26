@@ -1336,6 +1336,15 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             status = MS_SUCCESS;
           }
           break;
+        case MS_LABEL_BASE + MS_LABEL_BINDING_OUTLINECOLOR:
+          if (strlen(psRoot->pszValue) == 7 && psRoot->pszValue[0] == '#')
+          {
+            psLabel->outlinecolor.red = msHexToInt(psRoot->pszValue+1);
+            psLabel->outlinecolor.green = msHexToInt(psRoot->pszValue+3);
+            psLabel->outlinecolor.blue= msHexToInt(psRoot->pszValue+5);
+            status = MS_SUCCESS;
+          }
+          break;
         default:
           break;
       }
@@ -2735,9 +2744,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   char *pszFontWeight=NULL;
   CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
   CPLXMLNode *psFill = NULL, *psPropertyName=NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
-  int nLength = 0;
-  char *pszColor = NULL;
-  /* char *pszItem = NULL; */
   CPLXMLNode *psTmpNode = NULL;
   char *pszClassText = NULL;
   char szTmp[100];
@@ -2905,18 +2911,10 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
             pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
             if (pszName) {
               if (strcasecmp(pszName, "fill") == 0) {
-                if(psCssParam->psChild && psCssParam->psChild->psNext &&
-                    psCssParam->psChild->psNext->pszValue)
-                  pszColor = psCssParam->psChild->psNext->pszValue;
-
-                if (pszColor) {
-                  nLength = strlen(pszColor);
-                  /* expecting hexadecimal ex : #aaaaff */
-                  if (nLength == 7 && pszColor[0] == '#') {
-                    psLabelObj->outlinecolor.red = msHexToInt(pszColor+1);
-                    psLabelObj->outlinecolor.green = msHexToInt(pszColor+3);
-                    psLabelObj->outlinecolor.blue = msHexToInt(pszColor+5);
-                  }
+                if(psCssParam->psChild && psCssParam->psChild->psNext)
+                {
+                  msSLDParseOgcExpression(psCssParam->psChild->psNext, psLabelObj,
+                      MS_LABEL_BINDING_OUTLINECOLOR, MS_OBJ_LABEL);
                 }
               }
             }
