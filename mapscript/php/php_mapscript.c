@@ -898,9 +898,7 @@ PHP_FUNCTION(ms_tokenizeMap)
                                         filename);
     return;
   } else {
-    if (array_init(return_value) == FAILURE) {
-      RETURN_FALSE;
-    }
+    array_init(return_value);
 
     for (i=0; i<numtokens; i++) {
 #if PHP_VERSION_ID < 70000
