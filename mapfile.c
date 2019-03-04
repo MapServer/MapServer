@@ -2602,6 +2602,7 @@ int initStyle(styleObj *style)
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
     style->bindings[i].item = NULL;
     style->bindings[i].index = -1;
+    msInitExpression(&(style->exprBindings[i]));
   }
 
   return MS_SUCCESS;

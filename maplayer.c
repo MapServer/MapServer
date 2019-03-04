@@ -908,6 +908,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
         if(layer->class[i]->styles[j]->bindings[k].item) 
           layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->styles[j]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
       }
       if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
         msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
