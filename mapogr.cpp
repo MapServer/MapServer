@@ -4421,9 +4421,9 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
     }
     if(itemindexes[i] == -1) {
       msSetError(MS_OGRERR,
-                 "Invalid Field name: %s",
+                 "Invalid Field name: %s in layer `%s'",
                  "msOGRLayerInitItemInfo()",
-                 layer->items[i]);
+                 layer->items[i], layer->name ? layer->name : "(null)");
       return(MS_FAILURE);
     }
   }
