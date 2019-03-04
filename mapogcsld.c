@@ -2940,23 +2940,11 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
           pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
           if (pszName) {
             if (strcasecmp(pszName, "fill") == 0) {
-              if(psCssParam->psChild && psCssParam->psChild->psNext) /// &&
-///               psCssParam->psChild->psNext->pszValue)
+              if(psCssParam->psChild && psCssParam->psChild->psNext)
               {
                 msSLDParseOgcExpression(psCssParam->psChild->psNext, psLabelObj,
                     MS_LABEL_BINDING_COLOR, MS_OBJ_LABEL);
               }
-///             pszColor = psCssParam->psChild->psNext->pszValue;
-
-///           if (pszColor) {
-///             nLength = strlen(pszColor);
-///             /* expecting hexadecimal ex : #aaaaff */
-///             if (nLength == 7 && pszColor[0] == '#') {
-///               psLabelObj->color.red = msHexToInt(pszColor+1);
-///               psLabelObj->color.green = msHexToInt(pszColor+3);
-///               psLabelObj->color.blue = msHexToInt(pszColor+5);
-///             }
-///           }
             }
           }
           psCssParam = psCssParam->psNext;
