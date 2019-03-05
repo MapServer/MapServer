@@ -182,9 +182,56 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
       style->polaroffsetangle = 0;
       bindDoubleAttribute(&style->polaroffsetangle, shape->values[style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
-      style->outlinewidth = 1;
-      bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
+  }
+  if (style->nexprbindings > 0)
+  {
+    if (style->exprBindings[MS_STYLE_BINDING_OFFSET_X].type == MS_EXPRESSION)
+    {
+      style->offsetx = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OFFSET_X]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OFFSET_Y].type == MS_EXPRESSION)
+    {
+      style->offsety = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OFFSET_Y]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_ANGLE].type == MS_EXPRESSION)
+    {
+      style->angle = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_ANGLE]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_SIZE].type == MS_EXPRESSION)
+    {
+      style->size = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_SIZE]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_WIDTH].type == MS_EXPRESSION)
+    {
+      style->width = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_WIDTH]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OPACITY].type == MS_EXPRESSION)
+    {
+      style->opacity = 100 * msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OPACITY]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
+    {
+      bindColorAttribute(&style->outlinecolor,
+          msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR]), shape));
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_COLOR].type == MS_EXPRESSION)
+    {
+      bindColorAttribute(&style->color,
+          msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_COLOR]), shape));
     }
   }
   if(style->opacity < 100 || style->color.alpha != 255 ) {

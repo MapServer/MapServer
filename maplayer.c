@@ -830,7 +830,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
 
   if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
     msTokenizeExpression(&layer->_geomtransform, layer->items, &(layer->numitems));
-  
+
   /* class level counts */
   for(i=0; i<layer->numclasses; i++) {
 
@@ -839,6 +839,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       nt += layer->class[i]->styles[j]->numbindings;
       if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
         nt += msCountChars(layer->class[i]->styles[j]->_geomtransform.string, '[');
+      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          nt += msCountChars(layer->class[i]->styles[j]->exprBindings[k].string, '[');
+        }
+      }
     }
 
     if(layer->class[i]->expression.type == MS_EXPRESSION)

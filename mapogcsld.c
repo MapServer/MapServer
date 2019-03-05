@@ -1362,16 +1362,41 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         // Parse a <ogc:PropertyName> element
         if (objtype == MS_OBJ_STYLE)
         {
-          psStyle->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
-          psStyle->numbindings++;
-          status = MS_SUCCESS;
+          char * propertyString = NULL;
+          char * strDelim = "";
+          switch (binding)
+          {
+            case MS_STYLE_BINDING_COLOR:
+            case MS_STYLE_BINDING_OUTLINECOLOR:
+              strDelim = "\"";
+            case MS_STYLE_BINDING_OFFSET_X:
+            case MS_STYLE_BINDING_OFFSET_Y:
+            case MS_STYLE_BINDING_ANGLE:
+            case MS_STYLE_BINDING_SIZE:
+            case MS_STYLE_BINDING_WIDTH:
+            case MS_STYLE_BINDING_OPACITY:
+              propertyString = msStringConcatenate(propertyString, strDelim);
+              propertyString = msStringConcatenate(propertyString, "[");
+              propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
+              propertyString = msStringConcatenate(propertyString, "]");
+              propertyString = msStringConcatenate(propertyString, strDelim);
+              msInitExpression(&(psStyle->exprBindings[binding]));
+              psStyle->exprBindings[binding].string = propertyString;
+              psStyle->exprBindings[binding].type = MS_EXPRESSION;
+              psStyle->nexprbindings++;
+              break;
+            default:
+              psStyle->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
+              psStyle->numbindings++;
+              break;
+          }
         }
         else if (objtype == MS_OBJ_LABEL)
         {
           psLabel->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
           psLabel->numbindings++;
-          status = MS_SUCCESS;
         }
+        status = MS_SUCCESS;
       }
       break;
     default:

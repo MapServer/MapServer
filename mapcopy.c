@@ -475,6 +475,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     dst->exprBindings[i].type = src->exprBindings[i].type;
   }
   MS_COPYSTELEM(numbindings);
+  MS_COPYSTELEM(nexprbindings);
 
   MS_COPYCOLOR(&(dst->color), &(src->color));
   MS_COPYCOLOR(&(dst->outlinecolor),&(src->outlinecolor));
