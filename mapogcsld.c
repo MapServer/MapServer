@@ -1260,16 +1260,33 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
                             enum objType objtype)
 {
   int status = MS_FAILURE;
+  const char * ops = "Add+Sub-Mul*Div/";
   styleObj * psStyle = psObj;
   labelObj * psLabel = psObj;
   int lbinding = binding;
+  expressionObj *exprBindings = psStyle->exprBindings;
+  int *nexprbindings = &psStyle->nexprbindings;
   enum { MS_STYLE_BASE = 0, MS_LABEL_BASE = 100 };
-  if (objtype == MS_OBJ_LABEL) lbinding += MS_LABEL_BASE;
+  if (objtype == MS_OBJ_LABEL)
+  {
+    lbinding += MS_LABEL_BASE;
+    exprBindings = psLabel->exprBindings;
+    nexprbindings = &psLabel->nexprbindings;
+  }
 
   switch (psRoot->eType)
   {
     case CXT_Text:
       // Parse a raw value
+      {
+        char * literalString = NULL;
+        literalString = msStringConcatenate(literalString, "(");
+        literalString = msStringConcatenate(literalString, psRoot->pszValue);
+        literalString = msStringConcatenate(literalString, ")");
+        msInitExpression(&(exprBindings[binding]));
+        exprBindings[binding].string = literalString;
+        exprBindings[binding].type = MS_STRING;
+      }
       switch (lbinding)
       {
         case MS_STYLE_BASE + MS_STYLE_BINDING_OFFSET_X:
@@ -1354,27 +1371,14 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       {
         // Parse a <ogc:Literal> element
         status = msSLDParseOgcExpression(psRoot->psChild, psStyle, binding,
-                                         objtype);
+            objtype);
       }
       else if (strcasecmp(psRoot->pszValue,"PropertyName") == 0
-               && psRoot->psChild)
+          && psRoot->psChild)
       {
         // Parse a <ogc:PropertyName> element
         char * propertyString = NULL;
         char * strDelim = "";
-        expressionObj * exprBindings;
-        int * nexprbindings;
-
-        if (objtype == MS_OBJ_STYLE)
-        {
-          exprBindings = psStyle->exprBindings;
-          nexprbindings = &psStyle->nexprbindings;
-        }
-        else if (objtype == MS_OBJ_LABEL)
-        {
-          exprBindings = psLabel->exprBindings;
-          nexprbindings = &psLabel->nexprbindings;
-        }
 
         switch (lbinding)
         {
@@ -1396,6 +1400,44 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             break;
         }
         status = MS_SUCCESS;
+      }
+      else if (strstr(ops, psRoot->pszValue)
+          && psRoot->psChild && psRoot->psChild->psNext)
+      {
+        // Parse an arithmetic element <ogc:Add>, <ogc:Sub>, <ogc:Mul>, <ogc:Div>
+        const char operator[2] = { *(strstr(ops, psRoot->pszValue)+3), '\0' };
+        char * expressionString = NULL;
+
+        // Parse first operand
+        expressionString = msStringConcatenate(expressionString, "(");
+        msInitExpression(&(exprBindings[binding]));
+        status = msSLDParseOgcExpression(psRoot->psChild, psObj, binding, objtype);
+
+        // Parse second operand
+        if (status == MS_SUCCESS)
+        {
+          expressionString = msStringConcatenate(expressionString,
+              exprBindings[binding].string);
+          expressionString = msStringConcatenate(expressionString,
+              operator);
+          msInitExpression(&(exprBindings[binding]));
+          status = msSLDParseOgcExpression(psRoot->psChild->psNext,
+              psObj, binding, objtype);
+          if (status == MS_SUCCESS)
+          {
+            expressionString = msStringConcatenate(expressionString,
+                exprBindings[binding].string);
+            expressionString = msStringConcatenate(expressionString,
+                ")");
+            exprBindings[binding].string = expressionString;
+            exprBindings[binding].type = MS_EXPRESSION;
+            (*nexprbindings)++;
+          }
+        }
+        if (status == MS_FAILURE)
+        {
+          msInitExpression(&(exprBindings[binding]));
+        }
       }
       break;
     default:
