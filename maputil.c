@@ -326,6 +326,15 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
       }
     }
   }
+  if (label->nexprbindings > 0)
+  {
+    if (label->exprBindings[MS_LABEL_BINDING_ANGLE].type == MS_EXPRESSION)
+    {
+      label->angle = msEvalDoubleExpression(
+          &(label->exprBindings[MS_LABEL_BINDING_ANGLE]),
+          shape);
+    }
+  }
 }
 
 /*

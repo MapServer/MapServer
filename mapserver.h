@@ -1131,6 +1131,8 @@ extern "C" {
 #ifndef SWIG
     attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
     int numbindings;
+    expressionObj exprBindings[MS_LABEL_BINDING_LENGTH];
+    int nexprbindings;
 #endif
 
     labelLeaderObj *leader;

@@ -1675,9 +1675,11 @@ void initLabel(labelObj *label)
   label->styles = NULL;
 
   label->numbindings = 0;
+  label->nexprbindings = 0;
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
     label->bindings[i].item = NULL;
     label->bindings[i].index = -1;
+    msInitExpression(&(label->exprBindings[i]));
   }
 
   msInitExpression(&(label->expression));

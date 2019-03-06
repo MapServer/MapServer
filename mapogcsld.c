@@ -1360,41 +1360,56 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
                && psRoot->psChild)
       {
         // Parse a <ogc:PropertyName> element
+        char * propertyString = NULL;
+        char * strDelim = "";
+        expressionObj * exprBindings;
+        int * nexprbindings;
+
         if (objtype == MS_OBJ_STYLE)
         {
-          char * propertyString = NULL;
-          char * strDelim = "";
+          exprBindings = psStyle->exprBindings;
+          nexprbindings = &psStyle->nexprbindings;
+
           switch (binding)
           {
             case MS_STYLE_BINDING_COLOR:
             case MS_STYLE_BINDING_OUTLINECOLOR:
               strDelim = "\"";
-            case MS_STYLE_BINDING_OFFSET_X:
-            case MS_STYLE_BINDING_OFFSET_Y:
-            case MS_STYLE_BINDING_ANGLE:
-            case MS_STYLE_BINDING_SIZE:
-            case MS_STYLE_BINDING_WIDTH:
-            case MS_STYLE_BINDING_OPACITY:
+            default:
               propertyString = msStringConcatenate(propertyString, strDelim);
               propertyString = msStringConcatenate(propertyString, "[");
               propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
               propertyString = msStringConcatenate(propertyString, "]");
               propertyString = msStringConcatenate(propertyString, strDelim);
               msInitExpression(&(psStyle->exprBindings[binding]));
-              psStyle->exprBindings[binding].string = propertyString;
-              psStyle->exprBindings[binding].type = MS_EXPRESSION;
-              psStyle->nexprbindings++;
-              break;
-            default:
-              psStyle->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
-              psStyle->numbindings++;
+              exprBindings[binding].string = propertyString;
+              exprBindings[binding].type = MS_EXPRESSION;
+              (*nexprbindings)++;
               break;
           }
         }
         else if (objtype == MS_OBJ_LABEL)
         {
-          psLabel->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
-          psLabel->numbindings++;
+          exprBindings = psLabel->exprBindings;
+          nexprbindings = &psLabel->nexprbindings;
+
+          switch (binding)
+          {
+            case MS_LABEL_BINDING_ANGLE:
+              propertyString = msStringConcatenate(propertyString, strDelim);
+              propertyString = msStringConcatenate(propertyString, "[");
+              propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
+              propertyString = msStringConcatenate(propertyString, "]");
+              propertyString = msStringConcatenate(propertyString, strDelim);
+              msInitExpression(&(psStyle->exprBindings[binding]));
+              exprBindings[binding].string = propertyString;
+              exprBindings[binding].type = MS_EXPRESSION;
+              (*nexprbindings)++;
+              break;
+            default:
+              psLabel->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
+              psLabel->numbindings++;
+          }
         }
         status = MS_SUCCESS;
       }
