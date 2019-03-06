@@ -1369,47 +1369,31 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         {
           exprBindings = psStyle->exprBindings;
           nexprbindings = &psStyle->nexprbindings;
-
-          switch (binding)
-          {
-            case MS_STYLE_BINDING_COLOR:
-            case MS_STYLE_BINDING_OUTLINECOLOR:
-              strDelim = "\"";
-            default:
-              propertyString = msStringConcatenate(propertyString, strDelim);
-              propertyString = msStringConcatenate(propertyString, "[");
-              propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
-              propertyString = msStringConcatenate(propertyString, "]");
-              propertyString = msStringConcatenate(propertyString, strDelim);
-              msInitExpression(&(psStyle->exprBindings[binding]));
-              exprBindings[binding].string = propertyString;
-              exprBindings[binding].type = MS_EXPRESSION;
-              (*nexprbindings)++;
-              break;
-          }
         }
         else if (objtype == MS_OBJ_LABEL)
         {
           exprBindings = psLabel->exprBindings;
           nexprbindings = &psLabel->nexprbindings;
+        }
 
-          switch (binding)
-          {
-            case MS_LABEL_BINDING_ANGLE:
-              propertyString = msStringConcatenate(propertyString, strDelim);
-              propertyString = msStringConcatenate(propertyString, "[");
-              propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
-              propertyString = msStringConcatenate(propertyString, "]");
-              propertyString = msStringConcatenate(propertyString, strDelim);
-              msInitExpression(&(psStyle->exprBindings[binding]));
-              exprBindings[binding].string = propertyString;
-              exprBindings[binding].type = MS_EXPRESSION;
-              (*nexprbindings)++;
-              break;
-            default:
-              psLabel->bindings[binding].item = msStrdup(psRoot->psChild->pszValue);
-              psLabel->numbindings++;
-          }
+        switch (lbinding)
+        {
+          case MS_STYLE_BASE + MS_STYLE_BINDING_COLOR:
+          case MS_STYLE_BASE + MS_STYLE_BINDING_OUTLINECOLOR:
+          case MS_LABEL_BASE + MS_LABEL_BINDING_COLOR:
+          case MS_LABEL_BASE + MS_LABEL_BINDING_OUTLINECOLOR:
+            strDelim = "\"";
+          default:
+            propertyString = msStringConcatenate(propertyString, strDelim);
+            propertyString = msStringConcatenate(propertyString, "[");
+            propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
+            propertyString = msStringConcatenate(propertyString, "]");
+            propertyString = msStringConcatenate(propertyString, strDelim);
+            msInitExpression(&(psStyle->exprBindings[binding]));
+            exprBindings[binding].string = propertyString;
+            exprBindings[binding].type = MS_EXPRESSION;
+            (*nexprbindings)++;
+            break;
         }
         status = MS_SUCCESS;
       }

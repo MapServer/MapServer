@@ -334,6 +334,24 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
           &(label->exprBindings[MS_LABEL_BINDING_ANGLE]),
           shape);
     }
+    if (label->exprBindings[MS_LABEL_BINDING_SIZE].type == MS_EXPRESSION)
+    {
+      label->size = msEvalDoubleExpression(
+          &(label->exprBindings[MS_LABEL_BINDING_SIZE]),
+          shape);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_COLOR].type == MS_EXPRESSION)
+    {
+      bindColorAttribute(&label->color,
+          msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_COLOR]), shape));
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
+    {
+      bindColorAttribute(&label->outlinecolor,
+          msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR]), shape));
+    }
   }
 }
 
