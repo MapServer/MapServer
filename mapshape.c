@@ -1843,7 +1843,7 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
 
     sprintf(filename, "%s%s", sourcename, MS_INDEX_EXTENSION);
 
-    shpfile->status = msSearchDiskTree(filename, rect, debug);
+    shpfile->status = msSearchDiskTree(filename, rect, debug, shpfile->numshapes);
     free(filename);
     free(sourcename);
 
