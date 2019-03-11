@@ -155,7 +155,7 @@ int main( int argc, char ** argv )
     rect.maxy =  node->rect.maxy;
   }
 
-  bitmap = msSearchDiskTree( argv[1], rect, 0 /* no debug*/ );
+  bitmap = msSearchDiskTree( argv[1], rect, 0 /* no debug*/, j );
 
   if ( bitmap ) {
     printf ("result of rectangle search was \n");
