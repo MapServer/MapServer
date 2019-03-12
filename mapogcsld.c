@@ -1813,7 +1813,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               {
                 psValue = psCssParam->psChild->psNext->pszValue;
                 if (psValue) {
-                  fprintf(stderr, "DEBUGJBO: <Graphic> fill-opacity (%p)\n", psStyle);
                   psStyle->color.alpha = (int)(atof(psValue)*255);
                 }
               }
@@ -1846,7 +1845,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
               {
                 psValue = psCssParam->psChild->psNext->pszValue;
                 if (psValue) {
-                  fprintf(stderr, "DEBUGJBO: <Graphic> stroke-opacity (%p)\n", psStyle);
                   psStyle->outlinecolor.alpha = (int)(atof(psValue)*255);
                 }
               }

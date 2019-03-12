@@ -786,9 +786,6 @@ double msEvalDoubleExpression(expressionObj *expression, shapeObj *shape)
   } else {
     value = atof(p.result.strval);
   }
-  fprintf(stderr,
-      "DEBUGJBO: expr: \"%s\" = \"%s\" %.18g\n",
-      expression->string, p.result.strval, value);
   return value;
 }
 
