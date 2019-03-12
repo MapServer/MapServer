@@ -86,6 +86,45 @@ class InlineFeatureTestCase(MapTestCase):
         inline_layer = self.map.getLayerByName('INLINE')
         assert inline_layer.getNumFeatures() == 1
 
+    def testShapeGeoInterface(self):
+        """return the shape using the  __geo_interface__ protocol with no attribute names"""
+        inline_layer = self.map.getLayerByName('POLYGON')
+        inline_layer.open()
+        inline_layer.template = "FAKE"
+        inline_layer.queryByIndex(self.map, -1, 0)
+        res = inline_layer.getResult(0)
+        s = inline_layer.getShape(res)
+        assert s.__geo_interface__ == {
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[(-0.25, 51.227222), (-0.25, 51.727222), (0.25, 51.727222),
+                                 (0.25, 51.227222), (-0.25, 51.227222)]]
+            },
+            'type': 'Feature',
+            'bbox': (-0.25, 51.227222, 0.25, 51.727222),
+            'properties': {'1': 'A Polygon', '0': '1'}
+         }
+
+    def testShapeGeoInterfaceWithFields(self):
+        """return the shape using the  __geo_interface__ protocol with attribute names"""
+        inline_layer = self.map.getLayerByName('POLYGON')
+        inline_layer.open()
+        inline_layer.template = "FAKE"
+        inline_layer.queryByIndex(self.map, -1, 0)
+        res = inline_layer.getResult(0)
+        s = inline_layer.getShape(res)
+        s.attributes = inline_layer.getAttributes()
+        assert s.__geo_interface__ == {
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[(-0.25, 51.227222), (-0.25, 51.727222), (0.25, 51.727222),
+                                 (0.25, 51.227222), (-0.25, 51.227222)]]
+            },
+            'type': 'Feature',
+            'bbox': (-0.25, 51.227222, 0.25, 51.727222),
+            'properties': {'FNAME': 'A Polygon', 'FID': '1'}
+         }
+
 
 class ShapeValuesTestCase(unittest.TestCase):
 

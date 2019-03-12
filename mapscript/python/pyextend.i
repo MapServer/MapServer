@@ -134,62 +134,71 @@ def fromstring(data, mappath=None):
 
 %pythoncode %{
 
-    @property
-    def __geo_interface__(self):
+        @property
+        def __geo_interface__(self):
 
-        bounds = self.bounds
-        geom_type = self.type
+            bounds = self.bounds
+            ms_geom_type = self.type
 
-        # see https://tools.ietf.org/html/rfc7946 for GeoJSON types
+            # see https://tools.ietf.org/html/rfc7946 for GeoJSON types
 
-        if ms_geom_type == MS_SHAPE_POINT or ms_geom_type == MS_SHP_POINTZ or ms_geom_type == MS_SHP_POINTM:
-            geom_type = "Point"
-        elif ms_geom_type == MS_SHP_MULTIPOINTZ or ms_geom_type == MS_SHP_MULTIPOINTM:
-            geom_type = "MultiPoint"
-        elif ms_geom_type == MS_SHAPE_LINE or ms_geom_type == MS_SHP_ARCZ or ms_geom_type == MS_SHP_ARCM:
-            if self.numlines == 1:
-                geom_type = "LineString"
+            if ms_geom_type == MS_SHAPE_POINT or ms_geom_type == MS_SHP_POINTZ or ms_geom_type == MS_SHP_POINTM:
+                geom_type = "Point"
+            elif ms_geom_type == MS_SHP_MULTIPOINTZ or ms_geom_type == MS_SHP_MULTIPOINTM:
+                geom_type = "MultiPoint"
+            elif ms_geom_type == MS_SHAPE_LINE or ms_geom_type == MS_SHP_ARCZ or ms_geom_type == MS_SHP_ARCM:
+                if self.numlines == 1:
+                    geom_type = "LineString"
+                else:
+                    geom_type = "MultiLineString"
+            elif ms_geom_type == MS_SHAPE_POLYGON or ms_geom_type == MS_SHP_POLYGONZ or ms_geom_type == MS_SHP_POLYGONM:
+                if self.numlines == 1:
+                    geom_type = "Polygon"
+                else:
+                    geom_type = "MultiPolygon"
+            elif ms_geom_type == MS_SHAPE_NULL:
+                return None
             else:
-                geom_type = "MultiLineString"
-        elif ms_geom_type == MS_SHAPE_POLYGON or ms_geom_type == MS_SHP_POLYGONZ or ms_geom_type == MS_SHP_POLYGONM:
-            if self.numlines == 1:
-                geom_type = "Polygon"
+                raise TypeError("Shape type {} not supported".format(geom_type))
+
+            properties = {}
+            coords = []
+
+            # property names are stored at the layer level
+            # https://github.com/mapserver/mapserver/issues/130
+
+            if hasattr(self, "_attributes"):
+                property_names = self._attributes
             else:
-                geom_type = "MultiPolygon"
-        elif ms_geom_type == MS_SHAPE_NULL:
-            return None
-        else:
-            raise TypeError("Shape type {} not supported".format(geom_type))
+                property_names = [str(idx) for idx in range(0, self.numvalues)]
 
-        properties = {}
+            property_values = [self.getValue(idx) for idx in range(0, self.numvalues)]
 
+            properties = dict(zip(property_names, property_values))
 
+            for idx in range(0, self.numlines):
+                line = self.get(idx)
+                geom = line.__geo_interface__
+                coords.append(geom["coordinates"])
 
-        coords = []
-
-        # property names are stored at the layer level
-        # https://github.com/mapserver/mapserver/issues/130
-        property_names = [for self.getValue(idx) in range(0, self.numvalues)]
-
-
-        property_values = [for self.getValue(idx) in range(0, self.numvalues)]
-
-        properties = zip(property_names, property_values)
-
-        for idx in range(0, self.numlines):
-            line = self.get(idx)
-            geom = line.__geo_interface__
-            coords.append(geom["coordinates"])
-
-        return {
-                "type": "Feature",
-                "bbox": (bounds.minx, bounds.miny, bounds.maxx, bounds.maxxy),
-                "properties": properties
-                "geometry": {
-                    "type": geom_type,
-                    "coordinates": coords
+            return {
+                    "type": "Feature",
+                    "bbox": (bounds.minx, bounds.miny, bounds.maxx, bounds.maxy),
+                    "properties": properties,
+                    "geometry": {
+                        "type": geom_type,
+                        "coordinates": coords
+                        }
                     }
-               }
+
+        def getAttributes(self):
+            return self._attributes
+
+        def setAttributes(self, attributes):
+            self._attributes = attributes
+
+        __swig_getmethods__["attributes"] = getAttributes
+        __swig_setmethods__["attributes"] = setAttributes
 
 %}
 }
@@ -231,6 +240,7 @@ def fromstring(data, mappath=None):
         PyTuple_SetItem(output,1,PyInt_FromLong((long)self->height));
         return output;
     }
+
 %pythoncode %{
 
     def get_height(self):
@@ -247,6 +257,23 @@ def fromstring(data, mappath=None):
 
     width = property(get_width, set_width)
     height = property(get_height, set_height)
+
+%}
+}
+
+/******************************************************************************
+ * Extensions to layerObj
+ *****************************************************************************/
+
+%extend layerObj {
+  
+%pythoncode %{
+
+    def getAttributes(self):
+        self.open()
+        attributes = [self.getItem(idx) for idx in range(0, self.numitems)]
+        self.close()
+        return attributes
 
 %}
 }
