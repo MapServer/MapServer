@@ -31,8 +31,6 @@
 
 // Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4 
 %pragma(csharp) imclasscode=%{
-  //static $imclassname() {
-  //}
 
   public class UTF8Marshaler : System.Runtime.InteropServices.ICustomMarshaler {
     static UTF8Marshaler static_instance;
@@ -45,12 +43,12 @@
                    "UTF8Marshaler must be used on a string.");
 
         // not null terminated
-        byte[] strbuf = System.Text.Encoding.UTF8.GetBytes((string)managedObj); 
+        byte[] strbuf = System.Text.Encoding.UTF8.GetBytes((string)managedObj);
         System.IntPtr buffer = System.Runtime.InteropServices.Marshal.AllocHGlobal(strbuf.Length + 1);
         System.Runtime.InteropServices.Marshal.Copy(strbuf, 0, buffer, strbuf.Length);
 
         // write the terminating null
-        System.Runtime.InteropServices.Marshal.WriteByte(buffer, strbuf.Length, 0); 
+        System.Runtime.InteropServices.Marshal.WriteByte(buffer, strbuf.Length, 0);
         return buffer;
     }
 
@@ -62,7 +60,7 @@
     }
 
     public void CleanUpNativeData(System.IntPtr pNativeData) {
-        System.Runtime.InteropServices.Marshal.FreeHGlobal(pNativeData);            
+        System.Runtime.InteropServices.Marshal.FreeHGlobal(pNativeData);
     }
 
     public void CleanUpManagedData(object managedObj) {
@@ -81,8 +79,8 @@
   }
 %}
 
-%typemap(imtype, inattributes="[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]", 
-  outattributes="[return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]") 
+%typemap(imtype, inattributes="[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]",
+  outattributes="[return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]")
   char *, char *&, char[ANY], char[]   "string"
 
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
@@ -267,7 +265,7 @@
 
 %pragma(csharp) modulecode=%{
   /* %pragma(csharp) modulecode */
-  internal class $moduleObject : System.IDisposable {
+  internal class $moduleObject : global::System.IDisposable {
 	public virtual void Dispose() {
       
     }
