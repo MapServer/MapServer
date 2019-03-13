@@ -403,9 +403,7 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
   /* -------------------------------------------------------------------- */
   /*      initilize return array.                                         */
   /* -------------------------------------------------------------------- */
-  if (array_init(return_value) == FAILURE) {
-    RETURN_FALSE;
-  }
+  array_init(return_value);
 
   convert_to_double(p1);
   convert_to_double(p2);
@@ -467,9 +465,7 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
   /* -------------------------------------------------------------------- */
   /*      initilize return array.                                         */
   /* -------------------------------------------------------------------- */
-  if (array_init(return_value) == FAILURE) {
-    RETURN_FALSE;
-  }
+  array_init(return_value);
 
   convert_to_double(p1);
   convert_to_double(p2);
@@ -524,9 +520,7 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
   /* -------------------------------------------------------------------- */
   /*      initilize return array.                                         */
   /* -------------------------------------------------------------------- */
-  if (array_init(return_value) == FAILURE) {
-    RETURN_FALSE;
-  }
+  array_init(return_value);
 
   convert_to_double(p1);
   convert_to_double(p2);
@@ -602,9 +596,7 @@ DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
   /* -------------------------------------------------------------------- */
   /*      initilize return array.                                         */
   /* -------------------------------------------------------------------- */
-  if (array_init(return_value) == FAILURE) {
-    RETURN_FALSE;
-  }
+  array_init(return_value);
 
   convert_to_double(p1);
   convert_to_double(p2);
