@@ -438,7 +438,7 @@ MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *wfs_
 /*====================================================================
  *   mapwms.c
  *====================================================================*/
-int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, int force_wms_mode);
+MS_DLL_EXPORT int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, int force_wms_mode);
 MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                         char **names, char **values, int numentries,
                                         char *wms_exception_format, const char *wms_request, owsRequestObj *ows_request);
@@ -452,32 +452,32 @@ MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 #define WMS_GETFEATUREINFO 2
 #define WMS_GETLEGENDGRAPHIC 3
 
-int msInitWmsParamsObj(wmsParamsObj *wmsparams);
-void msFreeWmsParamsObj(wmsParamsObj *wmsparams);
+MS_DLL_EXPORT int msInitWmsParamsObj(wmsParamsObj *wmsparams);
+MS_DLL_EXPORT void msFreeWmsParamsObj(wmsParamsObj *wmsparams);
 
-int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
+MS_DLL_EXPORT int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              int nRequestType, enum MS_CONNECTION_TYPE lastconnectiontype,
                              wmsParamsObj *psLastWMSParams,
                              int nClickX, int nClickY, int nFeatureCount, const char *pszInfoFormat,
                              httpRequestObj *pasReqInfo, int *numRequests);
-int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
+MS_DLL_EXPORT int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
                       int numRequests, mapObj *map, layerObj *lp,
                       imageObj *img);
 MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
     int nClickX, int nClickY, int nFeatureCount,
     const char *pszInfoFormat);
-int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
+MS_DLL_EXPORT int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
                              int nFeatureCount, const char *pszInfoFormat, int type);
 
 /*====================================================================
  *   mapmetadata.c
  *====================================================================*/
-metadataParamsObj *msMetadataCreateParamsObj(void);
-void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
-int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+MS_DLL_EXPORT metadataParamsObj *msMetadataCreateParamsObj(void);
+MS_DLL_EXPORT void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
+MS_DLL_EXPORT int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
                       metadataParamsObj *metadataparams);
-int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
-void msMetadataSetGetMetadataURL(layerObj *lp, const char *url);
+MS_DLL_EXPORT int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
+MS_DLL_EXPORT void msMetadataSetGetMetadataURL(layerObj *lp, const char *url);
 
 /*====================================================================
  *   mapwfs.c
@@ -485,13 +485,13 @@ void msMetadataSetGetMetadataURL(layerObj *lp, const char *url);
 
 MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
                                 owsRequestObj *ows_request, int force_wfs_mode);
-int msWFSParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
+MS_DLL_EXPORT int msWFSParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
                       wfsParamsObj *, int force_wfs_mode);
-wfsParamsObj *msWFSCreateParamsObj(void);
-int msWFSHandleUpdateSequence(mapObj *map, wfsParamsObj *wfsparams, const char* pszFunction);
-void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
-int msWFSIsLayerSupported(layerObj *lp);
-int msWFSException(mapObj *map, const char *locator, const char *code,
+MS_DLL_EXPORT wfsParamsObj *msWFSCreateParamsObj(void);
+MS_DLL_EXPORT int msWFSHandleUpdateSequence(mapObj *map, wfsParamsObj *wfsparams, const char* pszFunction);
+MS_DLL_EXPORT void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
+MS_DLL_EXPORT int msWFSIsLayerSupported(layerObj *lp);
+MS_DLL_EXPORT int msWFSException(mapObj *map, const char *locator, const char *code,
                    const char *version);
 
 #ifdef USE_WFS_SVR
@@ -527,16 +527,16 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
  *   mapwfslayer.c
  *====================================================================*/
 
-int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
+MS_DLL_EXPORT int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              httpRequestObj *pasReqInfo, int *numRequests);
-void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo);
-int msWFSLayerOpen(layerObj *lp,
+MS_DLL_EXPORT void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo);
+MS_DLL_EXPORT int msWFSLayerOpen(layerObj *lp,
                    const char *pszGMLFilename, rectObj *defaultBBOX);
-int msWFSLayerIsOpen(layerObj *lp);
-int msWFSLayerInitItemInfo(layerObj *layer);
-int msWFSLayerGetItems(layerObj *layer);
-int msWFSLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
-int msWFSLayerClose(layerObj *lp);
+MS_DLL_EXPORT int msWFSLayerIsOpen(layerObj *lp);
+MS_DLL_EXPORT int msWFSLayerInitItemInfo(layerObj *layer);
+MS_DLL_EXPORT int msWFSLayerGetItems(layerObj *layer);
+MS_DLL_EXPORT int msWFSLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
+MS_DLL_EXPORT int msWFSLayerClose(layerObj *lp);
 MS_DLL_EXPORT char *msWFSExecuteGetFeature(layerObj *lp);
 
 /*====================================================================
@@ -553,7 +553,7 @@ MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique
  *   mapwcs.c
  *====================================================================*/
 
-int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
+MS_DLL_EXPORT int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
 
 
 
@@ -561,7 +561,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
  *   mapogsos.c
  *====================================================================*/
 
-int msSOSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
+MS_DLL_EXPORT int msSOSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
 
 #ifdef __cplusplus
 } /* extern "C" */
