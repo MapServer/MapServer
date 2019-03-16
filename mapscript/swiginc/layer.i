@@ -685,5 +685,31 @@
         self->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
         self->_geomtransform.string = NULL;
       }
-    }    
+    }
+
+    %feature("autodoc", "3");
+    %feature("docstring") "Returns the requested item's field definition.
+A layer must be open to retrieve an item definition. 
+A field definition object includes the following properties: 
+name, type, alias, encode, minOccurs, outputByDefault, precision
+template, visible, and width. 
+The numitems property contains the number of items 
+available, and the first item is index zero."
+
+    gmlItemObj *getItemDefinition(int i)
+    {
+
+        if (i >= 0 && i < self->numitems) {
+            gmlItemListObj *item_list;
+            item_list = msGMLGetItems(self, "G");
+            gmlItemObj *item = item_list->items + i; 
+            return item;
+        }
+        else {
+            return NULL;
+        }
+
+    }
+
+
 }
