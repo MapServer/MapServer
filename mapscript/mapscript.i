@@ -57,6 +57,7 @@
 #include "../../maperror.h"
 #include "../../mapprimitive.h"
 #include "../../mapshape.h"
+#include "../../mapows.h"
 
 #if defined(WIN32) && defined(SWIGCSHARP)
 /* <windows.h> is needed for GetExceptionCode() for unhandled exception */
