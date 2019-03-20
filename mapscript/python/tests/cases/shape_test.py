@@ -118,12 +118,11 @@ class InlineFeatureTestCase(MapTestCase):
         s.itemdefinitions = layer.getItemDefinitions()
         assert s.__geo_interface__ == {
             'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[(-0.25, 51.227222), (-0.25, 51.727222), (0.25, 51.727222),
-                                 (0.25, 51.227222), (-0.25, 51.227222)]]
+                'type': 'Point',
+                'coordinates': [[(0.0, 51.477222)]]
             },
             'type': 'Feature',
-            'bbox': (-0.25, 51.227222, 0.25, 51.727222),
+            'bbox': (0.0, 51.477222, 0.0, 51.477222),
             'properties': {'FNAME': 'A Point', 'FID': 1}
          }
 
