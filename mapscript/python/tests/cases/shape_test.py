@@ -88,12 +88,12 @@ class InlineFeatureTestCase(MapTestCase):
 
     def testShapeGeoInterface(self):
         """return the shape using the  __geo_interface__ protocol with no attribute names"""
-        inline_layer = self.map.getLayerByName('POLYGON')
-        inline_layer.open()
-        inline_layer.template = "FAKE"
-        inline_layer.queryByIndex(self.map, -1, 0)
-        res = inline_layer.getResult(0)
-        s = inline_layer.getShape(res)
+        layer = self.map.getLayerByName('POLYGON')
+        layer.open()
+        layer.template = "FAKE"
+        layer.queryByIndex(self.map, -1, 0)
+        res = layer.getResult(0)
+        s = layer.getShape(res)
         assert s.__geo_interface__ == {
             'geometry': {
                 'type': 'Polygon',
@@ -105,15 +105,17 @@ class InlineFeatureTestCase(MapTestCase):
             'properties': {'1': 'A Polygon', '0': '1'}
          }
 
+        layer.close()
+
     def testShapeGeoInterfaceWithFields(self):
         """return the shape using the  __geo_interface__ protocol with attribute names"""
-        inline_layer = self.map.getLayerByName('POLYGON')
-        inline_layer.open()
-        inline_layer.template = "FAKE"
-        inline_layer.queryByIndex(self.map, -1, 0)
-        res = inline_layer.getResult(0)
-        s = inline_layer.getShape(res)
-        s.attributes = inline_layer.getAttributes()
+        layer = self.map.getLayerByName('POINT')
+        layer.open()
+        layer.template = "FAKE"
+        layer.queryByIndex(self.map, -1, 0)
+        res = layer.getResult(0)
+        s = layer.getShape(res)
+        s.itemdefinitions = layer.getItemDefinitions()
         assert s.__geo_interface__ == {
             'geometry': {
                 'type': 'Polygon',
@@ -122,8 +124,10 @@ class InlineFeatureTestCase(MapTestCase):
             },
             'type': 'Feature',
             'bbox': (-0.25, 51.227222, 0.25, 51.727222),
-            'properties': {'FNAME': 'A Polygon', 'FID': '1'}
+            'properties': {'FNAME': 'A Point', 'FID': 1}
          }
+
+        layer.close()
 
 
 class ShapeValuesTestCase(unittest.TestCase):

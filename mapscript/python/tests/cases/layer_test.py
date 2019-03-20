@@ -68,63 +68,36 @@ class LayerItemDefinitionTestCase(MapLayerTestCase):
     def tearDown(self):
         self.layer.close()
 
-    def testLayerGetItemDefinition(self):
+    def testLayerGetItemType(self):
         """test getting layer item information for the first item"""
 
-        gml_item = self.layer.getItemDefinition(0)
-        assert gml_item.name == "FID"
-        assert gml_item.type == "Integer"
-        assert gml_item.alias is None
-        assert gml_item.encode == 1
-        assert gml_item.minOccurs == 0
-        assert gml_item.outputByDefault == 1
-        assert gml_item.precision == 0
-        assert gml_item.template is None
-        assert gml_item.visible == 0
-        assert gml_item.width == 10
+        item_type = self.layer.getItemType(0)
+        assert item_type == "Integer"
 
     def testLayerGetItemDefinition2(self):
         """test getting layer item information for the second item"""
 
-        gml_item = self.layer.getItemDefinition(1)
-        assert gml_item.name == "FNAME"
-        assert gml_item.type == "Character"
-        assert gml_item.alias is None
-        assert gml_item.encode == 1
-        assert gml_item.minOccurs == 0
-        assert gml_item.outputByDefault == 1
-        assert gml_item.precision == 0
-        assert gml_item.template is None
-        assert gml_item.visible == 0
-        assert gml_item.width == 10
+        item_type = self.layer.getItemType(1)
+        assert item_type == "Character"
 
-    def testLayerGetMissingItemDefinition(self):
+    def testLayerGetMissingItemType(self):
         """test getting item information for a non-existent index"""
-        gml_item = self.layer.getItemDefinition(100)
-        assert gml_item is None
+        item_type = self.layer.getItemType(100)
+        assert item_type is None
 
-    def testLayerGetItemDefinitionClosedLayer(self):
+    def testLayerGetItemTypeClosedLayer(self):
         """item definition will be None for a closed layer"""
         self.layer.close()
-        gml_item = self.layer.getItemDefinition(0)
-        assert gml_item is None
+        item_type = self.layer.getItemType(0)
+        assert item_type is None
 
-    def testLayerGetNonDefinedItemDefinition(self):
+    def testLayerGetNonDefinedItemType(self):
         """test getting layer item information for a layer with gml_types auto"""
 
         layer = self.map.getLayerByName('POLYGON')
         layer.open()
-        gml_item = layer.getItemDefinition(0)
-        assert gml_item.name == "FID"
-        assert gml_item.type is None
-        assert gml_item.alias is None
-        assert gml_item.encode == 1
-        assert gml_item.minOccurs == 0
-        assert gml_item.outputByDefault == 1
-        assert gml_item.precision == 0
-        assert gml_item.template is None
-        assert gml_item.visible == 0
-        assert gml_item.width == 0
+        item_type = layer.getItemType(0)
+        assert item_type == ""
         layer.close()
 
 
