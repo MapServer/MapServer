@@ -688,26 +688,27 @@
     }
 
     %feature("autodoc", "3");
-    %feature("docstring") "Returns the requested item's field definition.
-A layer must be open to retrieve an item definition. 
-A field definition object includes the following properties: 
-name, type, alias, encode, minOccurs, outputByDefault, precision
-template, visible, and width. 
-The numitems property contains the number of items 
+    %feature("docstring") "Returns the requested item's field type.
+A layer must be open to retrieve the item definition. 
+
+Pass in the attribute index to retrieve the type. The 
+layer's numitems property contains the number of items 
 available, and the first item is index zero."
 
-    gmlItemObj *getItemDefinition(int i)
+    char *getItemType(int i)
     {
+
+        char *itemType = NULL;
 
         if (i >= 0 && i < self->numitems) {
             gmlItemListObj *item_list;
             item_list = msGMLGetItems(self, "G");
-            gmlItemObj *item = item_list->items + i; 
-            return item;
+            gmlItemObj *item = item_list->items + i;
+            itemType = msStrdup(item->type);
+            msGMLFreeItems(item_list); // destroy the original list
         }
-        else {
-            return NULL;
-        }
+
+        return itemType;
 
     }
 
