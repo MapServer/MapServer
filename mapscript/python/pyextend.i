@@ -134,6 +134,36 @@ def fromstring(data, mappath=None):
 
 %pythoncode %{
 
+        def _convert_item_values(self, property_values, property_types):
+            """
+            **Python MapScript only**
+
+            Convert an item value, which is always stored as a string, into a
+            Python type, based on an attributes GML metadata type. These can be one
+            of the following:
+
+            ``Integer|Long|Real|Character|Date|Boolean``
+            """
+
+            typed_values = []
+
+            for value, type_ in zip(property_values, property_types):
+                try:
+                    if type_.lower() == "integer":
+                        value = int(value)
+                    elif type_.lower() == "long":
+                        value = long(value)
+                    elif type_.lower() == "real":
+                        value = float(value)
+                    else:
+                        pass
+                except ValueError:
+                    pass
+
+                typed_values.append(value)
+
+            return typed_values
+
         @property
         def __geo_interface__(self):
 
@@ -167,12 +197,13 @@ def fromstring(data, mappath=None):
             # property names are stored at the layer level
             # https://github.com/mapserver/mapserver/issues/130
 
-            if hasattr(self, "_attributes"):
-                property_names = self._attributes
+            property_values = [self.getValue(idx) for idx in range(0, self.numvalues)]
+
+            if hasattr(self, "_item_definitions"):
+                property_names, property_types = zip(*self._item_definitions)
+                property_values = self._convert_item_values(property_values, property_types)
             else:
                 property_names = [str(idx) for idx in range(0, self.numvalues)]
-
-            property_values = [self.getValue(idx) for idx in range(0, self.numvalues)]
 
             properties = dict(zip(property_names, property_values))
 
@@ -191,14 +222,14 @@ def fromstring(data, mappath=None):
                         }
                     }
 
-        def getAttributes(self):
-            return self._attributes
+        def getItemDefinitions(self):
+            return self._item_definitions
 
-        def setAttributes(self, attributes):
-            self._attributes = attributes
+        def setItemDefinitions(self, item_definitions):
+            self._item_definitions = item_definitions
 
-        __swig_getmethods__["attributes"] = getAttributes
-        __swig_setmethods__["attributes"] = setAttributes
+        __swig_getmethods__["itemdefinitions"] = getItemDefinitions
+        __swig_setmethods__["itemdefinitions"] = setItemDefinitions
 
 %}
 }
@@ -269,11 +300,19 @@ def fromstring(data, mappath=None):
   
 %pythoncode %{
 
-    def getAttributes(self):
-        self.open()
-        attributes = [self.getItem(idx) for idx in range(0, self.numitems)]
-        self.close()
-        return attributes
+    def getItemDefinitions(self):
+        """
+        **Python MapScript only**
+        
+        Return item (field) names and their types if available.
+        Field types are specified using GML metadata and can be one of the following:
+
+        ``Integer|Long|Real|Character|Date|Boolean``
+
+        """
+        item_names = [self.getItem(idx) for idx in range(0, self.numitems)]
+        item_types = [self.getItemType(idx) for idx in range(0, self.numitems)]
+        return zip(item_names, item_types)
 
 %}
 }
