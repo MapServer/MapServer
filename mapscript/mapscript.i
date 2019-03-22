@@ -249,7 +249,6 @@ typedef struct {
 %include "../../mapshape.h"
 %include "../../mapproject.h"
 %include "../../mapsymbol.h"
-%include "../../mapsymbol.h"
 
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
