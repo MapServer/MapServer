@@ -703,9 +703,11 @@ available, and the first item is index zero."
         if (i >= 0 && i < self->numitems) {
             gmlItemListObj *item_list;
             item_list = msGMLGetItems(self, "G");
-            gmlItemObj *item = item_list->items + i;
-            itemType = msStrdup(item->type);
-            msGMLFreeItems(item_list); // destroy the original list
+            if (item_list != NULL) {
+                gmlItemObj *item = item_list->items + i;
+                itemType = msStrdup(item->type);
+                msGMLFreeItems(item_list); // destroy the original list
+            }
         }
 
         return itemType;
