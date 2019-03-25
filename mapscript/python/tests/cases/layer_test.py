@@ -58,6 +58,49 @@ class LayerConstructorTestCase(MapLayerTestCase):
         assert layer.map is not None, layer.map
 
 
+class LayerItemDefinitionTestCase(MapLayerTestCase):
+
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.layer = self.map.getLayerByName('POINT')
+        self.layer.open()
+
+    def tearDown(self):
+        self.layer.close()
+
+    def testLayerGetItemType(self):
+        """test getting layer item information for the first item"""
+
+        item_type = self.layer.getItemType(0)
+        assert item_type == "Integer"
+
+    def testLayerGetItemDefinition2(self):
+        """test getting layer item information for the second item"""
+
+        item_type = self.layer.getItemType(1)
+        assert item_type == "Character"
+
+    def testLayerGetMissingItemType(self):
+        """test getting item information for a non-existent index"""
+        item_type = self.layer.getItemType(100)
+        assert item_type is None
+
+    def testLayerGetItemTypeClosedLayer(self):
+        """item definition will be None for a closed layer"""
+        self.layer.close()
+        item_type = self.layer.getItemType(0)
+        assert item_type is None
+
+    def testLayerGetNonDefinedItemType(self):
+        """test getting layer item information for a layer with gml_types auto"""
+
+        layer = self.map.getLayerByName('POLYGON')
+        layer.open()
+        item_type = layer.getItemType(0)
+        assert item_type == ""
+        layer.close()
+
+
 class LayerCloningTestCase(MapLayerTestCase):
 
     def testLayerCloning(self):

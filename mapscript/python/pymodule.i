@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  MapServer
  * Purpose:  Python-specific enhancements to MapScript
  * Author:   Sean Gillies, sgillies@frii.com
@@ -8,7 +6,7 @@
  ******************************************************************************
  *
  * Python-specific mapscript code has been moved into this 
- * SWIG interface file to improve the readibility of the main
+ * SWIG interface file to improve the readability of the main
  * interface file.  The main mapscript.i file includes this
  * file when SWIGPYTHON is defined (via 'swig -python ...').
  *
@@ -122,7 +120,7 @@ PyObject *MSExc_MapServerChildError;
 %init %{
 
 /* See bug 1203 for discussion of race condition with GD font cache */
-	if (msSetup() != MS_SUCCESS)
+    if (msSetup() != MS_SUCCESS)
     {
         msSetError(MS_MISCERR, "Failed to set up threads and font cache",
                    "msSetup()");
@@ -241,44 +239,43 @@ MapServerChildError = _mapscript.MapServerChildError
        %}
 
 %feature("shadow") insertClass %{
-	def insertClass(*args):
+    def insertClass(*args):
         actualIndex=$action(*args)
         args[1].p_layer=args[0]
         return actualIndex%}
 
 %feature("shadow") getClass %{
-	def getClass(*args):
-		clazz = $action(*args)
-		if clazz:
-			if args and len(args)!=0:
-				clazz.p_layer=args[0]
-			else:
-				clazz.p_layer=None
-		return clazz%}
+    def getClass(*args):
+        clazz = $action(*args)
+        if clazz:
+            if args and len(args)!=0:
+                clazz.p_layer=args[0]
+            else:
+                clazz.p_layer=None
+        return clazz%}
 
 %feature("shadow") insertLayer %{
-	def insertLayer(*args):
+    def insertLayer(*args):
         actualIndex=$action(*args)
         args[1].p_map=args[0]
         return actualIndex%}
 
 %feature("shadow") getLayer %{
-	def getLayer(*args):
-		layer = $action(*args)
-		if layer:
-			if args and len(args)!=0:
-				layer.p_map=args[0]
-			else:
-				layer.p_map=None
-		return layer%}
+    def getLayer(*args):
+        layer = $action(*args)
+        if layer:
+            if args and len(args)!=0:
+                layer.p_map=args[0]
+            else:
+                layer.p_map=None
+        return layer%}
 
 %feature("shadow") getLayerByName %{
-	def getLayerByName(*args):
-		layer = $action(*args)
-		if layer:
-			if args and len(args)!=0:
-				layer.p_map=args[0]
-			else:
-				layer.p_map=None
-		return layer%}
-
+    def getLayerByName(*args):
+        layer = $action(*args)
+        if layer:
+            if args and len(args)!=0:
+                layer.p_map=args[0]
+            else:
+                layer.p_map=None
+        return layer%}

@@ -86,6 +86,48 @@ class InlineFeatureTestCase(MapTestCase):
         inline_layer = self.map.getLayerByName('INLINE')
         assert inline_layer.getNumFeatures() == 1
 
+    def testShapeGeoInterface(self):
+        """return the shape using the  __geo_interface__ protocol with no attribute names"""
+        layer = self.map.getLayerByName('POLYGON')
+        layer.open()
+        layer.template = "FAKE"
+        layer.queryByIndex(self.map, -1, 0)
+        res = layer.getResult(0)
+        s = layer.getShape(res)
+        assert s.__geo_interface__ == {
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [[(-0.25, 51.227222), (-0.25, 51.727222), (0.25, 51.727222),
+                                 (0.25, 51.227222), (-0.25, 51.227222)]]
+            },
+            'type': 'Feature',
+            'bbox': (-0.25, 51.227222, 0.25, 51.727222),
+            'properties': {'1': 'A Polygon', '0': '1'}
+         }
+
+        layer.close()
+
+    def testShapeGeoInterfaceWithFields(self):
+        """return the shape using the  __geo_interface__ protocol with attribute names"""
+        layer = self.map.getLayerByName('POINT')
+        layer.open()
+        layer.template = "FAKE"
+        layer.queryByIndex(self.map, -1, 0)
+        res = layer.getResult(0)
+        s = layer.getShape(res)
+        s.itemdefinitions = layer.getItemDefinitions()
+        assert s.__geo_interface__ == {
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [[(0.0, 51.477222)]]
+            },
+            'type': 'Feature',
+            'bbox': (0.0, 51.477222, 0.0, 51.477222),
+            'properties': {'FNAME': 'A Point', 'FID': 1}
+         }
+
+        layer.close()
+
 
 class ShapeValuesTestCase(unittest.TestCase):
 

@@ -685,5 +685,34 @@
         self->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
         self->_geomtransform.string = NULL;
       }
-    }    
+    }
+
+    %feature("autodoc", "3");
+    %feature("docstring") "Returns the requested item's field type.
+A layer must be open to retrieve the item definition. 
+
+Pass in the attribute index to retrieve the type. The 
+layer's numitems property contains the number of items 
+available, and the first item is index zero."
+
+    char *getItemType(int i)
+    {
+
+        char *itemType = NULL;
+
+        if (i >= 0 && i < self->numitems) {
+            gmlItemListObj *item_list;
+            item_list = msGMLGetItems(self, "G");
+            if (item_list != NULL) {
+                gmlItemObj *item = item_list->items + i;
+                itemType = msStrdup(item->type);
+                msGMLFreeItems(item_list); // destroy the original list
+            }
+        }
+
+        return itemType;
+
+    }
+
+
 }
