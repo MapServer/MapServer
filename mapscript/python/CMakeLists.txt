@@ -105,7 +105,7 @@ add_custom_command(
 )
 
 add_custom_command(
-    WORKING_DIRECTORY ${OUTPUT_FOLDER}/mapscriptvenv/Scripts # make sure scripts aren't run when from the same folder as mapscript.py
+    WORKING_DIRECTORY ${PYTHON_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py
     DEPENDS mapscriptwheel.stamp
     OUTPUT mapscripttests.stamp
     COMMAND ${PYTHON_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
