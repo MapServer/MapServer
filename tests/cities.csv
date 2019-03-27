@@ -1,0 +1,7 @@
+city,lat,lng,country,iso2,admin,capital,population,population_proper
+Dublin,53.333056,-6.248889,Ireland,IE,Dublin,primary,1059000,968976
+Cork,51.898611,-8.495833,Ireland,IE,Cork,admin,188907,136797
+Limerick,52.664722,-8.623056,Ireland,IE,Limerick,admin,90054,78078
+Galway,53.271944,-9.048889,Ireland,IE,Galway,admin,75594,70686
+Waterford,52.258333,-7.111944,Ireland,IE,Waterford,admin,49275,49275
+Drogheda,53.718889,-6.347778,Ireland,IE,Louth,,36533,33441
