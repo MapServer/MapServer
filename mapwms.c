@@ -1367,22 +1367,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   }
 
   /*
-  ** Apply vendor-specific filter if specified
-  */
-  if (filter) {
-    if (sld_url || sld_body) {
-      msSetError(MS_WMSERR,
-                 "Vendor-specific FILTER parameter cannot be used with SLD or SLD_BODY.",
-                 "msWMSLoadGetMapParams()");
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
-    }
-    
-    if (msWMSApplyFilter(map, nVersion, filter, need_axis_swap, wms_exception_format) == MS_FAILURE) {
-      return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidFilterRequest"); */
-    }
-  }
-
-  /*
   ** If any select layers have a default time, we will apply the default
   ** time value even if no TIME request was in the url.
   */
@@ -1655,6 +1639,22 @@ this request. Check wms/ows_enable_request settings.",
     nTmp = GetMapserverUnitUsingProj(&(map->projection));
     if( nTmp != -1 ) {
       map->units = nTmp;
+    }
+  }
+
+  /*
+  ** Apply vendor-specific filter if specified
+  */
+  if (filter) {
+    if (sld_url || sld_body) {
+      msSetError(MS_WMSERR,
+                 "Vendor-specific FILTER parameter cannot be used with SLD or SLD_BODY.",
+                 "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+    }
+
+    if (msWMSApplyFilter(map, nVersion, filter, need_axis_swap, wms_exception_format) == MS_FAILURE) {
+      return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidFilterRequest"); */
     }
   }
 
