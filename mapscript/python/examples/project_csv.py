@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Simple example to read a csv file and reproject point x/y data
 
