@@ -355,7 +355,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
 
     /*check for image path and image url*/
     if (layer->map->debug && (layer->map->web.imageurl == NULL ||   layer->map->web.imagepath == NULL))
-      msDebug("KmlRenderer::startNewLayer: imagepath and imageurl sould be set in the web object\n");
+      msDebug("KmlRenderer::startNewLayer: imagepath and imageurl should be set in the web object\n");
 
 
     /*map rect for ground overlay*/
