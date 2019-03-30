@@ -22,17 +22,17 @@ add_definitions(-DZTS=1)
 endif(WITH_THREAD_SAFETY)
 endif(WIN32)
 
-include_directories(${PHP_FOUND_INCLUDE_PATH})
-include_directories(${PHP_FOUND_INCLUDE_PATH}/main)
-include_directories(${PHP_FOUND_INCLUDE_PATH}/Zend)
-include_directories(${PHP_FOUND_INCLUDE_PATH}/TSRM)
+include_directories(${PHP_INCLUDE_PATH})
+include_directories(${PHP_INCLUDE_PATH}/main)
+include_directories(${PHP_INCLUDE_PATH}/Zend)
+include_directories(${PHP_INCLUDE_PATH}/TSRM)
 
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/phpng)
 
 if(WIN32)
-include_directories(${PHP_FOUND_INCLUDE_PATH}/win32)
+include_directories(${PHP_INCLUDE_PATH}/win32)
 endif(WIN32)
 
 IF(PHP_VERSION LESS 5)
