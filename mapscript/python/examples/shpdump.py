@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Dump the contents of the passed in Shapefile
 
