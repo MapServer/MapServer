@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Extracts basic descriptive information from a Shapefile
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Output WMS GetCapabilities response for a Mapfile
 

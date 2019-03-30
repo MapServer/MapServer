@@ -43,4 +43,4 @@ target_link_libraries(php_mapscript ${MAPSERVER_LIBMAPSERVER})
 ENDIF(WIN32)
 
 set_target_properties(php_mapscript PROPERTIES PREFIX "")
-#install(TARGETS php_mapscript DESTINATION ${PHP_EXTENSION_DIR})
+install(TARGETS php_mapscript DESTINATION ${PHP_EXTENSION_DIR})
