@@ -247,6 +247,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   char *user_srid;     /* zero length = calculate, non-zero means using this value! */
   char *index_name;  /* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
   char *sort_spec;  /* the sort by specification which should be applied to the generated select statement */
+  int mssqlversion_major; /* the sql server major version number */
   SQLSMALLINT *itemtypes; /* storing the sql field types for further reference */
 
   msODBCconn * conn;          /* Connection to db */
@@ -973,6 +974,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
   layerinfo->sort_spec = NULL;
   layerinfo->conn = NULL;
   layerinfo->itemtypes = NULL;
+  layerinfo->mssqlversion_major = 0;
 
   layerinfo->conn = (msODBCconn *) msConnPoolRequest(layer);
 
@@ -1102,26 +1104,153 @@ int msMSSQL2008LayerInitItemInfo(layerObj *layer)
   return MS_SUCCESS;
 }
 
+static int getMSSQLMajorVersion(layerObj* layer)
+{
+  msMSSQL2008LayerInfo  *layerinfo = getMSSQL2008LayerInfo(layer);
+  if (layerinfo == NULL)
+    return 0;
+
+  if (layerinfo->mssqlversion_major == 0) {
+    char* mssqlversion_major = msLayerGetProcessingKey(layer, "MSSQL_VERSION_MAJOR");
+    if (mssqlversion_major != NULL) {
+      layerinfo->mssqlversion_major = atoi(mssqlversion_major);
+    }
+    else {
+      /* need to query from database */
+      if (executeSQL(layerinfo->conn, "SELECT SERVERPROPERTY('ProductVersion')")) {
+        SQLRETURN rc = SQLFetch(layerinfo->conn->hstmt);
+        if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
+          /* process results */
+          char result_data[256];
+          SQLLEN retLen = 0;
+
+          rc = SQLGetData(layerinfo->conn->hstmt, 1, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
+
+          if (rc != SQL_ERROR) {
+            result_data[retLen] = 0;
+            layerinfo->mssqlversion_major = atoi(result_data);
+          }
+        }
+      }
+    }
+  }
+
+  return layerinfo->mssqlversion_major;
+}
+
 /* Get the layer extent as specified in the mapfile or a largest area */
 /* covering all features */
 int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
 {
-  if(layer->debug) {
-    msDebug("msMSSQL2008LayerGetExtent called\n");
-  }
+    msMSSQL2008LayerInfo *layerinfo;
+    char *query = 0;
+    char result_data[256];
+    SQLLEN retLen;
+    SQLRETURN rc;
+    
+    if(layer->debug) {
+      msDebug("msMSSQL2008LayerGetExtent called\n");
+    }
 
-  if (layer->extent.minx == -1.0 && layer->extent.miny == -1.0 &&
-      layer->extent.maxx == -1.0 && layer->extent.maxy == -1.0) {
-    extent->minx = extent->miny = -1.0 * FLT_MAX;
-    extent->maxx = extent->maxy = FLT_MAX;
-  } else {
-    extent->minx = layer->extent.minx;
-    extent->miny = layer->extent.miny;
-    extent->maxx = layer->extent.maxx;
-    extent->maxy = layer->extent.maxy;
-  }
+    layerinfo = getMSSQL2008LayerInfo(layer);
 
-  return MS_SUCCESS;
+    if (!layerinfo) {
+        msSetError(MS_QUERYERR, "GetExtent called with layerinfo = NULL", "msMSSQL2008LayerGetExtent()");
+        return MS_FAILURE;
+    }
+
+    /* set up statement */
+    if (getMSSQLMajorVersion(layer) >= 11) {
+      if (strcasecmp(layerinfo->geom_column_type, "geography") == 0) {
+        query = msStringConcatenate(query, "WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(geometry::STGeomFromWKB(");
+        query = msStringConcatenate(query, layerinfo->geom_column);
+        query = msStringConcatenate(query, ".STAsBinary(), ");
+        query = msStringConcatenate(query, layerinfo->geom_column);
+        query = msStringConcatenate(query, ".STSrid)");
+      }
+      else {
+        query = msStringConcatenate(query, "WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(");
+        query = msStringConcatenate(query, layerinfo->geom_column);        
+      }
+      query = msStringConcatenate(query, ".MakeValid()) AS extentcol FROM ");
+      query = msStringConcatenate(query, layerinfo->geom_table);
+      query = msStringConcatenate(query, ") SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY, extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent");
+    }
+    else {
+      if (strcasecmp(layerinfo->geom_column_type, "geography") == 0) {
+        query = msStringConcatenate(query, "WITH ENVELOPE as (SELECT geometry::STGeomFromWKB(");
+        query = msStringConcatenate(query, layerinfo->geom_column);
+        query = msStringConcatenate(query, ".STAsBinary(), ");
+        query = msStringConcatenate(query, layerinfo->geom_column);
+        query = msStringConcatenate(query, ".STSrid)");
+      }
+      else {
+        query = msStringConcatenate(query, "WITH ENVELOPE as (SELECT ");
+        query = msStringConcatenate(query, layerinfo->geom_column);      
+      }
+      query = msStringConcatenate(query, ".MakeValid().STEnvelope() as envelope from ");
+      query = msStringConcatenate(query, layerinfo->geom_table);
+      query = msStringConcatenate(query, "), CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE) SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS");
+    }
+
+    if (!executeSQL(layerinfo->conn, query)) {
+        msFree(query);
+        return MS_FAILURE;
+    }
+
+    msFree(query);
+
+    /* process results */
+    rc = SQLFetch(layerinfo->conn->hstmt);
+
+    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
+        if (layer->debug) {
+            msDebug("msMSSQL2008LayerGetExtent: No results found.\n");
+        }
+        return MS_FAILURE;
+    }
+
+    rc = SQLGetData(layerinfo->conn->hstmt, 1, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
+    if (rc == SQL_ERROR) {
+        msSetError(MS_QUERYERR, "Failed to get MinX value", "msMSSQL2008LayerGetExtent()");
+        return MS_FAILURE;
+    }
+
+    result_data[retLen] = 0;
+
+    extent->minx = atof(result_data);
+
+    rc = SQLGetData(layerinfo->conn->hstmt, 2, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
+    if (rc == SQL_ERROR) {
+        msSetError(MS_QUERYERR, "Failed to get MinY value", "msMSSQL2008LayerGetExtent()");
+        return MS_FAILURE;
+    }
+
+    result_data[retLen] = 0;
+
+    extent->miny = atof(result_data);
+
+    rc = SQLGetData(layerinfo->conn->hstmt, 3, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
+    if (rc == SQL_ERROR) {
+        msSetError(MS_QUERYERR, "Failed to get MaxX value", "msMSSQL2008LayerGetExtent()");
+        return MS_FAILURE;
+    }
+
+    result_data[retLen] = 0;
+
+    extent->maxx = atof(result_data);
+
+    rc = SQLGetData(layerinfo->conn->hstmt, 4, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
+    if (rc == SQL_ERROR) {
+        msSetError(MS_QUERYERR, "Failed to get MaxY value", "msMSSQL2008LayerGetExtent()");
+        return MS_FAILURE;
+    }
+
+    result_data[retLen] = 0;
+
+    extent->maxy = atof(result_data);
+
+    return MS_SUCCESS;
 }
 
 /* Get the layer feature count */
@@ -1358,19 +1487,15 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   }
 
   /* adding spatial filter */
-  msMSSQL2008LayerGetExtent(layer, &extent);
-  if (rect.minx > extent.minx || rect.miny > extent.miny ||
-      rect.maxx < extent.maxx || rect.maxy < extent.maxy) {
-      if (hasFilter == MS_FALSE)
-          query = msStringConcatenate(query, " WHERE ");
-      else
-          query = msStringConcatenate(query, " AND ");
+  if (hasFilter == MS_FALSE)
+      query = msStringConcatenate(query, " WHERE ");
+  else
+      query = msStringConcatenate(query, " AND ");
 
-      query = msStringConcatenate(query, layerinfo->geom_column);
-      query = msStringConcatenate(query, ".STIntersects(");
-      query = msStringConcatenate(query, box3d);
-      query = msStringConcatenate(query, ") = 1 ");
-  }
+  query = msStringConcatenate(query, layerinfo->geom_column);
+  query = msStringConcatenate(query, ".MakeValid().STIntersects(");
+  query = msStringConcatenate(query, box3d);
+  query = msStringConcatenate(query, ") = 1 ");
 
   if (layerinfo->sort_spec)
       query = msStringConcatenate(query, layerinfo->sort_spec);
