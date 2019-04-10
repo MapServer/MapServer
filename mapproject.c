@@ -806,7 +806,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   lineObj  ring;
   /*  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4]; */
   pointObj *ringPoints;
-  int     ix, iy;
+  int     ix, iy, ixy, sampleDiagonal, numPolyPoints;
 
   double dx, dy;
 
@@ -841,7 +841,8 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Build polygon as steps around the source rectangle.             */
+  /*      Build polygon as steps around the source rectangle              */
+  /*      and possibly its diagonal.                                      */
   /* -------------------------------------------------------------------- */
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
@@ -857,7 +858,10 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     return MS_SUCCESS;
   }
   
-  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*4+4);
+  /* If there is more than two sample points we will also get samples from the diagonal line */
+  sampleDiagonal = NUMBER_OF_SAMPLE_POINTS > 2 ? MS_TRUE : MS_FALSE;
+  numPolyPoints = sampleDiagonal ? NUMBER_OF_SAMPLE_POINTS*5+3 : NUMBER_OF_SAMPLE_POINTS*4+4;
+  ringPoints = (pointObj*) calloc(sizeof(pointObj),numPolyPoints);
   ring.point = ringPoints;
   ring.numpoints = 0;
 
@@ -888,11 +892,22 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     }
   }
 
-  /* sample on along left side */
+  /* sample along left side */
   if(dy != 0) {
     for(iy = NUMBER_OF_SAMPLE_POINTS-1; iy >= 0; iy-- ) {
       ringPoints[ring.numpoints].x = rect->minx;
       ringPoints[ring.numpoints++].y = rect->miny + iy * dy;
+    }
+  }
+
+  /* sample along diagonal line */
+  /* This is done to handle cases where reprojection from world covering projection to one */
+  /* which isn't could cause min and max values of the projected rectangle to be invalid */
+  if(dy != 0 && dx != 0 && sampleDiagonal) {
+    /* No need to compute corners as they've already been computed */
+    for(ixy = NUMBER_OF_SAMPLE_POINTS-2; ixy >= 1; ixy-- ) {
+      ringPoints[ring.numpoints].x = rect->minx + ixy * dx;
+      ringPoints[ring.numpoints++].y = rect->miny + ixy * dy;
     }
   }
 
