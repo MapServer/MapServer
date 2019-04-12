@@ -1934,7 +1934,7 @@ int msSetup()
 
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
-#ifndef NDEBUG
+#if !defined(NDEBUG)
 #if defined(USE_LIBXML2)
 #include "maplibxml2.h"
 #endif
@@ -1972,7 +1972,7 @@ void msCleanup()
 #endif
 
 /* make valgrind happy on debug code */
-#ifndef NDEBUG
+#if !defined(NDEBUG)
 #ifdef USE_CAIRO
   msCairoCleanup();
 #endif

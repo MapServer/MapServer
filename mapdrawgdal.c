@@ -86,7 +86,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 {
   int i,j, k; /* loop counters */
   int cmap[MAXCOLORS];
-#ifndef NDEBUG
+#if !defined(NDEBUG)
   int cmap_set = FALSE;
 #endif
   unsigned char rb_cmap[4][MAXCOLORS];
@@ -521,7 +521,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     const char* pszRangeColorspace = msLayerGetProcessingKey( layer, "RANGE_COLORSPACE" );
     colorspace iRangeColorspace;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG)
     cmap_set = TRUE;
 #endif
 
@@ -605,7 +605,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     }
   } else if( hBand2 == NULL && hColorMap != NULL && rb->type == MS_BUFFER_BYTE_RGBA ) {
     int color_count;
-#ifndef NDEBUG
+#if !defined(NDEBUG)
     cmap_set = TRUE;
 #endif
 

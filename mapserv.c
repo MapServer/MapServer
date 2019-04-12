@@ -52,7 +52,7 @@ void msCleanupOnSignal( int nInData )
   /* from within the signal handler on Unix.  So we force output through */
   /* normal stdio functions. */
   msIO_installHandlers( NULL, NULL, NULL );
-#ifndef NDEBUG
+#if !defined(NDEBUG)
   msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
 #endif
   msCleanup();
