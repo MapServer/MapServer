@@ -645,7 +645,7 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
           char *pszTmp = NULL;
           int bufferSize = 0;
           const char* pszId = tokens[i];
-          const char* pszDot = strchr(pszId, '.');
+          const char* pszDot = strrchr(pszId, '.');
           if( pszDot )
             pszId = pszDot + 1;
 
