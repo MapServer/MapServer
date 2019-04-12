@@ -1152,6 +1152,15 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
       msDebug("msMSSQL2008LayerGetExtent called\n");
     }
 
+    if (!(layer->extent.minx == -1.0 && layer->extent.miny == -1.0 && 
+        layer->extent.maxx == -1.0 && layer->extent.maxy == -1.0)) {
+      /* extent was already set */
+      extent->minx = layer->extent.minx;
+      extent->miny = layer->extent.miny;
+      extent->maxx = layer->extent.maxx;
+      extent->maxy = layer->extent.maxy;
+    }
+
     layerinfo = getMSSQL2008LayerInfo(layer);
 
     if (!layerinfo) {
