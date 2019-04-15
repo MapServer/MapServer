@@ -806,7 +806,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   lineObj  ring;
   /*  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4]; */
   pointObj *ringPoints;
-  int     ix, iy, ixy, sampleDiagonal, numPolyPoints;
+  int     ix, iy, ixy;
 
   double dx, dy;
 
@@ -859,9 +859,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   }
   
   /* If there is more than two sample points we will also get samples from the diagonal line */
-  sampleDiagonal = NUMBER_OF_SAMPLE_POINTS > 2 ? MS_TRUE : MS_FALSE;
-  numPolyPoints = sampleDiagonal ? NUMBER_OF_SAMPLE_POINTS*5+3 : NUMBER_OF_SAMPLE_POINTS*4+4;
-  ringPoints = (pointObj*) calloc(sizeof(pointObj),numPolyPoints);
+  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*5+3);
   ring.point = ringPoints;
   ring.numpoints = 0;
 
@@ -876,7 +874,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     }
   }
 
-  /* sample on along right side */
+  /* sample along right side */
   if(dy != 0) {
     for(iy = 1; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ ) {
       ringPoints[ring.numpoints].x = rect->maxx;
@@ -903,7 +901,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /* sample along diagonal line */
   /* This is done to handle cases where reprojection from world covering projection to one */
   /* which isn't could cause min and max values of the projected rectangle to be invalid */
-  if(dy != 0 && dx != 0 && sampleDiagonal) {
+  if(dy != 0 && dx != 0) {
     /* No need to compute corners as they've already been computed */
     for(ixy = NUMBER_OF_SAMPLE_POINTS-2; ixy >= 1; ixy-- ) {
       ringPoints[ring.numpoints].x = rect->minx + ixy * dx;
