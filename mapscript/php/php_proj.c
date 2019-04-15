@@ -134,6 +134,9 @@
  *
  **********************************************************************/
 
+/* workaround to allow compiling against Proj 6.x (#5766) */
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
+
 #ifdef USE_PROJ
 #include <projects.h>
 #include "php_mapscript_util.h"
