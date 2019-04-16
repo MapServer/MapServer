@@ -2,8 +2,8 @@
 use strict;
 use warnings;
 use Test::More tests => 11;
-use File::Spec;
 
+# check the mapserver version for keywords
 sub msHas
 {
 	my ($mod) = @_;
@@ -37,24 +37,4 @@ SKIP: {
 		ok( $orig eq $new_wkt, 'from WKT <> toWKT' );
 	}
 };
-
-=pod
-my $map = new mapscript::mapObj( "../mspython/test_mapio.map" );
-mapscript::msIO_installStdoutToBuffer();
-my $owreq = new mapscript::OWSRequest();
-$owreq->loadParamsFromURL('service=WMS&version=1.1.1&request=GetMap&layers=grey&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&width=80&height=40')
-
-my $err = $map->OWSDispatch( $owreq );
-ok($err == 0, 'OWSDispatch');
-
-#	warn(mapscript::msGetErrorString("\n"));
-
-my $content_type = mapscript::msIO_stripStdoutBufferContentType();
-$x = mapscript::msIO_getStdoutBufferBytes();
-mapscript::msIO_resetHandlers();
-
-$res->status(200);
-$res->content_type($content_type);
-$res->body($$x);
-=cut
 
