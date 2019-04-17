@@ -3671,7 +3671,9 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     strlcat(repstr, " ", sizeof(repstr));
   }
   msStringTrimBlanks(repstr);
-  outstr = msReplaceSubstring(outstr, "[layers]", repstr);
+  encodedstr = msEncodeHTMLEntities(repstr);
+  outstr = msReplaceSubstring(outstr, "[layers]", encodedstr);
+  free(encodedstr);
 
   encodedstr = msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[layers_esc]", encodedstr);
