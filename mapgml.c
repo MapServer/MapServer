@@ -1455,7 +1455,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       value = (char *) msOWSLookupMetadata(&(lp->metadata), "OM", "title");
       if (value) {
-        msOWSPrintMetadata(stream, &(lp->metadata), namespaces, "title", OWS_NOERR, "\t<gml:name>%s</gml:name>\n", value);
+        msOWSPrintEncodeMetadata(stream, &(lp->metadata), namespaces, "title", OWS_NOERR, "\t<gml:name>%s</gml:name>\n", value);
       }
 
       geomtype = msOWSLookupMetadata(&(lp->metadata), "OFG", "geomtype");
