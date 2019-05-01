@@ -81,7 +81,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
       pszSLDTmpFile = msTmpFile(map, NULL, NULL, "sld.xml" );
     }
     if (pszSLDTmpFile == NULL) {
-      msSetError(MS_WMSERR, "Could not determine temporary file %s. Please make sure that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL()", pszSLDTmpFile);
+      msSetError(MS_WMSERR, "Could not determine temporary file %s. Please make sure that the temporary path is set. The temporary path can be defined for example by setting TEMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL()", pszSLDTmpFile);
     } else {
       int nMaxRemoteSLDBytes;
       const char *pszMaxRemoteSLDBytes = msOWSLookupMetadata(&(map->web.metadata), "MO", "remote_sld_max_bytes");
@@ -108,7 +108,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
         }
       } else {
         unlink(pszSLDTmpFile);
-        msSetError(MS_WMSERR, "Could not open SLD %s and save it in a temporary file. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL);
+        msSetError(MS_WMSERR, "Could not open SLD %s and save it in a temporary file. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TEMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL);
       }
       msFree(pszSLDTmpFile);
       if (pszSLDbuf)
