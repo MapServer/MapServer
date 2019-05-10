@@ -18,7 +18,7 @@ include(CheckCSourceCompiles)
 set (MapServer_VERSION_MAJOR 7)
 set (MapServer_VERSION_MINOR 4)
 set (MapServer_VERSION_REVISION 0)
-set (MapServer_VERSION_SUFFIX "-rc1")
+set (MapServer_VERSION_SUFFIX "-rc2")
 
 set(TARGET_VERSION_MAJOR ${MapServer_VERSION_MAJOR})
 set(TARGET_VERSION_MINOR ${MapServer_VERSION_MINOR})
