@@ -1,5 +1,5 @@
 #
-# Test GEOMETRY REFERENCE
+# Test REFERENCE
 #
 # REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
 #
@@ -19,6 +19,7 @@
 # --- Reference output rendered with MapFile only
 #
 # RUN_PARMS: map_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint" > [RESULT_DEMIME]
+#
 #
 # --- Reference output rendered with SLD (compatible with MapServer 7.2)
 #
