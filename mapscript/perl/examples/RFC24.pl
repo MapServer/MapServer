@@ -1,6 +1,10 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
 use mapscript;
-$file=$ARGV[0];
+use Data::Dumper;
+
+my $file=$ARGV[0];
 
 # utility
 sub assertNotNull {
@@ -12,13 +16,6 @@ sub assertNotNull {
 	}
 }
 
-sub dumpHash {
-	my ($hashmap) = @_;
-	print "Dumping hashmap: $hashmap\n";
-	for my $k ( keys %$hashmap ) {
-		    print "\t".$k.": ".$hashmap{$k}."\n";
-	}
-}
 
 # layerObj
 sub testGetLayerObj {
@@ -49,7 +46,7 @@ sub testInsertLayerObj {
 	my $position = $map->insertLayer($layer);
 	$map = undef;
 	assertNotNull( $position == 7 , "testInsertLayerObj position");
-	assertNotNull( $layer->{map} , "testInsertLayerObj notnull");	
+	assertNotNull( $layer->{map} , "testInsertLayerObj notnull");
 }
 
 # classObj
@@ -83,7 +80,7 @@ sub testInsertClassObj {
 	my $position = $layer->insertClass($clazz);
 	$map = undef; $layer=undef;
 	assertNotNull( $position == 2 , "testInsertClassObj position");
-	assertNotNull( $clazz->{layer} , "testInsertClassObj notnull");	
+	assertNotNull( $clazz->{layer} , "testInsertClassObj notnull");
 }
 
 if ( ! $file ) {
@@ -99,8 +96,9 @@ testGetClassObj;
 testClassObj;
 testInsertClassObj;
 
-$hashmap=mapscript::getPARENT_PTRS();
+my $hashmap = mapscript::getPARENT_PTRS();
 assertNotNull( keys( %$hashmap )==0 , "checking that hashmap of parent ptrs is empty");
 print "No of keys:".keys( %$hashmap )."\n";
-dumpHash($hashmap);
+#dumpHash($hashmap);
+print Dumper( $hashmap );
 

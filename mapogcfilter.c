@@ -3171,7 +3171,7 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
         tokens = msStringSplit(psFilterNode->pszValue,',', &nTokens);
         for (j=0; j<nTokens; j++) {
             const char* pszId = tokens[j];
-            const char* pszDot = strchr(pszId, '.');
+            const char* pszDot = strrchr(pszId, '.');
             if( pszDot )
             {
                 if( pszDot - pszId != strlen(lp->name) ||

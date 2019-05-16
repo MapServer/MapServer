@@ -10,8 +10,6 @@
 
 use strict;
 use warnings;
-use POSIX;
-use XBase;
 use mapscript;
 use Getopt::Long;
 use File::Copy;
