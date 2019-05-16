@@ -6,7 +6,8 @@ export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
 apt-get install -y python-software-properties
-add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+add-apt-repository -y ppa:ubuntugis/ppa
+add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
 apt-get update
 apt-get -y upgrade
 
