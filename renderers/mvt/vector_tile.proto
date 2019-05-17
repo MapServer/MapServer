@@ -1,4 +1,4 @@
-//set statement to avoid warnings thrown in protobuf >= 3
+//set version statement to avoid warnings thrown in protobuf >= 3
 syntax = "proto2";
 
 package vector_tile;
