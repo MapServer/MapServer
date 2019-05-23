@@ -1312,13 +1312,23 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         case MS_STYLE_BASE + MS_STYLE_BINDING_OPACITY:
           psStyle->opacity = atof(psRoot->pszValue)*100;
           status = MS_SUCCESS;
+          // Apply opacity as the alpha channel color(s)
+          if(psStyle->opacity < 100)
+          {
+            int alpha = MS_NINT(psStyle->opacity*2.55);
+            psStyle->color.alpha = alpha;
+            psStyle->outlinecolor.alpha = alpha;
+            psStyle->backgroundcolor.alpha = alpha;
+            psStyle->mincolor.alpha = alpha;
+            psStyle->maxcolor.alpha = alpha;
+          }
           break;
         case MS_STYLE_BASE + MS_STYLE_BINDING_COLOR:
           if (strlen(psRoot->pszValue) == 7 && psRoot->pszValue[0] == '#')
           {
             psStyle->color.red = msHexToInt(psRoot->pszValue+1);
             psStyle->color.green = msHexToInt(psRoot->pszValue+3);
-            psStyle->color.blue= msHexToInt(psRoot->pszValue+5);
+            psStyle->color.blue = msHexToInt(psRoot->pszValue+5);
             status = MS_SUCCESS;
           }
           break;
@@ -1327,7 +1337,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           {
             psStyle->outlinecolor.red = msHexToInt(psRoot->pszValue+1);
             psStyle->outlinecolor.green = msHexToInt(psRoot->pszValue+3);
-            psStyle->outlinecolor.blue= msHexToInt(psRoot->pszValue+5);
+            psStyle->outlinecolor.blue = msHexToInt(psRoot->pszValue+5);
             status = MS_SUCCESS;
           }
           break;
