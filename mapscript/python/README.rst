@@ -1,8 +1,8 @@
-Python MapScript for MapServer 7.2.1 README
+Python MapScript for MapServer 7.4.0 README
 ===========================================
 
 :Author: MapServer Team
-:Last Updated: 2018-11-28
+:Last Updated: 2019-06-04
 
 Introduction
 ------------
@@ -36,8 +36,8 @@ Advantages of ready-made wheels on PyPI include:
 
 Currently the following wheels are built:
 
-+ Python 2.7 x64 for MapServer 7.2
-+ Python 3.6 x64 for MapServer 7.2
++ Python 2.7 x64 for MapServer 7.4.0
++ Python 3.6 x64 for MapServer 7.4.0
 
 The mapscript wheels have been compiled using Visual Studio 2017 version 15.3 (``MSVC++ 14.11 _MSC_VER == 1911``). 
 Linux wheels are also planned, using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
@@ -62,8 +62,8 @@ On Windows you can use the following, replacing ``C:\MapServer\bin`` with the lo
     SET PATH=C:\MapServer\bin;%PATH%
 
 Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`_. 
-To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1911-x64-gdal-2-3-mapserver-7-2``
-for mapscript 7.2. 
+To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1911-x64-gdal-2-3-mapserver-7-4``
+for mapscript 7.4. 
 
 When using these packages the MapServer path will be similar to ``C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin``. 
 
@@ -90,7 +90,7 @@ Now you should be able to import mapscript:
 .. code-block:: python
 
     python -c "import mapscript;print(mapscript.msGetVersion())"
-    MapServer version 7.2.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
+    MapServer version 7.4.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
 
 If you failed to add the MapServer binaries to your system path you may see one of the following errors:
 
@@ -232,8 +232,8 @@ Make sure the MapServer binaries are on the system path, and that the PROJ_LIB v
 
 .. code-block:: bat
 
-    SET PATH=C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin;%PATH%
-    SET PROJ_LIB=C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin\proj\SHARE
+    SET PATH=C:\release-1911-x64-gdal-2-3-mapserver-7-4\bin;%PATH%
+    SET PROJ_LIB=C:\release-1911-x64-gdal-2-3-mapserver-7-4\bin\proj\SHARE
 
 Finally run the command below to run the test suite: 
 
