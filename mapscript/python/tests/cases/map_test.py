@@ -289,8 +289,13 @@ class MapSizeTestCase(MapTestCase):
 
 class MapSetWKTTestCase(MapTestCase):
 
-    def xtestOGCWKT(self):
-        self.map.setWKTProjection('PROJCS["unnamed", PROJECTION["Albers_Conic_Equal_Area"], '
+    def testOGCWKT(self):
+        self.map.setWKTProjection('PROJCS["unnamed", ''GEOGCS["WGS 84", '
+                                  'DATUM["WGS_1984", '
+                                  'SPHEROID["WGS 84",6378137,298.257223563]], '
+                                  'PRIMEM["Greenwich",0], '
+                                  'UNIT["degree",0.0174532925199433]], '
+                                  'PROJECTION["Albers_Conic_Equal_Area"], '
                                   'PARAMETER["standard_parallel_1", 65], PARAMETER["standard_parallel_2", 55], '
                                   'PARAMETER["latitude_of_center", 0], PARAMETER["longitude_of_center", -153], '
                                   'PARAMETER["false_easting", -4943910.68], PARAMETER["false_northing", 0]]')
