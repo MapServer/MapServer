@@ -1421,12 +1421,12 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if (wldfile && (strlen(wldfile)>=3))
       strcpy(wldfile+strlen(wldfile)-3, "wld");
     if (wldfile && (fp = VSIFOpenL(wldfile, "wt")) != NULL) {
-      double dfCellSizeX = MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
-                                       pasReqInfo[iReq].bbox.maxx,
-                                       pasReqInfo[iReq].width);
-      double dfCellSizeY = MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
-                                       pasReqInfo[iReq].bbox.miny,
-                                       pasReqInfo[iReq].height);
+      double dfCellSizeX = MS_OWS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
+                                           pasReqInfo[iReq].bbox.maxx,
+                                           pasReqInfo[iReq].width);
+      double dfCellSizeY = MS_OWS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
+                                           pasReqInfo[iReq].bbox.miny,
+                                           pasReqInfo[iReq].height);
       char world_text[5000];
 
       sprintf( world_text, "%.12f\n0\n0\n%.12f\n%.12f\n%.12f\n",
