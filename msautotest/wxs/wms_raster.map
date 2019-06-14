@@ -86,6 +86,7 @@ END
 #
 
 LAYER
+  DEBUG 3
   NAME road
   DATA toronto.tif
   METADATA

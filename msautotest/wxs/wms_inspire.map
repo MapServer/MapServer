@@ -255,6 +255,7 @@ MAP
     #
 
     LAYER
+        DEBUG 3
         NAME TN.CommonTransportElements
         METADATA
             "wms_title" "TN.CommonTransportElements"
