@@ -194,6 +194,7 @@ END
 
 
 LAYER
+  DEBUG 3
   NAME province
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from province order by gid) as foo using srid=3978 using unique gid"
@@ -219,6 +220,7 @@ LAYER
 END # Layer
 
 LAYER
+  DEBUG 3
   NAME popplace
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from popplace order by gid) as foo using srid=3978 using unique gid"

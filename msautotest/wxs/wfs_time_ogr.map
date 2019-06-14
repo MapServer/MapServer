@@ -70,6 +70,7 @@ END
 #
 
 LAYER
+  DEBUG 3
   NAME time
   CONNECTIONTYPE OGR
   CONNECTION "data/pattern1.shp"
