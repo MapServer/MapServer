@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<encoding_layer_layer>
+	<gml:name>encoding test &amp; &lt;&gt; </gml:name>
+		<encoding_layer_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:3857">
+					<gml:coordinates>-10.000000,-10.000000 10.000000,10.000000</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+		</encoding_layer_feature>
+	</encoding_layer_layer>
+</msGMLOutput>

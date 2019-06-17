@@ -76,6 +76,7 @@ END
 #
 
 LAYER
+  DEBUG 3
   NAME time
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern1 order by gid) as foo using unique gid using srid=4326"
