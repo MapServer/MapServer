@@ -1,3 +1,7 @@
+branches:
+  except:
+  - /^(cherry-pick-)?backport-\d+-to-/
+
 dist: trusty
 language: php
 php:
