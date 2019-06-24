@@ -93,7 +93,7 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   pszValue = psFilterNode->psRightNode->pszValue;
   nLength = strlen(pszValue);
   /* The 4 factor is in case of \. See below */
-  if( 1 + 4 * nLength + 1 + 1 >= sizeof(szTmp) )
+  if( 1 + 4 * nLength + 1 + 1 + 1 >= sizeof(szTmp) )
       return NULL;
 
   iTmp =0;
@@ -162,6 +162,10 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
       iTmp++;
       szTmp[iTmp] = '\0';
     }
+  }
+  if (nLength > 0) {
+    szTmp[iTmp]= '$';
+    iTmp++;
   }
   szTmp[iTmp] = '"';
   szTmp[++iTmp] = '\0';
