@@ -1,0 +1,23 @@
+{ "type": "FeatureCollection",
+  "features": [ {
+    "type": "Feature",
+    "properties": {
+      "r2": 2,
+      "a15": 15.0,
+      "s12": 12.0,
+      "x2": 2,
+      "y2": 2,
+      "r180": 180.0,
+      "s20": 20.0,
+      "blue": "#0000FF",
+      "red": "#FF0000",
+      "white": "#FFFFFF",
+      "green": "#00FF00",
+      "w1": 1,
+      "semiopaque": 0.5,
+      "Property1": "Un",
+      "Property2": "Deux",
+      "name": "Plot" },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [ 4.8, 45.7 ] } } ] }
