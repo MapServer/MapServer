@@ -1680,7 +1680,7 @@ int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int 
 int msLayerSupportsSorting(layerObj *layer)
 {
   if (layer && (
-    (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL) || ((layer->connectiontype == MS_PLUGIN) && (strstr(layer->plugin_library,"msplugin_oracle") != NULL))
+    (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL) || ((layer->connectiontype == MS_PLUGIN) && (strstr(layer->plugin_library,"msplugin_oracle") != NULL)) || ((layer->connectiontype == MS_PLUGIN) && (strstr(layer->plugin_library,"msplugin_mssql2008") != NULL))
                )
      )
     return MS_TRUE;
