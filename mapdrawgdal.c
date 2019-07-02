@@ -1935,6 +1935,9 @@ msDrawRasterLayerGDAL_16BitClassification(
   int lastC;
   struct mstimeval starttime, endtime;
 
+  const char *pszClassifyScaled;
+  int bClassifyScaled = FALSE;
+
   if(layer->mask) {
     int ret;
     layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
@@ -1997,6 +2000,13 @@ msDrawRasterLayerGDAL_16BitClassification(
       fDataMax = MS_MAX(fDataMax,pafRawData[i]);
     }
   }
+
+  /* -------------------------------------------------------------------- */
+  /*      Fetch the scale classification option.                          */
+  /* -------------------------------------------------------------------- */
+  pszClassifyScaled = CSLFetchNameValue( layer->processing, "CLASSIFY_SCALED" );
+  if( pszClassifyScaled != NULL && EQUAL(pszClassifyScaled,"TRUE") )
+    bClassifyScaled = TRUE;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the scale processing option.                              */
@@ -2106,12 +2116,17 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     cmap[i] = -1;
 
+    // i = (int) ((dfOriginalValue - dfScaleMin) * dfScaleRatio+1)-1;
     dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
 
     /* The creation of buckets takes a significant time when they are many, and many classes
        as well. When iterating over buckets, a faster strategy is to reuse first the last used
        class index. */
-    c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) dfOriginalValue, -1, -1, -1, lastC);
+    if(bClassifyScaled == TRUE)
+      c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) i, -1, -1, -1, lastC);
+    else
+      c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) dfOriginalValue, -1, -1, -1, lastC);
+
     lastC = c;
     if( c != -1 ) {
       int s;
@@ -2139,6 +2154,17 @@ msDrawRasterLayerGDAL_16BitClassification(
     msDebug("msDrawRasterGDAL_16BitClassification() bucket creation time: %.3fs\n",
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
             (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  }
+
+  // testy...
+  if(1==1) {
+    int iMapIndex;
+
+    iMapIndex = (int) ((dfScaleMin - dfScaleMin) * dfScaleRatio+1)-1;
+    fprintf(stderr, "min: %d,%f\n", iMapIndex, dfScaleMin);
+
+    iMapIndex = (int) ((dfScaleMax - dfScaleMin) * dfScaleRatio+1)-1;
+    fprintf(stderr, "max: %d,%f\n", iMapIndex, dfScaleMax);
   }
 
   /* ==================================================================== */
