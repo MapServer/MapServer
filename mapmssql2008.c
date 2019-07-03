@@ -1506,8 +1506,21 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   query = msStringConcatenate(query, box3d);
   query = msStringConcatenate(query, ") = 1 ");
 
-  if (layerinfo->sort_spec)
+  if (layerinfo->sort_spec) {
       query = msStringConcatenate(query, layerinfo->sort_spec);
+  }
+
+  /* Add extra sort by */
+  if( layer->sortBy.nProperties > 0 ) {
+    char* pszTmp = msLayerBuildSQLOrderBy(layer);
+    if (layerinfo->sort_spec)
+        query = msStringConcatenate(query, ", ");
+    else
+        query = msStringConcatenate(query, " ORDER BY ");
+    query = msStringConcatenate(query, pszTmp);
+    msFree(pszTmp);
+  }
+
 
   if (layer->debug) {
       msDebug("query:%s\n", query);
