@@ -3976,6 +3976,17 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     mapserv->request = req;
     map->querymap.status = MS_FALSE;
 
+    if( nMatchingFeatures >= 0 )
+    {
+        char szMatchingFeatures[12];
+        sprintf(szMatchingFeatures, "%d", nMatchingFeatures);
+        msSetOutputFormatOption( psFormat, "_matching_features_",
+                                 szMatchingFeatures);
+    }
+    else
+    {
+        msSetOutputFormatOption( psFormat, "_matching_features_", "");
+    }
     status = msReturnTemplateQuery( mapserv, psFormat->name, NULL );
 
     mapserv->request = NULL;
