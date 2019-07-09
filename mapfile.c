@@ -1720,8 +1720,10 @@ int freeLabel(labelObj *label)
   }
   msFree(label->styles);
 
-  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++)
+  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
     msFree(label->bindings[i].item);
+    msFreeExpression(&(label->exprBindings[i]));
+  }
 
   msFreeExpression(&(label->expression));
   msFreeExpression(&(label->text));
@@ -2924,8 +2926,10 @@ int freeStyle(styleObj *style)
   msFreeExpression(&style->_geomtransform);
   msFree(style->rangeitem);
 
-  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
+  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
     msFree(style->bindings[i].item);
+    msFreeExpression(&(style->exprBindings[i]));
+  }
 
   return MS_SUCCESS;
 }
