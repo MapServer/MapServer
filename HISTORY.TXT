@@ -12,6 +12,11 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.4.1 release (2019-7-12)
+-------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
 7.4.0 release (2019-5-14)
 -------------------------
 
