@@ -1967,8 +1967,12 @@ static int loadLabel(labelObj *label)
           label->bindings[MS_LABEL_BINDING_SIZE].item = NULL;
           label->numbindings--;
         }
+        if (label->exprBindings[MS_LABEL_BINDING_SIZE].string) {
+          msFreeExpression(&label->exprBindings[MS_LABEL_BINDING_SIZE]);
+          label->nexprbindings--;
+        }
 
-        if((symbol = getSymbol(7, MS_NUMBER,MS_BINDING,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1)
+        if((symbol = getSymbol(8, MS_EXPRESSION,MS_NUMBER,MS_BINDING,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1)
           return(-1);
 
         if(symbol == MS_NUMBER) {
@@ -1976,6 +1980,11 @@ static int loadLabel(labelObj *label)
         } else if(symbol == MS_BINDING) {
           label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
+        } else if (symbol == MS_EXPRESSION) {
+          msFree(label->exprBindings[MS_LABEL_BINDING_SIZE].string);
+          label->exprBindings[MS_LABEL_BINDING_SIZE].string = msStrdup(msyystring_buffer);
+          label->exprBindings[MS_LABEL_BINDING_SIZE].type = MS_EXPRESSION;
+          label->nexprbindings++;
         } else
           label->size = symbol;
         break;
