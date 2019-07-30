@@ -2988,6 +2988,8 @@ int process_node(layerObj* layer, expressionObj *filter)
           i++;
           continue;
         }
+        if( c == '$' && c_next == 0 && strtmpl[0] == '^' )
+          break;
 
         if (c == '\\') {
           i++;
