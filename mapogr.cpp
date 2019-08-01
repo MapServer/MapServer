@@ -1934,12 +1934,14 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
             }
             else if (c == '.')
                 c = wild_one;
-
-            if (i == 0 && c == '^') {
+            else if (i == 0 && c == '^') {
                 i++;
                 continue;
             }
-                
+            else if( c == '$' && c_next == 0 ) {
+                break;
+            }
+
             re[j++] = c;
             i++;
                 
@@ -3643,6 +3645,8 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
             {
                 if( i == 0 && expr->m_aoChildren[1]->m_osVal[i] == '^' )
                     continue;
+                if( i == nSize-1 && expr->m_aoChildren[1]->m_osVal[i] == '$' )
+                    break;
                 if( expr->m_aoChildren[1]->m_osVal[i] == '.' )
                 {
                     if( i+1<nSize &&

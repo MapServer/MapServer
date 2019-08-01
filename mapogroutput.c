@@ -699,16 +699,23 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   int iLayer, i;
   int bDataSourceNameIsRequestDir = FALSE;
   int bUseFeatureId = MS_FALSE;
+  const char* pszMatchingFeatures;
+  int nMatchingFeatures = -1;
+  const char* pszFormatName = format->driver+4;
+  
+  pszMatchingFeatures = msGetOutputFormatOption(format, "_matching_features_", "");
+  if( pszMatchingFeatures[0] != '\0' )
+      nMatchingFeatures = atoi(pszMatchingFeatures);
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
   /* -------------------------------------------------------------------- */
   msOGRInitialize();
 
-  hDriver = OGRGetDriverByName( format->driver+4 );
+  hDriver = OGRGetDriverByName( pszFormatName );
   if( hDriver == NULL ) {
     msSetError( MS_MISCERR, "No OGR driver named `%s' available.",
-                "msOGRWriteFromQuery()", format->driver+4 );
+                "msOGRWriteFromQuery()", pszFormatName );
     return MS_FAILURE;
   }
 
@@ -722,6 +729,29 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( strncasecmp(format->formatoptions[i],"DSCO:",5) == 0 )
       ds_options = CSLAddString( ds_options,
                                  format->formatoptions[i] + 5 );
+  }
+  if( EQUAL(pszFormatName, "GeoJSON") && nMatchingFeatures >= 0 )
+  {
+      const char* pszNativeData =
+        CSLFetchNameValueDef(layer_options, "NATIVE_DATA", "{}");
+      if( pszNativeData[strlen(pszNativeData)-1] == '}' )
+      {
+          char szTemp[32];
+          char* pszTemplate = msSmallMalloc(strlen(pszNativeData) + 32);
+          strcpy(pszTemplate, pszNativeData);
+          pszTemplate[strlen(pszTemplate)-1] = 0;
+          if( strlen(pszNativeData) > 2 )
+              strcat(pszTemplate, ",");
+          sprintf(szTemp, "\"numberMatched\":%d}", nMatchingFeatures);
+          strcat(pszTemplate, szTemp);
+          layer_options = CSLSetNameValue(layer_options,
+                                          "NATIVE_MEDIA_TYPE",
+                                          "application/vnd.geo+json");
+          layer_options = CSLSetNameValue(layer_options,
+                                          "NATIVE_DATA",
+                                          pszTemplate);
+          msFree(pszTemplate);
+      }
   }
   if(!strcasecmp("true",msGetOutputFormatOption(format,"USE_FEATUREID","false"))) {
     bUseFeatureId = MS_TRUE;

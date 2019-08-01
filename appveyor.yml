@@ -1,3 +1,7 @@
+branches:
+  except:
+    - /(cherry-pick-)?backport-\d+-to-/
+
 image: Visual Studio 2017
 
 cache:
