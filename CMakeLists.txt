@@ -294,16 +294,16 @@ if(WITH_PROTOBUFC)
  else(NOT PROTOBUFC_FOUND)
    list(APPEND ALL_INCLUDE_DIRS ${PROTOBUFC_INCLUDE_DIR})
 
-   FILE(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/renderers/mvt)
+   FILE(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/renderers/mvt")
     # Create custom command for protoc-c
     ADD_CUSTOM_COMMAND(
        COMMAND ${PROTOBUFC_COMPILER}
-       ARGS --c_out=${PROJECT_BINARY_DIR}/renderers/mvt --proto_path=${PROJECT_SOURCE_DIR}/renderers/mvt ${PROJECT_SOURCE_DIR}/renderers/mvt/vector_tile.proto
-       OUTPUT ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.h
+       ARGS --c_out="${PROJECT_BINARY_DIR}/renderers/mvt" --proto_path="${PROJECT_SOURCE_DIR}/renderers/mvt" "${PROJECT_SOURCE_DIR}/renderers/mvt/vector_tile.proto"
+       OUTPUT "${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c" "${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.h"
     )
 
-    SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.h ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c GENERATED)
-    set (vectortile_SOURCES ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c)
+    SET_SOURCE_FILES_PROPERTIES("${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.h" "${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c" GENERATED)
+    set (vectortile_SOURCES "${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c")
 
     set (USE_PBF 1)
  endif(NOT PROTOBUFC_FOUND)
@@ -1004,6 +1004,7 @@ status_optional_feature("V8 Javascript" "${USE_V8_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
+message(STATUS "PROJECT_BINARY_DIR is set to ${PROJECT_BINARY_DIR}")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Will install libraries to ${INSTALL_LIB_DIR}")
 
