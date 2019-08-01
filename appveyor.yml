@@ -19,7 +19,7 @@ environment:
     PYTHON_EXECUTABLE: c:/python36-x64/python.exe
 
 matrix:
-  fast_finish: true
+  fast_finish: false
 
 shallow_clone: true
 
