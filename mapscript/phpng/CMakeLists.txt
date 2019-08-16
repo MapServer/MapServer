@@ -62,6 +62,20 @@ if(WIN32)
   SWIG_LINK_LIBRARIES(php_mapscriptng ${PHP_LIBRARY})
 endif(WIN32)
 
+IF(APPLE)
+  if(XCODE)
+     SET(CMAKE_C_LINK_FLAGS 
+        "${CMAKE_C_LINK_FLAGS} -undefined dynamic_lookup")
+     SET(CMAKE_CXX_LINK_FLAGS 
+        "${CMAKE_CXX_LINK_FLAGS} -undefined dynamic_lookup")
+  else(XCODE)
+     SET(CMAKE_SHARED_MODULE_CREATE_C_FLAGS 
+        "${CMAKE_SHARED_MODULE_CREATE_C_FLAGS} -undefined dynamic_lookup")
+     SET(CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS 
+        "${CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS} -undefined dynamic_lookup")
+  endif(XCODE)
+ENDIF(APPLE)
+
 # hide "defined but not used" warnings
 target_compile_options(php_mapscriptng PRIVATE -Wno-unused-label)
 
