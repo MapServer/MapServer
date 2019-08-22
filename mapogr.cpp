@@ -38,6 +38,7 @@
 
 #if defined(USE_OGR) || defined(USE_GDAL)
 #  include "gdal_version.h"
+#  include "gdal.h"
 #  include "cpl_conv.h"
 #  include "cpl_string.h"
 #  include "ogr_srs_api.h"
@@ -1191,7 +1192,13 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       msDebug("OGROPen(%s)\n", pszDSSelectedName);
 
     ACQUIRE_OGR_LOCK;
-    hDS = OGROpen( pszDSSelectedName, MS_FALSE, NULL );
+    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+    hDS = (OGRDataSourceH) GDALOpenEx(pszDSSelectedName,
+                                GDAL_OF_VECTOR,
+                                NULL,
+                                (const char* const*)connectionoptions,
+                                NULL);
+    CSLDestroy(connectionoptions);
     RELEASE_OGR_LOCK;
 
     if( hDS == NULL ) {

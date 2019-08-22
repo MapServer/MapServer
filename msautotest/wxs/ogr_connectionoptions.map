@@ -1,0 +1,88 @@
+#
+# Test WFS
+#
+# REQUIRES: SUPPORTS=WFS INPUT=OGR
+#
+# RUN_PARMS: ogr_connectionoptions.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test" > [RESULT]
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT -180 -90 180 90
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:4326"
+    "ows_abstract"    "Test WFS Abstract"
+    "ows_keywordlist" "ogc,wfs,gml,om"
+    "ows_service_onlineresource" "http://localhost"
+    "ows_fees" "none"
+    "ows_accessconstraints" "none"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+    "ows_hoursofservice" "0800h - 1600h EST"
+    "ows_contactinstructions" "during hours of service"
+    "ows_role" "staff"
+    "wms_feature_info_mime_type" "text/csv"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "+proj=latlong +datum=WGS84"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME test
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/nested_attrs.geojson"
+  CONNECTIONOPTIONS
+    "FLATTEN_NESTED_ATTRIBUTES" "YES"
+  END
+  METADATA
+    "ows_title"         "test"
+    "ows_description"   "test"
+    "wfs_featureid"     "fid" 
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  DUMP TRUE
+END # Layer
+
+END # Map File

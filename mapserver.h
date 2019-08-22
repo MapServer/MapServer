@@ -1797,6 +1797,8 @@ typedef struct labelObj labelObj;
 #endif
     
     LayerCompositer *compositer;
+
+    hashTableObj connectionoptions;
   };
 
 
@@ -2791,6 +2793,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 #ifdef USE_GDAL
   void msCleanVSIDir( const char *pszDir );
+  char** msGetStringListFromHashTable(hashTableObj* table);
 #endif
 
   /* ==================================================================== */

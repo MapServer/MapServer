@@ -788,7 +788,20 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     }
 
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+    if( !layer->tileindex )
+    {
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        hDS = GDALOpenEx(decrypted_path,
+                                    GDAL_OF_RASTER,
+                                    NULL,
+                                    (const char* const*)connectionoptions,
+                                    NULL);
+        CSLDestroy(connectionoptions);
+    }
+    else
+    {
+        hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+    }
 
     if( hDS == NULL ) {
       int ignore_missing = msMapIgnoreMissingData( map );
@@ -1378,7 +1391,13 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   msAcquireLock( TLOCK_GDAL );
   if( decrypted_path ) {
-    hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+    hDS = GDALOpenEx(decrypted_path,
+                                GDAL_OF_RASTER,
+                                NULL,
+                                (const char* const*)connectionoptions,
+                                NULL);
+    CSLDestroy(connectionoptions);
     msFree( decrypted_path );
   } else
     hDS = NULL;

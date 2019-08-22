@@ -661,7 +661,21 @@ void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
     return NULL;
 
   msAcquireLock( TLOCK_GDAL );
-  return GDALOpenShared( *p_decrypted_path, GA_ReadOnly );
+  if( !layer->tileindex )
+  {
+    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+    GDALDatasetH hDS = GDALOpenEx( *p_decrypted_path,
+                                   GDAL_OF_RASTER | GDAL_OF_SHARED,
+                                   NULL,
+                                   (const char* const*)connectionoptions,
+                                   NULL);
+    CSLDestroy(connectionoptions);
+    return hDS;
+  }
+  else
+  {
+    return GDALOpenShared( *p_decrypted_path, GA_ReadOnly );
+  }
 #endif
 }
 
@@ -682,6 +696,15 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
 
       if( close_connection == NULL && layer->tileindex == NULL )
         close_connection = "DEFER";
+
+      {
+        /* Due to how GDAL processes OVERVIEW_LEVEL, datasets returned are */
+        /* not shared, despite being asked to, so close them for real */
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        if( CSLFetchNameValue(connectionoptions, "OVERVIEW_LEVEL") )
+            close_connection = NULL;
+        CSLDestroy(connectionoptions);
+      }
 
       if( close_connection != NULL
           && strcasecmp(close_connection,"DEFER") == 0 ) {

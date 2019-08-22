@@ -2712,8 +2712,12 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
       return MS_FAILURE;
 
     msAcquireLock( TLOCK_GDAL );
-
-    hDS = GDALOpen( decrypted_path, GA_ReadOnly );
+    {
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        hDS = GDALOpenEx( decrypted_path, GDAL_OF_RASTER, NULL,
+                          (const char* const*)connectionoptions, NULL);
+        CSLDestroy(connectionoptions);
+    }
     if( hDS == NULL ) {
       const char *cpl_error_msg = CPLGetLastErrorMsg();
 
