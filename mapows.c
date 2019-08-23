@@ -2090,7 +2090,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 */
 void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext)
 {
-  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+  if (srcproj->proj && !msProjIsGeographicCRS(srcproj)) {
     projectionObj wgs84;
     msInitProjection(&wgs84);
     msLoadProjectionString(&wgs84, "+proj=longlat +ellps=WGS84 +datum=WGS84");

@@ -3842,7 +3842,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 #ifdef USE_PROJ
   if((strstr(outstr, "lat]") || strstr(outstr, "lon]") || strstr(outstr, "lon_esc]"))
       && mapserv->map->projection.proj != NULL
-      && !pj_is_latlong(mapserv->map->projection.proj) ) {
+      && !msProjIsGeographicCRS(&(mapserv->map->projection)) ) {
     llextent=mapserv->map->extent;
     llpoint=mapserv->mappnt;
     msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon), &llextent);

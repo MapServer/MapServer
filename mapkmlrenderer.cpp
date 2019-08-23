@@ -523,7 +523,7 @@ int KmlRenderer::checkProjection(mapObj *map)
 {
   projectionObj *projection= &map->projection;
 #ifdef USE_PROJ
-  if (projection && projection->numargs > 0 && pj_is_latlong(projection->proj)) {
+  if (projection && projection->numargs > 0 && msProjIsGeographicCRS(projection)) {
     return MS_SUCCESS;
   } else {
     char epsg_string[100];

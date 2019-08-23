@@ -36,14 +36,550 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
-
-
 #ifdef USE_PROJ
+static char *ms_proj_lib = NULL;
+
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            projectionObj *src_proj,
                            projectionObj *dst_proj );
+
+#if defined(USE_PROJ) && PROJ_VERSION_MAJOR >= 6
+
+#include "proj_experimental.h"
+
+struct reprojectionObj
+{
+    projectionObj* in;
+    projectionObj* out;
+    PJ* pj;
+};
+
+/************************************************************************/
+/*                         createNormalizedPJ()                         */
+/************************************************************************/
+
+/* Return to be freed with proj_destroy() */
+static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out)
+{
+    const char* in_str = (in && msProjectHasLonWrap(in, NULL)) ?
+        proj_as_proj_string(in->proj_ctx, in->proj, PJ_PROJ_4, NULL) :
+        proj_as_wkt(in->proj_ctx, in->proj, PJ_WKT2_2018, NULL);
+    const char* out_str = (out && msProjectHasLonWrap(out, NULL)) ?
+        proj_as_proj_string(out->proj_ctx, out->proj, PJ_PROJ_4, NULL) :
+        proj_as_wkt(out->proj_ctx, out->proj, PJ_WKT2_2018, NULL);
+    PJ* pj_raw;
+    PJ* pj_normalized;
+    if( !in_str || !out_str )
+        return NULL;
+    pj_raw = proj_create_crs_to_crs(in->proj_ctx, in_str, out_str, NULL);
+    if( !pj_raw )
+        return NULL;
+    pj_normalized = proj_normalize_for_visualization(in->proj_ctx, pj_raw);
+    proj_destroy(pj_raw);
+    if( !pj_normalized )
+        return NULL;
+    return pj_normalized;
+}
+
+/************************************************************************/
+/*                        getBaseGeographicCRS()                        */
+/************************************************************************/
+
+/* Return to be freed with proj_destroy() */
+static PJ* getBaseGeographicCRS(projectionObj* in)
+{
+    PJ_TYPE type;
+    assert(in && in->proj);
+    type = proj_get_type(in->proj);
+    if( type == PJ_TYPE_PROJECTED_CRS )
+    {
+        return proj_get_source_crs(in->proj_ctx, in->proj);
+    }
+    if( type == PJ_TYPE_BOUND_CRS )
+    {
+        /* If it is a boundCRS of a projectedCRS, extract the geographicCRS
+         * from the projectedCRS, and rewrap it in a boundCRS */
+        PJ* source_crs = proj_get_source_crs(in->proj_ctx, in->proj);
+        PJ* geog_source_crs;
+        PJ* hub_crs;
+        PJ* transf;
+        PJ* ret;
+        if( proj_get_type(source_crs) != PJ_TYPE_PROJECTED_CRS )
+        {
+            proj_destroy(source_crs);
+            return NULL;
+        }
+        geog_source_crs = proj_get_source_crs(in->proj_ctx, source_crs);
+        proj_destroy(source_crs);
+        hub_crs = proj_get_target_crs(in->proj_ctx, in->proj);
+        transf = proj_crs_get_coordoperation(in->proj_ctx, in->proj);
+        ret = proj_crs_create_bound_crs(in->proj_ctx, geog_source_crs,
+                                        hub_crs, transf);
+        proj_destroy(geog_source_crs);
+        proj_destroy(hub_crs);
+        proj_destroy(transf);
+        return ret;
+
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        msProjectCreateReprojector()                  */
+/************************************************************************/
+
+reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out)
+{
+    reprojectionObj* obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
+    obj->in = in;
+    obj->out = out;
+
+    /* -------------------------------------------------------------------- */
+    /*      If the source and destination are simple and equal, then do     */
+    /*      nothing.                                                        */
+    /* -------------------------------------------------------------------- */
+    if( in && in->numargs == 1 && out && out->numargs == 1
+        && strcmp(in->args[0],out->args[0]) == 0 ) {
+        /* do nothing, no transformation required */
+    }
+    /* -------------------------------------------------------------------- */
+    /*      If we have a fully defined input coordinate system and          */
+    /*      output coordinate system, then we will use createNormalizedPJ   */
+    /* -------------------------------------------------------------------- */
+    else if( in && in->proj && out && out->proj ) {
+        PJ* pj = createNormalizedPJ(in, out);
+        if( !pj )
+        {
+            msFree(obj);
+            return NULL;
+        }
+        obj->pj = pj;
+    }
+
+    /* nothing to do if the other coordinate system is also lat/long */
+    else if( (in == NULL || in->proj == NULL) &&
+             (out == NULL || out->proj == NULL || msProjIsGeographicCRS(out) ))
+    {
+        /* do nothing */
+    }
+    else if( out == NULL && in != NULL && msProjIsGeographicCRS(in) )
+    {
+        /* do nothing */
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Otherwise we assume that the NULL projectionObj is supposed to be */
+    /*      lat/long in the same datum as the other projectionObj.  This    */
+    /*      is essentially a backwards compatibility mode.                  */
+    /* -------------------------------------------------------------------- */
+    else {
+        PJ* pj = NULL;
+
+        if( (in==NULL || in->proj==NULL) && out && out->proj) { /* input coordinates are lat/lon */
+            PJ* source_crs = getBaseGeographicCRS(out);
+            projectionObj in_modified;
+            memset(&in_modified, 0, sizeof(in_modified));
+
+            in_modified.proj_ctx = out->proj_ctx;
+            in_modified.proj = source_crs;
+            pj = createNormalizedPJ(&in_modified, out);
+            proj_destroy(source_crs);
+        } else if( /* (out==NULL || out->proj==NULL) && */ in && in->proj )  {
+            PJ* target_crs = getBaseGeographicCRS(in);
+            projectionObj out_modified;
+            memset(&out_modified, 0, sizeof(out_modified));
+
+            out_modified.proj_ctx = in->proj_ctx;
+            out_modified.proj = target_crs;
+            pj = createNormalizedPJ(in, &out_modified);
+            proj_destroy(target_crs);
+        }
+        if( !pj )
+        {
+            msFree(obj);
+            return NULL;
+        }
+        obj->pj = pj;
+    }
+
+    return obj;
+}
+
+/************************************************************************/
+/*                      msProjectDestroyReprojector()                   */
+/************************************************************************/
+
+void msProjectDestroyReprojector(reprojectionObj* reprojector)
+{
+    if( !reprojector )
+        return;
+    proj_destroy(reprojector->pj);
+    msFree(reprojector);
+}
+
+/************************************************************************/
+/*                       msProjectTransformPoints()                     */
+/************************************************************************/
+
+int msProjectTransformPoints( reprojectionObj* reprojector,
+                              int npoints, double* x, double* y )
+{
+    proj_trans_generic (reprojector->pj, PJ_FWD,
+                        x, sizeof(double), npoints,
+                        y, sizeof(double), npoints,
+                        NULL, 0, 0,
+                        NULL, 0, 0 );
+    return MS_SUCCESS;
+}
+
+#else
+
+struct reprojectionObj
+{
+    projectionObj* in;
+    projectionObj* out;
+    int no_op;
+};
+
+/************************************************************************/
+/*                        msProjectCreateReprojector()                  */
+/************************************************************************/
+
+reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out)
+{
+    reprojectionObj* obj;
+    obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
+    obj->in = in;
+    obj->out = out;
+
+    /* -------------------------------------------------------------------- */
+    /*      If the source and destination are simple and equal, then do     */
+    /*      nothing.                                                        */
+    /* -------------------------------------------------------------------- */
+    if( in && in->numargs == 1 && out && out->numargs == 1
+        && strcmp(in->args[0],out->args[0]) == 0 ) {
+        obj->no_op = MS_TRUE;
+    }
+    /* -------------------------------------------------------------------- */
+    /*      If we have a fully defined input coordinate system and          */
+    /*      output coordinate system, then we will use pj_transform         */
+    /* -------------------------------------------------------------------- */
+    else if( in && in->proj && out && out->proj ) {
+        /* do nothing for now */
+    }
+#ifdef USE_PROJ
+    /* nothing to do if the other coordinate system is also lat/long */
+    else if( in == NULL && (out == NULL || msProjIsGeographicCRS(out) ))
+    {
+        obj->no_op = MS_TRUE;
+    }
+    else if( out == NULL && in != NULL && msProjIsGeographicCRS(in) )
+    {
+        obj->no_op = MS_TRUE;
+    }
+#endif
+    return obj;
+}
+
+/************************************************************************/
+/*                      msProjectDestroyReprojector()                   */
+/************************************************************************/
+
+void msProjectDestroyReprojector(reprojectionObj* reprojector)
+{
+    if( !reprojector )
+        return;
+    msFree(reprojector);
+}
+
 #endif
 
+#endif
+
+/*
+** Initialize, load and free a projectionObj structure
+*/
+int msInitProjection(projectionObj *p)
+{
+  p->gt.need_geotransform = MS_FALSE;
+  p->numargs = 0;
+  p->args = NULL;
+  p->wellknownprojection = wkp_none;
+#ifdef USE_PROJ
+  p->proj = NULL;
+  p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *));
+  MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS*sizeof(char *), -1);
+#if PJ_VERSION >= 480 || PROJ_VERSION_MAJOR >= 6
+  p->proj_ctx = NULL;
+#endif
+#endif
+  return(0);
+}
+
+void msFreeProjection(projectionObj *p)
+{
+#ifdef USE_PROJ
+#if PROJ_VERSION_MAJOR >= 6
+  proj_destroy(p->proj);
+  p->proj = NULL;
+  proj_context_destroy(p->proj_ctx);
+  p->proj_ctx = NULL;
+#else
+  if(p->proj) {
+    pj_free(p->proj);
+    p->proj = NULL;
+  }
+#if PJ_VERSION >= 480
+  if(p->proj_ctx) {
+    pj_ctx_free(p->proj_ctx);
+    p->proj_ctx = NULL;
+  }
+#endif
+#endif
+
+  msFreeCharArray(p->args, p->numargs);
+  p->args = NULL;
+  p->numargs = 0;
+#endif
+}
+
+/*
+** Handle OGC WMS/WFS AUTO projection in the format:
+**    "AUTO:proj_id,units_id,lon0,lat0"
+*/
+#ifdef USE_PROJ
+static int _msProcessAutoProjection(projectionObj *p)
+{
+  char **args;
+  int numargs, nProjId, nUnitsId, nZone;
+  double dLat0, dLon0;
+  const char *pszUnits = "m";
+  char szProjBuf[512]="";
+
+  /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
+  args = msStringSplit(p->args[0], ',', &numargs);
+  if (numargs != 4 ||
+      (strncasecmp(args[0], "AUTO:", 5) != 0 &&
+       strncasecmp(args[0], "AUTO2:", 6) != 0)) {
+    msSetError(MS_PROJERR,
+               "WMS/WFS AUTO/AUTO2 PROJECTION must be in the format "
+               "'AUTO:proj_id,units_id,lon0,lat0' or 'AUTO2:crs_id,factor,lon0,lat0'(got '%s').\n",
+               "_msProcessAutoProjection()", p->args[0]);
+    return -1;
+  }
+
+  if (strncasecmp(args[0], "AUTO:", 5)==0)
+    nProjId = atoi(args[0]+5);
+  else
+    nProjId = atoi(args[0]+6);
+
+  nUnitsId = atoi(args[1]);
+  dLon0 = atof(args[2]);
+  dLat0 = atof(args[3]);
+
+
+  /*There is no unit parameter for AUTO2. The 2nd parameter is
+   factor. Set the units to always be meter*/
+  if (strncasecmp(args[0], "AUTO2:", 6) == 0)
+    nUnitsId = 9001;
+
+  msFreeCharArray(args, numargs);
+
+  /* Handle EPSG Units.  Only meters for now. */
+  switch(nUnitsId) {
+    case 9001:  /* Meters */
+      pszUnits = "m";
+      break;
+    default:
+      msSetError(MS_PROJERR,
+                 "WMS/WFS AUTO PROJECTION: EPSG Units %d not supported.\n",
+                 "_msProcessAutoProjection()", nUnitsId);
+      return -1;
+  }
+
+  /* Build PROJ4 definition.
+   * This is based on the definitions found in annex E of the WMS 1.1.1
+   * spec and online at http://www.digitalearth.org/wmt/auto.html
+   * The conversion from the original WKT definitions to PROJ4 format was
+   * done using the MapScript setWKTProjection() function (based on OGR).
+   */
+  switch(nProjId) {
+    case 42001: /** WGS 84 / Auto UTM **/
+      nZone = (int) floor( (dLon0 + 180.0) / 6.0 ) + 1;
+      sprintf( szProjBuf,
+               "+proj=tmerc+lat_0=0+lon_0=%.16g+k=0.999600+x_0=500000"
+               "+y_0=%.16g+ellps=WGS84+datum=WGS84+units=%s+type=crs",
+               -183.0 + nZone * 6.0,
+               (dLat0 >= 0.0) ? 0.0 : 10000000.0,
+               pszUnits);
+      break;
+    case 42002: /** WGS 84 / Auto Tr. Mercator **/
+      sprintf( szProjBuf,
+               "+proj=tmerc+lat_0=0+lon_0=%.16g+k=0.999600+x_0=500000"
+               "+y_0=%.16g+ellps=WGS84+datum=WGS84+units=%s+type=crs",
+               dLon0,
+               (dLat0 >= 0.0) ? 0.0 : 10000000.0,
+               pszUnits);
+      break;
+    case 42003: /** WGS 84 / Auto Orthographic **/
+      sprintf( szProjBuf,
+               "+proj=ortho+lon_0=%.16g+lat_0=%.16g+x_0=0+y_0=0"
+               "+ellps=WGS84+datum=WGS84+units=%s+type=crs",
+               dLon0, dLat0, pszUnits );
+      break;
+    case 42004: /** WGS 84 / Auto Equirectangular **/
+      /* Note that we have to pass lon_0 as lon_ts for this one to */
+      /* work.  Either a PROJ4 bug or a PROJ4 documentation issue. */
+      sprintf( szProjBuf,
+               "+proj=eqc+lon_ts=%.16g+lat_ts=%.16g+x_0=0+y_0=0"
+               "+ellps=WGS84+datum=WGS84+units=%s+type=crs",
+               dLon0, dLat0, pszUnits);
+      break;
+    case 42005: /** WGS 84 / Auto Mollweide **/
+      sprintf( szProjBuf,
+               "+proj=moll+lon_0=%.16g+x_0=0+y_0=0+ellps=WGS84"
+               "+datum=WGS84+units=%s+type=crs",
+               dLon0, pszUnits);
+      break;
+    default:
+      msSetError(MS_PROJERR,
+                 "WMS/WFS AUTO PROJECTION %d not supported.\n",
+                 "_msProcessAutoProjection()", nProjId);
+      return -1;
+  }
+
+  /* msDebug("%s = %s\n", p->args[0], szProjBuf); */
+
+  /* OK, pass the definition to pj_init() */
+  args = msStringSplit(szProjBuf, '+', &numargs);
+
+#if PROJ_VERSION_MAJOR >= 6
+  if( !(p->proj = proj_create_argv(p->proj_ctx, numargs, args)) ) {
+    int l_pj_errno = proj_context_errno (p->proj_ctx);
+    msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+               "msProcessProjection()", proj_errno_string(l_pj_errno), szProjBuf) ;
+    return(-1);
+  }
+#else
+  msAcquireLock( TLOCK_PROJ );
+  if( !(p->proj = pj_init(numargs, args)) ) {
+    int *pj_errno_ref = pj_get_errno_ref();
+    msReleaseLock( TLOCK_PROJ );
+    msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+               "msProcessProjection()", pj_strerrno(*pj_errno_ref), szProjBuf) ;
+    return(-1);
+  }
+  msReleaseLock( TLOCK_PROJ );
+#endif
+
+  msFreeCharArray(args, numargs);
+
+  return(0);
+}
+#endif /* USE_PROJ */
+
+int msProcessProjection(projectionObj *p)
+{
+#ifdef USE_PROJ
+  assert( p->proj == NULL );
+
+  if( strcasecmp(p->args[0],"GEOGRAPHIC") == 0 ) {
+    msSetError(MS_PROJERR,
+               "PROJECTION 'GEOGRAPHIC' no longer supported.\n"
+               "Provide explicit definition.\n"
+               "ie. proj=latlong\n"
+               "    ellps=clrk66\n",
+               "msProcessProjection()");
+    return(-1);
+  }
+
+  if (strcasecmp(p->args[0], "AUTO") == 0) {
+    p->proj = NULL;
+    return 0;
+  }
+
+#if PROJ_VERSION_MAJOR >= 6
+  p->proj_ctx = proj_context_create();
+  if( p->proj_ctx == NULL )
+  {
+      return -1;
+  }
+  proj_context_use_proj4_init_rules(p->proj_ctx, TRUE);
+  if( ms_proj_lib )
+  {
+      const char* const paths[1] = { ms_proj_lib };
+      proj_context_set_search_paths(p->proj_ctx, 1, paths);
+  }
+#endif
+
+  if (strncasecmp(p->args[0], "AUTO:", 5) == 0 ||
+      strncasecmp(p->args[0], "AUTO2:", 6) == 0) {
+    /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
+    /*WMS 1.3.0: AUTO2:auto_crs_id,factor,lon0,lat0*/
+    return _msProcessAutoProjection(p);
+  }
+
+#if PROJ_VERSION_MAJOR >= 6
+  {
+      char** args = (char**)msSmallMalloc(sizeof(char*) * (p->numargs+1));
+      memcpy(args, p->args, sizeof(char*) * p->numargs);
+      args[p->numargs] = (char*) "type=crs";
+      if( !(p->proj = proj_create_argv(p->proj_ctx, p->numargs + 1, args)) ) {
+          int l_pj_errno = proj_context_errno (p->proj_ctx);
+          if(p->numargs>1) {
+            msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
+                        "msProcessProjection()", proj_errno_string(l_pj_errno), p->args[0],p->args[1]) ;
+          } else {
+            msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                        "msProcessProjection()", proj_errno_string(l_pj_errno), p->args[0]) ;
+          }
+          free(args);
+          return(-1);
+      }
+      free(args);
+  }
+#else
+  msAcquireLock( TLOCK_PROJ );
+#if PJ_VERSION < 480
+  if( !(p->proj = pj_init(p->numargs, p->args)) ) {
+#else
+  p->proj_ctx = pj_ctx_alloc();
+  if( !(p->proj=pj_init_ctx(p->proj_ctx, p->numargs, p->args)) ) {
+#endif
+
+    int *pj_errno_ref = pj_get_errno_ref();
+    msReleaseLock( TLOCK_PROJ );
+    if(p->numargs>1) {
+      msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
+                 "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0],p->args[1]) ;
+    } else {
+      msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                 "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0]) ;
+    }
+    return(-1);
+  }
+
+  msReleaseLock( TLOCK_PROJ );
+#endif
+
+#ifdef USE_PROJ_FASTPATHS
+  if(strcasestr(p->args[0],"epsg:4326")) {
+    p->wellknownprojection = wkp_lonlat;
+  } else if(strcasestr(p->args[0],"epsg:3857")) {
+    p->wellknownprojection = wkp_gmerc;
+  } else {
+    p->wellknownprojection = wkp_none;
+  }
+#endif
+
+
+  return(0);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.",
+             "msProcessProjection()");
+  return(-1);
+#endif
+}
 
 /************************************************************************/
 /*                           int msIsAxisInverted                       */
@@ -67,9 +603,23 @@ int msIsAxisInverted(int epsg_code)
 /************************************************************************/
 int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 {
+    int ret;
+    reprojectionObj* reprojector = msProjectCreateReprojector(in, out);
+    if( !reprojector )
+        return MS_FAILURE;
+    ret = msProjectPointEx(reprojector, point);
+    msProjectDestroyReprojector(reprojector);
+    return ret;
+}
+
+/************************************************************************/
+/*                           msProjectPointEx()                         */
+/************************************************************************/
+int msProjectPointEx(reprojectionObj* reprojector, pointObj *point)
+{
 #ifdef USE_PROJ
-  projUV p;
-  int  error;
+  projectionObj* in = reprojector->in;
+  projectionObj* out = reprojector->out;
 
   if( in && in->gt.need_geotransform ) {
     double x_out, y_out;
@@ -85,12 +635,22 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
     point->y = y_out;
   }
 
-  /* -------------------------------------------------------------------- */
-  /*      If the source and destination are simple and equal, then do     */
-  /*      nothing.                                                        */
-  /* -------------------------------------------------------------------- */
-  if( in && in->numargs == 1 && out && out->numargs == 1
-      && strcmp(in->args[0],out->args[0]) == 0 ) {
+#if PROJ_VERSION_MAJOR >= 6
+  if( reprojector->pj ) {
+    PJ_COORD c;
+    c.xyzt.x = point->x;
+    c.xyzt.y = point->y;
+    c.xyzt.z = 0;
+    c.xyzt.t = 0;
+    c = proj_trans (reprojector->pj, PJ_FWD, c);
+    if( c.xyzt.x == HUGE_VAL || c.xyzt.y == HUGE_VAL ) {
+      return MS_FAILURE;
+    }
+    point->x = c.xyzt.x;
+    point->y = c.xyzt.y;
+  }
+#else
+  if( reprojector->no_op ) {
     /* do nothing, no transformation required */
   }
 
@@ -99,6 +659,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   /*      output coordinate system, then we will use pj_transform.        */
   /* -------------------------------------------------------------------- */
   else if( in && in->proj && out && out->proj ) {
+    int error;
     double  z = 0.0;
 
     if( pj_is_latlong(in->proj) ) {
@@ -133,11 +694,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   /*      is essentially a backwards compatibility mode.                  */
   /* -------------------------------------------------------------------- */
   else {
-    /* nothing to do if the other coordinate system is also lat/long */
-    if( in == NULL && (out == NULL || pj_is_latlong(out->proj) ))
-      return MS_SUCCESS;
-    if( out == NULL && in != NULL && pj_is_latlong(in->proj) )
-      return MS_SUCCESS;
+    projUV p;
 
     p.u = point->x;
     p.v = point->y;
@@ -146,23 +703,19 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
       p.u *= DEG_TO_RAD; /* convert to radians */
       p.v *= DEG_TO_RAD;
       p = pj_fwd(p, out->proj);
-    } else {
-      if(out==NULL || out->proj==NULL) { /* output coordinates are lat/lon */
-        p = pj_inv(p, in->proj);
-        p.u *= RAD_TO_DEG; /* convert to decimal degrees */
-        p.v *= RAD_TO_DEG;
-      } else { /* need to go from one projection to another */
-        p = pj_inv(p, in->proj);
-        p = pj_fwd(p, out->proj);
-      }
+    } else /* if(out==NULL || out->proj==NULL) */ { /* output coordinates are lat/lon */
+      p = pj_inv(p, in->proj);
+      p.u *= RAD_TO_DEG; /* convert to decimal degrees */
+      p.v *= RAD_TO_DEG;
     }
-
-    if( p.u == HUGE_VAL || p.v == HUGE_VAL )
-      return MS_FAILURE;
 
     point->x = p.u;
     point->y = p.v;
+    if( point->x == HUGE_VAL || point->y == HUGE_VAL ) {
+      return MS_FAILURE;
+    }
   }
+#endif
 
   if( out && out->gt.need_geotransform ) {
     double x_out, y_out;
@@ -189,12 +742,12 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 /*                         msProjectGrowRect()                          */
 /************************************************************************/
 #ifdef USE_PROJ
-static void msProjectGrowRect(projectionObj *in, projectionObj *out,
+static void msProjectGrowRect(reprojectionObj* reprojector,
                               rectObj *prj_rect,
                               pointObj *prj_point, int *failure )
 
 {
-  if( msProjectPoint(in, out, prj_point) == MS_SUCCESS ) {
+  if( msProjectPointEx(reprojector, prj_point) == MS_SUCCESS ) {
       prj_rect->miny = MS_MIN(prj_rect->miny, prj_point->y);
       prj_rect->maxy = MS_MAX(prj_rect->maxy, prj_point->y);
       prj_rect->minx = MS_MIN(prj_rect->minx, prj_point->x);
@@ -290,7 +843,7 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
 
 #ifdef USE_PROJ
 static int
-msProjectShapeLine(projectionObj *in, projectionObj *out,
+msProjectShapeLine(reprojectionObj* reprojector,
                    shapeObj *shape, int line_index)
 
 {
@@ -302,6 +855,8 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
   int numpoints_in = line->numpoints;
   int line_alloc = numpoints_in;
   int wrap_test;
+  projectionObj *in = reprojector->in;
+  projectionObj *out = reprojector->out;
 
 #ifdef USE_PROJ_FASTPATHS
 #define MAXEXTENT 20037508.34
@@ -340,8 +895,8 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 
 
 
-  wrap_test = out != NULL && out->proj != NULL && pj_is_latlong(out->proj)
-              && !pj_is_latlong(in->proj);
+  wrap_test = out != NULL && out->proj != NULL && msProjIsGeographicCRS(out)
+              && !msProjIsGeographicCRS(in);
 
   line->numpoints = 0;
 
@@ -354,7 +909,7 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
     int ms_err;
     wrkPoint = thisPoint = line->point[i];
 
-    ms_err = msProjectPoint(in, out, &wrkPoint );
+    ms_err = msProjectPointEx(reprojector, &wrkPoint );
 
     /* -------------------------------------------------------------------- */
     /*      Apply wrap logic.                                               */
@@ -499,6 +1054,20 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 /************************************************************************/
 int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 {
+    int ret;
+    reprojectionObj* reprojector = msProjectCreateReprojector(in, out);
+    if( !reprojector )
+        return MS_FAILURE;
+    ret = msProjectShapeEx(reprojector, shape);
+    msProjectDestroyReprojector(reprojector);
+    return ret;
+}
+
+/************************************************************************/
+/*                          msProjectShapeEx()                          */
+/************************************************************************/
+int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape)
+{
 #ifdef USE_PROJ
   int i;
 #ifdef USE_PROJ_FASTPATHS
@@ -540,13 +1109,11 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #undef p_y
 #endif
 
-
-
   for( i = shape->numlines-1; i >= 0; i-- ) {
     if( shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON ) {
-      if( msProjectShapeLine( in, out, shape, i ) == MS_FAILURE )
+      if( msProjectShapeLine( reprojector, shape, i ) == MS_FAILURE )
         msShapeDeleteLine( shape, i );
-    } else if( msProjectLine(in, out, shape->line+i ) == MS_FAILURE ) {
+    } else if( msProjectLineEx(reprojector, shape->line+i ) == MS_FAILURE ) {
       msShapeDeleteLine( shape, i );
     }
   }
@@ -566,20 +1133,35 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 
 /************************************************************************/
 /*                           msProjectLine()                            */
+/************************************************************************/
+int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
+{
+    int ret;
+    reprojectionObj* reprojector = msProjectCreateReprojector(in, out);
+    if( !reprojector )
+        return MS_FAILURE;
+    ret = msProjectLineEx(reprojector, line);
+    msProjectDestroyReprojector(reprojector);
+    return ret;
+}
+
+/************************************************************************/
+/*                         msProjectLineEx()                            */
 /*                                                                      */
 /*      This function is now normally only used for point data.         */
 /*      msProjectShapeLine() is used for lines and polygons and has     */
 /*      lots of logic to handle horizon crossing.                       */
 /************************************************************************/
 
-int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
+int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 {
 #ifdef USE_PROJ
   int i, be_careful = 1;
 
   if( be_careful )
-    be_careful = out->proj != NULL && pj_is_latlong(out->proj)
-                 && !pj_is_latlong(in->proj);
+    be_careful = reprojector->out->proj != NULL &&
+                 msProjIsGeographicCRS(reprojector->out)
+                 && !msProjIsGeographicCRS(reprojector->in);
 
   if( be_careful ) {
     pointObj  startPoint, thisPoint; /* locations in projected space */
@@ -595,12 +1177,12 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
       ** Read comments before msTestNeedWrap() to better understand
       ** this dateline wrapping logic.
       */
-      msProjectPoint(in, out, &(line->point[i]));
+      msProjectPointEx(reprojector, &(line->point[i]));
       if( i > 0 ) {
         dist = line->point[i].x - line->point[0].x;
         if( fabs(dist) > 180.0 ) {
           if( msTestNeedWrap( thisPoint, startPoint,
-                              line->point[0], in, out ) ) {
+                              line->point[0], reprojector->in, reprojector->out ) ) {
             if( dist > 0.0 ) {
               line->point[i].x -= 360.0;
             } else if( dist < 0.0 ) {
@@ -613,7 +1195,7 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
     }
   } else {
     for(i=0; i<line->numpoints; i++) {
-      if( msProjectPoint(in, out, &(line->point[i])) == MS_FAILURE )
+      if( msProjectPointEx(reprojector, &(line->point[i])) == MS_FAILURE )
         return MS_FAILURE;
     }
   }
@@ -631,7 +1213,8 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 
 #define NUMBER_OF_SAMPLE_POINTS 100
 
-int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
+static
+int msProjectRectGrid(reprojectionObj* reprojector, rectObj *rect)
 {
 #ifdef USE_PROJ
   pointObj prj_point;
@@ -660,7 +1243,7 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
   prj_point.m = 0.0;
 #endif /* USE_POINT_Z_M */
 
-  msProjectGrowRect(in,out,&prj_rect,&prj_point,
+  msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                     &failure);
 
   failure = 0;
@@ -672,7 +1255,7 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
 
       prj_point.x = x;
       prj_point.y = y;
-      msProjectGrowRect(in,out,&prj_rect,&prj_point,
+      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                         &failure);
     }
   }
@@ -708,7 +1291,7 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
 /************************************************************************/
 #ifdef notdef
 static int
-msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
+msProjectRectTraditionalEdge(reprojectionObj* reprojector,
                              rectObj *rect)
 {
 #ifdef USE_PROJ
@@ -738,7 +1321,7 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
   prj_point.m = 0.0;
 #endif /* USE_POINT_Z_M */
 
-  msProjectGrowRect(in,out,&prj_rect,&prj_point,
+  msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                     &failure);
 
   /* sample along top and bottom */
@@ -748,12 +1331,12 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
 
       prj_point.x = x;
       prj_point.y = rect->miny;
-      msProjectGrowRect(in,out,&prj_rect,&prj_point,
+      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                         &failure);
 
       prj_point.x = x;
       prj_point.y = rect->maxy;
-      msProjectGrowRect(in,out,&prj_rect,,&prj_point,
+      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                         &failure);
     }
   }
@@ -765,12 +1348,12 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
 
       prj_point.y = y;
       prj_point.x = rect->minx;
-      msProjectGrowRect(in,out,&prj_rect,&prj_point,
+      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                         &failure);
 
       prj_point.x = rect->maxx;
       prj_point.y = y;
-      msProjectGrowRect(in,out,&prj_rect,&prj_point,
+      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                         &failure);
     }
   }
@@ -780,7 +1363,7 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
   ** try and fill in the interior to get a close bounds.
   */
   if( failure > 0 )
-    return msProjectRectGrid( in, out, rect );
+    return msProjectRectGrid( reprojector, rect );
 
   rect->minx = prj_rect.minx;
   rect->miny = prj_rect.miny;
@@ -803,8 +1386,7 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
 /************************************************************************/
 
 static int
-msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
-                       rectObj *rect)
+msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect)
 {
 #ifdef USE_PROJ
   shapeObj polygonObj;
@@ -818,13 +1400,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /* If projecting from longlat to projected */
   /* This hack was introduced for WFS 2.0 compliance testing, but is far */
   /* from being perfect */
-  if( out && !pj_is_latlong(out->proj) && in && pj_is_latlong(in->proj) &&
+  if( reprojector->out && !msProjIsGeographicCRS(reprojector->out) &&
+      reprojector->in && msProjIsGeographicCRS(reprojector->in) &&
       fabs(rect->minx - -180.0) < 1e-5 && fabs(rect->miny - -90.0) < 1e-5 &&
       fabs(rect->maxx - 180.0) < 1e-5 && fabs(rect->maxy - 90.0) < 1e-5) {
     pointObj pointTest;
     pointTest.x = -180;
     pointTest.y = 85;
-    msProjectPoint(in, out, &pointTest);
+    msProjectPointEx(reprojector, &pointTest);
     /* Detect if we are reprojecting from EPSG:4326 to EPSG:3857 */
     /* and if so use more plausible bounds to avoid issues with computed */
     /* resolution for WCS */
@@ -857,7 +1440,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     msDebug( "msProjectRect(): Warning: degenerate rect {%f,%f,%f,%f}\n",rect->minx,rect->miny,rect->minx,rect->miny );
     foo.x = rect->minx;
     foo.y = rect->miny;
-    msProjectPoint(in,out,&foo);
+    msProjectPointEx(reprojector,&foo);
     rect->minx=rect->maxx=foo.x;
     rect->miny=rect->maxy=foo.y;
     return MS_SUCCESS;
@@ -927,12 +1510,12 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /* -------------------------------------------------------------------- */
   /*      Attempt to reproject.                                           */
   /* -------------------------------------------------------------------- */
-  msProjectShapeLine( in, out, &polygonObj, 0 );
+  msProjectShapeLine( reprojector, &polygonObj, 0 );
 
   /* If no points reprojected, try a grid sampling */
   if( polygonObj.numlines == 0 || polygonObj.line[0].numpoints == 0 ) {
     msFreeShape( &polygonObj );
-    return msProjectRectGrid( in, out, rect );
+    return msProjectRectGrid( reprojector, rect );
   }
 
 #ifdef notdef
@@ -966,8 +1549,10 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /*      region greater than 360 degrees wide due to various wrapping    */
   /*      logic.                                                          */
   /* -------------------------------------------------------------------- */
-  if( out && pj_is_latlong(out->proj) && in && !pj_is_latlong(in->proj)
-      && rect->maxx - rect->minx > 360.0 && !out->gt.need_geotransform ) {
+  if( reprojector->out && msProjIsGeographicCRS(reprojector->out) &&
+      reprojector->in && !msProjIsGeographicCRS(reprojector->in)
+      && rect->maxx - rect->minx > 360.0 &&
+      !reprojector->out->gt.need_geotransform ) {
     rect->maxx = 180;
     rect->minx = -180;
   }
@@ -989,7 +1574,7 @@ int msProjectHasLonWrap(projectionObj *in, double* pdfLonWrap)
     if( pdfLonWrap )
         *pdfLonWrap = 0;
 #if USE_PROJ
-    if( !pj_is_latlong(in->proj) )
+    if( !msProjIsGeographicCRS(in) )
         return MS_FALSE;
 #endif
     for( i = 0; i < in->numargs; i++ )
@@ -1020,35 +1605,41 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   int bFreeOutOver = MS_FALSE;
   projectionObj in_over,out_over,*inp,*outp;
   double dfLonWrap = 0.0;
+  reprojectionObj* reprojector = NULL;
 
 #if USE_PROJ
   /* Detect projecting from north polar stereographic to longlat */
   if( in && !in->gt.need_geotransform &&
       out && !out->gt.need_geotransform &&
-      !pj_is_latlong(in->proj) && pj_is_latlong(out->proj) )
+      !msProjIsGeographicCRS(in) && msProjIsGeographicCRS(out) )
   {
       pointObj p;
       p.x = 0.0;
       p.y = 0.0;
-      if( msProjectPoint(in, out, &p) == MS_SUCCESS &&
+      reprojector = msProjectCreateReprojector(in, out);
+      if( reprojector &&
+          msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
           fabs(p.y - 90) < 1e-8 )
       {
         /* Is the pole in the rectangle ? */
         if( 0 >= rect->minx && 0 >= rect->miny &&
             0 <= rect->maxx && 0 <= rect->maxy )
         {
-            if( msProjectRectAsPolygon(in, out, rect ) == MS_SUCCESS )
+            if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
             {
                 rect->minx = -180.0;
                 rect->maxx = 180.0;
                 rect->maxy = 90.0;
+                msProjectDestroyReprojector(reprojector);
                 return MS_SUCCESS;
             }
         }
         /* Are we sure the dateline is not enclosed ? */
         else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
         {
-            return msProjectRectAsPolygon(in, out, rect );
+            ret = msProjectRectAsPolygon(reprojector, rect );
+            msProjectDestroyReprojector(reprojector);
+            return ret;
         }
       }
   }
@@ -1077,6 +1668,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       msInitProjection(&out_over);
       msCopyProjectionExtended(&out_over,out,&over,1);
       outp = &out_over;
+      if( reprojector ) {
+          msProjectDestroyReprojector(reprojector);
+          reprojector = NULL;
+      }
     } else {
       outp = out;
     }
@@ -1085,11 +1680,20 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
       inp = &in_over;
+      if( reprojector ) {
+          msProjectDestroyReprojector(reprojector);
+          reprojector = NULL;
+      }
     } else {
       inp = in;
     }
   }
-  ret = msProjectRectAsPolygon(inp,outp, rect );
+  if( reprojector == NULL )
+  {
+     reprojector = msProjectCreateReprojector(inp, outp);
+  }
+  ret = reprojector ? msProjectRectAsPolygon(reprojector, rect ) : MS_FAILURE;
+  msProjectDestroyReprojector(reprojector);
   if(bFreeInOver)
     msFreeProjection(&in_over);
   if(bFreeOutOver)
@@ -1113,7 +1717,11 @@ static int msProjectSortString(const void* firstelt, const void* secondelt)
 static projectionObj* msGetProjectNormalized( const projectionObj* p )
 {
   int i;
+#if PROJ_VERSION_MAJOR >= 6
+  const char* pszNewProj4Def;
+#else
   char* pszNewProj4Def;
+#endif
   projectionObj* pnew;
 
   pnew = (projectionObj*)msSmallMalloc(sizeof(projectionObj));
@@ -1124,7 +1732,11 @@ static projectionObj* msGetProjectNormalized( const projectionObj* p )
       return pnew;
 
   /* Normalize definition so that msProjectDiffers() works better */
+#if PROJ_VERSION_MAJOR >= 6
+  pszNewProj4Def = proj_as_proj_string(p->proj_ctx, p->proj, PJ_PROJ_4, NULL);
+#else
   pszNewProj4Def = pj_get_def( p->proj, 0 );
+#endif
   msFreeCharArray(pnew->args, pnew->numargs);
   pnew->args = msStringSplit(pszNewProj4Def,'+', &pnew->numargs);
   for(i = 0; i < pnew->numargs; i++)
@@ -1159,8 +1771,10 @@ static projectionObj* msGetProjectNormalized( const projectionObj* p )
           fprintf(stderr, "'%s' ", p->args[i]);
       fprintf(stderr, "\n");
   }*/
+#if PROJ_VERSION_MAJOR < 6
   pj_dalloc(pszNewProj4Def);
-  
+#endif
+
   return pnew;
 }
 #endif /* USE_PROJ */
@@ -1343,7 +1957,8 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 /*                            msProjFinder()                            */
 /************************************************************************/
 #ifdef USE_PROJ
-static char *ms_proj_lib = NULL;
+
+#if PROJ_VERSION_MAJOR < 6
 static char *last_filename = NULL;
 
 static const char *msProjFinder( const char *filename)
@@ -1363,6 +1978,8 @@ static const char *msProjFinder( const char *filename)
 
   return last_filename;
 }
+#endif
+
 #endif /* def USE_PROJ */
 
 /************************************************************************/
@@ -1384,7 +2001,6 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
 {
 #ifdef USE_PROJ
-  static int finder_installed = 0;
   char *extended_path = NULL;
 
   /* Handle relative path if applicable */
@@ -1408,10 +2024,16 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
 
   msAcquireLock( TLOCK_PROJ );
-
-  if( finder_installed == 0 && proj_lib != NULL) {
-    finder_installed = 1;
-    pj_set_finder( msProjFinder );
+#if PROJ_VERSION_MAJOR >= 6
+  free( ms_proj_lib );
+  ms_proj_lib = proj_lib ? msStrdup(proj_lib) : NULL;
+#else
+  {
+    static int finder_installed = 0;
+    if( finder_installed == 0 && proj_lib != NULL) {
+      finder_installed = 1;
+      pj_set_finder( msProjFinder );
+    }
   }
 
   if (proj_lib == NULL) pj_set_finder(NULL);
@@ -1428,7 +2050,7 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
   if( proj_lib != NULL )
     ms_proj_lib = msStrdup( proj_lib );
-
+#endif
   msReleaseLock( TLOCK_PROJ );
 
   if ( extended_path )
@@ -1587,3 +2209,33 @@ void msAxisDenormalizePoints( projectionObj *proj, int count,
   /* For how this is essentially identical to normalizing */
   msAxisNormalizePoints( proj, count, x, y );
 }
+
+/************************************************************************/
+/*                        msProjIsGeographicCRS()                       */
+/*                                                                      */
+/*      Returns whether a CRS is a geographic one.                      */
+/************************************************************************/
+
+#ifdef USE_PROJ
+int msProjIsGeographicCRS(projectionObj* proj)
+{
+#if PROJ_VERSION_MAJOR >= 6
+    PJ_TYPE type;
+    if( !proj->proj )
+        return FALSE;
+    type = proj_get_type(proj->proj);
+    if( type == PJ_TYPE_GEOGRAPHIC_2D_CRS || type == PJ_TYPE_GEOGRAPHIC_3D_CRS )
+        return TRUE;
+    if( type == PJ_TYPE_BOUND_CRS )
+    {
+        PJ* base_crs = proj_get_source_crs(proj->proj_ctx, proj->proj);
+        type = proj_get_type(base_crs);
+        proj_destroy(base_crs);
+        return type == PJ_TYPE_GEOGRAPHIC_2D_CRS || type == PJ_TYPE_GEOGRAPHIC_3D_CRS;
+    }
+    return FALSE;
+#else
+    return pj_is_latlong(proj->proj);
+#endif
+}
+#endif

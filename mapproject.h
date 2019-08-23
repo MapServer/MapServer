@@ -37,13 +37,17 @@
 extern "C" {
 #endif
 
-/* workaround to allow compiling against Proj 6.x (#5766) */
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
-
 #ifdef USE_PROJ
+#if PROJ_VERSION_MAJOR >= 6
+#  include <proj.h>
+#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR == 0
+#error "PROJ 6.0 is not supported. Use PROJ 6.1 or later"
+#endif
+#else
 #  include <proj_api.h>
 #if PJ_VERSION >= 470 && PJ_VERSION < 480
    void pj_clear_initcache();
+#endif
 #endif
 #endif
 
@@ -64,9 +68,14 @@ extern "C" {
 #ifndef SWIG
     char **args; /* variable number of projection args */
 #ifdef USE_PROJ
+#if PROJ_VERSION_MAJOR >= 6
+    PJ* proj;
+    PJ_CONTEXT* proj_ctx;
+#else
     projPJ proj; /* a projection structure for the PROJ package */
 #if PJ_VERSION >= 480
     projCtx proj_ctx;
+#endif
 #endif
 #else
     void *proj;
@@ -78,10 +87,17 @@ extern "C" {
 
 #ifndef SWIG
 
+  typedef struct reprojectionObj reprojectionObj;
+  MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
+  MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj* reprojector);
+
   MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
-  MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
-  MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
-  MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
+  MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point); /* legacy interface */
+  MS_DLL_EXPORT int msProjectPointEx(reprojectionObj* reprojector, pointObj *point);
+  MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape); /* legacy interface */
+  MS_DLL_EXPORT int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape);
+  MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line); /* legacy interface */
+  MS_DLL_EXPORT int msProjectLineEx(reprojectionObj* reprojector, lineObj *line);
   MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
   MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
   MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
@@ -104,9 +120,12 @@ extern "C" {
   MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
   MS_DLL_EXPORT void msProjLibInitFromEnv();
 
-  /* Provides compatiblity with PROJ.4 4.4.2 */
-#ifndef PJ_VERSION
-#  define pj_is_latlong(x)  ((x)->is_latlong)
+#ifdef USE_PROJ
+  int msProjIsGeographicCRS(projectionObj* proj);
+#if PROJ_VERSION_MAJOR >= 6
+  int msProjectTransformPoints( reprojectionObj* reprojector,
+                                int npoints, double* x, double* y );
+#endif
 #endif
 
   /*utility functions */

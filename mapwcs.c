@@ -2788,14 +2788,14 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
   cm->llextent = cm->extent;
 
   /* Already in latlong .. use directly. */
-  if( layer->projection.proj != NULL && pj_is_latlong(layer->projection.proj)) {
+  if( layer->projection.proj != NULL && msProjIsGeographicCRS(&(layer->projection))) {
     /* no change */
   }
 
-  else if (layer->projection.numargs > 0 && !pj_is_latlong(layer->projection.proj)) /* check the layer projection */
+  else if (layer->projection.numargs > 0 && !msProjIsGeographicCRS(&(layer->projection))) /* check the layer projection */
     msProjectRect(&(layer->projection), NULL, &(cm->llextent));
 
-  else if (layer->map->projection.numargs > 0 && !pj_is_latlong(layer->map->projection.proj)) /* check the map projection */
+  else if (layer->map->projection.numargs > 0 && !msProjIsGeographicCRS(&(layer->map->projection))) /* check the map projection */
     msProjectRect(&(layer->map->projection), NULL, &(cm->llextent));
 
   else { /* projection was specified in the metadata only (EPSG:... only at the moment)  */

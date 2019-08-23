@@ -66,12 +66,20 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 int GetMapserverUnitUsingProj(projectionObj *psProj)
 {
 #ifdef USE_PROJ
+#if PROJ_VERSION_MAJOR >= 6
+  const char *proj_str;
+#else
   char *proj_str;
+#endif
 
-  if( pj_is_latlong( psProj->proj ) )
+  if( msProjIsGeographicCRS( psProj ) )
     return MS_DD;
 
+#if PROJ_VERSION_MAJOR >= 6
+  proj_str = proj_as_proj_string(psProj->proj_ctx, psProj->proj, PJ_PROJ_4, NULL);
+#else
   proj_str = pj_get_def( psProj->proj, 0 );
+#endif
 
   /* -------------------------------------------------------------------- */
   /*      Handle case of named units.                                     */
@@ -81,7 +89,9 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
     char *blank;
 
     strlcpy( units, (strstr(proj_str,"units=")+6), sizeof(units) );
+#if PROJ_VERSION_MAJOR < 6
     pj_dalloc( proj_str );
+#endif
 
     blank = strchr(units, ' ');
     if( blank != NULL )
@@ -100,7 +110,9 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 
     strlcpy(to_meter_str,(strstr(proj_str,"to_meter=")+9),
             sizeof(to_meter_str));
+#if PROJ_VERSION_MAJOR < 6
     pj_dalloc( proj_str );
+#endif
 
     blank = strchr(to_meter_str, ' ');
     if( blank != NULL )
@@ -124,7 +136,9 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
       return -1;
   }
 
+#if PROJ_VERSION_MAJOR < 6
   pj_dalloc( proj_str );
+#endif
 #endif
   return -1;
 }

@@ -2073,10 +2073,12 @@ void msCleanup()
 #endif
 
 #ifdef USE_PROJ
+#if PROJ_VERSION_MAJOR < 6
 #  if PJ_VERSION >= 480
   pj_clear_initcache();
 #  endif
   pj_deallocate_grids();
+#endif
   msSetPROJ_LIB( NULL, NULL );
 #endif
 #if defined(USE_CURL)

@@ -985,8 +985,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       /* the layer projection. */
       if( layer->connectiontype == MS_UVRASTER &&
           !layer->projection.gt.need_geotransform &&
-          !(pj_is_latlong(map->projection.proj) &&
-            pj_is_latlong(layer->projection.proj)) ) {
+          !(msProjIsGeographicCRS(&(map->projection)) &&
+            msProjIsGeographicCRS(&(layer->projection))) ) {
         rectObj layer_ori_extent;
 
         if( msLayerGetExtent(layer, &layer_ori_extent) == MS_SUCCESS ) {
