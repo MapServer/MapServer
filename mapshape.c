@@ -1930,6 +1930,9 @@ static const char* msTiledSHPLoadEntry(layerObj *layer, int i, char* tilename, s
     const char* filename;
     msTiledSHPLayerInfo *tSHP= layer->layerinfo;
 
+    msProjectDestroyReprojector(tSHP->reprojectorFromTileProjToLayerProj);
+    tSHP->reprojectorFromTileProjToLayerProj = NULL;
+
     msFreeProjection(&(tSHP->sTileProj));
     if( layer->tilesrs != NULL )
     {
@@ -1968,7 +1971,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     return MS_FAILURE;
 
   /* allocate space for a shapefileObj using layer->layerinfo  */
-  tSHP = (msTiledSHPLayerInfo *) malloc(sizeof(msTiledSHPLayerInfo));
+  tSHP = (msTiledSHPLayerInfo *) calloc(1, sizeof(msTiledSHPLayerInfo));
   MS_CHECK_ALLOC(tSHP, sizeof(msTiledSHPLayerInfo), MS_FAILURE);
   msInitProjection(&(tSHP->sTileProj));
 
@@ -2328,7 +2331,14 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 #ifdef USE_PROJ
     if( tSHP->sTileProj.numargs > 0 )
     {
-      msProjectShape( &(tSHP->sTileProj), &(layer->projection), shape);
+      if( tSHP->reprojectorFromTileProjToLayerProj == NULL )
+      {
+          tSHP->reprojectorFromTileProjToLayerProj = msProjectCreateReprojector(&(tSHP->sTileProj), &(layer->projection));
+      }
+      if( tSHP->reprojectorFromTileProjToLayerProj )
+      {
+        msProjectShapeEx( tSHP->reprojectorFromTileProjToLayerProj, shape);
+      }
     }
 #endif
 
@@ -2400,7 +2410,14 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 #ifdef USE_PROJ
   if( tSHP->sTileProj.numargs > 0 )
   {
-      msProjectShape( &(tSHP->sTileProj), &(layer->projection), shape);
+      if( tSHP->reprojectorFromTileProjToLayerProj == NULL )
+      {
+          tSHP->reprojectorFromTileProjToLayerProj = msProjectCreateReprojector(&(tSHP->sTileProj), &(layer->projection));
+      }
+      if( tSHP->reprojectorFromTileProjToLayerProj )
+      {
+        msProjectShapeEx( tSHP->reprojectorFromTileProjToLayerProj, shape);
+      }
   }
 #endif
 
@@ -2435,6 +2452,9 @@ void msTiledSHPClose(layerObj *layer)
       msShapefileClose(tSHP->tileshpfile);
       free(tSHP->tileshpfile);
     }
+
+    msProjectDestroyReprojector(tSHP->reprojectorFromTileProjToLayerProj);
+
     msFreeProjection(&(tSHP->sTileProj));
 
     free(tSHP);
