@@ -55,6 +55,9 @@ extern "C" {
 #define wkp_lonlat 1
 #define wkp_gmerc 2
 
+#ifndef SWIG
+  typedef struct projectionContext projectionContext;
+#endif
 
   typedef struct {
 #ifdef SWIG
@@ -70,7 +73,7 @@ extern "C" {
 #ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR >= 6
     PJ* proj;
-    PJ_CONTEXT* proj_ctx;
+    projectionContext* proj_ctx;
 #else
     projPJ proj; /* a projection structure for the PROJ package */
 #if PJ_VERSION >= 480
@@ -105,7 +108,9 @@ extern "C" {
   MS_DLL_EXPORT char *msProjectionObj2OGCWKT( projectionObj *proj );
 
   MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
+  MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
   MS_DLL_EXPORT int msInitProjection(projectionObj *p);
+  MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc);
   MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
   MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
   MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, const char *value);

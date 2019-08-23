@@ -2093,6 +2093,7 @@ void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext)
   if (srcproj->proj && !msProjIsGeographicCRS(srcproj)) {
     projectionObj wgs84;
     msInitProjection(&wgs84);
+    msProjectionInheritContextFrom(&wgs84, srcproj);
     msLoadProjectionString(&wgs84, "+proj=longlat +ellps=WGS84 +datum=WGS84");
     msProjectRect(srcproj, &wgs84, ext);
     msFreeProjection(&wgs84);
@@ -2211,6 +2212,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 
       /* reproject the extents for each SRS's bounding box */
       msInitProjection(&proj);
+      msProjectionInheritContextFrom(&proj, srcproj);
       if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0) {
         if (msProjectionsDiffer(srcproj, &proj) == MS_TRUE) {
           msProjectRect(srcproj, &proj, &ext);

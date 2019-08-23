@@ -1266,7 +1266,8 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
 #ifdef USE_PROJ
   assert(p);
-  msFreeProjection(p);
+
+  msFreeProjectionExceptContext(p);
 
   p->gt.need_geotransform = MS_FALSE;
 #ifdef USE_PROJ_FASTPATHS
@@ -1299,8 +1300,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
   p->gt.need_geotransform = MS_FALSE;
 
 #ifdef USE_PROJ
-  msFreeProjection(p);
-
+  msFreeProjectionExceptContext(p);
 
   /*
    * Handle new style definitions, the same as they would be given to
@@ -3570,6 +3570,12 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->units = MS_METERS;
   if(msInitProjection(&(layer->projection)) == -1) return(-1);
+
+  if( map )
+  {
+    msProjectionInheritContextFrom(&(layer->projection), &(map->projection));
+  }
+
   layer->project = MS_TRUE;
 
   initCluster(&layer->cluster);
@@ -5925,6 +5931,8 @@ int initMap(mapObj *map)
   map->latlon.args[0] = msStrdup("proj=latlong");
   map->latlon.args[1] = msStrdup("ellps=WGS84"); /* probably want a different ellipsoid */
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
+
+  msProjectionInheritContextFrom(&(map->projection), &(map->latlon));
 #endif
 
   map->templatepattern = map->datapattern = NULL;
