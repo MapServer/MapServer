@@ -1179,9 +1179,15 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
 
       if( layer->project ) {
-        status =
-          msProjectShape(&layer->projection, &layer->map->projection,
-                         &resultshape);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &layer->map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+            status = msProjectShapeEx(layer->reprojectorLayerToMap, &resultshape);
+        else
+            status = MS_FAILURE;
       }
 
       /*

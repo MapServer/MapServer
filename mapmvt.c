@@ -510,8 +510,17 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
       }
 
       if( layer->project ) {
-        status = msProjectShape(&layer->projection, &layer->map->projection, &shape);
-      }      if( status == MS_SUCCESS ) {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+            status = msProjectShapeEx(layer->reprojectorLayerToMap, &shape);
+        else
+            status = MS_FAILURE;
+      }
+      if( status == MS_SUCCESS ) {
         status = mvtWriteShape( layer, &shape, mvt_layer, item_list, &value_lookup_cache, &map->extent, buffer );
       }
 

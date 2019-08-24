@@ -1679,6 +1679,7 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
   /* TODO: need to handle circle annotation */
 }
 
+static
 int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *shape, int drawmode)
 {
   int l, c = shape->classindex, j, i, s;
@@ -1687,7 +1688,18 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
 
 #ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
-    msProjectShape(&layer->projection, &map->projection, shape);
+  {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+          layer->reprojectorLayerToMap = msProjectCreateReprojector(
+              &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+  }
 #endif
 
   // Only take into account map rotation if the label and style angles are
@@ -2015,7 +2027,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 #ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
-    msProjectShape(&layer->projection, &map->projection, shape);
+  {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+          layer->reprojectorLayerToMap = msProjectCreateReprojector(
+              &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+  }
 #endif
 
   /* check if we'll need the unclipped shape */

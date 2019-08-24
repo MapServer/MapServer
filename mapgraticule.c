@@ -702,8 +702,15 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     msCopyShape(&shapegrid, &tmpshape);
     /* status = msDrawShape(map, layer, &tmpshape, image, -1); */
 
-    if(layer->project)
-      msProjectShape(&layer->projection, &map->projection, &shapegrid);
+    if(layer->project) {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+        layer->reprojectorLayerToMap = msProjectCreateReprojector(
+            &layer->projection, &map->projection);
+      }
+      if( layer->reprojectorLayerToMap )
+        msProjectShapeEx(layer->reprojectorLayerToMap, &shapegrid);
+    }
 
     msClipPolylineRect(&shapegrid, cliprect);
 
@@ -1070,7 +1077,13 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
 #ifdef USE_PROJ
   if(pLayer->project)
   {
-    msProjectShape( &pLayer->projection, &pLayer->map->projection, pShape );
+    if( pLayer->reprojectorLayerToMap == NULL )
+    {
+        pLayer->reprojectorLayerToMap = msProjectCreateReprojector(
+            &pLayer->projection, &pLayer->map->projection);
+    }
+    if( pLayer->reprojectorLayerToMap )
+        msProjectShapeEx(pLayer->reprojectorLayerToMap, pShape );
 
     /* Poor man detection of reprojection failure */
     if( msProjIsGeographicCRS(&(pLayer->projection)) != 
@@ -1191,7 +1204,13 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
         }
     }
 
-    msProjectShape( &pLayer->map->projection, &pLayer->projection, pShape );
+    if( pLayer->reprojectorMapToLayer == NULL )
+    {
+        pLayer->reprojectorMapToLayer = msProjectCreateReprojector(
+            &pLayer->map->projection, &pLayer->projection);
+    }
+    if( pLayer->reprojectorMapToLayer )
+        msProjectShapeEx(pLayer->reprojectorMapToLayer, pShape );
   }
 #endif
 

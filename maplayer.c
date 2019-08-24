@@ -1589,6 +1589,7 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
   shapeObj shape, searchshape;
   int nShapeCount = 0;
   rectObj searchrect = rect;
+  reprojectionObj* reprojector = NULL;
 
   msInitShape(&searchshape);
   msRectToPolygon(searchrect, &searchshape);
@@ -1622,7 +1623,12 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
     {
 #ifdef USE_PROJ
       if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
-        msProjectShape(&(layer->projection), rectProjection, &shape);
+      {
+        if( reprojector == NULL )
+            reprojector = msProjectCreateReprojector(&(layer->projection), rectProjection);
+        if( reprojector )
+            msProjectShapeEx(reprojector, &shape);
+      }
       else
         layer->project = MS_FALSE;
 #endif
@@ -1656,6 +1662,7 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
   }
 
   msFreeShape(&searchshape);
+  msProjectDestroyReprojector(reprojector);
 
   return nShapeCount;
 }

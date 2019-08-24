@@ -3577,6 +3577,8 @@ int initLayer(layerObj *layer, mapObj *map)
   }
 
   layer->project = MS_TRUE;
+  layer->reprojectorLayerToMap = NULL;
+  layer->reprojectorMapToLayer = NULL;
 
   initCluster(&layer->cluster);
 
@@ -3720,6 +3722,8 @@ int freeLayer(layerObj *layer)
   msFree(layer->vtable);
   msFree(layer->classgroup);
 
+  msProjectDestroyReprojector(layer->reprojectorLayerToMap);
+  msProjectDestroyReprojector(layer->reprojectorMapToLayer);
   msFreeProjection(&(layer->projection));
   msFreeExpression(&layer->_geomtransform);
   

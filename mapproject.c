@@ -40,8 +40,7 @@
 static char *ms_proj_lib = NULL;
 
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
-                           projectionObj *src_proj,
-                           projectionObj *dst_proj );
+                           reprojectionObj* reprojector );
 
 #if defined(USE_PROJ) && PROJ_VERSION_MAJOR >= 6
 
@@ -964,7 +963,7 @@ static void msProjectGrowRect(reprojectionObj* reprojector,
 /*      reprojects and the other end does not.  Finds the horizon.      */
 /************************************************************************/
 #ifdef USE_PROJ
-static int msProjectSegment( projectionObj *in, projectionObj *out,
+static int msProjectSegment( reprojectionObj* reprojector,
                              pointObj *start, pointObj *end )
 
 {
@@ -976,12 +975,12 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
   /*      then re-call with the points reversed.                          */
   /* -------------------------------------------------------------------- */
   testPoint = *start;
-  if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE ) {
+  if( msProjectPointEx( reprojector, &testPoint ) == MS_FAILURE ) {
     testPoint = *end;
-    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE )
+    if( msProjectPointEx( reprojector, &testPoint ) == MS_FAILURE )
       return MS_FAILURE;
     else
-      return msProjectSegment( in, out, end, start );
+      return msProjectSegment( reprojector, end, start );
   }
 
   /* -------------------------------------------------------------------- */
@@ -1002,7 +1001,7 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
 
     testPoint = midPoint;
 
-    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE ) {
+    if( msProjectPointEx( reprojector, &testPoint ) == MS_FAILURE ) {
       if (midPoint.x == subEnd.x && midPoint.y == subEnd.y)
         return MS_FAILURE; /* break infinite loop */
 
@@ -1021,8 +1020,8 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
   /* -------------------------------------------------------------------- */
   *end = subStart;
 
-  if( msProjectPoint( in, out, end ) == MS_FAILURE
-      || msProjectPoint( in, out, start ) == MS_FAILURE )
+  if( msProjectPointEx( reprojector, end ) == MS_FAILURE
+      || msProjectPointEx( reprojector, start ) == MS_FAILURE )
     return MS_FAILURE;
   else
     return MS_SUCCESS;
@@ -1126,7 +1125,7 @@ msProjectShapeLine(reprojectionObj* reprojector,
       dist = wrkPoint.x - pt1Geo.x;
       if( fabs(dist) > 180.0
           && msTestNeedWrap( thisPoint, lastPoint,
-                             pt1Geo, in, out ) ) {
+                             pt1Geo, reprojector ) ) {
         if( dist > 0.0 )
           wrkPoint.x -= 360.0;
         else if( dist < 0.0 )
@@ -1150,7 +1149,7 @@ msProjectShapeLine(reprojectionObj* reprojector,
 
         startPoint = lastPoint;
         endPoint = thisPoint;
-        if( msProjectSegment( in, out, &startPoint, &endPoint )
+        if( msProjectSegment( reprojector, &startPoint, &endPoint )
             == MS_SUCCESS ) {
           line_out->point[line_out->numpoints++] = endPoint;
         }
@@ -1181,7 +1180,7 @@ msProjectShapeLine(reprojectionObj* reprojector,
 
         startPoint = lastPoint;
         endPoint = thisPoint;
-        if( msProjectSegment( in, out, &endPoint, &startPoint )
+        if( msProjectSegment( reprojector, &endPoint, &startPoint )
             == MS_SUCCESS ) {
           lineObj newLine;
 
@@ -1382,7 +1381,7 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
         dist = line->point[i].x - line->point[0].x;
         if( fabs(dist) > 180.0 ) {
           if( msTestNeedWrap( thisPoint, startPoint,
-                              line->point[0], reprojector->in, reprojector->out ) ) {
+                              line->point[0], reprojector ) ) {
             if( dist > 0.0 ) {
               line->point[i].x -= 360.0;
             } else if( dist < 0.0 ) {
@@ -2125,8 +2124,7 @@ reprojected to geographic space.  However, it does not:
 
 #ifdef USE_PROJ
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
-                           projectionObj *in,
-                           projectionObj *out )
+                           reprojectionObj* reprojector )
 
 {
   pointObj  middle;
@@ -2134,9 +2132,9 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
   middle.x = (pt1.x + pt2.x) * 0.5;
   middle.y = (pt1.y + pt2.y) * 0.5;
 
-  if( msProjectPoint( in, out, &pt1 ) == MS_FAILURE
-      || msProjectPoint( in, out, &pt2 ) == MS_FAILURE
-      || msProjectPoint( in, out, &middle ) == MS_FAILURE )
+  if( msProjectPointEx( reprojector, &pt1 ) == MS_FAILURE
+      || msProjectPointEx( reprojector, &pt2 ) == MS_FAILURE
+      || msProjectPointEx( reprojector, &middle ) == MS_FAILURE )
     return 0;
 
   /*

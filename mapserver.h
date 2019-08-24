@@ -1697,6 +1697,8 @@ typedef struct labelObj labelObj;
     int tileitemindex;
     projectionObj projection; /* projection information for the layer */
     int project; /* boolean variable, do we need to project this layer or not */
+    reprojectionObj* reprojectorLayerToMap;
+    reprojectionObj* reprojectorMapToLayer;
 #endif /* not SWIG */
 
     int units; /* units of the projection */
