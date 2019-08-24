@@ -52,12 +52,27 @@ struct reprojectionObj
     projectionObj* in;
     projectionObj* out;
     PJ* pj;
+    int bFreePJ;
 };
+
+/* Helps considerably for use cases like msautotest/wxs/wms_inspire.map */
+/* which involve a number of layers with same SRS, and a number of exposed */
+/* output SRS */
+#define PJ_CACHE_ENTRY_SIZE 32
+
+typedef struct
+{
+    char* inStr;
+    char* outStr;
+    PJ* pj;
+} pjCacheEntry;
 
 struct projectionContext
 {
     PJ_CONTEXT* proj_ctx;
     int ref_count;
+    pjCacheEntry pj_cache[PJ_CACHE_ENTRY_SIZE];
+    int pj_cache_size;
 };
 
 /************************************************************************/
@@ -82,19 +97,54 @@ static int msProjectHasLonWrapOrOver(projectionObj *in) {
 /*                         createNormalizedPJ()                         */
 /************************************************************************/
 
-/* Return to be freed with proj_destroy() */
-static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out)
+/* Return to be freed with proj_destroy() if *pbFreePJ = TRUE */
+static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFreePJ)
 {
+    const char* const wkt_options[] = { "MULTILINE=NO", NULL };
     const char* in_str = (in && msProjectHasLonWrapOrOver(in)) ?
         proj_as_proj_string(in->proj_ctx->proj_ctx, in->proj, PJ_PROJ_4, NULL) :
-        proj_as_wkt(in->proj_ctx->proj_ctx, in->proj, PJ_WKT2_2018, NULL);
+        proj_as_wkt(in->proj_ctx->proj_ctx, in->proj, PJ_WKT2_2018, wkt_options);
     const char* out_str = (out && msProjectHasLonWrapOrOver(out)) ?
         proj_as_proj_string(out->proj_ctx->proj_ctx, out->proj, PJ_PROJ_4, NULL) :
-        proj_as_wkt(out->proj_ctx->proj_ctx, out->proj, PJ_WKT2_2018, NULL);
+        proj_as_wkt(out->proj_ctx->proj_ctx, out->proj, PJ_WKT2_2018, wkt_options);
     PJ* pj_raw;
     PJ* pj_normalized;
     if( !in_str || !out_str )
         return NULL;
+
+    if( in->proj_ctx->proj_ctx == out->proj_ctx->proj_ctx )
+    {
+        int i;
+        pjCacheEntry* pj_cache = in->proj_ctx->pj_cache;
+        for( i = 0; i < in->proj_ctx->pj_cache_size; i++ )
+        {
+            if (strcmp(pj_cache[i].inStr, in_str) == 0 &&
+                strcmp(pj_cache[i].outStr, out_str) == 0 )
+            {
+                PJ* ret = pj_cache[i].pj;
+                if( i != 0 )
+                {
+                    /* Move entry to top */
+                    pjCacheEntry tmp;
+                    memcpy(&tmp, &pj_cache[i], sizeof(pjCacheEntry));
+                    memmove(&pj_cache[1], &pj_cache[0], i * sizeof(pjCacheEntry));
+                    memcpy(&pj_cache[0], &tmp, sizeof(pjCacheEntry));
+                }
+#ifdef notdef
+                fprintf(stderr, "cache hit!\n");
+#endif
+                *pbFreePJ = FALSE;
+                return ret;
+            }
+        }
+    }
+
+#ifdef notdef
+    fprintf(stderr, "%s -> %s\n", in_str, out_str);
+    fprintf(stderr, "%p -> %p\n", in->proj_ctx->proj_ctx, out->proj_ctx->proj_ctx);
+    fprintf(stderr, "cache miss!\n");
+#endif
+
     pj_raw = proj_create_crs_to_crs(in->proj_ctx->proj_ctx, in_str, out_str, NULL);
     if( !pj_raw )
         return NULL;
@@ -102,6 +152,38 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out)
     proj_destroy(pj_raw);
     if( !pj_normalized )
         return NULL;
+
+    if( in->proj_ctx->proj_ctx == out->proj_ctx->proj_ctx )
+    {
+        /* Insert entry into cache */
+        int i;
+        pjCacheEntry* pj_cache = in->proj_ctx->pj_cache;
+        if( in->proj_ctx->pj_cache_size < PJ_CACHE_ENTRY_SIZE )
+        {
+            i = in->proj_ctx->pj_cache_size;
+            assert ( pj_cache[i].inStr == NULL );
+            in->proj_ctx->pj_cache_size ++;
+        }
+        else
+        {
+            i = 0;
+            /* Evict oldest entry */
+            msFree(pj_cache[PJ_CACHE_ENTRY_SIZE - 1].inStr);
+            msFree(pj_cache[PJ_CACHE_ENTRY_SIZE - 1].outStr);
+            proj_destroy(pj_cache[PJ_CACHE_ENTRY_SIZE - 1].pj);
+            memmove(&pj_cache[1], &pj_cache[0],
+                    (PJ_CACHE_ENTRY_SIZE - 1) * sizeof(pjCacheEntry));
+        }
+        pj_cache[i].inStr = msStrdup(in_str);
+        pj_cache[i].outStr = msStrdup(out_str);
+        pj_cache[i].pj = pj_normalized;
+        *pbFreePJ = FALSE;
+    }
+    else
+    {
+        *pbFreePJ = TRUE;
+    }
+
     return pj_normalized;
 }
 
@@ -186,6 +268,13 @@ void msProjectionContextUnref(projectionContext* ctx)
     --ctx->ref_count;
     if( ctx->ref_count == 0 )
     {
+        int i;
+        for( i = 0; i < ctx->pj_cache_size; i++ )
+        {
+            msFree(ctx->pj_cache[i].inStr);
+            msFree(ctx->pj_cache[i].outStr);
+            proj_destroy(ctx->pj_cache[i].pj);
+        }
         proj_context_destroy(ctx->proj_ctx);
         msFree(ctx);
     }
@@ -214,7 +303,7 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     /*      output coordinate system, then we will use createNormalizedPJ   */
     /* -------------------------------------------------------------------- */
     else if( in && in->proj && out && out->proj ) {
-        PJ* pj = createNormalizedPJ(in, out);
+        PJ* pj = createNormalizedPJ(in, out, &(obj->bFreePJ));
         if( !pj )
         {
             msFree(obj);
@@ -249,7 +338,7 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
 
             in_modified.proj_ctx = out->proj_ctx;
             in_modified.proj = source_crs;
-            pj = createNormalizedPJ(&in_modified, out);
+            pj = createNormalizedPJ(&in_modified, out, &(obj->bFreePJ));
             proj_destroy(source_crs);
         } else if( /* (out==NULL || out->proj==NULL) && */ in && in->proj )  {
             PJ* target_crs = getBaseGeographicCRS(in);
@@ -258,7 +347,7 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
 
             out_modified.proj_ctx = in->proj_ctx;
             out_modified.proj = target_crs;
-            pj = createNormalizedPJ(in, &out_modified);
+            pj = createNormalizedPJ(in, &out_modified, &(obj->bFreePJ));
             proj_destroy(target_crs);
         }
         if( !pj )
@@ -280,7 +369,8 @@ void msProjectDestroyReprojector(reprojectionObj* reprojector)
 {
     if( !reprojector )
         return;
-    proj_destroy(reprojector->pj);
+    if( reprojector->bFreePJ )
+        proj_destroy(reprojector->pj);
     msFree(reprojector);
 }
 
