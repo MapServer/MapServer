@@ -232,6 +232,24 @@ static PJ* getBaseGeographicCRS(projectionObj* in)
 }
 
 /************************************************************************/
+/*                          msProjErrorLogger()                         */
+/************************************************************************/
+
+static void msProjErrorLogger(void * user_data,
+                             int level, const char * message)
+{
+    (void)user_data;
+    if( level == PJ_LOG_ERROR )
+    {
+        msDebug( "PROJ: Error: %s\n", message );
+    }
+    else if( level == PJ_LOG_DEBUG )
+    {
+        msDebug( "PROJ: Debug: %s\n", message );
+    }
+}
+
+/************************************************************************/
 /*                        msProjectionContextCreate()                   */
 /************************************************************************/
 
@@ -252,6 +270,7 @@ projectionContext* msProjectionContextCreate(void)
         const char* const paths[1] = { ms_proj_lib };
         proj_context_set_search_paths(ctx->proj_ctx, 1, paths);
     }
+    proj_log_func (ctx->proj_ctx, NULL, msProjErrorLogger);
     return ctx;
 }
 
