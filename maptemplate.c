@@ -1621,7 +1621,17 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         labelPos = shape->line[0].point[0];
         if(layer->transform == MS_TRUE) {
           if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-            msProjectShape(&layer->projection, &layer->map->projection, shape);
+          {
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                    &layer->projection, &layer->map->projection);
+            }
+            if( layer->reprojectorLayerToMap )
+            {
+                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+            }
+          }
 
           labelPos = shape->line[0].point[0];
           labelPos.x = MS_MAP2IMAGE_X(labelPos.x, layer->map->extent.minx, cellsize);
@@ -1632,7 +1642,18 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       labelposvalid = MS_FALSE;
       if(layer->transform == MS_TRUE) {
         if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-          msProjectShape(&layer->projection, &layer->map->projection, shape);
+        {
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                    &layer->projection, &layer->map->projection);
+            }
+            if( layer->reprojectorLayerToMap )
+            {
+                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+            }
+        }
+
         if(clip_to_map)
           msClipPolylineRect(shape, layer->map->extent);
 
@@ -1661,7 +1682,17 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       labelposvalid = MS_FALSE;
       if(layer->transform == MS_TRUE) {
         if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-          msProjectShape(&layer->projection, &layer->map->projection, shape);
+        {
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                    &layer->projection, &layer->map->projection);
+            }
+            if( layer->reprojectorLayerToMap )
+            {
+                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+            }
+        }
 
         if(clip_to_map)
           msClipPolygonRect(shape, layer->map->extent);
@@ -1749,7 +1780,17 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 
       /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-        msProjectShape(&layer->projection, &layer->map->projection, &tShape);
+      {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &layer->map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+        {
+            msProjectShapeEx(layer->reprojectorLayerToMap, &tShape);
+        }
+      }
 
       msClipPolylineRect(&tShape, layer->map->extent);
 
@@ -2125,7 +2166,17 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-        msProjectShape(&layer->projection, &layer->map->projection, &tShape);
+      {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &layer->map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+        {
+            msProjectShapeEx(layer->reprojectorLayerToMap, &tShape);
+        }
+      }
 
       switch(tShape.type) {
         case(MS_SHAPE_POINT):
