@@ -773,7 +773,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
 #ifdef USE_PROJ
     if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
-      msProjectShape(&lp->projection, &lp->projection, &sShape);
+      msProjectShape(&lp->projection, &map->projection, &sShape);
 #endif
     psNode = xmlNewChild(psNode, psNsGml, BAD_CAST "featureMember", NULL);
     /* xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml")); */
