@@ -966,7 +966,7 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
 {
 #ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]...
-  msFreeProjection( proj );
+  msFreeProjectionExceptContext( proj );
 
   if (hSRS == NULL || OSRIsLocal( hSRS ) ) {
     // Dataset had no set projection or is NonEarth (LOCAL_CS)...
@@ -1288,6 +1288,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   psInfo->nTileId = 0;
   msInitProjection(&(psInfo->sTileProj));
+  msProjectionInheritContextFrom(&(psInfo->sTileProj),&(layer->projection));
   psInfo->poCurTile = NULL;
   psInfo->rect_is_defined = false;
   psInfo->rect.minx = psInfo->rect.maxx = 0;

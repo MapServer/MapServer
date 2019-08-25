@@ -549,11 +549,12 @@ int KmlRenderer::checkProjection(mapObj *map)
     }
     strcpy(epsg_string, "epsg:4326" );
     msInitProjection(&out);
+    msProjectionInheritContextFrom(&out, projection);
     msLoadProjectionString(&out, epsg_string);
 
     sRect = map->extent;
     msProjectRect(projection, &out, &sRect);
-    msFreeProjection(projection);
+    msFreeProjectionExceptContext(projection);
     msLoadProjectionString(projection, epsg_string);
 
     /*change also units and extents*/
