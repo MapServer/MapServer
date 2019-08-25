@@ -1974,6 +1974,7 @@ int msTiledSHPOpenFile(layerObj *layer)
   tSHP = (msTiledSHPLayerInfo *) calloc(1, sizeof(msTiledSHPLayerInfo));
   MS_CHECK_ALLOC(tSHP, sizeof(msTiledSHPLayerInfo), MS_FAILURE);
   msInitProjection(&(tSHP->sTileProj));
+  msProjectionInheritContextFrom(&(tSHP->sTileProj), &layer->projection);
 
   tSHP->shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
   if (tSHP->shpfile == NULL) {

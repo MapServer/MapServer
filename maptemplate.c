@@ -1458,6 +1458,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     } else if(rectProj && projectionString) {
       projectionObj projection;
       msInitProjection(&projection);
+      msProjectionInheritContextFrom(&projection, &mapserv->map->projection);
 
       if(MS_SUCCESS != msLoadProjectionString(&projection, projectionString)) return MS_FAILURE;
 
@@ -1756,6 +1757,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     } else if(projectionString) {
       projectionObj projection;
       msInitProjection(&projection);
+      msProjectionInheritContextFrom(&projection, &layer->map->projection);
 
       status = msLoadProjectionString(&projection, projectionString);
       if(status != MS_SUCCESS) return MS_FAILURE;
@@ -2161,6 +2163,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     } else if(projectionString) {
       projectionObj projection;
       msInitProjection(&projection);
+      msProjectionInheritContextFrom(&projection, &(layer->projection));
 
       status = msLoadProjectionString(&projection, projectionString);
       if(status != MS_SUCCESS) return MS_FAILURE;

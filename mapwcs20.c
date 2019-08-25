@@ -4383,6 +4383,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /************************************************************************/
 
   msInitProjection(&imageProj);
+  msProjectionInheritContextFrom(&imageProj, &(layer->projection));
   if (msLoadProjectionString(&imageProj, cm.srs_epsg) == -1) {
     msFreeProjection(&imageProj);
     msWCSClearCoverageMetadata20(&cm);
@@ -4474,6 +4475,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
+    msProjectionInheritContextFrom(&subsetProj, &(layer->projection));
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
       msFreeProjection(&subsetProj);
       msFreeProjection(&imageProj);
@@ -4625,6 +4627,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     projectionObj outputProj;
 
     msInitProjection(&outputProj);
+    msProjectionInheritContextFrom(&outputProj, &(layer->projection));
     if(msLoadProjectionString(&outputProj, params->outputcrs) == -1) {
       msFreeProjection(&outputProj);
       msWCSClearCoverageMetadata20(&cm);

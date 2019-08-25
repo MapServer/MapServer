@@ -425,6 +425,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
   szEPSG = FLTGetBBOX(psNode, &sQueryRect);
   if(szEPSG && map->projection.numargs > 0) {
     msInitProjection(&sProjTmp);
+    msProjectionInheritContextFrom(&sProjTmp, &map->projection);
     /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
     if (msLoadProjectionString(&sProjTmp, szEPSG) == 0) {
       msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
@@ -768,6 +769,7 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
       if(pszEPSG && map->projection.numargs > 0) {
         projectionObj sProjTmp;
         msInitProjection(&sProjTmp);
+        msProjectionInheritContextFrom(&sProjTmp, &map->projection);
         /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
         if (msLoadProjectionString(&sProjTmp, pszEPSG) == 0) {
           rectObj oldRect = rect;
@@ -2923,11 +2925,15 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
 /*                        FLTNeedSRSSwapping                            */
 /************************************************************************/
 
-static int FLTNeedSRSSwapping( const char* pszSRS )
+static int FLTNeedSRSSwapping( mapObj *map, const char* pszSRS )
 {
     int bNeedSwapping = MS_FALSE;
     projectionObj sProjTmp;
     msInitProjection(&sProjTmp);
+    if( map )
+    {
+        msProjectionInheritContextFrom(&sProjTmp, &map->projection);
+    }
     if (msLoadProjectionStringEPSG(&sProjTmp, pszSRS) == 0) {
         bNeedSwapping = msIsAxisInvertedProj(&sProjTmp);
     }
@@ -2944,7 +2950,8 @@ static int FLTNeedSRSSwapping( const char* pszSRS )
 /*      caller will have to determine its value from a more general     */
 /*      context.                                                        */
 /************************************************************************/
-void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
+void FLTDoAxisSwappingIfNecessary(mapObj *map, 
+                                  FilterEncodingNode *psFilterNode,
                                   int bDefaultSRSNeedsAxisSwapping)
 {
     if( psFilterNode == NULL )
@@ -2955,7 +2962,7 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
     {
         rectObj* rect = (rectObj *)psFilterNode->psRightNode->pOther;
         const char* pszSRS = psFilterNode->pszSRS;
-        if( (pszSRS != NULL && FLTNeedSRSSwapping(pszSRS)) ||
+        if( (pszSRS != NULL && FLTNeedSRSSwapping(map, pszSRS)) ||
             (pszSRS == NULL && bDefaultSRSNeedsAxisSwapping) )
         {
             double tmp;
@@ -2974,7 +2981,7 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
     {
         shapeObj* shape = (shapeObj *)(psFilterNode->psRightNode->pOther);
         const char* pszSRS = psFilterNode->pszSRS;
-        if( (pszSRS != NULL && FLTNeedSRSSwapping(pszSRS)) ||
+        if( (pszSRS != NULL && FLTNeedSRSSwapping(map, pszSRS)) ||
             (pszSRS == NULL && bDefaultSRSNeedsAxisSwapping) )
         {
             msAxisSwapShape(shape);
@@ -2982,8 +2989,8 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
     }
     else
     {
-        FLTDoAxisSwappingIfNecessary(psFilterNode->psLeftNode, bDefaultSRSNeedsAxisSwapping);
-        FLTDoAxisSwappingIfNecessary(psFilterNode->psRightNode, bDefaultSRSNeedsAxisSwapping);
+        FLTDoAxisSwappingIfNecessary(map, psFilterNode->psLeftNode, bDefaultSRSNeedsAxisSwapping);
+        FLTDoAxisSwappingIfNecessary(map, psFilterNode->psRightNode, bDefaultSRSNeedsAxisSwapping);
     }
 }
 

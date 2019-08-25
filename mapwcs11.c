@@ -728,6 +728,7 @@ msWCSDescribeCoverage_CoverageDescription11(
     double resy = cm.geotransform[5];
 
     msInitProjection( &proj );
+    msProjectionInheritContextFrom(&proj, &(layer->projection));
     if( msLoadProjectionString( &proj, cm.srs_urn ) == 0 ) {
       msAxisNormalizePoints( &proj, 1, &x0, &y0 );
       msAxisNormalizePoints( &proj, 1, &resx, &resy );

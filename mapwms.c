@@ -405,7 +405,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
      * elements inside the filter(s)
      */
     if (version >= OWS_1_3_0)
-      FLTDoAxisSwappingIfNecessary(psNode, def_srs_needs_axis_swap);
+      FLTDoAxisSwappingIfNecessary(map, psNode, def_srs_needs_axis_swap);
 
 #ifdef do_we_need_this
     FLTProcessPropertyIsNull(psNode, map, lp->index);
@@ -1335,6 +1335,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     /*try to adjust the axes if necessary*/
     if (strlen(srsbuffer) > 1) {
       msInitProjection(&proj);
+      msProjectionInheritContextFrom(&proj, &(map->projection));
       if (msLoadProjectionStringEPSG(&proj, (char *)srsbuffer) == 0 &&
 	  (need_axis_swap = msIsAxisInvertedProj(&proj) ) ) {
         msAxisNormalizePoints( &proj, 1, &rect.minx, &rect.miny );
@@ -1610,6 +1611,7 @@ this request. Check wms/ows_enable_request settings.",
     }
 
     msInitProjection(&newProj);
+    msProjectionInheritContextFrom(&newProj, &map->projection);
     if (strlen(srsbuffer) > 1) {
       int nTmp;
 
@@ -1634,8 +1636,7 @@ this request. Check wms/ows_enable_request settings.",
   /* that the srs given as parameter is valid for all layers */
   if (strlen(srsbuffer) > 1) {
     int nTmp;
-    msFreeProjection(&map->projection);
-    msInitProjection(&map->projection);
+    msFreeProjectionExceptContext(&map->projection);
     if (nVersion >= OWS_1_3_0)
       nTmp = msLoadProjectionStringEPSG(&(map->projection), srsbuffer);
     else

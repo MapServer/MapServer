@@ -2122,6 +2122,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
 
             /* project MAP.EXTENT to this SRS */
             msInitProjection(&po);
+            msProjectionInheritContextFrom(&po, &map->projection);
 
             snprintf(srsbuffer, sizeof(srsbuffer), "+init=epsg:%.20s", sosparams->pszSrsName+strlen("EPSG:"));
 

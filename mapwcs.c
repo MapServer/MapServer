@@ -1770,6 +1770,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     projectionObj proj;
 
     msInitProjection( &proj );
+    msProjectionInheritContextFrom(&proj, &(map->projection));
     if( msLoadProjectionString( &proj, (char *) params->crs ) == 0 ) {
       msAxisNormalizePoints( &proj, 1,
                              &(params->bbox.minx),
@@ -1958,6 +1959,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     projectionObj tmp_proj;
 
     msInitProjection(&tmp_proj);
+    msProjectionInheritContextFrom(&tmp_proj, &(map->projection));
     if (msLoadProjectionString(&tmp_proj, (char *) params->crs) != 0) {
       msWCSFreeCoverageMetadata(&cm);
       return msWCSException( map, NULL, NULL, params->version);
@@ -2803,6 +2805,7 @@ int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     char projstring[32];
 
     msInitProjection(&proj); /* or bad things happen */
+    msProjectionInheritContextFrom(&proj, &(layer->map->projection));
 
     snprintf(projstring, sizeof(projstring), "init=epsg:%.20s", cm->srs_epsg+5);
     if (msLoadProjectionString(&proj, projstring) != 0) return MS_FAILURE;

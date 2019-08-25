@@ -130,7 +130,7 @@ MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerI
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
 #endif
 
-void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
+void FLTDoAxisSwappingIfNecessary(mapObj *map, FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
 
 void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
                                        mapObj *map, int i, const char *namespaces);

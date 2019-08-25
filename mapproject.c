@@ -495,6 +495,8 @@ void msFreeProjection(projectionObj *p)
 #endif
 #endif
 
+  p->gt.need_geotransform = MS_FALSE;
+  p->wellknownprojection = wkp_none;
   msFreeCharArray(p->args, p->numargs);
   p->args = NULL;
   p->numargs = 0;
