@@ -428,13 +428,22 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     obj->out = out;
 
     /* -------------------------------------------------------------------- */
-    /*      If the source and destination are simple and equal, then do     */
-    /*      nothing.                                                        */
+    /*      If the source and destination are equal, then do nothing.       */
     /* -------------------------------------------------------------------- */
-    if( in && in->numargs == 1 && out && out->numargs == 1
-        && strcmp(in->args[0],out->args[0]) == 0 ) {
+    if( in && out && in->numargs == out->numargs && in->numargs > 0
+        && strcmp(in->args[0],out->args[0]) == 0 )
+    {
+        int i;
         obj->no_op = MS_TRUE;
+        for( i = 1; i < in->numargs; i++ )
+        {
+            if( strcmp(in->args[i],out->args[i]) != 0 ) {
+                obj->no_op = MS_FALSE;
+                break;
+            }
+        }
     }
+
     /* -------------------------------------------------------------------- */
     /*      If we have a fully defined input coordinate system and          */
     /*      output coordinate system, then we will use pj_transform         */

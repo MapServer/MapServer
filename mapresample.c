@@ -691,6 +691,8 @@ void *msInitProjTransformer( projectionObj *psSrc,
                              double *padfDstGeoTransform )
 
 {
+  int backup_src_need_gt;
+  int backup_dst_need_gt;
   msProjTransformInfo *psPTInfo;
 
   psPTInfo = (msProjTransformInfo *) msSmallCalloc(1,sizeof(msProjTransformInfo));
@@ -699,9 +701,15 @@ void *msInitProjTransformer( projectionObj *psSrc,
   /*      We won't even use PROJ.4 if either coordinate system is         */
   /*      NULL.                                                           */
   /* -------------------------------------------------------------------- */
+  backup_src_need_gt = psSrc->gt.need_geotransform;
+  psSrc->gt.need_geotransform = 0;
+  backup_dst_need_gt = psDst->gt.need_geotransform;
+  psDst->gt.need_geotransform = 0;
   psPTInfo->bUseProj =
     (psSrc->proj != NULL && psDst->proj != NULL
      && msProjectionsDiffer( psSrc, psDst ) );
+  psSrc->gt.need_geotransform = backup_src_need_gt;
+  psDst->gt.need_geotransform = backup_dst_need_gt;
 
   /* -------------------------------------------------------------------- */
   /*      Record source image information.  We invert the source          */
