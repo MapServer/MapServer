@@ -161,11 +161,61 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     fprintf(stderr, "cache miss!\n");
 #endif
 
-    pj_raw = proj_create_crs_to_crs(in->proj_ctx->proj_ctx, in_str, out_str, NULL);
-    if( !pj_raw )
-        return NULL;
-    pj_normalized = proj_normalize_for_visualization(in->proj_ctx->proj_ctx, pj_raw);
-    proj_destroy(pj_raw);
+#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR < 2
+    if( strstr(in_str, "+proj=") && strstr(in_str, "+over") &&
+        strstr(out_str, "+proj=") && strstr(out_str, "+over") &&
+        strlen(in_str) < 400 && strlen(out_str) < 400 )
+    {
+        // Fixed per PROJ commit
+        // https://github.com/OSGeo/PROJ/commit/78302efb70eb4b49610cda6a60bf9ce39b82264f
+        // and
+        // https://github.com/OSGeo/PROJ/commit/ae70b26b9cbae85a38d5b26533ba06da0ea13940
+        // Fix for wcs_get_capabilities_tileindexmixedsrs_26711.xml and wcs_20_getcov_bands_name_new_reproject.dat
+        char szPipeline[1024];
+        strcpy(szPipeline, "+proj=pipeline");
+        if( msProjIsGeographicCRS(in) )
+        {
+            strcat(szPipeline, " +step +proj=unitconvert +xy_in=deg +xy_out=rad");
+        }
+        strcat(szPipeline, " +step +inv ");
+        strcat(szPipeline, in_str);
+        strcat(szPipeline, " +step ");
+        strcat(szPipeline, out_str);
+        if( msProjIsGeographicCRS(out) )
+        {
+            strcat(szPipeline, " +step +proj=unitconvert +xy_in=rad +xy_out=deg");
+        }
+        /* We do not want datum=NAD83 to imply a transformation with towgs84=0,0,0 */
+        {
+            char* ptr = szPipeline;
+            while(1)
+            {
+                ptr = strstr(ptr, " +datum=NAD83");
+                if( !ptr )
+                    break;
+                memcpy(ptr, " +ellps=GRS80", 13);
+            }
+        }
+
+        /* Remove +nadgrids=@null as it doesn't work if going outside of [-180,180] */
+        /* Fixed per https://github.com/OSGeo/PROJ/commit/10a30bb539be1afb25952b19af8bbe72e1b13b56 */
+        {
+            char* ptr = strstr(szPipeline, " +nadgrids=@null");
+            if( ptr )
+                memcpy(ptr, "                ", 16);
+        }
+
+        pj_normalized = proj_create(in->proj_ctx->proj_ctx, szPipeline);
+    }
+    else
+#endif
+    {
+        pj_raw = proj_create_crs_to_crs(in->proj_ctx->proj_ctx, in_str, out_str, NULL);
+        if( !pj_raw )
+            return NULL;
+        pj_normalized = proj_normalize_for_visualization(in->proj_ctx->proj_ctx, pj_raw);
+        proj_destroy(pj_raw);
+    }
     if( !pj_normalized )
         return NULL;
 
