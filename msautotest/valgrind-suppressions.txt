@@ -221,3 +221,12 @@
    fun:OS_LibInit
    ...
 }
+
+{
+   <MONGO>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:_mongoc_openssl_init
+   ...
+}
