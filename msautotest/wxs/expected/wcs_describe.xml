@@ -12,8 +12,8 @@
   <name>grey</name>
   <label>Test label</label>
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-      <gml:pos>-121.488743889689 0</gml:pos>
-      <gml:pos>-121.485160277178 0.00270582611334856</gml:pos>
+      <gml:pos>-121.48874388937 0</gml:pos>
+      <gml:pos>-121.48516027686 0.00270582611334944</gml:pos>
     </lonLatEnvelope>
   <keywords>
     <keyword>test</keyword>
@@ -22,8 +22,8 @@
     <domainSet>
       <spatialDomain>
         <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-121.488743889689 0</gml:pos>
-          <gml:pos>-121.485160277178 0.00270582611334856</gml:pos>
+          <gml:pos>-121.48874388937 0</gml:pos>
+          <gml:pos>-121.48516027686 0.00270582611334944</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:32611">
           <gml:pos>0 0</gml:pos>
