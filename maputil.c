@@ -2080,6 +2080,7 @@ void msCleanup()
   pj_deallocate_grids();
 #endif
   msSetPROJ_LIB( NULL, NULL );
+  msProjectionContextPoolCleanup();
 #endif
 #if defined(USE_CURL)
   msHTTPCleanup();

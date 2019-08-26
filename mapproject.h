@@ -55,9 +55,7 @@ extern "C" {
 #define wkp_lonlat 1
 #define wkp_gmerc 2
 
-#ifndef SWIG
-  typedef struct projectionContext projectionContext;
-#endif
+typedef struct projectionContext projectionContext;
 
   typedef struct {
 #ifdef SWIG
@@ -94,6 +92,10 @@ extern "C" {
   MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
   MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj* reprojector);
 
+  MS_DLL_EXPORT projectionContext* msProjectionContextGetFromPool(void);
+  MS_DLL_EXPORT void msProjectionContextReleaseToPool(projectionContext* ctx);
+  MS_DLL_EXPORT void msProjectionContextPoolCleanup(void);
+
   MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
   MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point); /* legacy interface */
   MS_DLL_EXPORT int msProjectPointEx(reprojectionObj* reprojector, pointObj *point);
@@ -111,6 +113,7 @@ extern "C" {
   MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
   MS_DLL_EXPORT int msInitProjection(projectionObj *p);
   MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc);
+  MS_DLL_EXPORT void msProjectionSetContext(projectionObj *p, projectionContext* ctx);
   MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
   MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
   MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, const char *value);

@@ -5848,6 +5848,7 @@ int msUpdateWebFromString(webObj *web, char *string, int url_string)
 ** This really belongs in mapobject.c, but currently it also depends on
 ** lots of other init methods in this file.
 */
+
 int initMap(mapObj *map)
 {
   int i=0;
@@ -5925,18 +5926,21 @@ int initMap(mapObj *map)
   initQueryMap(&map->querymap);
 
 #ifdef USE_PROJ
+  map->projContext = msProjectionContextGetFromPool();
+
   if(msInitProjection(&(map->projection)) == -1)
     return(-1);
   if(msInitProjection(&(map->latlon)) == -1)
     return(-1);
+
+  msProjectionSetContext(&(map->projection), map->projContext);
+  msProjectionSetContext(&(map->latlon), map->projContext);
 
   /* initialize a default "geographic" projection */
   map->latlon.numargs = 2;
   map->latlon.args[0] = msStrdup("proj=latlong");
   map->latlon.args[1] = msStrdup("ellps=WGS84"); /* probably want a different ellipsoid */
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
-
-  msProjectionInheritContextFrom(&(map->projection), &(map->latlon));
 #endif
 
   map->templatepattern = map->datapattern = NULL;
@@ -6314,7 +6318,7 @@ static int loadMapInternal(mapObj *map)
         if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(LATLON):
-        msFreeProjection(&map->latlon);
+        msFreeProjectionExceptContext(&map->latlon);
         if(loadProjection(&map->latlon) == -1) return MS_FAILURE;
         break;
       case(LAYER):
@@ -6486,7 +6490,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 /*
 ** Sets up file-based mapfile loading and calls loadMapInternal to do the work.
 */
-mapObj *msLoadMap(char *filename, char *new_mappath)
+mapObj *msLoadMap(const char *filename, const char *new_mappath)
 {
   mapObj *map;
   struct mstimeval starttime, endtime;

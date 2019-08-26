@@ -38,9 +38,25 @@
 
 #ifdef USE_PROJ
 static char *ms_proj_lib = NULL;
+#if PROJ_VERSION_MAJOR >= 6
+static unsigned ms_proj_lib_change_counter = 0;
+#endif
+
+typedef struct LinkedListOfProjContext LinkedListOfProjContext;
+struct LinkedListOfProjContext
+{
+    LinkedListOfProjContext* next;
+    projectionContext* context;
+};
+
+static LinkedListOfProjContext* headOfLinkedListOfProjContext = NULL;
 
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            reprojectionObj* reprojector );
+
+
+static projectionContext* msProjectionContextCreate(void);
+static void msProjectionContextUnref(projectionContext* ctx);
 
 #if defined(USE_PROJ) && PROJ_VERSION_MAJOR >= 6
 
@@ -69,6 +85,7 @@ typedef struct
 struct projectionContext
 {
     PJ_CONTEXT* proj_ctx;
+    unsigned ms_proj_lib_change_counter;
     int ref_count;
     pjCacheEntry pj_cache[PJ_CACHE_ENTRY_SIZE];
     int pj_cache_size;
@@ -253,7 +270,6 @@ static void msProjErrorLogger(void * user_data,
 /*                        msProjectionContextCreate()                   */
 /************************************************************************/
 
-static
 projectionContext* msProjectionContextCreate(void)
 {
     projectionContext* ctx = (projectionContext*)msSmallCalloc(1, sizeof(projectionContext));
@@ -265,11 +281,6 @@ projectionContext* msProjectionContextCreate(void)
     }
     ctx->ref_count = 1;
     proj_context_use_proj4_init_rules(ctx->proj_ctx, TRUE);
-    if( ms_proj_lib )
-    {
-        const char* const paths[1] = { ms_proj_lib };
-        proj_context_set_search_paths(ctx->proj_ctx, 1, paths);
-    }
     proj_log_func (ctx->proj_ctx, NULL, msProjErrorLogger);
     return ctx;
 }
@@ -278,7 +289,6 @@ projectionContext* msProjectionContextCreate(void)
 /*                        msProjectionContextUnref()                    */
 /************************************************************************/
 
-static
 void msProjectionContextUnref(projectionContext* ctx)
 {
     if( !ctx )
@@ -408,6 +418,24 @@ int msProjectTransformPoints( reprojectionObj* reprojector,
 }
 
 #else
+
+/************************************************************************/
+/*                        msProjectionContextCreate()                   */
+/************************************************************************/
+
+projectionContext* msProjectionContextCreate(void)
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                        msProjectionContextUnref()                    */
+/************************************************************************/
+
+void msProjectionContextUnref(projectionContext* ctx)
+{
+    (void)ctx;
+}
 
 struct reprojectionObj
 {
@@ -558,6 +586,25 @@ void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc)
     {
         pDst->proj_ctx = pSrc->proj_ctx;
         pDst->proj_ctx->ref_count ++;
+    }
+#else
+    /* do nothing */
+#endif
+}
+
+/************************************************************************/
+/*                      msProjectionSetContext()                        */
+/************************************************************************/
+
+void msProjectionSetContext(projectionObj *p, projectionContext* ctx)
+{
+#if !defined(USE_PROJ)
+    /* do nothing */
+#elif PROJ_VERSION_MAJOR >= 6
+    if( p->proj_ctx == NULL && ctx != NULL)
+    {
+        p->proj_ctx = ctx;
+        p->proj_ctx->ref_count ++;
     }
 #else
     /* do nothing */
@@ -727,6 +774,16 @@ int msProcessProjection(projectionObj *p)
     {
         return -1;
     }
+  }
+  if( p->proj_ctx->ms_proj_lib_change_counter != ms_proj_lib_change_counter )
+  {
+    msAcquireLock( TLOCK_PROJ );
+    p->proj_ctx->ms_proj_lib_change_counter = ms_proj_lib_change_counter;
+    {
+        const char* const paths[1] = { ms_proj_lib };
+        proj_context_set_search_paths(p->proj_ctx->proj_ctx, 1, ms_proj_lib ? paths : NULL);
+    }
+    msReleaseLock( TLOCK_PROJ );
   }
 #endif
 
@@ -2259,8 +2316,21 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
   msAcquireLock( TLOCK_PROJ );
 #if PROJ_VERSION_MAJOR >= 6
-  free( ms_proj_lib );
-  ms_proj_lib = proj_lib ? msStrdup(proj_lib) : NULL;
+  if( proj_lib == NULL && ms_proj_lib == NULL )
+  {
+     /* do nothing */
+  }
+  else if( proj_lib != NULL && ms_proj_lib != NULL &&
+           strcmp(proj_lib, ms_proj_lib) == 0 )
+  {
+    /* do nothing */
+  }
+  else
+  {
+    ms_proj_lib_change_counter++;
+    free( ms_proj_lib );
+    ms_proj_lib = proj_lib ? msStrdup(proj_lib) : NULL;
+  }
 #else
   {
     static int finder_installed = 0;
@@ -2589,3 +2659,75 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
   return -1;
 }
 
+/************************************************************************/
+/*                   msProjectionContextGetFromPool()                   */
+/*                                                                      */
+/*       Returns a projection context from the pool, or create a new    */
+/*       one if the pool is empty.                                      */
+/*       After use, it should normally be returned with                 */
+/*       msProjectionContextReleaseToPool()                             */
+/************************************************************************/
+
+projectionContext* msProjectionContextGetFromPool()
+{
+#ifdef USE_PROJ
+    projectionContext* context;
+    msAcquireLock( TLOCK_PROJ );
+
+    if( headOfLinkedListOfProjContext )
+    {
+        LinkedListOfProjContext* next = headOfLinkedListOfProjContext->next;
+        context = headOfLinkedListOfProjContext->context;
+        msFree(headOfLinkedListOfProjContext);
+        headOfLinkedListOfProjContext = next;
+    }
+    else
+    {
+        context = msProjectionContextCreate();
+    }
+
+    msReleaseLock( TLOCK_PROJ );
+    return context;
+#else
+    return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                  msProjectionContextReleaseToPool()                  */
+/************************************************************************/
+
+void msProjectionContextReleaseToPool(projectionContext* ctx)
+{
+#ifdef USE_PROJ
+    LinkedListOfProjContext* link =
+        (LinkedListOfProjContext*)msSmallMalloc(sizeof(LinkedListOfProjContext));
+    link->context = ctx;
+    msAcquireLock( TLOCK_PROJ );
+    link->next = headOfLinkedListOfProjContext;
+    headOfLinkedListOfProjContext = link;
+    msReleaseLock( TLOCK_PROJ );
+#endif
+}
+
+/************************************************************************/
+/*                   msProjectionContextPoolCleanup()                   */
+/************************************************************************/
+
+void msProjectionContextPoolCleanup()
+{
+#ifdef USE_PROJ
+    LinkedListOfProjContext* link;
+    msAcquireLock( TLOCK_PROJ );
+    link = headOfLinkedListOfProjContext;
+    while( link )
+    {
+        LinkedListOfProjContext* next = link->next;
+        msProjectionContextUnref(link->context);
+        msFree(link);
+        link = next;
+    }
+    headOfLinkedListOfProjContext = NULL;
+    msReleaseLock( TLOCK_PROJ );
+#endif
+}
