@@ -830,7 +830,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
 
   if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
     msTokenizeExpression(&layer->_geomtransform, layer->items, &(layer->numitems));
-  
+
   /* class level counts */
   for(i=0; i<layer->numclasses; i++) {
 
@@ -839,6 +839,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       nt += layer->class[i]->styles[j]->numbindings;
       if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
         nt += msCountChars(layer->class[i]->styles[j]->_geomtransform.string, '[');
+      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          nt += msCountChars(layer->class[i]->styles[j]->exprBindings[k].string, '[');
+        }
+      }
     }
 
     if(layer->class[i]->expression.type == MS_EXPRESSION)
@@ -851,6 +857,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
         nt += layer->class[i]->labels[l]->styles[j]->numbindings;
         if(layer->class[i]->labels[l]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
           nt += msCountChars(layer->class[i]->labels[l]->styles[j]->_geomtransform.string, '[');
+      }
+      for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {
+        if (layer->class[i]->labels[l]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          nt += msCountChars(layer->class[i]->labels[l]->exprBindings[k].string, '[');
+        }
       }
 
       if(layer->class[i]->labels[l]->expression.type == MS_EXPRESSION)
@@ -908,6 +920,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
         if(layer->class[i]->styles[j]->bindings[k].item) 
           layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->styles[j]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
       }
       if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
         msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
@@ -928,6 +946,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {
         if(layer->class[i]->labels[l]->bindings[k].item) 
           layer->class[i]->labels[l]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->bindings[k].item);
+        if (layer->class[i]->labels[l]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->labels[l]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
       }
 
        /* label expression */

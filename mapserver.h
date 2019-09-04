@@ -1025,6 +1025,8 @@ extern "C" {
 #ifndef SWIG
     attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
     int numbindings;
+    expressionObj exprBindings[MS_STYLE_BINDING_LENGTH];
+    int nexprbindings;
 #endif
   };
 
@@ -1129,6 +1131,8 @@ extern "C" {
 #ifndef SWIG
     attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
     int numbindings;
+    expressionObj exprBindings[MS_LABEL_BINDING_LENGTH];
+    int nexprbindings;
 #endif
 
     labelLeaderObj *leader;
@@ -2671,6 +2675,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
   MS_DLL_EXPORT char *msEvalTextExpression(expressionObj *expr, shapeObj *shape);
   MS_DLL_EXPORT char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape);
+  MS_DLL_EXPORT double msEvalDoubleExpression(expressionObj *expr, shapeObj *shape);
   MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
   MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
   MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);

@@ -1675,9 +1675,11 @@ void initLabel(labelObj *label)
   label->styles = NULL;
 
   label->numbindings = 0;
+  label->nexprbindings = 0;
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
     label->bindings[i].item = NULL;
     label->bindings[i].index = -1;
+    msInitExpression(&(label->exprBindings[i]));
   }
 
   msInitExpression(&(label->expression));
@@ -1718,8 +1720,10 @@ int freeLabel(labelObj *label)
   }
   msFree(label->styles);
 
-  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++)
+  for(i=0; i<MS_LABEL_BINDING_LENGTH; i++) {
     msFree(label->bindings[i].item);
+    msFreeExpression(&(label->exprBindings[i]));
+  }
 
   msFreeExpression(&(label->expression));
   msFreeExpression(&(label->text));
@@ -1963,8 +1967,12 @@ static int loadLabel(labelObj *label)
           label->bindings[MS_LABEL_BINDING_SIZE].item = NULL;
           label->numbindings--;
         }
+        if (label->exprBindings[MS_LABEL_BINDING_SIZE].string) {
+          msFreeExpression(&label->exprBindings[MS_LABEL_BINDING_SIZE]);
+          label->nexprbindings--;
+        }
 
-        if((symbol = getSymbol(7, MS_NUMBER,MS_BINDING,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1)
+        if((symbol = getSymbol(8, MS_EXPRESSION,MS_NUMBER,MS_BINDING,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1)
           return(-1);
 
         if(symbol == MS_NUMBER) {
@@ -1972,6 +1980,11 @@ static int loadLabel(labelObj *label)
         } else if(symbol == MS_BINDING) {
           label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
+        } else if (symbol == MS_EXPRESSION) {
+          msFree(label->exprBindings[MS_LABEL_BINDING_SIZE].string);
+          label->exprBindings[MS_LABEL_BINDING_SIZE].string = msStrdup(msyystring_buffer);
+          label->exprBindings[MS_LABEL_BINDING_SIZE].type = MS_EXPRESSION;
+          label->nexprbindings++;
         } else
           label->size = symbol;
         break;
@@ -2599,9 +2612,11 @@ int initStyle(styleObj *style)
   style->linejoinmaxsize = MS_CJC_DEFAULT_JOIN_MAXSIZE;
 
   style->numbindings = 0;
+  style->nexprbindings = 0;
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
     style->bindings[i].item = NULL;
     style->bindings[i].index = -1;
+    msInitExpression(&(style->exprBindings[i]));
   }
 
   return MS_SUCCESS;
@@ -2920,8 +2935,10 @@ int freeStyle(styleObj *style)
   msFreeExpression(&style->_geomtransform);
   msFree(style->rangeitem);
 
-  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
+  for(i=0; i<MS_STYLE_BINDING_LENGTH; i++) {
     msFree(style->bindings[i].item);
+    msFreeExpression(&(style->exprBindings[i]));
+  }
 
   return MS_SUCCESS;
 }
