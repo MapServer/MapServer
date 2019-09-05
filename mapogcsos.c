@@ -1924,10 +1924,8 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             /* HACK END */
 
             pszBuffer = NULL;
-            if (&lp->filter) {
-              if (lp->filter.string && strlen(lp->filter.string) > 0)
-                msFreeExpression(&lp->filter);
-            }
+            if (lp->filter.string && strlen(lp->filter.string) > 0)
+              msFreeExpression(&lp->filter);
 
             /*The filter should reflect the underlying db*/
             /*for ogr add a where clause */

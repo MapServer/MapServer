@@ -1319,16 +1319,14 @@ makeTimeFilter(layerObj *lp,
       msFreeExpression(&lp->filter);
     */
 
-    if (&lp->filter) {
-      /* if the filter is set and it's a sting type, concatenate it with
-         the time. If not just free it */
-      if (lp->filter.string && lp->filter.type == MS_STRING) {
-        pszBuffer = msStringConcatenate(pszBuffer, "((");
-        pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-        pszBuffer = msStringConcatenate(pszBuffer, ") and ");
-      } else {
-        msFreeExpression(&lp->filter);
-      }
+    /* if the filter is set and it's a sting type, concatenate it with
+       the time. If not just free it */
+     if (lp->filter.string && lp->filter.type == MS_STRING) {
+      pszBuffer = msStringConcatenate(pszBuffer, "((");
+      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+    } else {
+      msFreeExpression(&lp->filter);
     }
 
     pszBuffer = msStringConcatenate(pszBuffer, "(");
@@ -1359,7 +1357,7 @@ makeTimeFilter(layerObj *lp,
     pszBuffer = msStringConcatenate(pszBuffer, ")");
 
     /* if there was a filter, It was concatenate with an And ans should be closed*/
-    if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
+    if(lp->filter.string && lp->filter.type == MS_STRING) {
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     }
 
@@ -1377,7 +1375,7 @@ makeTimeFilter(layerObj *lp,
     return MS_FALSE;
   }
 
-  if (&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
+  if (lp->filter.string && lp->filter.type == MS_STRING) {
     pszBuffer = msStringConcatenate(pszBuffer, "((");
     pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
     pszBuffer = msStringConcatenate(pszBuffer, ") and ");
@@ -1502,7 +1500,7 @@ makeTimeFilter(layerObj *lp,
 
   /* load the string to the filter */
   if (pszBuffer && strlen(pszBuffer) > 0) {
-    if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING)
+    if(lp->filter.string && lp->filter.type == MS_STRING)
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     /*
     if(lp->filteritem)

@@ -4363,7 +4363,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(getString(&layer->encoding) == MS_FAILURE) return(-1);
         break;
       case(END):
-        if(layer->type == -1) {
+        if((int)layer->type == -1) {
           msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");
           return(-1);
         }
@@ -4382,7 +4382,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       }
       case(FEATURE):
-        if(layer->type == -1) {
+        if((int)layer->type == -1) {
           msSetError(MS_MISCERR, "Layer type must be set before defining inline features.", "loadLayer()");
           return(-1);
         }
@@ -6611,7 +6611,7 @@ static int loadMapInternal(mapObj *map)
         if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(UNITS):
-        if((map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) return MS_FAILURE;
+        if((int)(map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) return MS_FAILURE;
         break;
       case(WEB):
         if(loadWeb(&(map->web), map) == -1) return MS_FAILURE;
@@ -7030,7 +7030,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyystring = string;
           msyylex();
 
-          if((map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) break;
+          if((int)(map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) break;
           break;
         case(WEB):
           return msUpdateWebFromString(&(map->web), string, MS_TRUE);

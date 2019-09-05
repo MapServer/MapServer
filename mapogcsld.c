@@ -4133,8 +4133,8 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
       snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace );
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-      sprintf(szHexColor,"%02hhx%02hhx%02hhx",nColorRed,
-              nColorGreen, nColorBlue);
+      sprintf(szHexColor,"%02hhx%02hhx%02hhx",(unsigned char)nColorRed,
+              (unsigned char)nColorGreen, (unsigned char)nColorBlue);
 
       snprintf(szTmp, sizeof(szTmp),
                "<%s name=\"fill\">#%s</%s>\n",
