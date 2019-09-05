@@ -217,7 +217,6 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess );
   free( x );
   free( y );
-  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
@@ -450,7 +449,6 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess );
   free( x );
   free( y );
-  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
@@ -648,7 +646,6 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess2 );
   free( x2 );
   free( y2 );
-  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
@@ -1453,6 +1450,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
             if( layer->debug )
                 msDebug( "msResampleGDALToMap(): Request matching raster resolution and pixel boundaries. "
                          "No need to do resampling/reprojection.\n" );
+            msFree(mask_rb);
             return msDrawRasterLayerGDAL( map, layer, image, rb, hDS );
       }
 
@@ -1495,6 +1493,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
       || sSrcExtent.maxy <= sSrcExtent.miny ) {
     if( layer->debug )
       msDebug( "msResampleGDALToMap(): no overlap ... no result.\n" );
+    msFree(mask_rb);
     return 0;
   }
 
@@ -1635,18 +1634,22 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                             sDummyMap.outputformat, NULL, NULL,
                             map->resolution, map->defresolution, &(sDummyMap.imagecolor));
 
-  if (srcImage == NULL)
+  if (srcImage == NULL) {
+    msFree(mask_rb);
     return -1; /* msSetError() should have been called already */
+  }
 
   if( MS_RENDERER_PLUGIN( srcImage->format ) ) {
     psrc_rb = &src_rb;
     memset( psrc_rb, 0, sizeof(rasterBufferObj) );
     if( srcImage->format->vtable->supports_pixel_buffer ) {
       if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb ))) {
+        msFree(mask_rb);
         return -1;
       }
     } else {
       if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA))) {
+        msFree(mask_rb);
         return -1;
       }
     }
@@ -1674,6 +1677,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         msFreeRasterBuffer(psrc_rb);
 
       msFreeImage( srcImage );
+      msFree(mask_rb);
 
       return result;
     }
@@ -1694,6 +1698,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     if( MS_RENDERER_PLUGIN( srcImage->format ) && !srcImage->format->vtable->supports_pixel_buffer)
       msFreeRasterBuffer(psrc_rb);
     msFreeImage( srcImage );
+    msFree(mask_rb);
     return MS_PROJERR;
   }
 
@@ -1732,6 +1737,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      cleanup                                                         */
   /* -------------------------------------------------------------------- */
+  msFree(mask_rb);
   if( MS_RENDERER_PLUGIN( srcImage->format ) && !srcImage->format->vtable->supports_pixel_buffer)
     msFreeRasterBuffer(psrc_rb);
   msFreeImage( srcImage );

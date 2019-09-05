@@ -6529,6 +6529,7 @@ static int loadMapInternal(mapObj *map)
         if(getInteger(&(map->imagequality)) == -1) return MS_FAILURE;
         break;
       case(IMAGETYPE):
+        msFree(map->imagetype);
         map->imagetype = getToken();
         break;
       case(INTERLACE):
@@ -6896,6 +6897,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
           /* TODO: should validate or does msPostMapParseOutputFormatSetup() do enough? */
 
+          msFree(map->imagetype);
           map->imagetype = getToken();
           msPostMapParseOutputFormatSetup( map );
           break;
