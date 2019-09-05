@@ -293,6 +293,7 @@ int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
       
       tmpshp = p.result.shpval;
 
+      shape->type = tmpshp->type; /* could change as a result of the transformation (e.g. medial axis) */
       for (i= 0; i < shape->numlines; i++)
         free(shape->line[i].point);
       shape->numlines = 0;

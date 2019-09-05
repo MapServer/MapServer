@@ -49,7 +49,7 @@ int yyerror(parseObj *, const char *);
 %left AREA LENGTH COMMIFY ROUND
 %left UPPER LOWER INITCAP FIRSTCAP
 %left TOSTRING
-%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA JAVASCRIPT
+%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA MEDIALAXIS JAVASCRIPT
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -652,6 +652,26 @@ shape_exp: SHAPE
     s->scratch = MS_TRUE;
     $$ = s;
   }
+  | MEDIALAXIS '(' shape_exp ')' {
+    shapeObj *s;
+    s = msGEOSMedialAxis($3, 0.0);
+    if(!s) {
+      yyerror(p, "Executing medialaxis failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | MEDIALAXIS '(' shape_exp ',' math_exp ')' {
+  shapeObj *s;
+  s = msGEOSMedialAxis($3, $5);
+  if(!s) {
+    yyerror(p, "Executing medialaxis failed.");
+    return(-1);
+  }
+  s->scratch = MS_TRUE;
+  $$ = s;
+  }
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
     shapeObj *s;
     s = msGEOSDifference($3, $5);
@@ -938,6 +958,7 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
   case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
   case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;
+  case MS_TOKEN_FUNCTION_MEDIALAXIS: token = MEDIALAXIS; break;
   case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;
 
   default:
