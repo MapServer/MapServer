@@ -38,7 +38,8 @@
 /*      Create a gmd:name/gmd:CharacterString element pattern           */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, char *name, char *value) {
+static
+xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, const char *name, const char *value) {
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
 
@@ -61,7 +62,8 @@ xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, char *name, char *v
 /*      Create a gmd:name/gmd:URL element pattern                       */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, char *name, char *value) {
+static
+xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, const char *name, const char *value) {
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
 
@@ -83,13 +85,14 @@ xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, char *name, char *value) {
 /*               Create a gmd:onLine element pattern                    */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *service, char *format, char *desc, char *url_in) {
+static
+xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, const char *service, const char *format, const char *desc, const char *url_in) {
 
   int status;
   char *url = NULL;
   char buffer[32];
   char *epsg_str;
-  char *link_protocol;
+  const char *link_protocol = "unknown protocol";
 
   xmlNodePtr psNode = NULL;
   xmlNodePtr psORNode = NULL;
@@ -160,7 +163,8 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
 /*      Create a gmd:name/gmd:Integer element pattern                   */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetInteger(xmlNsPtr namespace, char *name, int value) {
+static
+xmlNodePtr _msMetadataGetInteger(xmlNsPtr namespace, const char *name, int value) {
   char buffer[8];
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
@@ -185,7 +189,8 @@ xmlNodePtr _msMetadataGetInteger(xmlNsPtr namespace, char *name, int value) {
 /*      Create a gmd:name/gmd:Decimal element pattern                   */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, char *name, double value) {
+static
+xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, const char *name, double value) {
   char buffer[32];
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
@@ -210,7 +215,8 @@ xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, char *name, double value) {
 /*      Create a gmd:name/gmd:* code list element pattern               */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, char *parent_element, char *name, char *value) {
+static
+xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, const char *parent_element, const char *name, const char *value) {
   char *codelist = NULL;
   xmlNodePtr psNode = NULL;
   xmlNodePtr psCodeNode = NULL;
@@ -233,7 +239,8 @@ xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, char *parent_element, char
 /*      Create a gmd:date or gmd:dateStamp element pattern              */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetDate(xmlNsPtr namespace, char *parent_element, char *date_type, char *value) {
+static
+xmlNodePtr _msMetadataGetDate(xmlNsPtr namespace, const char *parent_element, const char *date_type, const char *value) {
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
   xmlNodePtr psNode2 = NULL;

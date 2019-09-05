@@ -282,21 +282,22 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     int iBand;
 
     for( iBand = 0; iBand < nBands; iBand++ ) {
+      CPLErr eErr;
       GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, iBand+1 );
 
       if( format->imagemode == MS_IMAGEMODE_INT16 ) {
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+        eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                       image->img.raw_16bit + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Int16, 2, 0 );
 
       } else if( format->imagemode == MS_IMAGEMODE_FLOAT32 ) {
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+        eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                       image->img.raw_float + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Float32, 4, 0 );
       } else if( format->imagemode == MS_IMAGEMODE_BYTE ) {
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+        eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                       image->img.raw_byte + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Byte, 1, 0 );
@@ -323,13 +324,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
           msReleaseLock( TLOCK_GDAL );
           msSetError( MS_MISCERR, "Missing RGB or A buffer.\n",
                       "msSaveImageGDAL()" );
+          GDALClose(hMemDS);
           return MS_FAILURE;
         }
 
         pabyData = (GByte *)(pixptr + iLine*rb.data.rgba.row_step);
 
         if( rb.data.rgba.a == NULL || iBand == 3 ) {
-          GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+          eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                         pabyData, image->width, 1, GDT_Byte,
                         rb.data.rgba.pixel_step, 0 );
         } else { /* We need to un-pre-multiple RGB by alpha. */
@@ -352,10 +354,17 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
             }
           }
 
-          GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+          eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                         pabyUPM, image->width, 1, GDT_Byte, 1, 0 );
           free( pabyUPM );
         }
+      }
+      if( eErr != CE_None ) {
+          msReleaseLock( TLOCK_GDAL );
+          msSetError( MS_MISCERR, "GDALRasterIO() failed.\n",
+                      "msSaveImageGDAL()" );
+          GDALClose(hMemDS);
+          return MS_FAILURE;
       }
     }
   }

@@ -97,7 +97,7 @@ END
 #
 
 LAYER
-  DEBUG 3
+
   NAME towns
   DATA towns
   CONNECTIONTYPE OGR

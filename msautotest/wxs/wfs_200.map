@@ -323,7 +323,7 @@ END
 
 
 LAYER
-  DEBUG 3
+
   NAME province
   DATA province
   METADATA

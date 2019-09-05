@@ -148,7 +148,8 @@ char **msOGRRecursiveFileList( const char *path )
              CPLFormFilename( path, file_list[i], NULL ),
              sizeof(full_filename) );
 
-    VSIStatL( full_filename, &sStatBuf );
+    if( VSIStatL( full_filename, &sStatBuf ) != 0 )
+        continue;
 
     if( VSI_ISREG( sStatBuf.st_mode ) ) {
       result_list = CSLAddString( result_list, full_filename );
@@ -197,7 +198,8 @@ static void msOGRCleanupDS( const char *datasource_name )
              CPLFormFilename( path, file_list[i], NULL ),
              sizeof(full_filename) );
 
-    VSIStatL( full_filename, &sStatBuf );
+    if( VSIStatL( full_filename, &sStatBuf ) != 0 )
+      continue;
 
     if( VSI_ISREG( sStatBuf.st_mode ) ) {
       VSIUnlink( full_filename );

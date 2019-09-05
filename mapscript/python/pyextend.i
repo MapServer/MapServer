@@ -336,7 +336,6 @@ def fromstring(data, mappath=None):
         int imgsize;
         PyObject *noerr;
         int retval=MS_FAILURE;
-        rendererVTableObj *renderer = NULL;
 
         /* Return immediately if image driver is not GD */
         if ( !MS_RENDERER_PLUGIN(self->format) )

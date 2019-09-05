@@ -185,7 +185,7 @@ PHP_FUNCTION(ms_newLayerObj)
   layerObj *layer;
   int index;
   php_map_object *php_map;
-  php_layer_object *php_layer;
+  php_layer_object *php_layer = NULL;
   parent_object parent;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
