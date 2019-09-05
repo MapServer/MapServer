@@ -71,21 +71,21 @@ int msScaleInBounds(double scale, double minscale, double maxscale)
 /*
 ** Helper functions to convert from strings to other types or objects.
 */
-static int bindIntegerAttribute(int *attribute, char *value)
+static int bindIntegerAttribute(int *attribute, const char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
   *attribute = MS_NINT(atof(value)); /*use atof instead of atoi as a fix for bug 2394*/
   return MS_SUCCESS;
 }
 
-static int bindDoubleAttribute(double *attribute, char *value)
+static int bindDoubleAttribute(double *attribute, const char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
   *attribute = atof(value);
   return MS_SUCCESS;
 }
 
-static int bindColorAttribute(colorObj *attribute, char *value)
+static int bindColorAttribute(colorObj *attribute, const char *value)
 {
   int len;
 
@@ -223,15 +223,17 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
     }
     if (style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
     {
-      bindColorAttribute(&style->outlinecolor,
-          msEvalTextExpression(
-            &(style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR]), shape));
+      char* txt = msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR]), shape);
+      bindColorAttribute(&style->outlinecolor, txt);
+      msFree(txt);
     }
     if (style->exprBindings[MS_STYLE_BINDING_COLOR].type == MS_EXPRESSION)
     {
-      bindColorAttribute(&style->color,
-          msEvalTextExpression(
-            &(style->exprBindings[MS_STYLE_BINDING_COLOR]), shape));
+      char* txt = msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_COLOR]), shape);
+      bindColorAttribute(&style->color, txt);
+      msFree(txt);
     }
   }
   if(style->opacity < 100 || style->color.alpha != 255 ) {
@@ -342,15 +344,17 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
     }
     if (label->exprBindings[MS_LABEL_BINDING_COLOR].type == MS_EXPRESSION)
     {
-      bindColorAttribute(&label->color,
-          msEvalTextExpression(
-            &(label->exprBindings[MS_LABEL_BINDING_COLOR]), shape));
+      char* txt = msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_COLOR]), shape);
+      bindColorAttribute(&label->color, txt);
+      msFree(txt);
     }
     if (label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
     {
-      bindColorAttribute(&label->outlinecolor,
-          msEvalTextExpression(
-            &(label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR]), shape));
+      char* txt = msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR]), shape);
+      bindColorAttribute(&label->outlinecolor, txt);
+      msFree(txt);
     }
   }
 }
@@ -785,6 +789,7 @@ double msEvalDoubleExpression(expressionObj *expression, shapeObj *shape)
     value = 0.0;
   } else {
     value = atof(p.result.strval);
+    msFree(p.result.strval);
   }
   return value;
 }

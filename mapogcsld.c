@@ -1430,6 +1430,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
               exprBindings[binding].string);
           expressionString = msStringConcatenate(expressionString,
               operator);
+          msFree(exprBindings[binding].string);
           msInitExpression(&(exprBindings[binding]));
           status = msSLDParseOgcExpression(psRoot->psChild->psNext,
               psObj, binding, objtype);
@@ -1439,6 +1440,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
                 exprBindings[binding].string);
             expressionString = msStringConcatenate(expressionString,
                 ")");
+            msFree(exprBindings[binding].string);
             exprBindings[binding].string = expressionString;
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
