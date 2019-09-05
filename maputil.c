@@ -39,6 +39,10 @@
 #include "mapcopy.h"
 #include "mapows.h"
 
+#if defined(USE_OGR) || defined(USE_GDAL)
+#include "gdal.h"
+#endif
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
 # include <tchar.h>
@@ -1956,6 +1960,19 @@ void msCleanup()
 #ifdef USE_GDAL
   msGDALCleanup();
 #endif
+
+  /* Release both GDAL and OGR resources */
+#if defined(USE_OGR) || defined(USE_GDAL)
+  msAcquireLock( TLOCK_GDAL );
+#if GDAL_VERSION_MAJOR >= 3 || (GDAL_VERSION_MAJOR == 2 && GDAL_VERSION_MINOR == 4)
+  /* Cleanup some GDAL global resources in particular */
+  GDALDestroy();
+#else
+  GDALDestroyDriverManager();
+#endif
+  msReleaseLock( TLOCK_GDAL );
+#endif
+
 #ifdef USE_PROJ
 #  if PJ_VERSION >= 480
   pj_clear_initcache();
