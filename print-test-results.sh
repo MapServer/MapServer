@@ -39,11 +39,12 @@ for testcase in "${tests[@]}"; do
       echo "######################################"
       echo "# $testcase => $failedtest"
       echo "######################################"
+      if echo "$failedtest" | egrep -q "asan.txt"; then
+        cat "$failedtest"
       #for txt, gml and xml files, print a diff
-      if echo "$failedtest" | egrep -q "(txt|xml|gml|html|json)$"; then
+      elif echo "$failedtest" | egrep -q "(txt|xml|gml|html|json)$"; then
         $DIFF -u "../expected/$failedtest" "$failedtest"
-      fi
-      if echo "$failedtest" | egrep -q "(png|gif|tif)$"; then
+      elif echo "$failedtest" | egrep -q "(png|gif|tif)$"; then
         if echo "$failedtest" | egrep -v -q "\\.diff\\.png$"; then
            if [ -n "$COMPARE" ]; then
               $COMPARE ../expected/$failedtest $failedtest -compose Src $failedtest.diff.png
