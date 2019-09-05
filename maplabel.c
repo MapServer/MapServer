@@ -251,8 +251,11 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
     msPopulateTextSymbolForLabelAndString(ts,lbl,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
 
     if(annotext && *annotext && lbl->autominfeaturesize && featuresize > 0) {
-      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+        freeTextSymbol(ts);
+        free(ts);
         return MS_FAILURE;
+      }
       if(featuresize < (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
         /* feature is too big to be drawn, skip it */
         freeTextSymbol(ts);
