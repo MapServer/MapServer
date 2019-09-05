@@ -5522,7 +5522,6 @@ void msOGRCleanup( void )
   ACQUIRE_OGR_LOCK;
   if( bOGRDriversRegistered == MS_TRUE ) {
     CPLPopErrorHandler();
-    OGRCleanupAll();
     bOGRDriversRegistered = MS_FALSE;
   }
   RELEASE_OGR_LOCK;
