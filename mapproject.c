@@ -31,6 +31,7 @@
 #include "mapproject.h"
 #include "mapthread.h"
 #include <assert.h>
+#include <float.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "mapaxisorder.h"
@@ -189,21 +190,15 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 /************************************************************************/
 #ifdef USE_PROJ
 static void msProjectGrowRect(projectionObj *in, projectionObj *out,
-                              rectObj *prj_rect, int *rect_initialized,
+                              rectObj *prj_rect,
                               pointObj *prj_point, int *failure )
 
 {
   if( msProjectPoint(in, out, prj_point) == MS_SUCCESS ) {
-    if( *rect_initialized ) {
       prj_rect->miny = MS_MIN(prj_rect->miny, prj_point->y);
       prj_rect->maxy = MS_MAX(prj_rect->maxy, prj_point->y);
       prj_rect->minx = MS_MIN(prj_rect->minx, prj_point->x);
       prj_rect->maxx = MS_MAX(prj_rect->maxx, prj_point->x);
-    } else {
-      prj_rect->minx = prj_rect->maxx = prj_point->x;
-      prj_rect->miny = prj_rect->maxy = prj_point->y;
-      *rect_initialized = MS_TRUE;
-    }
   } else
     (*failure)++;
 }
@@ -641,11 +636,16 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
 #ifdef USE_PROJ
   pointObj prj_point;
   rectObj prj_rect;
-  int   rect_initialized = MS_FALSE, failure=0;
+  int     failure=0;
   int     ix, iy;
 
   double dx, dy;
   double x, y;
+
+  prj_rect.minx = DBL_MAX;
+  prj_rect.miny = DBL_MAX;
+  prj_rect.maxx = -DBL_MAX;
+  prj_rect.maxy = -DBL_MAX;
 
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
@@ -660,7 +660,7 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
   prj_point.m = 0.0;
 #endif /* USE_POINT_Z_M */
 
-  msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+  msProjectGrowRect(in,out,&prj_rect,&prj_point,
                     &failure);
 
   failure = 0;
@@ -672,20 +672,23 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
 
       prj_point.x = x;
       prj_point.y = y;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+      msProjectGrowRect(in,out,&prj_rect,&prj_point,
                         &failure);
     }
   }
 
-  if( !rect_initialized ) {
-    prj_rect.minx = 0;
-    prj_rect.maxx = 0;
-    prj_rect.miny = 0;
-    prj_rect.maxy = 0;
+  if( prj_rect.minx > prj_rect.maxx ) {
+    rect->minx = 0;
+    rect->maxx = 0;
+    rect->miny = 0;
+    rect->maxy = 0;
 
     msSetError(MS_PROJERR, "All points failed to reproject.", "msProjectRect()");
-  } else {
-    msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
+    return MS_FAILURE;
+  }
+
+  if( failure ) {
+      msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
   }
 
   rect->minx = prj_rect.minx;
@@ -693,10 +696,7 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
   rect->maxx = prj_rect.maxx;
   rect->maxy = prj_rect.maxy;
 
-  if( !rect_initialized )
-    return MS_FAILURE;
-  else
-    return(MS_SUCCESS);
+  return(MS_SUCCESS);
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
   return(MS_FAILURE);
@@ -714,11 +714,16 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
 #ifdef USE_PROJ
   pointObj prj_point;
   rectObj prj_rect;
-  int   rect_initialized = MS_FALSE, failure=0;
+  int     failure=0;
   int     ix, iy;
 
   double dx, dy;
   double x, y;
+
+  prj_rect.minx = DBL_MAX;
+  prj_rect.miny = DBL_MAX;
+  prj_rect.maxx = -DBL_MAX;
+  prj_rect.maxy = -DBL_MAX;
 
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
@@ -733,7 +738,7 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
   prj_point.m = 0.0;
 #endif /* USE_POINT_Z_M */
 
-  msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+  msProjectGrowRect(in,out,&prj_rect,&prj_point,
                     &failure);
 
   /* sample along top and bottom */
@@ -743,12 +748,12 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
 
       prj_point.x = x;
       prj_point.y = rect->miny;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+      msProjectGrowRect(in,out,&prj_rect,&prj_point,
                         &failure);
 
       prj_point.x = x;
       prj_point.y = rect->maxy;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+      msProjectGrowRect(in,out,&prj_rect,,&prj_point,
                         &failure);
     }
   }
@@ -760,12 +765,12 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
 
       prj_point.y = y;
       prj_point.x = rect->minx;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+      msProjectGrowRect(in,out,&prj_rect,&prj_point,
                         &failure);
 
       prj_point.x = rect->maxx;
       prj_point.y = y;
-      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+      msProjectGrowRect(in,out,&prj_rect,&prj_point,
                         &failure);
     }
   }
@@ -782,7 +787,7 @@ msProjectRectTraditionalEdge(projectionObj *in, projectionObj *out,
   rect->maxx = prj_rect.maxx;
   rect->maxy = prj_rect.maxy;
 
-  if( !rect_initialized )
+  if( prj_rect.minx > prj_rect.maxx )
     return MS_FAILURE;
   else
     return(MS_SUCCESS);

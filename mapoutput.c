@@ -1164,6 +1164,7 @@ void msOutputFormatResolveFromImage( mapObj *map, imageObj* img )
 
       ret = format->vtable->getRasterBufferHandle(img,&rb);
       assert( ret == MS_SUCCESS );
+      (void)ret;
       if( rb.data.rgba.a )
       {
         int row;

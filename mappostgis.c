@@ -333,21 +333,28 @@ wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag)
   {
 #ifdef USE_POINT_Z_M
       memcpy(&(p->z), w->ptr, sizeof(double));
-      if( !(nZMFlag & HAS_M) )
-          p->m = 0.0;
 #endif
       w->ptr += sizeof(double);
   }
+#ifdef USE_POINT_Z_M
+  else
+  {
+      p->z = 0;
+  }
+#endif
   if( nZMFlag & HAS_M )
   {
 #ifdef USE_POINT_Z_M
-      if( !(nZMFlag & HAS_Z) )
-          p->z = 0.0;
       memcpy(&(p->m), w->ptr, sizeof(double));
 #endif
       w->ptr += sizeof(double);
   }
-
+#ifdef USE_POINT_Z_M
+  else
+  {
+      p->m = 0;
+  }
+#endif
 }
 
 /*
