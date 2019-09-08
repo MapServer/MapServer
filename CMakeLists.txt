@@ -1004,6 +1004,7 @@ status_optional_feature("V8 Javascript" "${USE_V8_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
+message(STATUS "PROJECT_BINARY_DIR is set to ${PROJECT_BINARY_DIR}")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Will install libraries to ${INSTALL_LIB_DIR}")
 
