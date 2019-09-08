@@ -18,6 +18,9 @@ environment:
   - platform: x64
     PYTHON_EXECUTABLE: c:/python36-x64/python.exe
 
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  
 matrix:
   fast_finish: true
 
@@ -67,6 +70,9 @@ deploy: off
 after_test:
   - cd %BUILD_FOLDER%
   - 7z a mapserver.zip ./build/*
+  
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
 
 artifacts:
   - path: mapserver.zip
