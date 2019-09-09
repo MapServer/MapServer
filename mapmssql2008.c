@@ -1181,7 +1181,7 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
         query = msStringConcatenate(query, "WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(");
         query = msStringConcatenate(query, layerinfo->geom_column);        
       }
-      query = msStringConcatenate(query, ".MakeValid()) AS extentcol FROM ");
+      query = msStringConcatenate(query, ") AS extentcol FROM ");
       query = msStringConcatenate(query, layerinfo->geom_table);
       query = msStringConcatenate(query, ") SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY, extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent");
     }
@@ -1197,7 +1197,7 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
         query = msStringConcatenate(query, "WITH ENVELOPE as (SELECT ");
         query = msStringConcatenate(query, layerinfo->geom_column);      
       }
-      query = msStringConcatenate(query, ".MakeValid().STEnvelope() as envelope from ");
+      query = msStringConcatenate(query, ".STEnvelope() as envelope from ");
       query = msStringConcatenate(query, layerinfo->geom_table);
       query = msStringConcatenate(query, "), CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE) SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS");
     }
@@ -1502,7 +1502,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       query = msStringConcatenate(query, " AND ");
 
   query = msStringConcatenate(query, layerinfo->geom_column);
-  query = msStringConcatenate(query, ".MakeValid().STIntersects(");
+  query = msStringConcatenate(query, ".STIntersects(");
   query = msStringConcatenate(query, box3d);
   query = msStringConcatenate(query, ") = 1 ");
 
