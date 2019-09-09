@@ -76,7 +76,7 @@ typedef struct ms_ogr_file_info_t {
   char *pszRowId;
   int   bIsOKForSQLCompose;
   bool  bHasSpatialIndex; // used only for spatialite for now
-  char* pszTablePrefix; // prefix to qualify field names. used only for spatialite for now when a join is done for spatial filtering.
+  char* pszTablePrefix; // prefix to qualify field names. used only for spatialite & gpkg for now when a join is done for spatial filtering.
 
   int   bPaging;
 
@@ -1386,6 +1386,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
         if( have_gpkg_spatialite )
         {
             psInfo->pszMainTableName = msStrdup( OGR_L_GetName(hLayer) );
+            psInfo->pszTablePrefix = msStrdup( psInfo->pszMainTableName );
             psInfo->pszSpatialFilterTableName = msStrdup( OGR_L_GetName(hLayer) );
             psInfo->pszSpatialFilterGeometryColumn = msStrdup( OGR_L_GetGeometryColumn(hLayer) );
             psInfo->dialect = "GPKG";
