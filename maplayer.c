@@ -2249,6 +2249,7 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
         shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
         for (i = shape->numvalues; i < layer->numitems; i++)
           shape->values[i] = msStrdup("");
+        shape->numvalues = layer->numitems;
       }
 
       break;
