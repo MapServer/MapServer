@@ -45,7 +45,7 @@ int msyystate=MS_TOKENIZE_DEFAULT;
 char *msyystring=NULL;
 char *msyybasepath=NULL;
 char *msyystring_buffer_ptr;
-int  msyystring_buffer_size = 256;
+int  msyystring_buffer_size = 0;
 int  msyystring_size;
 char msyystring_begin;
 char *msyystring_buffer = NULL;
@@ -88,10 +88,12 @@ char path[MS_MAXPATHLEN];
 
 %%
        if (msyystring_buffer == NULL)
+       {
+           msyystring_buffer_size = 256;
            msyystring_buffer = (char*) msSmallMalloc(sizeof(char) * msyystring_buffer_size);
+       }
 
        msyystring_buffer[0] = '\0';
-       msyystring_buffer_size = 0;
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
          break;
