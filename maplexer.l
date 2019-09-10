@@ -1,3 +1,5 @@
+%option never-interactive
+
 %{
 /*
 ** READ ME FIRST!
