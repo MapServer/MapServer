@@ -447,6 +447,7 @@ extern "C" {
 #define MS_REFCNT_DECR(obj) __sync_sub_and_fetch(&obj->refcount, +1)
 #define MS_REFCNT_INIT(obj) obj->refcount=1, __sync_synchronize()
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#include <intrin.h>
 #pragma intrinsic (_InterlockedExchangeAdd)
 #if defined(_MSC_VER) && (_MSC_VER <= 1200)
 #define MS_REFCNT_INCR(obj) ( _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1)) +1 )

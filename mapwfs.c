@@ -1035,7 +1035,7 @@ static OWSGMLVersion msWFSGetGMLVersionFromSchemaVersion(WFSSchemaVersion output
 static void msWFSSchemaWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometryList, WFSSchemaVersion outputformat, const char *tab)
 {
   OWSGMLVersion gmlversion = msWFSGetGMLVersionFromSchemaVersion(outputformat);
-  return msWFSWriteGeometryElement(stream,geometryList,gmlversion,tab);
+  msWFSWriteGeometryElement(stream,geometryList,gmlversion,tab);
 }
 
 static const char* msWFSMapServTypeToXMLType(const char* type)
