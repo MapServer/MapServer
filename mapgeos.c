@@ -1134,7 +1134,7 @@ shapeObj *msGEOSLineMerge(shapeObj *shape1)
 
 shapeObj *msGEOSVoronoiDiagram(shapeObj *shape1, double tolerance, int onlyEdges)
 {
-#ifdef USE_GEOS
+#if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5
   GEOSGeom g1, g2;
   GEOSContextHandle_t handle = msGetGeosContextHandle();
 
@@ -1149,7 +1149,7 @@ shapeObj *msGEOSVoronoiDiagram(shapeObj *shape1, double tolerance, int onlyEdges
   g2 = GEOSVoronoiDiagram_r(handle, g1, NULL, tolerance, onlyEdges);
   return msGEOSGeometry2Shape(g2);
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSVoronoiDiagram()");
+  msSetError(MS_GEOSERR, "GEOS support is not available or GEOS version is not 3.5 or higher.", "msGEOSVoronoiDiagram()");
   return NULL;
 #endif
 }
@@ -1269,7 +1269,7 @@ static int keepEdge(lineObj *segment, shapeObj *polygon)
 
 shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
 {
-#ifdef USE_GEOS
+#if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5 
   int i;
   shapeObj *shape2, *shape3, *shapetmp=NULL, *shapeptr;
 
@@ -1335,7 +1335,7 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
 
   return shape2;
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSMedialAxis()");
+  msSetError(MS_GEOSERR, "GEOS support is not available or GEOS version is not 3.5 or higher.", "msGEOSMedialAxis()");
   return NULL;
 #endif
 }
