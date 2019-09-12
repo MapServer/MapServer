@@ -481,6 +481,8 @@ def run_tests( argv ):
     keep_pass = 0
     valgrind = 0 
     valgrind_log = ''
+    run_under_asan = False
+    asan_log = ''
     shp2img = 'shp2img'
     renderer = None
     verbose = 0
@@ -489,6 +491,7 @@ def run_tests( argv ):
     validate_xml = True
     skiparg = False
     valgrind_non_empty_count = 0
+    asan_non_empty_count = 0
 
     ###########################################################################
     # Process arguments.
@@ -504,6 +507,8 @@ def run_tests( argv ):
             keep_pass = 1
         elif argv[i] == '-valgrind':
             valgrind = 1
+        elif argv[i] == '-run_under_asan':
+            run_under_asan = True
         elif argv[i] == '-strict':
             strict = 1
         elif argv[i] == '-renderer':
@@ -519,7 +524,7 @@ def run_tests( argv ):
             pass
         else:
             print( 'Unrecognised argument: %s' % argv[i] )
-            print( 'Usage: run_test.py [-v] [-keep] [-valgrind] [-strict]\n' + 
+            print( 'Usage: run_test.py [-v] [-keep] [-valgrind|-run_under_asan] [-strict]\n' + 
                    '                   [-shp2img <file>] [-renderer <name>]\n' +
                    '                   [mapfilename]*' )
             sys.exit( 1 )
@@ -673,6 +678,10 @@ def run_tests( argv ):
                   command = 'valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'%(command, valgrind_log)
                 else:
                   command = 'echo "' + post + '" | valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'%(command, valgrind_log)
+            elif run_under_asan:
+                asan_log = 'result/' + out_file + ".asan.txt"
+                command = command.strip()
+                command += " 2>%s" % asan_log
 
             if verbose:
                 print('')
@@ -705,6 +714,22 @@ def run_tests( argv ):
                     valgrind_non_empty_count = valgrind_non_empty_count + 1
                     if not quiet:
                         print('     Valgrind log non empty.')
+
+            elif run_under_asan:
+                if os.path.getsize(asan_log) == 0:
+                   os.remove( asan_log )
+                else:
+                    asan_log_content = open(asan_log, 'rt').read()
+                    # We get some unexplained crashes on Travis-CI
+                    if "Assertion `unscaled->face" in asan_log_content:
+                        os.remove( asan_log )
+                    elif 'AddressSanitizer' in asan_log_content or 'LeakSanitizer' in asan_log_content:
+                        asan_non_empty_count = asan_non_empty_count + 1
+                        if not quiet:
+                            print('     ASAN log non empty.')
+                    else:
+                        # some other standard error output
+                        os.remove( asan_log )
 
             apply_strip_items_file( 'result/'+out_file, strip_items )
                 
@@ -786,6 +811,8 @@ def run_tests( argv ):
     print('%d test results initialized' % init_count)
     if valgrind:
         print('%d test have non-empty Valgrind log' % valgrind_non_empty_count)
+    elif run_under_asan:
+        print('%d test have non-empty ASAN log' % asan_non_empty_count)
 
     if noresult_count > 0:
         print('%d of failed tests produced *no* result! Serious Failure!' % noresult_count)

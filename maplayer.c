@@ -2128,7 +2128,7 @@ msINLINELayerInfo;
 
 int msINLINELayerIsOpen(layerObj *layer)
 {
-  if (layer->currentfeature)
+  if (layer->layerinfo)
     return(MS_TRUE);
   else
     return(MS_FALSE);

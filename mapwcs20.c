@@ -3344,6 +3344,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
            psIntNs = NULL;
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
+  xmlDocPtr pInspireTmpDoc = NULL;
 
   const char *inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_capabilities");
 
@@ -3482,8 +3483,6 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       xmlNodePtr pDlsExtendedCapabilities;
       xmlNodePtr pChild;
 
-      xmlDocPtr pInspireTmpDoc = NULL;
-
       xmlNsPtr psInspireCommonNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX );
       xmlNsPtr psInspireDlsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX );
 
@@ -3612,6 +3611,8 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   msWCSWriteDocument20(map, psDoc);
   msFree(validated_language);
   xmlFreeDoc(psDoc);
+  if( pInspireTmpDoc )
+    xmlFreeDoc(pInspireTmpDoc);
   xmlCleanupParser();
   return MS_SUCCESS;
 }
@@ -3951,7 +3952,6 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
                                        wcs20ParamsObjPtr params, wcs20coverageMetadataObjPtr cm, char **bandlist)
 {
   int i = 0, count, maxlen, index;
-  char *tmp = NULL;
   char *interval_stop;
   char **band_ids = NULL;
 
@@ -3970,10 +3970,11 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
 
   /* Use WCS 2.0 metadata items in priority */
-  tmp = msOWSGetEncodeMetadata(&layer->metadata,
+  {
+    char* tmp = msOWSGetEncodeMetadata(&layer->metadata,
                                "CO", "band_names", NULL);
 
-  if( NULL == tmp ) {
+    if( NULL == tmp ) {
       /* Otherwise default to WCS 1.x*/
       tmp = msOWSGetEncodeMetadata(&layer->metadata,
                      "CO", "rangeset_axes", NULL);
@@ -3990,10 +3991,11 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
             band_ids[i] = msStrdup(szName);
         }
       }
-  }
+    }
 
-  if(NULL != tmp && band_ids == NULL) {
-    band_ids = CSLTokenizeString2(tmp, " ", 0);
+    if(NULL != tmp && band_ids == NULL) {
+      band_ids = CSLTokenizeString2(tmp, " ", 0);
+    }
     msFree(tmp);
   }
 
@@ -4053,6 +4055,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 
       /* expand the interval to a list of indices and push them on the list */
       for (j = start; j <= stop; ++j) {
+        char* tmp;
         if(i != 0 || j != start) {
           strlcat(*bandlist, ",", maxlen);
         }
@@ -4069,6 +4072,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 
       /* check if the string represents an integer */
       if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
+        char* tmp;
         if (index < 1 || index > cm->numbands) {
           msSetError(MS_WCSERR, "Band index is out of the valid range: 1-%d",
                  "msWCSGetCoverage20_GetBands()", (int)cm->numbands);
@@ -4084,7 +4088,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       /* check if the string is equal to a band identifier    */
       /* if so, what is the index of the band                 */
       if((index = CSLFindString(band_ids, params->range_subset[i])) != -1) {
-        tmp = msIntToString((int)index + 1);
+        char* tmp = msIntToString((int)index + 1);
         strlcat(*bandlist, tmp, maxlen);
         msFree(tmp);
       }

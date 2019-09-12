@@ -460,6 +460,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
           msFree(pszLayerSRS);
           return MS_FAILURE;
         }
+        msFree(pszLayerSRS);
       }
       pszOutputSRS = msStrdup(srs);
     }

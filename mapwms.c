@@ -366,6 +366,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   if (numlayers != numfilters) {
     msSetError(MS_WMSERR, "Wrong number of filter elements, one filter must be specified for each requested layer.",
 	       "msWMSApplyFilter" );
+    msFreeCharArray(paszFilters, numfilters);
     return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
   }
 
@@ -396,6 +397,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       msSetError(MS_WMSERR,
 		 "Invalid or Unsupported FILTER : %s",
 		 "msWMSApplyFilter()", paszFilters[curfilter]);
+      msFreeCharArray(paszFilters, numfilters);
       return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
     }
 
@@ -426,12 +428,14 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         if( FLTCheckInvalidOperand(psNode) == MS_FAILURE)
         {
             FLTFreeFilterEncodingNode( psNode );
+            msFreeCharArray(paszFilters, numfilters);
             return msWFSException(map, "filter", MS_WFS_ERROR_OPERATION_PROCESSING_FAILED, paramsObj->pszVersion);
         }
 
         if( FLTCheckInvalidProperty(psNode, map, lp->index) == MS_FAILURE)
         {
             FLTFreeFilterEncodingNode( psNode );
+            msFreeCharArray(paszFilters, numfilters);
             return msWFSException(map, "filter", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
         }
 
@@ -439,6 +443,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         if( psNode == NULL )
         {
             FLTFreeFilterEncodingNode( psNode );
+            msFreeCharArray(paszFilters, numfilters);
             if( nEvaluation == 1 ) {
                 /* return full layer */
                 return msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
@@ -460,6 +465,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       if(ms_error->code != MS_NOTFOUND) {
 	msSetError(MS_WMSERR, "FLTApplyFilterToLayer() failed", "msWMSApplyFilter()");
 	FLTFreeFilterEncodingNode( psNode );
+        msFreeCharArray(paszFilters, numfilters);
 	return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
       }
     }
@@ -469,6 +475,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     curfilter++;
 
   }/* for */
+
+    msFreeCharArray(paszFilters, numfilters);
 
     return MS_SUCCESS;
 }
@@ -3724,6 +3732,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                     msFree(pszMimetype);
                   }
                 }
+
+                msFree(group_layers);
               }
               msIO_fprintf(stdout, "    </Style>\n");
               msFree(pszEncodedName);

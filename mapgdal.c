@@ -105,19 +105,10 @@ void msGDALCleanup( void )
     while( iRepeat-- )
       CPLPopErrorHandler();
 
-#if GDAL_RELEASE_DATE > 20021001
-    GDALDestroyDriverManager();
-#endif
-
     msReleaseLock( TLOCK_GDAL );
 
     bGDALInitialized = 0;
   }
-
-#if GDAL_VERSION_MAJOR >= 3 || (GDAL_VERSION_MAJOR == 2 && GDAL_VERSION_MINOR == 4)
-  /* Cleanup some GDAL global resources in particular */
-  GDALDestroy();
-#endif
 }
 
 /************************************************************************/

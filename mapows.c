@@ -2002,6 +2002,7 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
 {
   const char *value;
   char *encoded;
+  size_t default_value_len = 0;
 
   value = msOWSLookupMetadata(metadata, namespaces, name);
 
@@ -2009,6 +2010,8 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
     value = default_value;
     default_value = NULL;
   }
+  if( default_value )
+      default_value_len = strlen(default_value);
 
   if(value != NULL) {
     char **keywords;
@@ -2020,8 +2023,9 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       if(startTag) msIO_fprintf(stream, "%s", startTag);
       for(kw=0; kw<numkeywords; kw++) {
         if (default_value != NULL
+            && default_value_len > 8
             && strncasecmp(keywords[kw],default_value,strlen(keywords[kw])) == 0
-            && strncasecmp("_exclude",default_value+strlen(default_value)-8,8) == 0)
+            && strncasecmp("_exclude",default_value+default_value_len-8,8) == 0)
           continue;
 
         encoded = msEncodeHTMLEntities(keywords[kw]);
