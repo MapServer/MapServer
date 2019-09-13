@@ -35,9 +35,8 @@
 #define SWIG_PYTHON_INTERPRETER_NO_DEBUG
 #endif
 %}
-
 #ifndef SWIGPHPNG
-%module mapscript
+%module(docstring=DOCSTRING) mapscript
 #else
 %module mapscriptng
 #endif
@@ -52,6 +51,11 @@
 #endif
 
 %newobject msLoadMapFromString;
+
+/* Include class attribute docstrings */
+#ifdef SWIGPYTHON
+    %include "../swiginc/docs.i"
+#endif
 
 %{
 #include "../../mapserver.h"
@@ -219,6 +223,7 @@ typedef struct {
 
 /* Python */
 #ifdef SWIGPYTHON
+%feature("autodoc", "1"); // this auto-documents all methods
 %include "pymodule.i"
 #endif /* SWIGPYTHON */
 
