@@ -491,6 +491,25 @@ sld_cleanup:
 #ifdef USE_OGR
 
 
+static CPLXMLNode* FindNextChild(CPLXMLNode* psNode, const char* pszChildName)
+{
+    while( psNode )
+    {
+        if( psNode->eType == CXT_Element &&
+            strcasecmp(psNode->pszValue, pszChildName) == 0 )
+        {
+            return psNode;
+        }
+        psNode = psNode->psNext;
+    }
+    return NULL;
+}
+
+#define LOOP_ON_CHILD_ELEMENT(psParent_, psChild_, pszChildName_) \
+    for( psChild_ = FindNextChild(psParent_->psChild, pszChildName_); \
+         psChild_ != NULL; \
+         psChild_ = FindNextChild(psChild_->psNext, pszChildName_) )
+
 /************************************************************************/
 /*                              msSLDParseSLD                           */
 /*                                                                      */
@@ -503,7 +522,7 @@ sld_cleanup:
 layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers)
 {
   CPLXMLNode *psRoot = NULL;
-  CPLXMLNode *psSLD, *psNamedLayer, *psChild, *psName;
+  CPLXMLNode *psSLD, *psNamedLayer;
   layerObj *pasLayers = NULL;
   int iLayer = 0;
   int nLayers = 0;
@@ -529,20 +548,9 @@ layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers)
 
 
   /* -------------------------------------------------------------------- */
-  /*      get the root element (Filter).                                  */
+  /*      get the root element (StyledLayerDescriptor).                   */
   /* -------------------------------------------------------------------- */
-  psChild = psRoot;
-  psSLD = NULL;
-
-  while( psChild != NULL ) {
-    if (psChild->eType == CXT_Element &&
-        EQUAL(psChild->pszValue,"StyledLayerDescriptor")) {
-      psSLD = psChild;
-      break;
-    } else
-      psChild = psChild->psNext;
-  }
-
+  psSLD = CPLGetXMLNode(psRoot, "=StyledLayerDescriptor");
   if (!psSLD) {
     msSetError(MS_WMSERR, "Invalid SLD document : %s", "", psSLDXML);
     return NULL;
@@ -551,15 +559,8 @@ layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers)
   /* -------------------------------------------------------------------- */
   /*      Parse the named layers.                                         */
   /* -------------------------------------------------------------------- */
-  psNamedLayer = CPLGetXMLNode(psSLD, "NamedLayer");
-  while (psNamedLayer) {
-    if (!psNamedLayer->pszValue ||
-        strcasecmp(psNamedLayer->pszValue, "NamedLayer") != 0) {
-      psNamedLayer = psNamedLayer->psNext;
-      continue;
-    }
-
-    psNamedLayer = psNamedLayer->psNext;
+  LOOP_ON_CHILD_ELEMENT(psSLD, psNamedLayer, "NamedLayer")
+  {
     nLayers++;
   }
 
@@ -568,19 +569,9 @@ layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers)
   else
     return NULL;
 
-  psNamedLayer = CPLGetXMLNode(psSLD, "NamedLayer");
-  if (psNamedLayer) {
-    iLayer = 0;
-    while (psNamedLayer)
-
-    {
-      if (!psNamedLayer->pszValue ||
-          strcasecmp(psNamedLayer->pszValue, "NamedLayer") != 0) {
-        psNamedLayer = psNamedLayer->psNext;
-        continue;
-      }
-
-      psName = CPLGetXMLNode(psNamedLayer, "Name");
+  LOOP_ON_CHILD_ELEMENT(psSLD, psNamedLayer, "NamedLayer")
+  {
+      CPLXMLNode* psName = CPLGetXMLNode(psNamedLayer, "Name");
       initLayer(&pasLayers[iLayer], map);
 
       if (psName && psName->psChild &&  psName->psChild->pszValue)
@@ -596,9 +587,7 @@ layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers)
         break;
       }
 
-      psNamedLayer = psNamedLayer->psNext;
       iLayer++;
-    }
   }
 
   if (pnLayers)
@@ -773,37 +762,21 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
 static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle;
-
-    psFeatureTypeStyle = CPLGetXMLNode(psUserStyle, "FeatureTypeStyle");
-    if (psFeatureTypeStyle) {
-      while (psFeatureTypeStyle && psFeatureTypeStyle->pszValue &&
-             strcasecmp(psFeatureTypeStyle->pszValue,
-                        "FeatureTypeStyle") == 0) {
-
+    LOOP_ON_CHILD_ELEMENT(psUserStyle, psFeatureTypeStyle,
+                          "FeatureTypeStyle")
+    {
         CPLXMLNode* psRule;
-
-        if (!psFeatureTypeStyle->pszValue ||
-            strcasecmp(psFeatureTypeStyle->pszValue,
-                       "FeatureTypeStyle") != 0) {
-          psFeatureTypeStyle = psFeatureTypeStyle->psNext;
-          continue;
-        }
 
         /* -------------------------------------------------------------------- */
         /*      Parse rules with no Else filter.                                */
         /* -------------------------------------------------------------------- */
-        psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
-        while (psRule) {
+        LOOP_ON_CHILD_ELEMENT(psFeatureTypeStyle, psRule, "Rule")
+        {
           CPLXMLNode *psFilter = NULL;
           CPLXMLNode *psElseFilter = NULL;
           int nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
           int nClassAfterRule=0, nClassBeforeRule=0;
 
-          if (!psRule->pszValue ||
-              strcasecmp(psRule->pszValue, "Rule") != 0) {
-            psRule = psRule->psNext;
-            continue;
-          }
           /* used for scale setting */
           nClassBeforeRule = psLayer->numclasses;
 
@@ -846,8 +819,6 @@ static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
           _SLDApplyRuleValues(psRule, psLayer, nNewClasses);
 
           /* TODO : parse legendgraphic */
-          psRule = psRule->psNext;
-
         }
         /* -------------------------------------------------------------------- */
         /*      First parse rules with the else filter. These rules will        */
@@ -855,26 +826,14 @@ static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
         /*      list. (See how classes are applied to layers in function        */
         /*      msSLDApplySLD).                                                 */
         /* -------------------------------------------------------------------- */
-        psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
-        while (psRule) {
-          CPLXMLNode* psElseFilter;
-          if (!psRule->pszValue ||
-              strcasecmp(psRule->pszValue, "Rule") != 0) {
-            psRule = psRule->psNext;
-            continue;
-          }
-          psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
+        LOOP_ON_CHILD_ELEMENT(psFeatureTypeStyle, psRule, "Rule")
+        {
+          CPLXMLNode* psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
           if (psElseFilter) {
             msSLDParseRule(psRule, psLayer);
             _SLDApplyRuleValues(psRule, psLayer, 1);
           }
-          psRule = psRule->psNext;
-
-
         }
-
-        psFeatureTypeStyle = psFeatureTypeStyle->psNext;
-      }
     }
 }
 
@@ -986,15 +945,8 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
   nSymbolizer =0;
 
   /* line symbolizer */
-  psLineSymbolizer = CPLGetXMLNode(psRoot, "LineSymbolizer");
-  while (psLineSymbolizer) {
-    if (!psLineSymbolizer->pszValue ||
-        strcasecmp(psLineSymbolizer->pszValue,
-                   "LineSymbolizer") != 0) {
-      psLineSymbolizer = psLineSymbolizer->psNext;
-      continue;
-    }
-
+  LOOP_ON_CHILD_ELEMENT(psRoot, psLineSymbolizer, "LineSymbolizer")
+  {
     bSymbolizer = 1;
     if (nSymbolizer == 0)
       bNewClass = 1;
@@ -1002,20 +954,13 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
       bNewClass = 0;
 
     msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass);
-    psLineSymbolizer = psLineSymbolizer->psNext;
     psLayer->type = MS_LAYER_LINE;
     nSymbolizer++;
   }
 
   /* Polygon symbolizer */
-  psPolygonSymbolizer = CPLGetXMLNode(psRoot, "PolygonSymbolizer");
-  while (psPolygonSymbolizer) {
-    if (!psPolygonSymbolizer->pszValue ||
-        strcasecmp(psPolygonSymbolizer->pszValue,
-                   "PolygonSymbolizer") != 0) {
-      psPolygonSymbolizer = psPolygonSymbolizer->psNext;
-      continue;
-    }
+  LOOP_ON_CHILD_ELEMENT(psRoot, psPolygonSymbolizer, "PolygonSymbolizer")
+  {
     bSymbolizer = 1;
     if (nSymbolizer == 0)
       bNewClass = 1;
@@ -1023,26 +968,18 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
       bNewClass = 0;
     msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer,
                                 bNewClass);
-    psPolygonSymbolizer = psPolygonSymbolizer->psNext;
     psLayer->type = MS_LAYER_POLYGON;
     nSymbolizer++;
   }
   /* Point Symbolizer */
-  psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
-  while (psPointSymbolizer) {
-    if (!psPointSymbolizer->pszValue ||
-        strcasecmp(psPointSymbolizer->pszValue,
-                   "PointSymbolizer") != 0) {
-      psPointSymbolizer = psPointSymbolizer->psNext;
-      continue;
-    }
+  LOOP_ON_CHILD_ELEMENT(psRoot, psPointSymbolizer, "PointSymbolizer")
+  {
     bSymbolizer = 1;
     if (nSymbolizer == 0)
       bNewClass = 1;
     else
       bNewClass = 0;
     msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass);
-    psPointSymbolizer = psPointSymbolizer->psNext;
     psLayer->type = MS_LAYER_POINT;
     nSymbolizer++;
   }
@@ -1057,35 +994,17 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
   /*        - If there are no other symbolizers, a new clas will be       */
   /*      created ocontain the label object.                              */
   /* ==================================================================== */
-  psTextSymbolizer = CPLGetXMLNode(psRoot, "TextSymbolizer");
-  while (psTextSymbolizer && psTextSymbolizer->pszValue &&
-         strcasecmp(psTextSymbolizer->pszValue,
-                    "TextSymbolizer") == 0) {
-    if (!psTextSymbolizer->pszValue ||
-        strcasecmp(psTextSymbolizer->pszValue,
-                   "TextSymbolizer") != 0) {
-      psTextSymbolizer = psTextSymbolizer->psNext;
-      continue;
-    }
+  LOOP_ON_CHILD_ELEMENT(psRoot, psTextSymbolizer, "TextSymbolizer")
+  {
     if (nSymbolizer == 0)
       psLayer->type = MS_LAYER_POINT;
     msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, bSymbolizer);
-    psTextSymbolizer = psTextSymbolizer->psNext;
   }
 
   /* Raster symbolizer */
-  psRasterSymbolizer = CPLGetXMLNode(psRoot, "RasterSymbolizer");
-  while (psRasterSymbolizer && psRasterSymbolizer->pszValue &&
-         strcasecmp(psRasterSymbolizer->pszValue,
-                    "RasterSymbolizer") == 0) {
-    if (!psRasterSymbolizer->pszValue ||
-        strcasecmp(psRasterSymbolizer->pszValue,
-                   "RasterSymbolizer") != 0) {
-      psRasterSymbolizer = psRasterSymbolizer->psNext;
-      continue;
-    }
+  LOOP_ON_CHILD_ELEMENT(psRoot, psRasterSymbolizer, "RasterSymbolizer")
+  {
     msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer);
-    psRasterSymbolizer = psRasterSymbolizer->psNext;
     psLayer->type = MS_LAYER_RASTER;
   }
 
