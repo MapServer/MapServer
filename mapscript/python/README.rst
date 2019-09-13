@@ -206,8 +206,9 @@ SWIG can also be run manually, without using CMake. This may allow further optim
 
 .. code-block:: bat
 
-    cd C:\Projects\mapserver\build
-    SET PATH=C:\MapServerBuild\swigwin-3.0.12;%PATH%
+    cd C:\mapserver\mapscript\python
+    SET PATH=C:\Tools\swigwin-3.0.12;%PATH%
+    REM mapserver-version.h needs to be copied from a build folder into the root of the MapServer source for the following to work
     swig -python -shadow -o mapscript_wrap.c ../mapscript.i
 
 SWIG has several command line options to control the output, examples of which are shown below:
