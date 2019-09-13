@@ -1178,8 +1178,17 @@ typedef struct labelObj labelObj;
   /*                                                                      */
   /*      basic symbolization and classification information              */
   /************************************************************************/
-  
+
+#if defined(SWIG) && defined(SWIGPYTHON) && defined(CLASSOBJDOC) /* Add in autodoc comments */
+  CLASSOBJDOC
+#endif
+
   struct classObj {
+
+#if defined(SWIG) && defined(SWIGPYTHON) && defined(CLASSOBJDOCSTRING) /* Add in autodoc comments */
+  CLASSOBJDOCSTRING
+#endif
+
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
 #endif
@@ -1195,6 +1204,7 @@ typedef struct labelObj labelObj;
     %immutable;
 #endif
     int numstyles;
+    int numlabels;
 #ifdef SWIG
     %mutable;
 #endif
@@ -1203,10 +1213,9 @@ typedef struct labelObj labelObj;
     labelObj **labels;
     int maxlabels;
 #endif
-    int numlabels; /* should be immutable */
 
     char *name; /* should be unique within a layer */
-    char *title; /* used for legend labeling */
+    char *title; /* used for legend labelling */
 
 #ifndef SWIG
     expressionObj text;
@@ -1234,6 +1243,7 @@ typedef struct labelObj labelObj;
 #endif /* SWIG */
     int refcount;
     struct layerObj *layer;
+    labelLeaderObj *leader;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1242,7 +1252,6 @@ typedef struct labelObj labelObj;
     char *keyimage;
 
     char *group;
-    labelLeaderObj *leader;
   };
 
   /************************************************************************/
