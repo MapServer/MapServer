@@ -2232,3 +2232,82 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   return MS_FAILURE;
 #endif
 }
+
+/************************************************************************/
+/*                             msStringBuffer                           */
+/************************************************************************/
+
+struct msStringBuffer
+{
+    size_t alloc_size;
+    size_t length;
+    char  *str;
+};
+
+/************************************************************************/
+/*                         msStringBufferAlloc()                        */
+/************************************************************************/
+
+msStringBuffer* msStringBufferAlloc(void)
+{
+    return (msStringBuffer*)msSmallCalloc(sizeof(msStringBuffer), 1);
+}
+
+/************************************************************************/
+/*                         msStringBufferFree()                         */
+/************************************************************************/
+
+void msStringBufferFree(msStringBuffer* sb)
+{
+    if( sb )
+        msFree(sb->str);
+    msFree(sb);
+}
+
+/************************************************************************/
+/*                       msStringBufferGetString()                      */
+/************************************************************************/
+
+const char* msStringBufferGetString(msStringBuffer* sb)
+{
+    return sb->str;
+}
+
+/************************************************************************/
+/*                   msStringBufferReleaseStringAndFree()               */
+/************************************************************************/
+
+char* msStringBufferReleaseStringAndFree(msStringBuffer* sb)
+{
+    char* str = sb->str;
+    sb->str = NULL;
+    sb->alloc_size = 0;
+    sb->length = 0;
+    msStringBufferFree(sb);
+    return str;
+}
+
+/************************************************************************/
+/*                        msStringBufferAppend()                        */
+/************************************************************************/
+
+int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString)
+{
+    size_t nAppendLen = strlen(pszAppendedString);
+    if( sb->length + nAppendLen >= sb->alloc_size )
+    {
+        size_t newAllocSize1 = sb->alloc_size + sb->alloc_size / 3;
+        size_t newAllocSize2 = sb->length + nAppendLen + 1;
+        size_t newAllocSize = MAX(newAllocSize1, newAllocSize2);
+        void* newStr = realloc(sb->str, newAllocSize);
+        if( newStr == NULL ) {
+            msSetError(MS_MEMERR, "Not enough memory", "msStringBufferAppend()");
+            return MS_FAILURE;
+        }
+        sb->alloc_size = newAllocSize;
+        sb->str = (char*) newStr;
+    }
+    memcpy(sb->str + sb->length, pszAppendedString, nAppendLen + 1);
+    sb->length += nAppendLen;
+    return MS_SUCCESS;
+}

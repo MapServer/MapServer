@@ -2275,6 +2275,13 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msStringEscape( const char * pszString );
   MS_DLL_EXPORT int msStringInArray( const char * pszString, char **array, int numelements);
 
+  typedef struct msStringBuffer msStringBuffer;
+  MS_DLL_EXPORT msStringBuffer* msStringBufferAlloc(void);
+  MS_DLL_EXPORT void msStringBufferFree(msStringBuffer* sb);
+  MS_DLL_EXPORT const char* msStringBufferGetString(msStringBuffer* sb);
+  MS_DLL_EXPORT char* msStringBufferReleaseStringAndFree(msStringBuffer* sb);
+  MS_DLL_EXPORT int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString);
+
 #ifndef HAVE_STRRSTR
   MS_DLL_EXPORT char *strrstr(const char *string, const char *find);
 #endif /* NEED_STRRSTR */
