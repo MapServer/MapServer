@@ -36,6 +36,9 @@ gdal-testcase:
 query-testcase:
 	cd msautotest/query  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
+sld-testcase:
+	cd msautotest/sld  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+
 mspython-testcase:
 	test -f "$(PYTHON_MAPSCRIPT_PATH)/_mapscript.so" && (export PYTHONPATH="../../$(PYTHON_MAPSCRIPT_PATH)" && cd msautotest/mspython && python run_all_tests.py)
 
@@ -63,14 +66,14 @@ perl-testcase:
 
 
 test:  cmakebuild
-	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-testcase
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase mspython-testcase
 	@./print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
 	@$(MAKE) $(MFLAGS)	csharp-testcase
 	@$(MAKE) $(MFLAGS)	perl-testcase
 
 asan_compatible_tests:  cmakebuild
-	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase
 	@./print-test-results.sh
 
 lexer: maplexer.c
