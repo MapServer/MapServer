@@ -4134,116 +4134,47 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 #endif
 }
 
+#if (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)) && defined(USE_OGR)
 
-/************************************************************************/
-/*                          msSLDGenerateSLDLayer                       */
-/*                                                                      */
-/*      Genrate an SLD XML string based on the layer's classes.         */
-/************************************************************************/
-char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
+static void msSLDAppendName(msStringBuffer* sb, const char* pszName, int nVersion)
 {
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+    char* pszEncoded = msEncodeHTMLEntities(pszName);
+    msStringBufferAppend(sb, (nVersion > OWS_1_0_0) ? "<se:Name>" : "<Name>");
+    msStringBufferAppend(sb, pszEncoded);
+    msStringBufferAppend(sb, (nVersion > OWS_1_0_0) ? "</se:Name>\n" : "</Name>\n");
+    msFree(pszEncoded);
+}
 
-#ifdef USE_OGR
-  char szTmp[100];
-  char *pszTmpName = NULL;
-  int i, j;
-  styleObj *psStyle = NULL;
-  char *pszFilter = NULL;
-  char *pszFinalSLD = NULL;
-  char *pszSLD = NULL;
-  const char *pszTmp = NULL;
-  double dfMinScale =-1, dfMaxScale = -1;
-  const char *pszWfsFilter= NULL;
-  char *pszEncoded = NULL, *pszWfsFilterEncoded=NULL;
+static void msSLDGenerateUserStyle(msStringBuffer* sb, layerObj *psLayer, int nVersion)
+{
+    const char* pszWfsFilter;
 
+    msStringBufferAppend(sb, "<UserStyle>\n");
 
-  if (psLayer &&
-      (psLayer->status == MS_ON || psLayer->status == MS_DEFAULT) &&
-      (psLayer->type == MS_LAYER_POINT ||
-       psLayer->type == MS_LAYER_LINE ||
-       psLayer->type == MS_LAYER_POLYGON )) {
-    snprintf(szTmp, sizeof(szTmp), "%s\n",  "<NamedLayer>");
-    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
-
-    pszTmp = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
-    if (pszTmp) {
-      pszEncoded = msEncodeHTMLEntities(pszTmp);
-      if (nVersion > OWS_1_0_0)
-        snprintf(szTmp, sizeof(szTmp), "<se:Name>%s</se:Name>\n", pszEncoded);
-      else
-        snprintf(szTmp, sizeof(szTmp), "<Name>%s</Name>\n", pszEncoded);
-      pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
-      msFree(pszEncoded);
-    } else if (psLayer->name) {
-      pszEncoded = msEncodeHTMLEntities(psLayer->name);
-      pszTmpName = (char *)malloc(sizeof(char)*(strlen(pszEncoded)+100));
-      if (nVersion > OWS_1_0_0)
-        sprintf(pszTmpName, "<se:Name>%s</se:Name>\n", pszEncoded);
-      else
-        sprintf(pszTmpName, "<Name>%s</Name>\n", pszEncoded);
-
-
-      msFree(pszEncoded);
-      pszFinalSLD = msStringConcatenate(pszFinalSLD, pszTmpName);
-      msFree(pszTmpName);
-      pszTmpName=NULL;
-
-    } else {
-      if (nVersion > OWS_1_0_0)
-        snprintf(szTmp, sizeof(szTmp), "<se:Name>%s</se:Name>\n", "NamedLayer");
-      else
-        snprintf(szTmp, sizeof(szTmp), "<Name>%s</Name>\n", "NamedLayer");
-      pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
-    }
-
-
-    snprintf(szTmp,  sizeof(szTmp), "%s\n",  "<UserStyle>");
-    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
-
-    if (nVersion > OWS_1_0_0)
-      snprintf(szTmp, sizeof(szTmp), "%s\n",  "<se:FeatureTypeStyle>");
-    else
-      snprintf(szTmp, sizeof(szTmp), "%s\n",  "<FeatureTypeStyle>");
-
-    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+    msStringBufferAppend(sb, nVersion > OWS_1_0_0 ?
+        "<se:FeatureTypeStyle>\n" : "<FeatureTypeStyle>\n");
 
     pszWfsFilter = msLookupHashTable(&(psLayer->metadata), "wfs_filter");
-    if (pszWfsFilter)
-      pszWfsFilterEncoded = msEncodeHTMLEntities(pszWfsFilter);
     if (psLayer->numclasses > 0) {
+      int i;
       for (i=0; i<psLayer->numclasses; i++) {
-        if (nVersion > OWS_1_0_0)
-          snprintf(szTmp, sizeof(szTmp), "%s\n",  "<se:Rule>");
-        else
-          snprintf(szTmp, sizeof(szTmp), "%s\n",  "<Rule>");
+        char* pszFilter;
+        double dfMinScale =-1, dfMaxScale = -1;
 
-        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+        msStringBufferAppend(sb, nVersion > OWS_1_0_0 ? "<se:Rule>\n" : "<Rule>\n" );
 
         /* if class has a name, use it as the RULE name */
         if (psLayer->class[i]->name) {
-          pszEncoded = msEncodeHTMLEntities(psLayer->class[i]->name);
-          pszTmpName = (char *)malloc(sizeof(char)*(strlen(pszEncoded)+100));
-
-          if (nVersion > OWS_1_0_0)
-            sprintf(pszTmpName, "<se:Name>%s</se:Name>\n",  pszEncoded);
-          else
-            sprintf(pszTmpName, "<Name>%s</Name>\n",  pszEncoded);
-
-          msFree(pszEncoded);
-
-          pszFinalSLD = msStringConcatenate(pszFinalSLD, pszTmpName);
-          msFree(pszTmpName);
-          pszTmpName=NULL;
+          msSLDAppendName(sb, psLayer->class[i]->name, nVersion);
         }
         /* -------------------------------------------------------------------- */
         /*      get the Filter if there is a class expression.                  */
         /* -------------------------------------------------------------------- */
         pszFilter = msSLDGetFilter(psLayer->class[i] ,
-                                   pszWfsFilter);/* pszWfsFilterEncoded); */
+                                   pszWfsFilter);
 
         if (pszFilter) {
-          pszFinalSLD = msStringConcatenate(pszFinalSLD, pszFilter);
+          msStringBufferAppend(sb, pszFilter);
           free(pszFilter);
         }
         /* -------------------------------------------------------------------- */
@@ -4257,6 +4188,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
         else if (psLayer->map && psLayer->map->web.minscaledenom > 0)
           dfMinScale = psLayer->map->web.minscaledenom;
         if (dfMinScale > 0) {
+          char szTmp[100];
           if (nVersion > OWS_1_0_0)
             snprintf(szTmp, sizeof(szTmp), "<se:MinScaleDenominator>%f</se:MinScaleDenominator>\n",
                      dfMinScale);
@@ -4264,7 +4196,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
             snprintf(szTmp, sizeof(szTmp), "<MinScaleDenominator>%f</MinScaleDenominator>\n",
                      dfMinScale);
 
-          pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+          msStringBufferAppend(sb, szTmp);
         }
 
         dfMaxScale = -1.0;
@@ -4275,6 +4207,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
         else if (psLayer->map && psLayer->map->web.maxscaledenom > 0)
           dfMaxScale = psLayer->map->web.maxscaledenom;
         if (dfMaxScale > 0) {
+          char szTmp[100];
           if (nVersion > OWS_1_0_0)
             snprintf(szTmp, sizeof(szTmp), "<se:MaxScaleDenominator>%f</se:MaxScaleDenominator>\n",
                      dfMaxScale);
@@ -4282,7 +4215,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
             snprintf(szTmp, sizeof(szTmp), "<MaxScaleDenominator>%f</MaxScaleDenominator>\n",
                      dfMaxScale);
 
-          pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+          msStringBufferAppend(sb, szTmp);
         }
 
 
@@ -4295,69 +4228,90 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
         /*      Lines using symbols TODO (specially for dash lines)             */
         /* -------------------------------------------------------------------- */
         if (psLayer->type == MS_LAYER_LINE) {
+          int j;
           for (j=0; j<psLayer->class[i]->numstyles; j++) {
-            psStyle = psLayer->class[i]->styles[j];
-            pszSLD = msSLDGenerateLineSLD(psStyle, psLayer, nVersion);
+            styleObj* psStyle = psLayer->class[i]->styles[j];
+            char* pszSLD = msSLDGenerateLineSLD(psStyle, psLayer, nVersion);
             if (pszSLD) {
-              pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
+              msStringBufferAppend(sb, pszSLD);
               free(pszSLD);
             }
           }
 
         } else if (psLayer->type == MS_LAYER_POLYGON) {
+          int j;
           for (j=0; j<psLayer->class[i]->numstyles; j++) {
-            psStyle = psLayer->class[i]->styles[j];
-            pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer, nVersion);
+            styleObj* psStyle = psLayer->class[i]->styles[j];
+            char* pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer, nVersion);
             if (pszSLD) {
-              pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
+              msStringBufferAppend(sb, pszSLD);
               free(pszSLD);
             }
           }
 
         } else if (psLayer->type == MS_LAYER_POINT) {
+          int j;
           for (j=0; j<psLayer->class[i]->numstyles; j++) {
-            psStyle = psLayer->class[i]->styles[j];
-            pszSLD = msSLDGeneratePointSLD(psStyle, psLayer, nVersion);
+            styleObj* psStyle = psLayer->class[i]->styles[j];
+            char* pszSLD = msSLDGeneratePointSLD(psStyle, psLayer, nVersion);
             if (pszSLD) {
-              pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
+              msStringBufferAppend(sb, pszSLD);
               free(pszSLD);
             }
           }
 
         }
-        /* label if it exists */
-        pszSLD = msSLDGenerateTextSLD(psLayer->class[i], psLayer, nVersion);
-        if (pszSLD) {
-          pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
-          free(pszSLD);
+        {
+          /* label if it exists */
+          char* pszSLD = msSLDGenerateTextSLD(psLayer->class[i], psLayer, nVersion);
+          if (pszSLD) {
+            msStringBufferAppend(sb, pszSLD);
+            free(pszSLD);
+          }
         }
-        if (nVersion > OWS_1_0_0)
-          snprintf(szTmp, sizeof(szTmp), "%s\n",  "</se:Rule>");
-        else
-          snprintf(szTmp, sizeof(szTmp), "%s\n",  "</Rule>");
-
-        pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
-
-
+        msStringBufferAppend(sb, nVersion > OWS_1_0_0 ? "</se:Rule>\n" : "</Rule>\n");
       }
     }
-    if (pszWfsFilterEncoded)
-      msFree(pszWfsFilterEncoded);
-    if (nVersion > OWS_1_0_0)
-      snprintf(szTmp, sizeof(szTmp), "%s\n",  "</se:FeatureTypeStyle>");
-    else
-      snprintf(szTmp, sizeof(szTmp), "%s\n",  "</FeatureTypeStyle>");
 
-    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+    msStringBufferAppend(sb, nVersion > OWS_1_0_0 ? "</se:FeatureTypeStyle>\n" : "</FeatureTypeStyle>\n");
+    msStringBufferAppend(sb, "</UserStyle>\n");
+}
 
-    snprintf(szTmp, sizeof(szTmp), "%s\n",  "</UserStyle>");
-    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+#endif
 
-    snprintf(szTmp, sizeof(szTmp), "%s\n",  "</NamedLayer>");
-    pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
+/************************************************************************/
+/*                          msSLDGenerateSLDLayer                       */
+/*                                                                      */
+/*      Genrate an SLD XML string based on the layer's classes.         */
+/************************************************************************/
+char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
+{
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
+#ifdef USE_OGR
+  const char *pszWMSLayerName = NULL;
+  msStringBuffer* sb = msStringBufferAlloc();
+
+  if (psLayer &&
+      (psLayer->status == MS_ON || psLayer->status == MS_DEFAULT) &&
+      (psLayer->type == MS_LAYER_POINT ||
+       psLayer->type == MS_LAYER_LINE ||
+       psLayer->type == MS_LAYER_POLYGON )) {
+
+    msStringBufferAppend(sb, "<NamedLayer>\n");
+
+    pszWMSLayerName = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
+    msSLDAppendName(sb, 
+                    pszWMSLayerName ? pszWMSLayerName :
+                    psLayer->name ? psLayer->name :
+                    "NamedLayer",
+                    nVersion);
+
+    msSLDGenerateUserStyle(sb, psLayer, nVersion);
+
+    msStringBufferAppend(sb, "</NamedLayer>\n");
   }
-  return pszFinalSLD;
+  return msStringBufferReleaseStringAndFree(sb);
 
 
 #else
