@@ -30,8 +30,13 @@
 ============================================================================
 */
 
+%define DOCSTRING
+"The mapscript module provides users an interface to `MapServer <http://mapserver.org>`_
+classes on any platform, and has been tested on Python versions 2.7 and 3.5+. "
+%enddef
+
 #ifndef SWIGPHPNG
-%module mapscript
+%module(docstring=DOCSTRING) mapscript
 #else
 %module mapscriptng
 #endif
@@ -46,6 +51,11 @@
 #endif
 
 %newobject msLoadMapFromString;
+
+/* Include class attribute docstrings */
+#ifdef SWIGPYTHON
+    %include "../swiginc/docs.i"
+#endif
 
 %{
 #include "../../mapserver.h"
@@ -213,6 +223,7 @@ typedef struct {
 
 /* Python */
 #ifdef SWIGPYTHON
+%feature("autodoc", "1"); // this auto-documents all methods
 %include "pymodule.i"
 #endif /* SWIGPYTHON */
 
