@@ -137,6 +137,46 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
 
 }
 
+/* -------------------------------------------------------------------- */
+/*      If the same layer is given more that once, we need to           */
+/*      duplicate it.                                                   */
+/* -------------------------------------------------------------------- */
+static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj *pasSLDLayers)
+{
+    int m;
+    for (m=0; m<nSLDLayers; m++) {
+      int l;
+      int nIndex = msGetLayerIndex(map, pasSLDLayers[m].name);
+      if(pasSLDLayers[m].name == NULL) continue;
+      if( nIndex < 0 ) continue;
+      for (l=m+1; l<nSLDLayers; l++) {
+        if(pasSLDLayers[l].name == NULL)
+          continue;
+        if (strcasecmp(pasSLDLayers[m].name, pasSLDLayers[l].name)== 0) {
+          layerObj* psTmpLayer = (layerObj *) malloc(sizeof(layerObj));
+          char tmpId[128];
+
+          initLayer(psTmpLayer, map);
+          msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
+          /* open the source layer */
+          if ( !psTmpLayer->vtable)
+            msInitializeVirtualTable(psTmpLayer);
+
+          /*make the name unique*/
+          snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),
+                   map->numlayers);
+          if (psTmpLayer->name)
+            msFree(psTmpLayer->name);
+          psTmpLayer->name = msStrdup(tmpId);
+          msFree(pasSLDLayers[l].name);
+          pasSLDLayers[l].name = msStrdup(tmpId);
+          msInsertLayer(map, psTmpLayer, -1);
+          MS_REFCNT_DECR(psTmpLayer);
+        }
+      }
+    }
+}
+
 /************************************************************************/
 /*                              msSLDApplySLD                           */
 /*                                                                      */
@@ -163,47 +203,11 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
       return MS_FAILURE;
   }
 
-  /* -------------------------------------------------------------------- */
-  /*      If the same layer is given more that once, we need to           */
-  /*      duplicate it.                                                   */
-  /* -------------------------------------------------------------------- */
   if (pasSLDLayers && nSLDLayers>0) {
     int i;
-    int m;
-    for (m=0; m<nSLDLayers; m++) {
-      int l;
-      layerObj *psTmpLayer=NULL;
-      int nIndex;
-      char tmpId[128];
-      nIndex = msGetLayerIndex(map, pasSLDLayers[m].name);
-      if(pasSLDLayers[m].name == NULL) continue;
-      for (l=0; l<nSLDLayers; l++) {
-        if(pasSLDLayers[l].name == NULL)
-          continue;
 
+    msSLDApplySLD_DuplicateLayers(map, nSLDLayers, pasSLDLayers);
 
-        if (m !=l && strcasecmp(pasSLDLayers[m].name, pasSLDLayers[l].name)== 0 &&
-            nIndex != -1) {
-          psTmpLayer = (layerObj *) malloc(sizeof(layerObj));
-          initLayer(psTmpLayer, map);
-          msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
-          /* open the source layer */
-          if ( !psTmpLayer->vtable)
-            msInitializeVirtualTable(psTmpLayer);
-
-          /*make the name unique*/
-          snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),
-                   map->numlayers);
-          if (psTmpLayer->name)
-            msFree(psTmpLayer->name);
-          psTmpLayer->name = msStrdup(tmpId);
-          msFree(pasSLDLayers[l].name);
-          pasSLDLayers[l].name = msStrdup(tmpId);
-          msInsertLayer(map, psTmpLayer, -1);
-          MS_REFCNT_DECR(psTmpLayer);
-        }
-      }
-    }
     for (i=0; i<map->numlayers; i++) {
       layerObj *lp = NULL;
       const char *pszWMSLayerName = NULL;
