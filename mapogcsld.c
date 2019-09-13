@@ -251,8 +251,16 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
           if ( sldLayer->numclasses > 0) {
             int iClass = 0;
             int k;
+            int bSLDHasNamedClass = MS_FALSE;
 
             lp->type = sldLayer->type;
+
+            for (k=0; k < sldLayer->numclasses; k++) {
+                if( sldLayer->class[k]->group ) {
+                    bSLDHasNamedClass = MS_TRUE;
+                    break;
+                }
+            }
 
             for(k=0; k<lp->numclasses; k++) {
               if (lp->class[k] != NULL) {
@@ -263,13 +271,21 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
                 }
               }
             }
-
             lp->numclasses = 0;
 
-            /*unset the classgroup on the layer if it was set. This allows the layer to render
-              with all the classes defined in the SLD*/
-            msFree(lp->classgroup);
-            lp->classgroup = NULL;
+            if( bSLDHasNamedClass ) {
+                if( sldLayer->classgroup ) {
+                    /* Set the class group to the class that has UserStyle.IsDefault */
+                    msFree( lp->classgroup);
+                    lp->classgroup = msStrdup(sldLayer->classgroup);
+                }
+            }
+            else {
+                /*unset the classgroup on the layer if it was set. This allows the layer to render
+                with all the classes defined in the SLD*/
+                msFree(lp->classgroup);
+                lp->classgroup = NULL;
+            }
 
             for (k=0; k < sldLayer->numclasses; k++) {
               if (msGrowLayerClasses(lp) == NULL)
@@ -762,6 +778,17 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
 static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle;
+    const char* pszUserStyleName = CPLGetXMLValue(psUserStyle, "Name", NULL);
+    if( pszUserStyleName )
+    {
+        const char* pszIsDefault = CPLGetXMLValue(psUserStyle, "IsDefault", "0");
+        if( EQUAL(pszIsDefault, "true") || EQUAL(pszIsDefault, "1") )
+        {
+            msFree(psLayer->classgroup);
+            psLayer->classgroup = msStrdup(pszUserStyleName);
+        }
+    }
+
     LOOP_ON_CHILD_ELEMENT(psUserStyle, psFeatureTypeStyle,
                           "FeatureTypeStyle")
     {
@@ -783,7 +810,7 @@ static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
           psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
           nClassBeforeFilter = psLayer->numclasses;
           if (psElseFilter == NULL)
-            msSLDParseRule(psRule, psLayer);
+            msSLDParseRule(psRule, psLayer, pszUserStyleName);
           nClassAfterFilter = psLayer->numclasses;
 
           /* -------------------------------------------------------------------- */
@@ -830,7 +857,7 @@ static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
         {
           CPLXMLNode* psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
           if (psElseFilter) {
-            msSLDParseRule(psRule, psLayer);
+            msSLDParseRule(psRule, psLayer, pszUserStyleName);
             _SLDApplyRuleValues(psRule, psLayer, 1);
           }
         }
@@ -844,15 +871,17 @@ static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
 /************************************************************************/
 int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
-  CPLXMLNode *psUserStyle;
   CPLXMLNode *psLayerFeatureConstraints = NULL;
 
   if (!psRoot || !psLayer)
     return MS_FAILURE;
 
-  psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
-  if (psUserStyle) {
-    msSLDParseUserStyle(psUserStyle, psLayer);
+  if (CPLGetXMLNode(psRoot, "UserStyle")) {
+    CPLXMLNode *psUserStyle;
+    LOOP_ON_CHILD_ELEMENT(psRoot, psUserStyle, "UserStyle")
+    {
+        msSLDParseUserStyle(psUserStyle, psLayer);
+    }
   }
   /* check for Named styles*/
   else {
@@ -914,11 +943,11 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
 
 /************************************************************************/
-/*        void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)    */
+/*                      msSLDParseRule()                                */
 /*                                                                      */
-/*      Parse a Rule node into classes for a spcific layer.             */
+/*      Parse a Rule node into classes for a specific layer.            */
 /************************************************************************/
-int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
+int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserStyleName)
 {
   CPLXMLNode *psLineSymbolizer = NULL;
   CPLXMLNode *psPolygonSymbolizer = NULL;
@@ -926,8 +955,7 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
   CPLXMLNode *psTextSymbolizer = NULL;
   CPLXMLNode *psRasterSymbolizer = NULL;
 
-  int bSymbolizer = 0;
-  int bNewClass=0, nSymbolizer=0;
+  int nSymbolizer=0;
 
   if (!psRoot || !psLayer)
     return MS_FAILURE;
@@ -942,18 +970,13 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
   /*      one symbolizer of the same type, a style is added in the        */
   /*      same class.                                                     */
   /* ==================================================================== */
-  nSymbolizer =0;
 
   /* line symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psLineSymbolizer, "LineSymbolizer")
   {
-    bSymbolizer = 1;
-    if (nSymbolizer == 0)
-      bNewClass = 1;
-    else
-      bNewClass = 0;
-
-    msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass);
+    const int bNewClass = (nSymbolizer == 0);
+    msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass,
+                             pszUserStyleName);
     psLayer->type = MS_LAYER_LINE;
     nSymbolizer++;
   }
@@ -961,25 +984,18 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
   /* Polygon symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psPolygonSymbolizer, "PolygonSymbolizer")
   {
-    bSymbolizer = 1;
-    if (nSymbolizer == 0)
-      bNewClass = 1;
-    else
-      bNewClass = 0;
+    const int bNewClass = (nSymbolizer == 0);
     msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer,
-                                bNewClass);
+                                bNewClass, pszUserStyleName);
     psLayer->type = MS_LAYER_POLYGON;
     nSymbolizer++;
   }
   /* Point Symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psPointSymbolizer, "PointSymbolizer")
   {
-    bSymbolizer = 1;
-    if (nSymbolizer == 0)
-      bNewClass = 1;
-    else
-      bNewClass = 0;
-    msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass);
+    const int bNewClass = (nSymbolizer == 0);
+    msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass,
+                              pszUserStyleName);
     psLayer->type = MS_LAYER_POINT;
     nSymbolizer++;
   }
@@ -998,23 +1014,44 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
   {
     if (nSymbolizer == 0)
       psLayer->type = MS_LAYER_POINT;
-    msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, bSymbolizer);
+    msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, nSymbolizer > 0, pszUserStyleName);
   }
 
   /* Raster symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psRasterSymbolizer, "RasterSymbolizer")
   {
-    msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer);
+    msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer, pszUserStyleName);
     psLayer->type = MS_LAYER_RASTER;
   }
 
   return MS_SUCCESS;
 }
 
+/************************************************************************/
+/*                            getClassId()                              */
+/************************************************************************/
+
+static int getClassId(layerObj *psLayer,
+                      int bNewClass,
+                      const char* pszUserStyleName)
+{
+    int nClassId;
+    if (bNewClass || psLayer->numclasses <= 0) {
+      if (msGrowLayerClasses(psLayer) == NULL)
+        return -1;
+      initClass(psLayer->class[psLayer->numclasses]);
+      nClassId = psLayer->numclasses;
+      if( pszUserStyleName )
+        psLayer->class[nClassId]->group = msStrdup(pszUserStyleName);
+      psLayer->numclasses++;
+    } else {
+      nClassId = psLayer->numclasses-1;
+    }
+    return nClassId;
+}
 
 /************************************************************************/
-/*        void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj    */
-/*      *psLayer)                                                       */
+/*                 msSLDParseLineSymbolizer()                           */
 /*                                                                      */
 /*      Parses the LineSymbolizer rule and creates a class in the       */
 /*      layer.                                                          */
@@ -1058,9 +1095,8 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /*       ...                                                            */
 /************************************************************************/
 int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                             int bNewClass)
+                             int bNewClass, const char* pszUserStyleName)
 {
-  int nClassId = 0;
   CPLXMLNode *psStroke=NULL, *psOffset=NULL;
   int iStyle = 0;
 
@@ -1069,14 +1105,9 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
   psStroke =  CPLGetXMLNode(psRoot, "Stroke");
   if (psStroke) {
-    if (bNewClass || psLayer->numclasses <= 0) {
-      if (msGrowLayerClasses(psLayer) == NULL)
+    int nClassId = getClassId(psLayer, bNewClass, pszUserStyleName);
+    if( nClassId < 0 )
         return MS_FAILURE;
-      initClass(psLayer->class[psLayer->numclasses]);
-      nClassId = psLayer->numclasses;
-      psLayer->numclasses++;
-    } else
-      nClassId = psLayer->numclasses-1;
 
     iStyle = psLayer->class[nClassId]->numstyles;
     msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
@@ -1416,8 +1447,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
 
 
 /************************************************************************/
-/*           void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot,       */
-/*      layerObj *psLayer)                                              */
+/*                      msSLDParsePolygonSymbolizer()                   */
 /*                                                                      */
 /*      <xs:element name="PolygonSymbolizer">                           */
 /*      <xs:complexType>                                                */
@@ -1492,7 +1522,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
 /*                                                                      */
 /************************************************************************/
 int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                                int bNewClass)
+                                int bNewClass, const char* pszUserStyleName)
 {
   CPLXMLNode *psFill, *psStroke;
   int nClassId=0, iStyle=0;
@@ -1521,14 +1551,9 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
   psFill =  CPLGetXMLNode(psRoot, "Fill");
   if (psFill) {
-    if (bNewClass || psLayer->numclasses <= 0) {
-      if (msGrowLayerClasses(psLayer) == NULL)
+    nClassId = getClassId(psLayer, bNewClass, pszUserStyleName);
+    if( nClassId < 0 )
         return MS_FAILURE;
-      initClass(psLayer->class[psLayer->numclasses]);
-      nClassId = psLayer->numclasses;
-      psLayer->numclasses++;
-    } else
-      nClassId = psLayer->numclasses-1;
 
     iStyle = psLayer->class[nClassId]->numstyles;
     msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
@@ -1554,14 +1579,9 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
       iStyle = psLayer->class[nClassId]->numstyles;
       msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
     } else {
-      if (bNewClass || psLayer->numclasses <= 0) {
-        if (msGrowLayerClasses(psLayer) == NULL)
-          return MS_FAILURE;
-        initClass(psLayer->class[psLayer->numclasses]);
-        nClassId = psLayer->numclasses;
-        psLayer->numclasses++;
-      } else
-        nClassId = psLayer->numclasses-1;
+      nClassId = getClassId(psLayer, bNewClass, pszUserStyleName);
+      if( nClassId < 0 )
+        return MS_FAILURE;
 
       iStyle = psLayer->class[nClassId]->numstyles;
       msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
@@ -2167,7 +2187,7 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
 /*      </xs:element>                                                   */
 /************************************************************************/
 int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                              int bNewClass)
+                              int bNewClass, const char* pszUserStyleName)
 {
   int nClassId = 0;
   int iStyle = 0;
@@ -2175,14 +2195,9 @@ int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
   if (!psRoot || !psLayer)
     return MS_FAILURE;
 
-  if (bNewClass || psLayer->numclasses <= 0) {
-    if (msGrowLayerClasses(psLayer) == NULL)
-      return MS_FAILURE;
-    initClass(psLayer->class[psLayer->numclasses]);
-    nClassId = psLayer->numclasses;
-    psLayer->numclasses++;
-  } else
-    nClassId = psLayer->numclasses-1;
+  nClassId = getClassId(psLayer, bNewClass, pszUserStyleName);
+  if( nClassId < 0 )
+    return MS_FAILURE;
 
   iStyle = psLayer->class[nClassId]->numstyles;
   msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
@@ -2362,7 +2377,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
 /*      </xs:element>                                                   */
 /************************************************************************/
 int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                             int bOtherSymboliser)
+                             int bOtherSymboliser, const char* pszUserStyleName)
 {
   int nStyleId=0, nClassId=0;
 
@@ -2374,6 +2389,8 @@ int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
       return MS_FAILURE;
     initClass(psLayer->class[psLayer->numclasses]);
     nClassId = psLayer->numclasses;
+    if( pszUserStyleName )
+        psLayer->class[nClassId]->group = msStrdup(pszUserStyleName);
     psLayer->numclasses++;
     msMaybeAllocateClassStyle(psLayer->class[nClassId], 0);
     nStyleId = 0;
@@ -2484,7 +2501,8 @@ int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      </xsd:simpleType>                                               */
 /*                                                                      */
 /************************************************************************/
-int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
+int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+                               const char* pszUserStyleName)
 {
   CPLXMLNode  *psColorMap = NULL, *psColorEntry = NULL, *psOpacity=NULL;
   char *pszColor=NULL, *pszQuantity=NULL;
@@ -2569,6 +2587,8 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                 initClass(psLayer->class[psLayer->numclasses]);
                 psLayer->numclasses++;
                 nClassId = psLayer->numclasses-1;
+                if( pszUserStyleName )
+                    psLayer->class[nClassId]->group = msStrdup(pszUserStyleName);
 
                 /*set the class name using the label. If label not defined
                   set it with the quantity*/
@@ -2633,6 +2653,9 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
             initClass(psLayer->class[psLayer->numclasses]);
             psLayer->numclasses++;
             nClassId = psLayer->numclasses-1;
+            if( pszUserStyleName )
+                psLayer->class[nClassId]->group = msStrdup(pszUserStyleName);
+
             msMaybeAllocateClassStyle(psLayer->class[nClassId], 0);
             if (pszLabel)
               psLayer->class[nClassId]->name = msStrdup(pszLabel);
@@ -2727,6 +2750,8 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
               initClass(psLayer->class[psLayer->numclasses]);
               psLayer->numclasses++;
               nClassId = psLayer->numclasses-1;
+              if( pszUserStyleName )
+                psLayer->class[nClassId]->group = msStrdup(pszUserStyleName);
               msMaybeAllocateClassStyle(psLayer->class[nClassId], 0);
               psLayer->class[nClassId]->numstyles = 1;
               psLayer->class[nClassId]->styles[0]->color.red =
