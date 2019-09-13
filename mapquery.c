@@ -819,6 +819,7 @@ int msQueryByFilter(mapObj *map)
     */
     lp->filteritem = map->query.filteritem; /* re-point lp->filteritem */
     if(old_filter.string != NULL) { /* need to merge filters to create one logical expression */
+      msFreeExpression(&lp->filter);
       lp->filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);      
       if(!lp->filter.string) {
 	msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");

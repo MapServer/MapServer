@@ -355,6 +355,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   char szPath[MS_MAXPATHLEN];
   symbolObj *symbol=NULL;
   char *extension=NULL;
+  int symbolidx;
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
@@ -366,7 +367,9 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   /* Allocate/init memory for new symbol if needed */
   if (msGrowSymbolSet(symbolset) == NULL)
     return -1;
-  symbol = symbolset->symbol[symbolset->numsymbols];
+  symbolidx = symbolset->numsymbols;
+  symbolset->numsymbols++;
+  symbol = symbolset->symbol[symbolidx];
 
   /* check if svg checking extension otherwise assume it's a pixmap */
   extension = strrchr(filename, '.');
@@ -418,7 +421,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     symbol->imagepath = msStrdup(filename);
   }
   symbol->name = msStrdup(filename);
-  return(symbolset->numsymbols++);
+  return symbolidx;
 }
 
 int msFreeSymbolSet(symbolSetObj *symbolset)

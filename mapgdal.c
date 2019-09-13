@@ -105,10 +105,6 @@ void msGDALCleanup( void )
     while( iRepeat-- )
       CPLPopErrorHandler();
 
-#if GDAL_RELEASE_DATE > 20021001
-    GDALDestroyDriverManager();
-#endif
-
     msReleaseLock( TLOCK_GDAL );
 
     bGDALInitialized = 0;

@@ -204,10 +204,12 @@ int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map)
 
 int msCopyExpression(expressionObj *dst, expressionObj *src)
 {
+  if((dst->type == MS_REGEX) && dst->compiled) ms_regfree(&(dst->regex));
+  dst->compiled = MS_FALSE;
+
   MS_COPYSTRING(dst->string, src->string);
   MS_COPYSTELEM(type);
   MS_COPYSTELEM(flags);
-  dst->compiled = MS_FALSE;
 
   return MS_SUCCESS;
 }

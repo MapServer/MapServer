@@ -877,7 +877,11 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
   int i;
   char *script_url_encoded=NULL;
 
-  script_url_encoded = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "CO", "onlineresource", req));
+  {
+      char* pszTmp = msOWSGetOnlineResource(map, "CO", "onlineresource", req);
+      script_url_encoded = msEncodeHTMLEntities(pszTmp);
+      msFree(pszTmp);
+  }
 
   /* start the ContentMetadata section, only need the full start tag if this is the only section requested */
   /* TODO: add Xlink attributes for other sources of this information  */
@@ -902,10 +906,13 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
 
       if(msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params, script_url_encoded) != MS_SUCCESS ) {
         msIO_printf("</ContentMetadata>\n");
+        msFree(script_url_encoded);
         return MS_FAILURE;
       }
     }
   }
+
+  msFree(script_url_encoded);
 
   /* done */
   msIO_printf("</ContentMetadata>\n");
@@ -1325,8 +1332,6 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
   char *coverageName=NULL;
   char *script_url_encoded=NULL;
 
-  script_url_encoded = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "CO", "onlineresource", req));
-
   /* -------------------------------------------------------------------- */
   /*      1.1.x is sufficiently different we have a whole case for        */
   /*      it.  The remainder of this function is for 1.0.0.               */
@@ -1384,6 +1389,13 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
               "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
               "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
               "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/describeCoverage.xsd\">\n", params->version, updatesequence, msOWSGetSchemasLocation(map), params->version);
+
+  {
+    char* pszTmp = msOWSGetOnlineResource(map, "CO", "onlineresource", req);
+    script_url_encoded = msEncodeHTMLEntities(pszTmp);
+    msFree(pszTmp);
+  }
+
   if(params->coverages) { /* use the list */
     for( j = 0; params->coverages[j]; j++ ) {
       coverages = msStringSplit(params->coverages[j], ',', &numcoverages);
@@ -1409,7 +1421,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
     }
   }
 
-
+  msFree(script_url_encoded);
 
   /* done */
   msIO_printf("</CoverageDescription>\n");
