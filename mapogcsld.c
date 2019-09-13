@@ -765,29 +765,23 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
 }
 
 /************************************************************************/
-/*                           msSLDParseNamedLayer                       */
+/*                          msSLDParseUserStyle                         */
 /*                                                                      */
-/*      Parse NamedLayer root.                                          */
+/*      Parse UserStyle node.                                           */
 /************************************************************************/
-int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
+
+static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
 {
-  CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
-  CPLXMLNode *psSLDName = NULL, *psNamedStyle=NULL;
-  CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
-  CPLXMLNode *psLayerFeatureConstraints = NULL;
-  int nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
-  int nClassAfterRule=0, nClassBeforeRule=0;
+    CPLXMLNode *psFeatureTypeStyle;
 
-  if (!psRoot || !psLayer)
-    return MS_FAILURE;
-
-  psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
-  if (psUserStyle) {
     psFeatureTypeStyle = CPLGetXMLNode(psUserStyle, "FeatureTypeStyle");
     if (psFeatureTypeStyle) {
       while (psFeatureTypeStyle && psFeatureTypeStyle->pszValue &&
              strcasecmp(psFeatureTypeStyle->pszValue,
                         "FeatureTypeStyle") == 0) {
+
+        CPLXMLNode* psRule;
+
         if (!psFeatureTypeStyle->pszValue ||
             strcasecmp(psFeatureTypeStyle->pszValue,
                        "FeatureTypeStyle") != 0) {
@@ -800,6 +794,11 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
         /* -------------------------------------------------------------------- */
         psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
         while (psRule) {
+          CPLXMLNode *psFilter = NULL;
+          CPLXMLNode *psElseFilter = NULL;
+          int nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
+          int nClassAfterRule=0, nClassBeforeRule=0;
+
           if (!psRule->pszValue ||
               strcasecmp(psRule->pszValue, "Rule") != 0) {
             psRule = psRule->psNext;
@@ -858,6 +857,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
         /* -------------------------------------------------------------------- */
         psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
         while (psRule) {
+          CPLXMLNode* psElseFilter;
           if (!psRule->pszValue ||
               strcasecmp(psRule->pszValue, "Rule") != 0) {
             psRule = psRule->psNext;
@@ -876,12 +876,30 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
         psFeatureTypeStyle = psFeatureTypeStyle->psNext;
       }
     }
+}
+
+/************************************************************************/
+/*                           msSLDParseNamedLayer                       */
+/*                                                                      */
+/*      Parse NamedLayer root.                                          */
+/************************************************************************/
+int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
+{
+  CPLXMLNode *psUserStyle;
+  CPLXMLNode *psLayerFeatureConstraints = NULL;
+
+  if (!psRoot || !psLayer)
+    return MS_FAILURE;
+
+  psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
+  if (psUserStyle) {
+    msSLDParseUserStyle(psUserStyle, psLayer);
   }
   /* check for Named styles*/
   else {
-    psNamedStyle = CPLGetXMLNode(psRoot, "NamedStyle");
+    CPLXMLNode* psNamedStyle = CPLGetXMLNode(psRoot, "NamedStyle");
     if (psNamedStyle) {
-      psSLDName = CPLGetXMLNode(psNamedStyle, "Name");
+      CPLXMLNode* psSLDName = CPLGetXMLNode(psNamedStyle, "Name");
       if (psSLDName && psSLDName->psChild &&  psSLDName->psChild->pszValue) {
         msFree(psLayer->classgroup);
         psLayer->classgroup = msStrdup(psSLDName->psChild->pszValue);
@@ -907,6 +925,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
       }
     }
     if( psFeatureTypeConstraint != NULL ) {
+      CPLXMLNode* psFilter;
       if( CPLGetXMLNode(psFeatureTypeConstraint, "FeatureTypeName") != NULL ) {
         msSetError(MS_WMSERR, "FeatureTypeName element is not "
                     "supported in FeatureTypeConstraint", "");
