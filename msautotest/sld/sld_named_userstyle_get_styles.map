@@ -1,0 +1,63 @@
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+
+# GetStyles
+# RUN_PARMS: sld_named_userstyle_get_styles.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline" > [RESULT]
+
+MAP
+
+NAME TEST
+SHAPEPATH ./data
+SIZE 300 300
+IMAGECOLOR 100 100 100
+FONTSET "data/fonts.lst"
+PROJECTION
+   "init=epsg:4326"
+END
+WEB
+  IMAGEPATH "/tmp/ms_tmp/"
+  IMAGEURL "/ms_tmp/"
+  METADATA
+    "wms_title"		   "Test SLD"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:4326"
+    "ows_schemas_location" "http://schemas.opengis.net"
+    "ows_enable_request" "*" 
+    "ows_sld_enabled" "true"
+  END
+END
+
+LAYER
+  NAME lline
+  DATA hexagon
+  TYPE LINE
+  STATUS ON
+  SIZEUNITS pixels
+  CLASSGROUP "red_and_blue"
+  CLASS
+    GROUP "red_and_blue"
+    STYLE
+      WIDTH 5
+      OPACITY 50
+      COLOR 255 0 0
+    END
+  END
+  CLASS
+    GROUP "red_and_blue"
+    STYLE
+      WIDTH 3
+      OPACITY 50
+      COLOR 0 0 255
+    END
+  END
+  CLASS
+    GROUP "green"
+    STYLE
+      WIDTH 5
+      OPACITY 50
+      COLOR 0 255 0
+    END
+  END
+END
+
+END

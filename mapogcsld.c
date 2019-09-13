@@ -4145,11 +4145,24 @@ static void msSLDAppendName(msStringBuffer* sb, const char* pszName, int nVersio
     msFree(pszEncoded);
 }
 
-static void msSLDGenerateUserStyle(msStringBuffer* sb, layerObj *psLayer, int nVersion)
+static void msSLDGenerateUserStyle(msStringBuffer* sb, layerObj *psLayer, int nVersion,
+                                   const char* pszTargetGroup)
 {
     const char* pszWfsFilter;
 
     msStringBufferAppend(sb, "<UserStyle>\n");
+
+    if( pszTargetGroup )
+    {
+        msSLDAppendName(sb, pszTargetGroup, nVersion);
+        if( psLayer->classgroup &&
+            strcmp(psLayer->classgroup, pszTargetGroup) == 0 )
+        {
+            msStringBufferAppend(sb, nVersion > OWS_1_0_0 ?
+                                        "<se:IsDefault>true</se:IsDefault>\n" :
+                                        "<IsDefault>true</IsDefault>\n");
+        }
+    }
 
     msStringBufferAppend(sb, nVersion > OWS_1_0_0 ?
         "<se:FeatureTypeStyle>\n" : "<FeatureTypeStyle>\n");
@@ -4160,6 +4173,20 @@ static void msSLDGenerateUserStyle(msStringBuffer* sb, layerObj *psLayer, int nV
       for (i=0; i<psLayer->numclasses; i++) {
         char* pszFilter;
         double dfMinScale =-1, dfMaxScale = -1;
+
+        /* Only write down classes that match the group of interest */
+        if( psLayer->class[i]->group )
+        {
+            if( pszTargetGroup == NULL ||
+                strcmp(psLayer->class[i]->group, pszTargetGroup) != 0 )
+            {
+                continue;
+            }
+        }
+        else if( pszTargetGroup != NULL )
+        {
+            continue;
+        }
 
         msStringBufferAppend(sb, nVersion > OWS_1_0_0 ? "<se:Rule>\n" : "<Rule>\n" );
 
@@ -4298,6 +4325,33 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
        psLayer->type == MS_LAYER_LINE ||
        psLayer->type == MS_LAYER_POLYGON )) {
 
+    int i;
+    int numClassGroupNames = 0;
+    char** papszClassGroupNames =
+                (char**) msSmallMalloc(sizeof(char*) * psLayer->numclasses);
+    for (i=0; i<psLayer->numclasses; i++) {
+        const char* group = psLayer->class[i]->group;
+        int j;
+        for( j = 0; j < numClassGroupNames; j++ )
+        {
+            if( group == NULL )
+            {
+                if( papszClassGroupNames[j] == NULL )
+                    break;
+            }
+            else if( papszClassGroupNames[j] != NULL &&
+                     strcmp(papszClassGroupNames[j], group) == 0 )
+            {
+                break;
+            }
+        }
+        if( j >= numClassGroupNames )
+        {
+            papszClassGroupNames[numClassGroupNames] = group ? msStrdup(group) : NULL;
+            numClassGroupNames ++;
+        }
+    }
+
     msStringBufferAppend(sb, "<NamedLayer>\n");
 
     pszWMSLayerName = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
@@ -4307,7 +4361,11 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
                     "NamedLayer",
                     nVersion);
 
-    msSLDGenerateUserStyle(sb, psLayer, nVersion);
+    for (i=0; i<numClassGroupNames; i++) {
+        msSLDGenerateUserStyle(sb, psLayer, nVersion, papszClassGroupNames[i]);
+        msFree(papszClassGroupNames[i]);
+    }
+    msFree(papszClassGroupNames);
 
     msStringBufferAppend(sb, "</NamedLayer>\n");
   }
