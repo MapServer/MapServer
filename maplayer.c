@@ -1785,7 +1785,7 @@ void msLayerEnablePaging(layerObj *layer, int value)
       return;
     }
   }
-  return layer->vtable->LayerEnablePaging(layer, value);
+  layer->vtable->LayerEnablePaging(layer, value);
 }
 
 int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)

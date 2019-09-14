@@ -2786,7 +2786,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   /* free bind values */
   free(bind_key);
-  free(layer_bind_values);
+  free((void*)layer_bind_values);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
@@ -2983,7 +2983,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
 
   /* free bind values */
   free(bind_key);
-  free(layer_bind_values);
+  free((void*)layer_bind_values);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n",
