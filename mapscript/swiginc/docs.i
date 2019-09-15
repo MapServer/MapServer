@@ -26,12 +26,22 @@
    ===========================================================================
 */
 
-%define CLASSOBJDOC
+%define CLASSDOC
       // hide parameters at the class level with an empty constructor
       %feature("autodoc", "classObj()
 Class to store classification information") classObj;
 %enddef
 
-%define CLASSOBJDOCSTRING
+%define CLASSDOCSTRING
     %pythoncode "../swigdoc/class.py"
+%enddef
+
+%define COLORDOC
+      %feature("autodoc", "colorObj()
+MapServer colors are instances of colorObj. A colorObj may be a lone object or 
+an attribute of other objects and have no other associations") colorObj;
+%enddef
+
+%define COLORDOCSTRING
+    %pythoncode "../swigdoc/color.py"
 %enddef

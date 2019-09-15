@@ -1179,14 +1179,14 @@ typedef struct labelObj labelObj;
   /*      basic symbolization and classification information              */
   /************************************************************************/
 
-#if defined(SWIG) && defined(SWIGPYTHON) && defined(CLASSOBJDOC) /* Add in autodoc comments */
-  CLASSOBJDOC
+#if defined(SWIG) && defined(SWIGPYTHON) /* Add in autodoc comments */
+  CLASSDOC
 #endif
 
   struct classObj {
 
-#if defined(SWIG) && defined(SWIGPYTHON) && defined(CLASSOBJDOCSTRING) /* Add in autodoc comments */
-  CLASSOBJDOCSTRING
+#if defined(SWIG) && defined(SWIGPYTHON) /* Add in doctring */
+  CLASSDOCSTRING
 #endif
 
 #ifndef SWIG

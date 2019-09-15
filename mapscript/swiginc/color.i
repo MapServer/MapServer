@@ -29,13 +29,12 @@
    ===========================================================================
 */
 
-%{
-#include "../../mapserver.h"
-%}
-
 %extend colorObj 
 {
-  
+
+    %feature("autodoc", "colorObj.__init__()
+
+Create a new instance. The color arguments are optional.") colorObj;
     colorObj(int red=0, int green=0, int blue=0, int alpha=255) 
     {
         colorObj *color;
@@ -60,7 +59,9 @@
     {
         free(self);
     }
- 
+
+    %feature("docstring") setRGB 
+    "Set all four RGBA components. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int setRGB(int red, int green, int blue, int alpha = 255) 
     {
         /* Check colors */
@@ -72,7 +73,14 @@
         MS_INIT_COLOR(*self, red, green, blue, alpha);
         return MS_SUCCESS;
     }
- 
+
+    %feature("docstring") setHex 
+    "Set the color to values specified in case-independent hexadecimal notation. 
+hex must start with a “#” followed by three or four hex bytes, e.g. '#ffffff' 
+or '#ffffffff'. If only three hex bytes are supplied, the alpha will be set 
+to 255. Calling setHex('#ffffff') therefore assigns values of 255 to each 
+color component, including the alpha. 
+Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int setHex(char *psHexColor) 
     {
         int red, green, blue, alpha = 255;
@@ -96,7 +104,11 @@
             return MS_FAILURE;
         }
     }   
-    
+
+    %feature("docstring") toHex 
+    "Complement to setHex, returning a hexadecimal representation of the color 
+components. If alpha is 255 then this is three hex bytes '#rrggbb', 
+otherwise four hex bytes '#rrggbbaa'";
     %newobject toHex;
     char *toHex() 
     {
