@@ -6,6 +6,7 @@ image: Visual Studio 2017
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
+  - '%BUILD_FOLDER%/sdk/swigwin-3.0.12.zip'
 
 environment:
   # VS 2017
