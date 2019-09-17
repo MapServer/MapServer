@@ -39,7 +39,7 @@ build_script:
   - echo "%SDK_ZIP%"
   - echo "%SDK_URL%"
   - mkdir sdk
-  - 7z x swigwin-3.0.12.zip -o sdk > nul
+  - 7z x swigwin-3.0.12.zip -osdk > nul
   - cd sdk
   - appveyor DownloadFile "%SDK_URL%"
   - 7z x "%SDK_ZIP%" > nul
