@@ -67,7 +67,7 @@ deploy: off
 
 after_test:
   - cd %BUILD_FOLDER%
-  - 7z a mapserver.zip ./build/*
+  - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
 #on_finish:
