@@ -39,6 +39,7 @@ build_script:
   - echo "%SDK_ZIP%"
   - echo "%SDK_URL%"
   - mkdir sdk
+  - 7z x swigwin-3.0.12.zip -o sdk > nul
   - cd sdk
   - appveyor DownloadFile "%SDK_URL%"
   - 7z x "%SDK_ZIP%" > nul
@@ -46,7 +47,6 @@ build_script:
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
-  - 7z x '%BUILD_FOLDER%/swigwin-3.0.12.zip' > nul
   - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/swigwin-3.0.12/swig.exe
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/regex-0.12
   - if "%platform%" == "x86" SET PYTHON_EXECUTABLE=c:/python27/python.exe
