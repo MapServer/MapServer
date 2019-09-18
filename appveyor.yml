@@ -6,6 +6,7 @@ image: Visual Studio 2017
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
+  - '%APPVEYOR_BUILD_FOLDER%\swigwin-3.0.12.zip'
 
 environment:
   # VS 2017
@@ -32,11 +33,13 @@ build_script:
   - if "%platform%" == "x64" call "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
   - if "%platform%" == "x86" call "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
   - echo "%VS_FULL%"
+  - if not exist swigwin-3.0.12.zip appveyor DownloadFile https://sourceforge.net/projects/swig/files/swigwin/swigwin-3.0.12/swigwin-3.0.12.zip
   - set SDK_ZIP=%SDK%-dev.zip
   - set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
   - echo "%SDK_ZIP%"
   - echo "%SDK_URL%"
   - mkdir sdk
+  - 7z x swigwin-3.0.12.zip -osdk > nul
   - cd sdk
   - appveyor DownloadFile "%SDK_URL%"
   - 7z x "%SDK_ZIP%" > nul
@@ -44,13 +47,11 @@ build_script:
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
-  - appveyor DownloadFile https://sourceforge.net/projects/swig/files/swigwin/swigwin-3.0.12/swigwin-3.0.12.zip
-  - 7z x swigwin-3.0.12.zip > nul
   - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/swigwin-3.0.12/swig.exe
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/regex-0.12
   - if "%platform%" == "x86" SET PYTHON_EXECUTABLE=c:/python27/python.exe
   - if "%platform%" == "x64" SET PYTHON_EXECUTABLE=c:/python27-x64/python.exe
-  - cd %BUILD_FOLDER%  
+  - cd %BUILD_FOLDER%
   - mkdir build
   - cd build
   - set "PROJECT_BINARY_DIR=%BUILD_FOLDER%/build"
@@ -66,7 +67,7 @@ deploy: off
 
 after_test:
   - cd %BUILD_FOLDER%
-  - 7z a mapserver.zip ./build/*
+  - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
 #on_finish:
