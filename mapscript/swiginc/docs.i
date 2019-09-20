@@ -45,3 +45,12 @@ an attribute of other objects and have no other associations") colorObj;
 %define COLORDOCSTRING
     %pythoncode "../swigdoc/color.py"
 %enddef
+
+%define CLUSTERDOC
+      %feature("autodoc", "clusterObj()
+Class to define clustering") clusterObj;
+%enddef
+
+%define CLUSTERDOCSTRING
+    %pythoncode "../swigdoc/cluster.py"
+%enddef
