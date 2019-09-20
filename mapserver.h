@@ -776,8 +776,15 @@ extern "C" {
   } parseObj;
 #endif
 
+#if defined(SWIG) && defined(SWIGPYTHON) /* Add in autodoc comments */
+  CLUSTERDOC
+#endif
+
   /* MS RFC 69*/
   typedef struct {
+#if defined(SWIG) && defined(SWIGPYTHON) /* Add in doctring */
+    CLUSTERDOCSTRING
+#endif
     double maxdistance; /* max distance between clusters */
     double buffer;      /* the buffer size around the selection area */
     char* region;       /* type of the cluster region (rectangle or ellipse) */
