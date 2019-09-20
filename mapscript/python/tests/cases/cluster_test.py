@@ -51,9 +51,9 @@ class ClusterObjTestCase(unittest.TestCase):
     def testClusterObjGetSetGroup(self):
         """a cluster filter can be set and read"""
         c = mapscript.clusterObj()
-        exp = '100' # TODO not sure what would be a relevant expression here
+        exp = '100'  # TODO not sure what would be a relevant expression here
         c.setGroup(exp)
-        assert '"{}"'.format(exp)  == c.getGroupString()
+        assert '"{}"'.format(exp) == c.getGroupString()
 
 
 if __name__ == '__main__':
