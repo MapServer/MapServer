@@ -6,7 +6,7 @@
              Seth Girvin
 
    ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+   Copyright (c) 1996-2019 Regents of the University of Minnesota.
    
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -82,7 +82,7 @@ context of a parent layer by omitting the layerObj constructor argument") classO
     }
 
     %feature("docstring") updateFromString 
-    "Update a label from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+    "Update a class from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int updateFromString(char *snippet)
     {
         return msUpdateClassFromString(self, snippet, MS_FALSE);

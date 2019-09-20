@@ -1,13 +1,12 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript colorObj extensions
    Author:   Steve Lime 
              Sean Gillies, sgillies@frii.com
-             
+             Seth Girvin
+
    ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+   Copyright (c) 1996-2019 Regents of the University of Minnesota.
    
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -52,7 +51,7 @@ Create a new instance. The color arguments are optional.") colorObj;
     
         MS_INIT_COLOR(*color, red, green, blue, alpha);
 
-        return(color);    	
+        return(color);
     }
 
     ~colorObj() 
@@ -76,7 +75,7 @@ Create a new instance. The color arguments are optional.") colorObj;
 
     %feature("docstring") setHex 
     "Set the color to values specified in case-independent hexadecimal notation. 
-hex must start with a “#” followed by three or four hex bytes, e.g. '#ffffff' 
+hex must start with a '#' followed by three or four hex bytes, e.g. '#ffffff' 
 or '#ffffffff'. If only three hex bytes are supplied, the alpha will be set 
 to 255. Calling setHex('#ffffff') therefore assigns values of 255 to each 
 color component, including the alpha. 
@@ -141,6 +140,4 @@ otherwise four hex bytes '#rrggbbaa'";
         }
         return hexcolor;
     }
-
 }
-
