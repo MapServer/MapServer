@@ -123,6 +123,7 @@ extern "C" {
 
 #ifndef SWIG
 
+    FILE  *fp;
     unsigned int nRecordLength;
     int   nHeaderLength;
 
