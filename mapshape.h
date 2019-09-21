@@ -108,11 +108,11 @@ extern "C" {
 #endif
 
 
-#ifdef SWIGPYTHON /* Add in autodoc comments */
+#if defined(SWIG) && defined(SWIGPYTHON)
   DBFINFODOC
 #endif
   typedef struct {
-#ifdef SWIGPYTHON /* Add in doctring */
+#if defined(SWIG) && defined(SWIGPYTHON)
       DBFINFODOCSTRING
 #endif
 #ifdef SWIG
