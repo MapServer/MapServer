@@ -42,13 +42,13 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
 #define MS_IMAGECACHESIZE 6
 
 /* COLOR OBJECT */
-#if defined(SWIGPYTHON) /* Add in autodoc comments */
+#if defined(SWIG) && defined(SWIGPYTHON)
   COLORDOC
 #endif
 typedef struct {
-  #if defined(SWIGPYTHON) /* Add in doctring */
+#if defined(SWIG) && defined(SWIGPYTHON)
     COLORDOCSTRING
-  #endif
+#endif
   int red;
   int green;
   int blue;
