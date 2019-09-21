@@ -776,13 +776,13 @@ extern "C" {
   } parseObj;
 #endif
 
-#if defined(SWIG) && defined(SWIGPYTHON) /* Add in autodoc comments */
+#if defined(SWIGPYTHON) /* Add in autodoc comments */
   CLUSTERDOC
 #endif
 
   /* MS RFC 69*/
   typedef struct {
-#if defined(SWIG) && defined(SWIGPYTHON) /* Add in doctring */
+#if defined(SWIGPYTHON) /* Add in doctring */
     CLUSTERDOCSTRING
 #endif
     double maxdistance; /* max distance between clusters */
@@ -1001,11 +1001,11 @@ extern "C" {
     double size;
     double minsize, maxsize;
 
-#if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
+#if defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
   %immutable;
 #endif
     int patternlength;  /*moved from symbolObj in version 6.0*/
-#if defined(SWIG) && defined(SWIGPYTHON)
+#if defined(SWIGPYTHON)
   %mutable;
 #endif
 #if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
@@ -1186,13 +1186,13 @@ typedef struct labelObj labelObj;
   /*      basic symbolization and classification information              */
   /************************************************************************/
 
-#if defined(SWIG) && defined(SWIGPYTHON) /* Add in autodoc comments */
+#if defined(SWIGPYTHON) /* Add in autodoc comments */
   CLASSDOC
 #endif
 
   struct classObj {
 
-#if defined(SWIG) && defined(SWIGPYTHON) /* Add in doctring */
+#if defined(SWIGPYTHON) /* Add in doctring */
   CLASSDOCSTRING
 #endif
 
