@@ -108,18 +108,24 @@ extern "C" {
 #endif
 
 
-
+#if defined(SWIGPYTHON) /* Add in autodoc comments */
+  DBFINFODOC
+#endif
   typedef struct {
+#if defined(SWIGPYTHON) /* Add in doctring */
+      DBFINFODOCSTRING
+#endif
 #ifdef SWIG
     %immutable;
 #endif
-    FILE  *fp;
-
     int   nRecords;
+    int   nFields;
+
+#ifndef SWIG
 
     unsigned int nRecordLength;
     int   nHeaderLength;
-    int   nFields;
+
     int   *panFieldOffset;
     int   *panFieldSize;
     int   *panFieldDecimals;
@@ -136,6 +142,8 @@ extern "C" {
 
     char  *pszStringField;
     int   nStringFieldLen;
+#endif
+
 #ifdef SWIG
     %mutable;
 #endif
