@@ -108,11 +108,11 @@ extern "C" {
 #endif
 
 
-#if defined(SWIGPYTHON) /* Add in autodoc comments */
+#ifdef SWIGPYTHON /* Add in autodoc comments */
   DBFINFODOC
 #endif
   typedef struct {
-#if defined(SWIGPYTHON) /* Add in doctring */
+#ifdef SWIGPYTHON /* Add in doctring */
       DBFINFODOCSTRING
 #endif
 #ifdef SWIG
@@ -122,7 +122,6 @@ extern "C" {
     int   nFields;
 
 #ifndef SWIG
-
     FILE  *fp;
     unsigned int nRecordLength;
     int   nHeaderLength;
