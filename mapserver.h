@@ -776,13 +776,13 @@ extern "C" {
   } parseObj;
 #endif
 
-#if defined(SWIGPYTHON) /* Add in autodoc comments */
+#ifdef SWIGPYTHON /* Add in autodoc comments */
   CLUSTERDOC
 #endif
 
   /* MS RFC 69*/
   typedef struct {
-#if defined(SWIGPYTHON) /* Add in doctring */
+#ifdef SWIGPYTHON /* Add in doctring */
     CLUSTERDOCSTRING
 #endif
     double maxdistance; /* max distance between clusters */
@@ -1186,13 +1186,13 @@ typedef struct labelObj labelObj;
   /*      basic symbolization and classification information              */
   /************************************************************************/
 
-#if defined(SWIGPYTHON) /* Add in autodoc comments */
+#ifdef SWIGPYTHON /* Add in autodoc comments */
   CLASSDOC
 #endif
 
   struct classObj {
 
-#if defined(SWIGPYTHON) /* Add in doctring */
+#ifdef SWIGPYTHON /* Add in doctring */
   CLASSDOCSTRING
 #endif
 
