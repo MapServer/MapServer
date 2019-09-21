@@ -487,7 +487,7 @@
         else 
             shape->index = 0;
         if (insertFeatureList(&(self->features), shape) == NULL) 
-        return MS_FAILURE;
+            return MS_FAILURE;
         return MS_SUCCESS;
     }
 
