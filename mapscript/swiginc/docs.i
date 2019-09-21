@@ -54,3 +54,12 @@ Class to define clustering") clusterObj;
 %define CLUSTERDOCSTRING
     %pythoncode "../swigdoc/cluster.py"
 %enddef
+
+%define DBFINFODOC
+      %feature("autodoc", "DBFInfo()
+Class to provide information about a DBF file") DBFInfo;
+%enddef
+
+%define DBFINFODOCSTRING
+    %pythoncode "../swigdoc/dbfinfo.py"
+%enddef
