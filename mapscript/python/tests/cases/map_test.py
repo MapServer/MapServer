@@ -329,5 +329,58 @@ class MapSetWKTTestCase(MapTestCase):
         assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_METERS
 
 
+class MapRunSubTestCase(MapTestCase):
+
+    def testDefaultSubstitutions(self):
+        s = """
+MAP
+    WEB
+        VALIDATION
+            'key1' '.*'
+            'default_key1' 'Test Title'
+        END
+        METADATA
+            "wms_title" "%key1%"
+        END
+    END
+END
+        """
+        map = mapscript.fromstring(s)
+        map.applyDefaultSubstitutions()
+        assert map.web.metadata["wms_title"] == "Test Title"
+
+    def testRuntimeSubstitutions(self):
+        """
+        For supported parameters see https://mapserver.org/cgi/runsub.html#parameters-supported
+        """
+        s = """
+MAP
+    WEB
+        VALIDATION
+            'key1' '.*'
+            'default_key1' 'Test Title'
+        END
+        METADATA
+            "wms_title" "%key1%"
+        END
+    END
+    LAYER
+        TYPE POINT
+        FILTER ([size]<%my_filter%)
+        VALIDATION
+            'my_filter' '^[0-9]$'
+        END
+    END
+END
+        """
+        map = mapscript.fromstring(s)
+
+        d = {"key1": "New Title", "my_filter": "3"}
+        map.applySubstitutions(d)
+
+        assert map.web.metadata["wms_title"] == "New Title"
+        assert map.getLayer(0).getFilterString() == "([size]<3)"
+
+
 if __name__ == '__main__':
     unittest.main()
