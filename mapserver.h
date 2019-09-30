@@ -2783,6 +2783,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filename );
   MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
+#ifdef USE_GDAL
+  void msCleanVSIDir( const char *pszDir );
+#endif
 
   /* ==================================================================== */
   /*      prototypes for functions in mapogroutput.c                      */
