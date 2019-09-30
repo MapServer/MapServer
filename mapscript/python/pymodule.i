@@ -99,20 +99,19 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   /* Check if is a dict */
   if (PyDict_Check($input)) {
 
-    int size = PyDict_Size($input);
-    $3 = size;
-    $1 = (char **) malloc((size+1)*sizeof(char *));
-    $2 = (char **) malloc((size+1)*sizeof(char *));
     int i = 0;
+    int size = PyDict_Size($input);
 
     PyObject* keys = PyDict_Keys($input);
     PyObject* values = PyDict_Values($input);
-    PyObject *key;
-    PyObject *val;
+
+    $3 = size;
+    $1 = (char **) malloc((size+1)*sizeof(char *));
+    $2 = (char **) malloc((size+1)*sizeof(char *));
 
     for (i = 0; i < size; i++) {
-        key = PyList_GetItem(keys, i);
-        val = PyList_GetItem(values, i);
+        PyObject* key = PyList_GetItem(keys, i);
+        PyObject* val = PyList_GetItem(values, i);
 
         $1[i] = PyString_AsString(key);
         $2[i] = PyString_AsString(val);
