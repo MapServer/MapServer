@@ -44,8 +44,6 @@
 #  include "cpl_vsi.h"
 #endif
 
-void CleanVSIDir( const char *pszDir );
-
 /**********************************************************************
  *                          msInitWmsParamsObj()
  *
@@ -1363,7 +1361,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
    * to attach a "VSI" name to this buffer.
    * ------------------------------------------------------------------ */
   if( pasReqInfo[iReq].pszOutputFile == NULL ) {
-    CleanVSIDir( "/vsimem/msout" );
+    msCleanVSIDir( "/vsimem/msout" );
     mem_filename = msTmpFile(map, NULL, "/vsimem/msout/", "img.tmp" );
 
     VSIFCloseL(
