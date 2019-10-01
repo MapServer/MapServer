@@ -146,8 +146,8 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
 #endif /* PHP_VERSION_ID < 70000 */
 
 #if PHP_VERSION_ID >= 70300
-#define MAPSCRIPT_ADDREF(zv) zend_gc_addref(&(Z_COUNTED(zv))->gc)
-#define MAPSCRIPT_ADDREF_P(p) zend_gc_addref(&(Z_COUNTED_P(p))->gc)
+#define MAPSCRIPT_ADDREF(zv) if(!Z_ISUNDEF(zv)) GC_ADDREF(Z_COUNTED(zv))
+#define MAPSCRIPT_ADDREF_P(p) if(!Z_ISUNDEF(*p)) GC_ADDREF(Z_COUNTED_P(p))
 #else
 #if PHP_VERSION_ID >= 70000
 #define MAPSCRIPT_ADDREF(zv) if(!(Z_ISUNDEF(zv))) GC_REFCOUNT(Z_COUNTED(zv))++;
@@ -163,7 +163,7 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
     if (!(Z_ISUNDEF(zv)))                               \
     {                                                   \
         zend_refcounted *_gc = Z_COUNTED(zv);           \
-        zend_gc_delref(&_gc->gc);                       \
+        GC_DELREF(_gc);                       \
         if(GC_REFCOUNT(_gc) == 0)                       \
             rc_dtor_func(_gc);                          \
         ZVAL_UNDEF(&zv);                                \
