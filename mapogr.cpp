@@ -2475,7 +2475,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
         if ( !bOffsetAlreadyAdded && psInfo->bPaging && layer->startindex > 0 ) {
             char szOffset[50];
-            snprintf(szOffset, sizeof(szOffset), " OFFSET %d", layer->startindex);
+            snprintf(szOffset, sizeof(szOffset), " OFFSET %d", layer->startindex-1);
             select = msStringConcatenate(select, szOffset);
         }
 
