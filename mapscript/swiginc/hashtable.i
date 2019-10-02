@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript hashTableObj extensions
    Author:   Sean Gillies, sgillies@frii.com
@@ -51,7 +49,8 @@
 
 %extend hashTableObj {
     
-    /* New instance */
+    %feature("autodoc", "hashTableObj.__init__()
+Create a new instance") hashTableObj;
 #if defined(SWIGJAVA) || defined(SWIGCSHARP)
     hashTableObj() {
 #else
@@ -65,15 +64,17 @@
         msFreeHashTable(self);
     }
 
-    /* set a hash item given key and value */
+    %feature("docstring") set 
+    "Set a hash item given key and value. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int set(char *key, char *value) {
         if (msInsertHashTable(self, key, value) == NULL) {
-	        return MS_FAILURE;
+            return MS_FAILURE;
         }
         return MS_SUCCESS;
     }
 
-    /* get value from item by its key */
+    %feature("docstring") get 
+    "Returns the value of the item by its key, or default if the key does not exist";
     char *get(char *key, char *default_value=NULL) {
         char *value = NULL;
         if (!key) {
@@ -87,23 +88,24 @@
         return value;
     }
 
-    /* Remove one item from hash table */
+    %feature("docstring") remove 
+    "Removes the hash item by its key. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int remove(char *key) {
         return msRemoveHashTable(self, key);
     }
 
-    /* Clear all items in hash table (to NULL) */
+    %feature("docstring") clear 
+    "Empties the table of all items";
     void clear(void) {
         msFreeHashItems(self);
         initHashTable(self);
     }
 
-    /* Return the next key or first key if prevkey == NULL */
+    %feature("docstring") nextKey 
+    "Returns the name of the next key or NULL if there is no valid next key. 
+If the input key is NULL, returns the first key";
     const char *nextKey(char *prevkey=NULL) {
         return msNextKeyFromHashTable(self, (const char *) prevkey);
     }
     
 }
-
-
-

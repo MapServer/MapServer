@@ -54,7 +54,14 @@ extern "C" {
   };
 #endif /*SWIG*/
 
+#if defined(SWIG) && defined(SWIGPYTHON)
+  HASHTABLEDOC
+#endif
+
   typedef struct {
+#if defined(SWIG) && defined(SWIGPYTHON)
+    HASHTABLEDOCSTRING
+#endif
 #ifndef SWIG
     struct hashObj **items;  /* the hash table */
 #endif

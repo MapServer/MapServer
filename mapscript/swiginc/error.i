@@ -36,7 +36,8 @@
 
 %extend errorObj 
 {
-  
+    %feature("autodoc", "errorObj.__init__()
+Create a new instance") errorObj;
     errorObj() 
     {    
         return msGetErrorObj();

@@ -73,3 +73,14 @@ do not expose the error stack through exceptions (such as Python)") errorObj;
 %define ERRORDOCSTRING
     %pythoncode "../swigdoc/error.py"
 %enddef
+
+%define HASHTABLEDOC
+      %feature("autodoc", "hashTableObj()
+A hashTableObj is a very simple mapping of case-insensitive string keys to single string values. 
+Map, Layer, and Class metadata have always been hash tables and now these are exposed 
+directly. This is a limited hash that can contain no more than 41 values.") hashTableObj;
+%enddef
+
+%define HASHTABLEDOCSTRING
+    %pythoncode "../swigdoc/hashtable.py"
+%enddef
