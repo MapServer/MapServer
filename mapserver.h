@@ -2244,7 +2244,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void msReplaceChar(char *str, char old, char sznew);
   MS_DLL_EXPORT char *msCaseReplaceSubstring(char *str, const char *old, const char *sznew);
   MS_DLL_EXPORT char *msStripPath(char *fn);
-  MS_DLL_EXPORT char *msGetPath(char *fn);
+  MS_DLL_EXPORT char *msGetPath(const char *fn);
   MS_DLL_EXPORT char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path);
   MS_DLL_EXPORT char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1, const char *path2);
   MS_DLL_EXPORT char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path);
@@ -2805,6 +2805,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filename );
   MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
+#ifdef USE_GDAL
+  void msCleanVSIDir( const char *pszDir );
+#endif
 
   /* ==================================================================== */
   /*      prototypes for functions in mapogroutput.c                      */

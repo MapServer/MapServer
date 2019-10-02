@@ -688,7 +688,8 @@
     }
 
     %feature("autodoc", "3");
-    %feature("docstring") "Returns the requested item's field type.
+    %feature("docstring") getItemType 
+"Returns the requested item's field type.
 A layer must be open to retrieve the item definition. 
 
 Pass in the attribute index to retrieve the type. The 
