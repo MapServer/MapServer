@@ -63,3 +63,13 @@ Class to provide information about a DBF file") DBFInfo;
 %define DBFINFODOCSTRING
     %pythoncode "../swigdoc/dbfinfo.py"
 %enddef
+
+%define ERRORDOC
+      %feature("autodoc", "errorObj()
+This class allows inspection of the MapServer error stack. Only needed for the modules which
+do not expose the error stack through exceptions (such as Python)") errorObj;
+%enddef
+
+%define ERRORDOCSTRING
+    %pythoncode "../swigdoc/error.py"
+%enddef

@@ -104,7 +104,14 @@ extern "C" {
 #endif
 #endif
 
+#if defined(SWIG) && defined(SWIGPYTHON)
+  ERRORDOC
+#endif
+
   typedef struct errorObj {
+#if defined(SWIG) && defined(SWIGPYTHON)
+    ERRORDOCSTRING
+#endif
     int code;
     char routine[ROUTINELENGTH];
     char message[MESSAGELENGTH];

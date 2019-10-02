@@ -10,7 +10,7 @@
            Tamas Szekeres, szekerest@gmail.com
 
  Note: Python exceptions are in mapscript/python
-       C# exceptions are redefinied in mapscript/csharp
+       C# exceptions are redefined in mapscript/csharp
        
        This implementation truncates the error message length
        to MAX_ERROR_LEN since SWIG_exception does not allow
@@ -29,9 +29,9 @@
         char* msg = msGetErrorString(";");
         int ms_errorcode = ms_error->code;
         if (msg) {
-			snprintf(ms_message, MAX_ERROR_LEN, "%s", msg);
-			free(msg);
-		}
+            snprintf(ms_message, MAX_ERROR_LEN, "%s", msg);
+            free(msg);
+        }
         else sprintf(ms_message, "Unknown message");
 
         msResetErrorList();
