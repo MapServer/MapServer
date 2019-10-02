@@ -468,7 +468,9 @@ def fromstring(data, mappath=None):
         return self.numitems
 
     def keys(self):
-
+        """
+        **Python only** Return a list of keys in the hash table
+        """
         keys = []
         k = None
 
