@@ -91,6 +91,46 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   $result = t_output_helper($result,r);
 }
 
+/*
+ *  Typemap to turn a Python dict into two sequences and
+ *  an item count. Used for msApplySubstitutions
+ */
+%typemap(in) (char **names, char **values, int npairs) {
+  /* Check if is a dict */
+  if (PyDict_Check($input)) {
+
+    int i = 0;
+    int size = PyDict_Size($input);
+
+    PyObject* keys = PyDict_Keys($input);
+    PyObject* values = PyDict_Values($input);
+
+    $3 = size;
+    $1 = (char **) malloc((size+1)*sizeof(char *));
+    $2 = (char **) malloc((size+1)*sizeof(char *));
+
+    for (i = 0; i < size; i++) {
+        PyObject* key = PyList_GetItem(keys, i);
+        PyObject* val = PyList_GetItem(values, i);
+
+        $1[i] = PyString_AsString(key);
+        $2[i] = PyString_AsString(val);
+    }
+
+    $1[i] = 0;
+    $2[i] = 0;
+
+  } else {
+    PyErr_SetString(PyExc_TypeError, "Input not a dictionary");
+    SWIG_fail;
+  }
+}
+
+%typemap(freearg) (char **names, char **values, int npairs) {
+  free((char *) $1);
+  free((char *) $2);
+}
+
 /**************************************************************************
  * MapServer Errors and Python Exceptions
  **************************************************************************

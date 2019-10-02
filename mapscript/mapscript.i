@@ -35,6 +35,12 @@
 classes on any platform, and has been tested on Python versions 2.7 and 3.5+. "
 %enddef
 
+%begin %{
+#ifdef _MSC_VER
+#define SWIG_PYTHON_INTERPRETER_NO_DEBUG
+#endif
+%}
+
 #ifndef SWIGPHPNG
 %module(docstring=DOCSTRING) mapscript
 #else

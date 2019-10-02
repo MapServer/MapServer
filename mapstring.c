@@ -663,7 +663,7 @@ char *msStripPath(char *fn)
 /*
 ** Returns the *path* portion of the filename fn. Memory is allocated using malloc.
 */
-char *msGetPath(char *fn)
+char *msGetPath(const char *fn)
 {
   char *str;
   int i, length;
