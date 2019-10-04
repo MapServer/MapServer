@@ -1207,7 +1207,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
   const char *argValue=NULL;
 
   const char *name=NULL, *pattern=NULL;
-  const char *format=NULL, *nullFormat=NULL, *paddingFormatString = NULL;
+  const char *format=NULL, *nullFormat=NULL;
   int precision;
   int padding;
   int uc, lc, commify;
@@ -1224,7 +1224,6 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
   while (tagStart) {
     format = "$value"; /* initialize the tag arguments */
-    paddingFormatString = "%-*s";
     nullFormat = "";
     precision = -1;
     padding = -1;
@@ -1317,10 +1316,10 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
       msFree(itemValue);
 
       if (padding != -1) {
-          int paddedSize = sizeof(tagValue) + (padding * sizeof(char*));
+          int paddedSize = strlen(tagValue) + padding + 1;
           char *paddedValue = NULL;
-          paddedValue = (char *) msSmallMalloc(paddedSize + 1);
-          snprintf(paddedValue, paddedSize, paddingFormatString, padding, tagValue);
+          paddedValue = (char *) msSmallMalloc(paddedSize);
+          snprintf(paddedValue, paddedSize, "%-*s", padding, tagValue);
           tagValue = msStrdup(paddedValue);
           msFree(paddedValue);
       }
