@@ -1320,8 +1320,8 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
           char *paddedValue = NULL;
           paddedValue = (char *) msSmallMalloc(paddedSize);
           snprintf(paddedValue, paddedSize, "%-*s", padding, tagValue);
-          tagValue = msStrdup(paddedValue);
-          msFree(paddedValue);
+          msFree(tagValue);
+          tagValue = paddedValue;
       }
 
       if(!tagValue) {
