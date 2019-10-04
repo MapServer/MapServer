@@ -84,3 +84,12 @@ directly. This is a limited hash that can contain no more than 41 values.") hash
 %define HASHTABLEDOCSTRING
     %pythoncode "../swigdoc/hashtable.py"
 %enddef
+
+%define IMAGEDOC
+      %feature("autodoc", "imageObj()
+An image object is a wrapper for AGG and GDAL images") imageObj;
+%enddef
+
+%define IMAGEDOCSTRING
+    %pythoncode "../swigdoc/image.py"
+%enddef
