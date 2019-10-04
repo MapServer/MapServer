@@ -1207,8 +1207,9 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
   const char *argValue=NULL;
 
   const char *name=NULL, *pattern=NULL;
-  const char *format=NULL, *nullFormat=NULL;
+  const char *format=NULL, *nullFormat=NULL, *paddingFormatString = NULL;
   int precision;
+  int padding;
   int uc, lc, commify;
   int escape;
 
@@ -1223,8 +1224,10 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
   while (tagStart) {
     format = "$value"; /* initialize the tag arguments */
+    paddingFormatString = "%-*s";
     nullFormat = "";
-    precision=-1;
+    precision = -1;
+    padding = -1;
     name = pattern = NULL;
     uc = lc = commify = MS_FALSE;
     escape=ESCAPE_HTML;
@@ -1240,6 +1243,9 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
+
+      argValue = msLookupHashTable(tagArgs, "padding");
+      if (argValue) padding = atoi(argValue);
 
       argValue = msLookupHashTable(tagArgs, "format");
       if(argValue) format = argValue;
@@ -1309,6 +1315,15 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
       tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
       msFree(itemValue);
+
+      if (padding != -1) {
+          int paddedSize = sizeof(tagValue) + (padding * sizeof(char*));
+          char *paddedValue = NULL;
+          paddedValue = (char *) msSmallMalloc(paddedSize + 1);
+          snprintf(paddedValue, paddedSize, paddingFormatString, padding, tagValue);
+          tagValue = msStrdup(paddedValue);
+          msFree(paddedValue);
+      }
 
       if(!tagValue) {
         msSetError(MS_WEBERR, "Error applying item format.", "processItemTag()");
