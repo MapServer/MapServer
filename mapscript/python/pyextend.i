@@ -330,6 +330,14 @@ def fromstring(data, mappath=None):
        Overrides extension method in mapscript/swiginc/image.i.
        Intended to replace saveToString.
     ====================================================================== */
+    %feature("docstring") write 
+    "Write image data to an open file descriptor or, by default, to stdout. 
+Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+
+.. note:: 
+
+  This method is current enabled for Python and C# only. 
+  C# supports writing onto a Stream object. User-contributed typemaps are needed for Perl, Ruby, and Java.";
     int write( PyObject *file=Py_None )
     {
         unsigned char *imgbuffer=NULL;
@@ -376,7 +384,8 @@ def fromstring(data, mappath=None):
         return retval;
     }
 
-    /* Deprecated */  
+    %feature("docstring") saveToString 
+    "**Python only** *Deprecated* Save image to a string";
     PyObject *saveToString() {
         int size=0;
         unsigned char *imgbytes;
