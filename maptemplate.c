@@ -1315,7 +1315,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
       tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
       msFree(itemValue);
 
-      if (padding != -1) {
+      if (padding > 0 && padding < 1000) {
           int paddedSize = strlen(tagValue) + padding + 1;
           char *paddedValue = NULL;
           paddedValue = (char *) msSmallMalloc(paddedSize);
