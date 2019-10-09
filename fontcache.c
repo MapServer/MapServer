@@ -163,7 +163,7 @@ void msFontCacheSetup() {
   if (use_global_cache)
     use_global_ft_cache = atoi(use_global_cache);
   else
-    use_global_ft_cache = 0;
+    use_global_ft_cache = 1;
 
   ft_caches = NULL;
 #endif
