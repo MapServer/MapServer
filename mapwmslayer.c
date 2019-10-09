@@ -44,6 +44,7 @@
 #  include "cpl_vsi.h"
 #endif
 
+void CleanVSIDir( const char *pszDir );								   
 /**********************************************************************
  *                          msInitWmsParamsObj()
  *
@@ -418,7 +419,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                    wmsParamsObj *psWMSParams)
 {
 #ifdef USE_WMS_LYR
-  char *pszEPSG = NULL;
+  char *pszEPSG = NULL, *pszTmp;
   const char *pszVersion, *pszRequestParam, *pszExceptionsParam,
         *pszSrsParamName="SRS", *pszLayer=NULL, *pszQueryLayers=NULL,
         *pszUseStrictAxisOrder;
@@ -612,30 +613,27 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    * Set layer SRS.
    * ------------------------------------------------------------------ */
   /* No need to set lp->proj if it's already set to the right EPSG code */
-  {
-    char* pszEPSGCodeFromLayer = NULL;
-    msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszEPSGCodeFromLayer);
-    if (pszEPSGCodeFromLayer == NULL || strcasecmp(pszEPSG, pszEPSGCodeFromLayer) != 0) {
-      char *ows_srs;
-      msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
-      /* no need to set lp->proj if it is already set and there is only
-      one item in the _srs metadata for this layer - we will assume
-      the projection block matches the _srs metadata (the search for ' '
-      in ows_srs is a test to see if there are multiple EPSG: codes) */
-      if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
-        msFree(ows_srs);
-        if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
-          char szProj[20];
-          snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
-          if (msLoadProjectionString(&(lp->projection), szProj) != 0)
-            return MS_FAILURE;
-        } else {
-          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
-            return MS_FAILURE;
-        }
+  msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszTmp);
+  if (pszTmp == NULL || strcasecmp(pszEPSG, pszTmp) != 0) {
+    char *ows_srs;
+    msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
+    msFree(pszTmp);
+    /* no need to set lp->proj if it is already set and there is only
+       one item in the _srs metadata for this layer - we will assume
+       the projection block matches the _srs metadata (the search for ' '
+       in ows_srs is a test to see if there are multiple EPSG: codes) */
+    if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
+      msFree(ows_srs);
+      if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
+        char szProj[20];
+        snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
+        if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+          return MS_FAILURE;
+      } else {
+        if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
+          return MS_FAILURE;
       }
     }
-    msFree(pszEPSGCodeFromLayer);
   }
 
   /* ------------------------------------------------------------------
