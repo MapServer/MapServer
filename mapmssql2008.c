@@ -1181,7 +1181,7 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
         query = msStringConcatenate(query, "WITH extent(extentcol) AS (SELECT geometry::EnvelopeAggregate(");
         query = msStringConcatenate(query, layerinfo->geom_column);        
       }
-      query = msStringConcatenate(query, ") AS extentcol FROM ");
+      query = msStringConcatenate(query, ".MakeValid()) AS extentcol FROM ");
       query = msStringConcatenate(query, layerinfo->geom_table);
       query = msStringConcatenate(query, ") SELECT extentcol.STPointN(1).STX, extentcol.STPointN(1).STY, extentcol.STPointN(3).STX, extentcol.STPointN(3).STY FROM extent");
     }
@@ -1197,7 +1197,7 @@ int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
         query = msStringConcatenate(query, "WITH ENVELOPE as (SELECT ");
         query = msStringConcatenate(query, layerinfo->geom_column);      
       }
-      query = msStringConcatenate(query, ".STEnvelope() as envelope from ");
+      query = msStringConcatenate(query, ".MakeValid().STEnvelope() as envelope from ");
       query = msStringConcatenate(query, layerinfo->geom_table);
       query = msStringConcatenate(query, "), CORNERS as (SELECT envelope.STPointN(1) as point from ENVELOPE UNION ALL select envelope.STPointN(3) from ENVELOPE) SELECT MIN(point.STX), MIN(point.STY), MAX(point.STX), MAX(point.STY) FROM CORNERS");
     }
@@ -1339,8 +1339,14 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     "Geometry::STGeomFromText('POLYGON(())',)" + terminator = 40 chars
     Plus 10 formatted doubles (15 digits of precision, a decimal point, a space/comma delimiter each = 17 chars each)
     Plus SRID + comma - if SRID is a long...we'll be safe with 10 chars
+
+  	or for geography columns
+	
+    "Geography::STGeomFromText('CURVEPOLYGON(CIRCULARSTRING())',)" + terminator = 60 chars
+    Plus 18 formatted doubles (15 digits of precision, a decimal point, a space/comma delimiter each = 17 chars each)
+    Plus SRID + comma - if SRID is a long...we'll be safe with 10 chars
   */
-  char        box3d[40 + 10 * 22 + 11];
+  char        box3d[60 + 18 * 22 + 11];
   int         t;
 
   char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
@@ -1395,10 +1401,23 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       /* create point shape for rectangles with zero area */
       sprintf(box3d, "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
           layerinfo->geom_column_type, rect.minx, rect.miny, layerinfo->user_srid);
-  }
-  else {
-      sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
-          layerinfo->geom_column_type,
+  } else if (strcasecmp(layerinfo->geom_column_type, "geography") == 0) {
+	  /* SQL Server has a problem when x is -180 or 180 */  
+	  double minx = rect.minx == -180? -179.999: rect.minx;
+	  double maxx = rect.maxx == 180? 179.999: rect.maxx;
+	  sprintf(box3d, "Geography::STGeomFromText('CURVEPOLYGON(CIRCULARSTRING(%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+          rect.minx, rect.miny,
+          rect.minx + (rect.maxx - rect.minx) / 2, rect.miny,
+          rect.maxx, rect.miny,
+          rect.maxx, rect.miny + (rect.maxy - rect.miny) / 2,
+          rect.maxx, rect.maxy,
+          rect.minx + (rect.maxx - rect.minx) / 2, rect.maxy,
+          rect.minx, rect.maxy,
+          rect.minx, rect.miny + (rect.maxy - rect.miny) / 2,
+          rect.minx, rect.miny,
+          layerinfo->user_srid);  
+  } else {
+      sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
           rect.minx, rect.miny,
           rect.maxx, rect.miny,
           rect.maxx, rect.maxy,
@@ -1506,21 +1525,8 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   query = msStringConcatenate(query, box3d);
   query = msStringConcatenate(query, ") = 1 ");
 
-  if (layerinfo->sort_spec) {
+  if (layerinfo->sort_spec)
       query = msStringConcatenate(query, layerinfo->sort_spec);
-  }
-
-  /* Add extra sort by */
-  if( layer->sortBy.nProperties > 0 ) {
-    char* pszTmp = msLayerBuildSQLOrderBy(layer);
-    if (layerinfo->sort_spec)
-        query = msStringConcatenate(query, ", ");
-    else
-        query = msStringConcatenate(query, " ORDER BY ");
-    query = msStringConcatenate(query, pszTmp);
-    msFree(pszTmp);
-  }
-
 
   if (layer->debug) {
       msDebug("query:%s\n", query);
