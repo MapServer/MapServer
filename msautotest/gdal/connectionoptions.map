@@ -1,0 +1,34 @@
+#
+# Test LAYER.CONNECTIONOPTIONS
+#
+MAP
+  IMAGETYPE PNG24
+  IMAGECOLOR 255 255 255
+  SIZE 100 100
+  EXTENT 0 -90 180 90
+
+  PROJECTION
+  "init=epsg:4326"
+  END
+
+LAYER
+  NAME "TEST"
+  STATUS DEFAULT
+  TYPE RASTER
+  DUMP TRUE
+
+  # At full resolution red_square.tif is a red square indeed
+  # but we created an overview which is yellow.
+
+  DATA "data/red_square.tif"
+  CONNECTIONOPTIONS
+    "OVERVIEW_LEVEL" "0"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+END
+
+
+END # end of map file

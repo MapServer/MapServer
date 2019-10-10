@@ -3890,6 +3890,8 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->compositer = NULL;
 
+  initHashTable(&(layer->connectionoptions));
+
   return(0);
 }
 
@@ -4020,6 +4022,8 @@ int freeLayer(layerObj *layer)
   for(i=0;i<layer->sortBy.nProperties;i++)
       msFree(layer->sortBy.properties[i].item);
   msFree(layer->sortBy.properties);
+
+  if(&(layer->connectionoptions))  msFreeHashItems(&layer->connectionoptions);
 
   return MS_SUCCESS;
 }
@@ -4557,6 +4561,11 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(OFFSITE):
         if(loadColor(&(layer->offsite), NULL) != MS_SUCCESS) return(-1);
         break;
+
+      case(CONNECTIONOPTIONS):
+        if(loadHashTable(&(layer->connectionoptions)) != MS_SUCCESS) return(-1);
+        break;
+
       case(OPACITY):
       case(TRANSPARENCY): /* keyword supported for mapfile backwards compatability */
       {
@@ -4890,6 +4899,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeLayerCompositer(stream, indent, layer->compositer);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
   writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY");
+  writeHashTableInline(stream, indent, "CONNECTIONOPTIONS", &(layer->connectionoptions));
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
   writeString(stream, indent, "ENCODING", NULL, layer->encoding);

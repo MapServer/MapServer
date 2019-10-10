@@ -2930,7 +2930,12 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
     msTryBuildPath3((char *)szPath,  layer->map->mappath, layer->map->shapepath, layer->data);
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpen( szPath, GA_ReadOnly );
+    {
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        hDS = GDALOpenEx( szPath, GDAL_OF_RASTER, NULL,
+                          (const char* const*)connectionoptions, NULL);
+        CSLDestroy(connectionoptions);
+    }
     if( hDS == NULL ) {
       msReleaseLock( TLOCK_GDAL );
       msSetError( MS_IOERR, "%s", "msWCSGetCoverageMetadata20()", CPLGetLastErrorMsg() );

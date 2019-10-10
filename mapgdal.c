@@ -566,6 +566,26 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
   return MS_SUCCESS;
 }
 
+char** msGetStringListFromHashTable(hashTableObj* table)
+{
+  struct hashObj *tp = NULL;
+  int i;
+  char** papszRet = NULL;
+
+  if(!table) return NULL;
+  if(msHashIsEmpty(table)) return NULL;
+
+  for (i=0; i<MS_HASHSIZE; ++i) {
+    if (table->items[i] != NULL) {
+      for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
+        papszRet = CSLSetNameValue(papszRet, tp->key, tp->data);
+      }
+    }
+  }
+  return papszRet;
+}
+
+
 #else
 
 void msGDALInitialize( void ) {}

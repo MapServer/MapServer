@@ -353,6 +353,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>offset                     { MS_LEXER_RETURN_TOKEN(OFFSET); }
 <INITIAL>offsite                               { MS_LEXER_RETURN_TOKEN(OFFSITE); }
 <INITIAL,URL_STRING>opacity                    { MS_LEXER_RETURN_TOKEN(OPACITY); }
+<INITIAL>connectionoptions                     { MS_LEXER_RETURN_TOKEN(CONNECTIONOPTIONS); }
 <INITIAL,URL_STRING>outlinecolor               { MS_LEXER_RETURN_TOKEN(OUTLINECOLOR); }
 <INITIAL,URL_STRING>outlinewidth               { MS_LEXER_RETURN_TOKEN(OUTLINEWIDTH); }
 <INITIAL>outputformat                          { MS_LEXER_RETURN_TOKEN(OUTPUTFORMAT); }
