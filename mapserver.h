@@ -1697,6 +1697,8 @@ typedef struct labelObj labelObj;
     int tileitemindex;
     projectionObj projection; /* projection information for the layer */
     int project; /* boolean variable, do we need to project this layer or not */
+    reprojectionObj* reprojectorLayerToMap;
+    reprojectionObj* reprojectorMapToLayer;
 #endif /* not SWIG */
 
     int units; /* units of the projection */
@@ -1962,6 +1964,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 #ifdef USE_V8_MAPSCRIPT
     void *v8context;
 #endif
+
+#ifndef SWIG
+    projectionContext* projContext;
+#endif
   };
 
   /************************************************************************/
@@ -2120,7 +2126,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4);
   MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
-  MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
+  MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
   MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
   MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);

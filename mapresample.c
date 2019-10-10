@@ -662,22 +662,23 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
 /************************************************************************/
 /* ==================================================================== */
-/*      PROJ.4 based transformer.         */
+/*      PROJ based transformer.         */
 /* ==================================================================== */
 /************************************************************************/
 
 typedef struct {
   projectionObj *psSrcProjObj;
-  projPJ psSrcProj;
   int bSrcIsGeographic;
   double adfInvSrcGeoTransform[6];
 
   projectionObj *psDstProjObj;
-  projPJ psDstProj;
   int bDstIsGeographic;
   double adfDstGeoTransform[6];
 
   int  bUseProj;
+#if PROJ_VERSION_MAJOR >= 6
+  reprojectionObj* pReprojectionDstToSrc;
+#endif
 } msProjTransformInfo;
 
 /************************************************************************/
@@ -690,6 +691,8 @@ void *msInitProjTransformer( projectionObj *psSrc,
                              double *padfDstGeoTransform )
 
 {
+  int backup_src_need_gt;
+  int backup_dst_need_gt;
   msProjTransformInfo *psPTInfo;
 
   psPTInfo = (msProjTransformInfo *) msSmallCalloc(1,sizeof(msProjTransformInfo));
@@ -698,18 +701,24 @@ void *msInitProjTransformer( projectionObj *psSrc,
   /*      We won't even use PROJ.4 if either coordinate system is         */
   /*      NULL.                                                           */
   /* -------------------------------------------------------------------- */
+  backup_src_need_gt = psSrc->gt.need_geotransform;
+  psSrc->gt.need_geotransform = 0;
+  backup_dst_need_gt = psDst->gt.need_geotransform;
+  psDst->gt.need_geotransform = 0;
   psPTInfo->bUseProj =
     (psSrc->proj != NULL && psDst->proj != NULL
      && msProjectionsDiffer( psSrc, psDst ) );
+  psSrc->gt.need_geotransform = backup_src_need_gt;
+  psDst->gt.need_geotransform = backup_dst_need_gt;
 
   /* -------------------------------------------------------------------- */
   /*      Record source image information.  We invert the source          */
   /*      transformation for more convenient inverse application in       */
   /*      the transformer.                                                */
   /* -------------------------------------------------------------------- */
-  psPTInfo->psSrcProj = psSrc->proj;
+  psPTInfo->psSrcProjObj = psSrc;
   if( psPTInfo->bUseProj )
-    psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
+    psPTInfo->bSrcIsGeographic = msProjIsGeographicCRS(psSrc);
   else
     psPTInfo->bSrcIsGeographic = MS_FALSE;
 
@@ -722,13 +731,26 @@ void *msInitProjTransformer( projectionObj *psSrc,
   /* -------------------------------------------------------------------- */
   /*      Record destination image information.                           */
   /* -------------------------------------------------------------------- */
-  psPTInfo->psDstProj = psDst->proj;
+  psPTInfo->psDstProjObj = psDst;
   if( psPTInfo->bUseProj )
-    psPTInfo->bDstIsGeographic = pj_is_latlong(psDst->proj);
+    psPTInfo->bDstIsGeographic = msProjIsGeographicCRS(psDst);
   else
     psPTInfo->bDstIsGeographic = MS_FALSE;
   memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform,
           sizeof(double) * 6 );
+
+#if PROJ_VERSION_MAJOR >= 6
+  if( psPTInfo->bUseProj )
+  {
+    psPTInfo->pReprojectionDstToSrc =
+        msProjectCreateReprojector( psPTInfo->psDstProjObj, psPTInfo->psSrcProjObj );
+    if( !psPTInfo->pReprojectionDstToSrc )
+    {
+        free(psPTInfo);
+        return NULL;
+    }
+  }
+#endif
 
   return psPTInfo;
 }
@@ -740,6 +762,13 @@ void *msInitProjTransformer( projectionObj *psSrc,
 void msFreeProjTransformer( void * pCBData )
 
 {
+#if PROJ_VERSION_MAJOR >= 6
+  if( pCBData )
+  {
+      msProjTransformInfo *psPTInfo = (msProjTransformInfo *)pCBData;
+      msProjectDestroyReprojector(psPTInfo->pReprojectionDstToSrc);
+  }
+#endif
   free( pCBData );
 }
 
@@ -770,6 +799,21 @@ int msProjTransformer( void *pCBData, int nPoints,
     panSuccess[i] = 1;
   }
 
+#if PROJ_VERSION_MAJOR >= 6
+  if( psPTInfo->bUseProj ) {
+    if( msProjectTransformPoints( psPTInfo->pReprojectionDstToSrc,
+                                  nPoints, x, y ) != MS_SUCCESS ) {
+      for( i = 0; i < nPoints; i++ )
+        panSuccess[i] = 0;
+
+      return MS_FALSE;
+    }
+    for( i = 0; i < nPoints; i++ ) {
+      if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+        panSuccess[i] = 0;
+    }
+  }
+#else
   /* -------------------------------------------------------------------- */
   /*      Transform from degrees to radians if geographic.                */
   /* -------------------------------------------------------------------- */
@@ -790,7 +834,7 @@ int msProjTransformer( void *pCBData, int nPoints,
     z = (double *) msSmallCalloc(sizeof(double),nPoints);
 
     msAcquireLock( TLOCK_PROJ );
-    tr_result = pj_transform( psPTInfo->psDstProj, psPTInfo->psSrcProj,
+    tr_result = pj_transform( psPTInfo->psDstProjObj->proj, psPTInfo->psSrcProjObj->proj,
                               nPoints, 1, x, y,  z);
     msReleaseLock( TLOCK_PROJ );
 
@@ -820,6 +864,7 @@ int msProjTransformer( void *pCBData, int nPoints,
       }
     }
   }
+#endif
 
   /* -------------------------------------------------------------------- */
   /*      Transform to source raster space.                               */
@@ -996,7 +1041,10 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 
   int   i, nSamples = 0, bOutInit = 0;
   double      dfRatio;
-  double  x[MAX_SIZE], y[MAX_SIZE], z[MAX_SIZE];
+  double  x[MAX_SIZE], y[MAX_SIZE];
+#if PROJ_VERSION_MAJOR < 6
+  double z[MAX_SIZE];
+#endif
 
   /* -------------------------------------------------------------------- */
   /*      Collect edges in map image pixel/line coordinates               */
@@ -1046,16 +1094,27 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 
     x[i] = x_out;
     y[i] = y_out;
+#if PROJ_VERSION_MAJOR < 6
     z[i] = 0.0;
+#endif
   }
 
   /* -------------------------------------------------------------------- */
   /*      Transform to layer georeferenced coordinates.                   */
   /* -------------------------------------------------------------------- */
   if( psDstProj->proj && psSrcProj->proj ) {
+#if PROJ_VERSION_MAJOR >= 6
+    reprojectionObj* reprojector = msProjectCreateReprojector(psDstProj, psSrcProj);
+    if( !reprojector )
+        return MS_FALSE;
+    if( msProjectTransformPoints( reprojector, nSamples, x, y ) != MS_SUCCESS ) {
+      msProjectDestroyReprojector(reprojector);
+      return MS_FALSE;
+    }
+    msProjectDestroyReprojector(reprojector);
+#else
     int tr_result;
-
-    if( pj_is_latlong(psDstProj->proj) ) {
+    if( msProjIsGeographicCRS(psDstProj) ) {
       for( i = 0; i < nSamples; i++ ) {
         x[i] = x[i] * DEG_TO_RAD;
         y[i] = y[i] * DEG_TO_RAD;
@@ -1070,7 +1129,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     if( tr_result != 0 )
       return MS_FALSE;
 
-    if( pj_is_latlong(psSrcProj->proj) ) {
+    if( msProjIsGeographicCRS(psSrcProj) ) {
       for( i = 0; i < nSamples; i++ ) {
         if( x[i] != HUGE_VAL && y[i] != HUGE_VAL ) {
           x[i] = x[i] * RAD_TO_DEG;
@@ -1078,6 +1137,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
         }
       }
     }
+#endif
   }
 
   /* -------------------------------------------------------------------- */
@@ -1131,14 +1191,17 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
   /*      projection. In that case we must check if the points at         */
   /*      lon_wrap +/- 180deg are in the output raster.                   */
   /* -------------------------------------------------------------------- */
-  if( bOutInit && pj_is_latlong(psSrcProj->proj) )
+  if( bOutInit && msProjIsGeographicCRS(psSrcProj) )
   {
       double dfLonWrap = 0;
       int bHasLonWrap = msProjectHasLonWrap(psSrcProj, &dfLonWrap);
 
       if( bHasLonWrap )
       {
-          double x2[2], y2[2], z2[2];
+          double x2[2], y2[2];
+#if PROJ_VERSION_MAJOR < 6
+          double z2[2];
+#endif
           int nCountY = 0;
           double dfY = 0.0;
           double dfXMinOut = 0.0;
@@ -1172,16 +1235,27 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 
           x2[0] = dfLonWrap-180+1e-7;
           y2[0] = dfY;
-          z2[0] = 0.0;
 
           x2[1] = dfLonWrap+180-1e-7;
           y2[1] = dfY;
-          z2[1] = 0.0;
 
+#if PROJ_VERSION_MAJOR >= 6
+          {
+            reprojectionObj* reprojector = msProjectCreateReprojector(psSrcProj, psDstProj);
+            if( reprojector )
+            {
+              msProjectTransformPoints( reprojector, 2, x2, y2 );
+              msProjectDestroyReprojector(reprojector);
+            }
+          }
+#else
+          z2[0] = 0.0;
+          z2[1] = 0.0;
           msAcquireLock( TLOCK_PROJ );
           pj_transform( psSrcProj->proj, psDstProj->proj,
                         2, 1, x2, y2, z2 );
           msReleaseLock( TLOCK_PROJ );
+#endif
 
           if( x2[0] >= dfXMinOut && x2[0] <= dfXMaxOut &&
               y2[0] >= dfYMinOut && y2[0] <= dfYMaxOut )
@@ -1268,16 +1342,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                          rasterBufferObj *rb, GDALDatasetH hDS )
 
 {
-  /* -------------------------------------------------------------------- */
-  /*      We require PROJ.4 4.4.2 or later.  Earlier versions don't       */
-  /*      have PJD_GRIDSHIFT.                                             */
-  /* -------------------------------------------------------------------- */
-#if !defined(PJD_GRIDSHIFT) && !defined(PJ_VERSION)
-  msSetError(MS_PROJERR,
-             "Projection support is not available, so msResampleGDALToMap() fails.",
-             "msProjectRect()");
-  return(MS_FAILURE);
-#else
   int   nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
   int   result, bSuccess;
   double  adfSrcGeoTransform[6], adfDstGeoTransform[6];
@@ -1708,7 +1772,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   pACBData = msInitApproxTransformer( msProjTransformer, pTCBData, 0.333 );
 
-  if( pj_is_latlong(layer->projection.proj) )
+  if( msProjIsGeographicCRS(&(layer->projection)) )
   {
       /* Does the raster cover a whole 360 deg range ? */
       if( nSrcXSize == (int)(adfInvSrcGeoTransform[1] * 360 + 0.5) )
@@ -1746,7 +1810,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   msFreeApproxTransformer( pACBData );
 
   return result;
-#endif
 }
 
 #endif /* def USE_GDAL */

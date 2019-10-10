@@ -1472,6 +1472,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     } else if(rectProj && projectionString) {
       projectionObj projection;
       msInitProjection(&projection);
+      msProjectionInheritContextFrom(&projection, &mapserv->map->projection);
 
       if(MS_SUCCESS != msLoadProjectionString(&projection, projectionString)) return MS_FAILURE;
 
@@ -1634,7 +1635,17 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         labelPos = shape->line[0].point[0];
         if(layer->transform == MS_TRUE) {
           if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-            msProjectShape(&layer->projection, &layer->map->projection, shape);
+          {
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                    &layer->projection, &layer->map->projection);
+            }
+            if( layer->reprojectorLayerToMap )
+            {
+                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+            }
+          }
 
           labelPos = shape->line[0].point[0];
           labelPos.x = MS_MAP2IMAGE_X(labelPos.x, layer->map->extent.minx, cellsize);
@@ -1645,7 +1656,18 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       labelposvalid = MS_FALSE;
       if(layer->transform == MS_TRUE) {
         if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-          msProjectShape(&layer->projection, &layer->map->projection, shape);
+        {
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                    &layer->projection, &layer->map->projection);
+            }
+            if( layer->reprojectorLayerToMap )
+            {
+                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+            }
+        }
+
         if(clip_to_map)
           msClipPolylineRect(shape, layer->map->extent);
 
@@ -1674,7 +1696,17 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       labelposvalid = MS_FALSE;
       if(layer->transform == MS_TRUE) {
         if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-          msProjectShape(&layer->projection, &layer->map->projection, shape);
+        {
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                    &layer->projection, &layer->map->projection);
+            }
+            if( layer->reprojectorLayerToMap )
+            {
+                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+            }
+        }
 
         if(clip_to_map)
           msClipPolygonRect(shape, layer->map->extent);
@@ -1762,7 +1794,17 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 
       /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-        msProjectShape(&layer->projection, &layer->map->projection, &tShape);
+      {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &layer->map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+        {
+            msProjectShapeEx(layer->reprojectorLayerToMap, &tShape);
+        }
+      }
 
       msClipPolylineRect(&tShape, layer->map->extent);
 
@@ -1770,6 +1812,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     } else if(projectionString) {
       projectionObj projection;
       msInitProjection(&projection);
+      msProjectionInheritContextFrom(&projection, &layer->map->projection);
 
       status = msLoadProjectionString(&projection, projectionString);
       if(status != MS_SUCCESS) return MS_FAILURE;
@@ -2137,7 +2180,17 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
-        msProjectShape(&layer->projection, &layer->map->projection, &tShape);
+      {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &layer->map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+        {
+            msProjectShapeEx(layer->reprojectorLayerToMap, &tShape);
+        }
+      }
 
       switch(tShape.type) {
         case(MS_SHAPE_POINT):
@@ -2175,6 +2228,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     } else if(projectionString) {
       projectionObj projection;
       msInitProjection(&projection);
+      msProjectionInheritContextFrom(&projection, &(layer->projection));
 
       status = msLoadProjectionString(&projection, projectionString);
       if(status != MS_SUCCESS) return MS_FAILURE;
@@ -3856,7 +3910,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 #ifdef USE_PROJ
   if((strstr(outstr, "lat]") || strstr(outstr, "lon]") || strstr(outstr, "lon_esc]"))
       && mapserv->map->projection.proj != NULL
-      && !pj_is_latlong(mapserv->map->projection.proj) ) {
+      && !msProjIsGeographicCRS(&(mapserv->map->projection)) ) {
     llextent=mapserv->map->extent;
     llpoint=mapserv->mappnt;
     msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon), &llextent);

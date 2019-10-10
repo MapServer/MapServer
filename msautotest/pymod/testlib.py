@@ -87,6 +87,11 @@ def compare_result( filename ):
     if filecmp.cmp(expected_file,result_file,0):
         return 'match'
 
+    expected_file_alternative = expected_file + ".alternative"
+    if os.path.exists( expected_file_alternative ):
+        if filecmp.cmp(expected_file_alternative,result_file,0):
+            return 'match'
+
     if expected_file[-4:] == '.xml':
         return 'nomatch'
     

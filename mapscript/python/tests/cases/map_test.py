@@ -324,8 +324,7 @@ class MapSetWKTTestCase(MapTestCase):
     def testWellKnownGEOGCS(self):
         self.map.setWKTProjection('WGS84')
         proj4 = self.map.getProjection()
-        assert proj4.find('+proj=longlat') != -1, proj4
-        assert proj4.find('+datum=WGS84') != -1, proj4
+        assert ('+proj=longlat' in proj4 and '+datum=WGS84' in proj4) or proj4 == '+init=epsg:4326', proj4
         assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_METERS
 
 

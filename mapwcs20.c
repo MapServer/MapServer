@@ -44,7 +44,6 @@
 #include "maptime.h"
 #include "mapprimitive.h"
 #include "cpl_string.h"
-#include <proj_api.h>
 #include <string.h>
 
 #if defined(USE_LIBXML2)
@@ -2044,7 +2043,7 @@ static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadata
     {
       xmlNewProp(psEnvelope, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
 
-      if(projection->proj != NULL && pj_is_latlong(projection->proj)) {
+      if(projection->proj != NULL && msProjIsGeographicCRS(projection)) {
         if (swapAxes == MS_FALSE) {
           strlcpy(axisLabels, "long lat", sizeof(axisLabels));
         } else {
@@ -2116,7 +2115,7 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
         }
       }
 
-      if(projection->proj != NULL && pj_is_latlong(projection->proj)) {
+      if(projection->proj != NULL && msProjIsGeographicCRS(projection)) {
         strlcpy(axisLabels, "long lat", sizeof(axisLabels));
       } else {
         strlcpy(axisLabels, "x y", sizeof(axisLabels));
@@ -4389,6 +4388,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /************************************************************************/
 
   msInitProjection(&imageProj);
+  msProjectionInheritContextFrom(&imageProj, &(layer->projection));
   if (msLoadProjectionString(&imageProj, cm.srs_epsg) == -1) {
     msFreeProjection(&imageProj);
     msWCSClearCoverageMetadata20(&cm);
@@ -4480,6 +4480,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
+    msProjectionInheritContextFrom(&subsetProj, &(layer->projection));
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
       msFreeProjection(&subsetProj);
       msFreeProjection(&imageProj);
@@ -4501,8 +4502,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       /* (height and resolutionY) are unknown. */
       if( ((params->width == 0 && params->resolutionX == MS_WCS20_UNBOUNDED) ||
            (params->height == 0 && params->resolutionY == MS_WCS20_UNBOUNDED)) &&
-          (pj_is_latlong(imageProj.proj) &&
-           !pj_is_latlong(subsetProj.proj) &&
+          (msProjIsGeographicCRS(&imageProj) &&
+           !msProjIsGeographicCRS(&subsetProj) &&
            fabs(layer->extent.minx - -180.0) < 1e-5 &&
            fabs(layer->extent.miny - -90.0) < 1e-5 &&
            fabs(layer->extent.maxx - 180.0) < 1e-5 &&
@@ -4631,6 +4632,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     projectionObj outputProj;
 
     msInitProjection(&outputProj);
+    msProjectionInheritContextFrom(&outputProj, &(layer->projection));
     if(msLoadProjectionString(&outputProj, params->outputcrs) == -1) {
       msFreeProjection(&outputProj);
       msWCSClearCoverageMetadata20(&cm);

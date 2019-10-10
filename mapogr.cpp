@@ -967,13 +967,33 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
 {
 #ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]...
-  msFreeProjection( proj );
+  msFreeProjectionExceptContext( proj );
 
   if (hSRS == NULL || OSRIsLocal( hSRS ) ) {
     // Dataset had no set projection or is NonEarth (LOCAL_CS)...
     // Nothing else to do. Leave proj empty and no reprojection will happen!
     return MS_SUCCESS;
   }
+
+#if PROJ_VERSION_MAJOR >= 6
+  // This could be done also in the < 6 case, but would be useless.
+  // Here this helps avoiding going through potentially lossy PROJ4 strings
+  const char* pszAuthName = OSRGetAuthorityName(hSRS, NULL);
+  if( pszAuthName && EQUAL(pszAuthName, "EPSG") )
+  {
+    const char* pszAuthCode = OSRGetAuthorityCode(hSRS, NULL);
+    if( pszAuthCode )
+    {
+        char szInitStr[32];
+        sprintf(szInitStr, "init=epsg:%d", atoi(pszAuthCode));
+
+        if( debug_flag )
+            msDebug( "AUTO = %s\n", szInitStr );
+
+        return msLoadProjectionString(proj, szInitStr) == 0 ? MS_SUCCESS : MS_FAILURE;
+    }
+  }
+#endif
 
   // Export OGR SRS to a PROJ4 string
   char *pszProj = NULL;
@@ -1295,6 +1315,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   psInfo->nTileId = 0;
   msInitProjection(&(psInfo->sTileProj));
+  msProjectionInheritContextFrom(&(psInfo->sTileProj),&(layer->projection));
   psInfo->poCurTile = NULL;
   psInfo->rect_is_defined = false;
   psInfo->rect.minx = psInfo->rect.maxx = 0;

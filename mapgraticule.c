@@ -191,7 +191,7 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   layer->project = msProjectionsDiffer(&(layer->projection), &(layer->map->projection));
   if( layer->project &&
       strstr(layer->map->projection.args[0], "epsg:3857") &&
-      pj_is_latlong(layer->projection.proj) )
+      msProjIsGeographicCRS(&(layer->projection)) )
   {
       if( rectMapCoordinates.minx < -20037508)
           rectMapCoordinates.minx = -20037508;
@@ -702,8 +702,15 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     msCopyShape(&shapegrid, &tmpshape);
     /* status = msDrawShape(map, layer, &tmpshape, image, -1); */
 
-    if(layer->project)
-      msProjectShape(&layer->projection, &map->projection, &shapegrid);
+    if(layer->project) {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+        layer->reprojectorLayerToMap = msProjectCreateReprojector(
+            &layer->projection, &map->projection);
+      }
+      if( layer->reprojectorLayerToMap )
+        msProjectShapeEx(layer->reprojectorLayerToMap, &shapegrid);
+    }
 
     msClipPolylineRect(&shapegrid, cliprect);
 
@@ -1070,11 +1077,17 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
 #ifdef USE_PROJ
   if(pLayer->project)
   {
-    msProjectShape( &pLayer->projection, &pLayer->map->projection, pShape );
+    if( pLayer->reprojectorLayerToMap == NULL )
+    {
+        pLayer->reprojectorLayerToMap = msProjectCreateReprojector(
+            &pLayer->projection, &pLayer->map->projection);
+    }
+    if( pLayer->reprojectorLayerToMap )
+        msProjectShapeEx(pLayer->reprojectorLayerToMap, pShape );
 
     /* Poor man detection of reprojection failure */
-    if( pj_is_latlong(pLayer->projection.proj) != 
-        pj_is_latlong(pLayer->map->projection.proj) )
+    if( msProjIsGeographicCRS(&(pLayer->projection)) != 
+        msProjIsGeographicCRS(&(pLayer->map->projection)) )
     {
         if( ptPoint.x == pShape->line->point[0].x &&
             ptPoint.y == pShape->line->point[0].y )
@@ -1128,7 +1141,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     /* Clamp coordinates into the validity area of the projection, in the */
     /* particular case of EPSG:3857 (WebMercator) to longlat reprojection */
     if( strstr(pLayer->map->projection.args[0], "epsg:3857") &&
-        pj_is_latlong(pLayer->projection.proj) )
+        msProjIsGeographicCRS(&(pLayer->projection)) )
     {
         if( !pLayer->map->projection.gt.need_geotransform &&
             ePosition == posLeft && pShape->line->point[0].x < -20037508)
@@ -1191,7 +1204,13 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
         }
     }
 
-    msProjectShape( &pLayer->map->projection, &pLayer->projection, pShape );
+    if( pLayer->reprojectorMapToLayer == NULL )
+    {
+        pLayer->reprojectorMapToLayer = msProjectCreateReprojector(
+            &pLayer->map->projection, &pLayer->projection);
+    }
+    if( pLayer->reprojectorMapToLayer )
+        msProjectShapeEx(pLayer->reprojectorMapToLayer, pShape );
   }
 #endif
 

@@ -70,6 +70,7 @@ int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** arg
   for(i=0 ; i< num_args; i++) {
     dst->args[dst->numargs++] = msStrdup(args[i]);
   }
+  msProjectionInheritContextFrom(dst, src);
   if (dst->numargs != 0) {
     if (msProcessProjection(dst) != MS_SUCCESS)
       return MS_FAILURE;

@@ -201,7 +201,20 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
         values = (float*) msSmallCalloc(im_width * im_height, sizeof(float));
 #ifdef USE_PROJ
       if(layer->project)
-        msProjectShape(&layer->projection, &map->projection, &shape);
+      {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &map->projection);
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                msFreeShape(&shape);
+                msLayerClose(layer);
+                return MS_FAILURE;
+            }
+        }
+        msProjectShapeEx(layer->reprojectorLayerToMap, &shape);
+      }
 #endif
       
       /* the weight for the sample is set to 1.0 by default. If the

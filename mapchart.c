@@ -251,7 +251,18 @@ int getNextShape(mapObj *map, layerObj *layer, double *values, int *nvalues, sty
   if(status == MS_SUCCESS) {
 #ifdef USE_PROJ
     if(layer->project)
-      msProjectShape(&layer->projection, &map->projection, shape);
+    {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+        layer->reprojectorLayerToMap = msProjectCreateReprojector(
+            &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+    }
 #endif
 
     if(msBindLayerToShape(layer, shape, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS) != MS_SUCCESS)

@@ -362,7 +362,15 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
 
   if (psParent && psShape) {
     if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
-      msProjectShape(&lp->projection, &map->projection, psShape);
+      if( lp->reprojectorLayerToMap == NULL )
+      {
+        lp->reprojectorLayerToMap = msProjectCreateReprojector(
+            &lp->projection, &map->projection);
+      }
+      if( lp->reprojectorLayerToMap )
+      {
+        msProjectShapeEx(lp->reprojectorLayerToMap, psShape);
+      }
       msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg_buf);
       pszEpsg = pszEpsg_buf;
     }
@@ -773,7 +781,17 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
 #ifdef USE_PROJ
     if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
-      msProjectShape(&lp->projection, &lp->projection, &sShape);
+    {
+      if( lp->reprojectorLayerToMap == NULL )
+      {
+        lp->reprojectorLayerToMap = msProjectCreateReprojector(
+            &lp->projection, &map->projection);
+      }
+      if( lp->reprojectorLayerToMap )
+      {
+        msProjectShapeEx(lp->reprojectorLayerToMap, &sShape);
+      }
+    }
 #endif
     psNode = xmlNewChild(psNode, psNsGml, BAD_CAST "featureMember", NULL);
     /* xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml")); */
@@ -2122,6 +2140,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
 
             /* project MAP.EXTENT to this SRS */
             msInitProjection(&po);
+            msProjectionInheritContextFrom(&po, &map->projection);
 
             snprintf(srsbuffer, sizeof(srsbuffer), "+init=epsg:%.20s", sosparams->pszSrsName+strlen("EPSG:"));
 

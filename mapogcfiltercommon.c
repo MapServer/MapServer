@@ -517,8 +517,10 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         fabs(sQueryRect.maxy - 90.0) < 1e-5)
     {
       if (lp->projection.numargs > 0) {
-        if (psNode->pszSRS)
+        if (psNode->pszSRS) {
           msInitProjection(&sProjTmp);
+          msProjectionInheritContextFrom(&sProjTmp, &lp->projection);
+        }
         if (psNode->pszSRS) {
           /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
           if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
@@ -567,8 +569,10 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     ** target is layer projection
     */
     if (!bAlreadyReprojected && lp->projection.numargs > 0) {
-      if (psNode->pszSRS)
+      if (psNode->pszSRS) {
         msInitProjection(&sProjTmp);
+        msProjectionInheritContextFrom(&sProjTmp, &lp->projection);
+      }
       if (psNode->pszSRS) {
         /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
         if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
