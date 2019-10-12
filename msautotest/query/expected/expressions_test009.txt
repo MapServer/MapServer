@@ -1,0 +1,3 @@
+
+CTY_NAME,CTY_FIPS
+Lake of the Woods,77
