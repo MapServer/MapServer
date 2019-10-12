@@ -3,11 +3,19 @@
 #
 # REQUIRES: INPUT=SHAPEFILE INPUT=OGR
 #
-# Test 1: simple mode=nquery, one layer, rect-based
-# RUN_PARMS: expressions_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemnquery&&qlayer=expressions_test001)' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test001' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test002.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test002' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test003.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test003' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test004.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test004' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test005.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test005' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test006.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test006' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test007.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test007' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test008.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test008' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test009.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test009' > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test010.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test010' > [RESULT_DEMIME]
 #
 MAP
-  NAME 'filters'
+  NAME 'expressions'
   EXTENT 125000 4785000 789000 5489000
   UNITS METERS
   
@@ -125,7 +133,3 @@ MAP
   END
 
 END
-
-cd /D D:\GitHub\mapserver\msautotest\query
-mapserv -nh "QUERY_STRING=map=expressions.map&mode=nquery&qformat=csv&qlayer=expressions_test003" > D:\GitHub\mapserver\msautotest\query\expected\results.txt
-GDAL 3.0.1, released 2019/06/28
