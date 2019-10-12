@@ -3,6 +3,8 @@ Content-Type: text/xml; charset=UTF-8
 <?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <WMS_Capabilities version="1.3.0"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver http://foo/?service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
 
+<!-- MapServer version 7.4.2 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE -->
+
 <Service>
   <Name>WMS</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
@@ -57,16 +59,6 @@ Content-Type: text/xml; charset=UTF-8
         </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>layer2</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
-        <Title>layer2</Title>
-        <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo/?request=GetMetadata&amp;layer=layer2"/>
-        </MetadataURL>
-    </Layer>
-    <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer3</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer3</Title>
@@ -94,21 +86,21 @@ Content-Type: text/xml; charset=UTF-8
         </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-      <Name>layer5b</Name>
+        <Name>layer5b</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
-      <Title>layer5b</Title>
-      <EX_GeographicBoundingBox>
-        <westBoundLongitude>1.10894</westBoundLongitude>
-        <eastBoundLongitude>7.19753</eastBoundLongitude>
-        <southBoundLatitude>39.2727</southBoundLatitude>
-        <northBoundLatitude>44.1415</northBoundLatitude>
-      </EX_GeographicBoundingBox>
-      <BoundingBox CRS="EPSG:3857"
-                  minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
-      <MetadataURL type="TC211">
-        <Format>text/xml</Format>
-        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo/?request=GetMetadata&amp;layer=layer5b"/>
-      </MetadataURL>
+        <Title>layer5b</Title>
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>1.10894</westBoundLongitude>
+            <eastBoundLongitude>7.19753</eastBoundLongitude>
+            <southBoundLatitude>39.2727</southBoundLatitude>
+            <northBoundLatitude>44.1415</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:3857"
+                    minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo/?request=GetMetadata&amp;layer=layer5b"/>
+        </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer6</Name>
