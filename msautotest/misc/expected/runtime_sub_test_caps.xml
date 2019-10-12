@@ -59,6 +59,16 @@ Content-Type: text/xml; charset=UTF-8
         </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>layer2</Name>
+<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+        <Title>layer2</Title>
+        <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo/?request=GetMetadata&amp;layer=layer2"/>
+        </MetadataURL>
+    </Layer>    
+    <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer3</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer3</Title>
