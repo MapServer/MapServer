@@ -109,7 +109,7 @@ Content-Type: text/xml; charset=UTF-8
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo/?request=GetMetadata&amp;layer=layer5b"/>
         </MetadataURL>
-    </Layer>    
+    </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer6</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
