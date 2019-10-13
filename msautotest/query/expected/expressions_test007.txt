@@ -1,4 +1,3 @@
-
 CTY_NAME,CTY_FIPS
 Yellow Medicine,173
 Winona,169

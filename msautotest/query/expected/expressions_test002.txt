@@ -1,4 +1,3 @@
-
 CTY_NAME,CTY_FIPS
 Beltrami,7
 Becker,5
