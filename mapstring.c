@@ -1503,7 +1503,7 @@ char *msCommifyString(char *str)
 /* ------------------------------------------------------------------------------- */
 /*       Replace all occurrences of old with new in str.                           */
 /*       It is assumed that str was dynamically created using malloc.              */
-/*       Same function as msReplaceSubstring but this is case ins                  */
+/*       Same function as msReplaceSubstring but this is case insensitive          */
 /* ------------------------------------------------------------------------------- */
 char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
 {
