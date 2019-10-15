@@ -877,7 +877,7 @@ int             mapObj_setWKTProjection(mapObj *self, char *string);
 char*           mapObj_getProjection(mapObj* self);
 int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
-char            *mapObj_getMetaData(mapObj *self, char *name);
+const char     *mapObj_getMetaData(mapObj *self, char *name);
 int             mapObj_setMetaData(mapObj *self, char *name, char *value);
 int             mapObj_removeMetaData(mapObj *self, char *name);
 void            mapObj_freeQuery(mapObj *self, int qlayer);
@@ -954,7 +954,7 @@ int             layerObj_setWKTProjection(layerObj *self, char *string);
 char*           layerObj_getProjection(layerObj *self);
 int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
-char            *layerObj_getMetaData(layerObj *self, char *name);
+const char     *layerObj_getMetaData(layerObj *self, char *name);
 int             layerObj_setMetaData(layerObj *self, char *name, char *value);
 int             layerObj_removeMetaData(layerObj *self, char *name);
 char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map,

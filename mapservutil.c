@@ -498,7 +498,7 @@ int msCGILoadForm(mapservObj *mapserv)
          *         and coincidentally fall in the lon/lat range, bad things
          *         will ensue.
          */
-        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+        if(mapserv->map->projection.proj && !msProjIsGeographicCRS(&(mapserv->map->projection))
             && (mapserv->map->extent.minx >= -180.0 && mapserv->map->extent.minx <= 180.0)
             && (mapserv->map->extent.miny >= -90.0 && mapserv->map->extent.miny <= 90.0)
             && (mapserv->map->extent.maxx >= -180.0 && mapserv->map->extent.maxx <= 180.0)
@@ -561,7 +561,7 @@ int msCGILoadForm(mapservObj *mapserv)
         msFreeCharArray(tokens, 2);
 
 #ifdef USE_PROJ
-        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+        if(mapserv->map->projection.proj && !msProjIsGeographicCRS(&(mapserv->map->projection))
             && (mapserv->mappnt.x >= -180.0 && mapserv->mappnt.x <= 180.0)
             && (mapserv->mappnt.y >= -90.0 && mapserv->mappnt.y <= 90.0)) {
           msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &mapserv->mappnt); /* point is a in lat/lon */
@@ -615,7 +615,7 @@ int msCGILoadForm(mapservObj *mapserv)
           line.point[j].y = atof(tmp[2*j+1]);
 
 #ifdef USE_PROJ
-          if(mapserv->QueryCoordSource == FROMUSERSHAPE && mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+          if(mapserv->QueryCoordSource == FROMUSERSHAPE && mapserv->map->projection.proj && !msProjIsGeographicCRS(&(mapserv->map->projection))
               && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0)
               && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0)) {
             msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &line.point[j]); /* point is a in lat/lon */
@@ -1189,7 +1189,7 @@ int msCGIDispatchCoordinateRequest(mapservObj *mapserv)
               mapserv->mappnt.x, mapserv->mappnt.y);
 
 #ifdef USE_PROJ
-  if(mapserv->map->projection.proj != NULL && !pj_is_latlong(mapserv->map->projection.proj) ) {
+  if(mapserv->map->projection.proj != NULL && !msProjIsGeographicCRS(&(mapserv->map->projection)) ) {
     pointObj p=mapserv->mappnt;
     msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon), &p);
     msIO_printf("Computed lat/lon value is (%g, %g).\n",p.x, p.y);

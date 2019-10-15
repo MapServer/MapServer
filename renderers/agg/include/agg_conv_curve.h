@@ -154,8 +154,8 @@ namespace mapserver
             return path_cmd_line_to;
         }
 
-        double ct2_x;
-        double ct2_y;
+        double ct2_x = 0;
+        double ct2_y = 0;
         double end_x;
         double end_y;
 

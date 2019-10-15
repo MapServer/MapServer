@@ -1430,12 +1430,13 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
     char *pszOutputSRS = NULL;
     int nSRSDimension = 2;
     const char* geomtype;
-
     lp = (GET_LAYER(map, map->layerorder[i]));
 
     if(lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
 #ifdef USE_PROJ
+      reprojectionObj* reprojector = NULL;
+
       /* Determine output SRS, if map has none, then try using layer's native SRS */
       if ((pszOutputSRS = pszMapSRS) == NULL) {
         msOWSGetEPSGProj(&(lp->projection), NULL, namespaces, MS_TRUE, &pszOutputSRS);
@@ -1478,6 +1479,19 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         return MS_FAILURE;
       }
 
+#ifdef USE_PROJ
+      if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
+        reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+        if( reprojector == NULL ) {
+           msGMLFreeGroups(groupList);
+           msGMLFreeConstants(constantList);
+           msGMLFreeItems(itemList);
+           msGMLFreeGeometries(geometryList);
+           return MS_FAILURE;
+        }
+      }
+#endif
+
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
         if(status != MS_SUCCESS) {
@@ -1485,15 +1499,19 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
            msGMLFreeConstants(constantList);
            msGMLFreeItems(itemList);
            msGMLFreeGeometries(geometryList);
+#ifdef USE_PROJ
+           msProjectDestroyReprojector(reprojector);
+#endif
            return(status);
         }
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
-        if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
-          status = msProjectShape(&lp->projection, &map->projection, &shape);
+        if(reprojector) {
+          status = msProjectShapeEx(reprojector, &shape);
           if(status != MS_SUCCESS) {
             msIO_fprintf(stream, "<!-- Warning: Failed to reproject shape: %s -->\n",msGetErrorString(","));
+            msFreeShape(&shape);
             continue;
           }
         }
@@ -1542,6 +1560,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
         msFreeShape(&shape); /* init too */
       }
+
+#ifdef USE_PROJ
+      msProjectDestroyReprojector(reprojector);
+#endif
 
       /* end this collection (layer) */
       /* if no layer name provided fall back on the layer name + "_layer" */
@@ -1668,6 +1690,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       int bOutputGMLIdOnly = MS_FALSE;
       int nSRSDimension = 2;
       const char* geomtype;
+#ifdef USE_PROJ
+      reprojectionObj* reprojector = NULL;
+#endif
 
       /* setup namespace, a layer can override the default */
       namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
@@ -1740,6 +1765,18 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
           if (!srs)
             msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE, &srs);
       }
+
+      if(msProjectionsDiffer(&(lp->projection), &(map->projection))) {
+        reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+        if( reprojector == NULL ) {
+           msGMLFreeGroups(groupList);
+           msGMLFreeConstants(constantList);
+           msGMLFreeItems(itemList);
+           msGMLFreeGeometries(geometryList);
+           msFree(layerName);
+           return MS_FAILURE;
+        }
+      }
 #endif
 
       for(j=0; j<lp->resultcache->numresults; j++) {
@@ -1759,14 +1796,17 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
                 msGMLFreeItems(itemList);
                 msGMLFreeGeometries(geometryList);
                 msFree(layerName);
+#ifdef USE_PROJ
+                msProjectDestroyReprojector(reprojector);
+#endif
                 return(status);
             }
         }
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
-        if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
-          msProjectShape(&lp->projection, &map->projection, &shape);
+        if(reprojector)
+          msProjectShapeEx(reprojector, &shape);
 #endif
 
         if(featureIdIndex != -1) {
@@ -1853,6 +1893,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         pszFID = NULL;
         msFreeShape(&shape); /* init too */
       }
+
+#ifdef USE_PROJ
+      msProjectDestroyReprojector(reprojector);
+#endif
 
       msFree(srs);
 

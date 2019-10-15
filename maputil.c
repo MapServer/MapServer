@@ -39,6 +39,10 @@
 #include "mapcopy.h"
 #include "mapows.h"
 
+#if defined(USE_OGR) || defined(USE_GDAL)
+#include "gdal.h"
+#endif
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
 # include <tchar.h>
@@ -71,21 +75,21 @@ int msScaleInBounds(double scale, double minscale, double maxscale)
 /*
 ** Helper functions to convert from strings to other types or objects.
 */
-static int bindIntegerAttribute(int *attribute, char *value)
+static int bindIntegerAttribute(int *attribute, const char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
   *attribute = MS_NINT(atof(value)); /*use atof instead of atoi as a fix for bug 2394*/
   return MS_SUCCESS;
 }
 
-static int bindDoubleAttribute(double *attribute, char *value)
+static int bindDoubleAttribute(double *attribute, const char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
   *attribute = atof(value);
   return MS_SUCCESS;
 }
 
-static int bindColorAttribute(colorObj *attribute, char *value)
+static int bindColorAttribute(colorObj *attribute, const char *value)
 {
   int len;
 
@@ -182,19 +186,68 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
       style->polaroffsetangle = 0;
       bindDoubleAttribute(&style->polaroffsetangle, shape->values[style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
-      style->outlinewidth = 1;
-      bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
+  }
+  if (style->nexprbindings > 0)
+  {
+    if (style->exprBindings[MS_STYLE_BINDING_OFFSET_X].type == MS_EXPRESSION)
+    {
+      style->offsetx = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OFFSET_X]),
+          shape);
     }
-    if(style->opacity < 100 || style->color.alpha != 255 ) {
-      int alpha;
-      alpha = MS_NINT(style->opacity*2.55);
-      style->color.alpha = alpha;
-      style->outlinecolor.alpha = alpha;
-      style->backgroundcolor.alpha = alpha;
-      style->mincolor.alpha = alpha;
-      style->maxcolor.alpha = alpha;
+    if (style->exprBindings[MS_STYLE_BINDING_OFFSET_Y].type == MS_EXPRESSION)
+    {
+      style->offsety = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OFFSET_Y]),
+          shape);
     }
+    if (style->exprBindings[MS_STYLE_BINDING_ANGLE].type == MS_EXPRESSION)
+    {
+      style->angle = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_ANGLE]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_SIZE].type == MS_EXPRESSION)
+    {
+      style->size = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_SIZE]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_WIDTH].type == MS_EXPRESSION)
+    {
+      style->width = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_WIDTH]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OPACITY].type == MS_EXPRESSION)
+    {
+      style->opacity = 100 * msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OPACITY]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR]), shape);
+      bindColorAttribute(&style->outlinecolor, txt);
+      msFree(txt);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_COLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_COLOR]), shape);
+      bindColorAttribute(&style->color, txt);
+      msFree(txt);
+    }
+  }
+  if(style->opacity < 100 || style->color.alpha != 255 ) {
+    int alpha;
+    alpha = MS_NINT(style->opacity*2.55);
+    style->color.alpha = alpha;
+    style->outlinecolor.alpha = alpha;
+    style->backgroundcolor.alpha = alpha;
+    style->mincolor.alpha = alpha;
+    style->maxcolor.alpha = alpha;
   }
 }
 
@@ -277,6 +330,35 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
             label->position = MS_CC;
         }
       }
+    }
+  }
+  if (label->nexprbindings > 0)
+  {
+    if (label->exprBindings[MS_LABEL_BINDING_ANGLE].type == MS_EXPRESSION)
+    {
+      label->angle = msEvalDoubleExpression(
+          &(label->exprBindings[MS_LABEL_BINDING_ANGLE]),
+          shape);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_SIZE].type == MS_EXPRESSION)
+    {
+      label->size = msEvalDoubleExpression(
+          &(label->exprBindings[MS_LABEL_BINDING_SIZE]),
+          shape);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_COLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_COLOR]), shape);
+      bindColorAttribute(&label->color, txt);
+      msFree(txt);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR]), shape);
+      bindColorAttribute(&label->outlinecolor, txt);
+      msFree(txt);
     }
   }
 }
@@ -693,6 +775,27 @@ char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape)
 char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
 {
     return msEvalTextExpressionInternal(expr, shape, MS_FALSE);
+}
+
+double msEvalDoubleExpression(expressionObj *expression, shapeObj *shape)
+{
+  double value;
+  int status;
+  parseObj p;
+  p.shape = shape;
+  p.expr = expression;
+  p.expr->curtoken = p.expr->tokens; /* reset */
+  p.type = MS_PARSE_TYPE_STRING;
+  status = yyparse(&p);
+  if (status != 0) {
+    msSetError(MS_PARSEERR, "Failed to parse expression: %s",
+        "bindStyle", expression->string);
+    value = 0.0;
+  } else {
+    value = atof(p.result.strval);
+    msFree(p.result.strval);
+  }
+  return value;
 }
 
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
@@ -1956,12 +2059,28 @@ void msCleanup()
 #ifdef USE_GDAL
   msGDALCleanup();
 #endif
+
+  /* Release both GDAL and OGR resources */
+#if defined(USE_OGR) || defined(USE_GDAL)
+  msAcquireLock( TLOCK_GDAL );
+#if GDAL_VERSION_MAJOR >= 3 || (GDAL_VERSION_MAJOR == 2 && GDAL_VERSION_MINOR == 4)
+  /* Cleanup some GDAL global resources in particular */
+  GDALDestroy();
+#else
+  GDALDestroyDriverManager();
+#endif
+  msReleaseLock( TLOCK_GDAL );
+#endif
+
 #ifdef USE_PROJ
+#if PROJ_VERSION_MAJOR < 6
 #  if PJ_VERSION >= 480
   pj_clear_initcache();
 #  endif
   pj_deallocate_grids();
+#endif
   msSetPROJ_LIB( NULL, NULL );
+  msProjectionContextPoolCleanup();
 #endif
 #if defined(USE_CURL)
   msHTTPCleanup();

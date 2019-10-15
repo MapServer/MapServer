@@ -206,7 +206,7 @@ typedef enum
 } OWSServiceType;
 
 MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-    const int action_if_not_found, const char *tag_name, const char* tag_ns,
+    int action_if_not_found, const char *tag_name, const char* tag_ns,
     const char *validated_language, const OWSServiceType service);
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
                                     int action_if_not_found, const OWSServiceType service);

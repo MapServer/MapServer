@@ -333,21 +333,28 @@ wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag)
   {
 #ifdef USE_POINT_Z_M
       memcpy(&(p->z), w->ptr, sizeof(double));
-      if( !(nZMFlag & HAS_M) )
-          p->m = 0.0;
 #endif
       w->ptr += sizeof(double);
   }
+#ifdef USE_POINT_Z_M
+  else
+  {
+      p->z = 0;
+  }
+#endif
   if( nZMFlag & HAS_M )
   {
 #ifdef USE_POINT_Z_M
-      if( !(nZMFlag & HAS_Z) )
-          p->z = 0.0;
       memcpy(&(p->m), w->ptr, sizeof(double));
 #endif
       w->ptr += sizeof(double);
   }
-
+#ifdef USE_POINT_Z_M
+  else
+  {
+      p->m = 0;
+  }
+#endif
 }
 
 /*
@@ -2779,7 +2786,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   /* free bind values */
   free(bind_key);
-  free(layer_bind_values);
+  free((void*)layer_bind_values);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
@@ -2976,7 +2983,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
 
   /* free bind values */
   free(bind_key);
-  free(layer_bind_values);
+  free((void*)layer_bind_values);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n",

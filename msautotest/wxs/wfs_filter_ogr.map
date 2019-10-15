@@ -177,7 +177,7 @@ END
 
 
 LAYER
-  DEBUG 3
+
   NAME province
   CONNECTIONTYPE OGR
   CONNECTION "province.shp"
@@ -205,7 +205,7 @@ END # Layer
 
 
 LAYER
-  DEBUG 3
+
   NAME popplace
   CONNECTIONTYPE OGR
   CONNECTION "popplace.shp"

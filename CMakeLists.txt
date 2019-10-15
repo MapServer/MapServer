@@ -259,7 +259,7 @@ mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.c maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
 mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
-mapprojhack.c maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
+maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
@@ -1004,6 +1004,7 @@ status_optional_feature("V8 Javascript" "${USE_V8_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
+message(STATUS "PROJECT_BINARY_DIR is set to ${PROJECT_BINARY_DIR}")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Will install libraries to ${INSTALL_LIB_DIR}")
 

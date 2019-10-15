@@ -253,7 +253,7 @@ END
 
 
 LAYER
-  DEBUG 3
+
   NAME province
   DATA province
   METADATA
@@ -305,7 +305,7 @@ END # Layer
 
 
 LAYER
-  DEBUG 3
+
   NAME popplace
   DATA popplace
   METADATA

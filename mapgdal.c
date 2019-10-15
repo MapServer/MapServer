@@ -105,10 +105,6 @@ void msGDALCleanup( void )
     while( iRepeat-- )
       CPLPopErrorHandler();
 
-#if GDAL_RELEASE_DATE > 20021001
-    GDALDestroyDriverManager();
-#endif
-
     msReleaseLock( TLOCK_GDAL );
 
     bGDALInitialized = 0;
@@ -116,13 +112,13 @@ void msGDALCleanup( void )
 }
 
 /************************************************************************/
-/*                            CleanVSIDir()                             */
+/*                          msCleanVSIDir()                             */
 /*                                                                      */
 /*      For the temporary /vsimem/msout directory we need to be sure    */
 /*      things are clean before we start, and after we are done.        */
 /************************************************************************/
 
-void CleanVSIDir( const char *pszDir )
+void msCleanVSIDir( const char *pszDir )
 
 {
   char **papszFiles = CPLReadDir( pszDir );
@@ -133,7 +129,7 @@ void CleanVSIDir( const char *pszDir )
         || strcasecmp(papszFiles[i],"..") == 0 )
       continue;
 
-    VSIUnlink( papszFiles[i] );
+    VSIUnlink( CPLFormFilename(pszDir, papszFiles[i], NULL) );
   }
 
   CSLDestroy( papszFiles );
@@ -196,7 +192,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
 
     if( bUseXmp == MS_FALSE && GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL )
         != NULL ) {
-      CleanVSIDir( "/vsimem/msout" );
+      msCleanVSIDir( "/vsimem/msout" );
       filenameToFree = msTmpFile(map, NULL, "/vsimem/msout/", pszExtension );
     }
 
@@ -282,21 +278,22 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     int iBand;
 
     for( iBand = 0; iBand < nBands; iBand++ ) {
+      CPLErr eErr;
       GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, iBand+1 );
 
       if( format->imagemode == MS_IMAGEMODE_INT16 ) {
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+        eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                       image->img.raw_16bit + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Int16, 2, 0 );
 
       } else if( format->imagemode == MS_IMAGEMODE_FLOAT32 ) {
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+        eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                       image->img.raw_float + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Float32, 4, 0 );
       } else if( format->imagemode == MS_IMAGEMODE_BYTE ) {
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+        eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                       image->img.raw_byte + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Byte, 1, 0 );
@@ -323,13 +320,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
           msReleaseLock( TLOCK_GDAL );
           msSetError( MS_MISCERR, "Missing RGB or A buffer.\n",
                       "msSaveImageGDAL()" );
+          GDALClose(hMemDS);
           return MS_FAILURE;
         }
 
         pabyData = (GByte *)(pixptr + iLine*rb.data.rgba.row_step);
 
         if( rb.data.rgba.a == NULL || iBand == 3 ) {
-          GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+          eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                         pabyData, image->width, 1, GDT_Byte,
                         rb.data.rgba.pixel_step, 0 );
         } else { /* We need to un-pre-multiple RGB by alpha. */
@@ -352,10 +350,17 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
             }
           }
 
-          GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
+          eErr = GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                         pabyUPM, image->width, 1, GDT_Byte, 1, 0 );
           free( pabyUPM );
         }
+      }
+      if( eErr != CE_None ) {
+          msReleaseLock( TLOCK_GDAL );
+          msSetError( MS_MISCERR, "GDALRasterIO() failed.\n",
+                      "msSaveImageGDAL()" );
+          GDALClose(hMemDS);
+          return MS_FAILURE;
       }
     }
   }
@@ -507,7 +512,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     VSIFCloseL( fp );
 
     VSIUnlink( filename );
-    CleanVSIDir( "/vsimem/msout" );
+    msCleanVSIDir( "/vsimem/msout" );
 
     msFree( filenameToFree );
   }
@@ -560,6 +565,26 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
 
   return MS_SUCCESS;
 }
+
+char** msGetStringListFromHashTable(hashTableObj* table)
+{
+  struct hashObj *tp = NULL;
+  int i;
+  char** papszRet = NULL;
+
+  if(!table) return NULL;
+  if(msHashIsEmpty(table)) return NULL;
+
+  for (i=0; i<MS_HASHSIZE; ++i) {
+    if (table->items[i] != NULL) {
+      for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
+        papszRet = CSLSetNameValue(papszRet, tp->key, tp->data);
+      }
+    }
+  }
+  return papszRet;
+}
+
 
 #else
 

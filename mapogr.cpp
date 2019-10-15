@@ -38,6 +38,7 @@
 
 #if defined(USE_OGR) || defined(USE_GDAL)
 #  include "gdal_version.h"
+#  include "gdal.h"
 #  include "cpl_conv.h"
 #  include "cpl_string.h"
 #  include "ogr_srs_api.h"
@@ -76,7 +77,7 @@ typedef struct ms_ogr_file_info_t {
   char *pszRowId;
   int   bIsOKForSQLCompose;
   bool  bHasSpatialIndex; // used only for spatialite for now
-  char* pszTablePrefix; // prefix to qualify field names. used only for spatialite for now when a join is done for spatial filtering.
+  char* pszTablePrefix; // prefix to qualify field names. used only for spatialite & gpkg for now when a join is done for spatial filtering.
 
   int   bPaging;
 
@@ -966,13 +967,33 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
 {
 #ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]...
-  msFreeProjection( proj );
+  msFreeProjectionExceptContext( proj );
 
   if (hSRS == NULL || OSRIsLocal( hSRS ) ) {
     // Dataset had no set projection or is NonEarth (LOCAL_CS)...
     // Nothing else to do. Leave proj empty and no reprojection will happen!
     return MS_SUCCESS;
   }
+
+#if PROJ_VERSION_MAJOR >= 6
+  // This could be done also in the < 6 case, but would be useless.
+  // Here this helps avoiding going through potentially lossy PROJ4 strings
+  const char* pszAuthName = OSRGetAuthorityName(hSRS, NULL);
+  if( pszAuthName && EQUAL(pszAuthName, "EPSG") )
+  {
+    const char* pszAuthCode = OSRGetAuthorityCode(hSRS, NULL);
+    if( pszAuthCode )
+    {
+        char szInitStr[32];
+        sprintf(szInitStr, "init=epsg:%d", atoi(pszAuthCode));
+
+        if( debug_flag )
+            msDebug( "AUTO = %s\n", szInitStr );
+
+        return msLoadProjectionString(proj, szInitStr) == 0 ? MS_SUCCESS : MS_FAILURE;
+    }
+  }
+#endif
 
   // Export OGR SRS to a PROJ4 string
   char *pszProj = NULL;
@@ -1191,7 +1212,13 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       msDebug("OGROPen(%s)\n", pszDSSelectedName);
 
     ACQUIRE_OGR_LOCK;
-    hDS = OGROpen( pszDSSelectedName, MS_FALSE, NULL );
+    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+    hDS = (OGRDataSourceH) GDALOpenEx(pszDSSelectedName,
+                                GDAL_OF_VECTOR,
+                                NULL,
+                                (const char* const*)connectionoptions,
+                                NULL);
+    CSLDestroy(connectionoptions);
     RELEASE_OGR_LOCK;
 
     if( hDS == NULL ) {
@@ -1288,6 +1315,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   psInfo->nTileId = 0;
   msInitProjection(&(psInfo->sTileProj));
+  msProjectionInheritContextFrom(&(psInfo->sTileProj),&(layer->projection));
   psInfo->poCurTile = NULL;
   psInfo->rect_is_defined = false;
   psInfo->rect.minx = psInfo->rect.maxx = 0;
@@ -1386,6 +1414,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
         if( have_gpkg_spatialite )
         {
             psInfo->pszMainTableName = msStrdup( OGR_L_GetName(hLayer) );
+            psInfo->pszTablePrefix = msStrdup( psInfo->pszMainTableName );
             psInfo->pszSpatialFilterTableName = msStrdup( OGR_L_GetName(hLayer) );
             psInfo->pszSpatialFilterGeometryColumn = msStrdup( OGR_L_GetGeometryColumn(hLayer) );
             psInfo->dialect = "GPKG";
@@ -5522,7 +5551,6 @@ void msOGRCleanup( void )
   ACQUIRE_OGR_LOCK;
   if( bOGRDriversRegistered == MS_TRUE ) {
     CPLPopErrorHandler();
-    OGRCleanupAll();
     bOGRDriversRegistered = MS_FALSE;
   }
   RELEASE_OGR_LOCK;

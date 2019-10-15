@@ -44,7 +44,6 @@
 #include "maptime.h"
 #include "mapprimitive.h"
 #include "cpl_string.h"
-#include <proj_api.h>
 #include <string.h>
 
 #if defined(USE_LIBXML2)
@@ -2044,7 +2043,7 @@ static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadata
     {
       xmlNewProp(psEnvelope, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
 
-      if(projection->proj != NULL && pj_is_latlong(projection->proj)) {
+      if(projection->proj != NULL && msProjIsGeographicCRS(projection)) {
         if (swapAxes == MS_FALSE) {
           strlcpy(axisLabels, "long lat", sizeof(axisLabels));
         } else {
@@ -2116,7 +2115,7 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
         }
       }
 
-      if(projection->proj != NULL && pj_is_latlong(projection->proj)) {
+      if(projection->proj != NULL && msProjIsGeographicCRS(projection)) {
         strlcpy(axisLabels, "long lat", sizeof(axisLabels));
       } else {
         strlcpy(axisLabels, "x y", sizeof(axisLabels));
@@ -2930,7 +2929,12 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
     msTryBuildPath3((char *)szPath,  layer->map->mappath, layer->map->shapepath, layer->data);
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpen( szPath, GA_ReadOnly );
+    {
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        hDS = GDALOpenEx( szPath, GDAL_OF_RASTER, NULL,
+                          (const char* const*)connectionoptions, NULL);
+        CSLDestroy(connectionoptions);
+    }
     if( hDS == NULL ) {
       msReleaseLock( TLOCK_GDAL );
       msSetError( MS_IOERR, "%s", "msWCSGetCoverageMetadata20()", CPLGetLastErrorMsg() );
@@ -3344,6 +3348,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
            psIntNs = NULL;
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
+  xmlDocPtr pInspireTmpDoc = NULL;
 
   const char *inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), "CO", "inspire_capabilities");
 
@@ -3482,8 +3487,6 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       xmlNodePtr pDlsExtendedCapabilities;
       xmlNodePtr pChild;
 
-      xmlDocPtr pInspireTmpDoc = NULL;
-
       xmlNsPtr psInspireCommonNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX );
       xmlNsPtr psInspireDlsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX );
 
@@ -3612,6 +3615,8 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   msWCSWriteDocument20(map, psDoc);
   msFree(validated_language);
   xmlFreeDoc(psDoc);
+  if( pInspireTmpDoc )
+    xmlFreeDoc(pInspireTmpDoc);
   xmlCleanupParser();
   return MS_SUCCESS;
 }
@@ -3951,7 +3956,6 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
                                        wcs20ParamsObjPtr params, wcs20coverageMetadataObjPtr cm, char **bandlist)
 {
   int i = 0, count, maxlen, index;
-  char *tmp = NULL;
   char *interval_stop;
   char **band_ids = NULL;
 
@@ -3970,10 +3974,11 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
 
   /* Use WCS 2.0 metadata items in priority */
-  tmp = msOWSGetEncodeMetadata(&layer->metadata,
+  {
+    char* tmp = msOWSGetEncodeMetadata(&layer->metadata,
                                "CO", "band_names", NULL);
 
-  if( NULL == tmp ) {
+    if( NULL == tmp ) {
       /* Otherwise default to WCS 1.x*/
       tmp = msOWSGetEncodeMetadata(&layer->metadata,
                      "CO", "rangeset_axes", NULL);
@@ -3990,10 +3995,11 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
             band_ids[i] = msStrdup(szName);
         }
       }
-  }
+    }
 
-  if(NULL != tmp && band_ids == NULL) {
-    band_ids = CSLTokenizeString2(tmp, " ", 0);
+    if(NULL != tmp && band_ids == NULL) {
+      band_ids = CSLTokenizeString2(tmp, " ", 0);
+    }
     msFree(tmp);
   }
 
@@ -4053,6 +4059,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 
       /* expand the interval to a list of indices and push them on the list */
       for (j = start; j <= stop; ++j) {
+        char* tmp;
         if(i != 0 || j != start) {
           strlcat(*bandlist, ",", maxlen);
         }
@@ -4069,6 +4076,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 
       /* check if the string represents an integer */
       if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
+        char* tmp;
         if (index < 1 || index > cm->numbands) {
           msSetError(MS_WCSERR, "Band index is out of the valid range: 1-%d",
                  "msWCSGetCoverage20_GetBands()", (int)cm->numbands);
@@ -4084,7 +4092,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       /* check if the string is equal to a band identifier    */
       /* if so, what is the index of the band                 */
       if((index = CSLFindString(band_ids, params->range_subset[i])) != -1) {
-        tmp = msIntToString((int)index + 1);
+        char* tmp = msIntToString((int)index + 1);
         strlcat(*bandlist, tmp, maxlen);
         msFree(tmp);
       }
@@ -4380,6 +4388,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /************************************************************************/
 
   msInitProjection(&imageProj);
+  msProjectionInheritContextFrom(&imageProj, &(layer->projection));
   if (msLoadProjectionString(&imageProj, cm.srs_epsg) == -1) {
     msFreeProjection(&imageProj);
     msWCSClearCoverageMetadata20(&cm);
@@ -4471,6 +4480,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
+    msProjectionInheritContextFrom(&subsetProj, &(layer->projection));
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
       msFreeProjection(&subsetProj);
       msFreeProjection(&imageProj);
@@ -4492,8 +4502,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       /* (height and resolutionY) are unknown. */
       if( ((params->width == 0 && params->resolutionX == MS_WCS20_UNBOUNDED) ||
            (params->height == 0 && params->resolutionY == MS_WCS20_UNBOUNDED)) &&
-          (pj_is_latlong(imageProj.proj) &&
-           !pj_is_latlong(subsetProj.proj) &&
+          (msProjIsGeographicCRS(&imageProj) &&
+           !msProjIsGeographicCRS(&subsetProj) &&
            fabs(layer->extent.minx - -180.0) < 1e-5 &&
            fabs(layer->extent.miny - -90.0) < 1e-5 &&
            fabs(layer->extent.maxx - 180.0) < 1e-5 &&
@@ -4622,6 +4632,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     projectionObj outputProj;
 
     msInitProjection(&outputProj);
+    msProjectionInheritContextFrom(&outputProj, &(layer->projection));
     if(msLoadProjectionString(&outputProj, params->outputcrs) == -1) {
       msFreeProjection(&outputProj);
       msWCSClearCoverageMetadata20(&cm);

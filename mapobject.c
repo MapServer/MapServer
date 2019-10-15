@@ -93,8 +93,11 @@ void msFreeMap(mapObj *map)
   msFree(map->shapepath);
   msFree(map->mappath);
 
+#ifdef USE_PROJ
   msFreeProjection(&(map->projection));
   msFreeProjection(&(map->latlon));
+  msProjectionContextReleaseToPool(map->projContext);
+#endif
 
   msFreeLabelCache(&(map->labelcache));
 

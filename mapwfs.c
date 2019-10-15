@@ -379,6 +379,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
   if(pszMapSRS && nWFSVersion >  OWS_1_0_0){
     projectionObj proj;
     msInitProjection(&proj);
+    msProjectionInheritContextFrom(&proj, &(map->projection));
     if (map->projection.numargs > 0 && msLoadProjectionStringEPSG(&proj, pszMapSRS) == 0) {
       msProjectRect(&(map->projection), &proj, &map->extent);
     }
@@ -460,6 +461,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
           msFree(pszLayerSRS);
           return MS_FAILURE;
         }
+        msFree(pszLayerSRS);
       }
       pszOutputSRS = msStrdup(srs);
     }
@@ -470,6 +472,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
     int nTmp=0;
 
     msInitProjection(&sProjTmp);
+    msProjectionInheritContextFrom(&sProjTmp, &(map->projection));
     if( nWFSVersion >= OWS_1_1_0 ) {
       nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
     } else {
@@ -603,6 +606,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp, const char *script_url_encoded)
   /* If layer has no proj set then use map->proj for bounding box. */
   if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
     msInitProjection(&poWfs);
+    msProjectionInheritContextFrom(&poWfs, &(map->projection));
     if (pszWfsSrs != NULL)
       msLoadProjectionString(&(poWfs), pszWfsSrs);
 
@@ -1035,7 +1039,7 @@ static OWSGMLVersion msWFSGetGMLVersionFromSchemaVersion(WFSSchemaVersion output
 static void msWFSSchemaWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometryList, WFSSchemaVersion outputformat, const char *tab)
 {
   OWSGMLVersion gmlversion = msWFSGetGMLVersionFromSchemaVersion(outputformat);
-  return msWFSWriteGeometryElement(stream,geometryList,gmlversion,tab);
+  msWFSWriteGeometryElement(stream,geometryList,gmlversion,tab);
 }
 
 static const char* msWFSMapServTypeToXMLType(const char* type)
@@ -2080,7 +2084,7 @@ static int msWFSRunFilter(mapObj* map,
               bDefaultSRSNeedsAxisSwapping = msIsAxisInverted(atoi(srs+5));
           }
           msFree(srs);
-          FLTDoAxisSwappingIfNecessary(psNode, bDefaultSRSNeedsAxisSwapping);
+          FLTDoAxisSwappingIfNecessary(map, psNode, bDefaultSRSNeedsAxisSwapping);
     }
 
     layerWasOpened = msLayerIsOpen(lp);
@@ -2547,6 +2551,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
           projectionObj sProjTmp;
 
           msInitProjection(&sProjTmp);
+          msProjectionInheritContextFrom(&sProjTmp, &(map->projection));
           msOWSGetEPSGProj(&sProjTmp,&(map->web.metadata),"FO",MS_TRUE, &sBBoxSrs);
           msFreeProjection(&sProjTmp);
       }
@@ -2556,6 +2561,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         projectionObj sProjTmp;
 
         msInitProjection(&sProjTmp);
+        msProjectionInheritContextFrom(&sProjTmp, &(map->projection));
         /*do the axis order for now. It is unclear if the bbox are expected
           ro respect the axis oder defined in the projectsion #3296*/
 

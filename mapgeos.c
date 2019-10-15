@@ -137,6 +137,7 @@ void msGEOSCleanup()
 {
 #ifndef USE_THREAD
   finishGEOS_r(geos_handle);
+  geos_handle = NULL;
 #else
   geos_thread_info_t *link;
   msAcquireLock( TLOCK_GEOS );

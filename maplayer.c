@@ -830,7 +830,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
 
   if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
     msTokenizeExpression(&layer->_geomtransform, layer->items, &(layer->numitems));
-  
+
   /* class level counts */
   for(i=0; i<layer->numclasses; i++) {
 
@@ -839,6 +839,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       nt += layer->class[i]->styles[j]->numbindings;
       if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
         nt += msCountChars(layer->class[i]->styles[j]->_geomtransform.string, '[');
+      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          nt += msCountChars(layer->class[i]->styles[j]->exprBindings[k].string, '[');
+        }
+      }
     }
 
     if(layer->class[i]->expression.type == MS_EXPRESSION)
@@ -851,6 +857,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
         nt += layer->class[i]->labels[l]->styles[j]->numbindings;
         if(layer->class[i]->labels[l]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
           nt += msCountChars(layer->class[i]->labels[l]->styles[j]->_geomtransform.string, '[');
+      }
+      for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {
+        if (layer->class[i]->labels[l]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          nt += msCountChars(layer->class[i]->labels[l]->exprBindings[k].string, '[');
+        }
       }
 
       if(layer->class[i]->labels[l]->expression.type == MS_EXPRESSION)
@@ -908,6 +920,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
         if(layer->class[i]->styles[j]->bindings[k].item) 
           layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->styles[j]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
       }
       if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
         msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
@@ -928,6 +946,12 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {
         if(layer->class[i]->labels[l]->bindings[k].item) 
           layer->class[i]->labels[l]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->bindings[k].item);
+        if (layer->class[i]->labels[l]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->labels[l]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
       }
 
        /* label expression */
@@ -1295,16 +1319,14 @@ makeTimeFilter(layerObj *lp,
       msFreeExpression(&lp->filter);
     */
 
-    if (&lp->filter) {
-      /* if the filter is set and it's a sting type, concatenate it with
-         the time. If not just free it */
-      if (lp->filter.string && lp->filter.type == MS_STRING) {
-        pszBuffer = msStringConcatenate(pszBuffer, "((");
-        pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-        pszBuffer = msStringConcatenate(pszBuffer, ") and ");
-      } else {
-        msFreeExpression(&lp->filter);
-      }
+    /* if the filter is set and it's a sting type, concatenate it with
+       the time. If not just free it */
+     if (lp->filter.string && lp->filter.type == MS_STRING) {
+      pszBuffer = msStringConcatenate(pszBuffer, "((");
+      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+    } else {
+      msFreeExpression(&lp->filter);
     }
 
     pszBuffer = msStringConcatenate(pszBuffer, "(");
@@ -1335,7 +1357,7 @@ makeTimeFilter(layerObj *lp,
     pszBuffer = msStringConcatenate(pszBuffer, ")");
 
     /* if there was a filter, It was concatenate with an And ans should be closed*/
-    if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
+    if(lp->filter.string && lp->filter.type == MS_STRING) {
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     }
 
@@ -1353,7 +1375,7 @@ makeTimeFilter(layerObj *lp,
     return MS_FALSE;
   }
 
-  if (&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
+  if (lp->filter.string && lp->filter.type == MS_STRING) {
     pszBuffer = msStringConcatenate(pszBuffer, "((");
     pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
     pszBuffer = msStringConcatenate(pszBuffer, ") and ");
@@ -1478,7 +1500,7 @@ makeTimeFilter(layerObj *lp,
 
   /* load the string to the filter */
   if (pszBuffer && strlen(pszBuffer) > 0) {
-    if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING)
+    if(lp->filter.string && lp->filter.type == MS_STRING)
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     /*
     if(lp->filteritem)
@@ -1567,6 +1589,7 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
   shapeObj shape, searchshape;
   int nShapeCount = 0;
   rectObj searchrect = rect;
+  reprojectionObj* reprojector = NULL;
 
   msInitShape(&searchshape);
   msRectToPolygon(searchrect, &searchshape);
@@ -1600,7 +1623,12 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
     {
 #ifdef USE_PROJ
       if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
-        msProjectShape(&(layer->projection), rectProjection, &shape);
+      {
+        if( reprojector == NULL )
+            reprojector = msProjectCreateReprojector(&(layer->projection), rectProjection);
+        if( reprojector )
+            msProjectShapeEx(reprojector, &shape);
+      }
       else
         layer->project = MS_FALSE;
 #endif
@@ -1634,6 +1662,7 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
   }
 
   msFreeShape(&searchshape);
+  msProjectDestroyReprojector(reprojector);
 
   return nShapeCount;
 }
@@ -1763,7 +1792,7 @@ void msLayerEnablePaging(layerObj *layer, int value)
       return;
     }
   }
-  return layer->vtable->LayerEnablePaging(layer, value);
+  layer->vtable->LayerEnablePaging(layer, value);
 }
 
 int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
@@ -2106,7 +2135,7 @@ msINLINELayerInfo;
 
 int msINLINELayerIsOpen(layerObj *layer)
 {
-  if (layer->currentfeature)
+  if (layer->layerinfo)
     return(MS_TRUE);
   else
     return(MS_FALSE);
@@ -2227,6 +2256,7 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
         shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
         for (i = shape->numvalues; i < layer->numitems; i++)
           shape->values[i] = msStrdup("");
+        shape->numvalues = layer->numitems;
       }
 
       break;

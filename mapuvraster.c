@@ -477,8 +477,15 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
           if( decrypted_path )
           {
+              char** connectionoptions;
               GDALAllRegister();
-              hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+              connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+              hDS = GDALOpenEx(decrypted_path,
+                                        GDAL_OF_RASTER,
+                                        NULL,
+                                        (const char* const*)connectionoptions,
+                                        NULL);
+              CSLDestroy(connectionoptions);
           }
           if( hDS != NULL )
           {
@@ -833,7 +840,13 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   msAcquireLock( TLOCK_GDAL );
   if( decrypted_path ) {
-    hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+    hDS = GDALOpenEx(decrypted_path,
+                                GDAL_OF_RASTER,
+                                NULL,
+                                (const char* const*)connectionoptions,
+                                NULL);
+    CSLDestroy(connectionoptions);
     msFree( decrypted_path );
   } else
     hDS = NULL;

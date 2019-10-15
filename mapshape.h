@@ -181,6 +181,7 @@ extern "C" {
     int tilelayerindex;
     projectionObj sTileProj;
     rectObj searchrect;
+    reprojectionObj* reprojectorFromTileProjToLayerProj;
   } msTiledSHPLayerInfo;
 
   /* shapefileObj function prototypes  */

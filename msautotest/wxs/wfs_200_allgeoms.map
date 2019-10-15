@@ -135,7 +135,7 @@ PROJECTION
 END
 
 LAYER
-  DEBUG 3
+
   NAME "point"
   DATA "point"
   TOLERANCE 50
@@ -154,7 +154,7 @@ LAYER
 END # Layer
 
 LAYER
-  DEBUG 3
+
   NAME "multipoint"
   DATA "multipoint"
   METADATA
@@ -171,7 +171,7 @@ LAYER
 END # Layer
 
 LAYER
-  DEBUG 3
+
   NAME "linestring"
   DATA "linestring"
   METADATA

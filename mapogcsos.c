@@ -362,7 +362,15 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
 
   if (psParent && psShape) {
     if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
-      msProjectShape(&lp->projection, &map->projection, psShape);
+      if( lp->reprojectorLayerToMap == NULL )
+      {
+        lp->reprojectorLayerToMap = msProjectCreateReprojector(
+            &lp->projection, &map->projection);
+      }
+      if( lp->reprojectorLayerToMap )
+      {
+        msProjectShapeEx(lp->reprojectorLayerToMap, psShape);
+      }
       msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg_buf);
       pszEpsg = pszEpsg_buf;
     }
@@ -773,7 +781,17 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
 #ifdef USE_PROJ
     if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
-      msProjectShape(&lp->projection, &lp->projection, &sShape);
+    {
+      if( lp->reprojectorLayerToMap == NULL )
+      {
+        lp->reprojectorLayerToMap = msProjectCreateReprojector(
+            &lp->projection, &map->projection);
+      }
+      if( lp->reprojectorLayerToMap )
+      {
+        msProjectShapeEx(lp->reprojectorLayerToMap, &sShape);
+      }
+    }
 #endif
     psNode = xmlNewChild(psNode, psNsGml, BAD_CAST "featureMember", NULL);
     /* xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml")); */
@@ -1713,10 +1731,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   xmlNodePtr psObservationNode = NULL, psResultNode=NULL;
   const char *pszProcedure = NULL;
   const char *pszBlockSep=NULL;
-  char *pszResult=NULL;
   int nDiffrentProc = 0;
   SOSProcedureNode *paDiffrentProc = NULL;
-  char *pszProcedureValue = NULL;
   int iItemPosition, status;
   shapeObj sShape;
   char* pszEscapedStr = NULL;
@@ -1924,10 +1940,8 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             /* HACK END */
 
             pszBuffer = NULL;
-            if (&lp->filter) {
-              if (lp->filter.string && strlen(lp->filter.string) > 0)
-                msFreeExpression(&lp->filter);
-            }
+            if (lp->filter.string && strlen(lp->filter.string) > 0)
+              msFreeExpression(&lp->filter);
 
             /*The filter should reflect the underlying db*/
             /*for ogr add a where clause */
@@ -2126,6 +2140,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
 
             /* project MAP.EXTENT to this SRS */
             msInitProjection(&po);
+            msProjectionInheritContextFrom(&po, &map->projection);
 
             snprintf(srsbuffer, sizeof(srsbuffer), "+init=epsg:%.20s", sosparams->pszSrsName+strlen("EPSG:"));
 
@@ -2303,6 +2318,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
     if (tokens==NULL || n != 4) {
       msSetError(MS_SOSERR, "Wrong number of arguments for sos_offering_extent.",
                  "msSOSGetCapabilities()");
+      msFree(script_url);
       return msSOSException(map, "sos_offering_extent", "InvalidParameterValue");
     }
 
@@ -2314,6 +2330,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
     if (map && msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
       if (msProjectRect(&lp->projection, &map->projection, &envelope) == MS_FAILURE) {
         msSetError(MS_SOSERR, "Coordinates transformation failed.  Raised in msProjectRect() of file %s line %d", "msSOSGetCapabilities()", __FILE__, __LINE__);
+        msFree(script_url);
         return msSOSException(map, "sos_offering_extent", "InvalidParameterValue");
       }
     }
@@ -2352,6 +2369,14 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
     msSetError(MS_SOSERR, "resultModel should be om:Measurement or om:Observation", "msSOSGetObservation()");
     free(xsi_schemaLocation);
     free(schemalocation);
+    msFree(script_url);
+    xmlFreeNs(psNsSos);
+    xmlFreeNs(psNsGml);
+    xmlFreeNs(psNsOm);
+    xmlFreeNs(psNsSwe);
+    xmlFreeNs(psNsXLink);
+    xmlFreeNs(psNsMs);
+    xmlFreeDoc(psDoc);
     return msSOSException(map, "resultModel", "InvalidParameterValue");
   }
 
@@ -2391,10 +2416,12 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
                 else
                   xmlNodeAddContent(psResultNode, BAD_CAST "\n");
               }
-              pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, NULL);
-              if (pszResult) {
-                xmlNodeAddContent(psResultNode, BAD_CAST pszResult);
-                msFree(pszResult);
+              {
+                char* pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, NULL);
+                if (pszResult) {
+                  xmlNodeAddContent(psResultNode, BAD_CAST pszResult);
+                  msFree(pszResult);
+                }
               }
             }
           }
@@ -2404,9 +2431,14 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
           else {
 
             for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++) {
-              pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, &pszProcedureValue);
+              char* pszProcedureValue = NULL;
+              char* pszResult = msSOSReturnMemberResult((GET_LAYER(map, i)), j, &pszProcedureValue);
               if (!pszProcedureValue || !pszResult)
+              {
+                msFree(pszProcedureValue);
+                msFree(pszResult);
                 continue;
+              }
               for (k=0; k<nDiffrentProc; k++) {
                 if (strcasecmp(paDiffrentProc[k].pszProcedure, pszProcedureValue) == 0) {
                   pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S",
@@ -2432,14 +2464,14 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
                 psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map,
                                     (GET_LAYER(map, i)),
                                     pszProcedureValue);
-                msFree(pszProcedureValue);
 
                 paDiffrentProc[nDiffrentProc-1].psResultNode =
                   xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
 
                 xmlNodeAddContent(paDiffrentProc[nDiffrentProc-1].psResultNode, BAD_CAST pszResult);
-                msFree(pszResult);
               }
+              msFree(pszProcedureValue);
+              msFree(pszResult);
             }
             if (paDiffrentProc) {
               for (k=0; k<nDiffrentProc; k++)

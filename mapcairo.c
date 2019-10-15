@@ -34,6 +34,7 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <cairo-pdf.h>
 #include <cairo-svg.h>
+#include <cairo-win32.h>
 #else
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-svg.h>
