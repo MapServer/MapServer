@@ -458,8 +458,8 @@
     }
     
     %newobject generateSLD;
-    char *generateSLD() {
-        return (char *) msSLDGenerateSLD(self, -1, NULL);
+    char *generateSLD(char *sldVersion=NULL) {
+        return (char *) msSLDGenerateSLD(self, -1, sldVersion);
     }
 
 
