@@ -777,7 +777,31 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
 }
 
 int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
-   return MS_SUCCESS;
+
+  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+
+  /* utfvalue is set to 0 if the shape isn't in the table. */
+  if(r->utfvalue == 0) {
+    return MS_SUCCESS; //Stop the rendering with no errors
+  }
+
+  /* Pathing the symbol BBox */
+  mapserver::path_storage box;
+  double size, x, y;
+  
+  size = tp->glyph_size;;
+  x = tp->glyphs->pnt.x;
+  y = tp->glyphs->pnt.y;
+  
+  box.move_to((x)/r->utfresolution,(y)/r->utfresolution);
+  box.line_to((x+size)/r->utfresolution,(y)/r->utfresolution);
+  box.line_to((x+size)/r->utfresolution,(y-size)/r->utfresolution);
+  box.line_to((x)/r->utfresolution,(y-size)/r->utfresolution);
+
+  /* Rendering the symbol */
+  utfgridRenderPath(img, box);
+
+  return MS_SUCCESS;
 }
 
 int utfgridFreeSymbol(symbolObj * symbol)
