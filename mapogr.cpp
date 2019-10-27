@@ -2719,9 +2719,13 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
         break;
 
       case OFTDate:
-      case OFTTime:
-      case OFTDateTime:
         gml_type = "Date";
+        break;
+      case OFTTime:
+        gml_type = "Time";
+        break;
+      case OFTDateTime:
+        gml_type = "DateTime";
         break;
 
       default:

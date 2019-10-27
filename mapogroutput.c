@@ -1067,6 +1067,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       else if( EQUAL(item->type,"Character") )
         eType = OFTString;
       else if( EQUAL(item->type,"Date") )
+        eType = OFTDate;
+      else if( EQUAL(item->type,"Time") )
+        eType = OFTTime;
+      else if( EQUAL(item->type,"DateTime") )
         eType = OFTDateTime;
       else if( EQUAL(item->type,"Boolean") )
         eType = OFTInteger;

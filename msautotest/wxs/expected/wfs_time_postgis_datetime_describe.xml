@@ -12,17 +12,17 @@ Content-Type: application/gml+xml; version=3.2; charset=UTF-8
   <import namespace="http://www.opengis.net/gml/3.2"
           schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd" />
 
-  <element name="time" 
-           type="ms:timeType" 
+  <element name="datetime" 
+           type="ms:datetimeType" 
            substitutionGroup="gml:AbstractFeature" />
 
-  <complexType name="timeType">
+  <complexType name="datetimeType">
     <complexContent>
       <extension base="gml:AbstractFeatureType">
         <sequence>
           <element name="msGeometry" type="gml:GeometryPropertyType" minOccurs="0" maxOccurs="1"/>
-          <element name="gid" minOccurs="0" type="string"/>
-          <element name="time" minOccurs="0" type="gml:TimeInstantType"/>
+          <element name="gid" minOccurs="0" type="integer"/>
+          <element name="datetime" minOccurs="0" type="gml:TimeInstantType"/>
         </sequence>
       </extension>
     </complexContent>

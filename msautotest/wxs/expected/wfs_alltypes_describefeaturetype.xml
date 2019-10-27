@@ -25,7 +25,9 @@ Content-Type: text/xml; subtype=gml/3.1.1; charset=UTF-8
           <element name="aint" minOccurs="0" type="integer"/>
           <element name="str" minOccurs="0" type="string"/>
           <element name="areal" minOccurs="0" type="double"/>
+          <element name="adatetime" minOccurs="0" type="dateTime"/>
           <element name="adate" minOccurs="0" type="date"/>
+          <element name="atime" minOccurs="0" type="time"/>
         </sequence>
       </extension>
     </complexContent>

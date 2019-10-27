@@ -886,9 +886,13 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
           break;
 
         case SQL_TYPE_DATE:
-        case SQL_TYPE_TIME:
-        case SQL_TYPE_TIMESTAMP:
           gml_type = "Date";
+          break;
+        case SQL_TYPE_TIME:
+          gml_type = "Time";
+          break;
+        case SQL_TYPE_TIMESTAMP:
+          gml_type = "DateTime";
           break;
 
         case SQL_BIT:
