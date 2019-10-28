@@ -193,6 +193,10 @@ unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode) {
   if(face->face->charmap && face->face->charmap->encoding == FT_ENCODING_MS_SYMBOL) {
     unicode |= 0xf000; /* why? */
   }
+#ifdef USE_THREAD
+  if (use_global_ft_cache)
+	  msAcquireLock(TLOCK_TTF);
+#endif   
   UT_HASH_FIND_INT(face->index_cache,&unicode,ic);
   if(!ic) {
     ic = msSmallMalloc(sizeof(index_element));
@@ -200,6 +204,10 @@ unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode) {
     ic->unicode = unicode;
     UT_HASH_ADD_INT(face->index_cache,unicode,ic);
   }
+#ifdef USE_THREAD
+  if (use_global_ft_cache)
+	  msReleaseLock(TLOCK_TTF);
+#endif  
   return ic->codepoint;
 }
 
@@ -266,6 +274,10 @@ glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned
   memset(&key,0,sizeof(glyph_element_key));
   key.codepoint = codepoint;
   key.size = size;
+#ifdef USE_THREAD
+  if (use_global_ft_cache)
+    msAcquireLock(TLOCK_TTF);
+#endif   
   UT_HASH_FIND(hh,face->glyph_cache,&key,sizeof(glyph_element_key),gc);
   if(!gc) {
     FT_Error error;
@@ -277,6 +289,10 @@ glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned
     if(error) {
       msSetError(MS_MISCERR, "unable to load glyph %ud for font \"%s\"", "msGetGlyphByIndex()",key.codepoint, face->font);
       free(gc);
+#ifdef USE_THREAD
+      if (use_global_ft_cache)
+        msReleaseLock(TLOCK_TTF);
+#endif      
       return NULL;
     }
     gc->metrics.minx = face->face->glyph->metrics.horiBearingX / 64.0;
@@ -287,6 +303,10 @@ glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned
     gc->key = key;
     UT_HASH_ADD(hh,face->glyph_cache,key,sizeof(glyph_element_key), gc);
   }
+#ifdef USE_THREAD
+  if (use_global_ft_cache)
+    msReleaseLock(TLOCK_TTF);
+#endif  
   return gc;
 }
 
