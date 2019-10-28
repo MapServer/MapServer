@@ -1367,7 +1367,7 @@ void msProjLibInitFromEnv()
 {
   const char *val;
 
-  if( (val=getenv( "PROJ_LIB" )) != NULL ) {
+  if( (val=getenv( "MS_PROJ_LIB" )) != NULL ) {
     msSetPROJ_LIB(val, NULL);
   }
 }
