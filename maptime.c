@@ -45,9 +45,7 @@ typedef struct {
   MS_TIME_RESOLUTION resolution;
 } timeFormatObj;
 
-#define MS_NUMTIMEFORMATS 13
-
-timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
+static timeFormatObj ms_timeFormats[] = {
   {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD",TIME_RESOLUTION_DAY},
   {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ",TIME_RESOLUTION_SECOND},
   {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS",TIME_RESOLUTION_SECOND},
@@ -60,8 +58,12 @@ timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
   {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
   {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
   {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND}
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%H:%M:%SZ", "HH:MM:SSZ", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%H:%M:%S", "HH:MM:SS", TIME_RESOLUTION_SECOND}
 };
+
+#define MS_NUMTIMEFORMATS (int)(sizeof(ms_timeFormats)/sizeof(ms_timeFormats[0]))
 
 int *ms_limited_pattern = NULL;
 int ms_num_limited_pattern;

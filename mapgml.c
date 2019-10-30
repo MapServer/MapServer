@@ -1024,14 +1024,14 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item,
     tag_name = item->name;
   if(strchr(tag_name, ':') != NULL) add_namespace = MS_FALSE;
 
-  if( item->type && EQUAL(item->type, "Date") ) {
+  if( item->type && (EQUAL(item->type, "Date") ||
+                     EQUAL(item->type, "DateTime") ||
+                     EQUAL(item->type, "Time")) ) {
       struct tm tm;
       if( msParseTime(value, &tm) == MS_TRUE ) {
           const char* pszStartTag = "";
           const char* pszEndTag = "";
-          int timeresolution;
 
-          timeresolution = msTimeGetResolution(value);
           encoded_value = (char*) msSmallMalloc(256);
           if( outputformat == OWS_GML32  ) {
               if( pszFID != NULL )
@@ -1040,10 +1040,15 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item,
               pszEndTag = "</gml:timePosition>";
           }
 
-          if( timeresolution == TIME_RESOLUTION_DAY )
+          if( EQUAL(item->type, "Date") )
               snprintf(encoded_value, 256, "%s%04d-%02d-%02d%s",
                        pszStartTag,
                        tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                       pszEndTag);
+          else if( EQUAL(item->type, "Time") )
+              snprintf(encoded_value, 256, "%s%02d:%02d:%02dZ%s",
+                       pszStartTag,
+                       tm.tm_hour, tm.tm_min, tm.tm_sec,
                        pszEndTag);
           else
               snprintf(encoded_value, 256, "%s%04d-%02d-%02dT%02d:%02d:%02dZ%s",
