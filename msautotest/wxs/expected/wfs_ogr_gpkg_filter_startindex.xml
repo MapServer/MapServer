@@ -1,0 +1,68 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-64.333577,44.375794 -60.981038,46.980843</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>&quot;Tignish</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>&#39;Cheticamp</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>Sheet Harbour</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>&#39;Souris&#39;</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>&quot;Canso&quot;</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>Port Hawkesbury</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>Antigonish</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>Springhill</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>&quot;Wind&quot;sor</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <ms:NAME>Lunenburg</ms:NAME>
+      </ms:popplace>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+
