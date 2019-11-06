@@ -4613,6 +4613,7 @@ mapservObj *msAllocMapServObj()
   mapserv->QueryString=NULL;
   mapserv->ShapeIndex=-1;
   mapserv->TileIndex=-1;
+  mapserv->TileMode=TILE_GMAP;
   mapserv->QueryCoordSource=NONE;
   mapserv->ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
 

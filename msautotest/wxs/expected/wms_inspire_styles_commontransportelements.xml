@@ -2,6 +2,7 @@
 <NamedLayer>
 <se:Name>TN.CommonTransportElements</se:Name>
 <UserStyle>
+<se:Name>TestStyle</se:Name>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TestStyle</se:Name>
@@ -23,6 +24,8 @@
 <NamedLayer>
 <se:Name>TN.CommonTransportElements.TransportArea</se:Name>
 <UserStyle>
+<se:Name>TN.CommonTransportElements.TransportArea.Default</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportArea</se:Name>
@@ -36,6 +39,11 @@
 </se:Stroke>
 </se:PolygonSymbolizer>
 </se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+<UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportArea</se:Name>
 <se:PolygonSymbolizer>
@@ -48,6 +56,11 @@
 </se:Stroke>
 </se:PolygonSymbolizer>
 </se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+<UserStyle>
+<se:Name>TestStyle</se:Name>
+<se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TestStyle</se:Name>
 <se:PolygonSymbolizer>
@@ -59,6 +72,8 @@
 <NamedLayer>
 <se:Name>TN.CommonTransportElements.TransportLink</se:Name>
 <UserStyle>
+<se:Name>TN.CommonTransportElements.TransportLink.Default</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportLink</se:Name>
@@ -70,6 +85,11 @@
 </se:Stroke>
 </se:LineSymbolizer>
 </se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+<UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportLink</se:Name>
 <se:MinScaleDenominator>5146.000000</se:MinScaleDenominator>
@@ -86,6 +106,8 @@
 <NamedLayer>
 <se:Name>TN.CommonTransportElements.TransportNode</se:Name>
 <UserStyle>
+<se:Name>TN.CommonTransportElements.TransportNode.Default</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportNode</se:Name>
@@ -101,6 +123,11 @@
 </se:Graphic>
 </se:PointSymbolizer>
 </se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+<UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportNode</se:Name>
 <se:PointSymbolizer>

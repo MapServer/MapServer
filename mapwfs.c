@@ -1060,6 +1060,10 @@ static const char* msWFSMapServTypeToXMLType(const char* type)
       element_type = "string";
     else if( EQUAL(type,"Date") )
       element_type = "date";
+    else if( EQUAL(type,"Time") )
+      element_type = "time";
+    else if( EQUAL(type,"DateTime") )
+      element_type = "dateTime";
     else if( EQUAL(type,"Boolean") )
       element_type = "boolean";
     return element_type;
@@ -1084,7 +1088,8 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
 
   if(item->type)
   {
-    if( outputformat == OWS_GML32_SFE_SCHEMA && EQUAL(item->type,"Date") )
+    if( outputformat == OWS_GML32_SFE_SCHEMA &&
+        (EQUAL(item->type,"Date") || EQUAL(item->type,"Time") || EQUAL(item->type,"DateTime")) )
       element_type = "gml:TimeInstantType";
     else
       element_type = msWFSMapServTypeToXMLType(item->type);

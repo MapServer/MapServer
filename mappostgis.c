@@ -3199,6 +3199,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 #define VARCHAROID    1043
 #define DATEOID     1082
 #define TIMEOID     1083
+#define TIMETZOID     1266
 #define TIMESTAMPOID          1114
 #define TIMESTAMPTZOID          1184
 #define NUMERICOID              1700
@@ -3260,9 +3261,12 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
         sprintf( gml_width, "%d", (fmod - 4) >> 16 );
         sprintf( gml_precision, "%d", ((fmod-4) & 0xFFFF) );
       }
-    } else if( oid == DATEOID
-               || oid == TIMESTAMPOID || oid == TIMESTAMPTZOID ) {
+    } else if( oid == DATEOID ) {
       gml_type = "Date";
+    } else if( oid == TIMEOID || oid == TIMETZOID ) {
+      gml_type = "Time";
+    } else if( oid == TIMESTAMPOID || oid == TIMESTAMPTZOID ) {
+      gml_type = "DateTime";
     }
 
     snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );

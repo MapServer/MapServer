@@ -381,5 +381,16 @@ END
         assert map.getLayer(0).getFilterString() == "([size]<3)"
 
 
+class MapSLDTestCase(MapTestCase):
+    def test(self):
+
+        test_map = mapscript.mapObj(TESTMAPFILE)
+        result = test_map.generateSLD()
+        assert result.startswith('<StyledLayerDescriptor version="1.0.0"'), result
+
+        result = test_map.generateSLD("1.1.0")
+        assert result.startswith('<StyledLayerDescriptor version="1.1.0"'), result
+
+
 if __name__ == '__main__':
     unittest.main()

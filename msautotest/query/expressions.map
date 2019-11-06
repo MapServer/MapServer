@@ -1,0 +1,135 @@
+#
+# Test Filter Expressions using Query Mode
+#
+# REQUIRES: INPUT=SHAPEFILE INPUT=OGR
+#
+# RUN_PARMS: expressions_test001.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test001" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test002.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test002" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test003.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test003" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test004.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test004" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test005.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test005" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test006.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test006" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test007.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test007" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test008.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test008" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test009.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test009" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test010.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test010" > [RESULT_DEMIME]
+#
+MAP
+  NAME 'expressions'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  
+  SIZE 300 300
+  IMAGETYPE png8
+
+  OUTPUTFORMAT
+    NAME "CSV"
+    DRIVER "OGR/CSV"
+    MIMETYPE "text/csv"
+    FORMATOPTION "LCO:STRING_QUOTING=IF_NEEDED"
+    FORMATOPTION "STORAGE=memory"
+    FORMATOPTION "FORM=simple"
+    FORMATOPTION "FILENAME=result.csv"
+  END
+
+  # OR logical expression, string equality
+  LAYER
+    NAME 'expressions_test001'
+    FILTER ('[cty_name]' = 'Aitkin' or '[cty_name]' = 'Anoka')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # AND logical expression, mixed casing
+  LAYER
+    NAME 'expressions_test002'
+    FILTER ('[CTY_NAME]' ~* '^B' AND [cty_fips] < 15)
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # NOT logical expression
+  LAYER
+    NAME 'expressions_test003'
+    FILTER ('[CTY_NAME]' ~* '^A.*$' AND NOT '[CTY_NAME]' = 'Aitkin')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # NOT logical expression with brackets
+  LAYER
+    NAME 'expressions_test004'
+    FILTER ('[CTY_NAME]' ~* '^A.*$' AND NOT('[CTY_NAME]' = 'Aitkin'))
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # AND logical expression with &&
+  LAYER
+    NAME 'expressions_test005'
+    FILTER ('[lastmod]' eq '2011-01-01 00:00:00' AND NOT '[CTY_NAME]' ~ '(Aitkin|Lac Qui Parle)')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,lastmod"
+    END
+  END
+
+  # OR logical expression with ||
+  LAYER
+    NAME 'expressions_test006'
+    FILTER ([area] ge 7577272795 || [perimeter] le 110)
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,area,perimeter"
+    END
+  END
+
+  # NOT logical expression with !
+  LAYER
+    NAME 'expressions_test007'
+    FILTER ([cty_fips] >= 165 AND !('[cty_name]' IN 'Wilkin,Wright'))
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # String functions - upper
+  LAYER
+    NAME 'expressions_test008'
+    FILTER (upper('[cty_name]') = "POLK")
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # String functions - firstcap
+  LAYER
+    NAME 'expressions_test009'
+    FILTER (firstcap ('[cty_name]') = 'Lake of the woods')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # String functions - commify
+  LAYER
+    NAME 'expressions_test010'
+    FILTER (commify ('[area]') = '4,698,732,287.54973')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,area"
+    END
+  END
+
+END

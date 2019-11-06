@@ -1,0 +1,6 @@
+CTY_NAME,CTY_FIPS
+Beltrami,7
+Becker,5
+Benton,9
+Big Stone,11
+Blue Earth,13

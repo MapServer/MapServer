@@ -46,7 +46,7 @@ enum objType { MS_OBJ_STYLE, MS_OBJ_LABEL };
 /* -------------------------------------------------------------------- */
 layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers);
 int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
-int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
+int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserStyleName);
 int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                      mapObj *map, int iColorParam);
 int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
@@ -55,14 +55,14 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                           mapObj *map);
 
 int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                             int bNewClass);
+                             int bNewClass, const char* pszUserStyleName);
 int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                                int bNewClass);
+                                int bNewClass, const char* pszUserStyleName);
 int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                              int bNewClass);
+                              int bNewClass, const char* pszUserStyleName);
 int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                             int bOtherSymboliser);
-int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
+                             int bOtherSymboliser, const char* pszUserStyleName);
+int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserStyleName);
 
 int msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                                   char *pszDashValue,

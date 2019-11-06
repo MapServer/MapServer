@@ -905,9 +905,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
         continue;
 
       if(msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params, script_url_encoded) != MS_SUCCESS ) {
-        msIO_printf("</ContentMetadata>\n");
-        msFree(script_url_encoded);
-        return MS_FAILURE;
+        msIO_printf("  <!-- WARNING: There was a problem with one of layers. See server log for details. -->\n");
       }
     }
   }

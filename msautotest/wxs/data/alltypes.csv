@@ -1,2 +1,2 @@
-aint,str,areal,adate
-1,a,2.4,"2013/10/26 12:00:00"
+aint,str,areal,adatetime,adate,atime
+1,a,2.4,"2013/10/26 12:00:00","2013/10/26","12:00:00"
