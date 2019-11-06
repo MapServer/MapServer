@@ -776,9 +776,16 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
   return MS_SUCCESS;
 }
 
-int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
+int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
 
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
+
+  /* If it's not a marker then it's a label or other thing and we dont
+   *  want to draw it on the map
+   */
+  if(!isMarker) {
+    return MS_SUCCESS; //Stop the rendering with no errors
+  }
 
   /* utfvalue is set to 0 if the shape isn't in the table. */
   if(r->utfvalue == 0) {

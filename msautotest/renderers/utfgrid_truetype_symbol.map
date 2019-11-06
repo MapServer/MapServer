@@ -1,0 +1,39 @@
+# RUN_PARMS: utfgrid_truetype_symbol.json [SHP2IMG] -m [MAPFILE] -i json -o [RESULT]
+#
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+LAYER
+  NAME "symbol"
+  TYPE point
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "ttf"
+        COLOR 0 0 0
+        SIZE 15
+    END
+    LABEL
+	 COLOR  12 0 150
+	 OUTLINECOLOR 0 0 255
+	 TYPE truetype
+	 SIZE 6
+	 POSITION AUTO
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+    text 'label_sample' END
+  END
+END
+
