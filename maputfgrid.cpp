@@ -667,7 +667,10 @@ int utfgridRenderLine(imageObj *img, shapeObj *lineshape, strokeStyleObj *linest
 
   /* utfvalue is set to 0 if the shape isn't in the table. */
   if(r->utfvalue == 0) {
-    return MS_FAILURE;
+    return MS_SUCCESS;
+    /* If we dont get a caracter to draw we just skip execution
+     * instead of failing
+     */
   }
 
   /* Render the line */
