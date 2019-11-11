@@ -465,20 +465,20 @@
 
     %newobject processTemplate;
     char *processTemplate(int bGenerateImages, char **names, char **values,
-                          int numentries)
+                          int npairs)
     {
         return msProcessTemplate(self, bGenerateImages, names, values,
-                                 numentries);
+                                 npairs);
     }
   
     %newobject processLegendTemplate;
-    char *processLegendTemplate(char **names, char **values, int numentries) {
-        return msProcessLegendTemplate(self, names, values, numentries);
+    char *processLegendTemplate(char **names, char **values, int npairs) {
+        return msProcessLegendTemplate(self, names, values, npairs);
     }
   
     %newobject processQueryTemplate;
-    char *processQueryTemplate(char **names, char **values, int numentries) {
-        return msProcessQueryTemplate(self, 1, names, values, numentries);
+    char *processQueryTemplate(char **names, char **values, int npairs) {
+        return msProcessQueryTemplate(self, 1, names, values, npairs);
     }
 
     outputFormatObj *getOutputFormatByName(char *name) {
