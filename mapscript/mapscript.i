@@ -30,6 +30,11 @@
 ============================================================================
 */
 
+%define DOCSTRING
+"The mapscript module provides users an interface to `MapServer <http://mapserver.org>`_
+classes on any platform, and has been tested on Python versions 2.7 and 3.5+. "
+%enddef
+
 %begin %{
 #ifdef _MSC_VER
 #define SWIG_PYTHON_INTERPRETER_NO_DEBUG
