@@ -169,7 +169,7 @@ imageObj *msDrawScalebar(mapObj *map)
   strokeStyle.patternlength=0;
   initTextSymbol(&ts);
 
-  if(map->units == -1) {
+  if((int)map->units == -1) {
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
     return(NULL);
   }

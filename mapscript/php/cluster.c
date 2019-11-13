@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_cluster;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_cluster_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(cluster___get_args, 0, 0, 1)
 ZEND_ARG_INFO(0, property)
@@ -78,7 +81,7 @@ PHP_METHOD(clusterObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   IF_GET_DOUBLE("maxdistance", php_cluster->cluster->maxdistance)
   else IF_GET_DOUBLE("buffer", php_cluster->cluster->buffer)
@@ -104,7 +107,7 @@ PHP_METHOD(clusterObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   IF_SET_DOUBLE("maxdistance", php_cluster->cluster->maxdistance, value)
   else IF_SET_DOUBLE("buffer", php_cluster->cluster->buffer, value)
@@ -132,7 +135,7 @@ PHP_METHOD(clusterObj, updateFromString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   status = clusterObj_updateFromString(php_cluster->cluster, snippet);
 
@@ -161,14 +164,14 @@ PHP_METHOD(clusterObj, convertToString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   value =  clusterObj_convertToString(php_cluster->cluster);
 
   if (value == NULL)
-    RETURN_STRING("", 1);
+    MAPSCRIPT_RETURN_STRING("", 1);
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -191,7 +194,7 @@ PHP_METHOD(clusterObj, setGroup)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   if ((status = clusterObj_setGroup(php_cluster->cluster, group)) != MS_SUCCESS) {
     mapscript_throw_mapserver_exception("" TSRMLS_CC);
@@ -217,14 +220,14 @@ PHP_METHOD(clusterObj, getGroupString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   value = clusterObj_getGroupString(php_cluster->cluster);
   if (value == NULL) {
     RETURN_NULL();
   }
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -247,7 +250,7 @@ PHP_METHOD(clusterObj, setFilter)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   if ((status = clusterObj_setFilter(php_cluster->cluster, filter)) != MS_SUCCESS) {
     mapscript_throw_mapserver_exception("" TSRMLS_CC);
@@ -273,14 +276,14 @@ PHP_METHOD(clusterObj, getFilterString)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, zobj);
 
   value = clusterObj_getFilterString(php_cluster->cluster);
   if (value == NULL) {
     RETURN_NULL();
   }
 
-  RETVAL_STRING(value, 1);
+  MAPSCRIPT_RETVAL_STRING(value, 1);
   free(value);
 }
 /* }}} */
@@ -304,16 +307,65 @@ void mapscript_create_cluster(clusterObj *cluster, parent_object parent, zval *r
 {
   php_cluster_object * php_cluster;
   object_init_ex(return_value, mapscript_ce_cluster);
-  php_cluster = (php_cluster_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_cluster = MAPSCRIPT_OBJ_P(php_cluster_object, return_value);
   php_cluster->cluster = cluster;
 
-  if (parent.val)
+  if (ZVAL_NOT_UNDEF(parent.val))
     php_cluster->is_ref = 1;
 
   php_cluster->parent = parent;
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_cluster_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_cluster_object *php_cluster;
+
+  php_cluster = ecalloc(1, sizeof(*php_cluster) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_cluster->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_cluster->zobj, ce);
+
+  php_cluster->zobj.handlers = &mapscript_cluster_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_cluster->parent);
+
+  return &php_cluster->zobj;
+}
+
+static void mapscript_cluster_free_object(zend_object *object)
+{
+  php_cluster_object *php_cluster;
+
+  php_cluster = (php_cluster_object *)((char *)object - XtOffsetOf(php_cluster_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_cluster->parent);
+
+  /* We don't need to free the clusterObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(cluster)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "clusterObj", cluster_functions);
+  mapscript_ce_cluster = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_cluster->create_object = mapscript_cluster_create_object;
+  mapscript_ce_cluster->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_cluster_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_cluster_object_handlers));
+  mapscript_cluster_object_handlers.free_obj = mapscript_cluster_free_object;
+  mapscript_cluster_object_handlers.offset   = XtOffsetOf(php_cluster_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_cluster_object_destroy(void *object TSRMLS_DC)
 {
   php_cluster_object *php_cluster = (php_cluster_object *)object;
@@ -356,3 +408,4 @@ PHP_MINIT_FUNCTION(cluster)
 
   return SUCCESS;
 }
+#endif

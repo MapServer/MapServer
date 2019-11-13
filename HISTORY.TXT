@@ -12,6 +12,41 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.4.0 release (2019-5-14)
+-------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.4.0-rc2 release (2019-5-10)
+----------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.4.0-rc1 release (2019-5-1)
+----------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.4.0-beta2 release (2019-4-17)
+-------------------------------
+
+- Addresses XSS issue with [layers] template tag (fix available in 6.4, 7.0 and 7.2 branches as well)
+
+- Added Perl/Mapscript to Travis CI
+
+- No other major changes, see detailed changelog for bug fixes
+
+7.4.0-beta1 release (2019-3-29)
+-------------------------------
+
+- Python MapScript binding is available as installable Wheels with a full test suite and examples
+
+- C# MapScript binding is now compatible with .NET Core
+
+- PHP 7 MapScript binding support - both PHP/MapScript and Swig/MapScript
+
+- Added workaround to allow compiling against Proj 6 (#5766)
+
 7.2.2 release (2019-2-19)
 --------------------------
 
@@ -26,11 +61,13 @@ http://mapserver.org/development/changelog/
 --------------------------
 
 - Fixed issue with ring handling with polygons in MVT support (#5626)
+
 - No other major changes, see detailed changelog for bug fixes
 
 7.2.0-beta2 release (2018-6-13)
 
 - Update beta1 release notes to remove reference to PHP7 support
+
 - No other major changes, see detailed changelog for bug fixes
 
 7.2.0-beta1 release (2018-5-9)

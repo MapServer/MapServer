@@ -71,6 +71,7 @@ END
 #
 
 LAYER
+
   NAME time
   DATA pattern1
   METADATA

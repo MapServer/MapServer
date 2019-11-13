@@ -97,6 +97,7 @@ END
 #
 
 LAYER
+
   NAME towns
   DATA towns
   CONNECTIONTYPE OGR

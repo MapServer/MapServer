@@ -1,0 +1,85 @@
+#
+# Test OGR GeoPackage support
+#
+# REQUIRES: SUPPORTS=WFS INPUT=OGR
+#
+# RUN_PARMS: wfs_ogr_gpkg_issue_5858.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test&BBOX=-180,-90,180,90&MAXFEATURES=1" > [RESULT]
+#
+# Filter using startIndex
+# RUN_PARMS: wfs_ogr_gpkg_filter_startindex.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=0" > [RESULT]
+# RUN_PARMS: wfs_ogr_gpkg_filter_startindex2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=10" > [RESULT]
+
+MAP
+
+NAME WFS_OGR_GPKG
+STATUS ON
+SIZE 400 300
+EXTENT 6 30 21 50
+UNITS METERS
+IMAGECOLOR 255 255 255
+
+#
+# Start of web interface definition
+#
+
+WEB
+
+ IMAGEPATH "tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:4326"
+    "wfs_enable_request"   "*" 
+  END
+END
+
+PROJECTION
+  "+proj=latlong +datum=WGS84"
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+
+  NAME test
+  DATA test
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/test.gpkg"
+  METADATA
+    "ows_title"         "test"
+    "wfs_featureid"     "id"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  TEMPLATE "wfs_ogr_gpkg.map"
+END # Layer
+
+LAYER
+
+  NAME popplace
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/popplace.gpkg"
+  METADATA
+    "wfs_title"         "popplace"
+    "wfs_description"   "Cities"
+    "wfs_result_fields" "name"
+    "gml_include_items" "all"
+   END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+END # Layer
+
+END # Map File

@@ -148,7 +148,8 @@ char **msOGRRecursiveFileList( const char *path )
              CPLFormFilename( path, file_list[i], NULL ),
              sizeof(full_filename) );
 
-    VSIStatL( full_filename, &sStatBuf );
+    if( VSIStatL( full_filename, &sStatBuf ) != 0 )
+        continue;
 
     if( VSI_ISREG( sStatBuf.st_mode ) ) {
       result_list = CSLAddString( result_list, full_filename );
@@ -197,7 +198,8 @@ static void msOGRCleanupDS( const char *datasource_name )
              CPLFormFilename( path, file_list[i], NULL ),
              sizeof(full_filename) );
 
-    VSIStatL( full_filename, &sStatBuf );
+    if( VSIStatL( full_filename, &sStatBuf ) != 0 )
+      continue;
 
     if( VSI_ISREG( sStatBuf.st_mode ) ) {
       VSIUnlink( full_filename );
@@ -699,16 +701,23 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   int iLayer, i;
   int bDataSourceNameIsRequestDir = FALSE;
   int bUseFeatureId = MS_FALSE;
+  const char* pszMatchingFeatures;
+  int nMatchingFeatures = -1;
+  const char* pszFormatName = format->driver+4;
+  
+  pszMatchingFeatures = msGetOutputFormatOption(format, "_matching_features_", "");
+  if( pszMatchingFeatures[0] != '\0' )
+      nMatchingFeatures = atoi(pszMatchingFeatures);
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
   /* -------------------------------------------------------------------- */
   msOGRInitialize();
 
-  hDriver = OGRGetDriverByName( format->driver+4 );
+  hDriver = OGRGetDriverByName( pszFormatName );
   if( hDriver == NULL ) {
     msSetError( MS_MISCERR, "No OGR driver named `%s' available.",
-                "msOGRWriteFromQuery()", format->driver+4 );
+                "msOGRWriteFromQuery()", pszFormatName );
     return MS_FAILURE;
   }
 
@@ -722,6 +731,29 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( strncasecmp(format->formatoptions[i],"DSCO:",5) == 0 )
       ds_options = CSLAddString( ds_options,
                                  format->formatoptions[i] + 5 );
+  }
+  if( EQUAL(pszFormatName, "GeoJSON") && nMatchingFeatures >= 0 )
+  {
+      const char* pszNativeData =
+        CSLFetchNameValueDef(layer_options, "NATIVE_DATA", "{}");
+      if( pszNativeData[strlen(pszNativeData)-1] == '}' )
+      {
+          char szTemp[32];
+          char* pszTemplate = msSmallMalloc(strlen(pszNativeData) + 32);
+          strcpy(pszTemplate, pszNativeData);
+          pszTemplate[strlen(pszTemplate)-1] = 0;
+          if( strlen(pszNativeData) > 2 )
+              strcat(pszTemplate, ",");
+          sprintf(szTemp, "\"numberMatched\":%d}", nMatchingFeatures);
+          strcat(pszTemplate, szTemp);
+          layer_options = CSLSetNameValue(layer_options,
+                                          "NATIVE_MEDIA_TYPE",
+                                          "application/vnd.geo+json");
+          layer_options = CSLSetNameValue(layer_options,
+                                          "NATIVE_DATA",
+                                          pszTemplate);
+          msFree(pszTemplate);
+      }
   }
   if(!strcasecmp("true",msGetOutputFormatOption(format,"USE_FEATUREID","false"))) {
     bUseFeatureId = MS_TRUE;
@@ -760,6 +792,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                 "STORAGE=%s value not supported.",
                 "msOGRWriteFromQuery()",
                 storage );
+    CSLDestroy(layer_options);
+    CSLDestroy(ds_options);
     return MS_FAILURE;
   }
 
@@ -789,6 +823,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                   "Attempt to create directory '%s' failed.",
                   "msOGRWriteFromQuery()",
                   dir_to_create );
+      msFree(request_dir);
+      CSLDestroy(layer_options);
+      CSLDestroy(ds_options);
       return MS_FAILURE;
     }
   }
@@ -816,6 +853,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
            "Invalid value for FILENAME option. "
            "It must not contain any directory information.",
            "msOGRWriteFromQuery()" );
+    msFree(request_dir);
+    CSLDestroy(layer_options);
+    CSLDestroy(ds_options);
     return MS_FAILURE;
   }
 
@@ -876,6 +916,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                 "msOGRWriteFromQuery()",
                 datasource_name,
                 format->driver+4 );
+    CSLDestroy(layer_options);
     return MS_FAILURE;
   }
 
@@ -983,6 +1024,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                   "msOGRWriteFromQuery()",
                   layer->name,
                   format->driver+4 );
+      CSLDestroy(layer_options);
       return MS_FAILURE;
     }
 
@@ -1025,6 +1067,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       else if( EQUAL(item->type,"Character") )
         eType = OFTString;
       else if( EQUAL(item->type,"Date") )
+        eType = OFTDate;
+      else if( EQUAL(item->type,"Time") )
+        eType = OFTTime;
+      else if( EQUAL(item->type,"DateTime") )
         eType = OFTDateTime;
       else if( EQUAL(item->type,"Boolean") )
         eType = OFTInteger;
@@ -1051,6 +1097,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         OGR_DS_Destroy( hDS );
         msOGRCleanupDS( datasource_name );
         msGMLFreeItems(item_list);
+        CSLDestroy(layer_options);
         return MS_FAILURE;
       }
 
@@ -1071,6 +1118,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
           OGR_DS_Destroy( hDS );
           msOGRCleanupDS( datasource_name );
           msGMLFreeItems(item_list);
+          CSLDestroy(layer_options);
           return status;
         }
       }
@@ -1101,6 +1149,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             msOGRCleanupDS( datasource_name );
             msGMLFreeItems(item_list);
             msFreeShape(&resultshape);
+            CSLDestroy(layer_options);
             return status;
         }
       }
@@ -1134,9 +1183,15 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
 
       if( layer->project ) {
-        status =
-          msProjectShape(&layer->projection, &layer->map->projection,
-                         &resultshape);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &layer->map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+            status = msProjectShapeEx(layer->reprojectorLayerToMap, &resultshape);
+        else
+            status = MS_FAILURE;
       }
 
       /*
@@ -1152,6 +1207,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         msOGRCleanupDS( datasource_name );
         msGMLFreeItems(item_list);
         msFreeShape(&resultshape);
+        CSLDestroy(layer_options);
         return status;
       }
     }
@@ -1164,6 +1220,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Close the datasource.                                           */
   /* -------------------------------------------------------------------- */
   OGR_DS_Destroy( hDS );
+
+  CSLDestroy( layer_options );
 
   /* -------------------------------------------------------------------- */
   /*      Get list of resulting files.                                    */
@@ -1366,7 +1424,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
   msOGRCleanupDS( datasource_name );
 
-  CSLDestroy( layer_options );
   CSLDestroy( file_list );
 
   return MS_SUCCESS;

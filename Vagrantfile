@@ -7,6 +7,9 @@ require 'socket'
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  vm_ram = ENV['VAGRANT_VM_RAM'] || 1024
+  vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
+
   config.vm.box = "ubuntu/trusty64"
 
   config.vm.hostname = "mapserver-vagrant"
@@ -14,7 +17,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network :forwarded_port, guest: 80, host: 8080
 
   config.vm.provider "virtualbox" do |v|
-     v.customize ["modifyvm", :id, "--memory", 1024, "--cpus", 2]
+     v.customize ["modifyvm", :id, "--memory", vm_ram, "--cpus", vm_cpu]
      v.customize ["modifyvm", :id, "--ioapic", "on", "--largepages", "off", "--vtxvpid", "off"]
      v.name = "mapserver-vagrant"
    end
@@ -31,6 +34,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", path: "scripts/vagrant/virtualbox-fix.sh"
   config.vm.provision "shell", path: "scripts/vagrant/packages.sh"
   config.vm.provision "shell", path: "scripts/vagrant/postgis.sh"
+  config.vm.provision "shell", path: "scripts/vagrant/proj6.sh"
   config.vm.provision "shell", path: "scripts/vagrant/mapserver.sh"
 
 end

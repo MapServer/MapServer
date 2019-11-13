@@ -355,7 +355,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
 
     /*check for image path and image url*/
     if (layer->map->debug && (layer->map->web.imageurl == NULL ||   layer->map->web.imagepath == NULL))
-      msDebug("KmlRenderer::startNewLayer: imagepath and imageurl sould be set in the web object\n");
+      msDebug("KmlRenderer::startNewLayer: imagepath and imageurl should be set in the web object\n");
 
 
     /*map rect for ground overlay*/
@@ -523,7 +523,7 @@ int KmlRenderer::checkProjection(mapObj *map)
 {
   projectionObj *projection= &map->projection;
 #ifdef USE_PROJ
-  if (projection && projection->numargs > 0 && pj_is_latlong(projection->proj)) {
+  if (projection && projection->numargs > 0 && msProjIsGeographicCRS(projection)) {
     return MS_SUCCESS;
   } else {
     char epsg_string[100];
@@ -549,11 +549,12 @@ int KmlRenderer::checkProjection(mapObj *map)
     }
     strcpy(epsg_string, "epsg:4326" );
     msInitProjection(&out);
+    msProjectionInheritContextFrom(&out, projection);
     msLoadProjectionString(&out, epsg_string);
 
     sRect = map->extent;
     msProjectRect(projection, &out, &sRect);
-    msFreeProjection(projection);
+    msFreeProjectionExceptContext(projection);
     msLoadProjectionString(projection, epsg_string);
 
     /*change also units and extents*/

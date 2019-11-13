@@ -1,0 +1,48 @@
+from io import open
+from setuptools import setup, find_packages, Distribution
+
+
+class BinaryDistribution(Distribution):
+    """
+    Distribution which always forces a binary package with platform name
+    See http://lucumr.pocoo.org/2014/1/27/python-on-wheels/
+    and https://stackoverflow.com/questions/24071491/how-can-i-make-a-python-wheel-from-an-existing-native-library
+    """
+    def has_ext_modules(foo):
+        return True
+    def is_pure(self):
+        return False
+
+
+def readme():
+    with open('README.rst', "r", encoding="utf-8") as f:
+        return f.read()
+
+setup(
+    name="mapscript",
+    description = "MapServer Python MapScript bindings",
+    long_description=readme(),
+    classifiers = [
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: C',
+        'Programming Language :: C++',
+        'Topic :: Scientific/Engineering :: GIS',
+        'Topic :: Scientific/Engineering :: Information Analysis',
+    ],
+    author = "Steve Lime",
+    license = "MIT",
+    url="http://www.mapserver.org",
+    version="@MapServer_VERSION_MAJOR@.@MapServer_VERSION_MINOR@.@MapServer_VERSION_REVISION@",
+    packages=find_packages(),
+    package_data={
+        # list the files to include starting with the most deeply nested folder or they are overwritten
+        'mapscript': ['tests/data/vera/*.*', 'tests/data/*.*', '$<TARGET_FILE_NAME:@SWIG_MODULE_pythonmapscript_REAL_NAME@>']
+        },
+    distclass=BinaryDistribution
+)

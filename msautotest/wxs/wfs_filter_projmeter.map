@@ -98,6 +98,7 @@ END
 
 
 LAYER
+
   NAME province
   DATA province
   METADATA
@@ -149,6 +150,7 @@ END # Layer
 
 
 LAYER
+
   NAME popplace
   DATA popplace
   METADATA

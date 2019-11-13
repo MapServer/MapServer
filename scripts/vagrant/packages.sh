@@ -6,7 +6,8 @@ export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
 apt-get install -y python-software-properties
-add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+add-apt-repository -y ppa:ubuntugis/ppa
+add-apt-repository -y ppa:ubuntugis/ubuntugis-testing
 apt-get update
 apt-get -y upgrade
 
@@ -17,4 +18,5 @@ apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
     librsvg2-dev libpng12-dev libjpeg-dev libgif-dev \
     libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev \
     libgdal1-dev libfribidi-dev libexempi-dev \
-    libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler libharfbuzz-dev gdal-bin
+    libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler libharfbuzz-dev gdal-bin \
+    curl sqlite3

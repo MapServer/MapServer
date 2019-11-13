@@ -1,24 +1,24 @@
 /* ===========================================================================
    $Id$
- 
+
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript imageObj extensions
-   Author:   Steve Lime 
+   Author:   Steve Lime
              Sean Gillies, sgillies@frii.com
-             
+
    ===========================================================================
    Copyright (c) 1996-2001 Regents of the University of Minnesota.
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
    the rights to use, copy, modify, merge, publish, distribute, sublicense,
    and/or sell copies of the Software, and to permit persons to whom the
    Software is furnished to do so, subject to the following conditions:
- 
+
    The above copyright notice and this permission notice shall be included
    in all copies or substantial portions of the Software.
- 
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,11 +29,8 @@
    =========================================================================*/
 
 %extend imageObj {
-   
-    /* imageObj constructor now takes filename as an optional argument.
-     * If the target language is Python, we ignore this constructor and
-     * instead use the one in python/pymodule.i. */
-#ifndef SWIGPYTHON
+
+    /* imageObj constructor now takes filename as an optional argument. */
     imageObj(int width, int height, outputFormatObj *input_format=NULL,
              const char *file=NULL,
              double resolution=MS_DEFAULT_RESOLUTION, double defresolution=MS_DEFAULT_RESOLUTION)
@@ -58,19 +55,30 @@
         }
 
         if (file) {
-            
+
             renderer = format->vtable;
             rb = (rasterBufferObj*) malloc(sizeof(rasterBufferObj));
             if (!rb) {
                 msSetError(MS_MEMERR, NULL, "imageObj()");
                 return NULL;
             }
-            if ( (renderer->loadImageFromFile((char *)file, rb)) == MS_FAILURE)
+            if ( (renderer->loadImageFromFile((char *)file, rb)) == MS_FAILURE) {
+                msFreeRasterBuffer(rb);
+                free(rb);
                 return NULL;
-
-            image = msImageCreate(rb->width, rb->height, format, NULL, NULL, 
+            }
+            image = msImageCreate(rb->width, rb->height, format, NULL, NULL,
                                   resolution, defresolution, NULL);
-            renderer->mergeRasterBuffer(image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height);
+            if (! image) {
+                msFreeRasterBuffer(rb);
+                free(rb);
+                return NULL;
+            }
+
+            if(renderer->mergeRasterBuffer(image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height) != MS_SUCCESS) {
+                msFreeImage(image);
+                image = NULL;
+            }
 
             msFreeRasterBuffer(rb);
             free(rb);
@@ -81,15 +89,14 @@
         image = msImageCreate(width, height, format, NULL, NULL, resolution, defresolution, NULL);
         return image;
     }
-#endif
 
-    ~imageObj() 
+    ~imageObj()
     {
-        msFreeImage(self);    
+        msFreeImage(self);
     }
 
-    /* saveGeo - see Bugzilla issue 549 */ 
-    void save(char *filename, mapObj *map=NULL) 
+    /* saveGeo - see Bugzilla issue 549 */
+    void save(char *filename, mapObj *map=NULL)
     {
         msSaveImage(map, self, filename );
     }
@@ -123,7 +130,8 @@
         else
         {
             msSetError(MS_IMGERR, "Writing of %s format not implemented",
-                       "imageObj::write");
+                       "imageObj::write",
+                       self->format->name);
         }
 
         return retval;
@@ -140,15 +148,15 @@
     contributed by Jerry Pisk, jerry.pisk@gmail.com
     -------------------------------------------------------------------------
     */
-    
-    gdBuffer getBytes() 
+
+    gdBuffer getBytes()
     {
         gdBuffer buffer;
-        
+
         buffer.owns_data = MS_TRUE;
-        
+
         buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
-            
+
         if( buffer.data == NULL || buffer.size == 0 )
         {
             buffer.data = NULL;
@@ -161,16 +169,16 @@
 
     int getSize() {
         gdBuffer buffer;
-	int size=0;
-        
+        int size=0;
+
         buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
-	size = buffer.size;
-            
+        size = buffer.size;
+
         if( buffer.data == NULL || buffer.size == 0 ) {
             buffer.data = NULL;
             msSetError(MS_MISCERR, "Failed to get image buffer size", "getSize");
         }
-	free(buffer.data);
+        free(buffer.data);
         return size;
     }
 }

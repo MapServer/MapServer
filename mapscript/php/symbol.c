@@ -32,6 +32,9 @@
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_symbol;
+#if PHP_VERSION_ID >= 70000
+zend_object_handlers mapscript_symbol_object_handlers;
+#endif  
 
 ZEND_BEGIN_ARG_INFO_EX(symbol___construct_args, 0, 0, 2)
 ZEND_ARG_OBJ_INFO(0, map, mapObj, 0)
@@ -84,8 +87,8 @@ PHP_METHOD(symbolObj, __construct)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-  php_map = (php_map_object *)zend_object_store_get_object(zmap TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, getThis());
+  php_map = MAPSCRIPT_OBJ_P(php_map_object, zmap);
 
   symbolId = msAddNewSymbol(php_map->map, symbolName);
 
@@ -98,7 +101,7 @@ PHP_METHOD(symbolObj, __construct)
 
   MAPSCRIPT_MAKE_PARENT(zmap, NULL);
   php_symbol->parent = parent;
-  MAPSCRIPT_ADDREF(zmap);
+  MAPSCRIPT_ADDREF_P(zmap);
 }
 /* }}} */
 
@@ -117,7 +120,7 @@ PHP_METHOD(symbolObj, __get)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, zobj);
 
   IF_GET_STRING("name", php_symbol->symbol->name)
   else IF_GET_LONG("type", php_symbol->symbol->type)
@@ -158,7 +161,7 @@ PHP_METHOD(symbolObj, __set)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, zobj);
 
   IF_SET_STRING("name", php_symbol->symbol->name, value)
   else IF_SET_LONG("type", php_symbol->symbol->type, value)
@@ -188,7 +191,8 @@ PHP_METHOD(symbolObj, __set)
    Set the points of the symbol ) */
 PHP_METHOD(symbolObj, setPoints)
 {
-  zval *zpoints, **ppzval;
+  zval *zpoints;
+  MAPSCRIPT_ZVAL_P ppzval;
   HashTable *points_hash = NULL;
   zval *zobj = getThis();
   int index = 0, flag = 0, numelements = 0;
@@ -202,7 +206,7 @@ PHP_METHOD(symbolObj, setPoints)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, zobj);
   points_hash = Z_ARRVAL_P(zpoints);
 
   numelements = zend_hash_num_elements(points_hash);
@@ -217,9 +221,15 @@ PHP_METHOD(symbolObj, setPoints)
       zend_hash_has_more_elements(points_hash) == SUCCESS;
       zend_hash_move_forward(points_hash)) {
 
+#if PHP_VERSION_ID < 70000
     zend_hash_get_current_data(points_hash, (void **)&ppzval);
     if (Z_TYPE_PP(ppzval) != IS_DOUBLE)
       convert_to_double(*ppzval);
+#else
+	ppzval = zend_hash_get_current_data(points_hash);
+    if (Z_TYPE_P(ppzval) != IS_DOUBLE)
+      convert_to_double(ppzval);
+#endif
 
     if (!flag) {
       php_symbol->symbol->points[index].x = Z_DVAL_PP(ppzval);
@@ -254,7 +264,7 @@ PHP_METHOD(symbolObj, getPointsArray)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, zobj);
 
   array_init(return_value);
 
@@ -287,7 +297,7 @@ PHP_METHOD(symbolObj, setImagePath)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, zobj);
 
   status = msLoadImageSymbol(php_symbol->symbol, filename);
 
@@ -316,8 +326,8 @@ PHP_METHOD(symbolObj, setImage)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-  php_image = (php_image_object *)zend_object_store_get_object(zimage TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, getThis());
+  php_image = MAPSCRIPT_OBJ_P(php_image_object, zimage);
 
   RETURN_LONG(symbolObj_setImage(php_symbol->symbol, php_image->image));
 }
@@ -341,9 +351,9 @@ PHP_METHOD(symbolObj, getImage)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-  php_map = (php_map_object *) zend_object_store_get_object(php_symbol->parent.val TSRMLS_CC);
-  php_outputformat = (php_outputformat_object *)zend_object_store_get_object(zoutputformat TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, getThis());
+  php_map = MAPSCRIPT_OBJ(php_map_object, php_symbol->parent.val);
+  php_outputformat = MAPSCRIPT_OBJ_P(php_outputformat_object, zoutputformat);
 
   image = symbolObj_getImage(php_symbol->symbol, php_outputformat->outputformat);
   if (image == NULL) {
@@ -360,7 +370,7 @@ PHP_METHOD(symbolObj, getImage)
   } /* }}} */
 
 zend_function_entry symbol_functions[] = {
-  PHP_ME(symbolObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+  PHP_ME(symbolObj, __construct, symbol___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
   PHP_ME(symbolObj, __get, symbol___get_args, ZEND_ACC_PUBLIC)
   PHP_ME(symbolObj, __set, symbol___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(symbolObj, set, __set, NULL, ZEND_ACC_PUBLIC)
@@ -377,7 +387,7 @@ void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *retu
 {
   php_symbol_object * php_symbol;
   object_init_ex(return_value, mapscript_ce_symbol);
-  php_symbol = (php_symbol_object *)zend_object_store_get_object(return_value TSRMLS_CC);
+  php_symbol = MAPSCRIPT_OBJ_P(php_symbol_object, return_value);
   php_symbol->symbol = symbol;
 
   php_symbol->parent = parent;
@@ -385,6 +395,55 @@ void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *retu
   MAPSCRIPT_ADDREF(parent.val);
 }
 
+#if PHP_VERSION_ID >= 70000
+/* PHP7 - Modification by Bjoern Boldt <mapscript@pixaweb.net> */
+static zend_object *mapscript_symbol_create_object(zend_class_entry *ce TSRMLS_DC)
+{
+  php_symbol_object *php_symbol;
+
+  php_symbol = ecalloc(1, sizeof(*php_symbol) + zend_object_properties_size(ce));
+
+  zend_object_std_init(&php_symbol->zobj, ce TSRMLS_CC);
+  object_properties_init(&php_symbol->zobj, ce);
+
+  php_symbol->zobj.handlers = &mapscript_symbol_object_handlers;
+
+  MAPSCRIPT_INIT_PARENT(php_symbol->parent);
+
+  return &php_symbol->zobj;
+}
+
+static void mapscript_symbol_free_object(zend_object *object)
+{
+  php_symbol_object *php_symbol;
+
+  php_symbol = (php_symbol_object *)((char *)object - XtOffsetOf(php_symbol_object, zobj));
+
+  MAPSCRIPT_FREE_PARENT(php_symbol->parent);
+
+  /* We don't need to free the symbolObj */
+
+  zend_object_std_dtor(object);
+}
+
+PHP_MINIT_FUNCTION(symbol)
+{
+  zend_class_entry ce;
+
+  INIT_CLASS_ENTRY(ce, "symbolObj", symbol_functions);
+  mapscript_ce_symbol = zend_register_internal_class(&ce TSRMLS_CC);
+
+  mapscript_ce_symbol->create_object = mapscript_symbol_create_object;
+  mapscript_ce_symbol->ce_flags |= ZEND_ACC_FINAL;
+
+  memcpy(&mapscript_symbol_object_handlers, &mapscript_std_object_handlers, sizeof(mapscript_symbol_object_handlers));
+  mapscript_symbol_object_handlers.free_obj = mapscript_symbol_free_object;
+  mapscript_symbol_object_handlers.offset   = XtOffsetOf(php_symbol_object, zobj);
+
+  return SUCCESS;
+}
+#else
+/* PHP5 */
 static void mapscript_symbol_object_destroy(void *object TSRMLS_DC)
 {
   php_symbol_object *php_symbol = (php_symbol_object *)object;
@@ -426,3 +485,4 @@ PHP_MINIT_FUNCTION(symbol)
 
   return SUCCESS;
 }
+#endif

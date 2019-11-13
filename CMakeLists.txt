@@ -16,8 +16,8 @@ include(CheckCSourceCompiles)
 
 
 set (MapServer_VERSION_MAJOR 7)
-set (MapServer_VERSION_MINOR 2)
-set (MapServer_VERSION_REVISION 2)
+set (MapServer_VERSION_MINOR 5)
+set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
 
 set(TARGET_VERSION_MAJOR ${MapServer_VERSION_MAJOR})
@@ -33,6 +33,10 @@ endif(MapServer_IS_DEV_VERSION)
 MATH(EXPR MapServer_VERSION_NUM "${MapServer_VERSION_MAJOR}*10000+${MapServer_VERSION_MINOR}*100+${MapServer_VERSION_REVISION}")
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+
+# Add custom function to check Python modules are installed
+include(FindPythonModule)
+
 if (APPLE)
   set(CMAKE_FIND_FRAMEWORK "LAST")
 endif (APPLE)
@@ -142,6 +146,7 @@ option(WITH_THREAD_SAFETY "Choose if a thread-safe version of libmapserver shoul
 option(WITH_GIF "Enable GIF support (for PIXMAP loading)" ON)
 option(WITH_PYTHON "Enable Python mapscript support" OFF)
 option(WITH_PHP "Enable PHP mapscript support" OFF)
+option(WITH_PHPNG "Enable PHPNG (SWIG) mapscript support" OFF)
 option(WITH_PERL "Enable Perl mapscript support" OFF)
 option(WITH_RUBY "Enable Ruby mapscript support" OFF)
 option(WITH_JAVA "Enable Java mapscript support" OFF)
@@ -254,7 +259,7 @@ mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.c maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
 mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
-mapprojhack.c maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
+maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
@@ -864,6 +869,11 @@ if(WITH_PHP)
    set(USE_PHP_MAPSCRIPT 1)
 endif(WITH_PHP)
 
+if(WITH_PHPNG)
+   add_subdirectory("mapscript/phpng")
+   set(USE_PHPNG_MAPSCRIPT 1)
+endif(WITH_PHPNG)
+
 if(WITH_APACHE_MODULE)
    add_subdirectory("apache")
    set(USE_APACHE_MODULE 1)
@@ -895,7 +905,10 @@ ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
+    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
+    if (MSVC)
+        set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/wd4267 /wd4244 /wd4018")
+    endif(MSVC)
 endif (WIN32)
 
 configure_file (
@@ -982,6 +995,7 @@ status_optional_feature("XML Mapfile support" "${USE_XMLMAPFILE}")
 message(STATUS " * Mapscripts")
 status_optional_feature("Python" "${USE_PYTHON_MAPSCRIPT}")
 status_optional_feature("PHP" "${USE_PHP_MAPSCRIPT}")
+status_optional_feature("PHPNG" "${USE_PHPNG_MAPSCRIPT}")
 status_optional_feature("PERL" "${USE_PERL_MAPSCRIPT}")
 status_optional_feature("RUBY" "${USE_RUBY_MAPSCRIPT}")
 status_optional_feature("JAVA" "${USE_JAVA_MAPSCRIPT}")
@@ -990,6 +1004,7 @@ status_optional_feature("V8 Javascript" "${USE_V8_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
+message(STATUS "PROJECT_BINARY_DIR is set to ${PROJECT_BINARY_DIR}")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Will install libraries to ${INSTALL_LIB_DIR}")
 

@@ -66,7 +66,7 @@
             map->layers[map->numlayers]->index = map->numlayers;
             map->layerorder[map->numlayers] = map->numlayers;
             map->numlayers++;
-	    MS_REFCNT_INCR(map->layers[map->numlayers-1]);
+        MS_REFCNT_INCR(map->layers[map->numlayers-1]);
 
             return (map->layers[map->numlayers-1]);
         }
@@ -87,12 +87,12 @@
         /*if (!self->map) {*/
         if (self) {
             if(freeLayer(self)==MS_SUCCESS) {
-            	free(self);
-	    }
+                free(self);
+        }
         }
     }
 
-#ifdef SWIGJAVA
+#if defined (SWIGJAVA) || defined(SWIGPHP)
     %newobject cloneLayer;
     layerObj *cloneLayer() 
 #else
@@ -138,7 +138,7 @@
         return msWriteLayerToString(self);
     }
 
-#ifdef SWIGCSHARP   
+#ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {classObj *classobj};
 #endif
     int insertClass(classObj *classobj, int index=-1)
@@ -154,10 +154,10 @@
     classObj *removeClass(int index) 
     {
         classObj* c = msRemoveClass(self, index);
-	if (c != NULL) {
-		MS_REFCNT_INCR(c);
-	}
-	return c;
+    if (c != NULL) {
+        MS_REFCNT_INCR(c);
+    }
+    return c;
     }
 
     int open() 
@@ -182,7 +182,7 @@
         self->connectiontype = oldconnectiontype;
 
         return msLayerWhichShapes(self, rect, MS_FALSE);
-    }	
+    }    
 
     %newobject nextShape;
     shapeObj *nextShape() 
@@ -197,8 +197,8 @@
        status = msLayerNextShape(self, shape);
        if(status != MS_SUCCESS) {
          msFreeShape(shape);
-	 free(shape);
-	 return NULL;
+     free(shape);
+     return NULL;
        } else
          return shape;
     }
@@ -259,12 +259,12 @@
     %newobject getClass;
     classObj *getClass(int i) 
     {
-	classObj *result=NULL;
+    classObj *result=NULL;
         if (i >= 0 && i < self->numclasses) {
             result=self->class[i]; 
-	    MS_REFCNT_INCR(result);
-	}
-	return result;
+        MS_REFCNT_INCR(result);
+    }
+    return result;
     }
 
     char *getItem(int i) 
@@ -307,13 +307,13 @@
         map->query.filter.type = MS_EXPRESSION;
         
         map->query.layer = self->index;
-     	  map->query.rect = map->extent;
+           map->query.rect = map->extent;
 
-	      status = self->status;
-	      self->status = MS_ON;
+          status = self->status;
+          self->status = MS_ON;
         retval = msQueryByFilter(map);
         self->status = status;
-	      return retval;
+          return retval;
     }
 
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
@@ -535,12 +535,12 @@
         }
      
         value = (char *) msLookupHashTable(&(self->metadata), name);
-	/*
-	Umberto, 05/17/2006
-	Exceptions should be reserved for situations when a serious error occurred
-	and normal program flow must be interrupted.
-	In this case returning null should be more that enough.
-	*/
+    /*
+    Umberto, 05/17/2006
+    Exceptions should be reserved for situations when a serious error occurred
+    and normal program flow must be interrupted.
+    In this case returning null should be more that enough.
+    */
 #ifndef SWIGJAVA
         if (!value) {
             msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
@@ -626,7 +626,7 @@
 
     void setProcessingKey(const char *key, const char *value) 
     {
-	   msLayerSetProcessingKey( self, key, value );
+       msLayerSetProcessingKey( self, key, value );
     }
  
     /* this method is deprecated ... should use addProcessing() */
@@ -685,5 +685,35 @@
         self->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
         self->_geomtransform.string = NULL;
       }
-    }    
+    }
+
+    %feature("autodoc", "3");
+    %feature("docstring") getItemType 
+"Returns the requested item's field type.
+A layer must be open to retrieve the item definition. 
+
+Pass in the attribute index to retrieve the type. The 
+layer's numitems property contains the number of items 
+available, and the first item is index zero."
+
+    char *getItemType(int i)
+    {
+
+        char *itemType = NULL;
+
+        if (i >= 0 && i < self->numitems) {
+            gmlItemListObj *item_list;
+            item_list = msGMLGetItems(self, "G");
+            if (item_list != NULL) {
+                gmlItemObj *item = item_list->items + i;
+                itemType = msStrdup(item->type);
+                msGMLFreeItems(item_list); // destroy the original list
+            }
+        }
+
+        return itemType;
+
+    }
+
+
 }

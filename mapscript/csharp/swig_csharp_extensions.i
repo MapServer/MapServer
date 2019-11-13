@@ -31,38 +31,36 @@
 
 // Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4 
 %pragma(csharp) imclasscode=%{
-  static $imclassname() {
-  }
 
-  public class UTF8Marshaler : ICustomMarshaler {
+  public class UTF8Marshaler : System.Runtime.InteropServices.ICustomMarshaler {
     static UTF8Marshaler static_instance;
 
-    public IntPtr MarshalManagedToNative(object managedObj) {
+    public System.IntPtr MarshalManagedToNative(object managedObj) {
         if (managedObj == null)
-            return IntPtr.Zero;
+            return System.IntPtr.Zero;
         if (!(managedObj is string))
-            throw new MarshalDirectiveException(
+            throw new System.Runtime.InteropServices.MarshalDirectiveException(
                    "UTF8Marshaler must be used on a string.");
 
         // not null terminated
-        byte[] strbuf = System.Text.Encoding.UTF8.GetBytes((string)managedObj); 
-        IntPtr buffer = Marshal.AllocHGlobal(strbuf.Length + 1);
-        Marshal.Copy(strbuf, 0, buffer, strbuf.Length);
+        byte[] strbuf = System.Text.Encoding.UTF8.GetBytes((string)managedObj);
+        System.IntPtr buffer = System.Runtime.InteropServices.Marshal.AllocHGlobal(strbuf.Length + 1);
+        System.Runtime.InteropServices.Marshal.Copy(strbuf, 0, buffer, strbuf.Length);
 
         // write the terminating null
-        Marshal.WriteByte(buffer, strbuf.Length, 0); 
+        System.Runtime.InteropServices.Marshal.WriteByte(buffer, strbuf.Length, 0);
         return buffer;
     }
 
-    public object MarshalNativeToManaged(IntPtr pNativeData) {	
-	    int len = Marshal.PtrToStringAnsi(pNativeData).Length;
+    public object MarshalNativeToManaged(System.IntPtr pNativeData) {
+	    int len = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(pNativeData).Length;
         byte[] utf8data = new byte[len];
-        Marshal.Copy(pNativeData, utf8data, 0, len);
+        System.Runtime.InteropServices.Marshal.Copy(pNativeData, utf8data, 0, len);
         return System.Text.Encoding.UTF8.GetString(utf8data);
     }
 
-    public void CleanUpNativeData(IntPtr pNativeData) {
-        Marshal.FreeHGlobal(pNativeData);            
+    public void CleanUpNativeData(System.IntPtr pNativeData) {
+        System.Runtime.InteropServices.Marshal.FreeHGlobal(pNativeData);
     }
 
     public void CleanUpManagedData(object managedObj) {
@@ -72,7 +70,7 @@
         return -1;
     }
 
-    public static ICustomMarshaler GetInstance(string cookie) {
+    public static System.Runtime.InteropServices.ICustomMarshaler GetInstance(string cookie) {
         if (static_instance == null) {
             return static_instance = new UTF8Marshaler();
         }
@@ -81,8 +79,8 @@
   }
 %}
 
-%typemap(imtype, inattributes="[MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]", 
-  outattributes="[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]") 
+%typemap(imtype, inattributes="[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]",
+  outattributes="[return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]")
   char *, char *&, char[ANY], char[]   "string"
 
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
@@ -98,8 +96,8 @@
   }
 %typemap(csout, excode=SWIGEXCODE, new="1") SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) {
     /* %typemap(csout, excode=SWIGEXCODE, new="1") SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) */
-    IntPtr cPtr = $imcall;
-    $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_$owner());$excode
+    System.IntPtr cPtr = $imcall;
+    $csclassname ret = (cPtr == System.IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_$owner());$excode
     return ret;
   }
 %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE %{
@@ -117,36 +115,36 @@
 %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE *, struct SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
     /* %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) */
     get {
-      IntPtr cPtr = $imcall;
-      $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_$owner());$excode
+      System.IntPtr cPtr = $imcall;
+      $csclassname ret = (cPtr == System.IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_$owner());$excode
       return ret;
     } %}
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE *& {
     /* %typemap(csout, excode=SWIGEXCODE) SWIGTYPE *& */
-    IntPtr cPtr = $imcall;
-    $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner, ThisOwn_$owner());$excode
+    System.IntPtr cPtr = $imcall;
+    $*csclassname ret = (cPtr == System.IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner, ThisOwn_$owner());$excode
     return ret;
   }
 // Proxy classes (base classes, ie, not derived classes)
 %typemap(csbody) SWIGTYPE %{
   /* %typemap(csbody) SWIGTYPE */
-  private HandleRef swigCPtr;
+  private System.Runtime.InteropServices.HandleRef swigCPtr;
   protected bool swigCMemOwn;
   protected object swigParentRef;
   
   protected static object ThisOwn_true() { return null; }
   protected object ThisOwn_false() { return this; }
 
-  internal $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) {
+  internal $csclassname(System.IntPtr cPtr, bool cMemoryOwn, object parent) {
     swigCMemOwn = cMemoryOwn;
     swigParentRef = parent;
-    swigCPtr = new HandleRef(this, cPtr);
+    swigCPtr = new System.Runtime.InteropServices.HandleRef(this, cPtr);
   }
 
-  internal static HandleRef getCPtr($csclassname obj) {
-    return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
+  internal static System.Runtime.InteropServices.HandleRef getCPtr($csclassname obj) {
+    return (obj == null) ? new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero) : obj.swigCPtr;
   }
-  internal static HandleRef getCPtrAndDisown($csclassname obj, object parent) {
+  internal static System.Runtime.InteropServices.HandleRef getCPtrAndDisown($csclassname obj, object parent) {
     if (obj != null)
     {
       obj.swigCMemOwn = false;
@@ -155,10 +153,10 @@
     }
     else
     {
-      return new HandleRef(null, IntPtr.Zero);
+      return new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
     }
   }
-  internal static HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
+  internal static System.Runtime.InteropServices.HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
     if (obj != null)
     {
       obj.swigParentRef = parent;
@@ -166,7 +164,7 @@
     }
     else
     {
-      return new HandleRef(null, IntPtr.Zero);
+      return new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
     }
   }
 %}
@@ -174,16 +172,16 @@
 // Derived proxy classes
 %typemap(csbody_derived) SWIGTYPE %{
   /* %typemap(csbody_derived) SWIGTYPE */
-  private HandleRef swigCPtr;
+  private System.Runtime.InteropServices.HandleRef swigCPtr;
 
-  internal $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
-    swigCPtr = new HandleRef(this, cPtr);
+  internal $csclassname(System.IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
+    swigCPtr = new System.Runtime.InteropServices.HandleRef(this, cPtr);
   }
 
-  internal static HandleRef getCPtr($csclassname obj) {
-    return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
+  internal static System.Runtime.InteropServices.HandleRef getCPtr($csclassname obj) {
+    return (obj == null) ? new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero) : obj.swigCPtr;
   }
-  internal static HandleRef getCPtrAndDisown($csclassname obj, object parent) {
+  internal static System.Runtime.InteropServices.HandleRef getCPtrAndDisown($csclassname obj, object parent) {
     if (obj != null)
     {
       obj.swigCMemOwn = false;
@@ -192,10 +190,10 @@
     }
     else
     {
-      return new HandleRef(null, IntPtr.Zero);
+      return new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
     }
   }
-  internal static HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
+  internal static System.Runtime.InteropServices.HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
     if (obj != null)
     {
       obj.swigParentRef = parent;
@@ -203,7 +201,7 @@
     }
     else
     {
-      return new HandleRef(null, IntPtr.Zero);
+      return new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
     }
   }
 %}
@@ -211,18 +209,18 @@
 // Typewrapper classes
 %typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
   /* %typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) */
-  private HandleRef swigCPtr;
+  private System.Runtime.InteropServices.HandleRef swigCPtr;
 
-  internal $csclassname(IntPtr cPtr, bool futureUse, object parent) {
-    swigCPtr = new HandleRef(this, cPtr);
+  internal $csclassname(System.IntPtr cPtr, bool futureUse, object parent) {
+    swigCPtr = new System.Runtime.InteropServices.HandleRef(this, cPtr);
   }
 
   protected $csclassname() {
-    swigCPtr = new HandleRef(null, IntPtr.Zero);
+    swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
   }
 
-  internal static HandleRef getCPtr($csclassname obj) {
-    return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
+  internal static System.Runtime.InteropServices.HandleRef getCPtr($csclassname obj) {
+    return (obj == null) ? new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero) : obj.swigCPtr;
   }
 %}
 
@@ -239,25 +237,25 @@
 
 %typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
   lock(this) {
-      if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
+      if(swigCPtr.Handle != System.IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;
         $imcall;
       }
-      swigCPtr = new HandleRef(null, IntPtr.Zero);
+      swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
       swigParentRef = null;
-      GC.SuppressFinalize(this);
+      System.GC.SuppressFinalize(this);
     }
   }
 
 %typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") TYPE {
   lock(this) {
-      if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwn) {
+      if(swigCPtr.Handle != System.IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;
         $imcall;
       }
-      swigCPtr = new HandleRef(null, IntPtr.Zero);
+      swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
       swigParentRef = null;
-      GC.SuppressFinalize(this);
+      System.GC.SuppressFinalize(this);
       base.Dispose();
     }
   }
@@ -267,7 +265,7 @@
 
 %pragma(csharp) modulecode=%{
   /* %pragma(csharp) modulecode */
-  internal class $moduleObject : IDisposable {
+  internal class $moduleObject : global::System.IDisposable {
 	public virtual void Dispose() {
       
     }
@@ -276,7 +274,7 @@
   protected static object ThisOwn_true() { return null; }
   protected static object ThisOwn_false() { return the$moduleObject; }
   
-  [DllImport("$dllimport", EntryPoint="SetEnvironmentVariable")]
+  [System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="SetEnvironmentVariable")]
   public static extern int SetEnvironmentVariable(string envstring);
 %}
 

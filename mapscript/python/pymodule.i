@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  MapServer
  * Purpose:  Python-specific enhancements to MapScript
  * Author:   Sean Gillies, sgillies@frii.com
@@ -8,7 +6,7 @@
  ******************************************************************************
  *
  * Python-specific mapscript code has been moved into this 
- * SWIG interface file to improve the readibility of the main
+ * SWIG interface file to improve the readability of the main
  * interface file.  The main mapscript.i file includes this
  * file when SWIGPYTHON is defined (via 'swig -python ...').
  *
@@ -94,42 +92,44 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 
 /*
-* Add dict methods to the hashTableObj object
-*/
-%extend hashTableObj{
-    %pythoncode %{
+ *  Typemap to turn a Python dict into two sequences and
+ *  an item count. Used for msApplySubstitutions
+ */
+%typemap(in) (char **names, char **values, int npairs) {
+  /* Check if is a dict */
+  if (PyDict_Check($input)) {
 
-    def __getitem__(self, key):
-        return self.get(key)
+    int i = 0;
+    int size = PyDict_Size($input);
 
-    def __setitem__(self, key, value):
-        return self.set(key, value)
+    PyObject* keys = PyDict_Keys($input);
+    PyObject* values = PyDict_Values($input);
 
-    def __delitem__(self, key) :
-        return self.remove(key)
+    $3 = size;
+    $1 = (char **) malloc((size+1)*sizeof(char *));
+    $2 = (char **) malloc((size+1)*sizeof(char *));
 
-    def __contains__(self, key):
-        return key.lower() in [k.lower() for k in self.keys()]
+    for (i = 0; i < size; i++) {
+        PyObject* key = PyList_GetItem(keys, i);
+        PyObject* val = PyList_GetItem(values, i);
 
-    def __len__(self):
-        return self.numitems
+        $1[i] = PyString_AsString(key);
+        $2[i] = PyString_AsString(val);
+    }
 
-    def keys(self):
+    $1[i] = 0;
+    $2[i] = 0;
 
-        keys = []
-        k = None
+  } else {
+    PyErr_SetString(PyExc_TypeError, "Input not a dictionary");
+    SWIG_fail;
+  }
+}
 
-        while True :
-            k = self.nextKey(k)
-            if k :
-                keys.append(k)
-            else :
-                break
-
-        return keys
-            
-    %}
-};
+%typemap(freearg) (char **names, char **values, int npairs) {
+  free((char *) $1);
+  free((char *) $2);
+}
 
 /**************************************************************************
  * MapServer Errors and Python Exceptions
@@ -160,7 +160,7 @@ PyObject *MSExc_MapServerChildError;
 %init %{
 
 /* See bug 1203 for discussion of race condition with GD font cache */
-	if (msSetup() != MS_SUCCESS)
+    if (msSetup() != MS_SUCCESS)
     {
         msSetError(MS_MISCERR, "Failed to set up threads and font cache",
                    "msSetup()");
@@ -279,44 +279,43 @@ MapServerChildError = _mapscript.MapServerChildError
        %}
 
 %feature("shadow") insertClass %{
-	def insertClass(*args):
+    def insertClass(*args):
         actualIndex=$action(*args)
         args[1].p_layer=args[0]
         return actualIndex%}
 
 %feature("shadow") getClass %{
-	def getClass(*args):
-		clazz = $action(*args)
-		if clazz:
-			if args and len(args)!=0:
-				clazz.p_layer=args[0]
-			else:
-				clazz.p_layer=None
-		return clazz%}
+    def getClass(*args):
+        clazz = $action(*args)
+        if clazz:
+            if args and len(args)!=0:
+                clazz.p_layer=args[0]
+            else:
+                clazz.p_layer=None
+        return clazz%}
 
 %feature("shadow") insertLayer %{
-	def insertLayer(*args):
+    def insertLayer(*args):
         actualIndex=$action(*args)
         args[1].p_map=args[0]
         return actualIndex%}
 
 %feature("shadow") getLayer %{
-	def getLayer(*args):
-		layer = $action(*args)
-		if layer:
-			if args and len(args)!=0:
-				layer.p_map=args[0]
-			else:
-				layer.p_map=None
-		return layer%}
+    def getLayer(*args):
+        layer = $action(*args)
+        if layer:
+            if args and len(args)!=0:
+                layer.p_map=args[0]
+            else:
+                layer.p_map=None
+        return layer%}
 
 %feature("shadow") getLayerByName %{
-	def getLayerByName(*args):
-		layer = $action(*args)
-		if layer:
-			if args and len(args)!=0:
-				layer.p_map=args[0]
-			else:
-				layer.p_map=None
-		return layer%}
-
+    def getLayerByName(*args):
+        layer = $action(*args)
+        if layer:
+            if args and len(args)!=0:
+                layer.p_map=args[0]
+            else:
+                layer.p_map=None
+        return layer%}

@@ -1,8 +1,37 @@
+branches:
+  except:
+  - /^(cherry-pick-)?backport-\d+-to-/
+
 dist: trusty
 language: php
-php:
-  - 5.5
-  - 5.6
+
+matrix:
+  include:
+
+    - php: 5.6
+      env:
+        - BUILD_NAME=PHP_5.6
+
+    - php: 7.0
+      env:
+        - BUILD_NAME=PHP_7.0
+
+    - php: 7.1
+      env:
+        - BUILD_NAME=PHP_7.1
+
+    - php: 7.2
+      env:
+        - BUILD_NAME=PHP_7.2_WITH_ASAN
+
+    - php: 7.3
+      env:
+        - BUILD_NAME=PHP_7.3_WITH_PROJ6
+
+cache:
+    apt: true
+    directories:
+        - $HOME/.ccache
 
 env:
   global:
@@ -43,31 +72,13 @@ compiler:
   - clang
 
 before_install:
-  - sudo mv /etc/apt/sources.list.d/pgdg* /tmp
-  - dpkg -l | grep postgresql
-  - dpkg -l | grep postgis
-  - sudo apt-get remove postgresql*
-  - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-  - sudo apt-get update
-  - sudo apt-get install --allow-unauthenticated protobuf-c-compiler libprotobuf-c0-dev bison flex python-lxml libfribidi-dev swig cmake librsvg2-dev colordiff libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-xpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev python-dev php5-dev libexempi-dev lcov lftp postgis postgresql-9.3 postgresql-9.3-postgis-2.2 postgresql-9.3-postgis-scripts libharfbuzz-dev gdal-bin
-  - sudo pip install git+git://github.com/tbonfort/cpp-coveralls.git@extensions
-  - cd msautotest
-  - ./create_postgis_test_data.sh
-  - python -m SimpleHTTPServer &> /dev/null &
-  - cd ..
-  - touch maplexer.l
-  - touch mapparser.y
-
+  - ./ci/travis/before_install.sh
 
 script:
-  - make -j4 test
+  - ./ci/travis/script.sh
 
 after_success:
-# Only run coverage when it is safe to do so (not on pull requests), and only on master branch
-  - echo "$TRAVIS_SECURE_ENV_VARS"
-  - echo "$TRAVIS_BRANCH"
-  - sh -c 'if test "$TRAVIS_SECURE_ENV_VARS" = "true" -a "$TRAVIS_BRANCH" = "master"; then echo "run coverage"; ./run_code_coverage_upload.sh; fi'
-  - coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude shp2img.c --exclude legend.c --exclude scalebar.c --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c --exclude sym2img.c --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
+  - ./ci/travis/after_success.sh
 
 notifications:
   email:

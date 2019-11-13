@@ -177,6 +177,7 @@ END
 
 
 LAYER
+
   NAME province
   CONNECTIONTYPE OGR
   CONNECTION "province.shp"
@@ -204,6 +205,7 @@ END # Layer
 
 
 LAYER
+
   NAME popplace
   CONNECTIONTYPE OGR
   CONNECTION "popplace.shp"

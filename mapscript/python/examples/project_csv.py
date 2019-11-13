@@ -1,50 +1,72 @@
-#!/usr/bin/python
-#
-# Script : project_csv.py
-#
-# Purpose: Simple example to read a csv file and reproject point x/y data
-#
-# $Id$
-#
+#!/usr/bin/env python
+
+"""
+Simple example to read a csv file and reproject point x/y data
+
+Usage:
+
+project_csv.py cities.csv 2 1 EPSG:4326 EPSG:3857
+
+"""
 
 import sys
 import csv
+from io import open
 import mapscript
 
-# example invocation
-# ./reproj.py ./foo.csv 2 3 EPSG:32619 EPSG:4326 
 
-# check input parameters
-if (len(sys.argv) != 6):
-    print sys.argv[0] + \
-        " <csvfile> <x_col> <y_col> <epsg_code_in> <epsg_code_out>"
-    sys.exit(1)
-else:     
-    # set x and y indices
-    x = int(sys.argv[2])
-    y = int(sys.argv[3])
+def main(input_file, x_field_idx, y_field_idx, input_proj, output_proj):
 
     # set input and output projections
-    projObjIn  = mapscript.projectionObj("init="+sys.argv[4].lower())
-    projObjOut = mapscript.projectionObj("init="+sys.argv[5].lower())
+    proj_in = mapscript.projectionObj(input_proj)
+    proj_out = mapscript.projectionObj(output_proj)
 
     # open file
-    fCsv = open(sys.argv[1], 'r')
+    with open(input_file, encoding='utf-8') as f:
+        # read csv
+        csv_in = csv.reader(f)
+        headers = next(csv_in)
 
-    # read csv 
-    csvIn  = csv.reader(fCsv)
-    # setup output 
-    csvOut = csv.writer(sys.stdout)
+        # setup output
+        csv_out = csv.writer(sys.stdout)
+        csv_out.writerow(headers)
 
-    for aRow in csvIn: # each record
-        # set pointObj
-        point = mapscript.pointObj(float(aRow[x]), float(aRow[y]))
-        # project
-        point.project(projObjIn, projObjOut)
+        for row in csv_in:
+            # set pointObj
+            point = mapscript.pointObj(float(row[x_field_idx]), float(row[y_field_idx]))
+            # project
+            point.project(proj_in, proj_out)
 
-        # update with reprojected coordinates
-        aRow[x] = point.x
-        aRow[y] = point.y
+            # update with reprojected coordinates
+            row[x_field_idx] = point.x
+            row[y_field_idx] = point.y
 
-        csvOut.writerow(aRow)
-    fCsv.close()
+            csv_out.writerow(row)
+
+
+def usage():
+    """
+    Display usage if program is used incorrectly
+    """
+    print("Syntax: %s <csvfile> <x_col> <y_col> <epsg_code_in> <epsg_code_out>" % sys.argv[0])
+    sys.exit(2)
+
+
+# check input parameters
+
+if (len(sys.argv) != 6):
+    usage()
+
+
+input_file = sys.argv[1]
+
+# set x and y indices
+
+x_field_idx = int(sys.argv[2])
+y_field_idx = int(sys.argv[3])
+
+# get projection codes
+
+input_proj = "init="+sys.argv[4].lower()
+output_proj = "init="+sys.argv[5].lower()
+main(input_file, x_field_idx, y_field_idx, input_proj, output_proj)

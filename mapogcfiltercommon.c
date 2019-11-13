@@ -93,7 +93,7 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   pszValue = psFilterNode->psRightNode->pszValue;
   nLength = strlen(pszValue);
   /* The 4 factor is in case of \. See below */
-  if( 1 + 4 * nLength + 1 + 1 >= sizeof(szTmp) )
+  if( 1 + 4 * nLength + 1 + 1 + 1 >= sizeof(szTmp) )
       return NULL;
 
   iTmp =0;
@@ -162,6 +162,10 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
       iTmp++;
       szTmp[iTmp] = '\0';
     }
+  }
+  if (nLength > 0) {
+    szTmp[iTmp]= '$';
+    iTmp++;
   }
   szTmp[iTmp] = '"';
   szTmp[++iTmp] = '\0';
@@ -513,8 +517,10 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         fabs(sQueryRect.maxy - 90.0) < 1e-5)
     {
       if (lp->projection.numargs > 0) {
-        if (psNode->pszSRS)
+        if (psNode->pszSRS) {
           msInitProjection(&sProjTmp);
+          msProjectionInheritContextFrom(&sProjTmp, &lp->projection);
+        }
         if (psNode->pszSRS) {
           /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
           if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
@@ -563,8 +569,10 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     ** target is layer projection
     */
     if (!bAlreadyReprojected && lp->projection.numargs > 0) {
-      if (psNode->pszSRS)
+      if (psNode->pszSRS) {
         msInitProjection(&sProjTmp);
+        msProjectionInheritContextFrom(&sProjTmp, &lp->projection);
+      }
       if (psNode->pszSRS) {
         /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
         if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
@@ -645,7 +653,7 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
           char *pszTmp = NULL;
           int bufferSize = 0;
           const char* pszId = tokens[i];
-          const char* pszDot = strchr(pszId, '.');
+          const char* pszDot = strrchr(pszId, '.');
           if( pszDot )
             pszId = pszDot + 1;
 

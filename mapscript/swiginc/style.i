@@ -87,7 +87,7 @@
         return msWriteStyleToString(self);
     }
 
-#ifdef SWIGJAVA
+#if defined (SWIGJAVA) || defined (SWIGPHP)
     %newobject cloneStyle;
     styleObj *cloneStyle() 
 #else

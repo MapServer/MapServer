@@ -985,8 +985,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       /* the layer projection. */
       if( layer->connectiontype == MS_UVRASTER &&
           !layer->projection.gt.need_geotransform &&
-          !(pj_is_latlong(map->projection.proj) &&
-            pj_is_latlong(layer->projection.proj)) ) {
+          !(msProjIsGeographicCRS(&(map->projection)) &&
+            msProjIsGeographicCRS(&(layer->projection))) ) {
         rectObj layer_ori_extent;
 
         if( msLayerGetExtent(layer, &layer_ori_extent) == MS_SUCCESS ) {
@@ -1710,6 +1710,7 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
   /* TODO: need to handle circle annotation */
 }
 
+static
 int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *shape, int drawmode)
 {
   int l, c = shape->classindex, j, i, s;
@@ -1718,7 +1719,18 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
 
 #ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
-    msProjectShape(&layer->projection, &map->projection, shape);
+  {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+          layer->reprojectorLayerToMap = msProjectCreateReprojector(
+              &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+  }
 #endif
 
   // Only take into account map rotation if the label and style angles are
@@ -2046,7 +2058,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 #ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
-    msProjectShape(&layer->projection, &map->projection, shape);
+  {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+          layer->reprojectorLayerToMap = msProjectCreateReprojector(
+              &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+  }
 #endif
 
   /* check if we'll need the unclipped shape */

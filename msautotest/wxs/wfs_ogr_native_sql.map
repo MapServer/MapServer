@@ -131,6 +131,7 @@ END
 #
 
 LAYER
+
   NAME towns
   DATA towns
   CONNECTIONTYPE OGR
@@ -309,6 +310,7 @@ LAYER
 END # Layer
 
 LAYER
+
   NAME select_zero_feature
   DATA "SELECT * FROM towns WHERE 0"
   CONNECTIONTYPE OGR

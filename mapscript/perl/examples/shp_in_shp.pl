@@ -9,8 +9,6 @@
 
 use strict;
 use warnings;
-use POSIX;
-use XBase;
 use mapscript;
 use Getopt::Long;
 use File::Copy;
@@ -19,7 +17,8 @@ my ($infile1, $infile1_shpid, $infile2, $infile2_shpid, $within);
 
 GetOptions("infile1=s", \$infile1, "infile1_shpid=s", \$infile1_shpid, "infile2=s", \$infile2, "infile2_shpid=s", \$infile2_shpid);
 
-if(!$infile1 or !$infile1_shpid or !$infile2 or !$infile2_shpid) {
+# shpid can be zero, which looks false, so use defined()
+if(!$infile1 or !defined($infile1_shpid) or !$infile2 or !defined($infile2_shpid)) {
   print "Usage: $0 --infile1=[filename] --infile1_shpid=[shpid] --infile2=[filename] --infile2_shpid=[shpid]\n";
   exit 0;
 }

@@ -283,7 +283,7 @@ int mapObj_save(mapObj* self, char *filename)
   return msSaveMap(self, filename);
 }
 
-char *mapObj_getMetaData(mapObj *self, char *name)
+const char *mapObj_getMetaData(mapObj *self, char *name)
 {
   return(msLookupHashTable(&(self->web.metadata), name));
 }
@@ -793,7 +793,7 @@ int layerObj_addFeature(layerObj *self, shapeObj *shape)
     return MS_SUCCESS;
 }
 
-char *layerObj_getMetaData(layerObj *self, char *name)
+const char *layerObj_getMetaData(layerObj *self, char *name)
 {
   return(msLookupHashTable(&(self->metadata), name));
 }

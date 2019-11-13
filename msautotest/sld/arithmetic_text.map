@@ -1,0 +1,192 @@
+#
+# Test TEXT
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+#    Three layers are defined, one for each <Line-, <Polygon- and <Point-
+#    -Symbolizer>:
+#     - lline   : This is a five pixel wide semi opaque yellow line which draws
+#                 an hexagon roughly around France country
+#     - lpolygon: This is a semi opaque cyan hexagon with one pixel wide semi
+#                 opaque magenta line roughly around "Centre-Val de Loire"
+#                 region
+#     - lpoint  : This is a semi opaque twenty pixel wide upside down blue star
+#                 with a one pixel wide red line roughly on Lyon city
+#    All tests shall produce the same image.
+#
+#
+# --- Text with <Literal> on "font-size"
+#
+# RUN_PARMS: sld_text_literal_fontsize.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22><Literal>12</Literal></SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <PropertyName> on "font-size"
+#
+# RUN_PARMS: sld_text_propertyname_fontsize.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22><PropertyName>s12</PropertyName></SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <ogc:expression> on "font-size"
+#
+# RUN_PARMS: sld_text_expression_fontsize.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22><Div><Add><PropertyName>s12</PropertyName><Literal>15</Literal></Add><Literal>2.25</Literal></Div></SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <Literal> on "font-family"
+# --- Text with <PropertyName> on "font-family"
+# --- Text with <Literal> on "font-style"
+# --- Text with <PropertyName> on "font-style"
+# --- Text with <Literal> on "font-weight"
+# --- Text with <PropertyName> on "font-weight"
+#
+# --- Text with <Literal> on <Rotation>
+#
+# RUN_PARMS: sld_text_literal_rotation.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation><Literal>15</Literal></Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <PropertyName> on <Rotation>
+#
+# RUN_PARMS: sld_text_propertyname_rotation.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation><PropertyName>a15</PropertyName></Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <ogc:expression> on <Rotation>
+#
+# RUN_PARMS: sld_text_expression_rotation.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation><Mul><Literal>0.5</Literal><Sub><Literal>45</Literal><PropertyName>a15</PropertyName></Sub></Mul></Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <Literal> on <DisplacementX>
+# --- Text with <PropertyName> on <DisplacementX>
+# --- Text with <Literal> on <DisplacementY>
+# --- Text with <PropertyName> on <DisplacementY>
+# --- Text with <Literal> on <AnchorPointX>
+# --- Text with <PropertyName> on <AnchorPointX>
+# --- Text with <Literal> on <AnchorPointY>
+# --- Text with <PropertyName> on <AnchorPointY>
+#
+# --- Text with <Literal> on "fill"
+#
+# RUN_PARMS: sld_text_literal_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22><Literal>#FFFFFF</Literal></SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <PropertyName> on "fill"
+#
+# RUN_PARMS: sld_text_propertyname_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22><PropertyName>white</PropertyName></SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22>#00FF00</SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <Literal> on <Halo> <Radius>
+# --- Text with <PropertyName> on <Halo> <Radius>
+#
+# --- Text with <Literal> on <Halo> "fill"
+#
+# RUN_PARMS: sld_text_literal_halofill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22><Literal>#00FF00</Literal></SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# --- Text with <PropertyName> on <Halo> "fill"
+#
+# RUN_PARMS: sld_text_propertyname_halofill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FF0000</SvgParameter><SvgParameter name=%22stroke-opacity%22>1</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter><SvgParameter name=%22fill-opacity%22>0.1</SvgParameter></Fill></Mark><Size>20</Size><Rotation>180</Rotation><Displacement><DisplacementX>2</DisplacementX><DisplacementY>2</DisplacementY></Displacement><Opacity>0.5</Opacity></Graphic></PointSymbolizer><TextSymbolizer><Label><PropertyName>name</PropertyName></Label><Font><SvgParameter name=%22font-family%22>vera</SvgParameter><SvgParameter name=%22font-weight%22>bold</SvgParameter><SvgParameter name=%22font-size%22>12</SvgParameter></Font><Fill><SvgParameter name=%22fill%22>#FFFFFF</SvgParameter></Fill><LabelPlacement><PointPlacement><Displacement><DisplacementX>2</DisplacementX><DisplacementY>20</DisplacementY></Displacement><AnchorPoint><AnchorPointX>0.5</AnchorPointX><AnchorPointY>0.5</AnchorPointY></AnchorPoint><Rotation>15</Rotation></PointPlacement></LabelPlacement><Halo><Radius>2</Radius><Fill><SvgParameter name=%22fill%22><PropertyName>green</PropertyName></SvgParameter></Fill></Halo></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+
+
+
+MAP
+
+NAME GEOMETRY_REFERENCE
+SHAPEPATH ./data
+SIZE 300 300
+IMAGECOLOR 100 100 100
+FONTSET "data/fonts.lst"
+PROJECTION
+   "init=epsg:4326"
+END
+WEB
+  IMAGEPATH "/tmp/ms_tmp/"
+  IMAGEURL "/ms_tmp/"
+  METADATA
+    "wms_title"		   "Test SLD"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+    "ows_sld_enabled" "true"
+  END
+END
+
+LAYER
+  NAME lline
+  DATA hexagon
+  TYPE LINE
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 5
+      OPACITY 50
+      COLOR 255 255 0
+    END
+  END
+END
+
+LAYER
+  NAME lpolygon
+  DATA inner
+  TYPE POLYGON
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 1
+      OPACITY 50
+      COLOR 0 255 255
+      OUTLINECOLOR 255 0 255
+    END
+  END
+END
+
+LAYER
+  NAME lpoint
+  DATA plot
+  TYPE POINT
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      COLOR 0 0 255
+      OUTLINECOLOR 255 0 0
+      OPACITY 50
+      SYMBOL "star"
+      SIZE 20
+      ANGLE 180
+      OFFSET 2 2
+    END
+    LABEL
+      TEXT "[name]"
+      COLOR 255 255 255
+      OUTLINECOLOR 0 255 0
+      OUTLINEWIDTH 2
+      TYPE TRUETYPE
+      FONT vera-bold
+      SIZE 12
+      OFFSET 2 20
+      ANGLE 15
+    END
+  END
+END
+
+SYMBOL
+  NAME "circle"
+  TYPE ellipse
+  FILLED true
+  POINTS
+    1 1
+  END
+END
+
+SYMBOL
+  NAME "star"
+  TYPE vector
+  FILLED true
+  POINTS
+    0     0.375 
+    0.35  0.375 
+    0.5   0 
+    0.65  0.375 
+    1     0.375 
+    0.75  0.625 
+    0.875 1 
+    0.5   0.75 
+    0.125 1 
+    0.25  0.625 
+  END
+END
+
+END

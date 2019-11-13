@@ -53,6 +53,10 @@
 # Verify PropertyIsLike
 # RUN_PARMS: wfs_filter_islike.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>NAME</PropertyName><Literal>Syd*</Literal></PropertyIsLike></Filter>" > [RESULT]
 #
+# RUN_PARMS: wfs_filter_islike_no_ending_wildcard_empty_resultset.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>NAME</PropertyName><Literal>Syd</Literal></PropertyIsLike></Filter>" > [RESULT]
+#
+# RUN_PARMS: wfs_filter_islike_no_ending_wildcard_non_empty_resultset.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>NAME</PropertyName><Literal>Sydney</Literal></PropertyIsLike></Filter>" > [RESULT]
+#
 # RUN_PARMS: wfs_filter_islike_escaping.xml [MAPSERV] QUERY_STRING='map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_islike_escaping&FILTER=<Filter><PropertyIsLike+wildCard="*"+singleChar="."+escape="^"><PropertyName>prop</PropertyName><Literal>\^^${}[]()^.^*%2B-?|"a.*e</Literal></PropertyIsLike></Filter>' > [RESULT]
 #
 # Again but use as an escape character the regexp escape character
@@ -249,6 +253,7 @@ END
 
 
 LAYER
+
   NAME province
   DATA province
   METADATA
@@ -300,6 +305,7 @@ END # Layer
 
 
 LAYER
+
   NAME popplace
   DATA popplace
   METADATA

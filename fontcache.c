@@ -97,6 +97,7 @@ void msFreeFontCache(ft_cache *c) {
     UT_HASH_DEL(c->bitmap_glyph_cache, cur_bitmap);
     free(cur_bitmap);
   }
+  memset(c,0,sizeof(ft_cache));
 }
 
 ft_cache* msGetFontCache() {

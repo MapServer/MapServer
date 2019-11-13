@@ -1,3 +1,6 @@
+//set version statement to avoid warnings thrown in protobuf >= 3
+syntax = "proto2";
+
 package vector_tile;
 
 option optimize_for = LITE_RUNTIME;

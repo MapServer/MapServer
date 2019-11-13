@@ -1001,6 +1001,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
 #ifdef USE_CLUSTER_EXTERNAL
   int layerIndex;
 #endif
+  reprojectionObj* reprojector = NULL;
 
   msClusterLayerInfo* layerinfo = layer->layerinfo;
 
@@ -1133,11 +1134,18 @@ int RebuildClusters(layerObj *layer, int isQuery)
   if ((current = clusterInfoCreate(layerinfo)) == NULL)
     return MS_FAILURE;
 
+#if defined(USE_PROJ) && defined(USE_CLUSTER_EXTERNAL)
+    if(srcLayer->transform == MS_TRUE && srcLayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srcLayer->projection), &(layer->projection)))
+    {
+        reprojector = msProjectCreateReprojector(&srcLayer->projection, &layer->projection);
+    }
+#endif
+  
   while((status = msLayerNextShape(srcLayer, &current->shape)) == MS_SUCCESS) {
 #if defined(USE_PROJ) && defined(USE_CLUSTER_EXTERNAL)
     /* transform the shape to the projection of this layer */
-    if(srcLayer->transform == MS_TRUE && srcLayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srcLayer->projection), &(layer->projection)))
-      msProjectShape(&srcLayer->projection, &layer->projection, &current->shape);
+    if( reprojector )
+      msProjectShapeEx(reprojector, &current->shape);
 #endif
     /* set up positions and variance */
     current->avgx = current->x = current->shape.bounds.minx;
@@ -1173,6 +1181,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
       /* add this shape to the tree */
       if (treeNodeAddShape(layerinfo, layerinfo->root, current, depth) != MS_SUCCESS) {
         clusterInfoDestroyList(layerinfo, current);
+        msProjectDestroyReprojector(reprojector);
         return MS_FAILURE;
       }
     }
@@ -1190,6 +1199,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
         /* if not found add this shape as a new cluster */
         if (treeNodeAddShape(layerinfo, layerinfo->root, current, depth) != MS_SUCCESS) {
           clusterInfoDestroyList(layerinfo, current);
+          msProjectDestroyReprojector(reprojector);
           return MS_FAILURE;
         }
       }
@@ -1197,9 +1207,12 @@ int RebuildClusters(layerObj *layer, int isQuery)
 
     if ((current = clusterInfoCreate(layerinfo)) == NULL) {
       clusterInfoDestroyList(layerinfo, current);
+      msProjectDestroyReprojector(reprojector);
       return MS_FAILURE;
     }
   }
+
+  msProjectDestroyReprojector(reprojector);
 
   clusterInfoDestroyList(layerinfo, current);
 

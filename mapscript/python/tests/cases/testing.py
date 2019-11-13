@@ -1,12 +1,10 @@
-# $Id$
-#
 # Project:  MapServer
 # Purpose:  xUnit style Python mapscript testing utilities
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
 # Copyright (c) 2004, Sean Gillies
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -28,38 +26,25 @@
 #
 # Purpose of this module is to export the locally built mapscript module
 # prior to installation, do some name normalization that allows testing of
-# the so-called next generation class names, and define some classes 
+# the so-called next generation class names, and define some classes
 # useful to many test cases.
-#
-# All test case modules should import mapscript from testing
-#
-#     from .testing import mapscript
 #
 # ===========================================================================
 
 import os
-import sys
-import distutils.util
 import unittest
+import tempfile
+import mapscript
 
 # define the path to mapserver test data
-test_path = os.path.abspath(os.path.join(__file__ ,"../../../../.."))
-TESTS_PATH = os.path.join(test_path, "tests")
-
+TESTS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
 XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
 HOME_IMAGE = os.path.join(TESTS_PATH, 'home.png')
 TEST_IMAGE = os.path.join(TESTS_PATH, 'test.png')
 
-INCOMING = '/tmp/'
+INCOMING = tempfile.mkdtemp(prefix="mapscript")
 
-# Put local build directory on head of python path
-platformdir = '-'.join((distutils.util.get_platform(), 
-                        '.'.join(map(str, sys.version_info[0:2]))))
-sys.path.insert(0, os.path.join('../../build', 'lib.' + platformdir))
-
-# import mapscript from the local build directory
-import mapscript
 
 # ==========================================================================
 # Base testing classes
@@ -72,9 +57,9 @@ class MapPrimitivesTestCase(unittest.TestCase):
         """Using either the standard or next_generation_api"""
         try:
             line.add(point)
-        except AttributeError: # next_generation_api
+        except AttributeError:  # next_generation_api
             line.addPoint(point)
-        except:
+        except Exception:
             raise
 
     def getPointFromLine(self, line, index):
@@ -82,19 +67,19 @@ class MapPrimitivesTestCase(unittest.TestCase):
         try:
             point = line.get(index)
             return point
-        except AttributeError: # next_generation_api
+        except AttributeError:  # next_generation_api
             point = line.getPoint(index)
             return point
-        except:
+        except Exception:
             raise
 
     def addLineToShape(self, shape, line):
         """Using either the standard or next_generation_api"""
         try:
             shape.add(line)
-        except AttributeError: # next_generation_api
+        except AttributeError:  # next_generation_api
             shape.addLine(line)
-        except:
+        except Exception:
             raise
 
     def getLineFromShape(self, shape, index):
@@ -102,16 +87,16 @@ class MapPrimitivesTestCase(unittest.TestCase):
         try:
             line = shape.get(index)
             return line
-        except AttributeError: # next_generation_api
+        except AttributeError:  # next_generation_api
             line = shape.getLine(index)
             return line
-        except:
+        except Exception:
             raise
 
     def assertPointsEqual(self, first, second):
         self.assertAlmostEqual(first.x, second.x)
         self.assertAlmostEqual(first.y, second.y)
-     
+
     def assertLinesEqual(self, first, second):
         assert first.numpoints == second.numpoints
         for i in range(first.numpoints):
@@ -132,14 +117,17 @@ class MapPrimitivesTestCase(unittest.TestCase):
         self.assertAlmostEqual(first.maxx, second.maxx)
         self.assertAlmostEqual(first.maxy, second.maxy)
 
+
 class MapTestCase(MapPrimitivesTestCase):
     """Base class for testing with a map fixture"""
     def setUp(self):
         self.map = mapscript.mapObj(TESTMAPFILE)
-        #self.xmarks_image = xmarks_image
-        #self.test_image = test_image
+        # self.xmarks_image = xmarks_image
+        # self.test_image = test_image
+
     def tearDown(self):
         self.map = None
+
 
 class MapZoomTestCase(MapPrimitivesTestCase):
     "Testing new zoom* methods that we are adapting from the PHP MapScript"
@@ -151,8 +139,10 @@ class MapZoomTestCase(MapPrimitivesTestCase):
         self.mapobj1.extent = rect
         # Change height/width as well
         self.mapobj1.width, self.mapobj1.height = (100, 100)
+
     def tearDown(self):
         self.mapobj1 = None
+
 
 class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""

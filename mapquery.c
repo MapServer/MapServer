@@ -766,6 +766,8 @@ int msQueryByFilter(mapObj *map)
     start = stop = map->query.layer;
 
   for(l=start; l>=stop; l--) {
+    reprojectionObj* reprojector = NULL;
+
     lp = (GET_LAYER(map, l));
     if (map->query.maxfeatures == 0)
       break; /* nothing else to do */
@@ -819,6 +821,7 @@ int msQueryByFilter(mapObj *map)
     */
     lp->filteritem = map->query.filteritem; /* re-point lp->filteritem */
     if(old_filter.string != NULL) { /* need to merge filters to create one logical expression */
+      msFreeExpression(&lp->filter);
       lp->filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);      
       if(!lp->filter.string) {
 	msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");
@@ -940,8 +943,17 @@ int msQueryByFilter(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project)
-        msProjectShape(&(lp->projection), &(map->projection), &shape);
+      if(lp->project) {
+        if( reprojector == NULL ) {
+            reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+            if( reprojector == NULL ) {
+              msFreeShape(&shape);
+              status = MS_FAILURE;
+              break;
+            }
+        }
+        msProjectShapeEx(reprojector, &shape);
+      }
 #endif
 
       /* Should we skip this feature? */
@@ -974,6 +986,8 @@ int msQueryByFilter(mapObj *map)
     lp->filteritem = old_filteritem; /* point back to original value */
     msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
     msFreeExpression(&old_filter);
+
+    msProjectDestroyReprojector(reprojector);
 
     if(status != MS_DONE) goto query_error;
     if(!map->query.only_cache_result_count && lp->resultcache->numresults == 0) 
@@ -1033,6 +1047,7 @@ int msQueryByRect(mapObj *map)
     start = stop = map->query.layer;
 
   for(l=start; l>=stop; l--) {
+    reprojectionObj* reprojector = NULL;
     lp = (GET_LAYER(map, l));
     /* Set the global maxfeatures */
     if (map->query.maxfeatures == 0)
@@ -1219,8 +1234,17 @@ int msQueryByRect(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project)
-        msProjectShape(&(lp->projection), &(map->projection), &shape);
+      if(lp->project) {
+        if( reprojector == NULL ) {
+            reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+            if( reprojector == NULL ) {
+              msFreeShape(&shape);
+              status = MS_FAILURE;
+              break;
+            }
+        }
+        msProjectShapeEx(reprojector, &shape);
+      }
 #endif
 
       if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
@@ -1266,6 +1290,8 @@ int msQueryByRect(mapObj *map)
 
     if (classgroup)
       msFree(classgroup);
+
+    msProjectDestroyReprojector(reprojector);
 
     if(status != MS_DONE) {
         msFreeShape(&searchshape);
@@ -1347,6 +1373,7 @@ int msQueryByFeatures(mapObj *map)
   msInitShape(&selectshape);
 
   for(l=start; l>=stop; l--) {
+    reprojectionObj* reprojector = NULL;
     if(l == map->query.slayer) continue; /* skip the selection layer */
 
     lp = (GET_LAYER(map, l));
@@ -1494,8 +1521,17 @@ int msQueryByFeatures(mapObj *map)
         }
 
 #ifdef USE_PROJ
-        if(lp->project)
-          msProjectShape(&(lp->projection), &(map->projection), &shape);
+        if(lp->project) {
+            if( reprojector == NULL ) {
+                reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+                if( reprojector == NULL ) {
+                    msFreeShape(&shape);
+                    status = MS_FAILURE;
+                    break;
+                }
+            }
+            msProjectShapeEx(reprojector, &shape);
+        }
 #endif
 
         switch(selectshape.type) { /* may eventually support types other than polygon on line */
@@ -1587,9 +1623,12 @@ int msQueryByFeatures(mapObj *map)
       if (classgroup)
         msFree(classgroup);
 
-      if(status != MS_DONE) return(MS_FAILURE);
+      msProjectDestroyReprojector(reprojector);
 
       msFreeShape(&selectshape);
+
+      if(status != MS_DONE) return(MS_FAILURE);
+
     } /* next selection shape */
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
@@ -1654,6 +1693,7 @@ int msQueryByPoint(mapObj *map)
     start = stop = map->query.layer;
 
   for(l=start; l>=stop; l--) {
+    reprojectionObj* reprojector = NULL;
     lp = (GET_LAYER(map, l));
     if (map->query.maxfeatures == 0)
       break; /* nothing else to do */
@@ -1781,8 +1821,17 @@ int msQueryByPoint(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project)
-        msProjectShape(&(lp->projection), &(map->projection), &shape);
+      if(lp->project) {
+        if( reprojector == NULL ) {
+            reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+            if( reprojector == NULL ) {
+              msFreeShape(&shape);
+              status = MS_FAILURE;
+              break;
+            }
+        }
+        msProjectShapeEx(reprojector, &shape);
+      }
 #endif
 
       d = msDistancePointToShape(&(map->query.point), &shape);
@@ -1821,6 +1870,8 @@ int msQueryByPoint(mapObj *map)
 
     if (classgroup)
       msFree(classgroup);
+
+    msProjectDestroyReprojector(reprojector);
 
     if(status != MS_DONE) return(MS_FAILURE);
 
@@ -1881,6 +1932,7 @@ int msQueryByShape(mapObj *map)
   msComputeBounds(qshape); /* make sure an accurate extent exists */
 
   for(l=start; l>=stop; l--) { /* each layer */
+    reprojectionObj* reprojector = NULL;
     lp = (GET_LAYER(map, l));
     if (map->query.maxfeatures == 0)
       break; /* nothing else to do */
@@ -2004,8 +2056,17 @@ int msQueryByShape(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project)
-        msProjectShape(&(lp->projection), &(map->projection), &shape);
+      if(lp->project) {
+        if( reprojector == NULL ) {
+            reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+            if( reprojector == NULL ) {
+              msFreeShape(&shape);
+              status = MS_FAILURE;
+              break;
+            }
+        }
+        msProjectShapeEx(reprojector, &shape);
+      }
 #endif
 
       switch(qshape->type) { /* may eventually support types other than polygon or line */
@@ -2099,14 +2160,16 @@ int msQueryByShape(mapObj *map)
       }
     } /* next shape */
 
+    free(classgroup);
+    classgroup = NULL;
+
+    msProjectDestroyReprojector(reprojector);
+
     if(status != MS_DONE) {
-      free(classgroup);
       return(MS_FAILURE);
     }
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
-    free(classgroup);
-    classgroup = NULL;
   } /* next layer */
 
   /* was anything found? */

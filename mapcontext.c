@@ -835,7 +835,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   /* Status */
   pszValue = (char*)CPLGetXMLValue(psLayer, "hidden", "1");
   if((pszValue != NULL) && (atoi(pszValue) == 0 &&
-                            !strcasecmp(pszValue, "true") == 0))
+                            strcasecmp(pszValue, "true") != 0))
     layer->status = MS_ON;
   else
     layer->status = MS_OFF;

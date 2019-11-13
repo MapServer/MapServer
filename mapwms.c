@@ -366,6 +366,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   if (numlayers != numfilters) {
     msSetError(MS_WMSERR, "Wrong number of filter elements, one filter must be specified for each requested layer.",
 	       "msWMSApplyFilter" );
+    msFreeCharArray(paszFilters, numfilters);
     return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
   }
 
@@ -396,6 +397,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       msSetError(MS_WMSERR,
 		 "Invalid or Unsupported FILTER : %s",
 		 "msWMSApplyFilter()", paszFilters[curfilter]);
+      msFreeCharArray(paszFilters, numfilters);
       return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
     }
 
@@ -403,7 +405,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
      * elements inside the filter(s)
      */
     if (version >= OWS_1_3_0)
-      FLTDoAxisSwappingIfNecessary(psNode, def_srs_needs_axis_swap);
+      FLTDoAxisSwappingIfNecessary(map, psNode, def_srs_needs_axis_swap);
 
 #ifdef do_we_need_this
     FLTProcessPropertyIsNull(psNode, map, lp->index);
@@ -426,12 +428,14 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         if( FLTCheckInvalidOperand(psNode) == MS_FAILURE)
         {
             FLTFreeFilterEncodingNode( psNode );
+            msFreeCharArray(paszFilters, numfilters);
             return msWFSException(map, "filter", MS_WFS_ERROR_OPERATION_PROCESSING_FAILED, paramsObj->pszVersion);
         }
 
         if( FLTCheckInvalidProperty(psNode, map, lp->index) == MS_FAILURE)
         {
             FLTFreeFilterEncodingNode( psNode );
+            msFreeCharArray(paszFilters, numfilters);
             return msWFSException(map, "filter", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
         }
 
@@ -439,6 +443,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         if( psNode == NULL )
         {
             FLTFreeFilterEncodingNode( psNode );
+            msFreeCharArray(paszFilters, numfilters);
             if( nEvaluation == 1 ) {
                 /* return full layer */
                 return msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
@@ -460,6 +465,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       if(ms_error->code != MS_NOTFOUND) {
 	msSetError(MS_WMSERR, "FLTApplyFilterToLayer() failed", "msWMSApplyFilter()");
 	FLTFreeFilterEncodingNode( psNode );
+        msFreeCharArray(paszFilters, numfilters);
 	return msWMSException(map, version, "InvalidParameterValue", wms_exception_format);
       }
     }
@@ -469,6 +475,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     curfilter++;
 
   }/* for */
+
+    msFreeCharArray(paszFilters, numfilters);
 
     return MS_SUCCESS;
 }
@@ -1327,6 +1335,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     /*try to adjust the axes if necessary*/
     if (strlen(srsbuffer) > 1) {
       msInitProjection(&proj);
+      msProjectionInheritContextFrom(&proj, &(map->projection));
       if (msLoadProjectionStringEPSG(&proj, (char *)srsbuffer) == 0 &&
 	  (need_axis_swap = msIsAxisInvertedProj(&proj) ) ) {
         msAxisNormalizePoints( &proj, 1, &rect.minx, &rect.miny );
@@ -1364,22 +1373,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
     adjust_extent = MS_TRUE;
-  }
-
-  /*
-  ** Apply vendor-specific filter if specified
-  */
-  if (filter) {
-    if (sld_url || sld_body) {
-      msSetError(MS_WMSERR,
-                 "Vendor-specific FILTER parameter cannot be used with SLD or SLD_BODY.",
-                 "msWMSLoadGetMapParams()");
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
-    }
-    
-    if (msWMSApplyFilter(map, nVersion, filter, need_axis_swap, wms_exception_format) == MS_FAILURE) {
-      return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidFilterRequest"); */
-    }
   }
 
   /*
@@ -1618,6 +1611,7 @@ this request. Check wms/ows_enable_request settings.",
     }
 
     msInitProjection(&newProj);
+    msProjectionInheritContextFrom(&newProj, &map->projection);
     if (strlen(srsbuffer) > 1) {
       int nTmp;
 
@@ -1642,8 +1636,7 @@ this request. Check wms/ows_enable_request settings.",
   /* that the srs given as parameter is valid for all layers */
   if (strlen(srsbuffer) > 1) {
     int nTmp;
-    msFreeProjection(&map->projection);
-    msInitProjection(&map->projection);
+    msFreeProjectionExceptContext(&map->projection);
     if (nVersion >= OWS_1_3_0)
       nTmp = msLoadProjectionStringEPSG(&(map->projection), srsbuffer);
     else
@@ -1655,6 +1648,22 @@ this request. Check wms/ows_enable_request settings.",
     nTmp = GetMapserverUnitUsingProj(&(map->projection));
     if( nTmp != -1 ) {
       map->units = nTmp;
+    }
+  }
+
+  /*
+  ** Apply vendor-specific filter if specified
+  */
+  if (filter) {
+    if (sld_url || sld_body) {
+      msSetError(MS_WMSERR,
+                 "Vendor-specific FILTER parameter cannot be used with SLD or SLD_BODY.",
+                 "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+    }
+
+    if (msWMSApplyFilter(map, nVersion, filter, need_axis_swap, wms_exception_format) == MS_FAILURE) {
+      return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidFilterRequest"); */
     }
   }
 
@@ -3724,6 +3733,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                     msFree(pszMimetype);
                   }
                 }
+
+                msFree(group_layers);
               }
               msIO_fprintf(stdout, "    </Style>\n");
               msFree(pszEncodedName);

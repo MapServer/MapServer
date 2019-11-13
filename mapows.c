@@ -2002,6 +2002,7 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
 {
   const char *value;
   char *encoded;
+  size_t default_value_len = 0;
 
   value = msOWSLookupMetadata(metadata, namespaces, name);
 
@@ -2009,6 +2010,8 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
     value = default_value;
     default_value = NULL;
   }
+  if( default_value )
+      default_value_len = strlen(default_value);
 
   if(value != NULL) {
     char **keywords;
@@ -2020,8 +2023,9 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       if(startTag) msIO_fprintf(stream, "%s", startTag);
       for(kw=0; kw<numkeywords; kw++) {
         if (default_value != NULL
+            && default_value_len > 8
             && strncasecmp(keywords[kw],default_value,strlen(keywords[kw])) == 0
-            && strncasecmp("_exclude",default_value+strlen(default_value)-8,8) == 0)
+            && strncasecmp("_exclude",default_value+default_value_len-8,8) == 0)
           continue;
 
         encoded = msEncodeHTMLEntities(keywords[kw]);
@@ -2086,9 +2090,10 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 */
 void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext)
 {
-  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+  if (srcproj->proj && !msProjIsGeographicCRS(srcproj)) {
     projectionObj wgs84;
     msInitProjection(&wgs84);
+    msProjectionInheritContextFrom(&wgs84, srcproj);
     msLoadProjectionString(&wgs84, "+proj=longlat +ellps=WGS84 +datum=WGS84");
     msProjectRect(srcproj, &wgs84, ext);
     msFreeProjection(&wgs84);
@@ -2207,6 +2212,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 
       /* reproject the extents for each SRS's bounding box */
       msInitProjection(&proj);
+      msProjectionInheritContextFrom(&proj, srcproj);
       if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0) {
         if (msProjectionsDiffer(srcproj, &proj) == MS_TRUE) {
           msProjectRect(srcproj, &proj, &ext);

@@ -2935,12 +2935,16 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
 
     case SQLT_DAT:
     case SQLT_DATE:
+      gml_type = "Date";
+      break;
     case SQLT_TIMESTAMP:
     case SQLT_TIMESTAMP_TZ:
     case SQLT_TIMESTAMP_LTZ:
+      gml_type = "DateTime";
+      break;
     case SQLT_TIME:
     case SQLT_TIME_TZ:
-      gml_type = "Date";
+      gml_type = "Time";
       break;
 
     default:

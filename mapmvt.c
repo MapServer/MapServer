@@ -290,7 +290,10 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
       if( item->type && EQUAL(item->type,"Integer")) {
         mvt_value->int_value = atoi(value->value);
         mvt_value->has_int_value = 1;
-      } else if( item->type && EQUAL(item->type,"Real") ) {
+      } else if( item->type && EQUAL(item->type,"Long")) { /* signed */
+	mvt_value->sint_value = atol(value->value);
+	mvt_value->has_sint_value = 1;
+      } else if( item->type && EQUAL(item->type,"Real")) {
         mvt_value->float_value = atof(value->value);
         mvt_value->has_float_value = 1;
       } else if( item->type && EQUAL(item->type,"Boolean") ) {
@@ -507,8 +510,17 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
       }
 
       if( layer->project ) {
-        status = msProjectShape(&layer->projection, &layer->map->projection, &shape);
-      }      if( status == MS_SUCCESS ) {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &map->projection);
+        }
+        if( layer->reprojectorLayerToMap )
+            status = msProjectShapeEx(layer->reprojectorLayerToMap, &shape);
+        else
+            status = MS_FAILURE;
+      }
+      if( status == MS_SUCCESS ) {
         status = mvtWriteShape( layer, &shape, mvt_layer, item_list, &value_lookup_cache, &map->extent, buffer );
       }
 
