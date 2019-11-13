@@ -1376,6 +1376,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           colorbuffer[i] = layer->class[i]->styles[0]->outlinecolor; /* if no color, save the outlinecolor from the BOTTOM style */
           layer->class[i]->styles[0]->outlinecolor = map->querymap.color;
         }
+      } else if (layer->type == MS_LAYER_LINE && layer->class[i]->numstyles > 0 && layer->class[i]->styles[0]->outlinewidth > 0) { /* alter BOTTOM style for lines with outlines */
+	if(MS_VALID_COLOR(layer->class[i]->styles[0]->color)) {
+          colorbuffer[i] = layer->class[i]->styles[0]->color; /* save the color from the BOTTOM style */
+          layer->class[i]->styles[0]->color = map->querymap.color;
+        } /* else ??? */
       } else if (layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->color)) {
           colorbuffer[i] = layer->class[i]->styles[layer->class[i]->numstyles-1]->color; /* save the color from the TOP style */
@@ -1387,7 +1392,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       } else if (layer->class[i]->numlabels > 0) {
           colorbuffer[i] = layer->class[i]->labels[0]->color;
           layer->class[i]->labels[0]->color = map->querymap.color;
-      }
+      } /* else ??? */
 
       mindistancebuffer[i] = -1; /* RFC77 TODO: only using the first label, is that cool? */
       if(layer->class[i]->numlabels > 0) {
@@ -1521,6 +1526,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           layer->class[i]->styles[0]->color = colorbuffer[i];
         else if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor))
           layer->class[i]->styles[0]->outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the BOTTOM style */
+      } else if (layer->type == MS_LAYER_LINE && layer->class[i]->numstyles > 0 && layer->class[i]->styles[0]->outlinewidth > 0) {
+        if(MS_VALID_COLOR(layer->class[i]->styles[0]->color))
+	  layer->class[i]->styles[0]->color = colorbuffer[i];
       } else if (layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->color))
           layer->class[i]->styles[layer->class[i]->numstyles-1]->color = colorbuffer[i];
