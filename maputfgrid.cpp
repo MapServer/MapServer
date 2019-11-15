@@ -808,6 +808,16 @@ int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *o
   box.line_to((x+size)/r->utfresolution,(y-size)/r->utfresolution);
   box.line_to((x)/r->utfresolution,(y-size)/r->utfresolution);
 
+     /* Rotation if necessary. */
+  if( tp->glyphs->rot != 0) {
+    mapserver::trans_affine mtx;
+    mtx *= mapserver::trans_affine_translation(-x/r->utfresolution,-y/r->utfresolution);
+    mtx *= mapserver::trans_affine_rotation(-tp->glyphs->rot);
+    mtx *= mapserver::trans_affine_translation(x/r->utfresolution,y/r->utfresolution);
+    box.transform(mtx);
+  } 
+
+
   /* Rendering the symbol */
   utfgridRenderPath(img, box);
 

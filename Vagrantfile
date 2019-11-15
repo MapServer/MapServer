@@ -7,7 +7,7 @@ require 'socket'
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  vm_ram = ENV['VAGRANT_VM_RAM'] || 1024
+  vm_ram = ENV['VAGRANT_VM_RAM'] || 2048
   vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
 
   config.vm.box = "ubuntu/trusty64"
