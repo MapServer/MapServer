@@ -216,7 +216,7 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams)
  * by the caller.
  **********************************************************************/
 static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
-                                  wmsParamsObj *psWMSParams)
+                                  wmsParamsObj *psWMSParams, int nRequestType)
 {
   const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
   const char *pszFormatList, *pszStyle, /* *pszStyleList,*/ *pszTime;
@@ -337,11 +337,14 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     }
   }
 
-  /*  set STYLES no matter what, even if it's empty (i.e. "STYLES=")
-   *  styles is a required param of WMS
+  /*  set STYLE parameter no matter what, even if it's empty (i.e. "STYLES=")
+   *  GetLegendGraphic doesn't support multiple styles and is named STYLE
    */
-
-  msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE, nVersion);
+  if (nRequestType == WMS_GETLEGENDGRAPHIC) {
+    msSetWMSParamString(psWMSParams, "STYLE", pszStyle, MS_TRUE, nVersion);
+  } else {
+    msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE, nVersion);
+  }
 
   if (pszSLD != NULL) {
     /* Only SLD is set */
@@ -443,7 +446,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
        (pszVersion = strstr(lp->connection, "WMTVER=")) == NULL &&
        (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) ) {
     /* CONNECTION missing or seems incomplete... try to build from metadata */
-    if (msBuildWMSLayerURLBase(map, lp, psWMSParams) != MS_SUCCESS)
+    if (msBuildWMSLayerURLBase(map, lp, psWMSParams, nRequestType) != MS_SUCCESS)
       return MS_FAILURE;  /* An error already produced. */
 
     /* If we received MS_SUCCESS then version must have been set */
@@ -858,6 +861,10 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
     msSetWMSParamString(psWMSParams, pszSrsParamName, pszEPSG, MS_FALSE, nVersion);
+
+    if (nVersion >= OWS_1_3_0) {
+      msSetWMSParamString(psWMSParams, "SLD_VERSION", "1.1.0", MS_FALSE, nVersion);
+    }
 
   } else { /* if (nRequestType == WMS_GETMAP) */
     char szBuf[100] = "";

@@ -159,12 +159,18 @@ def demime_file( filename ):
     if version_info >= (3,0,0):
         data = str(data, 'iso-8859-1')
 
+    offset = -1
     for i in range(len(data)-1):
         if data[i] == '\r' and data[i+1] == '\n' and data[i+2] == '\r' and data[i+3] == '\n':
+            offset = 4
+        elif data[i] == '\n' and data[i+1] == '\n':
+            offset = 2
+
+        if offset != -1:
             if version_info >= (3,0,0):
-                open(filename,'wb').write(bytes(data[i+4:], 'iso-8859-1'))
+                open(filename,'wb').write(bytes(data[i+offset:], 'iso-8859-1'))
             else:
-                open(filename,'wb').write(data[i+4:])
+                open(filename,'wb').write(data[i+offset:])
             return
     return
 
