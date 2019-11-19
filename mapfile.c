@@ -6907,7 +6907,7 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
     char *tmpfilename = msStrdup(filename);
     const char *default_key = msFirstKeyFromHashTable(table);
     while(default_key) {
-      if(!strncmp(default_key,"default_",8)) {
+      if(!strncasecmp(default_key,"default_",8)) {
         char *new_filename = NULL;
         size_t buffer_size = (strlen(default_key)-5);
         char *tag = (char *)msSmallMalloc(buffer_size);
@@ -6931,7 +6931,7 @@ static void applyClassDefaultSubstitutions(classObj *class, hashTableObj *table)
 {
   const char *default_key = msFirstKeyFromHashTable(table);
   while(default_key) {
-    if(!strncmp(default_key,"default_",8)) {
+    if(!strncasecmp(default_key,"default_",8)) {
       size_t buffer_size = (strlen(default_key)-5);
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
@@ -6950,7 +6950,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
   int i;
   const char *default_key = msFirstKeyFromHashTable(table);
   while(default_key) {
-    if(!strncmp(default_key,"default_",8)) {
+    if(!strncasecmp(default_key,"default_",8)) {
       size_t buffer_size = (strlen(default_key)-5);
       const char *to = msLookupHashTable(table, default_key);
       char *tag = (char *)msSmallMalloc(buffer_size);
@@ -6971,7 +6971,7 @@ static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableO
 {
 	const char *default_key = msFirstKeyFromHashTable(table);
 	while (default_key) {
-		if (!strncmp(default_key, "default_", 8)) {
+		if (!strncasecmp(default_key, "default_", 8)) {
 			size_t buffer_size = (strlen(default_key) - 5);
 			const char *to = msLookupHashTable(table, default_key);
 			char *tag = (char *)msSmallMalloc(buffer_size);
