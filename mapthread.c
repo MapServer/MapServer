@@ -273,18 +273,10 @@ void msThreadInit()
 /*                           msGetThreadId()                            */
 /************************************************************************/
 
-union voidStartDWORD
-{
-    void* ptr;
-    DWORD dword;
-};
-
 void* msGetThreadId()
 
 {
-  union voidStartDWORD u;
-  u.dword = GetCurrentThreadId();
-  return u.ptr;
+  return (void*) (size_t) GetCurrentThreadId();
 }
 
 /************************************************************************/
