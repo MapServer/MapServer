@@ -1666,6 +1666,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
     status = MS_FAILURE;
     goto li_cleanup;
   }
+  img->map = mapserv->map;
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
