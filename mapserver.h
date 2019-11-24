@@ -1242,7 +1242,6 @@ typedef struct labelObj labelObj;
     char *keyimage;
 
     char *group;
-    labelLeaderObj *leader;
   };
 
   /************************************************************************/
