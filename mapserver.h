@@ -962,6 +962,7 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int refcount;
+    char *symbolname;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -989,7 +990,6 @@ extern "C" {
     int rangeitemindex;
 
     int symbol;
-    char *symbolname;
 
     double size;
     double minsize, maxsize;
