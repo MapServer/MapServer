@@ -1,3 +1,4 @@
+# the following files will be excluded from releases
 .gitattributes export-ignore
 msautotest export-ignore
 .gitignore export-ignore
@@ -19,3 +20,6 @@ install-msautotest.sh export-ignore
 mapaxisorder.csv export-ignore
 mapaxisorder.sh export-ignore
 github_issue_no_activity_closer.py export-ignore
+
+# force LF line endings 
+* text=auto eol=lf
