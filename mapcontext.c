@@ -30,7 +30,7 @@
 #include "mapows.h"
 
 
-#if defined(USE_WMS_LYR) && defined(USE_OGR)
+#if defined(USE_WMS_LYR)
 
 /* There is a dependency to GDAL/OGR for the GML driver and MiniXML parser */
 #include "cpl_minixml.h"
@@ -87,7 +87,7 @@ char * msGetMapContextFileText(char *filename)
 }
 
 
-#if defined(USE_WMS_LYR) && defined(USE_OGR)
+#if defined(USE_WMS_LYR)
 
 /*
 **msGetMapContextXMLHashValue()
@@ -1066,7 +1066,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
 
 int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names)
 {
-#if defined(USE_WMS_LYR) && defined(USE_OGR)
+#if defined(USE_WMS_LYR)
   char *pszTmpFile = NULL;
   int status = 0;
 
@@ -1106,7 +1106,7 @@ int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names)
 */
 int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
 {
-#if defined(USE_WMS_LYR) && defined(USE_OGR)
+#if defined(USE_WMS_LYR)
   char *pszWholeText, *pszValue;
   CPLXMLNode *psRoot, *psMapContext, *psLayer, *psLayerList, *psChild;
   char szPath[MS_MAXPATHLEN];
@@ -1274,7 +1274,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
 */
 int msSaveMapContext(mapObj *map, char *filename)
 {
-#if defined(USE_WMS_LYR) && defined(USE_OGR)
+#if defined(USE_WMS_LYR)
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
   int nStatus;
@@ -1308,7 +1308,7 @@ int msSaveMapContext(mapObj *map, char *filename)
 
 int msWriteMapContext(mapObj *map, FILE *stream)
 {
-#if defined(USE_WMS_LYR) && defined(USE_OGR)
+#if defined(USE_WMS_LYR)
   const char * version;
   char *pszEPSG;
   char * tabspace=NULL, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;

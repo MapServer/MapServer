@@ -2903,7 +2903,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     msDebug("msPostGISLayerGetShapeCount called.\n");
   }
 
-#ifdef USE_PROJ
+
   // Special processing if the specified projection for the rect is different from the layer projection
   // We want to issue a WHERE that includes
   // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
@@ -2926,7 +2926,6 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     msProjectRect(rectProjection, &(layer->projection), &searchrectInLayerProj); /* project the searchrect to source coords */
     rectSRID = atoi(rectProjection->args[0] + strlen("init=epsg:"));
   }
-#endif
 
   msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
 

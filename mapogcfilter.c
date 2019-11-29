@@ -30,10 +30,8 @@
 #define _GNU_SOURCE
 #include "mapserver-config.h"
 
-#ifdef USE_OGR
 #include "cpl_minixml.h"
 #include "cpl_string.h"
-#endif
 
 #include "mapogcfilter.h"
 #include "mapserver.h"
@@ -303,9 +301,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
   msFree(pszTmpExpression);
   return pszExpression;
 }
-
-#ifdef USE_OGR
-
 
 int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
                           OGRwkbGeometryType nType)
@@ -3529,5 +3524,4 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   xmlNewChild(psNode, psNsOgc, BAD_CAST "FID", NULL);
   return psRootNode;
 }
-#endif
 #endif

@@ -41,13 +41,6 @@
 #include "mapthread.h"
 #include "maptime.h"
 
-#ifdef USE_GDAL
-#  include "cpl_conv.h"
-#  include "gdal.h"
-#endif
-
-
-
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
 extern int msyylex_destroy(void);
@@ -1115,13 +1108,9 @@ static void writeGrid(FILE *stream, int indent, graticuleObj *pGraticule)
 
 static int loadProjection(projectionObj *p)
 {
-#ifdef USE_PROJ
   int i=0;
-#endif
 
   p->gt.need_geotransform = MS_FALSE;
-
-#ifdef USE_PROJ
 
   if ( p->proj != NULL ) {
     msSetError(MS_MISCERR, "Projection is already initialized. Multiple projection definitions are not allowed in this object. (line %d)",
@@ -1163,10 +1152,6 @@ static int loadProjection(projectionObj *p)
         return(-1);
     }
   } /* next token */
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "loadProjection()");
-  return(-1);
-#endif
 }
 
 
@@ -1264,7 +1249,6 @@ static int msLoadProjectionStringCRSLike(projectionObj *p, const char *value,
 /************************************************************************/
 int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
-#ifdef USE_PROJ
   assert(p);
 
   msFreeProjectionExceptContext(p);
@@ -1286,12 +1270,6 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
   }
 
   return msLoadProjectionString(p, value);
-
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.",
-             "msLoadProjectionStringEPSG()");
-  return(-1);
-#endif
 }
 
 int msLoadProjectionString(projectionObj *p, const char *value)
@@ -1299,7 +1277,6 @@ int msLoadProjectionString(projectionObj *p, const char *value)
   assert(p);
   p->gt.need_geotransform = MS_FALSE;
 
-#ifdef USE_PROJ
   msFreeProjectionExceptContext(p);
 
   /*
@@ -1356,16 +1333,10 @@ int msLoadProjectionString(projectionObj *p, const char *value)
   }
 
   return msProcessProjection( p );
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.",
-             "msLoadProjectionString()");
-  return(-1);
-#endif
 }
 
 static void writeProjection(FILE *stream, int indent, projectionObj *p)
 {
-#ifdef USE_PROJ
   int i;
 
   if(!p || p->numargs <= 0) return;
@@ -1374,7 +1345,6 @@ static void writeProjection(FILE *stream, int indent, projectionObj *p)
   for(i=0; i<p->numargs; i++)
     writeString(stream, indent, NULL, NULL, p->args[i]);
   writeBlockEnd(stream, indent, "PROJECTION");
-#endif
 }
 
 void initLeader(labelLeaderObj *leader)
@@ -5935,7 +5905,6 @@ int initMap(mapObj *map)
   initReferenceMap(&map->reference);
   initQueryMap(&map->querymap);
 
-#ifdef USE_PROJ
   map->projContext = msProjectionContextGetFromPool();
 
   if(msInitProjection(&(map->projection)) == -1)
@@ -5951,7 +5920,6 @@ int initMap(mapObj *map)
   map->latlon.args[0] = msStrdup("proj=latlong");
   map->latlon.args[1] = msStrdup("ellps=WGS84"); /* probably want a different ellipsoid */
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
-#endif
 
   map->templatepattern = map->datapattern = NULL;
 

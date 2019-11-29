@@ -39,10 +39,8 @@
 #include "mapserver.h"
 #include "mapows.h"
 
-#if defined(USE_GDAL) || defined(USE_OGR)
 #include <cpl_conv.h>
 #include <ogr_srs_api.h>
-#endif
 
 /* Only use this macro on 32-bit integers! */
 #define SWAP_FOUR_BYTES(data) \
@@ -2119,12 +2117,10 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       else if (try_open == MS_FAILURE )
         return(MS_FAILURE);
 
-#ifdef USE_PROJ
       if( tSHP->sTileProj.numargs > 0 )
       {
         msProjectRect(&(layer->projection), &(tSHP->sTileProj), &rectTile);
       }
-#endif
 
       status = msShapefileWhichShapes(tSHP->shpfile, rectTile, layer->debug);
       if(status == MS_DONE) {
@@ -2164,12 +2160,10 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect, int isQuery)
         else if (try_open == MS_FAILURE )
           return(MS_FAILURE);
 
-#ifdef USE_PROJ
         if( tSHP->sTileProj.numargs > 0 )
         {
           msProjectRect(&(layer->projection), &(tSHP->sTileProj), &rectTile);
         }
-#endif
 
         status = msShapefileWhichShapes(tSHP->shpfile, rectTile, layer->debug);
         if(status == MS_DONE) {
@@ -2244,12 +2238,11 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
           else if (try_open == MS_FAILURE )
             return(MS_FAILURE);
 
-#ifdef USE_PROJ
           if( tSHP->sTileProj.numargs > 0 )
           {
             msProjectRect(&(layer->projection), &(tSHP->sTileProj), &rectTile);
           }
-#endif
+
           status = msShapefileWhichShapes(tSHP->shpfile, rectTile, layer->debug);
           if(status == MS_DONE) {
             /* Close and continue to next tile */
@@ -2291,12 +2284,11 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
             else if (try_open == MS_FAILURE )
               return(MS_FAILURE);
 
-#ifdef USE_PROJ
             if( tSHP->sTileProj.numargs > 0 )
             {
               msProjectRect(&(layer->projection), &(tSHP->sTileProj), &rectTile);
             }
-#endif
+
             status = msShapefileWhichShapes(tSHP->shpfile, rectTile, layer->debug);
             if(status == MS_DONE) {
               /* Close and continue to next tile */
@@ -2329,7 +2321,6 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
       continue; /* skip NULL shapes */
     }
 
-#ifdef USE_PROJ
     if( tSHP->sTileProj.numargs > 0 )
     {
       if( tSHP->reprojectorFromTileProjToLayerProj == NULL )
@@ -2341,7 +2332,6 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
         msProjectShapeEx( tSHP->reprojectorFromTileProjToLayerProj, shape);
       }
     }
-#endif
 
     shape->tileindex = tSHP->tileshpfile->lastshape;
     shape->numvalues = layer->numitems;
@@ -2408,7 +2398,6 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   tSHP->shpfile->lastshape = shapeindex;
   tSHP->tileshpfile->lastshape = tileindex;
 
-#ifdef USE_PROJ
   if( tSHP->sTileProj.numargs > 0 )
   {
       if( tSHP->reprojectorFromTileProjToLayerProj == NULL )
@@ -2420,7 +2409,6 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
         msProjectShapeEx( tSHP->reprojectorFromTileProjToLayerProj, shape);
       }
   }
-#endif
 
   if(layer->numitems > 0 && layer->iteminfo) {
     shape->numvalues = layer->numitems;
@@ -2688,7 +2676,6 @@ int msSHPLayerOpen(layerObj *layer)
   if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto"))
   {
-#if defined(USE_GDAL) || defined(USE_OGR)
     const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
     int bOK = MS_FALSE;
     FILE* fp = fopen(pszPRJFilename, "rb");
@@ -2727,11 +2714,6 @@ int msSHPLayerOpen(layerObj *layer)
             msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'.\n", szPath, layer->name );
         }
     }
-#else /* !(defined(USE_GDAL) || defined(USE_OGR)) */
-    if( layer->debug || layer->map->debug ) {
-        msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'. GDAL or OGR support needed\n", szPath, layer->name );
-    }
-#endif /* defined(USE_GDAL) || defined(USE_OGR) */
   }
 
   return MS_SUCCESS;

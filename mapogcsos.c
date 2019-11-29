@@ -778,8 +778,6 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
       <om:result uom="units.xml#cm">29.00</om:result> */
 
 
-
-#ifdef USE_PROJ
     if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
     {
       if( lp->reprojectorLayerToMap == NULL )
@@ -792,7 +790,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
         msProjectShapeEx(lp->reprojectorLayerToMap, &sShape);
       }
     }
-#endif
+
     psNode = xmlNewChild(psNode, psNsGml, BAD_CAST "featureMember", NULL);
     /* xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml")); */
 
@@ -808,14 +806,14 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
       xmlSetNs(psLayerNode,psNsMs);
 
     /*bbox*/
-#ifdef USE_PROJ
+
     msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg);
     if (!pszEpsg)
       msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg);
 
     if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE)
       msProjectRect(&lp->projection, &map->projection, &sShape.bounds);
-#endif
+
     psNode = xmlAddChild(psLayerNode, msGML3BoundedBy(psNsGml, sShape.bounds.minx, sShape.bounds.miny, sShape.bounds.maxx, sShape.bounds.maxy, pszEpsg));
 
     /*geometry*/

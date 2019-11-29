@@ -47,12 +47,10 @@
 #include "maplibxml2.h"
 #endif
 
-#ifdef USE_OGR
 static int msWFSAnalyzeStoredQuery(mapObj* map,
                                    wfsParamsObj *wfsparams,
                                    const char* id,
                                    const char* pszResolvedQuery);
-#endif
 static void msWFSSimplifyPropertyNameAndFilter(wfsParamsObj *wfsparams);
 static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsObj *paramsObj,
                                                   int bIsHits,
@@ -2278,7 +2276,6 @@ static int msWFSRetrieveFeatures(mapObj* map,
   int i, j;
   int iNumberOfFeatures = 0;
 
-#ifdef USE_OGR
   if (pszFilter && strlen(pszFilter) > 0) {
     int nFilters;
     char **paszFilter = NULL;
@@ -2518,7 +2515,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
     msFreeCharArray(aFIDLayers, iFIDLayers);
     msFreeCharArray(aFIDValues, iFIDLayers);
   }
-#endif /* USE_OGR */
 
   /*
   ** Perform Query (only BBOX for now)
@@ -3113,7 +3109,6 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
 
 static int msWFSResolveStoredQuery(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 {
-#ifdef USE_OGR
   if (paramsObj->pszStoredQueryId != NULL )
   {
       int i;
@@ -3147,7 +3142,6 @@ static int msWFSResolveStoredQuery(mapObj *map, wfsParamsObj *paramsObj, cgiRequ
       
       msWFSSimplifyPropertyNameAndFilter(paramsObj);
   }
-#endif
   return MS_SUCCESS;
 }
 
@@ -3831,7 +3825,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   status = MS_SUCCESS;
 
   if( psFormat == NULL ) {
-#ifdef USE_OGR
     if( paramsObj->countGetFeatureById == 1 && maxfeatures != 0 && iResultTypeHits == 0 )
     {
         /* When there's a single  urn:ogc:def:query:OGC-WFS::GetFeatureById GetFeature request */
@@ -3841,7 +3834,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         old_context = msIO_pushStdoutToBufferAndGetOldContext();
     }
     else
-#endif
     {
         msIO_setHeader("Content-Type","%s; charset=UTF-8", gmlinfo.output_mime_type);
         msIO_sendHeaders();
@@ -4025,7 +4017,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                                 nWFSVersion );
   }
 
-#ifdef USE_OGR
   /*Special case for a single urn:ogc:def:query:OGC-WFS::GetFeatureById GetFeature request */
   if( old_context != NULL )
   {
@@ -4082,7 +4073,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         CPLDestroyXMLNode(psRoot);
     }
   }
-#endif
 
   msWFSCleanupGMLInfo(&gmlinfo);
 
@@ -4721,8 +4711,6 @@ static int msWFSSetParam(char** ppszOut, cgiRequestObj *request, int i,
     return 0;
 }
 
-#ifdef USE_OGR
-
 /************************************************************************/
 /*                         msWFSParseXMLQueryNode                       */
 /************************************************************************/
@@ -4998,9 +4986,6 @@ static int msWFSParseXMLStoredQueryNode(mapObj* map,
     return status;
 }
 
-#endif
-
-
 /************************************************************************/
 /*                    msWFSSimplifyPropertyNameAndFilter                */
 /************************************************************************/
@@ -5161,7 +5146,6 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
   /* -------------------------------------------------------------------- */
   /*      Parse the post request. It is assumed to be an XML document.    */
   /* -------------------------------------------------------------------- */
-#ifdef USE_OGR
   if (request->postrequest != NULL) {
 
     CPLXMLNode *psRoot;
@@ -5541,7 +5525,6 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
 
   }
 
-#endif
 #endif
   return MS_SUCCESS;
 }

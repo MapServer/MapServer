@@ -31,12 +31,8 @@
 #include "mapserver.h"
 #include "mapows.h"
 
-#ifdef USE_GDAL
-#  include "gdal.h"
-#  include "cpl_conv.h"
-#endif
-
-
+#include "gdal.h"
+#include "cpl_conv.h"
 
 void freeWeb(webObj *web);
 void freeScalebar(scalebarObj *scalebar);
@@ -93,11 +89,9 @@ void msFreeMap(mapObj *map)
   msFree(map->shapepath);
   msFree(map->mappath);
 
-#ifdef USE_PROJ
   msFreeProjection(&(map->projection));
   msFreeProjection(&(map->latlon));
   msProjectionContextReleaseToPool(map->projContext);
-#endif
 
   msFreeLabelCache(&(map->labelcache));
 
@@ -227,10 +221,7 @@ void msApplyMapConfigOptions( mapObj *map )
     } else if( strcasecmp(key,"MS_ERRORFILE") == 0 ) {
       msSetErrorFile( value, map->mappath );
     } else {
-
-#if defined(USE_GDAL) && GDAL_RELEASE_DATE > 20030601
       CPLSetConfigOption( key, value );
-#endif
     }
   }
 }

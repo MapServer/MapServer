@@ -406,10 +406,10 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     }
 
     srcRect = rect;
-#ifdef USE_PROJ
+
     if(srclayer->transform == MS_TRUE && srclayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
       msProjectRect(&layer->projection, &srclayer->projection, &srcRect); /* project the searchrect to source coords */
-#endif
+
     layerinfo->status[i] = msLayerWhichShapes(srclayer, srcRect, isQuery);
     if (layerinfo->status[i] == MS_FAILURE)
       return MS_FAILURE;
@@ -510,7 +510,6 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
           }
         }
 
-#ifdef USE_PROJ
         /* reproject to the target layer */
         if( layerinfo->reprojectorCurSrcLayer != layerinfo->layerIndex )
         {
@@ -524,7 +523,7 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
         }
         if(layerinfo->reprojectorSrcLayerToLayer)
             msProjectShapeEx(layerinfo->reprojectorSrcLayerToLayer, shape);
-#endif
+
         /* update the layer styles with the bound values */
         if(msBindLayerToShape(srclayer, shape, MS_FALSE) != MS_SUCCESS)
           return MS_FAILURE;
@@ -592,7 +591,6 @@ int msUnionLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   record->tileindex = tile;
 
   if (rv == MS_SUCCESS) {
-#ifdef USE_PROJ
     /* reproject to the target layer */
     if( layerinfo->reprojectorCurSrcLayer != tile )
     {
@@ -606,7 +604,7 @@ int msUnionLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     }
     if(layerinfo->reprojectorSrcLayerToLayer)
       msProjectShapeEx(layerinfo->reprojectorSrcLayerToLayer, shape);
-#endif
+
     shape->tileindex = tile;
 
     /* construct the item array */

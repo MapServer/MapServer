@@ -37,7 +37,6 @@
 extern "C" {
 #endif
 
-#ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR >= 6
 #  include <proj.h>
 #if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR == 0
@@ -47,7 +46,6 @@ extern "C" {
 #  include <proj_api.h>
 #if PJ_VERSION >= 470 && PJ_VERSION < 480
    void pj_clear_initcache();
-#endif
 #endif
 #endif
 
@@ -68,7 +66,6 @@ typedef struct projectionContext projectionContext;
 #endif
 #ifndef SWIG
     char **args; /* variable number of projection args */
-#ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR >= 6
     PJ* proj;
     projectionContext* proj_ctx;
@@ -77,9 +74,6 @@ typedef struct projectionContext projectionContext;
 #if PJ_VERSION >= 480
     projCtx proj_ctx;
 #endif
-#endif
-#else
-    void *proj;
 #endif
     geotransformObj gt; /* extra transformation to apply */
 #endif
@@ -128,12 +122,10 @@ typedef struct projectionContext projectionContext;
   MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
   MS_DLL_EXPORT void msProjLibInitFromEnv();
 
-#ifdef USE_PROJ
   int msProjIsGeographicCRS(projectionObj* proj);
 #if PROJ_VERSION_MAJOR >= 6
   int msProjectTransformPoints( reprojectionObj* reprojector,
                                 int npoints, double* x, double* y );
-#endif
 #endif
 
   /*utility functions */

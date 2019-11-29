@@ -249,7 +249,7 @@ int getNextShape(mapObj *map, layerObj *layer, double *values, int *nvalues, sty
   int c;
   status = msLayerNextShape(layer, shape);
   if(status == MS_SUCCESS) {
-#ifdef USE_PROJ
+
     if(layer->project)
     {
       if( layer->reprojectorLayerToMap == NULL )
@@ -263,7 +263,6 @@ int getNextShape(mapObj *map, layerObj *layer, double *values, int *nvalues, sty
       }
       msProjectShapeEx(layer->reprojectorLayerToMap, shape);
     }
-#endif
 
     if(msBindLayerToShape(layer, shape, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS) != MS_SUCCESS)
       return MS_FAILURE; /* error message is set in msBindLayerToShape() */
@@ -372,9 +371,9 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
       return MS_FAILURE;
     }
   }
-#ifdef USE_PROJ
+
   layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
-#endif
+
   /* step through the target shapes */
   msInitShape(&shape);
 
@@ -631,10 +630,8 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
       searchrect.maxy = map->height-1;
     }
 
-#ifdef USE_PROJ
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
       msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
     status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     if(status == MS_DONE) { /* no overlap */

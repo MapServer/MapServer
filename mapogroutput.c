@@ -33,18 +33,12 @@
 #include "mapthread.h"
 #include "mapows.h"
 
-#if defined(USE_OGR)
-#  define __USE_LARGEFILE64 1
-#  include "ogr_api.h"
-#  include "ogr_srs_api.h"
-#  include "cpl_conv.h"
-#  include "cpl_vsi.h"
-#  include "cpl_string.h"
-#endif
-
-
-
-#ifdef USE_OGR
+#define __USE_LARGEFILE64 1
+#include "ogr_api.h"
+#include "ogr_srs_api.h"
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                   msInitDefaultOGROutputFormat()                     */
@@ -443,7 +437,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   /*      Consider trying to force the geometry to a new type if it       */
   /*      doesn't match the layer.                                        */
   /* -------------------------------------------------------------------- */
-#if defined(GDAL_VERSION_NUM) && (GDAL_VERSION_NUM >= 1800)
   if( hGeom != NULL ) {
     OGRwkbGeometryType eFlattenFeatureGType =
         wkbFlatten(OGR_G_GetGeometryType( hGeom ));
@@ -462,7 +455,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
         hGeom = OGR_G_ForceToMultiLineString( hGeom );
     }
   }
-#endif /* GDAL/OGR 1.8 or later */
 
   /* -------------------------------------------------------------------- */
   /*      Consider flattening the geometry to 2D if we want 2D            */
@@ -509,9 +501,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
       OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
       OGRFieldType eFieldType = OGR_Fld_GetType(hFieldDefn);
       if( eFieldType == OFTInteger || eFieldType == OFTReal
-#if GDAL_VERSION_MAJOR >= 2
           || eFieldType == OFTInteger64
-#endif
           )
       {
         out_field++;
@@ -543,8 +533,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     return MS_FAILURE;
 }
 
-#if defined(GDAL_COMPUTE_VERSION)
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
 /************************************************************************/
 /*                        msOGRStdoutWriteFunction()                    */
 /************************************************************************/
@@ -555,8 +543,6 @@ static size_t msOGRStdoutWriteFunction(const void* ptr, size_t size, size_t nmem
     msIOContext *ioctx = (msIOContext*) stream;
     return msIO_contextWrite(ioctx, ptr, size * nmemb ) / size;
 }
-#endif
-#endif
 
 /************************************************************************/
 /*                      msOGROutputGetAdditonalFiles()                  */
@@ -670,8 +656,6 @@ static char** msOGROutputGetAdditonalFiles( mapObj *map )
     return papszFiles;
 }
 
-#endif /* def USE_OGR */
-
 /************************************************************************/
 /*                        msOGRWriteFromQuery()                         */
 /************************************************************************/
@@ -679,11 +663,6 @@ static char** msOGROutputGetAdditonalFiles( mapObj *map )
 int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
 {
-#ifndef USE_OGR
-  msSetError(MS_OGRERR, "OGR support is not available.",
-             "msOGRWriteFromQuery()");
-  return MS_FAILURE;
-#else
   /* -------------------------------------------------------------------- */
   /*      Variable declarations.                                          */
   /* -------------------------------------------------------------------- */
@@ -764,14 +743,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* ==================================================================== */
   storage = msGetOutputFormatOption( format, "STORAGE", "filesystem" );
   if( EQUAL(storage,"stream") && !msIO_isStdContext() ) {
-#if defined(GDAL_COMPUTE_VERSION)
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
     msIOContext *ioctx = msIO_getHandler (stdout);
     if( ioctx != NULL )
         VSIStdoutSetRedirection( msOGRStdoutWriteFunction, (FILE*)ioctx );
     else
-#endif
-#endif
     /* bug #4858, streaming output won't work if standard output has been
      * redirected, we switch to memory output in this case
      */
@@ -834,11 +809,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   /*      Setup the full datasource name.                                 */
   /* -------------------------------------------------------------------- */
-#if !defined(CPL_ZIP_API_OFFERED)
-  form = msGetOutputFormatOption( format, "FORM", "multipart" );
-#else
   form = msGetOutputFormatOption( format, "FORM", "zip" );
-#endif
 
   if( EQUAL(form,"zip") )
     fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.zip" );
@@ -1057,11 +1028,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       else if( EQUAL(item->type,"Integer") )
         eType = OFTInteger;
       else if( EQUAL(item->type,"Long") )
-#if GDAL_VERSION_MAJOR >= 2
         eType = OFTInteger64;
-#else
-        eType = OFTReal;
-#endif
       else if( EQUAL(item->type,"Real") )
         eType = OFTReal;
       else if( EQUAL(item->type,"Character") )
@@ -1340,12 +1307,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Handle the case of a zip file result.                           */
   /* -------------------------------------------------------------------- */
   else if( EQUAL(form,"zip") ) {
-#if !defined(CPL_ZIP_API_OFFERED)
-    msSetError( MS_MISCERR, "FORM=zip selected, but CPL ZIP support unavailable, perhaps you need to upgrade to GDAL/OGR 1.8?",
-                "msOGRWriteFromQuery()");
-    msOGRCleanupDS( datasource_name );
-    return MS_FAILURE;
-#else
     FILE *fp;
     char *zip_filename = msTmpFile(map, NULL, "/vsimem/ogrzip/", "zip" );
     void *hZip;
@@ -1409,7 +1370,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     VSIFCloseL( fp );
 
     msFree( zip_filename );
-#endif /* defined(CPL_ZIP_API_OFFERED) */
   }
 
   /* -------------------------------------------------------------------- */
@@ -1427,7 +1387,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   CSLDestroy( file_list );
 
   return MS_SUCCESS;
-#endif /* def USE_OGR */
 }
 
 /************************************************************************/
@@ -1436,12 +1395,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
 int msPopulateRendererVTableOGR( rendererVTableObj *renderer )
 {
-#ifdef USE_OGR
   /* we aren't really a normal renderer so we leave everything default */
   return MS_SUCCESS;
-#else
-  msSetError(MS_OGRERR, "OGR Driver requested but is not built in",
-             "msPopulateRendererVTableOGR()");
-  return MS_FAILURE;
-#endif
 }

@@ -36,8 +36,6 @@ MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
 MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression);
 MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter);
 
-#ifdef USE_OGR
-
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
@@ -144,8 +142,5 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
 int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect);
 int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
                             mapObj *map, int i);
-
-#endif
-
 
 #endif

@@ -40,9 +40,7 @@
 #include <stdio.h>
 #endif
 
-#ifdef USE_GDAL
-#  include "cpl_vsi.h"
-#endif
+#include "cpl_vsi.h"
 
 /**********************************************************************
  *                          msInitWmsParamsObj()

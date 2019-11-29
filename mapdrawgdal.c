@@ -41,8 +41,6 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
 #define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
 
-#if defined(USE_GDAL)
-
 #include "gdal.h"
 #include "cpl_string.h"
 
@@ -2318,6 +2316,3 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
     return band_list;
   }
 }
-
-#endif /* def USE_GDAL */
-

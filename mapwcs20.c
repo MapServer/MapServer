@@ -4493,7 +4493,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     }
 
     if(msProjectionsDiffer(&imageProj, &subsetProj)) {
-#ifdef USE_PROJ
+
       /* Reprojection of source raster extent of (-180,-90,180,90) to any */
       /* projected CRS is going to exhibit strong anomalies. So instead */
       /* do the reverse, project the subset extent to the layer CRS, and */
@@ -4528,7 +4528,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
             }
           }
       }
-#endif
+
       msProjectRect(&imageProj, &subsetProj, &(layer->extent));
       map->extent = layer->extent;
       msFreeProjection(&(map->projection));

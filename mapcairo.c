@@ -55,10 +55,8 @@
 #endif
 #endif
 
-#ifdef USE_GDAL
 #include <cpl_string.h>
 #include <gdal.h>
-#endif
 
 #include "fontcache.h"
 
@@ -537,9 +535,6 @@ imageObj* createImageCairo(int width, int height, outputFormatObj *format,colorO
 
 static void msTransformToGeospatialPDF(imageObj *img, mapObj *map, cairo_renderer *r)
 {
-  /* We need a GDAL 1.10 PDF driver at runtime, but as far as the C API is concerned, GDAL 1.9 is */
-  /* largely sufficient. */
-#if defined(USE_GDAL) && defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1900
   GDALDatasetH hDS = NULL;
   const char* pszGEO_ENCODING = NULL;
   GDALDriverH hPDFDriver = NULL;
@@ -646,7 +641,6 @@ static void msTransformToGeospatialPDF(imageObj *img, mapObj *map, cairo_rendere
   VSIUnlink(pszTmpFilename);
 
   msFree(pszTmpFilename);
-#endif
 }
 
 int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)
