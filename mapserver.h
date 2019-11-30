@@ -962,6 +962,7 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int refcount;
+    char *symbolname;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
