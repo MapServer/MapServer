@@ -990,8 +990,6 @@ extern "C" {
     int rangeitemindex;
 
     int symbol;
-    char *symbolname;
-
     double size;
     double minsize, maxsize;
 
