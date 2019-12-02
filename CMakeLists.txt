@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.0)
 
 project (MapServer)
 
@@ -19,6 +19,24 @@ set (MapServer_VERSION_MAJOR 7)
 set (MapServer_VERSION_MINOR 5)
 set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
+
+# Set C++ version
+# Make CMAKE_CXX_STANDARD available as cache option overridable by user
+set(CMAKE_CXX_STANDARD 11
+  CACHE STRING "C++ standard version to use (default is 11)")
+message(STATUS "Requiring C++${CMAKE_CXX_STANDARD}")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+message(STATUS "Requiring C++${CMAKE_CXX_STANDARD} - done")
+
+# Set C99 version
+# Make CMAKE_C_STANDARD available as cache option overridable by user
+set(CMAKE_C_STANDARD 99
+  CACHE STRING "C standard version to use (default is 99)")
+message(STATUS "Requiring C${CMAKE_C_STANDARD}")
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+message(STATUS "Requiring C${CMAKE_C_STANDARD} - done")
 
 set(TARGET_VERSION_MAJOR ${MapServer_VERSION_MAJOR})
 set(TARGET_VERSION_MINOR ${MapServer_VERSION_MINOR})
