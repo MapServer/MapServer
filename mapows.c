@@ -53,7 +53,9 @@
 static void msOWSInitRequestObj(owsRequestObj *ows_request)
 {
   ows_request->numlayers = 0;
+  ows_request->numwmslayerargs = 0;
   ows_request->enabled_layers = NULL;
+  ows_request->layerwmsfilterindex = NULL;
 
   ows_request->service = NULL;
   ows_request->version = NULL;
@@ -68,6 +70,7 @@ static void msOWSInitRequestObj(owsRequestObj *ows_request)
 static void msOWSClearRequestObj(owsRequestObj *ows_request)
 {
   msFree(ows_request->enabled_layers);
+  msFree(ows_request->layerwmsfilterindex);
   msFree(ows_request->service);
   msFree(ows_request->version);
   msFree(ows_request->request);

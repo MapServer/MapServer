@@ -129,7 +129,9 @@ typedef struct {
 /* owsRequestObj: Represent a OWS specific request with its enabled layers */
 typedef struct {
   int numlayers;
+  int numwmslayerargs;
   int *enabled_layers;
+  int *layerwmsfilterindex;
 
   char *service;
   char *version;
