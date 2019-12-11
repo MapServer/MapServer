@@ -72,8 +72,6 @@ int InvGeoTransform( double *gt_in, double *gt_out )
   return 1;
 }
 
-#if defined(USE_PROJ) && defined(USE_GDAL)
-
 /************************************************************************/
 /*                      msNearestRasterResample()                       */
 /************************************************************************/
@@ -1331,9 +1329,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
   return MS_TRUE;
 }
 
-#endif /* def USE_PROJ */
-
-#ifdef USE_GDAL
 /************************************************************************/
 /*                        msResampleGDALToMap()                         */
 /************************************************************************/
@@ -1811,7 +1806,3 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
   return result;
 }
-
-#endif /* def USE_GDAL */
-
-

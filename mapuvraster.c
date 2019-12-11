@@ -28,7 +28,6 @@
  **********************************************************************/
 
 #include "mapserver.h"
-#ifdef USE_GDAL
 
 #include <assert.h>
 #include <math.h>
@@ -424,7 +423,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   /* Custom msCopyProjection() that removes lon_wrap parameter */
   {
-#ifdef USE_PROJ
     int i;
 
     map_tmp->projection.numargs = 0;
@@ -445,7 +443,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     if (map_tmp->projection.numargs != 0) {
       msProcessProjection(&(map_tmp->projection));
     }
-#endif
+
     map_tmp->projection.wellknownprojection = layer->projection.wellknownprojection;
   }
 
@@ -965,12 +963,3 @@ msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
 
   return MS_SUCCESS;
 }
-
-#else
-int msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
-{
-  msSetError(MS_MISCERR, "UVRaster Layer needs GDAL support, but it it not compiled in", "msUVRASTERLayerInitializeVirtualTable()");
-  return MS_FAILURE;
-}
-#endif
-

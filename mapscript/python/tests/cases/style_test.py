@@ -90,7 +90,7 @@ class NewStylesTestCase(MapTestCase):
         assert class0.numstyles == 2, class0.numstyles
         new_style = mapscript.styleObj()
         new_style.color.setRGB(0, 0, 0)
-        new_style.symbol = 1
+        new_style.setSymbolByName(self.map, 'circle')
         new_style.size = 3
         index = class0.insertStyle(new_style)
         assert index == 2, index

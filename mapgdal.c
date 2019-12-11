@@ -32,14 +32,9 @@
 #include <assert.h>
 
 
-
-#if defined(USE_GDAL) || defined(USE_OGR)
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
-#endif
-
-#ifdef USE_GDAL
 
 #include "gdal.h"
 
@@ -72,10 +67,7 @@ void msGDALCleanup( void )
 {
   if( bGDALInitialized ) {
     int iRepeat = 5;
-    msAcquireLock( TLOCK_GDAL );
 
-#if GDAL_RELEASE_DATE > 20101207
-    {
       /*
       ** Cleanup any unreferenced but open datasets as will tend
       ** to exist due to deferred close requests.  We are careful
@@ -83,11 +75,13 @@ void msGDALCleanup( void )
       ** list as closing some datasets may cause others to be
       ** closed (subdatasets in a VRT for instance).
       */
-      GDALDatasetH *pahDSList = NULL;
-      int nDSCount = 0;
-      int bDidSomething;
+    GDALDatasetH *pahDSList = NULL;
+    int nDSCount = 0;
+    int bDidSomething;
 
-      do {
+    msAcquireLock( TLOCK_GDAL );
+
+    do {
         int i;
         GDALGetOpenDatasets( &pahDSList, &nDSCount );
         bDidSomething = FALSE;
@@ -98,12 +92,10 @@ void msGDALCleanup( void )
           } else
             GDALDereferenceDataset( pahDSList[i] );
         }
-      } while( bDidSomething );
-    }
-#endif
+    } while( bDidSomething );
 
     while( iRepeat-- )
-      CPLPopErrorHandler();
+    CPLPopErrorHandler();
 
     msReleaseLock( TLOCK_GDAL );
 
@@ -586,15 +578,6 @@ char** msGetStringListFromHashTable(hashTableObj* table)
 }
 
 
-#else
-
-void msGDALInitialize( void ) {}
-void msGDALCleanup(void) {}
-
-
-#endif /* def USE_GDAL */
-
-
 /************************************************************************/
 /*                      msProjectionObj2OGCWKT()                        */
 /*                                                                      */
@@ -609,15 +592,6 @@ void msGDALCleanup(void) {}
 char *msProjectionObj2OGCWKT( projectionObj *projection )
 
 {
-
-#if !defined(USE_GDAL) && !defined(USE_OGR)
-  msSetError(MS_OGRERR,
-             "Not implemented since neither OGR nor GDAL is enabled.",
-             "msProjectionObj2OGCWKT()");
-  return NULL;
-
-#else /* defined USE_GDAL or USE_OGR */
-
   OGRSpatialReferenceH hSRS;
   char *pszWKT=NULL, *pszProj4, *pszInitEpsg=NULL;
   int  nLength = 0, i;
@@ -672,7 +646,6 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
     return pszWKT2;
   } else
     return NULL;
-#endif /* defined USE_GDAL or USE_OGR */
 }
 
 

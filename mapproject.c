@@ -36,7 +36,6 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
-#ifdef USE_PROJ
 static char *ms_proj_lib = NULL;
 #if PROJ_VERSION_MAJOR >= 6
 static unsigned ms_proj_lib_change_counter = 0;
@@ -58,7 +57,7 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 static projectionContext* msProjectionContextCreate(void);
 static void msProjectionContextUnref(projectionContext* ctx);
 
-#if defined(USE_PROJ) && PROJ_VERSION_MAJOR >= 6
+#if PROJ_VERSION_MAJOR >= 6
 
 #include "proj_experimental.h"
 
@@ -529,7 +528,6 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     else if( in && in->proj && out && out->proj ) {
         /* do nothing for now */
     }
-#ifdef USE_PROJ
     /* nothing to do if the other coordinate system is also lat/long */
     else if( in == NULL && (out == NULL || msProjIsGeographicCRS(out) ))
     {
@@ -539,7 +537,6 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     {
         obj->no_op = MS_TRUE;
     }
-#endif
     return obj;
 }
 
@@ -556,8 +553,6 @@ void msProjectDestroyReprojector(reprojectionObj* reprojector)
 
 #endif
 
-#endif
-
 /*
 ** Initialize, load and free a projectionObj structure
 */
@@ -567,7 +562,6 @@ int msInitProjection(projectionObj *p)
   p->numargs = 0;
   p->args = NULL;
   p->wellknownprojection = wkp_none;
-#ifdef USE_PROJ
   p->proj = NULL;
   p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *));
   MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS*sizeof(char *), -1);
@@ -576,13 +570,11 @@ int msInitProjection(projectionObj *p)
 #elif PJ_VERSION >= 480
   p->proj_ctx = NULL;
 #endif
-#endif
   return(0);
 }
 
 void msFreeProjection(projectionObj *p)
 {
-#ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR >= 6
   proj_destroy(p->proj);
   p->proj = NULL;
@@ -606,12 +598,10 @@ void msFreeProjection(projectionObj *p)
   msFreeCharArray(p->args, p->numargs);
   p->args = NULL;
   p->numargs = 0;
-#endif
 }
 
 void msFreeProjectionExceptContext(projectionObj *p)
 {
-#ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR >= 6
   projectionContext* ctx = p->proj_ctx;
   p->proj_ctx = NULL;
@@ -619,7 +609,6 @@ void msFreeProjectionExceptContext(projectionObj *p)
   p->proj_ctx = ctx;
 #else
   msFreeProjection(p);
-#endif
 #endif
 }
 
@@ -629,16 +618,12 @@ void msFreeProjectionExceptContext(projectionObj *p)
 
 void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc)
 {
-#if !defined(USE_PROJ)
-    /* do nothing */
-#elif PROJ_VERSION_MAJOR >= 6
+#if PROJ_VERSION_MAJOR >= 6
     if( pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL)
     {
         pDst->proj_ctx = pSrc->proj_ctx;
         pDst->proj_ctx->ref_count ++;
     }
-#else
-    /* do nothing */
 #endif
 }
 
@@ -648,16 +633,12 @@ void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc)
 
 void msProjectionSetContext(projectionObj *p, projectionContext* ctx)
 {
-#if !defined(USE_PROJ)
-    /* do nothing */
-#elif PROJ_VERSION_MAJOR >= 6
+#if PROJ_VERSION_MAJOR >= 6
     if( p->proj_ctx == NULL && ctx != NULL)
     {
         p->proj_ctx = ctx;
         p->proj_ctx->ref_count ++;
     }
-#else
-    /* do nothing */
 #endif
 }
 
@@ -665,7 +646,7 @@ void msProjectionSetContext(projectionObj *p, projectionContext* ctx)
 ** Handle OGC WMS/WFS AUTO projection in the format:
 **    "AUTO:proj_id,units_id,lon0,lat0"
 */
-#ifdef USE_PROJ
+
 static int _msProcessAutoProjection(projectionObj *p)
 {
   char **args;
@@ -794,11 +775,9 @@ static int _msProcessAutoProjection(projectionObj *p)
 
   return(0);
 }
-#endif /* USE_PROJ */
 
 int msProcessProjection(projectionObj *p)
 {
-#ifdef USE_PROJ
   assert( p->proj == NULL );
 
   if( strcasecmp(p->args[0],"GEOGRAPHIC") == 0 ) {
@@ -910,11 +889,6 @@ int msProcessProjection(projectionObj *p)
 
 
   return(0);
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.",
-             "msProcessProjection()");
-  return(-1);
-#endif
 }
 
 /************************************************************************/
@@ -953,7 +927,6 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 /************************************************************************/
 int msProjectPointEx(reprojectionObj* reprojector, pointObj *point)
 {
-#ifdef USE_PROJ
   projectionObj* in = reprojector->in;
   projectionObj* out = reprojector->out;
 
@@ -1068,16 +1041,11 @@ int msProjectPointEx(reprojectionObj* reprojector, pointObj *point)
   }
 
   return(MS_SUCCESS);
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectPoint()");
-  return(MS_FAILURE);
-#endif
 }
 
 /************************************************************************/
 /*                         msProjectGrowRect()                          */
 /************************************************************************/
-#ifdef USE_PROJ
 static void msProjectGrowRect(reprojectionObj* reprojector,
                               rectObj *prj_rect,
                               pointObj *prj_point, int *failure )
@@ -1091,7 +1059,6 @@ static void msProjectGrowRect(reprojectionObj* reprojector,
   } else
     (*failure)++;
 }
-#endif /* def USE_PROJ */
 
 /************************************************************************/
 /*                          msProjectSegment()                          */
@@ -1099,7 +1066,6 @@ static void msProjectGrowRect(reprojectionObj* reprojector,
 /*      Interpolate along a line segment for which one end              */
 /*      reprojects and the other end does not.  Finds the horizon.      */
 /************************************************************************/
-#ifdef USE_PROJ
 static int msProjectSegment( reprojectionObj* reprojector,
                              pointObj *start, pointObj *end )
 
@@ -1163,7 +1129,6 @@ static int msProjectSegment( reprojectionObj* reprojector,
   else
     return MS_SUCCESS;
 }
-#endif
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */
@@ -1177,7 +1142,6 @@ static int msProjectSegment( reprojectionObj* reprojector,
 /*      over the horizon point to the come back over the horizon point. */
 /************************************************************************/
 
-#ifdef USE_PROJ
 static int
 msProjectShapeLine(reprojectionObj* reprojector,
                    shapeObj *shape, int line_index)
@@ -1383,7 +1347,6 @@ msProjectShapeLine(reprojectionObj* reprojector,
 
   return(MS_SUCCESS);
 }
-#endif
 
 /************************************************************************/
 /*                           msProjectShape()                           */
@@ -1404,7 +1367,6 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 /************************************************************************/
 int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape)
 {
-#ifdef USE_PROJ
   int i;
 #ifdef USE_PROJ_FASTPATHS
   int j;
@@ -1461,10 +1423,6 @@ int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape)
     msComputeBounds( shape ); /* fixes bug 1586 */
     return(MS_SUCCESS);
   }
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectShape()");
-  return(MS_FAILURE);
-#endif
 }
 
 /************************************************************************/
@@ -1491,7 +1449,6 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 
 int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 {
-#ifdef USE_PROJ
   int i, be_careful = 1;
 
   if( be_careful )
@@ -1537,10 +1494,6 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
   }
 
   return(MS_SUCCESS);
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectLine()");
-  return(MS_FAILURE);
-#endif
 }
 
 /************************************************************************/
@@ -1552,7 +1505,6 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 static
 int msProjectRectGrid(reprojectionObj* reprojector, rectObj *rect)
 {
-#ifdef USE_PROJ
   pointObj prj_point;
   rectObj prj_rect;
   int     failure=0;
@@ -1616,106 +1568,7 @@ int msProjectRectGrid(reprojectionObj* reprojector, rectObj *rect)
   rect->maxy = prj_rect.maxy;
 
   return(MS_SUCCESS);
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
-  return(MS_FAILURE);
-#endif
 }
-
-/************************************************************************/
-/*                    msProjectRectTraditionalEdge()                    */
-/************************************************************************/
-#ifdef notdef
-static int
-msProjectRectTraditionalEdge(reprojectionObj* reprojector,
-                             rectObj *rect)
-{
-#ifdef USE_PROJ
-  pointObj prj_point;
-  rectObj prj_rect;
-  int     failure=0;
-  int     ix, iy;
-
-  double dx, dy;
-  double x, y;
-
-  prj_rect.minx = DBL_MAX;
-  prj_rect.miny = DBL_MAX;
-  prj_rect.maxx = -DBL_MAX;
-  prj_rect.maxy = -DBL_MAX;
-
-  dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
-  dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
-
-  /* first ensure the top left corner is processed, even if the rect
-     turns out to be degenerate. */
-
-  prj_point.x = rect->minx;
-  prj_point.y = rect->miny;
-#ifdef USE_POINT_Z_M
-  prj_point.z = 0.0;
-  prj_point.m = 0.0;
-#endif /* USE_POINT_Z_M */
-
-  msProjectGrowRect(reprojector,&prj_rect,&prj_point,
-                    &failure);
-
-  /* sample along top and bottom */
-  if(dx > 0) {
-    for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ ) {
-      x = rect->minx + ix * dx;
-
-      prj_point.x = x;
-      prj_point.y = rect->miny;
-      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
-                        &failure);
-
-      prj_point.x = x;
-      prj_point.y = rect->maxy;
-      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
-                        &failure);
-    }
-  }
-
-  /* sample along left and right */
-  if(dy > 0) {
-    for(iy = 0; iy <= NUMBER_OF_SAMPLE_POINTS; iy++ ) {
-      y = rect->miny + iy * dy;
-
-      prj_point.y = y;
-      prj_point.x = rect->minx;
-      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
-                        &failure);
-
-      prj_point.x = rect->maxx;
-      prj_point.y = y;
-      msProjectGrowRect(reprojector,&prj_rect,&prj_point,
-                        &failure);
-    }
-  }
-
-  /*
-  ** If there have been any failures around the edges, then we had better
-  ** try and fill in the interior to get a close bounds.
-  */
-  if( failure > 0 )
-    return msProjectRectGrid( reprojector, rect );
-
-  rect->minx = prj_rect.minx;
-  rect->miny = prj_rect.miny;
-  rect->maxx = prj_rect.maxx;
-  rect->maxy = prj_rect.maxy;
-
-  if( prj_rect.minx > prj_rect.maxx )
-    return MS_FAILURE;
-  else
-    return(MS_SUCCESS);
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
-  return(MS_FAILURE);
-#endif
-}
-#endif /* def notdef */
 
 /************************************************************************/
 /*                       msProjectRectAsPolygon()                       */
@@ -1724,7 +1577,6 @@ msProjectRectTraditionalEdge(reprojectionObj* reprojector,
 static int
 msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect)
 {
-#ifdef USE_PROJ
   shapeObj polygonObj;
   lineObj  ring;
   /*  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4]; */
@@ -1894,10 +1746,6 @@ msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect)
   }
 
   return MS_SUCCESS;
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
-  return(MS_FAILURE);
-#endif
 }
 
 /************************************************************************/
@@ -1909,10 +1757,10 @@ int msProjectHasLonWrap(projectionObj *in, double* pdfLonWrap)
     int i;
     if( pdfLonWrap )
         *pdfLonWrap = 0;
-#if USE_PROJ
+
     if( !msProjIsGeographicCRS(in) )
         return MS_FALSE;
-#endif
+
     for( i = 0; i < in->numargs; i++ )
     {
         if( strncmp(in->args[i], "lon_wrap=",
@@ -1932,9 +1780,6 @@ int msProjectHasLonWrap(projectionObj *in, double* pdfLonWrap)
 
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 {
-#ifdef notdef
-  return msProjectRectTraditionalEdge( in, out, rect );
-#else
   char *over = "+over";
   int ret;
   int bFreeInOver = MS_FALSE;
@@ -1943,7 +1788,6 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   double dfLonWrap = 0.0;
   reprojectionObj* reprojector = NULL;
 
-#if USE_PROJ
   /* Detect projecting from north polar stereographic to longlat */
   if( in && !in->gt.need_geotransform &&
       out && !out->gt.need_geotransform &&
@@ -1979,7 +1823,6 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
         }
       }
   }
-#endif
 
   if(in && msProjectHasLonWrap(in, &dfLonWrap) && dfLonWrap == 180.0) {
     inp = in;
@@ -2035,10 +1878,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   if(bFreeOutOver)
     msFreeProjection(&out_over);
   return ret;
-#endif
 }
 
-#ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR < 6
 
 static int msProjectSortString(const void* firstelt, const void* secondelt)
@@ -2117,8 +1958,6 @@ static projectionObj* msGetProjectNormalized( const projectionObj* p )
 }
 #endif
 
-#endif /* USE_PROJ */
-
 /************************************************************************/
 /*                        msProjectionsDiffer()                         */
 /************************************************************************/
@@ -2160,7 +1999,6 @@ static int msProjectionsDifferInternal( projectionObj *proj1, projectionObj *pro
 
 int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
 {
-#ifdef USE_PROJ
     int ret;
 
     ret = msProjectionsDifferInternal(proj1, proj2);
@@ -2184,9 +2022,6 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
     }
 #endif
     return ret;
-#else
-    return msProjectionsDifferInternal(proj1, proj2);
-#endif
 }
 
 /************************************************************************/
@@ -2259,7 +2094,6 @@ reprojected to geographic space.  However, it does not:
 
 */
 
-#ifdef USE_PROJ
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            reprojectionObj* reprojector )
 
@@ -2292,12 +2126,10 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
   else
     return 0;
 }
-#endif /* def USE_PROJ */
 
 /************************************************************************/
 /*                            msProjFinder()                            */
 /************************************************************************/
-#ifdef USE_PROJ
 
 #if PROJ_VERSION_MAJOR < 6
 static char *last_filename = NULL;
@@ -2321,8 +2153,6 @@ static const char *msProjFinder( const char *filename)
 }
 #endif
 
-#endif /* def USE_PROJ */
-
 /************************************************************************/
 /*                       msProjLibInitFromEnv()                         */
 /************************************************************************/
@@ -2341,7 +2171,6 @@ void msProjLibInitFromEnv()
 void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
 {
-#ifdef USE_PROJ
   char *extended_path = NULL;
 
   /* Handle relative path if applicable */
@@ -2409,7 +2238,6 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
   if ( extended_path )
     msFree( extended_path );
-#endif
 }
 
 /************************************************************************/
@@ -2570,7 +2398,6 @@ void msAxisDenormalizePoints( projectionObj *proj, int count,
 /*      Returns whether a CRS is a geographic one.                      */
 /************************************************************************/
 
-#ifdef USE_PROJ
 int msProjIsGeographicCRS(projectionObj* proj)
 {
 #if PROJ_VERSION_MAJOR >= 6
@@ -2592,8 +2419,6 @@ int msProjIsGeographicCRS(projectionObj* proj)
     return pj_is_latlong(proj->proj);
 #endif
 }
-#endif
-
 
 /************************************************************************/
 /*                        ConvertProjUnitStringToMS                     */
@@ -2602,7 +2427,6 @@ int msProjIsGeographicCRS(projectionObj* proj)
 /*      unit passed as argument.                                        */
 /*       Please refer to ./src/pj_units.c file in the Proj.4 module.    */
 /************************************************************************/
-#ifdef USE_PROJ
 static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 {
   if (strcmp(pszProjUnit, "m") ==0) {
@@ -2621,7 +2445,6 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 
   return -1;
 }
-#endif /* def USE_PROJ */
 
 /************************************************************************/
 /*           int GetMapserverUnitUsingProj(projectionObj *psProj)       */
@@ -2631,7 +2454,6 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 /************************************************************************/
 int GetMapserverUnitUsingProj(projectionObj *psProj)
 {
-#ifdef USE_PROJ
 #if PROJ_VERSION_MAJOR >= 6
   const char *proj_str;
 #else
@@ -2705,7 +2527,6 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 #if PROJ_VERSION_MAJOR < 6
   pj_dalloc( proj_str );
 #endif
-#endif
   return -1;
 }
 
@@ -2720,7 +2541,6 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 
 projectionContext* msProjectionContextGetFromPool()
 {
-#ifdef USE_PROJ
     projectionContext* context;
     msAcquireLock( TLOCK_PROJ );
 
@@ -2738,9 +2558,6 @@ projectionContext* msProjectionContextGetFromPool()
 
     msReleaseLock( TLOCK_PROJ );
     return context;
-#else
-    return NULL;
-#endif
 }
 
 /************************************************************************/
@@ -2749,7 +2566,6 @@ projectionContext* msProjectionContextGetFromPool()
 
 void msProjectionContextReleaseToPool(projectionContext* ctx)
 {
-#ifdef USE_PROJ
     LinkedListOfProjContext* link =
         (LinkedListOfProjContext*)msSmallMalloc(sizeof(LinkedListOfProjContext));
     link->context = ctx;
@@ -2757,7 +2573,6 @@ void msProjectionContextReleaseToPool(projectionContext* ctx)
     link->next = headOfLinkedListOfProjContext;
     headOfLinkedListOfProjContext = link;
     msReleaseLock( TLOCK_PROJ );
-#endif
 }
 
 /************************************************************************/
@@ -2766,7 +2581,6 @@ void msProjectionContextReleaseToPool(projectionContext* ctx)
 
 void msProjectionContextPoolCleanup()
 {
-#ifdef USE_PROJ
     LinkedListOfProjContext* link;
     msAcquireLock( TLOCK_PROJ );
     link = headOfLinkedListOfProjContext;
@@ -2779,5 +2593,4 @@ void msProjectionContextPoolCleanup()
     }
     headOfLinkedListOfProjContext = NULL;
     msReleaseLock( TLOCK_PROJ );
-#endif
 }

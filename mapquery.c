@@ -846,7 +846,7 @@ int msQueryByFilter(mapObj *map)
       int bUseLayerSRS = MS_FALSE;
       int numFeatures = -1;
 
-#if defined(USE_PROJ) && (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR))
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
       /* Optimization to detect the case where a WFS query uses in fact the */
       /* whole layer extent, but expressed in a map SRS different from the layer SRS */
       /* In the case, we can directly request against the layer extent in its native SRS */
@@ -896,11 +896,9 @@ int msQueryByFilter(mapObj *map)
       // Fallback in case of error (should not happen normally)
     }
 
-#ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
     if(lp->project && memcmp( &search_rect, &invalid_rect, sizeof(search_rect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
-#endif
 
     status = msLayerWhichShapes(lp, search_rect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
@@ -942,7 +940,6 @@ int msQueryByFilter(mapObj *map)
         continue;
       }
 
-#ifdef USE_PROJ
       if(lp->project) {
         if( reprojector == NULL ) {
             reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
@@ -954,7 +951,6 @@ int msQueryByFilter(mapObj *map)
         }
         msProjectShapeEx(reprojector, &shape);
       }
-#endif
 
       /* Should we skip this feature? */
       if (!paging && map->query.startindex > 1) {
@@ -1135,7 +1131,7 @@ int msQueryByRect(mapObj *map)
       int bUseLayerSRS = MS_FALSE;
       int numFeatures = -1;
 
-#if defined(USE_PROJ) && (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR))
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
       /* Optimization to detect the case where a WFS query uses in fact the */
       /* whole layer extent, but expressed in a map SRS different from the layer SRS */
       /* In the case, we can directly request against the layer extent in its native SRS */
@@ -1181,12 +1177,10 @@ int msQueryByRect(mapObj *map)
       // Fallback in case of error (should not happen normally)
     }
 
-#ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
     if(lp->project &&
        memcmp( &searchrect, &invalid_rect, sizeof(searchrect) ) != 0 )
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-#endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
@@ -1233,7 +1227,6 @@ int msQueryByRect(mapObj *map)
         continue;
       }
 
-#ifdef USE_PROJ
       if(lp->project) {
         if( reprojector == NULL ) {
             reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
@@ -1245,7 +1238,6 @@ int msQueryByRect(mapObj *map)
         }
         msProjectShapeEx(reprojector, &shape);
       }
-#endif
 
       if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
         status = MS_TRUE;
@@ -1450,10 +1442,8 @@ int msQueryByFeatures(mapObj *map)
         return(MS_FAILURE);
       }
 
-#ifdef USE_PROJ
       if(slp->project)
         msProjectShape(&(slp->projection), &(map->projection), &selectshape);
-#endif
 
       /* identify target shapes */
       searchrect = selectshape.bounds;
@@ -1463,10 +1453,8 @@ int msQueryByFeatures(mapObj *map)
       searchrect.miny -= tolerance;
       searchrect.maxy += tolerance;
 
-#ifdef USE_PROJ
       if(lp->project)
         msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-#endif
 
       status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
       if(status == MS_DONE) { /* no overlap */
@@ -1520,7 +1508,6 @@ int msQueryByFeatures(mapObj *map)
           continue;
         }
 
-#ifdef USE_PROJ
         if(lp->project) {
             if( reprojector == NULL ) {
                 reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
@@ -1532,7 +1519,6 @@ int msQueryByFeatures(mapObj *map)
             }
             msProjectShapeEx(reprojector, &shape);
         }
-#endif
 
         switch(selectshape.type) { /* may eventually support types other than polygon on line */
           case MS_SHAPE_POLYGON:
@@ -1771,11 +1757,10 @@ int msQueryByPoint(mapObj *map)
 
     /* identify target shapes */
     searchrect = rect;
-#ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
     if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-#endif
+
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
@@ -1820,7 +1805,6 @@ int msQueryByPoint(mapObj *map)
         continue;
       }
 
-#ifdef USE_PROJ
       if(lp->project) {
         if( reprojector == NULL ) {
             reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
@@ -1832,7 +1816,6 @@ int msQueryByPoint(mapObj *map)
         }
         msProjectShapeEx(reprojector, &shape);
       }
-#endif
 
       d = msDistancePointToShape(&(map->query.point), &shape);
       if( d <= t ) { /* found one */
@@ -2006,11 +1989,9 @@ int msQueryByShape(mapObj *map)
     searchrect.miny -= tolerance;
     searchrect.maxy += tolerance;
 
-#ifdef USE_PROJ
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
     if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-#endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
@@ -2055,7 +2036,6 @@ int msQueryByShape(mapObj *map)
         continue;
       }
 
-#ifdef USE_PROJ
       if(lp->project) {
         if( reprojector == NULL ) {
             reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
@@ -2067,7 +2047,6 @@ int msQueryByShape(mapObj *map)
         }
         msProjectShapeEx(reprojector, &shape);
       }
-#endif
 
       switch(qshape->type) { /* may eventually support types other than polygon or line */
         case MS_SHAPE_POLYGON:

@@ -30,12 +30,9 @@
 #include "mapogcfilter.h"
 #include "mapserver.h"
 #include "mapows.h"
-
-#ifdef USE_OGR
 #include "cpl_string.h"
-#endif
 
-#if defined(USE_OGR) && defined(USE_CURL)
+#if defined(USE_CURL)
 static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 #endif
 
@@ -64,8 +61,6 @@ static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC 
 int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
                      const char *pszStyleLayerName,  char **ppszLayerNames)
 {
-#ifdef USE_OGR
-
   /* needed for libcurl function msHTTPGetFile in maphttp.c */
 #if defined(USE_CURL)
 
@@ -124,17 +119,6 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
   msSetError(MS_MISCERR, "WMS/WFS client support is not enabled .", "msSLDApplySLDURL()");
   return(MS_FAILURE);
 #endif
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msSLDApplySLDURL()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
-
 }
 
 /* -------------------------------------------------------------------- */
@@ -188,9 +172,6 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj 
 int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *pszStyleLayerName, char **ppszLayerNames)
 {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
-
-#ifdef USE_OGR
-
   int nSLDLayers = 0;
   layerObj *pasSLDLayers = NULL;
   int nStatus = MS_SUCCESS;
@@ -484,17 +465,6 @@ sld_cleanup:
   }
   return nStatus;
 
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msSLDApplySLD()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
-
 #else
   msSetError(MS_MISCERR, "OWS support is not available.",
              "msSLDApplySLD()");
@@ -502,9 +472,6 @@ sld_cleanup:
 #endif
 }
 
-
-
-#ifdef USE_OGR
 
 
 static CPLXMLNode* FindNextChild(CPLXMLNode* psNode, const char* pszChildName)
@@ -3185,8 +3152,6 @@ int msSLDSetColorObject(char *psHexColor, colorObj *psColor)
   return MS_SUCCESS;
 }
 
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      client sld support functions                                    */
 /* -------------------------------------------------------------------- */
@@ -3204,9 +3169,6 @@ int msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion)
 {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
-
-#ifdef USE_OGR
-
 
   char szTmp[500];
   int i = 0;
@@ -3251,16 +3213,6 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion)
   }
 
   return pszSLD;
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msSLDGenerateSLD()");
-  return NULL;
-
-#endif /* USE_OGR */
 
 #else
   msSetError(MS_MISCERR, "OWS support is not available.",
@@ -4134,7 +4086,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 #endif
 }
 
-#if (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)) && defined(USE_OGR)
+#if (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR))
 
 static void msSLDAppendName(msStringBuffer* sb, const char* pszName, int nVersion)
 {
@@ -4315,7 +4267,6 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
 {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
-#ifdef USE_OGR
   const char *pszWMSLayerName = NULL;
   msStringBuffer* sb = msStringBufferAlloc();
 
@@ -4371,30 +4322,12 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
   }
   return msStringBufferReleaseStringAndFree(sb);
 
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msSLDGenerateSLDLayer()");
-  return NULL;
-
-#endif /* USE_OGR */
-
-
 #else
   msSetError(MS_MISCERR, "OWS support is not available.",
              "msSLDGenerateSLDLayer()");
   return NULL;
 #endif
 }
-
-#ifdef USE_OGR
-
-
-
 
 
 char *msSLDGetComparisonValue(char *pszExpression)
@@ -5264,5 +5197,3 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
   }
   return pszFilter;
 }
-
-#endif

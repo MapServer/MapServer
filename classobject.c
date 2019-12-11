@@ -31,12 +31,6 @@
 
 #include "mapserver.h"
 
-#ifdef USE_GDAL
-#  include "gdal.h"
-#  include "cpl_conv.h"
-#endif
-
-
 
 /*
 ** Add a label to a classObj (order doesn't matter for labels like it does with styles)

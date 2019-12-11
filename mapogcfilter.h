@@ -31,8 +31,6 @@
 
 #include "mapserver.h"
 
-#ifdef USE_OGR
-
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
@@ -150,8 +148,5 @@ int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
 #ifdef __cplusplus
 }
 #endif
-
-#endif
-
 
 #endif

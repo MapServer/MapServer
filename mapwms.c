@@ -57,12 +57,6 @@
  * ================================================================== */
 #ifdef USE_WMS_SVR
 
-#ifdef USE_OGR
-int ogrEnabled = 1;
-#else
-int ogrEnabled = 0;
-#endif /* USE_OGR */
-
 /*
 ** msWMSException()
 **
@@ -1011,10 +1005,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if (sldenabled == NULL)
         sldenabled = "true";
 
-      if (ogrEnabled == 0) {
-        msSetError(MS_WMSERR, "OGR support is not available.", "msWMSLoadGetMapParams()");
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
-      } else {
         if (strcasecmp(sldenabled, "true") == 0) {
           if (strcasecmp(names[i], "SLD") == 0) {
             sld_url =  values[i];
@@ -1023,7 +1013,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
             sld_body =  values[i];
           }
         }
-      }
     }
   }
 
@@ -4664,7 +4653,7 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
         pszFormat = values[i];
       else if (strcasecmp(names[i], "SCALE") == 0)
         psScale = values[i];
-#ifdef USE_OGR
+
       /* -------------------------------------------------------------------- */
       /*      SLD support :                                                   */
       /*        - check if the SLD parameter is there. it is supposed to      */
@@ -4682,7 +4671,7 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
         psRule = values[i];
       else if (strcasecmp(names[i], "STYLE") == 0)
         pszStyle = values[i];
-#endif
+
       /* -------------------------------------------------------------------- */
       /*      SLD support:                                                    */
       /*        - because the request parameter "sld_version" is required in  */
