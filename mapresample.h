@@ -33,10 +33,8 @@
 #include "mapserver.h"
 #include "mapproject.h"
 
-#ifdef USE_GDAL
-#  include <gdal.h>
-#  include <cpl_string.h>
-#endif
+#include <gdal.h>
+#include <cpl_string.h>
 
 typedef int (*SimpleTransformer)( void *pCBData, int nPoints,
                                   double *x, double *y, int *panSuccess );
@@ -48,9 +46,9 @@ void *msInitProjTransformer( projectionObj *psSrc,
 void msFreeProjTransformer( void * );
 int msProjTransformer( void *pCBData, int nPoints,
                        double *x, double *y, int *panSuccess );
-#ifdef USE_GDAL
+
 int msResampleGDALToMap( mapObj *map, layerObj *layer,
                          imageObj *image, rasterBufferObj *rb,
                          GDALDatasetH hDS );
-#endif
+
 #endif /* ndef RESAMPLE_H */

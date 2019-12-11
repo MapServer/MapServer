@@ -56,7 +56,6 @@
 int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args)
 {
 
-#ifdef USE_PROJ
   int i;
 
   MS_COPYSTELEM(numargs);
@@ -75,7 +74,6 @@ int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** arg
     if (msProcessProjection(dst) != MS_SUCCESS)
       return MS_FAILURE;
   }
-#endif
   MS_COPYSTELEM(wellknownprojection);
   return MS_SUCCESS;
 }

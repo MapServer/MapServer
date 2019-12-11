@@ -62,11 +62,8 @@ shapeObj *msShapeFromWKT(const char *string)
 {
 #ifdef USE_GEOS
   return msGEOSShapeFromWKT(string);
-#elif defined(USE_OGR)
-  return msOGRShapeFromWKT(string);
 #else
-  msSetError(MS_MISCERR, "WKT support is not available, please compile MapServer with GEOS or OGR support.", "msShapeFromWKT()");
-  return NULL;
+  return msOGRShapeFromWKT(string);
 #endif
 }
 
@@ -79,11 +76,8 @@ char *msShapeToWKT(shapeObj *shape)
   pszStr = (pszGEOSStr) ? msStrdup(pszGEOSStr) : NULL;
   msGEOSFreeWKT(pszGEOSStr);
   return pszStr;
-#elif defined(USE_OGR)
-  return msOGRShapeToWKT(shape);
 #else
-  msSetError(MS_MISCERR, "WKT support is not available, please compile MapServer with GEOS or OGR support.", "msShapeToWKT()");
-  return NULL;
+  return msOGRShapeToWKT(shape);
 #endif
 }
 

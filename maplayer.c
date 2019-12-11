@@ -1594,7 +1594,6 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
   msInitShape(&searchshape);
   msRectToPolygon(searchrect, &searchshape);
 
-#ifdef USE_PROJ
   if( rectProjection != NULL ) 
   {
     if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
@@ -1602,7 +1601,6 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
     else
       layer->project = MS_FALSE;
   }
-#endif
 
   status = msLayerWhichShapes(layer, searchrect, MS_TRUE) ;
   if( status == MS_FAILURE )
@@ -1621,7 +1619,6 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
   {
     if( rectProjection != NULL ) 
     {
-#ifdef USE_PROJ
       if(layer->project && msProjectionsDiffer(&(layer->projection), rectProjection))
       {
         if( reprojector == NULL )
@@ -1631,7 +1628,6 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
       }
       else
         layer->project = MS_FALSE;
-#endif
 
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */
         status = MS_TRUE;
@@ -1681,12 +1677,7 @@ int
 msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                  int iLayerIndex)
 {
-#ifdef USE_OGR
   return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex);
-
-#else
-  return MS_FAILURE;
-#endif
 }
 
 int msLayerSupportsPaging(layerObj *layer)
@@ -1764,11 +1755,7 @@ char* msLayerBuildSQLOrderBy(layerObj *layer)
 int
 msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex)
 {
-#ifdef USE_OGR
   return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
-#else
-  return MS_FAILURE;
-#endif
 }
 
 int msLayerGetPaging(layerObj *layer)

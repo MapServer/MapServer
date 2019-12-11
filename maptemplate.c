@@ -3655,10 +3655,8 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   struct hashObj *tp=NULL;
   char *encodedstr;
 
-#ifdef USE_PROJ
   rectObj llextent;
   pointObj llpoint;
-#endif
 
   outstr = msStrdup(instr); /* work from a copy */
 
@@ -3907,7 +3905,6 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   if(processExtentTag(mapserv, &outstr, "rawext_esc", &(mapserv->RawExt), &(mapserv->map->projection)) != MS_SUCCESS) /* depricated */
     return(NULL);
 
-#ifdef USE_PROJ
   if((strstr(outstr, "lat]") || strstr(outstr, "lon]") || strstr(outstr, "lon_esc]"))
       && mapserv->map->projection.proj != NULL
       && !msProjIsGeographicCRS(&(mapserv->map->projection)) ) {
@@ -3935,7 +3932,6 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     if(processExtentTag(mapserv, &outstr, "mapext_latlon_esc", &(llextent), NULL) != MS_SUCCESS) /* depricated */
       return(NULL);
   }
-#endif
 
   /* submitted by J.F (bug 1102) */
   if(mapserv->map->reference.status == MS_ON) {

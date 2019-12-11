@@ -26,16 +26,12 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
-#ifdef USE_OGR
 #include "cpl_minixml.h"
-#endif
 
 #include "mapogcfilter.h"
 #include "mapserver.h"
 #include "mapows.h"
 #include "mapowscommon.h"
-
-#ifdef USE_OGR
 
 char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 {
@@ -801,5 +797,3 @@ int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, 
 
   return retval;
 }
-
-#endif

@@ -1439,7 +1439,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
     if(lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
-#ifdef USE_PROJ
       reprojectionObj* reprojector = NULL;
 
       /* Determine output SRS, if map has none, then try using layer's native SRS */
@@ -1450,7 +1449,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
           continue;  /* No EPSG code, cannot output this layer */
         }
       }
-#endif
 
       /* start this collection (layer) */
       /* if no layer name provided fall back on the layer name + "_layer" */
@@ -1484,7 +1482,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         return MS_FAILURE;
       }
 
-#ifdef USE_PROJ
       if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
         reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
         if( reprojector == NULL ) {
@@ -1495,7 +1492,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
            return MS_FAILURE;
         }
       }
-#endif
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
@@ -1504,13 +1500,10 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
            msGMLFreeConstants(constantList);
            msGMLFreeItems(itemList);
            msGMLFreeGeometries(geometryList);
-#ifdef USE_PROJ
            msProjectDestroyReprojector(reprojector);
-#endif
            return(status);
         }
 
-#ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
         if(reprojector) {
           status = msProjectShapeEx(reprojector, &shape);
@@ -1520,7 +1513,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
             continue;
           }
         }
-#endif
 
         /* start this feature */
         /* specify a feature name, if nothing provided fall back on the layer name + "_feature" */
@@ -1566,9 +1558,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         msFreeShape(&shape); /* init too */
       }
 
-#ifdef USE_PROJ
       msProjectDestroyReprojector(reprojector);
-#endif
 
       /* end this collection (layer) */
       /* if no layer name provided fall back on the layer name + "_layer" */
@@ -1695,9 +1685,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       int bOutputGMLIdOnly = MS_FALSE;
       int nSRSDimension = 2;
       const char* geomtype;
-#ifdef USE_PROJ
       reprojectionObj* reprojector = NULL;
-#endif
 
       /* setup namespace, a layer can override the default */
       namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
@@ -1753,7 +1741,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         layerName = msStrdup(lp->name);
       }
 
-#ifdef USE_PROJ
       if( bUseURN )
       {
           srs = msOWSGetProjURN(&(map->projection), NULL, "FGO", MS_TRUE);
@@ -1782,7 +1769,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
            return MS_FAILURE;
         }
       }
-#endif
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         char* pszFID;
@@ -1801,18 +1787,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
                 msGMLFreeItems(itemList);
                 msGMLFreeGeometries(geometryList);
                 msFree(layerName);
-#ifdef USE_PROJ
                 msProjectDestroyReprojector(reprojector);
-#endif
                 return(status);
             }
         }
 
-#ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
         if(reprojector)
           msProjectShapeEx(reprojector, &shape);
-#endif
 
         if(featureIdIndex != -1) {
             pszFID = (char*) msSmallMalloc( strlen(lp->name) + 1 + strlen(shape.values[featureIdIndex]) + 1 );
@@ -1899,9 +1881,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         msFreeShape(&shape); /* init too */
       }
 
-#ifdef USE_PROJ
       msProjectDestroyReprojector(reprojector);
-#endif
 
       msFree(srs);
 
