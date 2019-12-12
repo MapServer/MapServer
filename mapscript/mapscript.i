@@ -197,7 +197,7 @@ typedef struct {
 ============================================================================
 */
 
-#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIGRUBY)
+#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIGRUBY) || defined(SWIGPHP7)
 %include "../mserror.i"
 #endif
 
