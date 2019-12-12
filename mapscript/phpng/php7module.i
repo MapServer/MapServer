@@ -11,3 +11,20 @@
     if( $1.owns_data )
        msFree($1.data);
 }
+
+
+/* Module initialization: call msSetup() and register msCleanup() */
+%init %{
+    if (msSetup() != MS_SUCCESS)
+    {
+        msSetError(MS_MISCERR, "Failed to set up threads and font cache",
+                   "msSetup()");
+    }
+
+%}
+
+%mshutdown {
+    msCleanup();
+}
+
+
