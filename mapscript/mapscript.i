@@ -30,6 +30,12 @@
 ============================================================================
 */
 
+%begin %{
+#ifdef _MSC_VER
+#define SWIG_PYTHON_INTERPRETER_NO_DEBUG
+#endif
+%}
+
 #ifndef SWIGPHPNG
 %module mapscript
 #else
@@ -191,7 +197,7 @@ typedef struct {
 ============================================================================
 */
 
-#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIGRUBY)
+#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIGRUBY) || defined(SWIGPHP7)
 %include "../mserror.i"
 #endif
 
