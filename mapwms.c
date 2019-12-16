@@ -994,7 +994,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   epsgbuf[0]='\0';
   srsbuffer[0]='\0';
 
-
   /* Some of the getMap parameters are actually required depending on the */
   /* request, but for now we assume all are optional and the map file */
   /* defaults will apply. */
@@ -1034,9 +1033,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     if (strcasecmp(names[i], "REQUEST") == 0) {
       request = values[i];
     }
-
-
-
 
     if (strcasecmp(names[i], "LAYERS") == 0) {
       int  j, k, iLayer, *layerOrder;
@@ -1153,7 +1149,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
            used with msLoadProjection and that does alreay the job */
         /* snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5); */
 
-
         snprintf(srsbuffer, sizeof(srsbuffer), "EPSG:%.20s",values[i]+5);
         snprintf(epsgbuf, sizeof(epsgbuf), "EPSG:%.20s",values[i]+5);
 
@@ -1164,7 +1159,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
             srsbuffer[strlen(srsbuffer)-1] = '\0';
           if (epsgbuf[strlen(epsgbuf)-1] == ',')
             epsgbuf[strlen(epsgbuf)-1] = '\0';
-
         }
 
         /* we need to wait until all params are read before */
@@ -1650,28 +1644,11 @@ this request. Check wms/ows_enable_request settings.",
     }
   }
 
-  /*
-  ** Apply vendor-specific filter if specified
-  */
-  if (filter) {
-    if (sld_url || sld_body) {
-      msSetError(MS_WMSERR,
-                 "Vendor-specific FILTER parameter cannot be used with SLD or SLD_BODY.",
-                 "msWMSLoadGetMapParams()");
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
-    }
-
-    if (msWMSApplyFilter(map, nVersion, filter, need_axis_swap, wms_exception_format) == MS_FAILURE) {
-      return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidFilterRequest"); */
-    }
-  }
-
   if (sld_url || sld_body) {
     int nLayersBefore, nLayerAfter;
     char request_tmp[32];
     char *pszLayerNames = NULL;
     nLayersBefore = map->numlayers;
-
 
     /* -------------------------------------------------------------------- */
     /*      if LAYERS parameter was not given, set all layers to off        */
@@ -1682,7 +1659,6 @@ this request. Check wms/ows_enable_request settings.",
           GET_LAYER(map, j)->status = MS_OFF;
       }
     }
-
 
     /*apply sld if defined. This is done here so that bbox and srs are already applied*/
     if (sld_url) {
@@ -1734,6 +1710,7 @@ this request. Check wms/ows_enable_request settings.",
     msFree(pszLayerNames);
 
   }
+
   /* Validate Styles :
   ** MapServer advertize styles through th group setting in a class object.
   ** If no styles are set MapServer expects to have empty values
@@ -1907,6 +1884,22 @@ this request. Check wms/ows_enable_request settings.",
       return msWMSException(map, nVersion, "MissingParameterValue", wms_exception_format);
     }
 
+  }
+
+  /*
+  ** Apply vendor-specific filter if specified
+  */
+  if (filter) {
+    if (sld_url || sld_body) {
+      msSetError(MS_WMSERR,
+                 "Vendor-specific FILTER parameter cannot be used with SLD or SLD_BODY.",
+                 "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+    }
+
+    if (msWMSApplyFilter(map, nVersion, filter, need_axis_swap, wms_exception_format) == MS_FAILURE) {
+      return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidFilterRequest"); */
+    }
   }
 
   return MS_SUCCESS;
