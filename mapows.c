@@ -50,7 +50,7 @@
 ** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets
 ** all internal pointers to NULL.
 */
-static void msOWSInitRequestObj(owsRequestObj *ows_request)
+void msOWSInitRequestObj(owsRequestObj *ows_request)
 {
   ows_request->numlayers = 0;
   ows_request->numwmslayerargs = 0;
@@ -67,7 +67,7 @@ static void msOWSInitRequestObj(owsRequestObj *ows_request)
 ** msOWSClearRequestObj() releases all resources associated with an
 ** owsRequestObj.
 */
-static void msOWSClearRequestObj(owsRequestObj *ows_request)
+void msOWSClearRequestObj(owsRequestObj *ows_request)
 {
   msFree(ows_request->enabled_layers);
   msFree(ows_request->layerwmsfilterindex);

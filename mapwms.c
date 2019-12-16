@@ -956,7 +956,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   outputFormatObj *format = NULL;
   int validlayers = 0;
   char *styles = NULL;
-  int numwmslayerarg = 0;
+  int numwmslayerargs = 0;
   char **layers = NULL;
   int layerfound = MS_FALSE;
   int invalidlayers = 0;
@@ -1030,11 +1030,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       layerOrder = (int*)malloc(map->numlayers * sizeof(int));
       MS_CHECK_ALLOC(layerOrder, map->numlayers * sizeof(int), MS_FAILURE)
 
-      layers = msStringSplit(values[i], ',', &numwmslayerarg);
-      if (layers==NULL || strlen(values[i]) <=0 ||   numwmslayerarg < 1) {
-        numwmslayerarg = 0;
+      layers = msStringSplit(values[i], ',', &numwmslayerargs);
+      if (layers==NULL || strlen(values[i]) <=0 ||   numwmslayerargs < 1) {
+        numwmslayerargs = 0;
         if (sld_url == NULL &&   sld_body == NULL) {
-          msFreeCharArray(layers,numwmslayerarg);
+          msFreeCharArray(layers,numwmslayerargs);
           msFree(layerOrder);
           msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                      "msWMSLoadGetMapParams()");
@@ -1045,8 +1045,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if (nVersion >= OWS_1_3_0) {
         layerlimit = msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
         if(layerlimit) {
-          if (numwmslayerarg > atoi(layerlimit)) {
-            msFreeCharArray(layers,numwmslayerarg);
+          if (numwmslayerargs > atoi(layerlimit)) {
+            msFreeCharArray(layers,numwmslayerargs);
             msFree(layerOrder);
             msSetError(MS_WMSERR, "Number of layers requested exceeds LayerLimit.",
                        "msWMSLoadGetMapParams()");
@@ -1082,9 +1082,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       for(j=0; j<map->numlayers; j++) {
         ows_request->layerwmsfilterindex[j] = -1;
       }
-      ows_request->numwmslayerargs = numwmslayerarg;
+      ows_request->numwmslayerargs = numwmslayerargs;
 
-      for (k=0; k<numwmslayerarg; k++) {
+      for (k=0; k<numwmslayerargs; k++) {
         layerfound = MS_FALSE;
         for (j=0; j<map->numlayers; j++) {
           /* Turn on selected layers only. */
@@ -1106,7 +1106,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
             layerfound = MS_TRUE;
           }
         }
-        if (layerfound == MS_FALSE && numwmslayerarg>0)
+        if (layerfound == MS_FALSE && numwmslayerargs>0)
           invalidlayers++;
 
       }
@@ -1129,7 +1129,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
 
       free(layerOrder);
-      msFreeCharArray(layers, numwmslayerarg);
+      msFreeCharArray(layers, numwmslayerargs);
     } else if (strcasecmp(names[i], "STYLES") == 0) {
       styles = values[i];
 
