@@ -2253,13 +2253,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
   }
   theclass = layer->class[classindex];
   
-  if(labeltext) {
-    if(theclass->numlabels > 0) {
-      label = theclass->labels[0];
-    } else {
-      msSetError(MS_MISCERR, "Label missing for layer: %s", "msDrawPoint()", layer->name);
-      return MS_FAILURE;
-    }
+  if(labeltext && theclass->numlabels > 0) {
+    label = theclass->labels[0];
   }
   
   switch(layer->type) {
@@ -2277,7 +2272,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return MS_FAILURE;
           }
       }
-      if(labeltext && *labeltext) {
+      if(label && labeltext && *labeltext) {
         textSymbolObj *ts = msSmallMalloc(sizeof(textSymbolObj));
         initTextSymbol(ts);
         msPopulateTextSymbolForLabelAndString(ts, label, msStrdup(labeltext), layer->scalefactor, image->resolutionfactor, layer->labelcache);
