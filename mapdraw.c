@@ -2240,16 +2240,28 @@ draw_shape_cleanup:
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext)
 {
   int s,ret;
-  classObj *theclass=layer->class[classindex];
+  classObj *theclass=NULL;
   labelObj *label=NULL;
 
-  if(layer->transform == MS_TRUE && layer->project)
-    msProjectPoint(&layer->projection, &map->projection, point);
-
-  if(labeltext && theclass->numlabels > 0) {
-    label = theclass->labels[0];
+  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+    msProjectPoint(&(layer->projection), &(map->projection), point);
   }
-
+  
+  if(classindex > layer->numclasses) {
+    msSetError(MS_MISCERR, "Invalid classindex (%d)", "msDrawPoint()", classindex);
+    return MS_FAILURE; 
+  }
+  theclass = layer->class[classindex];
+  
+  if(labeltext) {
+    if(theclass->numlabels > 0) {
+      label = theclass->labels[0];
+    } else {
+      msSetError(MS_MISCERR, "Label missing for layer: %s", "msDrawPoint()", layer->name);
+      return MS_FAILURE;
+    }
+  }
+  
   switch(layer->type) {
     case MS_LAYER_POINT:
       if(layer->transform == MS_TRUE) {
