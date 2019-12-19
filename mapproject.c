@@ -825,11 +825,14 @@ int msProcessProjection(projectionObj *p)
 
 #if PROJ_VERSION_MAJOR >= 6
   {
-      char szTemp[24];
       char** args = (char**)msSmallMalloc(sizeof(char*) * (p->numargs+1));
       memcpy(args, p->args, sizeof(char*) * p->numargs);
 
+#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR < 2
       /* PROJ lookups are faster with EPSG in uppercase. Fixed in PROJ 6.2 */
+      /* Do that only for those versions, as it can create confusion if using */
+      /* a real old-style 'epsg' file... */
+      char szTemp[24];
       if( p->numargs && strncmp(args[0], "init=epsg:", strlen("init=epsg:")) == 0 &&
           strlen(args[0]) < 24)
       {
@@ -837,6 +840,7 @@ int msProcessProjection(projectionObj *p)
           strcat(szTemp, args[0] + strlen("init=epsg:"));
           args[0] = szTemp;
       }
+#endif
 
       args[p->numargs] = (char*) "type=crs";
       if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, p->numargs + 1, args)) ) {
