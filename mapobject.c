@@ -759,8 +759,7 @@ int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
   int result, i = 0;
   owsRequestObj ows_request;
 
-  ows_request.numlayers = 0;
-  ows_request.enabled_layers = NULL;
+  msOWSInitRequestObj(&ows_request);
 
 
   version = msOWSParseVersionString(wmtver);
@@ -778,8 +777,7 @@ int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
                                  request->ParamValues, request->NumParams,  wms_exception_format,
                                  wms_request, &ows_request);
 
-  if (ows_request.numlayers > 0)
-    msFree(ows_request.enabled_layers);
+  msOWSClearRequestObj(&ows_request);
 
   return result;
 
