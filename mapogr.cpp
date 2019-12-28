@@ -67,6 +67,7 @@ typedef struct ms_ogr_file_info_t {
   const char* dialect; /* NULL, Spatialite or PostgreSQL */
   char *pszSelect;
   char *pszSpatialFilterTableName;
+  bool        bSkipFailures;            /* PROCESSING SKIP_FAILURES=YES/NO (skip feature when OGR returns error */
   char *pszSpatialFilterGeometryColumn;
   char *pszMainTableName;
   char *pszRowId;
@@ -1305,6 +1306,9 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
     // test for Spatialite support in driver
     const char *test_spatialite = "SELECT spatialite_version()";
+  
+  const char *skipFailures = msLayerGetProcessingKey( layer, "SKIP_FAILURES" );
+  psInfo->bSkipFailures = skipFailures && EQUAL(skipFailures, "yes");
     OGRLayerH l = OGR_DS_ExecuteSQL(hDS, test_spatialite, NULL, NULL);
     if (l) {
         OGR_DS_ReleaseResultSet(hDS, l);
@@ -2803,16 +2807,23 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
     if( hFeature )
       OGR_F_Destroy( hFeature );
 
-    if( (hFeature = OGR_L_GetNextFeature( psInfo->hLayer )) == NULL ) {
-      psInfo->last_record_index_read = -1;
+    while ((hFeature = OGR_L_GetNextFeature( psInfo->hLayer )) == NULL) 
+    {
       if( CPLGetLastErrorType() == CE_Failure ) {
-        msSetError(MS_OGRERR, "OGR GetNextFeature() error'd. Check logs.",
-                   "msOGRFileNextShape()");
-        msDebug("msOGRFileNextShape(): %s\n",
-                CPLGetLastErrorMsg() );
-        RELEASE_OGR_LOCK;
-        return MS_FAILURE;
+        if( psInfo->bSkipFailures ) {
+          msDebug("msOGRFileNextShape(): %s -> skip\n", CPLGetLastErrorMsg() );
+          CPLErrorReset();
+        } else {
+          psInfo->last_record_index_read = -1;
+          msSetError(MS_OGRERR, "OGR GetNextFeature() error'd. Check logs.",
+                     "msOGRFileNextShape()");
+          msDebug("msOGRFileNextShape(): %s\n",
+                  CPLGetLastErrorMsg() );
+          RELEASE_OGR_LOCK;
+          return MS_FAILURE;
+        }
       } else {
+        psInfo->last_record_index_read = -1;
         RELEASE_OGR_LOCK;
         if (layer->debug >= MS_DEBUGLEVEL_VV)
           msDebug("msOGRFileNextShape: Returning MS_DONE (no more shapes)\n" );
@@ -2929,9 +2940,13 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
         OGR_F_Destroy( hFeature );
         hFeature = NULL;
       }
-      if( (hFeature = OGR_L_GetNextFeature( psInfo->hLayer )) == NULL ) {
-        RELEASE_OGR_LOCK;
-        return MS_FAILURE;
+      while( (hFeature = OGR_L_GetNextFeature( psInfo->hLayer )) == NULL ) {
+        if( psInfo->bSkipFailures && (CPLGetLastErrorType() == CE_Failure) ) {
+          CPLErrorReset();
+        } else {
+          RELEASE_OGR_LOCK;
+          return MS_FAILURE;
+        }
       }
       psInfo->last_record_index_read++;
     }
