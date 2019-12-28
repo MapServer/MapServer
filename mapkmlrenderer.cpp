@@ -36,10 +36,8 @@
 #include "mapio.h"
 #include "mapows.h"
 
-#if defined(USE_OGR)
-#  include "cpl_conv.h"
-#  include "cpl_vsi.h"
-#endif
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
 
 #define  KML_MAXFEATURES_TODRAW 1000
 
@@ -129,28 +127,17 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
   xmlChar *buf = NULL;
   msIOContext *context = NULL;
   int chunkSize = 4096;
-#if defined(CPL_ZIP_API_OFFERED)
   int bZip = MS_FALSE;
-#endif
 
   if( msIO_needBinaryStdout() == MS_FAILURE )
     return MS_FAILURE;
 
   xmlDocDumpFormatMemoryEnc(XmlDoc, &buf, &bufSize, "UTF-8", 1);
 
-#if defined(USE_OGR)
   if (format && format->driver && strcasecmp(format->driver, "kmz") == 0) {
-#if defined(CPL_ZIP_API_OFFERED)
     bZip = MS_TRUE;
-#else
-    msSetError( MS_MISCERR, "kmz format support unavailable, perhaps you need to upgrade to GDAL/OGR 1.8?",
-                "KmlRenderer::saveImage()");
-    xmlFree(buf);
-    return MS_FAILURE;
-#endif
   }
 
-#if defined(CPL_ZIP_API_OFFERED)
   if (bZip) {
     VSILFILE *fpZip;
     int bytes_read;
@@ -184,9 +171,6 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format)
     xmlFree(buf);
     return(MS_SUCCESS);
   }
-#endif
-
-#endif
 
   context = msIO_getHandler(fp);
 
@@ -522,7 +506,6 @@ void KmlRenderer::setupRenderingParams(hashTableObj *layerMetadata)
 int KmlRenderer::checkProjection(mapObj *map)
 {
   projectionObj *projection= &map->projection;
-#ifdef USE_PROJ
   if (projection && projection->numargs > 0 && msProjIsGeographicCRS(projection)) {
     return MS_SUCCESS;
   } else {
@@ -567,11 +550,6 @@ int KmlRenderer::checkProjection(mapObj *map)
 
     return MS_SUCCESS;
   }
-
-#else
-  msSetError(MS_MISCERR, "Projection support not enabled", "KmlRenderer::checkProjection" );
-  return MS_FAILURE;
-#endif
 }
 
 xmlNodePtr KmlRenderer::createPlacemarkNode(xmlNodePtr parentNode, char *styleUrl)

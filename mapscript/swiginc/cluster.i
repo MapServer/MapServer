@@ -1,12 +1,10 @@
 /* ===========================================================================
-   $Id$
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript clusterObj extensions
    Author:   Tamas Szekeres
-
+             Seth Girvin
    ===========================================================================
-   Copyright (c) 1996-2007 Regents of the University of Minnesota.
+   Copyright (c) 1996-2019 Regents of the University of Minnesota.
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -30,17 +28,25 @@
 
 %extend clusterObj
 {
+
+  %feature("docstring") updateFromString 
+  "Update a cluster from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int updateFromString(char *snippet)
   {
     return msUpdateClusterFromString(self, snippet);
   }
-  
+
+  %feature("docstring") convertToString 
+  "Output the CLUSTER as a Mapfile string"
   %newobject convertToString;
   char* convertToString()
   {
     return msWriteClusterToString(self);
   }
-  
+
+  %feature("docstring") setGroup 
+  "Set :mapfile:`GROUP <cluster.html#index-5>` string where `group` is a MapServer text expression.
+Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int setGroup(char *group) 
   {
     if (!group || strlen(group) == 0) {
@@ -50,19 +56,26 @@
     else return msLoadExpressionString(&self->group, group);
   }
 
+  %feature("docstring") getGroupString 
+  "Return a string representation of :mapfile:`GROUP <cluster.html#index-5>`";
   %newobject getGroupString;
   char *getGroupString() {
     return msGetExpressionString(&(self->group));
   }
 
+  %feature("docstring") setFilter 
+  "Set :mapfile:`FILTER <cluster.html#index-6>` string where `filter` is a MapServer text expression.
+Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int setFilter(char *filter) {
     if (!filter || strlen(filter) == 0) {
       msFreeExpression(&self->filter);
       return MS_SUCCESS;
-    }	
+    }
     else return msLoadExpressionString(&self->filter, filter);
   }
 
+  %feature("docstring") getFilterString 
+  "Return a string representation of :mapfile:`FILTER <cluster.html#index-6>`";
   %newobject getFilterString;
   char *getFilterString() {
     return msGetExpressionString(&(self->filter));

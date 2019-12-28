@@ -29,7 +29,6 @@
 #ifndef MAPRASTER_H
 #define MAPRASTER_H
 
-#if defined(USE_GDAL)
 
   int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
                                  rectObj* psearchrect,
@@ -64,6 +63,5 @@
                                  const char* filename,
                                  int tilesrsindex,
                                  const char* tilesrsname);
-#endif
 
 #endif /* MAPRASTER_H */

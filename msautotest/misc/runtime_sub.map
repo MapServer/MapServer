@@ -8,6 +8,7 @@
 # RUN_PARMS: runtime_sub_test004.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer3&name3=bdry_counpy2" > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test005.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer3&name3=bad+value" > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
 # RUN_PARMS: runtime_sub_test008.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer5" > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test008.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer5b" > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test009.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer6&eppl=40" > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test010.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer7&eppl=40" > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test011.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer8&eppl2=40" > [RESULT_DEMIME]
@@ -99,7 +100,22 @@ MAP
       STYLE OUTLINECOLOR 51 51 51 END
     END
   END
-  
+
+  # default value - case-insensitive
+  LAYER
+    NAME 'layer5b'
+    STATUS OFF
+    DATA '../query/data/%name5%'
+    TYPE POLYGON
+    VALIDATION
+      'DEFAULT_NAME5' 'indx_q100kpy4'
+      'name5' 'bdry_counpy2|indx_q100kpy4'
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+
   #class sub from class validation
   LAYER
     NAME 'layer6'

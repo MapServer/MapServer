@@ -141,10 +141,8 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include "mapregex.h"
 
 
-#ifdef USE_OGR
 #define CPL_SUPRESS_CPLUSPLUS
 #include "ogr_api.h"
-#endif
 
 
 /* EQUAL and EQUALN are defined in cpl_port.h, so add them in here if ogr was not included */
@@ -962,6 +960,7 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int refcount;
+    char *symbolname;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -989,8 +988,6 @@ extern "C" {
     int rangeitemindex;
 
     int symbol;
-    char *symbolname;
-
     double size;
     double minsize, maxsize;
 
@@ -1195,6 +1192,7 @@ typedef struct labelObj labelObj;
     %immutable;
 #endif
     int numstyles;
+    int numlabels;
 #ifdef SWIG
     %mutable;
 #endif
@@ -1203,10 +1201,8 @@ typedef struct labelObj labelObj;
     labelObj **labels;
     int maxlabels;
 #endif
-    int numlabels; /* should be immutable */
-
     char *name; /* should be unique within a layer */
-    char *title; /* used for legend labeling */
+    char *title; /* used for legend labelling */
 
 #ifndef SWIG
     expressionObj text;
@@ -1234,6 +1230,7 @@ typedef struct labelObj labelObj;
 #endif /* SWIG */
     int refcount;
     struct layerObj *layer;
+    labelLeaderObj *leader;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1242,7 +1239,6 @@ typedef struct labelObj labelObj;
     char *keyimage;
 
     char *group;
-    labelLeaderObj *leader;
   };
 
   /************************************************************************/
@@ -2514,10 +2510,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
   int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 
-#ifdef USE_OGR
   MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                                          OGRwkbGeometryType type);
-#endif /* USE_OGR */
 
   MS_DLL_EXPORT int msInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msConnectLayer(layerObj *layer, const int connectiontype,
@@ -2804,10 +2798,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   MS_DLL_EXPORT int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filename );
   MS_DLL_EXPORT int msInitDefaultGDALOutputFormat( outputFormatObj *format );
-#ifdef USE_GDAL
   void msCleanVSIDir( const char *pszDir );
   char** msGetStringListFromHashTable(hashTableObj* table);
-#endif
 
   /* ==================================================================== */
   /*      prototypes for functions in mapogroutput.c                      */

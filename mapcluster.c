@@ -1071,10 +1071,8 @@ int RebuildClusters(layerObj *layer, int isQuery)
   layerinfo->searchRect = searchrect;
 
   /* reproject the rectangle to layer coordinates */
-#ifdef USE_PROJ
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
   /* determine the compare method */
   layerinfo->fnCompare = CompareRectangleRegion;
@@ -1134,7 +1132,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
   if ((current = clusterInfoCreate(layerinfo)) == NULL)
     return MS_FAILURE;
 
-#if defined(USE_PROJ) && defined(USE_CLUSTER_EXTERNAL)
+#if defined(USE_CLUSTER_EXTERNAL)
     if(srcLayer->transform == MS_TRUE && srcLayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srcLayer->projection), &(layer->projection)))
     {
         reprojector = msProjectCreateReprojector(&srcLayer->projection, &layer->projection);
@@ -1142,7 +1140,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
 #endif
   
   while((status = msLayerNextShape(srcLayer, &current->shape)) == MS_SUCCESS) {
-#if defined(USE_PROJ) && defined(USE_CLUSTER_EXTERNAL)
+#if defined(USE_CLUSTER_EXTERNAL)
     /* transform the shape to the projection of this layer */
     if( reprojector )
       msProjectShapeEx(reprojector, &current->shape);

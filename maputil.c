@@ -39,9 +39,7 @@
 #include "mapcopy.h"
 #include "mapows.h"
 
-#if defined(USE_OGR) || defined(USE_GDAL)
 #include "gdal.h"
-#endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
@@ -940,7 +938,6 @@ int msSaveImage(mapObj *map, imageObj *img, const char *filename)
   }
 
   if (img) {
-#ifdef USE_GDAL
     if( MS_DRIVER_GDAL(img->format) ) {
       if (map != NULL && filename != NULL )
         nReturnVal = msSaveImageGDAL(map, img,
@@ -949,7 +946,6 @@ int msSaveImage(mapObj *map, imageObj *img, const char *filename)
       else
         nReturnVal = msSaveImageGDAL(map, img, filename);
     } else
-#endif
 
       if (MS_RENDERER_PLUGIN(img->format)) {
         rendererVTableObj *renderer = img->format->vtable;
@@ -2053,15 +2049,10 @@ void msCleanup()
   }
   msyylex_destroy();
 
-#ifdef USE_OGR
   msOGRCleanup();
-#endif
-#ifdef USE_GDAL
   msGDALCleanup();
-#endif
 
   /* Release both GDAL and OGR resources */
-#if defined(USE_OGR) || defined(USE_GDAL)
   msAcquireLock( TLOCK_GDAL );
 #if GDAL_VERSION_MAJOR >= 3 || (GDAL_VERSION_MAJOR == 2 && GDAL_VERSION_MINOR == 4)
   /* Cleanup some GDAL global resources in particular */
@@ -2070,9 +2061,8 @@ void msCleanup()
   GDALDestroyDriverManager();
 #endif
   msReleaseLock( TLOCK_GDAL );
-#endif
 
-#ifdef USE_PROJ
+
 #if PROJ_VERSION_MAJOR < 6
 #  if PJ_VERSION >= 480
   pj_clear_initcache();
@@ -2081,7 +2071,7 @@ void msCleanup()
 #endif
   msSetPROJ_LIB( NULL, NULL );
   msProjectionContextPoolCleanup();
-#endif
+
 #if defined(USE_CURL)
   msHTTPCleanup();
 #endif
@@ -2370,16 +2360,12 @@ void msFreeRasterBuffer(rasterBufferObj *b)
 */
 int msExtentsOverlap(mapObj *map, layerObj *layer)
 {
-#ifdef USE_PROJ
   rectObj map_extent;
   rectObj layer_extent;
-#endif
 
   /* No extent info? Nothing we can do, return MS_UNKNOWN. */
   if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;
   if( (layer->extent.minx == -1) && (layer->extent.miny == -1) && (layer->extent.maxx == -1 ) && (layer->extent.maxy == -1) ) return MS_UNKNOWN;
-
-#ifdef USE_PROJ
 
   /* No map projection? Let someone else sort this out. */
   if( ! (map->projection.numargs > 0) )
@@ -2418,13 +2404,6 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
   /* Uh oh, one of the rects crosses the dateline!
   ** Let someone else handle it. */
   return MS_UNKNOWN;
-
-#else
-  /* No proj? Naive comparison. */
-  if( msRectOverlap( &(map->extent), &(layer->extent) ) ) return MS_TRUE;
-  return MS_FALSE;
-#endif
-
 }
 
 /************************************************************************/

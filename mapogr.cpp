@@ -36,18 +36,13 @@
 #include <string>
 #include <vector>
 
-#if defined(USE_OGR) || defined(USE_GDAL)
-#  include "gdal_version.h"
-#  include "gdal.h"
-#  include "cpl_conv.h"
-#  include "cpl_string.h"
-#  include "ogr_srs_api.h"
-#endif
+#include "gdal.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 #define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
 #define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
-
-#ifdef USE_OGR
 
 // GDAL 1.x API
 #include "ogr_api.h"
@@ -319,7 +314,6 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
       return(-1);
     }
 
-#if GDAL_VERSION_NUM >= 1900
     OGR_G_GetPoints(hGeom,
                     &(line.point[0].x), sizeof(pointObj),
                     &(line.point[0].y), sizeof(pointObj),
@@ -328,16 +322,10 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
 #else
                     NULL, 0);
 #endif
-#endif
 
     for(j=0; j<numpoints; j++) {
-#if GDAL_VERSION_NUM < 1900
       dX = line.point[j].x = OGR_G_GetX( hGeom, j);
       dY = line.point[j].y = OGR_G_GetY( hGeom, j);
-#else
-      dX = line.point[j].x;
-      dY = line.point[j].y;
-#endif
 
       /* Keep track of shape bounds */
       if (j == 0 && outshp->numlines == 0) {
@@ -864,7 +852,6 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
           msDebug(MSOGR_LABELHCOLORNAME " = \"%s\"\n", values[i]);
       }
-#if GDAL_VERSION_NUM >= 1600
       else if (itemindexes[i] == MSOGR_LABELOCOLORINDEX) {
         if (hLabelStyle == NULL
             || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
@@ -877,7 +864,6 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
           msDebug(MSOGR_LABELOCOLORNAME " = \"%s\"\n", values[i]);
       }
-#endif /* GDAL_VERSION_NUM >= 1600 */
       else if (itemindexes[i] >= MSOGR_LABELPARAMINDEX) {
         if (hLabelStyle == NULL
             || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
@@ -950,10 +936,6 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
   return(values);
 }
 
-#endif  /* USE_OGR */
-
-#if defined(USE_OGR) || defined(USE_GDAL)
-
 /**********************************************************************
  *                     msOGRSpatialRef2ProjectionObj()
  *
@@ -965,7 +947,6 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
     projectionObj *proj, int debug_flag )
 {
-#ifdef USE_PROJ
   // First flush the "auto" name from the projargs[]...
   msFreeProjectionExceptContext( proj );
 
@@ -1013,11 +994,9 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
     return MS_FAILURE;
 
   CPLFree(pszProj);
-#endif
 
   return MS_SUCCESS;
 }
-#endif // defined(USE_OGR) || defined(USE_GDAL)
 
 /**********************************************************************
  *                     msOGCWKT2ProjectionObj()
@@ -1033,8 +1012,6 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
                             int debug_flag )
 
 {
-#if defined(USE_OGR) || defined(USE_GDAL)
-
   OGRSpatialReferenceH        hSRS;
   char      *pszAltWKT = (char *) pszWKT;
   OGRErr  eErr;
@@ -1062,12 +1039,6 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
 
   OSRDestroySpatialReference( hSRS );
   return ms_result;
-#else
-  msSetError(MS_OGRERR,
-             "Not implemented since neither OGR nor GDAL is enabled.",
-             "msOGCWKT2ProjectionObj()");
-  return MS_FAILURE;
-#endif
 }
 
 /**********************************************************************
@@ -1076,14 +1047,11 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
  * Open an OGR connection, and initialize a msOGRFileInfo.
  **********************************************************************/
 
-#ifdef USE_OGR
 static int bOGRDriversRegistered = MS_FALSE;
-#endif
 
 void msOGRInitialize(void)
 
 {
-#ifdef USE_OGR
   /* ------------------------------------------------------------------
    * Register OGR Drivers, only once per execution
    * ------------------------------------------------------------------ */
@@ -1104,7 +1072,6 @@ void msOGRInitialize(void)
 
     RELEASE_OGR_LOCK;
   }
-#endif /* USE_OGR */
 }
 
 /* ==================================================================
@@ -1112,8 +1079,6 @@ void msOGRInitialize(void)
  * maplayer.c, but are intended to be used for the tileindex or direct
  * layer access.
  * ================================================================== */
-
-#ifdef USE_OGR
 
 static void msOGRFileOpenSpatialite( layerObj *layer, 
                                      const char *pszLayerDef,
@@ -1273,11 +1238,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   for( iLayer = 0; hLayer == NULL && iLayer < OGR_DS_GetLayerCount(hDS); iLayer++ ) {
     hLayer = OGR_DS_GetLayer( hDS, iLayer );
     if( hLayer != NULL
-#if GDAL_VERSION_NUM >= 1800
         && EQUAL(OGR_L_GetName(hLayer),pszLayerDef) )
-#else
-        && EQUAL(OGR_FD_GetName( OGR_L_GetLayerDefn(hLayer) ),pszLayerDef) )
-#endif
     {
       nLayerIndex = iLayer;
       break;
@@ -1755,14 +1716,12 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 
   return MS_SUCCESS;
 }
-#endif /* USE_OGR */
 
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
 /************************************************************************/
 static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 {
-#ifdef USE_OGR
   char* pszEscapedStr =NULL;
   if(layer && pszString) {
     char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
@@ -1771,19 +1730,7 @@ static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
     CPLFree(pszEscapedOGRStr);
   }
   return pszEscapedStr;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGREscapeSQLParam()");
-  return NULL;
-
-#endif /* USE_OGR */
 }
-
-#ifdef USE_OGR
 
 // http://www.sqlite.org/lang_expr.html
 // http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html
@@ -3160,12 +3107,10 @@ NextFile:
   if( psInfo->rect.minx != 0 || psInfo->rect.maxx != 0 ) {
     rectObj rect = psInfo->rect;
 
-#ifdef USE_PROJ
     if( layer->tileindex != NULL && psInfo->sTileProj.numargs > 0 )
     {
       msProjectRect(&(layer->projection), &(psInfo->sTileProj), &rect);
     }
-#endif
 
     status = msOGRFileWhichShapes( layer, rect, psTileInfo );
     if( status != MS_SUCCESS )
@@ -3804,8 +3749,6 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
     }
 }
 
-#endif /* def USE_OGR */
-
 /* ==================================================================
  * Here comes the REAL stuff... the functions below are called by maplayer.c
  * ================================================================== */
@@ -3819,7 +3762,6 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
                                               expressionObj* psFilter,
                                               char *filteritem)
 {
-#ifdef USE_OGR
     msOGRFileInfo *info = (msOGRFileInfo *)layer->layerinfo;
 
     msFree(layer->filter.native_string);
@@ -4013,16 +3955,6 @@ fail:
     delete expr;
 
     return MS_SUCCESS;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRTranslateMsExpressionToOGRSQL()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4046,8 +3978,6 @@ fail:
  **********************************************************************/
 int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
 {
-#ifdef USE_OGR
-
   msOGRFileInfo *psInfo;
 
   if (layer->layerinfo != NULL) {
@@ -4123,7 +4053,6 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
    * If projection was "auto" then set proj to the dataset's projection.
    * For a tile index, it is assume the tile index has the projection.
    * ------------------------------------------------------------------ */
-#ifdef USE_PROJ
   if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto")) {
     ACQUIRE_OGR_LOCK;
@@ -4148,19 +4077,8 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
     }
     RELEASE_OGR_LOCK;
   }
-#endif
 
   return MS_SUCCESS;
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerOpen()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4178,7 +4096,6 @@ static int msOGRLayerOpenVT(layerObj *layer)
  **********************************************************************/
 int msOGRLayerClose(layerObj *layer)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   if (psInfo) {
@@ -4190,16 +4107,6 @@ int msOGRLayerClose(layerObj *layer)
   }
 
   return MS_SUCCESS;
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerClose()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4207,26 +4114,14 @@ int msOGRLayerClose(layerObj *layer)
  **********************************************************************/
 static int msOGRLayerIsOpen(layerObj *layer)
 {
-#ifdef USE_OGR
   if (layer->layerinfo)
     return MS_TRUE;
 
   return MS_FALSE;
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerIsOpen()");
-  return(MS_FALSE);
-
-#endif /* USE_OGR */
 }
 
 int msOGRIsSpatialite(layerObj* layer)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   if (psInfo && psInfo->dialect &&
       EQUAL(psInfo->dialect, "Spatialite") )
@@ -4240,16 +4135,6 @@ int msOGRIsSpatialite(layerObj* layer)
   }
 
   return MS_FALSE;
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRIsSpatialite()");
-  return(MS_FALSE);
-
-#endif /* USE_OGR */
 }
 
 
@@ -4263,7 +4148,6 @@ int msOGRIsSpatialite(layerObj* layer)
  **********************************************************************/
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   status;
 
@@ -4282,17 +4166,6 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   // tile matching the spatial query, and load it.
 
   return msOGRFileReadTile( layer, psInfo );
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerWhichShapes()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4304,7 +4177,6 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
  **********************************************************************/
 int msOGRLayerGetItems(layerObj *layer)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   if (psInfo == NULL || psInfo->hLayer == NULL) {
@@ -4330,17 +4202,6 @@ int msOGRLayerGetItems(layerObj *layer)
     layer->numitems++;
 
   return msOGRLayerInitItemInfo(layer);
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerGetItems()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4350,7 +4211,6 @@ int msOGRLayerGetItems(layerObj *layer)
  **********************************************************************/
 static int msOGRLayerInitItemInfo(layerObj *layer)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   i;
   OGRFeatureDefnH hDefn;
@@ -4429,10 +4289,8 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = MSOGR_LABELADJVERTINDEX;
     else if (EQUAL(layer->items[i], MSOGR_LABELHCOLORNAME))
       itemindexes[i] = MSOGR_LABELHCOLORINDEX;
-#if GDAL_VERSION_NUM >= 1600
     else if (EQUAL(layer->items[i], MSOGR_LABELOCOLORNAME))
       itemindexes[i] = MSOGR_LABELOCOLORINDEX;
-#endif /* GDAL_VERSION_NUM >= 1600 */
     else if (EQUALN(layer->items[i], MSOGR_LABELPARAMNAME, MSOGR_LABELPARAMNAMELEN))
         itemindexes[i] = MSOGR_LABELPARAMINDEX 
                           + atoi(layer->items[i] + MSOGR_LABELPARAMNAMELEN);
@@ -4466,16 +4324,6 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
   }
 
   return(MS_SUCCESS);
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerInitItemInfo()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4485,21 +4333,10 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
  **********************************************************************/
 void msOGRLayerFreeItemInfo(layerObj *layer)
 {
-#ifdef USE_OGR
 
   if (layer->iteminfo)
     free(layer->iteminfo);
   layer->iteminfo = NULL;
-
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerFreeItemInfo()");
-
-#endif /* USE_OGR */
 }
 
 
@@ -4513,7 +4350,6 @@ void msOGRLayerFreeItemInfo(layerObj *layer)
  **********************************************************************/
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int  status;
 
@@ -4538,12 +4374,10 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
     status = msOGRFileNextShape( layer, shape, psInfo->poCurTile );
     if( status != MS_DONE )
     {
-#ifdef USE_PROJ
       if( psInfo->sTileProj.numargs > 0 )
       {
         msProjectShape(&(psInfo->sTileProj), &(layer->projection), shape);
       }
-#endif
 
       return status;
     }
@@ -4554,16 +4388,6 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
       return status;
   } while( status == MS_SUCCESS );
   return status; //make compiler happy. this is never reached however
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerNextShape()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4575,7 +4399,6 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
  **********************************************************************/
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   long shapeindex = record->shapeindex;
@@ -4604,24 +4427,12 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     }
 
     int status = msOGRFileGetShape(layer, shape, shapeindex, psInfo->poCurTile, record_is_fid );
-#ifdef USE_PROJ
     if( status == MS_SUCCESS && psInfo->sTileProj.numargs > 0 )
     {
       msProjectShape(&(psInfo->sTileProj), &(layer->projection), shape);
     }
-#endif
     return status;
   }
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerGetShape()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4633,7 +4444,6 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
  **********************************************************************/
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   OGREnvelope oExtent;
 
@@ -4665,16 +4475,6 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
   extent->maxy = oExtent.MaxY;
 
   return MS_SUCCESS;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerGetExtent()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4686,7 +4486,6 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
 **********************************************************************/
 int msOGRLayerGetNumFeatures(layerObj *layer)
 {
-#ifdef USE_OGR
     msOGRFileInfo *psInfo = (msOGRFileInfo*)layer->layerinfo;
     int result;
 
@@ -4705,16 +4504,6 @@ int msOGRLayerGetNumFeatures(layerObj *layer)
     RELEASE_OGR_LOCK;
 
     return result;
-#else
-    /* ------------------------------------------------------------------
-    * OGR Support not included...
-    * ------------------------------------------------------------------ */
-
-    msSetError(MS_MISCERR, "OGR support is not available.",
-        "msOGRLayerGetNumFeatures()");
-    return -1;
-
-#endif /* USE_OGR */
 }
 
 /**********************************************************************
@@ -4724,7 +4513,6 @@ int msOGRLayerGetNumFeatures(layerObj *layer)
  * the OGR symbol id string.  If not found then try to locate the
  * default symbol name, and if not found return 0.
  **********************************************************************/
-#ifdef USE_OGR
 static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
                             const char *pszDefaultSymbol, int try_addimage_if_notfound)
 {
@@ -4737,11 +4525,7 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
   int   nSymbol = -1;
 
   if (pszSymbolId && pszSymbolId[0] != '\0') {
-#if GDAL_VERSION_NUM >= 1800 /* Use comma as the separator */
     params = msStringSplit(pszSymbolId, ',', &numparams);
-#else
-    params = msStringSplit(pszSymbolId, '.', &numparams);
-#endif
     if (params != NULL) {
       for(int j=0; j<numparams && nSymbol == -1; j++) {
         nSymbol = msGetSymbolIndex(symbolset, params[j],
@@ -4759,9 +4543,6 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
 
   return nSymbol;
 }
-#endif
-
-#ifdef USE_OGR
 
 static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
                                       OGRStyleToolH hLabelStyle);
@@ -5061,7 +4842,6 @@ static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
         MS_INIT_COLOR(c->labels[0]->shadowcolor, r, g, b, t);
       }
 
-#if GDAL_VERSION_NUM >= 1600
       pszColor = OGR_ST_GetParamStr(hLabelStyle,
                                     OGRSTLabelOColor,
                                     &bIsNull);
@@ -5069,7 +4849,6 @@ static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
                                               &r, &g, &b, &t)) {
         MS_INIT_COLOR(c->labels[0]->outlinecolor, r, g, b, t);
       }
-#endif /* GDAL_VERSION_NUM >= 1600 */
 
       const char *pszBold = OGR_ST_GetParamNum(hLabelStyle,
                             OGRSTLabelBold,
@@ -5366,7 +5145,6 @@ static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s
         MS_INIT_COLOR(s->color, r, g, b, t);
       }
 
-#if GDAL_VERSION_NUM >= 1600
       pszColor = OGR_ST_GetParamStr(hSymbolStyle,
                                     OGRSTSymbolOColor,
                                     &bIsNull);
@@ -5375,7 +5153,7 @@ static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s
                                               &r, &g, &b, &t)) {
         MS_INIT_COLOR(s->outlinecolor, r, g, b, t);
       }
-#endif /* GDAL_VERSION_NUM >= 1600 */
+
       s->angle = OGR_ST_GetParamNum(hSymbolStyle,
                             OGRSTSymbolAngle,
                             &bIsNull);
@@ -5410,9 +5188,6 @@ static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s
       return MS_SUCCESS;
 }
 
-#endif /* USE_OGR */
-
-
 
 /**********************************************************************
  *                     msOGRLayerGetAutoStyle()
@@ -5428,7 +5203,6 @@ static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s
 static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                   shapeObj* shape)
 {
-#ifdef USE_OGR
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
 
   if (psInfo == NULL || psInfo->hLayer == NULL) {
@@ -5481,16 +5255,6 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
   RELEASE_OGR_LOCK;
   return nRetVal;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerGetAutoStyle()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 
@@ -5508,7 +5272,6 @@ static int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 int msOGRUpdateStyleFromString(mapObj *map, layerObj *layer, classObj *c,
                                const char *stylestring)
 {
-#ifdef USE_OGR
   /* ------------------------------------------------------------------
    * Reset style info in the class to defaults
    * the only members we don't touch are name, expression, and join/query stuff
@@ -5532,16 +5295,6 @@ int msOGRUpdateStyleFromString(mapObj *map, layerObj *layer, classObj *c,
 
   RELEASE_OGR_LOCK;
   return nRetVal;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGRLayerGetAutoStyle()");
-  return(MS_FAILURE);
-
-#endif /* USE_OGR */
 }
 
 /************************************************************************/
@@ -5551,14 +5304,12 @@ int msOGRUpdateStyleFromString(mapObj *map, layerObj *layer, classObj *c,
 void msOGRCleanup( void )
 
 {
-#if defined(USE_OGR)
   ACQUIRE_OGR_LOCK;
   if( bOGRDriversRegistered == MS_TRUE ) {
     CPLPopErrorHandler();
     bOGRDriversRegistered = MS_FALSE;
   }
   RELEASE_OGR_LOCK;
-#endif
 }
 
 /************************************************************************/
@@ -5566,7 +5317,6 @@ void msOGRCleanup( void )
 /************************************************************************/
 char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 {
-#ifdef USE_OGR
   char* pszEscapedStr =NULL;
   if(layer && pszString && strlen(pszString) > 0) {
     pszEscapedStr = (char*) msSmallMalloc( strlen(pszString) * 2 + 1 );
@@ -5584,16 +5334,6 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
     pszEscapedStr[j] = 0;
   }
   return pszEscapedStr;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGREscapePropertyName()");
-  return NULL;
-
-#endif /* USE_OGR */
 }
 
 static int msOGRLayerSupportsCommonFilters(layerObj *layer)
@@ -5603,7 +5343,6 @@ static int msOGRLayerSupportsCommonFilters(layerObj *layer)
 
 static void msOGREnablePaging(layerObj *layer, int value)
 {
-#ifdef USE_OGR
   msOGRFileInfo *layerinfo = NULL;
 
   if (layer->debug) {
@@ -5617,18 +5356,10 @@ static void msOGREnablePaging(layerObj *layer, int value)
 
   layerinfo = (msOGRFileInfo *)layer->layerinfo;
   layerinfo->bPaging = value;
-
-#else
-  msSetError( MS_MISCERR,
-              "OGR support is not available.",
-              "msOGREnablePaging()");
-#endif
-  return;
 }
 
 static int msOGRGetPaging(layerObj *layer)
 {
-#ifdef USE_OGR
   msOGRFileInfo *layerinfo = NULL;
 
   if (layer->debug) {
@@ -5642,12 +5373,6 @@ static int msOGRGetPaging(layerObj *layer)
 
   layerinfo = (msOGRFileInfo *)layer->layerinfo;
   return layerinfo->bPaging;
-#else
-  msSetError( MS_MISCERR,
-              "OGR support is not available.",
-              "msOGREnablePaging()");
-  return MS_FAILURE;
-#endif
 }
 
 /************************************************************************/
@@ -5692,7 +5417,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer)
 /************************************************************************/
 shapeObj *msOGRShapeFromWKT(const char *string)
 {
-#ifdef USE_OGR
+
   OGRGeometryH hGeom = NULL;
   shapeObj *shape=NULL;
 
@@ -5722,10 +5447,6 @@ shapeObj *msOGRShapeFromWKT(const char *string)
   OGR_G_DestroyGeometry( hGeom );
 
   return shape;
-#else
-  msSetError(MS_OGRERR, "OGR support is not available.","msOGRShapeFromWKT()");
-  return NULL;
-#endif
 }
 
 /************************************************************************/
@@ -5733,7 +5454,6 @@ shapeObj *msOGRShapeFromWKT(const char *string)
 /************************************************************************/
 char *msOGRShapeToWKT(shapeObj *shape)
 {
-#ifdef USE_OGR
   OGRGeometryH hGeom = NULL;
   int          i;
   char        *wkt = NULL;
@@ -5811,8 +5531,4 @@ char *msOGRShapeToWKT(shapeObj *shape)
   }
 
   return wkt;
-#else
-  msSetError(MS_OGRERR, "OGR support is not available.", "msOGRShapeToWKT()");
-  return NULL;
-#endif
 }

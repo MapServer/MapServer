@@ -187,7 +187,7 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
    * These lines will be used when generating labels to get correct placement at arc/rect edge intersections.
    */
   rectMapCoordinates = layer->map->extent;
-#ifdef USE_PROJ
+
   layer->project = msProjectionsDiffer(&(layer->projection), &(layer->map->projection));
   if( layer->project &&
       strstr(layer->map->projection.args[0], "epsg:3857") &&
@@ -198,7 +198,6 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       if( rectMapCoordinates.maxx > 20037508 )
           rectMapCoordinates.maxx = 20037508;
   }
-#endif
 
   msFree(pInfo->pboundinglines);
   pInfo->pboundinglines   = (lineObj *)  msSmallMalloc( sizeof( lineObj )  * 4 );
@@ -217,10 +216,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[0].point[1].x = rectMapCoordinates.maxx;
     pInfo->pboundinglines[0].point[1].y = rectMapCoordinates.maxy;
 
-#ifdef USE_PROJ
     if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[0]);
-#endif
 
     /*
      * bottom
@@ -232,10 +229,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[1].point[1].x   = rectMapCoordinates.maxx;
     pInfo->pboundinglines[1].point[1].y = rectMapCoordinates.miny;
 
-#ifdef USE_PROJ
     if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[1]);
-#endif
 
     /*
      * left
@@ -247,10 +242,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[2].point[1].x   = rectMapCoordinates.minx;
     pInfo->pboundinglines[2].point[1].y   = rectMapCoordinates.maxy;
 
-#ifdef USE_PROJ
     if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[2]);
-#endif
 
     /*
      * right
@@ -262,10 +255,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[3].point[1].x = rectMapCoordinates.maxx;
     pInfo->pboundinglines[3].point[1].y = rectMapCoordinates.maxy;
 
-#ifdef USE_PROJ
     if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[3]);
-#endif
   }
 
   return MS_SUCCESS;
@@ -660,10 +651,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     searchrect.maxy = map->height-1;
   }
 
-#ifdef USE_PROJ
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
  status =  msLayerOpen(layer);
  if(status != MS_SUCCESS)
@@ -1074,7 +1063,6 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
 
   ptPoint = pShape->line->point[0];
 
-#ifdef USE_PROJ
   if(pLayer->project)
   {
     if( pLayer->reprojectorLayerToMap == NULL )
@@ -1096,7 +1084,6 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
         }
     }
   }
-#endif
 
   if(pLayer->transform) {
     msTransformShapeToPixelRound(pShape, pLayer->map->extent, pLayer->map->cellsize);
@@ -1135,7 +1122,6 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   if(pLayer->transform)
     msTransformPixelToShape( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
-#ifdef USE_PROJ
   if(pLayer->project)
   {
     /* Clamp coordinates into the validity area of the projection, in the */
@@ -1212,7 +1198,6 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     if( pLayer->reprojectorMapToLayer )
         msProjectShapeEx(pLayer->reprojectorMapToLayer, pShape );
   }
-#endif
 
   switch( ePosition ) {
     case posBottom:

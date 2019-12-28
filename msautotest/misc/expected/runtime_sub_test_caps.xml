@@ -94,6 +94,23 @@ Content-Type: text/xml; charset=UTF-8
         </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>layer5b</Name>
+<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+        <Title>layer5b</Title>
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>1.10894</westBoundLongitude>
+            <eastBoundLongitude>7.19753</eastBoundLongitude>
+            <southBoundLatitude>39.2727</southBoundLatitude>
+            <northBoundLatitude>44.1415</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:3857"
+                    minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo/?request=GetMetadata&amp;layer=layer5b"/>
+        </MetadataURL>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer6</Name>
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer6</Title>

@@ -31,7 +31,6 @@
 #include "mapserver.h"
 #include "mapcopy.h"
 #include "mapresample.h"
-#ifdef USE_GDAL
 
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
@@ -234,7 +233,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
 
     mapRect = rect;
     map_cellsize_x = map_cellsize_y = map->cellsize;      
-#ifdef USE_PROJ
+
     /* if necessary, project the searchrect to source coords */
     if (msProjectionsDiffer( &(map->projection), &(layer->projection)))  {
       if ( msProjectRect(&map->projection, &layer->projection, &mapRect)
@@ -267,8 +266,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
                                          MS_CELLSIZE(rect.miny, rect.maxy, map->height));
       }       
     }
-#endif
-    
+
     if (map_cellsize_x == 0 || map_cellsize_y == 0) {
       if (layer->debug)
         msDebug("msContourLayerReadRaster(): Cellsize can't be 0.\n");
@@ -803,8 +801,7 @@ int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   newRect = rect;
-  
-#ifdef USE_PROJ
+
     /* if necessary, project the searchrect to source coords */
     if (msProjectionsDiffer( &(layer->map->projection), &(layer->projection)))  {
       if (msProjectRect(&layer->projection, &layer->map->projection, &newRect)
@@ -813,7 +810,6 @@ int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
         return MS_FAILURE;
       }
     }
-#endif
 
   /* regenerate the raster io */
   if (clinfo->hOGRDS)
@@ -991,12 +987,3 @@ int msContourLayerInitializeVirtualTable(layerObj *layer)
 
   return MS_SUCCESS;
 }
-
-#else
-int msContourLayerInitializeVirtualTable(layerObj *layer)
-{
-  msSetError(MS_MISCERR, "Contour Layer needs GDAL support, but it it not compiled in", "msContourLayerInitializeVirtualTable()");
-  return MS_FAILURE;
-}
-#endif
-

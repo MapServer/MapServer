@@ -5,7 +5,7 @@ Content-Type: application/vnd.ogc.sld+xml; charset=UTF-8
 <Name>lline</Name>
 <UserStyle>
 <Name>red_and_blue</Name>
-<IsDefault>true<IsDefault>
+<IsDefault>true</IsDefault>
 <FeatureTypeStyle>
 <Rule>
 <LineSymbolizer>
