@@ -256,7 +256,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
              "</ogc:Filter>", pszGeometryName, bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
   }
 
-  bufferSize = strlen(pszFilter)+500;
+  bufferSize = strlen(pszFilter)+strlen(psParams->pszTypeName)+500;
   pszPostReq = (char *)msSmallMalloc(bufferSize);
   if (psParams->nMaxFeatures > 0)
     snprintf(pszPostReq, bufferSize, "<?xml version=\"1.0\" ?>\n"
