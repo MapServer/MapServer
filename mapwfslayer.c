@@ -1295,4 +1295,3 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
 
   return MS_SUCCESS;
 }
-
