@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include "mapows.h"
 #include "mapresample.h"
 #include "mapthread.h"
 
@@ -174,6 +175,28 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer)
   uvlinfo->v = NULL;
   uvlinfo->width = 0;
   uvlinfo->height = 0;
+
+  /* Set attribute type to Real, unless the user has explicitly set */
+  /* something else. */
+  {
+      const char* const items[] = {
+          MSUVRASTER_ANGLE,
+          MSUVRASTER_MINUS_ANGLE,
+          MSUVRASTER_LENGTH,
+          MSUVRASTER_LENGTH_2,
+          MSUVRASTER_U,
+          MSUVRASTER_V,
+      };
+      size_t i;
+      for( i = 0; i < sizeof(items)/sizeof(items[0]); ++i ) {
+          char szTmp[100];
+          snprintf(szTmp, sizeof(szTmp), "%s_type", items[i]);
+          if (msOWSLookupMetadata(&(layer->metadata), "OFG", szTmp) == NULL) {
+              snprintf(szTmp, sizeof(szTmp), "gml_%s_type", items[i]);
+              msInsertHashTable(&(layer->metadata), szTmp, "Real");
+          }
+      }
+  }
 
   /* uvlinfo->query_result_hard_max = 1000000; */
 
@@ -342,6 +365,104 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   return values;
 }
 
+rectObj msUVRASTERGetSearchRect( layerObj* layer, mapObj* map )
+{
+    rectObj searchrect = map->extent;
+    int bDone = MS_FALSE;
+
+    /* For UVRaster, it is important that the searchrect is not too large */
+    /* to avoid insufficient intermediate raster resolution, which could */
+    /* happen if we use the default code path, given potential reprojection */
+    /* issues when using a map extent that is not in the validity area of */
+    /* the layer projection. */
+    if( !layer->projection.gt.need_geotransform &&
+        !(msProjIsGeographicCRS(&(map->projection)) &&
+        msProjIsGeographicCRS(&(layer->projection))) ) {
+      rectObj layer_ori_extent;
+
+      if( msLayerGetExtent(layer, &layer_ori_extent) == MS_SUCCESS ) {
+        projectionObj map_proj;
+
+        double map_extent_minx = map->extent.minx;
+        double map_extent_miny = map->extent.miny;
+        double map_extent_maxx = map->extent.maxx;
+        double map_extent_maxy = map->extent.maxy;
+        rectObj layer_extent = layer_ori_extent;
+
+        /* Create a variant of map->projection without geotransform for */
+        /* conveniency */
+        msInitProjection(&map_proj);
+        msCopyProjection(&map_proj, &map->projection);
+        map_proj.gt.need_geotransform = MS_FALSE;
+        if( map->projection.gt.need_geotransform ) {
+            map_extent_minx = map->projection.gt.geotransform[0]
+                + map->projection.gt.geotransform[1] * map->extent.minx
+                + map->projection.gt.geotransform[2] * map->extent.miny;
+            map_extent_miny = map->projection.gt.geotransform[3]
+                + map->projection.gt.geotransform[4] * map->extent.minx
+                + map->projection.gt.geotransform[5] * map->extent.miny;
+            map_extent_maxx = map->projection.gt.geotransform[0]
+                + map->projection.gt.geotransform[1] * map->extent.maxx
+                + map->projection.gt.geotransform[2] * map->extent.maxy;
+            map_extent_maxy = map->projection.gt.geotransform[3]
+                + map->projection.gt.geotransform[4] * map->extent.maxx
+                + map->projection.gt.geotransform[5] * map->extent.maxy;
+        }
+
+        /* Reproject layer extent to map projection */
+        msProjectRect(&layer->projection, &map_proj, &layer_extent);
+
+        if( layer_extent.minx <= map_extent_minx &&
+            layer_extent.miny <= map_extent_miny &&
+            layer_extent.maxx >= map_extent_maxx &&
+            layer_extent.maxy >= map_extent_maxy ) {
+            /* do nothing special if area to map is inside layer extent */
+        }
+        else {
+            if( layer_extent.minx >= map_extent_minx &&
+                layer_extent.maxx <= map_extent_maxx &&
+                layer_extent.miny >= map_extent_miny &&
+                layer_extent.maxy <= map_extent_maxy ) {
+                /* if the area to map is larger than the layer extent, then */
+                /* use full layer extent and add some margin to reflect the */
+                /* proportion of the useful area over the requested bbox */
+                double extra_x =
+                (map_extent_maxx - map_extent_minx) /
+                    (layer_extent.maxx - layer_extent.minx) *
+                    (layer_ori_extent.maxx -  layer_ori_extent.minx);
+                double extra_y =
+                    (map_extent_maxy - map_extent_miny) /
+                    (layer_extent.maxy - layer_extent.miny) *
+                    (layer_ori_extent.maxy -  layer_ori_extent.miny);
+                searchrect.minx = layer_ori_extent.minx - extra_x / 2;
+                searchrect.maxx = layer_ori_extent.maxx + extra_x / 2;
+                searchrect.miny = layer_ori_extent.miny - extra_y / 2;
+                searchrect.maxy = layer_ori_extent.maxy + extra_y / 2;
+            }
+            else
+            {
+                /* otherwise clip the map extent with the reprojected layer */
+                /* extent */
+                searchrect.minx = MS_MAX( map_extent_minx, layer_extent.minx );
+                searchrect.maxx = MS_MIN( map_extent_maxx, layer_extent.maxx );
+                searchrect.miny = MS_MAX( map_extent_miny, layer_extent.miny );
+                searchrect.maxy = MS_MIN( map_extent_maxy, layer_extent.maxy );
+                /* and reproject into the layer projection */
+                msProjectRect(&map_proj, &layer->projection, &searchrect);
+            }
+            bDone = MS_TRUE;
+        }
+
+        msFreeProjection(&map_proj);
+      }
+    }
+
+    if( !bDone )
+      msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+
+    return searchrect;
+}
+
 int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
@@ -365,13 +486,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   if( uvlinfo == NULL )
     return MS_FAILURE;
-
-  /* QUERY NOT SUPPORTED YET */
-  if (isQuery == MS_TRUE) {
-    msSetError( MS_MISCERR, "Query is not supported for UV layer.", "msUVRASTERLayerWhichShapes()" );
-    return MS_FAILURE;
-  }
-
 
   if( CSLFetchNameValue( layer->processing, "BANDS" ) == NULL ) {
     msSetError( MS_MISCERR, "BANDS processing option is required for UV layer. You have to specified 2 bands.",
@@ -563,6 +677,12 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       }
   }
 
+  if( isQuery )
+  {
+      /* For query mode, use layer->map->extent reprojected rather than */
+      /* the provided rect. Generic query code will filter returned features. */
+      rect = msUVRASTERGetSearchRect(layer, layer->map);
+  }
 
   map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx,layer->map->width),
                         MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height));
@@ -758,6 +878,8 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
   shape->numvalues = layer->numitems;
   shape->values = msUVRASTERGetValues(layer, &uvlinfo->u[x][y], &uvlinfo->v[x][y]);
+  shape->index = shapeindex;
+  shape->resultindex = shapeindex;
 
   return MS_SUCCESS;
 

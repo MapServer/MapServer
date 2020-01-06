@@ -2534,6 +2534,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
   void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj* layer, mapObj* map);
+  rectObj msUVRASTERGetSearchRect( layerObj* layer, mapObj* map );
 
   /* ==================================================================== */
   /*      Prototypes for functions in mapdraw.c                           */
