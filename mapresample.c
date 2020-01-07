@@ -58,7 +58,7 @@ int InvGeoTransform( double *gt_in, double *gt_out )
 
   inv_det = 1.0 / det;
 
-  /* compute adjoint, and devide by determinate */
+  /* compute adjoint, and divide by determinate */
 
   gt_out[1] =  gt_in[5] * inv_det;
   gt_out[4] = -gt_in[4] * inv_det;
@@ -129,7 +129,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       /*
        * We test the original floating point values to
        * avoid errors related to asymmetric rounding around zero.
-       * (Also note bug #3120 regarding nearly redundent x/y < 0 checks).
+       * (Also note bug #3120 regarding nearly redundant x/y < 0 checks).
        */
       if( x[nDstX] < 0.0 || y[nDstX] < 0.0
           || nSrcX < 0 || nSrcY < 0
@@ -910,12 +910,15 @@ static int msApproxTransformer( void *pCBData, int nPoints,
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Transform first, last and middle point.                         */
+  /*      Transform first, last and point after the middle point.         */
+  /*      We avoid transforming the middle point to avoid an edge case    */
+  /*      where the middle point is correctly interpolated but other      */
+  /*      points are not. (#5958)                                         */
   /* -------------------------------------------------------------------- */
   x2[0] = x[0];
   y2[0] = y[0];
-  x2[1] = x[nMiddle];
-  y2[1] = y[nMiddle];
+  x2[1] = x[nMiddle+1];
+  y2[1] = y[nMiddle+1];
   x2[2] = x[nPoints-1];
   y2[2] = y[nPoints-1];
 
@@ -933,10 +936,11 @@ static int msApproxTransformer( void *pCBData, int nPoints,
   dfDeltaX = (x2[2] - x2[0]) / (x[nPoints-1] - x[0]);
   dfDeltaY = (y2[2] - y2[0]) / (x[nPoints-1] - x[0]);
 
-  dfError = fabs((x2[0] + dfDeltaX * (x[nMiddle] - x[0])) - x2[1])
-            + fabs((y2[0] + dfDeltaY * (x[nMiddle] - x[0])) - y2[1]);
+  dfError = fabs((x2[0] + dfDeltaX * (x[nMiddle+1] - x[0])) - x2[1])
+            + fabs((y2[0] + dfDeltaY * (x[nMiddle+1] - x[0])) - y2[1]);
 
   if( dfError > psATInfo->dfMaxError ) {
+    // Transform the left half
     bSuccess =
       msApproxTransformer( psATInfo, nMiddle, x, y, panSuccess );
 
@@ -946,6 +950,7 @@ static int msApproxTransformer( void *pCBData, int nPoints,
                                            x, y, panSuccess );
     }
 
+    // Transform the right half
     bSuccess =
       msApproxTransformer( psATInfo, nPoints - nMiddle,
                            x+nMiddle, y+nMiddle, panSuccess+nMiddle );
