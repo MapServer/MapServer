@@ -1322,7 +1322,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     rectObj rect;
     projectionObj proj;
 
-    /*we have already validated that the request format when reding
+    /*we have already validated that the request format when reading
      the request parameters*/
     rect = map->extent;
 
@@ -1337,7 +1337,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msFreeProjection( &proj );
     }
     /*if the CRS is AUTO2:auto_crs_id,factor,lon0,lat0,
-     we need to grab the factor patameter and use it with the bbox*/
+     we need to grab the factor parameter and use it with the bbox*/
     if (strlen(srsbuffer) > 1 && strncasecmp(srsbuffer, "AUTO2:", 6) == 0) {
       char **args;
       int numargs;
@@ -1712,7 +1712,7 @@ this request. Check wms/ows_enable_request settings.",
   }
 
   /* Validate Styles :
-  ** MapServer advertize styles through th group setting in a class object.
+  ** MapServer advertises styles through the group setting in a class object.
   ** If no styles are set MapServer expects to have empty values
   ** for the styles parameter (...&STYLES=&...) Or for multiple Styles/Layers,
   ** we could have ...&STYLES=,,,. If that is not the
