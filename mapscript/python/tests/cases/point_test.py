@@ -28,11 +28,11 @@ import unittest
 import mapscript
 
 
-have_image = 0
+have_image = False
 
 try:
     from PIL import Image
-    have_image = 1
+    have_image = True
 except ImportError:
     pass
 
@@ -125,7 +125,7 @@ class PointObjTestCase(unittest.TestCase):
             pyimg = Image.open(filename)
             assert pyimg.size == (500, 500)
         else:
-            assert 1
+            assert True
 
     def testPoint__str__(self):
         """return properly formatted string"""
