@@ -1145,6 +1145,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
           double dfYMinOut = 0.0;
           double dfXMaxOut = 0.0;
           double dfYMaxOut = 0.0;
+          const double dfHalfRes = adfDstGeoTransform[1] / 2;
 
           /* Find out average y coordinate in src projection */
           for( i = 0; i < nSamples; i++ ) {
@@ -1183,7 +1184,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                         2, 1, x2, y2, z2 );
           msReleaseLock( TLOCK_PROJ );
 
-          if( x2[0] >= dfXMinOut && x2[0] <= dfXMaxOut &&
+          if( x2[0] >= dfXMinOut - dfHalfRes && x2[0] <= dfXMaxOut + dfHalfRes &&
               y2[0] >= dfYMinOut && y2[0] <= dfYMaxOut )
           {
                 double x_out =      adfInvSrcGeoTransform[0]
@@ -1193,8 +1194,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                             +   (dfLonWrap-180)*adfInvSrcGeoTransform[4]
                             +   dfY*adfInvSrcGeoTransform[5];
 
-                /* Does the raster cover a whole 360 deg range ? */
-                if( nSrcXSize == (int)(adfInvSrcGeoTransform[1] * 360 + 0.5) )
+                /* Does the raster cover, at least, a whole 360 deg range ? */
+                if( nSrcXSize >= (int)(adfInvSrcGeoTransform[1] * 360) )
                 {
                     psSrcExtent->minx = 0;
                     psSrcExtent->maxx = nSrcXSize;
@@ -1208,8 +1209,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                 psSrcExtent->maxy = MS_MAX(psSrcExtent->maxy, y_out);
           }
 
-          if( x2[1] >= dfXMinOut && x2[1] <= dfXMaxOut &&
-              x2[1] >= dfYMinOut && y2[1] <= dfYMaxOut )
+          if( x2[1] >= dfXMinOut - dfHalfRes && x2[1] <= dfXMaxOut + dfHalfRes &&
+              y2[1] >= dfYMinOut && y2[1] <= dfYMaxOut )
           {
                 double x_out =      adfInvSrcGeoTransform[0]
                             +   (dfLonWrap+180)*adfInvSrcGeoTransform[1]
@@ -1218,8 +1219,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                             +   (dfLonWrap+180)*adfInvSrcGeoTransform[4]
                             +   dfY*adfInvSrcGeoTransform[5];
 
-                /* Does the raster cover a whole 360 deg range ? */
-                if( nSrcXSize == (int)(adfInvSrcGeoTransform[1] * 360 + 0.5) )
+                /* Does the raster cover, at least, a whole 360 deg range ? */
+                if( nSrcXSize >= (int)(adfInvSrcGeoTransform[1] * 360) )
                 {
                     psSrcExtent->minx = 0;
                     psSrcExtent->maxx = nSrcXSize;
