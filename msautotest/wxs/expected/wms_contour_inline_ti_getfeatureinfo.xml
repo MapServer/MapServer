@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<contour_inline_ti_layer>
+	<gml:name>contour_inline_ti</gml:name>
+		<contour_inline_ti_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>3.500000,6.849074 4.286121,8.259505</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<ID>0</ID>
+			<elevation>20.000</elevation>
+		</contour_inline_ti_feature>
+	</contour_inline_ti_layer>
+</msGMLOutput>
