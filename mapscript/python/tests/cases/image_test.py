@@ -56,8 +56,6 @@ class SaveToStringTestCase(MapTestCase):
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
             assert pyimg.mode == 'RGB'
-        else:
-            assert 1
 
 
 class ImageObjTestCase(unittest.TestCase):

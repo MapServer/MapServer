@@ -124,8 +124,6 @@ class PointObjTestCase(unittest.TestCase):
         if have_image:
             pyimg = Image.open(filename)
             assert pyimg.size == (500, 500)
-        else:
-            assert True
 
     def testPoint__str__(self):
         """return properly formatted string"""
