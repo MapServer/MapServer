@@ -2240,16 +2240,23 @@ draw_shape_cleanup:
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext)
 {
   int s,ret;
-  classObj *theclass=layer->class[classindex];
+  classObj *theclass=NULL;
   labelObj *label=NULL;
 
-  if(layer->transform == MS_TRUE && layer->project)
-    msProjectPoint(&layer->projection, &map->projection, point);
-
+  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+    msProjectPoint(&(layer->projection), &(map->projection), point);
+  }
+  
+  if(classindex > layer->numclasses) {
+    msSetError(MS_MISCERR, "Invalid classindex (%d)", "msDrawPoint()", classindex);
+    return MS_FAILURE; 
+  }
+  theclass = layer->class[classindex];
+  
   if(labeltext && theclass->numlabels > 0) {
     label = theclass->labels[0];
   }
-
+  
   switch(layer->type) {
     case MS_LAYER_POINT:
       if(layer->transform == MS_TRUE) {
@@ -2265,7 +2272,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return MS_FAILURE;
           }
       }
-      if(labeltext && *labeltext) {
+      if(label && labeltext && *labeltext) {
         textSymbolObj *ts = msSmallMalloc(sizeof(textSymbolObj));
         initTextSymbol(ts);
         msPopulateTextSymbolForLabelAndString(ts, label, msStrdup(labeltext), layer->scalefactor, image->resolutionfactor, layer->labelcache);
