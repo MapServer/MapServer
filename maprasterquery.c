@@ -564,6 +564,12 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     }
 #endif
 
+  reprojectionObj* reprojector = NULL;
+  if( layer->project )
+  {
+      reprojector = msProjectCreateReprojector(&(layer->projection), &(map->projection));
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Loop over all pixels determining which are "in".                */
   /* -------------------------------------------------------------------- */
@@ -588,7 +594,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       /* in sPixelLocationInLayerSRS, so that we can return those */
       /* coordinates if we have a hit */
       sReprojectedPixelLocation = sPixelLocation;
-      if( layer->project )
+      if( reprojector )
       {
 #if PROJ_VERSION_MAJOR < 6
         /* Works around a bug in PROJ < 6 when reprojecting from a lon_wrap */
@@ -603,8 +609,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         }
 #endif
 
-        msProjectPoint( &(layer->projection), &(map->projection),
-                        &sReprojectedPixelLocation);
+        msProjectPointEx( reprojector, &sReprojectedPixelLocation);
       }
 
       /* If we are doing QueryByShape, check against the shape now */
@@ -662,6 +667,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /*      Cleanup.                                                        */
   /* -------------------------------------------------------------------- */
   free( pafRaster );
+  msProjectDestroyReprojector( reprojector );
 
   return MS_SUCCESS;
 }
