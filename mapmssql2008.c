@@ -248,6 +248,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   char *index_name;  /* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
   char *sort_spec;  /* the sort by specification which should be applied to the generated select statement */
   int mssqlversion_major; /* the sql server major version number */
+  int paging;           /* Driver handling of pagination, enabled by default */
   SQLSMALLINT *itemtypes; /* storing the sql field types for further reference */
 
   msODBCconn * conn;          /* Connection to db */
@@ -979,6 +980,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
   layerinfo->conn = NULL;
   layerinfo->itemtypes = NULL;
   layerinfo->mssqlversion_major = 0;
+  layerinfo->paging = MS_TRUE;
 
   layerinfo->conn = (msODBCconn *) msConnPoolRequest(layer);
 
@@ -1339,6 +1341,8 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   char *data_source = 0;
   char *f_table_name = 0;
   char *geom_table = 0;
+  char *tmp = 0;
+  char *paging_query = 0;
   /*
     "Geometry::STGeomFromText('POLYGON(())',)" + terminator = 40 chars
     Plus 10 formatted doubles (15 digits of precision, a decimal point, a space/comma delimiter each = 17 chars each)
@@ -1446,17 +1450,37 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   /* start creating the query */
 
   query = msStringConcatenate(query, "SELECT ");
+  if (layerinfo->paging && (layer->maxfeatures >= 0 || layer->startindex > 0))
+    paging_query = msStringConcatenate(paging_query, "SELECT ");
 
   /* adding items to the select list */
   for (t = 0; t < layer->numitems; t++) {
 #ifdef USE_ICONV
       query = msStringConcatenate(query, "convert(nvarchar(max), [");
       query = msStringConcatenate(query, layer->items[t]);
-      query = msStringConcatenate(query, "]),");
+      query = msStringConcatenate(query, "]) '");
+      tmp = msIntToString(t);
+      query = msStringConcatenate(query, tmp);
+      if (paging_query) {
+          paging_query = msStringConcatenate(paging_query, "[");
+          paging_query = msStringConcatenate(paging_query, tmp);
+          paging_query = msStringConcatenate(paging_query, "], ");
+      }
+      msFree(tmp);
+      query = msStringConcatenate(query,"',");
 #else
       query = msStringConcatenate(query, "convert(varchar(max), [");
       query = msStringConcatenate(query, layer->items[t]);
-      query = msStringConcatenate(query, "]),");
+      query = msStringConcatenate(query, "]) '");
+      tmp = msIntToString(t);
+      query = msStringConcatenate(query, tmp);
+      if (paging_query) {
+          paging_query = msStringConcatenate(paging_query, "[");
+          paging_query = msStringConcatenate(paging_query, tmp);
+          paging_query = msStringConcatenate(paging_query, "], ");
+      }
+      msFree(tmp);
+      query = msStringConcatenate(query, "',");
 #endif
   }
 
@@ -1464,14 +1488,38 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   query = msStringConcatenate(query, "[");
   query = msStringConcatenate(query, layerinfo->geom_column);
   if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      query = msStringConcatenate(query, "],");
-  else
-      query = msStringConcatenate(query, "].STAsBinary(),");
+      query = msStringConcatenate(query, "] 'geom',");
+  else {
+      query = msStringConcatenate(query, "].STAsBinary() 'geom',");
+  }
 
   /* adding id column */
   query = msStringConcatenate(query, "convert(varchar(36), [");
   query = msStringConcatenate(query, layerinfo->urid_name);
-  query = msStringConcatenate(query, "]) FROM ");
+  if (paging_query) {
+      paging_query = msStringConcatenate(paging_query, "[geom], [id] FROM (");
+      query = msStringConcatenate(query, "]) 'id', row_number() over (");
+      if (layerinfo->sort_spec) {
+          query = msStringConcatenate(query, layerinfo->sort_spec);
+      }
+
+      if (layer->sortBy.nProperties > 0) {
+          tmp = msLayerBuildSQLOrderBy(layer);
+          if (layerinfo->sort_spec)
+              query = msStringConcatenate(query, ", ");
+          else
+              query = msStringConcatenate(query, " ORDER BY ");
+          query = msStringConcatenate(query, tmp);
+          msFree(tmp);
+      }
+      else {
+          query = msStringConcatenate(query, layerinfo->urid_name);
+      }
+      query = msStringConcatenate(query, ") 'rownum' FROM ");
+  }
+  else {
+      query = msStringConcatenate(query, "]) 'id' FROM ");
+  }
 
   /* adding the source */
   query = msStringConcatenate(query, data_source);
@@ -1510,19 +1558,44 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   query = msStringConcatenate(query, box3d);
   query = msStringConcatenate(query, ") = 1 ");
 
-  if (layerinfo->sort_spec) {
-      query = msStringConcatenate(query, layerinfo->sort_spec);
-  }
+  if (paging_query) {
+      paging_query = msStringConcatenate(paging_query, query);
+      paging_query = msStringConcatenate(paging_query, ") tbl where [rownum] ");
+      if (layer->startindex > 0) {
+          tmp = msIntToString(layer->startindex);
+          paging_query = msStringConcatenate(paging_query, ">= ");
+          paging_query = msStringConcatenate(paging_query, tmp);
+          if (layer->maxfeatures >= 0) {
+              msFree(tmp);
+              tmp = msIntToString(layer->startindex + layer->maxfeatures);
+              paging_query = msStringConcatenate(paging_query, " and [rownum] < ");
+              paging_query = msStringConcatenate(paging_query, tmp);
+          }
+      }
+      else {
+          tmp = msIntToString(layer->maxfeatures);
+          paging_query = msStringConcatenate(paging_query, "< ");
+          paging_query = msStringConcatenate(paging_query, tmp);
+      }
+      msFree(tmp);
+      msFree(query);
+      query = paging_query;
+  } 
+  else {
+      if (layerinfo->sort_spec) {
+          query = msStringConcatenate(query, layerinfo->sort_spec);
+      }
 
-  /* Add extra sort by */
-  if( layer->sortBy.nProperties > 0 ) {
-    char* pszTmp = msLayerBuildSQLOrderBy(layer);
-    if (layerinfo->sort_spec)
-        query = msStringConcatenate(query, ", ");
-    else
-        query = msStringConcatenate(query, " ORDER BY ");
-    query = msStringConcatenate(query, pszTmp);
-    msFree(pszTmp);
+      /* Add extra sort by */
+      if (layer->sortBy.nProperties > 0) {
+          char* pszTmp = msLayerBuildSQLOrderBy(layer);
+          if (layerinfo->sort_spec)
+              query = msStringConcatenate(query, ", ");
+          else
+              query = msStringConcatenate(query, " ORDER BY ");
+          query = msStringConcatenate(query, pszTmp);
+          msFree(pszTmp);
+      }
   }
 
 
@@ -2453,6 +2526,142 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
   return msMSSQL2008LayerGetShapeRandom(layer, shape, &(layerinfo->row_num));
 }
 
+/*
+** Returns the number of shapes that match the potential filter and extent.
+ * rectProjection is the projection in which rect is expressed, or can be NULL if
+ * rect should be considered in the layer projection.
+ * This should be equivalent to calling msLayerWhichShapes() and counting the
+ * number of shapes returned by msLayerNextShape(), honouring layer->maxfeatures
+ * limitation if layer->maxfeatures>=0, and honouring layer->startindex if
+ * layer->startindex >= 1 and paging is enabled.
+ * Returns -1 in case of failure.
+ */
+int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+    msMSSQL2008LayerInfo *layerinfo;
+    char *query = 0;
+    char result_data[256];
+    char box3d[40 + 10 * 22 + 11];
+    SQLLEN retLen;
+    SQLRETURN rc;
+    int hasFilter = MS_FALSE;
+
+    rectObj searchrectInLayerProj = rect;
+
+    if (layer->debug) {
+        msDebug("msMSSQL2008LayerGetShapeCount called.\n");
+    }
+
+    layerinfo = getMSSQL2008LayerInfo(layer);
+
+    if (!layerinfo) {
+        /* Layer not open */
+        msSetError(MS_QUERYERR, "msMSSQL2008LayerGetShapeCount called on unopened layer (layerinfo = NULL)", "msMSSQL2008LayerGetShapeCount()");
+
+        return MS_FAILURE;
+    }
+
+#ifdef USE_PROJ
+    // Special processing if the specified projection for the rect is different from the layer projection
+    // We want to issue a WHERE that includes
+    // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
+    if (rectProjection != NULL && layer->project &&
+        msProjectionsDiffer(&(layer->projection), rectProjection))
+    {
+        // If we cannot guess the EPSG code of the rectProjection, fallback on slow implementation
+        if (rectProjection->numargs < 1 ||
+            strncasecmp(rectProjection->args[0], "init=epsg:", strlen("init=epsg:")) != 0)
+        {
+            if (layer->debug) {
+                msDebug("msMSSQL2008LayerGetShapeCount(): cannot find EPSG code of rectProjection. Falling back on client-side feature count.\n");
+            }
+            return LayerDefaultGetShapeCount(layer, rect, rectProjection);
+        }
+
+        // Reproject the passed rect into the layer projection and get
+        // the SRID from the rectProjection
+        msProjectRect(rectProjection, &(layer->projection), &searchrectInLayerProj); /* project the searchrect to source coords */
+    }
+#endif
+
+    if (searchrectInLayerProj.minx == searchrectInLayerProj.maxx || 
+        searchrectInLayerProj.miny == searchrectInLayerProj.maxy) {
+        /* create point shape for rectangles with zero area */
+        sprintf(box3d, "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
+            layerinfo->geom_column_type, searchrectInLayerProj.minx, searchrectInLayerProj.miny, layerinfo->user_srid);
+    }
+    else {
+        sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+            layerinfo->geom_column_type,
+            searchrectInLayerProj.minx, searchrectInLayerProj.miny,
+            searchrectInLayerProj.maxx, searchrectInLayerProj.miny,
+            searchrectInLayerProj.maxx, searchrectInLayerProj.maxy,
+            searchrectInLayerProj.minx, searchrectInLayerProj.maxy,
+            searchrectInLayerProj.minx, searchrectInLayerProj.miny,
+            layerinfo->user_srid
+        );
+    }
+
+    msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
+
+    /* set up statement */
+    query = msStringConcatenate(query, "SELECT count(*) FROM ");
+    query = msStringConcatenate(query, layerinfo->geom_table);
+
+    /* adding attribute filter */
+    if (layer->filter.native_string) {
+        query = msStringConcatenate(query, " WHERE (");
+        query = msStringConcatenate(query, layer->filter.native_string);
+        query = msStringConcatenate(query, ")");
+        hasFilter = MS_TRUE;
+    }
+    else if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+        query = msStringConcatenate(query, " WHERE (");
+        query = msStringConcatenate(query, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+        query = msStringConcatenate(query, ")");
+        hasFilter = MS_TRUE;
+    }
+
+    /* adding spatial filter */
+    if (hasFilter == MS_FALSE)
+        query = msStringConcatenate(query, " WHERE ");
+    else
+        query = msStringConcatenate(query, " AND ");
+
+    query = msStringConcatenate(query, layerinfo->geom_column);
+    query = msStringConcatenate(query, ".MakeValid().STIntersects(");
+    query = msStringConcatenate(query, box3d);
+    query = msStringConcatenate(query, ") = 1 ");
+
+    if (!executeSQL(layerinfo->conn, query)) {
+        msFree(query);
+        return -1;
+    }
+
+    msFree(query);
+
+    rc = SQLFetch(layerinfo->conn->hstmt);
+
+    if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
+        if (layer->debug) {
+            msDebug("msMSSQL2008LayerGetShapeCount: No results found.\n");
+        }
+
+        return -1;
+    }
+
+    rc = SQLGetData(layerinfo->conn->hstmt, 1, SQL_C_CHAR, result_data, sizeof(result_data), &retLen);
+
+    if (rc == SQL_ERROR) {
+        msSetError(MS_QUERYERR, "Failed to get feature count", "msMSSQL2008LayerGetShapeCount()");
+        return -1;
+    }
+
+    result_data[retLen] = 0;
+
+    return atoi(result_data);
+}
+
 /* Query the DB for info about the requested table */
 int msMSSQL2008LayerGetItems(layerObj *layer)
 {
@@ -2802,6 +3011,32 @@ char *msMSSQL2008LayerEscapeSQLParam(layerObj *layer, const char *pszString)
     pszEscapedStr[j] = 0;
   }
   return pszEscapedStr;
+}
+
+int msMSSQL2008GetPaging(layerObj *layer)
+{
+    msMSSQL2008LayerInfo *layerinfo = NULL;
+
+    if (!msMSSQL2008LayerIsOpen(layer))
+        return MS_TRUE;
+
+    assert(layer->layerinfo != NULL);
+    layerinfo = (msMSSQL2008LayerInfo *)layer->layerinfo;
+
+    return layerinfo->paging;
+}
+
+void msMSSQL2008EnablePaging(layerObj *layer, int value)
+{
+    msMSSQL2008LayerInfo *layerinfo = NULL;
+
+    if (!msMSSQL2008LayerIsOpen(layer))
+        msMSSQL2008LayerOpen(layer);
+
+    assert(layer->layerinfo != NULL);
+    layerinfo = (msMSSQL2008LayerInfo *)layer->layerinfo;
+
+    layerinfo->paging = value;
 }
 
 int process_node(layerObj* layer, expressionObj *filter)
@@ -3413,6 +3648,12 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, long record)
   return MS_FAILURE;
 }
 
+int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+    msSetError(MS_QUERYERR, "msMSSQL2008LayerGetShapeCount called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008LayerGetShapeCount()");
+    return MS_FAILURE;
+}
+
 int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
 {
   msSetError(MS_QUERYERR, "msMSSQL2008LayerGetExtent called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008LayerGetExtent()");
@@ -3435,6 +3676,18 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 {
   msSetError(MS_QUERYERR, "msMSSQL2008LayerGetItems called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008LayerGetItems()");
   return MS_FAILURE;
+}
+
+void msMSSQL2008EnablePaging(layerObj *layer, int value)
+{
+    msSetError(MS_QUERYERR, "msMSSQL2008EnablePaging called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008EnablePaging()");
+    return;
+}
+
+int msMSSQL2008GetPaging(layerObj *layer)
+{
+    msSetError(MS_QUERYERR, "msMSSQL2008GetPaging called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008GetPaging()");
+    return MS_FAILURE;
 }
 
 int msMSSQL2008LayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
@@ -3465,6 +3718,8 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj 
   assert(layer != NULL);
   assert(vtable != NULL);
 
+  vtable->LayerEnablePaging = msMSSQL2008EnablePaging;
+  vtable->LayerGetPaging = msMSSQL2008GetPaging;
   vtable->LayerTranslateFilter = msMSSQL2008LayerTranslateFilter;
   vtable->LayerEscapeSQLParam = msMSSQL2008LayerEscapeSQLParam;
   vtable->LayerEscapePropertyName = msMSSQL2008LayerEscapePropertyName;
@@ -3476,6 +3731,7 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj 
   vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
   vtable->LayerNextShape = msMSSQL2008LayerNextShape;
   vtable->LayerGetShape = msMSSQL2008LayerGetShape;
+  vtable->LayerGetShapeCount = msMSSQL2008LayerGetShapeCount;
 
   vtable->LayerClose = msMSSQL2008LayerClose;
 
@@ -3503,6 +3759,8 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
+  layer->vtable->LayerEnablePaging = msMSSQL2008EnablePaging;
+  layer->vtable->LayerGetPaging = msMSSQL2008GetPaging;
   layer->vtable->LayerTranslateFilter = msMSSQL2008LayerTranslateFilter;
   layer->vtable->LayerEscapeSQLParam = msMSSQL2008LayerEscapeSQLParam;
   layer->vtable->LayerEscapePropertyName = msMSSQL2008LayerEscapePropertyName;
@@ -3514,7 +3772,7 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msMSSQL2008LayerWhichShapes;
   layer->vtable->LayerNextShape = msMSSQL2008LayerNextShape;
   layer->vtable->LayerGetShape = msMSSQL2008LayerGetShape;
-  /* layer->vtable->LayerGetShapeCount, use default */
+  layer->vtable->LayerGetShapeCount = msMSSQL2008LayerGetShapeCount;
 
   layer->vtable->LayerClose = msMSSQL2008LayerClose;
 
