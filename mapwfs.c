@@ -3000,7 +3000,6 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
                                         int nWFSVersion)
 {
   int nMatchingFeatures = -1;
-  int j;
 
   if( nWFSVersion >= OWS_2_0_0 )
   {
@@ -3052,28 +3051,24 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
         if( pszComputeNumberMatched != NULL &&
             strcasecmp(pszComputeNumberMatched, "true") == 0 )
         {
-            resultCacheObj** saveResultCache = (resultCacheObj** )
-                msSmallMalloc( map->numlayers * sizeof(resultCacheObj*));
+            int j;
+            mapObj* mapTmp = (mapObj*)msSmallCalloc(1, sizeof(mapObj));
+            initMap(mapTmp);
+            msCopyMap(mapTmp, map);
 
-            /* Save the result cache that contains the features that we want to */
-            /* emit in the response */
-            for(j=0; j<map->numlayers; j++) {
-                layerObj* lp = GET_LAYER(map, j);
-                saveResultCache[j] = lp->resultcache;
-                lp->resultcache = NULL;
-
-                /* Resent layer paging */
+            /* Re-run the query but with no limit */
+            mapTmp->query.maxfeatures = -1;
+            mapTmp->query.startindex = -1;
+            mapTmp->query.only_cache_result_count = MS_TRUE;
+            for(j=0; j<mapTmp->numlayers; j++) {
+                layerObj* lp = GET_LAYER(mapTmp, j);
+                /* Reset layer paging */
                 lp->maxfeatures = -1;
                 lp->startindex = -1;
             }
 
-            /* Re-run the query but with no limit */
-            map->query.maxfeatures = -1;
-            map->query.startindex = -1;
-            map->query.only_cache_result_count = MS_TRUE;
-
             nMatchingFeatures = 0;
-            msWFSRetrieveFeatures(map,
+            msWFSRetrieveFeatures(mapTmp,
                                   ows_request,
                                 paramsObj,
                                 pgmlinfo,
@@ -3089,17 +3084,7 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
                                 &nMatchingFeatures,
                                 NULL);
 
-            /* Restore the original result cache */
-            for(j=0; j<map->numlayers; j++) {
-                layerObj* lp = GET_LAYER(map, j);
-                if(lp->resultcache) {
-                    if(lp->resultcache->results) free(lp->resultcache->results);
-                    free(lp->resultcache);
-                    lp->resultcache = NULL;
-                }
-                lp->resultcache = saveResultCache[j];
-            }
-            msFree(saveResultCache);
+            msFreeMap(mapTmp);
         }
     }
   }
