@@ -1283,8 +1283,10 @@ int msCopyMap(mapObj *dst, mapObj *src)
     return MS_FAILURE;
   }
 
-  for (i = 0; i < dst->numlayers; i++) {
-    MS_COPYSTELEM(layerorder[i]);
+  if( src->layerorder ) {
+    for (i = 0; i < dst->numlayers; i++) {
+        MS_COPYSTELEM(layerorder[i]);
+    }
   }
   MS_COPYSTELEM(debug);
   MS_COPYSTRING(dst->datapattern, src->datapattern);
