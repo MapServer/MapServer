@@ -1110,16 +1110,17 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
       else
       {
-        status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
-        if(status != MS_SUCCESS) {
-            OGR_DS_Destroy( hDS );
-            msOGRCleanupDS( datasource_name );
-            msGMLFreeItems(item_list);
-            msFreeShape(&resultshape);
-            CSLDestroy(layer_options);
-            return status;
-        }
+          status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
       }
+      
+      if(status != MS_SUCCESS) {
+          OGR_DS_Destroy( hDS );
+          msOGRCleanupDS( datasource_name );
+          msGMLFreeItems(item_list);
+          msFreeShape(&resultshape);
+          CSLDestroy(layer_options);
+          return status;
+      }      
 
       /*
       ** Perform classification, and some annotation related magic.
