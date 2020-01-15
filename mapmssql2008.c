@@ -1513,6 +1513,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
           msFree(tmp);
       }
       else {
+          query = msStringConcatenate(query, "ORDER BY ");
           query = msStringConcatenate(query, layerinfo->urid_name);
       }
       query = msStringConcatenate(query, ") 'rownum' FROM ");
