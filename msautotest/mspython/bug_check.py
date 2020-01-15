@@ -123,9 +123,103 @@ def test_pattern():
 
     return 'success'
 
+###############################################################################
+# Test reprojection of lines from Polar Stereographic and crossing the antimerdian
+
+def test_reprojection_lines_from_polar_stereographic_to_geographic():
+
+    shape = mapscript.shapeObj( mapscript.MS_SHAPE_LINE )
+    line = mapscript.lineObj()
+    line.add( mapscript.pointObj( -5554682.77568025, -96957.3485051449 ) ) # -179 40
+    line.add( mapscript.pointObj( -5554682.77568025, 96957.3485051449 ) ) # 179 40
+    shape.add( line )
+
+    polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=270 +datum=WGS84")
+    longlat_proj = mapscript.projectionObj("+proj=longlat +datum=WGS84")
+
+    if shape.project(polar_proj, longlat_proj) != 0:
+        pmstestlib.post_reason('shape.project() failed')
+        return 'fail'
+
+    part1 = shape.get(0)
+    part2 = shape.get(1)
+    if not part1 or not part2:
+        pmstestlib.post_reason('should get two parts')
+        return 'fail'
+
+    point11 = part1.get(0)
+    point12 = part1.get(1)
+    point21 = part2.get(0)
+    point22 = part2.get(1)
+    if abs(point11.x - -179.0) > 1e-7:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    if abs(point12.x - -180.0) > 1e-7:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    if abs(point21.x - 180.0) > 1e-7:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    if abs(point22.x - 179.0) > 1e-7:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test reprojection of lines from Polar Stereographic and crossing the antimerdian
+
+def test_reprojection_lines_from_polar_stereographic_to_webmercator():
+
+    shape = mapscript.shapeObj( mapscript.MS_SHAPE_LINE )
+    line = mapscript.lineObj()
+    line.add( mapscript.pointObj( -5554682.77568025, -96957.3485051449 ) ) # -179 40
+    line.add( mapscript.pointObj( -5554682.77568025, 96957.3485051449 ) ) # 179 40
+    shape.add( line )
+
+    polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=270 +datum=WGS84")
+    longlat_proj = mapscript.projectionObj("init=epsg:3857")
+
+    if shape.project(polar_proj, longlat_proj) != 0:
+        pmstestlib.post_reason('shape.project() failed')
+        return 'fail'
+
+    part1 = shape.get(0)
+    part2 = shape.get(1)
+    if not part1 or not part2:
+        pmstestlib.post_reason('should get two parts')
+        return 'fail'
+
+    point11 = part1.get(0)
+    point12 = part1.get(1)
+    point21 = part2.get(0)
+    point22 = part2.get(1)
+    if abs(point11.x - -19926188.85) > 1e-2:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    if abs(point12.x - -20037508.34) > 1e-2:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    if abs(point21.x - 20037508.34) > 1e-2:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    if abs(point22.x - 19926188.85) > 1e-2:
+        print(point11.x, point12.x, point21.x, point22.x)
+        pmstestlib.post_reason('did not get expected coordinates')
+        return 'fail'
+    return 'success'
+
 test_list = [
     bug_673,
     test_pattern,
+    test_reprojection_lines_from_polar_stereographic_to_geographic,
+    test_reprojection_lines_from_polar_stereographic_to_webmercator,
     None ]
 
 if __name__ == '__main__':
