@@ -895,7 +895,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Process each layer with a resultset.                            */
   /* ==================================================================== */
   for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
-    int status;
+    int status = 0;
     layerObj *layer = GET_LAYER(map, iLayer);
     shapeObj resultshape;
     OGRLayerH hOGRLayer;
@@ -1106,7 +1106,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       if( layer->resultcache->results[i].shape )
       {
           /* msDebug("Using cached shape %ld\n", layer->resultcache->results[i].shapeindex); */
-          msCopyShape(layer->resultcache->results[i].shape, &resultshape);
+          status = msCopyShape(layer->resultcache->results[i].shape, &resultshape);
       }
       else
       {
