@@ -137,8 +137,6 @@ class ImageWriteTestCase(MapTestCase):
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
             assert pyimg.mode == 'RGB'
-        else:
-            assert True
 
     def testImageWriteBytesIO(self):
         """image writes data to a BytesIO instance"""
@@ -156,8 +154,6 @@ class ImageWriteTestCase(MapTestCase):
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
             assert pyimg.mode == 'RGB'
-        else:
-            assert True
 
     def testImageGetBytes(self):
         """image returns bytes"""
@@ -174,8 +170,6 @@ class ImageWriteTestCase(MapTestCase):
             assert pyimg.format == 'PNG'
             assert pyimg.size == (200, 200)
             assert pyimg.mode == 'RGB'
-        else:
-            assert True
 
 
 if __name__ == '__main__':
