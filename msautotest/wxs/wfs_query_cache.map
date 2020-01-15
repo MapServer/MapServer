@@ -6,6 +6,8 @@
 # This one will emit 'map->query.max_cached_shape_count = 3 reached'
 # RUN_PARMS: wfs_query_cache.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&MAXFEATURES=10" > [RESULT]
 
+# RUN_PARMS: wfs_query_cache.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&MAXFEATURES=10&OUTPUTFORMAT=geojson" > [RESULT]
+
 # This one will emit 'map->query.max_cached_shape_ram_amount = 10000 reached after 2 cached features'
 # Gives different result in Travis and Vagrant for some unknown reason
 # RUN_disabled_PARMS: wfs_query_cache_2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><PropertyIsEqualTo><PropertyName>NAME_E</PropertyName><Literal>Nova Scotia</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
@@ -23,6 +25,17 @@ SHAPEPATH ./data
 SYMBOLSET etc/symbols.sym
 FONTSET etc/fonts.txt
 
+OUTPUTFORMAT
+    NAME "geojson"
+    DRIVER "OGR/GEOJSON"
+    MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+    FORMATOPTION "FORM=SIMPLE"
+    FORMATOPTION "STORAGE=memory"
+    FORMATOPTION "FILENAME=out.json"
+    FORMATOPTION "LCO:COORDINATE_PRECISION=4"
+    FORMATOPTION "LCO:NATIVE_MEDIA_TYPE=application/vnd.geo+json"
+END
+
 #
 # Start of web interface definition
 #
@@ -39,6 +52,7 @@ WEB
     "wfs_title"		   "Test simple wfs"
     "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?myparam=something&"
     "wfs_srs"		   "EPSG:4326 EPSG:4269"
+    "wfs_getfeature_formatlist" "gml,geojson"
     "ows_abstract"    "Test WFS Abstract"
     "ows_keywordlist" "ogc,wfs,gml,om"
     "ows_service_onlineresource" "http://localhost"
