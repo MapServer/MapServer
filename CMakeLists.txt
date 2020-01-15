@@ -847,7 +847,7 @@ endif(UNIX)
 if (WIN32)
     ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
     if (MSVC)
-        set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/wd4267 /wd4244 /wd4018")
+        set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/wd4267 /wd4244 /wd4018 /w14701")
     endif(MSVC)
 endif (WIN32)
 
