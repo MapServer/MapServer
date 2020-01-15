@@ -1227,14 +1227,27 @@ msProjectShapeLine(reprojectionObj* reprojector,
       else
         pt1Geo = wrkPoint; /* this is a cop out */
 
-      dist = wrkPoint.x - pt1Geo.x;
+      if( out->gt.need_geotransform && out->gt.geotransform[2] == 0 ) {
+        dist = out->gt.geotransform[1] * (wrkPoint.x - pt1Geo.x);
+      } else {
+        dist = wrkPoint.x - pt1Geo.x;
+      }
+
       if( fabs(dist) > 180.0
           && msTestNeedWrap( thisPoint, lastPoint,
                              pt1Geo, reprojector ) ) {
-        if( dist > 0.0 )
-          wrkPoint.x -= 360.0;
-        else if( dist < 0.0 )
-          wrkPoint.x += 360.0;
+        if( out->gt.need_geotransform && out->gt.geotransform[2] == 0 ) {
+          if( dist > 0.0 )
+            wrkPoint.x -= 360.0 * out->gt.invgeotransform[1];
+          else if( dist < 0.0 )
+            wrkPoint.x += 360.0 * out->gt.invgeotransform[1];
+        }
+        else {
+          if( dist > 0.0 )
+            wrkPoint.x -= 360.0;
+          else if( dist < 0.0 )
+            wrkPoint.x += 360.0;
+        }
       }
     }
 
@@ -2103,6 +2116,7 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 
 {
   pointObj  middle;
+  projectionObj* out = reprojector->out;
 
   middle.x = (pt1.x + pt2.x) * 0.5;
   middle.y = (pt1.y + pt2.y) * 0.5;
@@ -2116,8 +2130,13 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
    * If the last point was moved, then we are considered due for a
    * move to.
    */
-  if( fabs(pt2_geo.x-pt2.x) > 180.0 )
-    return 1;
+  if( out->gt.need_geotransform && out->gt.geotransform[2] == 0 ) {
+    if( fabs( (pt2_geo.x-pt2.x) * out->gt.geotransform[1] ) > 180.0 )
+      return 1;
+  } else {
+    if( fabs(pt2_geo.x-pt2.x) > 180.0 )
+      return 1;
+  }
 
   /*
    * Otherwise, test to see if the middle point transforms
