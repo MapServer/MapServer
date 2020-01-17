@@ -2551,7 +2551,6 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
         return MS_FAILURE;
     }
 
-#ifdef USE_PROJ
     // Special processing if the specified projection for the rect is different from the layer projection
     // We want to issue a WHERE that includes
     // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
@@ -2572,7 +2571,6 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
         // the SRID from the rectProjection
         msProjectRect(rectProjection, &(layer->projection), &searchrectInLayerProj); /* project the searchrect to source coords */
     }
-#endif
 
     if (searchrectInLayerProj.minx == searchrectInLayerProj.maxx || 
         searchrectInLayerProj.miny == searchrectInLayerProj.maxy) {
