@@ -2577,11 +2577,11 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
     if (searchrectInLayerProj.minx == searchrectInLayerProj.maxx || 
         searchrectInLayerProj.miny == searchrectInLayerProj.maxy) {
         /* create point shape for rectangles with zero area */
-        sprintf(box3d, "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
+        snprintf(box3d, sizeof(box3d), "%s::STGeomFromText('POINT(%.15g %.15g)',%s)", /* %s.STSrid)", */
             layerinfo->geom_column_type, searchrectInLayerProj.minx, searchrectInLayerProj.miny, layerinfo->user_srid);
     }
     else {
-        sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+         snprintf(box3d, sizeof(box3d), "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
             layerinfo->geom_column_type,
             searchrectInLayerProj.minx, searchrectInLayerProj.miny,
             searchrectInLayerProj.maxx, searchrectInLayerProj.miny,
