@@ -2532,7 +2532,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
 
-  int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
+  MS_DLL_EXPORT int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
   void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj* layer, mapObj* map);
   rectObj msUVRASTERGetSearchRect( layerObj* layer, mapObj* map );
 
