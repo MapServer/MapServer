@@ -2592,7 +2592,7 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
             layerinfo->geom_column_type, searchrectInLayerProj.minx, searchrectInLayerProj.miny, layerinfo->user_srid);
     }
     else {
-        sprintf(box3d, "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+         snprintf(box3d, sizeof(box3d), "%s::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
             layerinfo->geom_column_type,
             searchrectInLayerProj.minx, searchrectInLayerProj.miny,
             searchrectInLayerProj.maxx, searchrectInLayerProj.miny,
