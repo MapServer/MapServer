@@ -1195,13 +1195,13 @@ PHP_METHOD(mapObj, zoomPoint)
 
   if (zoomFactor < 0) {
     newGeoRefExtent.minx =
-      dfGeoPosX - (dfDeltaX/2)*(abs(zoomFactor));
+      dfGeoPosX - (dfDeltaX/2)*(labs(zoomFactor));
     newGeoRefExtent.miny =
-      dfGeoPosY - (dfDeltaY/2)*(abs(zoomFactor));
+      dfGeoPosY - (dfDeltaY/2)*(labs(zoomFactor));
     newGeoRefExtent.maxx =
-      dfGeoPosX + (dfDeltaX/2)*(abs(zoomFactor));
+      dfGeoPosX + (dfDeltaX/2)*(labs(zoomFactor));
     newGeoRefExtent.maxy =
-      dfGeoPosY + (dfDeltaY/2)*(abs(zoomFactor));
+      dfGeoPosY + (dfDeltaY/2)*(labs(zoomFactor));
   }
   if (zoomFactor == 1) {
     newGeoRefExtent.minx = dfGeoPosX - (dfDeltaX/2);
