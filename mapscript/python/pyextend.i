@@ -255,8 +255,8 @@ def fromstring(data, mappath=None):
     } 
 
     int setLayerOrder(PyObject *order) {
-        int i, size;
-        size = PyTuple_Size(order);
+        int i;
+        Py_ssize_t size = PyTuple_Size(order);
         for (i = 0; i < size; i++) {
             self->layerorder[i] = (int)PyInt_AsLong(PyTuple_GetItem(order, i));
         }

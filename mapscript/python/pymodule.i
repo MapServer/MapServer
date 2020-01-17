@@ -39,7 +39,7 @@
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  $1 = (int) PySequence_Size($input);
   $2 = (double*) malloc($1*sizeof(double));
   for( i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -100,7 +100,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   if (PyDict_Check($input)) {
 
     int i = 0;
-    int size = PyDict_Size($input);
+    int size = (int) PyDict_Size($input);
 
     PyObject* keys = PyDict_Keys($input);
     PyObject* values = PyDict_Values($input);
