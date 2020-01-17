@@ -1806,8 +1806,8 @@ int msCGIDispatchRequest(mapservObj *mapserv)
 int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_length)
 {
   int x,m=0;
-  struct mstimeval execstarttime, execendtime;
-  struct mstimeval requeststarttime, requestendtime;
+  struct mstimeval execstarttime = {0}, execendtime = {0};
+  struct mstimeval requeststarttime = {0}, requestendtime = {0};
   mapservObj* mapserv = NULL;
   char *queryString = NULL;
   int maxParams = MS_DEFAULT_CGI_PARAMS;

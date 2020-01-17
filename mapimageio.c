@@ -388,7 +388,6 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
 {
   FILE *stream = NULL;
   char buffer[MS_BUFFER_LENGTH];
-  int r,g,b,a;
   *nEntries = 0;
 
   stream = fopen(palette, "r");
@@ -398,6 +397,7 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
   }
 
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) && *nEntries<256) {
+    int r,g,b,a = 0;
     /* while there are colors to load */
     if(buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\r')
       continue; /* skip comments and blank lines */

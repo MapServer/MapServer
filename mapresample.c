@@ -1342,7 +1342,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   int   result, bSuccess;
   double  adfSrcGeoTransform[6], adfDstGeoTransform[6];
   double      adfInvSrcGeoTransform[6], dfNominalCellSize;
-  rectObj sSrcExtent, sOrigSrcExtent;
+  rectObj sSrcExtent = {0}, sOrigSrcExtent;
   mapObj  sDummyMap;
   imageObj   *srcImage;
   void  *pTCBData;

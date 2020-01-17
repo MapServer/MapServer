@@ -1931,7 +1931,7 @@ msDrawRasterLayerGDAL_16BitClassification(
   rasterBufferObj *mask_rb = NULL;
   rasterBufferObj s_mask_rb;
   int lastC;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
 
   if(layer->mask) {
     int ret;

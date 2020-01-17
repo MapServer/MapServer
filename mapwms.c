@@ -167,9 +167,6 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
 
 int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int checkonly)
 {
-  char **atimes, **ranges, **patterns;
-  int numtimes, numpatterns, numranges, i, j, k;
-  char *tmpstr = NULL;
   int ret = MS_SUCCESS;
 
   if (timepatternstring && timestring) {
@@ -177,20 +174,23 @@ int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int che
     /* time value can be dicrete times (eg 2004-09-21), */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-    atimes = msStringSplit(timestring, ',', &numtimes);
+    int numtimes = 0;
+    char** atimes = msStringSplit(timestring, ',', &numtimes);
     
     /* get the pattern to use */
     if (numtimes > 0) {
-      patterns = msStringSplit(timepatternstring, ',', &numpatterns);
+      int numpatterns = 0;
+      char** patterns = msStringSplit(timepatternstring, ',', &numpatterns);
 
-      for (j=0; j<numtimes;++j) {
-        ranges = msStringSplit(atimes[j],  '/', &numranges);
-        for (k=0; k<numranges;++k) {
+      for (int j=0; j<numtimes;++j) {
+        int numranges = 0;
+        char** ranges = msStringSplit(atimes[j],  '/', &numranges);
+        for (int k=0; k<numranges;++k) {
           int match = MS_FALSE;
-          for (i=0; i<numpatterns; ++i) {
+          for (int i=0; i<numpatterns; ++i) {
             if (patterns[i] && strlen(patterns[i]) > 0) {
               msStringTrimBlanks(patterns[i]);
-              tmpstr = msStringTrimLeft(patterns[i]);
+              char* tmpstr = msStringTrimLeft(patterns[i]);
               if (msTimeMatchPattern(ranges[k], tmpstr) == MS_TRUE) {
                 if (!checkonly) msSetLimitedPatternsToUse(tmpstr);
                 match = MS_TRUE;
@@ -563,7 +563,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
 int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int forcecharcter)
 {
   char **extents=NULL, **ranges=NULL, **onerange=NULL;
-  int numextents, numranges, numonerange;
+  int numextents=0, numranges=0, numonerange=0;
   char **aextentvalues = NULL;
   int nextentvalues=0;
   pointObj *aextentranges=NULL;
