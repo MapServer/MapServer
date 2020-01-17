@@ -1456,20 +1456,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   /* adding items to the select list */
   for (t = 0; t < layer->numitems; t++) {
 #ifdef USE_ICONV
-      query = msStringConcatenate(query, "convert(nvarchar(max), [");
-      query = msStringConcatenate(query, layer->items[t]);
-      query = msStringConcatenate(query, "]) '");
-      tmp = msIntToString(t);
-      query = msStringConcatenate(query, tmp);
-      if (paging_query) {
-          paging_query = msStringConcatenate(paging_query, "[");
-          paging_query = msStringConcatenate(paging_query, tmp);
-          paging_query = msStringConcatenate(paging_query, "], ");
-      }
-      msFree(tmp);
-      query = msStringConcatenate(query,"',");
+      query = msStringConcatenate(query, "convert(nvarchar(max), [");     
 #else
       query = msStringConcatenate(query, "convert(varchar(max), [");
+#endif
       query = msStringConcatenate(query, layer->items[t]);
       query = msStringConcatenate(query, "]) '");
       tmp = msIntToString(t);
@@ -1481,7 +1471,6 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       }
       msFree(tmp);
       query = msStringConcatenate(query, "',");
-#endif
   }
 
   /* adding geometry column */
