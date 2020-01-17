@@ -962,7 +962,6 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
                          double buffer, int maxresults)
 {
   int result;
-  int previous_maxresults;
   double layer_tolerance;
   rectObj bufferRect;
   rasterLayerInfo *rlinfo = NULL;
@@ -1034,14 +1033,13 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
   rlinfo->range_mode = mode;
 
   if( maxresults != 0 ) {
-    previous_maxresults = rlinfo->query_result_hard_max;
+    const int previous_maxresults = rlinfo->query_result_hard_max;
     rlinfo->query_result_hard_max = maxresults;
-  }
-
-  result = msRasterQueryByRect( map, layer, bufferRect );
-
-  if( maxresults != 0 )
+    result = msRasterQueryByRect( map, layer, bufferRect );
     rlinfo->query_result_hard_max = previous_maxresults;
+  } else {
+    result = msRasterQueryByRect( map, layer, bufferRect );
+  }
 
   return result;
 }
@@ -1319,13 +1317,8 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 {
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
-  double adfGeoTransform[6];
-  int nXSize, nYSize;
-  GDALDatasetH hDS;
   shapefileObj *tileshpfile;
   int tilelayerindex = -1;
-  CPLErr eErr = CE_Failure;
-  char *decrypted_path;
 
   if( (!layer->data || strlen(layer->data) == 0)
       && layer->tileindex == NULL) {
@@ -1358,32 +1351,28 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
-  decrypted_path = msDecryptStringTokens( map, szPath );
+  char* decrypted_path = msDecryptStringTokens( map, szPath );
+  if( !decrypted_path )
+      return MS_FAILURE;
 
-  msAcquireLock( TLOCK_GDAL );
-  if( decrypted_path ) {
-    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
-    hDS = GDALOpenEx(decrypted_path,
+  char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+  GDALDatasetH hDS = GDALOpenEx(decrypted_path,
                                 GDAL_OF_RASTER,
                                 NULL,
                                 (const char* const*)connectionoptions,
                                 NULL);
-    CSLDestroy(connectionoptions);
-    msFree( decrypted_path );
-  } else
-    hDS = NULL;
-
-  if( hDS != NULL ) {
-    nXSize = GDALGetRasterXSize( hDS );
-    nYSize = GDALGetRasterYSize( hDS );
-    eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
-
-    GDALClose( hDS );
+  CSLDestroy(connectionoptions);
+  msFree( decrypted_path );
+  if( hDS == NULL ) {
+    return MS_FAILURE;
   }
 
-  msReleaseLock( TLOCK_GDAL );
-
-  if( hDS == NULL || eErr != CE_None ) {
+  const int nXSize = GDALGetRasterXSize( hDS );
+  const int nYSize = GDALGetRasterYSize( hDS );
+  double adfGeoTransform[6] = {0};
+  const CPLErr eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
+  if( eErr != CE_None ) {
+    GDALClose( hDS );
     return MS_FAILURE;
   }
 

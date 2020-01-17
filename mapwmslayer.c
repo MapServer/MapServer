@@ -951,8 +951,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 #ifdef USE_WMS_LYR
   char *pszURL = NULL, *pszHTTPCookieData = NULL;
   const char *pszTmp;
-  rectObj bbox;
-  int bbox_width, bbox_height;
+  rectObj bbox = { 0 };
+  int bbox_width = 0, bbox_height = 0;
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
 

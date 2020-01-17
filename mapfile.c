@@ -6390,7 +6390,7 @@ static int loadMapInternal(mapObj *map)
 mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 {
   mapObj *map;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime = {0}, endtime = {0};
   char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
   char *mappath=NULL;
   int debuglevel;
@@ -6471,7 +6471,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 mapObj *msLoadMap(const char *filename, const char *new_mappath)
 {
   mapObj *map;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
   char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
   int debuglevel;
 

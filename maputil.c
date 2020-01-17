@@ -931,7 +931,7 @@ int msSaveImage(mapObj *map, imageObj *img, const char *filename)
 {
   int nReturnVal = MS_FAILURE;
   char szPath[MS_MAXPATHLEN];
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
 
   if(map && map->debug >= MS_DEBUGLEVEL_TUNING) {
     msGettimeofday(&starttime, NULL);
@@ -1876,7 +1876,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
   for (i = 0; i < p->numlines; i++) {
-    pointObj old_pt, old_diffdir, old_offdir;
+    pointObj old_pt = {0}, old_diffdir, old_offdir;
     if(p->line[i].numpoints<2) {
       ret->line[i].numpoints = 0;
       continue; /* skip degenerate points */
@@ -2682,14 +2682,10 @@ void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_langu
    Ref: http://trac.osgeo.org/gdal/ticket/966 */
 shapeObj* msGeneralize(shapeObj *shape, double tolerance)
 {
-  shapeObj *newShape;
   lineObj newLine = {0,NULL};
-  double sqTolerance = tolerance*tolerance;
-  
-  double dX0, dY0, dX1, dY1, dX, dY, dSqDist;
-  int i;
+  const double sqTolerance = tolerance*tolerance;
 
-  newShape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  shapeObj* newShape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(newShape);
   msCopyShape(shape, newShape);
 
@@ -2697,28 +2693,30 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
     return newShape;
   
   /* Clean shape */
-  for (i=0; i < newShape->numlines; i++)
+  for (int i=0; i < newShape->numlines; i++)
     free(newShape->line[i].point);
   newShape->numlines = 0;
   if (newShape->line) free(newShape->line);
     
   msAddLine(newShape, &newLine);
   
-  if (shape->line[0].numpoints>0) {
-    msAddPointToLine(&newShape->line[0],
-                     &shape->line[0].point[0]);              
-    dX0 = shape->line[0].point[0].x;
-    dY0 = shape->line[0].point[0].y;    
+  if (shape->line[0].numpoints==0) {
+    return newShape;
   }
-  
-  for(i=1; i<shape->line[0].numpoints; i++)
+
+  msAddPointToLine(&newShape->line[0],
+                   &shape->line[0].point[0]);
+  double dX0 = shape->line[0].point[0].x;
+  double dY0 = shape->line[0].point[0].y;
+
+  for(int i=1; i<shape->line[0].numpoints; i++)
   {
-      dX1 = shape->line[0].point[i].x;
-      dY1 = shape->line[0].point[i].y;
+      double dX1 = shape->line[0].point[i].x;
+      double dY1 = shape->line[0].point[i].y;
      
-      dX = dX1-dX0;
-      dY = dY1-dY0;
-      dSqDist = dX*dX + dY*dY;
+      const double dX = dX1-dX0;
+      const double dY = dY1-dY0;
+      const double dSqDist = dX*dX + dY*dY;
       if (i == shape->line[0].numpoints-1 || dSqDist >= sqTolerance)
       {
           pointObj p;

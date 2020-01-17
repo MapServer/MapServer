@@ -994,32 +994,29 @@ void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double c
   if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove duplicate vertices */
     for(i=0; i<shape->numlines; i++) { /* for each part */
       int snap = 1;
-      double x0,y0,x1,y1,x2,y2;
+      const double x0 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[0].x, extent.minx, inv_cs, grid_resolution);
+      const double y0 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[0].y, extent.maxy, inv_cs, grid_resolution);
+
       /*do a quick heuristic: will we risk having a degenerate shape*/
       if(shape->type == MS_SHAPE_LINE) {
         /*a line is degenerate if it has a single pixel. we check that the first and last pixel are different*/
-        x0 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[0].x, extent.minx, inv_cs, grid_resolution);
-        y0 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[0].y, extent.maxy, inv_cs, grid_resolution);
-        x1 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints-1].x, extent.minx, inv_cs, grid_resolution);
-        y1 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints-1].y, extent.maxy, inv_cs, grid_resolution);
+        const double x1 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints-1].x, extent.minx, inv_cs, grid_resolution);
+        const double y1 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints-1].y, extent.maxy, inv_cs, grid_resolution);
         if(x0 == x1 && y0 == y1) {
           snap = 0;
         }
-      } else if(shape->type == MS_SHAPE_POLYGON) {
-        x0 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[0].x, extent.minx, inv_cs, grid_resolution);
-        y0 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[0].y, extent.maxy, inv_cs, grid_resolution);
-        x1 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3].x, extent.minx, inv_cs, grid_resolution);
-        y1 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3].y, extent.maxy, inv_cs, grid_resolution);
-        x2 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3*2].x, extent.minx, inv_cs, grid_resolution);
-        y2 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3*2].y, extent.maxy, inv_cs, grid_resolution);
+      } else /* if(shape->type == MS_SHAPE_POLYGON) */ {
+        const double x1 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3].x, extent.minx, inv_cs, grid_resolution);
+        const double y1 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3].y, extent.maxy, inv_cs, grid_resolution);
+        const double x2 = MS_MAP2IMAGE_X_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3*2].x, extent.minx, inv_cs, grid_resolution);
+        const double y2 = MS_MAP2IMAGE_Y_IC_SNAP(shape->line[i].point[shape->line[i].numpoints/3*2].y, extent.maxy, inv_cs, grid_resolution);
         if((x0 == x1 && y0 == y1) ||
             (x0 == x2 && y0 == y2) ||
             (x1 == x2 && y1 == y2)) {
           snap = 0;
         }
       }
-      else
-        snap = 0;
+
       if(snap) {
         shape->line[i].point[0].x = x0;
         shape->line[i].point[0].y = y0;

@@ -312,7 +312,7 @@ xmlNodePtr _msMetadataGetGMLTimePeriod(char **temporal)
 static
 xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer, xmlNsPtr *ppsNsGco)
 {
-  int n;
+  int n = 0;
   int status;
   char *value = NULL;
   char **temporal = NULL;

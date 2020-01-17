@@ -223,8 +223,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   layerObj *lp=NULL;
   int status = MS_FAILURE;
   imageObj *image = NULL;
-  struct mstimeval mapstarttime, mapendtime;
-  struct mstimeval starttime, endtime;
+  struct mstimeval mapstarttime = {0}, mapendtime = {0};
+  struct mstimeval starttime = {0}, endtime = {0};
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   enum MS_CONNECTION_TYPE lastconnectiontype;
@@ -2221,10 +2221,10 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
 int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
   shapeObj labelPoly;
-  label_bounds lbounds;
+  label_bounds lbounds = {0};
   lineObj labelPolyLine;
   pointObj labelPolyPoints[5];
-  textSymbolObj ts;
+  textSymbolObj ts = {0};
   int needLabelPoly=MS_TRUE;
   int needLabelPoint=MS_TRUE;
   int haveLabelText=MS_TRUE;
@@ -2248,7 +2248,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   labelPoly.line->numpoints = 5;
 
   if(label->position != MS_XY) {
-    pointObj p;
+    pointObj p = {0};
 
     if(label->numstyles > 0) {
       int i;
@@ -2891,7 +2891,7 @@ static int getLabelPositionFromString(char *pszString) {
 int msDrawLabelCache(mapObj *map, imageObj *image)
 {
   int nReturnVal = MS_SUCCESS;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
@@ -2915,7 +2915,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
        */
       lineObj labelpoly_line;
       pointObj labelpoly_points[5];
-      label_bounds labelpoly_bounds;
+      label_bounds labelpoly_bounds = {0};
       lineObj  label_marker_line;
       pointObj label_marker_points[5];
       label_bounds label_marker_bounds;

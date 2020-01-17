@@ -476,9 +476,9 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   char **savedProcessing = NULL;
   int bHasLonWrap = MS_FALSE;
   double dfLonWrap = 0.0;
-  rectObj oldLayerExtent;
+  rectObj oldLayerExtent = {0};
   char* oldLayerData = NULL;
-  projectionObj oldLayerProjection;
+  projectionObj oldLayerProjection={0};
   int ret;
 
   if (layer->debug)
@@ -915,13 +915,8 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 {
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
-  double adfGeoTransform[6];
-  int nXSize, nYSize;
-  GDALDatasetH hDS;
   shapefileObj *tileshpfile;
   int tilelayerindex = -1;
-  CPLErr eErr = CE_Failure;
-  char *decrypted_path;
 
   if( (!layer->data || strlen(layer->data) == 0)
       && layer->tileindex == NULL) {
@@ -954,34 +949,30 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
-  decrypted_path = msDecryptStringTokens( map, szPath );
+  char* decrypted_path = msDecryptStringTokens( map, szPath );
+  if( !decrypted_path )
+      return MS_FAILURE;
 
   GDALAllRegister();
 
-  msAcquireLock( TLOCK_GDAL );
-  if( decrypted_path ) {
-    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
-    hDS = GDALOpenEx(decrypted_path,
+  char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+  GDALDatasetH hDS = GDALOpenEx(decrypted_path,
                                 GDAL_OF_RASTER,
                                 NULL,
                                 (const char* const*)connectionoptions,
                                 NULL);
-    CSLDestroy(connectionoptions);
-    msFree( decrypted_path );
-  } else
-    hDS = NULL;
-
-  if( hDS != NULL ) {
-    nXSize = GDALGetRasterXSize( hDS );
-    nYSize = GDALGetRasterYSize( hDS );
-    eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
-
-    GDALClose( hDS );
+  CSLDestroy(connectionoptions);
+  msFree( decrypted_path );
+  if( hDS == NULL ) {
+    return MS_FAILURE;
   }
 
-  msReleaseLock( TLOCK_GDAL );
-
-  if( hDS == NULL || eErr != CE_None ) {
+  const int nXSize = GDALGetRasterXSize( hDS );
+  const int nYSize = GDALGetRasterYSize( hDS );
+  double adfGeoTransform[6] = {0};
+  const CPLErr eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
+  if( eErr != CE_None ) {
+    GDALClose( hDS );
     return MS_FAILURE;
   }
 
