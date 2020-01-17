@@ -306,19 +306,6 @@ wkbReadInt(wkbObj *w)
 }
 
 /*
-** Read one double from the WKB and advance the read pointer.
-** We assume the endianess of the WKB is the same as this machine.
-*/
-static inline double
-wkbReadDouble(wkbObj *w)
-{
-  double d;
-  memcpy(&d, w->ptr, sizeof(double));
-  w->ptr += sizeof(double);
-  return d;
-}
-
-/*
 ** Read one pointObj (two doubles) from the WKB and advance the read pointer.
 ** We assume the endianess of the WKB is the same as this machine.
 */
@@ -740,19 +727,6 @@ wkbConvGeometryToShape(wkbObj *w, shapeObj *shape)
   return MS_FAILURE;
 }
 
-
-/*
-** Calculate determinant of a 3x3 matrix. Handy for
-** the circle center calculation.
-*/
-static inline double
-arcDeterminant3x3(double *m)
-{
-  /* This had better be a 3x3 matrix or we'll fall to bits */
-  return m[0] * ( m[4] * m[8] - m[7] * m[5] ) -
-         m[3] * ( m[1] * m[8] - m[7] * m[2] ) +
-         m[6] * ( m[1] * m[5] - m[4] * m[2] );
-}
 
 /*
 ** What side of p1->p2 is q on?
