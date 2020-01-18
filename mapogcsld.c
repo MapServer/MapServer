@@ -4420,9 +4420,9 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
   if (strstr(pszExpression, " AND ") || strstr(pszExpression, " and ")) {
     for (i=0; i<nLength-5; i++) {
       if (pszExpression[i] == ' ' &&
-          (pszExpression[i+1] == 'A' || pszExpression[i+1] == 'a') &&
-          (pszExpression[i+2] == 'N' || pszExpression[i+2] == 'n') &&
-          (pszExpression[i+3] == 'D' || pszExpression[i+3] == 'd') &&
+          (toupper(pszExpression[i+1]) == 'A') &&
+          (toupper(pszExpression[i+2]) == 'N') &&
+          (toupper(pszExpression[i+3]) == 'D') &&
           (pszExpression[i+4] == ' '))
         break;
       else {
@@ -4432,9 +4432,9 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
     }
   } else if (strstr(pszExpression, "AND(") || strstr(pszExpression, "and(")) {
     for (i=0; i<nLength-4; i++) {
-      if ((pszExpression[i] == 'A' || pszExpression[i] == 'a') &&
-          (pszExpression[i+1] == 'N' || pszExpression[i+1] == 'n') &&
-          (pszExpression[i+2] == 'D' || pszExpression[i+2] == 'd') &&
+      if ((toupper(pszExpression[i]) == 'A') &&
+          (toupper(pszExpression[i+1]) == 'N') &&
+          (toupper(pszExpression[i+2]) == 'D') &&
           (pszExpression[i+3] == '('))
         break;
       else {
@@ -4445,8 +4445,8 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
   } else if (strstr(pszExpression, " OR ") || strstr(pszExpression, " or ")) {
     for (i=0; i<nLength-4; i++) {
       if (pszExpression[i] == ' ' &&
-          (pszExpression[i+1] == 'O' || pszExpression[i+1] == 'o') &&
-          (pszExpression[i+2] == 'R' || pszExpression[i+2] == 'r') &&
+          (toupper(pszExpression[i+1]) == 'O') &&
+          (toupper(pszExpression[i+2]) == 'R') &&
           pszExpression[i+3] == ' ')
         break;
       else {
@@ -4456,8 +4456,8 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
     }
   } else if (strstr(pszExpression, "OR(") || strstr(pszExpression, " or(")) {
     for (i=0; i<nLength-3; i++) {
-      if ((pszExpression[i] == 'O' || pszExpression[i] == 'o') &&
-          (pszExpression[i+1] == 'R' || pszExpression[i+1] == 'r') &&
+      if ((toupper(pszExpression[i]) == 'O') &&
+          (toupper(pszExpression[i+1]) == 'R') &&
           pszExpression[i+2] == '(')
         break;
       else {
