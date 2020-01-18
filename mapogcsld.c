@@ -4361,15 +4361,13 @@ char *msSLDGetLogicalOperator(char *pszExpression)
   if (!pszExpression)
     return NULL;
 
-  /* TODO for NOT */
-
-  if(strstr(pszExpression, " AND ") || strstr(pszExpression, "AND("))
+  if(strcasecmp(pszExpression, " AND ") || strcasecmp(pszExpression, "AND("))
     return msStrdup("And");
 
-  if(strstr(pszExpression, " OR ") || strstr(pszExpression, "OR("))
+  if(strcasecmp(pszExpression, " OR ") || strcasecmp(pszExpression, "OR("))
     return msStrdup("Or");
 
-  if(strstr(pszExpression, "NOT ") || strstr(pszExpression, "NOT("))
+  if(strcasecmp(pszExpression, "NOT ") || strcasecmp(pszExpression, "NOT("))
     return msStrdup("Not");
 
   return NULL;
@@ -4422,9 +4420,9 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
   if (strstr(pszExpression, " AND ") || strstr(pszExpression, " and ")) {
     for (i=0; i<nLength-5; i++) {
       if (pszExpression[i] == ' ' &&
-          (pszExpression[i+1] == 'A' || pszExpression[i] == 'a') &&
-          (pszExpression[i+2] == 'N' || pszExpression[i] == 'n') &&
-          (pszExpression[i+3] == 'D' || pszExpression[i] == 'd') &&
+          (pszExpression[i+1] == 'A' || pszExpression[i+1] == 'a') &&
+          (pszExpression[i+2] == 'N' || pszExpression[i+2] == 'n') &&
+          (pszExpression[i+3] == 'D' || pszExpression[i+3] == 'd') &&
           (pszExpression[i+4] == ' '))
         break;
       else {
@@ -4435,8 +4433,8 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
   } else if (strstr(pszExpression, "AND(") || strstr(pszExpression, "and(")) {
     for (i=0; i<nLength-4; i++) {
       if ((pszExpression[i] == 'A' || pszExpression[i] == 'a') &&
-          (pszExpression[i+1] == 'N' || pszExpression[i] == 'n') &&
-          (pszExpression[i+2] == 'D' || pszExpression[i] == 'd') &&
+          (pszExpression[i+1] == 'N' || pszExpression[i+1] == 'n') &&
+          (pszExpression[i+2] == 'D' || pszExpression[i+2] == 'd') &&
           (pszExpression[i+3] == '('))
         break;
       else {
@@ -4447,8 +4445,8 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
   } else if (strstr(pszExpression, " OR ") || strstr(pszExpression, " or ")) {
     for (i=0; i<nLength-4; i++) {
       if (pszExpression[i] == ' ' &&
-          (pszExpression[i+1] == 'O' || pszExpression[i] == 'o') &&
-          (pszExpression[i+2] == 'R' || pszExpression[i] == 'r') &&
+          (pszExpression[i+1] == 'O' || pszExpression[i+1] == 'o') &&
+          (pszExpression[i+2] == 'R' || pszExpression[i+2] == 'r') &&
           pszExpression[i+3] == ' ')
         break;
       else {
@@ -4459,7 +4457,7 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
   } else if (strstr(pszExpression, "OR(") || strstr(pszExpression, " or(")) {
     for (i=0; i<nLength-3; i++) {
       if ((pszExpression[i] == 'O' || pszExpression[i] == 'o') &&
-          (pszExpression[i+1] == 'R' || pszExpression[i] == 'r') &&
+          (pszExpression[i+1] == 'R' || pszExpression[i+1] == 'r') &&
           pszExpression[i+2] == '(')
         break;
       else {
