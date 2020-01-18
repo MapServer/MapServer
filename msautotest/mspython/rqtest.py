@@ -793,5 +793,5 @@ if __name__ == '__main__':
 
     pmstestlib.summarize()
 
-    mapscript.msCleanup(0)
+    mapscript.msCleanup()
 
