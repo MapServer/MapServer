@@ -4377,27 +4377,20 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
 {
   char *pszAnd = NULL, *pszOr = NULL, *pszNot=NULL;
 
-  pszAnd = strstr(pszExpression, " AND ");
-  if (!pszAnd)
-    pszAnd = strstr(pszExpression, " and ");
+  pszAnd = strcasestr(pszExpression, " AND ");
 
   if (pszAnd)
     return msStrdup(pszAnd+4);
   else {
-    pszOr = strstr(pszExpression, " OR ");
-    if (!pszOr)
-      pszOr = strstr(pszExpression, " or ");
+    pszOr = strcasestr(pszExpression, " OR ");
 
     if (pszOr)
       return msStrdup(pszOr+3);
     else {
-      pszNot = strstr(pszExpression, "NOT ");
+      pszNot = strcasestr(pszExpression, "NOT ");
+
       if (!pszNot)
-        pszNot = strstr(pszExpression, "not ");
-      if (!pszNot)
-        pszNot = strstr(pszExpression, "NOT(");
-      if (!pszNot)
-        pszNot = strstr(pszExpression, "not(");
+        pszNot = strcasestr(pszExpression, "NOT(");
 
       if (pszNot)
         return msStrdup(pszNot+4);
