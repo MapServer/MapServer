@@ -32,6 +32,7 @@
 #ifdef USE_POSTGIS
 
 #include "libpq-fe.h"
+#include <string>
 
 #ifndef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1
@@ -53,18 +54,18 @@
 ** Specific information needed for managing this layer.
 */
 typedef struct {
-  char        *sql;        /* SQL query to send to database */
-  PGconn      *pgconn;     /* Connection to database */
-  long        rownum;      /* What row is the next to be read (for random access) */
-  PGresult    *pgresult;   /* For fetching rows from the database */
-  char        *uid;        /* Name of user-specified unique identifier, if set */
-  char        *srid;       /* Name of user-specified SRID: zero-length => calculate; non-zero => use this value! */
-  char        *geomcolumn; /* Specified geometry column, eg "THEGEOM from thetable" */
-  char        *fromsource; /* Specified record source, ed "thegeom from THETABLE" or "thegeom from (SELECT..) AS FOO" */
-  int         endian;      /* Endianness of the mapserver host */
-  int         version;     /* PostGIS version of the database */
-  int         paging;      /* Driver handling of pagination, enabled by default */
-  int         force2d;     /* Pass geometry through ST_Force2D */
+  std::string sql{};                 /* SQL query to send to database */
+  PGconn      *pgconn = nullptr;     /* Connection to database */
+  long        rownum = 0;            /* What row is the next to be read (for random access) */
+  PGresult    *pgresult = nullptr;   /* For fetching rows from the database */
+  std::string uid{};                 /* Name of user-specified unique identifier, if set */
+  std::string srid{};                /* Name of user-specified SRID: zero-length => calculate; non-zero => use this value! */
+  std::string geomcolumn{};          /* Specified geometry column, eg "THEGEOM from thetable" */
+  std::string fromsource{};          /* Specified record source, ed "thegeom from THETABLE" or "thegeom from (SELECT..) AS FOO" */
+  int         endian = 0;            /* Endianness of the mapserver host */
+  int         version = 0;           /* PostGIS version of the database */
+  int         paging = 0;            /* Driver handling of pagination, enabled by default */
+  int         force2d = 0;           /* Pass geometry through ST_Force2D */
 }
 msPostGISLayerInfo;
 
@@ -79,16 +80,6 @@ typedef struct {
   size_t size; /* Size of allocated space */
   int *typemap; /* Look-up array to valid OGC types */
 } wkbObj;
-
-/*
-** Utility structure used when building up stroked lines while
-** handling curved feature types.
-*/
-typedef struct {
-  pointObj *data; /* Re-sizeable point buffer */
-  int npoints;  /* How many points are we currently storing */
-  int maxpoints; /* How big is our point buffer */
-} pointArrayObj;
 
 /*
 ** All the WKB type numbers from the OGC
@@ -154,19 +145,6 @@ static int wkb_postgis20[WKB_TYPE_COUNT] = {
   WKB_MULTISURFACE,
   0,0,0
 };
-
-
-/*
-** Prototypes
-*/
-void msPostGISFreeLayerInfo(layerObj *layer);
-msPostGISLayerInfo *msPostGISCreateLayerInfo(void);
-char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid, rectObj *rectInOtherSRID, int rectOtherSRID);
-int msPostGISParseData(layerObj *layer);
-int arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line, int pnZMFlag);
-int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);
-pointArrayObj* pointArrayNew(int maxpoints);
-void pointArrayFree(pointArrayObj *d);
 
 #endif /* USE_POSTGIS */
 
