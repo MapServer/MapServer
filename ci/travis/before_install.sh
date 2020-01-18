@@ -12,7 +12,7 @@ sudo apt-get install --allow-unauthenticated protobuf-c-compiler libprotobuf-c0-
 sudo apt-get install --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs
 sudo apt-get install --allow-unauthenticated php5-dev || sudo apt-get install --allow-unauthenticated php7-dev
 sudo apt-get install --allow-unauthenticated libperl-dev
-sudo pip install git+git://github.com/tbonfort/cpp-coveralls.git@extensions
+sudo pip install cpp-coveralls
 # install swig 3.0.12 (defaults to 2.0.11 on trusty)
 wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
 export CC="ccache gcc"
