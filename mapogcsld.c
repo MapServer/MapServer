@@ -4361,13 +4361,13 @@ char *msSLDGetLogicalOperator(char *pszExpression)
   if (!pszExpression)
     return NULL;
 
-  if(strcasecmp(pszExpression, " AND ") || strcasecmp(pszExpression, "AND("))
+  if(strcasestr(pszExpression, " AND ") || strcasestr(pszExpression, "AND("))
     return msStrdup("And");
 
-  if(strcasecmp(pszExpression, " OR ") || strcasecmp(pszExpression, "OR("))
+  if(strcasestr(pszExpression, " OR ") || strcasestr(pszExpression, "OR("))
     return msStrdup("Or");
 
-  if(strcasecmp(pszExpression, "NOT ") || strcasecmp(pszExpression, "NOT("))
+  if(strcasestr(pszExpression, "NOT ") || strcasestr(pszExpression, "NOT("))
     return msStrdup("Not");
 
   return NULL;
