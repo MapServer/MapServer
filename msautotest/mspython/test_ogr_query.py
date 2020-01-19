@@ -30,10 +30,10 @@
 ###############################################################################
 #
 
+import os
 import sys
-import math
+import pytest
 
-sys.path.append( '../pymod' )
 import pmstestlib
 
 import mapscript
@@ -56,21 +56,33 @@ def dumpResultSet( layer ):
             
     layer.close()
 
+
+def get_relpath_to_this(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
+
 ###############################################################################
-# Open map and get working layer.
+#
+def check_EAS_ID_with_or_without_space(layer, s, expected_value):
 
-def ogr_query_1():
-    
-    pmstestlib.map = mapscript.mapObj('ogr_query.map')
-    pmstestlib.layer = pmstestlib.map.getLayer(0)
-
-    return 'success'
+    name = 'EAS_ID'
+    actual_value = pmstestlib.get_item_value( layer, s, name )
+    if actual_value is None:
+        print( 'missing expected attribute %s' % name )
+        return False
+    if actual_value == expected_value or actual_value == expected_value.strip():
+        return True
+    else:
+        print( 'attribute %s is "%s" instead of expected "%s"' % \
+                        (name, actual_value, str(expected_value)) )
+        return False
 
 ###############################################################################
 # Execute region query.
 
-def ogr_query_2():
+def test_ogr_query_2():
 
+    map = mapscript.mapObj(get_relpath_to_this('ogr_query.map'))
+    layer = map.getLayer(0)
     line = mapscript.lineObj()
     line.add( mapscript.pointObj( 479000, 4763000 ) )
     line.add( mapscript.pointObj( 480000, 4763000 ) )
@@ -80,32 +92,8 @@ def ogr_query_2():
     poly = mapscript.shapeObj( mapscript.MS_SHAPE_POLYGON )
     poly.add( line )
 
-    pmstestlib.layer.queryByShape( pmstestlib.map, poly )
+    layer.queryByShape( map, poly )
 
-    return 'success'
-
-###############################################################################
-#
-def check_EAS_ID_with_or_without_space(layer, s, expected_value):
-
-    name = 'EAS_ID'
-    actual_value = pmstestlib.get_item_value( layer, s, name )
-    if actual_value is None:
-        post_reason( 'missing expected attribute %s' % name )
-        return False
-    if actual_value == expected_value or actual_value == expected_value.strip():
-        return True
-    else:
-        post_reason( 'attribute %s is "%s" instead of expected "%s"' % \
-                        (name, actual_value, str(expected_value)) )
-        return False
-
-###############################################################################
-# Scan results, checking count and the first shape information.
-
-def ogr_query_3():
-    layer = pmstestlib.layer
-    
     #########################################################################
     # Check result count.
     layer.open()
@@ -118,10 +106,7 @@ def ogr_query_3():
         s = layer.getShape( result )
         count = count + 1
 
-    if count != 2:
-        pmstestlib.post_reason( 'got %d results instead of expected %d.' \
-                             % (count, 55) )
-        return 'fail'
+    assert count == 2
 
     #########################################################################
     # Check first shape attributes.
@@ -130,38 +115,27 @@ def ogr_query_3():
     
     s = layer.getShape( result )
     
-    if not check_EAS_ID_with_or_without_space( layer, s,'        158' ):
-        return 'fail'
+    assert check_EAS_ID_with_or_without_space( layer, s,'        158' )
 
     #########################################################################
     # Check first shape geometry.
 
-    if s.type != mapscript.MS_SHAPE_POLYGON:
-        pmstestlib.post_reason( 'query result is not a polygon.' )
-        return 'fail'
-
-    if s.numlines != 1:
-        pmstestlib.post_reason( 'query has other than 1 lines.' )
-        return 'fail'
+    assert s.type == mapscript.MS_SHAPE_POLYGON
+    assert s.numlines == 1
 
     try:
         l = s.getLine( 0 )
     except:
         l = s.get( 0 )
-    if l.numpoints != 61:
-        pmstestlib.post_reason( 'query has %d points, instead of expected number.' % l.numpoints )
-        return 'fail'
+    assert l.numpoints == 61
 
     try:
         p = l.getPoint(0)
     except:
         p = l.get(5)
 
-    if abs(p.x-480984.25) > 0.01 or abs(p.y-4764875.0) > 0.01:
-        print(p.x, p.y)
-        pmstestlib.post_reason( 'got wrong location.' )
-        return 'fail'
-    
+    assert abs(p.x-480984.25) < 0.01 and abs(p.y-4764875.0) < 0.01
+
     #########################################################################
     # Check last shape attributes.
 
@@ -169,35 +143,27 @@ def ogr_query_3():
     
     s = layer.getShape( result )
 
-    if not check_EAS_ID_with_or_without_space( layer, s,'        165' ):
-        return 'fail'
+    assert check_EAS_ID_with_or_without_space( layer, s,'        165' )
     
     layer.close() 
     layer.close() # discard resultset.
 
-    return 'success'
-    
 ###############################################################################
 # Execute multiple point query, and check result.
 
-def ogr_query_4():
+def test_ogr_query_4():
 
+
+    map = mapscript.mapObj(get_relpath_to_this('ogr_query.map'))
+    layer = map.getLayer(0)
     rect = mapscript.rectObj()
     rect.minx = 479000
     rect.maxx = 480000
     rect.miny = 4763000
     rect.maxy = 4764000
-    
-    pmstestlib.layer.queryByRect( pmstestlib.map, rect )
 
-    return 'success'
+    layer.queryByRect( map, rect )
 
-###############################################################################
-# Scan results, checking count and the first shape information.
-
-def ogr_query_5():
-    layer = pmstestlib.layer
-    
     #########################################################################
     # Check result count.
     layer.open()
@@ -209,10 +175,7 @@ def ogr_query_5():
     
         count = count + 1
 
-    if count != 2:
-        pmstestlib.post_reason( 'got %d results instead of expected %d.' \
-                             % (count, 55) )
-        return 'fail'
+    assert count == 2
 
     #########################################################################
     # Check first shape attributes.
@@ -221,38 +184,27 @@ def ogr_query_5():
     
     s = layer.getShape( result )
     
-    if not check_EAS_ID_with_or_without_space( layer, s,'        158' ):
-        return 'fail'
+    assert check_EAS_ID_with_or_without_space( layer, s,'        158' )
 
     #########################################################################
     # Check first shape geometry.
 
-    if s.type != mapscript.MS_SHAPE_POLYGON:
-        pmstestlib.post_reason( 'query result is not a polygon.' )
-        return 'fail'
-
-    if s.numlines != 1:
-        pmstestlib.post_reason( 'query has other than 1 lines.' )
-        return 'fail'
+    assert s.type == mapscript.MS_SHAPE_POLYGON
+    assert s.numlines == 1
 
     try:
         l = s.getLine( 0 )
     except:
         l = s.get( 0 )
-    if l.numpoints != 61:
-        pmstestlib.post_reason( 'query has %d points, instead of expected number.' % l.numpoints )
-        return 'fail'
+    assert l.numpoints == 61
 
     try:
         p = l.getPoint(0)
     except:
         p = l.get(5)
 
-    if abs(p.x-480984.25) > 0.01 or abs(p.y-4764875.0) > 0.01:
-        print(p.x, p.y)
-        pmstestlib.post_reason( 'got wrong location.' )
-        return 'fail'
-    
+    assert abs(p.x-480984.25) < 0.01 and abs(p.y-4764875.0) < 0.01
+
     #########################################################################
     # Check last shape attributes.
 
@@ -260,13 +212,10 @@ def ogr_query_5():
     
     s = layer.getShape( result )
 
-    if not check_EAS_ID_with_or_without_space( layer, s,'        165' ):
-        return 'fail'
+    assert check_EAS_ID_with_or_without_space( layer, s,'        165' )
     
     layer.close() 
     layer.close() # discard resultset.
-
-    return 'success'
 
 ###############################################################################
 # Confirm that we can still fetch features not in the result set directly
@@ -275,41 +224,45 @@ def ogr_query_5():
 # NOTE: the ability to fetch features without going through the query API
 # seems to be gone in 6.0!  
 
-def ogr_query_6():
+def test_ogr_query_6():
 
-    return 'skip'
+    pytest.skip('no longer work')
 
-    layer = pmstestlib.layer
-    
+    map = mapscript.mapObj(get_relpath_to_this('ogr_query.map'))
+    layer = map.getLayer(0)
     layer.open()
     
     #########################################################################
     # Check first shape attributes.
-    
-    result = layer.getResult( 0 )
-    
+
     s = mapscript.shapeObj( mapscript.MS_SHAPE_POLYGON )
     layer.resultsGetShape( s, 9, 0 )
     
-    if not check_EAS_ID_with_or_without_space( layer, s,'        170' ):
-        return 'fail'
+    assert check_EAS_ID_with_or_without_space( layer, s,'        170' )
 
     layer.close() 
     layer.close() # discard resultset.
 
-    return 'success'
     
 ###############################################################################
 # Change the map extents and see if our query results have been altered.
 # With the current implementation they will be, though this might be
 # considered to be a defect.
 
-def ogr_query_7():
-    map = pmstestlib.map
+def test_ogr_query_7():
+
+    map = mapscript.mapObj(get_relpath_to_this('ogr_query.map'))
+    layer = map.getLayer(0)
+    rect = mapscript.rectObj()
+    rect.minx = 479000
+    rect.maxx = 480000
+    rect.miny = 4763000
+    rect.maxy = 4764000
+
+    layer.queryByRect( map, rect )
 
     map.draw()
-    layer = pmstestlib.layer
-    
+
     #########################################################################
     # Check result count.
     layer.open()
@@ -321,11 +274,7 @@ def ogr_query_7():
     
         count = count + 1
 
-    if count != 2:
-        pmstestlib.post_reason( 'got %d results instead of expected %d.' \
-                             % (count, 55) )
-        return 'fail'
-
+    assert count == 2
     #########################################################################
     # Check first shape attributes.
     
@@ -333,39 +282,8 @@ def ogr_query_7():
     
     s = layer.getShape( result )
     
-    if not check_EAS_ID_with_or_without_space( layer, s,'        168' ):
-        return 'fail'
+    assert check_EAS_ID_with_or_without_space( layer, s,'        168' )
 
     layer.close() 
     layer.close() # discard resultset.
-
-    return 'success'
-    
-###############################################################################
-# Cleanup.
-
-def ogr_query_cleanup():
-    pmstestlib.layer = None
-    pmstestlib.map = None
-    return 'success'
-
-test_list = [
-    ogr_query_1,
-    ogr_query_2,
-    ogr_query_3,
-    ogr_query_4,
-    ogr_query_5,
-    ogr_query_6,
-    ogr_query_7,
-    ogr_query_cleanup ]
-
-if __name__ == '__main__':
-
-    pmstestlib.setup_run( 'ogr_query' )
-
-    pmstestlib.run_tests( test_list )
-
-    pmstestlib.summarize()
-
-    mapscript.msCleanup()
 

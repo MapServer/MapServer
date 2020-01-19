@@ -30,12 +30,16 @@
 ###############################################################################
 
 import os
+import pytest
 import sys
 
-sys.path.append( '../pymod' )
 import pmstestlib
 
 import mapscript
+
+
+def get_relpath_to_this(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
 
 ###############################################################################
 # Attempt to verify that bug673 remains fixed.  This bug is trigger if
@@ -46,12 +50,9 @@ import mapscript
 #
 # http://trac.osgeo.org/mapserver/ticket/673
 
-def bug_673():
+def test_bug_673():
 
-    if 'SUPPORTS=PROJ' not in mapscript.msGetVersion():
-        return 'skip'
-
-    map = mapscript.mapObj('../misc/ogr_direct.map')
+    map = mapscript.mapObj(get_relpath_to_this('../misc/ogr_direct.map'))
 
     map.setProjection('+proj=utm +zone=11 +datum=WGS84')
 
@@ -60,7 +61,7 @@ def bug_673():
     # Draw map without reprojection.
 
     layer.setProjection('+proj=utm +zone=11 +datum=WGS84')
-    img1 = map.draw()
+    map.draw()
 
     # Draw map with reprojection
 
@@ -69,15 +70,15 @@ def bug_673():
 
     img2 = map.draw()
     try:
-        os.mkdir('result')
+        os.mkdir(get_relpath_to_this('result'))
     except:
         pass
-    img2.save( 'result/bug673.png' )
+    img2.save( get_relpath_to_this('result/bug673.png') )
 
     # Verify we got the image we expected ... at least hopefully we didn't
     # get all white which would indicate the bug is back.
 
-    return pmstestlib.compare_and_report( 'bug673.png' )
+    pmstestlib.compare_and_report( 'bug673.png', this_path = os.path.dirname(__file__) )
 
 ###############################################################################
 # Test https://github.com/mapserver/mapserver/issues/4943
@@ -85,43 +86,30 @@ def bug_673():
 def test_pattern():
 
     si = mapscript.styleObj()
-    if len(si.pattern) != 0:
-        pmstestlib.post_reason('fail 1')
-        return 'fail'
-    if si.patternlength != 0:
-        pmstestlib.post_reason('fail 2')
-        return 'fail'
+    assert len(si.pattern) == 0
+    assert si.patternlength == 0
 
     si.pattern = [2.0,3,4]
-    if si.pattern != (2.0, 3.0, 4.0):
-        pmstestlib.post_reason('fail 3')
-        return 'fail'
-    if si.patternlength != 3:
-        pmstestlib.post_reason('fail 4')
-        return 'fail'
+    assert si.pattern == (2.0, 3.0, 4.0)
+    assert si.patternlength == 3
 
     try:
         si.pattern = [1.0]
-        pmstestlib.post_reason('fail 5')
-        return 'fail'
+        assert False
     except mapscript.MapServerError:
         pass
 
     try:
         si.pattern = [i for i in range(11)]
-        pmstestlib.post_reason('fail 6')
-        return 'fail'
+        assert False
     except mapscript.MapServerError:
         pass
 
     try:
         si.patternlength = 0
-        pmstestlib.post_reason('fail 7')
-        return 'fail'
+        assert False
     except mapscript.MapServerError:
         pass
-
-    return 'success'
 
 ###############################################################################
 # Test reprojection of lines from Polar Stereographic and crossing the antimerdian
@@ -137,37 +125,21 @@ def test_reprojection_lines_from_polar_stereographic_to_geographic():
     polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=270 +datum=WGS84")
     longlat_proj = mapscript.projectionObj("+proj=longlat +datum=WGS84")
 
-    if shape.project(polar_proj, longlat_proj) != 0:
-        pmstestlib.post_reason('shape.project() failed')
-        return 'fail'
+    assert shape.project(polar_proj, longlat_proj) == 0
 
     part1 = shape.get(0)
+    assert part1
     part2 = shape.get(1)
-    if not part1 or not part2:
-        pmstestlib.post_reason('should get two parts')
-        return 'fail'
+    assert part2
 
     point11 = part1.get(0)
     point12 = part1.get(1)
     point21 = part2.get(0)
     point22 = part2.get(1)
-    if abs(point11.x - -179.0) > 1e-7:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    if abs(point12.x - -180.0) > 1e-7:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    if abs(point21.x - 180.0) > 1e-7:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    if abs(point22.x - 179.0) > 1e-7:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    return 'success'
+    assert point11.x == pytest.approx(-179.0, abs=1e-7)
+    assert point12.x == pytest.approx(-180.0, abs=1e-7)
+    assert point21.x == pytest.approx(180.0, abs=1e-7)
+    assert point22.x == pytest.approx(179.0, abs=1e-7)
 
 ###############################################################################
 # Test reprojection of lines from Polar Stereographic and crossing the antimerdian
@@ -183,52 +155,18 @@ def test_reprojection_lines_from_polar_stereographic_to_webmercator():
     polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=270 +datum=WGS84")
     longlat_proj = mapscript.projectionObj("init=epsg:3857")
 
-    if shape.project(polar_proj, longlat_proj) != 0:
-        pmstestlib.post_reason('shape.project() failed')
-        return 'fail'
+    assert shape.project(polar_proj, longlat_proj) == 0
 
     part1 = shape.get(0)
+    assert part1
     part2 = shape.get(1)
-    if not part1 or not part2:
-        pmstestlib.post_reason('should get two parts')
-        return 'fail'
+    assert part2
 
     point11 = part1.get(0)
     point12 = part1.get(1)
     point21 = part2.get(0)
     point22 = part2.get(1)
-    if abs(point11.x - -19926188.85) > 1e-2:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    if abs(point12.x - -20037508.34) > 1e-2:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    if abs(point21.x - 20037508.34) > 1e-2:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    if abs(point22.x - 19926188.85) > 1e-2:
-        print(point11.x, point12.x, point21.x, point22.x)
-        pmstestlib.post_reason('did not get expected coordinates')
-        return 'fail'
-    return 'success'
-
-test_list = [
-    bug_673,
-    test_pattern,
-    test_reprojection_lines_from_polar_stereographic_to_geographic,
-    test_reprojection_lines_from_polar_stereographic_to_webmercator,
-    None ]
-
-if __name__ == '__main__':
-
-    pmstestlib.setup_run( 'bug_check' )
-
-    pmstestlib.run_tests( test_list )
-
-    pmstestlib.summarize()
-
-    mapscript.msCleanup()
-
+    assert point11.x == pytest.approx(-19926188.85, abs=1e-2)
+    assert point12.x == pytest.approx(-20037508.34, abs=1e-2)
+    assert point21.x == pytest.approx(20037508.34, abs=1e-2)
+    assert point22.x == pytest.approx(19926188.85, abs=1e-2)

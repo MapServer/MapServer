@@ -20,3 +20,5 @@ apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
     libgdal1-dev libfribidi-dev libexempi-dev \
     libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler libharfbuzz-dev gdal-bin \
     curl sqlite3
+
+pip install -U -r /vagrant/msautotest/mspython/requirements.txt
