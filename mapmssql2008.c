@@ -814,7 +814,13 @@ static int executeSQL(msODBCconn *conn, const char * sql)
 
   SQLCloseCursor(conn->hstmt);
 
+#ifdef USE_ICONV
+  wchar_t *decodedSql = msConvertWideStringFromUTF8(sql, "UCS-2LE");
+  rc = SQLExecDirectW(conn->hstmt, decodedSql, SQL_NTS);
+  msFree(decodedSql);
+#else
   rc = SQLExecDirect(conn->hstmt, (SQLCHAR *) sql, SQL_NTS);
+#endif
 
   if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
     return 1;
@@ -2169,38 +2175,63 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
       shape->numvalues = layer->numitems;
 
       for(t=0; t < layer->numitems; t++) {
-        /* figure out how big the buffer needs to be */
-        rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), SQL_C_BINARY, dummyBuffer, 0, &needLen);
+        /* Startwith a 64 character long buffer. This may need to be increased after calling SQLGetData. */
+        SQLLEN emptyLen = 64;
+        valueBuffer = (char*) msSmallMalloc(emptyLen);
+        if ( valueBuffer == NULL ) {
+          msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
+          return MS_FAILURE;
+        }
+
+#ifdef USE_ICONV
+        SQLSMALLINT targetType = SQL_WCHAR;
+#else
+        SQLSMALLINT targetType = SQL_CHAR;
+#endif
+        SQLLEN totalLen = 0;
+        char *bufferLocation = valueBuffer;
+        int r = 0;
+        while (r < 20) {
+          rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), targetType, bufferLocation, emptyLen, &retLen);
+
+          if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+            totalLen += retLen > emptyLen || retLen == SQL_NO_TOTAL ? emptyLen : retLen;
+
+          if (rc == SQL_SUCCESS_WITH_INFO && rc != SQL_NO_DATA) {
+            /* We must compensate for the last null termination that SQLGetData include */
+            /* If we get SQL_NO_TOTAL we do not know how big buffer we need so we increase it with 512. */
+#ifdef USE_ICONV
+            totalLen -= sizeof(wchar_t);
+            emptyLen = retLen != SQL_NO_TOTAL? retLen - emptyLen + 2 * sizeof(wchar_t): 512;
+#else
+            totalLen -= sizeof(char);
+            emptyLen = retLen != SQL_NO_TOTAL? retLen - emptyLen + 2 * sizeof(char): 512;
+#endif
+
+            valueBuffer = (char *)msSmallRealloc(valueBuffer, totalLen + emptyLen);
+            bufferLocation = valueBuffer + totalLen;
+          } else
+            break;
+          
+          r++;
+        }
+
         if (rc == SQL_ERROR)
           handleSQLError(layer);
 
-        if (needLen > 0) {
-          /* allocate the buffer - this will be a null-terminated string so alloc for the null too */
-          valueBuffer = (char*) msSmallMalloc( needLen + 2 );
-          if ( valueBuffer == NULL ) {
-            msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
-            return MS_FAILURE;
-          }
-
-          /* Now grab the data */
-          rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), SQL_C_BINARY, valueBuffer, needLen, &retLen);
-          if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
-            handleSQLError(layer);
-
-          /* Terminate the buffer */
-          valueBuffer[retLen] = 0; /* null terminate it */
-
+        if (totalLen > 0) {
           /* Pop the value into the shape's value array */
 #ifdef USE_ICONV
-          valueBuffer[retLen + 1] = 0;
           shape->values[t] = msConvertWideStringToUTF8((wchar_t*)valueBuffer, "UCS-2LE");
           msFree(valueBuffer);
 #else
           shape->values[t] = valueBuffer;
 #endif
-        } else
+        } else {
           /* Copy empty sting for NULL values */
           shape->values[t] = msStrdup("");
+          msFree(valueBuffer);
+        }
       }
 
       /* Get shape geometry */
