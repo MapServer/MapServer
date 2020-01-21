@@ -4975,8 +4975,6 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
   if (!pszExpression || strlen(pszExpression) <=0)
     return NULL;
 
-
-  /* psNode = BuildExpressionTree(pszExpression, NULL); */
   psNode = BuildExpressionTree(pszExpression, NULL);
 
   if (psNode) {
@@ -4996,8 +4994,8 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
 
       free(pszFLTExpression);
       pszFLTExpression = pszTmp;
+      free(pszTmp);
     }
-
   }
 
   return pszFLTExpression;
