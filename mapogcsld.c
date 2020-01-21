@@ -176,7 +176,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
   layerObj *pasSLDLayers = NULL;
   int nStatus = MS_SUCCESS;
   /*const char *pszSLDNotSupported = NULL;*/
-  
+
   pasSLDLayers = msSLDParseSLD(map, psSLDXML, &nSLDLayers);
   if( pasSLDLayers == NULL ) {
     errorObj* psError = msGetErrorObj();
@@ -403,7 +403,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
 
                     snprintf(szTmp, sizeof(szTmp), "%s", "))");
                     pszBuffer =msStringConcatenate(pszBuffer, szTmp);
-                    
+
                     msFreeExpression(&lp->filter);
                     msInitExpression(&lp->filter);
                     lp->filter.string = msStrdup(pszBuffer);
@@ -439,7 +439,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
 
     }
   }
-  
+
   nStatus = MS_SUCCESS;
 
 #ifdef notdef
@@ -732,7 +732,7 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
         pszExpression = FLTGetCommonExpression(psNode, psLayer);
         FLTFreeFilterEncodingNode(psNode);
     }
-    
+
     return pszExpression;
 }
 
@@ -874,7 +874,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
           psFeatureTypeConstraint = psIter;
         } else {
           msSetError(MS_WMSERR, "Only one single FeatureTypeConstraint element "
-                    "per LayerFeatureConstraints is supported", "");  
+                    "per LayerFeatureConstraints is supported", "");
           return MS_FAILURE;
         }
       }
@@ -1718,7 +1718,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 
       /* default symbol is square */
 
-      if (!pszSymbolName || !*pszSymbolName || 
+      if (!pszSymbolName || !*pszSymbolName ||
           (strcasecmp(pszSymbolName, "square") != 0 &&
            strcasecmp(pszSymbolName, "circle") != 0 &&
            strcasecmp(pszSymbolName, "triangle") != 0 &&
@@ -4304,7 +4304,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
     msStringBufferAppend(sb, "<NamedLayer>\n");
 
     pszWMSLayerName = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
-    msSLDAppendName(sb, 
+    msSLDAppendName(sb,
                     pszWMSLayerName ? pszWMSLayerName :
                     psLayer->name ? psLayer->name :
                     "NamedLayer",
@@ -4379,10 +4379,18 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
 
   pszAnd = strcasestr(pszExpression, " AND ");
 
+  if (!pszAnd){
+      pszAnd = strcasestr(pszExpression, "AND(");
+  }
+
   if (pszAnd)
     return msStrdup(pszAnd+4);
   else {
     pszOr = strcasestr(pszExpression, " OR ");
+
+    if (!pszOr){
+        pszOr = strcasestr(pszExpression, "OR(");
+    }
 
     if (pszOr)
       return msStrdup(pszOr+3);
@@ -4410,7 +4418,7 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
 
   pszReturn = (char *)malloc(sizeof(char)*(nLength+1));
   pszReturn[0] = '\0';
-  if (strstr(pszExpression, " AND ") || strstr(pszExpression, " and ")) {
+  if (strcasestr(pszExpression, " AND ")) {
     for (i=0; i<nLength-5; i++) {
       if (pszExpression[i] == ' ' &&
           (toupper(pszExpression[i+1]) == 'A') &&
@@ -4423,7 +4431,7 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else if (strstr(pszExpression, "AND(") || strstr(pszExpression, "and(")) {
+  } else if (strcasestr(pszExpression, "AND(")) {
     for (i=0; i<nLength-4; i++) {
       if ((toupper(pszExpression[i]) == 'A') &&
           (toupper(pszExpression[i+1]) == 'N') &&
@@ -4435,7 +4443,7 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else if (strstr(pszExpression, " OR ") || strstr(pszExpression, " or ")) {
+  } else if (strcasestr(pszExpression, " OR ")) {
     for (i=0; i<nLength-4; i++) {
       if (pszExpression[i] == ' ' &&
           (toupper(pszExpression[i+1]) == 'O') &&
@@ -4447,7 +4455,7 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else if (strstr(pszExpression, "OR(") || strstr(pszExpression, " or(")) {
+  } else if (strcasestr(pszExpression, "OR(")) {
     for (i=0; i<nLength-3; i++) {
       if ((toupper(pszExpression[i]) == 'O') &&
           (toupper(pszExpression[i+1]) == 'R') &&
@@ -4487,6 +4495,10 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
   if (!pszAnd && !pszOr) {
     pszAnd = strcasestr(pszExpression, "AND(");
     pszOr = strcasestr(pszExpression, "OR(");
+  }
+
+  if (!pszNot) {
+    pszNot = strcasestr(pszExpression, "NOT(");
   }
 
   if (!pszAnd && !pszOr && !pszNot)
