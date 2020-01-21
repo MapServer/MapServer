@@ -4994,7 +4994,6 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
 
       free(pszFLTExpression);
       pszFLTExpression = pszTmp;
-      free(pszTmp);
     }
   }
 
