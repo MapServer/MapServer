@@ -4880,6 +4880,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             free(pszComparionValue);
             free(pszAttibuteName);
             free(pszAttibuteValue);
+            free(pszLeftExpression);
           }
         }
         if (pszRightExpression) {
@@ -4911,6 +4912,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             free(pszComparionValue);
             free(pszAttibuteName);
             free(pszAttibuteValue);
+            free(pszRightExpression);
           }
         }
       }
