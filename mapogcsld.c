@@ -4994,6 +4994,7 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
 
       free(pszFLTExpression);
       pszFLTExpression = pszTmp;
+      FLTFreeFilterEncodingNode(psNode);
     }
   }
 
