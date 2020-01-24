@@ -166,7 +166,7 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj 
 /*                                                                      */
 /*      Parses the SLD into array of layers. Go through the map and     */
 /*      compare the SLD layers and the map layers using the name. If    */
-/*      they have the same name, copy the classes asscoaited with       */
+/*      they have the same name, copy the classes associated with       */
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
 int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *pszStyleLayerName, char **ppszLayerNames)
@@ -176,7 +176,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
   layerObj *pasSLDLayers = NULL;
   int nStatus = MS_SUCCESS;
   /*const char *pszSLDNotSupported = NULL;*/
-  
+
   pasSLDLayers = msSLDParseSLD(map, psSLDXML, &nSLDLayers);
   if( pasSLDLayers == NULL ) {
     errorObj* psError = msGetErrorObj();
@@ -376,7 +376,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
 
           /*in some cases it would make sense to concatenate all the class
             expressions and use it to set the filter on the layer. This
-            could increase performace. Will do it for db types layers #2840*/
+            could increase performance. Will do it for db types layers #2840*/
           if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
               if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL || lp->connectiontype == MS_PLUGIN) {
                 if (lp->numclasses > 0) {
@@ -403,7 +403,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
 
                     snprintf(szTmp, sizeof(szTmp), "%s", "))");
                     pszBuffer =msStringConcatenate(pszBuffer, szTmp);
-                    
+
                     msFreeExpression(&lp->filter);
                     msInitExpression(&lp->filter);
                     lp->filter.string = msStrdup(pszBuffer);
@@ -439,7 +439,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
 
     }
   }
-  
+
   nStatus = MS_SUCCESS;
 
 #ifdef notdef
@@ -497,7 +497,7 @@ static CPLXMLNode* FindNextChild(CPLXMLNode* psNode, const char* pszChildName)
 /*                              msSLDParseSLD                           */
 /*                                                                      */
 /*      Parse the sld document into layers : for each named layer       */
-/*      there is one mapserver layer created with approproate           */
+/*      there is one mapserver layer created with appropriate           */
 /*      classes and styles.                                             */
 /*      Returns an array of mapserver layers. The pnLayres if           */
 /*      provided will indicate the size of the returned array.          */
@@ -665,7 +665,7 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
 /************************************************************************/
 /*                     msSLDGetCommonExpressionFromFilter               */
 /*                                                                      */
-/*      Get a commomn expression valid from the filter valid for the    */
+/*      Get a common expression valid from the filter valid for the    */
 /*      temporary layer.                                                */
 /************************************************************************/
 static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
@@ -698,7 +698,7 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
     if (psNode) {
         int j;
 
-        /*preparse the filter for possible gml aliases set on the layer's metada:
+        /*preparse the filter for possible gml aliases set on the layer's metadata:
         "gml_NA3DESC_alias" "alias_name" and filter could be
         <ogc:PropertyName>alias_name</ogc:PropertyName> #3079*/
         for (j=0; j<psLayer->map->numlayers; j++) {
@@ -716,7 +716,7 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
         }
         if (j < psLayer->map->numlayers) {
             /*make sure that the tmp layer has all the metadata that
-            the orinal layer has, allowing to do parsing for
+            the original layer has, allowing to do parsing for
             such things as gml_attribute_type #3052*/
             while (1) {
                 key = msNextKeyFromHashTable(&psCurrentLayer->metadata, key);
@@ -732,7 +732,7 @@ static char* msSLDGetCommonExpressionFromFilter(CPLXMLNode* psFilter,
         pszExpression = FLTGetCommonExpression(psNode, psLayer);
         FLTFreeFilterEncodingNode(psNode);
     }
-    
+
     return pszExpression;
 }
 
@@ -874,7 +874,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
           psFeatureTypeConstraint = psIter;
         } else {
           msSetError(MS_WMSERR, "Only one single FeatureTypeConstraint element "
-                    "per LayerFeatureConstraints is supported", "");  
+                    "per LayerFeatureConstraints is supported", "");
           return MS_FAILURE;
         }
       }
@@ -974,8 +974,8 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
   /*      the label object created will be created in the same class      */
   /*      (the last class) as the  symbolizer. This allows o have for     */
   /*      example of point layer with labels.                             */
-  /*        - If there are no other symbolizers, a new clas will be       */
-  /*      created ocontain the label object.                              */
+  /*        - If there are no other symbolizers, a new class will be       */
+  /*      created to contain the label object.                              */
   /* ==================================================================== */
   LOOP_ON_CHILD_ELEMENT(psRoot, psTextSymbolizer, "TextSymbolizer")
   {
@@ -1183,7 +1183,7 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 
   /* parse graphic fill or stroke */
   /* graphic fill and graphic stroke pare parsed the same way :  */
-  /* TODO : It seems inconsistent to me since the only diffrence */
+  /* TODO : It seems inconsistent to me since the only difference */
   /* between them seems to be fill (fill) or not fill (stroke). And */
   /* then again the fill parameter can be used inside both elements. */
   psGraphicFill =  CPLGetXMLNode(psStroke, "GraphicFill");
@@ -1533,7 +1533,7 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
       psLayer->class[nClassId]->styles[iStyle]->offsety = nOffsetY;
     }
   }
-  /* stroke wich corresponds to the outilne in mapserver */
+  /* stroke which corresponds to the outline in mapserver */
   /* is drawn after the fill */
   psStroke =  CPLGetXMLNode(psRoot, "Stroke");
   if (psStroke) {
@@ -1718,7 +1718,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 
       /* default symbol is square */
 
-      if (!pszSymbolName || !*pszSymbolName || 
+      if (!pszSymbolName || !*pszSymbolName ||
           (strcasecmp(pszSymbolName, "square") != 0 &&
            strcasecmp(pszSymbolName, "circle") != 0 &&
            strcasecmp(pszSymbolName, "triangle") != 0 &&
@@ -1860,7 +1860,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 /*                                                                      */
 /*      Get a Mark symbol using the name. Mark symbols can be           */
 /*      square, circle, triangle, star, cross, x.                       */
-/*      If the symbol does not exsist add it to the symbol list.        */
+/*      If the symbol does not exist add it to the symbol list.        */
 /************************************************************************/
 int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled)
 {
@@ -2179,7 +2179,7 @@ int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /************************************************************************/
 /*                        msSLDParseExternalGraphic                     */
 /*                                                                      */
-/*      Parse extrenal graphic node : download the symbol referneced    */
+/*      Parse external graphic node : download the symbol referenced    */
 /*      by the URL and create a PIXMAP inmap symbol. Only GIF and       */
 /*      PNG are supported.                                              */
 /************************************************************************/
@@ -2751,7 +2751,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /************************************************************************/
 /*                           msSLDParseTextParams                       */
 /*                                                                      */
-/*      Parse text paramaters like font, placement and color.           */
+/*      Parse text parameters like font, placement and color.           */
 /************************************************************************/
 int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                          classObj *psClass)
@@ -3133,7 +3133,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 /*           void msSLDSetColorObject(char *psHexColor, colorObj        */
 /*      *psColor)                                                       */
 /*                                                                      */
-/*      Utility function to exctract rgb values from an hexadecimal     */
+/*      Utility function to extract rgb values from an hexadecimal     */
 /*      color string (format is : #aaff08) and set it in the color      */
 /*      object.                                                         */
 /************************************************************************/
@@ -3158,7 +3158,7 @@ int msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 /*                msSLDGenerateSLD(mapObj *map, int iLayer)             */
 /*                                                                      */
 /*      Return an SLD document for all layers that are on or            */
-/*      default. The second argument should be set to -1 to genarte     */
+/*      default. The second argument should be set to -1 to generate    */
 /*      on all layers. Or set to the layer index to generate an SLD     */
 /*      for a specific layer.                                           */
 /*                                                                      */
@@ -3225,7 +3225,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion)
 /************************************************************************/
 /*                            msSLDGetGraphicSLD                        */
 /*                                                                      */
-/*      Get an SLD for a style containg a symbol (Mark or external).    */
+/*      Get an SLD for a style containing a symbol (Mark or external).  */
 /************************************************************************/
 char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                          int bNeedMarkSybol, int nVersion)
@@ -3781,8 +3781,8 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
 
 
 
-    /* If there is a symbol to be used for sroke, the color in the */
-    /* style sholud be set to -1. Else It won't apply here. */
+    /* If there is a symbol to be used for stroke, the color in the */
+    /* style should be set to -1. Else It won't apply here. */
     if (psStyle->color.red == -1 && psStyle->color.green == -1 &&
         psStyle->color.blue == -1) {
       pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
@@ -3918,7 +3918,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     /* -------------------------------------------------------------------- */
     /*      only true type fonts are exported. Font name should be          */
     /*      something like arial-bold-italic. There are 3 parts to the      */
-    /*      name font-family, font-style (italic, oblique, nomal),          */
+    /*      name font-family, font-style (italic, oblique, normal),         */
     /*      font-weight (bold, normal). These 3 elements are separated      */
     /*      with -.                                                         */
     /* -------------------------------------------------------------------- */
@@ -4259,7 +4259,7 @@ static void msSLDGenerateUserStyle(msStringBuffer* sb, layerObj *psLayer, int nV
 /************************************************************************/
 /*                          msSLDGenerateSLDLayer                       */
 /*                                                                      */
-/*      Genrate an SLD XML string based on the layer's classes.         */
+/*      Generate an SLD XML string based on the layer's classes.        */
 /************************************************************************/
 char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
 {
@@ -4304,7 +4304,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
     msStringBufferAppend(sb, "<NamedLayer>\n");
 
     pszWMSLayerName = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
-    msSLDAppendName(sb, 
+    msSLDAppendName(sb,
                     pszWMSLayerName ? pszWMSLayerName :
                     psLayer->name ? psLayer->name :
                     "NamedLayer",
@@ -4361,15 +4361,13 @@ char *msSLDGetLogicalOperator(char *pszExpression)
   if (!pszExpression)
     return NULL;
 
-  /* TODO for NOT */
-
-  if(strstr(pszExpression, " AND ") || strstr(pszExpression, "AND("))
+  if(strcasestr(pszExpression, " AND ") || strcasestr(pszExpression, "AND("))
     return msStrdup("And");
 
-  if(strstr(pszExpression, " OR ") || strstr(pszExpression, "OR("))
+  if(strcasestr(pszExpression, " OR ") || strcasestr(pszExpression, "OR("))
     return msStrdup("Or");
 
-  if(strstr(pszExpression, "NOT ") || strstr(pszExpression, "NOT("))
+  if(strcasestr(pszExpression, "NOT ") || strcasestr(pszExpression, "NOT("))
     return msStrdup("Not");
 
   return NULL;
@@ -4379,27 +4377,28 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
 {
   char *pszAnd = NULL, *pszOr = NULL, *pszNot=NULL;
 
-  pszAnd = strstr(pszExpression, " AND ");
-  if (!pszAnd)
-    pszAnd = strstr(pszExpression, " and ");
+  pszAnd = strcasestr(pszExpression, " AND ");
+
+  if (!pszAnd){
+      pszAnd = strcasestr(pszExpression, "AND(");
+  }
 
   if (pszAnd)
     return msStrdup(pszAnd+4);
   else {
-    pszOr = strstr(pszExpression, " OR ");
-    if (!pszOr)
-      pszOr = strstr(pszExpression, " or ");
+    pszOr = strcasestr(pszExpression, " OR ");
+
+    if (!pszOr){
+        pszOr = strcasestr(pszExpression, "OR(");
+    }
 
     if (pszOr)
       return msStrdup(pszOr+3);
     else {
-      pszNot = strstr(pszExpression, "NOT ");
+      pszNot = strcasestr(pszExpression, "NOT ");
+
       if (!pszNot)
-        pszNot = strstr(pszExpression, "not ");
-      if (!pszNot)
-        pszNot = strstr(pszExpression, "NOT(");
-      if (!pszNot)
-        pszNot = strstr(pszExpression, "not(");
+        pszNot = strcasestr(pszExpression, "NOT(");
 
       if (pszNot)
         return msStrdup(pszNot+4);
@@ -4419,12 +4418,12 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
 
   pszReturn = (char *)malloc(sizeof(char)*(nLength+1));
   pszReturn[0] = '\0';
-  if (strstr(pszExpression, " AND ") || strstr(pszExpression, " and ")) {
+  if (strcasestr(pszExpression, " AND ")) {
     for (i=0; i<nLength-5; i++) {
       if (pszExpression[i] == ' ' &&
-          (pszExpression[i+1] == 'A' || pszExpression[i] == 'a') &&
-          (pszExpression[i+2] == 'N' || pszExpression[i] == 'n') &&
-          (pszExpression[i+3] == 'D' || pszExpression[i] == 'd') &&
+          (toupper(pszExpression[i+1]) == 'A') &&
+          (toupper(pszExpression[i+2]) == 'N') &&
+          (toupper(pszExpression[i+3]) == 'D') &&
           (pszExpression[i+4] == ' '))
         break;
       else {
@@ -4432,11 +4431,11 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else if (strstr(pszExpression, "AND(") || strstr(pszExpression, "and(")) {
+  } else if (strcasestr(pszExpression, "AND(")) {
     for (i=0; i<nLength-4; i++) {
-      if ((pszExpression[i] == 'A' || pszExpression[i] == 'a') &&
-          (pszExpression[i+1] == 'N' || pszExpression[i] == 'n') &&
-          (pszExpression[i+2] == 'D' || pszExpression[i] == 'd') &&
+      if ((toupper(pszExpression[i]) == 'A') &&
+          (toupper(pszExpression[i+1]) == 'N') &&
+          (toupper(pszExpression[i+2]) == 'D') &&
           (pszExpression[i+3] == '('))
         break;
       else {
@@ -4444,11 +4443,11 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else if (strstr(pszExpression, " OR ") || strstr(pszExpression, " or ")) {
+  } else if (strcasestr(pszExpression, " OR ")) {
     for (i=0; i<nLength-4; i++) {
       if (pszExpression[i] == ' ' &&
-          (pszExpression[i+1] == 'O' || pszExpression[i] == 'o') &&
-          (pszExpression[i+2] == 'R' || pszExpression[i] == 'r') &&
+          (toupper(pszExpression[i+1]) == 'O') &&
+          (toupper(pszExpression[i+2]) == 'R') &&
           pszExpression[i+3] == ' ')
         break;
       else {
@@ -4456,10 +4455,10 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else if (strstr(pszExpression, "OR(") || strstr(pszExpression, " or(")) {
+  } else if (strcasestr(pszExpression, "OR(")) {
     for (i=0; i<nLength-3; i++) {
-      if ((pszExpression[i] == 'O' || pszExpression[i] == 'o') &&
-          (pszExpression[i+1] == 'R' || pszExpression[i] == 'r') &&
+      if ((toupper(pszExpression[i]) == 'O') &&
+          (toupper(pszExpression[i+1]) == 'R') &&
           pszExpression[i+2] == '(')
         break;
       else {
@@ -4496,6 +4495,10 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
   if (!pszAnd && !pszOr) {
     pszAnd = strcasestr(pszExpression, "AND(");
     pszOr = strcasestr(pszExpression, "OR(");
+  }
+
+  if (!pszNot) {
+    pszNot = strcasestr(pszExpression, "NOT(");
   }
 
   if (!pszAnd && !pszOr && !pszNot)
@@ -4797,9 +4800,9 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
 
   /* -------------------------------------------------------------------- */
   /*      First we check how many logical operators are there :           */
-  /*       - if none : It means It is a comparision operator (like =,      */
+  /*       - if none : It means It is a comparison operator (like =,      */
   /*      >, >= .... We get the comparison value as well as the           */
-  /*      attribute and the attribut's value and assign it to the node    */
+  /*      attribute and the attribute's value and assign it to the node   */
   /*      passed in argument.                                             */
   /*       - if there is one operator, we assign the operator to the      */
   /*      node and adds the expressions into the left and right nodes.    */
@@ -4877,6 +4880,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             free(pszComparionValue);
             free(pszAttibuteName);
             free(pszAttibuteValue);
+            free(pszLeftExpression);
           }
         }
         if (pszRightExpression) {
@@ -4908,6 +4912,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             free(pszComparionValue);
             free(pszAttibuteName);
             free(pszAttibuteValue);
+            free(pszRightExpression);
           }
         }
       }
@@ -4972,8 +4977,6 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
   if (!pszExpression || strlen(pszExpression) <=0)
     return NULL;
 
-
-  /* psNode = BuildExpressionTree(pszExpression, NULL); */
   psNode = BuildExpressionTree(pszExpression, NULL);
 
   if (psNode) {
@@ -4994,7 +4997,7 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
       free(pszFLTExpression);
       pszFLTExpression = pszTmp;
     }
-
+    FLTFreeFilterEncodingNode(psNode);
   }
 
   return pszFLTExpression;
@@ -5003,7 +5006,7 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
 /************************************************************************/
 /*             char *msSLDParseExpression(char *pszExpression)          */
 /*                                                                      */
-/*      Return an OGC filter for a mapserver locgical expression.       */
+/*      Return an OGC filter for a mapserver logical expression.        */
 /*      TODO : move function to mapogcfilter.c                          */
 /************************************************************************/
 char *msSLDParseExpression(char *pszExpression)
@@ -5090,23 +5093,23 @@ char *msSLDParseExpression(char *pszExpression)
 /************************************************************************/
 /*                     msSLDConvertRegexExpToOgcIsLike                  */
 /*                                                                      */
-/*      Convert mapserver regex expression to ogc is like propoery      */
-/*      exprssion.                                                      */
+/*      Convert mapserver regex expression to ogc is like property      */
+/*      expression.                                                     */
 /*                                                                      */
 /*      Review bug 1644 for details. Here are the current rules:        */
 /*                                                                      */
 /*       The filter encoding property like is more limited compared     */
-/*      to regular expressiosn that can be built in mapserver. I        */
+/*      to regular expression that can be built in mapserver. I         */
 /*      think we should define what is possible to convert properly     */
 /*      and do those, and also identify potential problems.  Example :  */
 /*        - any time there is a .* in the expression it will be         */
 /*      converted to *                                                  */
-/*        - any other character plus all the metacharcters . ^ $ * +    */
-/*      ? { [ ] \ | ( ) would be outputed as is. (In case of            */
+/*        - any other character plus all the metacharacters . ^ $ * +   */
+/*      ? { [ ] \ | ( ) would be outputted as is. (In case of           */
 /*      mapserver, when we read the the ogc filter expression, we       */
-/*      convert the wild card chracter to .*, and we convert the        */
-/*      single chracter to .  and the escpae character to \ all         */
-/*      other are outputed as is)                                       */
+/*      convert the wild card character to .*, and we convert the       */
+/*      single character to .  and the escape character to \ all        */
+/*      other are outputted as is)                                      */
 /*        - the  ogc tag would look like <ogc:PropertyIsLike            */
 /*      wildCard="*"  singleChar="." escape="\">                        */
 /*                                                                      */

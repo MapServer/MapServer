@@ -1,0 +1,175 @@
+#
+# Test WMS GetStyle SLD filters when using expressions
+#
+# REQUIRES: SUPPORTS=WMS
+#
+#
+# GetStyles
+# RUN_PARMS: wms_getstyles_expressions1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test1" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test2" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test3" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions4.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test4" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions5.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test5" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions6.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test6" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions7.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test7" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions8.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test8" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions9.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test9" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions10.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test10" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions11.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test11" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions12.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test12" > [RESULT_DEMIME]
+
+MAP
+    NAME WMS_TEST
+
+    WEB
+      METADATA
+        "ows_enable_request" "*"
+      END
+    END
+
+    LAYER
+      NAME "Test1"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] > 1 AND [FID] <= 10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test2"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] > 1 and [FID] <= 10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test3"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] > 1 And [FID] <= 10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test4"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] = 1 OR [FID] = 10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test5"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] = 1 or [FID] = 10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test6"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] = 1 Or [FID] = 10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test7"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( NOT ([FID] = 1))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test8"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( not ([FID] = 1))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test9"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( Not ([FID] = 1))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # test for expressions with brackets
+
+    LAYER
+      NAME "Test10"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([FID] > 1)And([FID] <= 10))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test11"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([FID] = 1)Or([FID] = 10))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test12"
+      TYPE POINT
+      CLASS
+        EXPRESSION (NOT([FID] = 1))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+END
