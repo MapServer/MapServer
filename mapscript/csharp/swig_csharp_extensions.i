@@ -224,28 +224,32 @@
   }
 %}
 
-//%typemap(csfinalize) SWIGTYPE %{
-//  /* %typemap(csfinalize) SWIGTYPE */
-//  ~$csclassname() {
-//    Dispose();
-//  }
-//%}
+#if SWIG_VERSION < 0x040000
+%typemap(csfinalize) SWIGTYPE %{
+  /* %typemap(csfinalize) SWIGTYPE */
+  ~$csclassname() {
+    Dispose();
+  }
+%}
+#endif
 
 %typemap(csconstruct, excode=SWIGEXCODE) SWIGTYPE %{: this($imcall, true, null) {$excode
   }
 %}
 
-//%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
-//  lock(this) {
-//      if(swigCPtr.Handle != System.IntPtr.Zero && swigCMemOwn) {
-//        swigCMemOwn = false;
-//        $imcall;
-//      }
-//      swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
-//      swigParentRef = null;
-//      System.GC.SuppressFinalize(this);
-//    }
-//  }
+#if SWIG_VERSION < 0x040000
+%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+  lock(this) {
+      if(swigCPtr.Handle != System.IntPtr.Zero && swigCMemOwn) {
+        swigCMemOwn = false;
+        $imcall;
+      }
+      swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
+      swigParentRef = null;
+      System.GC.SuppressFinalize(this);
+    }
+  }
+#endif
 
 %typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") TYPE {
   lock(this) {
