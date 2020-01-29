@@ -224,28 +224,28 @@
   }
 %}
 
-%typemap(csfinalize) SWIGTYPE %{
-  /* %typemap(csfinalize) SWIGTYPE */
-  ~$csclassname() {
-    Dispose();
-  }
-%}
+//%typemap(csfinalize) SWIGTYPE %{
+//  /* %typemap(csfinalize) SWIGTYPE */
+//  ~$csclassname() {
+//    Dispose();
+//  }
+//%}
 
 %typemap(csconstruct, excode=SWIGEXCODE) SWIGTYPE %{: this($imcall, true, null) {$excode
   }
 %}
 
-%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
-  lock(this) {
-      if(swigCPtr.Handle != System.IntPtr.Zero && swigCMemOwn) {
-        swigCMemOwn = false;
-        $imcall;
-      }
-      swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
-      swigParentRef = null;
-      System.GC.SuppressFinalize(this);
-    }
-  }
+//%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+//  lock(this) {
+//      if(swigCPtr.Handle != System.IntPtr.Zero && swigCMemOwn) {
+//        swigCMemOwn = false;
+//        $imcall;
+//      }
+//      swigCPtr = new System.Runtime.InteropServices.HandleRef(null, System.IntPtr.Zero);
+//      swigParentRef = null;
+//      System.GC.SuppressFinalize(this);
+//    }
+//  }
 
 %typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") TYPE {
   lock(this) {
