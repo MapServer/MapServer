@@ -32,7 +32,14 @@
 import os
 import pytest
 
-import mapscript
+mapscript_available = False
+try:
+    import mapscript
+    mapscript_available = True
+except ImportError:
+    pass
+
+pytestmark = pytest.mark.skipif(not mapscript_available, reason="mapscript not available")
 
 
 def get_relpath_to_this(filename):

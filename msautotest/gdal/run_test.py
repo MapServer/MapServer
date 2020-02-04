@@ -45,5 +45,4 @@ def test(map, out_file, command, extra_args):
 # main()
 
 if __name__ == '__main__':
-    sys.argv[0] = 'run_test.py'
-    sys.exit(pytest.main())
+    sys.exit(mstestlib.pytest_main())

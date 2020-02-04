@@ -34,8 +34,16 @@ import sys
 import math
 
 import pmstestlib
+import pytest
 
-import mapscript
+mapscript_available = False
+try:
+    import mapscript
+    mapscript_available = True
+except ImportError:
+    pass
+
+pytestmark = pytest.mark.skipif(not mapscript_available, reason="mapscript not available")
 
 ###############################################################################
 # Dump query result set ... used when debugging this test script.

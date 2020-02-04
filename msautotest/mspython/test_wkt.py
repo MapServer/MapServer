@@ -37,7 +37,14 @@
 
 import pytest
 
-import mapscript
+mapscript_available = False
+try:
+    import mapscript
+    mapscript_available = True
+except ImportError:
+    pass
+
+pytestmark = pytest.mark.skipif(not mapscript_available, reason="mapscript not available")
 
 ###############################################################################
 # Test simple geometries that should convert back to same thing - OGR only.

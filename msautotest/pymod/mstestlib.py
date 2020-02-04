@@ -726,3 +726,26 @@ def run_pytest(map, out_file, command, extra_args):
 
     ret, msg = _run(map, out_file, command, extra_args)
     assert ret, msg
+
+###############################################################################
+
+
+def pytest_main():
+    maps = []
+    new_argv = []
+    help = False
+    for arg in sys.argv:
+        if arg.endswith('.map'):
+            maps.append(arg[0:-4])
+        else:
+            if arg == '--help':
+                help = True
+            new_argv.append(arg)
+    sys.argv = new_argv
+    if maps:
+        sys.argv.append('-k')
+        sys.argv.append(' or '.join(maps))
+    ret = pytest.main()
+    if help:
+        print('\nMapServer note: you can also specify one or several .map filenames')
+    return ret
