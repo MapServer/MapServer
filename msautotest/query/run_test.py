@@ -27,39 +27,22 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-# $Log$
-# Revision 1.1  2005/09/22 18:28:43  frank
-# New
-#
-# Revision 1.5  2003/03/05 15:28:50  frank
-# use shared mstestlib.py
-#
-# Revision 1.4  2003/03/02 19:54:03  frank
-# auto create result directory if missing
-#
-# Revision 1.3  2003/01/23 22:47:50  frank
-# removed python2.2 use of st_size
-#
-# Revision 1.2  2002/12/21 21:47:20  frank
-# preserved failed results
-#
-# Revision 1.1  2002/11/22 21:13:19  frank
-# New
-#
 
+import os
+import pytest
 import sys
 
 sys.path.append( '../pymod' )
 
 import mstestlib
 
+@pytest.mark.parametrize('map,out_file,command', mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))))
+def test(map, out_file, command, extra_args):
+    mstestlib.run_pytest(map, out_file, command, extra_args)
+
 
 ###############################################################################
 # main()
 
 if __name__ == '__main__':
-    mstestlib.run_tests( sys.argv[1:] )
-    
-
-
+    sys.exit(mstestlib.pytest_main())

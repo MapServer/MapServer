@@ -21,3 +21,7 @@ apt-get install -q -y git build-essential pkg-config cmake3 libgeos-dev rake \
     libgdal1-dev libfribidi-dev libexempi-dev \
     libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler libharfbuzz-dev gdal-bin \
     curl sqlite3
+
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python get-pip.py
+pip install -U -r /vagrant/msautotest/requirements.txt

@@ -27,22 +27,22 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-# $Log$
-# Revision 1.4  2003/03/05 15:30:09  frank
-# use shared mstestlib
-#
+
+import os
+import pytest
 import sys
 
 sys.path.append( '../pymod' )
 
 import mstestlib
 
+@pytest.mark.parametrize('map,out_file,command', mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))))
+def test(map, out_file, command, extra_args):
+    mstestlib.run_pytest(map, out_file, command, extra_args)
+
 
 ###############################################################################
 # main()
 
 if __name__ == '__main__':
-    mstestlib.run_tests( sys.argv[1:] )
-    
-
+    sys.exit(mstestlib.pytest_main())

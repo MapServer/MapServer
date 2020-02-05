@@ -68,11 +68,11 @@ def strip_headers( filename ):
 ###############################################################################
 # compare_result()
 
-def compare_result( filename ):
+def compare_result( filename, this_path = '.' ):
     import filecmp
     
-    result_file = 'result/' + filename
-    expected_file = 'expected/'+ filename
+    result_file = os.path.join(this_path, 'result', filename)
+    expected_file = os.path.join(this_path, 'expected', filename)
 
     try:
         result_stat = os.stat( result_file )

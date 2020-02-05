@@ -13,6 +13,7 @@ sudo apt-get install --allow-unauthenticated libmono-system-drawing4.0-cil mono-
 sudo apt-get install --allow-unauthenticated php5-dev || sudo apt-get install --allow-unauthenticated php7-dev
 sudo apt-get install --allow-unauthenticated libperl-dev
 sudo pip install cpp-coveralls
+sudo pip install -U -r msautotest/requirements.txt
 # install swig 3.0.12 (defaults to 2.0.11 on trusty)
 wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
 export CC="ccache gcc"
