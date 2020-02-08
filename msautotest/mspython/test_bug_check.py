@@ -85,36 +85,6 @@ def test_bug_673():
 
     pmstestlib.compare_and_report( 'bug673.png', this_path = os.path.dirname(__file__) )
 
-###############################################################################
-# Test https://github.com/mapserver/mapserver/issues/4943
-
-def test_pattern():
-
-    si = mapscript.styleObj()
-    assert len(si.pattern) == 0
-    assert si.patternlength == 0
-
-    si.pattern = [2.0,3,4]
-    assert si.pattern == (2.0, 3.0, 4.0)
-    assert si.patternlength == 3
-
-    try:
-        si.pattern = [1.0]
-        assert False
-    except mapscript.MapServerError:
-        pass
-
-    try:
-        si.pattern = [i for i in range(11)]
-        assert False
-    except mapscript.MapServerError:
-        pass
-
-    try:
-        si.patternlength = 0
-        assert False
-    except mapscript.MapServerError:
-        pass
 
 ###############################################################################
 # Test reprojection of lines from Polar Stereographic and crossing the antimerdian
