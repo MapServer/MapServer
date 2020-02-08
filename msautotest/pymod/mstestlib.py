@@ -469,8 +469,6 @@ def get_gdal_version():
 
 def get_pytests(dirname):
 
-    renderer = None
-
     ###########################################################################
     # Create results directory if it does not already exist.
     if not os.path.exists(os.path.join(dirname, "result")):

@@ -221,11 +221,11 @@ def gdalurlopen(url):
         handle = urllib2.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
         return handle
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         print('HTTP service for %s is down (HTTP Error: %d)' % (url, e.code))
         socket.setdefaulttimeout(old_timeout)
         return None
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         print('HTTP service for %s is down (HTTP Error: %s)' % (url, e.reason))
         socket.setdefaulttimeout(old_timeout)
         return None
