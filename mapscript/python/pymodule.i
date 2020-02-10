@@ -114,7 +114,6 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
         PyObject* val = PyList_GetItem(values, i);
 
         %#if PY_MAJOR_VERSION >= 3
-        $2[i] = PyString_AsString(val);
             $1[i] = PyUnicode_AsUTF8(key);
             $2[i] = PyUnicode_AsUTF8(val);
         %#else
