@@ -113,8 +113,13 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
         PyObject* key = PyList_GetItem(keys, i);
         PyObject* val = PyList_GetItem(values, i);
 
-        $1[i] = PyString_AsString(key);
-        $2[i] = PyString_AsString(val);
+        %#if PY_MAJOR_VERSION >= 3
+            $1[i] = PyUnicode_AsUTF8(key);
+            $2[i] = PyUnicode_AsUTF8(val);
+        %#else
+            $1[i] = PyString_AsString(key);
+            $2[i] = PyString_AsString(val);
+        %#endif
     }
 
     $1[i] = 0;
