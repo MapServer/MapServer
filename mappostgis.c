@@ -2689,6 +2689,54 @@ int msPostGISLayerInitItemInfo(layerObj *layer)
 #endif
 }
 
+#ifdef USE_POSTGIS
+static const char** buildBindValues(layerObj *layer, int* p_num_bind_values)
+{
+  /* try to get the first bind value */
+  char bind_key[20];
+  const char* bind_value = msLookupHashTable(&layer->bindvals, "1");
+  int num_bind_values = 0;
+  const char** layer_bind_values = (const char**)(bind_value ? msSmallMalloc(sizeof(const char*) * 1000) : NULL);
+  while(bind_value != NULL && num_bind_values < 1000) {
+    /* put the bind value on the stack */
+    layer_bind_values[num_bind_values] = bind_value;
+    /* increment the counter */
+    num_bind_values++;
+    /* create a new lookup key */
+    sprintf(bind_key, "%d", num_bind_values+1);
+    /* get the bind_value */
+    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+  }
+  *p_num_bind_values = num_bind_values;
+  return layer_bind_values;
+}
+
+static void freeBindValues(const char** layer_bind_values)
+{
+  free((void*)layer_bind_values);
+}
+
+static PGresult* runPQexecParamsWithBindSubstitution(layerObj *layer, const char* strSQL, int binary)
+{
+  PGresult *pgresult = NULL;
+  msPostGISLayerInfo* layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+  int num_bind_values = 0;
+  const char** layer_bind_values = buildBindValues(layer, &num_bind_values);
+
+  if(num_bind_values > 0) {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, layer_bind_values, NULL, NULL, binary);
+  } else {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, 0, NULL, NULL, NULL, NULL, binary);
+  }
+
+  /* free bind values */
+  freeBindValues(layer_bind_values);
+
+  return pgresult;
+}
+#endif
+
 /*
 ** msPostGISLayerWhichShapes()
 **
@@ -2700,11 +2748,6 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   msPostGISLayerInfo *layerinfo = NULL;
   char *strSQL = NULL;
   PGresult *pgresult = NULL;
-  const char** layer_bind_values = NULL;
-  const char* bind_value;
-  char* bind_key = NULL;
-
-  int num_bind_values = 0;
 
   assert(layer != NULL);
   assert(layer->layerinfo != NULL);
@@ -2716,21 +2759,6 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   /* Fill out layerinfo with our current DATA state. */
   if ( msPostGISParseData(layer) != MS_SUCCESS) {
     return MS_FAILURE;
-  }
-
-  /* try to get the first bind value */
-  layer_bind_values = (const char**)msSmallMalloc(sizeof(const char*) * 1000);
-  bind_key = (char*)msSmallMalloc(3);
-  bind_value = msLookupHashTable(&layer->bindvals, "1");
-  while(bind_value != NULL) {
-    /* put the bind value on the stack */
-    layer_bind_values[num_bind_values] = bind_value;
-    /* increment the counter */
-    num_bind_values++;
-    /* create a new lookup key */
-    sprintf(bind_key, "%d", num_bind_values+1);
-    /* get the bind_value */
-    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
   }
 
   /*
@@ -2750,17 +2778,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     msDebug("msPostGISLayerWhichShapes query: %s\n", strSQL);
   }
 
-  // fprintf(stderr, "SQL: %s\n", strSQL);
-
-  if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, layer_bind_values, NULL, NULL, RESULTSET_TYPE);
-  } else {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
-  }
-
-  /* free bind values */
-  free(bind_key);
-  free((void*)layer_bind_values);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, RESULTSET_TYPE);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
@@ -2862,10 +2880,6 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
   char *strSQL = NULL;
   char *strSQLCount = NULL;
   PGresult *pgresult = NULL;
-  const char** layer_bind_values = NULL;
-  const char* bind_value;
-  char* bind_key = NULL;
-  int num_bind_values = 0;
   int nCount = 0;
   int rectSRID = -1;
   rectObj searchrectInLayerProj = rect;
@@ -2908,21 +2922,6 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     return -1;
   }
 
-  /* try to get the first bind value */
-  layer_bind_values = (const char**)msSmallMalloc(sizeof(const char*) * 1000);
-  bind_value = msLookupHashTable(&layer->bindvals, "1");
-  bind_key = (char*)msSmallMalloc(3);
-  while(bind_value != NULL) {
-    /* put the bind value on the stack */
-    layer_bind_values[num_bind_values] = bind_value;
-    /* increment the counter */
-    num_bind_values++;
-    /* create a new lookup key */
-    sprintf(bind_key, "%d", num_bind_values+1);
-    /* get the bind_value */
-    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
-  }
-
   /*
   ** This comes *after* parsedata, because parsedata fills in
   ** layer->layerinfo.
@@ -2948,15 +2947,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     msDebug("msPostGISLayerGetShapeCount query: %s\n", strSQLCount);
   }
 
-  if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount, num_bind_values, NULL, layer_bind_values, NULL, NULL, 1);
-  } else {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount,0, NULL, NULL, NULL, NULL, 0);
-  }
-
-  /* free bind values */
-  free(bind_key);
-  free((void*)layer_bind_values);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, strSQLCount, 0);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n",
@@ -3085,7 +3076,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
       msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
     }
 
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
+    pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, RESULTSET_TYPE);
 
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
@@ -3317,7 +3308,7 @@ int msPostGISLayerGetItems(layerObj *layer)
     msDebug("msPostGISLayerGetItems executing SQL: %s\n", sql);
   }
 
-  pgresult = PQexecParams(layerinfo->pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, sql, 0);
 
   if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
     msDebug("msPostGISLayerGetItems(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), sql);
@@ -3459,7 +3450,7 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   /* executing the query */
-  pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, 0);
 
   msFree(strSQL);
 
@@ -3591,7 +3582,8 @@ int msPostGISLayerGetNumFeatures(layerObj *layer)
     }
 
     /* executing the query */
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL, 0, NULL, NULL, NULL, NULL, 0);
+
+    pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, 0);
 
     msFree(strSQL);
 
