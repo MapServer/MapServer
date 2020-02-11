@@ -544,8 +544,6 @@ if(ORACLE_FOUND AND WITH_ORACLE_PLUGIN)
 endif(ORACLE_FOUND AND WITH_ORACLE_PLUGIN)
 
 if(WITH_MSSQL2008)
-  # Temporarily suppress warnings for mapmssql2008.c
-  set_source_files_properties(mapmssql2008.c PROPERTIES COMPILE_FLAGS /w)
   find_package(ODBC)
   if(ODBC_FOUND)
 	add_library(msplugin_mssql2008 MODULE mapmssql2008.c)
