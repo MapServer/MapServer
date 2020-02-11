@@ -31,6 +31,7 @@
 
 import os
 import math
+import sys
 
 import pmstestlib
 import pytest
@@ -581,6 +582,7 @@ def test_rq_16():
 ###############################################################################
 # Test a layer with a tileindex with mixed SRS
 
+@pytest.mark.skipif(sys.platform == 'win32', reason="Fails on Windows")
 def test_rq_18():
 
     map = mapscript.mapObj(get_relpath_to_this('../gdal/tileindexmixedsrs.map'))

@@ -544,9 +544,10 @@ if(ORACLE_FOUND AND WITH_ORACLE_PLUGIN)
 endif(ORACLE_FOUND AND WITH_ORACLE_PLUGIN)
 
 if(WITH_MSSQL2008)
+  # Temporarily Suppress warnings for mapmssql2008.c
+  set_source_files_properties(mapmssql2008.c PROPERTIES COMPILE_FLAGS /w)
   find_package(ODBC)
   if(ODBC_FOUND)
-    include_directories(${ODBC_INCLUDE_DIR})
 	add_library(msplugin_mssql2008 MODULE mapmssql2008.c)
 	target_link_libraries(msplugin_mssql2008 ${ODBC_LIBRARY} ${MAPSERVER_LIBMAPSERVER})
     set_target_properties(msplugin_mssql2008 PROPERTIES COMPILE_FLAGS "-DUSE_MSSQL2008_PLUGIN -DUSE_MSSQL2008")

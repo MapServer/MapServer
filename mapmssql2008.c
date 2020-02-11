@@ -759,7 +759,7 @@ static void setConnError(msODBCconn *conn)
 }
 
 /* Connect to db */
-static msODBCconn * mssql2008Connect(const char * connString)
+static msODBCconn * mssql2008Connect(char * connString)
 {
   SQLCHAR outConnString[1024];
   SQLSMALLINT outConnStringLen;
