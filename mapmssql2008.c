@@ -691,7 +691,7 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
   char    *hay_lower;
   char    *needle_lower;
   size_t  len_hay,len_need, match;
-  int     found = -1;
+  int    found = MS_FALSE;
   int     t;
   char    *loc;
 
@@ -715,13 +715,13 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
   loc = strstr(hay_lower, needle_lower);
   if(loc) {
     match = loc - hay_lower;
-    found = 1;
+    found = MS_TRUE;
   }
 
   msFree(hay_lower);
   msFree(needle_lower);
 
-  return (char *) (found < 0 ? NULL : haystack + match);
+  return (char *) (found == MS_FALSE ? NULL : haystack + match);
 }
 
 static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, char **sort_spec, int debug);
