@@ -109,8 +109,6 @@ def has_requires( version_info, gdal_version, requires_list ):
             if compare_version(gdal_version, item[len('GDAL=='):]) != 0:
                 return 0
         elif version_info.find( item ) == -1:
-            print(version_info)
-            print(item)
             return 0
 
     return 1
