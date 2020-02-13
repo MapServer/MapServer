@@ -15,7 +15,7 @@ LAYER
   NAME shppoly
   TYPE polygon
   CONNECTIONTYPE OGR
-  CONNECTION "data/shppoly"
+  CONNECTION "data/shppoly/poly.shp"
   DATA "poly"
   STATUS default
   CLASSITEM "AREA"
