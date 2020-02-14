@@ -648,7 +648,13 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
         else if (pszTitle)
           psLayer->class[psLayer->numclasses-1-i]->name = msStrdup(pszTitle);
         else
-          psLayer->class[psLayer->numclasses-1-i]->name = msStrdup("Unknown");
+        {
+          // Build a name from layer and class info
+          char szTmp[256];
+          snprintf(szTmp, sizeof(szTmp), "%s#%d", psLayer->name,
+              psLayer->numclasses-1-i);
+          psLayer->class[psLayer->numclasses-1-i]->name = msStrdup(szTmp);
+        }
       }
     }
     if (pszTitle) {
@@ -3985,6 +3991,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     }
     if (!psLabelText) continue; // Can't find text content for this <Label>
 
+    psLabelText = msReplaceSubstring(psLabelText, "\"", "");
     snprintf(szTmp, sizeof(szTmp), "<%sTextSymbolizer>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
@@ -4109,9 +4116,6 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
       pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
 
-    snprintf(szTmp, sizeof(szTmp), "</%sPointPlacement>\n", sNameSpace);
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
-
     /* rotation */
     if (psLabelObj->angle > 0) {
       snprintf(szTmp, sizeof(szTmp), "<%sRotation>%.2f</%sRotation>\n",
@@ -4119,7 +4123,8 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
       pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
 
-    snprintf(szTmp, sizeof(szTmp), "</%sLabelPlacement>\n", sNameSpace);
+    snprintf(szTmp, sizeof(szTmp), "</%sPointPlacement>\n</%sLabelPlacement>\n",
+        sNameSpace, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     if (psLabelObj->outlinecolor.red != -1 &&

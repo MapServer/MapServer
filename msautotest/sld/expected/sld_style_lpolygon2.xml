@@ -20,15 +20,18 @@
 <UserStyle>
 <se:FeatureTypeStyle>
 <se:Rule>
+<se:Name>lpolygon#0</se:Name>
 <se:PolygonSymbolizer>
 <se:Fill>
-<se:SvgParameter name="fill">#00ffff</se:SvgParameter>
-<se:SvgParameter name="fill-opacity">0.50</se:SvgParameter>
+<se:SvgParameter name="fill">#30ffff</se:SvgParameter>
+<se:SvgParameter name="fill-opacity">0.30</se:SvgParameter>
 </se:Fill>
+</se:PolygonSymbolizer>
+<se:PolygonSymbolizer>
 <se:Stroke>
-<se:SvgParameter name="stroke">#ff00ff</se:SvgParameter>
-<se:SvgParameter name="stroke-width">1.00</se:SvgParameter>
-<se:SvgParameter name="stroke-opacity">0.50</se:SvgParameter>
+<se:SvgParameter name="stroke">#ff07ff</se:SvgParameter>
+<se:SvgParameter name="stroke-width">7.00</se:SvgParameter>
+<se:SvgParameter name="stroke-opacity">0.70</se:SvgParameter>
 </se:Stroke>
 </se:PolygonSymbolizer>
 </se:Rule>

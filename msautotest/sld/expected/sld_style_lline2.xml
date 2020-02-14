@@ -4,11 +4,12 @@
 <UserStyle>
 <se:FeatureTypeStyle>
 <se:Rule>
+<se:Name>lline#0</se:Name>
 <se:LineSymbolizer>
 <se:Stroke>
-<se:SvgParameter name="stroke">#ffff00</se:SvgParameter>
-<se:SvgParameter name="stroke-opacity">0.50</se:SvgParameter>
-<se:SvgParameter name="stroke-width">5.00</se:SvgParameter>
+<se:SvgParameter name="stroke">#ffff07</se:SvgParameter>
+<se:SvgParameter name="stroke-opacity">0.70</se:SvgParameter>
+<se:SvgParameter name="stroke-width">7.00</se:SvgParameter>
 </se:Stroke>
 </se:LineSymbolizer>
 </se:Rule>

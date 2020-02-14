@@ -4,6 +4,7 @@
 <UserStyle>
 <se:FeatureTypeStyle>
 <se:Rule>
+<se:Name>lline#0</se:Name>
 <se:LineSymbolizer>
 <se:Stroke>
 <se:SvgParameter name="stroke">#ffff00</se:SvgParameter>

@@ -4952,6 +4952,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
   int numlayers = 0;
   char **layers = NULL;
   char  *sld = NULL;
+  const char * sldenabled = NULL;
 
   char ***nestedGroups = NULL;
   int *numNestedGroups = NULL;
@@ -4961,6 +4962,9 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
   numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
   isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
+
+  sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+  if (sldenabled == NULL) sldenabled = "true";
 
   for(i=0; i<numentries; i++) {
     /* getMap parameters */
@@ -4992,6 +4996,19 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
       msFreeCharArray(layers, numlayers);
     }
 
+    else if (strcasecmp(names[i], "SLD") == 0 &&
+        values[i] && strlen(values[i]) > 0 &&
+        strcasecmp(sldenabled, "true") == 0)
+    {
+        msSLDApplySLDURL(map, values[i], -1, NULL, NULL);
+    }
+
+    else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
+        values[i] && strlen(values[i]) > 0 &&
+        strcasecmp(sldenabled, "true") == 0)
+    {
+      msSLDApplySLD(map, values[i], -1, NULL, NULL);
+    }
   }
 
   /* free the stuff used for nested layers */

@@ -40,18 +40,18 @@
 <UserStyle>
 <se:FeatureTypeStyle>
 <se:Rule>
+<se:Name>lpoint#0</se:Name>
 <se:PointSymbolizer>
 <se:Graphic>
 <se:Mark>
 <se:WellKnownName>star</se:WellKnownName>
 <se:Fill>
 <se:SvgParameter name="fill">#0000ff</se:SvgParameter>
-<se:SvgParameter name="fill-opacity">0.50</se:SvgParameter>
+<se:SvgParameter name="fill-opacity">0.10</se:SvgParameter>
 </se:Fill>
 <se:Stroke>
 <se:SvgParameter name="stroke">#ff0000</se:SvgParameter>
 <se:SvgParameter name="stroke-width">1</se:SvgParameter>
-<se:SvgParameter name="stroke-opacity">0.50</se:SvgParameter>
 </se:Stroke>
 </se:Mark>
 <se:Size>20</se:Size>
