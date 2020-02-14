@@ -3424,12 +3424,13 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                   sNameSpace, psStyle->angle, sNameSpace);
               pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
-            if (psStyle->opacity < 100)
-            {
-              snprintf(szTmp, sizeof(szTmp), "<%sOpacity>%g</%sOpacity>\n",
-                  sNameSpace, psStyle->opacity/100.0, sNameSpace);
-              pszSLD = msStringConcatenate(pszSLD, szTmp);
-            }
+         // Style opacity is already reported to alpha channel of color and outlinecolor
+         // if (psStyle->opacity < 100)
+         // {
+         //   snprintf(szTmp, sizeof(szTmp), "<%sOpacity>%g</%sOpacity>\n",
+         //       sNameSpace, psStyle->opacity/100.0, sNameSpace);
+         //   pszSLD = msStringConcatenate(pszSLD, szTmp);
+         // }
 
             if (psStyle->offsetx != 0 || psStyle->offsety != 0)
             {
