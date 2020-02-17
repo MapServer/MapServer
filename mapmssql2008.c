@@ -1488,22 +1488,27 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   if (paging_query) {
       paging_query = msStringConcatenate(paging_query, "[geom], [id] FROM (");
       query = msStringConcatenate(query, "]) 'id', row_number() over (");
-      if (layerinfo->sort_spec) {
-          query = msStringConcatenate(query, layerinfo->sort_spec);
-      }
 
       if (layer->sortBy.nProperties > 0) {
           tmp = msLayerBuildSQLOrderBy(layer);
-          if (layerinfo->sort_spec)
+          if (layerinfo->sort_spec) {
+              query = msStringConcatenate(query, layerinfo->sort_spec);
               query = msStringConcatenate(query, ", ");
-          else
+          }
+          else {
               query = msStringConcatenate(query, " ORDER BY ");
+          }
           query = msStringConcatenate(query, tmp);
           msFree(tmp);
       }
       else {
-          query = msStringConcatenate(query, "ORDER BY ");
-          query = msStringConcatenate(query, layerinfo->urid_name);
+          if (layerinfo->sort_spec) {
+              query = msStringConcatenate(query, layerinfo->sort_spec);
+          }
+          else {
+              query = msStringConcatenate(query, "ORDER BY ");
+              query = msStringConcatenate(query, layerinfo->urid_name);
+          }
       }
       query = msStringConcatenate(query, ") 'rownum' FROM ");
   }
