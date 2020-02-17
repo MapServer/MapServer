@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ows:ExceptionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd">
+  <ows:Exception exceptionCode="NoApplicableCode" locator="mapserv">
+    <ows:ExceptionText>msWFSGetFeature(): WFS server error. ms_error-&gt;code not found
+msMSSQL2008LayerGetShape(): Query error. Error executing MSSQL2008 SQL statement: SELECT [0], [1], [2], [3], [geom], [id] FROM (SELECT convert(nvarchar(max), [ogr_fid]) '0',convert(nvarchar(max), [name]) '1',convert(nvarchar(max), [name_ar]) '2',convert(nvarchar(max), [name_hi]) '3',[ogr_geometry] 'geom',convert(varchar(36), [ogr_fid]) 'id', row_number() over ( ORDER BY ogr_fid ASC USING SRID=3857ORDER BY ogr_fid) 'rownum' FROM (select * from cities) as foo WHERE ogr_geometry.STIntersects(geometry::STGeomFromText('POLYGON((-20026376.39001 -20048966.10001,20026376.39001 -20048966.10001,20026376.39001 20048966.10001,-20026376.39001 20048966.10001,-20026376.39001 -20048966.10001))',3857)) = 1 ) tbl where [rownum] &lt; 11
+-[Microsoft][ODBC SQL Server Driver][SQL Server]Incorrect syntax near 'SRID'.
+</ows:ExceptionText>
+  </ows:Exception>
+</ows:ExceptionReport>

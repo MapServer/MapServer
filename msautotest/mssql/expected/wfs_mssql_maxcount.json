@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 6994,
+"name": "cities",
+"features": [
+{ "type": "Feature", "properties": { "ogr_fid": 1, "name": "崇州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11540741.500531593337655, 3584222.176282715518028 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 2, "name": "江油市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11658983.416123732924461, 3734167.308027575723827 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 3, "name": "都江堰市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11535108.467130685225129, 3632351.464808412827551 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 4, "name": "汉中市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11914449.602725410833955, 3905795.921342806424946 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 5, "name": "达州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11967742.628956081345677, 3658495.346212032716721 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6, "name": "彭州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11568532.166505239903927, 3647573.495146059896797 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 7, "name": "万源市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 12025983.606177415698767, 3772333.751561704557389 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 8, "name": "绵竹市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11599265.83038479834795, 3677164.76934290677309 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 9, "name": "绵阳市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11660728.683100385591388, 3692494.727239217143506 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 10, "name": "邛崃市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11517720.217953415587544, 3556944.647455960512161 ] } }
+]
+}
