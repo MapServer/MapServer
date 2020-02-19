@@ -32,6 +32,8 @@
 #include "mapows.h"
 #include "cpl_string.h"
 
+extern int yyparse(parseObj *);
+
 #if defined(USE_CURL)
 static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 #endif
@@ -3943,7 +3945,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
   char *pszSLD = NULL;
 
-  char szTmp[100];
+  char szTmp[1000];
   char **aszFontsParts = NULL;
   int nFontParts = 0;
   char szHexColor[7];
@@ -3970,32 +3972,79 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
   for (lid=0 ; lid < psClass->numlabels ; lid++)
   {
     char * psLabelText;
+    expressionObj psLabelExpr;
+    parseObj p;
+
+    msInitExpression(&psLabelExpr);
     psLabelObj = psClass->labels[lid];
 
-    psLabelText = NULL;
     if (psLabelObj->text.string)
     {
-      psLabelText = msStrdup(psLabelObj->text.string);
-      psLabelText = msReplaceSubstring(psLabelText, "[", "<ogc:PropertyName>");
-      psLabelText = msReplaceSubstring(psLabelText, "]", "</ogc:PropertyName>");
+      psLabelExpr.string = msStrdup(psLabelObj->text.string);
+      psLabelExpr.type = psLabelObj->text.type;
     }
     else if (psClass->text.string)
     {
-      psLabelText = msStrdup(psClass->text.string);
-      psLabelText = msReplaceSubstring(psLabelText, "[", "<ogc:PropertyName>");
-      psLabelText = msReplaceSubstring(psLabelText, "]", "</ogc:PropertyName>");
+      psLabelExpr.string = msStrdup(psClass->text.string);
+      psLabelExpr.type = psClass->text.type;
     }
     else if (psLayer->labelitem)
     {
-      psLabelText = msStrdup(psLayer->labelitem);
+      psLabelExpr.string = msStrdup(psLayer->labelitem);
+      psLabelExpr.type = MS_STRING;
     }
-    if (!psLabelText) continue; // Can't find text content for this <Label>
+    else
+    {
+      msFreeExpression(&psLabelExpr);
+      continue; // Can't find text content for this <Label>
+    }
 
-    psLabelText = msReplaceSubstring(psLabelText, "\"", "");
+    if (psLabelExpr.type == MS_STRING)
+    {
+      // Rewrite string to an expression so that literal strings and attributes
+      // are explicitely concatenated, e.g.:
+      //   "area is: [area]" becomes ("area is: "+"[area]"+"")
+      //             ^^^^^^                     ^^^^^^^^^^^^
+      char *result;
+      result = msStrdup("\"");
+      result = msStringConcatenate(result, psLabelExpr.string);
+      result = msStringConcatenate(result, "\"");
+      msTokenizeExpression(&psLabelExpr, NULL, NULL);
+      for (tokenListNodeObjPtr t = psLabelExpr.tokens ; t ; t=t->next)
+      {
+        if (t->token == MS_TOKEN_BINDING_DOUBLE ||
+            t->token == MS_TOKEN_BINDING_INTEGER ||
+            t->token == MS_TOKEN_BINDING_STRING)
+        {
+          char * target = msSmallMalloc(strlen(t->tokenval.bindval.item) + 3);
+          char * replacement = msSmallMalloc(strlen(t->tokenval.bindval.item) + 9);
+          sprintf(target, "[%s]", t->tokenval.bindval.item);
+          sprintf(replacement, "\"+\"[%s]\"+\"", t->tokenval.bindval.item);
+          result = msReplaceSubstring(result,target,replacement);
+          msFree(target);
+          msFree(replacement);
+        }
+      }
+      msFreeExpression(&psLabelExpr);
+      psLabelExpr.string = msStrdup(result);
+      psLabelExpr.type = MS_EXPRESSION;
+      msFree(result);
+    }
+
+    // Parse label expression to generate SLD tags from MapFile syntax
+    msTokenizeExpression(&psLabelExpr, NULL, NULL);
+    p.expr = &psLabelExpr;
+    p.shape = NULL;
+    p.type = MS_PARSE_TYPE_SLD;
+    yyparse(&p);
+    psLabelText = msStrdup(p.result.strval);
+    msFree(p.result.strval);
+    msFreeExpression(&psLabelExpr);
+
     snprintf(szTmp, sizeof(szTmp), "<%sTextSymbolizer>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    snprintf(szTmp, sizeof(szTmp), "<%sLabel>%s</%sLabel>\n",
+    snprintf(szTmp, sizeof(szTmp), "<%sLabel>\n%s</%sLabel>\n",
         sNameSpace, psLabelText, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 

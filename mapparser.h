@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_HOME_EVEN_MAPSERVER_MAPSERVER_MAPPARSER_H_INCLUDED
-# define YY_YY_HOME_EVEN_MAPSERVER_MAPSERVER_MAPPARSER_H_INCLUDED
+#ifndef YY_YY_MAPPARSER_H_INCLUDED
+# define YY_YY_MAPPARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -141,7 +141,7 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
+typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
 #line 30 "mapparser.y" /* yacc.c:1909  */
@@ -152,10 +152,8 @@ union YYSTYPE
   struct tm tmval;
   shapeObj *shpval;
 
-#line 156 "/home/even/mapserver/mapserver/mapparser.h" /* yacc.c:1909  */
+#line 156 "mapparser.h" /* yacc.c:1909  */
 };
-
-typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -164,4 +162,4 @@ typedef union YYSTYPE YYSTYPE;
 
 int yyparse (parseObj *p);
 
-#endif /* !YY_YY_HOME_EVEN_MAPSERVER_MAPSERVER_MAPPARSER_H_INCLUDED  */
+#endif /* !YY_YY_MAPPARSER_H_INCLUDED  */
