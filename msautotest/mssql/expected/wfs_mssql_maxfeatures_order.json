@@ -3,15 +3,15 @@
 "numberMatched": 6994,
 "name": "cities_with_order",
 "features": [
-{ "type": "Feature", "properties": { "ogr_fid": 1, "name": "崇州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11540741.500531593337655, 3584222.176282715518028 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 2, "name": "江油市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11658983.416123732924461, 3734167.308027575723827 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 3, "name": "都江堰市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11535108.467130685225129, 3632351.464808412827551 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 4, "name": "汉中市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11914449.602725410833955, 3905795.921342806424946 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 5, "name": "达州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11967742.628956081345677, 3658495.346212032716721 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 6, "name": "彭州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11568532.166505239903927, 3647573.495146059896797 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 7, "name": "万源市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 12025983.606177415698767, 3772333.751561704557389 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 8, "name": "绵竹市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11599265.83038479834795, 3677164.76934290677309 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 9, "name": "绵阳市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11660728.683100385591388, 3692494.727239217143506 ] } },
-{ "type": "Feature", "properties": { "ogr_fid": 10, "name": "邛崃市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11517720.217953415587544, 3556944.647455960512161 ] } }
+{ "type": "Feature", "properties": { "ogr_fid": 6994, "name": "Heroica Nogales", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12351166.251028399914503, 3674840.854894261341542 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6993, "name": "Puerto Peñasco", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12639224.034942869096994, 3673296.088174171745777 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6992, "name": "Heroica Caborca", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12485093.149664983153343, 3595057.794421822298318 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6991, "name": "Veracruz", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -10702096.524410091340542, 2178522.793445657007396 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6990, "name": "Cabo San Lucas", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12235251.302412027493119, 2619181.87938651163131 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6989, "name": "San Juan y Martínez", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -9332871.29609221406281, 2545428.252238906454295 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6988, "name": "", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -8427291.290518410503864, 604389.407783129950985 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6987, "name": "Maní", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -8046234.24289673473686, 536986.832195404102094 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6986, "name": "San Marcos", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -10902695.805292455479503, 3488473.674470861442387 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6985, "name": "Lancaster", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -13151879.188585720956326, 4123042.833017694763839 ] } }
 ]
 }

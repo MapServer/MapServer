@@ -51,7 +51,7 @@ MAP
     NAME 'cities_with_order'
     EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
     INCLUDE 'include/cities_mssql.map'
-    DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857 ORDER BY ogr_fid ASC"
+    DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857 ORDER BY ogr_fid DESC"
     METADATA
         "gml_include_items" "all"
         "gml_types" "auto"
