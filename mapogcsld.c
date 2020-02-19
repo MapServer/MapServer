@@ -3313,8 +3313,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
 
           if (pszSymbolName) {
-            colorObj sTmpFillColor;
-            colorObj sTmpStrokeColor;
+            colorObj sTmpFillColor = { 128, 128, 128, 255 };
+            colorObj sTmpStrokeColor = { 0, 0, 0, 255 };
             int hasFillColor = 0;
             int hasStrokeColor = 0;
 
