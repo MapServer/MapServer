@@ -658,13 +658,22 @@ int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
 
 int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses)
 {
+  return msShapeGetNextClass(-1, layer, map, shape, classgroup, numclasses);
+}
+
+int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map,
+    shapeObj *shape, int *classgroup, int numclasses)
+{
   int i, iclass;
+
+  if (currentclass < 0)
+    currentclass = -1;
 
   if (layer->numclasses > 0) {
     if (classgroup == NULL || numclasses <=0)
       numclasses = layer->numclasses;
 
-    for(i=0; i<numclasses; i++) {
+    for(i=currentclass+1; i<numclasses; i++) {
       if (classgroup)
         iclass = classgroup[i];
       else
