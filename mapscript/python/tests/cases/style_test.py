@@ -175,6 +175,53 @@ class NewStylesTestCase(MapTestCase):
         self.assertRaises(mapscript.MapServerChildError,
                           class0.insertStyle, None)
 
+    def testPattern(self):
+        """See https://github.com/mapserver/mapserver/issues/4943"""
+
+        si = mapscript.styleObj()
+        assert si.pattern == ()
+        assert si.patternlength == 0
+
+    def testPattern2(self):
+
+        si = mapscript.styleObj()
+        si.pattern = [2.0, 3, 4]
+        assert si.pattern == (2.0, 3.0, 4.0)
+        assert si.patternlength == 3
+
+    def testPattern3(self):
+        """a pattern must have at least 2 elements"""
+
+        si = mapscript.styleObj()
+        exception = None
+        try:
+            si.pattern = [1.0]
+        except Exception:
+            exception = True
+        assert exception is True
+
+    def testPattern4(self):
+        """a pattern can have a max of 10 elements
+        This is set in mapsymbol.h with #define MS_MAXPATTERNLENGTH 10"""
+
+        si = mapscript.styleObj()
+        exception = None
+        try:
+            si.pattern = [i for i in range(11)]
+        except Exception:
+            exception = True
+        assert exception is True
+
+    def testPattern5(self):
+        """pattern length is read-only"""
+        si = mapscript.styleObj()
+        exception = None
+        try:
+            si.patternlength = 0
+        except Exception:
+            exception = True
+        assert exception is True
+
 
 class BrushCachingTestCase(MapTestCase):
 

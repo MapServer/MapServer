@@ -26,7 +26,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500 // for putenv
+#endif
+
 #include "mapserver-config.h"
+#include <stdlib.h>
+
 #ifdef USE_FASTCGI
 #define NO_FCGI_DEFINES
 #include "fcgi_stdio.h"
@@ -39,7 +46,6 @@
 #ifndef WIN32
 #include <signal.h>
 #endif
-
 
 
 /************************************************************************/
@@ -73,7 +79,7 @@ void msCleanupOnExit( void )
   fprintf( fp_out, "In msCleanupOnExit\n" );
   fclose( fp_out );
 #endif
-  msCleanup(1);
+  msCleanup();
 }
 #endif
 
@@ -88,7 +94,7 @@ void msCleanupOnExit( void )
 static int msIO_fcgiRead( void *cbData, void *data, int byteCount )
 
 {
-  return FCGI_fread( data, 1, byteCount, (FCGI_FILE *) cbData );
+  return (int) FCGI_fread( data, 1, byteCount, (FCGI_FILE *) cbData );
 }
 
 /************************************************************************/
@@ -100,7 +106,7 @@ static int msIO_fcgiRead( void *cbData, void *data, int byteCount )
 static int msIO_fcgiWrite( void *cbData, void *data, int byteCount )
 
 {
-  return FCGI_fwrite( data, 1, byteCount, (FCGI_FILE *) cbData );
+  return (int) FCGI_fwrite( data, 1, byteCount, (FCGI_FILE *) cbData );
 }
 
 /************************************************************************/

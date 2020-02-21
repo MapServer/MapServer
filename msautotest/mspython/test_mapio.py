@@ -29,62 +29,43 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import os
+import pytest
 
-sys.path.append( '../pymod' )
-import pmstestlib
+mapscript_available = False
+try:
+    import mapscript
+    mapscript_available = True
+except ImportError:
+    pass
 
-import mapscript
+pytestmark = pytest.mark.skipif(not mapscript_available, reason="mapscript not available")
+
+
+def get_relpath_to_this(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
 
 ###############################################################################
 #
 
 def test_msIO_getAndStripStdoutBufferMimeHeaders():
 
-    if 'INPUT=GDAL' not in mapscript.msGetVersion():
-        return 'skip'
     if 'SUPPORTS=WMS' not in mapscript.msGetVersion():
-        return 'skip'
+        pytest.skip()
 
-    map = mapscript.mapObj('test_mapio.map')
+    map = mapscript.mapObj(get_relpath_to_this('test_mapio.map'))
     request = mapscript.OWSRequest()
     mapscript.msIO_installStdoutToBuffer()
     request.loadParamsFromURL('service=WMS&version=1.1.1&request=GetMap&layers=grey&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&width=80&height=40')
     status = map.OWSDispatch(request)
-    if status != 0:
-        pmstestlib.post_reason( 'wrong OWSDispatch status' )
-        return 'fail'
+    assert status == 0
     headers = mapscript.msIO_getAndStripStdoutBufferMimeHeaders()
-    if headers is None:
-        pmstestlib.post_reason( 'headers is None' )
-        return 'fail'
-    if 'Content-Type' not in headers or headers['Content-Type'] != 'image/png':
-        pmstestlib.post_reason( 'wrong Content-Type' )
-        print(headers)
-        return 'fail'
-    if 'Cache-Control' not in headers or headers['Cache-Control'] != 'max-age=86400':
-        pmstestlib.post_reason( 'wrong Cache-Control' )
-        print(headers)
-        return 'fail'
+    assert headers is not None
+    assert 'Content-Type' in headers
+    assert headers['Content-Type'] == 'image/png'
+    assert 'Cache-Control' in headers
+    assert headers['Cache-Control'] == 'max-age=86400'
 
     result = mapscript.msIO_getStdoutBufferBytes()
-    if result is None or result[1:4] != b'PNG':
-        pmstestlib.post_reason( 'wrong data' )
-        return 'fail'
-
-    return 'success'
-
-test_list = [
-    test_msIO_getAndStripStdoutBufferMimeHeaders,
-    None ]
-
-if __name__ == '__main__':
-
-    pmstestlib.setup_run( 'test_mapio' )
-
-    pmstestlib.run_tests( test_list )
-
-    pmstestlib.summarize()
-
-    mapscript.msCleanup()
-
+    assert result is not None
+    assert result[1:4] == b'PNG'

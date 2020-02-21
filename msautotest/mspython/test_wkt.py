@@ -35,21 +35,24 @@
 #
 #
 
-import sys
+import pytest
 
-sys.path.append( '../pymod' )
-import pmstestlib
+mapscript_available = False
+try:
+    import mapscript
+    mapscript_available = True
+except ImportError:
+    pass
 
-import mapscript
+pytestmark = pytest.mark.skipif(not mapscript_available, reason="mapscript not available")
 
 ###############################################################################
 # Test simple geometries that should convert back to same thing - OGR only.
 
-def wkt_test_1():
+def test_wkt_1():
 
-    if ('SUPPORTS=GEOS' in mapscript.msGetVersion() or
-            'INPUT=OGR' not in mapscript.msGetVersion()):
-        return 'skip'
+    if 'SUPPORTS=GEOS' in mapscript.msGetVersion():
+        pytest.skip()
 
     wkt_list = [ 'POINT (5 7)',
                  'LINESTRING (5 7, 7 9, 9 -1)',
@@ -62,23 +65,16 @@ def wkt_test_1():
         shp = mapscript.shapeObj.fromWKT( orig_wkt )
         new_wkt = shp.toWKT().replace('.0000000000000000', '')
 
-        if new_wkt != orig_wkt:
-            pmstestlib.post_reason( 'WKT "%s" converted to "%s".' \
-                                    % (orig_wkt, new_wkt) )
-            return 'fail'
-    
-    return 'success'
-
+        assert new_wkt == orig_wkt
 
 ###############################################################################
 # Test MULTIPOLYGON which will translate back as a POLYGON since MapServer
 # doesn't know how to distinguish - OGR Only.
 
-def wkt_test_2():
+def test_wkt_2():
 
-    if ('SUPPORTS=GEOS' in mapscript.msGetVersion() or
-            'INPUT=OGR' not in mapscript.msGetVersion()):
-        return 'skip'
+    if 'SUPPORTS=GEOS' in mapscript.msGetVersion():
+        pytest.skip()
 
     orig_wkt = 'MULTIPOLYGON(((50 50, 350 50, 350 250, 50 250, 50 50)),((250 150, 550 150, 550 350, 250 350, 250 150)))'
     expected_wkt = 'POLYGON ((50 50, 350 50, 350 250, 50 250, 50 50), (250 150, 550 150, 550 350, 250 350, 250 150))'
@@ -86,21 +82,17 @@ def wkt_test_2():
     shp = mapscript.shapeObj.fromWKT( orig_wkt )
     new_wkt = shp.toWKT().replace('.0000000000000000', '')
 
-    if new_wkt != expected_wkt:
-        pmstestlib.post_reason( 'WKT "%s" converted to "%s".' \
-                                % (expected_wkt, new_wkt) )
-        return 'fail'
-    
-    return 'success'
+    assert new_wkt == expected_wkt
 
 
 ###############################################################################
 # Test simple geometries that should convert back to same thing - GEOS only.
 
-def wkt_test_3():
+def test_wkt_3():
 
     if 'SUPPORTS=GEOS' not in mapscript.msGetVersion():
-        return 'skip'
+        pytest.skip()
+
 
     wkt_list = [ 'POINT (5.0000000000000000 7.0000000000000000)',
                  'LINESTRING (5.0000000000000000 7.0000000000000000, 7.0000000000000000 9.0000000000000000, 9.0000000000000000 -1.0000000000000000)',
@@ -112,33 +104,4 @@ def wkt_test_3():
         shp = mapscript.shapeObj.fromWKT( orig_wkt )
         new_wkt = shp.toWKT()
 
-        if new_wkt != orig_wkt:
-            pmstestlib.post_reason( 'WKT "%s" converted to "%s".' \
-                                    % (orig_wkt, new_wkt) )
-            return 'fail'
-    
-    return 'success'
-
-
-###############################################################################
-# Cleanup.
-
-def wkt_test_cleanup():
-    return 'success'
-
-test_list = [
-    wkt_test_1,
-    wkt_test_2,
-    wkt_test_3,
-    wkt_test_cleanup ]
-
-if __name__ == '__main__':
-
-    pmstestlib.setup_run( 'wkt' )
-
-    pmstestlib.run_tests( test_list )
-
-    pmstestlib.summarize()
-
-    mapscript.msCleanup(0)
-
+        assert new_wkt == orig_wkt

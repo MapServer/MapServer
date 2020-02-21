@@ -27,9 +27,7 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
-import string
 
 have_pdiff = None
 
@@ -68,19 +66,19 @@ def strip_headers( filename ):
 ###############################################################################
 # compare_result()
 
-def compare_result( filename ):
+def compare_result( filename, this_path = '.' ):
     import filecmp
     
-    result_file = 'result/' + filename
-    expected_file = 'expected/'+ filename
+    result_file = os.path.join(this_path, 'result', filename)
+    expected_file = os.path.join(this_path, 'expected', filename)
 
     try:
-        result_stat = os.stat( result_file )
+        os.stat( result_file )
     except OSError:
         return 'noresult'
     
     try:
-        expected_stat = os.stat( expected_file )
+        os.stat( expected_file )
     except OSError:
         return 'noexpected'
 

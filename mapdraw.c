@@ -223,8 +223,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   layerObj *lp=NULL;
   int status = MS_FAILURE;
   imageObj *image = NULL;
-  struct mstimeval mapstarttime, mapendtime;
-  struct mstimeval starttime, endtime;
+  struct mstimeval mapstarttime = {0}, mapendtime = {0};
+  struct mstimeval starttime = {0}, endtime = {0};
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   enum MS_CONNECTION_TYPE lastconnectiontype;
@@ -974,94 +974,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
           /* original area of interest is (map->extent, map->projection)... */
           /* Useful when dealin with UVRASTER that extend beyond 180 deg */
           msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, map );
-      }
 
-      /* For UVRaster, it is important that the searchrect is not too large */
-      /* to avoid insufficient intermediate raster resolution, which could */
-      /* happen if we use the default code path, given potential reprojection */
-      /* issues when using a map extent that is not in the validity area of */
-      /* the layer projection. */
-      if( layer->connectiontype == MS_UVRASTER &&
-          !layer->projection.gt.need_geotransform &&
-          !(msProjIsGeographicCRS(&(map->projection)) &&
-            msProjIsGeographicCRS(&(layer->projection))) ) {
-        rectObj layer_ori_extent;
-
-        if( msLayerGetExtent(layer, &layer_ori_extent) == MS_SUCCESS ) {
-          projectionObj map_proj;
-
-          double map_extent_minx = map->extent.minx;
-          double map_extent_miny = map->extent.miny;
-          double map_extent_maxx = map->extent.maxx;
-          double map_extent_maxy = map->extent.maxy;
-          rectObj layer_extent = layer_ori_extent;
-
-          /* Create a variant of map->projection without geotransform for */
-          /* conveniency */
-          msInitProjection(&map_proj);
-          msCopyProjection(&map_proj, &map->projection);
-          map_proj.gt.need_geotransform = MS_FALSE;
-          if( map->projection.gt.need_geotransform ) {
-            map_extent_minx = map->projection.gt.geotransform[0]
-                + map->projection.gt.geotransform[1] * map->extent.minx
-                + map->projection.gt.geotransform[2] * map->extent.miny;
-            map_extent_miny = map->projection.gt.geotransform[3]
-                + map->projection.gt.geotransform[4] * map->extent.minx
-                + map->projection.gt.geotransform[5] * map->extent.miny;
-            map_extent_maxx = map->projection.gt.geotransform[0]
-                + map->projection.gt.geotransform[1] * map->extent.maxx
-                + map->projection.gt.geotransform[2] * map->extent.maxy;
-            map_extent_maxy = map->projection.gt.geotransform[3]
-                + map->projection.gt.geotransform[4] * map->extent.maxx
-                + map->projection.gt.geotransform[5] * map->extent.maxy;
-          }
-
-          /* Reproject layer extent to map projection */
-          msProjectRect(&layer->projection, &map_proj, &layer_extent);
-
-          if( layer_extent.minx <= map_extent_minx &&
-              layer_extent.miny <= map_extent_miny &&
-              layer_extent.maxx >= map_extent_maxx &&
-              layer_extent.maxy >= map_extent_maxy ) {
-            /* do nothing special if area to map is inside layer extent */
-          }
-          else {
-            if( layer_extent.minx >= map_extent_minx &&
-                layer_extent.maxx <= map_extent_maxx &&
-                layer_extent.miny >= map_extent_miny &&
-                layer_extent.maxy <= map_extent_maxy ) {
-              /* if the area to map is larger than the layer extent, then */
-              /* use full layer extent and add some margin to reflect the */
-              /* proportion of the useful area over the requested bbox */
-              double extra_x =
-                (map_extent_maxx - map_extent_minx) /
-                  (layer_extent.maxx - layer_extent.minx) *
-                  (layer_ori_extent.maxx -  layer_ori_extent.minx);
-              double extra_y =
-                 (map_extent_maxy - map_extent_miny) /
-                  (layer_extent.maxy - layer_extent.miny) *
-                  (layer_ori_extent.maxy -  layer_ori_extent.miny);
-              searchrect.minx = layer_ori_extent.minx - extra_x / 2;
-              searchrect.maxx = layer_ori_extent.maxx + extra_x / 2;
-              searchrect.miny = layer_ori_extent.miny - extra_y / 2;
-              searchrect.maxy = layer_ori_extent.maxy + extra_y / 2;
-            }
-            else
-            {
-              /* otherwise clip the map extent with the reprojected layer */
-              /* extent */
-              searchrect.minx = MS_MAX( map_extent_minx, layer_extent.minx );
-              searchrect.maxx = MS_MIN( map_extent_maxx, layer_extent.maxx );
-              searchrect.miny = MS_MAX( map_extent_miny, layer_extent.miny );
-              searchrect.maxy = MS_MIN( map_extent_maxy, layer_extent.maxy );
-              /* and reproject into the layer projection */
-              msProjectRect(&map_proj, &layer->projection, &searchrect);
-            }
-            bDone = MS_TRUE;
-          }
-
-          msFreeProjection(&map_proj);
-        }
+          searchrect = msUVRASTERGetSearchRect( layer, map );
+          bDone = MS_TRUE;
       }
 
       if( !bDone )
@@ -2240,16 +2155,23 @@ draw_shape_cleanup:
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext)
 {
   int s,ret;
-  classObj *theclass=layer->class[classindex];
+  classObj *theclass=NULL;
   labelObj *label=NULL;
 
-  if(layer->transform == MS_TRUE && layer->project)
-    msProjectPoint(&layer->projection, &map->projection, point);
-
+  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+    msProjectPoint(&(layer->projection), &(map->projection), point);
+  }
+  
+  if(classindex > layer->numclasses) {
+    msSetError(MS_MISCERR, "Invalid classindex (%d)", "msDrawPoint()", classindex);
+    return MS_FAILURE; 
+  }
+  theclass = layer->class[classindex];
+  
   if(labeltext && theclass->numlabels > 0) {
     label = theclass->labels[0];
   }
-
+  
   switch(layer->type) {
     case MS_LAYER_POINT:
       if(layer->transform == MS_TRUE) {
@@ -2265,7 +2187,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return MS_FAILURE;
           }
       }
-      if(labeltext && *labeltext) {
+      if(label && labeltext && *labeltext) {
         textSymbolObj *ts = msSmallMalloc(sizeof(textSymbolObj));
         initTextSymbol(ts);
         msPopulateTextSymbolForLabelAndString(ts, label, msStrdup(labeltext), layer->scalefactor, image->resolutionfactor, layer->labelcache);
@@ -2299,10 +2221,10 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
 int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
   shapeObj labelPoly;
-  label_bounds lbounds;
+  label_bounds lbounds = {0};
   lineObj labelPolyLine;
   pointObj labelPolyPoints[5];
-  textSymbolObj ts;
+  textSymbolObj ts = {0};
   int needLabelPoly=MS_TRUE;
   int needLabelPoint=MS_TRUE;
   int haveLabelText=MS_TRUE;
@@ -2326,7 +2248,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   labelPoly.line->numpoints = 5;
 
   if(label->position != MS_XY) {
-    pointObj p;
+    pointObj p = {0};
 
     if(label->numstyles > 0) {
       int i;
@@ -2969,7 +2891,7 @@ static int getLabelPositionFromString(char *pszString) {
 int msDrawLabelCache(mapObj *map, imageObj *image)
 {
   int nReturnVal = MS_SUCCESS;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
@@ -2993,7 +2915,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
        */
       lineObj labelpoly_line;
       pointObj labelpoly_points[5];
-      label_bounds labelpoly_bounds;
+      label_bounds labelpoly_bounds = {0};
       lineObj  label_marker_line;
       pointObj label_marker_points[5];
       label_bounds label_marker_bounds;

@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 
   for(i=0; i<num_fields; i++) {
     msDBFGetFieldInfo(inDBF,i,fName,NULL,NULL);
-    if(strncasecmp(argv[3],fName,strlen(argv[3])) == 0) { /* ---- Found it ---- */
+    if(strncasecmp(argv[3],fName,(int)strlen(argv[3])) == 0) { /* ---- Found it ---- */
       fieldNumber = i;
       break;
     }

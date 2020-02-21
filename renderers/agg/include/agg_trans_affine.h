@@ -292,7 +292,7 @@ namespace mapserver
     //------------------------------------------------------------------------
     inline void trans_affine::transform(double* x, double* y) const
     {
-        register double tmp = *x;
+        const double tmp = *x;
         *x = tmp * sx  + *y * shx + tx;
         *y = tmp * shy + *y * sy  + ty;
     }
@@ -300,7 +300,7 @@ namespace mapserver
     //------------------------------------------------------------------------
     inline void trans_affine::transform_2x2(double* x, double* y) const
     {
-        register double tmp = *x;
+        const double tmp = *x;
         *x = tmp * sx  + *y * shx;
         *y = tmp * shy + *y * sy;
     }
@@ -308,9 +308,9 @@ namespace mapserver
     //------------------------------------------------------------------------
     inline void trans_affine::inverse_transform(double* x, double* y) const
     {
-        register double d = determinant_reciprocal();
-        register double a = (*x - tx) * d;
-        register double b = (*y - ty) * d;
+        const double d = determinant_reciprocal();
+        const double a = (*x - tx) * d;
+        const double b = (*y - ty) * d;
         *x = a * sy - b * shx;
         *y = b * sx - a * shy;
     }

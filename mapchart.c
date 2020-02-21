@@ -350,7 +350,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         status=MS_SUCCESS;
   const char *chartRangeProcessingKey=NULL;
   const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
-  double diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue, exponent=0;
+  double diameter=0, mindiameter=-1, maxdiameter=0, minvalue=0, maxvalue=0, exponent=0;
   double *values;
   styleObj **styles;
   pointObj center;
@@ -507,7 +507,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   double *values;
   styleObj **styles;
   pointObj center;
-  double barMaxVal,barMinVal;
+  double barMaxVal = 0.0,barMinVal = 0.0;
   int numvalues = layer->numclasses;
   int numvalues_for_shape;
   if(chartSizeProcessingKey==NULL) {

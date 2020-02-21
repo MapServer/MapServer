@@ -159,7 +159,7 @@ imageObj *msDrawScalebar(mapObj *map)
   imageObj      *image = NULL;
   double fontWidth, fontHeight;
   outputFormatObj *format = NULL;
-  strokeStyleObj strokeStyle;
+  strokeStyleObj strokeStyle = {0};
   shapeObj shape;
   lineObj line;
   pointObj points[5];

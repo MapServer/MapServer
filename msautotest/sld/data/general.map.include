@@ -1,0 +1,20 @@
+NAME TEST_SLD
+SHAPEPATH ./data
+SIZE 300 300
+IMAGECOLOR 100 100 100
+FONTSET "data/fonts.lst"
+PROJECTION
+   "init=epsg:4326"
+END
+WEB
+  IMAGEPATH "/tmp/ms_tmp/"
+  IMAGEURL "/ms_tmp/"
+  METADATA
+    "wms_title"            "Test SLD"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"              "EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+    "ows_sld_enabled" "true"
+  END
+END

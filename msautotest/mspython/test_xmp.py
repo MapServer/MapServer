@@ -30,68 +30,59 @@
 ###############################################################################
 
 import os
-import sys
+import pytest
 
-sys.path.append( '../pymod' )
-import pmstestlib
+mapscript_available = False
+try:
+    import mapscript
+    mapscript_available = True
+except ImportError:
+    pass
 
-import mapscript
+pytestmark = pytest.mark.skipif(not mapscript_available, reason="mapscript not available")
+
+
+def get_relpath_to_this(filename):
+    return os.path.join(os.path.dirname(__file__), filename)
+
 
 ###############################################################################
 #
 
 def test_xmp():
 
-    if 'INPUT=GDAL' not in mapscript.msGetVersion():
-        return 'skip'
     if 'SUPPORTS=XMP' not in mapscript.msGetVersion():
-        return 'skip'
+        pytest.skip()
 
-    map = mapscript.mapObj('test_xmp.map')
-    layer = map.getLayer(0)
+    map = mapscript.mapObj(get_relpath_to_this('test_xmp.map'))
     img = map.draw()
     try:
-        os.mkdir('result')
+        os.mkdir(get_relpath_to_this('result'))
     except:
         pass
-    img.save( 'result/test_xmp.png', map )
+    resultfile = get_relpath_to_this('result/test_xmp.png')
+    img.save(resultfile, map )
 
-    f = open('result/test_xmp.png', 'rb')
+    f = open(resultfile, 'rb')
     data = f.read()
     f.close()
 
-    if data.find('dc:Title="Super Map"') == -1 or \
-       data.find('xmpRights:Marked="true"') == -1 or \
-       data.find('cc:License="http://creativecommons.org/licenses/by-sa/2.0/"') == -1 or \
-       data.find('xmlns:lightroom="http://ns.adobe.com/lightroom/1.0/"') == -1 or \
-       data.find('lightroom:PrivateRTKInfo="My Information Here"') == -1  or \
-       data.find('exif:ExifVersion="dummy"') == -1  or \
-       data.find('xmp:CreatorTool="MapServer"') == -1  or \
-       data.find('photoshop:Source="MapServer"') == -1  or \
-       data.find('crs:Converter="MapServer"') == -1 or \
-       data.find('x:Author="John Doe"') == -1 :
+    def dump_md():
         try:
             from osgeo import gdal
-            ds = gdal.Open('result/test_xmp.png')
+            ds = gdal.Open(resultfile)
             print(ds.GetMetadata('xml:XMP'))
             ds = None
         except:
             pass
-        return 'fail'
 
-    return 'success'
-
-test_list = [
-    test_xmp,
-    None ]
-
-if __name__ == '__main__':
-
-    pmstestlib.setup_run( 'test_xmp' )
-
-    pmstestlib.run_tests( test_list )
-
-    pmstestlib.summarize()
-
-    mapscript.msCleanup(0)
-
+    assert 'dc:Title="Super Map"' in data, dump_md()
+    assert 'xmpRights:Marked="true"' in data, dump_md()
+    assert 'cc:License="http://creativecommons.org/licenses/by-sa/2.0/"' in data, dump_md()
+    assert 'xmlns:lightroom="http://ns.adobe.com/lightroom/1.0/"' in data, dump_md()
+    assert 'lightroom:PrivateRTKInfo="My Information Here"' in data, dump_md()
+    assert 'exif:ExifVersion="dummy"' in data, dump_md()
+    assert 'xmp:CreatorTool="MapServer"' in data, dump_md()
+    assert 'photoshop:Source="MapServer"' in data, dump_md()
+    assert 'crs:Converter="MapServer"' in data, dump_md()
+    assert 'x:Author="John Doe"' in data, dump_md()
