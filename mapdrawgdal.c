@@ -2003,8 +2003,8 @@ msDrawRasterLayerGDAL_16BitClassification(
   /*      Fetch the scale classification option.                          */
   /* -------------------------------------------------------------------- */
   pszClassifyScaled = CSLFetchNameValue( layer->processing, "CLASSIFY_SCALED" );
-  if( pszClassifyScaled != NULL && EQUAL(pszClassifyScaled,"TRUE") )
-    bClassifyScaled = TRUE;
+  if( pszClassifyScaled != NULL )
+    bClassifyScaled = CSLTestBoolean(pszClassifyScaled);
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the scale processing option.                              */
@@ -2152,17 +2152,6 @@ msDrawRasterLayerGDAL_16BitClassification(
     msDebug("msDrawRasterGDAL_16BitClassification() bucket creation time: %.3fs\n",
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
             (starttime.tv_sec+starttime.tv_usec/1.0e6) );
-  }
-
-  // testy...
-  if(1==1) {
-    int iMapIndex;
-
-    iMapIndex = (int) ((dfScaleMin - dfScaleMin) * dfScaleRatio+1)-1;
-    fprintf(stderr, "min: %d,%f\n", iMapIndex, dfScaleMin);
-
-    iMapIndex = (int) ((dfScaleMax - dfScaleMin) * dfScaleRatio+1)-1;
-    fprintf(stderr, "max: %d,%f\n", iMapIndex, dfScaleMax);
   }
 
   /* ==================================================================== */
