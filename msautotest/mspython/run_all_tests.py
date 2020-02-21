@@ -5,10 +5,10 @@
 #
 # Project:  MapServer
 # Purpose:  Test executive for Python MapScript based autotests.
-# Author:   Frank Warmerdam, warmerdam@pobox.com
+# Author:   Even Rouault
 #
 ###############################################################################
-#  Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
+#  Copyright (c) 2020, Even Rouault,<even.rouault at spatialys.com>
 # 
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -28,27 +28,13 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
-# 
-# $Log$
-# Revision 1.1  2004/05/13 03:01:33  frank
-# New
-#
-#
+
+# This is mostly the same as the 'pytest' launcher
 
 import sys
 
-sys.path.append( '../pymod' )
-
-import pmstestlib
-
-
-###############################################################################
-# main()
+from pytest import main
 
 if __name__ == '__main__':
-    pmstestlib.setup_run( 'all' )
-    pmstestlib.run_all( '.', sys.argv[1:] )
-    errors = pmstestlib.summarize()
-    sys.exit(errors)
-
-
+    sys.argv[0] = 'run_all_tests.py'
+    sys.exit(main())

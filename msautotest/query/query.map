@@ -39,6 +39,9 @@
 # Test 12: simple mode=indexquery, one layer, index query 
 # RUN_PARMS: query_test012.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=indexquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2&shapeindex=5' > [RESULT_DEMIME]
 #
+# Test 13: simple mode=indexquery, one layer, index query, with formatting
+# RUN_PARMS: query_test013.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=indexquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2&shapeindex=5&qformat=formattmpl' > [RESULT_DEMIME]
+#
 
 MAP
   NAME 'query'
@@ -54,6 +57,13 @@ MAP
     DRIVER 'TEMPLATE'
     MIMETYPE 'text/html'
     FORMATOPTION "FILE=template/query.tmpl"
+  END
+
+  OUTPUTFORMAT
+    NAME 'formattmpl'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/query_formatted.tmpl"
   END
 
   LAYER

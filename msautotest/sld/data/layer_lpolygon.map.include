@@ -1,0 +1,15 @@
+LAYER
+  NAME lpolygon
+  DATA inner
+  TYPE POLYGON
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 1
+      OPACITY 50
+      COLOR 0 255 255
+      OUTLINECOLOR 255 0 255
+    END
+  END
+END

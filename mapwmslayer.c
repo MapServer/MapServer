@@ -40,11 +40,7 @@
 #include <stdio.h>
 #endif
 
-#ifdef USE_GDAL
-#  include "cpl_vsi.h"
-#endif
-
-void CleanVSIDir( const char *pszDir );
+#include "cpl_vsi.h"
 
 /**********************************************************************
  *                          msInitWmsParamsObj()
@@ -218,7 +214,7 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams)
  * by the caller.
  **********************************************************************/
 static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
-                                  wmsParamsObj *psWMSParams)
+                                  wmsParamsObj *psWMSParams, int nRequestType)
 {
   const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
   const char *pszFormatList, *pszStyle, /* *pszStyleList,*/ *pszTime;
@@ -339,11 +335,14 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     }
   }
 
-  /*  set STYLES no matter what, even if it's empty (i.e. "STYLES=")
-   *  styles is a required param of WMS
+  /*  set STYLE parameter no matter what, even if it's empty (i.e. "STYLES=")
+   *  GetLegendGraphic doesn't support multiple styles and is named STYLE
    */
-
-  msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE, nVersion);
+  if (nRequestType == WMS_GETLEGENDGRAPHIC) {
+    msSetWMSParamString(psWMSParams, "STYLE", pszStyle, MS_TRUE, nVersion);
+  } else {
+    msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE, nVersion);
+  }
 
   if (pszSLD != NULL) {
     /* Only SLD is set */
@@ -420,7 +419,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                    wmsParamsObj *psWMSParams)
 {
 #ifdef USE_WMS_LYR
-  char *pszEPSG = NULL, *pszTmp;
+  char *pszEPSG = NULL;
   const char *pszVersion, *pszRequestParam, *pszExceptionsParam,
         *pszSrsParamName="SRS", *pszLayer=NULL, *pszQueryLayers=NULL,
         *pszUseStrictAxisOrder;
@@ -445,7 +444,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
        (pszVersion = strstr(lp->connection, "WMTVER=")) == NULL &&
        (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) ) {
     /* CONNECTION missing or seems incomplete... try to build from metadata */
-    if (msBuildWMSLayerURLBase(map, lp, psWMSParams) != MS_SUCCESS)
+    if (msBuildWMSLayerURLBase(map, lp, psWMSParams, nRequestType) != MS_SUCCESS)
       return MS_FAILURE;  /* An error already produced. */
 
     /* If we received MS_SUCCESS then version must have been set */
@@ -614,27 +613,30 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    * Set layer SRS.
    * ------------------------------------------------------------------ */
   /* No need to set lp->proj if it's already set to the right EPSG code */
-  msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszTmp);
-  if (pszTmp == NULL || strcasecmp(pszEPSG, pszTmp) != 0) {
-    char *ows_srs;
-    msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
-    msFree(pszTmp);
-    /* no need to set lp->proj if it is already set and there is only
-       one item in the _srs metadata for this layer - we will assume
-       the projection block matches the _srs metadata (the search for ' '
-       in ows_srs is a test to see if there are multiple EPSG: codes) */
-    if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
-      msFree(ows_srs);
-      if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
-        char szProj[20];
-        snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
-        if (msLoadProjectionString(&(lp->projection), szProj) != 0)
-          return MS_FAILURE;
-      } else {
-        if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
-          return MS_FAILURE;
+  {
+    char* pszEPSGCodeFromLayer = NULL;
+    msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszEPSGCodeFromLayer);
+    if (pszEPSGCodeFromLayer == NULL || strcasecmp(pszEPSG, pszEPSGCodeFromLayer) != 0) {
+      char *ows_srs;
+      msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
+      /* no need to set lp->proj if it is already set and there is only
+      one item in the _srs metadata for this layer - we will assume
+      the projection block matches the _srs metadata (the search for ' '
+      in ows_srs is a test to see if there are multiple EPSG: codes) */
+      if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
+        msFree(ows_srs);
+        if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
+          char szProj[20];
+          snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
+          if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+            return MS_FAILURE;
+        } else {
+          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
+            return MS_FAILURE;
+        }
       }
     }
+    msFree(pszEPSGCodeFromLayer);
   }
 
   /* ------------------------------------------------------------------
@@ -858,6 +860,10 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
     msSetWMSParamString(psWMSParams, pszSrsParamName, pszEPSG, MS_FALSE, nVersion);
 
+    if (nVersion >= OWS_1_3_0) {
+      msSetWMSParamString(psWMSParams, "SLD_VERSION", "1.1.0", MS_FALSE, nVersion);
+    }
+
   } else { /* if (nRequestType == WMS_GETMAP) */
     char szBuf[100] = "";
 
@@ -952,8 +958,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 #ifdef USE_WMS_LYR
   char *pszURL = NULL, *pszHTTPCookieData = NULL;
   const char *pszTmp;
-  rectObj bbox;
-  int bbox_width, bbox_height;
+  rectObj bbox = { 0 };
+  int bbox_width = 0, bbox_height = 0;
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
 
@@ -1360,7 +1366,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
    * to attach a "VSI" name to this buffer.
    * ------------------------------------------------------------------ */
   if( pasReqInfo[iReq].pszOutputFile == NULL ) {
-    CleanVSIDir( "/vsimem/msout" );
+    msCleanVSIDir( "/vsimem/msout" );
     mem_filename = msTmpFile(map, NULL, "/vsimem/msout/", "img.tmp" );
 
     VSIFCloseL(
@@ -1421,12 +1427,12 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if (wldfile && (strlen(wldfile)>=3))
       strcpy(wldfile+strlen(wldfile)-3, "wld");
     if (wldfile && (fp = VSIFOpenL(wldfile, "wt")) != NULL) {
-      double dfCellSizeX = MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
-                                       pasReqInfo[iReq].bbox.maxx,
-                                       pasReqInfo[iReq].width);
-      double dfCellSizeY = MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
-                                       pasReqInfo[iReq].bbox.miny,
-                                       pasReqInfo[iReq].height);
+      double dfCellSizeX = MS_OWS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
+                                           pasReqInfo[iReq].bbox.maxx,
+                                           pasReqInfo[iReq].width);
+      double dfCellSizeY = MS_OWS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
+                                           pasReqInfo[iReq].bbox.miny,
+                                           pasReqInfo[iReq].height);
       char world_text[5000];
 
       sprintf( world_text, "%.12f\n0\n0\n%.12f\n%.12f\n%.12f\n",

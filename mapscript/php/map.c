@@ -1195,13 +1195,13 @@ PHP_METHOD(mapObj, zoomPoint)
 
   if (zoomFactor < 0) {
     newGeoRefExtent.minx =
-      dfGeoPosX - (dfDeltaX/2)*(abs(zoomFactor));
+      dfGeoPosX - (dfDeltaX/2)*(labs(zoomFactor));
     newGeoRefExtent.miny =
-      dfGeoPosY - (dfDeltaY/2)*(abs(zoomFactor));
+      dfGeoPosY - (dfDeltaY/2)*(labs(zoomFactor));
     newGeoRefExtent.maxx =
-      dfGeoPosX + (dfDeltaX/2)*(abs(zoomFactor));
+      dfGeoPosX + (dfDeltaX/2)*(labs(zoomFactor));
     newGeoRefExtent.maxy =
-      dfGeoPosY + (dfDeltaY/2)*(abs(zoomFactor));
+      dfGeoPosY + (dfDeltaY/2)*(labs(zoomFactor));
   }
   if (zoomFactor == 1) {
     newGeoRefExtent.minx = dfGeoPosX - (dfDeltaX/2);
@@ -3366,7 +3366,6 @@ PHP_METHOD(mapObj, convertToString)
 /************************************************************************/
 PHP_METHOD(mapObj, getLatLongExtent)
 {
-#ifdef USE_PROJ
   zval *zobj = getThis();
   rectObj     geoRefExt;
   php_map_object *php_map;
@@ -3393,11 +3392,6 @@ PHP_METHOD(mapObj, getLatLongExtent)
   /* Return rectObj */
   MAPSCRIPT_MAKE_PARENT(NULL, NULL);
   mapscript_create_rect(&geoRefExt, parent, return_value TSRMLS_CC);
-
-#else
-  mapscript_throw_exception("Available only with PROJ.4 support." TSRMLS_CC);
-  return;
-#endif
 }
 
 /* {{{ proto int map.free().
@@ -3522,7 +3516,6 @@ zend_function_entry map_functions[] = {
 static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
                                        char *projString, int setUnitsAndExtents TSRMLS_DC)
 {
-#ifdef USE_PROJ
   int                 status = MS_SUCCESS;
   int                 units =   MS_METERS;
   projectionObj       in;
@@ -3587,10 +3580,6 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
   }
 
   return MS_SUCCESS;
-#else
-  mapscript_throw_exception("Available only with PROJ.4 support." TSRMLS_CC);
-  return MS_FAILURE;
-#endif
 }
 
 void mapscript_create_map(mapObj *map, zval *return_value TSRMLS_DC)

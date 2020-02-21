@@ -34,7 +34,6 @@ MAP
     END
 
     LAYER
-        DEBUG 3
         NAME "geojson"
         TYPE POLYGON
         STATUS DEFAULT

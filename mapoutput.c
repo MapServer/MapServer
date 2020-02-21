@@ -114,9 +114,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"svg","CAIRO/SVG","image/svg+xml"},
   {"cairopng","CAIRO/PNG","image/png"},
 #endif
-#ifdef USE_GDAL
   {"GTiff","GDAL/GTiff","image/tiff"},
-#endif
 #ifdef USE_KML
   {"kml","KML","application/vnd.google-earth.kml+xml"},
   {"kmz","KMZ","application/vnd.google-earth.kmz"},
@@ -341,7 +339,6 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
 
 
-#ifdef USE_GDAL
   else if( strncasecmp(driver,"gdal/",5) == 0 ) {
     if(!name) name=driver+5;
     format = msAllocOutputFormat( map, name, driver );
@@ -355,8 +352,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
       format = NULL;
     }
   }
-#endif
-#ifdef USE_OGR
+
   else if( strncasecmp(driver,"ogr/",4) == 0 ) {
     if(!name) name=driver+4;
     format = msAllocOutputFormat( map, name, driver );
@@ -370,7 +366,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
       format = NULL;
     }
   }
-#endif
+
   else if( strcasecmp(driver,"imagemap") == 0 ) {
     if(!name) name="imagemap";
     format = msAllocOutputFormat( map, name, driver );
@@ -1123,10 +1119,10 @@ int msInitializeRendererVTable(outputFormatObj *format)
     case MS_RENDER_WITH_KML:
       return msPopulateRendererVTableKML(format->vtable);
 #endif
-#ifdef USE_OGR
+
     case MS_RENDER_WITH_OGR:
       return msPopulateRendererVTableOGR(format->vtable);
-#endif
+
     default:
       msSetError(MS_MISCERR, "unsupported RendererVtable renderer %d",
                  "msInitializeRendererVTable()",format->renderer);
@@ -1164,6 +1160,7 @@ void msOutputFormatResolveFromImage( mapObj *map, imageObj* img )
 
       ret = format->vtable->getRasterBufferHandle(img,&rb);
       assert( ret == MS_SUCCESS );
+      (void)ret;
       if( rb.data.rgba.a )
       {
         int row;

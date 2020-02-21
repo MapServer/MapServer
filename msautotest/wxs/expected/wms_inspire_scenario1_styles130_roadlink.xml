@@ -2,6 +2,8 @@
 <NamedLayer>
 <se:Name>TN.RoadTransportNetwork.RoadLink</se:Name>
 <UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>myclass1</se:Name>

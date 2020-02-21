@@ -1,0 +1,20 @@
+Content-Type: application/json; subtype=geojson; charset=utf-8
+
+{
+"type": "FeatureCollection",
+"numberMatched": 28,
+"name": "popplace_fid",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3978" } },
+"features": [
+{ "type": "Feature", "id": 0, "properties": { "UNIQUE_KEY": "BACMK", "NAME": "\"Tignish", "CAPITAL": 0, "POP_CLASS": 1 }, "geometry": { "type": "Point", "coordinates": [ 2281604.25, 340848.9375 ] } },
+{ "type": "Feature", "id": 1215011, "properties": { "UNIQUE_KEY": "CAGYX", "NAME": "'Cheticamp", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2503805.5, 427872.65625 ] } },
+{ "type": "Feature", "id": 1209036, "properties": { "UNIQUE_KEY": "CBIKA", "NAME": "Sheet Harbour", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2499190.0, 194088.23438 ] } },
+{ "type": "Feature", "id": 1101036, "properties": { "UNIQUE_KEY": "BACII", "NAME": "'Souris'", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2434957.0, 347013.59375 ] } },
+{ "type": "Feature", "id": 1213006, "properties": { "UNIQUE_KEY": "CAGBW", "NAME": "\"Canso\"", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2578914.25, 292073.09375 ] } },
+{ "type": "Feature", "id": 1215002, "properties": { "UNIQUE_KEY": "CBELL", "NAME": "Port Hawkesbury", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2536072.75, 311524.96875 ] } },
+{ "type": "Feature", "id": 1214002, "properties": { "UNIQUE_KEY": "CAATB", "NAME": "Antigonish", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2494520.0, 285855.40625 ] } },
+{ "type": "Feature", "id": 1211008, "properties": { "UNIQUE_KEY": "CBKDH", "NAME": "Springhill", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2348711.75, 204294.0625 ] } },
+{ "type": "Feature", "id": 1208002, "properties": { "UNIQUE_KEY": "CBPAK", "NAME": "\"Wind\"sor", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2377598.0, 135734.70312 ] } },
+{ "type": "Feature", "id": 1206006, "properties": { "UNIQUE_KEY": "CAWAZ", "NAME": "Lunenburg", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2398677.25, 70608.14062 ] } }
+]
+}

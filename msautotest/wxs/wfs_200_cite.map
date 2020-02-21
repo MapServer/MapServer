@@ -93,7 +93,7 @@ END
 
 
 LAYER
-  DEBUG 3
+
   NAME province
   CONNECTIONTYPE OGR
   CONNECTION "data/province.shp"

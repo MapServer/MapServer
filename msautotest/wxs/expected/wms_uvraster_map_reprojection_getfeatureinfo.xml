@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<test_layer>
+	<gml:name>test</gml:name>
+		<test_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>82.689740,80.025912 82.689740,80.025912</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<uv_angle>0.000000</uv_angle>
+			<uv_minus_angle>180.000000</uv_minus_angle>
+			<uv_length>2.378277</uv_length>
+			<uv_length_2>1.189139</uv_length_2>
+			<u>2.378277</u>
+			<v>0.000000</v>
+		</test_feature>
+	</test_layer>
+</msGMLOutput>

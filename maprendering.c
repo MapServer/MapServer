@@ -213,7 +213,7 @@ int WARN_UNUSED drawGlyphMarker(imageObj *img, face_element *face, glyph_element
     glyph.pnt.x = px - ox;
     glyph.pnt.y = py + oy;
   }
-  return renderer->renderGlyphs(img, &path, clr, oclr, olwidth);
+  return renderer->renderGlyphs(img, &path, clr, oclr, olwidth, MS_TRUE);
 }
 
 
@@ -1049,7 +1049,7 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
       ts_shadow->textpath->glyphs[g].pnt.y += oy;
     }
 
-    ret = renderer->renderGlyphs(image,ts_shadow->textpath,&ts->label->shadowcolor,NULL,0);
+    ret = renderer->renderGlyphs(image,ts_shadow->textpath,&ts->label->shadowcolor,NULL,0, MS_FALSE);
     freeTextSymbol(ts_shadow);
     msFree(ts_shadow);
     if( ret != MS_SUCCESS )
@@ -1061,7 +1061,7 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
   if(MS_VALID_COLOR(ts->label->outlinecolor))
     oc = &ts->label->outlinecolor;
   ow = MS_NINT((double)ts->label->outlinewidth * ((double)ts->textpath->glyph_size / (double)ts->label->size));
-  return renderer->renderGlyphs(image,ts->textpath,c,oc,ow);
+  return renderer->renderGlyphs(image,ts->textpath,c,oc,ow, MS_FALSE);
   
 }
 

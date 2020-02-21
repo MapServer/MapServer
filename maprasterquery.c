@@ -37,8 +37,6 @@
 int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
 int msRASTERLayerGetItems(layerObj *layer);
 
-#ifdef USE_GDAL
-
 /* ==================================================================== */
 /*      For now the rasterLayerInfo lives here since it is just used    */
 /*      to hold information related to queries.                         */
@@ -417,6 +415,9 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   CPLErr      eErr;
   rasterLayerInfo *rlinfo;
   rectObj     searchrect;
+#if PROJ_VERSION_MAJOR < 6
+  int         mayNeedLonWrapAdjustment = MS_FALSE;
+#endif
 
   rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
@@ -425,11 +426,9 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /*      layer/file if needed.                                           */
   /* -------------------------------------------------------------------- */
   searchrect = queryRect;
-#ifdef USE_PROJ
   layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
   if(layer->project)
     msProjectRect(&(map->projection), &(layer->projection), &searchrect);
-#endif
 
   /* -------------------------------------------------------------------- */
   /*      Transform the rectangle in target ground coordinates to         */
@@ -555,6 +554,22 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     + sqrt( rlinfo->range_dist );
   dfAdjustedRange = dfAdjustedRange * dfAdjustedRange;
 
+#if PROJ_VERSION_MAJOR < 6
+    if( layer->project &&
+        msProjIsGeographicCRS(&(layer->projection)) &&
+        msProjIsGeographicCRS(&(map->projection)) )
+    {
+        double dfLonWrap = 0;
+        mayNeedLonWrapAdjustment = msProjectHasLonWrap(&(layer->projection), &dfLonWrap);
+    }
+#endif
+
+  reprojectionObj* reprojector = NULL;
+  if( layer->project )
+  {
+      reprojector = msProjectCreateReprojector(&(layer->projection), &(map->projection));
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Loop over all pixels determining which are "in".                */
   /* -------------------------------------------------------------------- */
@@ -579,9 +594,23 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       /* in sPixelLocationInLayerSRS, so that we can return those */
       /* coordinates if we have a hit */
       sReprojectedPixelLocation = sPixelLocation;
-      if( layer->project )
-        msProjectPoint( &(layer->projection), &(map->projection),
-                        &sReprojectedPixelLocation);
+      if( reprojector )
+      {
+#if PROJ_VERSION_MAJOR < 6
+        /* Works around a bug in PROJ < 6 when reprojecting from a lon_wrap */
+        /* geogCRS to a geogCRS, and the input abs(longitude) is > 180. Then */
+        /* lon_wrap was ignored and the output longitude remained as the source */
+        if( mayNeedLonWrapAdjustment )
+        {
+            if( rlinfo->target_point.x < sReprojectedPixelLocation.x - 180 )
+                sReprojectedPixelLocation.x -= 360;
+            else if( rlinfo->target_point.x > sReprojectedPixelLocation.x + 180 )
+                sReprojectedPixelLocation.x += 360;
+        }
+#endif
+
+        msProjectPointEx( reprojector, &sReprojectedPixelLocation);
+      }
 
       /* If we are doing QueryByShape, check against the shape now */
       if( rlinfo->searchshape != NULL ) {
@@ -638,10 +667,10 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /*      Cleanup.                                                        */
   /* -------------------------------------------------------------------- */
   free( pafRaster );
+  msProjectDestroyReprojector( reprojector );
 
   return MS_SUCCESS;
 }
-#endif /* def USE_GDAL */
 
 /************************************************************************/
 /*                        msRasterQueryByRect()                         */
@@ -650,12 +679,6 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 
 {
-#ifndef USE_GDAL
-  msSetError( MS_IMGERR,
-              "Rasters queries only supported with GDAL support enabled.",
-              "msRasterQueryByRect()" );
-  return MS_FAILURE;
-#else
   int status = MS_SUCCESS;
   char *filename=NULL;
 
@@ -788,7 +811,20 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     }
 
     msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+    if( !layer->tileindex )
+    {
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        hDS = GDALOpenEx(decrypted_path,
+                                    GDAL_OF_RASTER,
+                                    NULL,
+                                    (const char* const*)connectionoptions,
+                                    NULL);
+        CSLDestroy(connectionoptions);
+    }
+    else
+    {
+        hDS = GDALOpen(decrypted_path, GA_ReadOnly );
+    }
 
     if( hDS == NULL ) {
       int ignore_missing = msMapIgnoreMissingData( map );
@@ -861,7 +897,6 @@ cleanup:
   }
 
   return status;
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -871,12 +906,6 @@ cleanup:
 int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 
 {
-#ifndef USE_GDAL
-  msSetError( MS_IMGERR,
-              "Rasters queries only supported with GDAL support enabled.",
-              "msRasterQueryByRect()" );
-  return MS_FAILURE;
-#else
   rasterLayerInfo *rlinfo = NULL;
   int status;
   double tolerance;
@@ -923,7 +952,6 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
     rlinfo->searchshape = NULL;
 
   return status;
-#endif /* USE_GDAL  */
 }
 
 /************************************************************************/
@@ -933,14 +961,7 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
                          double buffer, int maxresults)
 {
-#ifndef USE_GDAL
-  msSetError( MS_IMGERR,
-              "Rasters queries only supported with GDAL support enabled.",
-              "msRasterQueryByRect()" );
-  return MS_FAILURE;
-#else
   int result;
-  int previous_maxresults;
   double layer_tolerance;
   rectObj bufferRect;
   rasterLayerInfo *rlinfo = NULL;
@@ -1012,17 +1033,15 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
   rlinfo->range_mode = mode;
 
   if( maxresults != 0 ) {
-    previous_maxresults = rlinfo->query_result_hard_max;
+    const int previous_maxresults = rlinfo->query_result_hard_max;
     rlinfo->query_result_hard_max = maxresults;
+    result = msRasterQueryByRect( map, layer, bufferRect );
+    rlinfo->query_result_hard_max = previous_maxresults;
+  } else {
+    result = msRasterQueryByRect( map, layer, bufferRect );
   }
 
-  result = msRasterQueryByRect( map, layer, bufferRect );
-
-  if( maxresults != 0 )
-    rlinfo->query_result_hard_max = previous_maxresults;
-
   return result;
-#endif /* USE_GDAL  */
 }
 
 /************************************************************************/
@@ -1040,12 +1059,6 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 
 int msRASTERLayerOpen(layerObj *layer)
 {
-#ifndef USE_GDAL
-  msSetError( MS_IMGERR,
-              "Rasters queries only supported with GDAL support enabled.",
-              "msRASTERLayerOpen()" );
-  return MS_FAILURE;
-#else
   rasterLayerInfo *rlinfo;
 
   /* If we don't have info, initialize an empty one now */
@@ -1057,7 +1070,6 @@ int msRASTERLayerOpen(layerObj *layer)
   rlinfo->refcount = rlinfo->refcount + 1;
 
   return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1066,16 +1078,9 @@ int msRASTERLayerOpen(layerObj *layer)
 
 int msRASTERLayerIsOpen(layerObj *layer)
 {
-#ifndef USE_GDAL
-  msSetError( MS_IMGERR,
-              "Rasters queries only supported with GDAL support enabled.",
-              "msRasterLayerIsOpen()" );
-  return MS_FALSE;
-#else
   if (layer->layerinfo)
     return MS_TRUE;
   return MS_FALSE;
-#endif
 }
 
 
@@ -1102,16 +1107,12 @@ int msRASTERLayerInitItemInfo(layerObj *layer)
 int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
 {
-#ifndef USE_GDAL
-  return MS_FAILURE;
-#else
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   rlinfo->which_rect = rect;
   rlinfo->next_shape = 0;
 
   return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1120,9 +1121,6 @@ int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
 int msRASTERLayerClose(layerObj *layer)
 {
-#ifndef USE_GDAL
-  return MS_FAILURE;
-#else
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   if( rlinfo != NULL ) {
@@ -1132,7 +1130,6 @@ int msRASTERLayerClose(layerObj *layer)
       msRasterLayerInfoFree( layer );
   }
   return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1141,9 +1138,6 @@ int msRASTERLayerClose(layerObj *layer)
 
 int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 {
-#ifndef USE_GDAL
-  return MS_FAILURE;
-#else
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   if( rlinfo->next_shape < 0
@@ -1160,7 +1154,6 @@ int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 
     return msRASTERLayerGetShape( layer, shape, &record);
   }
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1169,9 +1162,6 @@ int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 
 int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
-#ifndef USE_GDAL
-  return MS_FAILURE;
-#else
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
   int i;
 
@@ -1271,7 +1261,6 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   /* -------------------------------------------------------------------- */
 
   return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1280,9 +1269,6 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
 int msRASTERLayerGetItems(layerObj *layer)
 {
-#ifndef USE_GDAL
-  return MS_FAILURE;
-#else
   int maxnumitems = 0;
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
@@ -1320,7 +1306,6 @@ int msRASTERLayerGetItems(layerObj *layer)
   assert(layer->numitems <= maxnumitems);
 
   return msRASTERLayerInitItemInfo(layer);
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1330,18 +1315,10 @@ int msRASTERLayerGetItems(layerObj *layer)
 int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
 {
-#ifndef USE_GDAL
-  return MS_FAILURE;
-#else
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
-  double adfGeoTransform[6];
-  int nXSize, nYSize;
-  GDALDatasetH hDS;
   shapefileObj *tileshpfile;
   int tilelayerindex = -1;
-  CPLErr eErr = CE_Failure;
-  char *decrypted_path;
 
   if( (!layer->data || strlen(layer->data) == 0)
       && layer->tileindex == NULL) {
@@ -1374,26 +1351,28 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   msTryBuildPath3(szPath, map->mappath, map->shapepath, layer->data);
-  decrypted_path = msDecryptStringTokens( map, szPath );
+  char* decrypted_path = msDecryptStringTokens( map, szPath );
+  if( !decrypted_path )
+      return MS_FAILURE;
 
-  msAcquireLock( TLOCK_GDAL );
-  if( decrypted_path ) {
-    hDS = GDALOpen(decrypted_path, GA_ReadOnly );
-    msFree( decrypted_path );
-  } else
-    hDS = NULL;
-
-  if( hDS != NULL ) {
-    nXSize = GDALGetRasterXSize( hDS );
-    nYSize = GDALGetRasterYSize( hDS );
-    eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
-
-    GDALClose( hDS );
+  char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+  GDALDatasetH hDS = GDALOpenEx(decrypted_path,
+                                GDAL_OF_RASTER,
+                                NULL,
+                                (const char* const*)connectionoptions,
+                                NULL);
+  CSLDestroy(connectionoptions);
+  msFree( decrypted_path );
+  if( hDS == NULL ) {
+    return MS_FAILURE;
   }
 
-  msReleaseLock( TLOCK_GDAL );
-
-  if( hDS == NULL || eErr != CE_None ) {
+  const int nXSize = GDALGetRasterXSize( hDS );
+  const int nYSize = GDALGetRasterYSize( hDS );
+  double adfGeoTransform[6] = {0};
+  const CPLErr eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
+  if( eErr != CE_None ) {
+    GDALClose( hDS );
     return MS_FAILURE;
   }
 
@@ -1411,7 +1390,6 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   extent->miny = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
 
   return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 

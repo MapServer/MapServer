@@ -31,12 +31,8 @@
 #include "mapserver.h"
 #include "mapows.h"
 
-#ifdef USE_GDAL
-#  include "gdal.h"
-#  include "cpl_conv.h"
-#endif
-
-
+#include "gdal.h"
+#include "cpl_conv.h"
 
 void freeWeb(webObj *web);
 void freeScalebar(scalebarObj *scalebar);
@@ -95,6 +91,7 @@ void msFreeMap(mapObj *map)
 
   msFreeProjection(&(map->projection));
   msFreeProjection(&(map->latlon));
+  msProjectionContextReleaseToPool(map->projContext);
 
   msFreeLabelCache(&(map->labelcache));
 
@@ -224,10 +221,7 @@ void msApplyMapConfigOptions( mapObj *map )
     } else if( strcasecmp(key,"MS_ERRORFILE") == 0 ) {
       msSetErrorFile( value, map->mappath );
     } else {
-
-#if defined(USE_GDAL) && GDAL_RELEASE_DATE > 20030601
       CPLSetConfigOption( key, value );
-#endif
     }
   }
 }
@@ -765,8 +759,7 @@ int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
   int result, i = 0;
   owsRequestObj ows_request;
 
-  ows_request.numlayers = 0;
-  ows_request.enabled_layers = NULL;
+  msOWSInitRequestObj(&ows_request);
 
 
   version = msOWSParseVersionString(wmtver);
@@ -784,8 +777,7 @@ int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
                                  request->ParamValues, request->NumParams,  wms_exception_format,
                                  wms_request, &ows_request);
 
-  if (ows_request.numlayers > 0)
-    msFree(ows_request.enabled_layers);
+  msOWSClearRequestObj(&ows_request);
 
   return result;
 

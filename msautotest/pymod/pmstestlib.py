@@ -28,209 +28,64 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
-import string
-from testlib import *
+from testlib import compare_result
 
 keep_pass = 0
 
-success_counter = 0
-failure_counter = 0
-blow_counter = 0
-skip_counter = 0
-
-reason = None
-
-post_test_msg = None
-
-def setup_run( name ):
-    global success_counter, failure_counter, blow_counter, skip_counter
-    global cur_name
-    
-    cur_name = name
-
-def run_tests( test_list ):
-    global success_counter, failure_counter, blow_counter, skip_counter
-    global cur_name, reason, post_test_msg
-
-    for test_item in test_list:
-        if test_item is None:
-            continue
-
-        try:
-            (func, name) = test_item
-            sys.stdout.write( '  TEST: ' + func.__name__[4:] + ': ' + name + ' ... ' )
-        except:
-            func = test_item
-            name = func.__name__
-            sys.stdout.write( '  TEST: ' + name + ' ... ' )
-
-        sys.stdout.flush()
-            
-        reason = None
-        try:
-            result = func()
-            print(result)
-        except:
-            result = 'blowup'
-            print(result)
-            
-            import traceback
-            traceback.print_exc()
-
-
-        if reason is not None:
-            print('    ' + reason)
-
-        if post_test_msg is not None:
-            print(post_test_msg)
-            post_test_msg = None
-
-        if result == 'success':
-            success_counter = success_counter + 1
-        elif result == 'fail':
-            failure_counter = failure_counter + 1
-        elif result == 'skip':
-            skip_counter = skip_counter + 1
-        else:
-            blow_counter = blow_counter + 1
-
-def post_reason( msg ):
-    global reason
-
-    reason = msg
-
-def summarize():
-    global success_counter, failure_counter, blow_counter, skip_counter
-    global cur_name
-    
-    print()
-    print('Test Script: %s' % cur_name)
-    print('Succeeded: %d' % success_counter)
-    print('Failed:    %d (%d blew exceptions)' \
-          % (failure_counter+blow_counter, blow_counter))
-    print('Skipped:   %d' % skip_counter)
-    print()
-
-    return failure_counter + blow_counter
 
 def get_item_value( layer, shape_obj, name ):
     for i in range(layer.numitems):
         if layer.getItem(i) == name:
             return shape_obj.getValue(i)
     return None
-    
+
+###############################################################################
+#
+
+
 def check_items( layer, shape_obj, nv_list ):
     for nv in nv_list:
         name = nv[0]
         expected_value = nv[1]
 
         actual_value = get_item_value( layer, shape_obj, name )
-        if actual_value is None:
-            post_reason( 'missing expected attribute %s' % name )
-            return 0
-            
-        if str(expected_value) != actual_value:
-            post_reason( 'attribute %s is "%s" instead of expected "%s"' % \
-                         (name, actual_value, str(expected_value)) )
-            return 0
+        assert actual_value is not None, ('missing expected attribute %s' % name)
 
-    return 1
-
-          
-###############################################################################
-
-def run_all( dirlist, option_list = [] ):
-
-    for dir_name in dirlist:
-        files = os.listdir(dir_name)
-
-        old_path = sys.path
-        sys.path.append('.')
-        
-        for file in files:
-            if not file[-3:] == '.py':
-                continue
-
-            module_name = file[:-3]
-            try:
-                wd = os.getcwd()
-                os.chdir( dir_name )
-                
-                xtest_list = None
-                module = __import__(module_name)
-
-                try:
-                    xtest_list = module.test_list
-                except AttributeError:
-                    pass
-
-                if xtest_list is not None:
-                    try:
-                        print('Running tests from %s/%s' % (dir_name,file))
-                        run_tests( xtest_list )
-                    except:
-                        import traceback
-                        traceback.print_exc()
-                
-                os.chdir( wd )
-
-            except:
-                os.chdir( wd )
-                print('... failed to load %s ... skipping.' % file)
-
-                import traceback
-                traceback.print_exc()
-
-
-        # We only add the tool directory to the python path long enough
-        # to load the tool files.
-        sys.path = old_path
-
+        assert str(expected_value) == actual_value, \
+            ( 'attribute %s is "%s" instead of expected "%s"' % \
+              (name, actual_value, str(expected_value)) )
 
 ###############################################################################
 #
 
-def compare_and_report( out_file ):
+def compare_and_report( out_file, this_path = '.' ):
 
-    global post_test_msg
-    
-    cmp = compare_result( out_file )
-    
+    cmp = compare_result( out_file, this_path )
+
     if cmp == 'match':
         if keep_pass == 0:
-            os.remove( 'result/' + out_file )
-        post_test_msg = '     results match.'
-        return 'success'
-        
-    elif cmp ==  'files_differ_image_match':
-        if keep_pass == 0:
-            os.remove( 'result/' + out_file )
-        post_test_msg = '     result images match, though files differ.'
-        return 'success'
-        
-    elif cmp ==  'files_differ_image_nearly_match':
-        if keep_pass == 0:
-            os.remove( 'result/' + out_file )
-        post_test_msg = '     result images perceptually match, though files differ.'
-        return 'success'
+            os.remove( os.path.join(this_path, 'result', out_file) )
 
-    elif cmp ==  'nomatch':
-        post_test_msg = '*    results dont match, TEST FAILED.'
-        return 'fail'
-        
+    elif cmp == 'files_differ_image_match':
+        if keep_pass == 0:
+            os.remove( os.path.join(this_path, 'result', out_file) )
+        print('result images match, though files differ.')
+
+    elif cmp == 'files_differ_image_nearly_match':
+        if keep_pass == 0:
+            os.remove( os.path.join(this_path, 'result', out_file) )
+        print('result images perceptually match, though files differ.')
+
+    elif cmp == 'nomatch':
+        assert False, 'results dont match, TEST FAILED.'
+
     elif cmp == 'noresult':
-        post_test_msg = '*    no result file generated, TEST FAILED.'
-        return 'fail'
-    
+        assert False, 'no result file generated, TEST FAILED.'
+
     elif cmp == 'noexpected':
-        post_test_msg = '     no expected file exists, accepting result as expected.'
-        os.rename( 'result/' + out_file, 'expected/' + out_file )
-        return 'skip'
+        print('no expected file exists, accepting result as expected.')
+        os.rename( os.path.join(this_path, 'result', out_file), os.path.join(this_path, 'expected', out_file) )
 
     else:
-        post_test_msg = 'unexpected cmp value: ' + cmp
-        return 'fail'
-    
-    
+        assert False, 'unexpected cmp value: ' + cmp

@@ -1,0 +1,14 @@
+LAYER
+  NAME lline
+  DATA hexagon
+  TYPE LINE
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 5
+      OPACITY 50
+      COLOR 255 255 0
+    END
+  END
+END

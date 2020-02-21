@@ -26,44 +26,20 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-# This requires the EPSG database to be loaded.
-# See https://trac.osgeo.org/geotiff/browser/trunk/libgeotiff/csv/README
+# To be run with GDAL 3.1
 
-from osgeo import ogr
-ds = ogr.Open('PG:dbname=epsg')
+from osgeo import gdal, osr
 
-sql_lyr = ds.ExecuteSQL("""SELECT * 
-FROM epsg_coordinatereferencesystem
-WHERE coord_sys_code IN 
-( 
-    SELECT CAA.coord_sys_code 
-    FROM epsg_coordinateaxis AS CAA 
-    INNER JOIN epsg_coordinateaxis AS CAB ON CAA.coord_sys_code = CAB.coord_sys_code 
-    WHERE 
-       CAA.coord_axis_order=1 AND CAB.coord_axis_order=2
-      AND 
-      ( 
-        ( CAA.coord_axis_orientation ILIKE 'north%' AND CAB.coord_axis_orientation ILIKE 'east%' ) 
-       OR
-        ( CAA.coord_axis_orientation ILIKE 'south%'  AND CAB.coord_axis_orientation ILIKE 'west%' ) 
-      ) 
-)  AND coord_ref_sys_code <= 32767
-ORDER BY coord_ref_sys_code""")
-
+sr = osr.SpatialReference()
 print('epsg_code')
-for f in sql_lyr:
-    print(f['coord_ref_sys_code'])
-
-
-# Could work but GDAL doesn't support 3D geographical SRS at the moment
-if False:
-    from osgeo import gdal, osr
-
-    sr = osr.SpatialReference()
-    print('epsg_code')
-    for code in range(32767):
-        gdal.PushErrorHandler()
-        ret = sr.ImportFromEPSGA(code)
-        gdal.PopErrorHandler()
-        if ret == 0 and (sr.EPSGTreatsAsLatLong() or sr.EPSGTreatsAsNorthingEasting()):
+for code in range(32767):
+    gdal.PushErrorHandler()
+    ret = sr.ImportFromEPSGA(code)
+    gdal.PopErrorHandler()
+    if ret == 0 and sr.GetAxesCount() >= 2:
+        first_axis = sr.GetAxisOrientation(None, 0)
+        second_axis = sr.GetAxisOrientation(None, 1)
+        if first_axis == osr.OAO_North and second_axis == osr.OAO_East:
+            print(code)
+        elif first_axis == osr.OAO_South and second_axis == osr.OAO_West:
             print(code)

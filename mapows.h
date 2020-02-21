@@ -129,7 +129,9 @@ typedef struct {
 /* owsRequestObj: Represent a OWS specific request with its enabled layers */
 typedef struct {
   int numlayers;
+  int numwmslayerargs;
   int *enabled_layers;
+  int *layerwmsfilterindex;
 
   char *service;
   char *version;
@@ -147,6 +149,10 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
     hashTableObj *sec,
     const char *namespaces,
     const char *name);
+    
+void msOWSInitRequestObj(owsRequestObj *ows_request);
+void msOWSClearRequestObj(owsRequestObj *ows_request);
+
 MS_DLL_EXPORT int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
                                         const char *namespaces, const char *name, int check_all_layers);
 MS_DLL_EXPORT void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
@@ -206,7 +212,7 @@ typedef enum
 } OWSServiceType;
 
 MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-    const int action_if_not_found, const char *tag_name, const char* tag_ns,
+    int action_if_not_found, const char *tag_name, const char* tag_ns,
     const char *validated_language, const OWSServiceType service);
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
                                     int action_if_not_found, const OWSServiceType service);

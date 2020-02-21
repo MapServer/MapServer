@@ -488,7 +488,6 @@ int msCGILoadForm(mapservObj *mapserv)
 
         msFreeCharArray(tokens, 4);
 
-#ifdef USE_PROJ
         /*
          * If there is a projection in the map file, and it is not lon/lat, and the
          * extents "look like" they *are* lon/lat, based on their size,
@@ -498,14 +497,13 @@ int msCGILoadForm(mapservObj *mapserv)
          *         and coincidentally fall in the lon/lat range, bad things
          *         will ensue.
          */
-        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+        if(mapserv->map->projection.proj && !msProjIsGeographicCRS(&(mapserv->map->projection))
             && (mapserv->map->extent.minx >= -180.0 && mapserv->map->extent.minx <= 180.0)
             && (mapserv->map->extent.miny >= -90.0 && mapserv->map->extent.miny <= 90.0)
             && (mapserv->map->extent.maxx >= -180.0 && mapserv->map->extent.maxx <= 180.0)
             && (mapserv->map->extent.maxy >= -90.0 && mapserv->map->extent.maxy <= 90.0)) {
           msProjectRect(&(mapserv->map->latlon), &(mapserv->map->projection), &(mapserv->map->extent)); /* extent is a in lat/lon */
         }
-#endif
 
         if((mapserv->map->extent.minx != mapserv->map->extent.maxx) && (mapserv->map->extent.miny != mapserv->map->extent.maxy)) { /* extent seems ok */
           mapserv->CoordSource = FROMUSERBOX;
@@ -560,13 +558,11 @@ int msCGILoadForm(mapservObj *mapserv)
 
         msFreeCharArray(tokens, 2);
 
-#ifdef USE_PROJ
-        if(mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+        if(mapserv->map->projection.proj && !msProjIsGeographicCRS(&(mapserv->map->projection))
             && (mapserv->mappnt.x >= -180.0 && mapserv->mappnt.x <= 180.0)
             && (mapserv->mappnt.y >= -90.0 && mapserv->mappnt.y <= 90.0)) {
           msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &mapserv->mappnt); /* point is a in lat/lon */
         }
-#endif
 
         if(mapserv->CoordSource == NONE) { /* don't override previous settings (i.e. buffer or scale ) */
           mapserv->CoordSource = FROMUSERPNT;
@@ -614,13 +610,11 @@ int msCGILoadForm(mapservObj *mapserv)
           line.point[j].x = atof(tmp[2*j]);
           line.point[j].y = atof(tmp[2*j+1]);
 
-#ifdef USE_PROJ
-          if(mapserv->QueryCoordSource == FROMUSERSHAPE && mapserv->map->projection.proj && !pj_is_latlong(mapserv->map->projection.proj)
+          if(mapserv->QueryCoordSource == FROMUSERSHAPE && mapserv->map->projection.proj && !msProjIsGeographicCRS(&(mapserv->map->projection))
               && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0)
               && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0)) {
             msProjectPoint(&(mapserv->map->latlon), &(mapserv->map->projection), &line.point[j]); /* point is a in lat/lon */
           }
-#endif
         }
 
         if(msAddLine(mapserv->map->query.shape, &line) == -1) {
@@ -1188,13 +1182,11 @@ int msCGIDispatchCoordinateRequest(mapservObj *mapserv)
   msIO_printf("Your \"<i>click</i>\" corresponds to (approximately): (%g, %g).",
               mapserv->mappnt.x, mapserv->mappnt.y);
 
-#ifdef USE_PROJ
-  if(mapserv->map->projection.proj != NULL && !pj_is_latlong(mapserv->map->projection.proj) ) {
+  if(mapserv->map->projection.proj != NULL && !msProjIsGeographicCRS(&(mapserv->map->projection)) ) {
     pointObj p=mapserv->mappnt;
     msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon), &p);
     msIO_printf("Computed lat/lon value is (%g, %g).\n",p.x, p.y);
   }
-#endif
   return MS_SUCCESS;
 }
 
@@ -1666,6 +1658,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
     status = MS_FAILURE;
     goto li_cleanup;
   }
+  img->map = mapserv->map;
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
@@ -1813,8 +1806,8 @@ int msCGIDispatchRequest(mapservObj *mapserv)
 int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_length)
 {
   int x,m=0;
-  struct mstimeval execstarttime, execendtime;
-  struct mstimeval requeststarttime, requestendtime;
+  struct mstimeval execstarttime = {0}, execendtime = {0};
+  struct mstimeval requeststarttime = {0}, requestendtime = {0};
   mapservObj* mapserv = NULL;
   char *queryString = NULL;
   int maxParams = MS_DEFAULT_CGI_PARAMS;

@@ -560,7 +560,7 @@ int agg2RenderPolygonTiled(imageObj *img, shapeObj *p, imageObj * tile)
   return MS_SUCCESS;
 }
 
-int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
+int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
   mapserver::path_storage glyphs;
   mapserver::trans_affine trans;
   AGG2Renderer *r = AGG_RENDERER(img);

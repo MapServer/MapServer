@@ -28,7 +28,6 @@
 
 #include "mapserver.h"
 #include <float.h>
-#ifdef USE_GDAL
 
 #include "gdal.h"
 #include "cpl_string.h"
@@ -180,11 +179,9 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
     searchrect.maxy = map->height-1;
   }
 
-#ifdef USE_PROJ
   layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
   if(layer->project)
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     /* nothing to do */
@@ -199,11 +196,23 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
       double weight = 1.0;
       if(!values) /* defer allocation until we effectively have a feature */
         values = (float*) msSmallCalloc(im_width * im_height, sizeof(float));
-#ifdef USE_PROJ
+
       if(layer->project)
-        msProjectShape(&layer->projection, &map->projection, &shape);
-#endif
-      
+      {
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            layer->reprojectorLayerToMap = msProjectCreateReprojector(
+                &layer->projection, &map->projection);
+            if( layer->reprojectorLayerToMap == NULL )
+            {
+                msFreeShape(&shape);
+                msLayerClose(layer);
+                return MS_FAILURE;
+            }
+        }
+        msProjectShapeEx(layer->reprojectorLayerToMap, &shape);
+      }
+
       /* the weight for the sample is set to 1.0 by default. If the
        * layer has some classes defined, we will read the weight from
        * the class->style->size (which can be binded to an attribute)
@@ -332,15 +341,6 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
   }
   return status;
 }
-#else
-
-
-int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void **hDSvoid, void **cleanup_ptr) {
-    msSetError(MS_MISCERR,"msComputeKernelDensityDataset()", "KernelDensity layers require GDAL support, however GDAL support is not compiled in this build");
-    return MS_FAILURE;
-}
-
-#endif
 
 int msCleanupKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr) {
   free(cleanup_ptr);

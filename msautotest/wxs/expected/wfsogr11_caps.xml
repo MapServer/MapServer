@@ -197,8 +197,8 @@ Content-Type: text/xml; charset=UTF-8
         <Format>MIDMIF</Format>
       </OutputFormats>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-7.5572625062256 49.76680723189</ows:LowerCorner>
-        <ows:UpperCorner>-7.5557777787773 49.767768904154</ows:UpperCorner>
+        <ows:LowerCorner>-7.5565511764371 49.766185810692</ows:LowerCorner>
+        <ows:UpperCorner>-7.5550662982001 49.767147583362</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=multi</MetadataURL>
     </FeatureType>
@@ -215,8 +215,8 @@ Content-Type: text/xml; charset=UTF-8
         <Format>application/json; subtype=geojson</Format>
       </OutputFormats>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-7.5570524339304 49.767082436309</ows:LowerCorner>
-        <ows:UpperCorner>-7.5570524339304 49.767082436309</ows:UpperCorner>
+        <ows:LowerCorner>-7.556341092866 49.766461046013</ows:LowerCorner>
+        <ows:UpperCorner>-7.556341092866 49.766461046013</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <MetadataURL format="text/xml" type="TC211">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=withnullvalues</MetadataURL>
     </FeatureType>

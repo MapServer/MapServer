@@ -129,7 +129,6 @@ class ReferenceCountingTestCase(unittest.TestCase):
             layer.open()
         except Exception:
             # must fail because the new layer is missing information
-            assert True
             exception = True
         assert exception is True
 

@@ -34,6 +34,7 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <cairo-pdf.h>
 #include <cairo-svg.h>
+#include <cairo-win32.h>
 #else
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-svg.h>
@@ -54,10 +55,8 @@
 #endif
 #endif
 
-#ifdef USE_GDAL
 #include <cpl_string.h>
 #include <gdal.h>
-#endif
 
 #include "fontcache.h"
 
@@ -408,7 +407,7 @@ int renderTileCairo(imageObj *img, imageObj *tile, double x, double y)
   return MS_SUCCESS;
 }
 
-int renderGlyphs2Cairo(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
+int renderGlyphs2Cairo(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
   cairo_renderer *r = CAIRO_RENDERER(img);
   cairoCacheData *cache = MS_IMAGE_RENDERER_CACHE(img);
   cairoFaceCache *cairo_face = NULL;
@@ -536,9 +535,6 @@ imageObj* createImageCairo(int width, int height, outputFormatObj *format,colorO
 
 static void msTransformToGeospatialPDF(imageObj *img, mapObj *map, cairo_renderer *r)
 {
-  /* We need a GDAL 1.10 PDF driver at runtime, but as far as the C API is concerned, GDAL 1.9 is */
-  /* largely sufficient. */
-#if defined(USE_GDAL) && defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1900
   GDALDatasetH hDS = NULL;
   const char* pszGEO_ENCODING = NULL;
   GDALDriverH hPDFDriver = NULL;
@@ -645,7 +641,6 @@ static void msTransformToGeospatialPDF(imageObj *img, mapObj *map, cairo_rendere
   VSIUnlink(pszTmpFilename);
 
   msFree(pszTmpFilename);
-#endif
 }
 
 int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)

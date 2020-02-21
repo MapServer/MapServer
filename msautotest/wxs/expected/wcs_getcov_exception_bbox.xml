@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding="UTF-8" ?>
 <ServiceExceptionReport version="1.2.0"
 xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wcs/1.0.0/OGC-exception.xsd">
-  <ServiceException code="NoApplicableCode" locator="bbox">msWCSGetCoverage(): WCS server error. Requested BBOX (500.000111169182,499.999999995423,1000.00011052692,999.999999990907) is outside requested coverage BBOX (0,0,400,300)
+  <ServiceException code="NoApplicableCode" locator="bbox">msWCSGetCoverage(): WCS server error. Requested BBOX (500,500,1000,1000) is outside requested coverage BBOX (0,0,400,300)
   </ServiceException>
 </ServiceExceptionReport>

@@ -13,6 +13,7 @@
  *
  *****************************************************************************/
 
+
 /* fromstring: Factory for mapfile objects */
 
 %pythoncode %{
@@ -222,18 +223,16 @@ def fromstring(data, mappath=None):
                         }
                     }
 
-        def getItemDefinitions(self):
+        @property
+        def itemdefinitions(self):
             return self._item_definitions
 
-        def setItemDefinitions(self, item_definitions):
+        @itemdefinitions.setter
+        def itemdefinitions(self, item_definitions):
             self._item_definitions = item_definitions
-
-        __swig_getmethods__["itemdefinitions"] = getItemDefinitions
-        __swig_setmethods__["itemdefinitions"] = setItemDefinitions
 
 %}
 }
-
 
 /******************************************************************************
  * Extensions to mapObj
@@ -255,8 +254,8 @@ def fromstring(data, mappath=None):
     } 
 
     int setLayerOrder(PyObject *order) {
-        int i, size;
-        size = PyTuple_Size(order);
+        int i;
+        Py_ssize_t size = PyTuple_Size(order);
         for (i = 0; i < size; i++) {
             self->layerorder[i] = (int)PyInt_AsLong(PyTuple_GetItem(order, i));
         }
@@ -336,7 +335,6 @@ def fromstring(data, mappath=None):
         int imgsize;
         PyObject *noerr;
         int retval=MS_FAILURE;
-        rendererVTableObj *renderer = NULL;
 
         /* Return immediately if image driver is not GD */
         if ( !MS_RENDERER_PLUGIN(self->format) )
@@ -426,24 +424,13 @@ def fromstring(data, mappath=None):
         memcpy( *argout, self->pattern, sizeof(double) * *pnListSize);
     }
 
-    void patternlength_set2(int patternlength)
-    {
-        msSetError(MS_MISCERR, "pattern is read-only", "patternlength_set()");
-    }
 
 %pythoncode %{
 
-    __swig_setmethods__["patternlength"] = _mapscript.styleObj_patternlength_set2
-    __swig_getmethods__["patternlength"] = _mapscript.styleObj_patternlength_get
-    if _newclass:patternlength = _swig_property(_mapscript.styleObj_patternlength_get, _mapscript.styleObj_patternlength_set2)
+pattern = property(pattern_get, pattern_set)
 
-    __swig_setmethods__["pattern"] = _mapscript.styleObj_pattern_set
-    __swig_getmethods__["pattern"] = _mapscript.styleObj_pattern_get
-    if _newclass:pattern = _swig_property(_mapscript.styleObj_pattern_get, _mapscript.styleObj_pattern_set)
 %}
-
 }
-
 
 /******************************************************************************
  * Extensions to hashTableObj - add dict methods

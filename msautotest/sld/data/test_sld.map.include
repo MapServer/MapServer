@@ -1,0 +1,5 @@
+INCLUDE "data/general.map.include"
+INCLUDE "data/layer_lline.map.include"
+INCLUDE "data/layer_lpolygon.map.include"
+INCLUDE "data/layer_lpoint.map.include"
+INCLUDE "data/symbols.map.include"

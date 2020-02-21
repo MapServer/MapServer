@@ -7,6 +7,9 @@
 # RUN_PARMS: wms_contour_inline_ti.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG%3A4326&BBOX=3.697829,-16.193665,57.120229,23.8731435&WIDTH=300&HEIGHT=300&LAYERS=contour_inline_ti&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
 # RUN_PARMS: wms_contour_layer_ti.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG%3A4326&BBOX=3.697829,-16.193665,57.120229,23.8731435&WIDTH=300&HEIGHT=300&LAYERS=contour_layer_ti&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
 
+# RUN_PARMS: wms_contour_inline_ti_getfeatureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetFeatureInfo&SRS=EPSG%3A4326&BBOX=3.697829,-16.193665,57.120229,23.8731435&WIDTH=300&HEIGHT=300&LAYERS=contour_inline_ti&STYLES=&FORMAT=image%2Fpng&QUERY_LAYERS=contour_inline_ti&I=2&J=120&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+
+# RUN_PARMS: wms_contour_inline_ti_getfeatureinfo_empty_result.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetFeatureInfo&SRS=EPSG%3A4326&BBOX=3.697829,-16.193665,57.120229,23.8731435&WIDTH=300&HEIGHT=300&LAYERS=contour_inline_ti&STYLES=&FORMAT=image%2Fpng&QUERY_LAYERS=contour_inline_ti&I=20&J=120&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
 
 MAP
     NAME TEST_CONTOUR
@@ -21,7 +24,7 @@ MAP
         METADATA
             "ows_updatesequence"         "123"
             "WMS_TITLE"            "Test WMS time support"
-            "WMS_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
+            "ows_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
             "WMS_SRS"              "EPSG:4326"
             "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
             "WMS_ACCESSCONTRAINTS" "none"
@@ -47,6 +50,7 @@ MAP
         PROCESSING "BANDS=1"
         PROCESSING "CONTOUR_ITEM=elevation"
         PROCESSING "CONTOUR_INTERVAL=20"
+        TEMPLATE "ddd"
         CLASS
             STYLE
                 WIDTH 1
@@ -59,6 +63,7 @@ MAP
             "wms_title" "contour_inline_ti"
             "wms_timeitem"  "TIME"
             "wms_timeextent"  "2004-01-01/2004-02-01"
+            "gml_include_items" "all"
         END
     END
 
