@@ -1488,11 +1488,13 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   if (paging_query) {
       paging_query = msStringConcatenate(paging_query, "[geom], [id] FROM (");
       query = msStringConcatenate(query, "]) 'id', row_number() over (");
+      if (layerinfo->sort_spec) {
+          query = msStringConcatenate(query, layerinfo->sort_spec);
+      }
 
       if (layer->sortBy.nProperties > 0) {
           tmp = msLayerBuildSQLOrderBy(layer);
           if (layerinfo->sort_spec) {
-              query = msStringConcatenate(query, layerinfo->sort_spec);
               query = msStringConcatenate(query, ", ");
           }
           else {
@@ -1502,10 +1504,8 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
           msFree(tmp);
       }
       else {
-          if (layerinfo->sort_spec) {
-              query = msStringConcatenate(query, layerinfo->sort_spec);
-          }
-          else {
+          if (!layerinfo->sort_spec) {
+              // use the unique Id as the default sort for paging
               query = msStringConcatenate(query, "ORDER BY ");
               query = msStringConcatenate(query, layerinfo->urid_name);
           }
