@@ -1494,16 +1494,21 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
       if (layer->sortBy.nProperties > 0) {
           tmp = msLayerBuildSQLOrderBy(layer);
-          if (layerinfo->sort_spec)
+          if (layerinfo->sort_spec) {
               query = msStringConcatenate(query, ", ");
-          else
+          }
+          else {
               query = msStringConcatenate(query, " ORDER BY ");
+          }
           query = msStringConcatenate(query, tmp);
           msFree(tmp);
       }
       else {
-          query = msStringConcatenate(query, "ORDER BY ");
-          query = msStringConcatenate(query, layerinfo->urid_name);
+          if (!layerinfo->sort_spec) {
+              // use the unique Id as the default sort for paging
+              query = msStringConcatenate(query, "ORDER BY ");
+              query = msStringConcatenate(query, layerinfo->urid_name);
+          }
       }
       query = msStringConcatenate(query, ") 'rownum' FROM ");
   }

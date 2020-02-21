@@ -1,0 +1,6 @@
+  CONNECTIONTYPE PLUGIN
+  PLUGIN "C:\projects\mapserver\build\Release\msplugin_mssql2008.dll"
+  CONNECTION "SERVER=(local)\SQL2017;DATABASE=msautotest;uid=sa;pwd=Password12!;"
+  STATUS OFF
+  TYPE POINT
+
