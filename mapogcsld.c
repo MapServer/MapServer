@@ -235,6 +235,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
             int bSLDHasNamedClass = MS_FALSE;
 
             lp->type = sldLayer->type;
+            lp->rendermode = MS_ALL_MATCHING_CLASSES;
 
             for (k=0; k < sldLayer->numclasses; k++) {
                 if( sldLayer->class[k]->group ) {
@@ -826,6 +827,7 @@ static void msSLDParseUserStyle(CPLXMLNode* psUserStyle, layerObj *psLayer)
           if (psElseFilter) {
             msSLDParseRule(psRule, psLayer, pszUserStyleName);
             _SLDApplyRuleValues(psRule, psLayer, 1);
+            psLayer->class[psLayer->numclasses-1]->isfallback = TRUE;
           }
         }
     }

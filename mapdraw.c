@@ -924,11 +924,11 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         drawmode=MS_DRAWMODE_FEATURES;
   char        annotate=MS_TRUE;
   shapeObj    shape;
+  shapeObj    savedShape;
   rectObj     searchrect;
   char        cache=MS_FALSE;
   int         maxnumstyles=1;
   featureListNodeObjPtr shpcache=NULL, current=NULL;
-  int classindex = -1;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1016,8 +1016,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   /* step through the target shapes and their classes */
   msInitShape(&shape);
-  classindex = -1;
+  int classindex = -1;
+  int classcount = 0;
   for (;;) {
+    int rendermode;
     if (classindex == -1) {
       status = msLayerNextShape(layer, &shape);
       if (status != MS_SUCCESS) {
@@ -1030,6 +1032,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
           msDebug("msDrawVectorLayer(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
         continue;
       }
+      classcount = 0;
     }
 
     classindex = msShapeGetNextClass(classindex, layer, map, &shape, classgroup, nclasses);
@@ -1037,8 +1040,21 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       continue;
     }
     shape.classindex = classindex;
-    classindex = -1; // This value indicates that no more class is to be
-                     // fetched from current shape
+
+    // When only one class is applicable, rendering mode is forced to its default,
+    // i.e. only the first applicable class is actually applied. As a consequence,
+    // cache can be enabled when relevant.
+    classcount++;
+    rendermode = layer->rendermode;
+    if ((classcount == 1) && (msShapeGetNextClass(classindex, layer, map, &shape, classgroup, nclasses) == -1))
+    {
+      rendermode = MS_FIRST_MATCHING_CLASS;
+    }
+
+    if (rendermode == MS_FIRST_MATCHING_CLASS)
+    {
+      classindex = -1;
+    }
 
     if(maxfeatures >=0 && featuresdrawn >= maxfeatures) {
       status = MS_DONE;
@@ -1077,6 +1093,13 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       cache = MS_FALSE;
     }
 
+    if (rendermode == MS_ALL_MATCHING_CLASSES)
+    {
+      // Cache is designed to handle only one class. Therefore it is
+      // disabled when using SLD "painters model" rendering mode.
+      cache = MS_FALSE;
+    }
+
     /* RFC77 TODO: check return value, may need a more sophisticated if-then test. */
     if(annotate && layer->class[shape.classindex]->numlabels > 0) {
       drawmode |= MS_DRAWMODE_LABELS;
@@ -1087,6 +1110,16 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
+    }
+
+    if (rendermode == MS_ALL_MATCHING_CLASSES)
+    {
+      // In SLD "painters model" rendering mode, all applicable classes are actually applied.
+      // Coordinates stored in the shape must keep their original values for
+      // the shape to be drawn multiple times.
+      // Here the original shape is saved.
+      msInitShape(&savedShape);
+      msCopyShape(&shape, &savedShape);
     }
 
     if (cache) {
@@ -1115,6 +1148,17 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     else
       status = msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles  */
+
+    if (rendermode == MS_ALL_MATCHING_CLASSES)
+    {
+      // In SLD "painters model" rendering mode, all applicable classes are actually applied.
+      // Coordinates stored in the shape must keep their original values for
+      // the shape to be drawn multiple times.
+      // Here the original shape is restored.
+      msCopyShape(&savedShape, &shape);
+      msFreeShape(&savedShape);
+    }
+
     if(status != MS_SUCCESS) {
       retcode = MS_FAILURE;
       break;

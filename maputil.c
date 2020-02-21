@@ -698,7 +698,18 @@ int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map,
       }
 
       if(layer->class[iclass]->status != MS_DELETE && msEvalExpression(layer, shape, &(layer->class[iclass]->expression), layer->classitemindex) == MS_TRUE)
-        return(iclass);
+      {
+        if (layer->class[iclass]->isfallback && currentclass != -1)
+        {
+          // Class is not applicable if it is flagged as fallback (<ElseFilter/> tag in SLD)
+          // but other classes have been applied before.
+          return -1;
+        }
+        else
+        {
+          return(iclass);
+        }
+      }
     }
   }
 
