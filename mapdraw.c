@@ -1021,6 +1021,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   for (;;) {
     int rendermode;
     if (classindex == -1) {
+      msFreeShape(&shape);
       status = msLayerNextShape(layer, &shape);
       if (status != MS_SUCCESS) {
         break;
