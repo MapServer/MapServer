@@ -2526,6 +2526,12 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         layerObj *lp;
         lp = GET_LAYER(map, j);
         if (lp->status == MS_ON) {
+          if(paramsObj->pszPropertyName){
+            // override gml_items with properties passed in
+            // security risk!
+            //if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL
+            msInsertHashTable(&(lp->metadata), "gml_include_items", paramsObj->pszPropertyName);
+          }
           int status = msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
           if( status != MS_SUCCESS )
               return status;
