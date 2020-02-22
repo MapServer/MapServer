@@ -1115,16 +1115,16 @@ int msQueryByRect(mapObj *map)
     }
     msLayerEnablePaging(lp, paging);
 
-    /* build item list, we want *all* items */
-    /* change to just get selected items */
     const char *value = NULL;
     value = msOWSLookupMetadata(&(lp->metadata), "G", "include_items");
 
-    if(value){
-        status = msLayerWhichItems(lp, MS_FALSE, value);
+    if(!value || value == "all"){
+        /* build item list, we want *all* items */
+        status = msLayerWhichItems(lp, MS_TRUE, NULL);
     }
     else {
-        status = msLayerWhichItems(lp, MS_TRUE, NULL);
+        /* get only selected items */
+        status = msLayerWhichItems(lp, MS_FALSE, value);
     }
 
     if(status != MS_SUCCESS) {
