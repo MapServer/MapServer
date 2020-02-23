@@ -1430,7 +1430,10 @@ int msPostGISParseData(layerObj *layer)
     pos_opt = data + strlen(data);
   }
   /* Back after the last non-space character. */
-  for ( pos_opt; ( pos_opt > data ) && ( *(pos_opt-1) == ' ' ); pos_opt-- );
+  while( ( pos_opt > data ) && ( *(pos_opt-1) == ' ' ) )
+  {
+    --pos_opt;
+  }
 
   /*
   ** Scan for the 'geometry from table' or 'geometry from () as foo' clause.
