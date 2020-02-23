@@ -1118,7 +1118,7 @@ int msQueryByRect(mapObj *map)
     const char *value = NULL;
     value = msOWSLookupMetadata(&(lp->metadata), "G", "include_items");
 
-    if(!value || value == "all"){
+    if(!value || strcasecmp(value, "all") == 0){
         /* build item list, we want *all* items */
         status = msLayerWhichItems(lp, MS_TRUE, NULL);
     }
