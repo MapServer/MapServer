@@ -990,7 +990,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(i=0; i<n; i++) {
         bFound = 0;
         for(j=0; j<layer->numitems; j++) {
-          if(strcmp(tokens[i], layer->items[j]) == 0) {
+          if(strcasecmp(tokens[i], layer->items[j]) == 0) {
             bFound = 1;
             break;
           }
