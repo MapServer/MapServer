@@ -1331,6 +1331,8 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
   char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
   int hasFilter = MS_FALSE;
+  const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+  const int bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
   layerinfo =  getMSSQL2008LayerInfo(layer);
 
@@ -1519,16 +1521,18 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       hasFilter = MS_TRUE;
   }
 
-  /* adding spatial filter */
-  if (hasFilter == MS_FALSE)
-      query = msStringConcatenate(query, " WHERE ");
-  else
-      query = msStringConcatenate(query, " AND ");
+  if( bIsValidRect ) {
+    /* adding spatial filter */
+    if (hasFilter == MS_FALSE)
+        query = msStringConcatenate(query, " WHERE ");
+    else
+        query = msStringConcatenate(query, " AND ");
 
-  query = msStringConcatenate(query, layerinfo->geom_column);
-  query = msStringConcatenate(query, ".STIntersects(");
-  query = msStringConcatenate(query, box3d);
-  query = msStringConcatenate(query, ") = 1 ");
+    query = msStringConcatenate(query, layerinfo->geom_column);
+    query = msStringConcatenate(query, ".STIntersects(");
+    query = msStringConcatenate(query, box3d);
+    query = msStringConcatenate(query, ") = 1 ");
+  }
 
   if (paging_query) {
       paging_query = msStringConcatenate(paging_query, query);
@@ -2515,6 +2519,8 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
     SQLLEN retLen;
     SQLRETURN rc;
     int hasFilter = MS_FALSE;
+    const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+    const int bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
     rectObj searchrectInLayerProj = rect;
 
@@ -2590,16 +2596,22 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
         hasFilter = MS_TRUE;
     }
 
-    /* adding spatial filter */
-    if (hasFilter == MS_FALSE)
-        query = msStringConcatenate(query, " WHERE ");
-    else
-        query = msStringConcatenate(query, " AND ");
+    if( bIsValidRect ) {
+        /* adding spatial filter */
+        if (hasFilter == MS_FALSE)
+            query = msStringConcatenate(query, " WHERE ");
+        else
+            query = msStringConcatenate(query, " AND ");
 
-    query = msStringConcatenate(query, layerinfo->geom_column);
-    query = msStringConcatenate(query, ".MakeValid().STIntersects(");
-    query = msStringConcatenate(query, box3d);
-    query = msStringConcatenate(query, ") = 1 ");
+        query = msStringConcatenate(query, layerinfo->geom_column);
+        query = msStringConcatenate(query, ".STIntersects(");
+        query = msStringConcatenate(query, box3d);
+        query = msStringConcatenate(query, ") = 1 ");
+    }
+
+    if (layer->debug) {
+      msDebug("query:%s\n", query);
+    }
 
     if (!executeSQL(layerinfo->conn, query)) {
         msFree(query);

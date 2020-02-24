@@ -750,7 +750,8 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
                                               "use_default_extent_for_getfeature");
     if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
-        lp->connectiontype == MS_OGR )
+        (lp->connectiontype == MS_OGR ||
+        ((lp->connectiontype == MS_PLUGIN) && (strstr(lp->plugin_library,"msplugin_mssql2008") != NULL))) )
     {
         const rectObj rectInvalid = MS_INIT_INVALID_RECT;
         rect = rectInvalid;
