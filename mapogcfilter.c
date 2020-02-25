@@ -730,6 +730,31 @@ static FilterEncodingNode* FLTGetTopBBOX(FilterEncodingNode *psNode)
 }
 
 /************************************************************************/
+/*                   FLTLayerSetInvalidRectIfSupported                  */
+/*                                                                      */
+/*  This function will set in *rect a very huge extent if the layer     */
+/*  wfs_use_default_extent_for_getfeature metadata item is set to false */
+/*  and the layer supports such degenerate rectangle, as a hint that    */
+/*  they should not issue a spatial filter.                             */
+/************************************************************************/
+
+int FLTLayerSetInvalidRectIfSupported(layerObj* lp,
+                                      rectObj* rect)
+{
+    const char* pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
+                                              "use_default_extent_for_getfeature");
+    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
+        (lp->connectiontype == MS_OGR ||
+        ((lp->connectiontype == MS_PLUGIN) && (strstr(lp->plugin_library,"msplugin_mssql2008") != NULL))) )
+    {
+        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+        *rect = rectInvalid;
+        return MS_TRUE;
+    }
+    return MS_FALSE;
+}
+
+/************************************************************************/
 /*                   FLTLayerApplyPlainFilterToLayer                    */
 /*                                                                      */
 /* Helper function for layer virtual table architecture                 */
@@ -743,19 +768,10 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 
   pszExpression = FLTGetCommonExpression(psNode,  lp);
   if (pszExpression) {
-    const char* pszUseDefaultExtent;
     FilterEncodingNode* psTopBBOX;
     rectObj rect = map->extent;
 
-    pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
-                                              "use_default_extent_for_getfeature");
-    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
-        (lp->connectiontype == MS_OGR ||
-        ((lp->connectiontype == MS_PLUGIN) && (strstr(lp->plugin_library,"msplugin_mssql2008") != NULL))) )
-    {
-        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
-        rect = rectInvalid;
-    }
+    FLTLayerSetInvalidRectIfSupported(lp, &rect);
 
     psTopBBOX = FLTGetTopBBOX(psNode);
     if( psTopBBOX )
