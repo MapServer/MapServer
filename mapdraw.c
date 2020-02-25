@@ -1013,6 +1013,40 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->minfeaturesize > 0)
     minfeaturesize = Pix2LayerGeoref(map, layer, layer->minfeaturesize);
 
+  // Select how to render classes
+  //    MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
+  //    MS_ALL_MATCHING_CLASSES: SLD behavior
+  int ref_rendermode;
+  char * rendermodestr = msLayerGetProcessingKey(layer, "RENDERMODE");
+  if (layer->rendermode == MS_ALL_MATCHING_CLASSES)
+  {
+    // SLD takes precedence
+    ref_rendermode = MS_ALL_MATCHING_CLASSES;
+  }
+  else if (!rendermodestr)
+  {
+    // Default Mapfile
+    ref_rendermode = MS_FIRST_MATCHING_CLASS;
+  }
+  else if (!strcmp(rendermodestr,"FIRST_MATCHING_CLASS"))
+  {
+    // Explicit default Mapfile
+    ref_rendermode = MS_FIRST_MATCHING_CLASS;
+  }
+  else if (!strcmp(rendermodestr,"ALL_MATCHING_CLASSES"))
+  {
+    // SLD-like Mapfile
+    ref_rendermode = MS_ALL_MATCHING_CLASSES;
+  }
+  else
+  {
+    msLayerClose(layer);
+    msSetError(MS_MISCERR,
+    "Unknown RENDERMODE: %s, should be one of: FIRST_MATCHING_CLASS, ALL_MATCHING_CLASSES.",
+    "msDrawVectorLayer()",
+    rendermodestr);
+    return MS_FAILURE;
+  }
 
   /* step through the target shapes and their classes */
   msInitShape(&shape);
@@ -1046,7 +1080,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     // i.e. only the first applicable class is actually applied. As a consequence,
     // cache can be enabled when relevant.
     classcount++;
-    rendermode = layer->rendermode;
+    rendermode = ref_rendermode;
     if ((classcount == 1) && (msShapeGetNextClass(classindex, layer, map, &shape, classgroup, nclasses) == -1))
     {
       rendermode = MS_FIRST_MATCHING_CLASS;
