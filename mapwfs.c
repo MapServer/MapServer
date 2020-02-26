@@ -2169,21 +2169,15 @@ static int msWFSRunBasicGetFeature(mapObj* map,
 {
     rectObj ext;
     int status;
-    const char* pszUseDefaultExtent;
     
     map->query.type = MS_QUERY_BY_RECT; /* setup the query */
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.rect = map->extent;
     map->query.layer = lp->index;
 
-
-    pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
-                                              "use_default_extent_for_getfeature");
-    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
-        lp->connectiontype == MS_OGR )
+    if( FLTLayerSetInvalidRectIfSupported(lp, &(map->query.rect)) )
     {
-        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
-        map->query.rect = rectInvalid;
+        /* do nothing */
     }
     else if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
         char *pszMapSRS=NULL;

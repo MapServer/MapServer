@@ -450,7 +450,29 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 #endif
 
     /* Apply filter to this layer */
-    if( FLTApplyFilterToLayer(psNode, map, lp->index) != MS_SUCCESS ) {
+
+    /* But first, start by removing any wfs_use_default_extent_for_getfeature metadata item */
+    /* that could result in the BBOX to be removed */
+    char* old_value_wfs_use_default_extent_for_getfeature = NULL;
+    {
+        const char* old_value_tmp = msLookupHashTable(
+            &(lp->metadata), "wfs_use_default_extent_for_getfeature");
+        if( old_value_tmp )
+        {
+            old_value_wfs_use_default_extent_for_getfeature = msStrdup(old_value_tmp);
+            msRemoveHashTable(&(lp->metadata), "wfs_use_default_extent_for_getfeature");
+        }
+    }
+
+    int ret = FLTApplyFilterToLayer(psNode, map, lp->index);
+    if( old_value_wfs_use_default_extent_for_getfeature )
+    {
+        msInsertHashTable(&(lp->metadata), "wfs_use_default_extent_for_getfeature",
+                          old_value_wfs_use_default_extent_for_getfeature);
+        msFree(old_value_wfs_use_default_extent_for_getfeature);
+    }
+
+    if( ret != MS_SUCCESS ) {
       errorObj* ms_error = msGetErrorObj();
 
       if(ms_error->code != MS_NOTFOUND) {
