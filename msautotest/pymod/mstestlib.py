@@ -712,6 +712,9 @@ def _run(map, out_file, command, extra_args):
         return False, ('no result file generated', map, out_file)
 
     elif cmp == 'noexpected':
+        if strict:
+            return False, ('no existing file expected/' + out_file)
+
         if not quiet:
             print('     no expected file exists, accepting result as expected.')
         else:
