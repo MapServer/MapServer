@@ -2527,9 +2527,8 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         lp = GET_LAYER(map, j);
         if (lp->status == MS_ON) {
           if(paramsObj->pszPropertyName){
-            // override gml_items with properties passed in
-            // possible security risk?
-            msInsertHashTable(&(lp->metadata), "gml_include_items", paramsObj->pszPropertyName);
+            // add a new gml_select_items properties with only fields to be used for a selection
+            msInsertHashTable(&(lp->metadata), "gml_select_items", paramsObj->pszPropertyName);
           }
           int status = msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
           if( status != MS_SUCCESS )
