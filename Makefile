@@ -1,4 +1,4 @@
-AUTOTEST_OPTS?=--strict
+AUTOTEST_OPTS?=--strict_mode
 PHP_MAPSCRIPT=build/mapscript/php/php_mapscript.so
 PYTHON_MAPSCRIPT_PATH=build/mapscript/python
 JAVA_MAPSCRIPT_PATH=build/mapscript/java
