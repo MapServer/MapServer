@@ -34,7 +34,7 @@
 
 #if defined(USE_LIBXML2)
 #include "maplibxml2.h"
-#elif defined(USE_GDAL)
+#else
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #endif
@@ -50,10 +50,12 @@
 ** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets
 ** all internal pointers to NULL.
 */
-static void msOWSInitRequestObj(owsRequestObj *ows_request)
+void msOWSInitRequestObj(owsRequestObj *ows_request)
 {
   ows_request->numlayers = 0;
+  ows_request->numwmslayerargs = 0;
   ows_request->enabled_layers = NULL;
+  ows_request->layerwmsfilterindex = NULL;
 
   ows_request->service = NULL;
   ows_request->version = NULL;
@@ -65,9 +67,10 @@ static void msOWSInitRequestObj(owsRequestObj *ows_request)
 ** msOWSClearRequestObj() releases all resources associated with an
 ** owsRequestObj.
 */
-static void msOWSClearRequestObj(owsRequestObj *ows_request)
+void msOWSClearRequestObj(owsRequestObj *ows_request)
 {
   msFree(ows_request->enabled_layers);
+  msFree(ows_request->layerwmsfilterindex);
   msFree(ows_request->service);
   msFree(ows_request->version);
   msFree(ows_request->request);
@@ -75,7 +78,7 @@ static void msOWSClearRequestObj(owsRequestObj *ows_request)
 #if defined(USE_LIBXML2)
     xmlFreeDoc(ows_request->document);
     xmlCleanupParser();
-#elif defined(USE_GDAL)
+#else
     CPLDestroyXMLNode(ows_request->document);
 #endif
   }
@@ -136,7 +139,7 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
 #if LIBXML_VERSION < 20900
     xmlExternalEntityLoader oldExternalEntityLoader;
 #endif
-#elif defined(USE_GDAL)
+#else
     CPLXMLNode *temp;
 #endif
     if (!request->postrequest || !strlen(request->postrequest)) {
@@ -176,7 +179,7 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     ows_request->version = (char *) xmlGetProp(root, BAD_CAST "version");
     ows_request->request = msStrdup((char *) root->name);
 
-#elif defined(USE_GDAL)
+#else
     /* parse with CPLXML */
     ows_request->document = CPLParseXMLString(request->postrequest);
     if (ows_request->document == NULL) {
@@ -204,12 +207,6 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
         continue;
       }
     }
-#else
-    /* could not parse XML since no parser was compiled */
-    msSetError(MS_OWSERR, "Could not parse the POST XML since MapServer"
-               "was not compiled with libxml2 or GDAL.",
-               "msOWSPreParseRequest()");
-    return MS_FAILURE;
 #endif /* defined(USE_LIBXML2) */
   } else {
     msSetError(MS_OWSERR, "Unknown request method. Use either GET or POST.",
@@ -997,10 +994,6 @@ const char *msOWSGetVersionString(int nVersion, char *pszBuffer)
 
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-
-#if !defined(USE_PROJ)
-#error "PROJ.4 is required for WMS, WFS, WCS and SOS Server Support."
-#endif
 
 /*
 ** msRenameLayer()
@@ -2002,6 +1995,7 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
 {
   const char *value;
   char *encoded;
+  size_t default_value_len = 0;
 
   value = msOWSLookupMetadata(metadata, namespaces, name);
 
@@ -2009,6 +2003,8 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
     value = default_value;
     default_value = NULL;
   }
+  if( default_value )
+      default_value_len = strlen(default_value);
 
   if(value != NULL) {
     char **keywords;
@@ -2020,8 +2016,9 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       if(startTag) msIO_fprintf(stream, "%s", startTag);
       for(kw=0; kw<numkeywords; kw++) {
         if (default_value != NULL
+            && default_value_len > 8
             && strncasecmp(keywords[kw],default_value,strlen(keywords[kw])) == 0
-            && strncasecmp("_exclude",default_value+strlen(default_value)-8,8) == 0)
+            && strncasecmp("_exclude",default_value+default_value_len-8,8) == 0)
           continue;
 
         encoded = msEncodeHTMLEntities(keywords[kw]);
@@ -2086,9 +2083,10 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 */
 void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext)
 {
-  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+  if (srcproj->proj && !msProjIsGeographicCRS(srcproj)) {
     projectionObj wgs84;
     msInitProjection(&wgs84);
+    msProjectionInheritContextFrom(&wgs84, srcproj);
     msLoadProjectionString(&wgs84, "+proj=longlat +ellps=WGS84 +datum=WGS84");
     msProjectRect(srcproj, &wgs84, ext);
     msFreeProjection(&wgs84);
@@ -2207,6 +2205,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 
       /* reproject the extents for each SRS's bounding box */
       msInitProjection(&proj);
+      msProjectionInheritContextFrom(&proj, srcproj);
       if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0) {
         if (msProjectionsDiffer(srcproj, &proj) == MS_TRUE) {
           msProjectRect(srcproj, &proj, &ext);

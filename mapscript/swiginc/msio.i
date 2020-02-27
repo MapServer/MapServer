@@ -45,10 +45,8 @@ void msIO_stripStdoutBufferContentHeaders(void);
 const char *msIO_getStdoutBufferString(void);
 gdBuffer msIO_getStdoutBufferBytes(void);
 
-#ifdef SWIGPYTHON
 %newobject msIO_getAndStripStdoutBufferMimeHeaders;
 hashTableObj* msIO_getAndStripStdoutBufferMimeHeaders(void);
-#endif
 
 %{
 

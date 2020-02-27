@@ -140,6 +140,9 @@ MAP
     END
     STATUS OFF # DEFAULT
     DATA "point"
+    METADATA
+      "gml_types" "auto"
+    END
     CLASSITEM "FNAME"
     LABELITEM "FNAME"
     CLASS
@@ -173,7 +176,7 @@ MAP
       END
     END
   END
- 
+
   LAYER
     NAME "INLINE"
     TYPE POINT

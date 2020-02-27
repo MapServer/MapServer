@@ -145,19 +145,34 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
     FREE_HASHTABLE(zobj->std.properties);
 #endif /* PHP_VERSION_ID < 70000 */
 
+#if PHP_VERSION_ID >= 70300
+#define MAPSCRIPT_ADDREF(zv) if(!Z_ISUNDEF(zv)) GC_ADDREF(Z_COUNTED(zv))
+#define MAPSCRIPT_ADDREF_P(p) if(!Z_ISUNDEF(*p)) GC_ADDREF(Z_COUNTED_P(p))
+#else
 #if PHP_VERSION_ID >= 70000
 #define MAPSCRIPT_ADDREF(zv) if(!(Z_ISUNDEF(zv))) GC_REFCOUNT(Z_COUNTED(zv))++;
 #define MAPSCRIPT_ADDREF_P(zv) if(!(Z_ISUNDEF(*zv))) GC_REFCOUNT(Z_COUNTED_P(zv))++;
 #else
 #define MAPSCRIPT_ADDREF(zobj) if (zobj) Z_ADDREF_P(zobj)
 #define MAPSCRIPT_ADDREF_P(zv) MAPSCRIPT_ADDREF(zv)
-#endif
+#endif  /* PHP_VERSION_ID >= 70000 */
+#endif  /* PHP_VERSION_ID >= 70300 */
 
+#if PHP_VERSION_ID >= 70300
+#define MAPSCRIPT_DELREF(zv)                            \
+    if (!(Z_ISUNDEF(zv)))                               \
+    {                                                   \
+        zend_refcounted *_gc = Z_COUNTED(zv);           \
+        GC_DELREF(_gc);                       \
+        if(GC_REFCOUNT(_gc) == 0)                       \
+            rc_dtor_func(_gc);                          \
+        ZVAL_UNDEF(&zv);                                \
+    }
+#else
 #if PHP_VERSION_ID >= 70000
-#ifndef _zval_dtor_func_for_ptr
-//use _zval_dtor_func in PHP7.1 instead
+#if PHP_VERSION_ID >= 70100
 #define _zval_dtor_func_for_ptr _zval_dtor_func
-#endif
+#endif /* PHP_VERSION_ID >= 70100 */
 #define MAPSCRIPT_DELREF(zv)                            \
     if (!(Z_ISUNDEF(zv)))                               \
     {                                                   \
@@ -178,7 +193,8 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         } \
         zobj = NULL; \
     }
-#endif
+#endif /* PHP_VERSION_ID >= 70000 */
+#endif  /* PHP_VERSION_ID >= 70300 */
 
 #if PHP_VERSION_ID >= 70000
 #define MAPSCRIPT_FREE_PARENT(parent) \

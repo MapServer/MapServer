@@ -758,6 +758,7 @@ string_exp: STRING
   | TOSTRING '(' math_exp ',' string_exp ')' {
     $$ = (char *) malloc(strlen($5) + 64); /* Plenty big? Should use snprintf below... */
     sprintf($$, $5, $3);
+    free($5);
   }
   | COMMIFY '(' string_exp ')' {  
     $3 = msCommifyString($3); 

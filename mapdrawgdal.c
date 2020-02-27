@@ -41,8 +41,6 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
 #define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
 
-#if defined(USE_GDAL)
-
 #include "gdal.h"
 #include "cpl_string.h"
 
@@ -1933,7 +1931,10 @@ msDrawRasterLayerGDAL_16BitClassification(
   rasterBufferObj *mask_rb = NULL;
   rasterBufferObj s_mask_rb;
   int lastC;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
+
+  const char *pszClassifyScaled;
+  int bClassifyScaled = FALSE;
 
   if(layer->mask) {
     int ret;
@@ -1997,6 +1998,13 @@ msDrawRasterLayerGDAL_16BitClassification(
       fDataMax = MS_MAX(fDataMax,pafRawData[i]);
     }
   }
+
+  /* -------------------------------------------------------------------- */
+  /*      Fetch the scale classification option.                          */
+  /* -------------------------------------------------------------------- */
+  pszClassifyScaled = CSLFetchNameValue( layer->processing, "CLASSIFY_SCALED" );
+  if( pszClassifyScaled != NULL )
+    bClassifyScaled = CSLTestBoolean(pszClassifyScaled);
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the scale processing option.                              */
@@ -2106,12 +2114,17 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     cmap[i] = -1;
 
+    // i = (int) ((dfOriginalValue - dfScaleMin) * dfScaleRatio+1)-1;
     dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
 
     /* The creation of buckets takes a significant time when they are many, and many classes
        as well. When iterating over buckets, a faster strategy is to reuse first the last used
        class index. */
-    c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) dfOriginalValue, -1, -1, -1, lastC);
+    if(bClassifyScaled == TRUE)
+      c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) i, -1, -1, -1, lastC);
+    else
+      c = msGetClass_FloatRGB_WithFirstClassToTry(layer, (float) dfOriginalValue, -1, -1, -1, lastC);
+
     lastC = c;
     if( c != -1 ) {
       int s;
@@ -2318,6 +2331,3 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
     return band_list;
   }
 }
-
-#endif /* def USE_GDAL */
-

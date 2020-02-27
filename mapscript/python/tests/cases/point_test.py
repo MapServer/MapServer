@@ -28,6 +28,15 @@ import unittest
 import mapscript
 
 
+have_image = False
+
+try:
+    from PIL import Image
+    have_image = True
+except ImportError:
+    pass
+
+
 class PointObjTestCase(unittest.TestCase):
 
     def testPointObjConstructorNoArgs(self):
@@ -70,6 +79,52 @@ class PointObjTestCase(unittest.TestCase):
             self.assertAlmostEqual(p.z, 3.0)
             self.assertAlmostEqual(p.m, 4.0)
 
+    def testPointDraw(self):
+        """Can create a point, add to a layer, and draw it directly"""
+
+        map_string = """
+        MAP
+            EXTENT 0 0 90 90
+            SIZE 500 500
+
+            SYMBOL
+            NAME "circle"
+            TYPE ELLIPSE
+            POINTS 1 1 END
+            FILLED true
+            END
+
+            LAYER
+            NAME "punkt"
+            STATUS ON
+            TYPE POINT
+            END
+
+        END"""
+
+        test_map = mapscript.fromstring(map_string)
+        layer = test_map.getLayerByName('punkt')
+        cls = mapscript.classObj()
+        style = mapscript.styleObj()
+        style.outlinecolor.setHex('#00aa00ff')
+        style.size = 10
+        style.setSymbolByName(test_map, 'circle')
+
+        cls.insertStyle(style)
+        class_idx = layer.insertClass(cls)
+        point = mapscript.pointObj(45, 45)
+
+        img = test_map.prepareImage()
+        point.draw(test_map, layer, img, class_idx, "test")
+
+        filename = 'testDrawPoint.png'
+        with open(filename, 'wb') as fh:
+            img.write(fh)
+
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.size == (500, 500)
+
     def testPoint__str__(self):
         """return properly formatted string"""
         p = mapscript.pointObj(1.0, 1.0)
@@ -89,6 +144,14 @@ class PointObjTestCase(unittest.TestCase):
             p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
 
         assert p.toString() == p_str, p.toString()
+
+    def testPointGeoInterface(self):
+        """return point using the  __geo_interface__ protocol"""
+        p = mapscript.pointObj(1.0, 1.0, 0.002, 15.0)
+        if hasattr(p, 'z'):
+            assert p.__geo_interface__ == {"type": "Point", "coordinates": (1.0, 1.0, 0.002)}
+        else:
+            assert p.__geo_interface__ == {"type": "Point", "coordinates": (1.0, 1.0)}
 
 
 if __name__ == '__main__':

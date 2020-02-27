@@ -30,10 +30,8 @@
 #define _GNU_SOURCE
 #include "mapserver-config.h"
 
-#ifdef USE_OGR
 #include "cpl_minixml.h"
 #include "cpl_string.h"
-#endif
 
 #include "mapogcfilter.h"
 #include "mapserver.h"
@@ -304,9 +302,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
   return pszExpression;
 }
 
-#ifdef USE_OGR
-
-
 int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
                           OGRwkbGeometryType nType)
 {
@@ -425,6 +420,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
   szEPSG = FLTGetBBOX(psNode, &sQueryRect);
   if(szEPSG && map->projection.numargs > 0) {
     msInitProjection(&sProjTmp);
+    msProjectionInheritContextFrom(&sProjTmp, &map->projection);
     /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
     if (msLoadProjectionString(&sProjTmp, szEPSG) == 0) {
       msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
@@ -734,6 +730,31 @@ static FilterEncodingNode* FLTGetTopBBOX(FilterEncodingNode *psNode)
 }
 
 /************************************************************************/
+/*                   FLTLayerSetInvalidRectIfSupported                  */
+/*                                                                      */
+/*  This function will set in *rect a very huge extent if the layer     */
+/*  wfs_use_default_extent_for_getfeature metadata item is set to false */
+/*  and the layer supports such degenerate rectangle, as a hint that    */
+/*  they should not issue a spatial filter.                             */
+/************************************************************************/
+
+int FLTLayerSetInvalidRectIfSupported(layerObj* lp,
+                                      rectObj* rect)
+{
+    const char* pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
+                                              "use_default_extent_for_getfeature");
+    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
+        (lp->connectiontype == MS_OGR ||
+        ((lp->connectiontype == MS_PLUGIN) && (strstr(lp->plugin_library,"msplugin_mssql2008") != NULL))) )
+    {
+        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+        *rect = rectInvalid;
+        return MS_TRUE;
+    }
+    return MS_FALSE;
+}
+
+/************************************************************************/
 /*                   FLTLayerApplyPlainFilterToLayer                    */
 /*                                                                      */
 /* Helper function for layer virtual table architecture                 */
@@ -747,18 +768,10 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 
   pszExpression = FLTGetCommonExpression(psNode,  lp);
   if (pszExpression) {
-    const char* pszUseDefaultExtent;
     FilterEncodingNode* psTopBBOX;
     rectObj rect = map->extent;
 
-    pszUseDefaultExtent = msOWSLookupMetadata(&(lp->metadata), "F",
-                                              "use_default_extent_for_getfeature");
-    if( pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
-        lp->connectiontype == MS_OGR )
-    {
-        const rectObj rectInvalid = MS_INIT_INVALID_RECT;
-        rect = rectInvalid;
-    }
+    FLTLayerSetInvalidRectIfSupported(lp, &rect);
 
     psTopBBOX = FLTGetTopBBOX(psNode);
     if( psTopBBOX )
@@ -768,6 +781,7 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
       if(pszEPSG && map->projection.numargs > 0) {
         projectionObj sProjTmp;
         msInitProjection(&sProjTmp);
+        msProjectionInheritContextFrom(&sProjTmp, &map->projection);
         /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
         if (msLoadProjectionString(&sProjTmp, pszEPSG) == 0) {
           rectObj oldRect = rect;
@@ -1245,7 +1259,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         char *pszSRS = NULL;
         const char* pszPropertyName = NULL;
         CPLXMLNode *psBox = NULL, *psEnvelope=NULL;
-        rectObj sBox;
+        rectObj sBox = {0};
 
         int bCoordinatesValid = 0;
 
@@ -2923,11 +2937,15 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
 /*                        FLTNeedSRSSwapping                            */
 /************************************************************************/
 
-static int FLTNeedSRSSwapping( const char* pszSRS )
+static int FLTNeedSRSSwapping( mapObj *map, const char* pszSRS )
 {
     int bNeedSwapping = MS_FALSE;
     projectionObj sProjTmp;
     msInitProjection(&sProjTmp);
+    if( map )
+    {
+        msProjectionInheritContextFrom(&sProjTmp, &map->projection);
+    }
     if (msLoadProjectionStringEPSG(&sProjTmp, pszSRS) == 0) {
         bNeedSwapping = msIsAxisInvertedProj(&sProjTmp);
     }
@@ -2944,7 +2962,8 @@ static int FLTNeedSRSSwapping( const char* pszSRS )
 /*      caller will have to determine its value from a more general     */
 /*      context.                                                        */
 /************************************************************************/
-void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
+void FLTDoAxisSwappingIfNecessary(mapObj *map, 
+                                  FilterEncodingNode *psFilterNode,
                                   int bDefaultSRSNeedsAxisSwapping)
 {
     if( psFilterNode == NULL )
@@ -2955,7 +2974,7 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
     {
         rectObj* rect = (rectObj *)psFilterNode->psRightNode->pOther;
         const char* pszSRS = psFilterNode->pszSRS;
-        if( (pszSRS != NULL && FLTNeedSRSSwapping(pszSRS)) ||
+        if( (pszSRS != NULL && FLTNeedSRSSwapping(map, pszSRS)) ||
             (pszSRS == NULL && bDefaultSRSNeedsAxisSwapping) )
         {
             double tmp;
@@ -2974,7 +2993,7 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
     {
         shapeObj* shape = (shapeObj *)(psFilterNode->psRightNode->pOther);
         const char* pszSRS = psFilterNode->pszSRS;
-        if( (pszSRS != NULL && FLTNeedSRSSwapping(pszSRS)) ||
+        if( (pszSRS != NULL && FLTNeedSRSSwapping(map, pszSRS)) ||
             (pszSRS == NULL && bDefaultSRSNeedsAxisSwapping) )
         {
             msAxisSwapShape(shape);
@@ -2982,8 +3001,8 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
     }
     else
     {
-        FLTDoAxisSwappingIfNecessary(psFilterNode->psLeftNode, bDefaultSRSNeedsAxisSwapping);
-        FLTDoAxisSwappingIfNecessary(psFilterNode->psRightNode, bDefaultSRSNeedsAxisSwapping);
+        FLTDoAxisSwappingIfNecessary(map, psFilterNode->psLeftNode, bDefaultSRSNeedsAxisSwapping);
+        FLTDoAxisSwappingIfNecessary(map, psFilterNode->psRightNode, bDefaultSRSNeedsAxisSwapping);
     }
 }
 
@@ -3171,7 +3190,7 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
         tokens = msStringSplit(psFilterNode->pszValue,',', &nTokens);
         for (j=0; j<nTokens; j++) {
             const char* pszId = tokens[j];
-            const char* pszDot = strchr(pszId, '.');
+            const char* pszDot = strrchr(pszId, '.');
             if( pszDot )
             {
                 if( pszDot - pszId != strlen(lp->name) ||
@@ -3522,5 +3541,4 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   xmlNewChild(psNode, psNsOgc, BAD_CAST "FID", NULL);
   return psRootNode;
 }
-#endif
 #endif

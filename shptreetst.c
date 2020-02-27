@@ -55,7 +55,7 @@ char* AddFileSuffix ( const char * Filename, const char * Suffix )
   /* -------------------------------------------------------------------- */
   pszBasename = (char *) msSmallMalloc(strlen(Filename)+5);
   strcpy( pszBasename, Filename );
-  for( i = strlen(pszBasename)-1;
+  for( i = (int)strlen(pszBasename)-1;
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
        && pszBasename[i] != '\\';
        i-- ) {}
@@ -155,7 +155,7 @@ int main( int argc, char ** argv )
     rect.maxy =  node->rect.maxy;
   }
 
-  bitmap = msSearchDiskTree( argv[1], rect, 0 /* no debug*/ );
+  bitmap = msSearchDiskTree( argv[1], rect, 0 /* no debug*/, j );
 
   if ( bitmap ) {
     printf ("result of rectangle search was \n");

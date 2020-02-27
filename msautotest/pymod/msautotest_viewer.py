@@ -1,7 +1,7 @@
 #!/home/nsavard/fgs/bin/python
 ##!c:/python25/python.exe
 
-import cgi, os, os.path, subprocess, tempfile
+import cgi, os, os.path, subprocess
 import logging, difflib, ConfigParser, sys, string
 
 config = ConfigParser.ConfigParser()
@@ -16,9 +16,9 @@ def main():
 
     
     if not os.path.isdir(os.path.dirname(python_logging_file)):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The logging file: " + python_logging_file + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The logging file: " + python_logging_file + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The logging file:  " + python_logging_file + " does not exist.  Check the configuration file.")
 
     logging.basicConfig(level=logging.DEBUG,
@@ -29,9 +29,9 @@ def main():
     if logging_flag == False:
         logging.disable('debug')
 
-    print "Content-type: text/html"
-    print
-    print """
+    print("Content-type: text/html")
+    print("")
+    print("""
 
     <html>
     <head>
@@ -115,7 +115,7 @@ def main():
 
     <br>
 
-    <table border=1>"""
+    <table border=1>""")
 
     rmTmpPngImages()
 
@@ -242,7 +242,7 @@ def main():
         i+=1
     logging.debug(function_name + str(parameters_list_list))
 
-    print "<tr><td><table border=1 width=100%><tr><td>" + prev_button + "</td><td></td><td>" + next_button + "</td></tr></table></td></tr>\n"
+    print("<tr><td><table border=1 width=100%><tr><td>" + prev_button + "</td><td></td><td>" + next_button + "</td></tr></table></td></tr>\n")
 
     i =0
     for parameters_list in parameters_list_list:
@@ -251,7 +251,7 @@ def main():
 
             logging.debug(function_name + str(parameters_list[0]))
 
-            print "<tr><td><table border=1 width=100%><tr><td>Diff output expected vs actual ---File: " + parameters_list[0] + "</td></tr>\n"
+            print("<tr><td><table border=1 width=100%><tr><td>Diff output expected vs actual ---File: " + parameters_list[0] + "</td></tr>\n")
 
  
             expected_fp = open(parameters_list[3], 'r')
@@ -264,7 +264,7 @@ def main():
         
             #logging.debug(function_name + str(diff_output_list_list[len(diff_output_list_list) - 1]))
 
-            print "<tr><td><TEXTAREA COLS=175 ROWS=25x>value=" + diff_output_list_list[len(diff_output_list_list) - 1] + "</TEXTAREA></td></tr></table></td></tr>"
+            print("<tr><td><TEXTAREA COLS=175 ROWS=25x>value=" + diff_output_list_list[len(diff_output_list_list) - 1] + "</TEXTAREA></td></tr></table></td></tr>")
 
 
         elif string.find(parameters_list[0], '.tif') != -1 or string.find(parameters_list[0], '.png') != -1:
@@ -285,34 +285,34 @@ def main():
                 actual_PNG_image_URL = tiff2png(parameters_list[1])
                 #expected_PNG_image_URL = parameters_list[4]
                 #actual_PNG_image_URL = parameters_list[2]
-                print "<tr><td><table border=1 width=100%><tr><td>File:" + parameters_list[0] + "</td><td>GeoTiff converted to Png.</td></tr></tr></table></td></tr>"
+                print("<tr><td><table border=1 width=100%><tr><td>File:" + parameters_list[0] + "</td><td>GeoTiff converted to Png.</td></tr></tr></table></td></tr>")
 
             else:
                 expected_PNG_image_URL = parameters_list[4]
                 actual_PNG_image_URL = parameters_list[2]
-                print "<tr><td><table border=1 width=100%><tr><td>File:" + parameters_list[0] + "</td><td></td></tr></tr></table></td></tr>"
+                print("<tr><td><table border=1 width=100%><tr><td>File:" + parameters_list[0] + "</td><td></td></tr></tr></table></td></tr>")
 
 
             #Display switching buttons
-            print "<tr><td><table border=1 width=100%><tr><td>Expected</td><td>Actual</td><td><table><tr><td><INPUT TYPE=button NAME=\"Start\" onclick=\"startSwitching('imagefliper" + str(i) + "', '" + actual_PNG_image_URL +"', '" + expected_PNG_image_URL + "')\" >Start switching</td><td><INPUT TYPE=button NAME=\"Stop\" onclick=\"stopSwitching()\" >Stop switching</td><td>image:<input type=\"text\" id=\"imagefliper" + str(i) + "\" name=\"imagefliper" + str(i) + "\" value=\"" + actual_PNG_image_URL + "\" size=\"30\"></td></tr></table></td></tr>\n"
+            print("<tr><td><table border=1 width=100%><tr><td>Expected</td><td>Actual</td><td><table><tr><td><INPUT TYPE=button NAME=\"Start\" onclick=\"startSwitching('imagefliper" + str(i) + "', '" + actual_PNG_image_URL +"', '" + expected_PNG_image_URL + "')\" >Start switching</td><td><INPUT TYPE=button NAME=\"Stop\" onclick=\"stopSwitching()\" >Stop switching</td><td>image:<input type=\"text\" id=\"imagefliper" + str(i) + "\" name=\"imagefliper" + str(i) + "\" value=\"" + actual_PNG_image_URL + "\" size=\"30\"></td></tr></table></td></tr>\n")
 
             #Display images
-            print "<tr><td><img width=\"400\" height=\"300\" src=\"" + expected_PNG_image_URL + "\"></td><td><img width=\"400\" height=\"300\" src=\"" + actual_PNG_image_URL + "\"></td><td><img name=\"imagefliper" + str(i) + "\" width=\"400\" height=\"300\" src=\"" + actual_PNG_image_URL + "\"></td></tr></table><td><tr>\n"
+            print("<tr><td><img width=\"400\" height=\"300\" src=\"" + expected_PNG_image_URL + "\"></td><td><img width=\"400\" height=\"300\" src=\"" + actual_PNG_image_URL + "\"></td><td><img name=\"imagefliper" + str(i) + "\" width=\"400\" height=\"300\" src=\"" + actual_PNG_image_URL + "\"></td></tr></table><td><tr>\n")
 
         else:
             continue
 
         i+=1   #End of for loop
 
-    print "<tr><td><table border=1 width=100%><tr><td>" + prev_button + "</td><td></td><td>" + next_button + "</td></tr></table></td></tr>\n"
+    print("<tr><td><table border=1 width=100%><tr><td>" + prev_button + "</td><td></td><td>" + next_button + "</td></tr></table></td></tr>\n")
 
-    print """        
+    print("""
 
           </table>
           <br>
         </form>
       </body>
-    </html>"""
+    </html>""")
 
 ## Convert GeoTiff to PNG file in order to be able to see the image in the
 ## browser
@@ -322,9 +322,9 @@ def tiff2png(tiff_file):
 
     ## Checking if path is found
     if not os.path.isdir(os.path.dirname(python_logging_file)):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The logging file: " + python_logging_file + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The logging file: " + python_logging_file + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The logging file:  " + python_logging_file + "does not exist.  Check the configuration file.")
 
     logging.basicConfig(level=logging.DEBUG,
@@ -339,37 +339,37 @@ def tiff2png(tiff_file):
     out_file = config.get("Logging", "ShellOutputFile")
     ## Checking if path is found
     if not os.path.isdir(os.path.dirname(out_file)):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The output log file: " + out_file + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print()
+        print("<html><pre>" + function_name + ":The output log file: " + out_file + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The output log file:  " + out_file + " does not exist.  Check the configuration file.")
 
-    out_fp = file(out_file, "a")
+    out_fp = open(out_file, "a")
 
     err_file = config.get("Logging", "ShellErrorFile")
     ## Checking if path is found
     if not os.path.isdir(os.path.dirname(err_file)):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The error log file: " + err_file + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The error log file: " + err_file + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The error log file:  " + err_file + " does not exist.  Check the configuration file.")
 
-    err_fp = file(err_file, "a")
+    err_fp = open(err_file, "a")
 
     tmp_path = config.get("Applications", "TmpDir")
     ## Checking if path is found
     if not os.path.isdir(tmp_path):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The tmp directory: " + tmp_path + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The tmp directory: " + tmp_path + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The tmp directory:  " + tmp_path + " does not exist.  Check the configuration file.")
 
     tmp_web = config.get("Applications", "TmpWeb")
     ## Checking if path is found
     if not os.path.isdir(tmp_web):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The tmp Web URL: " + tmp_web + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The tmp Web URL: " + tmp_web + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The tmp Web URL:  " + tmp_path + " does not exist.  Check the configuration file.")
 
 
@@ -395,16 +395,16 @@ def tiff2png(tiff_file):
 
     ## Checking if the path exist
     if not os.path.isdir(os.path.dirname(image_converter_parameters_list[0])):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The image converter command: " + image_converter_parameters_list[0] + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The image converter command: " + image_converter_parameters_list[0] + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The image converter command:  " + image_converter_parameters_list[0] + "does not exist.  Check the configuration file.")
 
     ## Executing conversion
     cmd = image_converter + " png " + tiff_file + ' ' + PNG_file
 
     logging.debug(function_name + "cmd=" + cmd)
-    oShellProcess = subprocess.call(cmd, shell=True, stdout=out_fp, stderr=err_fp )
+    subprocess.call(cmd, shell=True, stdout=out_fp, stderr=err_fp )
 
     return(PNG_URL)
 
@@ -417,9 +417,9 @@ def rmTmpPngImages():
     tmp_path = config.get("Applications", "TmpDir")
     ## Checking if path is found
     if not os.path.isdir(tmp_path):
-        print "Content-type: text/html"
-        print
-        print "<html><pre>" + function_name + ":The logging file: " + tmp_path + " does not exist; check the configuration file</pre></html>"
+        print("Content-type: text/html")
+        print("")
+        print("<html><pre>" + function_name + ":The logging file: " + tmp_path + " does not exist; check the configuration file</pre></html>")
         sys.exit(function_name + ":The logging file:  " + tmp_path + " does not exist.  Check the configuration file.")
 
     for file in os.listdir(tmp_path):

@@ -5,6 +5,11 @@
 #
 # Test OGR geojson output. 
 # RUN_PARMS: wfsogr10_geojson.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace_fid&OUTPUTFORMAT=geojson" > [RESULT]
+#
+# RUN_PARMS: wfsogr20_geojson.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_fid&OUTPUTFORMAT=geojson&COUNT=10" > [RESULT]
+#
+# RUN_PARMS: wfsogr20_geojson_with_predefine_native_data.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_fid&OUTPUTFORMAT=geojson_with_predefined_native_data&COUNT=10" > [RESULT]
+
 MAP
 
 NAME WFS_OGROUT_TEST
@@ -24,6 +29,20 @@ OUTPUTFORMAT
   FORMATOPTION "USE_FEATUREID=true"
   FORMATOPTION "LCO:COORDINATE_PRECISION=5"
 END
+
+
+OUTPUTFORMAT
+  NAME "geojson_with_predefined_native_data"
+  DRIVER "OGR/GEOJSON"
+  MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+  FORMATOPTION "STORAGE=stream"
+  FORMATOPTION "FORM=SIMPLE"
+  FORMATOPTION "USE_FEATUREID=true"
+  FORMATOPTION "LCO:COORDINATE_PRECISION=5"
+  FORMATOPTION "LCO:NATIVE_MEDIA_TYPE=application/vnd.geo+json"
+  FORMATOPTION "LCO:NATIVE_DATA={\"foo\":\"bar\"}"
+END
+
 #
 WEB
 
@@ -60,6 +79,7 @@ WEB
     "ows_role" "staff"
     "wms_feature_info_mime_type" "text/csv"
     "ows_enable_request" "*" 
+    "wfs_compute_number_matched" "true"
   END
 END
 
@@ -78,7 +98,7 @@ LAYER
     "wfs_title"         "popplace"
     "wfs_description"   "populated places"
     "wfs_featureid"     "SGC_CODE"
-    "wfs_getfeature_formatlist" "geojson"
+    "wfs_getfeature_formatlist" "geojson,geojson_with_predefined_native_data"
     "gml_include_items" "NAME,UNIQUE_KEY,CAPITAL,POP_RANGE"
     "gml_POP_RANGE_alias" "POP_CLASS"
     "gml_types"         "auto"

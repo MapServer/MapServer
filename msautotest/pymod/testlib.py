@@ -27,9 +27,7 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
 import os
-import string
 
 have_pdiff = None
 
@@ -68,24 +66,29 @@ def strip_headers( filename ):
 ###############################################################################
 # compare_result()
 
-def compare_result( filename ):
+def compare_result( filename, this_path = '.' ):
     import filecmp
     
-    result_file = 'result/' + filename
-    expected_file = 'expected/'+ filename
+    result_file = os.path.join(this_path, 'result', filename)
+    expected_file = os.path.join(this_path, 'expected', filename)
 
     try:
-        result_stat = os.stat( result_file )
+        os.stat( result_file )
     except OSError:
         return 'noresult'
     
     try:
-        expected_stat = os.stat( expected_file )
+        os.stat( expected_file )
     except OSError:
         return 'noexpected'
 
     if filecmp.cmp(expected_file,result_file,0):
         return 'match'
+
+    expected_file_alternative = expected_file + ".alternative"
+    if os.path.exists( expected_file_alternative ):
+        if filecmp.cmp(expected_file_alternative,result_file,0):
+            return 'match'
 
     if expected_file[-4:] == '.xml':
         return 'nomatch'

@@ -42,10 +42,8 @@ extern int yyparse(parseObj *);
 
 extern parseResultObj yypresult; /* result of parsing, true/false */
 
-#ifdef USE_GDAL
 #include "gdal.h"
 #include "cpl_string.h"
-#endif
 #include "mapraster.h"
 
 #define MAXCOLORS 256
@@ -225,8 +223,6 @@ int msGetClass_FloatRGB_WithFirstClassToTry(layerObj *layer, float fValue, int r
   return msGetClass_String( layer, &color, pixel_value, firstClassToTry );
 }
 
-#if defined(USE_GDAL)
-
 /************************************************************************/
 /*                      msRasterSetupTileLayer()                        */
 /*                                                                      */
@@ -352,7 +348,6 @@ int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
       return MS_FAILURE;
     }
 
-#ifdef USE_PROJ
     /* if necessary, project the searchrect to source coords */
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0) &&
         !EQUAL(layer->projection.args[0], "auto")) {
@@ -370,7 +365,6 @@ int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
         return MS_FAILURE;
       }
     }
-#endif
     return msLayerWhichShapes(tlp, *psearchrect, MS_FALSE);
 }
 
@@ -562,9 +556,6 @@ int msDrawRasterLoadProjection(layerObj *layer,
 
     return MS_SUCCESS;
 }
-#endif // defined(USE_GDAL)
-
-#if defined(USE_GDAL)
 
 typedef enum
 {
@@ -611,7 +602,6 @@ CheckDatasetReturnType msDrawRasterLayerLowCheckDataset(mapObj *map,
 
     return CDRT_OK;
 }
-#endif
 
 /************************************************************************/
 /*              msDrawRasterLayerLowOpenDataset()                       */
@@ -622,14 +612,6 @@ void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
                                       char szPath[MS_MAXPATHLEN],
                                       char** p_decrypted_path)
 {
-#if !defined(USE_GDAL)
-  msSetError(MS_MISCERR,
-             "Attempt to render a RASTER (or WMS) layer but without\n"
-             "GDAL support enabled.  Raster rendering requires GDAL.",
-             "msDrawRasterLayerLow()" );
-  *p_decrypted_path = NULL;
-  return NULL;
-#else /* defined(USE_GDAL) */
   const char* pszPath;
 
   msGDALInitialize();
@@ -661,8 +643,21 @@ void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
     return NULL;
 
   msAcquireLock( TLOCK_GDAL );
-  return GDALOpenShared( *p_decrypted_path, GA_ReadOnly );
-#endif
+  if( !layer->tileindex )
+  {
+    char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+    GDALDatasetH hDS = GDALOpenEx( *p_decrypted_path,
+                                   GDAL_OF_RASTER | GDAL_OF_SHARED,
+                                   NULL,
+                                   (const char* const*)connectionoptions,
+                                   NULL);
+    CSLDestroy(connectionoptions);
+    return hDS;
+  }
+  else
+  {
+    return GDALOpenShared( *p_decrypted_path, GA_ReadOnly );
+  }
 }
 
 /************************************************************************/
@@ -671,9 +666,6 @@ void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
 
 void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
 {
-#if !defined(USE_GDAL)
-    (void)hDS;
-#else
     if( hDS )
     {
       const char *close_connection;
@@ -683,6 +675,15 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
       if( close_connection == NULL && layer->tileindex == NULL )
         close_connection = "DEFER";
 
+      {
+        /* Due to how GDAL processes OVERVIEW_LEVEL, datasets returned are */
+        /* not shared, despite being asked to, so close them for real */
+        char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
+        if( CSLFetchNameValue(connectionoptions, "OVERVIEW_LEVEL") )
+            close_connection = NULL;
+        CSLDestroy(connectionoptions);
+      }
+
       if( close_connection != NULL
           && strcasecmp(close_connection,"DEFER") == 0 ) {
         GDALDereferenceDataset( (GDALDatasetH)hDS );
@@ -691,7 +692,6 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
       }
       msReleaseLock( TLOCK_GDAL );
     }
-#endif
 }
 
 
@@ -703,9 +703,6 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
 
 int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer)
 {
-#if !defined(USE_GDAL)
-  return 0;
-#else
   if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY)) {
     if(layer->debug == MS_TRUE)
       msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
@@ -749,7 +746,6 @@ int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer)
   }
 
   return 1;
-#endif
 }
 
 /************************************************************************/
@@ -772,14 +768,6 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *imag
   /*      As of MapServer 6.0 GDAL is required for rendering raster       */
   /*      imagery.                                                        */
   /* -------------------------------------------------------------------- */
-#if !defined(USE_GDAL)
-  msSetError(MS_MISCERR,
-             "Attempt to render a RASTER (or WMS) layer but without\n"
-             "GDAL support enabled.  Raster rendering requires GDAL.",
-             "msDrawRasterLayerLow()" );
-  return MS_FAILURE;
-
-#else /* defined(USE_GDAL) */
   int status, done;
   char *filename=NULL, tilename[MS_MAXPATHLEN], tilesrsname[1024];
 
@@ -916,7 +904,7 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *imag
     ** the projections differ or if resampling has been explicitly
     ** requested, or if the image has north-down instead of north-up.
     */
-#ifdef USE_PROJ
+
     if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
           || adfGeoTransform[5] > 0.0 || adfGeoTransform[1] < 0.0 )
          && layer->transform )
@@ -924,8 +912,8 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *imag
                                 &(layer->projection) )
         || CSLFetchNameValue( layer->processing, "RESAMPLE" ) != NULL ) {
       status = msResampleGDALToMap( map, layer, image, rb, hDS );
-    } else
-#endif
+    }
+    else
     {
       if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 ) {
         if( layer->debug || map->debug )
@@ -983,8 +971,6 @@ cleanup:
   }
 
   return final_status;
-
-#endif /* defined(USE_GDAL) */
 }
 
 /************************************************************************/

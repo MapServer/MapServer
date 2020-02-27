@@ -533,9 +533,7 @@ char *msGetVersion()
 #ifdef USE_KML
   strcat(version, " OUTPUT=KML");
 #endif
-#ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
-#endif
   strcat(version, " SUPPORTS=AGG");
   strcat(version, " SUPPORTS=FREETYPE");
 #ifdef USE_CAIRO
@@ -609,12 +607,8 @@ char *msGetVersion()
 #ifdef USE_ORACLESPATIAL
   strcat(version, " INPUT=ORACLESPATIAL");
 #endif
-#ifdef USE_OGR
   strcat(version, " INPUT=OGR");
-#endif
-#ifdef USE_GDAL
   strcat(version, " INPUT=GDAL");
-#endif
   strcat(version, " INPUT=SHAPEFILE");
   return(version);
 }

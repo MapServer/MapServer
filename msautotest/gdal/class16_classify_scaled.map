@@ -1,0 +1,48 @@
+#
+# Simple test of classification methods on a floating point input. 
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT ON
+END
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/float.tif
+ 
+  PROCESSING "SCALE=0,28"
+  PROCESSING "SCALE_BUCKETS=256"
+  PROCESSING "CLASSIFY_SCALED=TRUE"
+
+  CLASS 
+    NAME "red"
+    EXPRESSION ([pixel] < 50)
+    COLOR 255 0 0 
+  END
+  CLASS 
+    NAME "green"
+    EXPRESSION ([pixel] >=50 and [pixel] < 150)
+    COLOR 0 255 0
+  END
+  CLASS 
+    NAME "blue"
+    EXPRESSION ([pixel] > 150)
+    COLOR 0 0 255
+  END
+END
+
+END # of map file

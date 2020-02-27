@@ -22,6 +22,18 @@
 # GetMap 1.3.0 two layers, one without and one with filter
 # RUN_PARMS: wms_filter_getmap130_emptyfilter.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=400&HEIGHT=400&LAYERS=road,popplace&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE&FILTER=()(<Filter><PropertyIsEqualTo><PropertyName>NAME</PropertyName><Literal>Charlottetown</Literal></PropertyIsEqualTo></Filter>)" > [RESULT_DEMIME]
 #
+# GetMap 1.3.0 one group layer
+# RUN_PARMS: wms_filter_getmap130_one_group.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=400&HEIGHT=400&LAYERS=feature_group&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE&FILTER=(<Filter><PropertyIsEqualTo><PropertyName>REG_CODE</PropertyName><Literal>12</Literal></PropertyIsEqualTo></Filter>)" > [RESULT_DEMIME]
+#
+# GetMap 1.3.0 one group layer and one layer
+# RUN_PARMS: wms_filter_getmap130_group_and_layer.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=400&HEIGHT=400&LAYERS=feature_group,road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE&FILTER=(<Filter><PropertyIsEqualTo><PropertyName>REG_CODE</PropertyName><Literal>12</Literal></PropertyIsEqualTo></Filter>)(<Filter><DWithin><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>46,-63</gml:coordinates></gml:Point><Distance units='dd'>0.5</Distance></DWithin></Filter>)" > [RESULT_DEMIME]
+#
+# GetMap 1.3.0 one group one layer missing a filter
+# RUN_PARMS: wms_filter_getmap130_group_missingFilter.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=400&HEIGHT=400&LAYERS=feature_group,road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=XML&FILTER=(<Filter><PropertyIsEqualTo><PropertyName>REG_CODE</PropertyName><Literal>12</Literal></PropertyIsEqualTo></Filter>)" > [RESULT_DEMIME]
+#
+# GetMap 1.3.0 filter with invalid group name
+# RUN_PARMS: wms_filter_getmap130_wrong_group.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=400&HEIGHT=400&LAYERS=inval_group&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=XML&FILTER=(<Filter><PropertyIsEqualTo><PropertyName>REG_CODE</PropertyName><Literal>12</Literal></PropertyIsEqualTo></Filter>)" > [RESULT_DEMIME]
+#
 
 MAP
 
@@ -71,12 +83,13 @@ END
 LAYER
   NAME province
   DATA province
+  GROUP feature_group
   METADATA
     "wms_title"         "province"
     "wms_description"   "province"
     "wms_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
   END
-  TYPE POINT
+  TYPE POLYGON
   STATUS ON
   PROJECTION
     "init=epsg:3978"
@@ -96,6 +109,7 @@ END # Layer
 LAYER
   NAME popplace
   DATA popplace
+  GROUP feature_group
   METADATA
     "wms_title"         "popplace"
     "wms_description"   "Cities of I.P.E."
@@ -136,6 +150,7 @@ LAYER
   METADATA
     "wms_title"       "road"
     "wms_description" "Roads of I.P.E."
+    "wfs_use_default_extent_for_getfeature" "false"
   END
   TYPE LINE
   STATUS ON

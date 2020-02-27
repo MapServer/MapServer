@@ -31,13 +31,6 @@
 
 #include "mapserver.h"
 
-/*dont need ogr for these functikons*/
-MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
-MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression);
-MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter);
-
-#ifdef USE_OGR
-
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
@@ -47,6 +40,9 @@ MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *i
 #include<libxml/tree.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
   char *pszWildCard;
@@ -58,6 +54,10 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
+MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
+MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression);
+MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter);
+
 MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 MS_DLL_EXPORT char** FLTSplitFilters(const char* pszStr, int* pnTokens);
@@ -130,7 +130,7 @@ MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerI
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
 #endif
 
-void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
+void FLTDoAxisSwappingIfNecessary(mapObj *map, FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
 
 void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
                                        mapObj *map, int i, const char *namespaces);
@@ -144,8 +144,10 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
 int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect);
 int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
                             mapObj *map, int i);
+int FLTLayerSetInvalidRectIfSupported(layerObj* lp, rectObj* rect);
 
+#ifdef __cplusplus
+}
 #endif
-
 
 #endif

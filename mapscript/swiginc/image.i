@@ -1,24 +1,22 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript imageObj extensions
-   Author:   Steve Lime 
+   Author:   Steve Lime
              Sean Gillies, sgillies@frii.com
-             
+
    ===========================================================================
    Copyright (c) 1996-2001 Regents of the University of Minnesota.
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
    the rights to use, copy, modify, merge, publish, distribute, sublicense,
    and/or sell copies of the Software, and to permit persons to whom the
    Software is furnished to do so, subject to the following conditions:
- 
+
    The above copyright notice and this permission notice shall be included
    in all copies or substantial portions of the Software.
- 
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -29,8 +27,18 @@
    =========================================================================*/
 
 %extend imageObj {
-   
-    /* imageObj constructor now takes filename as an optional argument. */
+
+    // manually add parameter here or get mapscript.mapscript.layerObj in output docs
+    %feature("autodoc",
+"imageObj.__init__(int width, int height, outputFormatObj format=None, char * filename, double resolution=72, double defresolution=72)
+
+Create a new imageObj instance. If *filename* is specified, an imageObj
+is created from the file and any specified *width*, *height*, and
+*format* parameters will be overridden by values of the image in 
+*filename*.  Otherwise, if *format* is specified (as an :class:`outputFormatObj`) an imageObj is created
+using that format. If *filename* is not specified, then *width* and *height* should be specified. 
+The default resolution is currently 72 and defined by MS_DEFAULT_RESOLUTION - this setting is 
+not available in MapScript. ") imageObj;
     imageObj(int width, int height, outputFormatObj *input_format=NULL,
              const char *file=NULL,
              double resolution=MS_DEFAULT_RESOLUTION, double defresolution=MS_DEFAULT_RESOLUTION)
@@ -55,19 +63,30 @@
         }
 
         if (file) {
-            
+
             renderer = format->vtable;
             rb = (rasterBufferObj*) malloc(sizeof(rasterBufferObj));
             if (!rb) {
                 msSetError(MS_MEMERR, NULL, "imageObj()");
                 return NULL;
             }
-            if ( (renderer->loadImageFromFile((char *)file, rb)) == MS_FAILURE)
+            if ( (renderer->loadImageFromFile((char *)file, rb)) == MS_FAILURE) {
+                msFreeRasterBuffer(rb);
+                free(rb);
                 return NULL;
-
-            image = msImageCreate(rb->width, rb->height, format, NULL, NULL, 
+            }
+            image = msImageCreate(rb->width, rb->height, format, NULL, NULL,
                                   resolution, defresolution, NULL);
-            renderer->mergeRasterBuffer(image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height);
+            if (! image) {
+                msFreeRasterBuffer(rb);
+                free(rb);
+                return NULL;
+            }
+
+            if(renderer->mergeRasterBuffer(image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height) != MS_SUCCESS) {
+                msFreeImage(image);
+                image = NULL;
+            }
 
             msFreeRasterBuffer(rb);
             free(rb);
@@ -79,13 +98,14 @@
         return image;
     }
 
-    ~imageObj() 
+    ~imageObj()
     {
-        msFreeImage(self);    
+        msFreeImage(self);
     }
 
-    /* saveGeo - see Bugzilla issue 549 */ 
-    void save(char *filename, mapObj *map=NULL) 
+    %feature("docstring") save 
+    "Save image to filename. The optional map parameter must be specified if saving GeoTIFF images.";
+    void save(char *filename, mapObj *map=NULL)
     {
         msSaveImage(map, self, filename );
     }
@@ -119,7 +139,8 @@
         else
         {
             msSetError(MS_IMGERR, "Writing of %s format not implemented",
-                       "imageObj::write");
+                       "imageObj::write",
+                       self->format->name);
         }
 
         return retval;
@@ -136,15 +157,18 @@
     contributed by Jerry Pisk, jerry.pisk@gmail.com
     -------------------------------------------------------------------------
     */
-    
-    gdBuffer getBytes() 
+
+    %feature("docstring") getBytes 
+    "Returns the image contents as a binary buffer. The exact form of this buffer will 
+vary by mapscript language (e.g. a string in Python, byte[] array in Java and C#, unhandled in Perl)";
+    gdBuffer getBytes()
     {
         gdBuffer buffer;
-        
+
         buffer.owns_data = MS_TRUE;
-        
+
         buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
-            
+
         if( buffer.data == NULL || buffer.size == 0 )
         {
             buffer.data = NULL;
@@ -155,19 +179,26 @@
         return buffer;
     }
 
+    %feature("docstring") getSize 
+    "Returns the size of the binary buffer representing the image buffer
+
+.. note:: 
+
+  The getSize method is inefficient as it does a call to getBytes and 
+  then computes the size of the byte array. The byte array is then immediately discarded. 
+  In most cases it is more efficient to call getBytes directly.";
     int getSize() {
         gdBuffer buffer;
-	int size=0;
-        
+        int size=0;
+
         buffer.data = msSaveImageBuffer(self, &buffer.size, self->format);
-	size = buffer.size;
-            
+        size = buffer.size;
+
         if( buffer.data == NULL || buffer.size == 0 ) {
             buffer.data = NULL;
             msSetError(MS_MISCERR, "Failed to get image buffer size", "getSize");
         }
-	free(buffer.data);
+        free(buffer.data);
         return size;
     }
 }
-

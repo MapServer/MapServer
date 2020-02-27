@@ -1,0 +1,50 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://ogc.dmsolutions.ca/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-60.214963,46.123322 -60.214963,46.123322</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-60.214963,46.123322 -60.214963,46.123322</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-60.214963,46.123322</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>24</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>391</ms:popplace_>
+        <ms:popplace_i>4</ms:popplace_i>
+        <ms:unique_key>CBLGX</ms:unique_key>
+        <ms:name>Sydney</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>011K01</ms:nts50>
+        <ms:lat>460900</ms:lat>
+        <ms:long>601100</ms:long>
+        <ms:sgc_code>1217014</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>4</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

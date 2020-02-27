@@ -4,18 +4,20 @@
 # REQUIRES: INPUT=OGR SUPPORTS=WFS
 #
 # RUN_PARMS: wfs_time_postgis_getcaps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT]
-# RUN_PARMS: wfs_time_postgis_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType" > [RESULT]
-# RUN_PARMS: wfs_time_postgis_getfeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=time" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_time_postgis_during_filter_match_features.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During></Filter>" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_post_time_postgis_during_filter_match_features.xml [MAPSERV] [POST]<GetFeature resultType="hits" service="WFS" version="2.0.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/fes/2.0 http://schemas.opengis.net/filter/2.0/filterAll.xsd http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"><Query typeNames="time"><fes:Filter><fes:During><fes:ValueReference>time</fes:ValueReference><gml:TimePeriod gml:id="TP1"><gml:begin><gml:TimeInstant gml:id="TI1"><gml:timePosition>1970-01-01</gml:timePosition></gml:TimeInstant></gml:begin><gml:end><gml:TimeInstant gml:id="TI2"><gml:timePosition>2004-01-01</gml:timePosition></gml:TimeInstant></gml:end></gml:TimePeriod></fes:During></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_time_postgis_during_filter_match_no_feature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></end></TimePeriod></During></Filter>" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_time_postgis_during_filter_and_other_clause.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><And><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During><PropertyIsEqualTo><ValueReference>gid</ValueReference><Literal>1</Literal></PropertyIsEqualTo></And></Filter>" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_time_postgis_or_two_during_filter.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><Or><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></end></TimePeriod></During><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During></Or></Filter>" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_time_postgis_lessthan.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&RESULTTYPE=hits&REQUEST=GetFeature&TYPENAME=time&FILTER=<Filter><PropertyIsLessThan><PropertyName>time</PropertyName><Literal>2004-01-01T23:59:59</Literal></PropertyIsLessThan></Filter>" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_time_postgis_between.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&RESULTTYPE=hits&REQUEST=GetFeature&TYPENAME=time&FILTER=<Filter><PropertyIsBetween><PropertyName>time</PropertyName><LowerBoundary>1970-01-01T00:00:00</LowerBoundary><UpperBoundary>2004-01-01T23:59:59</UpperBoundary></PropertyIsBetween></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAMES=datetime" > [RESULT]
+# RUN_PARMS: wfs_time_postgis_datetime_getfeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=datetime" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_date_getfeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=date&MAXFEATURES=1" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_time_getfeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=time&MAXFEATURES=1" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_during_filter_match_features.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=datetime&RESULTTYPE=hits&FILTER=<Filter><During><ValueReference>datetime</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_post_during_filter_match_features.xml [MAPSERV] [POST]<GetFeature resultType="hits" service="WFS" version="2.0.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/fes/2.0 http://schemas.opengis.net/filter/2.0/filterAll.xsd http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"><Query typeNames="datetime"><fes:Filter><fes:During><fes:ValueReference>datetime</fes:ValueReference><gml:TimePeriod gml:id="TP1"><gml:begin><gml:TimeInstant gml:id="TI1"><gml:timePosition>1970-01-01</gml:timePosition></gml:TimeInstant></gml:begin><gml:end><gml:TimeInstant gml:id="TI2"><gml:timePosition>2004-01-01</gml:timePosition></gml:TimeInstant></gml:end></gml:TimePeriod></fes:During></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_during_filter_match_no_feature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=datetime&RESULTTYPE=hits&FILTER=<Filter><During><ValueReference>datetime</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></end></TimePeriod></During></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_during_filter_and_other_clause.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=datetime&RESULTTYPE=hits&FILTER=<Filter><And><During><ValueReference>datetime</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During><PropertyIsEqualTo><ValueReference>gid</ValueReference><Literal>1</Literal></PropertyIsEqualTo></And></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_or_two_during_filter.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=datetime&RESULTTYPE=hits&FILTER=<Filter><Or><During><ValueReference>datetime</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></end></TimePeriod></During><During><ValueReference>datetime</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During></Or></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_lessthan.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&RESULTTYPE=hits&REQUEST=GetFeature&TYPENAME=datetime&FILTER=<Filter><PropertyIsLessThan><PropertyName>datetime</PropertyName><Literal>2004-01-01T23:59:59</Literal></PropertyIsLessThan></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_between.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&RESULTTYPE=hits&REQUEST=GetFeature&TYPENAME=datetime&FILTER=<Filter><PropertyIsBetween><PropertyName>datetime</PropertyName><LowerBoundary>1970-01-01T00:00:00</LowerBoundary><UpperBoundary>2004-01-01T23:59:59</UpperBoundary></PropertyIsBetween></Filter>" > [RESULT_DEVERSION]
 #
 # SortBy
-# RUN_PARMS: wfs_time_postgis_sortby.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=time&SORTBY=time+D&COUNT=1" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_postgis_datetime_sortby.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=datetime&SORTBY=datetime+D&COUNT=1" > [RESULT_DEVERSION]
 
 MAP
 
@@ -76,16 +78,17 @@ END
 #
 
 LAYER
-  NAME time
+
+  NAME datetime
   INCLUDE "postgis.include"
-  DATA "the_geom from (select * from pattern1 order by gid) as foo using unique gid using srid=4326"
+  DATA "the_geom from (select gid, time as datetime, the_geom from pattern1 order by gid) as foo using unique gid using srid=4326"
   METADATA
-    "DESCRIPTION" "time"
-    "wfs_title" "time"
+    "DESCRIPTION" "datetime"
+    "wfs_title" "datetime"
     "wfs_featureid" "gid"
-    "gml_include_items" "time,gid"
-    "gml_default_items" "time"
-    "gml_time_type" "Date"
+    "gml_include_items" "datetime,gid"
+    "gml_default_items" "datetime"
+    "gml_types" "auto"
   END
 
   PROJECTION
@@ -96,6 +99,48 @@ LAYER
 END
 
 
+LAYER
+
+  NAME date
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select gid, cast(time as date) as date, the_geom from pattern1 order by gid) as foo using unique gid using srid=4326"
+  METADATA
+    "DESCRIPTION" "date"
+    "wfs_title" "date"
+    "wfs_featureid" "gid"
+    "gml_include_items" "date,gid"
+    "gml_default_items" "date"
+    "gml_types" "auto"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+END
+
+
+LAYER
+
+  NAME time
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select gid, cast('12:34:56Z' as time with time zone) as time, the_geom from pattern1 order by gid) as foo using unique gid using srid=4326"
+  METADATA
+    "DESCRIPTION" "time"
+    "wfs_title" "time"
+    "wfs_featureid" "gid"
+    "gml_include_items" "time,gid"
+    "gml_default_items" "time"
+    "gml_types" "auto"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+END
 
 
 END # Map File

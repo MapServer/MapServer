@@ -93,6 +93,7 @@ END
 
 
 LAYER
+
   NAME province
   CONNECTIONTYPE OGR
   CONNECTION "data/province.shp"

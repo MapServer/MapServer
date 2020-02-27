@@ -2,6 +2,8 @@
 <NamedLayer>
 <se:Name>TN.CommonTransportElements.TransportNode</se:Name>
 <UserStyle>
+<se:Name>TN.CommonTransportElements.TransportNode.Default</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportNode</se:Name>
@@ -17,6 +19,11 @@
 </se:Graphic>
 </se:PointSymbolizer>
 </se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+<UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>TN.CommonTransportElements.TransportNode</se:Name>
 <se:PointSymbolizer>

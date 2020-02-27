@@ -90,7 +90,7 @@ class NewStylesTestCase(MapTestCase):
         assert class0.numstyles == 2, class0.numstyles
         new_style = mapscript.styleObj()
         new_style.color.setRGB(0, 0, 0)
-        new_style.symbol = 1
+        new_style.setSymbolByName(self.map, 'circle')
         new_style.size = 3
         index = class0.insertStyle(new_style)
         assert index == 2, index
@@ -203,7 +203,54 @@ class NewStylesTestCase(MapTestCase):
         assert new_style2.offsetx == 10.5
         assert new_style2.offsety == 20.75
 
+    def testPattern(self):
+        """See https://github.com/mapserver/mapserver/issues/4943"""
 
+        si = mapscript.styleObj()
+        assert si.pattern == ()
+        assert si.patternlength == 0
+
+    def testPattern2(self):
+
+        si = mapscript.styleObj()
+        si.pattern = [2.0, 3, 4]
+        assert si.pattern == (2.0, 3.0, 4.0)
+        assert si.patternlength == 3
+
+    def testPattern3(self):
+        """a pattern must have at least 2 elements"""
+
+        si = mapscript.styleObj()
+        exception = None
+        try:
+            si.pattern = [1.0]
+        except Exception:
+            exception = True
+        assert exception is True
+
+    def testPattern4(self):
+        """a pattern can have a max of 10 elements
+        This is set in mapsymbol.h with #define MS_MAXPATTERNLENGTH 10"""
+
+        si = mapscript.styleObj()
+        exception = None
+        try:
+            si.pattern = [i for i in range(11)]
+        except Exception:
+            exception = True
+        assert exception is True
+
+    def testPattern5(self):
+        """pattern length is read-only"""
+        si = mapscript.styleObj()
+        exception = None
+        try:
+            si.patternlength = 0
+        except Exception:
+            exception = True
+        assert exception is True
+
+        
 class BrushCachingTestCase(MapTestCase):
 
     def testDrawMapWithSecondPolygon(self):

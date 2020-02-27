@@ -1,22 +1,22 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  MapServer
  * Purpose:  Python-specific extensions to MapScript objects
  * Author:   Sean Gillies, sgillies@frii.com
+ * Author:   Seth Girvin, sethg@geographika.co.uk
  *
  ******************************************************************************
  *
  * Python-specific mapscript code has been moved into this 
- * SWIG interface file to improve the readibility of the main
+ * SWIG interface file to improve the readability of the main
  * interface file.  The main mapscript.i file includes this
  * file when SWIGPYTHON is defined (via 'swig -python ...').
  *
  *****************************************************************************/
 
+
 /* fromstring: Factory for mapfile objects */
 
-%pythoncode {
+%pythoncode %{
 def fromstring(data, mappath=None):
     """Creates map objects from mapfile strings.
 
@@ -50,22 +50,7 @@ def fromstring(data, mappath=None):
         return ob
     else:
         raise ValueError("No map, layer, class, or style found. Can not load from provided string")
-}
-
-/* ===========================================================================
-   Python rectObj extensions
-   ======================================================================== */
-
-%extend pointObj {
-
-%pythoncode {
-
-    def __str__(self):
-        return self.toString()
-
-}
-    
-}
+%}
 
 
 /* ===========================================================================
@@ -74,11 +59,11 @@ def fromstring(data, mappath=None):
    
 %extend rectObj {
 
-%pythoncode {
+%pythoncode %{
 
     def __str__(self):
         return self.toString()
-        
+
     def __contains__(self, item):
         item_type = item.__class__.__name__
         if item_type == "pointObj":
@@ -89,9 +74,164 @@ def fromstring(data, mappath=None):
                 return False
         else:
             raise TypeError('__contains__ does not yet handle %s' % (item_type))
-        
+
+%}
 }
 
+/* ===========================================================================
+   Python pointObj extensions
+   ======================================================================== */
+
+%extend pointObj {
+
+%pythoncode %{
+
+    def __str__(self):
+        return self.toString()
+
+    @property
+    def __geo_interface__(self):
+
+        if hasattr(self, "z"):
+            coords = (self.x, self.y, self.z)
+        else:
+            coords = (self.x, self.y)
+
+        return {"type": "Point", "coordinates": coords}
+
+%}
+}
+
+
+/* ===========================================================================
+   Python lineObj extensions
+   ======================================================================== */
+   
+%extend lineObj {
+
+%pythoncode %{
+
+    @property
+    def __geo_interface__(self):
+
+        coords = []
+
+        for idx in range(0, self.numpoints):
+            pt = self.get(idx)
+            geom = pt.__geo_interface__
+            coords.append(geom["coordinates"])
+
+        return {"type": "LineString", "coordinates": coords}
+
+%}
+}
+
+
+/* ===========================================================================
+   Python shapeObj extensions
+   ======================================================================== */
+
+%extend shapeObj {
+
+%pythoncode %{
+
+        def _convert_item_values(self, property_values, property_types):
+            """
+            **Python MapScript only**
+
+            Convert an item value, which is always stored as a string, into a
+            Python type, based on an attributes GML metadata type. These can be one
+            of the following:
+
+            ``Integer|Long|Real|Character|Date|Boolean``
+            """
+
+            typed_values = []
+
+            for value, type_ in zip(property_values, property_types):
+                try:
+                    if type_.lower() == "integer":
+                        value = int(value)
+                    elif type_.lower() == "long":
+                        value = long(value)
+                    elif type_.lower() == "real":
+                        value = float(value)
+                    else:
+                        pass
+                except ValueError:
+                    pass
+
+                typed_values.append(value)
+
+            return typed_values
+
+        @property
+        def __geo_interface__(self):
+
+            bounds = self.bounds
+            ms_geom_type = self.type
+
+            # see https://tools.ietf.org/html/rfc7946 for GeoJSON types
+
+            if ms_geom_type == MS_SHAPE_POINT or ms_geom_type == MS_SHP_POINTZ or ms_geom_type == MS_SHP_POINTM:
+                geom_type = "Point"
+            elif ms_geom_type == MS_SHP_MULTIPOINTZ or ms_geom_type == MS_SHP_MULTIPOINTM:
+                geom_type = "MultiPoint"
+            elif ms_geom_type == MS_SHAPE_LINE or ms_geom_type == MS_SHP_ARCZ or ms_geom_type == MS_SHP_ARCM:
+                if self.numlines == 1:
+                    geom_type = "LineString"
+                else:
+                    geom_type = "MultiLineString"
+            elif ms_geom_type == MS_SHAPE_POLYGON or ms_geom_type == MS_SHP_POLYGONZ or ms_geom_type == MS_SHP_POLYGONM:
+                if self.numlines == 1:
+                    geom_type = "Polygon"
+                else:
+                    geom_type = "MultiPolygon"
+            elif ms_geom_type == MS_SHAPE_NULL:
+                return None
+            else:
+                raise TypeError("Shape type {} not supported".format(geom_type))
+
+            properties = {}
+            coords = []
+
+            # property names are stored at the layer level
+            # https://github.com/mapserver/mapserver/issues/130
+
+            property_values = [self.getValue(idx) for idx in range(0, self.numvalues)]
+
+            if hasattr(self, "_item_definitions"):
+                property_names, property_types = zip(*self._item_definitions)
+                property_values = self._convert_item_values(property_values, property_types)
+            else:
+                property_names = [str(idx) for idx in range(0, self.numvalues)]
+
+            properties = dict(zip(property_names, property_values))
+
+            for idx in range(0, self.numlines):
+                line = self.get(idx)
+                geom = line.__geo_interface__
+                coords.append(geom["coordinates"])
+
+            return {
+                    "type": "Feature",
+                    "bbox": (bounds.minx, bounds.miny, bounds.maxx, bounds.maxy),
+                    "properties": properties,
+                    "geometry": {
+                        "type": geom_type,
+                        "coordinates": coords
+                        }
+                    }
+
+        @property
+        def itemdefinitions(self):
+            return self._item_definitions
+
+        @itemdefinitions.setter
+        def itemdefinitions(self, item_definitions):
+            self._item_definitions = item_definitions
+
+%}
 }
 
 /******************************************************************************
@@ -114,8 +254,8 @@ def fromstring(data, mappath=None):
     } 
 
     int setLayerOrder(PyObject *order) {
-        int i, size;
-        size = PyTuple_Size(order);
+        int i;
+        Py_ssize_t size = PyTuple_Size(order);
         for (i = 0; i < size; i++) {
             self->layerorder[i] = (int)PyInt_AsLong(PyTuple_GetItem(order, i));
         }
@@ -129,22 +269,51 @@ def fromstring(data, mappath=None):
         PyTuple_SetItem(output,0,PyInt_FromLong((long)self->width));
         PyTuple_SetItem(output,1,PyInt_FromLong((long)self->height));
         return output;
-    }    
-%pythoncode {
+    }
+
+%pythoncode %{
 
     def get_height(self):
         return self.getSize()[1] # <-- second member is the height
+
     def get_width(self):
         return self.getSize()[0] # <-- first member is the width
+
     def set_height(self, value):
         return self.setSize(self.getSize()[0], value)
+
     def set_width(self, value):
         return self.setSize(value, self.getSize()[1])
+
     width = property(get_width, set_width)
     height = property(get_height, set_height)
-    
-}    
-    
+
+%}
+}
+
+/******************************************************************************
+ * Extensions to layerObj
+ *****************************************************************************/
+
+%extend layerObj {
+  
+%pythoncode %{
+
+    def getItemDefinitions(self):
+        """
+        **Python MapScript only**
+        
+        Return item (field) names and their types if available.
+        Field types are specified using GML metadata and can be one of the following:
+
+        ``Integer|Long|Real|Character|Date|Boolean``
+
+        """
+        item_names = [self.getItem(idx) for idx in range(0, self.numitems)]
+        item_types = [self.getItemType(idx) for idx in range(0, self.numitems)]
+        return zip(item_names, item_types)
+
+%}
 }
 
 /******************************************************************************
@@ -166,7 +335,6 @@ def fromstring(data, mappath=None):
         int imgsize;
         PyObject *noerr;
         int retval=MS_FAILURE;
-        rendererVTableObj *renderer = NULL;
 
         /* Return immediately if image driver is not GD */
         if ( !MS_RENDERER_PLUGIN(self->format) )
@@ -256,30 +424,20 @@ def fromstring(data, mappath=None):
         memcpy( *argout, self->pattern, sizeof(double) * *pnListSize);
     }
 
-    void patternlength_set2(int patternlength)
-    {
-        msSetError(MS_MISCERR, "pattern is read-only", "patternlength_set()");
-    }
 
-%pythoncode {
+%pythoncode %{
 
-    __swig_setmethods__["patternlength"] = _mapscript.styleObj_patternlength_set2
-    __swig_getmethods__["patternlength"] = _mapscript.styleObj_patternlength_get
-    if _newclass:patternlength = _swig_property(_mapscript.styleObj_patternlength_get, _mapscript.styleObj_patternlength_set2)
+pattern = property(pattern_get, pattern_set)
 
-    __swig_setmethods__["pattern"] = _mapscript.styleObj_pattern_set
-    __swig_getmethods__["pattern"] = _mapscript.styleObj_pattern_get
-    if _newclass:pattern = _swig_property(_mapscript.styleObj_pattern_get, _mapscript.styleObj_pattern_set)
+%}
 }
-
-}
-
 
 /******************************************************************************
  * Extensions to hashTableObj - add dict methods
  *****************************************************************************/
 
 %extend hashTableObj{
+
     %pythoncode %{
 
     def __getitem__(self, key):
@@ -311,5 +469,5 @@ def fromstring(data, mappath=None):
 
         return keys
             
-    %}
-};
+%}
+}

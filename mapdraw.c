@@ -223,8 +223,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   layerObj *lp=NULL;
   int status = MS_FAILURE;
   imageObj *image = NULL;
-  struct mstimeval mapstarttime, mapendtime;
-  struct mstimeval starttime, endtime;
+  struct mstimeval mapstarttime = {0}, mapendtime = {0};
+  struct mstimeval starttime = {0}, endtime = {0};
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
   enum MS_CONNECTION_TYPE lastconnectiontype;
@@ -964,112 +964,25 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* identify target shapes */
   if(layer->transform == MS_TRUE) {
     searchrect = map->extent;
-#ifdef USE_PROJ
+
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
       int bDone = MS_FALSE;
 
-#ifdef USE_GDAL
       if( layer->connectiontype == MS_UVRASTER )
       {
           /* Nasty hack to make msUVRASTERLayerWhichShapes() aware that the */
           /* original area of interest is (map->extent, map->projection)... */
           /* Useful when dealin with UVRASTER that extend beyond 180 deg */
           msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, map );
-      }
-#endif
 
-      /* For UVRaster, it is important that the searchrect is not too large */
-      /* to avoid insufficient intermediate raster resolution, which could */
-      /* happen if we use the default code path, given potential reprojection */
-      /* issues when using a map extent that is not in the validity area of */
-      /* the layer projection. */
-      if( layer->connectiontype == MS_UVRASTER &&
-          !layer->projection.gt.need_geotransform &&
-          !(pj_is_latlong(map->projection.proj) &&
-            pj_is_latlong(layer->projection.proj)) ) {
-        rectObj layer_ori_extent;
-
-        if( msLayerGetExtent(layer, &layer_ori_extent) == MS_SUCCESS ) {
-          projectionObj map_proj;
-
-          double map_extent_minx = map->extent.minx;
-          double map_extent_miny = map->extent.miny;
-          double map_extent_maxx = map->extent.maxx;
-          double map_extent_maxy = map->extent.maxy;
-          rectObj layer_extent = layer_ori_extent;
-
-          /* Create a variant of map->projection without geotransform for */
-          /* conveniency */
-          msInitProjection(&map_proj);
-          msCopyProjection(&map_proj, &map->projection);
-          map_proj.gt.need_geotransform = MS_FALSE;
-          if( map->projection.gt.need_geotransform ) {
-            map_extent_minx = map->projection.gt.geotransform[0]
-                + map->projection.gt.geotransform[1] * map->extent.minx
-                + map->projection.gt.geotransform[2] * map->extent.miny;
-            map_extent_miny = map->projection.gt.geotransform[3]
-                + map->projection.gt.geotransform[4] * map->extent.minx
-                + map->projection.gt.geotransform[5] * map->extent.miny;
-            map_extent_maxx = map->projection.gt.geotransform[0]
-                + map->projection.gt.geotransform[1] * map->extent.maxx
-                + map->projection.gt.geotransform[2] * map->extent.maxy;
-            map_extent_maxy = map->projection.gt.geotransform[3]
-                + map->projection.gt.geotransform[4] * map->extent.maxx
-                + map->projection.gt.geotransform[5] * map->extent.maxy;
-          }
-
-          /* Reproject layer extent to map projection */
-          msProjectRect(&layer->projection, &map_proj, &layer_extent);
-
-          if( layer_extent.minx <= map_extent_minx &&
-              layer_extent.miny <= map_extent_miny &&
-              layer_extent.maxx >= map_extent_maxx &&
-              layer_extent.maxy >= map_extent_maxy ) {
-            /* do nothing special if area to map is inside layer extent */
-          }
-          else {
-            if( layer_extent.minx >= map_extent_minx &&
-                layer_extent.maxx <= map_extent_maxx &&
-                layer_extent.miny >= map_extent_miny &&
-                layer_extent.maxy <= map_extent_maxy ) {
-              /* if the area to map is larger than the layer extent, then */
-              /* use full layer extent and add some margin to reflect the */
-              /* proportion of the useful area over the requested bbox */
-              double extra_x =
-                (map_extent_maxx - map_extent_minx) /
-                  (layer_extent.maxx - layer_extent.minx) *
-                  (layer_ori_extent.maxx -  layer_ori_extent.minx);
-              double extra_y =
-                 (map_extent_maxy - map_extent_miny) /
-                  (layer_extent.maxy - layer_extent.miny) *
-                  (layer_ori_extent.maxy -  layer_ori_extent.miny);
-              searchrect.minx = layer_ori_extent.minx - extra_x / 2;
-              searchrect.maxx = layer_ori_extent.maxx + extra_x / 2;
-              searchrect.miny = layer_ori_extent.miny - extra_y / 2;
-              searchrect.maxy = layer_ori_extent.maxy + extra_y / 2;
-            }
-            else
-            {
-              /* otherwise clip the map extent with the reprojected layer */
-              /* extent */
-              searchrect.minx = MS_MAX( map_extent_minx, layer_extent.minx );
-              searchrect.maxx = MS_MIN( map_extent_maxx, layer_extent.maxx );
-              searchrect.miny = MS_MAX( map_extent_miny, layer_extent.miny );
-              searchrect.maxy = MS_MIN( map_extent_maxy, layer_extent.maxy );
-              /* and reproject into the layer projection */
-              msProjectRect(&map_proj, &layer->projection, &searchrect);
-            }
-            bDone = MS_TRUE;
-          }
-
-          msFreeProjection(&map_proj);
-        }
+          searchrect = msUVRASTERGetSearchRect( layer, map );
+          bDone = MS_TRUE;
       }
 
       if( !bDone )
         msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
     }
-#endif
+
   } else {
     searchrect.minx = searchrect.miny = 0;
     searchrect.maxx = map->width-1;
@@ -1078,12 +991,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
 
-#ifdef USE_GDAL
   if( layer->connectiontype == MS_UVRASTER )
   {
     msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes( layer, NULL );
   }
-#endif
 
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);
@@ -1354,7 +1265,6 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(map->querymap.style == MS_NORMAL || status != MS_SUCCESS) return(status);
   }
 
-
   /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
     if (layer->numclasses > 0) {
@@ -1377,6 +1287,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           colorbuffer[i] = layer->class[i]->styles[0]->outlinecolor; /* if no color, save the outlinecolor from the BOTTOM style */
           layer->class[i]->styles[0]->outlinecolor = map->querymap.color;
         }
+      } else if (layer->type == MS_LAYER_LINE && layer->class[i]->numstyles > 0 && layer->class[i]->styles[0]->outlinewidth > 0) { /* alter BOTTOM style for lines with outlines */
+	if(MS_VALID_COLOR(layer->class[i]->styles[0]->color)) {
+          colorbuffer[i] = layer->class[i]->styles[0]->color; /* save the color from the BOTTOM style */
+          layer->class[i]->styles[0]->color = map->querymap.color;
+        } /* else ??? */
       } else if (layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->color)) {
           colorbuffer[i] = layer->class[i]->styles[layer->class[i]->numstyles-1]->color; /* save the color from the TOP style */
@@ -1388,7 +1303,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       } else if (layer->class[i]->numlabels > 0) {
           colorbuffer[i] = layer->class[i]->labels[0]->color;
           layer->class[i]->labels[0]->color = map->querymap.color;
-      }
+      } /* else ??? */
 
       mindistancebuffer[i] = -1; /* RFC77 TODO: only using the first label, is that cool? */
       if(layer->class[i]->numlabels > 0) {
@@ -1428,19 +1343,28 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex]->numstyles > 1)
+    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth > 0))) {
+      int i;
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
+
+      /* we can't handle caching with attribute binding other than for the first style (#3976) */
+      for(i=1; i<layer->class[shape.classindex]->numstyles; i++) {
+        if(layer->class[shape.classindex]->styles[i]->numbindings > 0) cache = MS_FALSE;
+      }
+    }
 
     if(annotate && layer->class[shape.classindex]->numlabels > 0) {
       drawmode |= MS_DRAWMODE_LABELS;
     }
 
     if(cache) {
-      drawmode |= MS_DRAWMODE_SINGLESTYLE;
-      status = msDrawShape(map, layer, &shape, image, 0, drawmode); /* draw only the first style */
-    }
-    else
+      styleObj *pStyle = layer->class[shape.classindex]->styles[0];
+      if (pStyle->outlinewidth > 0) msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
+      status = msDrawShape(map, layer, &shape, image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw only the first style */
+      if (pStyle->outlinewidth > 0) msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
+    } else {
       status = msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles  */
+    }
     if(status != MS_SUCCESS) {
       msLayerClose(layer);
       msFree(colorbuffer);
@@ -1467,19 +1391,36 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(shpcache) {
     int s;
-
-    for(s=1; s<maxnumstyles; s++) {
+    for(s=0; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {
         if(layer->class[current->shape.classindex]->numstyles > s) {
-          styleObj *curStyle = layer->class[current->shape.classindex]->styles[s];
+          styleObj *pStyle = layer->class[current->shape.classindex]->styles[s];
+          if(pStyle->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
+            continue; /* skip this as it has already been rendered */
           if(map->scaledenom > 0) {
-            if((curStyle->maxscaledenom != -1) && (map->scaledenom >= curStyle->maxscaledenom))
+            if((pStyle->maxscaledenom != -1) && (map->scaledenom >= pStyle->maxscaledenom))
               continue;
-            if((curStyle->minscaledenom != -1) && (map->scaledenom < curStyle->minscaledenom))
+            if((pStyle->minscaledenom != -1) && (map->scaledenom < pStyle->minscaledenom))
               continue;
           }
-          if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map, image, &current->shape, (layer->class[current->shape.classindex]->styles[s]), layer->scalefactor)))
-            return MS_FAILURE;
+          if(s==0 && pStyle->outlinewidth>0 && MS_VALID_COLOR(pStyle->color)) {
+            if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map, image, &current->shape, pStyle, layer->scalefactor))) {
+              return MS_FAILURE;
+            }
+          } else if(s>0) {
+            if (pStyle->outlinewidth > 0 && MS_VALID_COLOR(pStyle->outlinecolor)) {
+              msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
+              if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map, image, &current->shape, pStyle, layer->scalefactor))) {
+                return MS_FAILURE;
+              }
+              msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
+            }
+            /* draw a valid line, i.e. one with a color defined or of type pixmap */
+            if(MS_VALID_COLOR(pStyle->color) || (pStyle->symbol<map->symbolset.numsymbols && (map->symbolset.symbol[pStyle->symbol]->type == MS_SYMBOL_PIXMAP || map->symbolset.symbol[pStyle->symbol]->type == MS_SYMBOL_SVG))) {
+              if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map, image, &current->shape, pStyle, layer->scalefactor)))
+                return MS_FAILURE;
+            }
+          }
         }
       }
     }
@@ -1496,20 +1437,21 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           layer->class[i]->styles[0]->color = colorbuffer[i];
         else if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor))
           layer->class[i]->styles[0]->outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the BOTTOM style */
+      } else if (layer->type == MS_LAYER_LINE && layer->class[i]->numstyles > 0 && layer->class[i]->styles[0]->outlinewidth > 0) {
+        if(MS_VALID_COLOR(layer->class[i]->styles[0]->color))
+	  layer->class[i]->styles[0]->color = colorbuffer[i];
       } else if (layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->color))
           layer->class[i]->styles[layer->class[i]->numstyles-1]->color = colorbuffer[i];
         else if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->outlinecolor))
           layer->class[i]->styles[layer->class[i]->numstyles-1]->outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
-      }
-      else if (layer->class[i]->numlabels > 0) {
-          if(MS_VALID_COLOR(layer->class[i]->labels[0]->color))
-            layer->class[i]->labels[0]->color = colorbuffer[i];
+      } else if (layer->class[i]->numlabels > 0) {
+        if(MS_VALID_COLOR(layer->class[i]->labels[0]->color))
+          layer->class[i]->labels[0]->color = colorbuffer[i];
       }
 
       if(layer->class[i]->numlabels > 0)
         layer->class[i]->labels[0]->mindistance = mindistancebuffer[i]; /* RFC77 TODO: again, only using the first label, is that cool? */
-
     }
 
     msFree(colorbuffer);
@@ -1655,10 +1597,8 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
 
   if (layer->transform == MS_TRUE) {
 
-#ifdef USE_PROJ
     if (layer->project)
       msProjectPoint(&layer->projection, &map->projection, &center);
-#endif
 
     center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
     center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
@@ -1679,16 +1619,26 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
   /* TODO: need to handle circle annotation */
 }
 
+static
 int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *shape, int drawmode)
 {
   int l, c = shape->classindex, j, i, s;
   pointObj *point;
   int ret = MS_FAILURE;
 
-#ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
-    msProjectShape(&layer->projection, &map->projection, shape);
-#endif
+  {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+          layer->reprojectorLayerToMap = msProjectCreateReprojector(
+              &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+  }
 
   // Only take into account map rotation if the label and style angles are
   // non-zero.
@@ -2013,10 +1963,19 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     return (MS_FAILURE);
   }
 
-#ifdef USE_PROJ
   if (layer->project && layer->transform == MS_TRUE)
-    msProjectShape(&layer->projection, &map->projection, shape);
-#endif
+  {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+          layer->reprojectorLayerToMap = msProjectCreateReprojector(
+              &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+  }
 
   /* check if we'll need the unclipped shape */
   if (shape->type != MS_SHAPE_POINT) {
@@ -2196,18 +2155,23 @@ draw_shape_cleanup:
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext)
 {
   int s,ret;
-  classObj *theclass=layer->class[classindex];
+  classObj *theclass=NULL;
   labelObj *label=NULL;
 
-#ifdef USE_PROJ
-  if(layer->transform == MS_TRUE && layer->project)
-    msProjectPoint(&layer->projection, &map->projection, point);
-#endif
-
+  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+    msProjectPoint(&(layer->projection), &(map->projection), point);
+  }
+  
+  if(classindex > layer->numclasses) {
+    msSetError(MS_MISCERR, "Invalid classindex (%d)", "msDrawPoint()", classindex);
+    return MS_FAILURE; 
+  }
+  theclass = layer->class[classindex];
+  
   if(labeltext && theclass->numlabels > 0) {
     label = theclass->labels[0];
   }
-
+  
   switch(layer->type) {
     case MS_LAYER_POINT:
       if(layer->transform == MS_TRUE) {
@@ -2223,7 +2187,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return MS_FAILURE;
           }
       }
-      if(labeltext && *labeltext) {
+      if(label && labeltext && *labeltext) {
         textSymbolObj *ts = msSmallMalloc(sizeof(textSymbolObj));
         initTextSymbol(ts);
         msPopulateTextSymbolForLabelAndString(ts, label, msStrdup(labeltext), layer->scalefactor, image->resolutionfactor, layer->labelcache);
@@ -2257,10 +2221,10 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
 int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
   shapeObj labelPoly;
-  label_bounds lbounds;
+  label_bounds lbounds = {0};
   lineObj labelPolyLine;
   pointObj labelPolyPoints[5];
-  textSymbolObj ts;
+  textSymbolObj ts = {0};
   int needLabelPoly=MS_TRUE;
   int needLabelPoint=MS_TRUE;
   int haveLabelText=MS_TRUE;
@@ -2284,7 +2248,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   labelPoly.line->numpoints = 5;
 
   if(label->position != MS_XY) {
-    pointObj p;
+    pointObj p = {0};
 
     if(label->numstyles > 0) {
       int i;
@@ -2927,7 +2891,7 @@ static int getLabelPositionFromString(char *pszString) {
 int msDrawLabelCache(mapObj *map, imageObj *image)
 {
   int nReturnVal = MS_SUCCESS;
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
 
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
@@ -2951,7 +2915,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
        */
       lineObj labelpoly_line;
       pointObj labelpoly_points[5];
-      label_bounds labelpoly_bounds;
+      label_bounds labelpoly_bounds = {0};
       lineObj  label_marker_line;
       pointObj label_marker_points[5];
       label_bounds label_marker_bounds;

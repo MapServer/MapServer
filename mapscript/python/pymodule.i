@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  MapServer
  * Purpose:  Python-specific enhancements to MapScript
  * Author:   Sean Gillies, sgillies@frii.com
@@ -8,7 +6,7 @@
  ******************************************************************************
  *
  * Python-specific mapscript code has been moved into this 
- * SWIG interface file to improve the readibility of the main
+ * SWIG interface file to improve the readability of the main
  * interface file.  The main mapscript.i file includes this
  * file when SWIGPYTHON is defined (via 'swig -python ...').
  *
@@ -19,7 +17,7 @@
  *****************************************************************************/
 
 /* Translates Python None to C NULL for strings */
-%typemap(in,parse="z") char * "";
+//%typemap(in,parse="z") char * "";
 
 /* To support imageObj::getBytes */
 %typemap(out) gdBuffer {
@@ -41,7 +39,7 @@
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
-  $1 = PySequence_Size($input);
+  $1 = (int) PySequence_Size($input);
   $2 = (double*) malloc($1*sizeof(double));
   for( i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -93,6 +91,51 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   $result = t_output_helper($result,r);
 }
 
+/*
+ *  Typemap to turn a Python dict into two sequences and
+ *  an item count. Used for msApplySubstitutions
+ */
+%typemap(in) (char **names, char **values, int npairs) {
+  /* Check if is a dict */
+  if (PyDict_Check($input)) {
+
+    int i = 0;
+    int size = (int) PyDict_Size($input);
+
+    PyObject* keys = PyDict_Keys($input);
+    PyObject* values = PyDict_Values($input);
+
+    $3 = size;
+    $1 = (char **) malloc((size+1)*sizeof(char *));
+    $2 = (char **) malloc((size+1)*sizeof(char *));
+
+    for (i = 0; i < size; i++) {
+        PyObject* key = PyList_GetItem(keys, i);
+        PyObject* val = PyList_GetItem(values, i);
+
+        %#if PY_MAJOR_VERSION >= 3
+            $1[i] = PyUnicode_AsUTF8(key);
+            $2[i] = PyUnicode_AsUTF8(val);
+        %#else
+            $1[i] = PyString_AsString(key);
+            $2[i] = PyString_AsString(val);
+        %#endif
+    }
+
+    $1[i] = 0;
+    $2[i] = 0;
+
+  } else {
+    PyErr_SetString(PyExc_TypeError, "Input not a dictionary");
+    SWIG_fail;
+  }
+}
+
+%typemap(freearg) (char **names, char **values, int npairs) {
+  free((char *) $1);
+  free((char *) $2);
+}
+
 /**************************************************************************
  * MapServer Errors and Python Exceptions
  **************************************************************************
@@ -122,7 +165,7 @@ PyObject *MSExc_MapServerChildError;
 %init %{
 
 /* See bug 1203 for discussion of race condition with GD font cache */
-	if (msSetup() != MS_SUCCESS)
+    if (msSetup() != MS_SUCCESS)
     {
         msSetError(MS_MISCERR, "Failed to set up threads and font cache",
                    "msSetup()");
@@ -212,73 +255,54 @@ MapServerError = _mapscript.MapServerError
 MapServerChildError = _mapscript.MapServerChildError
 %}
 
-/* The bogus "if 1:" is to introduce a new scope to work around indentation
-   handling with pythonappend in different versions.  (#3180) */
-%feature("pythonappend") layerObj %{if 1:
-            self.p_map=None
-            try:
-                # python 2.5
-                if args and len(args)!=0: 
-                    self.p_map=args[0]
-            except NameError:
-                # python 2.6
-                if map: 
-                    self.p_map=map
-       %}
+%feature("pythonappend") layerObj %{
+    self.p_map = None
+    if map: 
+        self.p_map = map%}
 
-/* The bogus "if 1:" is to introduce a new scope to work around indentation
-   handling with pythonappend in different versions. (#3180) */
-%feature("pythonappend") classObj %{if 1:
-            self.p_layer =None
-            try:
-                # python 2.5
-                if args and len(args)!=0: 
-                    self.p_layer=args[0]
-            except NameError:
-                # python 2.6
-                if layer: 
-                    self.p_layer=layer
-       %}
+%feature("pythonappend") classObj %{
+    self.p_layer = None
+    if layer: 
+        self.p_layer = layer%}
 
 %feature("shadow") insertClass %{
-	def insertClass(*args):
+    def insertClass(*args):
         actualIndex=$action(*args)
         args[1].p_layer=args[0]
         return actualIndex%}
 
 %feature("shadow") getClass %{
-	def getClass(*args):
-		clazz = $action(*args)
-		if clazz:
-			if args and len(args)!=0:
-				clazz.p_layer=args[0]
-			else:
-				clazz.p_layer=None
-		return clazz%}
+    def getClass(*args):
+        clazz = $action(*args)
+        if clazz:
+            if args and len(args)!=0:
+                clazz.p_layer=args[0]
+            else:
+                clazz.p_layer=None
+        return clazz%}
 
 %feature("shadow") insertLayer %{
-	def insertLayer(*args):
+    def insertLayer(*args):
         actualIndex=$action(*args)
         args[1].p_map=args[0]
         return actualIndex%}
 
 %feature("shadow") getLayer %{
-	def getLayer(*args):
-		layer = $action(*args)
-		if layer:
-			if args and len(args)!=0:
-				layer.p_map=args[0]
-			else:
-				layer.p_map=None
-		return layer%}
+    def getLayer(*args):
+        layer = $action(*args)
+        if layer:
+            if args and len(args)!=0:
+                layer.p_map=args[0]
+            else:
+                layer.p_map=None
+        return layer%}
 
 %feature("shadow") getLayerByName %{
-	def getLayerByName(*args):
-		layer = $action(*args)
-		if layer:
-			if args and len(args)!=0:
-				layer.p_map=args[0]
-			else:
-				layer.p_map=None
-		return layer%}
-
+    def getLayerByName(*args):
+        layer = $action(*args)
+        if layer:
+            if args and len(args)!=0:
+                layer.p_map=args[0]
+            else:
+                layer.p_map=None
+        return layer%}

@@ -45,6 +45,47 @@ class ClassObjTestCase(unittest.TestCase):
         assert c.layer.name == lyr.name
         assert c.numstyles == 0
 
+    def testGetSetAttributes(self):
+        c = mapscript.classObj()
+
+        val = '/tmp/legend.png'
+        c.keyimage = val
+        assert c.keyimage == val
+
+        c.debug = mapscript.MS_TRUE
+        assert c.debug == mapscript.MS_TRUE
+
+        val = 'Group1'
+        c.group = val
+        assert c.group == val
+
+        val = 10000
+        c.maxscaledenom = val
+        assert c.maxscaledenom == val
+
+        val = 3
+        c.minfeaturesize = val
+        assert c.minfeaturesize == val
+
+        val = 1000
+        c.minscaledenom = val
+        assert c.minscaledenom == val
+
+        val = 'Class1'
+        c.name = val
+        assert c.name == val
+
+        c.status = mapscript.MS_OFF
+        assert c.status == mapscript.MS_OFF
+
+        val = 'template.html'
+        c.template = val
+        assert c.template == val
+
+        val = 'Title1'
+        c.title = val
+        assert c.title == val
+
 
 class ClassCloningTestCase(unittest.TestCase):
 

@@ -45,18 +45,21 @@ typedef struct _streamInfo {
   bufferObj *buffer;
 } streamInfo;
 
+static
 void png_write_data_to_stream(png_structp png_ptr, png_bytep data, png_size_t length)
 {
   FILE *fp = ((streamInfo*)png_get_io_ptr(png_ptr))->fp;
   msIO_fwrite(data,length,1,fp);
 }
 
+static
 void png_write_data_to_buffer(png_structp png_ptr, png_bytep data, png_size_t length)
 {
   bufferObj *buffer = ((streamInfo*)png_get_io_ptr(png_ptr))->buffer;
   msBufferAppend(buffer,data,length);
 }
 
+static
 void png_flush_data(png_structp png_ptr)
 {
   /* do nothing */
@@ -79,7 +82,7 @@ typedef struct {
 
 #define OUTPUT_BUF_SIZE 4096
 
-void
+static void
 jpeg_init_destination (j_compress_ptr cinfo)
 {
   ms_destination_mgr *dest = (ms_destination_mgr*) cinfo->dest;
@@ -93,6 +96,7 @@ jpeg_init_destination (j_compress_ptr cinfo)
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
 
+static
 void jpeg_stream_term_destination (j_compress_ptr cinfo)
 {
   ms_stream_destination_mgr *dest = (ms_stream_destination_mgr*) cinfo->dest;
@@ -101,6 +105,7 @@ void jpeg_stream_term_destination (j_compress_ptr cinfo)
   dest->mgr.pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
 
+static
 void jpeg_buffer_term_destination (j_compress_ptr cinfo)
 {
   ms_buffer_destination_mgr *dest = (ms_buffer_destination_mgr*) cinfo->dest;
@@ -109,7 +114,8 @@ void jpeg_buffer_term_destination (j_compress_ptr cinfo)
   dest->mgr.pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
 
-int jpeg_stream_empty_output_buffer (j_compress_ptr cinfo)
+static
+boolean jpeg_stream_empty_output_buffer (j_compress_ptr cinfo)
 {
   ms_stream_destination_mgr *dest = (ms_stream_destination_mgr*) cinfo->dest;
   msIO_fwrite(dest->mgr.data, OUTPUT_BUF_SIZE, 1, dest->stream);
@@ -118,7 +124,8 @@ int jpeg_stream_empty_output_buffer (j_compress_ptr cinfo)
   return TRUE;
 }
 
-int jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo)
+static
+boolean jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo)
 {
   ms_buffer_destination_mgr *dest = (ms_buffer_destination_mgr*) cinfo->dest;
   msBufferAppend(dest->buffer, dest->mgr.data, OUTPUT_BUF_SIZE);
@@ -381,7 +388,6 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
 {
   FILE *stream = NULL;
   char buffer[MS_BUFFER_LENGTH];
-  int r,g,b,a;
   *nEntries = 0;
 
   stream = fopen(palette, "r");
@@ -391,6 +397,7 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
   }
 
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) && *nEntries<256) {
+    int r,g,b,a = 0;
     /* while there are colors to load */
     if(buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\r')
       continue; /* skip comments and blank lines */

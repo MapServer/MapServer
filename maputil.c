@@ -39,6 +39,8 @@
 #include "mapcopy.h"
 #include "mapows.h"
 
+#include "gdal.h"
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
 # include <tchar.h>
@@ -71,21 +73,21 @@ int msScaleInBounds(double scale, double minscale, double maxscale)
 /*
 ** Helper functions to convert from strings to other types or objects.
 */
-static int bindIntegerAttribute(int *attribute, char *value)
+static int bindIntegerAttribute(int *attribute, const char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
   *attribute = MS_NINT(atof(value)); /*use atof instead of atoi as a fix for bug 2394*/
   return MS_SUCCESS;
 }
 
-static int bindDoubleAttribute(double *attribute, char *value)
+static int bindDoubleAttribute(double *attribute, const char *value)
 {
   if(!value || strlen(value) == 0) return MS_FAILURE;
   *attribute = atof(value);
   return MS_SUCCESS;
 }
 
-static int bindColorAttribute(colorObj *attribute, char *value)
+static int bindColorAttribute(colorObj *attribute, const char *value)
 {
   int len;
 
@@ -182,19 +184,68 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
       style->polaroffsetangle = 0;
       bindDoubleAttribute(&style->polaroffsetangle, shape->values[style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
-      style->outlinewidth = 1;
-      bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
+  }
+  if (style->nexprbindings > 0)
+  {
+    if (style->exprBindings[MS_STYLE_BINDING_OFFSET_X].type == MS_EXPRESSION)
+    {
+      style->offsetx = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OFFSET_X]),
+          shape);
     }
-    if(style->opacity < 100 || style->color.alpha != 255 ) {
-      int alpha;
-      alpha = MS_NINT(style->opacity*2.55);
-      style->color.alpha = alpha;
-      style->outlinecolor.alpha = alpha;
-      style->backgroundcolor.alpha = alpha;
-      style->mincolor.alpha = alpha;
-      style->maxcolor.alpha = alpha;
+    if (style->exprBindings[MS_STYLE_BINDING_OFFSET_Y].type == MS_EXPRESSION)
+    {
+      style->offsety = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OFFSET_Y]),
+          shape);
     }
+    if (style->exprBindings[MS_STYLE_BINDING_ANGLE].type == MS_EXPRESSION)
+    {
+      style->angle = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_ANGLE]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_SIZE].type == MS_EXPRESSION)
+    {
+      style->size = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_SIZE]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_WIDTH].type == MS_EXPRESSION)
+    {
+      style->width = msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_WIDTH]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OPACITY].type == MS_EXPRESSION)
+    {
+      style->opacity = 100 * msEvalDoubleExpression(
+          &(style->exprBindings[MS_STYLE_BINDING_OPACITY]),
+          shape);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR]), shape);
+      bindColorAttribute(&style->outlinecolor, txt);
+      msFree(txt);
+    }
+    if (style->exprBindings[MS_STYLE_BINDING_COLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(style->exprBindings[MS_STYLE_BINDING_COLOR]), shape);
+      bindColorAttribute(&style->color, txt);
+      msFree(txt);
+    }
+  }
+  if(style->opacity < 100 || style->color.alpha != 255 ) {
+    int alpha;
+    alpha = MS_NINT(style->opacity*2.55);
+    style->color.alpha = alpha;
+    style->outlinecolor.alpha = alpha;
+    style->backgroundcolor.alpha = alpha;
+    style->mincolor.alpha = alpha;
+    style->maxcolor.alpha = alpha;
   }
 }
 
@@ -277,6 +328,35 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
             label->position = MS_CC;
         }
       }
+    }
+  }
+  if (label->nexprbindings > 0)
+  {
+    if (label->exprBindings[MS_LABEL_BINDING_ANGLE].type == MS_EXPRESSION)
+    {
+      label->angle = msEvalDoubleExpression(
+          &(label->exprBindings[MS_LABEL_BINDING_ANGLE]),
+          shape);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_SIZE].type == MS_EXPRESSION)
+    {
+      label->size = msEvalDoubleExpression(
+          &(label->exprBindings[MS_LABEL_BINDING_SIZE]),
+          shape);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_COLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_COLOR]), shape);
+      bindColorAttribute(&label->color, txt);
+      msFree(txt);
+    }
+    if (label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR].type == MS_EXPRESSION)
+    {
+      char* txt = msEvalTextExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_OUTLINECOLOR]), shape);
+      bindColorAttribute(&label->outlinecolor, txt);
+      msFree(txt);
     }
   }
 }
@@ -695,6 +775,27 @@ char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
     return msEvalTextExpressionInternal(expr, shape, MS_FALSE);
 }
 
+double msEvalDoubleExpression(expressionObj *expression, shapeObj *shape)
+{
+  double value;
+  int status;
+  parseObj p;
+  p.shape = shape;
+  p.expr = expression;
+  p.expr->curtoken = p.expr->tokens; /* reset */
+  p.type = MS_PARSE_TYPE_STRING;
+  status = yyparse(&p);
+  if (status != 0) {
+    msSetError(MS_PARSEERR, "Failed to parse expression: %s",
+        "bindStyle", expression->string);
+    value = 0.0;
+  } else {
+    value = atof(p.result.strval);
+    msFree(p.result.strval);
+  }
+  return value;
+}
+
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
   assert(shape && lbl);
   if(lbl->text.string) {
@@ -830,14 +931,13 @@ int msSaveImage(mapObj *map, imageObj *img, const char *filename)
 {
   int nReturnVal = MS_FAILURE;
   char szPath[MS_MAXPATHLEN];
-  struct mstimeval starttime, endtime;
+  struct mstimeval starttime={0}, endtime={0};
 
   if(map && map->debug >= MS_DEBUGLEVEL_TUNING) {
     msGettimeofday(&starttime, NULL);
   }
 
   if (img) {
-#ifdef USE_GDAL
     if( MS_DRIVER_GDAL(img->format) ) {
       if (map != NULL && filename != NULL )
         nReturnVal = msSaveImageGDAL(map, img,
@@ -846,7 +946,6 @@ int msSaveImage(mapObj *map, imageObj *img, const char *filename)
       else
         nReturnVal = msSaveImageGDAL(map, img, filename);
     } else
-#endif
 
       if (MS_RENDERER_PLUGIN(img->format)) {
         rendererVTableObj *renderer = img->format->vtable;
@@ -1777,7 +1876,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
   for (i = 0; i < p->numlines; i++) {
-    pointObj old_pt, old_diffdir, old_offdir;
+    pointObj old_pt = {0}, old_diffdir, old_offdir;
     if(p->line[i].numpoints<2) {
       ret->line[i].numpoints = 0;
       continue; /* skip degenerate points */
@@ -1950,19 +2049,29 @@ void msCleanup()
   }
   msyylex_destroy();
 
-#ifdef USE_OGR
   msOGRCleanup();
-#endif
-#ifdef USE_GDAL
   msGDALCleanup();
+
+  /* Release both GDAL and OGR resources */
+  msAcquireLock( TLOCK_GDAL );
+#if GDAL_VERSION_MAJOR >= 3 || (GDAL_VERSION_MAJOR == 2 && GDAL_VERSION_MINOR == 4)
+  /* Cleanup some GDAL global resources in particular */
+  GDALDestroy();
+#else
+  GDALDestroyDriverManager();
 #endif
-#ifdef USE_PROJ
+  msReleaseLock( TLOCK_GDAL );
+
+
+#if PROJ_VERSION_MAJOR < 6
 #  if PJ_VERSION >= 480
   pj_clear_initcache();
 #  endif
   pj_deallocate_grids();
-  msSetPROJ_LIB( NULL, NULL );
 #endif
+  msSetPROJ_LIB( NULL, NULL );
+  msProjectionContextPoolCleanup();
+
 #if defined(USE_CURL)
   msHTTPCleanup();
 #endif
@@ -2251,16 +2360,12 @@ void msFreeRasterBuffer(rasterBufferObj *b)
 */
 int msExtentsOverlap(mapObj *map, layerObj *layer)
 {
-#ifdef USE_PROJ
   rectObj map_extent;
   rectObj layer_extent;
-#endif
 
   /* No extent info? Nothing we can do, return MS_UNKNOWN. */
   if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;
   if( (layer->extent.minx == -1) && (layer->extent.miny == -1) && (layer->extent.maxx == -1 ) && (layer->extent.maxy == -1) ) return MS_UNKNOWN;
-
-#ifdef USE_PROJ
 
   /* No map projection? Let someone else sort this out. */
   if( ! (map->projection.numargs > 0) )
@@ -2299,13 +2404,6 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
   /* Uh oh, one of the rects crosses the dateline!
   ** Let someone else handle it. */
   return MS_UNKNOWN;
-
-#else
-  /* No proj? Naive comparison. */
-  if( msRectOverlap( &(map->extent), &(layer->extent) ) ) return MS_TRUE;
-  return MS_FALSE;
-#endif
-
 }
 
 /************************************************************************/
@@ -2584,14 +2682,10 @@ void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_langu
    Ref: http://trac.osgeo.org/gdal/ticket/966 */
 shapeObj* msGeneralize(shapeObj *shape, double tolerance)
 {
-  shapeObj *newShape;
   lineObj newLine = {0,NULL};
-  double sqTolerance = tolerance*tolerance;
-  
-  double dX0, dY0, dX1, dY1, dX, dY, dSqDist;
-  int i;
+  const double sqTolerance = tolerance*tolerance;
 
-  newShape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  shapeObj* newShape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(newShape);
   msCopyShape(shape, newShape);
 
@@ -2599,28 +2693,30 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
     return newShape;
   
   /* Clean shape */
-  for (i=0; i < newShape->numlines; i++)
+  for (int i=0; i < newShape->numlines; i++)
     free(newShape->line[i].point);
   newShape->numlines = 0;
   if (newShape->line) free(newShape->line);
     
   msAddLine(newShape, &newLine);
   
-  if (shape->line[0].numpoints>0) {
-    msAddPointToLine(&newShape->line[0],
-                     &shape->line[0].point[0]);              
-    dX0 = shape->line[0].point[0].x;
-    dY0 = shape->line[0].point[0].y;    
+  if (shape->line[0].numpoints==0) {
+    return newShape;
   }
-  
-  for(i=1; i<shape->line[0].numpoints; i++)
+
+  msAddPointToLine(&newShape->line[0],
+                   &shape->line[0].point[0]);
+  double dX0 = shape->line[0].point[0].x;
+  double dY0 = shape->line[0].point[0].y;
+
+  for(int i=1; i<shape->line[0].numpoints; i++)
   {
-      dX1 = shape->line[0].point[i].x;
-      dY1 = shape->line[0].point[i].y;
+      double dX1 = shape->line[0].point[i].x;
+      double dY1 = shape->line[0].point[i].y;
      
-      dX = dX1-dX0;
-      dY = dY1-dY0;
-      dSqDist = dX*dX + dY*dY;
+      const double dX = dX1-dX0;
+      const double dY = dY1-dY0;
+      const double dSqDist = dX*dX + dY*dY;
       if (i == shape->line[0].numpoints-1 || dSqDist >= sqTolerance)
       {
           pointObj p;

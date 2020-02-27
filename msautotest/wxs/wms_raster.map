@@ -86,6 +86,7 @@ END
 #
 
 LAYER
+
   NAME road
   DATA toronto.tif
   METADATA

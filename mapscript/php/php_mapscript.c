@@ -185,7 +185,7 @@ PHP_FUNCTION(ms_newLayerObj)
   layerObj *layer;
   int index;
   php_map_object *php_map;
-  php_layer_object *php_layer;
+  php_layer_object *php_layer = NULL;
   parent_object parent;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -898,9 +898,7 @@ PHP_FUNCTION(ms_tokenizeMap)
                                         filename);
     return;
   } else {
-    if (array_init(return_value) == FAILURE) {
-      RETURN_FALSE;
-    }
+    array_init(return_value);
 
     for (i=0; i<numtokens; i++) {
 #if PHP_VERSION_ID < 70000

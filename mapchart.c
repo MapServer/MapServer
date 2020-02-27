@@ -249,10 +249,20 @@ int getNextShape(mapObj *map, layerObj *layer, double *values, int *nvalues, sty
   int c;
   status = msLayerNextShape(layer, shape);
   if(status == MS_SUCCESS) {
-#ifdef USE_PROJ
+
     if(layer->project)
-      msProjectShape(&layer->projection, &map->projection, shape);
-#endif
+    {
+      if( layer->reprojectorLayerToMap == NULL )
+      {
+        layer->reprojectorLayerToMap = msProjectCreateReprojector(
+            &layer->projection, &map->projection);
+        if( layer->reprojectorLayerToMap == NULL )
+        {
+            return MS_FAILURE;
+        }
+      }
+      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+    }
 
     if(msBindLayerToShape(layer, shape, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS) != MS_SUCCESS)
       return MS_FAILURE; /* error message is set in msBindLayerToShape() */
@@ -340,7 +350,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         status=MS_SUCCESS;
   const char *chartRangeProcessingKey=NULL;
   const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
-  double diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue, exponent=0;
+  double diameter=0, mindiameter=-1, maxdiameter=0, minvalue=0, maxvalue=0, exponent=0;
   double *values;
   styleObj **styles;
   pointObj center;
@@ -361,9 +371,9 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
       return MS_FAILURE;
     }
   }
-#ifdef USE_PROJ
+
   layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
-#endif
+
   /* step through the target shapes */
   msInitShape(&shape);
 
@@ -497,7 +507,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   double *values;
   styleObj **styles;
   pointObj center;
-  double barMaxVal,barMinVal;
+  double barMaxVal = 0.0,barMinVal = 0.0;
   int numvalues = layer->numclasses;
   int numvalues_for_shape;
   if(chartSizeProcessingKey==NULL) {
@@ -620,10 +630,8 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
       searchrect.maxy = map->height-1;
     }
 
-#ifdef USE_PROJ
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
       msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
     status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     if(status == MS_DONE) { /* no overlap */

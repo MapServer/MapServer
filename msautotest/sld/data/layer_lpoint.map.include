@@ -1,0 +1,29 @@
+LAYER
+  NAME lpoint
+  DATA plot
+  TYPE POINT
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      COLOR 0 0 255
+      OUTLINECOLOR 255 0 0
+      OPACITY 50
+      SYMBOL "star"
+      SIZE 20
+      ANGLE 180
+      OFFSET 2 2
+    END
+    LABEL
+      TEXT "[name]"
+      COLOR 255 255 255
+      OUTLINECOLOR 0 255 0
+      OUTLINEWIDTH 2
+      TYPE TRUETYPE
+      FONT vera-bold
+      SIZE 12
+      OFFSET 2 20
+      ANGLE 15
+    END
+  END
+END

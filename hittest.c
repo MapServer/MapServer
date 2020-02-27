@@ -172,10 +172,8 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
     /* identify target shapes */
     if(layer->transform == MS_TRUE) {
       searchrect = map->extent;
-#ifdef USE_PROJ
       if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
         msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
     }
     else {
       searchrect.minx = searchrect.miny = 0;

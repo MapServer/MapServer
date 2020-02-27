@@ -1,0 +1,105 @@
+# RUN_PARMS: utfgrid_truetype_symbol_labelcache.json [SHP2IMG] -m [MAPFILE] -l symbol-labelcache -i json -o [RESULT]
+# RUN_PARMS: utfgrid_truetype_symbol_nolabelcache.json [SHP2IMG] -m [MAPFILE] -l symbol-nolabelcache -i json -o [RESULT]
+# RUN_PARMS: utfgrid_truetype_symbol_rotation.json [SHP2IMG] -m [MAPFILE] -l symbol-rotation -i json -o [RESULT]
+#
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+# This layer renders the symbol to the utfgrid output but not the label
+# (in this case the label is handled via the labelcache code path)
+LAYER
+  NAME "symbol-labelcache"
+  TYPE point
+  STATUS OFF
+  LABELCACHE ON
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "ttf"
+        COLOR 0 0 0
+        SIZE 15
+    END
+    LABEL
+	 COLOR  12 0 150
+	 OUTLINECOLOR 0 0 255
+	 TYPE truetype
+	 SIZE 6
+	 POSITION AUTO
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+    TEXT 'label_sample'
+  END
+END
+
+# This layer renders the symbol to the utfgrid output but not the label
+# (in this case the label is handled via the msDrawLabel() code path)
+LAYER
+  NAME "symbol-nolabelcache"
+  TYPE point
+  STATUS OFF
+  LABELCACHE OFF
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "ttf"
+        COLOR 0 0 0
+        SIZE 15
+    END
+    LABEL
+	 COLOR  12 0 150
+	 OUTLINECOLOR 0 0 255
+	 TYPE truetype
+	 SIZE 6
+	 POSITION AUTO
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+    TEXT 'label_sample'
+  END
+END
+
+# This layer renders the symbol to the utfgrid whith a rotation
+LAYER
+  NAME "symbol-rotation"
+  TYPE point
+  STATUS OFF
+  LABELCACHE OFF
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "ttf"
+        COLOR 0 0 0
+        SIZE 15
+        ANGLE 45
+    END
+    LABEL
+	 COLOR  12 0 150
+	 OUTLINECOLOR 0 0 255
+	 TYPE truetype
+	 SIZE 6
+	 POSITION AUTO
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+    TEXT 'label_sample'
+  END
+END
+
+END #MAP

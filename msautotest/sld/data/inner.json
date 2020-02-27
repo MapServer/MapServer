@@ -1,0 +1,13 @@
+{ "type": "FeatureCollection",
+  "features": [ {
+    "type": "Feature",
+    "properties": {
+      "w1": 1,
+      "cyan": "#00FFFF",
+      "magenta": "#FF00FF",
+      "semiopaque": 0.5,
+      "name": "Inner" },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [ [ [ 1.5, 49.0 ], [ 0.8, 48.2 ], [ 0.1, 47.1 ],
+        [ 2.2, 46.4 ], [ 3.2, 46.8 ], [ 3.0, 48.2 ], [ 1.5, 49.0 ] ] ] } } ] }

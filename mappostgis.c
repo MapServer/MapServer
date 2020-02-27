@@ -306,19 +306,6 @@ wkbReadInt(wkbObj *w)
 }
 
 /*
-** Read one double from the WKB and advance the read pointer.
-** We assume the endianess of the WKB is the same as this machine.
-*/
-static inline double
-wkbReadDouble(wkbObj *w)
-{
-  double d;
-  memcpy(&d, w->ptr, sizeof(double));
-  w->ptr += sizeof(double);
-  return d;
-}
-
-/*
 ** Read one pointObj (two doubles) from the WKB and advance the read pointer.
 ** We assume the endianess of the WKB is the same as this machine.
 */
@@ -333,21 +320,28 @@ wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag)
   {
 #ifdef USE_POINT_Z_M
       memcpy(&(p->z), w->ptr, sizeof(double));
-      if( !(nZMFlag & HAS_M) )
-          p->m = 0.0;
 #endif
       w->ptr += sizeof(double);
   }
+#ifdef USE_POINT_Z_M
+  else
+  {
+      p->z = 0;
+  }
+#endif
   if( nZMFlag & HAS_M )
   {
 #ifdef USE_POINT_Z_M
-      if( !(nZMFlag & HAS_Z) )
-          p->z = 0.0;
       memcpy(&(p->m), w->ptr, sizeof(double));
 #endif
       w->ptr += sizeof(double);
   }
-
+#ifdef USE_POINT_Z_M
+  else
+  {
+      p->m = 0;
+  }
+#endif
 }
 
 /*
@@ -733,19 +727,6 @@ wkbConvGeometryToShape(wkbObj *w, shapeObj *shape)
   return MS_FAILURE;
 }
 
-
-/*
-** Calculate determinant of a 3x3 matrix. Handy for
-** the circle center calculation.
-*/
-static inline double
-arcDeterminant3x3(double *m)
-{
-  /* This had better be a 3x3 matrix or we'll fall to bits */
-  return m[0] * ( m[4] * m[8] - m[7] * m[5] ) -
-         m[3] * ( m[1] * m[8] - m[7] * m[2] ) +
-         m[6] * ( m[1] * m[5] - m[4] * m[2] );
-}
 
 /*
 ** What side of p1->p2 is q on?
@@ -1301,7 +1282,8 @@ msPostGISRetrievePK(layerObj *layer)
 int msPostGISParseData(layerObj *layer)
 {
   char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *pos_geom, *data;
-  int slength;
+  char *pos_use_1st, *pos_use_2nd;
+  int slength, dsize;
   msPostGISLayerInfo *layerinfo;
 
   assert(layer != NULL);
@@ -1317,7 +1299,11 @@ int msPostGISParseData(layerObj *layer)
     msSetError(MS_QUERYERR, "Missing DATA clause. DATA statement must contain 'geometry_column from table_name' or 'geometry_column from (sub-query) as sub'.", "msPostGISParseData()");
     return MS_FAILURE;
   }
-  data = layer->data;
+  dsize = strlen ( layer->data ) + 1;
+  data = (char*)msSmallMalloc(dsize);
+  strlcpy ( data, layer->data, dsize );
+  for ( tmp = data; *tmp; tmp++ )
+    if ( strchr ( "\t\n\r", *tmp ) ) *tmp = ' ';
 
   /*
   ** Clean up any existing strings first, as we will be populating these fields.
@@ -1340,36 +1326,87 @@ int msPostGISParseData(layerObj *layer)
   }
 
   /*
+  ** Look for the optional ' using ' clauses.
+  */
+  pos_srid = pos_uid = NULL;
+  pos_use_1st = pos_use_2nd = NULL;
+  tmp = strcasestr(data, " using ");
+  while ( tmp )
+  {
+    pos_use_1st = pos_use_2nd;
+    pos_use_2nd = tmp + 1;
+    tmp = strcasestr(tmp+1, " using ");
+  };
+
+  /*
+  ** What clause appear after 2nd 'using', if set?
+  */
+  if ( pos_use_2nd )
+  {
+    for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
+    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
+    if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+  };
+
+  /*
+  ** What clause appear after 1st 'using', if set?
+  */
+  if ( pos_use_1st )
+  {
+    for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
+    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+    {
+      if ( pos_uid )
+      {
+        free ( data );
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING UNIQUE' found! %s", "msPostGISParseData()", layer->data);
+        return MS_FAILURE;
+      };
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
+    };
+    if ( strncmp ( tmp, "srid=", 5 ) == 0 )
+    {
+      if ( pos_srid )
+      {
+        free ( data );
+        msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING SRID' found! %s", "msPostGISParseData()", layer->data);
+        return MS_FAILURE;
+      };
+      pos_srid = tmp + 5;
+    };
+  };
+
+  /*
   ** Look for the optional ' using unique ID' string first.
   */
-  pos_uid = strcasestr(data, " using unique ");
   if (pos_uid) {
     /* Find the end of this case 'using unique ftab_id using srid=33' */
-    tmp = strstr(pos_uid + 14, " ");
+    tmp = strstr(pos_uid, " ");
     /* Find the end of this case 'using srid=33 using unique ftab_id' */
     if (!tmp) {
       tmp = pos_uid + strlen(pos_uid);
     }
-    layerinfo->uid = (char*) msSmallMalloc((tmp - (pos_uid + 14)) + 1);
-    strlcpy(layerinfo->uid, pos_uid + 14, tmp - (pos_uid + 14)+1);
+    layerinfo->uid = (char*) msSmallMalloc((tmp - pos_uid) + 1);
+    strlcpy(layerinfo->uid, pos_uid, (tmp - pos_uid) + 1);
     msStringTrim(layerinfo->uid);
   }
 
   /*
   ** Look for the optional ' using srid=333 ' string next.
   */
-  pos_srid = strcasestr(data, " using srid=");
   if (!pos_srid) {
     layerinfo->srid = (char*) msSmallMalloc(1);
     (layerinfo->srid)[0] = '\0'; /* no SRID, so return just null terminator*/
   } else {
-    slength = strspn(pos_srid + 12, "-0123456789");
+    slength = strspn(pos_srid, "-0123456789");
     if (!slength) {
-      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", data);
+      free ( data );
+      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", layer->data);
       return MS_FAILURE;
     } else {
       layerinfo->srid = (char*) msSmallMalloc(slength + 1);
-      strlcpy(layerinfo->srid, pos_srid + 12, slength+1);
+      strlcpy(layerinfo->srid, pos_srid, slength+1);
       msStringTrim(layerinfo->srid);
     }
   }
@@ -1379,17 +1416,23 @@ int msPostGISParseData(layerObj *layer)
   ** pos_opt should point to the start of the optional blocks.
   **
   ** If they are both set, return the smaller one.
+  ** If pos_use_1st set, then it smaller.
   */
-  if (pos_srid && pos_uid) {
-    pos_opt = (pos_srid > pos_uid) ? pos_uid : pos_srid;
+  if (pos_use_1st) {
+    pos_opt = pos_use_1st;
   }
   /* If one or none is set, return the larger one. */
   else {
-    pos_opt = (pos_srid > pos_uid) ? pos_srid : pos_uid;
+    pos_opt = pos_use_2nd;
   }
   /* No pos_opt? Move it to the end of the string. */
   if (!pos_opt) {
     pos_opt = data + strlen(data);
+  }
+  /* Back after the last non-space character. */
+  while( ( pos_opt > data ) && ( *(pos_opt-1) == ' ' ) )
+  {
+    --pos_opt;
   }
 
   /*
@@ -1397,30 +1440,37 @@ int msPostGISParseData(layerObj *layer)
   */
 
   /* Find the first non-white character to start from */
-  pos_geom = data;
-  while( *pos_geom == ' ' || *pos_geom == '\t' || *pos_geom == '\n' || *pos_geom == '\r' )
-    pos_geom++;
+  for ( pos_geom = data; *pos_geom == ' '; pos_geom++ );
 
   /* Find the end of the geom column name */
   pos_scn = strcasestr(data, " from ");
   if (!pos_scn) {
-    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
+    free ( data );
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
     return MS_FAILURE;
   }
 
   /* Copy the geometry column name */
   layerinfo->geomcolumn = (char*) msSmallMalloc((pos_scn - pos_geom) + 1);
-  strlcpy(layerinfo->geomcolumn, pos_geom, pos_scn - pos_geom+1);
+  strlcpy(layerinfo->geomcolumn, pos_geom, (pos_scn - pos_geom) + 1);
   msStringTrim(layerinfo->geomcolumn);
 
   /* Copy the table name or sub-select clause */
-  layerinfo->fromsource = (char*) msSmallMalloc((pos_opt - (pos_scn + 6)) + 1);
-  strlcpy(layerinfo->fromsource, pos_scn + 6, pos_opt - (pos_scn + 6)+1);
+  for ( pos_scn += 6; *pos_scn == ' '; pos_scn++ );
+  if ( pos_opt - pos_scn < 1 )
+  {
+    free ( data );
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
+    return MS_FAILURE;
+  };
+  layerinfo->fromsource = (char*) msSmallMalloc(pos_opt - pos_scn + 1);
+  strlcpy(layerinfo->fromsource, ( layer->data - data ) + pos_scn, pos_opt - pos_scn + 1);
   msStringTrim(layerinfo->fromsource);
 
   /* Something is wrong, our goemetry column and table references are not there. */
   if (strlen(layerinfo->fromsource) < 1 || strlen(layerinfo->geomcolumn) < 1) {
-    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
+    free ( data );
+    msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", layer->data);
     return MS_FAILURE;
   }
 
@@ -1430,6 +1480,7 @@ int msPostGISParseData(layerObj *layer)
   */
   if ( ! (layerinfo->uid) ) {
     if ( strstr(layerinfo->fromsource, " ") ) {
+      free ( data );
       msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable.  You must specify 'using unique' when supplying a subselect in the data definition.", "msPostGISParseData()");
       return MS_FAILURE;
     }
@@ -1443,6 +1494,7 @@ int msPostGISParseData(layerObj *layer)
   if (layer->debug) {
     msDebug("msPostGISParseData: unique_column=%s, srid=%s, geom_column_name=%s, table_name=%s\n", layerinfo->uid, layerinfo->srid, layerinfo->geomcolumn, layerinfo->fromsource);
   }
+  free ( data );
   return MS_SUCCESS;
 }
 
@@ -2708,6 +2760,54 @@ int msPostGISLayerInitItemInfo(layerObj *layer)
 #endif
 }
 
+#ifdef USE_POSTGIS
+static const char** buildBindValues(layerObj *layer, int* p_num_bind_values)
+{
+  /* try to get the first bind value */
+  char bind_key[20];
+  const char* bind_value = msLookupHashTable(&layer->bindvals, "1");
+  int num_bind_values = 0;
+  const char** layer_bind_values = (const char**)(bind_value ? msSmallMalloc(sizeof(const char*) * 1000) : NULL);
+  while(bind_value != NULL && num_bind_values < 1000) {
+    /* put the bind value on the stack */
+    layer_bind_values[num_bind_values] = bind_value;
+    /* increment the counter */
+    num_bind_values++;
+    /* create a new lookup key */
+    sprintf(bind_key, "%d", num_bind_values+1);
+    /* get the bind_value */
+    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+  }
+  *p_num_bind_values = num_bind_values;
+  return layer_bind_values;
+}
+
+static void freeBindValues(const char** layer_bind_values)
+{
+  free((void*)layer_bind_values);
+}
+
+static PGresult* runPQexecParamsWithBindSubstitution(layerObj *layer, const char* strSQL, int binary)
+{
+  PGresult *pgresult = NULL;
+  msPostGISLayerInfo* layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+  int num_bind_values = 0;
+  const char** layer_bind_values = buildBindValues(layer, &num_bind_values);
+
+  if(num_bind_values > 0) {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, layer_bind_values, NULL, NULL, binary);
+  } else {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQL, 0, NULL, NULL, NULL, NULL, binary);
+  }
+
+  /* free bind values */
+  freeBindValues(layer_bind_values);
+
+  return pgresult;
+}
+#endif
+
 /*
 ** msPostGISLayerWhichShapes()
 **
@@ -2719,11 +2819,6 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   msPostGISLayerInfo *layerinfo = NULL;
   char *strSQL = NULL;
   PGresult *pgresult = NULL;
-  const char** layer_bind_values = NULL;
-  const char* bind_value;
-  char* bind_key = NULL;
-
-  int num_bind_values = 0;
 
   assert(layer != NULL);
   assert(layer->layerinfo != NULL);
@@ -2735,21 +2830,6 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   /* Fill out layerinfo with our current DATA state. */
   if ( msPostGISParseData(layer) != MS_SUCCESS) {
     return MS_FAILURE;
-  }
-
-  /* try to get the first bind value */
-  layer_bind_values = (const char**)msSmallMalloc(sizeof(const char*) * 1000);
-  bind_key = (char*)msSmallMalloc(3);
-  bind_value = msLookupHashTable(&layer->bindvals, "1");
-  while(bind_value != NULL) {
-    /* put the bind value on the stack */
-    layer_bind_values[num_bind_values] = bind_value;
-    /* increment the counter */
-    num_bind_values++;
-    /* create a new lookup key */
-    sprintf(bind_key, "%d", num_bind_values+1);
-    /* get the bind_value */
-    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
   }
 
   /*
@@ -2769,17 +2849,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     msDebug("msPostGISLayerWhichShapes query: %s\n", strSQL);
   }
 
-  // fprintf(stderr, "SQL: %s\n", strSQL);
-
-  if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL, num_bind_values, NULL, layer_bind_values, NULL, NULL, RESULTSET_TYPE);
-  } else {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
-  }
-
-  /* free bind values */
-  free(bind_key);
-  free(layer_bind_values);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, RESULTSET_TYPE);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
@@ -2881,10 +2951,6 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
   char *strSQL = NULL;
   char *strSQLCount = NULL;
   PGresult *pgresult = NULL;
-  const char** layer_bind_values = NULL;
-  const char* bind_value;
-  char* bind_key = NULL;
-  int num_bind_values = 0;
   int nCount = 0;
   int rectSRID = -1;
   rectObj searchrectInLayerProj = rect;
@@ -2896,7 +2962,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     msDebug("msPostGISLayerGetShapeCount called.\n");
   }
 
-#ifdef USE_PROJ
+
   // Special processing if the specified projection for the rect is different from the layer projection
   // We want to issue a WHERE that includes
   // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
@@ -2919,28 +2985,12 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     msProjectRect(rectProjection, &(layer->projection), &searchrectInLayerProj); /* project the searchrect to source coords */
     rectSRID = atoi(rectProjection->args[0] + strlen("init=epsg:"));
   }
-#endif
 
   msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
 
   /* Fill out layerinfo with our current DATA state. */
   if ( msPostGISParseData(layer) != MS_SUCCESS) {
     return -1;
-  }
-
-  /* try to get the first bind value */
-  layer_bind_values = (const char**)msSmallMalloc(sizeof(const char*) * 1000);
-  bind_value = msLookupHashTable(&layer->bindvals, "1");
-  bind_key = (char*)msSmallMalloc(3);
-  while(bind_value != NULL) {
-    /* put the bind value on the stack */
-    layer_bind_values[num_bind_values] = bind_value;
-    /* increment the counter */
-    num_bind_values++;
-    /* create a new lookup key */
-    sprintf(bind_key, "%d", num_bind_values+1);
-    /* get the bind_value */
-    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
   }
 
   /*
@@ -2968,15 +3018,7 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     msDebug("msPostGISLayerGetShapeCount query: %s\n", strSQLCount);
   }
 
-  if(num_bind_values > 0) {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount, num_bind_values, NULL, layer_bind_values, NULL, NULL, 1);
-  } else {
-    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount,0, NULL, NULL, NULL, NULL, 0);
-  }
-
-  /* free bind values */
-  free(bind_key);
-  free(layer_bind_values);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, strSQLCount, 0);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n",
@@ -3105,7 +3147,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
       msDebug("msPostGISLayerGetShape query: %s\n", strSQL);
     }
 
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, RESULTSET_TYPE);
+    pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, RESULTSET_TYPE);
 
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
@@ -3192,6 +3234,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 #define VARCHAROID    1043
 #define DATEOID     1082
 #define TIMEOID     1083
+#define TIMETZOID     1266
 #define TIMESTAMPOID          1114
 #define TIMESTAMPTZOID          1184
 #define NUMERICOID              1700
@@ -3253,9 +3296,12 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
         sprintf( gml_width, "%d", (fmod - 4) >> 16 );
         sprintf( gml_precision, "%d", ((fmod-4) & 0xFFFF) );
       }
-    } else if( oid == DATEOID
-               || oid == TIMESTAMPOID || oid == TIMESTAMPTZOID ) {
+    } else if( oid == DATEOID ) {
       gml_type = "Date";
+    } else if( oid == TIMEOID || oid == TIMETZOID ) {
+      gml_type = "Time";
+    } else if( oid == TIMESTAMPOID || oid == TIMESTAMPTZOID ) {
+      gml_type = "DateTime";
     }
 
     snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
@@ -3333,7 +3379,7 @@ int msPostGISLayerGetItems(layerObj *layer)
     msDebug("msPostGISLayerGetItems executing SQL: %s\n", sql);
   }
 
-  pgresult = PQexecParams(layerinfo->pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, sql, 0);
 
   if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
     msDebug("msPostGISLayerGetItems(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), sql);
@@ -3475,7 +3521,7 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   /* executing the query */
-  pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
+  pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, 0);
 
   msFree(strSQL);
 
@@ -3607,7 +3653,8 @@ int msPostGISLayerGetNumFeatures(layerObj *layer)
     }
 
     /* executing the query */
-    pgresult = PQexecParams(layerinfo->pgconn, strSQL, 0, NULL, NULL, NULL, NULL, 0);
+
+    pgresult = runPQexecParamsWithBindSubstitution(layer, strSQL, 0);
 
     msFree(strSQL);
 
@@ -4025,6 +4072,8 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
     msFree(snippet);
     msFree(stresc);
   } else if(filter->type == MS_EXPRESSION) {
+    int ieq_expected = MS_FALSE;
+
     if(msPostGISParseData(layer) != MS_SUCCESS) return MS_FAILURE;
 
     if(layer->debug >= 2) msDebug("msPostGISLayerTranslateFilter. String: %s.\n", filter->string);
@@ -4039,7 +4088,9 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
       */
       if(node->token == MS_TOKEN_BINDING_TIME) {
         bindingToken = node->token;
-      } else if(node->token == MS_TOKEN_COMPARISON_EQ || node->token == MS_TOKEN_COMPARISON_NE ||
+      } else if(node->token == MS_TOKEN_COMPARISON_EQ ||
+         node->token == MS_TOKEN_COMPARISON_IEQ ||
+         node->token == MS_TOKEN_COMPARISON_NE ||
          node->token == MS_TOKEN_COMPARISON_GT || node->token == MS_TOKEN_COMPARISON_GE ||
          node->token == MS_TOKEN_COMPARISON_LT || node->token == MS_TOKEN_COMPARISON_LE ||
          node->token == MS_TOKEN_COMPARISON_IN) {
@@ -4090,7 +4141,10 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 
             msFreeCharArray(strings, nstrings);
           } else {
-            strtmpl = "'%s'";
+            if(comparisonToken == MS_TOKEN_COMPARISON_IEQ)
+                strtmpl = "lower('%s')";
+            else
+                strtmpl = "'%s'";
             stresc = msPostGISEscapeSQLParam(layer, node->tokenval.strval);
             snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
             sprintf(snippet, strtmpl, stresc);
@@ -4138,7 +4192,11 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
         case MS_TOKEN_BINDING_DOUBLE:
         case MS_TOKEN_BINDING_INTEGER:
         case MS_TOKEN_BINDING_STRING:
-          if(node->token == MS_TOKEN_BINDING_STRING || node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
+          if (node->token == MS_TOKEN_BINDING_STRING && node->next->token == MS_TOKEN_COMPARISON_IEQ ) {
+            strtmpl = "lower(%s::text)";
+            ieq_expected = MS_TRUE;
+          }
+          else if(node->token == MS_TOKEN_BINDING_STRING || node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
             strtmpl = "%s::text"; /* explicit cast necessary for certain operators */
           else
             strtmpl = "%s";
@@ -4184,8 +4242,19 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
           break;
 
-	/* unsupported tokens */ 
 	case MS_TOKEN_COMPARISON_IEQ:
+            if( ieq_expected )
+            {
+                native_string = msStringConcatenate(native_string, "=");
+                ieq_expected = MS_FALSE;
+            }
+            else
+            {
+                goto cleanup;
+            }
+            break;
+
+	/* unsupported tokens */
         case MS_TOKEN_COMPARISON_BEYOND:
 	case MS_TOKEN_FUNCTION_TOSTRING:
 	case MS_TOKEN_FUNCTION_ROUND:

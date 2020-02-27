@@ -667,7 +667,10 @@ int utfgridRenderLine(imageObj *img, shapeObj *lineshape, strokeStyleObj *linest
 
   /* utfvalue is set to 0 if the shape isn't in the table. */
   if(r->utfvalue == 0) {
-    return MS_FAILURE;
+    return MS_SUCCESS;
+    /* If we dont get a caracter to draw we just skip execution
+     * instead of failing
+     */
   }
 
   /* Render the line */
@@ -776,8 +779,49 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
   return MS_SUCCESS;
 }
 
-int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
-   return MS_SUCCESS;
+int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
+
+  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+
+  /* If it's not a marker then it's a label or other thing and we dont
+   *  want to draw it on the map
+   */
+  if(!isMarker) {
+    return MS_SUCCESS; //Stop the rendering with no errors
+  }
+
+  /* utfvalue is set to 0 if the shape isn't in the table. */
+  if(r->utfvalue == 0) {
+    return MS_SUCCESS; //Stop the rendering with no errors
+  }
+
+  /* Pathing the symbol BBox */
+  mapserver::path_storage box;
+  double size, x, y;
+  
+  size = tp->glyph_size;;
+  x = tp->glyphs->pnt.x;
+  y = tp->glyphs->pnt.y;
+  
+  box.move_to((x)/r->utfresolution,(y)/r->utfresolution);
+  box.line_to((x+size)/r->utfresolution,(y)/r->utfresolution);
+  box.line_to((x+size)/r->utfresolution,(y-size)/r->utfresolution);
+  box.line_to((x)/r->utfresolution,(y-size)/r->utfresolution);
+
+     /* Rotation if necessary. */
+  if( tp->glyphs->rot != 0) {
+    mapserver::trans_affine mtx;
+    mtx *= mapserver::trans_affine_translation(-x/r->utfresolution,-y/r->utfresolution);
+    mtx *= mapserver::trans_affine_rotation(-tp->glyphs->rot);
+    mtx *= mapserver::trans_affine_translation(x/r->utfresolution,y/r->utfresolution);
+    box.transform(mtx);
+  } 
+
+
+  /* Rendering the symbol */
+  utfgridRenderPath(img, box);
+
+  return MS_SUCCESS;
 }
 
 int utfgridFreeSymbol(symbolObj * symbol)

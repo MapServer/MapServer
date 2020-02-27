@@ -290,15 +290,21 @@ class MapSizeTestCase(MapTestCase):
 class MapSetWKTTestCase(MapTestCase):
 
     def testOGCWKT(self):
-        self.map.setWKTProjection('PROJCS["unnamed", PROJECTION["Albers_Conic_Equal_Area"], '
-                                  'PARAMETER["standard_parallel_1", 65], PARAMETER["standard_parallel_2", 55], '
-                                  'PARAMETER["latitude_of_center", 0], PARAMETER["longitude_of_center", -153], '
-                                  'PARAMETER["false_easting", -4943910.68], PARAMETER["false_northing", 0]]')
+        self.map.setWKTProjection('''PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",
+                                     SPHEROID["WGS 84",6378137,298.257223563]],
+                                     PRIMEM["Greenwich",0],
+                                     UNIT["Degree",0.0174532925199433]],
+                                     PROJECTION["Albers_Conic_Equal_Area"],
+                                     PARAMETER["standard_parallel_1", 65], PARAMETER["standard_parallel_2", 55],
+                                     PARAMETER["latitude_of_center", 0], PARAMETER["longitude_of_center", -153],
+                                     PARAMETER["false_easting", -4943910.68], PARAMETER["false_northing", 0],
+                                     UNIT["metre",1.0]
+                                     ]''')
         proj4 = self.map.getProjection()
 
         assert proj4.find('+proj=aea') != -1
-        assert proj4.find('+ellps=WGS84') != -1
-        assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_DD
+        assert proj4.find('+datum=WGS84') != -1
+        assert mapscript.projectionObj(proj4).getUnits() != mapscript.MS_DD
 
     def testESRIWKT(self):
         self.map.setWKTProjection('ESRI::PROJCS["Pulkovo_1995_GK_Zone_2", GEOGCS["GCS_Pulkovo_1995", '
@@ -318,9 +324,72 @@ class MapSetWKTTestCase(MapTestCase):
     def testWellKnownGEOGCS(self):
         self.map.setWKTProjection('WGS84')
         proj4 = self.map.getProjection()
-        assert proj4.find('+proj=longlat') != -1, proj4
-        assert proj4.find('+datum=WGS84') != -1, proj4
+        assert ('+proj=longlat' in proj4 and '+datum=WGS84' in proj4) or proj4 == '+init=epsg:4326', proj4
         assert (mapscript.projectionObj(proj4)).getUnits() != mapscript.MS_METERS
+
+
+class MapRunSubTestCase(MapTestCase):
+
+    def testDefaultSubstitutions(self):
+        s = """
+MAP
+    WEB
+        VALIDATION
+            'key1' '.*'
+            'default_key1' 'Test Title'
+        END
+        METADATA
+            "wms_title" "%key1%"
+        END
+    END
+END
+        """
+        map = mapscript.fromstring(s)
+        map.applyDefaultSubstitutions()
+        assert map.web.metadata["wms_title"] == "Test Title"
+
+    def testRuntimeSubstitutions(self):
+        """
+        For supported parameters see https://mapserver.org/cgi/runsub.html#parameters-supported
+        """
+        s = """
+MAP
+    WEB
+        VALIDATION
+            'key1' '.*'
+            'default_key1' 'Test Title'
+        END
+        METADATA
+            "wms_title" "%key1%"
+        END
+    END
+    LAYER
+        TYPE POINT
+        FILTER ([size]<%my_filter%)
+        VALIDATION
+            'my_filter' '^[0-9]$'
+        END
+    END
+END
+        """
+        map = mapscript.fromstring(s)
+
+        d = {"key1": "New Title", "my_filter": "3"}
+        map.applySubstitutions(d)
+
+        assert map.web.metadata["wms_title"] == "New Title"
+        assert map.getLayer(0).getFilterString() == "([size]<3)"
+
+
+class MapSLDTestCase(MapTestCase):
+    def test(self):
+
+        test_map = mapscript.mapObj(TESTMAPFILE)
+        result = test_map.generateSLD()
+        assert result.startswith('<StyledLayerDescriptor version="1.0.0"'), result
+
+        result = test_map.generateSLD("1.1.0")
+        assert result.startswith('<StyledLayerDescriptor version="1.1.0"'), result
 
 
 if __name__ == '__main__':

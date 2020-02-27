@@ -276,7 +276,7 @@ void msThreadInit()
 void* msGetThreadId()
 
 {
-  return GetCurrentThreadId();
+  return (void*) (size_t) GetCurrentThreadId();
 }
 
 /************************************************************************/

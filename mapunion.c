@@ -52,6 +52,8 @@ typedef struct {
   int *status;     /* the layer status */
   int *classgroup; /* current array of the valid classes */
   int nclasses;  /* number of the valid classes */
+  reprojectionObj* reprojectorSrcLayerToLayer;
+  int reprojectorCurSrcLayer;
 } msUnionLayerInfo;
 
 /* Close the the combined layer */
@@ -66,6 +68,7 @@ int msUnionLayerClose(layerObj *layer)
   if (!layer->map)
     return MS_FAILURE;
 
+  msProjectDestroyReprojector(layerinfo->reprojectorSrcLayerToLayer);
   for (i = 0; i < layerinfo->layerCount; i++) {
     msLayerClose(&layerinfo->layers[i]);
     freeLayer(&layerinfo->layers[i]);
@@ -144,7 +147,7 @@ int msUnionLayerOpen(layerObj *layer)
 
   map = layer->map;
 
-  layerinfo =(msUnionLayerInfo*)malloc(sizeof(msUnionLayerInfo));
+  layerinfo =(msUnionLayerInfo*)calloc(1, sizeof(msUnionLayerInfo));
   MS_CHECK_ALLOC(layerinfo, sizeof(msUnionLayerInfo), MS_FAILURE);
 
   layer->layerinfo = layerinfo;
@@ -156,6 +159,7 @@ int msUnionLayerOpen(layerObj *layer)
   layerinfo->layerCount = 0;
 
   layerinfo->classText = NULL;
+  layerinfo->reprojectorCurSrcLayer = -1;
 
   pkey = msLayerGetProcessingKey(layer, "UNION_STATUS_CHECK");
   if(pkey && strcasecmp(pkey, "true") == 0)
@@ -402,10 +406,10 @@ int msUnionLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     }
 
     srcRect = rect;
-#ifdef USE_PROJ
+
     if(srclayer->transform == MS_TRUE && srclayer->project && layer->transform == MS_TRUE && layer->project &&msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
       msProjectRect(&layer->projection, &srclayer->projection, &srcRect); /* project the searchrect to source coords */
-#endif
+
     layerinfo->status[i] = msLayerWhichShapes(srclayer, srcRect, isQuery);
     if (layerinfo->status[i] == MS_FAILURE)
       return MS_FAILURE;
@@ -506,13 +510,20 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
           }
         }
 
-#ifdef USE_PROJ
         /* reproject to the target layer */
-        if(srclayer->project && msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
-          msProjectShape(&(srclayer->projection), &(layer->projection), shape);
-        else
-          srclayer->project = MS_FALSE;
-#endif
+        if( layerinfo->reprojectorCurSrcLayer != layerinfo->layerIndex )
+        {
+            msProjectDestroyReprojector(layerinfo->reprojectorSrcLayerToLayer);
+            layerinfo->reprojectorSrcLayerToLayer = NULL;
+            layerinfo->reprojectorCurSrcLayer = layerinfo->layerIndex;
+            if(srclayer->project && msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
+                layerinfo->reprojectorSrcLayerToLayer = msProjectCreateReprojector(&(srclayer->projection), &(layer->projection));
+            else
+                srclayer->project = MS_FALSE;
+        }
+        if(layerinfo->reprojectorSrcLayerToLayer)
+            msProjectShapeEx(layerinfo->reprojectorSrcLayerToLayer, shape);
+
         /* update the layer styles with the bound values */
         if(msBindLayerToShape(srclayer, shape, MS_FALSE) != MS_SUCCESS)
           return MS_FAILURE;
@@ -580,13 +591,20 @@ int msUnionLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   record->tileindex = tile;
 
   if (rv == MS_SUCCESS) {
-#ifdef USE_PROJ
     /* reproject to the target layer */
-    if(srclayer->project && msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
-      msProjectShape(&(srclayer->projection), &(layer->projection), shape);
-    else
-      srclayer->project = MS_FALSE;
-#endif
+    if( layerinfo->reprojectorCurSrcLayer != tile )
+    {
+        msProjectDestroyReprojector(layerinfo->reprojectorSrcLayerToLayer);
+        layerinfo->reprojectorSrcLayerToLayer = NULL;
+        layerinfo->reprojectorCurSrcLayer = tile;
+        if(srclayer->project && msProjectionsDiffer(&(srclayer->projection), &(layer->projection)))
+            layerinfo->reprojectorSrcLayerToLayer = msProjectCreateReprojector(&(srclayer->projection), &(layer->projection));
+        else
+            srclayer->project = MS_FALSE;
+    }
+    if(layerinfo->reprojectorSrcLayerToLayer)
+      msProjectShapeEx(layerinfo->reprojectorSrcLayerToLayer, shape);
+
     shape->tileindex = tile;
 
     /* construct the item array */

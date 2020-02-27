@@ -30,9 +30,9 @@
 
 import sys
 import os
+import pytest
 import string
-import time
-from testlib import *
+from testlib import compare_result
 try:
     import xmlvalidate
     xmlvalidate_ok = True
@@ -42,30 +42,27 @@ except:
     pass
 
 have_pdiff = None
+shp2img = 'shp2img'
+keep_pass = False
+quiet = False
+validate_xml = True
+ogc_schemas_location = None
 
 ###############################################################################
 # get_mapfile_list()
 
-def get_mapfile_list( argv ):
+def get_mapfile_list( dirname ):
+
+    # scan the current directory for mapfiles. 
+    files = os.listdir(dirname)
 
     map_files = []
-
-    # use mapfile(s) passed in arg list if any.
-    for arg in argv:
-        if arg[-4:] == '.map':
-            map_files.append( arg )
-
-    if len(map_files) > 0:
-        return map_files
-    
-    # scan the current directory for mapfiles. 
-    files = os.listdir('.')
-
     for file in files:
         if file[-4:] == '.map':
             map_files.append( file )
 
     return map_files
+
 
 ###############################################################################
 # compare_version()
@@ -159,12 +156,18 @@ def demime_file( filename ):
     if version_info >= (3,0,0):
         data = str(data, 'iso-8859-1')
 
+    offset = -1
     for i in range(len(data)-1):
         if data[i] == '\r' and data[i+1] == '\n' and data[i+2] == '\r' and data[i+3] == '\n':
+            offset = 4
+        elif data[i] == '\n' and data[i+1] == '\n':
+            offset = 2
+
+        if offset != -1:
             if version_info >= (3,0,0):
-                open(filename,'wb').write(bytes(data[i+4:], 'iso-8859-1'))
+                open(filename,'wb').write(bytes(data[i+offset:], 'iso-8859-1'))
             else:
-                open(filename,'wb').write(data[i+4:])
+                open(filename,'wb').write(data[i+offset:])
             return
     return
 
@@ -425,7 +428,7 @@ def truncate_one_decimal( filename ):
 def crlf( filename ):
     
     try:
-        file_stat = os.stat( filename )
+        os.stat( filename )
     except OSError:
         return
     data = open(filename, "rb").read()
@@ -469,323 +472,287 @@ def get_gdal_version():
     return None
 
 ###############################################################################
-# run_tests()
 
-def run_tests( argv ):
-
-    skip_count = 0
-    fail_count = 0
-    succeed_count = 0
-    init_count = 0
-    noresult_count = 0
-    keep_pass = 0
-    valgrind = 0 
-    valgrind_log = ''
-    shp2img = 'shp2img'
-    renderer = None
-    verbose = 0
-    strict = 0
-    quiet = 0
-    validate_xml = True
-    skiparg = False
-    valgrind_non_empty_count = 0
-
-    ###########################################################################
-    # Process arguments.
-    
-    for i in range(len(argv)):
-        if skiparg:
-            skiparg = False
-            continue
-        if argv[i] == '-shp2img':
-            shp2img = argv[i+1]
-            skiparg = True
-        elif argv[i] == '-keep':
-            keep_pass = 1
-        elif argv[i] == '-valgrind':
-            valgrind = 1
-        elif argv[i] == '-strict':
-            strict = 1
-        elif argv[i] == '-renderer':
-            renderer = argv[i+1]
-            skiparg = True
-        elif argv[i] == '-v':
-            verbose = 1
-        elif argv[i] == '-q':
-            quiet = 1
-        elif argv[i] == '-dontvalidatexml':
-            validate_xml = False
-        elif argv[i][-4:] == '.map':
-            pass
-        else:
-            print( 'Unrecognised argument: %s' % argv[i] )
-            print( 'Usage: run_test.py [-v] [-keep] [-valgrind] [-strict]\n' + 
-                   '                   [-shp2img <file>] [-renderer <name>]\n' +
-                   '                   [mapfilename]*' )
-            sys.exit( 1 )
+def get_pytests(dirname):
 
     ###########################################################################
     # Create results directory if it does not already exist.
-    if not os.path.exists("result"):
-         os.mkdir("result")
+    if not os.path.exists(os.path.join(dirname, "result")):
+         os.mkdir(os.path.join(dirname, "result"))
 
     ###########################################################################
     # Get version info.
     version_info = os.popen( shp2img + ' -v' ).read()
-    print('version = %s' % version_info)
+    #print('version = %s' % version_info)
 
     gdal_version = get_gdal_version()
     #print('GDAL version = %s' % gdal_version)
 
     ###########################################################################
-    # Check directory wide requirements.
-    try:
-        (runparms_list, requires_list) = read_test_directives( 'all_require.txt' )
-        if not has_requires( version_info, gdal_version, requires_list ):
-            print('Some or all of the following requirements for this directory of tests\nare not available:')
-            print(requires_list)
-            return
-    except:
-        pass
-
-    ###########################################################################
     # Must we and can we validate XML stuff ?
-    ogc_schemas_location = None
     if validate_xml and xmlvalidate_ok:
         if xmlvalidate.has_local_ogc_schemas('SCHEMAS_OPENGIS_NET'):
+            global ogc_schemas_location
             ogc_schemas_location = 'SCHEMAS_OPENGIS_NET'
         else:
             print('Cannot validate XML because SCHEMAS_OPENGIS_NET not found. Run "python ../pymod/xmlvalidate.py -download_ogc_schemas" from msautotest/wxs')
 
-    ###########################################################################
-    # Process all mapfiles.
-    map_files = get_mapfile_list( argv )
+    tests = []
+    for map in get_mapfile_list(dirname):
 
-    for map in map_files:
+        runparms_list, requires_list = read_test_directives( os.path.join(dirname, map) )
+
+        marks = []
+        if not has_requires( version_info, gdal_version, requires_list ):
+            print('%s: missing some or all of required components, skip.'%(map))
+            marks.append(pytest.mark.skip)
+
+        for out_file, command in runparms_list:
+            out_file = os.path.basename(out_file)
+            id = map[0:-4]+'_'+out_file.replace('.','_')
+            param = pytest.param(os.path.join(dirname, map), out_file, command, id=id,marks=marks)
+            tests.append(param)
+
+    return tests
+
+
+###############################################################################
+
+
+def _run(map, out_file, command, extra_args):
+
+    strict = extra_args.getoption("strict_mode")
+    valgrind = extra_args.getoption("valgrind")
+    run_under_asan = extra_args.getoption("run_under_asan")
+    verbose = extra_args.getoption("verbose") >= 2
+    renderer = extra_args.getoption("renderer")
+    if renderer:
+        (resultbase,resultext) = os.path.splitext(out_file)
+        if renderer in ( 'pdf', 'svg', 'gif'):
+            out_file = "%s.%s"%(resultbase,renderer)
+        else:
+            out_file = "%s.%s%s"%(resultbase,renderer,resultext)
+
+    if command.find('[RESULT_DEMIME_DEVERSION]') != -1:
+        demime = 1
+        deversion = 1
+    else:
+        if command.find('[RESULT_DEMIME]') != -1:
+            demime = 1
+        else:
+            demime = 0
+
+        if command.find('[RESULT_DEVERSION]') != -1:
+            deversion = 1
+        else:
+            deversion = 0
+
+    if command.find('[EXTRACT_SERVICE_VERSION]') != -1:
+        extractserviceversion = 1
+    else:
+        extractserviceversion = 0
+
+    command = command.replace('[RESULT]', 'result/'+out_file )
+    command = command.replace('[RESULT_DEMIME]', 'result/'+out_file )
+    command = command.replace('[RESULT_DEVERSION]', 'result/'+out_file )
+    command = command.replace('[RESULT_DEMIME_DEVERSION]', 'result/'+out_file )
+    command = command.replace('[EXTRACT_SERVICE_VERSION]', 'result/'+out_file )
+    command = command.replace('[MAPFILE]', os.path.basename(map) )
+    command = command.replace('[SHP2IMG]', shp2img )
+    if renderer is not None:
+        command = command.replace('[RENDERER]', '-i '+renderer )
+    else:
+        command = command.replace('[RENDERER]', '' )
+
+    #support for environment variable of type [ENV foo=bar]
+    begin = command.find('[ENV')
+    envirkey = ''
+    if begin != -1:
+        end = command[begin:].find(']')
+        equal = command[begin:].find('=')
+        #print("equal is %d"%equal)
+        envirkey = command[begin+len('[ENV '):begin+equal]
+        envirval = command[equal+1:end]
+        os.environ[envirkey] = envirval
+        tmp = command
+        command = tmp[:begin] + tmp[end+1:]
+        #print('added environment variable (%s)=(%s); new command:%s' % (envirkey,envirval,command))
+
+    # support for POST request method
+    begin = command.find('[POST]')
+    end = command.find('[/POST]')
+    post = ''
+    if begin != -1 and end != -1 and begin < end:
+        post = command[begin+len('[POST]'):end]
+        tmp = command
+        post = post.replace( '"', '\'')
+        if valgrind:
+            command = tmp[:begin] + tmp[end+len('[/POST]'):]
+        else:
+            command = 'echo "' + post + '" | ' + tmp[:begin] + tmp[end+len('[/POST]'):]
+        os.environ['CONTENT_LENGTH'] = str(len(post))
+        os.environ['REQUEST_METHOD'] = "POST"
+        os.environ['MS_MAPFILE'] = map
+        if post[0] == '<':
+            os.environ['CONTENT_TYPE'] = 'text/xml'
+            if ogc_schemas_location is not None:
+                xmlvalidate.validate(post, ogc_schemas_location = ogc_schemas_location)
+        else:
+            os.environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+
+    command = command.replace('[MAPSERV]', 'mapserv' )
+    command = command.replace('[LEGEND]', 'legend' )
+    command = command.replace('[SCALEBAR]', 'scalebar' )
+
+    (command, strip_items) = collect_strip_requests( command )
+    
+    if valgrind:
+        valgrind_log = 'result/%s.txt'%(out_file+".vgrind.txt")
+        command = command.strip()
+        if post == '':
+            command = 'valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'%(command, valgrind_log)
+        else:
+            command = 'echo "' + post + '" | valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'%(command, valgrind_log)
+    elif run_under_asan:
+        asan_log = 'result/' + out_file + ".asan.txt"
+        command = command.strip()
+        command += " 2>%s" % asan_log
+
+    if verbose:
+        print('')
+        print( command )
+        
+    os.system( command )
+
+    if begin != -1 and end != -1 and begin < end:
+        del os.environ['CONTENT_LENGTH']
+        del os.environ['REQUEST_METHOD']
+        del os.environ['MS_MAPFILE']
+
+    if envirkey != '':
+        del os.environ[envirkey]
+
+    if demime:
+        demime_file( 'result/'+out_file )
+    if deversion:
+        deversion_file( 'result/'+out_file )
+        degdalversion_file( 'result/'+out_file )
+        fixexponent_file( 'result/'+out_file )
+        truncate_one_decimal( 'result/'+out_file )
+        detimestamp_file( 'result/'+out_file )
+    if extractserviceversion:
+        extract_service_version_file( 'result/'+out_file )
+    if valgrind:
+        if os.path.getsize(valgrind_log) == 0:
+            os.remove( valgrind_log )
+        else:
+            if not quiet:
+                print('     Valgrind log non empty.')
+
+    elif run_under_asan:
+        if os.path.getsize(asan_log) == 0:
+            os.remove( asan_log )
+        else:
+            asan_log_content = open(asan_log, 'rt').read()
+            # We get some unexplained crashes on Travis-CI
+            if "Assertion `unscaled->face" in asan_log_content:
+                os.remove( asan_log )
+            elif 'AddressSanitizer' in asan_log_content or 'LeakSanitizer' in asan_log_content:
+                if not quiet:
+                    print('     ASAN log non empty.')
+            else:
+                # some other standard error output
+                os.remove( asan_log )
+
+    apply_strip_items_file( 'result/'+out_file, strip_items )
+
+    crlf('result/'+out_file)
+
+    cmp = compare_result( out_file )
+
+    if cmp == 'match':
+        if not keep_pass:
+            os.remove( 'result/' + out_file )
+        if not quiet:
+            print('     results match.')
+        else:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+    elif cmp ==  'files_differ_image_match':
+        if strict:
+            return False, ('results dont match (though images match)', map, out_file)
+
+        else:
+            if not keep_pass:
+                os.remove( 'result/' + out_file )
+            if not quiet:
+                print('     result images match, though files differ.')
+            else:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+    elif cmp ==  'files_differ_image_nearly_match':
+        if strict:
+            return False, ('results dont match (though images perceptually match)', map, out_file)
+
+        else:
+            if not keep_pass:
+                os.remove( 'result/' + out_file )
+            if not quiet:
+                print('     result images perceptually match, though files differ.')
+            else:
+                print('%s: result images perceptually match, though files differ.'%(out_file))
+
+    elif cmp ==  'nomatch':
+        return False, ('results dont match', map, out_file)
+
+    elif cmp == 'noresult':
+        with open('result/' + out_file, 'w') as fh:
+            fh.write("Segmentation fault or other serious error\n")
+
+        return False, ('no result file generated', map, out_file)
+
+    elif cmp == 'noexpected':
+        if strict:
+            return False, ('no existing file expected/' + out_file)
 
         if not quiet:
-           print(' Processing: %s' % map)
-        (runparms_list, requires_list) = read_test_directives( map )
-        for i in range(len(runparms_list)):
-            if renderer is not None:
-                (resultbase,resultext) = os.path.splitext(runparms_list[i][0])
-                if renderer in ( 'pdf', 'svg', 'gif'):
-                   runparms_list[i] = ("%s.%s"%(resultbase,renderer),runparms_list[i][1])
-                else:
-                   runparms_list[i] = ("%s.%s%s"%(resultbase,renderer,resultext),runparms_list[i][1])
+            print('     no expected file exists, accepting result as expected.')
+        else:
+            print('%s: no expected file exists, accepting result as expected.'%(out_file))
 
-        if not has_requires( version_info, gdal_version, requires_list ):
-            if not quiet:
-                print('    missing some or all of required components, skip.')
-            else:
-                print('%s: missing some or all of required components, skip.'%(map))
-            skip_count += len(runparms_list)
-            continue
-        
-        #######################################################################
-        # Handle each RUN_PARMS item in this file.
-        for run_item in runparms_list:
-            time.sleep(0.05)  #allow us to catch a ctrl-c
-            out_file = run_item[0]
-            command = run_item[1]
+        os.rename( 'result/' + out_file, 'expected/' + out_file )
 
-            if len(runparms_list) > 1 and not quiet:
-                print('   test %s' % out_file)
+    return True, None
+
+###############################################################################
 
 
-            if command.find('[RESULT_DEMIME_DEVERSION]') != -1:
-                demime = 1
-                deversion = 1
-            else:
-                if command.find('[RESULT_DEMIME]') != -1:
-                    demime = 1
-                else:
-                    demime = 0
-                    
-                if command.find('[RESULT_DEVERSION]') != -1:
-                    deversion = 1
-                else:
-                    deversion = 0
+def run_pytest(map, out_file, command, extra_args):
 
-            if command.find('[EXTRACT_SERVICE_VERSION]') != -1:
-                extractserviceversion = 1
-            else:
-                extractserviceversion = 0
+    os.chdir(os.path.dirname(map))
 
-            command = command.replace('[RESULT]', 'result/'+out_file )
-            command = command.replace('[RESULT_DEMIME]', 'result/'+out_file )
-            command = command.replace('[RESULT_DEVERSION]', 'result/'+out_file )
-            command = command.replace('[RESULT_DEMIME_DEVERSION]', 'result/'+out_file )
-            command = command.replace('[EXTRACT_SERVICE_VERSION]', 'result/'+out_file )
-            command = command.replace('[MAPFILE]', map )
-            command = command.replace('[SHP2IMG]', shp2img )
-            if renderer is not None:
-                command = command.replace('[RENDERER]', '-i '+renderer )
-            else:
-                command = command.replace('[RENDERER]', '' )
+    ret, msg = _run(map, out_file, command, extra_args)
+    assert ret, msg
 
-            #support for environment variable of type [ENV foo=bar]
-            begin = command.find('[ENV')
-            envirkey = ''
-            if begin != -1:
-                end = command[begin:].find(']')
-                equal = command[begin:].find('=')
-                #print("equal is %d"%equal)
-                envirkey = command[begin+len('[ENV '):begin+equal]
-                envirval = command[equal+1:end]
-                os.environ[envirkey] = envirval
-                tmp = command
-                command = tmp[:begin] + tmp[end+1:]
-                #print('added environment variable (%s)=(%s); new command:%s' % (envirkey,envirval,command))
+###############################################################################
 
-            # support for POST request method
-            begin = command.find('[POST]')
-            end = command.find('[/POST]')
-            post = ''
-            if begin != -1 and end != -1 and begin < end:
-                post = command[begin+len('[POST]'):end]
-                tmp = command
-                post = post.replace( '"', '\'')
-                if valgrind:
-                    command = tmp[:begin] + tmp[end+len('[/POST]'):]
-                else:
-                    command = 'echo "' + post + '" | ' + tmp[:begin] + tmp[end+len('[/POST]'):]
-                os.environ['CONTENT_LENGTH'] = str(len(post))
-                os.environ['REQUEST_METHOD'] = "POST"
-                os.environ['MS_MAPFILE'] = map
-                if post[0] == '<':
-                  os.environ['CONTENT_TYPE'] = 'text/xml'
-                  if ogc_schemas_location is not None:
-                      xmlvalidate.validate(post, ogc_schemas_location = ogc_schemas_location)
-                else:
-                  os.environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
 
-            command = command.replace('[MAPSERV]', 'mapserv' )
-            command = command.replace('[LEGEND]', 'legend' )
-            command = command.replace('[SCALEBAR]', 'scalebar' )
-
-            (command, strip_items) = collect_strip_requests( command )
-            
-            if valgrind:
-                valgrind_log = 'result/%s.txt'%(out_file+".vgrind.txt")
-                command = command.strip()
-                if post == '':
-                  command = 'valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'%(command, valgrind_log)
-                else:
-                  command = 'echo "' + post + '" | valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'%(command, valgrind_log)
-
-            if verbose:
-                print('')
-                print( command )
-                
-            os.system( command )
-
-            if begin != -1 and end != -1 and begin < end:
-                del os.environ['CONTENT_LENGTH']
-                del os.environ['REQUEST_METHOD']
-                del os.environ['MS_MAPFILE']
-
-            if envirkey != '':
-                del os.environ[envirkey]
-
-            if demime:
-                demime_file( 'result/'+out_file )
-            if deversion:
-                deversion_file( 'result/'+out_file )
-                degdalversion_file( 'result/'+out_file )
-                fixexponent_file( 'result/'+out_file )
-                truncate_one_decimal( 'result/'+out_file )
-                detimestamp_file( 'result/'+out_file )
-            if extractserviceversion:
-                extract_service_version_file( 'result/'+out_file )
-            if valgrind:
-                if os.path.getsize(valgrind_log) == 0:
-                   os.remove( valgrind_log )
-                else:
-                    valgrind_non_empty_count = valgrind_non_empty_count + 1
-                    if not quiet:
-                        print('     Valgrind log non empty.')
-
-            apply_strip_items_file( 'result/'+out_file, strip_items )
-                
-            crlf('result/'+out_file)
-            cmp = compare_result( out_file )
-            
-            if cmp == 'match':
-                succeed_count = succeed_count + 1
-                if keep_pass == 0:
-                   os.remove( 'result/' + out_file )
-                if not quiet:
-                   print('     results match.')
-                else:
-                   sys.stdout.write('.')
-                   sys.stdout.flush()
-            elif cmp ==  'files_differ_image_match':
-                if strict:
-                   fail_count = fail_count + 1
-                   if not quiet:
-                       print('*    results dont match (though images match), TEST FAILED.')
-                   else:
-                       print('%s: results dont match (though images match), TEST FAILED.'%(out_file))
-                else:
-                   succeed_count = succeed_count + 1
-                   if keep_pass == 0:
-                      os.remove( 'result/' + out_file )
-                   if not quiet:
-                      print('     result images match, though files differ.')
-                   else:
-                      sys.stdout.write('.')
-                      sys.stdout.flush()
-            elif cmp ==  'files_differ_image_nearly_match':
-                if strict:
-                   fail_count = fail_count + 1
-                   if not quiet:
-                       print('*    results dont match (though images perceptually match), TEST FAILED.')
-                   else:
-                       print('%s: results dont match (though images perceptually match), TEST FAILED.'%(out_file))
-                else:
-                   succeed_count = succeed_count + 1
-                   if keep_pass == 0:
-                      os.remove( 'result/' + out_file )
-                   if not quiet:
-                      print('     result images perceptually match, though files differ.')
-                   else:
-                      print('%s: result images perceptually match, though files differ.'%(out_file))
-            elif cmp ==  'nomatch':
-                fail_count = fail_count + 1
-                if not quiet:
-                    print('*    results dont match, TEST FAILED.')
-                else:
-                    print('%s: results dont match, TEST FAILED.'%(out_file))
-
-            elif cmp == 'noresult':
-                with open('result/' + out_file, 'w') as fh:
-                    fh.write("Segmentation fault or other serious error\n")
-                fail_count = fail_count + 1
-                noresult_count += 1
-                if not quiet:
-                    print('*    no result file generated, TEST FAILED.')
-                else:
-                    print('%s: no result file generated, TEST FAILED.'%(out_file))
-            elif cmp == 'noexpected':
-                if not quiet:
-                    print('     no expected file exists, accepting result as expected.')
-                else:
-                    print('%s: no expected file exists, accepting result as expected.'%(out_file))
-                init_count = init_count + 1
-                os.rename( 'result/' + out_file, 'expected/' + out_file )
-
-    try:
-        print('Test done (%.2f%% success):' % (float(succeed_count)/float(succeed_count+fail_count)*100))
-    except:
-        pass
-
-    print('%d tested skipped' % skip_count)
-    print('%d tests succeeded' % succeed_count)
-    print('%d tests failed' %fail_count)
-    print('%d test results initialized' % init_count)
-    if valgrind:
-        print('%d test have non-empty Valgrind log' % valgrind_non_empty_count)
-
-    if noresult_count > 0:
-        print('%d of failed tests produced *no* result! Serious Failure!' % noresult_count)
+def pytest_main():
+    maps = []
+    new_argv = []
+    help = False
+    for arg in sys.argv:
+        if arg.endswith('.map'):
+            maps.append(arg[0:-4])
+        else:
+            if arg == '--help':
+                help = True
+            new_argv.append(arg)
+    sys.argv = new_argv
+    if maps:
+        sys.argv.append('-k')
+        sys.argv.append(' or '.join(maps))
+    ret = pytest.main()
+    if help:
+        print('\nMapServer note: you can also specify one or several .map filenames')
+    return ret

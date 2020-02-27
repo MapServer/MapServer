@@ -135,6 +135,7 @@ PROJECTION
 END
 
 LAYER
+
   NAME "point"
   DATA "point"
   TOLERANCE 50
@@ -153,6 +154,7 @@ LAYER
 END # Layer
 
 LAYER
+
   NAME "multipoint"
   DATA "multipoint"
   METADATA
@@ -169,6 +171,7 @@ LAYER
 END # Layer
 
 LAYER
+
   NAME "linestring"
   DATA "linestring"
   METADATA

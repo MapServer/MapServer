@@ -48,10 +48,6 @@ extern FILE *msyyin;
 
 extern int msyystate;
 
-static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
-static const unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
-
-
 void freeImageCache(struct imageCacheObj *ic)
 {
   if(ic) {
@@ -355,6 +351,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   char szPath[MS_MAXPATHLEN];
   symbolObj *symbol=NULL;
   char *extension=NULL;
+  int symbolidx;
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
@@ -366,7 +363,9 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   /* Allocate/init memory for new symbol if needed */
   if (msGrowSymbolSet(symbolset) == NULL)
     return -1;
-  symbol = symbolset->symbol[symbolset->numsymbols];
+  symbolidx = symbolset->numsymbols;
+  symbolset->numsymbols++;
+  symbol = symbolset->symbol[symbolidx];
 
   /* check if svg checking extension otherwise assume it's a pixmap */
   extension = strrchr(filename, '.');
@@ -418,7 +417,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     symbol->imagepath = msStrdup(filename);
   }
   symbol->name = msStrdup(filename);
-  return(symbolset->numsymbols++);
+  return symbolidx;
 }
 
 int msFreeSymbolSet(symbolSetObj *symbolset)

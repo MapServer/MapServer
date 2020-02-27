@@ -329,5 +329,6 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 
+#define CONNECTIONOPTIONS 2001
 
 #endif /* MAPFILE_H */

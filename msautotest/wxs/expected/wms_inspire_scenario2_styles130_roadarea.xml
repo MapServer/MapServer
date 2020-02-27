@@ -2,6 +2,8 @@
 <NamedLayer>
 <se:Name>TN.RoadTransportNetwork.RoadLink</se:Name>
 <UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>myclass1</se:Name>
@@ -29,6 +31,8 @@
 <NamedLayer>
 <se:Name>TN.RailTransportNetwork.RailwayLink</se:Name>
 <UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>myclass3</se:Name>
@@ -46,6 +50,8 @@
 <NamedLayer>
 <se:Name>TN.AirTransportNetwork.AirLink</se:Name>
 <UserStyle>
+<se:Name>inspire_common:DEFAULT</se:Name>
+<se:IsDefault>true</se:IsDefault>
 <se:FeatureTypeStyle>
 <se:Rule>
 <se:Name>myclass4</se:Name>
