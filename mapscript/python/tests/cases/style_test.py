@@ -250,7 +250,7 @@ class NewStylesTestCase(MapTestCase):
             exception = True
         assert exception is True
 
-        
+
 class BrushCachingTestCase(MapTestCase):
 
     def testDrawMapWithSecondPolygon(self):
