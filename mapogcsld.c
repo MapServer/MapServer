@@ -30,6 +30,7 @@
 #include "mapogcfilter.h"
 #include "mapserver.h"
 #include "mapows.h"
+#include "mapcopy.h"
 #include "cpl_string.h"
 
 #if defined(USE_CURL)
@@ -928,25 +929,10 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
     return MS_FAILURE;
 
   /* TODO : parse name of the rule */
-  /* -------------------------------------------------------------------- */
-  /*      The SLD specs assumes here that a certain FeatureType can only have*/
-  /*      rules for only one type of symbolizer.                          */
-  /* -------------------------------------------------------------------- */
   /* ==================================================================== */
   /*      For each rule a new class is created. If there are more than    */
-  /*      one symbolizer of the same type, a style is added in the        */
-  /*      same class.                                                     */
+  /*      one symbolizer, a style is added in the same class.             */
   /* ==================================================================== */
-
-  /* line symbolizer */
-  LOOP_ON_CHILD_ELEMENT(psRoot, psLineSymbolizer, "LineSymbolizer")
-  {
-    const int bNewClass = (nSymbolizer == 0);
-    msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass,
-                             pszUserStyleName);
-    psLayer->type = MS_LAYER_LINE;
-    nSymbolizer++;
-  }
 
   /* Polygon symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psPolygonSymbolizer, "PolygonSymbolizer")
@@ -957,15 +943,53 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
     psLayer->type = MS_LAYER_POLYGON;
     nSymbolizer++;
   }
+
+  /* line symbolizer */
+  LOOP_ON_CHILD_ELEMENT(psRoot, psLineSymbolizer, "LineSymbolizer")
+  {
+    const int bNewClass = (nSymbolizer == 0);
+    msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass,
+                             pszUserStyleName);
+    if (bNewClass)
+    {
+      psLayer->type = MS_LAYER_LINE;
+    }
+    if (psLayer->type == MS_LAYER_POLYGON)
+    {
+      const int nClassId = psLayer->numclasses - 1;
+      if (nClassId >= 0)
+      {
+        const int nStyleId = psLayer->class[nClassId]->numstyles - 1;
+        if (nStyleId >= 0)
+        {
+          styleObj * psStyle = psLayer->class[nClassId]->styles[nStyleId];
+          psStyle->outlinecolor = psStyle->color;
+          MS_INIT_COLOR(psStyle->color,-1,-1,-1,255);
+          MS_COPYSTRING(psStyle->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR].string,
+              psStyle->exprBindings[MS_STYLE_BINDING_COLOR].string);
+          psStyle->exprBindings[MS_STYLE_BINDING_OUTLINECOLOR].type =
+            psStyle->exprBindings[MS_STYLE_BINDING_COLOR].type;
+          msFreeExpression(&(psStyle->exprBindings[MS_STYLE_BINDING_COLOR]));
+          msInitExpression(&(psStyle->exprBindings[MS_STYLE_BINDING_COLOR]));
+        }
+      }
+    }
+    nSymbolizer++;
+  }
+
   /* Point Symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psPointSymbolizer, "PointSymbolizer")
   {
     const int bNewClass = (nSymbolizer == 0);
     msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass,
                               pszUserStyleName);
-    psLayer->type = MS_LAYER_POINT;
+    if (bNewClass)
+    {
+      psLayer->type = MS_LAYER_POINT;
+    }
     nSymbolizer++;
   }
+
   /* Text symbolizer */
   /* ==================================================================== */
   /*      For text symbolizer, here is how it is translated into          */
@@ -988,7 +1012,10 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
   LOOP_ON_CHILD_ELEMENT(psRoot, psRasterSymbolizer, "RasterSymbolizer")
   {
     msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer, pszUserStyleName);
-    psLayer->type = MS_LAYER_RASTER;
+    if (nSymbolizer == 0)
+    {
+      psLayer->type = MS_LAYER_RASTER;
+    }
   }
 
   return MS_SUCCESS;
