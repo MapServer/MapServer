@@ -10,6 +10,12 @@ cache:
   - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.0.1.zip'
   
 environment:
+
+  global:
+    TWINE_USERNAME: geographika
+    TWINE_PASSWORD:
+      secure: 6yuYlaTUIL8SRBakWTke8w==
+
   # VS 2017
   VS_VERSION: Visual Studio 15 2017
   matrix:
@@ -18,10 +24,10 @@ environment:
     SWIG_VER: swigwin-3.0.12
   - platform: x64
     PYTHON_EXECUTABLE: c:/python27-x64/python.exe
-    SWIG_VER: swigwin-4.0.1    
+    SWIG_VER: swigwin-4.0.1
   - platform: x64
     PYTHON_EXECUTABLE: c:/python36-x64/python.exe
-    SWIG_VER: swigwin-4.0.1    
+    SWIG_VER: swigwin-4.0.1
 
 services:
   - mssql2017
@@ -83,17 +89,26 @@ test_script:
   - cd %BUILD_FOLDER%/msautotest/mspython
   - "%PYTHON_EXECUTABLE% run_all_tests.py"
 
-deploy: off
-
 after_test:
   - cd %BUILD_FOLDER%
   - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
-#on_finish:
+# on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
 
 artifacts:
   - path: mapserver.zip
     name: mapserver
     type: zip
+
+deploy_script:
+  - ps: |
+        if ($env:APPVEYOR_REPO_BRANCH -ne "master" -or $env:APPVEYOR_REPO_TAG -ne $TRUE) { return }
+            if ($env:PYTHON_EXECUTABLE -eq "c:/python36-x64/python.exe") {
+            cd $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release
+                & $env:PYTHON_EXECUTABLE setup.py sdist
+            }
+            echo "Deploying Python Wheel to PyPI"
+            & $env:PYTHON_EXECUTABLE -m pip --disable-pip-version-check install twine
+            & $env:PYTHON_EXECUTABLE -m twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release\dist\*
