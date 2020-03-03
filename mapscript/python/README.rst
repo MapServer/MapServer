@@ -1,8 +1,8 @@
-Python MapScript for MapServer 7.4.0 README
-===========================================
+Python MapScript for MapServer README
+=====================================
 
 :Author: MapServer Team
-:Last Updated: 2019-06-04
+:Last Updated: 2020-03-02
 
 Introduction
 ------------
@@ -17,15 +17,16 @@ many different programming languages.
 + Language agnostic documentation is available at http://mapserver.org/mapscript/introduction.html
 + Python specific documentation is available at http://mapserver.org/mapscript/python.html
 
-For working with Mapfiles in Python the `mappyfile <https://mappyfile.readthedocs.io/en/latest/>`_ project is 
-also available, this allows creating, parsing, formatting, and validating Mapfiles without any dependencies on MapServer. 
+When working with Mapfiles in Python the `mappyfile <https://mappyfile.readthedocs.io/en/latest/>`_ project can
+also be used, this allows creating, parsing, formatting, and validating Mapfiles without any dependencies on MapServer. 
 
 Wheels and PyPI
 ---------------
 
-Python `wheels <https://wheel.readthedocs.io/en/stable/>`_ have been created for Windows and uploaded to 
-`PyPI <https://pypi.org/>`_ - the Python Package Index. Note - MapServer binaries still need to be installed on the system, 
-and are not included in the wheel itself, see the *Installation* section below. 
+Python `wheels <https://wheel.readthedocs.io/en/stable/>`_ for Windows are automatically and uploaded to 
+`PyPI <https://pypi.org/>`_ - the Python Package Index on each MapServer release. 
+Note - MapServer binaries still need to be installed on the system, and are not included in the wheel itself, 
+see the *Installation* section below.
 
 Advantages of ready-made wheels on PyPI include:
 
@@ -34,18 +35,20 @@ Advantages of ready-made wheels on PyPI include:
 + mapscript can be easily added to a Python `Virtual Environment <https://docs.python-guide.org/dev/virtualenvs/>`_
 + Python2 or Python3 versions of mapscript can be installed and work with a single installation of MapServer
 
-Currently the following wheels are built:
+Wheels are built based on the `Appveyor build environments <https://github.com/mapserver/mapserver/blob/master/appveyor.yml>`_. 
+These are as follows at the time of writing:
 
-+ Python 2.7 x64 for MapServer 7.4.0
-+ Python 3.6 x64 for MapServer 7.4.0
++ Python 2.7 x32
++ Python 2.7 x64
++ Python 3.6 x64
 
-The mapscript wheels have been compiled using Visual Studio 2017 version 15.3 (``MSVC++ 14.11 _MSC_VER == 1911``). 
-Linux wheels are also planned, using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
+The mapscript wheels have been compiled using Visual Studio 2017 version 15 (``MSVC++ 14.11 _MSC_VER == 1911``). 
+Linux Wheels may also be available in the future using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
 
 No source distributions will be provided on PyPI - to build from source requires the full MapServer source code,
 in which case it is easiest to take a copy of the full MapServer project and run the CMake process detailed below. 
 
-The wheels contain a full test suite and sample data that can be run to check that the installed MapServer is
+The Wheels contain a full test suite and sample data that can be run to check that the installed MapServer is
 running correctly. 
 
 ..
@@ -207,7 +210,7 @@ SWIG can also be run manually, without using CMake. This may allow further optim
 .. code-block:: bat
 
     cd C:\Projects\mapserver\build
-    SET PATH=C:\MapServerBuild\swigwin-3.0.12;%PATH%
+    SET PATH=C:\MapServerBuild\swigwin-4.0.1;%PATH%
     swig -python -shadow -o mapscript_wrap.c ../mapscript.i
 
 SWIG has several command line options to control the output, examples of which are shown below:
