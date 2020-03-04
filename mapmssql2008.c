@@ -1424,18 +1424,20 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
           layerinfo->geom_column_type, rect.minx, rect.miny, layerinfo->user_srid);
   } else if (strcasecmp(layerinfo->geom_column_type, "geography") == 0) {
 	  /* SQL Server has a problem when x is -180 or 180 */  
-	  double minx = rect.minx == -180? -179.999: rect.minx;
-	  double maxx = rect.maxx == 180? 179.999: rect.maxx;
+	  double minx = rect.minx <= -180? -179.999: rect.minx;
+	  double maxx = rect.maxx >= 180? 179.999: rect.maxx;
+	  double miny = rect.miny < -90? -90: rect.miny;
+	  double maxy = rect.maxy > 90? 90: rect.maxy;
 	  sprintf(box3d, "Geography::STGeomFromText('CURVEPOLYGON(CIRCULARSTRING(%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
-          rect.minx, rect.miny,
-          rect.minx + (rect.maxx - rect.minx) / 2, rect.miny,
-          rect.maxx, rect.miny,
-          rect.maxx, rect.miny + (rect.maxy - rect.miny) / 2,
-          rect.maxx, rect.maxy,
-          rect.minx + (rect.maxx - rect.minx) / 2, rect.maxy,
-          rect.minx, rect.maxy,
-          rect.minx, rect.miny + (rect.maxy - rect.miny) / 2,
-          rect.minx, rect.miny,
+          minx, miny,
+          minx + (maxx - minx) / 2, miny,
+          maxx, miny,
+          maxx, miny + (maxy - miny) / 2,
+          maxx, maxy,
+          minx + (maxx - minx) / 2, maxy,
+          minx, maxy,
+          minx, miny + (maxy - miny) / 2,
+          minx, miny,
           layerinfo->user_srid);  
   } else {
       sprintf(box3d, "Geometry::STGeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
