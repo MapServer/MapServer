@@ -12,9 +12,9 @@ cache:
 environment:
 
   global:
-    TWINE_USERNAME: geographika
+    TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
-      secure: 6yuYlaTUIL8SRBakWTke8w==
+      secure: mHoJHeXdXbBNoDf7MA4ZEg==
 
   # VS 2017
   VS_VERSION: Visual Studio 15 2017
