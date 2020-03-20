@@ -1319,15 +1319,26 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
   const char * ops = "Add+Sub-Mul*Div/";
   styleObj * psStyle = psObj;
   labelObj * psLabel = psObj;
-  int lbinding = binding;
-  expressionObj *exprBindings = psStyle->exprBindings;
-  int *nexprbindings = &psStyle->nexprbindings;
+  int lbinding;
+  expressionObj *exprBindings;
+  int *nexprbindings;
   enum { MS_STYLE_BASE = 0, MS_LABEL_BASE = 100 };
-  if (objtype == MS_OBJ_LABEL)
+
+  switch (objtype)
   {
-    lbinding += MS_LABEL_BASE;
-    exprBindings = psLabel->exprBindings;
-    nexprbindings = &psLabel->nexprbindings;
+    case MS_OBJ_STYLE:
+      lbinding = binding + MS_STYLE_BASE;
+      exprBindings = psStyle->exprBindings;
+      nexprbindings = &psStyle->nexprbindings;
+      break;
+    case MS_OBJ_LABEL:
+      lbinding = binding + MS_LABEL_BASE;
+      exprBindings = psLabel->exprBindings;
+      nexprbindings = &psLabel->nexprbindings;
+      break;
+    default:
+      return MS_FAILURE;
+      break;
   }
 
   switch (psRoot->eType)
@@ -1335,13 +1346,14 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
     case CXT_Text:
       // Parse a raw value
       {
-        char * literalString = NULL;
-        literalString = msStringConcatenate(literalString, "(");
-        literalString = msStringConcatenate(literalString, psRoot->pszValue);
-        literalString = msStringConcatenate(literalString, ")");
+        msStringBuffer * literal = msStringBufferAlloc();
+        msStringBufferAppend(literal, "(");
+        msStringBufferAppend(literal, psRoot->pszValue);
+        msStringBufferAppend(literal, ")");
         msFreeExpression(&(exprBindings[binding]));
         msInitExpression(&(exprBindings[binding]));
-        exprBindings[binding].string = literalString;
+        exprBindings[binding].string =
+            msStrdup(msStringBufferReleaseStringAndFree(literal));
         exprBindings[binding].type = MS_STRING;
       }
       switch (lbinding)
@@ -1437,14 +1449,13 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       if (strcasecmp(psRoot->pszValue,"Literal") == 0 && psRoot->psChild)
       {
         // Parse a <ogc:Literal> element
-        status = msSLDParseOgcExpression(psRoot->psChild, psStyle, binding,
-            objtype);
+        status = msSLDParseOgcExpression(psRoot->psChild, psObj, binding, objtype);
       }
       else if (strcasecmp(psRoot->pszValue,"PropertyName") == 0
           && psRoot->psChild)
       {
         // Parse a <ogc:PropertyName> element
-        char * propertyString = NULL;
+        msStringBuffer * property = msStringBufferAlloc();
         char * strDelim = "";
 
         switch (lbinding)
@@ -1455,13 +1466,14 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           case MS_LABEL_BASE + MS_LABEL_BINDING_OUTLINECOLOR:
             strDelim = "\"";
           default:
-            propertyString = msStringConcatenate(propertyString, strDelim);
-            propertyString = msStringConcatenate(propertyString, "[");
-            propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
-            propertyString = msStringConcatenate(propertyString, "]");
-            propertyString = msStringConcatenate(propertyString, strDelim);
+            msStringBufferAppend(property, strDelim);
+            msStringBufferAppend(property, "[");
+            msStringBufferAppend(property, psRoot->psChild->pszValue);
+            msStringBufferAppend(property, "]");
+            msStringBufferAppend(property, strDelim);
             msInitExpression(&(psStyle->exprBindings[binding]));
-            exprBindings[binding].string = propertyString;
+            exprBindings[binding].string =
+                msStrdup(msStringBufferReleaseStringAndFree(property));
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
             break;
@@ -1473,32 +1485,29 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       {
         // Parse an arithmetic element <ogc:Add>, <ogc:Sub>, <ogc:Mul>, <ogc:Div>
         const char operator[2] = { *(strstr(ops, psRoot->pszValue)+3), '\0' };
-        char * expressionString = NULL;
+        msStringBuffer * expression = msStringBufferAlloc();
 
         // Parse first operand
-        expressionString = msStringConcatenate(expressionString, "(");
+        msStringBufferAppend(expression, "(");
         msInitExpression(&(exprBindings[binding]));
         status = msSLDParseOgcExpression(psRoot->psChild, psObj, binding, objtype);
 
         // Parse second operand
         if (status == MS_SUCCESS)
         {
-          expressionString = msStringConcatenate(expressionString,
-              exprBindings[binding].string);
-          expressionString = msStringConcatenate(expressionString,
-              operator);
+          msStringBufferAppend(expression, exprBindings[binding].string);
+          msStringBufferAppend(expression, operator);
           msFree(exprBindings[binding].string);
           msInitExpression(&(exprBindings[binding]));
           status = msSLDParseOgcExpression(psRoot->psChild->psNext,
               psObj, binding, objtype);
           if (status == MS_SUCCESS)
           {
-            expressionString = msStringConcatenate(expressionString,
-                exprBindings[binding].string);
-            expressionString = msStringConcatenate(expressionString,
-                ")");
+            msStringBufferAppend(expression, exprBindings[binding].string);
+            msStringBufferAppend(expression, ")");
             msFree(exprBindings[binding].string);
-            exprBindings[binding].string = expressionString;
+            exprBindings[binding].string =
+                msStrdup(msStringBufferReleaseStringAndFree(expression));
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
           }
