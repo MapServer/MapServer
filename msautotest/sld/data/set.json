@@ -3,7 +3,8 @@
   "features": [
     {
       "type": "Feature",
-      "properties": {"N_EDGES":6},
+      "properties": {"N_EDGES":6,
+        "NAME": "Hauts-de-France"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -42,7 +43,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":5},
+      "properties": {"N_EDGES":5,
+        "NAME": "Centre-Val de Loire"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -77,7 +79,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":4},
+      "properties": {"N_EDGES":4,
+        "NAME": "Grand-Est"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -108,7 +111,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":4},
+      "properties": {"N_EDGES":4,
+        "NAME": "Bretagne"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -139,7 +143,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":8},
+      "properties": {"N_EDGES":8,
+        "NAME": "Nouvelle-Aquitaine"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -186,7 +191,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":6},
+      "properties": {"N_EDGES":6,
+        "NAME": "Occitanie"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -225,7 +231,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":4},
+      "properties": {"N_EDGES":4,
+        "NAME": "Pays de la Loire"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -256,7 +263,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":6},
+      "properties": {"N_EDGES":6,
+        "NAME": "Normandie"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -295,7 +303,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":4},
+      "properties": {"N_EDGES":4,
+        "NAME": "Bourgogne-Franche-Comté"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -326,7 +335,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":7},
+      "properties": {"N_EDGES":7,
+        "NAME": "Auvergne-Rhône-Alpes"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -369,7 +379,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":5},
+      "properties": {"N_EDGES":5,
+        "NAME": "Provence-Alpes-Côte d'Azur"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -404,7 +415,8 @@
     },
     {
       "type": "Feature",
-      "properties": {"N_EDGES":4},
+      "properties": {"N_EDGES":4,
+        "NAME": "Île-de-France"},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
