@@ -2932,9 +2932,9 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   if (psLabel )
   {
     msStringBuffer * classtext = msStringBufferAlloc();
+    msStringBufferAppend(classtext, "(");
     if (CPLGetXMLNode(psLabel, "PropertyName"))
     {
-      msStringBufferAppend(classtext, "(");
       for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
       {
         if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
@@ -2950,18 +2950,18 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
           msStringBufferAppend(classtext, "]\"");
         }
       }
-      msStringBufferAppend(classtext, ")");
     }
     else
     {
       /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
       if (psLabel->psChild && psLabel->psChild->pszValue)
       {
-        msStringBufferAppend(classtext, "(\"[");
+        msStringBufferAppend(classtext, "\"");
         msStringBufferAppend(classtext, psLabel->psChild->pszValue);
-        msStringBufferAppend(classtext, "]\")");
+        msStringBufferAppend(classtext, "\"");
       }
     }
+    msStringBufferAppend(classtext, ")");
     msLoadExpressionString(&psClass->text, msStringBufferReleaseStringAndFree(classtext));
 
     {
