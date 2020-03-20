@@ -2933,36 +2933,36 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   {
     msStringBuffer * classtext = msStringBufferAlloc();
     msStringBufferAppend(classtext, "(");
-    if (CPLGetXMLNode(psLabel, "PropertyName"))
+    for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
     {
-      for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
+      if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
       {
-        if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
-        {
-          msStringBufferAppend(classtext, psTmpNode->pszValue);
-        }
-        else if (psTmpNode->eType == CXT_Element &&
-                 strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
-                 CPLGetXMLValue(psTmpNode, NULL, NULL))
-        {
-          msStringBufferAppend(classtext, "\"[");
-          msStringBufferAppend(classtext, CPLGetXMLValue(psTmpNode, NULL, NULL));
-          msStringBufferAppend(classtext, "]\"");
-        }
+        msStringBufferAppend(classtext, "\"");
+        msStringBufferAppend(classtext, psTmpNode->pszValue);
+        msStringBufferAppend(classtext, "\"");
       }
-    }
-    else
-    {
-      /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
-      if (psLabel->psChild && psLabel->psChild->pszValue)
+      else if (psTmpNode->eType == CXT_Element
+               && strcasecmp(psTmpNode->pszValue,"Literal") == 0
+               && psTmpNode->psChild)
       {
         msStringBufferAppend(classtext, "\"");
-        msStringBufferAppend(classtext, psLabel->psChild->pszValue);
+        msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
         msStringBufferAppend(classtext, "\"");
+      }
+      else if (psTmpNode->eType == CXT_Element
+               && strcasecmp(psTmpNode->pszValue,"PropertyName") == 0
+               && psTmpNode->psChild)
+      {
+        msStringBufferAppend(classtext, "\"[");
+        msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
+        msStringBufferAppend(classtext, "]\"");
       }
     }
     msStringBufferAppend(classtext, ")");
-    msLoadExpressionString(&psClass->text, msStringBufferReleaseStringAndFree(classtext));
+    if (strlen(msStringBufferGetString(classtext)) > 2)
+    {
+      msLoadExpressionString(&psClass->text, msStringBufferReleaseStringAndFree(classtext));
+    }
 
     {
       /* font */
