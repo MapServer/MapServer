@@ -35,20 +35,19 @@
 #include <stdarg.h>
 #include "../../maperror.h"
 
-#define MAX_EXCEPTION_MSG 256
-
 zend_class_entry *mapscript_ce_mapscriptexception;
 
 zval* mapscript_throw_exception(char *format TSRMLS_DC, ...)
 {
   va_list args;
-  char message[MAX_EXCEPTION_MSG];
+  char message[MESSAGELENGTH];
 #ifdef ZTS
   va_start(args, TSRMLS_C);
 #else
   va_start(args, format);
 #endif
-  vsprintf(message, format, args);
+  //prevent buffer overflow
+  vsnprintf(message, MESSAGELENGTH, format, args);
   va_end(args);
   return zend_throw_exception(mapscript_ce_mapscriptexception, message, 0 TSRMLS_CC);
 }
@@ -56,7 +55,7 @@ zval* mapscript_throw_exception(char *format TSRMLS_DC, ...)
 zval* mapscript_throw_mapserver_exception(char *format TSRMLS_DC, ...)
 {
   va_list args;
-  char message[MAX_EXCEPTION_MSG];
+  char message[MESSAGELENGTH];
   errorObj *ms_error;
 
   ms_error = msGetErrorObj();
@@ -73,21 +72,24 @@ zval* mapscript_throw_mapserver_exception(char *format TSRMLS_DC, ...)
 #else
   va_start(args, format);
 #endif
-  vsprintf(message, format, args);
+  //prevent buffer overflow
+  vsnprintf(message, MESSAGELENGTH, format, args);
   va_end(args);
-  return mapscript_throw_exception(message TSRMLS_CC);
+  //prevent format string attack
+  return mapscript_throw_exception("%s", message TSRMLS_CC);
 }
 
 void mapscript_report_php_error(int error_type, char *format TSRMLS_DC, ...)
 {
   va_list args;
-  char message[MAX_EXCEPTION_MSG];
+  char message[MESSAGELENGTH];
 #ifdef ZTS
   va_start(args, TSRMLS_C);
 #else
   va_start(args, format);
 #endif
-  vsprintf(message, format, args);
+  //prevent buffer overflow
+  vsnprintf(message, MESSAGELENGTH, format, args); 
   va_end(args);
   php_error_docref(NULL TSRMLS_CC, error_type, "%s,", message);
 }
