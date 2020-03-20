@@ -658,13 +658,22 @@ int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
 
 int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses)
 {
+  return msShapeGetNextClass(-1, layer, map, shape, classgroup, numclasses);
+}
+
+int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map,
+    shapeObj *shape, int *classgroup, int numclasses)
+{
   int i, iclass;
+
+  if (currentclass < 0)
+    currentclass = -1;
 
   if (layer->numclasses > 0) {
     if (classgroup == NULL || numclasses <=0)
       numclasses = layer->numclasses;
 
-    for(i=0; i<numclasses; i++) {
+    for(i=currentclass+1; i<numclasses; i++) {
       if (classgroup)
         iclass = classgroup[i];
       else
@@ -689,7 +698,18 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
       }
 
       if(layer->class[iclass]->status != MS_DELETE && msEvalExpression(layer, shape, &(layer->class[iclass]->expression), layer->classitemindex) == MS_TRUE)
-        return(iclass);
+      {
+        if (layer->class[iclass]->isfallback && currentclass != -1)
+        {
+          // Class is not applicable if it is flagged as fallback (<ElseFilter/> tag in SLD)
+          // but other classes have been applied before.
+          return -1;
+        }
+        else
+        {
+          return(iclass);
+        }
+      }
     }
   }
 

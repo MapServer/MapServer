@@ -489,6 +489,7 @@ extern "C" {
   enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
   enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION /* only used for parser backwards compatibility */, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX, MS_LAYER_CHART};
   enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
+  enum MS_RENDER_MODE {MS_FIRST_MATCHING_CLASS, MS_ALL_MATCHING_CLASSES};
 
 #define MS_POSITIONS_LENGTH 14
   enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_NONE, MS_AUTO2,MS_FOLLOW};
@@ -1182,6 +1183,8 @@ typedef struct labelObj labelObj;
 #endif
 
     int status;
+    int isfallback; // TRUE if this class should be applied if and only if      
+                    // no other class is applicable (e.g. SLD <ElseFilter/>)
 
 #ifndef SWIG
     styleObj **styles;
@@ -1647,6 +1650,9 @@ typedef struct labelObj labelObj;
     char *group; /* shouldn't be unique it's supposed to be a group right? */
 
     int status; /* on or off */
+    enum MS_RENDER_MODE rendermode;
+            // MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
+            // MS_ALL_MATCHING_CLASSES: SLD behavior
 
 #ifndef SWIG
     /* RFC86 Scale-dependent token replacements */
@@ -2680,6 +2686,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
   MS_DLL_EXPORT int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex);
   MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses);
+  MS_DLL_EXPORT int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses);
   MS_DLL_EXPORT int msShapeCheckSize(shapeObj *shape, double minfeaturesize);
   MS_DLL_EXPORT char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl);

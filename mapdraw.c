@@ -924,6 +924,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         drawmode=MS_DRAWMODE_FEATURES;
   char        annotate=MS_TRUE;
   shapeObj    shape;
+  shapeObj    savedShape;
   rectObj     searchrect;
   char        cache=MS_FALSE;
   int         maxnumstyles=1;
@@ -1004,9 +1005,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     return MS_FAILURE;
   }
 
-  /* step through the target shapes */
-  msInitShape(&shape);
-
   nclasses = 0;
   classgroup = NULL;
   if(layer->classgroup && layer->numclasses > 0)
@@ -1015,24 +1013,85 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->minfeaturesize > 0)
     minfeaturesize = Pix2LayerGeoref(map, layer, layer->minfeaturesize);
 
-  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
+  // Select how to render classes
+  //    MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
+  //    MS_ALL_MATCHING_CLASSES: SLD behavior
+  int ref_rendermode;
+  char * rendermodestr = msLayerGetProcessingKey(layer, "RENDERMODE");
+  if (layer->rendermode == MS_ALL_MATCHING_CLASSES)
+  {
+    // SLD takes precedence
+    ref_rendermode = MS_ALL_MATCHING_CLASSES;
+  }
+  else if (!rendermodestr)
+  {
+    // Default Mapfile
+    ref_rendermode = MS_FIRST_MATCHING_CLASS;
+  }
+  else if (!strcmp(rendermodestr,"FIRST_MATCHING_CLASS"))
+  {
+    // Explicit default Mapfile
+    ref_rendermode = MS_FIRST_MATCHING_CLASS;
+  }
+  else if (!strcmp(rendermodestr,"ALL_MATCHING_CLASSES"))
+  {
+    // SLD-like Mapfile
+    ref_rendermode = MS_ALL_MATCHING_CLASSES;
+  }
+  else
+  {
+    msLayerClose(layer);
+    msSetError(MS_MISCERR,
+    "Unknown RENDERMODE: %s, should be one of: FIRST_MATCHING_CLASS, ALL_MATCHING_CLASSES.",
+    "msDrawVectorLayer()",
+    rendermodestr);
+    return MS_FAILURE;
+  }
 
-    /* Check if the shape size is ok to be drawn */
-    if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) && (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)) {
-      if(layer->debug >= MS_DEBUGLEVEL_V)
-        msDebug("msDrawVectorLayer(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+  /* step through the target shapes and their classes */
+  msInitShape(&shape);
+  int classindex = -1;
+  int classcount = 0;
+  for (;;) {
+    int rendermode;
+    if (classindex == -1) {
       msFreeShape(&shape);
-      continue;
+      status = msLayerNextShape(layer, &shape);
+      if (status != MS_SUCCESS) {
+        break;
+      }
+
+      /* Check if the shape size is ok to be drawn */
+      if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) && (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)) {
+        if(layer->debug >= MS_DEBUGLEVEL_V)
+          msDebug("msDrawVectorLayer(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+        continue;
+      }
+      classcount = 0;
     }
 
-    shape.classindex = msShapeGetClass(layer, map, &shape, classgroup, nclasses);
-    if((shape.classindex == -1) || (layer->class[shape.classindex]->status == MS_OFF)) {
-      msFreeShape(&shape);
+    classindex = msShapeGetNextClass(classindex, layer, map, &shape, classgroup, nclasses);
+    if((classindex == -1) || (layer->class[classindex]->status == MS_OFF)) {
       continue;
+    }
+    shape.classindex = classindex;
+
+    // When only one class is applicable, rendering mode is forced to its default,
+    // i.e. only the first applicable class is actually applied. As a consequence,
+    // cache can be enabled when relevant.
+    classcount++;
+    rendermode = ref_rendermode;
+    if ((classcount == 1) && (msShapeGetNextClass(classindex, layer, map, &shape, classgroup, nclasses) == -1))
+    {
+      rendermode = MS_FIRST_MATCHING_CLASS;
+    }
+
+    if (rendermode == MS_FIRST_MATCHING_CLASS)
+    {
+      classindex = -1;
     }
 
     if(maxfeatures >=0 && featuresdrawn >= maxfeatures) {
-      msFreeShape(&shape);
       status = MS_DONE;
       break;
     }
@@ -1055,19 +1114,24 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       if(strcasecmp(layer->styleitem, "AUTO") == 0) {
         if(msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
           retcode = MS_FAILURE;
-          msFreeShape(&shape);
           break;
         }
       } else {
         /* Generic feature style handling as per RFC-61 */
         if(msLayerGetFeatureStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
           retcode = MS_FAILURE;
-          msFreeShape(&shape);
           break;
         }
       }
 
       /* __TODO__ For now, we can't cache features with 'AUTO' style */
+      cache = MS_FALSE;
+    }
+
+    if (rendermode == MS_ALL_MATCHING_CLASSES)
+    {
+      // Cache is designed to handle only one class. Therefore it is
+      // disabled when using SLD "painters model" rendering mode.
       cache = MS_FALSE;
     }
 
@@ -1081,6 +1145,16 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
+    }
+
+    if (rendermode == MS_ALL_MATCHING_CLASSES)
+    {
+      // In SLD "painters model" rendering mode, all applicable classes are actually applied.
+      // Coordinates stored in the shape must keep their original values for
+      // the shape to be drawn multiple times.
+      // Here the original shape is saved.
+      msInitShape(&savedShape);
+      msCopyShape(&shape, &savedShape);
     }
 
     if (cache) {
@@ -1109,20 +1183,28 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     else
       status = msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles  */
+
+    if (rendermode == MS_ALL_MATCHING_CLASSES)
+    {
+      // In SLD "painters model" rendering mode, all applicable classes are actually applied.
+      // Coordinates stored in the shape must keep their original values for
+      // the shape to be drawn multiple times.
+      // Here the original shape is restored.
+      msCopyShape(&savedShape, &shape);
+      msFreeShape(&savedShape);
+    }
+
     if(status != MS_SUCCESS) {
-      msFreeShape(&shape);
       retcode = MS_FAILURE;
       break;
     }
     
     if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
-      msFreeShape(&shape);
       continue;
     }
 
     if(cache) {
       if(insertFeatureList(&shpcache, &shape) == NULL) {
-        msFreeShape(&shape);
         retcode = MS_FAILURE; /* problem adding to the cache */
         break;
       }
@@ -1130,8 +1212,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);
 
-    msFreeShape(&shape);
   }
+  msFreeShape(&shape);
 
   if (classgroup)
     msFree(classgroup);
