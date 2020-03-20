@@ -2904,8 +2904,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   char *pszName=NULL, *pszFontFamily=NULL, *pszFontStyle=NULL;
   char *pszFontWeight=NULL;
   CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
-  CPLXMLNode *psFill = NULL, *psPropertyName=NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
-  char szTmp[100];
+  CPLXMLNode *psFill = NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
   labelObj *psLabelObj = NULL;
   szFontName[0]='\0';
 
@@ -2930,45 +2929,42 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
    - <TextSymbolizer><Label><ogc:PropertyName>MY_COLUMN</ogc:PropertyName></Label>
   Bug 1857 */
   psLabel = CPLGetXMLNode(psRoot, "Label");
-  if (psLabel ) {
-    char *pszClassText = NULL;
-    psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
-    if (psPropertyName)
+  if (psLabel )
+  {
+    msStringBuffer * classtext = msStringBufferAlloc();
+    if (CPLGetXMLNode(psLabel, "PropertyName"))
     {
-      pszClassText = msStringConcatenate(pszClassText, "(");
+      msStringBufferAppend(classtext, "(");
       for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
       {
         if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
         {
-          pszClassText = msStringConcatenate(pszClassText, psTmpNode->pszValue);
+          msStringBufferAppend(classtext, psTmpNode->pszValue);
         }
         else if (psTmpNode->eType == CXT_Element &&
                  strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
                  CPLGetXMLValue(psTmpNode, NULL, NULL))
         {
-          snprintf(szTmp, sizeof(szTmp), "\"[%s]\"", CPLGetXMLValue(psTmpNode, NULL, NULL));
-          pszClassText = msStringConcatenate(pszClassText, szTmp);
+          msStringBufferAppend(classtext, "\"[");
+          msStringBufferAppend(classtext, CPLGetXMLValue(psTmpNode, NULL, NULL));
+          msStringBufferAppend(classtext, "]\"");
         }
       }
-      pszClassText = msStringConcatenate(pszClassText, ")");
+      msStringBufferAppend(classtext, ")");
     }
     else
     {
       /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
       if (psLabel->psChild && psLabel->psChild->pszValue)
       {
-        pszClassText = msStringConcatenate(pszClassText, "(\"[");
-        pszClassText = msStringConcatenate(pszClassText, psLabel->psChild->pszValue);
-        pszClassText = msStringConcatenate(pszClassText, "]\")");
+        msStringBufferAppend(classtext, "(\"[");
+        msStringBufferAppend(classtext, psLabel->psChild->pszValue);
+        msStringBufferAppend(classtext, "]\")");
       }
     }
+    msLoadExpressionString(&psClass->text, msStringBufferReleaseStringAndFree(classtext));
 
-/// if (pszClassText)
-    { /* pszItem) */
-
-      msLoadExpressionString(&psClass->text, pszClassText);
-      free(pszClassText);
-
+    {
       /* font */
       psFont = CPLGetXMLNode(psRoot, "Font");
       if (psFont) {
@@ -3112,7 +3108,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         }
       }
 
-    }/* labelitem */
+    }
   }
 
   return MS_SUCCESS;
