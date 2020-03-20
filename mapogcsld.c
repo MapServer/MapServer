@@ -2905,8 +2905,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   char *pszFontWeight=NULL;
   CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
   CPLXMLNode *psFill = NULL, *psPropertyName=NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
-  CPLXMLNode *psTmpNode = NULL;
-  char *pszClassText = NULL;
   char szTmp[100];
   labelObj *psLabelObj = NULL;
   szFontName[0]='\0';
@@ -2933,38 +2931,40 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   Bug 1857 */
   psLabel = CPLGetXMLNode(psRoot, "Label");
   if (psLabel ) {
-    psTmpNode = psLabel->psChild;
+    char *pszClassText = NULL;
     psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
-    if (psPropertyName) {
-      while (psTmpNode) {
-        /* open bracket to get valid expression */
-        if (pszClassText == NULL)
-          pszClassText = msStringConcatenate(pszClassText, "(");
-
-        if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue) {
+    if (psPropertyName)
+    {
+      pszClassText = msStringConcatenate(pszClassText, "(");
+      for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
+      {
+        if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
+        {
           pszClassText = msStringConcatenate(pszClassText, psTmpNode->pszValue);
-        } else if (psTmpNode->eType == CXT_Element &&
-                   strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
-                   CPLGetXMLValue(psTmpNode, NULL, NULL)) {
+        }
+        else if (psTmpNode->eType == CXT_Element &&
+                 strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
+                 CPLGetXMLValue(psTmpNode, NULL, NULL))
+        {
           snprintf(szTmp, sizeof(szTmp), "\"[%s]\"", CPLGetXMLValue(psTmpNode, NULL, NULL));
           pszClassText = msStringConcatenate(pszClassText, szTmp);
         }
-        psTmpNode = psTmpNode->psNext;
-
       }
-      /* close bracket to get valid expression */
-      if (pszClassText != NULL)
-        pszClassText = msStringConcatenate(pszClassText, ")");
-    } else {
+      pszClassText = msStringConcatenate(pszClassText, ")");
+    }
+    else
+    {
       /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
-      if (psLabel->psChild && psLabel->psChild->pszValue) {
+      if (psLabel->psChild && psLabel->psChild->pszValue)
+      {
         pszClassText = msStringConcatenate(pszClassText, "(\"[");
         pszClassText = msStringConcatenate(pszClassText, psLabel->psChild->pszValue);
         pszClassText = msStringConcatenate(pszClassText, "]\")");
       }
     }
 
-    if (pszClassText) { /* pszItem) */
+/// if (pszClassText)
+    { /* pszItem) */
 
       msLoadExpressionString(&psClass->text, pszClassText);
       free(pszClassText);
