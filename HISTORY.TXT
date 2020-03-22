@@ -12,6 +12,19 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.0-beta1 release (2020-03-22)
+--------------------------------
+
+- Full support for PROJ6 API (#5888)
+
+- Enable PointZM data support (X,Y,Z,M coordinates) by default
+
+- SLD support enhancements (RFC 124)
+
+- CONNECTIONOPTIONS support in mapfile LAYER (RFC 125)
+
+- Enforce C99 and C++11 build requirements (RFC 128)
+
 7.4.4 release (2020-3-20)
 -------------------------
 
