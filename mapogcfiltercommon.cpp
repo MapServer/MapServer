@@ -26,55 +26,86 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
+#ifdef USE_OGR
+#include "cpl_minixml.h"
+#endif
+
 #include "mapogcfilter.h"
 #include "mapserver.h"
 #include "mapows.h"
 #include "mapowscommon.h"
-#include "cpl_minixml.h"
 
-#include <string>
+#ifdef USE_OGR
 
-static std::string FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
+char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 {
+  const size_t bufferSize = 1024;
+  char szBuffer[1024];
+  char szTmp[512];
+  char *pszValue = NULL;
+
+  const char *pszWild = NULL;
+  const char *pszSingle = NULL;
+  const char *pszEscape = NULL;
+  int  bCaseInsensitive = 0;
+  FEPropertyIsLike* propIsLike;
+
+  int nLength=0, i=0, iTmp=0;
+
   /* From http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html#tag_09_04 */
   /* also add double quote because we are within a string */
   const char* pszRegexSpecialCharsAndDoubleQuote = "\\^${[().*+?|\"";
 
   if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode || !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
-    return std::string();
+    return NULL;
 
-  const FEPropertyIsLike* propIsLike = (const FEPropertyIsLike *)psFilterNode->pOther;
-  const char* pszWild = propIsLike->pszWildCard;
-  const char* pszSingle = propIsLike->pszSingleChar;
-  const char* pszEscape = propIsLike->pszEscapeChar;
-  const bool bCaseInsensitive = propIsLike->bCaseInsensitive != 0;
+  propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
+  pszWild = propIsLike->pszWildCard;
+  pszSingle = propIsLike->pszSingleChar;
+  pszEscape = propIsLike->pszEscapeChar;
+  bCaseInsensitive = propIsLike->bCaseInsensitive;
 
   if (!pszWild || strlen(pszWild) == 0 || !pszSingle || strlen(pszSingle) == 0 || !pszEscape || strlen(pszEscape) == 0)
-    return std::string();
+    return NULL;
 
   /* -------------------------------------------------------------------- */
   /*      Use operand with regular expressions.                           */
   /* -------------------------------------------------------------------- */
-  std::string expr("(\"[");
+  szBuffer[0] = '\0';
+  sprintf(szTmp, "%s", "(\"[");
+  szTmp[4] = '\0';
+
+  strlcat(szBuffer, szTmp, bufferSize);
 
   /* attribute */
-  expr += psFilterNode->psLeftNode->pszValue;
+  strlcat(szBuffer, psFilterNode->psLeftNode->pszValue, bufferSize);
+  szBuffer[strlen(szBuffer)] = '\0';
 
   /* #3521 */
-  if (bCaseInsensitive )
-    expr += "]\" ~* \"";
+  if (bCaseInsensitive == 1)
+    sprintf(szTmp, "%s", "]\" ~* \"");
   else
-    expr += "]\" ~ \"";
+    sprintf(szTmp, "%s", "]\" ~ \"");
+  szTmp[7] = '\0';
+  strlcat(szBuffer, szTmp, bufferSize);
+  szBuffer[strlen(szBuffer)] = '\0';
 
-  const char* pszValue = psFilterNode->psRightNode->pszValue;
-  const size_t nLength = strlen(pszValue);
+  pszValue = psFilterNode->psRightNode->pszValue;
+  nLength = strlen(pszValue);
+  /* The 4 factor is in case of \. See below */
+  if( 1 + 4 * nLength + 1 + 1 + 1 >= sizeof(szTmp) )
+      return NULL;
 
+  iTmp =0;
   if (nLength > 0) {
-    expr += '^';
+    szTmp[iTmp]= '^';
+    iTmp++;
   }
-  for (size_t i=0; i<nLength; i++) {
+  for (i=0; i<nLength; i++) {
     if (pszValue[i] == pszSingle[0]) {
-      expr += '.';
+      szTmp[iTmp] = '.';
+      iTmp++;
+      szTmp[iTmp] = '\0';
     /* The Filter escape character is supposed to only escape the single, wildcard and escape character */
     } else if (pszValue[i] == pszEscape[0] && (
                     pszValue[i+1] == pszSingle[0] ||
@@ -86,7 +117,10 @@ static std::string FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *ps
              so that the regexp matches it as an ordinary character.
              But as \ is also the escape character for MapServer string, we
              must escape it again. */
-          expr += "\\" "\\" "\\" "\\";
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
       }
       else
       {
@@ -94,13 +128,16 @@ static std::string FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *ps
         /* we need to regular-expression-escape-it ! */
         if( strchr(pszRegexSpecialCharsAndDoubleQuote, pszValue[i+1]) )
         {
-            expr += '\\';
+            szTmp[iTmp++] = '\\';
         }
-        expr += pszValue[i+1];
+        szTmp[iTmp++] = pszValue[i+1];
       }
       i++;
+      szTmp[iTmp] = '\0';
     } else if (pszValue[i] == pszWild[0]) {
-      expr += ".*";
+      szTmp[iTmp++] = '.';
+      szTmp[iTmp++] = '*';
+      szTmp[iTmp] = '\0';
     }
     /* Escape regular expressions special characters and double quote */
     else if (strchr(pszRegexSpecialCharsAndDoubleQuote, pszValue[i]))
@@ -108,146 +145,169 @@ static std::string FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *ps
       if( pszValue[i] == '\\' )
       {
           /* See above explantation */
-          expr += "\\" "\\" "\\" "\\";
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
+          szTmp[iTmp++] = '\\';
       }
       else
       {
-        expr += '\\';
-        expr += pszValue[i];
+        szTmp[iTmp++] = '\\';
+        szTmp[iTmp++] = pszValue[i];
       }
+      szTmp[iTmp] = '\0';
     }
     else {
-      expr += pszValue[i];
+      szTmp[iTmp] = pszValue[i];
+      iTmp++;
+      szTmp[iTmp] = '\0';
     }
   }
   if (nLength > 0) {
-    expr += '$';
+    szTmp[iTmp]= '$';
+    iTmp++;
   }
-  expr += "\")";
-  return expr;
+  szTmp[iTmp] = '"';
+  szTmp[++iTmp] = '\0';
+#if 0
+  msDebug("like: %s\n", pszValue);
+  msDebug("regexp (with \\ escaping for MapServer use): %s\n", szTmp);
+#endif
+  strlcat(szBuffer, szTmp, bufferSize);
+  strlcat(szBuffer, ")", bufferSize);
+  return msStrdup(szBuffer);
 }
 
-static std::string FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp)
+char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
+  const size_t bufferSize = 1024;
+  char szBuffer[1024];
+  char **aszBounds = NULL;
+  int nBounds = 0;
+  int bString=0;
+  int bDateTime = 0;
+  char *pszExpression=NULL, *pszTmpEscaped;
+
   if (!psFilterNode || !(strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0))
-    return std::string();
+    return NULL;
 
   if (psFilterNode->psLeftNode == NULL || psFilterNode->psRightNode == NULL )
-    return std::string();
+    return NULL;
 
   /* -------------------------------------------------------------------- */
   /*      Get the bounds value which are stored like boundmin;boundmax    */
   /* -------------------------------------------------------------------- */
-  int nBounds = 0;
-  char** aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
+  aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
   if (nBounds != 2) {
     msFreeCharArray(aszBounds, nBounds);
-    return std::string();
+    return NULL;
   }
 
   /* -------------------------------------------------------------------- */
   /*      check if the value is a numeric value or alphanumeric. If it    */
   /*      is alphanumeric, add quotes around attribute and values.        */
   /* -------------------------------------------------------------------- */
-  bool bString = false;
-  bool bDateTime = false;
+  bString = 0;
   if (aszBounds[0]) {
-    const char* pszType = msOWSLookupMetadata(&(lp->metadata), "OFG",
-        (std::string(psFilterNode->psLeftNode->pszValue)+ "_type").c_str());
+    const char* pszType;
+    snprintf(szBuffer,  bufferSize, "%s_type",  psFilterNode->psLeftNode->pszValue);
+    pszType = msOWSLookupMetadata(&(lp->metadata), "OFG", szBuffer);
     if (pszType != NULL && (strcasecmp(pszType, "Character") == 0))
-      bString = true;
+      bString = 1;
     else if (pszType != NULL && (strcasecmp(pszType, "Date") == 0))
-      bDateTime = true;
+      bDateTime = 1;
     else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)
-      bString = true;
+      bString = 1;
   }
   if (!bString && !bDateTime) {
     if (aszBounds[1]) {
       if (FLTIsNumeric(aszBounds[1]) == MS_FALSE)
-        bString = true;
+        bString = 1;
     }
   }
 
-  std::string expr;
   /* -------------------------------------------------------------------- */
   /*      build expresssion.                                              */
   /* -------------------------------------------------------------------- */
   /* attribute */
   if (bString)
-    expr += "(\"[";
+    sprintf(szBuffer, "%s", "(\"[");
   else
-    expr += "([";
-
-  expr += psFilterNode->psLeftNode->pszValue;
+    sprintf(szBuffer, "%s", "([");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
+  
+  pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
 
   if (bString)
-    expr += "]\" ";
+    sprintf(szBuffer, "%s", "]\" ");
   else
-    expr += "] ";
+    sprintf(szBuffer, "%s", "] ");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
-  expr += " >= ";
-
-  if (bString) {
-    expr += '\"';
-  }
-  else if (bDateTime) {
-    expr += '`';
-  }
-
-  {
-      char* pszTmpEscaped = msStringEscape(aszBounds[0]);
-      expr += pszTmpEscaped;
-      if(pszTmpEscaped != aszBounds[0] ) msFree(pszTmpEscaped);
-  }
+  sprintf(szBuffer, "%s", " >= ");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   if (bString) {
-    expr += '\"';
+    pszExpression = msStringConcatenate(pszExpression, "\"");
   }
   else if (bDateTime) {
-    expr += '`';
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
 
-  expr += " AND ";
+  pszTmpEscaped = msStringEscape(aszBounds[0]);
+  snprintf(szBuffer, bufferSize, "%s", pszTmpEscaped);
+  if(pszTmpEscaped != aszBounds[0] ) msFree(pszTmpEscaped);
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
+  if (bString) {
+    pszExpression = msStringConcatenate(pszExpression, "\"");
+  }
+  else if (bDateTime) {
+    pszExpression = msStringConcatenate(pszExpression, "`");
+  }
+
+  sprintf(szBuffer, "%s", " AND ");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   if (bString)
-    expr += " \"[";
+    sprintf(szBuffer, "%s", " \"[");
   else
-    expr += " [";
+    sprintf(szBuffer, "%s", " [");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   /* attribute */
-  expr += psFilterNode->psLeftNode->pszValue;
+  pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
 
   if (bString)
-    expr += "]\" ";
+    sprintf(szBuffer, "%s", "]\" ");
   else
-    expr += "] ";
+    sprintf(szBuffer, "%s", "] ");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
-  expr += " <= ";
-
+  sprintf(szBuffer, "%s", " <= ");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
   if (bString) {
-    expr += '\"';
+    pszExpression = msStringConcatenate(pszExpression, "\"");
   }
   else if (bDateTime) {
-    expr += '`';
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
-
-  {
-      char* pszTmpEscaped = msStringEscape(aszBounds[1]);
-      expr += pszTmpEscaped;
-      if(pszTmpEscaped != aszBounds[1] ) msFree(pszTmpEscaped);
-  }
+  pszTmpEscaped = msStringEscape(aszBounds[1]);
+  snprintf(szBuffer, bufferSize, "%s", pszTmpEscaped);
+  if (pszTmpEscaped != aszBounds[1]) msFree(pszTmpEscaped);
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   if (bString) {
-    expr += '\"';
+    pszExpression = msStringConcatenate(pszExpression, "\"");
   }
   else if (bDateTime) {
-    expr += '`';
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
-  expr += ')';
+  sprintf(szBuffer, "%s", ")");
+  pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   msFreeCharArray(aszBounds, nBounds);
 
-  return expr;
+  return pszExpression;
 }
 
 char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
@@ -457,10 +517,8 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         fabs(sQueryRect.maxy - 90.0) < 1e-5)
     {
       if (lp->projection.numargs > 0) {
-        if (psNode->pszSRS) {
+        if (psNode->pszSRS)
           msInitProjection(&sProjTmp);
-          msProjectionInheritContextFrom(&sProjTmp, &lp->projection);
-        }
         if (psNode->pszSRS) {
           /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
           if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
@@ -509,10 +567,8 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     ** target is layer projection
     */
     if (!bAlreadyReprojected && lp->projection.numargs > 0) {
-      if (psNode->pszSRS) {
+      if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
-        msProjectionInheritContextFrom(&sProjTmp, &lp->projection);
-      }
       if (psNode->pszSRS) {
         /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
         if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
@@ -672,9 +728,9 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
       if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
         pszExpression = FLTGetBinaryComparisonCommonExpression(psFilterNode, lp);
       else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-        pszExpression = msStrdup(FLTGetIsLikeComparisonCommonExpression(psFilterNode).c_str());
+        pszExpression = FLTGetIsLikeComparisonCommonExpression(psFilterNode);
       else if (strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0)
-        pszExpression = msStrdup(FLTGetIsBetweenComparisonCommonExpresssion(psFilterNode, lp).c_str());
+        pszExpression = FLTGetIsBetweenComparisonCommonExpresssion(psFilterNode, lp);
     }
   } else if (psFilterNode->eType == FILTER_NODE_TYPE_LOGICAL) {
     pszExpression = FLTGetLogicalComparisonCommonExpression(psFilterNode, lp);
@@ -741,3 +797,5 @@ int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, 
 
   return retval;
 }
+
+#endif
