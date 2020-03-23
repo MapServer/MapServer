@@ -2929,33 +2929,40 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
    - <TextSymbolizer><Label><ogc:PropertyName>MY_COLUMN</ogc:PropertyName></Label>
   Bug 1857 */
   psLabel = CPLGetXMLNode(psRoot, "Label");
-  if (psLabel )
+  if (psLabel)
   {
+    char * sep = "";
     msStringBuffer * classtext = msStringBufferAlloc();
     msStringBufferAppend(classtext, "(");
     for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
     {
       if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
       {
+        msStringBufferAppend(classtext, sep);
         msStringBufferAppend(classtext, "\"");
         msStringBufferAppend(classtext, psTmpNode->pszValue);
         msStringBufferAppend(classtext, "\"");
+        sep = "+";
       }
       else if (psTmpNode->eType == CXT_Element
                && strcasecmp(psTmpNode->pszValue,"Literal") == 0
                && psTmpNode->psChild)
       {
+        msStringBufferAppend(classtext, sep);
         msStringBufferAppend(classtext, "\"");
         msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
         msStringBufferAppend(classtext, "\"");
+        sep = "+";
       }
       else if (psTmpNode->eType == CXT_Element
                && strcasecmp(psTmpNode->pszValue,"PropertyName") == 0
                && psTmpNode->psChild)
       {
+        msStringBufferAppend(classtext, sep);
         msStringBufferAppend(classtext, "\"[");
         msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
         msStringBufferAppend(classtext, "]\"");
+        sep = "+";
       }
     }
     msStringBufferAppend(classtext, ")");
