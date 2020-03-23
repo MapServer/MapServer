@@ -3004,11 +3004,11 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         msStringBufferAppend(classtext, sep);
         msStringBufferAppend(classtext, "tostring(");
 
-        labelObj * tempExpressionCollector = calloc(1,sizeof(labelObj));
-        initLabel(tempExpressionCollector);
-        msSLDParseOgcExpression(psTmpNode,tempExpressionCollector,MS_LABEL_BINDING_SIZE,MS_OBJ_LABEL);
-        msStringBufferAppend(classtext,tempExpressionCollector->exprBindings[MS_LABEL_BINDING_SIZE].string);
-        freeLabel(tempExpressionCollector);
+        labelObj tempExpressionCollector;
+        initLabel(&tempExpressionCollector);
+        msSLDParseOgcExpression(psTmpNode,&tempExpressionCollector,MS_LABEL_BINDING_SIZE,MS_OBJ_LABEL);
+        msStringBufferAppend(classtext,tempExpressionCollector.exprBindings[MS_LABEL_BINDING_SIZE].string);
+        freeLabel(&tempExpressionCollector);
 
         msStringBufferAppend(classtext, ",\"%g\")");
         sep = "+";
@@ -3018,7 +3018,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
     const char * expressionstring = msStringBufferGetString(classtext);
     if (strlen(expressionstring) > 2)
     {
-      msLoadExpressionString(&psClass->text, expressionstring);
+      msLoadExpressionString(&psClass->text, (char*)expressionstring);
     }
     msStringBufferFree(classtext);
 
