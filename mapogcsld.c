@@ -84,9 +84,9 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
       int nMaxRemoteSLDBytes;
       const char *pszMaxRemoteSLDBytes = msOWSLookupMetadata(&(map->web.metadata), "MO", "remote_sld_max_bytes");
       if(!pszMaxRemoteSLDBytes) {
-    	  nMaxRemoteSLDBytes = 1024*1024; /* 1 megaByte */
+        nMaxRemoteSLDBytes = 1024*1024; /* 1 megaByte */
       } else {
-    	  nMaxRemoteSLDBytes = atoi(pszMaxRemoteSLDBytes);
+        nMaxRemoteSLDBytes = atoi(pszMaxRemoteSLDBytes);
       }
       if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0, nMaxRemoteSLDBytes) ==  MS_SUCCESS) {
         if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
