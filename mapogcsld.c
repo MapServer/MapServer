@@ -1480,6 +1480,39 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         }
         status = MS_SUCCESS;
       }
+      else if (strcasecmp(psRoot->pszValue,"Function") == 0
+          && CPLGetXMLValue(psRoot,"name",NULL)
+          && psRoot->psChild->psNext)
+      {
+        // Parse a <ogc:Function> element
+        msStringBuffer * function = msStringBufferAlloc();
+
+        // Parse function name
+        const char * funcname = CPLGetXMLValue(psRoot,"name",NULL);
+        msStringBufferAppend(function, funcname);
+        msStringBufferAppend(function, "(");
+        msInitExpression(&(exprBindings[binding]));
+
+        // Parse arguments
+        char * sep ="";
+        for (CPLXMLNode * argument = psRoot->psChild->psNext ; argument ; argument = argument->psNext)
+        {
+          status = msSLDParseOgcExpression(argument, psObj, binding, objtype);
+          if (status != MS_SUCCESS)
+            break;
+          msStringBufferAppend(function, sep);
+          msStringBufferAppend(function, exprBindings[binding].string);
+          msFree(exprBindings[binding].string);
+          msInitExpression(&(exprBindings[binding]));
+          sep = ",";
+        }
+        msStringBufferAppend(function, ")");
+        exprBindings[binding].string =
+            msStrdup(msStringBufferReleaseStringAndFree(function));
+        exprBindings[binding].type = MS_EXPRESSION;
+        (*nexprbindings)++;
+        status = MS_SUCCESS;
+      }
       else if (strstr(ops, psRoot->pszValue)
           && psRoot->psChild && psRoot->psChild->psNext)
       {
@@ -2962,6 +2995,22 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         msStringBufferAppend(classtext, "\"[");
         msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
         msStringBufferAppend(classtext, "]\"");
+        sep = "+";
+      }
+      else if (psTmpNode->eType == CXT_Element
+               && strcasecmp(psTmpNode->pszValue,"Function") == 0
+               && psTmpNode->psChild)
+      {
+        msStringBufferAppend(classtext, sep);
+        msStringBufferAppend(classtext, "tostring(");
+
+        labelObj * tempExpressionCollector = calloc(1,sizeof(labelObj));
+        initLabel(tempExpressionCollector);
+        msSLDParseOgcExpression(psTmpNode,tempExpressionCollector,MS_LABEL_BINDING_SIZE,MS_OBJ_LABEL);
+        msStringBufferAppend(classtext,tempExpressionCollector->exprBindings[MS_LABEL_BINDING_SIZE].string);
+        freeLabel(tempExpressionCollector);
+
+        msStringBufferAppend(classtext, ",\"%g\")");
         sep = "+";
       }
     }
