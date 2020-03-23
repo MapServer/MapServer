@@ -1353,7 +1353,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         msFreeExpression(&(exprBindings[binding]));
         msInitExpression(&(exprBindings[binding]));
         exprBindings[binding].string =
-            msStrdup(msStringBufferReleaseStringAndFree(literal));
+            msStringBufferReleaseStringAndFree(literal);
         exprBindings[binding].type = MS_STRING;
       }
       switch (lbinding)
@@ -1473,7 +1473,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             msStringBufferAppend(property, strDelim);
             msInitExpression(&(psStyle->exprBindings[binding]));
             exprBindings[binding].string =
-                msStrdup(msStringBufferReleaseStringAndFree(property));
+                msStringBufferReleaseStringAndFree(property);
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
             break;
@@ -1508,7 +1508,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         }
         msStringBufferAppend(function, ")");
         exprBindings[binding].string =
-            msStrdup(msStringBufferReleaseStringAndFree(function));
+            msStringBufferReleaseStringAndFree(function);
         exprBindings[binding].type = MS_EXPRESSION;
         (*nexprbindings)++;
         status = MS_SUCCESS;
@@ -1540,7 +1540,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             msStringBufferAppend(expression, ")");
             msFree(exprBindings[binding].string);
             exprBindings[binding].string =
-                msStrdup(msStringBufferReleaseStringAndFree(expression));
+                msStringBufferReleaseStringAndFree(expression);
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
           }
@@ -3015,10 +3015,12 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
       }
     }
     msStringBufferAppend(classtext, ")");
-    if (strlen(msStringBufferGetString(classtext)) > 2)
+    const char * expressionstring = msStringBufferGetString(classtext);
+    if (strlen(expressionstring) > 2)
     {
-      msLoadExpressionString(&psClass->text, msStringBufferReleaseStringAndFree(classtext));
+      msLoadExpressionString(&psClass->text, expressionstring);
     }
+    msStringBufferFree(classtext);
 
     {
       /* font */
