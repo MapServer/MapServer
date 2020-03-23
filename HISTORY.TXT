@@ -19,7 +19,7 @@ http://mapserver.org/development/changelog/
 
 - Enable PointZM data support (X,Y,Z,M coordinates) by default
 
-- SLD support enhancements (RFC 124)
+- SLD support enhancements (RFC 124) except PR#5832
 
 - CONNECTIONOPTIONS support in mapfile LAYER (RFC 125)
 
