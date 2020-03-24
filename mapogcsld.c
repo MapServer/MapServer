@@ -989,6 +989,19 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
     {
       psLayer->type = MS_LAYER_POINT;
     }
+    if (psLayer->type == MS_LAYER_POLYGON)
+    {
+      const int nClassId = psLayer->numclasses - 1;
+      if (nClassId >= 0)
+      {
+        const int nStyleId = psLayer->class[nClassId]->numstyles - 1;
+        if (nStyleId >= 0)
+        {
+          styleObj * psStyle = psLayer->class[nClassId]->styles[nStyleId];
+          msStyleSetGeomTransform(psStyle, "centroid");
+        }
+      }
+    }
     nSymbolizer++;
   }
 
