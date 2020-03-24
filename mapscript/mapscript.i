@@ -33,6 +33,8 @@
 %begin %{
 #ifdef _MSC_VER
 #define SWIG_PYTHON_INTERPRETER_NO_DEBUG
+#else
+#define _GNU_SOURCE 1
 #endif
 %}
 
