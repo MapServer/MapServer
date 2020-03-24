@@ -936,6 +936,16 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
   /*      one symbolizer, a style is added in the same class.             */
   /* ==================================================================== */
 
+  /* Raster symbolizer */
+  LOOP_ON_CHILD_ELEMENT(psRoot, psRasterSymbolizer, "RasterSymbolizer")
+  {
+    msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer, pszUserStyleName);
+    if (nSymbolizer == 0)
+    {
+      psLayer->type = MS_LAYER_RASTER;
+    }
+  }
+
   /* Polygon symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psPolygonSymbolizer, "PolygonSymbolizer")
   {
@@ -989,7 +999,9 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
     {
       psLayer->type = MS_LAYER_POINT;
     }
-    if (psLayer->type == MS_LAYER_POLYGON)
+    if (psLayer->type == MS_LAYER_POLYGON
+        || psLayer->type == MS_LAYER_LINE
+        || psLayer->type == MS_LAYER_RASTER)
     {
       const int nClassId = psLayer->numclasses - 1;
       if (nClassId >= 0)
@@ -1011,26 +1023,16 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
   /*      mapserver classes :                                             */
   /*        - If there are other symbolizers(line, polygon, symbol),      */
   /*      the label object created will be created in the same class      */
-  /*      (the last class) as the  symbolizer. This allows o have for     */
+  /*      (the last class) as the  symbolizer. This allows to have for    */
   /*      example of point layer with labels.                             */
-  /*        - If there are no other symbolizers, a new class will be       */
-  /*      created to contain the label object.                              */
+  /*        - If there are no other symbolizers, a new class will be      */
+  /*      created to contain the label object.                            */
   /* ==================================================================== */
   LOOP_ON_CHILD_ELEMENT(psRoot, psTextSymbolizer, "TextSymbolizer")
   {
     if (nSymbolizer == 0)
       psLayer->type = MS_LAYER_POINT;
     msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, nSymbolizer > 0, pszUserStyleName);
-  }
-
-  /* Raster symbolizer */
-  LOOP_ON_CHILD_ELEMENT(psRoot, psRasterSymbolizer, "RasterSymbolizer")
-  {
-    msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer, pszUserStyleName);
-    if (nSymbolizer == 0)
-    {
-      psLayer->type = MS_LAYER_RASTER;
-    }
   }
 
   return MS_SUCCESS;
