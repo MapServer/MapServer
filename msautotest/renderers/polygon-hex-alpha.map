@@ -1,0 +1,31 @@
+# RUN_PARMS: polygon-hex-alpha.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+#
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT -125.549477 -69.508628 101.670954 15.840339
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+shapepath "../misc/data"
+
+CONFIG MS_ERRORFILE "stderr"
+
+LAYER
+  NAME "world"
+  TYPE polygon
+  STATUS default
+  DATA "world_testpoly"
+  CLASS
+      NAME "hexalpha"
+      STYLE
+        COLOR "#ee990033"
+      END
+    END
+END
+
+END
