@@ -485,7 +485,7 @@ extern "C" {
 
   /* General enumerated types - needed by scripts */
   enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
-  enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS, MS_PERCENTAGES, MS_NAUTICALMILES};
+  enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS, MS_PERCENTAGES, MS_NAUTICALMILES, MS_INHERIT = -1};
   enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
   enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION /* only used for parser backwards compatibility */, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX, MS_LAYER_CHART};
   enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
@@ -1027,6 +1027,12 @@ extern "C" {
     expressionObj exprBindings[MS_STYLE_BINDING_LENGTH];
     int nexprbindings;
 #endif
+
+    int sizeunits; // supersedes class's sizeunits
+#ifndef SWIG
+    double scalefactor; // computed, not set
+#endif /* not SWIG */
+
   };
 
 #define MS_STYLE_SINGLE_SIDED_OFFSET -99
@@ -1135,6 +1141,12 @@ extern "C" {
 #endif
 
     labelLeaderObj *leader;
+
+    int sizeunits; // supersedes class's sizeunits
+#ifndef SWIG
+    double scalefactor; // computed, not set
+#endif /* not SWIG */
+
   };
   
 #ifdef SWIG
@@ -1242,6 +1254,12 @@ typedef struct labelObj labelObj;
     char *keyimage;
 
     char *group;
+
+    int sizeunits; // supersedes layer's sizeunits and applies to all styles and labels
+#ifndef SWIG
+    double scalefactor; // computed, not set
+#endif /* not SWIG */
+
   };
 
   /************************************************************************/

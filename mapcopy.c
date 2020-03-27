@@ -414,6 +414,9 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     dst->leader = NULL;
   }
 
+  MS_COPYSTELEM(sizeunits);
+  MS_COPYSTELEM(scalefactor);
+
   return MS_SUCCESS;
 }
 
@@ -520,6 +523,9 @@ int msCopyStyle(styleObj *dst, styleObj *src)
   MS_COPYSTELEM(maxscaledenom);
   /* TODO: add copy for bindings */
 
+  MS_COPYSTELEM(sizeunits);
+  MS_COPYSTELEM(scalefactor);
+
   return MS_SUCCESS;
 }
 
@@ -618,6 +624,9 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
   MS_COPYSTELEM(maxscaledenom);
   MS_COPYSTELEM(layer);
   MS_COPYSTELEM(debug);
+
+  MS_COPYSTELEM(sizeunits);
+  MS_COPYSTELEM(scalefactor);
 
   return MS_SUCCESS;
 }

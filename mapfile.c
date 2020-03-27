@@ -1423,6 +1423,9 @@ void initLabel(labelObj *label)
 
   label->leader = NULL;
 
+  label->sizeunits = MS_INHERIT;
+  label->scalefactor = 1.0;
+
   return;
 }
 
@@ -2355,6 +2358,9 @@ int initStyle(styleObj *style)
     msInitExpression(&(style->exprBindings[i]));
   }
 
+  style->sizeunits = MS_INHERIT;
+  style->scalefactor = 1.0;
+
   return MS_SUCCESS;
 }
 
@@ -2858,6 +2864,9 @@ int initClass(classObj *class)
   class->group = NULL;
 
   class->leader = NULL;
+
+  class->sizeunits = MS_INHERIT;
+  class->scalefactor = 1.0;
 
   return(0);
 }
