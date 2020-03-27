@@ -183,7 +183,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         class->scalefactor = layer->symbolscaledenom/map->scaledenom*map->resolution/map->defresolution;
       else
         class->scalefactor = map->resolution/map->defresolution;
-      for (int sid=0 ; sid< class->numstyles ; sid++)
+      for (int sid=0 ; sid<class->numstyles ; sid++)
       {
         styleObj * style = class->styles[sid];
         if (style->sizeunits == MS_INHERIT)
@@ -195,7 +195,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         else
           style->scalefactor = map->resolution/map->defresolution;
       }
-      for (int sid=0 ; sid< class->numlabels ; sid++)
+      for (int sid=0 ; sid<class->numlabels ; sid++)
       {
         labelObj * label = class->labels[sid];
         if (label->sizeunits == MS_INHERIT)
@@ -206,6 +206,18 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
           label->scalefactor = layer->symbolscaledenom/map->scaledenom*map->resolution/map->defresolution;
         else
           label->scalefactor = map->resolution/map->defresolution;
+        for (int lsid=0 ; lsid<label->numstyles ; lsid++)
+        {
+          styleObj * lstyle = label->styles[lsid];
+          if (lstyle->sizeunits == MS_INHERIT)
+            lstyle->scalefactor = label->scalefactor;
+          else if (lstyle->sizeunits != MS_PIXELS)
+            lstyle->scalefactor = (msInchesPerUnit(lstyle->sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
+          else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
+            lstyle->scalefactor = layer->symbolscaledenom/map->scaledenom*map->resolution/map->defresolution;
+          else
+            lstyle->scalefactor = map->resolution/map->defresolution;
+        }
       }
     }
   }
