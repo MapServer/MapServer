@@ -1190,6 +1190,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       // Coordinates stored in the shape must keep their original values for
       // the shape to be drawn multiple times.
       // Here the original shape is restored.
+      msFreeShape(&shape);
       msCopyShape(&savedShape, &shape);
       msFreeShape(&savedShape);
     }
