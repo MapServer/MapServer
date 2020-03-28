@@ -2526,10 +2526,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         layerObj *lp;
         lp = GET_LAYER(map, j);
         if (lp->status == MS_ON) {
-          if(paramsObj->pszPropertyName){
-            // add a new gml_select_items properties with only fields to be used for a selection
-            msInsertHashTable(&(lp->metadata), "gml_select_items", paramsObj->pszPropertyName);
-          }
           int status = msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
           if( status != MS_SUCCESS )
               return status;
@@ -3396,7 +3392,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     int k, y,z;
 
     char **tokens;
-    int n=0, i=0;
+    char **selectProperties = NULL;
+    char *selectPropertiesStr = NULL;
+    int n=0, i=0, j=0;
     char **papszPropertyName = NULL;
     char **papszSortBy = NULL;
 
@@ -3458,6 +3456,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
     for (k=0; k<numlayers; k++) {
       layerObj *lp;
+      j=0;
       lp = msWFSGetLayerByName(map, ows_request, layers[k]);
       if( lp != NULL )
       {
@@ -3543,6 +3542,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                   char* pszTmp = msStrdup(pszPropertyNameItem);
                   msFree(tokens[y]);
                   tokens[y] = pszTmp;
+                  // add the property to the select list
+                  selectProperties = (char**) realloc(selectProperties, sizeof(char*) * (j+1));
+                  selectProperties[j] = pszTmp;
+                  j++;
                 }
               }
 
@@ -3587,6 +3590,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                 }
               }
 
+              if (selectProperties != NULL ) {
+                // add a new gml_select_items properties with only fields to be used for a selection
+                selectPropertiesStr = msJoinStrings(selectProperties, j, ",");
+                msInsertHashTable(&(lp->metadata), "gml_select_items", msStrdup(selectPropertiesStr));
+                msFree(selectPropertiesStr);
+                //msFreeCharArray(selectProperties, j); // causes a crash when freeing
+              }
 
               msFreeCharArray(tokens, n);
               msLayerClose(lp);
