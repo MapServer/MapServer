@@ -1047,6 +1047,50 @@ static int getClassId(layerObj *psLayer,
 }
 
 /************************************************************************/
+/*                      msSLDParseUomAttribute()                        */
+/************************************************************************/
+
+int msSLDParseUomAttribute(CPLXMLNode *node, enum MS_UNITS * sizeunits)
+{
+  const struct
+  {
+    enum MS_UNITS unit;
+    char * values[10];
+  } known_uoms[] =
+  {
+    { MS_INCHES, { "inch", "inches", NULL } },
+    { MS_FEET, { "foot", "feet", "http://www.opengeospatial.org/se/units/foot", NULL } },
+    { MS_MILES, { "mile", "miles", NULL } },
+    { MS_METERS, { "meter", "meters", "metre", "metres", "http://www.opengeospatial.org/se/units/metre", NULL } },
+    { MS_KILOMETERS, { "kilometer", "kilometers", "kilometre", "kilometres", NULL } },
+    { MS_DD, { "dd", NULL } },
+    { MS_PIXELS, { "pixel", "pixels", "px", "http://www.opengeospatial.org/se/units/pixel", NULL } },
+    { MS_PERCENTAGES, { "percent", "percents", "percentage", "percentages", NULL } },
+    { MS_NAUTICALMILES, { "nauticalmile", "nauticalmiles", "nautical_mile", "nautical_miles", NULL } },
+    { 0, { NULL } }
+  };
+
+  const char * uom = CPLGetXMLValue(node, "uom", NULL);
+  if (uom)
+  {
+    for (int i=0 ; known_uoms[i].values[0] ; i++)
+      for (int j=0 ; known_uoms[i].values[j] ; j++)
+        if (strcmp(uom,known_uoms[i].values[j]) == 0)
+        {
+          // Match found
+          *sizeunits = known_uoms[i].unit;
+          return MS_SUCCESS;
+        }
+    // No match was found
+    return MS_FAILURE;
+  }
+  // No uom was found
+  *sizeunits = MS_PIXELS;
+  return MS_SUCCESS;
+}
+
+
+/************************************************************************/
 /*                 msSLDParseLineSymbolizer()                           */
 /*                                                                      */
 /*      Parses the LineSymbolizer rule and creates a class in the       */
@@ -1099,6 +1143,14 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
   if (!psRoot || !psLayer)
     return MS_FAILURE;
 
+  // Get uom if any, defaults to MS_PIXELS
+  enum MS_UNITS sizeunits = MS_PIXELS;
+  if (msSLDParseUomAttribute(psRoot, &sizeunits) != MS_SUCCESS)
+  {
+    msSetError(MS_WMSERR, "Invalid uom attribute value.", "msSLDParsePolygonSymbolizer()");
+    return MS_FAILURE;
+  }
+
   psStroke =  CPLGetXMLNode(psRoot, "Stroke");
   if (psStroke) {
     int nClassId = getClassId(psLayer, bNewClass, pszUserStyleName);
@@ -1107,6 +1159,7 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
     iStyle = psLayer->class[nClassId]->numstyles;
     msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
+    psLayer->class[nClassId]->styles[iStyle]->sizeunits = sizeunits;
 
     msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
                      psLayer->map, 0);
@@ -1441,7 +1494,6 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
 }
 
 
-
 /************************************************************************/
 /*                      msSLDParsePolygonSymbolizer()                   */
 /*                                                                      */
@@ -1528,6 +1580,14 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
   if (!psRoot || !psLayer)
     return MS_FAILURE;
 
+  // Get uom if any, defaults to MS_PIXELS
+  enum MS_UNITS sizeunits = MS_PIXELS;
+  if (msSLDParseUomAttribute(psRoot, &sizeunits) != MS_SUCCESS)
+  {
+    msSetError(MS_WMSERR, "Invalid uom attribute value.", "msSLDParsePolygonSymbolizer()");
+    return MS_FAILURE;
+  }
+
   /*parse displacement for SLD 1.1.0*/
   psDisplacement = CPLGetXMLNode(psRoot, "Displacement");
   if (psDisplacement) {
@@ -1553,6 +1613,7 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
     iStyle = psLayer->class[nClassId]->numstyles;
     msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
+    psLayer->class[nClassId]->styles[iStyle]->sizeunits = sizeunits;
 
     msSLDParsePolygonFill(psFill, psLayer->class[nClassId]->styles[iStyle],
                           psLayer->map);
@@ -1574,6 +1635,7 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
       nClassId =psLayer->numclasses-1;
       iStyle = psLayer->class[nClassId]->numstyles;
       msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
+      psLayer->class[nClassId]->styles[iStyle]->sizeunits = sizeunits;
     } else {
       nClassId = getClassId(psLayer, bNewClass, pszUserStyleName);
       if( nClassId < 0 )
@@ -1581,6 +1643,7 @@ int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
       iStyle = psLayer->class[nClassId]->numstyles;
       msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
+      psLayer->class[nClassId]->styles[iStyle]->sizeunits = sizeunits;
 
     }
     msSLDParseStroke(psStroke, psLayer->class[nClassId]->styles[iStyle],
@@ -2202,9 +2265,17 @@ int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
   if( nClassId < 0 )
     return MS_FAILURE;
 
+  // Get uom if any, defaults to MS_PIXELS
+  enum MS_UNITS sizeunits = MS_PIXELS;
+  if (msSLDParseUomAttribute(psRoot, &sizeunits) != MS_SUCCESS)
+  {
+    msSetError(MS_WMSERR, "Invalid uom attribute value.", "msSLDParsePolygonSymbolizer()");
+    return MS_FAILURE;
+  }
+
   iStyle = psLayer->class[nClassId]->numstyles;
   msMaybeAllocateClassStyle(psLayer->class[nClassId], iStyle);
-
+  psLayer->class[nClassId]->styles[iStyle]->sizeunits = sizeunits;
 
   msSLDParseGraphicFillOrStroke(psRoot, NULL,
                                 psLayer->class[nClassId]->styles[iStyle],
