@@ -299,6 +299,12 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request, wcs20ParamsObjPtr pa
     || CSLFindString(params->sections, "All") != -1             \
     || CSLFindString(params->sections, section) != -1)
 
+
+#if defined(USE_LIBXML2)
+#include "maplibxml2.h"
+void msWCS_11_20_PrintMetadataLinks(layerObj *layer, xmlDocPtr doc, xmlNodePtr psCSummary);
+#endif
+
 #ifdef __cplusplus
 } /* extern C */
 #endif

@@ -3229,13 +3229,9 @@ static int msWCSGetCapabilities20_CoverageSummary(
 {
   wcs20coverageMetadataObj cm;
   int status;
-  xmlNodePtr psCSummary, psMetadata;
-  const char *metadatalink_href = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href");
-
+  xmlNodePtr psCSummary;
 
   xmlNsPtr psWcsNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "wcs" );
-  xmlNsPtr psOwsNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "ows" );
-  xmlNsPtr psXlinkNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "xlink" );
 
   status = msWCSGetCoverageMetadata20(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
@@ -3244,21 +3240,7 @@ static int msWCSGetCapabilities20_CoverageSummary(
   xmlNewChild(psCSummary, psWcsNs, BAD_CAST "CoverageId", BAD_CAST layer->name);
   xmlNewChild(psCSummary, psWcsNs, BAD_CAST "CoverageSubtype", BAD_CAST "RectifiedGridCoverage");
 
-  /* Add references to additional coverage metadata */
-  if (metadatalink_href != NULL) {
-    const char *metadatalink_type = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_type");
-    const char *metadatalink_format = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_format");
-
-    psMetadata = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Metadata", NULL);
-    xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "type", BAD_CAST "simple");
-    xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "href", BAD_CAST metadatalink_href);
-    if (metadatalink_type != NULL) {
-      xmlNewProp(psMetadata, BAD_CAST "about", BAD_CAST metadatalink_type);
-    }
-    if (metadatalink_format != NULL) {
-      xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "role", BAD_CAST metadatalink_format);
-    }
-  }
+  msWCS_11_20_PrintMetadataLinks(layer, doc, psCSummary);
 
   msWCSClearCoverageMetadata20(&cm);
 
