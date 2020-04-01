@@ -2311,7 +2311,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 #endif /* NEED_STRCASESTR */
 
 #ifndef HAVE_STRNCASECMP
-  MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
+  MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, size_t len);
 #endif /* NEED_STRNCASECMP */
 
 #ifndef HAVE_STRCASECMP

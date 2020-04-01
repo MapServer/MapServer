@@ -279,7 +279,7 @@ char *strcasestr(const char *s, const char *find)
 #endif
 
 #ifndef HAVE_STRNCASECMP
-int strncasecmp(const char *s1, const char *s2, int len)
+int strncasecmp(const char *s1, const char *s2, size_t len)
 {
   register const char *cp1, *cp2;
   int cmp = 0;
