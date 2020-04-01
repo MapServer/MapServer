@@ -1332,7 +1332,6 @@ static int msWCSParseRequest20_XMLGetCoverage(
               xmlNodePtr endComponentNode = msLibXml2GetFirstChild(intervalNode, "endComponent");
               char *start;
               char *stop;
-              int length;
 
               if (!startComponentNode || !endComponentNode) {
                 msSetError(MS_WCSERR, "Wrong RangeInterval.",
@@ -1342,7 +1341,6 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
               start = (char *)xmlNodeGetContent(startComponentNode);
               stop = (char *)xmlNodeGetContent(endComponentNode);
-              length = strlen(start) + strlen(stop) + 2;
 
               std::string value(start);
               value += ':';
@@ -2160,7 +2158,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
   xmlNodePtr psRangeType, psDataRecord, psField, psQuantity,
              psUom, psConstraint, psAllowedValues = NULL, psNilValues = NULL;
   char **arr = NULL;
-  int i, num = 0;
+  int num = 0;
 
   if(NULL != bands) {
     arr = msStringSplit(bands, ',', &num);
@@ -2170,13 +2168,14 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
   psDataRecord  = xmlNewChild(psRangeType, psSweNs, BAD_CAST "DataRecord", NULL);
 
   /* iterate over every band */
-  for(i = 0; i < cm->numbands; ++i) {
+  for(unsigned i = 0; i < cm->numbands; ++i) {
     /* only add bands that are in the range subset */
     if (NULL != arr && num > 0) {
-      int found = MS_FALSE, j, repr;
+      int found = MS_FALSE, j;
       for(j = 0; j < num; ++j) {
+        int repr = 0;
         msStringParseInteger(arr[j], &repr);
-        if(repr == i + 1) {
+        if(static_cast<unsigned>(repr) == i + 1) {
           found = MS_TRUE;
           break;
         }
@@ -2207,11 +2206,10 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
     /* if there are given nilvalues -> add them to the first field */
     /* all other fields get a reference to these */
     if(cm->numnilvalues > 0) {
-      int j;
       psNilValues = xmlNewChild(
                       xmlNewChild(psQuantity, psSweNs, BAD_CAST "nilValues", NULL),
                       psSweNs, BAD_CAST "NilValues", NULL);
-      for(j = 0; j < cm->numnilvalues; ++j) {
+      for(unsigned j = 0; j < cm->numnilvalues; ++j) {
         xmlNodePtr psTemp =
           xmlNewChild(psNilValues, psSweNs, BAD_CAST "nilValue", BAD_CAST cm->nilvalues[j]);
         if(j < cm->numnilvalues)
@@ -2538,7 +2536,6 @@ static const char *msWCSLookupRangesetAxisMetadata20(hashTableObj *table,
 static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj *cm)
 {
   char  *srs_uri = NULL;
-  int i = 0;
   memset(cm,0,sizeof(wcs20coverageMetadataObj));
   if ( msCheckParentPointer(layer->map,"map") == MS_FAILURE )
     return MS_FAILURE;
@@ -2725,7 +2722,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     }
 
     {
-      int num_band_names = 0, i, j;
+      int num_band_names = 0, j;
       char **band_names = NULL;
 
       const char *wcs11_band_names_key = "rangeset_axes";
@@ -2762,7 +2759,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         {
             num_band_names = cm->numbands;
             band_names = (char**) msSmallMalloc( sizeof(char*) * num_band_names );
-            for( i = 0; i < num_band_names; i++ )
+            for( int i = 0; i < num_band_names; i++ )
             {
                 char szName[30];
                 snprintf(szName, sizeof(szName), "Band%d", i+1);
@@ -2780,7 +2777,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
       /* return with error when number of bands does not match    */
       /* the number of names                                      */
-      if (num_band_names != cm->numbands && num_band_names != 0) {
+      if (static_cast<size_t>(num_band_names) != cm->numbands && num_band_names != 0) {
         msFreeCharArray(band_names, num_band_names);
         msSetError( MS_WCSERR,
                     "Wrong number of band names given in layer '%s'. "
@@ -2849,7 +2846,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       }
 
       /* iterate over every band */
-      for(i = 0; i < cm->numbands; ++i) {
+      for(unsigned i = 0; i < cm->numbands; ++i) {
         cm->bands[i].name = NULL;
 
         /* look up band metadata or copy defaults */
@@ -2974,7 +2971,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     cm->bands = static_cast<wcs20rasterbandMetadataObj*>(msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands));
 
     /* get as much band metadata as possible */
-    for(i = 0; i < cm->numbands; ++i) {
+    for(unsigned i = 0; i < cm->numbands; ++i) {
       char bandname[32];
       GDALColorInterp colorInterp;
       hBand = GDALGetRasterBand(hDS, i + 1);
@@ -3013,7 +3010,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     driver_short_name = GDALGetDriverShortName(hDriver);
     driver_long_name = GDALGetDriverLongName(hDriver);
     /* TODO: improve this, exchange strstr() */
-    for(i = 0; i < layer->map->numoutputformats; ++i) {
+    for(int i = 0; i < layer->map->numoutputformats; ++i) {
       if(strstr( layer->map->outputformatlist[i]->driver, driver_short_name) != NULL
           || strstr(layer->map->outputformatlist[i]->driver, driver_long_name) != NULL) {
         cm->native_format = msStrdup(layer->map->outputformatlist[i]->mimetype);
@@ -3037,17 +3034,16 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 
 static int msWCSClearCoverageMetadata20(wcs20coverageMetadataObj *cm)
 {
-  int i = 0, j = 0;
   msFree(cm->native_format);
-  for(i = 0; i < cm->numnilvalues; ++i) {
+  for(unsigned i = 0; i < cm->numnilvalues; ++i) {
     msFree(cm->nilvalues[i]);
     msFree(cm->nilvalues_reasons[i]);
   }
   msFree(cm->nilvalues);
   msFree(cm->nilvalues_reasons);
 
-  for(i = 0; i < cm->numbands; ++i) {
-    for(j = 0; j < 5; ++j) {
+  for(unsigned i = 0; i < cm->numbands; ++i) {
+    for(int j = 0; j < 5; ++j) {
       msFree(cm->bands[i].values[j]);
     }
   }
@@ -3948,14 +3944,14 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
 static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
                                        wcs20ParamsObjPtr params, wcs20coverageMetadataObjPtr cm, char **bandlist)
 {
-  int i = 0, count, maxlen, index;
+  int maxlen, index;
   char *interval_stop;
   char **band_ids = NULL;
 
   /* if rangesubset parameter is not given, default to all bands */
   if(NULL == params->range_subset) {
     *bandlist = msStrdup("1");
-    for(i = 1; i < cm->numbands; ++i) {
+    for(unsigned i = 1; i < cm->numbands; ++i) {
       char strnumber[12];
       snprintf(strnumber, sizeof(strnumber), ",%d", i + 1);
       *bandlist = msStringConcatenate(*bandlist, strnumber);
@@ -3981,7 +3977,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       {
         int num_band_names = cm->numbands;
         band_ids = (char**) msSmallCalloc( sizeof(char*), (num_band_names + 1) );
-        for( i = 0; i < num_band_names; i++ )
+        for( int i = 0; i < num_band_names; i++ )
         {
             char szName[30];
             snprintf(szName, sizeof(szName), "Band%d", i+1);
@@ -3999,17 +3995,17 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   /* If we still don't have band names, use the band names from the coverage metadata */
   if (band_ids == NULL) {
     band_ids = (char**) CPLCalloc(sizeof(char*), (cm->numbands + 1));
-    for (i = 0; i < cm->numbands; ++i) {
+    for (unsigned i = 0; i < cm->numbands; ++i) {
       band_ids[i] = CPLStrdup(cm->bands[i].name);
     }
   }
 
   /* Iterate over all supplied range */
-  count = CSLCount(params->range_subset);
-  for(i = 0; i < count; ++i) {
+  const int count = CSLCount(params->range_subset);
+  for(int i = 0; i < count; ++i) {
     /* RangeInterval case: defined as "<start>:<stop>" */
     if ((interval_stop = strchr(params->range_subset[i], ':')) != NULL) {
-      int start, stop, j;
+      int start, stop;
       *interval_stop = '\0';
       ++interval_stop;
 
@@ -4044,14 +4040,14 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
         msSetError(MS_WCSERR, "Invalid range interval given.",
                "msWCSGetCoverage20_GetBands()");
         return MS_FAILURE;
-      } else if (start < 1 || stop > cm->numbands) {
+      } else if (start < 1 || static_cast<unsigned>(stop) > cm->numbands) {
         msSetError(MS_WCSERR, "Band interval is out of the valid range: 1-%d",
                "msWCSGetCoverage20_GetBands()", (int)cm->numbands);
         return MS_FAILURE;
       }
 
       /* expand the interval to a list of indices and push them on the list */
-      for (j = start; j <= stop; ++j) {
+      for (int j = start; j <= stop; ++j) {
         char* tmp;
         if(i != 0 || j != start) {
           strlcat(*bandlist, ",", maxlen);
@@ -4070,7 +4066,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       /* check if the string represents an integer */
       if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
         char* tmp;
-        if (index < 1 || index > cm->numbands) {
+        if (index < 1 || static_cast<unsigned>(index) > cm->numbands) {
           msSetError(MS_WCSERR, "Band index is out of the valid range: 1-%d",
                  "msWCSGetCoverage20_GetBands()", (int)cm->numbands);
           return MS_FAILURE;
