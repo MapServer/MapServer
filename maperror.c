@@ -304,7 +304,7 @@ char *msAddErrorDisplayString(char *source, errorObj *error)
   return source;
 }
 
-char *msGetErrorString(char *delimiter)
+char *msGetErrorString(const char *delimiter)
 {
   char *errstr=NULL;
 

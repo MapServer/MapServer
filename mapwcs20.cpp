@@ -54,9 +54,7 @@
 
 #endif /* defined(USE_LIBXML2) */
 
-
-
-
+#include <string>
 
 /************************************************************************/
 /*                          msXMLStripIndentation                       */
@@ -1334,7 +1332,6 @@ static int msWCSParseRequest20_XMLGetCoverage(
               xmlNodePtr endComponentNode = msLibXml2GetFirstChild(intervalNode, "endComponent");
               char *start;
               char *stop;
-              char *value;
               int length;
 
               if (!startComponentNode || !endComponentNode) {
@@ -1346,16 +1343,16 @@ static int msWCSParseRequest20_XMLGetCoverage(
               start = (char *)xmlNodeGetContent(startComponentNode);
               stop = (char *)xmlNodeGetContent(endComponentNode);
               length = strlen(start) + strlen(stop) + 2;
-              value = msSmallCalloc(length, sizeof(char));
 
-              snprintf(value, length, "%s:%s", start, stop);
+              std::string value(start);
+              value += ':';
+              value += stop;
 
               xmlFree(start);
               xmlFree(stop);
 
               params->range_subset =
-                CSLAddString(params->range_subset, value);
-              msFree(value);
+                CSLAddString(params->range_subset, value.c_str());
             }
           }
         }
@@ -1443,7 +1440,7 @@ int msWCSParseRequest20(mapObj *map,
   /* Parse the POST request */
   if (request->type == MS_POST_REQUEST) {
 #if defined(USE_LIBXML2)
-    xmlDocPtr doc = ows_request->document;
+    xmlDocPtr doc = static_cast<xmlDocPtr>(ows_request->document);
     xmlNodePtr root = NULL;
     const char *validate;
     int ret = MS_SUCCESS;
@@ -1785,13 +1782,10 @@ static int msWCSValidateAndFindAxes20(
   wcs20AxisObjPtr outAxes[])
 {
   static const int numAxis = 2;
-  char *validXAxisNames[] = {"x", "xaxis", "x-axis", "x_axis", "long", "long_axis", "long-axis", "lon", "lon_axis", "lon-axis", NULL};
-  char *validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
-  char **validAxisNames[2];
+  const char * const validXAxisNames[] = {"x", "xaxis", "x-axis", "x_axis", "long", "long_axis", "long-axis", "lon", "lon_axis", "lon-axis", NULL};
+  const char * const validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
+  const char * const * const validAxisNames[2] = { validXAxisNames, validYAxisNames };
   int iParamAxis, iAcceptedAxis, iName, i;
-
-  validAxisNames[0] = validXAxisNames;
-  validAxisNames[1] = validYAxisNames;
 
   for(i = 0; i < numAxis; ++i) {
     outAxes[i] = NULL;
@@ -2677,7 +2671,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       cm->numbands = (size_t)numbands;
     }
 
-    cm->bands = msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
+    cm->bands = static_cast<wcs20rasterbandMetadataObj*>(msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands));
 
     /* get bands type, or assume float if not found */
     cm->imagemode = MS_IMAGEMODE_FLOAT32;
@@ -2715,8 +2709,8 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       if(n_nilvalues > 0) {
         int i;
         cm->numnilvalues = n_nilvalues;
-        cm->nilvalues = msSmallCalloc(sizeof(char*), n_nilvalues);
-        cm->nilvalues_reasons = msSmallCalloc(sizeof(char*), n_nilvalues);
+        cm->nilvalues = static_cast<char**>(msSmallCalloc(sizeof(char*), n_nilvalues));
+        cm->nilvalues_reasons = static_cast<char**>(msSmallCalloc(sizeof(char*), n_nilvalues));
         for(i = 0; i < n_nilvalues; ++i) {
           cm->nilvalues[i] = msStrdup(t_nilvalues[i]);
           if(i < n_nilvalues_reasons) {
@@ -2734,20 +2728,20 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
       int num_band_names = 0, i, j;
       char **band_names = NULL;
 
-      char *wcs11_band_names_key = "rangeset_axes";
-      char *wcs20_band_names_key = "band_names";
+      const char *wcs11_band_names_key = "rangeset_axes";
+      const char *wcs20_band_names_key = "band_names";
 
-      char *wcs11_interval_key = "interval";
-      char *wcs20_interval_key = "interval";
-      char *interval_key = NULL;
+      const char *wcs11_interval_key = "interval";
+      const char *wcs20_interval_key = "interval";
+      const char *interval_key = NULL;
 
-      char *significant_figures_key = "significant_figures";
+      const char *significant_figures_key = "significant_figures";
 
-      char *wcs11_keys[] =
+      const char *wcs11_keys[] =
       { "label", "semantic", "values_type", "values_semantic", "description" };
-      char *wcs20_keys[] =
+      const char *wcs20_keys[] =
       { "band_name", "band_interpretation", "band_uom", "band_definition", "band_description" };
-      char **keys = NULL;
+      const char **keys = NULL;
 
       char **interval_array;
       int num_interval;
@@ -2922,12 +2916,12 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     GDALDatasetH hDS;
     GDALDriverH hDriver;
     GDALRasterBandH hBand;
-    const char szPath[MS_MAXPATHLEN];
+    char szPath[MS_MAXPATHLEN];
     const char *driver_short_name, *driver_long_name;
 
     msGDALInitialize();
 
-    msTryBuildPath3((char *)szPath,  layer->map->mappath, layer->map->shapepath, layer->data);
+    msTryBuildPath3(szPath,  layer->map->mappath, layer->map->shapepath, layer->data);
     msAcquireLock( TLOCK_GDAL );
     {
         char** connectionoptions = msGetStringListFromHashTable(&(layer->connectionoptions));
@@ -2977,7 +2971,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         break;
     }
 
-    cm->bands = msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands);
+    cm->bands = static_cast<wcs20rasterbandMetadataObj*>(msSmallCalloc(sizeof(wcs20rasterbandMetadataObj), cm->numbands));
 
     /* get as much band metadata as possible */
     for(i = 0; i < cm->numbands; ++i) {
@@ -3072,7 +3066,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
                      const char *locator, const char *version)
 {
   int size = 0;
-  char *status = "400 Bad Request";
+  const char *status = "400 Bad Request";
   char *errorString = NULL;
   char *schemasLocation = NULL;
   char *xsi_schemaLocation = NULL;
@@ -3181,7 +3175,7 @@ static int msWCSGetCapabilities20_CreateProfiles(
   int i = 0;
 
   /* even indices are urls, uneven are mime-types, or null*/
-  char *urls_and_mime_types[] = {
+  const char * const urls_and_mime_types[] = {
     MS_WCS_20_PROFILE_CORE,     NULL,
     MS_WCS_20_PROFILE_KVP,      NULL,
     MS_WCS_20_PROFILE_POST,     NULL,
@@ -3206,8 +3200,7 @@ static int msWCSGetCapabilities20_CreateProfiles(
   msGetOutputFormatMimeList(map, available_mime_types, MAX_MIMES);
 
   while(urls_and_mime_types[i] != NULL) {
-    char *mime_type;
-    mime_type = urls_and_mime_types[i+1];
+    const char* mime_type = urls_and_mime_types[i+1];
 
     /* check if there is a mime type */
     if(mime_type != NULL) {
@@ -3549,7 +3542,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     /* interpolations supported */
     {
       /* TODO: use URIs/URLs once they are specified */
-      char *interpolation_methods[] = {"NEAREST", "AVERAGE", "BILINEAR"};
+      const char * const interpolation_methods[] = {"NEAREST", "AVERAGE", "BILINEAR"};
       int i;
       xmlNodePtr imNode = xmlNewChild(psExtensionNode, psIntNs,
                                       BAD_CAST "InterpolationMetadata", NULL);
@@ -3971,7 +3964,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   }
 
   maxlen = cm->numbands * 4 * sizeof(char);
-  *bandlist = msSmallCalloc(sizeof(char), maxlen);
+  *bandlist = static_cast<char*>( msSmallCalloc(sizeof(char), maxlen));
 
   /* Use WCS 2.0 metadata items in priority */
   {
@@ -4121,7 +4114,7 @@ static const char * fixedCPLParseNameValue(const char* string, char **key) {
   }
 
   size = value - string;
-  *key = msSmallMalloc(size + 1);
+  *key = static_cast<char*>(msSmallMalloc(size + 1));
   strncpy(*key, string, size + 1);
   (*key)[size] = '\0';
   return value + 1;
@@ -4207,7 +4200,7 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
     }
     else if (EQUAL(key, "geotiff:predictor") && is_geotiff) {
       /* PREDICTOR=[None/Horizontal/FloatingPoint] */
-      char *predictor;
+      const char *predictor;
       if (EQUAL(value, "None") || EQUAL(value, "1")) {
         predictor = "1";
       }
@@ -4420,21 +4413,17 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   {
-    wcs20AxisObjPtr *axes;
-    axes = msSmallMalloc(sizeof(wcs20AxisObjPtr) * 2);
+    wcs20AxisObjPtr axes[2];
     if(msWCSValidateAndFindAxes20(params, axes) == MS_FAILURE) {
       msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
-      msFree(axes);
       return msWCSException(map, "InvalidAxisLabel", "subset", params->version);
     }
     if(msWCSGetCoverage20_FinalizeParamsObj(params, axes) == MS_FAILURE) {
       msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
-      msFree(axes);
       return msWCSException(map, "InvalidParameterValue", "extent", params->version);
     }
-    msFree(axes);
   }
 
   subsets = params->bbox;
@@ -4946,7 +4935,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     wcs20coverageMetadataObj tmpCm;
     char *srs_uri, *default_filename;
     const char *filename;
-    char *file_ref, *role;
     int length = 0, swapAxes;
 
     /* Create Document  */
@@ -5000,26 +4988,25 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     filename = msGetOutputFormatOption(image->format, "FILENAME", default_filename);
     length = strlen("cid:coverage/") + strlen(filename) + 1;
-    file_ref = msSmallMalloc(length);
-    strlcpy(file_ref, "cid:coverage/", length);
-    strlcat(file_ref, filename, length);
+    std::string file_ref("cid:coverage/");
+    file_ref += filename;
+
     msFree(default_filename);
 
+    std::string role;
     if(EQUAL(MS_IMAGE_MIME_TYPE(map->outputformat), "image/tiff")) {
       length = strlen(MS_WCS_20_PROFILE_GML_GEOTIFF) + 1;
-      role = msSmallMalloc(length);
-      strlcpy(role, MS_WCS_20_PROFILE_GML_GEOTIFF, length);
+      role = MS_WCS_20_PROFILE_GML_GEOTIFF;
     } else {
       length = strlen(MS_IMAGE_MIME_TYPE(map->outputformat)) + 1;
-      role = msSmallMalloc(length);
-      strlcpy(role, MS_IMAGE_MIME_TYPE(map->outputformat), length);
+      role = MS_IMAGE_MIME_TYPE(map->outputformat);
     }
 
-    xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "href", BAD_CAST file_ref);
-    xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST role);
+    xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "href", BAD_CAST file_ref.c_str());
+    xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST role.c_str());
     xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "arcrole", BAD_CAST "fileReference");
 
-    xmlNewChild(psFile, psGmlNs, BAD_CAST "fileReference", BAD_CAST file_ref);
+    xmlNewChild(psFile, psGmlNs, BAD_CAST "fileReference", BAD_CAST file_ref.c_str());
     xmlNewChild(psFile, psGmlNs, BAD_CAST "fileStructure", NULL);
     xmlNewChild(psFile, psGmlNs, BAD_CAST "mimeType", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
 
@@ -5032,8 +5019,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSWriteDocument20(map, psDoc);
     msWCSWriteFile20(map, image, params, 1);
 
-    msFree(file_ref);
-    msFree(role);
     xmlFreeDoc(psDoc);
     xmlCleanupParser();
   /* just print out the file without gml */

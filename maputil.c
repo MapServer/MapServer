@@ -2308,7 +2308,7 @@ void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
 /*
  RFC 24: check if the parent pointer is NULL and raise an error otherwise
 */
-int msCheckParentPointer(void* p, char *objname)
+int msCheckParentPointer(void* p, const char *objname)
 {
   char* msg=NULL;
   if (p == NULL) {
