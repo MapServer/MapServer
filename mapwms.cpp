@@ -46,6 +46,7 @@
 #include <time.h>
 #include <string.h>
 
+#include <string>
 #include <vector>
 
 #ifdef WIN32
@@ -2462,32 +2463,75 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
   }
 
   if(nVersion >= OWS_1_1_0) {
-    if (! msOWSLookupMetadata(&(lp->metadata), "MO", "metadataurl_href"))
-      msMetadataSetGetMetadataURL(lp, script_url_encoded);
+    const char* metadataurl_list = msOWSLookupMetadata(&(lp->metadata), "MO", "metadataurl_list");
+    if( metadataurl_list ) {
+      int ntokens = 0;
+      char** tokens = msStringSplit(metadataurl_list, ' ', &ntokens);
+      for( int i = 0; i < ntokens; i++ )
+      {
+        std::string key("metadataurl_");
+        key += tokens[i];
+        msOWSPrintURLType(stdout, &(lp->metadata), "MO", key.c_str(),
+                        OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"",
+                        NULL, NULL, ">\n          <Format>%s</Format",
+                        "\n          <OnlineResource xmlns:xlink=\""
+                        "http://www.w3.org/1999/xlink\" "
+                       "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                        MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
+                        NULL, NULL, NULL, NULL, NULL, "        ");
+      }
+      msFreeCharArray(tokens, ntokens);
+    }
+    else {
+      if (! msOWSLookupMetadata(&(lp->metadata), "MO", "metadataurl_href"))
+        msMetadataSetGetMetadataURL(lp, script_url_encoded);
 
-    msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl",
-                      OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"",
-                      NULL, NULL, ">\n          <Format>%s</Format",
-                      "\n          <OnlineResource xmlns:xlink=\""
-                      "http://www.w3.org/1999/xlink\" "
-                      "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
-                      MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
-                      NULL, NULL, NULL, NULL, NULL, "        ");
+      msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl",
+                        OWS_NOERR, NULL, "MetadataURL", " type=\"%s\"",
+                        NULL, NULL, ">\n          <Format>%s</Format",
+                        "\n          <OnlineResource xmlns:xlink=\""
+                        "http://www.w3.org/1999/xlink\" "
+                       "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                        MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
+                        NULL, NULL, NULL, NULL, NULL, "        ");
+    }
   }
 
   if(nVersion < OWS_1_1_0)
     msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "dataurl_href",
                              OWS_NOERR, "        <DataURL>%s</DataURL>\n",
                              NULL);
-  else
-    msOWSPrintURLType(stdout, &(lp->metadata), "MO", "dataurl",
-                      OWS_NOERR, NULL, "DataURL", NULL, NULL, NULL,
-                      ">\n          <Format>%s</Format",
-                      "\n          <OnlineResource xmlns:xlink=\""
-                      "http://www.w3.org/1999/xlink\" "
-                      "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
-                      MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
-                      NULL, NULL, NULL, NULL, NULL, "        ");
+  else {
+    const char* dataurl_list = msOWSLookupMetadata(&(lp->metadata), "MO", "dataurl_list");
+    if( dataurl_list ) {
+      int ntokens = 0;
+      char** tokens = msStringSplit(dataurl_list, ' ', &ntokens);
+      for( int i = 0; i < ntokens; i++ )
+      {
+        std::string key("dataurl_");
+        key += tokens[i];
+        msOWSPrintURLType(stdout, &(lp->metadata), "MO", key.c_str(),
+                        OWS_NOERR, NULL, "DataURL", NULL, NULL, NULL,
+                        ">\n          <Format>%s</Format",
+                        "\n          <OnlineResource xmlns:xlink=\""
+                        "http://www.w3.org/1999/xlink\" "
+                        "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                        MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
+                        NULL, NULL, NULL, NULL, NULL, "        ");
+      }
+      msFreeCharArray(tokens, ntokens);
+    }
+    else {
+      msOWSPrintURLType(stdout, &(lp->metadata), "MO", "dataurl",
+                        OWS_NOERR, NULL, "DataURL", NULL, NULL, NULL,
+                        ">\n          <Format>%s</Format",
+                        "\n          <OnlineResource xmlns:xlink=\""
+                        "http://www.w3.org/1999/xlink\" "
+                        "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                        MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
+                        NULL, NULL, NULL, NULL, NULL, "        ");
+    }
+  }
 
   /* The LegendURL reside in a style. The Web Map Context spec already  */
   /* included the support on this in mapserver. However, it is not in the  */

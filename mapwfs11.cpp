@@ -30,12 +30,12 @@
 #include "mapserver.h"
 #include "mapows.h"
 
-
-
 #if defined(USE_WFS_SVR) && defined(USE_LIBXML2)
 #include "maplibxml2.h"
 #include "mapowscommon.h"
 #include "mapogcfilter.h"
+
+#include <string>
 
 /************************************************************************/
 /*                          msWFSException11()                          */
@@ -89,6 +89,47 @@ int msWFSException11(mapObj *map, const char *locator,
   return MS_FAILURE;
 }
 
+/************************************************************************/
+/*                       msWFSAddMetadataURL                            */
+/************************************************************************/
+
+static void msWFSAddMetadataURL(layerObj* lp,
+                                int nWFSVersion, 
+                                const std::string& radix,
+                                xmlNodePtr psRootNode)
+{
+  const char* value = msOWSLookupMetadata(&(lp->metadata), "FO", (radix + "_href").c_str());
+
+  if (value) {
+    if( nWFSVersion >= OWS_2_0_0 )
+    {
+        xmlNodePtr psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", NULL);
+        xmlNewProp(psNode, BAD_CAST "xlink:href", BAD_CAST value);
+
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", (radix + "_about").c_str());
+        if( value != NULL )
+            xmlNewProp(psNode, BAD_CAST "about", BAD_CAST value);
+    }
+    else
+    {
+        xmlNodePtr psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
+
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", (radix + "_format").c_str());
+
+        if (!value)
+            value = "text/html"; /* default */
+
+        xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
+
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", (radix + "_type").c_str());
+
+        if (!value)
+            value = "FGDC"; /* default */
+
+        xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
+    }
+  }
+}
 
 /************************************************************************/
 /*                            msWFSDumpLayer11                          */
@@ -223,38 +264,23 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
                   xmlNewComment(BAD_CAST "WARNING: Optional WGS84BoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement"));
   }
 
-  if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
-    msMetadataSetGetMetadataURL(lp, script_url);
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href");
-
-  if (value) {
-    if( nWFSVersion >= OWS_2_0_0 )
+  const char* metadataurl_list = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_list");
+  if( metadataurl_list ) {
+    int ntokens = 0;
+    char** tokens = msStringSplit(metadataurl_list, ' ', &ntokens);
+    for( int i = 0; i < ntokens; i++ )
     {
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", NULL);
-        xmlNewProp(psNode, BAD_CAST "xlink:href", BAD_CAST value);
-
-        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_about");
-        if( value != NULL )
-            xmlNewProp(psNode, BAD_CAST "about", BAD_CAST value);
+      std::string key("metadataurl_");
+      key += tokens[i];
+      msWFSAddMetadataURL(lp, nWFSVersion, key, psRootNode);
     }
-    else
-    {
-        psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
+    msFreeCharArray(tokens, ntokens);
+  }
+  else {
+    if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
+      msMetadataSetGetMetadataURL(lp, script_url);
 
-        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
-
-        if (!value)
-            value = msStrdup("text/html"); /* default */
-
-        xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
-
-        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
-
-        if (!value)
-            value = msStrdup("FGDC"); /* default */
-
-        xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
-    }
+    msWFSAddMetadataURL(lp, nWFSVersion, "metadataurl", psRootNode);
   }
 
   return psRootNode;

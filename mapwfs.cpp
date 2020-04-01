@@ -48,6 +48,8 @@
 #include "maplibxml2.h"
 #endif
 
+#include <string>
+
 static int msWFSAnalyzeStoredQuery(mapObj* map,
                                    wfsParamsObj *wfsparams,
                                    const char* id,
@@ -621,14 +623,32 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp, const char *script_url_encoded)
     msIO_printf("<!-- WARNING: Optional LatLongBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement -->\n");
   }
 
-  if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
-    msMetadataSetGetMetadataURL(lp, script_url_encoded);
-
-  msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl",
+  const char* metadataurl_list = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_list");
+  if( metadataurl_list ) {
+    int ntokens = 0;
+    char** tokens = msStringSplit(metadataurl_list, ' ', &ntokens);
+    for( int i = 0; i < ntokens; i++ )
+    {
+      std::string key("metadataurl_");
+      key += tokens[i];
+      msOWSPrintURLType(stdout, &(lp->metadata), "FO", key.c_str(),
                     OWS_WARN, NULL, "MetadataURL", " type=\"%s\"",
                     NULL, NULL, " format=\"%s\"", "%s",
                     MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                     NULL, NULL, NULL, NULL, NULL, "        ");
+    }
+    msFreeCharArray(tokens, ntokens);
+  }
+  else {
+    if (! msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href"))
+      msMetadataSetGetMetadataURL(lp, script_url_encoded);
+
+    msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl",
+                      OWS_WARN, NULL, "MetadataURL", " type=\"%s\"",
+                      NULL, NULL, " format=\"%s\"", "%s",
+                      MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
+                      NULL, NULL, NULL, NULL, NULL, "        ");
+  }
 
   if (msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid") == NULL) {
     msIO_fprintf(stdout, "<!-- WARNING: Required Feature Id attribute (fid) not specified for this feature type. Make sure you set one of wfs_featureid, ows_featureid or gml_featureid metadata. -->\n");

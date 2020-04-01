@@ -33,7 +33,7 @@
 #include "mapows.h"
 #include <assert.h>
 
-
+#include <string>
 
 #if defined(USE_WCS_SVR)
 
@@ -816,10 +816,48 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
 }
 
 /************************************************************************/
+/*                    msWCSPrintMetadataLink()                          */
+/************************************************************************/
+
+static void  msWCSPrintMetadataLink(layerObj *layer, const char *script_url_encoded)
+{
+  const char* list = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_list");
+  if( list ) {
+    int ntokens = 0;
+    char** tokens = msStringSplit(list, ' ', &ntokens);
+    for( int i = 0; i < ntokens; i++ )
+    {
+      std::string key("metadatalink_");
+      key += tokens[i];
+      msOWSPrintURLType(stdout, &(layer->metadata), "CO", key.c_str(),
+                        OWS_NOERR,
+                        "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
+                        NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
+                        " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
+                        MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
+    }
+    msFreeCharArray(tokens, ntokens);
+    return;
+  }
+
+  /* optional metadataLink */
+  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
+    msMetadataSetGetMetadataURL(layer, script_url_encoded);
+
+  msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
+                    OWS_NOERR,
+                    "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
+                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
+                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
+                    MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
+
+}
+
+/************************************************************************/
 /*             msWCSGetCapabilities_CoverageOfferingBrief()             */
 /************************************************************************/
 
-static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params, char *script_url_encoded)
+static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params, const char *script_url_encoded)
 {
   coverageMetadataObj cm;
   int status;
@@ -832,16 +870,7 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   /* start the CoverageOfferingBrief section */
   msIO_printf("  <CoverageOfferingBrief>\n"); /* is this tag right? (I hate schemas without ANY examples) */
 
-  /* optional metadataLink */
-  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
-    msMetadataSetGetMetadataURL(layer, script_url_encoded);
-
-  msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
-                    OWS_NOERR,
-                    "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
-                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
-                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
-                    MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
+  msWCSPrintMetadataLink(layer, script_url_encoded);
 
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "CO", "description", OWS_NOERR, "    <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "CO", "name", OWS_NOERR, "    <name>%s</name>\n", layer->name);
@@ -1129,16 +1158,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   /* start the Coverage section */
   msIO_printf("  <CoverageOffering>\n");
 
-  /* optional metadataLink */
-  if (! msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href"))
-    msMetadataSetGetMetadataURL(layer, script_url_encoded);
-
-  msOWSPrintURLType(stdout, &(layer->metadata), "CO", "metadatalink",
-                    OWS_NOERR,
-                    "  <metadataLink%s%s%s%s xlink:type=\"simple\"%s/>",
-                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
-                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
-                    MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
+  msWCSPrintMetadataLink(layer, script_url_encoded);
 
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "CO", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "CO", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);

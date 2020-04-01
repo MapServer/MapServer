@@ -48,6 +48,8 @@
 #include "maplibxml2.h"
 #endif
 
+#include <string>
+
 #if defined(USE_WCS_SVR) && defined(USE_LIBXML2)
 /*
 ** msWCSException11()
@@ -225,6 +227,58 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 }
 
 /************************************************************************/
+/*                   msWCS_11_20_PrintMetadataLink()                    */
+/************************************************************************/
+
+static void msWCS_11_20_PrintMetadataLink(layerObj *layer,
+                                          const std::string& radix,
+                                          xmlDocPtr doc,
+                                          xmlNodePtr psCSummary)
+{
+  const char* value = msOWSLookupMetadata(&(layer->metadata), "CO", (radix + "_href").c_str());
+  if (value) {
+    xmlNsPtr psOwsNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "ows" );
+    xmlNodePtr psMetadata = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Metadata", NULL);
+    xmlNsPtr psXlinkNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "xlink" );
+    const char *metadatalink_type = msOWSLookupMetadata(&(layer->metadata), "CO", (radix + "_type").c_str());
+    const char *metadatalink_format = msOWSLookupMetadata(&(layer->metadata), "CO", (radix + "_format").c_str());
+
+    xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "type", BAD_CAST "simple");
+    xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "href", BAD_CAST value);
+    if (metadatalink_type != NULL) {
+      xmlNewProp(psMetadata, BAD_CAST "about", BAD_CAST metadatalink_type);
+    }
+    if (metadatalink_format != NULL) {
+      xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "role", BAD_CAST metadatalink_format);
+    }
+  }
+}
+
+/************************************************************************/
+/*                   msWCS_11_20_PrintMetadataLinks()                   */
+/************************************************************************/
+
+void msWCS_11_20_PrintMetadataLinks(layerObj *layer, xmlDocPtr doc,
+                                    xmlNodePtr psCSummary)
+{
+  const char* list = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_list");
+  if( list ) {
+    int ntokens = 0;
+    char** tokens = msStringSplit(list, ' ', &ntokens);
+    for( int i = 0; i < ntokens; i++ )
+    {
+      std::string key("metadatalink_");
+      key += tokens[i];
+      msWCS_11_20_PrintMetadataLink(layer, key, doc, psCSummary);
+    }
+    msFreeCharArray(tokens, ntokens);
+    return;
+  }
+
+  msWCS_11_20_PrintMetadataLink(layer, "metadatalink", doc, psCSummary);
+}
+
+/************************************************************************/
 /*                msWCSGetCapabilities11_CoverageSummary()              */
 /*                                                                      */
 /*      Generate a WCS 1.1 CoverageSummary.                             */
@@ -289,23 +343,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
   /* -------------------------------------------------------------------- */
   /*      Metadata Link                                                   */
   /* -------------------------------------------------------------------- */
-  value = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href");
-
-  if (value) {
-    xmlNodePtr psMetadata = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Metadata", NULL);
-    xmlNsPtr psXlinkNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "xlink" );
-    const char *metadatalink_type = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_type");
-    const char *metadatalink_format = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_format");
-
-    xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "type", BAD_CAST "simple");
-    xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "href", BAD_CAST value);
-    if (metadatalink_type != NULL) {
-      xmlNewProp(psMetadata, BAD_CAST "about", BAD_CAST metadatalink_type);
-    }
-    if (metadatalink_format != NULL) {
-      xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "role", BAD_CAST metadatalink_format);
-    }
-  }
+  msWCS_11_20_PrintMetadataLinks(layer, doc, psCSummary);
 
   /* -------------------------------------------------------------------- */
   /*      WGS84 bounding box.                                             */
