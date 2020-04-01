@@ -33,7 +33,7 @@ elif [ "$BUILD_NAME" = "PHP_7.3_WITH_PROJ6" ]; then
 else
     # Force use of PROJ 4 API
     sudo rm /usr/local/include/proj.h
-    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-DPROJ_RENAME_SYMBOLS -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H" CMAKE_CXX_FLAGS="-DPROJ_RENAME_SYMBOLS -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H" EXTRA_CMAKEFLAGS="-DPROJ_INCLUDE_DIR=/usr/local/include -DPROJ_LIBRARY=/usr/local/lib/libproj.so.15"
+    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-DPROJ_RENAME_SYMBOLS -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H" CMAKE_CXX_FLAGS="-DPROJ_RENAME_SYMBOLS -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H" EXTRA_CMAKEFLAGS="-DPROJ_INCLUDE_DIR=/usr/local/include -DPROJ_LIBRARY=/usr/local/lib/libproj.so.15" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror"
     make mspython-wheel
     make -j4 test
 fi

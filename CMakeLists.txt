@@ -869,6 +869,10 @@ if(BUILD_DYNAMIC)
   )
 endif(BUILD_DYNAMIC)
 
+if (NOT("${LIBMAPSERVER_EXTRA_FLAGS}" STREQUAL ""))
+  set_source_files_properties(${mapserver_SOURCES} PROPERTIES COMPILE_FLAGS ${LIBMAPSERVER_EXTRA_FLAGS})
+endif()
+
 macro(status_optional_component component enabled libpath)
   if("${enabled}" EQUAL "1")
     message(STATUS "  * ${component}: ${libpath}")
