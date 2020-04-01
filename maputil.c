@@ -134,8 +134,10 @@ static int bindColorAttribute(colorObj *attribute, const char *value)
 
 static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int drawmode)
 {
+  int applyOpacity = MS_FALSE;
   assert(MS_DRAW_FEATURES(drawmode));
   if(style->numbindings > 0) {
+    applyOpacity = MS_TRUE;
     if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
       style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
       if(style->symbol == -1) style->symbol = 0; /* a reasonable default (perhaps should throw an error?) */
@@ -187,6 +189,7 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
   }
   if (style->nexprbindings > 0)
   {
+    applyOpacity = MS_TRUE;
     if (style->exprBindings[MS_STYLE_BINDING_OFFSET_X].type == MS_EXPRESSION)
     {
       style->offsetx = msEvalDoubleExpression(
@@ -238,7 +241,8 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
       msFree(txt);
     }
   }
-  if(style->opacity < 100 || style->color.alpha != 255 ) {
+
+  if(applyOpacity == MS_TRUE && (style->opacity < 100 || style->color.alpha != 255) ) {
     int alpha;
     alpha = MS_NINT(style->opacity*2.55);
     style->color.alpha = alpha;
