@@ -33,6 +33,8 @@
 #include "mapcopy.h"
 #include "cpl_string.h"
 
+extern int yyparse(parseObj *);
+
 #if defined(USE_CURL)
 static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 #endif
@@ -650,7 +652,13 @@ void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer,
         else if (pszTitle)
           psLayer->class[psLayer->numclasses-1-i]->name = msStrdup(pszTitle);
         else
-          psLayer->class[psLayer->numclasses-1-i]->name = msStrdup("Unknown");
+        {
+          // Build a name from layer and class info
+          char szTmp[256];
+          snprintf(szTmp, sizeof(szTmp), "%s#%d", psLayer->name,
+              psLayer->numclasses-1-i);
+          psLayer->class[psLayer->numclasses-1-i]->name = msStrdup(szTmp);
+        }
       }
     }
     if (pszTitle) {
@@ -3341,13 +3349,13 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
-  char *pszSLD = NULL;
+  msStringBuffer * sldString = msStringBufferAlloc();
   int nSymbol = -1;
   symbolObj *psSymbol = NULL;
   char szTmp[512];
   char szFormat[4];
   int i = 0, nLength = 0;
-  int bFillColor = 0, bColorAvailable=0;
+  int bColorAvailable=0;
   int bGenerateDefaultSymbol = 0;
   char *pszSymbolName= NULL;
   char sNameSpace[10];
@@ -3414,103 +3422,149 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
 
           if (pszSymbolName) {
-            colorObj sTmpColor;
+            colorObj sTmpFillColor = { 128, 128, 128, 255 };
+            colorObj sTmpStrokeColor = { 0, 0, 0, 255 };
+            int hasFillColor = 0;
+            int hasStrokeColor = 0;
 
             snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-
+            msStringBufferAppend(sldString, szTmp);
 
             snprintf(szTmp, sizeof(szTmp), "<%sMark>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             snprintf(szTmp, sizeof(szTmp), "<%sWellKnownName>%s</%sWellKnownName>\n",
-                     sNameSpace, pszSymbolName, sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
-
+                sNameSpace, pszSymbolName, sNameSpace);
+            msStringBufferAppend(sldString, szTmp);
 
             if (psStyle->color.red != -1 &&
                 psStyle->color.green != -1 &&
-                psStyle->color.blue != -1) {
-              sTmpColor.red = psStyle->color.red;
-              sTmpColor.green = psStyle->color.green;
-              sTmpColor.blue = psStyle->color.blue;
-              bFillColor =1;
-            } else if (psStyle->outlinecolor.red != -1 &&
-                       psStyle->outlinecolor.green != -1 &&
-                       psStyle->outlinecolor.blue != -1) {
-              sTmpColor.red = psStyle->outlinecolor.red;
-              sTmpColor.green = psStyle->outlinecolor.green;
-              sTmpColor.blue = psStyle->outlinecolor.blue;
-              bFillColor = 0;
-            } else {
-              sTmpColor.red = 128;
-              sTmpColor.green = 128;
-              sTmpColor.blue = 128;
-              bFillColor =1;
+                psStyle->color.blue != -1)
+            {
+              sTmpFillColor.red = psStyle->color.red;
+              sTmpFillColor.green = psStyle->color.green;
+              sTmpFillColor.blue = psStyle->color.blue;
+              sTmpFillColor.alpha = psStyle->color.alpha;
+              hasFillColor = 1;
             }
-
-
-            if (psLayer->type == MS_LAYER_POINT) {
-              if (psSymbol->filled || bFillColor) {
-                snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
-                pszSLD = msStringConcatenate(pszSLD, szTmp);
-                snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%02x%02x%02x</%s>\n",
-                         sCssParam,sTmpColor.red,
-                         sTmpColor.green,
-                         sTmpColor.blue,
-                         sCssParam);
-              } else {
-                snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
-                pszSLD = msStringConcatenate(pszSLD, szTmp);
-                snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke\">#%02x%02x%02x</%s>\n",
-                         sCssParam,
-                         sTmpColor.red,
-                         sTmpColor.green,
-                         sTmpColor.blue,
-                         sCssParam);
-              }
-            } else {
-              if (bFillColor) {
-                snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
-                pszSLD = msStringConcatenate(pszSLD, szTmp);
-                snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%02x%02x%02x</%s>\n",
-                         sCssParam,
-                         sTmpColor.red,
-                         sTmpColor.green,
-                         sTmpColor.blue,
-                         sCssParam);
-              } else {
-                snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
-                pszSLD = msStringConcatenate(pszSLD, szTmp);
-                snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke\">#%02x%02x%02x</%s>\n",
-                         sCssParam,
-                         sTmpColor.red,
-                         sTmpColor.green,
-                         sTmpColor.blue,
-                         sCssParam);
+            if (psStyle->outlinecolor.red != -1 &&
+                psStyle->outlinecolor.green != -1 &&
+                psStyle->outlinecolor.blue != -1)
+            {
+              sTmpStrokeColor.red = psStyle->outlinecolor.red;
+              sTmpStrokeColor.green = psStyle->outlinecolor.green;
+              sTmpStrokeColor.blue = psStyle->outlinecolor.blue;
+              sTmpStrokeColor.alpha = psStyle->outlinecolor.alpha;
+              hasStrokeColor = 1;
+              // Make defaults implicit
+              if (sTmpStrokeColor.red == 0 &&
+                  sTmpStrokeColor.green == 0 &&
+                  sTmpStrokeColor.blue == 0 &&
+                  sTmpStrokeColor.alpha == 255 &&
+                  psStyle->width == 1)
+              {
+                hasStrokeColor = 0;
               }
             }
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            if (!hasFillColor && !hasStrokeColor)
+            {
+              sTmpFillColor.red = 128;
+              sTmpFillColor.green = 128;
+              sTmpFillColor.blue = 128;
+              sTmpFillColor.alpha = 255;
+              hasFillColor = 1;
+            }
 
-            if ((psLayer->type == MS_LAYER_POINT && psSymbol->filled) ||
-                bFillColor)
+            if (hasFillColor) {
+              snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+              snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%02x%02x%02x</%s>\n",
+                  sCssParam,
+                  sTmpFillColor.red,
+                  sTmpFillColor.green,
+                  sTmpFillColor.blue,
+                  sCssParam);
+              msStringBufferAppend(sldString, szTmp);
+              if (sTmpFillColor.alpha != 255 && sTmpFillColor.alpha != -1)
+              {
+                snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill-opacity\">%.2f</%s>\n",
+                    sCssParam,
+                    (float)sTmpFillColor.alpha/255.0,
+                    sCssParam);
+                msStringBufferAppend(sldString, szTmp);
+              }
               snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
-            else
+              msStringBufferAppend(sldString, szTmp);
+            }
+            if (hasStrokeColor) {
+              snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+              snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke\">#%02x%02x%02x</%s>\n",
+                  sCssParam,
+                  sTmpStrokeColor.red,
+                  sTmpStrokeColor.green,
+                  sTmpStrokeColor.blue,
+                  sCssParam);
+              msStringBufferAppend(sldString, szTmp);
+              if (psStyle->width > 0)
+              {
+                snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke-width\">%g</%s>\n",
+                    sCssParam,
+                    psStyle->width,
+                    sCssParam);
+                msStringBufferAppend(sldString, szTmp);
+              }
+              if (sTmpStrokeColor.alpha != 255 && sTmpStrokeColor.alpha != -1)
+              {
+                snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke-opacity\">%.2f</%s>\n",
+                    sCssParam,
+                    (float)sTmpStrokeColor.alpha/255.0,
+                    sCssParam);
+                msStringBufferAppend(sldString, szTmp);
+              }
               snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+              msStringBufferAppend(sldString, szTmp);
+            }
 
             snprintf(szTmp, sizeof(szTmp), "</%sMark>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             if (psStyle->size > 0) {
-              snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n", sNameSpace,
-                       psStyle->size, sNameSpace);
-              pszSLD = msStringConcatenate(pszSLD, szTmp);
+              snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n",
+                  sNameSpace, psStyle->size, sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+            }
+
+            if (fmod(psStyle->angle, 360))
+            {
+              snprintf(szTmp, sizeof(szTmp), "<%sRotation>%g</%sRotation>\n",
+                  sNameSpace, psStyle->angle, sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+            }
+         // Style opacity is already reported to alpha channel of color and outlinecolor
+         // if (psStyle->opacity < 100)
+         // {
+         //   snprintf(szTmp, sizeof(szTmp), "<%sOpacity>%g</%sOpacity>\n",
+         //       sNameSpace, psStyle->opacity/100.0, sNameSpace);
+         //   pszSLD = msStringConcatenate(pszSLD, szTmp);
+         // }
+
+            if (psStyle->offsetx != 0 || psStyle->offsety != 0)
+            {
+              snprintf(szTmp, sizeof(szTmp), "<%sDisplacement>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+              snprintf(szTmp, sizeof(szTmp), "<%sDisplacementX>%g</%sDisplacementX>\n",
+                  sNameSpace, psStyle->offsetx, sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+              snprintf(szTmp, sizeof(szTmp), "<%sDisplacementY>%g</%sDisplacementY>\n",
+                  sNameSpace, psStyle->offsety, sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+              snprintf(szTmp, sizeof(szTmp), "</%sDisplacement>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
             }
 
             snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             if (pszSymbolName)
               free(pszSymbolName);
@@ -3525,16 +3579,16 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
           if (pszURL) {
             snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
 
 
             snprintf(szTmp, sizeof(szTmp), "<%sExternalGraphic>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             snprintf(szTmp, sizeof(szTmp), "<%sOnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s%s\"/>\n", sNameSpace,
                      pszURL,psSymbol->imagepath);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
             /* TODO : extract format from symbol */
 
             szFormat[0] = '\0';
@@ -3557,100 +3611,100 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
               snprintf(szTmp, sizeof(szTmp), "<%sFormat>%s</%sFormat>\n", sNameSpace,
                             (psSymbol->type ==MS_SYMBOL_SVG)?"image/svg+xml":"image/gif",sNameSpace);
 
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             snprintf(szTmp, sizeof(szTmp), "</%sExternalGraphic>\n",  sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             if (psStyle->size > 0)
               snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n", sNameSpace, psStyle->size,
                        sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
             snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
-            pszSLD = msStringConcatenate(pszSLD, szTmp);
+            msStringBufferAppend(sldString, szTmp);
 
           }
         }
 
       }
     }
-    if (bGenerateDefaultSymbol) { /* genrate a default square symbol */
+    if (bGenerateDefaultSymbol) { /* generate a default square symbol */
       snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
-      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      msStringBufferAppend(sldString, szTmp);
 
 
 
       snprintf(szTmp, sizeof(szTmp), "<%sMark>\n", sNameSpace);
-      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      msStringBufferAppend(sldString, szTmp);
 
       snprintf(szTmp, sizeof(szTmp), "<%sWellKnownName>%s</%sWellKnownName>\n",
                sNameSpace, "square", sNameSpace);
-      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      msStringBufferAppend(sldString, szTmp);
 
       bColorAvailable = 0;
       if (psStyle->color.red != -1 &&
           psStyle->color.green != -1 &&
           psStyle->color.blue != -1) {
         snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%02x%02x%02x</%s>\n",
                  sCssParam,
                  psStyle->color.red,
                  psStyle->color.green,
                  psStyle->color.blue,
                  sCssParam);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         bColorAvailable = 1;
       }
       if (psStyle->outlinecolor.red != -1 &&
           psStyle->outlinecolor.green != -1 &&
           psStyle->outlinecolor.blue != -1) {
         snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         snprintf(szTmp, sizeof(szTmp), "<%s name=\"Stroke\">#%02x%02x%02x</%s>\n",
                  sCssParam,
                  psStyle->outlinecolor.red,
                  psStyle->outlinecolor.green,
                  psStyle->outlinecolor.blue,
                  sCssParam);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n", sNameSpace);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         bColorAvailable = 1;
       }
       if (!bColorAvailable) {
         /* default color */
         snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         snprintf(szTmp, sizeof(szTmp),
                  "<%s name=\"fill\">%s</%s>\n",
                  sCssParam, "#808080", sCssParam);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
         snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
-        pszSLD = msStringConcatenate(pszSLD, szTmp);
+        msStringBufferAppend(sldString, szTmp);
       }
 
       snprintf(szTmp, sizeof(szTmp), "</%sMark>\n", sNameSpace);
-      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      msStringBufferAppend(sldString, szTmp);
 
       if (psStyle->size > 0)
         snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n", sNameSpace,
                  psStyle->size, sNameSpace);
       else
         snprintf(szTmp,  sizeof(szTmp), "<%sSize>%d</%sSize>\n", sNameSpace,1,sNameSpace);
-      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      msStringBufferAppend(sldString, szTmp);
 
       snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
-      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      msStringBufferAppend(sldString, szTmp);
 
 
     }
   }
 
-  return pszSLD;
+  return msStringBufferReleaseStringAndFree(sldString);
 
 #else
   return NULL;
@@ -3928,6 +3982,14 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
              sCssParam,dfSize,sCssParam);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
+    if(psStyle->outlinecolor.alpha != 255 && psStyle->outlinecolor.alpha != -1)
+    {
+      snprintf(szTmp, sizeof(szTmp),
+          "<%s name=\"stroke-opacity\">%.2f</%s>\n",
+          sCssParam, psStyle->outlinecolor.alpha/255.0, sCssParam);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+    }
+
     snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
   }
@@ -3992,13 +4054,13 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
   char *pszSLD = NULL;
 
-  char szTmp[100];
+  char szTmp[1000];
   char **aszFontsParts = NULL;
   int nFontParts = 0;
   char szHexColor[7];
-  int nColorRed=-1, nColorGreen=-1, nColorBlue=-1;
   double dfAnchorX = 0.5, dfAnchorY = 0.5;
   int i = 0;
+  int lid;
   char sCssParam[30];
   char sNameSpace[10];
   labelObj *psLabelObj = NULL;
@@ -4014,14 +4076,85 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     strcpy(sNameSpace, "se:");
 
 
-  if (psClass && psLayer && psLayer->labelitem &&
-      strlen(psLayer->labelitem) > 0 && psClass->numlabels > 0) {
-    psLabelObj = psClass->labels[0];
+  if (!psLayer || !psClass) return pszSLD;
+
+  for (lid=0 ; lid < psClass->numlabels ; lid++)
+  {
+    char * psLabelText;
+    expressionObj psLabelExpr;
+    parseObj p;
+
+    msInitExpression(&psLabelExpr);
+    psLabelObj = psClass->labels[lid];
+
+    if (psLabelObj->text.string)
+    {
+      psLabelExpr.string = msStrdup(psLabelObj->text.string);
+      psLabelExpr.type = psLabelObj->text.type;
+    }
+    else if (psClass->text.string)
+    {
+      psLabelExpr.string = msStrdup(psClass->text.string);
+      psLabelExpr.type = psClass->text.type;
+    }
+    else if (psLayer->labelitem)
+    {
+      psLabelExpr.string = msStrdup(psLayer->labelitem);
+      psLabelExpr.type = MS_STRING;
+    }
+    else
+    {
+      msFreeExpression(&psLabelExpr);
+      continue; // Can't find text content for this <Label>
+    }
+
+    if (psLabelExpr.type == MS_STRING)
+    {
+      // Rewrite string to an expression so that literal strings and attributes
+      // are explicitely concatenated, e.g.:
+      //   "area is: [area]" becomes ("area is: "+"[area]"+"")
+      //             ^^^^^^                     ^^^^^^^^^^^^
+      char *result;
+      result = msStrdup("\"");
+      result = msStringConcatenate(result, psLabelExpr.string);
+      result = msStringConcatenate(result, "\"");
+      msTokenizeExpression(&psLabelExpr, NULL, NULL);
+      for (tokenListNodeObjPtr t = psLabelExpr.tokens ; t ; t=t->next)
+      {
+        if (t->token == MS_TOKEN_BINDING_DOUBLE ||
+            t->token == MS_TOKEN_BINDING_INTEGER ||
+            t->token == MS_TOKEN_BINDING_STRING)
+        {
+          char * target = msSmallMalloc(strlen(t->tokenval.bindval.item) + 3);
+          char * replacement = msSmallMalloc(strlen(t->tokenval.bindval.item) + 9);
+          sprintf(target, "[%s]", t->tokenval.bindval.item);
+          sprintf(replacement, "\"+\"[%s]\"+\"", t->tokenval.bindval.item);
+          result = msReplaceSubstring(result,target,replacement);
+          msFree(target);
+          msFree(replacement);
+        }
+      }
+      msFreeExpression(&psLabelExpr);
+      psLabelExpr.string = msStrdup(result);
+      psLabelExpr.type = MS_EXPRESSION;
+      msFree(result);
+    }
+
+    // Parse label expression to generate SLD tags from MapFile syntax
+    msTokenizeExpression(&psLabelExpr, NULL, NULL);
+    p.expr = &psLabelExpr;
+    p.shape = NULL;
+    p.type = MS_PARSE_TYPE_SLD;
+    yyparse(&p);
+    psLabelText = msStrdup(p.result.strval);
+    msFree(p.result.strval);
+    msFreeExpression(&psLabelExpr);
+
     snprintf(szTmp, sizeof(szTmp), "<%sTextSymbolizer>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    snprintf(szTmp, sizeof(szTmp), "<%sLabel><ogc:PropertyName>%s</ogc:PropertyName></%sLabel>\n",  sNameSpace,
-             psLayer->labelitem, sNameSpace);
+    snprintf(szTmp, sizeof(szTmp), "<%sLabel>\n%s</%sLabel>\n",
+        sNameSpace, psLabelText, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     /* -------------------------------------------------------------------- */
@@ -4039,29 +4172,29 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 
         /* assuming first one is font-family */
         snprintf(szTmp, sizeof(szTmp),
-                 "<%s name=\"font-family\">%s</%s>\n",
-                 sCssParam, aszFontsParts[0], sCssParam);
+            "<%s name=\"font-family\">%s</%s>\n",
+            sCssParam, aszFontsParts[0], sCssParam);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
         for (i=1; i<nFontParts; i++) {
           if (strcasecmp(aszFontsParts[i], "italic") == 0 ||
               strcasecmp(aszFontsParts[i], "oblique") == 0) {
             snprintf(szTmp, sizeof(szTmp),
-                     "<%s name=\"font-style\">%s</%s>\n",
-                     sCssParam, aszFontsParts[i], sCssParam);
+                "<%s name=\"font-style\">%s</%s>\n",
+                sCssParam, aszFontsParts[i], sCssParam);
             pszSLD = msStringConcatenate(pszSLD, szTmp);
           } else if (strcasecmp(aszFontsParts[i], "bold") == 0) {
             snprintf(szTmp, sizeof(szTmp),
-                     "<%s name=\"font-weight\">%s</%s>\n",
-                     sCssParam,
-                     aszFontsParts[i], sCssParam);
+                "<%s name=\"font-weight\">%s</%s>\n",
+                sCssParam,
+                aszFontsParts[i], sCssParam);
             pszSLD = msStringConcatenate(pszSLD, szTmp);
           }
         }
         /* size */
         if (psLabelObj->size > 0) {
           snprintf(szTmp, sizeof(szTmp),
-                   "<%s name=\"font-size\">%d</%s>\n",
-                   sCssParam, psLabelObj->size, sCssParam);
+              "<%s name=\"font-size\">%d</%s>\n",
+              sCssParam, psLabelObj->size, sCssParam);
           pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
         snprintf(szTmp, sizeof(szTmp), "</%sFont>\n",  sNameSpace);
@@ -4073,7 +4206,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 
     /* label placement */
     snprintf(szTmp, sizeof(szTmp), "<%sLabelPlacement>\n<%sPointPlacement>\n",
-             sNameSpace, sNameSpace  );
+        sNameSpace, sNameSpace  );
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     snprintf(szTmp, sizeof(szTmp), "<%sAnchorPoint>\n", sNameSpace);
@@ -4112,10 +4245,10 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
       dfAnchorY = 1;
     }
     snprintf(szTmp, sizeof(szTmp), "<%sAnchorPointX>%.1f</%sAnchorPointX>\n",
-             sNameSpace, dfAnchorX, sNameSpace);
+        sNameSpace, dfAnchorX, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
     snprintf(szTmp, sizeof(szTmp), "<%sAnchorPointY>%.1f</%sAnchorPointY>\n", sNameSpace,
-             dfAnchorY, sNameSpace);
+        dfAnchorY, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     snprintf(szTmp, sizeof(szTmp), "</%sAnchorPoint>\n",  sNameSpace);
@@ -4128,55 +4261,68 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 
       if (psLabelObj->offsetx > 0) {
         snprintf(szTmp, sizeof(szTmp), "<%sDisplacementX>%d</%sDisplacementX>\n",
-                 sNameSpace, psLabelObj->offsetx, sNameSpace);
+            sNameSpace, psLabelObj->offsetx, sNameSpace);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
       }
       if (psLabelObj->offsety > 0) {
         snprintf(szTmp, sizeof(szTmp), "<%sDisplacementY>%d</%sDisplacementY>\n",
-                 sNameSpace, psLabelObj->offsety, sNameSpace);
+            sNameSpace, psLabelObj->offsety, sNameSpace);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
       }
 
       snprintf(szTmp,  sizeof(szTmp), "</%sDisplacement>\n",  sNameSpace);
       pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
+
     /* rotation */
     if (psLabelObj->angle > 0) {
       snprintf(szTmp, sizeof(szTmp), "<%sRotation>%.2f</%sRotation>\n",
-               sNameSpace, psLabelObj->angle, sNameSpace);
+          sNameSpace, psLabelObj->angle, sNameSpace);
       pszSLD = msStringConcatenate(pszSLD, szTmp);
     }
 
-    /* TODO : support Halo parameter => shadow */
-
-    snprintf(szTmp, sizeof(szTmp), "</%sPointPlacement>\n</%sLabelPlacement>\n", sNameSpace, sNameSpace);
+    snprintf(szTmp, sizeof(szTmp), "</%sPointPlacement>\n</%sLabelPlacement>\n",
+        sNameSpace, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
+    if (psLabelObj->outlinecolor.red != -1 &&
+        psLabelObj->outlinecolor.green != -1 &&
+        psLabelObj->outlinecolor.blue != -1)
+    {
+      snprintf(szTmp, sizeof(szTmp), "<%sHalo>\n", sNameSpace);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      snprintf(szTmp, sizeof(szTmp), "<%sRadius>%d</%sRadius>\n",
+          sNameSpace, psLabelObj->outlinewidth, sNameSpace);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%02x%02x%02x</%s>\n",
+          sCssParam,
+          psLabelObj->outlinecolor.red,
+          psLabelObj->outlinecolor.green,
+          psLabelObj->outlinecolor.blue,
+          sCssParam);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+      snprintf(szTmp, sizeof(szTmp), "</%sHalo>\n", sNameSpace);
+      pszSLD = msStringConcatenate(pszSLD, szTmp);
+    }
 
     /* color */
     if (psLabelObj->color.red != -1 &&
         psLabelObj->color.green != -1 &&
-        psLabelObj->color.blue != -1) {
-      nColorRed = psLabelObj->color.red;
-      nColorGreen = psLabelObj->color.green;
-      nColorBlue = psLabelObj->color.blue;
-    } else if (psLabelObj->outlinecolor.red != -1 &&
-               psLabelObj->outlinecolor.green != -1 &&
-               psLabelObj->outlinecolor.blue != -1) {
-      nColorRed = psLabelObj->outlinecolor.red;
-      nColorGreen = psLabelObj->outlinecolor.green;
-      nColorBlue = psLabelObj->outlinecolor.blue;
-    }
-    if (nColorRed >= 0 && nColorGreen >= 0  && nColorBlue >=0) {
+        psLabelObj->color.blue != -1)
+    {
       snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace );
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-      sprintf(szHexColor,"%02hhx%02hhx%02hhx",(unsigned char)nColorRed,
-              (unsigned char)nColorGreen, (unsigned char)nColorBlue);
+      sprintf(szHexColor,"%02hhx%02hhx%02hhx",psLabelObj->color.red,
+          psLabelObj->color.green, psLabelObj->color.blue);
 
       snprintf(szTmp, sizeof(szTmp),
-               "<%s name=\"fill\">#%s</%s>\n",
-               sCssParam, szHexColor, sCssParam);
+          "<%s name=\"fill\">#%s</%s>\n",
+          sCssParam, szHexColor, sCssParam);
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
       snprintf(szTmp, sizeof(szTmp), "</%sFill>\n",  sNameSpace);
@@ -4185,6 +4331,8 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 
     snprintf(szTmp, sizeof(szTmp), "</%sTextSymbolizer>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+    msFree(psLabelText);
   }
   return pszSLD;
 
