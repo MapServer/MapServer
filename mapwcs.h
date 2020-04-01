@@ -40,6 +40,10 @@
 #include <sys/time.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Definitions
  */
@@ -101,7 +105,7 @@ void msWCSFreeCoverageMetadata(coverageMetadataObj *cm);
 void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
                                        coverageMetadataObj *cm,
                                        layerObj *lp );
-const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name);
+const char *msWCSGetRequestParameter(cgiRequestObj *request, const char *name);
 void msWCSApplyLayerCreationOptions(layerObj* lp,
                                     outputFormatObj* format,
                                     const char* bandlist);
@@ -294,5 +298,9 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request, wcs20ParamsObjPtr pa
     (params->sections == NULL                                   \
     || CSLFindString(params->sections, "All") != -1             \
     || CSLFindString(params->sections, section) != -1)
+
+#ifdef __cplusplus
+} /* extern C */
+#endif
 
 #endif /* nef MAPWCS_H */

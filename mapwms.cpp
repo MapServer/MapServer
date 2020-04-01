@@ -27,8 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#define _GNU_SOURCE
-
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -48,6 +46,8 @@
 #include <time.h>
 #include <string.h>
 
+#include <vector>
+
 #ifdef WIN32
 #include <process.h>
 #endif
@@ -63,8 +63,9 @@
 ** Report current MapServer error in requested format.
 */
 
+static
 int msWMSException(mapObj *map, int nVersion, const char *exception_code,
-                   char *wms_exception_format)
+                   const char *wms_exception_format)
 {
   char *schemalocation = NULL;
 
@@ -379,8 +380,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     }
     
     /* Force setting a template to enable query. */
-    if (lp->template == NULL)
-      lp->template = msStrdup("ttt.html");
+    if (lp->_template == NULL)
+      lp->_template = msStrdup("ttt.html");
 
     /* Parse filter */
     psNode = FLTParseFilterEncoding(paszFilters[curfilter]);
@@ -511,11 +512,10 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
 {
   int i, k;
   const char* groups;
-  char* errorMsg;
   //Create array to hold unique groups
   int maxgroups = 2000;
   int maxgroupiter = 1;
-  char** uniqgroups = msSmallMalloc(maxgroups * sizeof(char*));
+  char** uniqgroups = static_cast<char**>(msSmallMalloc(maxgroups * sizeof(char*)));
   int uniqgroupcount = 0;
   
 
@@ -527,13 +527,13 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
     groups = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "MO", "layer_group");
     if ((groups != NULL) && (strlen(groups) != 0)) {
       if (GET_LAYER(map, i)->group != NULL && strlen(GET_LAYER(map, i)->group) != 0) {
-        errorMsg = "It is not allowed to set both the GROUP and WMS_LAYER_GROUP for a layer";
+        const char* errorMsg = "It is not allowed to set both the GROUP and WMS_LAYER_GROUP for a layer";
         msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
         msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
         /* cannot return exception at this point because we are already writing to stdout */
       } else {
         if (groups[0] != '/') {
-          errorMsg = "The WMS_LAYER_GROUP metadata does not start with a '/'";
+          const char* errorMsg = "The WMS_LAYER_GROUP metadata does not start with a '/'";
           msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
           msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
           /* cannot return exception at this point because we are already writing to stdout */
@@ -555,7 +555,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
              uniqgroupcount++;
              // Does need only when maximum unique groups exceed 2000
              if ( uniqgroupcount == (maxgroups*maxgroupiter)){
-                uniqgroups = realloc(uniqgroups, (uniqgroupcount + maxgroups) * sizeof(char*));
+                uniqgroups = static_cast<char**>(realloc(uniqgroups, (uniqgroupcount + maxgroups) * sizeof(char*)));
                 maxgroupiter++;
              }
             }
@@ -588,7 +588,7 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
   int numextents=0, numranges=0, numonerange=0;
   char **aextentvalues = NULL;
   int nextentvalues=0;
-  pointObj *aextentranges=NULL;
+  std::vector<pointObj> aextentranges;
   int nextentranges=0;
 
   int isextentavalue = MS_FALSE, isextentarange=MS_FALSE;
@@ -631,7 +631,7 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
       if(ranges && (numranges == 2 || numranges == 3)) {
         /*single range*/
         isextentarange = MS_TRUE;
-        aextentranges = msSmallMalloc(sizeof(pointObj));
+        aextentranges.resize(1);
         nextentranges=1;
         aextentranges[0].x = atof(ranges[0]);
         aextentranges[0].y = atof(ranges[1]);
@@ -659,7 +659,7 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
       /*ranges should be numeric*/
       ischaracter = MS_FALSE;
       isextentarange = MS_TRUE;
-      aextentranges = msSmallMalloc(sizeof(pointObj) * numextents);
+      aextentranges.resize(numextents);
       nextentranges=0;
 
       for (i=0; i<numextents; i++) {
@@ -677,8 +677,6 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
         onerange = NULL;
       }
       if (!isvalidextent) {
-        msFree(aextentranges);
-        aextentranges = NULL;
         nextentranges = 0;
         isextentarange = MS_FALSE;
       }
@@ -853,10 +851,6 @@ dimension_cleanup:
     for (i=0; i<nextentvalues; i++)
       msFree(aextentvalues[i]);
     msFree(aextentvalues);
-  }
-
-  if(aextentranges) {
-    msFree(aextentranges);
   }
 
   return status;
@@ -1658,7 +1652,7 @@ this request. Check wms/ows_enable_request settings.",
 
     nTmp = GetMapserverUnitUsingProj(&(map->projection));
     if( nTmp != -1 ) {
-      map->units = nTmp;
+      map->units = static_cast<MS_UNITS>(nTmp);
     }
   }
 
@@ -1806,7 +1800,7 @@ this request. Check wms/ows_enable_request settings.",
                 (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[i]) == 0)) {
               lp =   GET_LAYER(map, j);
               for (k=0; k<lp->numclasses; k++) {
-                if (lp->class[k]->group && strcasecmp(lp->class[k]->group, tokens[i]) == 0) {
+                if (lp->_class[k]->group && strcasecmp(lp->_class[k]->group, tokens[i]) == 0) {
                   msFree(lp->classgroup);
                   lp->classgroup = msStrdup( tokens[i]);
                   break;
@@ -2574,8 +2568,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
           size_t bufferSize = 0;
           int classnameset = 0, i=0;
           for (i=0; i<lp->numclasses; i++) {
-            if (lp->class[i]->name &&
-                strlen(lp->class[i]->name) > 0) {
+            if (lp->_class[i]->name &&
+                strlen(lp->_class[i]->name) > 0) {
               classnameset = 1;
               break;
             }
@@ -2643,9 +2637,9 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
               pszEncodedStyleName = msEncodeHTMLEntities(styleName);
 
               for (i=0; i<lp->numclasses; i++) {
-                if (lp->class[i]->name && lp->class[i]->group) {
+                if (lp->_class[i]->name && lp->_class[i]->group) {
                   /* Check that style is not inherited from root layer (#4442). */
-                  if (strcasecmp(pszEncodedStyleName, lp->class[i]->group) == 0)
+                  if (strcasecmp(pszEncodedStyleName, lp->_class[i]->group) == 0)
                     continue;
                   /* Check that style is not inherited from group layer(s) (#4442). */
                   if (numNestedGroups[lp->index] > 0) {
@@ -2654,7 +2648,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                         if (GET_LAYER(map, k)->name && strcasecmp(GET_LAYER(map, k)->name, nestedGroups[lp->index][j]) == 0) {
                           lp2 = (GET_LAYER(map, k));
                           for (l=0; l < lp2->numclasses; l++) {
-                            if (strcasecmp(lp2->class[l]->group, lp->class[i]->group) == 0)
+                            if (strcasecmp(lp2->_class[l]->group, lp->_class[i]->group) == 0)
                               break;
                           }
                           break;
@@ -2668,17 +2662,17 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                   }
                   if (!classgroups) {
                     classgroups = (char **)msSmallMalloc(sizeof(char *));
-                    classgroups[iclassgroups++]= msStrdup(lp->class[i]->group);
+                    classgroups[iclassgroups++]= msStrdup(lp->_class[i]->group);
                   } else {
                     /* Output style only once. */
                     for (j=0; j<iclassgroups; j++) {
-                      if (strcasecmp(classgroups[j], lp->class[i]->group) == 0)
+                      if (strcasecmp(classgroups[j], lp->_class[i]->group) == 0)
                         break;
                     }
                     if (j == iclassgroups) {
                       iclassgroups++;
                       classgroups = (char **)msSmallRealloc(classgroups, sizeof(char *)*iclassgroups);
-                      classgroups[iclassgroups-1]= msStrdup(lp->class[i]->group);
+                      classgroups[iclassgroups-1]= msStrdup(lp->_class[i]->group);
                     }
                   }
                 }
@@ -3148,7 +3142,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
   } else {
-    char *mime_list[20];
+    const char *mime_list[20];
     int mime_count = 0;
     int max_mime = 20;
     /* WMS 1.1.0 and later */
@@ -4749,7 +4743,7 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
            * one class with the property name set */
           wms_layer = MS_TRUE;
           for (j=0; j<lp->numclasses; j++) {
-            if (lp->class[j]->name != NULL && strlen(lp->class[j]->name)>0) {
+            if (lp->_class[j]->name != NULL && strlen(lp->_class[j]->name)>0) {
               wms_layer = MS_FALSE;
               break;
             }
@@ -4803,8 +4797,8 @@ this request. Check wms/ows_enable_request settings.",
     /*style is only validated when there is only one layer #3411*/
     if (nLayers == 1 &&  pszStyle && strlen(pszStyle) > 0 && strcasecmp(pszStyle, "default") != 0) {
       for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++) {
-        if (GET_LAYER(map, iLayerIndex)->class[i]->group &&
-            strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->group, pszStyle) == 0)
+        if (GET_LAYER(map, iLayerIndex)->_class[i]->group &&
+            strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->group, pszStyle) == 0)
           break;
       }
 
@@ -4873,14 +4867,14 @@ this request. Check wms/ows_enable_request settings.",
 
     for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++) {
       if (GET_LAYER(map, iLayerIndex)->classgroup &&
-          (GET_LAYER(map, iLayerIndex)->class[i]->group == NULL ||
-           strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->group,
+          (GET_LAYER(map, iLayerIndex)->_class[i]->group == NULL ||
+           strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->group,
                       GET_LAYER(map, iLayerIndex)->classgroup) != 0))
         continue;
 
-      if (GET_LAYER(map, iLayerIndex)->class[i]->name &&
-          strlen(GET_LAYER(map, iLayerIndex)->class[i]->name) > 0 &&
-          strcasecmp(GET_LAYER(map, iLayerIndex)->class[i]->name,psRule) == 0)
+      if (GET_LAYER(map, iLayerIndex)->_class[i]->name &&
+          strlen(GET_LAYER(map, iLayerIndex)->_class[i]->name) > 0 &&
+          strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->name,psRule) == 0)
         break;
 
     }
@@ -4904,12 +4898,12 @@ this request. Check wms/ows_enable_request settings.",
         map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
         msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
         img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
-                                 GET_LAYER(map, iLayerIndex)->class[i],
+                                 GET_LAYER(map, iLayerIndex)->_class[i],
                                  nWidth, nHeight, MS_FALSE);
       } else {
         /* Scale-independent legend */
         img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
-                                 GET_LAYER(map, iLayerIndex)->class[i],
+                                 GET_LAYER(map, iLayerIndex)->_class[i],
                                  nWidth, nHeight, MS_TRUE);
       }
     }

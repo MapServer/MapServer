@@ -353,7 +353,7 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws)
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url)
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, const char *name, int method, const char *url)
 {
   xmlNodePtr psRootNode      = NULL;
   xmlNodePtr psNode          = NULL;
@@ -405,7 +405,7 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, char *elname, char *name, char *values)
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, const char *elname, const char *name, const char *values)
 {
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psNode = NULL;

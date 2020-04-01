@@ -257,7 +257,7 @@ int msWCSIsLayerSupported(layerObj *layer)
 /*                                                                      */
 /************************************************************************/
 
-const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name)
+const char *msWCSGetRequestParameter(cgiRequestObj *request, const char *name)
 {
   int i;
 
@@ -1851,7 +1851,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
     iUnits = GetMapserverUnitUsingProj(&(map->projection));
     if (iUnits != -1)
-      map->units = iUnits;
+      map->units = static_cast<MS_UNITS>(iUnits);
   }
 
   /* did we get a TIME value (support only a single value for now) */
@@ -2313,7 +2313,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request)
 {
 #if defined(USE_WCS_SVR)
-  void *params = NULL; /* either wcsParamsObj* or wcs20ParamsObj* */
+  wcs20ParamsObj *params20 = NULL;
   int status, retVal, operation;
 
   /* If SERVICE is not set or not WCS exit gracefully. */
@@ -2409,7 +2409,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
 
       /* check if we can keep the params object */
       if (EQUAL(params_tmp->version, "2.0.1")) {
-        params = params_tmp;
+        params20 = params_tmp;
       } else {
         msWCSFreeParamsObj20(params_tmp);
       }
@@ -2449,36 +2449,36 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       || strcmp(ows_request->version, "1.1.0") == 0
       || strcmp(ows_request->version, "1.1.1") == 0
       || strcmp(ows_request->version, "1.1.2") == 0) {
-    params = msWCSCreateParams();
-    status = msWCSParseRequest(request, params, map);
+    auto paramsTmp = msWCSCreateParams();
+    status = msWCSParseRequest(request, paramsTmp, map);
     if (status == MS_FAILURE) {
-      msWCSFreeParams(params);
-      free(params);
+      msWCSFreeParams(paramsTmp);
+      free(paramsTmp);
       return msWCSException(map, "InvalidParameterValue",
                             "request", "2.0");
     }
 
     retVal = MS_FAILURE;
     if (operation == MS_WCS_GET_CAPABILITIES) {
-      retVal = msWCSGetCapabilities(map, params, request, ows_request);
+      retVal = msWCSGetCapabilities(map, paramsTmp, request, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {
-      retVal = msWCSDescribeCoverage(map, params, ows_request, request);
+      retVal = msWCSDescribeCoverage(map, paramsTmp, ows_request, request);
     } else if (operation == MS_WCS_GET_COVERAGE) {
-      retVal = msWCSGetCoverage(map, request, params, ows_request);
+      retVal = msWCSGetCoverage(map, request, paramsTmp, ows_request);
     }
-    msWCSFreeParams(params);
-    free(params);
+    msWCSFreeParams(paramsTmp);
+    free(paramsTmp);
     return retVal;
   } else if (strcmp(ows_request->version, "2.0.0") == 0
              || strcmp(ows_request->version, "2.0.1") == 0) {
 #if defined(USE_LIBXML2)
     int i;
 
-    if (params == NULL) {
-      params = msWCSCreateParamsObj20();
-      status = msWCSParseRequest20(map, request, ows_request, params);
+    if (params20 == NULL) {
+      params20 = msWCSCreateParamsObj20();
+      status = msWCSParseRequest20(map, request, ows_request, params20);
       if (status == MS_FAILURE) {
-        msWCSFreeParamsObj20(params);
+        msWCSFreeParamsObj20(params20);
         return msWCSException(map, "InvalidParameterValue",
                               "request", "2.0.1");
       }
@@ -2486,7 +2486,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         /* MS_DONE means, that the exception has already been written to the IO 
           buffer. 
         */
-        msWCSFreeParamsObj20(params);
+        msWCSFreeParamsObj20(params20);
         return MS_FAILURE;
       }
     }
@@ -2500,18 +2500,18 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       if (msEvalRegex("^[a-zA-z_][a-zA-Z0-9_.-]*$" , map->layers[i]->name) == MS_FALSE) {
         msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
                    "msWCSDispatch()", map->layers[i]->name);
-        msWCSFreeParamsObj20(params);
+        msWCSFreeParamsObj20(params20);
         return msWCSException(map, "mapserv", "Internal", "2.0.1");
       }
     }
 
     /* Call operation specific functions */
     if (operation == MS_WCS_GET_CAPABILITIES) {
-      retVal = msWCSGetCapabilities20(map, request, params, ows_request);
+      retVal = msWCSGetCapabilities20(map, request, params20, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {
-      retVal = msWCSDescribeCoverage20(map, params, ows_request);
+      retVal = msWCSDescribeCoverage20(map, params20, ows_request);
     } else if (operation == MS_WCS_GET_COVERAGE) {
-      retVal = msWCSGetCoverage20(map, request, params, ows_request);
+      retVal = msWCSGetCoverage20(map, request, params20, ows_request);
     } else {
       msSetError(MS_WCSERR, "Invalid request '%s'.",
                  "msWCSDispatch20()", ows_request->request);
@@ -2519,7 +2519,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
                                 "request", "2.0.1");
     }
     /* clean up */
-    msWCSFreeParamsObj20(params);
+    msWCSFreeParamsObj20(params20);
     return retVal;
 #else /* def USE_LIBXML2 */
     msSetError(MS_WCSERR, "WCS 2.0 needs mapserver to be compiled with libxml2.",

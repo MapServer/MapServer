@@ -39,11 +39,19 @@
 #include <libxml/xmlschemas.h>
 #include <libxml/xmlschemastypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath);
 
 void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elname, const char *values, char delim);
 
 char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath);
+
+#ifdef __cplusplus
+} /* extern C */
+#endif
 
 #endif /* defined(USE_LIBXML2) */
 

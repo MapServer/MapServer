@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "mapows.h"
 
+#include <string>
 
 
 #if defined(USE_WFS_SVR)
@@ -496,7 +497,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
 
     nTmp = GetMapserverUnitUsingProj(&(map->projection));
     if( nTmp != -1 ) {
-      map->units = nTmp;
+      map->units = static_cast<MS_UNITS>(nTmp);
     }
   }
 
@@ -1077,7 +1078,7 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
 
   if(!stream || !item || !tab) return;
   if(!item->visible) return; /* not exposing this attribute */
-  if(item->template) return; /* can't adequately deal with templated items yet */
+  if(item->_template) return; /* can't adequately deal with templated items yet */
 
   if(item->alias) /* TODO: what about name spaces embedded in the alias? */
     element_name = item->alias;
@@ -1118,12 +1119,12 @@ static void msWFSWriteConstantElement(FILE *stream, gmlConstantObj *constant, co
   return;
 }
 
-static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, const char *tab, const char *namespace)
+static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, const char *tab, const char *_namespace)
 {
   if(group->type)
-    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s:%s\"/>\n", tab, group->name, namespace, group->type);
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s:%s\"/>\n", tab, group->name, _namespace, group->type);
   else
-    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s:%sType\"/>\n", tab, group->name, namespace, group->name);
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s:%sType\"/>\n", tab, group->name, _namespace, group->name);
 
   return;
 }
@@ -1604,7 +1605,7 @@ typedef struct {
   const char *user_namespace_uri;
   char       *user_namespace_uri_encoded;
   const char *collection_name;
-  const char *typename;
+  const char *_typename;
   char       *script_url, *script_url_encoded;
   const char *output_mime_type;
   const char *output_schema_format;
@@ -1760,7 +1761,7 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
   if(value) gmlinfo->collection_name = value;
 
   encoded_version = msEncodeHTMLEntities( paramsObj->pszVersion );
-  encoded_typename = msEncodeHTMLEntities( gmlinfo->typename );
+  encoded_typename = msEncodeHTMLEntities( gmlinfo->_typename );
   encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   if( nWFSVersion >= OWS_2_0_0) {
@@ -2292,7 +2293,7 @@ static int msWFSRetrieveFeatures(mapObj* map,
       return msWFSException(map, "filter_language", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
-    if (gmlinfo->typename == NULL || strlen(gmlinfo->typename) <= 0 || layers == NULL || numlayers <= 0) {
+    if (gmlinfo->_typename == NULL || strlen(gmlinfo->_typename) <= 0 || layers == NULL || numlayers <= 0) {
       msSetError(MS_WFSERR,
                  "Required %s parameter missing for GetFeature with a FILTER parameter.",
                  "msWFSGetFeature()",
@@ -2477,9 +2478,9 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
     for (j=0; j< iFIDLayers; j++) {
       layerObj *lp;
       lp = msWFSGetLayerByName(map, ows_request, aFIDLayers[j]);
-      if (lp->template == NULL) {
+      if (lp->_template == NULL) {
         /* Force setting a template to enable query. */
-        lp->template = msStrdup("ttt.html");
+        lp->_template = msStrdup("ttt.html");
       }
       psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
 
@@ -2669,10 +2670,11 @@ static char** msWFSParsePropertyNameOrSortBy(const char* pszPropertyName,
 
     if (numlayers == 1 && pszPropertyName[0] != '(') {
         /* Accept PROPERTYNAME without () when there is a single TYPENAME */
-        char* pszTmpPropertyName = msSmallMalloc(1+strlen(pszPropertyName)+1+1);
-        sprintf(pszTmpPropertyName, "(%s)", pszPropertyName);
-        tokens = msStringSplit(pszTmpPropertyName+1, '(', &nPropertyNames);
-        free(pszTmpPropertyName);
+        std::string osTmpPropertyName;
+        osTmpPropertyName = '(';
+        osTmpPropertyName += pszPropertyName;
+        osTmpPropertyName += ')';
+        tokens = msStringSplit(osTmpPropertyName.c_str()+1, '(', &nPropertyNames);
     } else
         tokens = msStringSplit(pszPropertyName+1, '(', &nPropertyNames);
 
@@ -2710,7 +2712,7 @@ static void msWFSInitGMLInfo(WFSGMLInfo* pgmlinfo)
   pgmlinfo->user_namespace_prefix = MS_DEFAULT_NAMESPACE_PREFIX;
   pgmlinfo->user_namespace_uri = MS_DEFAULT_NAMESPACE_URI;
   pgmlinfo->collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
-  pgmlinfo->typename = "";
+  pgmlinfo->_typename = "";
   pgmlinfo->output_mime_type = "text/xml";
   pgmlinfo->output_schema_format = "XMLSCHEMA";
 }
@@ -3397,13 +3399,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     char **papszSortBy = NULL;
 
     /* keep a ref for layer use. */
-    gmlinfo.typename = paramsObj->pszTypeName;
+    gmlinfo._typename = paramsObj->pszTypeName;
 
     /* Parse comma-delimited list of type names (layers) */
     /*  */
     /* __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4" */
     /*  */
-    layers = msStringSplit(gmlinfo.typename, ',', &numlayers);
+    layers = msStringSplit(gmlinfo._typename, ',', &numlayers);
 
     /* ==================================================================== */
     /*      TODO: check if the typename contains namespaces (ex cdf:Other), */
@@ -3462,9 +3464,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             gmlGroupListObj* groupList=NULL;
 
             lp->status = MS_ON;
-            if (lp->template == NULL) {
+            if (lp->_template == NULL) {
               /* Force setting a template to enable query. */
-              lp->template = msStrdup("ttt.html");
+              lp->_template = msStrdup("ttt.html");
             }
 
             /*do an alias replace for the current layer*/
@@ -4120,9 +4122,9 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
         gmlGroupListObj* groupList=NULL;
 
         lp->status = MS_ON;
-        if (lp->template == NULL) {
+        if (lp->_template == NULL) {
             /* Force setting a template to enable query. */
-            lp->template = msStrdup("ttt.html");
+            lp->_template = msStrdup("ttt.html");
         }
 
         /*do an alias replace for the current layer*/
@@ -4231,7 +4233,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
       iResultTypeHits = 1;
   }
 
-  gmlinfo.typename = paramsObj->pszTypeName;
+  gmlinfo._typename = paramsObj->pszTypeName;
 
   /* Validate outputformat */
   status = msWFSGetGMLOutputFormat(map, paramsObj, &gmlinfo, nWFSVersion);

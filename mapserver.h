@@ -2778,7 +2778,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT void msHSLtoRGB(double h, double s, double l, colorObj *rgb);
 
-  MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
+  MS_DLL_EXPORT int msCheckParentPointer(void* p, const char* objname);
 
   MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
 
@@ -2808,8 +2808,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );
   MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, const char *value );
   MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
-  MS_DLL_EXPORT void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime );
-  MS_DLL_EXPORT void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime );
+  MS_DLL_EXPORT void msGetOutputFormatMimeListImg( mapObj *map, const char **mime_list, int max_mime );
+  MS_DLL_EXPORT void msGetOutputFormatMimeListWMS( mapObj *map, const char **mime_list, int max_mime );
   MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
   MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format,
       int issue_error );

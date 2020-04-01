@@ -122,7 +122,7 @@ extern "C" {
   MS_DLL_EXPORT void msResetErrorList(void);
   MS_DLL_EXPORT char *msGetVersion(void);
   MS_DLL_EXPORT int  msGetVersionInt(void);
-  MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
+  MS_DLL_EXPORT char *msGetErrorString(const char *delimiter);
 
 #ifndef SWIG
   MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...) MS_PRINT_FUNC_FORMAT(2,4) ;

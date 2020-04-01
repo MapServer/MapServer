@@ -268,7 +268,7 @@ else(WIN32)
 endif(WIN32)
 
 set(mapserver_SOURCES fontcache.c 
-cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.c classobject.c
+cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.cpp classobject.c
 mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
 maphttp.c mapparser.c mapstring.c mapxmp.c mapcairo.c mapimageio.c
@@ -279,9 +279,9 @@ mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
 maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
-mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
-mapogcfiltercommon.cpp maprendering.c mapwcs20.c mapogcsld.c mapmetadata.c
-mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
+mapwcs.cpp maperror.c mapogcfilter.c mapregex.c mapwcs11.cpp mapfile.c
+mapogcfiltercommon.cpp maprendering.c mapwcs20.cpp mapogcsld.c mapmetadata.c
+mapresample.c mapwfs.cpp mapgdal.c mapogcsos.c mapscale.c mapwfs11.cpp mapwfs20.c
 mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c 

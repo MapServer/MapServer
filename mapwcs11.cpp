@@ -1037,14 +1037,14 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
 
 {
   char *rangesubset, *field_id;
-  const char *axis_id, *value;
+  const char *axis_id;
   int i;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the RangeSubset from the parameters, skip building a      */
   /*      bands list if not found.                                        */
   /* -------------------------------------------------------------------- */
-  value = msWCSGetRequestParameter(request, "RangeSubset");
+  const char* value = msWCSGetRequestParameter(request, "RangeSubset");
   if( value == NULL )
     return MS_SUCCESS;
 
