@@ -1547,6 +1547,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         }
         if (status == MS_FAILURE)
         {
+          msStringBufferFree(expression);
           msInitExpression(&(exprBindings[binding]));
         }
       }
