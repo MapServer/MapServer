@@ -84,9 +84,9 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
       int nMaxRemoteSLDBytes;
       const char *pszMaxRemoteSLDBytes = msOWSLookupMetadata(&(map->web.metadata), "MO", "remote_sld_max_bytes");
       if(!pszMaxRemoteSLDBytes) {
-    	  nMaxRemoteSLDBytes = 1024*1024; /* 1 megaByte */
+        nMaxRemoteSLDBytes = 1024*1024; /* 1 megaByte */
       } else {
-    	  nMaxRemoteSLDBytes = atoi(pszMaxRemoteSLDBytes);
+        nMaxRemoteSLDBytes = atoi(pszMaxRemoteSLDBytes);
       }
       if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0, nMaxRemoteSLDBytes) ==  MS_SUCCESS) {
         if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
@@ -1319,15 +1319,26 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
   const char * ops = "Add+Sub-Mul*Div/";
   styleObj * psStyle = psObj;
   labelObj * psLabel = psObj;
-  int lbinding = binding;
-  expressionObj *exprBindings = psStyle->exprBindings;
-  int *nexprbindings = &psStyle->nexprbindings;
+  int lbinding;
+  expressionObj *exprBindings;
+  int *nexprbindings;
   enum { MS_STYLE_BASE = 0, MS_LABEL_BASE = 100 };
-  if (objtype == MS_OBJ_LABEL)
+
+  switch (objtype)
   {
-    lbinding += MS_LABEL_BASE;
-    exprBindings = psLabel->exprBindings;
-    nexprbindings = &psLabel->nexprbindings;
+    case MS_OBJ_STYLE:
+      lbinding = binding + MS_STYLE_BASE;
+      exprBindings = psStyle->exprBindings;
+      nexprbindings = &psStyle->nexprbindings;
+      break;
+    case MS_OBJ_LABEL:
+      lbinding = binding + MS_LABEL_BASE;
+      exprBindings = psLabel->exprBindings;
+      nexprbindings = &psLabel->nexprbindings;
+      break;
+    default:
+      return MS_FAILURE;
+      break;
   }
 
   switch (psRoot->eType)
@@ -1335,13 +1346,14 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
     case CXT_Text:
       // Parse a raw value
       {
-        char * literalString = NULL;
-        literalString = msStringConcatenate(literalString, "(");
-        literalString = msStringConcatenate(literalString, psRoot->pszValue);
-        literalString = msStringConcatenate(literalString, ")");
+        msStringBuffer * literal = msStringBufferAlloc();
+        msStringBufferAppend(literal, "(");
+        msStringBufferAppend(literal, psRoot->pszValue);
+        msStringBufferAppend(literal, ")");
         msFreeExpression(&(exprBindings[binding]));
         msInitExpression(&(exprBindings[binding]));
-        exprBindings[binding].string = literalString;
+        exprBindings[binding].string =
+            msStringBufferReleaseStringAndFree(literal);
         exprBindings[binding].type = MS_STRING;
       }
       switch (lbinding)
@@ -1437,14 +1449,13 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       if (strcasecmp(psRoot->pszValue,"Literal") == 0 && psRoot->psChild)
       {
         // Parse a <ogc:Literal> element
-        status = msSLDParseOgcExpression(psRoot->psChild, psStyle, binding,
-            objtype);
+        status = msSLDParseOgcExpression(psRoot->psChild, psObj, binding, objtype);
       }
       else if (strcasecmp(psRoot->pszValue,"PropertyName") == 0
           && psRoot->psChild)
       {
         // Parse a <ogc:PropertyName> element
-        char * propertyString = NULL;
+        msStringBuffer * property = msStringBufferAlloc();
         char * strDelim = "";
 
         switch (lbinding)
@@ -1455,17 +1466,51 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           case MS_LABEL_BASE + MS_LABEL_BINDING_OUTLINECOLOR:
             strDelim = "\"";
           default:
-            propertyString = msStringConcatenate(propertyString, strDelim);
-            propertyString = msStringConcatenate(propertyString, "[");
-            propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
-            propertyString = msStringConcatenate(propertyString, "]");
-            propertyString = msStringConcatenate(propertyString, strDelim);
+            msStringBufferAppend(property, strDelim);
+            msStringBufferAppend(property, "[");
+            msStringBufferAppend(property, psRoot->psChild->pszValue);
+            msStringBufferAppend(property, "]");
+            msStringBufferAppend(property, strDelim);
             msInitExpression(&(psStyle->exprBindings[binding]));
-            exprBindings[binding].string = propertyString;
+            exprBindings[binding].string =
+                msStringBufferReleaseStringAndFree(property);
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
             break;
         }
+        status = MS_SUCCESS;
+      }
+      else if (strcasecmp(psRoot->pszValue,"Function") == 0
+          && CPLGetXMLValue(psRoot,"name",NULL)
+          && psRoot->psChild->psNext)
+      {
+        // Parse a <ogc:Function> element
+        msStringBuffer * function = msStringBufferAlloc();
+
+        // Parse function name
+        const char * funcname = CPLGetXMLValue(psRoot,"name",NULL);
+        msStringBufferAppend(function, funcname);
+        msStringBufferAppend(function, "(");
+        msInitExpression(&(exprBindings[binding]));
+
+        // Parse arguments
+        char * sep ="";
+        for (CPLXMLNode * argument = psRoot->psChild->psNext ; argument ; argument = argument->psNext)
+        {
+          status = msSLDParseOgcExpression(argument, psObj, binding, objtype);
+          if (status != MS_SUCCESS)
+            break;
+          msStringBufferAppend(function, sep);
+          msStringBufferAppend(function, exprBindings[binding].string);
+          msFree(exprBindings[binding].string);
+          msInitExpression(&(exprBindings[binding]));
+          sep = ",";
+        }
+        msStringBufferAppend(function, ")");
+        exprBindings[binding].string =
+            msStringBufferReleaseStringAndFree(function);
+        exprBindings[binding].type = MS_EXPRESSION;
+        (*nexprbindings)++;
         status = MS_SUCCESS;
       }
       else if (strstr(ops, psRoot->pszValue)
@@ -1473,38 +1518,36 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       {
         // Parse an arithmetic element <ogc:Add>, <ogc:Sub>, <ogc:Mul>, <ogc:Div>
         const char operator[2] = { *(strstr(ops, psRoot->pszValue)+3), '\0' };
-        char * expressionString = NULL;
+        msStringBuffer * expression = msStringBufferAlloc();
 
         // Parse first operand
-        expressionString = msStringConcatenate(expressionString, "(");
+        msStringBufferAppend(expression, "(");
         msInitExpression(&(exprBindings[binding]));
         status = msSLDParseOgcExpression(psRoot->psChild, psObj, binding, objtype);
 
         // Parse second operand
         if (status == MS_SUCCESS)
         {
-          expressionString = msStringConcatenate(expressionString,
-              exprBindings[binding].string);
-          expressionString = msStringConcatenate(expressionString,
-              operator);
+          msStringBufferAppend(expression, exprBindings[binding].string);
+          msStringBufferAppend(expression, operator);
           msFree(exprBindings[binding].string);
           msInitExpression(&(exprBindings[binding]));
           status = msSLDParseOgcExpression(psRoot->psChild->psNext,
               psObj, binding, objtype);
           if (status == MS_SUCCESS)
           {
-            expressionString = msStringConcatenate(expressionString,
-                exprBindings[binding].string);
-            expressionString = msStringConcatenate(expressionString,
-                ")");
+            msStringBufferAppend(expression, exprBindings[binding].string);
+            msStringBufferAppend(expression, ")");
             msFree(exprBindings[binding].string);
-            exprBindings[binding].string = expressionString;
+            exprBindings[binding].string =
+                msStringBufferReleaseStringAndFree(expression);
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
           }
         }
         if (status == MS_FAILURE)
         {
+          msStringBufferFree(expression);
           msInitExpression(&(exprBindings[binding]));
         }
       }
@@ -2895,10 +2938,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   char *pszName=NULL, *pszFontFamily=NULL, *pszFontStyle=NULL;
   char *pszFontWeight=NULL;
   CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
-  CPLXMLNode *psFill = NULL, *psPropertyName=NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
-  CPLXMLNode *psTmpNode = NULL;
-  char *pszClassText = NULL;
-  char szTmp[100];
+  CPLXMLNode *psFill = NULL, *psHalo=NULL, *psHaloRadius=NULL, *psHaloFill=NULL;
   labelObj *psLabelObj = NULL;
   szFontName[0]='\0';
 
@@ -2923,43 +2963,67 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
    - <TextSymbolizer><Label><ogc:PropertyName>MY_COLUMN</ogc:PropertyName></Label>
   Bug 1857 */
   psLabel = CPLGetXMLNode(psRoot, "Label");
-  if (psLabel ) {
-    psTmpNode = psLabel->psChild;
-    psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
-    if (psPropertyName) {
-      while (psTmpNode) {
-        /* open bracket to get valid expression */
-        if (pszClassText == NULL)
-          pszClassText = msStringConcatenate(pszClassText, "(");
-
-        if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue) {
-          pszClassText = msStringConcatenate(pszClassText, psTmpNode->pszValue);
-        } else if (psTmpNode->eType == CXT_Element &&
-                   strcasecmp(psTmpNode->pszValue,"PropertyName") ==0 &&
-                   CPLGetXMLValue(psTmpNode, NULL, NULL)) {
-          snprintf(szTmp, sizeof(szTmp), "\"[%s]\"", CPLGetXMLValue(psTmpNode, NULL, NULL));
-          pszClassText = msStringConcatenate(pszClassText, szTmp);
-        }
-        psTmpNode = psTmpNode->psNext;
-
+  if (psLabel)
+  {
+    char * sep = "";
+    msStringBuffer * classtext = msStringBufferAlloc();
+    msStringBufferAppend(classtext, "(");
+    for (CPLXMLNode * psTmpNode = psLabel->psChild ; psTmpNode ; psTmpNode = psTmpNode->psNext)
+    {
+      if (psTmpNode->eType == CXT_Text && psTmpNode->pszValue)
+      {
+        msStringBufferAppend(classtext, sep);
+        msStringBufferAppend(classtext, "\"");
+        msStringBufferAppend(classtext, psTmpNode->pszValue);
+        msStringBufferAppend(classtext, "\"");
+        sep = "+";
       }
-      /* close bracket to get valid expression */
-      if (pszClassText != NULL)
-        pszClassText = msStringConcatenate(pszClassText, ")");
-    } else {
-      /* supports  - <TextSymbolizer><Label>MY_COLUMN</Label> */
-      if (psLabel->psChild && psLabel->psChild->pszValue) {
-        pszClassText = msStringConcatenate(pszClassText, "(\"[");
-        pszClassText = msStringConcatenate(pszClassText, psLabel->psChild->pszValue);
-        pszClassText = msStringConcatenate(pszClassText, "]\")");
+      else if (psTmpNode->eType == CXT_Element
+               && strcasecmp(psTmpNode->pszValue,"Literal") == 0
+               && psTmpNode->psChild)
+      {
+        msStringBufferAppend(classtext, sep);
+        msStringBufferAppend(classtext, "\"");
+        msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
+        msStringBufferAppend(classtext, "\"");
+        sep = "+";
+      }
+      else if (psTmpNode->eType == CXT_Element
+               && strcasecmp(psTmpNode->pszValue,"PropertyName") == 0
+               && psTmpNode->psChild)
+      {
+        msStringBufferAppend(classtext, sep);
+        msStringBufferAppend(classtext, "\"[");
+        msStringBufferAppend(classtext, psTmpNode->psChild->pszValue);
+        msStringBufferAppend(classtext, "]\"");
+        sep = "+";
+      }
+      else if (psTmpNode->eType == CXT_Element
+               && strcasecmp(psTmpNode->pszValue,"Function") == 0
+               && psTmpNode->psChild)
+      {
+        msStringBufferAppend(classtext, sep);
+        msStringBufferAppend(classtext, "tostring(");
+
+        labelObj tempExpressionCollector;
+        initLabel(&tempExpressionCollector);
+        msSLDParseOgcExpression(psTmpNode,&tempExpressionCollector,MS_LABEL_BINDING_SIZE,MS_OBJ_LABEL);
+        msStringBufferAppend(classtext,tempExpressionCollector.exprBindings[MS_LABEL_BINDING_SIZE].string);
+        freeLabel(&tempExpressionCollector);
+
+        msStringBufferAppend(classtext, ",\"%g\")");
+        sep = "+";
       }
     }
+    msStringBufferAppend(classtext, ")");
+    const char * expressionstring = msStringBufferGetString(classtext);
+    if (strlen(expressionstring) > 2)
+    {
+      msLoadExpressionString(&psClass->text, (char*)expressionstring);
+    }
+    msStringBufferFree(classtext);
 
-    if (pszClassText) { /* pszItem) */
-
-      msLoadExpressionString(&psClass->text, pszClassText);
-      free(pszClassText);
-
+    {
       /* font */
       psFont = CPLGetXMLNode(psRoot, "Font");
       if (psFont) {
@@ -3103,7 +3167,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         }
       }
 
-    }/* labelitem */
+    }
   }
 
   return MS_SUCCESS;

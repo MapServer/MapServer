@@ -637,6 +637,7 @@ math_exp: NUMBER
     if($3->scratch == MS_TRUE) msFreeShape($3);
   }
   | ROUND '(' math_exp ',' math_exp ')' { $$ = (MS_NINT($3/$5))*$5; }
+  | ROUND '(' math_exp ')' { $$ = (MS_NINT($3)); }
 ;
 
 shape_exp: SHAPE 
