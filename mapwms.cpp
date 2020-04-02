@@ -46,6 +46,7 @@
 #include <time.h>
 #include <string.h>
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -167,80 +168,67 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 
-int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int checkonly)
+static bool msWMSSetTimePattern(const char *timepatternstring, const char *timestring, bool checkonly)
 {
-  int ret = MS_SUCCESS;
-
   if (timepatternstring && timestring) {
     /* parse the time parameter to extract a distinct time. */
     /* time value can be dicrete times (eg 2004-09-21), */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-    int numtimes = 0;
-    char** atimes = msStringSplit(timestring, ',', &numtimes);
-    
-    /* get the pattern to use */
-    if (numtimes > 0) {
-      int numpatterns = 0;
-      char** patterns = msStringSplit(timepatternstring, ',', &numpatterns);
+    const auto atimes = msStringSplit(timestring, ',');
 
-      for (int j=0; j<numtimes;++j) {
-        int numranges = 0;
-        char** ranges = msStringSplit(atimes[j],  '/', &numranges);
-        for (int k=0; k<numranges;++k) {
-          int match = MS_FALSE;
-          for (int i=0; i<numpatterns; ++i) {
-            if (patterns[i] && strlen(patterns[i]) > 0) {
-              msStringTrimBlanks(patterns[i]);
-              char* tmpstr = msStringTrimLeft(patterns[i]);
-              if (msTimeMatchPattern(ranges[k], tmpstr) == MS_TRUE) {
-                if (!checkonly) msSetLimitedPatternsToUse(tmpstr);
-                match = MS_TRUE;
+    /* get the pattern to use */
+    if (!atimes.empty()) {
+      auto patterns = msStringSplit(timepatternstring, ',');
+      for (auto& pattern: patterns) {
+        msStringTrimBlanks(pattern);
+        msStringTrimLeft(pattern);
+      }
+
+      for (const auto& atime: atimes) {
+        const auto ranges = msStringSplit(atime.c_str(), '/');
+        for( const auto& range: ranges) {
+          bool match = false;
+          for (const auto& pattern: patterns) {
+            if (!pattern.empty()) {
+              if (msTimeMatchPattern(range.c_str(), pattern.c_str()) == MS_TRUE) {
+                if (!checkonly) msSetLimitedPatternsToUse(pattern.c_str());
+                match = true;
                 break;
               }
             }
           }
-          if (match == MS_FALSE) {
-            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.", "msWMSSetTimePattern", ranges[k]);
-            ret = MS_FAILURE;
-            break;
+          if (!match) {
+            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.", "msWMSSetTimePattern", range.c_str());
+            return false;
           }
         }
-         msFreeCharArray(ranges, numranges);
-         if (ret == MS_FAILURE)
-           break;
       }
-
-      msFreeCharArray(patterns, numpatterns);
     }
-    msFreeCharArray(atimes, numtimes);              
   }
 
-  return ret;
+  return true;
 }
 
 /*
 ** Apply the TIME parameter to layers that are time aware
 */
-int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_format)
+static
+int msWMSApplyTime(mapObj *map, int version, const char *time, const char *wms_exception_format)
 {
-  int i=0;
-  layerObj *lp = NULL;
-  const char *timeextent, *timefield, *timedefault, *timepattern = NULL;
-    
   if (map) {
 
-    timepattern = msOWSLookupMetadata(&(map->web.metadata), "MO", "timeformat");
+    const char* timepattern = msOWSLookupMetadata(&(map->web.metadata), "MO", "timeformat");
 
-    for (i=0; i<map->numlayers; i++) {
-      lp = (GET_LAYER(map, i));
+    for (int i=0; i<map->numlayers; i++) {
+      layerObj* lp = (GET_LAYER(map, i));
       if (lp->status != MS_ON && lp->status != MS_DEFAULT)
         continue;
 
       /* check if the layer is time aware */
-      timeextent = msOWSLookupMetadata(&(lp->metadata), "MO", "timeextent");
-      timefield =  msOWSLookupMetadata(&(lp->metadata), "MO", "timeitem");
-      timedefault =  msOWSLookupMetadata(&(lp->metadata), "MO", "timedefault");
+      const char* timeextent = msOWSLookupMetadata(&(lp->metadata), "MO", "timeextent");
+      const char* timefield =  msOWSLookupMetadata(&(lp->metadata), "MO", "timeitem");
+      const char* timedefault =  msOWSLookupMetadata(&(lp->metadata), "MO", "timedefault");
 
       if (timeextent && timefield) {
         /* check to see if the time value is given. If not */
@@ -267,7 +255,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
           ** to only apply the wms_timeformats on the user request values, not the mapfile values. 
           */
           if (timepattern && time && strlen(time) > 0) {
-            if (msWMSSetTimePattern(timepattern, time, MS_TRUE) == MS_FAILURE) 
+            if (!msWMSSetTimePattern(timepattern, time, true)) 
               return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
           }
           
@@ -300,7 +288,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
     /* last argument is MS_FALSE to trigger a method call that set the patterns
        info. some drivers use it */
     if (timepattern && time && strlen(time) > 0) {
-      if (msWMSSetTimePattern(timepattern, time, MS_FALSE) == MS_FAILURE)
+      if (!msWMSSetTimePattern(timepattern, time, false))
         return msWMSException(map, version, "InvalidDimensionValue", wms_exception_format);
     }    
   }
@@ -311,14 +299,10 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
 /*
 ** Apply the FILTER parameter to layers (RFC118)
 */
+static
 int msWMSApplyFilter(mapObj *map, int version, const char *filter,
-		     int def_srs_needs_axis_swap, char *wms_exception_format, owsRequestObj *ows_request)
+		     int def_srs_needs_axis_swap, const char *wms_exception_format, owsRequestObj *ows_request)
 {
-  int i=0, numlayers;
-  int numfilters=0, curfilter=0;
-  char **paszFilters = NULL;
-  FilterEncodingNode *psNode = NULL;
-
   // Empty filter should be ignored
   if (!filter || strlen(filter) == 0)
     return MS_SUCCESS;
@@ -331,7 +315,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
    * Layers with STATUS DEFAULT were set in the mapfile and are
    * not expected to have a corresponding filter in the request
    */
-  for(i=0, numlayers=0; i<map->numlayers; i++) {
+  int numlayers = 0;
+  for(int i=0; i<map->numlayers; i++) {
     layerObj *lp=NULL;
 
     if(map->layerorder[i] != -1) {
@@ -345,7 +330,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   /*      Parse the Filter parameter. If there are several Filter         */
   /*      parameters, each Filter is inside parentheses.                  */
   /* -------------------------------------------------------------------- */
-  numfilters = 0;
+  int numfilters = 0;
+  char **paszFilters = NULL;
   if (filter[0] == '(') {
     paszFilters = FLTSplitFilters(filter, &numfilters);
 
@@ -363,7 +349,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   }
 
   /* We're good to go. Apply each filter to the corresponding layer */
-  for(i=0; i<map->numlayers; i++) {
+  for(int i=0; i<map->numlayers; i++) {
     layerObj *lp=NULL;
 
     if(map->layerorder[i] != -1)
@@ -373,7 +359,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     if (lp == NULL || lp->status != MS_ON)
       continue;
 
-    curfilter = ows_request->layerwmsfilterindex[lp->index];
+    const int curfilter = ows_request->layerwmsfilterindex[lp->index];
 
     /* Skip empty filters */
     if (paszFilters[curfilter][0] == '\0') {
@@ -385,7 +371,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       lp->_template = msStrdup("ttt.html");
 
     /* Parse filter */
-    psNode = FLTParseFilterEncoding(paszFilters[curfilter]);
+    FilterEncodingNode* psNode = FLTParseFilterEncoding(paszFilters[curfilter]);
     if (!psNode) {
       msSetError(MS_WMSERR,
 		 "Invalid or Unsupported FILTER : %s",
@@ -487,8 +473,6 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 
     FLTFreeFilterEncodingNode( psNode );
 
-    curfilter++;
-
   }/* for */
 
     msFreeCharArray(paszFilters, numfilters);
@@ -509,23 +493,18 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 ** - isUsedInNestedGroup: This array indicates if the layer is used as group
 **                        as set through the WMS_LAYER_GROUP metadata
 */
+static
 void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup)
 {
-  int i, k;
-  const char* groups;
-  //Create array to hold unique groups
-  int maxgroups = 2000;
-  int maxgroupiter = 1;
-  char** uniqgroups = static_cast<char**>(msSmallMalloc(maxgroups * sizeof(char*)));
-  int uniqgroupcount = 0;
-  
+  //Create set to hold unique groups
+  std::set<std::string> uniqgroups;
 
-  for (i = 0; i < map->numlayers; i++) {
+  for (int i = 0; i < map->numlayers; i++) {
     nestedGroups[i] = NULL; /* default */
     numNestedGroups[i] = 0; /* default */
     isUsedInNestedGroup[i] = 0; /* default */
 
-    groups = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "MO", "layer_group");
+    const char* groups = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "MO", "layer_group");
     if ((groups != NULL) && (strlen(groups) != 0)) {
       if (GET_LAYER(map, i)->group != NULL && strlen(GET_LAYER(map, i)->group) != 0) {
         const char* errorMsg = "It is not allowed to set both the GROUP and WMS_LAYER_GROUP for a layer";
@@ -542,70 +521,39 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
           /* split into subgroups. Start at address + 1 because the first '/' would cause an extra empty group */
           nestedGroups[i] = msStringSplit(groups + 1, '/', &numNestedGroups[i]);
           /* Iterate through the groups and add them to the unique groups array */
-          for (k=0; k<numNestedGroups[i]; k++) {
-            int found ,l = 0;
-            found = 0;
-            for (l=0; l<uniqgroupcount; l++) {
-              if ( strcasecmp(uniqgroups[l], nestedGroups[i][k]) == 0 ){
-                found = 1;
-                break;
-              }
-            }
-            if(found == 0){
-             uniqgroups[uniqgroupcount] = nestedGroups[i][k];
-             uniqgroupcount++;
-             // Does need only when maximum unique groups exceed 2000
-             if ( uniqgroupcount == (maxgroups*maxgroupiter)){
-                uniqgroups = static_cast<char**>(realloc(uniqgroups, (uniqgroupcount + maxgroups) * sizeof(char*)));
-                maxgroupiter++;
-             }
-            }
+          for (int k=0; k<numNestedGroups[i]; k++) {
+            uniqgroups.insert(msStringToLower(std::string(nestedGroups[i][k])));
          }
        } 
      }
    }
  } 
  /* Iterate through layers to find out whether they are in any of the nested groups */
- for (i = 0; i < map->numlayers; i++) {
-    for (k=0; k<uniqgroupcount; k++) {
-       if ( strcasecmp(GET_LAYER(map, i)->name ,uniqgroups[k]) == 0 ){
-             isUsedInNestedGroup[i] = 1;
-             break;
-        }
-     }
+ for (int i = 0; i < map->numlayers; i++) {
+    if( uniqgroups.find(msStringToLower(std::string(GET_LAYER(map, i)->name))) != uniqgroups.end() ) {
+        isUsedInNestedGroup[i] = 1;
+    }
   }
-
-  /* free uniqgroups */
-  free(uniqgroups);
 }
 
 
 /*
 ** Validate that a given dimension is inside the extents defined
 */
-int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int forcecharcter)
+static
+bool msWMSValidateDimensionValue(const char *value, const char *dimensionextent, bool forcecharacter)
 {
-  char **extents=NULL, **ranges=NULL, **onerange=NULL;
-  int numextents=0, numranges=0, numonerange=0;
-  char **aextentvalues = NULL;
-  int nextentvalues=0;
   std::vector<pointObj> aextentranges;
-  int nextentranges=0;
 
-  int isextentavalue = MS_FALSE, isextentarange=MS_FALSE;
-  int i,j,status=MS_FALSE;
-  char **uservalues=NULL;
-  int numuservalues=0;
-  int ischaracter = MS_FALSE;
-  float minval, maxval,currentval,mincurrentval,maxcurrentval, mincurrentrange, maxcurrentrange;
+  bool isextentavalue = false;
+  bool isextentarange = false;
+  bool ischaracter = false;
 
-  int uservaluevalid= MS_FALSE;
-
-  if (forcecharcter)
-    ischaracter = MS_TRUE;
+  if (forcecharacter)
+    ischaracter = true;
 
   if (!value || !dimensionextent)
-    return MS_FALSE;
+    return false;
 
   /*for the value, we support descrete values (2005) */
   /* multiple values (abc, def, ...) */
@@ -615,87 +563,69 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
   /* -------------------------------------------------------------------- */
   /*      parse the extent first.                                         */
   /* -------------------------------------------------------------------- */
-  extents = msStringSplit (dimensionextent, ',', &numextents);
-  if (numextents == 1) {
+  auto extents = msStringSplit (dimensionextent, ',');
+  for( auto& extent: extents ) // Make sure to get by reference so that it is updated in place
+    msStringTrim(extent);
+
+  std::vector<std::string> aextentvalues;
+  if (extents.size() == 1) {
     if (strstr(dimensionextent, "/") == NULL) {
       /*single value*/
-      isextentavalue = MS_TRUE;
-      nextentvalues = 1;
-      aextentvalues = (char **)msSmallMalloc(sizeof(char *));
-      msStringTrim(extents[0]);
-      aextentvalues[0] = msStrdup(dimensionextent);
-      if (!forcecharcter)
-        ischaracter= !FLTIsNumeric((char *)dimensionextent);
+      isextentavalue = true;
+      aextentvalues.push_back(dimensionextent);
+      if (!forcecharacter)
+        ischaracter= FLTIsNumeric(dimensionextent) == MS_FALSE;
 
     } else {
-      ranges = msStringSplit (dimensionextent, '/', &numranges);
-      if(ranges && (numranges == 2 || numranges == 3)) {
+      const auto ranges = msStringSplit (dimensionextent, '/');
+      if(ranges.size() == 2 || ranges.size() == 3) {
         /*single range*/
-        isextentarange = MS_TRUE;
+        isextentarange = true;
         aextentranges.resize(1);
-        nextentranges=1;
-        aextentranges[0].x = atof(ranges[0]);
-        aextentranges[0].y = atof(ranges[1]);
+        aextentranges[0].x = atof(ranges[0].c_str());
+        aextentranges[0].y = atof(ranges[1].c_str());
         /*ranges should be numeric*/
-        ischaracter = MS_FALSE;
+        ischaracter = false;
       }
-      msFreeCharArray(ranges, numranges);
-      ranges = NULL;
     }
-  } else if (numextents > 1) { /*check if it is muliple values or mutliple ranges*/
+  } else if (extents.size() > 1) { /*check if it is muliple values or mutliple ranges*/
     if (strstr(dimensionextent, "/") == NULL) {
       /*multiple values*/
-      isextentavalue = MS_TRUE;
-      aextentvalues = (char **)msSmallMalloc(sizeof(char *)*numextents);
-      for (i=0; i<numextents; i++) {
-        char *stmp = msStrdup(extents[i]);
-        msStringTrim(stmp);
-        aextentvalues[i] = stmp;
-      }
-      nextentvalues = numextents;
-      if (!forcecharcter)
-        ischaracter= !FLTIsNumeric(aextentvalues[0]);
+      isextentavalue = true;
+      aextentvalues = extents;
+      if (!forcecharacter)
+        ischaracter= FLTIsNumeric(aextentvalues[0].c_str()) == MS_FALSE;
     } else { /*multiple range extent*/
       int isvalidextent = MS_TRUE;
       /*ranges should be numeric*/
-      ischaracter = MS_FALSE;
-      isextentarange = MS_TRUE;
-      aextentranges.resize(numextents);
-      nextentranges=0;
+      ischaracter = false;
+      isextentarange = true;
+      aextentranges.resize(extents.size());
+      size_t nextentranges=0;
 
-      for (i=0; i<numextents; i++) {
-        onerange = msStringSplit(extents[i], '/', &numonerange);
-        if (!onerange || (numonerange != 2 && numonerange != 3)) {
+      for(const auto& extent: extents) {
+        const auto onerange = msStringSplit(extent.c_str(), '/');
+        if (onerange.size() != 2 && onerange.size() != 3) {
           isvalidextent = MS_FALSE;
           break;
         }
         if (isvalidextent) {
 
-          aextentranges[nextentranges].x = atof(onerange[0]);
-          aextentranges[nextentranges++].y = atof(onerange[1]);
+          aextentranges[nextentranges].x = atof(onerange[0].c_str());
+          aextentranges[nextentranges++].y = atof(onerange[1].c_str());
         }
-        msFreeCharArray(onerange, numonerange);
-        onerange = NULL;
       }
       if (!isvalidextent) {
         nextentranges = 0;
-        isextentarange = MS_FALSE;
+        isextentarange = false;
       }
+      aextentranges.resize(nextentranges);
     }
   }
 
-  if (numextents > 0) {
-    msFreeCharArray(extents, numextents);
-    extents = NULL;
-  }
-
-
-
-
   /* make sure that we got a valid extent*/
   if (!isextentavalue && !isextentarange) {
-    status = MS_FALSE;
-    goto dimension_cleanup;
+    return false;
   }
 
   /*for the extent of the dimesion, we support
@@ -703,75 +633,73 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
   a single range or multipe ranges */
 
 
-  uservalues = msStringSplit (value, ',', &numuservalues);
-  uservaluevalid = MS_FALSE;
-  if (numuservalues == 1) {
+  const auto uservalues = msStringSplit (value, ',');
+  bool uservaluevalid = false;
+  if (uservalues.size() == 1) {
     /*user iput=single*/
     /*is it descret or range*/
-    ranges = msStringSplit(uservalues[0], '/', &numranges);
-    if (numranges == 1) { /*discrete*/
+    const auto ranges = msStringSplit(uservalues[0].c_str(), '/');
+    if (ranges.size() == 1) { /*discrete*/
       if (isextentavalue) {
         /*single user value, single/multiple values extent*/
-        for (i=0; i<nextentvalues; i++) {
+        for (const auto& extentvalue: aextentvalues) {
           if (ischaracter)
-            uservaluevalid = !strcmp(uservalues[0], aextentvalues[i]);
+            uservaluevalid = (uservalues[0] == extentvalue);
           else {
-            if (atof(uservalues[0]) == atof(aextentvalues[i]))
-              uservaluevalid = MS_TRUE;
+            if (atof(uservalues[0].c_str()) == atof(extentvalue.c_str()))
+              uservaluevalid = true;
           }
           if(uservaluevalid)
             break;
         }
       } else if (isextentarange) {
         /*single user value, single/multiple range extent*/
-        currentval = atof(uservalues[0]);
+        const float currentval = atof(uservalues[0].c_str());
 
-        for (i=0; i<nextentranges; i++) {
-          minval = aextentranges[i].x;
-          maxval = aextentranges[i].y;
+        for (const auto& extentrange: aextentranges) {
+          const float minval = extentrange.x;
+          const float maxval = extentrange.y;
           if (currentval >= minval && currentval <= maxval) {
-            uservaluevalid= MS_TRUE;
+            uservaluevalid= true;
             break;
           }
         }
       }
-    } else if (numranges == 2 || numranges == 3) { /*range*/
+    } else if (ranges.size() == 2 || ranges.size() == 3) { /*range*/
       /*user input=single range. In this case the extents must
        be of a range type.*/
-      mincurrentval = atof(ranges[0]);
-      maxcurrentval = atof(ranges[1]);
+      const float mincurrentval = atof(ranges[0].c_str());
+      const float maxcurrentval = atof(ranges[1].c_str());
       if (isextentarange) {
-        for (i=0; i<nextentranges; i++) {
-          minval = aextentranges[i].x;
-          maxval = aextentranges[i].y;
+        for (const auto& extentrange: aextentranges) {
+          const float minval = extentrange.x;
+          const float maxval = extentrange.y;
 
           if(minval <= mincurrentval && maxval >= maxcurrentval &&
               minval <= maxval) {
-            uservaluevalid= MS_TRUE;
+            uservaluevalid= true;
             break;
           }
         }
       }
     }
-    msFreeCharArray(ranges, numranges);
-    ranges = NULL;
-  } else if (numuservalues > 1) { /*user input=multiple*/
+  } else if (uservalues.size() > 1) { /*user input=multiple*/
     if (strstr(value, "/") == NULL) {
       /*user input=multiple value*/
-      int valueisvalid = MS_FALSE;
-      for (i=0; i<numuservalues; i++) {
-        valueisvalid = MS_FALSE;
+      bool valueisvalid = false;
+      for (const auto& uservalue: uservalues) {
+        valueisvalid = false;
         if (isextentavalue) {
           /*user input is multiple values, extent is defned as one or multiple values*/
-          for (j=0; j<nextentvalues; j++) {
+          for (const auto& extentvalue: aextentvalues) {
             if (ischaracter) {
-              if (strcmp(uservalues[i], aextentvalues[j]) == 0) {
-                valueisvalid = MS_TRUE;
+              if (uservalue == extentvalue) {
+                valueisvalid = true;
                 break;
               }
             } else {
-              if (atof(uservalues[i]) == atof(aextentvalues[j])) {
-                valueisvalid = MS_TRUE;
+              if (atof(uservalue.c_str()) == atof(extentvalue.c_str())) {
+                valueisvalid = true;
                 break;
               }
             }
@@ -781,13 +709,13 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
             break;
         } else if (isextentarange) {
           /*user input is multiple values, extent is defned as one or multiple ranges*/
-          for (j=0; j<nextentranges; j++) {
-            minval = aextentranges[j].x;
-            maxval = aextentranges[j].y;
-            currentval = atof(uservalues[i]);
+          for (const auto& extentrange: aextentranges) {
+            const float minval = extentrange.x;
+            const float maxval = extentrange.y;
+            const float currentval = atof(uservalue.c_str());
             if(minval <= currentval && maxval >= currentval &&
                 minval <= maxval) {
-              valueisvalid = MS_TRUE;
+              valueisvalid = true;
               break;
             }
           }
@@ -797,166 +725,118 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
       }
       uservaluevalid = valueisvalid;
     } else { /*user input multiple ranges*/
-      int valueisvalid = MS_TRUE;
+      bool valueisvalid = true;
 
-      for (i=0; i<numuservalues; i++) {
+      for (const auto& uservalue: uservalues) {
         /*each ranges should be valid*/
-        onerange = msStringSplit(uservalues[i], '/', &numonerange);
-        if (numonerange == 2 || numonerange == 3) {
-          mincurrentval = atof(onerange[0]);
-          maxcurrentval = atof(onerange[1]);
+        const auto onerange = msStringSplit(uservalue.c_str(), '/');
+        if (onerange.size() == 2 || onerange.size() == 3) {
+          const float mincurrentval = atof(onerange[0].c_str());
+          const float maxcurrentval = atof(onerange[1].c_str());
 
           /*extent must be defined also as a rangle*/
           if (isextentarange) {
-            for (j=0; j<nextentranges; j++) {
-              mincurrentrange = aextentranges[j].x;
-              maxcurrentrange = aextentranges[j].y;
+            bool found = false;
+            for (const auto& extentrange: aextentranges) {
+              const float mincurrentrange = extentrange.x;
+              const float maxcurrentrange = extentrange.y;
 
               if(mincurrentval >=mincurrentrange && maxcurrentval <= maxcurrentrange &&
                   mincurrentval <= maxcurrentval) {
+                found = true;
                 break;
               }
 
             }
-            if (j == nextentranges) {
-              valueisvalid = MS_FALSE;
-              msFreeCharArray(onerange, numonerange);
-              onerange = NULL;
+            if (!found) {
+              valueisvalid = false;
               break;
             }
           }
         } else {
-          valueisvalid = MS_FALSE;
+          valueisvalid = false;
         }
-        msFreeCharArray(onerange, numonerange);
-        onerange = NULL;
       }
       uservaluevalid = valueisvalid;
     }
 
   }
-  if(uservaluevalid)
-    status = MS_TRUE;
 
-dimension_cleanup:
-  if(ranges)
-    msFreeCharArray(ranges, numranges);
-  if(onerange)
-    msFreeCharArray(onerange, numonerange);
-  if(extents)
-    msFreeCharArray(extents, numextents);
-  if(uservalues)
-    msFreeCharArray(uservalues, numuservalues);
-
-  if (aextentvalues) {
-    for (i=0; i<nextentvalues; i++)
-      msFree(aextentvalues[i]);
-    msFree(aextentvalues);
-  }
-
-  return status;
+  return uservaluevalid;
 }
 
-
-int msWMSApplyDimensionLayer(layerObj *lp, const char *item, char *value, int forcecharcter)
+static
+bool msWMSApplyDimensionLayer(layerObj *lp, const char *item, const char *value, bool forcecharacter)
 {
-  int result = MS_FALSE;
-  char *pszExpression=NULL;
-  int tlpindex = -1;
+  bool result = false;
 
   if (lp && item && value) {
     /*for the value, we support descrete values (2005) */
     /* multiple values (abc, def, ...) */
     /* and range(s) (1000/2000, 3000/5000) */
-    pszExpression = FLTGetExpressionForValuesRanges(lp, (char *)item, value,  forcecharcter);
+    char* pszExpression = FLTGetExpressionForValuesRanges(lp, item, value, forcecharacter ? MS_TRUE : MS_FALSE);
 
     if (pszExpression) {
       // If tileindex is set, the filter is applied to tileindex too.
+      int tlpindex = -1;
       if (lp->tileindex && (tlpindex = msGetLayerIndex(lp->map, lp->tileindex)) != -1) {
-          if(FLTApplyExpressionToLayer((GET_LAYER(lp->map, tlpindex)), pszExpression))
-            result = MS_TRUE;
-          else
-            result = MS_FALSE;
+          result = FLTApplyExpressionToLayer((GET_LAYER(lp->map, tlpindex)), pszExpression) != MS_FALSE;
+      } else {
+          result = true;
       }
-      if(FLTApplyExpressionToLayer(lp, pszExpression))
-        result = MS_TRUE;
-      else
-        result = MS_FALSE;
+      result &= FLTApplyExpressionToLayer(lp, pszExpression) != MS_FALSE;
       msFree(pszExpression);
     }
   }
   return result;
 }
 
-
-int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *value,
-                        char *wms_exception_format)
+static
+bool msWMSApplyDimension(layerObj *lp, int version, const char *dimensionname, const char *value,
+                        const char *wms_exception_format)
 {
-  char *dimensionitemname=NULL, *dimensionextentname=NULL, *dimensiontypename=NULL;
-  char *dimensionunitname=NULL, *dimensiondefaultname=NULL;
-  const char *dimensionitem, *dimensionextent, *dimensiontype, *dimensionunit, *dimensiondefault;
-  int forcecharcter;
-  int result = MS_FALSE;
-  char *dimension = NULL, *currentvalue=NULL;
+  bool forcecharacter = false;
+  bool result = false;
 
   if (lp && dimensionname && value) {
     /*check if the dimension name passes starts with dim_. All dimensions should start with dim_, except elevation*/
+    std::string dimension;
     if (strncasecmp(dimensionname, "dim_", 4) == 0)
-      dimension = msStrdup(dimensionname+4);
+      dimension = dimensionname+4;
     else
-      dimension = msStrdup(dimensionname);
+      dimension = dimensionname;
 
     /*if value is empty and a default is defined, use it*/
+    std::string currentvalue;
     if (strlen(value) > 0)
-      currentvalue = msStrdup(value);
+      currentvalue = value;
     else {
-      dimensiondefaultname = msStrdup(dimension);
-      dimensiondefaultname = msStringConcatenate(dimensiondefaultname, "_default");
-      dimensiondefault = msOWSLookupMetadata(&(lp->metadata), "M", dimensiondefaultname);
-      if (dimensiondefault && strlen(dimensiondefault) > 0)
-        currentvalue = msStrdup(dimensiondefault);
+      const char* dimensiondefault = msOWSLookupMetadata(&(lp->metadata), "M", (dimension + "_default").c_str());
+      if (dimensiondefault)
+        currentvalue = dimensiondefault;
     }
 
     /*check if the manadatory metada related to the dimension are set*/
-    dimensionitemname = msStrdup(dimension);
-    dimensionitemname = msStringConcatenate(dimensionitemname, "_item");
-    dimensionitem = msOWSLookupMetadata(&(lp->metadata), "M", dimensionitemname);
-
-    dimensionextentname = msStrdup(dimension);
-    dimensionextentname = msStringConcatenate(dimensionextentname, "_extent");
-    dimensionextent = msOWSLookupMetadata(&(lp->metadata), "M", dimensionextentname);
-
-    dimensionunitname = msStrdup(dimension);
-    dimensionunitname = msStringConcatenate(dimensionunitname, "_units");
-    dimensionunit = msOWSLookupMetadata(&(lp->metadata), "M", dimensionunitname);
+    const char* dimensionitem = msOWSLookupMetadata(&(lp->metadata), "M", (dimension + "_item").c_str());
+    const char* dimensionextent = msOWSLookupMetadata(&(lp->metadata), "M", (dimension + "_extent").c_str());
+    const char* dimensionunit = msOWSLookupMetadata(&(lp->metadata), "M", (dimension + "_units").c_str());
 
     /*if the server want to force the type to character*/
-    dimensiontypename = msStrdup(dimension);
-    dimensiontypename = msStringConcatenate(dimensiontypename, "_type");
-    dimensiontype = msOWSLookupMetadata(&(lp->metadata), "M", dimensiontypename);
-    forcecharcter = MS_FALSE;
+    const char* dimensiontype = msOWSLookupMetadata(&(lp->metadata), "M", (dimension + "_type").c_str());
     if (dimensiontype && strcasecmp(dimensiontype, "Character") == 0)
-      forcecharcter = MS_TRUE;
+      forcecharacter = true;
 
-    if (dimensionitem && dimensionextent && dimensionunit && currentvalue) {
-      if(msWMSValidateDimensionValue(currentvalue, dimensionextent, forcecharcter)) {
-        result = msWMSApplyDimensionLayer(lp, dimensionitem, currentvalue, forcecharcter);
+    if (dimensionitem && dimensionextent && dimensionunit && !currentvalue.empty()) {
+      if(msWMSValidateDimensionValue(currentvalue.c_str(), dimensionextent, forcecharacter)) {
+        result = msWMSApplyDimensionLayer(lp, dimensionitem, currentvalue.c_str(), forcecharacter);
       } else {
         msSetError(MS_WMSERR, "Dimension %s with a value of %s is invalid or outside the extents defined", "msWMSApplyDimension",
-                   dimension, currentvalue);
-        result =  MS_FALSE;
+                   dimension.c_str(), currentvalue.c_str());
+        result = false;
       }
     } else
       msSetError(MS_WMSERR, "Dimension %s : invalid settings. Make sure that item, units and extent are set.", "msWMSApplyDimension",
-                 dimension);
-
-    msFree(dimensionitemname);
-    msFree(dimensionextentname);
-    msFree(dimensiontypename);
-    msFree(dimensionunitname);
-    msFree(dimensiondefaultname);
-    msFree(dimension);
-    msFree(currentvalue);
+                 dimension.c_str());
   }
   return result;
 }
@@ -964,43 +844,39 @@ int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *va
 **
 */
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
-                          char **names, char **values, int numentries, char *wms_exception_format,
+                          char **names, char **values, int numentries, const char *wms_exception_format,
                           const char *wms_request, owsRequestObj *ows_request)
 {
-  int i, adjust_extent = MS_FALSE, nonsquare_enabled = MS_FALSE;
+  int adjust_extent = MS_FALSE, nonsquare_enabled = MS_FALSE;
   int transparent = MS_NOOVERRIDE;
   int bbox_pixel_is_point = MS_FALSE;
   outputFormatObj *format = NULL;
   int validlayers = 0;
-  char *styles = NULL;
+  const char *styles = NULL;
   int numwmslayerargs = 0;
   char **layers = NULL;
   int layerfound = MS_FALSE;
   int invalidlayers = 0;
-  char epsgbuf[100];
-  char srsbuffer[100];
+  std::string epsgbuf;
+  std::string srsbuffer;
   int epsgvalid = MS_FALSE;
   int timerequest = 0;
-  char *stime = NULL;
-  char **tokens=NULL;
-  int n,j;
+  const char *stime = NULL;
   int srsfound = 0;
   int bboxfound = 0;
   int formatfound = 0;
   int widthfound = 0;
   int heightfound = 0;
-  char *request = NULL;
+  const char *request = NULL;
   int status = 0;
   const char *layerlimit = NULL;
 
   const char *sldenabled=NULL;
-  char *sld_url=NULL, *sld_body=NULL;
+  const char *sld_url=NULL;
+  const char *sld_body=NULL;
 
   int need_axis_swap = MS_FALSE;
   const char *filter = NULL;
-
-  epsgbuf[0]='\0';
-  srsbuffer[0]='\0';
 
   /* Some of the getMap parameters are actually required depending on the */
   /* request, but for now we assume all are optional and the map file */
@@ -1011,7 +887,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   /*
     Check for SLDs first. If SLD is available LAYERS and STYLES parameters are non mandatory
    */
-  for(i=0; map && i<numentries; i++) {
+  for(int i=0; i<numentries; i++) {
     /* check if SLD is passed.  If yes, check for OGR support */
     if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0) {
       sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
@@ -1030,7 +906,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
   }
 
-  for(i=0; map && i<numentries; i++) {
+  for(int i=0; i<numentries; i++) {
     /* getMap parameters */
 
     if (strcasecmp(names[i], "REQUEST") == 0) {
@@ -1157,20 +1033,21 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if (strncasecmp(values[i], "EPSG:", 5) == 0) {
         /* SRS=EPSG:xxxx */
 
-        /* don't need to copy init=xxx since the srsbudder is only
+        /* don't need to copy init=xxx since the srsbuffer is only
            used with msLoadProjection and that does alreay the job */
-        /* snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5); */
 
-        snprintf(srsbuffer, sizeof(srsbuffer), "EPSG:%.20s",values[i]+5);
-        snprintf(epsgbuf, sizeof(epsgbuf), "EPSG:%.20s",values[i]+5);
+        srsbuffer = "EPSG:";
+        srsbuffer += (values[i]+5);
+        epsgbuf = srsbuffer;
 
         /* This test was to correct a request by the OCG cite 1.3.0 test
          sending CRS=ESPG:4326,  Bug:*/
         if (nVersion >= OWS_1_3_0) {
-          if (srsbuffer[strlen(srsbuffer)-1] == ',')
-            srsbuffer[strlen(srsbuffer)-1] = '\0';
-          if (epsgbuf[strlen(epsgbuf)-1] == ',')
-            epsgbuf[strlen(epsgbuf)-1] = '\0';
+          if (srsbuffer.back() == ',')
+          {
+            srsbuffer.resize(srsbuffer.size() - 1);
+            epsgbuf = srsbuffer;
+          }
         }
 
         /* we need to wait until all params are read before */
@@ -1185,7 +1062,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           map->units = iUnits;
         */
       } else if (strncasecmp(values[i], "AUTO:", 5) == 0 && nVersion < OWS_1_3_0) {
-        snprintf(srsbuffer, sizeof(srsbuffer), "%s",  values[i]);
+        srsbuffer = values[i];
         /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
         /*
         if (msLoadProjectionString(&(map->projection), values[i]) != 0)
@@ -1197,7 +1074,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         */
       } else if (nVersion >= OWS_1_3_0 && (strncasecmp(values[i], "AUTO2:", 6) == 0 ||
                                            strncasecmp(values[i], "CRS:", 4) == 0)) {
-        snprintf(srsbuffer, sizeof(srsbuffer), "%s",  values[i]);
+        srsbuffer = values[i];
       } else {
         if (nVersion >= OWS_1_3_0) {
           msSetError(MS_WMSERR,
@@ -1339,10 +1216,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     rect = map->extent;
 
     /*try to adjust the axes if necessary*/
-    if (strlen(srsbuffer) > 1) {
+    if (srsbuffer.size() > 1) {
       msInitProjection(&proj);
       msProjectionInheritContextFrom(&proj, &(map->projection));
-      if (msLoadProjectionStringEPSG(&proj, (char *)srsbuffer) == 0 &&
+      if (msLoadProjectionStringEPSG(&proj, srsbuffer.c_str()) == 0 &&
 	  (need_axis_swap = msIsAxisInvertedProj(&proj) ) ) {
         msAxisNormalizePoints( &proj, 1, &rect.minx, &rect.miny );
         msAxisNormalizePoints( &proj, 1, &rect.maxx, &rect.maxy );
@@ -1351,13 +1228,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     }
     /*if the CRS is AUTO2:auto_crs_id,factor,lon0,lat0,
      we need to grab the factor patameter and use it with the bbox*/
-    if (strlen(srsbuffer) > 1 && strncasecmp(srsbuffer, "AUTO2:", 6) == 0) {
-      char **args;
-      int numargs;
-      double factor;
-      args = msStringSplit(srsbuffer, ',', &numargs);
-      if (numargs == 4) {
-        factor = atof(args[1]);
+    if (srsbuffer.size() > 1 && strncasecmp(srsbuffer.c_str(), "AUTO2:", 6) == 0) {
+      const auto args = msStringSplit(srsbuffer.c_str(), ',');
+      if (args.size() == 4) {
+        const double factor = atof(args[1].c_str());
         if (factor > 0 && factor != 1.0) {
           rect.minx = rect.minx*factor;
           rect.miny = rect.miny*factor;
@@ -1365,7 +1239,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           rect.maxx = rect.maxy*factor;
         }
       }
-      msFreeCharArray(args, numargs);
     }
 
     map->extent = rect;
@@ -1386,7 +1259,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   ** time value even if no TIME request was in the url.
   */
   if( !timerequest && map ) {
-    for (i=0; i<map->numlayers && !timerequest; i++) {
+    for (int i=0; i<map->numlayers && !timerequest; i++) {
       layerObj *lp = NULL;
 
       lp = (GET_LAYER(map, i));
@@ -1411,11 +1284,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   ** Check/apply  wms dimensions
   ** all dimension requests shoul start with dim_xxxx, except time and elevation.
   */
-  for (i=0; i<map->numlayers; i++) {
+  for (int i=0; i<map->numlayers; i++) {
     layerObj *lp = NULL;
     const char *dimensionlist = NULL;
     char **tokens;
-    int ntokens=0,k;
+    int ntokens=0;
 
     lp = (GET_LAYER(map, i));
     if (lp->status != MS_ON && lp->status != MS_DEFAULT)
@@ -1431,8 +1304,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if (tokens && ntokens > 0) {
         char *dimensionname=NULL;
         char *stmp = NULL;
-        for (j=0; j<ntokens; j++) {
-          for(k=0; map && k<numentries; k++) {
+        for (int j=0; j<ntokens; j++) {
+          for(int k=0; k<numentries; k++) {
             if (strcasecmp(names[k], "elevation") == 0)
               dimensionname = msStrdup(names[k]);
             else {
@@ -1505,41 +1378,35 @@ this request. Check wms/ows_enable_request settings.",
   ** Validate first against epsg in the map and if no matching srs is found
   ** validate all layers requested.
   */
-  if (epsgbuf[0] && epsgbuf[1]) { /*at least 2 chars*/
+  if (epsgbuf.size() >= 2) { /*at least 2 chars*/
     char *projstring;
     epsgvalid = MS_FALSE;
     msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
                                   "MO", MS_FALSE, &projstring);
     if (projstring) {
-      tokens = msStringSplit(projstring, ' ', &n);
-      if (tokens && n > 0) {
-        for(i=0; i<n; i++) {
-          if (strcasecmp(tokens[i], epsgbuf) == 0) {
-            epsgvalid = MS_TRUE;
-            break;
-          }
+      const auto tokens = msStringSplit(projstring, ' ');
+      for( const auto& token: tokens) {
+        if (strcasecmp(token.c_str(), epsgbuf.c_str()) == 0) {
+          epsgvalid = MS_TRUE;
+          break;
         }
-        msFreeCharArray(tokens, n);
       }
       msFree(projstring);
     }
     if (epsgvalid == MS_FALSE) {
-      for (i=0; i<map->numlayers; i++) {
+      for (int i=0; i<map->numlayers; i++) {
         epsgvalid = MS_FALSE;
         if (GET_LAYER(map, i)->status == MS_ON) {
           msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
                                         &(GET_LAYER(map, i)->metadata),
                                         "MO", MS_FALSE, &projstring);
           if (projstring) {
-            tokens = msStringSplit(projstring, ' ', &n);
-            if (tokens && n > 0) {
-              for(j=0; j<n; j++) {
-                if (strcasecmp(tokens[j], epsgbuf) == 0) {
-                  epsgvalid = MS_TRUE;
-                  break;
-                }
+            const auto tokens = msStringSplit(projstring, ' ');
+            for( const auto& token: tokens) {
+              if (strcasecmp(token.c_str(), epsgbuf.c_str()) == 0) {
+                epsgvalid = MS_TRUE;
+                break;
               }
-              msFreeCharArray(tokens, n);
             }
             msFree(projstring);
           }
@@ -1575,11 +1442,10 @@ this request. Check wms/ows_enable_request settings.",
    */
   nonsquare_enabled = msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE );
   if (!nonsquare_enabled) {
-    double dx, dy, reqy;
-    dx = MS_ABS(map->extent.maxx - map->extent.minx);
-    dy = MS_ABS(map->extent.maxy - map->extent.miny);
+    const double dx = MS_ABS(map->extent.maxx - map->extent.minx);
+    const double dy = MS_ABS(map->extent.maxy - map->extent.miny);
 
-    reqy = ((double)map->width) * dy / dx;
+    const double reqy = ((double)map->width) * dy / dx;
 
     /* Allow up to 1 pixel of error on the width/height ratios. */
     /* If more than 1 pixel then enable non-square pixels */
@@ -1597,7 +1463,7 @@ this request. Check wms/ows_enable_request settings.",
   ** have a projection. This will prevent problems when users forget to
   ** explicitly set a projection on all layers in a WMS mapfile.
   */
-  if (strlen(srsbuffer) > 1 || nonsquare_enabled) {
+  if (srsbuffer.size() > 1 || nonsquare_enabled) {
     projectionObj newProj;
 
     if (map->projection.numargs <= 0) {
@@ -1618,13 +1484,13 @@ this request. Check wms/ows_enable_request settings.",
 
     msInitProjection(&newProj);
     msProjectionInheritContextFrom(&newProj, &map->projection);
-    if (strlen(srsbuffer) > 1) {
+    if (srsbuffer.size() > 1) {
       int nTmp;
 
       if (nVersion >= OWS_1_3_0)
-        nTmp = msLoadProjectionStringEPSG(&newProj, srsbuffer);
+        nTmp = msLoadProjectionStringEPSG(&newProj, srsbuffer.c_str());
       else
-        nTmp = msLoadProjectionString(&newProj, srsbuffer);
+        nTmp = msLoadProjectionString(&newProj, srsbuffer.c_str());
       if (nTmp != 0) {
         msFreeProjection(&newProj);
         return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -1640,13 +1506,13 @@ this request. Check wms/ows_enable_request settings.",
 
   /* apply the srs to the map file. This is only done after validating */
   /* that the srs given as parameter is valid for all layers */
-  if (strlen(srsbuffer) > 1) {
+  if (srsbuffer.size() > 1) {
     int nTmp;
     msFreeProjectionExceptContext(&map->projection);
     if (nVersion >= OWS_1_3_0)
-      nTmp = msLoadProjectionStringEPSG(&(map->projection), srsbuffer);
+      nTmp = msLoadProjectionStringEPSG(&(map->projection), srsbuffer.c_str());
     else
-      nTmp = msLoadProjectionString(&(map->projection), srsbuffer);
+      nTmp = msLoadProjectionString(&(map->projection), srsbuffer.c_str());
 
     if (nTmp != 0)
       return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -1659,7 +1525,6 @@ this request. Check wms/ows_enable_request settings.",
 
   if (sld_url || sld_body) {
     int nLayersBefore, nLayerAfter;
-    char request_tmp[32];
     char *pszLayerNames = NULL;
     nLayersBefore = map->numlayers;
 
@@ -1667,7 +1532,7 @@ this request. Check wms/ows_enable_request settings.",
     /*      if LAYERS parameter was not given, set all layers to off        */
     /* -------------------------------------------------------------------- */
     if (validlayers == 0) { /*no LAYERS parameter is give*/
-      for(j=0; j<map->numlayers; j++) {
+      for(int j=0; j<map->numlayers; j++) {
         if (GET_LAYER(map, j)->status != MS_DEFAULT)
           GET_LAYER(map, j)->status = MS_OFF;
       }
@@ -1688,8 +1553,7 @@ this request. Check wms/ows_enable_request settings.",
     /* -------------------------------------------------------------------- */
     nLayerAfter=map->numlayers;
     if (nLayersBefore != nLayerAfter) {
-      strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
-      msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request);
+      msOWSRequestLayersEnabled(map, "M", "GetMap", ows_request);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1705,8 +1569,8 @@ this request. Check wms/ows_enable_request settings.",
         int ntokens=0;
         tokens = msStringSplit(pszLayerNames, ',', &ntokens);
         if (ntokens >0) {
-          for (i=0; i<ntokens; i++) {
-            for (j=0; j<map->numlayers; j++) {
+          for (int i=0; i<ntokens; i++) {
+            for (int j=0; j<map->numlayers; j++) {
               if ( ((GET_LAYER(map, j)->name &&
                      strcasecmp(GET_LAYER(map, j)->name, tokens[i]) == 0) ||
                     (map->name && strcasecmp(map->name, tokens[i]) == 0) ||
@@ -1733,20 +1597,19 @@ this request. Check wms/ows_enable_request settings.",
   */
   if(styles && strlen(styles) > 0) {
     char **tokens;
-    int n=0, i=0, k=0, l=0,m=0;
+    int n=0;
     char **layers=NULL;
     int numlayers =0;
     layerObj *lp = NULL;
 
     tokens = msStringSplitComplex(styles, ",",&n,MS_ALLOWEMPTYTOKENS);
-    for (i=0; i<n; i++) {
+    for (int i=0; i<n; i++) {
       if (tokens[i] && strlen(tokens[i]) > 0 &&
           strcasecmp(tokens[i],"default") != 0) {
         if (layers == NULL) {
           int bLayerInserted = MS_FALSE;
-          char request_tmp[32];
 
-          for(j=0; j<numentries; j++) {
+          for(int j=0; j<numentries; j++) {
             if (strcasecmp(names[j], "LAYERS") == 0) {
               layers = msStringSplit(values[j], ',', &numlayers);
             }
@@ -1756,11 +1619,11 @@ this request. Check wms/ows_enable_request settings.",
           /*      duplicate it.                                                   */
           /* -------------------------------------------------------------------- */
           if (layers && numlayers>0) {
-            for (m=0; m<numlayers; m++) {
+            for (int m=0; m<numlayers; m++) {
               layerObj *psTmpLayer=NULL;
               int nIndex;
               char tmpId[128];
-              for (l=0; l<numlayers; l++) {
+              for (int l=0; l<numlayers; l++) {
                 nIndex = msGetLayerIndex(map, layers[m]);
                 if (m !=l && strcasecmp(layers[m], layers[l])== 0 &&
                     nIndex != -1) {
@@ -1789,25 +1652,26 @@ this request. Check wms/ows_enable_request settings.",
           }
 
           if (bLayerInserted) {
-            strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
-            msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request);
+            msOWSRequestLayersEnabled(map, "M", "GetMap", ows_request);
           }
 
         }
         if (layers && numlayers == n) {
-          for (j=0; j<map->numlayers; j++) {
+          for (int j=0; j<map->numlayers; j++) {
             if ((GET_LAYER(map, j)->name &&
                  strcasecmp(GET_LAYER(map, j)->name, layers[i]) == 0) ||
                 (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[i]) == 0)) {
               lp =   GET_LAYER(map, j);
-              for (k=0; k<lp->numclasses; k++) {
+              bool found = false;
+              for (int k=0; k<lp->numclasses; k++) {
                 if (lp->_class[k]->group && strcasecmp(lp->_class[k]->group, tokens[i]) == 0) {
                   msFree(lp->classgroup);
                   lp->classgroup = msStrdup( tokens[i]);
+                  found = true;
                   break;
                 }
               }
-              if (k == lp->numclasses) {
+              if (!found) {
                 msSetError(MS_WMSERR, "Style (%s) not defined on layer.",
                            "msWMSLoadGetMapParams()", tokens[i]);
                 msFreeCharArray(tokens, n);
@@ -2947,35 +2811,33 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
 /*
 ** msWMSGetCapabilities()
 */
+static
 int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsRequestObj *ows_request,
-                         const char *requested_updatesequence, char *wms_exception_format, const char *requested_language)
+                         const char *requested_updatesequence, const char *wms_exception_format, const char *requested_language)
 {
   char *dtd_url = NULL;
   char *script_url=NULL, *script_url_encoded=NULL;
 
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
-  const char *updatesequence=NULL;
-  const char *sldenabled=NULL;
   const char *layerlimit=NULL;
   const char *rootlayer_name=NULL;
   char *pszTmp=NULL;
-  int i;
   const char *format_list=NULL;
   char **tokens = NULL;
   int numtokens = 0;
   char *validated_language = NULL;
   char *pszMapEPSG;
 
-  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
+  const char* updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
 
-  sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
+  const char* sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
   if (sldenabled == NULL)
     sldenabled = "true";
 
   if (requested_updatesequence != NULL) {
-    i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
+    int i = msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
     if (i == 0) { /* current */
       msSetError(MS_WMSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
       return msWMSException(map, nVersion, "CurrentUpdateSequence", wms_exception_format);
@@ -3224,7 +3086,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       tokens = msStringSplit(format_list,  ',', &numtokens);
       if (tokens && numtokens > 0) {
         mime_count = 0;
-        for(i=0; i < numtokens; i++ ) {
+        for(int i=0; i < numtokens; i++ ) {
           msStringTrim(tokens[i]);
           /*text plain and gml do not need to be a format and accepted by default*/
           /*can not really validate since the old way of using template
@@ -3844,11 +3706,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 */
 int msTranslateWMS2Mapserv(const char **names, const char **values, int numentries, char ***translated_names, char ***translated_values, int *translated_numentries)
 {
-  int i=0, num_allocated = numentries;
+  int num_allocated = numentries;
   *translated_names = (char**)msSmallMalloc(num_allocated * sizeof(char*));
   *translated_values = (char**)msSmallMalloc(num_allocated * sizeof(char*));
   *translated_numentries = 0;
-  for (i=0; i<numentries; i++) {
+  for (int i=0; i<numentries; i++) {
     (*translated_values)[*translated_numentries] = msStrdup(values[i]);
     (*translated_names)[*translated_numentries] = msStrdup(names[i]);
     (*translated_numentries)++;
@@ -3918,11 +3780,11 @@ int msTranslateWMS2Mapserv(const char **names, const char **values, int numentri
 /*
 ** msWMSGetMap()
 */
+static
 int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int numentries,
-                char *wms_exception_format, owsRequestObj *ows_request)
+                const char *wms_exception_format, owsRequestObj *ows_request)
 {
   imageObj *img;
-  int i = 0;
   int sldrequested = MS_FALSE,  sldspatialfilter = MS_FALSE;
   int drawquerymap = MS_FALSE;
   const char *http_max_age;
@@ -3938,7 +3800,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   /* layer, we added a temporary metadata on the layer */
   /* (tmp_wms_sld_query) for layers with a spatial filter. */
 
-  for (i=0; i<numentries; i++) {
+  for (int i=0; i<numentries; i++) {
     if ((strcasecmp(names[i], "SLD") == 0 && values[i] && strlen(values[i]) > 0) ||
         (strcasecmp(names[i], "SLD_BODY") == 0 && values[i] && strlen(values[i]) > 0)) {
       sldrequested = MS_TRUE;
@@ -3946,7 +3808,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     }
   }
   if (sldrequested) {
-    for (i=0; i<map->numlayers; i++) {
+    for (int i=0; i<map->numlayers; i++) {
       if (msLookupHashTable(&(GET_LAYER(map, i)->metadata), "tmp_wms_sld_query")) {
         sldspatialfilter = MS_TRUE;
         break;
@@ -3954,7 +3816,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     }
   }
   /* If FILTER is passed then we'll render layers as querymap */
-  for (i=0; i<numentries; i++) {
+  for (int i=0; i<numentries; i++) {
     if ((strcasecmp(names[i], "FILTER") == 0 && values[i] && strlen(values[i]) > 0)) {
       drawquerymap = MS_TRUE;
       map->querymap.status = MS_ON;
@@ -3964,7 +3826,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   }
 
   /* turn off layer if WMS GetMap is not enabled */
-  for (i=0; i<map->numlayers; i++)
+  for (int i=0; i<map->numlayers; i++)
     if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
       GET_LAYER(map, i)->status = MS_OFF;
 
@@ -3976,7 +3838,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     img = msPrepareImage(map, MS_TRUE);
 
     /* compute layer scale factors now */
-    for(i=0; i<map->numlayers; i++) {
+    for(int i=0; i<map->numlayers; i++) {
       if(GET_LAYER(map, i)->sizeunits != MS_PIXELS)
         GET_LAYER(map, i)->scalefactor = (msInchesPerUnit(GET_LAYER(map, i)->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
       else if(GET_LAYER(map, i)->symbolscaledenom > 0 && map->scaledenom > 0)
@@ -3984,7 +3846,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       else
         GET_LAYER(map, i)->scalefactor = 1;
     }
-    for (i=0; i<map->numlayers; i++) {
+    for (int i=0; i<map->numlayers; i++) {
       if (msLookupHashTable(&(GET_LAYER(map, i)->metadata), "tmp_wms_sld_query") &&
           (GET_LAYER(map, i)->type == MS_LAYER_POINT ||
            GET_LAYER(map, i)->type == MS_LAYER_LINE ||
@@ -4042,25 +3904,13 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   return(MS_SUCCESS);
 }
 
-int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception_format)
+static
+int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, const char *wms_exception_format)
 {
   int numresults=0;
-  int i;
 
-  for(i=0; i<map->numlayers; i++) {
-    int j, k, *itemvisible;
-    char **incitems=NULL;
-    int numincitems=0;
-    char **excitems=NULL;
-    int numexcitems=0;
-    const char *value;
-    size_t bufferSize=0;
-    size_t reqBuffSize;
-    char *tag=NULL;
-    const char *lineTemplate="    %s = '%s'\n";
-
-    layerObj *lp;
-    lp = (GET_LAYER(map, i));
+  for(int i=0; i<map->numlayers; i++) {
+    layerObj *lp = (GET_LAYER(map, i));
 
     if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
       continue;
@@ -4074,80 +3924,59 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
      * wms/ows_exclude_items: comma delimited list (all items are excluded by default)
      */
     /* get a list of items that should be excluded in output */
+    std::vector<std::string> incitems;
+    const char *value;
     if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "include_items")) != NULL)
-      incitems = msStringSplit(value, ',', &numincitems);
+      incitems = msStringSplit(value, ',');
 
     /* get a list of items that should be excluded in output */
+    std::vector<std::string> excitems;
     if((value = msOWSLookupMetadata(&(lp->metadata), "MO", "exclude_items")) != NULL)
-      excitems = msStringSplit(value, ',', &numexcitems);
+      excitems = msStringSplit(value, ',');
 
-    itemvisible = (int*)msSmallMalloc(lp->numitems*sizeof(int));
-    for(k=0; k<lp->numitems; k++) {
-      int l;
-
-      itemvisible[k] = MS_FALSE;
-
+    std::vector<bool> itemvisible(lp->numitems);
+    for(int k=0; k<lp->numitems; k++) {
       /* check visibility, included items first... */
-      if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
-        itemvisible[k] = MS_TRUE;
+      if(incitems.size() == 1 && strcasecmp("all", incitems[0].c_str()) == 0) {
+        itemvisible[k] = true;
       } else {
-        for(l=0; l<numincitems; l++) {
-          if(strcasecmp(lp->items[k], incitems[l]) == 0)
-            itemvisible[k] = MS_TRUE;
+        for( const auto& incitem: incitems ) {
+          if(strcasecmp(lp->items[k], incitem.c_str()) == 0)
+            itemvisible[k] = true;
         }
       }
 
       /* ...and now excluded items */
-      for(l=0; l<numexcitems; l++) {
-        if(strcasecmp(lp->items[k], excitems[l]) == 0)
-          itemvisible[k] = MS_FALSE;
+      for( const auto& excitem: excitems ) {
+        if(strcasecmp(lp->items[k], excitem.c_str()) == 0)
+          itemvisible[k] = false;
       }
     }
-
-    msFreeCharArray(incitems, numincitems);
-    msFreeCharArray(excitems, numexcitems);
 
     /* Output selected shapes for this layer */
     msIO_printf("\nLayer '%s'\n", lp->name);
 
-    for(j=0; j<lp->resultcache->numresults; j++) {
+    for(int j=0; j<lp->resultcache->numresults; j++) {
       shapeObj shape;
 
       msInitShape(&shape);
       if (msLayerGetShape(lp, &shape, &(lp->resultcache->results[j])) != MS_SUCCESS) {
-        if (tag != NULL) msFree(tag);
-        msFree(itemvisible);
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
 
       msIO_printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
 
-      for(k=0; k<lp->numitems; k++) {
+      for(int k=0; k<lp->numitems; k++) {
         if (itemvisible[k]) {
-          reqBuffSize = strlen(lp->items[k]) + 7;
-          if (reqBuffSize > bufferSize) {
-            if (tag != NULL) msFree(tag);
-            /* allocate more buffer than we need to try and avoid need for
-               repeated reallocation */
-            bufferSize = reqBuffSize * 2;
-            tag = (char*)msSmallMalloc(bufferSize);
-          }
-          snprintf(tag, reqBuffSize, "%s_alias", lp->items[k]);
-
-          if((value = msOWSLookupMetadata(&(lp->metadata), "MO", tag)) != NULL)
-            msIO_printf(lineTemplate, value, shape.values[k]);
-          else
-            msIO_printf(lineTemplate, lp->items[k], shape.values[k]);
-
+          value = msOWSLookupMetadata(&(lp->metadata), "MO", (std::string(lp->items[k]) + "_alias").c_str());
+          const char *lineTemplate="    %s = '%s'\n";
+          msIO_printf(lineTemplate, value != NULL ? value : lp->items[k], shape.values[k]);
         }
       }
  
       msFreeShape(&shape);
       numresults++;
     }
-
-    if (tag != NULL) msFree(tag);
-    msFree(itemvisible);
 
     /* msLayerClose(lp); */
   }
@@ -4159,13 +3988,13 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
 /*
 ** msWMSFeatureInfo()
 */
+static
 int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int numentries,
-                     char *wms_exception_format, owsRequestObj *ows_request)
+                     const char *wms_exception_format, owsRequestObj *ows_request)
 {
-  int i, feature_count=1, numlayers_found=0;
+  int feature_count=1, numlayers_found=0;
   pointObj point = {-1.0, -1.0};
   const char *info_format="MIME";
-  double cellx, celly;
   errorObj *ms_error = msGetErrorObj();
   int query_status=MS_NOERR;
   int query_layer = 0;
@@ -4176,16 +4005,13 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   int wms_layer =  MS_FALSE;
   const char *wms_connection = NULL;
   int numOWSLayers = 0;
-  char ***nestedGroups = NULL;
-  int *numNestedGroups = NULL;
-  int *isUsedInNestedGroup = NULL;
 
-  nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
-  numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
-  isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+  char*** nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
+  int* numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+  int* isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
 
-  for(i=0; i<numentries; i++) {
+  for(int i=0; i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       char **layers;
       int numlayers, j, k;
@@ -4279,7 +4105,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   }
 
   /* free the stuff used for nested layers */
-  for (i = 0; i < map->numlayers; i++) {
+  for (int i = 0; i < map->numlayers; i++) {
     if (numNestedGroups[i] > 0) {
       msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
     }
@@ -4308,7 +4134,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   /* -------------------------------------------------------------------- */
 
   /* If a layer of type WMS was found... all layers have to be of that type and with the same connection */
-  for (i=0; i<map->numlayers; i++) {
+  for (int i=0; i<map->numlayers; i++) {
     if (GET_LAYER(map, i)->status == MS_ON) {
       if (wms_layer == MS_TRUE) {
         if ( (GET_LAYER(map, i)->connectiontype != MS_WMS) || (strcasecmp(wms_connection, GET_LAYER(map, i)->connection) != 0) ) {
@@ -4343,8 +4169,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       }
     }
     /* Perform the actual query */
-    cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); /* note: don't adjust extent, WMS assumes incoming extent is correct */
-    celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
+    const double cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); /* note: don't adjust extent, WMS assumes incoming extent is correct */
+    const double celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
     point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
     point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
 
@@ -4477,28 +4303,17 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 /*
 ** msWMSDescribeLayer()
 */
+static
 int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
-                       char **values, int numentries, char *wms_exception_format)
+                       char **values, int numentries, const char *wms_exception_format)
 {
-  int i = 0;
-  char **layers = NULL;
-  int numlayers = 0;
-  int j, k;
-  layerObj *lp = NULL;
-  const char *pszOnlineResMapWFS = NULL, *pszOnlineResLyrWFS = NULL;
-  const char *pszOnlineResMapWCS = NULL, *pszOnlineResLyrWCS = NULL;
-  char *pszOnlineResEncoded=NULL, *pszLayerName=NULL;
-  char *schemalocation = NULL;
-  char *version = NULL;
-  char *sld_version = NULL;
-  char ***nestedGroups = NULL;
-  int *numNestedGroups = NULL;
-  int *isUsedInNestedGroup = NULL;
+  std::vector<std::string> wmslayers;
+  const char *version = NULL;
+  const char *sld_version = NULL;
 
-  for(i=0; map && i<numentries; i++) {
+  for(int i=0; i<numentries; i++) {
     if(strcasecmp(names[i], "LAYERS") == 0) {
-      if(layers) msFreeCharArray(layers, numlayers); /* free previous occurence of layers array if more than one was provided */
-      layers = msStringSplit(values[i], ',', &numlayers);
+      wmslayers = msStringSplit(values[i], ',');
     }
     if(strcasecmp(names[i], "VERSION") == 0) {
       version = values[i];
@@ -4522,48 +4337,49 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
 
   msIO_printf("<?xml version='1.0' encoding=\"UTF-8\"?>\n");
 
-  schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
-  if (nVersion < OWS_1_3_0) {
+  {
+   char* schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
+   if (nVersion < OWS_1_3_0) {
 
     msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"%s/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n", schemalocation);
 
 
     msIO_printf("<WMS_DescribeLayerResponse version=\"%s\" >\n", version);
-  } else {
+   } else {
     msIO_printf("<DescribeLayerResponse xmlns=\"http://www.opengis.net/sld\" xmlns:ows=\"http://www.opengis.net/ows\" xmlns:se=\"http://www.opengis.net/se\" xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xsi:schemaLocation=\"http://www.opengis.net/sld %s/sld/1.1.0/DescribeLayer.xsd\">\n", schemalocation);
     msIO_printf("<Version>%s</Version>\n",sld_version);
-
+   }
+   free(schemalocation);
   }
-  free(schemalocation);
 
   /* check if map-level metadata wfs(wcs)_onlineresource is available */
-  pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
+  const char* pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
   if (pszOnlineResMapWFS && strlen(pszOnlineResMapWFS) == 0)
     pszOnlineResMapWFS = NULL;
 
-  pszOnlineResMapWCS = msOWSLookupMetadata(&(map->web.metadata), "CO", "onlineresource");
+  const char* pszOnlineResMapWCS = msOWSLookupMetadata(&(map->web.metadata), "CO", "onlineresource");
   if (pszOnlineResMapWCS && strlen(pszOnlineResMapWCS) == 0)
     pszOnlineResMapWCS = NULL;
 
-  nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
-  numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
-  isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+  char*** nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
+  int* numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+  int * isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
 
-  for(j=0; j<numlayers; j++) {
-    for(k=0; k<map->numlayers; k++) {
-      lp = GET_LAYER(map, k);
+  for(const auto& wmslayer: wmslayers) {
+    for(int k=0; k<map->numlayers; k++) {
+      layerObj* lp = GET_LAYER(map, k);
 
-      if ((map->name && strcasecmp(map->name, layers[j]) == 0) ||
-          (lp->name && strcasecmp(lp->name, layers[j]) == 0) ||
-          (lp->group && strcasecmp(lp->group, layers[j]) == 0) ||
-          ((numNestedGroups[k] >0) && msStringInArray(layers[j], nestedGroups[k], numNestedGroups[k]))) {
+      if ((map->name && strcasecmp(map->name, wmslayer.c_str()) == 0) ||
+          (lp->name && strcasecmp(lp->name, wmslayer.c_str()) == 0) ||
+          (lp->group && strcasecmp(lp->group, wmslayer.c_str()) == 0) ||
+          ((numNestedGroups[k] >0) && msStringInArray(wmslayer.c_str(), nestedGroups[k], numNestedGroups[k]))) {
         /* Look for a WFS onlineresouce at the layer level and then at
          * the map level.
          */
-        pszOnlineResLyrWFS = msOWSLookupMetadata(&(lp->metadata), "FO",
+        const char* pszOnlineResLyrWFS = msOWSLookupMetadata(&(lp->metadata), "FO",
                              "onlineresource");
-        pszOnlineResLyrWCS = msOWSLookupMetadata(&(lp->metadata), "CO",
+        const char* pszOnlineResLyrWCS = msOWSLookupMetadata(&(lp->metadata), "CO",
                              "onlineresource");
         if (pszOnlineResLyrWFS == NULL || strlen(pszOnlineResLyrWFS) == 0)
           pszOnlineResLyrWFS = pszOnlineResMapWFS;
@@ -4574,8 +4390,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
         if (pszOnlineResLyrWFS && (lp->type == MS_LAYER_POINT ||
                                    lp->type == MS_LAYER_LINE ||
                                    lp->type == MS_LAYER_POLYGON) ) {
-          pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWFS);
-          pszLayerName = msEncodeHTMLEntities(lp->name);
+          char* pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWFS);
+          char* pszLayerName = msEncodeHTMLEntities(lp->name);
 
           if (nVersion < OWS_1_3_0) {
             msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" owsType=\"WFS\" owsURL=\"%s\">\n",
@@ -4597,8 +4413,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
           msFree(pszLayerName);
         } else if (pszOnlineResLyrWCS && lp->type == MS_LAYER_RASTER &&
                    lp->connectiontype != MS_WMS) {
-          pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWCS);
-          pszLayerName = msEncodeHTMLEntities(lp->name);
+          char* pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWCS);
+          char* pszLayerName = msEncodeHTMLEntities(lp->name);
 
           if (nVersion < OWS_1_3_0) {
             msIO_printf("<LayerDescription name=\"%s\"  owsType=\"WCS\" owsURL=\"%s\">\n",
@@ -4619,8 +4435,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
             msIO_printf("  </LayerDescription>\n");
           }
         } else {
-          char *pszLayerName;
-          pszLayerName = msEncodeHTMLEntities(lp->name);
+          char *pszLayerName = msEncodeHTMLEntities(lp->name);
 
           if (nVersion < OWS_1_3_0)
             msIO_printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
@@ -4655,11 +4470,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   else
     msIO_printf("</DescribeLayerResponse>\n");
 
-  if (layers)
-    msFreeCharArray(layers, numlayers);
-
   /* free the stuff used for nested layers */
-  for (i = 0; i < map->numlayers; i++) {
+  for (int i = 0; i < map->numlayers; i++) {
     if (numNestedGroups[i] > 0) {
       msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
     }
@@ -4675,29 +4487,25 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
 /*
 ** msWMSGetLegendGraphic()
 */
+static
 int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
-                       char **values, int numentries, char *wms_exception_format, owsRequestObj *ows_request,
+                       char **values, int numentries, const char *wms_exception_format, owsRequestObj *ows_request,
                        map_hittest *hittest)
 {
-  char *pszLayer = NULL;
-  char *pszFormat = NULL;
-  char *psRule = NULL;
-  char *psScale = NULL;
+  const char *pszLayer = NULL;
+  const char *pszFormat = NULL;
+  const char *psRule = NULL;
+  const char *psScale = NULL;
   int iLayerIndex = -1;
   outputFormatObj *psFormat = NULL;
   imageObj *img=NULL;
-  int j, i = 0;
   int nWidth = -1, nHeight =-1;
-  char *pszStyle = NULL;
-  char *sld_version = NULL;
+  const char *pszStyle = NULL;
+  const char *sld_version = NULL;
   int wms_layer =  MS_FALSE;
   const char *sldenabled = NULL;
   const char *format_list = NULL;
-  layerObj *lp;
   int nLayers =0;
-  char ***nestedGroups = NULL;
-  int *numNestedGroups = NULL;
-  int *isUsedInNestedGroup = NULL;
 
   if(!hittest) {
     /* we can skip alot of testing if we already have a hittest, as it has already been done in the hittesting phase */
@@ -4708,7 +4516,7 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
     if (sldenabled == NULL)
       sldenabled = "true";
 
-    for(i=0; map && i<numentries; i++) {
+    for(int i=0; i<numentries; i++) {
       if (strcasecmp(names[i], "LAYER") == 0) {
         pszLayer = values[i];
       } else if (strcasecmp(names[i], "WIDTH") == 0)
@@ -4765,15 +4573,15 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
       return msWMSException(map, nVersion, "InvalidParameterValue", wms_exception_format);
     }
 
-    nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
-    numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
-    isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+    char*** nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
+    int* numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+    int* isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
     msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
 
     /* check if layer name is valid. we check for layer's and group's name */
     /* as well as wms_layer_group names */
-    for (i=0; i<map->numlayers; i++) {
-      lp = GET_LAYER(map, i);
+    for (int i=0; i<map->numlayers; i++) {
+      layerObj* lp = GET_LAYER(map, i);
       if (  ((map->name && strcasecmp(map->name, pszLayer) == 0) ||
           (lp->name && strcasecmp(lp->name, pszLayer) == 0) ||
           (lp->group && strcasecmp(lp->group, pszLayer) == 0) ||
@@ -4786,7 +4594,7 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
           /* we do not cascade a wms layer if it contains at least
            * one class with the property name set */
           wms_layer = MS_TRUE;
-          for (j=0; j<lp->numclasses; j++) {
+          for (int j=0; j<lp->numclasses; j++) {
             if (lp->_class[j]->name != NULL && strlen(lp->_class[j]->name)>0) {
               wms_layer = MS_FALSE;
               break;
@@ -4798,7 +4606,7 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
     }
 
     /* free the stuff used for nested layers */
-    for (i = 0; i < map->numlayers; i++) {
+    for (int i = 0; i < map->numlayers; i++) {
       if (numNestedGroups[i] > 0) {
         msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
       }
@@ -4840,13 +4648,16 @@ this request. Check wms/ows_enable_request settings.",
     of the classes have a the group value equals to the style */
     /*style is only validated when there is only one layer #3411*/
     if (nLayers == 1 &&  pszStyle && strlen(pszStyle) > 0 && strcasecmp(pszStyle, "default") != 0) {
-      for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++) {
+      bool found = false;
+      for (int i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++) {
         if (GET_LAYER(map, iLayerIndex)->_class[i]->group &&
-            strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->group, pszStyle) == 0)
+            strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->group, pszStyle) == 0) {
+          found = true;
           break;
+        }
       }
 
-      if (i == GET_LAYER(map, iLayerIndex)->numclasses) {
+      if (!found) {
         msSetError(MS_WMSERR, "style used in the STYLE parameter is not defined on the layer.",
             "msWMSGetLegendGraphic()");
         return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
@@ -4858,7 +4669,7 @@ this request. Check wms/ows_enable_request settings.",
     }
   } else {
     /* extract the parameters we need */
-    for(i=0; map && i<numentries; i++) {
+    for(int i=0; i<numentries; i++) {
       if (strcasecmp(names[i], "FORMAT") == 0)
         pszFormat = values[i];
       else if (strcasecmp(names[i], "RULE") == 0)
@@ -4909,20 +4720,22 @@ this request. Check wms/ows_enable_request settings.",
     /* (RULE = class->name) */
     /* TBT FIXME? also check the map->scaledenom if multiple scale-dependant classes with same name */
 
-    for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++) {
-      if (GET_LAYER(map, iLayerIndex)->classgroup &&
-          (GET_LAYER(map, iLayerIndex)->_class[i]->group == NULL ||
-           strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->group,
-                      GET_LAYER(map, iLayerIndex)->classgroup) != 0))
+    layerObj* lp = GET_LAYER(map, iLayerIndex);
+    int i;
+    for (i=0; i<lp->numclasses; i++) {
+      if (lp->classgroup &&
+          (lp->_class[i]->group == NULL ||
+           strcasecmp(lp->_class[i]->group,
+                      lp->classgroup) != 0))
         continue;
 
-      if (GET_LAYER(map, iLayerIndex)->_class[i]->name &&
-          strlen(GET_LAYER(map, iLayerIndex)->_class[i]->name) > 0 &&
-          strcasecmp(GET_LAYER(map, iLayerIndex)->_class[i]->name,psRule) == 0)
+      if (lp->_class[i]->name &&
+          strlen(lp->_class[i]->name) > 0 &&
+          strcasecmp(lp->_class[i]->name,psRule) == 0)
         break;
 
     }
-    if (i < GET_LAYER(map, iLayerIndex)->numclasses) {
+    if (i < lp->numclasses) {
       /* set the map legend parameters */
       if (nWidth < 0) {
         if (map->legend.keysizex > 0)
@@ -4941,13 +4754,13 @@ this request. Check wms/ows_enable_request settings.",
         /* Scale-dependent legend. calculate map->scaledenom */
         map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
         msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
-        img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
-                                 GET_LAYER(map, iLayerIndex)->_class[i],
+        img = msCreateLegendIcon(map, lp,
+                                 lp->_class[i],
                                  nWidth, nHeight, MS_FALSE);
       } else {
         /* Scale-independent legend */
-        img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
-                                 GET_LAYER(map, iLayerIndex)->_class[i],
+        img = msCreateLegendIcon(map, lp,
+                                 lp->_class[i],
                                  nWidth, nHeight, MS_TRUE);
       }
     }
@@ -4976,8 +4789,9 @@ this request. Check wms/ows_enable_request settings.",
 /*
 ** msWMSGetContentDependantLegend()
 */
+static
 int msWMSGetContentDependantLegend(mapObj *map, int nVersion, char **names, char **values, int numentries,
-                char *wms_exception_format, owsRequestObj *ows_request) {
+                const char *wms_exception_format, owsRequestObj *ows_request) {
 
   int i,status;
   map_hittest hittest;
@@ -5003,8 +4817,9 @@ int msWMSGetContentDependantLegend(mapObj *map, int nVersion, char **names, char
 ** msWMSGetStyles() : return an SLD document for all layers that
 ** have a status set to on or default.
 */
+static
 int msWMSGetStyles(mapObj *map, int nVersion, char **names,
-                   char **values, int numentries, char *wms_exception_format)
+                   char **values, int numentries, const char *wms_exception_format)
 
 {
   int i,j,k;
@@ -5143,8 +4958,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
 #ifdef USE_WMS_SVR
   int i, status, nVersion=OWS_VERSION_NOTSET, isContentDependantLegend = 0;
   const char *version=NULL, *request=NULL, *service=NULL, *format=NULL, *updatesequence=NULL, *language=NULL;
-  char *wms_exception_format = NULL;
-  char *validated_language = NULL;
+  const char *wms_exception_format = NULL;
 
   /*
   ** Process Params common to all requests
@@ -5329,13 +5143,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
        (strcasecmp(request, "map") == 0 || strcasecmp(request, "GetMap") == 0) ||
        (strcasecmp(request, "feature_info") == 0 || strcasecmp(request, "GetFeatureInfo") == 0) ||
        (strcasecmp(request, "DescribeLayer") == 0) ) {
-    char request_tmp[32];
+    const char* request_tmp;
     if (strcasecmp(request, "map") == 0)
-      strlcpy(request_tmp, "GetMap", sizeof(request_tmp));
+      request_tmp = "GetMap";
     else if (strcasecmp(request, "feature_info") == 0)
-      strlcpy(request_tmp, "GetFeatureInfo", sizeof(request_tmp));
+      request_tmp = "GetFeatureInfo";
     else
-      strlcpy(request_tmp, request, sizeof(request_tmp));
+      request_tmp = request;
 
     msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request);
     if (ows_request->numlayers == 0) {
@@ -5394,7 +5208,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
   }
 
   /* This function owns validated_language, so remember to free it later*/
-  validated_language = msOWSGetLanguageFromList(map, "MO", language);
+  char* validated_language = msOWSGetLanguageFromList(map, "MO", language);
   if (validated_language != NULL) {
     msMapSetLanguageSpecificConnection(map, validated_language);
   }

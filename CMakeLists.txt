@@ -271,7 +271,7 @@ set(mapserver_SOURCES fontcache.c
 cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.cpp classobject.c
 mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
-maphttp.c mapparser.c mapstring.c mapxmp.c mapcairo.c mapimageio.c
+maphttp.c mapparser.c mapstring.cpp mapxmp.c mapcairo.c mapimageio.c
 mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.c maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
@@ -285,7 +285,7 @@ mapresample.c mapwfs.cpp mapgdal.c mapogcsos.c mapscale.c mapwfs11.cpp mapwfs20.
 mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c 
-mapcompositingfilter.c mapmvt.c)
+mapcompositingfilter.c mapmvt.c mapiconv.c)
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
@@ -294,7 +294,7 @@ maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
 mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h
 mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
-mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h)
+mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h)
 
 if(WIN32)
 	configure_file(
