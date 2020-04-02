@@ -4913,7 +4913,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     wcs20coverageMetadataObj tmpCm;
     char *srs_uri, *default_filename;
     const char *filename;
-    int length = 0, swapAxes;
+    int swapAxes;
 
     /* Create Document  */
     psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -4965,7 +4965,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     default_filename = msStringConcatenate(default_filename, MS_IMAGE_EXTENSION(image->format));
 
     filename = msGetOutputFormatOption(image->format, "FILENAME", default_filename);
-    length = strlen("cid:coverage/") + strlen(filename) + 1;
     std::string file_ref("cid:coverage/");
     file_ref += filename;
 
@@ -4973,10 +4972,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     std::string role;
     if(EQUAL(MS_IMAGE_MIME_TYPE(map->outputformat), "image/tiff")) {
-      length = strlen(MS_WCS_20_PROFILE_GML_GEOTIFF) + 1;
       role = MS_WCS_20_PROFILE_GML_GEOTIFF;
     } else {
-      length = strlen(MS_IMAGE_MIME_TYPE(map->outputformat)) + 1;
       role = MS_IMAGE_MIME_TYPE(map->outputformat);
     }
 
