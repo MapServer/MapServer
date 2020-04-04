@@ -17,7 +17,7 @@ applications can be enhanced using Java, JavaScript or many other web
 technologies. For more  information and complete documentation please 
 visit:
 
-  http://www.mapserver.org/
+  https://mapserver.org/
 
 Bug reports and enhancement submissions can be reported in the MapServer 
 issue tracker at the following url.   If you do make changes and/or enhancements, 
@@ -28,7 +28,7 @@ please let us know so that they might be incorporated into future releases.
 
 Join the MapServer user mailing list online at:
 
-  http://www.mapserver.org/community/lists.html
+  https://mapserver.org/community/lists.html
 
  
 
