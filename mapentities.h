@@ -41,8 +41,8 @@
 extern "C" {
 #endif
 
-  static struct mapentities_s {
-    char  *name;
+  static const struct mapentities_s {
+    const char  *name;
     int value;
   } mapentities[] = {
     {"AElig", 198},

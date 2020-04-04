@@ -171,6 +171,8 @@ typedef const ms_uint32 *ms_const_bitarray;
 #endif
 
 #ifdef __cplusplus
+#include <string>
+#include <vector>
 extern "C" {
 #endif
 
@@ -2301,6 +2303,16 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT const char* msStringBufferGetString(msStringBuffer* sb);
   MS_DLL_EXPORT char* msStringBufferReleaseStringAndFree(msStringBuffer* sb);
   MS_DLL_EXPORT int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString);
+
+#ifdef __cplusplus
+}
+  void msStringTrim(std::string& string);
+  void msStringTrimBlanks(std::string& string);
+  void msStringTrimLeft(std::string& string);
+  std::vector<std::string> msStringSplit(const char *string, char cd);
+  std::string msStringToLower(const std::string& s);
+extern "C" {
+#endif
 
 #ifndef HAVE_STRRSTR
   MS_DLL_EXPORT char *strrstr(const char *string, const char *find);
