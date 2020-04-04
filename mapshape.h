@@ -34,6 +34,8 @@
 #include "mapprimitive.h"
 #include "mapproject.h"
 
+#include "cpl_vsi.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,8 +81,8 @@ extern "C" {
   typedef unsigned char uchar;
 
   typedef struct {
-    FILE  *fpSHP;
-    FILE  *fpSHX;
+    VSILFILE  *fpSHP;
+    VSILFILE  *fpSHX;
 
     int   nShapeType;       /* SHPT_* */
     int   nFileSize;        /* SHP file */
@@ -113,7 +115,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif
-    FILE  *fp;
+    VSILFILE  *fp;
 
     int   nRecords;
 

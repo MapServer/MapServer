@@ -151,8 +151,8 @@ static void writeHeader( SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   /*      Write .shp file header.                                         */
   /* -------------------------------------------------------------------- */
-  fseek( psSHP->fpSHP, 0, 0 );
-  fwrite( abyHeader, 100, 1, psSHP->fpSHP );
+  VSIFSeekL( psSHP->fpSHP, 0, 0 );
+  VSIFWriteL( abyHeader, 100, 1, psSHP->fpSHP );
 
   /* -------------------------------------------------------------------- */
   /*      Prepare, and write .shx file header.                            */
@@ -161,8 +161,8 @@ static void writeHeader( SHPHandle psSHP )
   ByteCopy( &i32, abyHeader+24, 4 );
   if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
-  fseek( psSHP->fpSHX, 0, 0 );
-  fwrite( abyHeader, 100, 1, psSHP->fpSHX );
+  VSIFSeekL( psSHP->fpSHX, 0, 0 );
+  VSIFWriteL( abyHeader, 100, 1, psSHP->fpSHX );
 
   /* -------------------------------------------------------------------- */
   /*      Write out the .shx contents.                                    */
@@ -178,7 +178,7 @@ static void writeHeader( SHPHandle psSHP )
     }
   }
 
-  fwrite( panSHX, sizeof(ms_int32) * 2, psSHP->nRecords, psSHP->fpSHX );
+  VSIFWriteL( panSHX, sizeof(ms_int32) * 2, psSHP->nRecords, psSHP->fpSHX );
 
   free( panSHX );
 }
@@ -247,10 +247,10 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /* -------------------------------------------------------------------- */
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s.shp", pszBasename );
-  psSHP->fpSHP = fopen(pszFullname, pszAccess );
+  psSHP->fpSHP = VSIFOpenL(pszFullname, pszAccess );
   if( psSHP->fpSHP == NULL ) {
     sprintf( pszFullname, "%s.SHP", pszBasename );
-    psSHP->fpSHP = fopen(pszFullname, pszAccess );
+    psSHP->fpSHP = VSIFOpenL(pszFullname, pszAccess );
   }
   if( psSHP->fpSHP == NULL ) {
     msFree(pszBasename);
@@ -260,13 +260,13 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   }
 
   sprintf( pszFullname, "%s.shx", pszBasename );
-  psSHP->fpSHX = fopen(pszFullname, pszAccess );
+  psSHP->fpSHX = VSIFOpenL(pszFullname, pszAccess );
   if( psSHP->fpSHX == NULL ) {
     sprintf( pszFullname, "%s.SHX", pszBasename );
-    psSHP->fpSHX = fopen(pszFullname, pszAccess );
+    psSHP->fpSHX = VSIFOpenL(pszFullname, pszAccess );
   }
   if( psSHP->fpSHX == NULL ) {
-    fclose(psSHP->fpSHP);
+    VSIFCloseL(psSHP->fpSHP);
     msFree(pszBasename);
     msFree(pszFullname);
     msFree(psSHP);
@@ -280,9 +280,9 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /*   Read the file size from the SHP file.            */
   /* -------------------------------------------------------------------- */
   pabyBuf = (uchar *) msSmallMalloc(100);
-  if(1 != fread( pabyBuf, 100, 1, psSHP->fpSHP )) {
-    fclose( psSHP->fpSHP );
-    fclose( psSHP->fpSHX );
+  if(1 != VSIFReadL( pabyBuf, 100, 1, psSHP->fpSHP )) {
+    VSIFCloseL( psSHP->fpSHP );
+    VSIFCloseL( psSHP->fpSHX );
     free( psSHP );
     free(pabyBuf);
     return( NULL );
@@ -296,10 +296,10 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /* -------------------------------------------------------------------- */
   /*  Read SHX file Header info                                           */
   /* -------------------------------------------------------------------- */
-  if(1 != fread( pabyBuf, 100, 1, psSHP->fpSHX )) {
+  if(1 != VSIFReadL( pabyBuf, 100, 1, psSHP->fpSHX )) {
     msSetError(MS_SHPERR, "Corrupted .shx file", "msSHPOpen()");
-    fclose( psSHP->fpSHP );
-    fclose( psSHP->fpSHX );
+    VSIFCloseL( psSHP->fpSHP );
+    VSIFCloseL( psSHP->fpSHX );
     free( psSHP );
     free(pabyBuf);
     return( NULL );
@@ -307,8 +307,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
 
   if( pabyBuf[0] != 0 || pabyBuf[1] != 0 || pabyBuf[2] != 0x27  || (pabyBuf[3] != 0x0a && pabyBuf[3] != 0x0d) ) {
     msSetError(MS_SHPERR, "Corrupted .shp file", "msSHPOpen()");
-    fclose( psSHP->fpSHP );
-    fclose( psSHP->fpSHX );
+    VSIFCloseL( psSHP->fpSHP );
+    VSIFCloseL( psSHP->fpSHX );
     free( psSHP );
     free(pabyBuf);
 
@@ -322,8 +322,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 ) {
     msSetError(MS_SHPERR, "Corrupted .shp file : nRecords = %d.", "msSHPOpen()",
                psSHP->nRecords);
-    fclose( psSHP->fpSHP );
-    fclose( psSHP->fpSHX );
+    VSIFCloseL( psSHP->fpSHP );
+    VSIFCloseL( psSHP->fpSHX );
     free( psSHP );
     free(pabyBuf);
     return( NULL );
@@ -386,8 +386,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     free(psSHP->panRecOffset);
     free(psSHP->panRecSize);
     free(psSHP->panRecLoaded);
-    fclose( psSHP->fpSHP );
-    fclose( psSHP->fpSHX );
+    VSIFCloseL( psSHP->fpSHP );
+    VSIFCloseL( psSHP->fpSHX );
     free( psSHP );
     msSetError(MS_MEMERR, "Out of memory", "msSHPOpen()");
     return( NULL );
@@ -421,8 +421,8 @@ void msSHPClose(SHPHandle psSHP )
   free(psSHP->pabyRec);
   free(psSHP->panParts);
 
-  fclose( psSHP->fpSHX );
-  fclose( psSHP->fpSHP );
+  VSIFCloseL( psSHP->fpSHX );
+  VSIFCloseL( psSHP->fpSHP );
 
   free( psSHP );
 }
@@ -451,7 +451,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
 {
   char *pszBasename, *pszFullname;
   int i;
-  FILE *fpSHP, *fpSHX;
+  VSILFILE *fpSHP, *fpSHX;
   uchar abyHeader[100];
   ms_int32 i32;
   double dValue;
@@ -499,7 +499,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /* -------------------------------------------------------------------- */
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s.shp", pszBasename );
-  fpSHP = fopen(pszFullname, "wb" );
+  fpSHP = VSIFOpenL(pszFullname, "wb" );
   if( fpSHP == NULL ) {
     free( pszFullname );
     free(pszBasename);
@@ -507,9 +507,9 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   }
 
   sprintf( pszFullname, "%s.shx", pszBasename );
-  fpSHX = fopen(pszFullname, "wb" );
+  fpSHX = VSIFOpenL(pszFullname, "wb" );
   if( fpSHX == NULL ) {
-    fclose(fpSHP);
+    VSIFCloseL(fpSHP);
     free( pszFullname );
     free(pszBasename);
     return( NULL );
@@ -548,7 +548,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /* -------------------------------------------------------------------- */
   /*      Write .shp file header.                                         */
   /* -------------------------------------------------------------------- */
-  fwrite( abyHeader, 100, 1, fpSHP );
+  VSIFWriteL( abyHeader, 100, 1, fpSHP );
 
   /* -------------------------------------------------------------------- */
   /*      Prepare, and write .shx file header.                            */
@@ -557,13 +557,13 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   ByteCopy( &i32, abyHeader+24, 4 );
   if( !bBigEndian ) SwapWord( 4, abyHeader+24 );
 
-  fwrite( abyHeader, 100, 1, fpSHX );
+  VSIFWriteL( abyHeader, 100, 1, fpSHX );
 
   /* -------------------------------------------------------------------- */
   /*      Close the files, and then open them as regular existing files.  */
   /* -------------------------------------------------------------------- */
-  fclose( fpSHP );
-  fclose( fpSHX );
+  VSIFCloseL( fpSHP );
+  VSIFCloseL( fpSHX );
 
   return( msSHPOpen( pszLayer, "rb+" ) );
 }
@@ -677,8 +677,8 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
   /* -------------------------------------------------------------------- */
   /*      Write out record.                                               */
   /* -------------------------------------------------------------------- */
-  if(fseek( psSHP->fpSHP, nRecordOffset, 0 ) == 0) {
-    fwrite( pabyRec, nRecordSize+8, 1, psSHP->fpSHP );
+  if(VSIFSeekL( psSHP->fpSHP, nRecordOffset, 0 ) == 0) {
+    VSIFWriteL( pabyRec, nRecordSize+8, 1, psSHP->fpSHP );
 
     psSHP->panRecSize[psSHP->nRecords-1] = nRecordSize;
     psSHP->nFileSize += nRecordSize + 8;
@@ -969,8 +969,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*      Write out record.                                               */
   /* -------------------------------------------------------------------- */
-  if(fseek( psSHP->fpSHP, nRecordOffset, 0 ) == 0) {
-    fwrite( pabyRec, nRecordSize+8, 1, psSHP->fpSHP );
+  if(VSIFSeekL( psSHP->fpSHP, nRecordOffset, 0 ) == 0) {
+    VSIFWriteL( pabyRec, nRecordSize+8, 1, psSHP->fpSHP );
 
     psSHP->panRecSize[psSHP->nRecords-1] = nRecordSize;
     psSHP->nFileSize += nRecordSize + 8;
@@ -1082,11 +1082,11 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
   /* -------------------------------------------------------------------- */
   /*      Read the record.                                                */
   /* -------------------------------------------------------------------- */
-  if( 0 != fseek( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 )) {
+  if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 )) {
     msSetError(MS_IOERR, "failed to seek offset", "msSHPReadPoint()");
     return(MS_FAILURE);
   }
-  if( 1 != fread( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
+  if( 1 != VSIFReadL( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
     msSetError(MS_IOERR, "failed to fread record", "msSHPReadPoint()");
     return(MS_FAILURE);
   }
@@ -1122,13 +1122,13 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
   if( shxBufferPage < 0  )
     return(MS_FAILURE);
 
-  if( 0 != fseek( psSHP->fpSHX, 100 + shxBufferPage * SHX_BUFFER_PAGE * 8, 0 )) {
+  if( 0 != VSIFSeekL( psSHP->fpSHX, 100 + shxBufferPage * SHX_BUFFER_PAGE * 8, 0 )) {
     /*
      * msSetError(MS_IOERR, "failed to seek offset", "msSHXLoadPage()");
      * return(MS_FAILURE);
     */
   }
-  if( SHX_BUFFER_PAGE != fread( buffer, 8, SHX_BUFFER_PAGE, psSHP->fpSHX )) {
+  if( SHX_BUFFER_PAGE != VSIFReadL( buffer, 8, SHX_BUFFER_PAGE, psSHP->fpSHX )) {
     /*
      * msSetError(MS_IOERR, "failed to fread SHX record", "msSHXLoadPage()");
      * return(MS_FAILURE);
@@ -1175,7 +1175,7 @@ int msSHXLoadAll( SHPHandle psSHP )
   uchar *pabyBuf;
 
   pabyBuf = (uchar *) msSmallMalloc(8 * psSHP->nRecords );
-  if(psSHP->nRecords != fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )) {
+  if(psSHP->nRecords != VSIFReadL( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )) {
     msSetError(MS_IOERR, "failed to read shx records", "msSHXLoadAll()");
     free(pabyBuf);
     return MS_FAILURE;
@@ -1268,12 +1268,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*      Read the record.                                                */
   /* -------------------------------------------------------------------- */
-  if( 0 != fseek( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 )) {
+  if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 )) {
     msSetError(MS_IOERR, "failed to seek offset", "msSHPReadShape()");
     shape->type = MS_SHAPE_NULL;
     return;
   }
-  if( 1 != fread( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
+  if( 1 != VSIFReadL( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
     msSetError(MS_IOERR, "failed to fread record", "msSHPReadPoint()");
     shape->type = MS_SHAPE_NULL;
     return;
@@ -1645,11 +1645,11 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
     }
 
     if( psSHP->nShapeType != SHP_POINT && psSHP->nShapeType != SHP_POINTZ && psSHP->nShapeType != SHP_POINTM) {
-      if( 0 != fseek( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity) + 12, 0 )) {
+      if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity) + 12, 0 )) {
         msSetError(MS_IOERR, "failed to seek offset", "msSHPReadBounds()");
         return(MS_FAILURE);
       }
-      if( 1 != fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP )) {
+      if( 1 != VSIFReadL( padBounds, sizeof(double)*4, 1, psSHP->fpSHP )) {
         msSetError(MS_IOERR, "failed to fread record", "msSHPReadBounds()");
         return(MS_FAILURE);
       }
@@ -1671,11 +1671,11 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
       /*      minimum and maximum bound.                                      */
       /* -------------------------------------------------------------------- */
 
-      if( 0 != fseek( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity) + 12, 0 )) {
+      if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity) + 12, 0 )) {
         msSetError(MS_IOERR, "failed to seek offset", "msSHPReadBounds()");
         return(MS_FAILURE);
       }
-      if( 1 != fread( padBounds, sizeof(double)*2, 1, psSHP->fpSHP )) {
+      if( 1 != VSIFReadL( padBounds, sizeof(double)*2, 1, psSHP->fpSHP )) {
         msSetError(MS_IOERR, "failed to fread record", "msSHPReadBounds()");
         return(MS_FAILURE);
       }
@@ -2678,14 +2678,14 @@ int msSHPLayerOpen(layerObj *layer)
   {
     const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
     int bOK = MS_FALSE;
-    FILE* fp = fopen(pszPRJFilename, "rb");
+    VSILFILE* fp = VSIFOpenL(pszPRJFilename, "rb");
     if( fp != NULL )
     {
         char szPRJ[2048];
         OGRSpatialReferenceH hSRS;
         int nRead;
 
-        nRead = (int)fread(szPRJ, 1, sizeof(szPRJ) - 1, fp);
+        nRead = (int)VSIFReadL(szPRJ, 1, sizeof(szPRJ) - 1, fp);
         szPRJ[nRead] = '\0';
         hSRS = OSRNewSpatialReference(szPRJ);
         if( hSRS != NULL )
@@ -2705,7 +2705,7 @@ int msSHPLayerOpen(layerObj *layer)
             }
             OSRDestroySpatialReference(hSRS);
         }
-      fclose(fp);
+      VSIFCloseL(fp);
     }
 
     if( bOK != MS_TRUE )
