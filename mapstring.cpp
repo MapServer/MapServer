@@ -34,6 +34,7 @@
 #include "mapserver.h"
 #include "mapthread.h"
 
+#include "cpl_vsi.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -801,17 +802,17 @@ char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1,
 char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path)
 
 {
-  FILE  *fp;
+  VSILFILE  *fp;
 
   if( msBuildPath( szReturnPath, abs_path, path ) == NULL )
     return NULL;
 
-  fp = fopen( szReturnPath, "r" );
+  fp = VSIFOpenL( szReturnPath, "r" );
   if( fp == NULL ) {
     strlcpy( szReturnPath, path, MS_MAXPATHLEN);
     return NULL;
   } else
-    fclose( fp );
+    VSIFCloseL( fp );
 
   return szReturnPath;
 }
@@ -826,17 +827,17 @@ char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path)
 char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2)
 
 {
-  FILE  *fp;
+  VSILFILE  *fp;
 
   if( msBuildPath3( szReturnPath, abs_path, path1, path2 ) == NULL )
     return NULL;
 
-  fp = fopen( szReturnPath, "r" );
+  fp = VSIFOpenL( szReturnPath, "r" );
   if( fp == NULL ) {
     strlcpy( szReturnPath, path2, MS_MAXPATHLEN);
     return NULL;
   } else
-    fclose( fp );
+    VSIFCloseL( fp );
 
   return szReturnPath;
 }

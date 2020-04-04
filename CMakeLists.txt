@@ -282,7 +282,7 @@ mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.cpp maperror.c mapogcfilter.c mapregex.c mapwcs11.cpp mapfile.c
 mapogcfiltercommon.cpp maprendering.c mapwcs20.cpp mapogcsld.c mapmetadata.c
 mapresample.c mapwfs.cpp mapgdal.c mapogcsos.c mapscale.c mapwfs11.cpp mapwfs20.c
-mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
+mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c 
 mapcompositingfilter.c mapmvt.c mapiconv.c)

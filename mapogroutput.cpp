@@ -33,12 +33,13 @@
 #include "mapthread.h"
 #include "mapows.h"
 
-#define __USE_LARGEFILE64 1
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
+
+#include <string>
 
 /************************************************************************/
 /*                   msInitDefaultOGROutputFormat()                     */
@@ -717,21 +718,19 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         CSLFetchNameValueDef(layer_options, "NATIVE_DATA", "{}");
       if( pszNativeData[strlen(pszNativeData)-1] == '}' )
       {
-          char szTemp[32];
-          char* pszTemplate = msSmallMalloc(strlen(pszNativeData) + 32);
-          strcpy(pszTemplate, pszNativeData);
-          pszTemplate[strlen(pszTemplate)-1] = 0;
+          std::string tmpl(pszNativeData);
+          tmpl.resize(tmpl.size() - 1);
           if( strlen(pszNativeData) > 2 )
-              strcat(pszTemplate, ",");
-          sprintf(szTemp, "\"numberMatched\":%d}", nMatchingFeatures);
-          strcat(pszTemplate, szTemp);
+              tmpl += ',';
+          tmpl += "\"numberMatched\":";
+          tmpl += std::to_string(nMatchingFeatures);
+          tmpl += '}';
           layer_options = CSLSetNameValue(layer_options,
                                           "NATIVE_MEDIA_TYPE",
                                           "application/vnd.geo+json");
           layer_options = CSLSetNameValue(layer_options,
                                           "NATIVE_DATA",
-                                          pszTemplate);
-          msFree(pszTemplate);
+                                          tmpl.c_str());
       }
   }
   if(!strcasecmp("true",msGetOutputFormatOption(format,"USE_FEATUREID","false"))) {
@@ -1129,11 +1128,11 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         msShapeGetClass(layer, map, &resultshape, NULL, -1);
 
       if( resultshape.classindex >= 0
-          && (layer->class[resultshape.classindex]->text.string
+          && (layer->_class[resultshape.classindex]->text.string
               || layer->labelitem)
-          && layer->class[resultshape.classindex]->numlabels > 0
-          && layer->class[resultshape.classindex]->labels[0]->size != -1 ) {
-        resultshape.text = msShapeGetLabelAnnotation(layer,&resultshape,layer->class[resultshape.classindex]->labels[0]);
+          && layer->_class[resultshape.classindex]->numlabels > 0
+          && layer->_class[resultshape.classindex]->labels[0]->size != -1 ) {
+        resultshape.text = msShapeGetLabelAnnotation(layer,&resultshape,layer->_class[resultshape.classindex]->labels[0]);
       }
 
       /*
