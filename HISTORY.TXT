@@ -12,6 +12,11 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.0-rc1 release (2020-04-05)
+------------------------------
+
+- Fix alpha value for hex colors (#6023)
+
 7.6.0-beta2 release (2020-03-28)
 --------------------------------
 
