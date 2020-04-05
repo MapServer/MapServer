@@ -890,7 +890,7 @@ const char *msOWSLookupMetadataWithLanguage(hashTableObj *metadata,
 {
   const char *value = NULL;
 
-  if ( name && validated_language ) {
+  if ( name && validated_language && validated_language[0] ) {
     size_t bufferSize = strlen(name)+strlen(validated_language)+2;
     char *name2 = (char *) msSmallMalloc( bufferSize );
     snprintf(name2, bufferSize, "%s.%s", name, validated_language);
@@ -1161,7 +1161,7 @@ char * msOWSGetOnlineResource2(mapObj *map, const char *namespaces, const char *
 {
   char *online_resource = msOWSGetOnlineResource(map, namespaces, metadata_name, req);
 
-  if ( online_resource && validated_language ) {
+  if ( online_resource && validated_language && validated_language[0] ) {
     /* online_resource is already terminated, so we can simply add language=...& */
     /* but first we need to make sure that online_resource has enough capacity */
     online_resource = (char *)msSmallRealloc(online_resource, strlen(online_resource) + strlen(validated_language) +  11);
@@ -1447,7 +1447,7 @@ int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *name
 
   char *default_language = msOWSGetLanguageFromList(map, namespaces, NULL);
 
-  if(validated_language && default_language) {
+  if(validated_language && validated_language[0] && default_language) {
     msIO_fprintf(stream, "    <inspire_common:SupportedLanguages>\n");
     msIO_fprintf(stream, "      <inspire_common:DefaultLanguage><inspire_common:Language>%s"
                  "</inspire_common:Language></inspire_common:DefaultLanguage>\n",
@@ -1550,7 +1550,7 @@ int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata,
     free(pszEncodedValue);
   } else {
     if (action_if_not_found == OWS_WARN) {
-      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name, (validated_language?".":""), (validated_language?validated_language:""));
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name, (validated_language && validated_language[0]?".":""), (validated_language && validated_language[0]?validated_language:""));
       status = action_if_not_found;
     }
 
