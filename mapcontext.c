@@ -29,6 +29,8 @@
 #include "mapserver.h"
 #include "mapows.h"
 
+#include "cpl_vsi.h"
+
 
 #if defined(USE_WMS_LYR)
 
@@ -47,12 +49,12 @@
 char * msGetMapContextFileText(char *filename)
 {
   char *pszBuffer;
-  FILE *stream;
+  VSILFILE *stream;
   int  nLength;
 
   /* open file */
   if(filename != NULL && strlen(filename) > 0) {
-    stream = fopen(filename, "rb");
+    stream = VSIFOpenL(filename, "rb");
     if(!stream) {
       msSetError(MS_IOERR, "(%s)", "msGetMapContextFileText()", filename);
       return NULL;
@@ -62,26 +64,26 @@ char * msGetMapContextFileText(char *filename)
     return NULL;
   }
 
-  fseek( stream, 0, SEEK_END );
-  nLength = ftell( stream );
-  fseek( stream, 0, SEEK_SET );
+  VSIFSeekL( stream, 0, SEEK_END );
+  nLength = (int) VSIFTellL( stream );
+  VSIFSeekL( stream, 0, SEEK_SET );
 
   pszBuffer = (char *) malloc(nLength+1);
   if( pszBuffer == NULL ) {
     msSetError(MS_MEMERR, "(%s)", "msGetMapContextFileText()", filename);
-    fclose( stream );
+    VSIFCloseL( stream );
     return NULL;
   }
 
-  if(fread( pszBuffer, nLength, 1, stream ) == 0 &&  !feof(stream)) {
+  if(VSIFReadL( pszBuffer, nLength, 1, stream ) == 0) {
     free( pszBuffer );
-    fclose( stream );
+    VSIFCloseL( stream );
     msSetError(MS_IOERR, "(%s)", "msGetMapContextFileText()", filename);
     return NULL;
   }
   pszBuffer[nLength] = '\0';
 
-  fclose( stream );
+  VSIFCloseL( stream );
 
   return pszBuffer;
 }
@@ -1275,7 +1277,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
 int msSaveMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
-  FILE *stream;
+  VSILFILE *stream;
   char szPath[MS_MAXPATHLEN];
   int nStatus;
 
