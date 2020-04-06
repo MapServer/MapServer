@@ -1,4 +1,4 @@
-# RUN_PARMS: ogr_empty_geojson.json [MAPSERV] "QUERY_STRING=map=[MAPFILE]&service=WMS&request=GetFeatureInfo&version=1.3.0&CRS=EPSG:3857&width=200&height=200&layers=geojson&bbox=-20,-20,20,20&format=image/png&query_layers=geojson&i=0&j=0&&info_format=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: ogr_empty_geojson.json [MAPSERV] "QUERY_STRING=map=[MAPFILE]&service=WMS&request=GetFeatureInfo&version=1.3.0&CRS=EPSG:3857&width=200&height=200&layers=geojson&bbox=-20,-20,20,20&format=image/png&query_layers=geojson&i=0&j=0&&info_format=geojson&STYLES=" > [RESULT_DEMIME]
 # check that ogr-output with no features returns a correct format. bug #5208
 
 MAP

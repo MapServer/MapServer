@@ -1687,6 +1687,18 @@ this request. Check wms/ows_enable_request settings.",
       return msWMSException(map, nVersion, "MissingParameterValue", wms_exception_format);
     }
 
+    if (styles == nullptr && sld_url == nullptr && sld_body == nullptr &&
+        (strcasecmp(request, "GetMap") == 0 ||
+         strcasecmp(request, "GetFeatureInfo") == 0) &&
+        msOWSLookupMetadata(&(map->web.metadata), "M",
+                            "allow_getmap_without_styles") == nullptr) {
+      msSetError(MS_WMSERR,
+                 "Missing required parameter STYLES. Note to service administrators: "
+                 "defining the \"wms_allow_getmap_without_styles\" \"true\" MAP.WEB.METADATA "
+                 "item will disable this check (backward compatibility with behaviour "
+                 "of MapServer < 8.0)", "msWMSLoadGetMapParams()");
+      return msWMSException(map, nVersion, "MissingParameterValue", wms_exception_format);
+    }
   }
 
   /*

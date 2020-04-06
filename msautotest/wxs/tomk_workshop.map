@@ -20,7 +20,7 @@
 # RUN_PARMS: wms_describe_layer.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WMS&version=1.1.1&request=DescribeLayer&layers=rivers" > [RESULT]
 #
 # Generate WMS GetMap
-# RUN_PARMS: wms_getmap.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetMap&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getmap.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetMap&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&STYLES=" > [RESULT_DEMIME]
 #
 # Generate WMS GetFeatureInfo HTML format on vector data
 # RUN_PARMS: wms_get_feature_info_vector.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&layers=land_shallow_topo_2048,rivers&styles=,&transparent=true&width=500&height=300&query_layers=rivers&info_format=text/html&x=141&y=91&radius=10" > [RESULT]

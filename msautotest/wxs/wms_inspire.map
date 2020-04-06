@@ -114,16 +114,16 @@
 #
 #
 # GetFeatureInfo all
-# RUN_PARMS: wms_inspire_featureinfo_all.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
-# RUN_PARMS: wms_inspire_featureinfo_all_mime_xml.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT]
-# RUN_PARMS: wms_inspire_featureinfo_all_mime_plain.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=text/plain" > [RESULT]
+# RUN_PARMS: wms_inspire_featureinfo_all.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml&STYLES=" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_featureinfo_all_mime_xml.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml&STYLES=" > [RESULT]
+# RUN_PARMS: wms_inspire_featureinfo_all_mime_plain.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=text/plain&STYLES=" > [RESULT]
 #
 # GetFeatureInfo CommonTransportElements all
-# RUN_PARMS: wms_inspire_featureinfo_commontransportelements.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.CommonTransportElements&LAYERS=TN.CommonTransportElements&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_featureinfo_commontransportelements.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.CommonTransportElements&LAYERS=TN.CommonTransportElements&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml&STYLES=" > [RESULT_DEMIME]
 # GetFeatureInfo RoadTransportNetwork all
-# RUN_PARMS: wms_inspire_featureinfo_roadtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.RoadTransportNetwork&LAYERS=TN.RoadTransportNetwork&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_featureinfo_roadtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.RoadTransportNetwork&LAYERS=TN.RoadTransportNetwork&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml&STYLES=" > [RESULT_DEMIME]
 # GetFeatureInfo RailTransportNetwork all
-# RUN_PARMS: wms_inspire_featureinfo_railtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.RailTransportNetwork&LAYERS=TN.RailTransportNetwork&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_featureinfo_railtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.RailTransportNetwork&LAYERS=TN.RailTransportNetwork&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml&STYLES=" > [RESULT_DEMIME]
 #
 #
 # DescribeLayer all
