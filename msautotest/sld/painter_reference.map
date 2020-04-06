@@ -3,15 +3,15 @@
 #
 # --- Mapfile: all polygons are green
 #
-# RUN_PARMS: map_painter_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=multipolygon" > [RESULT_DEMIME]
+# RUN_PARMS: map_painter_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=multipolygon&STYLES=" > [RESULT_DEMIME]
 #
 # --- Mapfile with SLD-like rendering: polygons are green, red, blue
 #
-# RUN_PARMS: map_sldlike_painter_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=sldlike_multipolygon" > [RESULT_DEMIME]
+# RUN_PARMS: map_sldlike_painter_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=sldlike_multipolygon&STYLES=" > [RESULT_DEMIME]
 #
 # --- Mapfile with SLD-like rendering and centroid geomtransform: polygons are green, red, blue, with a white dot at center
 #
-# RUN_PARMS: map_sldlikedot_painter_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=sldlike_multipolygon_withdot" > [RESULT_DEMIME]
+# RUN_PARMS: map_sldlikedot_painter_reference.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=sldlike_multipolygon_withdot&STYLES=" > [RESULT_DEMIME]
 #
 # --- SLD: polygons are green, red, blue
 #

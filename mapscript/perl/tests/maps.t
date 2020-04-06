@@ -29,7 +29,7 @@ ok($map, 'create mapObj');
 mapscript::msIO_installStdoutToBuffer();
 my $owreq = new mapscript::OWSRequest();
 ok($owreq, 'create OWSRequest');
-$owreq->loadParamsFromURL('service=WMS&version=1.1.1&request=GetMap&layers=grey&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&width=80&height=40');
+$owreq->loadParamsFromURL('service=WMS&version=1.1.1&request=GetMap&layers=grey&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&width=80&height=40&STYLES=');
 ok($owreq->getName(0) eq 'service');
 ok($owreq->getValue(0) eq 'WMS');
 ok($owreq->getValueByName('request') eq 'GetMap');
