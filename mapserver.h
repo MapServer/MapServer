@@ -2306,6 +2306,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
 #ifdef __cplusplus
 }
+  std::string msStdStringEscape( const char * pszString );
   void msStringTrim(std::string& string);
   void msStringTrimBlanks(std::string& string);
   void msStringTrimLeft(std::string& string);

@@ -2219,6 +2219,15 @@ char* msStringEscape( const char * pszString )
   return string_tmp;
 }
 
+std::string msStdStringEscape( const char * pszString )
+{
+  char* tmp = msStringEscape(pszString);
+  std::string ret(tmp);
+  if( tmp != pszString )
+      msFree(tmp);
+  return ret;
+}
+
 /************************************************************************/
 /*                             msStringInArray()                        */
 /************************************************************************/

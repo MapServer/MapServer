@@ -26,8 +26,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
-
-#define _GNU_SOURCE
 #include "mapserver-config.h"
 
 #include "cpl_minixml.h"
@@ -433,13 +431,13 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
   }
 
   /* make sure that the layer can be queried*/
-  if (!lp->template) lp->template = msStrdup("ttt.html");
+  if (!lp->_template) lp->_template = msStrdup("ttt.html");
 
   /* if there is no class, create at least one, so that query by rect would work */
   if (lp->numclasses == 0) {
     if (msGrowLayerClasses(lp) == NULL)
       return MS_FAILURE;
-    initClass(lp->class[0]);
+    initClass(lp->_class[0]);
   }
 
   bConcatWhere = 0;
@@ -1712,7 +1710,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_TIME_PERIOD;
-          psFilterNode->psRightNode->pszValue = msSmallMalloc( strlen(pszBeginTime) + strlen(pszEndTime) + 2 );
+          psFilterNode->psRightNode->pszValue = static_cast<char*>(msSmallMalloc( strlen(pszBeginTime) + strlen(pszEndTime) + 2 ));
           sprintf(psFilterNode->psRightNode->pszValue, "%s/%s", pszBeginTime, pszEndTime);
         }
         else
@@ -2273,7 +2271,7 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   }
   else if ( lp->connectiontype != MS_OGR &&
             psFilterNode->eType == FILTER_NODE_TYPE_TEMPORAL )
-    pszExpression = FLTGetTimeExpression(psFilterNode, lp);
+    pszExpression = msStrdup(FLTGetTimeExpression(psFilterNode, lp).c_str());
 
   return pszExpression;
 }
@@ -3193,7 +3191,7 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
             const char* pszDot = strrchr(pszId, '.');
             if( pszDot )
             {
-                if( pszDot - pszId != strlen(lp->name) ||
+                if( static_cast<size_t>(pszDot - pszId) != strlen(lp->name) ||
                     strncasecmp(pszId, lp->name, strlen(lp->name)) != 0 )
                 {
                     msSetError(MS_MISCERR, "Feature id %s not consistent with feature type name %s.",
