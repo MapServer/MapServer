@@ -2234,6 +2234,15 @@ int msStringInArray( const char * pszString, char **array, int numelements)
   return MS_FALSE;
 }
 
+bool msStringInArray( const char * pszString, const std::vector<std::string>& array)
+{
+  for( const auto& str: array ) {
+    if (strcasecmp(pszString, str.c_str())==0)
+      return true;
+  }
+  return false;
+}
+
 int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
 #ifdef USE_ICONV

@@ -2311,6 +2311,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   void msStringTrimLeft(std::string& string);
   std::vector<std::string> msStringSplit(const char *string, char cd);
   std::string msStringToLower(const std::string& s);
+  bool msStringInArray( const char * pszString, const std::vector<std::string>& array);
 extern "C" {
 #endif
 
