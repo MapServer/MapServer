@@ -1,0 +1,96 @@
+LAYER
+  NAME multiplot
+  CONNECTIONTYPE OGR
+  CONNECTION data/multiplot.json
+  TYPE POINT
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    NAME 'Static text'
+    EXPRESSION ([code] == 75)
+    LABEL
+      TEXT "PARIS"
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'Static text in expression'
+    EXPRESSION ([code] == 33)
+    LABEL
+      TEXT ("BORDEAUX")
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'Number attribute in expression'
+    EXPRESSION ([code] == 69)
+    LABEL
+      TEXT ([code])
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'Number attribute as a string'
+    EXPRESSION ([code] == 59)
+    LABEL
+      TEXT "[code]"
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'String attribute'
+    EXPRESSION ([code] == 67)
+    LABEL
+      TEXT "[name]"
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'String attribute in expression'
+    EXPRESSION ([code] == 31)
+    LABEL
+      TEXT ("[name]")
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'Compound string attribute and static text'
+    EXPRESSION ([code] == 13)
+    LABEL
+      TEXT "[name] (PACA)"
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+  CLASS
+    NAME 'Compound string attribute, number attribute and static text'
+    EXPRESSION ([code] == 44)
+    LABEL
+      TEXT "[name] (dpt.: [code])"
+      COLOR 255 255 255
+      TYPE TRUETYPE
+      FONT vera
+      SIZE 6
+    END
+  END
+END

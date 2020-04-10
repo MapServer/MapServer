@@ -16,7 +16,7 @@ include(CheckCSourceCompiles)
 
 
 set (MapServer_VERSION_MAJOR 7)
-set (MapServer_VERSION_MINOR 5)
+set (MapServer_VERSION_MINOR 7)
 set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
 
@@ -268,24 +268,24 @@ else(WIN32)
 endif(WIN32)
 
 set(mapserver_SOURCES fontcache.c 
-cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.c classobject.c
+cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.cpp classobject.c
 mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
-maphttp.c mapparser.c mapstring.c mapxmp.c mapcairo.c mapimageio.c
+maphttp.c mapparser.c mapstring.cpp mapxmp.c mapcairo.c mapimageio.c
 mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
-mapcluster.c mapio.c mappostgis.c maptemplate.c mapcontext.c mapjoin.c
+mapcluster.c mapio.c mappostgis.cpp maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
 mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
 maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
-mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
-mapogcfiltercommon.cpp maprendering.c mapwcs20.c mapogcsld.c mapmetadata.c
-mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
-mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
+mapwcs.cpp maperror.c mapogcfilter.cpp mapregex.c mapwcs11.cpp mapfile.c
+mapogcfiltercommon.cpp maprendering.c mapwcs20.cpp mapogcsld.c mapmetadata.c
+mapresample.c mapwfs.cpp mapgdal.c mapogcsos.c mapscale.c mapwfs11.cpp mapwfs20.c
+mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c 
-mapcompositingfilter.c mapmvt.c)
+mapcompositingfilter.c mapmvt.c mapiconv.c)
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
@@ -294,7 +294,7 @@ maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
 mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h
 mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
-mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h)
+mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h)
 
 if(WIN32)
 	configure_file(
@@ -868,6 +868,10 @@ if(BUILD_DYNAMIC)
     PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
 endif(BUILD_DYNAMIC)
+
+if (NOT("${LIBMAPSERVER_EXTRA_FLAGS}" STREQUAL ""))
+  set_source_files_properties(${mapserver_SOURCES} PROPERTIES COMPILE_FLAGS ${LIBMAPSERVER_EXTRA_FLAGS})
+endif()
 
 macro(status_optional_component component enabled libpath)
   if("${enabled}" EQUAL "1")

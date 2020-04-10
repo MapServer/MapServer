@@ -131,6 +131,7 @@ int msCopyShape(shapeObj *from, shapeObj *to)
   to->resultindex = from->resultindex;
 
   if(from->values) {
+    if (to->values) msFreeCharArray(to->values, to->numvalues);
     to->values = (char **)msSmallMalloc(sizeof(char *)*from->numvalues);
     for(i=0; i<from->numvalues; i++)
       to->values[i] = msStrdup(from->values[i]);

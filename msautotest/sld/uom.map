@@ -1,0 +1,47 @@
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# RUN_PARMS: map_uom.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=sldlike_multipolygon,lline,uompoint&STYLES=" > [RESULT_DEMIME]
+#
+# RUN_PARMS: sld_uom.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=multipolygon,lline,uompoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><se:Name>multipolygon</se:Name><UserStyle><se:FeatureTypeStyle><se:Rule><se:Name>all_green</se:Name><se:PolygonSymbolizer uom=%22http://www.opengeospatial.org/se/units/metre%22><se:Fill><se:SvgParameter name=%22fill%22>#00ff00</se:SvgParameter></se:Fill><se:Stroke><se:SvgParameter name=%22stroke%22>#ffff00</se:SvgParameter><se:SvgParameter name=%22stroke-width%22>5.00</se:SvgParameter></se:Stroke></se:PolygonSymbolizer></se:Rule><se:Rule><se:Name>red_3_5</se:Name><ogc:Filter><ogc:And><ogc:PropertyIsLessThanOrEqualTo><ogc:PropertyName>N_EDGES</ogc:PropertyName><ogc:Literal>5</ogc:Literal></ogc:PropertyIsLessThanOrEqualTo><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>N_EDGES</ogc:PropertyName><ogc:Literal>3</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo></ogc:And></ogc:Filter><se:PolygonSymbolizer uom=%22kilometre%22><se:Fill><se:SvgParameter name=%22fill%22>#ff0000</se:SvgParameter></se:Fill><se:Stroke><se:SvgParameter name=%22stroke%22>#ffff00</se:SvgParameter><se:SvgParameter name=%22stroke-width%22>5.00</se:SvgParameter></se:Stroke></se:PolygonSymbolizer></se:Rule><se:Rule><se:Name>blue_quadrilateral</se:Name><ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>N_EDGES</ogc:PropertyName><ogc:Literal>4</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter><se:PolygonSymbolizer><se:Fill><se:SvgParameter name=%22fill%22>#0000ff</se:SvgParameter></se:Fill><se:Stroke><se:SvgParameter name=%22stroke%22>#ffff00</se:SvgParameter><se:SvgParameter name=%22stroke-width%22>5.00</se:SvgParameter></se:Stroke></se:PolygonSymbolizer></se:Rule></se:FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer uom=%22kilometers%22><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>uompoint</Name><UserStyle><FeatureTypeStyle><Rule><PointSymbolizer uom=%22kilometre%22><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#0000FF</SvgParameter><SvgParameter name=%22stroke-width%22>1</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#FF0000</SvgParameter></Fill></Mark><Size>50</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+
+
+MAP
+
+  INCLUDE "data/general.map.include"
+  INCLUDE "data/symbols.map.include"
+
+  LAYER
+    TYPE POLYGON
+    NAME multipolygon
+    INCLUDE "data/multipolygon.map.include"
+  END
+
+  LAYER
+    TYPE POLYGON
+    NAME sldlike_multipolygon
+    PROCESSING "RENDERMODE=ALL_MATCHING_CLASSES"
+    INCLUDE "data/multipolygon.map.include"
+  END
+
+  INCLUDE "data/layer_lline.map.include"
+
+  LAYER
+    NAME uompoint
+    TYPE POINT
+    FEATURE
+      POINTS 1.45 43.6 END
+    END
+    CLASS
+      STYLE
+        SYMBOL "circle"
+        SIZE 50
+        WIDTH 1
+        COLOR 255 0 0
+        OUTLINECOLOR 0 0 255
+      END
+    END
+  END
+
+END

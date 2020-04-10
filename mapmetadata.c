@@ -64,7 +64,6 @@ xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, const char *name, c
 
 static
 xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, const char *name, const char *value, xmlNsPtr* ppsNsGco) {
-
   xmlNodePtr psNode = NULL;
 
   if( *ppsNsGco == NULL )
@@ -230,7 +229,6 @@ xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, const char *name, double va
 /*      Create a gmd:name/gmd:* code list element pattern               */
 /************************************************************************/
 
-static
 xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, const char *parent_element, const char *name, const char *value) {
   char *codelist = NULL;
   xmlNodePtr psNode = NULL;
@@ -257,7 +255,6 @@ xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, const char *parent_element
 
 static
 xmlNodePtr _msMetadataGetDate(xmlNsPtr namespace, const char *parent_element, const char *date_type, const char *value, xmlNsPtr* ppsNsGco) {
-
   xmlNodePtr psNode = NULL;
   xmlNodePtr psNode2 = NULL;
 

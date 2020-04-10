@@ -2823,6 +2823,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
     psInfo->last_record_index_read++;
 
     if(layer->numitems > 0) {
+      if (shape->values) msFreeCharArray(shape->values, shape->numvalues);
       shape->values = msOGRGetValues(layer, hFeature);
       shape->numvalues = layer->numitems;
       if(!shape->values) {

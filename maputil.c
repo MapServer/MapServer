@@ -134,8 +134,10 @@ static int bindColorAttribute(colorObj *attribute, const char *value)
 
 static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int drawmode)
 {
+  int applyOpacity = MS_FALSE;
   assert(MS_DRAW_FEATURES(drawmode));
   if(style->numbindings > 0) {
+    applyOpacity = MS_TRUE;
     if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
       style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
       if(style->symbol == -1) style->symbol = 0; /* a reasonable default (perhaps should throw an error?) */
@@ -187,6 +189,7 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
   }
   if (style->nexprbindings > 0)
   {
+    applyOpacity = MS_TRUE;
     if (style->exprBindings[MS_STYLE_BINDING_OFFSET_X].type == MS_EXPRESSION)
     {
       style->offsetx = msEvalDoubleExpression(
@@ -238,7 +241,8 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
       msFree(txt);
     }
   }
-  if(style->opacity < 100 || style->color.alpha != 255 ) {
+
+  if(applyOpacity == MS_TRUE && (style->opacity < 100 || style->color.alpha != 255) ) {
     int alpha;
     alpha = MS_NINT(style->opacity*2.55);
     style->color.alpha = alpha;
@@ -658,13 +662,22 @@ int *msAllocateValidClassGroups(layerObj *lp, int *nclasses)
 
 int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses)
 {
+  return msShapeGetNextClass(-1, layer, map, shape, classgroup, numclasses);
+}
+
+int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map,
+    shapeObj *shape, int *classgroup, int numclasses)
+{
   int i, iclass;
+
+  if (currentclass < 0)
+    currentclass = -1;
 
   if (layer->numclasses > 0) {
     if (classgroup == NULL || numclasses <=0)
       numclasses = layer->numclasses;
 
-    for(i=0; i<numclasses; i++) {
+    for(i=currentclass+1; i<numclasses; i++) {
       if (classgroup)
         iclass = classgroup[i];
       else
@@ -689,7 +702,18 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
       }
 
       if(layer->class[iclass]->status != MS_DELETE && msEvalExpression(layer, shape, &(layer->class[iclass]->expression), layer->classitemindex) == MS_TRUE)
-        return(iclass);
+      {
+        if (layer->class[iclass]->isfallback && currentclass != -1)
+        {
+          // Class is not applicable if it is flagged as fallback (<ElseFilter/> tag in SLD)
+          // but other classes have been applied before.
+          return -1;
+        }
+        else
+        {
+          return(iclass);
+        }
+      }
     }
   }
 
@@ -2284,7 +2308,7 @@ void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
 /*
  RFC 24: check if the parent pointer is NULL and raise an error otherwise
 */
-int msCheckParentPointer(void* p, char *objname)
+int msCheckParentPointer(void* p, const char *objname)
 {
   char* msg=NULL;
   if (p == NULL) {

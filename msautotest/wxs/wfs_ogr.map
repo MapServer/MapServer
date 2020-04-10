@@ -69,7 +69,7 @@
 # 
 # WMS 1.1 - GetFeatureInfo
 #
-# RUN_PARMS: wfsogr_wms_getfeatureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:3978&bbox=2250000,-71000,2620000,496000&format=image/png&layers=road&width=500&height=300&query_layers=road&info_format=text/csv&x=141&y=91&radius=100" > [RESULT]
+# RUN_PARMS: wfsogr_wms_getfeatureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:3978&bbox=2250000,-71000,2620000,496000&format=image/png&layers=road&width=500&height=300&query_layers=road&info_format=text/csv&x=141&y=91&radius=100&STYLES=" > [RESULT]
 
 # WFS 1.1 - SortBy
 #

@@ -867,7 +867,7 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
 /************************************************************************/
 /*                     msGetOutputFormatMimeList()                      */
 /************************************************************************/
-void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
+void msGetOutputFormatMimeListImg( mapObj *map, const char **mime_list, int max_mime )
 
 {
   int mime_count = 0, i,j;
@@ -916,7 +916,7 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
 /*                  msGetOutputFormatMimeListWMS()                      */
 /************************************************************************/
 
-void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
+void msGetOutputFormatMimeListWMS( mapObj *map, const char **mime_list, int max_mime )
 {
   int mime_count = 0, i,j;
   const char *format_list = NULL;

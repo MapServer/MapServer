@@ -1,0 +1,34 @@
+#
+# Test that nested symbolsets are parsed completely
+#
+MAP
+
+IMAGETYPE PNG
+SIZE 10 10
+EXTENT 0 0 400 300
+SHAPEPATH "../misc/data"
+FONTSET "../misc/fonts.lst"
+SYMBOLSET "root_nested_symbolset"
+
+LAYER
+    TYPE POINT
+
+  STATUS ON
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "vector arrow"
+        COLOR 0 0 0
+        SIZE 5
+        ANGLE 45
+    END
+  END
+
+  FEATURE
+    POINTS
+        200 200
+    END
+  END
+END
+
+END

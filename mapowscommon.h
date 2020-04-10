@@ -30,6 +30,10 @@
 #ifndef MAPOWSCOMMON_H
 #define MAPOWSCOMMON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
@@ -172,9 +176,9 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws);
 #define OWS_METHOD_POST    2
 #define OWS_METHOD_GETPOST 3
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url);
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, const char *name, int method, const char *url);
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, char *elname, char *name, char *values);
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, const char *elname, const char *name, const char *values);
 
 xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText);
 
@@ -189,5 +193,9 @@ int msOWSSchemaValidation(const char* xml_schema, const char* xml);
 #endif /* defined(USE_LIBXML2) */
 
 int msOWSCommonNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions);
+
+#ifdef __cplusplus
+} /* extern C */
+#endif
 
 #endif /* MAPOWSCOMMON_H */

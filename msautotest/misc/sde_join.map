@@ -6,7 +6,7 @@
 #   
 # REQUIRES: INPUT=OGR OUTPUT=PNG INPUT=SDE
 #
-# RUN_PARMS: sde_join_getinfo.xml [MAPSERV] QUERY_STRING="service=WMS&request=GetFeatureInfo&layers=shppoly&version=1.1.1&styles=&map=[MAPFILE]&query_layers=shppoly&x=300&y=300&info_format=application/vnd.ogc.gml&srs=EPSG:4326&bbox=1283364.000001,457670.968990,1330430.374999,495313.843989&format=image/png&width=600&height=600" > [RESULT_DEVERSION]
+# RUN_PARMS: sde_join_getinfo.xml [MAPSERV] QUERY_STRING="service=WMS&request=GetFeatureInfo&layers=shppoly&version=1.1.1&styles=&map=[MAPFILE]&query_layers=shppoly&x=300&y=300&info_format=application/vnd.ogc.gml&srs=EPSG:4326&bbox=1283364.000001,457670.968990,1330430.374999,495313.843989&format=image/png&width=600&height=600&STYLES=" > [RESULT_DEVERSION]
 #
 #
 MAP

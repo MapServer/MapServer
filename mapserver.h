@@ -171,6 +171,8 @@ typedef const ms_uint32 *ms_const_bitarray;
 #endif
 
 #ifdef __cplusplus
+#include <string>
+#include <vector>
 extern "C" {
 #endif
 
@@ -485,10 +487,11 @@ extern "C" {
 
   /* General enumerated types - needed by scripts */
   enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
-  enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS, MS_PERCENTAGES, MS_NAUTICALMILES};
+  enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS, MS_PERCENTAGES, MS_NAUTICALMILES, MS_INHERIT = -1};
   enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
   enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION /* only used for parser backwards compatibility */, MS_LAYER_QUERY, MS_LAYER_CIRCLE, MS_LAYER_TILEINDEX, MS_LAYER_CHART};
   enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
+  enum MS_RENDER_MODE {MS_FIRST_MATCHING_CLASS, MS_ALL_MATCHING_CLASSES};
 
 #define MS_POSITIONS_LENGTH 14
   enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_NONE, MS_AUTO2,MS_FOLLOW};
@@ -717,7 +720,7 @@ extern "C" {
     MS_TOKEN_FUNCTION_UPPER, MS_TOKEN_FUNCTION_LOWER, MS_TOKEN_FUNCTION_INITCAP, MS_TOKEN_FUNCTION_FIRSTCAP
   };
   enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=370, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
-  enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE };
+  enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE, MS_PARSE_TYPE_SLD };
 
 #ifndef SWIG
   typedef union {
@@ -1026,6 +1029,12 @@ extern "C" {
     expressionObj exprBindings[MS_STYLE_BINDING_LENGTH];
     int nexprbindings;
 #endif
+
+    int sizeunits; // supersedes class's sizeunits
+#ifndef SWIG
+    double scalefactor; // computed, not set
+#endif /* not SWIG */
+
   };
 
 #define MS_STYLE_SINGLE_SIDED_OFFSET -99
@@ -1134,6 +1143,12 @@ extern "C" {
 #endif
 
     labelLeaderObj *leader;
+
+    int sizeunits; // supersedes class's sizeunits
+#ifndef SWIG
+    double scalefactor; // computed, not set
+#endif /* not SWIG */
+
   };
   
 #ifdef SWIG
@@ -1182,6 +1197,8 @@ typedef struct labelObj labelObj;
 #endif
 
     int status;
+    int isfallback; // TRUE if this class should be applied if and only if      
+                    // no other class is applicable (e.g. SLD <ElseFilter/>)
 
 #ifndef SWIG
     styleObj **styles;
@@ -1239,6 +1256,12 @@ typedef struct labelObj labelObj;
     char *keyimage;
 
     char *group;
+
+    int sizeunits; // supersedes layer's sizeunits and applies to all styles and labels
+#ifndef SWIG
+    double scalefactor; // computed, not set
+#endif /* not SWIG */
+
   };
 
   /************************************************************************/
@@ -1647,6 +1670,9 @@ typedef struct labelObj labelObj;
     char *group; /* shouldn't be unique it's supposed to be a group right? */
 
     int status; /* on or off */
+    enum MS_RENDER_MODE rendermode;
+            // MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
+            // MS_ALL_MATCHING_CLASSES: SLD behavior
 
 #ifndef SWIG
     /* RFC86 Scale-dependent token replacements */
@@ -2278,6 +2304,18 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msStringBufferReleaseStringAndFree(msStringBuffer* sb);
   MS_DLL_EXPORT int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString);
 
+#ifdef __cplusplus
+}
+  std::string msStdStringEscape( const char * pszString );
+  void msStringTrim(std::string& string);
+  void msStringTrimBlanks(std::string& string);
+  void msStringTrimLeft(std::string& string);
+  std::vector<std::string> msStringSplit(const char *string, char cd);
+  std::string msStringToLower(const std::string& s);
+  bool msStringInArray( const char * pszString, const std::vector<std::string>& array);
+extern "C" {
+#endif
+
 #ifndef HAVE_STRRSTR
   MS_DLL_EXPORT char *strrstr(const char *string, const char *find);
 #endif /* NEED_STRRSTR */
@@ -2287,7 +2325,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 #endif /* NEED_STRCASESTR */
 
 #ifndef HAVE_STRNCASECMP
-  MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
+  MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, size_t len);
 #endif /* NEED_STRNCASECMP */
 
 #ifndef HAVE_STRCASECMP
@@ -2680,6 +2718,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
   MS_DLL_EXPORT int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex);
   MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses);
+  MS_DLL_EXPORT int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses);
   MS_DLL_EXPORT int msShapeCheckSize(shapeObj *shape, double minfeaturesize);
   MS_DLL_EXPORT char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl);
@@ -2753,7 +2792,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT void msHSLtoRGB(double h, double s, double l, colorObj *rgb);
 
-  MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
+  MS_DLL_EXPORT int msCheckParentPointer(void* p, const char* objname);
 
   MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
 
@@ -2783,8 +2822,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );
   MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, const char *value );
   MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
-  MS_DLL_EXPORT void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime );
-  MS_DLL_EXPORT void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime );
+  MS_DLL_EXPORT void msGetOutputFormatMimeListImg( mapObj *map, const char **mime_list, int max_mime );
+  MS_DLL_EXPORT void msGetOutputFormatMimeListWMS( mapObj *map, const char **mime_list, int max_mime );
   MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
   MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format,
       int issue_error );

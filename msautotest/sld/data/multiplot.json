@@ -1,0 +1,118 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 75,
+        "name": "Paris"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.340087890625,
+          48.84302835299516
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 69,
+        "name": "Lyon"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.844970703125,
+          45.744526980468436
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 13,
+        "name": "Marseille"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.38330078125,
+          43.28520334369384
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 31,
+        "name": "Toulouse"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.461181640625,
+          43.60426186809618
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 33,
+        "name": "Bordeaux"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.582275390625,
+          44.84029065139799
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 44,
+        "name": "Nantes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -1.527099609375,
+          47.204642388766935
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 59,
+        "name": "Lille"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.076171875,
+          50.62507306341435
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "code": 67,
+        "name": "Strasbourg"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.745361328125,
+          48.574789910928864
+          ]
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,17 @@
+#
+# Test Text Expressions
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# RUN_PARMS: map_style_text.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,10&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=multiplot,lline&STYLES=" > [RESULT_DEMIME]
+# RUN_PARMS: map_style_text.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetStyles&LAYERS=multiplot,lline&STYLES=" > [RESULT_DEMIME]
+#
+
+MAP
+
+INCLUDE "data/general.map.include"
+INCLUDE "data/layer_lline.map.include"
+INCLUDE "data/layer_multiplot.map.include"
+
+END
+

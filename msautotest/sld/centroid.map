@@ -1,0 +1,66 @@
+#
+# Test CENTROID
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# --- Mapfile: Polygon with a star symbol at its centroid,
+#     and closed line with a circle symbol at its centroid: explicit GEOMTRANSFORM
+#
+# RUN_PARMS: map_centroid.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=lpolygon,lline&STYLES=" > [RESULT_DEMIME]
+#
+# --- SLD: Polygon with a star symbol at its centroid,
+#     and closed line with a circle symbol at its centroid: automatic GEOMTRANSFORM
+#
+# RUN_PARMS: sld_centroid.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=800&HEIGHT=800&LAYERS=lpolygon,lline&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#9696FF</SvgParameter></Fill></PolygonSymbolizer><PointSymbolizer><Graphic><Mark><WellKnownName>star</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FFFFFF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter></Fill></Mark><Size>30</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>lline</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter></Stroke></LineSymbolizer><PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FFFFFF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22>#0000FF</SvgParameter></Fill></Mark><Size>30</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+
+
+MAP
+
+INCLUDE "data/general.map.include"
+INCLUDE "data/symbols.map.include"
+
+LAYER
+  NAME lpolygon
+  DATA inner
+  TYPE POLYGON
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 5
+      COLOR 150 150 255
+      OUTLINECOLOR 255 255 0
+    END
+    STYLE
+      GEOMTRANSFORM "centroid"
+      COLOR 0 0 255
+      OUTLINECOLOR 255 255 255
+      SYMBOL "star"
+      SIZE 30
+    END
+  END
+END
+
+LAYER
+  NAME lline
+  DATA hexagon
+  TYPE LINE
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      WIDTH 5
+      COLOR 255 255 0
+    END
+    STYLE
+      GEOMTRANSFORM "centroid"
+      COLOR 0 0 255
+      OUTLINECOLOR 255 255 255
+      SYMBOL "circle"
+      SIZE 30
+    END
+  END
+END
+
+END

@@ -56,7 +56,7 @@ def test_msIO_getAndStripStdoutBufferMimeHeaders():
     map = mapscript.mapObj(get_relpath_to_this('test_mapio.map'))
     request = mapscript.OWSRequest()
     mapscript.msIO_installStdoutToBuffer()
-    request.loadParamsFromURL('service=WMS&version=1.1.1&request=GetMap&layers=grey&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&width=80&height=40')
+    request.loadParamsFromURL('service=WMS&version=1.1.1&request=GetMap&layers=grey&srs=EPSG:4326&bbox=-180,-90,180,90&format=image/png&width=80&height=40&STYLES=')
     status = map.OWSDispatch(request)
     assert status == 0
     headers = mapscript.msIO_getAndStripStdoutBufferMimeHeaders()

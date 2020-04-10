@@ -28,6 +28,10 @@
 
 #include "mapserver.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion);
 MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
                                    const char *pszStyleLayerName, char **ppszLayerNames);
@@ -87,3 +91,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
 char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
 char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion);
 FilterEncodingNode *BuildExpressionTree(char *pszExpression, FilterEncodingNode *psNode);
+
+#ifdef __cplusplus
+} /* extern C */
+#endif

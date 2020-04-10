@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 6994,
+"name": "cities_with_order",
+"features": [
+{ "type": "Feature", "properties": { "ogr_fid": 6994, "name": "Heroica Nogales", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12351166.251028399914503, 3674840.854894261341542 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6993, "name": "Puerto Peñasco", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12639224.034942869096994, 3673296.088174171745777 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6992, "name": "Heroica Caborca", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12485093.149664983153343, 3595057.794421822298318 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6991, "name": "Veracruz", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -10702096.524410091340542, 2178522.793445657007396 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6990, "name": "Cabo San Lucas", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12235251.302412027493119, 2619181.87938651163131 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6989, "name": "San Juan y Martínez", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -9332871.29609221406281, 2545428.252238906454295 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6988, "name": "", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -8427291.290518410503864, 604389.407783129950985 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6987, "name": "Maní", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -8046234.24289673473686, 536986.832195404102094 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6986, "name": "San Marcos", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -10902695.805292455479503, 3488473.674470861442387 ] } },
+{ "type": "Feature", "properties": { "ogr_fid": 6985, "name": "Lancaster", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -13151879.188585720956326, 4123042.833017694763839 ] } }
+]
+}

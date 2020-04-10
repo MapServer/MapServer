@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.2.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+#define YYBISON_VERSION "3.0.2"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -80,7 +80,7 @@
 int yylex(YYSTYPE *, parseObj *); /* prototype functions, defined after the grammar */
 int yyerror(parseObj *, const char *);
 
-#line 84 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:339  */
+#line 84 "mapparser.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -100,8 +100,8 @@ int yyerror(parseObj *, const char *);
 
 /* In a future release of Bison, this section will be replaced
    by #include "mapparser.h".  */
-#ifndef YY_YY_HOME_EVEN_MAPSERVER_MAPSERVER_MAPPARSER_H_INCLUDED
-# define YY_YY_HOME_EVEN_MAPSERVER_MAPSERVER_MAPPARSER_H_INCLUDED
+#ifndef YY_YY_MAPPARSER_H_INCLUDED
+# define YY_YY_MAPPARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -211,7 +211,7 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
+typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
 #line 30 "mapparser.y" /* yacc.c:355  */
@@ -222,10 +222,8 @@ union YYSTYPE
   struct tm tmval;
   shapeObj *shpval;
 
-#line 226 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:355  */
+#line 226 "mapparser.c" /* yacc.c:355  */
 };
-
-typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -234,11 +232,11 @@ typedef union YYSTYPE YYSTYPE;
 
 int yyparse (parseObj *p);
 
-#endif /* !YY_YY_HOME_EVEN_MAPSERVER_MAPSERVER_MAPPARSER_H_INCLUDED  */
+#endif /* !YY_YY_MAPPARSER_H_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
-#line 242 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:358  */
+#line 240 "mapparser.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -480,16 +478,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  78
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   510
+#define YYLAST   511
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  57
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  7
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  97
+#define YYNRULES  98
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  287
+#define YYNSTATES  288
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -540,16 +538,16 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    68,    68,    69,    82,    96,   109,   119,   120,   121,
-     125,   133,   142,   150,   159,   167,   176,   184,   193,   194,
-     195,   215,   235,   241,   247,   253,   259,   265,   271,   279,
-     287,   295,   303,   311,   319,   325,   331,   337,   343,   349,
-     355,   376,   396,   402,   410,   416,   427,   438,   449,   460,
-     471,   482,   493,   504,   515,   526,   537,   548,   559,   570,
-     581,   592,   602,   614,   615,   616,   617,   618,   619,   620,
-     627,   628,   629,   630,   638,   641,   642,   643,   653,   663,
-     673,   683,   693,   703,   713,   723,   734,   752,   753,   754,
-     758,   763,   767,   771,   775,   779,   785,   786
+       0,    68,    68,    69,    82,    96,   110,   120,   121,   122,
+     126,   134,   143,   151,   160,   168,   177,   185,   194,   195,
+     196,   216,   236,   242,   248,   254,   260,   266,   272,   280,
+     288,   296,   304,   312,   320,   326,   332,   338,   344,   350,
+     356,   377,   397,   403,   411,   417,   428,   439,   450,   461,
+     472,   483,   494,   505,   516,   527,   538,   549,   560,   571,
+     582,   593,   603,   615,   616,   617,   618,   619,   620,   621,
+     628,   629,   630,   631,   639,   640,   643,   644,   645,   655,
+     665,   675,   685,   695,   705,   715,   725,   736,   754,   755,
+     756,   760,   765,   769,   773,   777,   781,   787,   788
 };
 #endif
 
@@ -598,35 +596,35 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     275,   -44,   -44,   -44,   -44,   -44,   275,    -3,    -2,     1,
+     276,   -44,   -44,   -44,   -44,   -44,   276,    -3,    -2,     1,
       12,    19,    32,    33,    34,    35,    37,    47,    48,    49,
       50,    51,    64,    65,    66,    67,    69,    81,    83,   110,
-     120,   123,   125,    -1,   275,    45,     6,   324,    58,   247,
-     193,    42,   387,    58,   247,   117,   117,   117,   117,   117,
+     123,   125,   126,    -1,   276,    45,     6,   325,    58,   244,
+     193,    42,   388,    58,   244,   117,   117,   117,   117,   117,
      117,   117,   117,   117,   117,   117,     4,     4,    -1,     4,
        4,     4,     4,    -1,   117,   117,   117,   117,   117,   117,
-     117,    -1,    79,     8,   173,   219,   378,     9,   -44,   275,
-     275,   275,   275,   275,    -1,    -1,    -1,    -1,    -1,    -1,
+     117,    -1,    79,     8,   173,   219,   379,     9,   -44,   276,
+     276,   276,   276,   276,    -1,    -1,    -1,    -1,    -1,    -1,
        4,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   117,   117,
      117,   117,   117,   117,   117,   117,     4,     4,     4,     4,
        4,     4,     4,     4,     4,     4,     4,    -4,    -4,    -4,
-      -4,    -4,    -4,    -4,   117,    16,   124,   137,   155,   176,
-     199,   200,   201,   214,   215,   179,     4,   -28,   -11,   119,
-      -9,   118,   129,   178,   360,   216,   230,   231,   232,   234,
-      -7,   266,   371,   -44,   -44,   -44,   -44,   -44,    23,   335,
-      42,   387,   -44,   324,    23,   335,    42,   387,   457,   457,
-     457,   457,   457,   457,   189,   457,    18,    18,    79,    79,
+      -4,    -4,    -4,    -4,   117,    16,   137,   155,   176,   183,
+     209,   210,   213,   214,   215,   179,     4,   -28,   -11,   -43,
+      -9,   118,   129,   178,   361,   216,   222,   231,   232,   233,
+      -7,   239,   372,   -44,   -44,   -44,   -44,   -44,    23,   336,
+      42,   388,   -44,   325,    23,   336,    42,   388,   458,   458,
+     458,   458,   458,   458,   189,   458,    18,    18,    79,    79,
       79,    79,   -44,   -44,   -44,   -44,   -44,   -44,   -44,   -44,
      189,   189,   189,   189,   189,   189,   189,   189,   189,   189,
-     -44,    -4,   -44,   -44,   -44,   -44,   -44,   -44,   -44,   184,
+     -44,    -4,   -44,   -44,   -44,   -44,   -44,   -44,   -44,   268,
      117,   117,   117,   117,   117,   117,   117,   117,   117,   117,
-     -44,   180,   -44,   -44,    -1,   -44,   -44,   -44,   -44,     4,
-      -1,   117,    -1,    -1,    -1,   -44,    -1,     4,   220,   269,
-     272,   273,   276,   279,   290,   291,   300,   274,   301,   394,
-     183,   403,   303,   412,   421,   430,   -43,   221,   -44,   -44,
-     -44,   -44,   -44,   -44,   -44,   -44,    -1,    -1,   -44,   -44,
-     -44,   -44,   -44,   -44,   -44,   -44,    -1,   -44,   439,   448,
-      78,   -44,   -44,   -44,     4,   222,   -44
+     -44,   180,   -44,   -44,   -44,    -1,   -44,   -44,   -44,   -44,
+       4,    -1,   117,    -1,    -1,    -1,   -44,    -1,     4,   270,
+     273,   274,   277,   280,   291,   292,   301,   302,   275,   313,
+     395,   182,   404,   303,   413,   422,   431,    78,   220,   -44,
+     -44,   -44,   -44,   -44,   -44,   -44,   -44,    -1,    -1,   -44,
+     -44,   -44,   -44,   -44,   -44,   -44,   -44,    -1,   -44,   440,
+     449,   119,   -44,   -44,   -44,     4,   221,   -44
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -634,7 +632,7 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       2,     7,    63,    87,    96,    75,     0,     0,     0,     0,
+       2,     7,    63,    88,    97,    76,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     3,     4,     6,     5,
@@ -649,20 +647,20 @@ static const yytype_uint8 yydefact[] =
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     8,    64,    76,    88,    97,    10,    12,
+       0,     0,     0,     8,    64,    77,    89,    98,    10,    12,
       11,    13,     9,     0,    14,    16,    15,    17,    22,    23,
       25,    24,    27,    26,    41,    42,    65,    66,    67,    69,
       68,    71,    45,    48,    50,    52,    54,    56,    58,    60,
       20,    28,    29,    31,    30,    33,    32,    40,    43,    21,
-      89,     0,    34,    35,    37,    36,    39,    38,    44,     0,
+      90,     0,    34,    35,    37,    36,    39,    38,    44,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-      73,     0,    72,    91,     0,    92,    93,    94,    95,     0,
-       0,     0,     0,     0,     0,    82,     0,     0,     0,     0,
+      73,     0,    72,    92,    75,     0,    93,    94,    95,    96,
+       0,     0,     0,     0,     0,     0,    83,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,    47,    49,
-      51,    53,    55,    57,    59,    46,     0,     0,    74,    90,
-      77,    78,    79,    80,    81,    83,     0,    86,     0,     0,
-       0,    62,    61,    84,     0,     0,    85
+       0,     0,     0,     0,     0,     0,     0,     0,     0,    47,
+      49,    51,    53,    55,    57,    59,    46,     0,     0,    74,
+      91,    78,    79,    80,    81,    82,    84,     0,    87,     0,
+       0,     0,    62,    61,    85,     0,     0,    86
 };
 
   /* YYPGOTO[NTERM-NUM].  */
@@ -683,10 +681,10 @@ static const yytype_int8 yydefgoto[] =
 static const yytype_uint16 yytable[] =
 {
       39,    41,     4,     2,    92,    93,    94,    95,    96,     3,
-      97,    77,   275,   276,    79,    80,    79,    80,    81,   116,
+      97,    77,   224,   225,    79,    80,    79,    80,    81,   116,
       81,   117,   118,   119,   120,   121,   122,   222,   123,    73,
       17,    18,    80,    20,    76,    81,   116,    19,   116,    21,
-      22,    23,    24,    25,   223,    78,   225,    33,   235,   236,
+      22,    23,    24,    25,   223,    78,   226,    33,   236,   237,
      201,    45,    46,    71,    81,    47,   137,   138,   136,   140,
      141,   142,   143,   153,   157,    42,    48,    94,    95,    96,
       98,    97,   210,    49,   158,   160,   162,   164,   166,    99,
@@ -695,45 +693,45 @@ static const yytype_uint16 yytable[] =
      208,    55,    56,    57,    58,    59,   190,   191,   192,   193,
      194,   195,   196,   197,   198,   199,   200,   139,    60,    61,
       62,    63,   144,    64,     5,    92,    93,    94,    95,    96,
-     152,    97,    97,   283,   284,    65,   221,    66,   159,   161,
+     152,    97,    97,   276,   277,    65,   221,    66,   159,   161,
      163,   165,   167,   168,   169,   170,   171,   172,   173,    38,
      175,   176,   177,   178,   179,   180,   181,    26,    27,    28,
       29,    30,    31,    32,    67,   116,    92,    93,    94,    95,
-      96,   124,    97,   226,    68,   224,   116,    69,   238,    70,
-     211,    82,    83,    75,   227,    84,    85,    86,    87,    88,
-      89,    90,    91,   212,   125,   126,   127,   128,   129,   130,
+      96,   124,    97,   227,   284,   285,   116,    68,   239,    69,
+      70,    82,    83,    75,   228,    84,    85,    86,    87,    88,
+      89,    90,    91,   211,   125,   126,   127,   128,   129,   130,
      131,   132,   133,   134,   135,   117,   118,   119,   120,   121,
-     122,   213,   123,   145,   146,   147,   148,   149,   150,   151,
-      92,    93,    94,    95,    96,   116,    97,   116,   154,   250,
-     116,    98,   214,   228,   220,   156,   116,   257,   269,   155,
+     122,   212,   123,   145,   146,   147,   148,   149,   150,   151,
+      92,    93,    94,    95,    96,   116,    97,   116,   154,   116,
+     251,    98,   213,   229,   220,   156,   116,   270,   258,   214,
       99,   100,   101,   102,   103,   104,   105,   182,   183,   184,
-     185,   186,   187,   188,   189,   215,   216,   217,   106,   107,
-     108,   109,   110,   111,   112,   113,   114,   115,   116,   116,
-     218,   219,   230,   209,   155,   157,   277,   286,     1,     2,
-       3,     4,     5,   249,   285,     6,   231,   232,   233,   251,
-     234,   253,   254,   255,   116,   256,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,    18,    19,    20,
-      21,    22,    23,    24,    25,    26,    27,    28,    29,    30,
-      31,    32,   237,    33,   258,   278,   279,   259,   260,    34,
-     266,   261,    82,    83,   262,   280,    84,    85,    86,    87,
-      88,    89,    90,    91,    83,   263,   264,    84,    85,    86,
-      87,    88,    89,    90,    91,   265,     0,   267,   271,   239,
-     240,   241,   242,   243,   244,   245,   246,   247,   248,     0,
-       0,    92,    93,    94,    95,    96,     0,    97,     0,     0,
-     252,     0,    92,    93,    94,    95,    96,     0,    97,   106,
-     107,   108,   109,   110,   111,   112,   113,   114,   115,    84,
-      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
-      95,    96,     0,    97,     0,     0,   229,     0,    92,    93,
-      94,    95,    96,     0,    97,   116,   154,     0,     0,     0,
-       0,     0,     0,   156,    92,    93,    94,    95,    96,     0,
-      97,    92,    93,    94,    95,    96,     0,    97,     0,   268,
-      92,    93,    94,    95,    96,     0,    97,     0,   270,    92,
-      93,    94,    95,    96,     0,    97,     0,   272,    92,    93,
-      94,    95,    96,     0,    97,     0,   273,    92,    93,    94,
-      95,    96,     0,    97,     0,   274,    92,    93,    94,    95,
-      96,     0,    97,     0,   281,    92,    93,    94,    95,    96,
-       0,    97,     0,   282,    92,    93,    94,    95,    96,     0,
-      97
+     185,   186,   187,   188,   189,   106,   107,   108,   109,   110,
+     111,   112,   113,   114,   115,   215,   216,   116,   116,   217,
+     218,   219,   231,   209,   155,   278,   287,     0,   232,     1,
+       2,     3,     4,     5,   250,   286,     6,   233,   234,   235,
+     252,   116,   254,   255,   256,   238,   257,     7,     8,     9,
+      10,    11,    12,    13,    14,    15,    16,    17,    18,    19,
+      20,    21,    22,    23,    24,    25,    26,    27,    28,    29,
+      30,    31,    32,   155,    33,   157,   279,   280,   259,   260,
+      34,   267,   261,    82,    83,   262,   281,    84,    85,    86,
+      87,    88,    89,    90,    91,    83,   263,   264,    84,    85,
+      86,    87,    88,    89,    90,    91,   265,   266,   272,   240,
+     241,   242,   243,   244,   245,   246,   247,   248,   249,   268,
+       0,     0,    92,    93,    94,    95,    96,     0,    97,     0,
+       0,   253,     0,    92,    93,    94,    95,    96,     0,    97,
+     106,   107,   108,   109,   110,   111,   112,   113,   114,   115,
+      84,    85,    86,    87,    88,    89,    90,    91,    92,    93,
+      94,    95,    96,     0,    97,     0,     0,   230,     0,    92,
+      93,    94,    95,    96,     0,    97,   116,   154,     0,     0,
+       0,     0,     0,     0,   156,    92,    93,    94,    95,    96,
+       0,    97,    92,    93,    94,    95,    96,     0,    97,     0,
+     269,    92,    93,    94,    95,    96,     0,    97,     0,   271,
+      92,    93,    94,    95,    96,     0,    97,     0,   273,    92,
+      93,    94,    95,    96,     0,    97,     0,   274,    92,    93,
+      94,    95,    96,     0,    97,     0,   275,    92,    93,    94,
+      95,    96,     0,    97,     0,   282,    92,    93,    94,    95,
+      96,     0,    97,     0,   283,    92,    93,    94,    95,    96,
+       0,    97
 };
 
 static const yytype_int16 yycheck[] =
@@ -755,41 +753,41 @@ static const yytype_int16 yycheck[] =
       81,    82,    83,    84,    85,    86,    87,    88,    89,     0,
       91,    92,    93,    94,    95,    96,    97,    40,    41,    42,
       43,    44,    45,    46,    54,    47,    47,    48,    49,    50,
-      51,    54,    53,    55,    54,    56,    47,    54,   201,    54,
-      56,     8,     9,    34,    55,    12,    13,    14,    15,    16,
+      51,    54,    53,    55,    55,    56,    47,    54,   201,    54,
+      54,     8,     9,    34,    55,    12,    13,    14,    15,    16,
       17,    18,    19,    56,    45,    46,    47,    48,    49,    50,
       51,    52,    53,    54,    55,    12,    13,    14,    15,    16,
       17,    56,    19,    64,    65,    66,    67,    68,    69,    70,
-      47,    48,    49,    50,    51,    47,    53,    47,    55,   229,
-      47,    12,    56,    55,    55,    55,    47,   237,    55,    55,
+      47,    48,    49,    50,    51,    47,    53,    47,    55,    47,
+     230,    12,    56,    55,    55,    55,    47,    55,   238,    56,
       21,    22,    23,    24,    25,    26,    27,    98,    99,   100,
-     101,   102,   103,   104,   105,    56,    56,    56,    11,    12,
-      13,    14,    15,    16,    17,    18,    19,    20,    47,    47,
-      56,    56,    56,   124,    55,    55,    55,    55,     3,     4,
-       5,     6,     7,   224,   284,    10,    56,    56,    56,   230,
-      56,   232,   233,   234,    47,   236,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    56,    48,    55,   266,   267,    55,    55,    54,
-      56,    55,     8,     9,    55,   276,    12,    13,    14,    15,
-      16,    17,    18,    19,     9,    55,    55,    12,    13,    14,
-      15,    16,    17,    18,    19,    55,    -1,    56,    55,   210,
-     211,   212,   213,   214,   215,   216,   217,   218,   219,    -1,
-      -1,    47,    48,    49,    50,    51,    -1,    53,    -1,    -1,
-     231,    -1,    47,    48,    49,    50,    51,    -1,    53,    11,
-      12,    13,    14,    15,    16,    17,    18,    19,    20,    12,
-      13,    14,    15,    16,    17,    18,    19,    47,    48,    49,
-      50,    51,    -1,    53,    -1,    -1,    56,    -1,    47,    48,
-      49,    50,    51,    -1,    53,    47,    55,    -1,    -1,    -1,
-      -1,    -1,    -1,    55,    47,    48,    49,    50,    51,    -1,
-      53,    47,    48,    49,    50,    51,    -1,    53,    -1,    55,
+     101,   102,   103,   104,   105,    11,    12,    13,    14,    15,
+      16,    17,    18,    19,    20,    56,    56,    47,    47,    56,
+      56,    56,    56,   124,    55,    55,    55,    -1,    56,     3,
+       4,     5,     6,     7,   225,   285,    10,    56,    56,    56,
+     231,    47,   233,   234,   235,    56,   237,    21,    22,    23,
+      24,    25,    26,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
+      44,    45,    46,    55,    48,    55,   267,   268,    55,    55,
+      54,    56,    55,     8,     9,    55,   277,    12,    13,    14,
+      15,    16,    17,    18,    19,     9,    55,    55,    12,    13,
+      14,    15,    16,    17,    18,    19,    55,    55,    55,   210,
+     211,   212,   213,   214,   215,   216,   217,   218,   219,    56,
+      -1,    -1,    47,    48,    49,    50,    51,    -1,    53,    -1,
+      -1,   232,    -1,    47,    48,    49,    50,    51,    -1,    53,
+      11,    12,    13,    14,    15,    16,    17,    18,    19,    20,
+      12,    13,    14,    15,    16,    17,    18,    19,    47,    48,
+      49,    50,    51,    -1,    53,    -1,    -1,    56,    -1,    47,
+      48,    49,    50,    51,    -1,    53,    47,    55,    -1,    -1,
+      -1,    -1,    -1,    -1,    55,    47,    48,    49,    50,    51,
+      -1,    53,    47,    48,    49,    50,    51,    -1,    53,    -1,
+      55,    47,    48,    49,    50,    51,    -1,    53,    -1,    55,
       47,    48,    49,    50,    51,    -1,    53,    -1,    55,    47,
       48,    49,    50,    51,    -1,    53,    -1,    55,    47,    48,
       49,    50,    51,    -1,    53,    -1,    55,    47,    48,    49,
       50,    51,    -1,    53,    -1,    55,    47,    48,    49,    50,
       51,    -1,    53,    -1,    55,    47,    48,    49,    50,    51,
-      -1,    53,    -1,    55,    47,    48,    49,    50,    51,    -1,
-      53
+      -1,    53
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -818,13 +816,13 @@ static const yytype_uint8 yystos[] =
       62,    62,    62,    62,    62,    62,    62,    62,    62,    62,
       62,    54,    63,    63,    63,    63,    63,    63,    63,    61,
       56,    56,    56,    56,    56,    56,    56,    56,    56,    56,
-      55,    62,    55,    55,    56,    55,    55,    55,    55,    56,
-      56,    56,    56,    56,    56,    55,    56,    56,    63,    61,
-      61,    61,    61,    61,    61,    61,    61,    61,    61,    60,
-      62,    60,    61,    60,    60,    60,    60,    62,    55,    55,
-      55,    55,    55,    55,    55,    55,    56,    56,    55,    55,
-      55,    55,    55,    55,    55,    55,    56,    55,    60,    60,
-      60,    55,    55,    55,    56,    62,    55
+      55,    62,    55,    55,    55,    56,    55,    55,    55,    55,
+      56,    56,    56,    56,    56,    56,    55,    56,    56,    63,
+      61,    61,    61,    61,    61,    61,    61,    61,    61,    61,
+      60,    62,    60,    61,    60,    60,    60,    60,    62,    55,
+      55,    55,    55,    55,    55,    55,    55,    56,    56,    55,
+      55,    55,    55,    55,    55,    55,    55,    56,    55,    60,
+      60,    60,    55,    55,    55,    56,    62,    55
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -837,9 +835,9 @@ static const yytype_uint8 yyr1[] =
       59,    59,    59,    59,    59,    59,    59,    59,    59,    59,
       59,    59,    59,    59,    59,    59,    59,    59,    59,    59,
       59,    59,    59,    60,    60,    60,    60,    60,    60,    60,
-      60,    60,    60,    60,    60,    61,    61,    61,    61,    61,
-      61,    61,    61,    61,    61,    61,    61,    62,    62,    62,
-      62,    62,    62,    62,    62,    62,    63,    63
+      60,    60,    60,    60,    60,    60,    61,    61,    61,    61,
+      61,    61,    61,    61,    61,    61,    61,    61,    62,    62,
+      62,    62,    62,    62,    62,    62,    62,    63,    63
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -852,9 +850,9 @@ static const yytype_uint8 yyr2[] =
        3,     3,     3,     3,     3,     3,     6,     6,     3,     6,
        3,     6,     3,     6,     3,     6,     3,     6,     3,     6,
        3,     8,     8,     1,     3,     3,     3,     3,     3,     3,
-       2,     3,     4,     4,     6,     1,     3,     6,     6,     6,
-       6,     6,     4,     6,     8,    10,     6,     1,     3,     3,
-       6,     4,     4,     4,     4,     4,     1,     3
+       2,     3,     4,     4,     6,     4,     1,     3,     6,     6,
+       6,     6,     6,     4,     6,     8,    10,     6,     1,     3,
+       3,     6,     4,     4,     4,     4,     4,     1,     3
 };
 
 
@@ -1551,7 +1549,7 @@ yyreduce:
       break;
     }
   }
-#line 1555 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1553 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 4:
@@ -1570,7 +1568,7 @@ yyreduce:
       break;
     }
   }
-#line 1574 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1572 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 5:
@@ -1583,16 +1581,17 @@ yyreduce:
       else
         p->result.intval = MS_FALSE;
       break;
+    case(MS_PARSE_TYPE_SLD):
     case(MS_PARSE_TYPE_STRING):
       p->result.strval = (yyvsp[0].strval); // msStrdup($1);
       break;
     }
   }
-#line 1592 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1591 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 109 "mapparser.y" /* yacc.c:1646  */
+#line 110 "mapparser.y" /* yacc.c:1646  */
     {
     switch(p->type) {
     case(MS_PARSE_TYPE_SHAPE):
@@ -1601,26 +1600,26 @@ yyreduce:
       break;
     }
   }
-#line 1605 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1604 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 120 "mapparser.y" /* yacc.c:1646  */
+#line 121 "mapparser.y" /* yacc.c:1646  */
     { (yyval.intval) = (yyvsp[-1].intval); }
-#line 1611 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1610 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 121 "mapparser.y" /* yacc.c:1646  */
+#line 122 "mapparser.y" /* yacc.c:1646  */
     {
     (yyval.intval) = MS_FALSE;
     if((yyvsp[-2].intval) == (yyvsp[0].intval)) (yyval.intval) = MS_TRUE;
   }
-#line 1620 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1619 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 125 "mapparser.y" /* yacc.c:1646  */
+#line 126 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].intval) == MS_TRUE)
       (yyval.intval) = MS_TRUE;
@@ -1629,11 +1628,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1633 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1632 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 133 "mapparser.y" /* yacc.c:1646  */
+#line 134 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].intval) == MS_TRUE) {
       if((yyvsp[0].intval) == MS_TRUE)
@@ -1643,11 +1642,11 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1647 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1646 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 142 "mapparser.y" /* yacc.c:1646  */
+#line 143 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].intval) == MS_TRUE)
       (yyval.intval) = MS_TRUE;
@@ -1656,11 +1655,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1660 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1659 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 150 "mapparser.y" /* yacc.c:1646  */
+#line 151 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].intval) == MS_TRUE) {
       if((yyvsp[0].dblval) != 0)
@@ -1670,11 +1669,11 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1674 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1673 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 159 "mapparser.y" /* yacc.c:1646  */
+#line 160 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1683,11 +1682,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1687 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1686 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 167 "mapparser.y" /* yacc.c:1646  */
+#line 168 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) != 0) {
       if((yyvsp[0].intval) == MS_TRUE)
@@ -1697,11 +1696,11 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1701 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1700 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 176 "mapparser.y" /* yacc.c:1646  */
+#line 177 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1710,11 +1709,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1714 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1713 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 184 "mapparser.y" /* yacc.c:1646  */
+#line 185 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) != 0) {
       if((yyvsp[0].dblval) != 0)
@@ -1724,23 +1723,23 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1728 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1727 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 193 "mapparser.y" /* yacc.c:1646  */
+#line 194 "mapparser.y" /* yacc.c:1646  */
     { (yyval.intval) = !(yyvsp[0].intval); }
-#line 1734 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1733 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 194 "mapparser.y" /* yacc.c:1646  */
+#line 195 "mapparser.y" /* yacc.c:1646  */
     { (yyval.intval) = !(yyvsp[0].dblval); }
-#line 1740 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1739 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 195 "mapparser.y" /* yacc.c:1646  */
+#line 196 "mapparser.y" /* yacc.c:1646  */
     {
     ms_regex_t re;
 
@@ -1761,11 +1760,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1765 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1764 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 215 "mapparser.y" /* yacc.c:1646  */
+#line 216 "mapparser.y" /* yacc.c:1646  */
     {
     ms_regex_t re;
 
@@ -1786,77 +1785,77 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1790 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1789 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 235 "mapparser.y" /* yacc.c:1646  */
+#line 236 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) == (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1801 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1800 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 241 "mapparser.y" /* yacc.c:1646  */
+#line 242 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) != (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1812 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1811 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 247 "mapparser.y" /* yacc.c:1646  */
+#line 248 "mapparser.y" /* yacc.c:1646  */
     {    
     if((yyvsp[-2].dblval) > (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1823 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1822 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 253 "mapparser.y" /* yacc.c:1646  */
+#line 254 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) < (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1834 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1833 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 259 "mapparser.y" /* yacc.c:1646  */
+#line 260 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) >= (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1845 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1844 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 265 "mapparser.y" /* yacc.c:1646  */
+#line 266 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) <= (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1856 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1855 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 271 "mapparser.y" /* yacc.c:1646  */
+#line 272 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) == 0)
       (yyval.intval) = MS_TRUE;
@@ -1865,11 +1864,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1869 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1868 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 279 "mapparser.y" /* yacc.c:1646  */
+#line 280 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1878,11 +1877,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1882 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1881 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 287 "mapparser.y" /* yacc.c:1646  */
+#line 288 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) > 0)
       (yyval.intval) = MS_TRUE;
@@ -1891,11 +1890,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1895 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1894 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 295 "mapparser.y" /* yacc.c:1646  */
+#line 296 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) < 0)
       (yyval.intval) = MS_TRUE;
@@ -1904,11 +1903,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1908 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1907 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 303 "mapparser.y" /* yacc.c:1646  */
+#line 304 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) >= 0)
       (yyval.intval) = MS_TRUE;
@@ -1917,11 +1916,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1921 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1920 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 311 "mapparser.y" /* yacc.c:1646  */
+#line 312 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) <= 0)
       (yyval.intval) = MS_TRUE;
@@ -1930,77 +1929,77 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 1934 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1933 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 319 "mapparser.y" /* yacc.c:1646  */
+#line 320 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) == 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1945 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1944 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 325 "mapparser.y" /* yacc.c:1646  */
+#line 326 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) != 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1956 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1955 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 331 "mapparser.y" /* yacc.c:1646  */
+#line 332 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) > 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1967 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1966 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 337 "mapparser.y" /* yacc.c:1646  */
+#line 338 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) < 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1978 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1977 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 343 "mapparser.y" /* yacc.c:1646  */
+#line 344 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) >= 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1989 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1988 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 349 "mapparser.y" /* yacc.c:1646  */
+#line 350 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) <= 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2000 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 1999 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 355 "mapparser.y" /* yacc.c:1646  */
+#line 356 "mapparser.y" /* yacc.c:1646  */
     {
     char *delim, *bufferp;
 
@@ -2022,11 +2021,11 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 2026 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2025 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 376 "mapparser.y" /* yacc.c:1646  */
+#line 377 "mapparser.y" /* yacc.c:1646  */
     {
     char *delim,*bufferp;
 
@@ -2047,22 +2046,22 @@ yyreduce:
       (yyval.intval) = MS_TRUE;  
     free((yyvsp[0].strval));
   }
-#line 2051 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2050 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 396 "mapparser.y" /* yacc.c:1646  */
+#line 397 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-2].dblval) == (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2062 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2061 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 402 "mapparser.y" /* yacc.c:1646  */
+#line 403 "mapparser.y" /* yacc.c:1646  */
     {
     if(strcasecmp((yyvsp[-2].strval), (yyvsp[0].strval)) == 0)
       (yyval.intval) = MS_TRUE;
@@ -2071,22 +2070,22 @@ yyreduce:
     free((yyvsp[-2].strval));
     free((yyvsp[0].strval));
   }
-#line 2075 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2074 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 410 "mapparser.y" /* yacc.c:1646  */
+#line 411 "mapparser.y" /* yacc.c:1646  */
     {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) == 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2086 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2085 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 416 "mapparser.y" /* yacc.c:1646  */
+#line 417 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSEquals((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2098,11 +2097,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2102 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2101 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 427 "mapparser.y" /* yacc.c:1646  */
+#line 428 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSEquals((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2114,11 +2113,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2118 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2117 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 438 "mapparser.y" /* yacc.c:1646  */
+#line 439 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSIntersects((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2130,11 +2129,11 @@ yyreduce:
     } else
     (yyval.intval) = rval;
   }
-#line 2134 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2133 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 449 "mapparser.y" /* yacc.c:1646  */
+#line 450 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSIntersects((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2146,11 +2145,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2150 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2149 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 460 "mapparser.y" /* yacc.c:1646  */
+#line 461 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSDisjoint((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2162,11 +2161,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2166 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2165 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 471 "mapparser.y" /* yacc.c:1646  */
+#line 472 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSDisjoint((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2178,11 +2177,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2182 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2181 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 482 "mapparser.y" /* yacc.c:1646  */
+#line 483 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSTouches((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2194,11 +2193,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2198 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2197 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 493 "mapparser.y" /* yacc.c:1646  */
+#line 494 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSTouches((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2210,11 +2209,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2214 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2213 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 504 "mapparser.y" /* yacc.c:1646  */
+#line 505 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSOverlaps((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2226,11 +2225,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2230 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2229 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 515 "mapparser.y" /* yacc.c:1646  */
+#line 516 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
      rval = msGEOSOverlaps((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2242,11 +2241,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2246 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2245 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 526 "mapparser.y" /* yacc.c:1646  */
+#line 527 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSCrosses((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2258,11 +2257,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2262 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2261 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 537 "mapparser.y" /* yacc.c:1646  */
+#line 538 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSCrosses((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2274,11 +2273,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2278 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2277 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 548 "mapparser.y" /* yacc.c:1646  */
+#line 549 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSWithin((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2290,11 +2289,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2294 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2293 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 559 "mapparser.y" /* yacc.c:1646  */
+#line 560 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSWithin((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2306,11 +2305,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2310 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2309 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 570 "mapparser.y" /* yacc.c:1646  */
+#line 571 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSContains((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2322,11 +2321,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2326 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2325 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 581 "mapparser.y" /* yacc.c:1646  */
+#line 582 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSContains((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2338,11 +2337,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2342 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2341 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 592 "mapparser.y" /* yacc.c:1646  */
+#line 593 "mapparser.y" /* yacc.c:1646  */
     {
     double d;
     d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));    
@@ -2353,11 +2352,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2357 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2356 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 602 "mapparser.y" /* yacc.c:1646  */
+#line 603 "mapparser.y" /* yacc.c:1646  */
     {
     double d;
     d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));
@@ -2368,41 +2367,41 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2372 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2371 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 615 "mapparser.y" /* yacc.c:1646  */
+#line 616 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-1].dblval); }
-#line 2378 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2377 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 616 "mapparser.y" /* yacc.c:1646  */
+#line 617 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-2].dblval) + (yyvsp[0].dblval); }
-#line 2384 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2383 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 617 "mapparser.y" /* yacc.c:1646  */
+#line 618 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-2].dblval) - (yyvsp[0].dblval); }
-#line 2390 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2389 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 618 "mapparser.y" /* yacc.c:1646  */
+#line 619 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-2].dblval) * (yyvsp[0].dblval); }
-#line 2396 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2395 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 619 "mapparser.y" /* yacc.c:1646  */
+#line 620 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (int)(yyvsp[-2].dblval) % (int)(yyvsp[0].dblval); }
-#line 2402 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2401 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 620 "mapparser.y" /* yacc.c:1646  */
+#line 621 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[0].dblval) == 0.0) {
       yyerror(p, "Division by zero.");
@@ -2410,29 +2409,29 @@ yyreduce:
     } else
       (yyval.dblval) = (yyvsp[-2].dblval) / (yyvsp[0].dblval); 
   }
-#line 2414 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2413 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 627 "mapparser.y" /* yacc.c:1646  */
+#line 628 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[0].dblval); }
-#line 2420 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2419 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 628 "mapparser.y" /* yacc.c:1646  */
+#line 629 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = pow((yyvsp[-2].dblval), (yyvsp[0].dblval)); }
-#line 2426 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2425 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 629 "mapparser.y" /* yacc.c:1646  */
+#line 630 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = strlen((yyvsp[-1].strval)); }
-#line 2432 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2431 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 630 "mapparser.y" /* yacc.c:1646  */
+#line 631 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-1].shpval)->type != MS_SHAPE_POLYGON) {
       yyerror(p, "Area can only be computed for polygon shapes.");
@@ -2441,23 +2440,29 @@ yyreduce:
     (yyval.dblval) = msGetPolygonArea((yyvsp[-1].shpval));
     if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
   }
-#line 2445 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2444 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 638 "mapparser.y" /* yacc.c:1646  */
+#line 639 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (MS_NINT((yyvsp[-3].dblval)/(yyvsp[-1].dblval)))*(yyvsp[-1].dblval); }
-#line 2451 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2450 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 76:
-#line 642 "mapparser.y" /* yacc.c:1646  */
-    { (yyval.shpval) = (yyvsp[-1].shpval); }
-#line 2457 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+  case 75:
+#line 640 "mapparser.y" /* yacc.c:1646  */
+    { (yyval.dblval) = (MS_NINT((yyvsp[-1].dblval))); }
+#line 2456 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 643 "mapparser.y" /* yacc.c:1646  */
+#line 644 "mapparser.y" /* yacc.c:1646  */
+    { (yyval.shpval) = (yyvsp[-1].shpval); }
+#line 2462 "mapparser.c" /* yacc.c:1646  */
+    break;
+
+  case 78:
+#line 645 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSBuffer((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2468,11 +2473,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2472 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2477 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 78:
-#line 653 "mapparser.y" /* yacc.c:1646  */
+  case 79:
+#line 655 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSDifference((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2483,11 +2488,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2487 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2492 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 79:
-#line 663 "mapparser.y" /* yacc.c:1646  */
+  case 80:
+#line 665 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2498,11 +2503,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2502 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2507 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 80:
-#line 673 "mapparser.y" /* yacc.c:1646  */
+  case 81:
+#line 675 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2513,11 +2518,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2517 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2522 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 81:
-#line 683 "mapparser.y" /* yacc.c:1646  */
+  case 82:
+#line 685 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGeneralize((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2528,11 +2533,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2532 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2537 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 82:
-#line 693 "mapparser.y" /* yacc.c:1646  */
+  case 83:
+#line 695 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-1].shpval), 3, 1, NULL);
@@ -2543,11 +2548,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2547 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2552 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 83:
-#line 703 "mapparser.y" /* yacc.c:1646  */
+  case 84:
+#line 705 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-3].shpval), (yyvsp[-1].dblval), 1, NULL);
@@ -2558,11 +2563,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2562 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2567 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 84:
-#line 713 "mapparser.y" /* yacc.c:1646  */
+  case 85:
+#line 715 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-5].shpval), (yyvsp[-3].dblval), (yyvsp[-1].dblval), NULL);
@@ -2573,11 +2578,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2577 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2582 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 85:
-#line 723 "mapparser.y" /* yacc.c:1646  */
+  case 86:
+#line 725 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-7].shpval), (yyvsp[-5].dblval), (yyvsp[-3].dblval), (yyvsp[-1].strval));
@@ -2589,11 +2594,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2593 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2598 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 86:
-#line 734 "mapparser.y" /* yacc.c:1646  */
+  case 87:
+#line 736 "mapparser.y" /* yacc.c:1646  */
     {
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
@@ -2610,87 +2615,87 @@ yyreduce:
     return(-1);
 #endif
   }
-#line 2614 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
-    break;
-
-  case 88:
-#line 753 "mapparser.y" /* yacc.c:1646  */
-    { (yyval.strval) = (yyvsp[-1].strval); }
-#line 2620 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2619 "mapparser.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 754 "mapparser.y" /* yacc.c:1646  */
+#line 755 "mapparser.y" /* yacc.c:1646  */
+    { (yyval.strval) = (yyvsp[-1].strval); }
+#line 2625 "mapparser.c" /* yacc.c:1646  */
+    break;
+
+  case 90:
+#line 756 "mapparser.y" /* yacc.c:1646  */
     { 
     (yyval.strval) = (char *)malloc(strlen((yyvsp[-2].strval)) + strlen((yyvsp[0].strval)) + 1);
     sprintf((yyval.strval), "%s%s", (yyvsp[-2].strval), (yyvsp[0].strval)); free((yyvsp[-2].strval)); free((yyvsp[0].strval)); 
   }
-#line 2629 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2634 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 90:
-#line 758 "mapparser.y" /* yacc.c:1646  */
+  case 91:
+#line 760 "mapparser.y" /* yacc.c:1646  */
     {
     (yyval.strval) = (char *) malloc(strlen((yyvsp[-1].strval)) + 64); /* Plenty big? Should use snprintf below... */
     sprintf((yyval.strval), (yyvsp[-1].strval), (yyvsp[-3].dblval));
     free((yyvsp[-1].strval));
   }
-#line 2639 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2644 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 91:
-#line 763 "mapparser.y" /* yacc.c:1646  */
+  case 92:
+#line 765 "mapparser.y" /* yacc.c:1646  */
     {  
     (yyvsp[-1].strval) = msCommifyString((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2648 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2653 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 92:
-#line 767 "mapparser.y" /* yacc.c:1646  */
+  case 93:
+#line 769 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToUpper((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2657 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2662 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 93:
-#line 771 "mapparser.y" /* yacc.c:1646  */
+  case 94:
+#line 773 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToLower((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2666 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2671 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 94:
-#line 775 "mapparser.y" /* yacc.c:1646  */
+  case 95:
+#line 777 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringInitCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2675 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2680 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 95:
-#line 779 "mapparser.y" /* yacc.c:1646  */
+  case 96:
+#line 781 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringFirstCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2684 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2689 "mapparser.c" /* yacc.c:1646  */
     break;
 
-  case 97:
-#line 786 "mapparser.y" /* yacc.c:1646  */
+  case 98:
+#line 788 "mapparser.y" /* yacc.c:1646  */
     { (yyval.tmval) = (yyvsp[-1].tmval); }
-#line 2690 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2695 "mapparser.c" /* yacc.c:1646  */
     break;
 
 
-#line 2694 "/home/even/mapserver/mapserver/mapparser.c" /* yacc.c:1646  */
+#line 2699 "mapparser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2918,7 +2923,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 789 "mapparser.y" /* yacc.c:1906  */
+#line 791 "mapparser.y" /* yacc.c:1906  */
 
 
 /*
@@ -2950,8 +2955,25 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
     break;
   case MS_TOKEN_LITERAL_STRING:
     // printf("token value = %s\n", p->expr->curtoken->tokenval.strval); 
-    token = STRING;
-    (*lvalp).strval = msStrdup(p->expr->curtoken->tokenval.strval);    
+    if (p->type == MS_PARSE_TYPE_SLD)
+    {
+      token = STRING;
+      if (*(p->expr->curtoken->tokenval.strval))
+      {
+        (*lvalp).strval = msStrdup("<![CDATA[");
+        (*lvalp).strval = msStringConcatenate((*lvalp).strval,p->expr->curtoken->tokenval.strval);
+        (*lvalp).strval = msStringConcatenate((*lvalp).strval,"]]>\n");
+      }
+      else
+      {
+        (*lvalp).strval = msStrdup(p->expr->curtoken->tokenval.strval);
+      }
+    }
+    else
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup(p->expr->curtoken->tokenval.strval);    
+    }
     break;
   case MS_TOKEN_LITERAL_TIME:
     token = TIME;
@@ -2987,12 +3009,32 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
 
   case MS_TOKEN_BINDING_DOUBLE:
   case MS_TOKEN_BINDING_INTEGER:
-    token = NUMBER;
-    (*lvalp).dblval = atof(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    if (p->type == MS_PARSE_TYPE_SLD)
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup("<ogc:PropertyName>");
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,p->expr->curtoken->tokenval.bindval.item);
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,"</ogc:PropertyName>\n");
+    }
+    else
+    {
+      token = NUMBER;
+      (*lvalp).dblval = atof(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    }
     break;
   case MS_TOKEN_BINDING_STRING:
-    token = STRING;
-    (*lvalp).strval = msStrdup(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    if (p->type == MS_PARSE_TYPE_SLD)
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup("<ogc:PropertyName>");
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,p->expr->curtoken->tokenval.bindval.item);
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,"</ogc:PropertyName>\n");
+    }
+    else
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    }
     break;
   case MS_TOKEN_BINDING_SHAPE:
     token = SHAPE;

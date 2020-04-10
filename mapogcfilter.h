@@ -121,9 +121,7 @@ MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char 
 MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
 
 /*common-expressions*/
-MS_DLL_EXPORT   char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT  char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
-char* FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression);
 
 #ifdef USE_LIBXML2
@@ -144,9 +142,12 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
 int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect);
 int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
                             mapObj *map, int i);
+int FLTLayerSetInvalidRectIfSupported(layerObj* lp, rectObj* rect);
 
 #ifdef __cplusplus
 }
+std::string FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+
 #endif
 
 #endif

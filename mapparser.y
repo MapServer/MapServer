@@ -23,7 +23,7 @@ int yyerror(parseObj *, const char *);
 /* Bison/Yacc declarations */
 
 /* %define api.pure */
-%pure_parser
+%pure-parser
 %parse-param {parseObj *p}
 %lex-param {parseObj *p}
 
@@ -101,6 +101,7 @@ input: /* empty string */
       else
         p->result.intval = MS_FALSE;
       break;
+    case(MS_PARSE_TYPE_SLD):
     case(MS_PARSE_TYPE_STRING):
       p->result.strval = $1; // msStrdup($1);
       break;
@@ -636,6 +637,7 @@ math_exp: NUMBER
     if($3->scratch == MS_TRUE) msFreeShape($3);
   }
   | ROUND '(' math_exp ',' math_exp ')' { $$ = (MS_NINT($3/$5))*$5; }
+  | ROUND '(' math_exp ')' { $$ = (MS_NINT($3)); }
 ;
 
 shape_exp: SHAPE 
@@ -817,8 +819,25 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
     break;
   case MS_TOKEN_LITERAL_STRING:
     // printf("token value = %s\n", p->expr->curtoken->tokenval.strval); 
-    token = STRING;
-    (*lvalp).strval = msStrdup(p->expr->curtoken->tokenval.strval);    
+    if (p->type == MS_PARSE_TYPE_SLD)
+    {
+      token = STRING;
+      if (*(p->expr->curtoken->tokenval.strval))
+      {
+        (*lvalp).strval = msStrdup("<![CDATA[");
+        (*lvalp).strval = msStringConcatenate((*lvalp).strval,p->expr->curtoken->tokenval.strval);
+        (*lvalp).strval = msStringConcatenate((*lvalp).strval,"]]>\n");
+      }
+      else
+      {
+        (*lvalp).strval = msStrdup(p->expr->curtoken->tokenval.strval);
+      }
+    }
+    else
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup(p->expr->curtoken->tokenval.strval);    
+    }
     break;
   case MS_TOKEN_LITERAL_TIME:
     token = TIME;
@@ -854,12 +873,32 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
 
   case MS_TOKEN_BINDING_DOUBLE:
   case MS_TOKEN_BINDING_INTEGER:
-    token = NUMBER;
-    (*lvalp).dblval = atof(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    if (p->type == MS_PARSE_TYPE_SLD)
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup("<ogc:PropertyName>");
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,p->expr->curtoken->tokenval.bindval.item);
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,"</ogc:PropertyName>\n");
+    }
+    else
+    {
+      token = NUMBER;
+      (*lvalp).dblval = atof(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    }
     break;
   case MS_TOKEN_BINDING_STRING:
-    token = STRING;
-    (*lvalp).strval = msStrdup(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    if (p->type == MS_PARSE_TYPE_SLD)
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup("<ogc:PropertyName>");
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,p->expr->curtoken->tokenval.bindval.item);
+      (*lvalp).strval = msStringConcatenate((*lvalp).strval,"</ogc:PropertyName>\n");
+    }
+    else
+    {
+      token = STRING;
+      (*lvalp).strval = msStrdup(p->shape->values[p->expr->curtoken->tokenval.bindval.index]);
+    }
     break;
   case MS_TOKEN_BINDING_SHAPE:
     token = SHAPE;

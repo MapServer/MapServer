@@ -30,6 +30,10 @@
 #ifndef MAPTIME_H
 #define MAPTIME_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* (bug 602) gettimeofday() and struct timeval aren't available on Windows,
  * so we provide a replacement with msGettimeofday() and struct mstimeval on
  * Windows.  On Unix/Linux they are just #defines to the real things.
@@ -71,5 +75,9 @@ MS_DLL_EXPORT int msTimeGetResolution(const char *timestring);
 void msTimeCleanup();
 
 int msValidateTimeValue(const char *timestring, const char *timeextent);
+
+#ifdef __cplusplus
+} /* extern C */
+#endif
 
 #endif /* MAPTIME_H */

@@ -32,6 +32,9 @@
  * Created.
  *
  */
+#ifndef _WIN32
+#define _GNU_SOURCE
+#endif
 
 #define _CRT_SECURE_NO_WARNINGS 1
 
@@ -43,7 +46,9 @@
 
 #ifdef USE_MSSQL2008
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include <sql.h>
 #include <sqlext.h>
 #include <sqltypes.h>
@@ -478,7 +483,7 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
     ReadPoint(gpi, &shape->line[0].point[0], 0);
     ReadPoint(gpi, &shape->line[0].point[1], 1);
   } else {
-    int iShape, iFigure, iSegment;
+    int iShape, iFigure, iSegment = 0;
     // complex geometries
     gpi->nNumPoints = ReadInt32(6);
 
@@ -658,33 +663,6 @@ void handleSQLError(layerObj *layer)
   }
 }
 
-/* remove white space */
-/* dont send in empty strings or strings with just " " in them! */
-static char* removeWhite(char *str)
-{
-  size_t     initial;
-  char    *orig, *loc;
-
-  initial = strspn(str, " ");
-  if(initial) {
-    memmove(str, str + initial, strlen(str) - initial + 1);
-  }
-  /* now final */
-  if(strlen(str) == 0) {
-    return str;
-  }
-  if(str[strlen(str) - 1] == ' ') {
-    /* have to remove from end */
-    orig = str;
-    loc = &str[strlen(str) - 1];
-    while((*loc = ' ') && (loc >orig)) {
-      *loc = 0;
-      loc--;
-    }
-  }
-  return str;
-}
-
 /* TODO Take a look at glibc's strcasestr */
 static char *strstrIgnoreCase(const char *haystack, const char *needle)
 {
@@ -785,7 +763,7 @@ static msODBCconn * mssql2008Connect(char * connString)
   }
   else
   {
-      rc = SQLDriverConnect(conn->hdbc, NULL, connString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
+      rc = SQLDriverConnect(conn->hdbc, NULL, (SQLCHAR*)connString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
   }
 
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
@@ -837,7 +815,6 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
   SQLULEN columnSize;
   SQLSMALLINT decimalDigits;
   SQLSMALLINT nullable;
-  msMSSQL2008LayerInfo  *layerinfo = getMSSQL2008LayerInfo(layer);
 
   rc = SQLDescribeCol(
          conn->hstmt,
@@ -1354,6 +1331,8 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
   char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
   int hasFilter = MS_FALSE;
+  const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+  const int bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
   layerinfo =  getMSSQL2008LayerInfo(layer);
 
@@ -1494,16 +1473,21 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
       if (layer->sortBy.nProperties > 0) {
           tmp = msLayerBuildSQLOrderBy(layer);
-          if (layerinfo->sort_spec)
+          if (layerinfo->sort_spec) {
               query = msStringConcatenate(query, ", ");
-          else
+          }
+          else {
               query = msStringConcatenate(query, " ORDER BY ");
+          }
           query = msStringConcatenate(query, tmp);
           msFree(tmp);
       }
       else {
-          query = msStringConcatenate(query, "ORDER BY ");
-          query = msStringConcatenate(query, layerinfo->urid_name);
+          if (!layerinfo->sort_spec) {
+              // use the unique Id as the default sort for paging
+              query = msStringConcatenate(query, "ORDER BY ");
+              query = msStringConcatenate(query, layerinfo->urid_name);
+          }
       }
       query = msStringConcatenate(query, ") 'rownum' FROM ");
   }
@@ -1537,16 +1521,18 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       hasFilter = MS_TRUE;
   }
 
-  /* adding spatial filter */
-  if (hasFilter == MS_FALSE)
-      query = msStringConcatenate(query, " WHERE ");
-  else
-      query = msStringConcatenate(query, " AND ");
+  if( bIsValidRect ) {
+    /* adding spatial filter */
+    if (hasFilter == MS_FALSE)
+        query = msStringConcatenate(query, " WHERE ");
+    else
+        query = msStringConcatenate(query, " AND ");
 
-  query = msStringConcatenate(query, layerinfo->geom_column);
-  query = msStringConcatenate(query, ".STIntersects(");
-  query = msStringConcatenate(query, box3d);
-  query = msStringConcatenate(query, ") = 1 ");
+    query = msStringConcatenate(query, layerinfo->geom_column);
+    query = msStringConcatenate(query, ".STIntersects(");
+    query = msStringConcatenate(query, box3d);
+    query = msStringConcatenate(query, ") = 1 ");
+  }
 
   if (paging_query) {
       paging_query = msStringConcatenate(paging_query, query);
@@ -1607,7 +1593,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       layerinfo->itemtypes = msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
       for (t = 0; t < layer->numitems; t++) {
           char colBuff[256];
-          SQLSMALLINT itemType;
+          SQLSMALLINT itemType = 0;
 
           columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff), layer, pass_field_def, &itemType);
           layerinfo->itemtypes[t] = itemType;
@@ -1764,7 +1750,6 @@ static int  force_to_points(char *wkb, shapeObj *shape)
   /* we're going to make a 'line' for each entity (point, line or ring) in the geom collection */
 
   int     offset = 0;
-  int     pt_offset;
   int     ngeoms;
   int     t, u, v;
   int     type, nrings, npoints;
@@ -1807,7 +1792,6 @@ static int  force_to_points(char *wkb, shapeObj *shape)
 
       memcpy(&nrings, &wkb[offset+5],4); /* num rings */
       /* add a line for each polygon ring */
-      pt_offset = 0;
       offset += 9; /* now points at 1st linear ring */
       for(u = 0; u < nrings; u++) {
         /* for each ring, make a line */
@@ -1839,7 +1823,6 @@ static int  force_to_points(char *wkb, shapeObj *shape)
 static int  force_to_lines(char *wkb, shapeObj *shape)
 {
   int     offset = 0;
-  int     pt_offset;
   int     ngeoms;
   int     t, u, v;
   int     type, nrings, npoints;
@@ -1873,7 +1856,6 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
 
       memcpy(&nrings, &wkb[offset + 5], 4); /* num rings */
       /* add a line for each polygon ring */
-      pt_offset = 0;
       offset += 9; /* now points at 1st linear ring */
       for(u = 0; u < nrings; u++) {
         /* for each ring, make a line */
@@ -1902,7 +1884,6 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
 static int  force_to_polygons(char  *wkb, shapeObj *shape)
 {
   int     offset = 0;
-  int     pt_offset;
   int     ngeoms;
   int     t, u, v;
   int     type, nrings, npoints;
@@ -1921,7 +1902,6 @@ static int  force_to_polygons(char  *wkb, shapeObj *shape)
 
       memcpy(&nrings, &wkb[offset + 5], 4); /* num rings */
       /* add a line for each polygon ring */
-      pt_offset = 0;
       offset += 9; /* now points at 1st linear ring */
       for(u=0; u < nrings; u++) {
         /* for each ring, make a line */
@@ -1983,6 +1963,7 @@ static int  dont_force(char *wkb, shapeObj *shape)
   return MS_FAILURE; /* unknown type */
 }
 
+#if 0
 /* ******************************************************* */
 /* wkb assumed to be same endian as this machine.  */
 /* Should be in little endian (default if created by Microsoft platforms) */
@@ -2074,6 +2055,7 @@ static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
 
   return MS_SUCCESS;
 }
+#endif
 
 ///* if there is any polygon in wkb, return force_polygon */
 ///* if there is any line in wkb, return force_line */
@@ -2182,7 +2164,6 @@ static void find_bounds(shapeObj *shape)
 int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 {
   msMSSQL2008LayerInfo  *layerinfo;
-  int                 result;
   SQLLEN needLen = 0;
   SQLLEN retLen = 0;
   char dummyBuffer[1];
@@ -2304,6 +2285,9 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
               case MS_LAYER_POLYGON:
                 shape->type = MS_SHAPE_POLYGON;
                 break;
+
+              default:
+                break;
             }
           }
         } else {
@@ -2330,20 +2314,20 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
           switch(layer->type) {
             case MS_LAYER_POINT:
-              result = force_to_points(wkbBuffer, shape);
+              /*result =*/ force_to_points(wkbBuffer, shape);
               break;
 
             case MS_LAYER_LINE:
-              result = force_to_lines(wkbBuffer, shape);
+              /*result =*/ force_to_lines(wkbBuffer, shape);
               break;
 
             case MS_LAYER_POLYGON:
-              result = force_to_polygons(wkbBuffer, shape);
+              /*result =*/ force_to_polygons(wkbBuffer, shape);
               break;
 
             case MS_LAYER_QUERY:
             case MS_LAYER_CHART:
-              result = dont_force(wkbBuffer, shape);
+              /*result =*/ dont_force(wkbBuffer, shape);
               break;
 
             case MS_LAYER_RASTER:
@@ -2389,7 +2373,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
       if(shape->type != MS_SHAPE_NULL) {
         return MS_SUCCESS;
       } else {
-        msDebug("msMSSQL2008LayerGetShapeRandom bad shape: %d\n", *record);
+        msDebug("msMSSQL2008LayerGetShapeRandom bad shape: %ld\n", *record);
       }
       /* if (layer->type == MS_LAYER_POINT) {return MS_DONE;} */
     }
@@ -2436,7 +2420,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
   long resultindex = record->resultindex;
 
   if(layer->debug) {
-    msDebug("msMSSQL2008LayerGetShape called for shapeindex = %i\n", shapeindex);
+    msDebug("msMSSQL2008LayerGetShape called for shapeindex = %ld\n", shapeindex);
   }
 
   layerinfo = getMSSQL2008LayerInfo(layer);
@@ -2490,7 +2474,7 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
   }
 
   /* index_name is ignored here since the hint should be for the spatial index, not the PK index */
-  snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %d", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, shapeindex);
+  snprintf(buffer, sizeof(buffer), "select %s from %s where %s = %ld", columns_wanted, layerinfo->geom_table, layerinfo->urid_name, shapeindex);
 
   query_str = msStrdup(buffer);
 
@@ -2535,6 +2519,8 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
     SQLLEN retLen;
     SQLRETURN rc;
     int hasFilter = MS_FALSE;
+    const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+    const int bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
     rectObj searchrectInLayerProj = rect;
 
@@ -2610,16 +2596,22 @@ int msMSSQL2008LayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *
         hasFilter = MS_TRUE;
     }
 
-    /* adding spatial filter */
-    if (hasFilter == MS_FALSE)
-        query = msStringConcatenate(query, " WHERE ");
-    else
-        query = msStringConcatenate(query, " AND ");
+    if( bIsValidRect ) {
+        /* adding spatial filter */
+        if (hasFilter == MS_FALSE)
+            query = msStringConcatenate(query, " WHERE ");
+        else
+            query = msStringConcatenate(query, " AND ");
 
-    query = msStringConcatenate(query, layerinfo->geom_column);
-    query = msStringConcatenate(query, ".MakeValid().STIntersects(");
-    query = msStringConcatenate(query, box3d);
-    query = msStringConcatenate(query, ") = 1 ");
+        query = msStringConcatenate(query, layerinfo->geom_column);
+        query = msStringConcatenate(query, ".STIntersects(");
+        query = msStringConcatenate(query, box3d);
+        query = msStringConcatenate(query, ") = 1 ");
+    }
+
+    if (layer->debug) {
+      msDebug("query:%s\n", query);
+    }
 
     if (!executeSQL(layerinfo->conn, query)) {
         msFree(query);
@@ -2717,7 +2709,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
 
   for(t = 0; t < cols; t++) {
     char colBuff[256];
-    SQLSMALLINT itemType;
+    SQLSMALLINT itemType = 0;
 
     columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff), layer, pass_field_def, &itemType);
 
@@ -2781,7 +2773,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
     tmp2 = (char *)msSmallMalloc(sizeof(char)*(strlen(tmp1) + strlen(sql) + 1));
     strcpy(tmp2, tmp1);
     strcat(tmp2, sql);
-    msSetError(MS_QUERYERR, tmp2, "msMSSQL2008LayerRetrievePK()");
+    msSetError(MS_QUERYERR, "%s", "msMSSQL2008LayerRetrievePK()", tmp2);
     msFree(tmp2);
     return(MS_FAILURE);
   }

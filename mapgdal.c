@@ -95,7 +95,7 @@ void msGDALCleanup( void )
     } while( bDidSomething );
 
     while( iRepeat-- )
-    CPLPopErrorHandler();
+      CPLPopErrorHandler();
 
     msReleaseLock( TLOCK_GDAL );
 

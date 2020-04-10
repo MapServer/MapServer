@@ -414,6 +414,9 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     dst->leader = NULL;
   }
 
+  MS_COPYSTELEM(sizeunits);
+  MS_COPYSTELEM(scalefactor);
+
   return MS_SUCCESS;
 }
 
@@ -520,6 +523,9 @@ int msCopyStyle(styleObj *dst, styleObj *src)
   MS_COPYSTELEM(maxscaledenom);
   /* TODO: add copy for bindings */
 
+  MS_COPYSTELEM(sizeunits);
+  MS_COPYSTELEM(scalefactor);
+
   return MS_SUCCESS;
 }
 
@@ -541,6 +547,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
   }
 
   MS_COPYSTELEM(status);
+  MS_COPYSTELEM(isfallback);
 
   /* free any previous styles on the dst layer */
   for(i=0; i<dst->numstyles; i++) { /* each style */
@@ -617,6 +624,9 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
   MS_COPYSTELEM(maxscaledenom);
   MS_COPYSTELEM(layer);
   MS_COPYSTELEM(debug);
+
+  MS_COPYSTELEM(sizeunits);
+  MS_COPYSTELEM(scalefactor);
 
   return MS_SUCCESS;
 }
@@ -1033,6 +1043,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   MS_COPYSTRING(dst->data, src->data);
   MS_COPYSTRING(dst->encoding, src->encoding);
 
+  MS_COPYSTELEM(rendermode);
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(type);
   MS_COPYSTELEM(tolerance);

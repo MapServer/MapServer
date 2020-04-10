@@ -447,7 +447,7 @@ MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *wfs_
 int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, int force_wms_mode);
 MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                         char **names, char **values, int numentries,
-                                        char *wms_exception_format, const char *wms_request, owsRequestObj *ows_request);
+                                        const char *wms_exception_format, const char *wms_request, owsRequestObj *ows_request);
 
 
 /*====================================================================

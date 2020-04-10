@@ -1423,6 +1423,9 @@ void initLabel(labelObj *label)
 
   label->leader = NULL;
 
+  label->sizeunits = MS_INHERIT;
+  label->scalefactor = 1.0;
+
   return;
 }
 
@@ -2355,6 +2358,9 @@ int initStyle(styleObj *style)
     msInitExpression(&(style->exprBindings[i]));
   }
 
+  style->sizeunits = MS_INHERIT;
+  style->scalefactor = 1.0;
+
   return MS_SUCCESS;
 }
 
@@ -2829,6 +2835,7 @@ int initClass(classObj *class)
   class->status = MS_ON;
   class->debug = MS_OFF;
   MS_REFCNT_INIT(class);
+  class->isfallback = FALSE;
 
   msInitExpression(&(class->expression));
   class->name = NULL;
@@ -2857,6 +2864,9 @@ int initClass(classObj *class)
   class->group = NULL;
 
   class->leader = NULL;
+
+  class->sizeunits = MS_INHERIT;
+  class->scalefactor = 1.0;
 
   return(0);
 }
@@ -3507,6 +3517,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->group = NULL;
   layer->status = MS_OFF;
   layer->data = NULL;
+  layer->rendermode = MS_FIRST_MATCHING_CLASS;
 
   layer->map = map; /* point back to the encompassing structure */
 

@@ -1,0 +1,47 @@
+#
+#
+# RUN_PARMS: map_symbolizers.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=main&STYLES=" > [RESULT_DEMIME]
+#
+#
+# RUN_PARMS: sld_stroke_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=main&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>main</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke%22><Literal>#FFFF00</Literal></SvgParameter><SvgParameter name=%22stroke-width%22><Literal>3</Literal></SvgParameter></Stroke><Fill><SvgParameter name=%22fill%22><Literal>#0000FF</Literal></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+#
+# RUN_PARMS: sld_symbolizers.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=main&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>main</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Fill><SvgParameter name=%22fill%22><Literal>#0000FF</Literal></SvgParameter></Fill></PolygonSymbolizer><LineSymbolizer><Stroke><SvgParameter name=%22stroke%22><Literal>#FFFF00</Literal></SvgParameter><SvgParameter name=%22stroke-width%22><Add><PropertyName>w1</PropertyName><Literal>2</Literal></Add></SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+
+MAP
+NAME SYMBOLIZERS
+SIZE 300 300
+IMAGECOLOR 100 100 100
+PROJECTION
+  "init=epsg:4326"
+END
+WEB
+  IMAGEPATH "/tmp/ms_tmp/"
+  IMAGEURL "/ms_tmp/"
+  METADATA
+    "wms_title"            "Test SLD"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"              "EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*"
+    "ows_sld_enabled" "true"
+  END
+END
+
+LAYER
+  NAME main
+  CONNECTIONTYPE OGR
+  CONNECTION data/inner.json
+  TYPE POLYGON
+  STATUS ON
+  SIZEUNITS pixels
+  CLASS
+    STYLE
+      COLOR 0 0 255
+      OUTLINECOLOR 255 255 0
+      WIDTH 3
+    END
+  END
+END
+END
