@@ -73,6 +73,17 @@
         dY = dfDeltaY/((double)height);
         dfGeoPosX = poGeorefExt->minx + dX * (double)poPixPos->x;
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
+
+        if (self->gt.rotation_angle != 0) {
+            double dfAlpha, dfCenterX, dfCenterY, dfGeoPosXR, dfGeoPosYR;
+            dfAlpha = self->gt.rotation_angle * 3.14159265358979323846 / 180.0;
+            dfCenterX = (poGeorefExt->minx + poGeorefExt->maxx) / 2;
+            dfCenterY = (poGeorefExt->miny + poGeorefExt->maxy) / 2;
+            dfGeoPosXR = (dfGeoPosX - dfCenterX) * cos(dfAlpha) - (dfGeoPosY - dfCenterY) * sin(dfAlpha) + dfCenterX;
+            dfGeoPosYR = (dfGeoPosX - dfCenterX) * sin(dfAlpha) + (dfGeoPosY - dfCenterY) * cos(dfAlpha) + dfCenterY;
+            dfGeoPosX = dfGeoPosXR;
+            dfGeoPosY = dfGeoPosYR;
+        }
         
         /* --- -------------------------------------------------------- */
         /*      zoom in                                                 */
@@ -427,6 +438,17 @@
         dY = dfDeltaY/((double)height);
         dfGeoPosX = poGeorefExt->minx + dX * (double)poPixPos->x;
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
+
+        if (self->gt.rotation_angle != 0) {
+            double dfAlpha, dfCenterX, dfCenterY, dfGeoPosXR, dfGeoPosYR;
+            dfAlpha = self->gt.rotation_angle * 3.14159265358979323846 / 180.0;
+            dfCenterX = (poGeorefExt->minx + poGeorefExt->maxx) / 2;
+            dfCenterY = (poGeorefExt->miny + poGeorefExt->maxy) / 2;
+            dfGeoPosXR = (dfGeoPosX - dfCenterX) * cos(dfAlpha) - (dfGeoPosY - dfCenterY) * sin(dfAlpha) + dfCenterX;
+            dfGeoPosYR = (dfGeoPosX - dfCenterX) * sin(dfAlpha) + (dfGeoPosY - dfCenterY) * cos(dfAlpha) + dfCenterY;
+            dfGeoPosX = dfGeoPosXR;
+            dfGeoPosY = dfGeoPosYR;
+        }
         
         /* ------------------------------------------------------------ */
         /*  Calculate new extents based on the scale.                   */
