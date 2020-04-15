@@ -73,6 +73,11 @@
         dY = dfDeltaY/((double)height);
         dfGeoPosX = poGeorefExt->minx + dX * (double)poPixPos->x;
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
+
+        if (self->gt.rotation_angle != 0) {
+            dfGeoPosX = self->gt.geotransform[0] + self->gt.geotransform[1] * (double)poPixPos->x + self->gt.geotransform[2] * (double)poPixPos->y;
+            dfGeoPosY = self->gt.geotransform[3] + self->gt.geotransform[4] * (double)poPixPos->x + self->gt.geotransform[5] * (double)poPixPos->y;
+        }
         
         /* --- -------------------------------------------------------- */
         /*      zoom in                                                 */
@@ -427,6 +432,11 @@
         dY = dfDeltaY/((double)height);
         dfGeoPosX = poGeorefExt->minx + dX * (double)poPixPos->x;
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
+
+        if (self->gt.rotation_angle != 0) {
+            dfGeoPosX = self->gt.geotransform[0] + self->gt.geotransform[1] * (double)poPixPos->x + self->gt.geotransform[2] * (double)poPixPos->y;
+            dfGeoPosY = self->gt.geotransform[3] + self->gt.geotransform[4] * (double)poPixPos->x + self->gt.geotransform[5] * (double)poPixPos->y;
+        }
         
         /* ------------------------------------------------------------ */
         /*  Calculate new extents based on the scale.                   */
