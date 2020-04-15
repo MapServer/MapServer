@@ -75,14 +75,8 @@
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
 
         if (self->gt.rotation_angle != 0) {
-            double dfAlpha, dfCenterX, dfCenterY, dfGeoPosXR, dfGeoPosYR;
-            dfAlpha = self->gt.rotation_angle * 3.14159265358979323846 / 180.0;
-            dfCenterX = (poGeorefExt->minx + poGeorefExt->maxx) / 2;
-            dfCenterY = (poGeorefExt->miny + poGeorefExt->maxy) / 2;
-            dfGeoPosXR = (dfGeoPosX - dfCenterX) * cos(dfAlpha) - (dfGeoPosY - dfCenterY) * sin(dfAlpha) + dfCenterX;
-            dfGeoPosYR = (dfGeoPosX - dfCenterX) * sin(dfAlpha) + (dfGeoPosY - dfCenterY) * cos(dfAlpha) + dfCenterY;
-            dfGeoPosX = dfGeoPosXR;
-            dfGeoPosY = dfGeoPosYR;
+            dfGeoPosX = self->gt.geotransform[0] + self->gt.geotransform[1] * (double)poPixPos->x + self->gt.geotransform[2] * (double)poPixPos->y;
+            dfGeoPosY = self->gt.geotransform[3] + self->gt.geotransform[4] * (double)poPixPos->x + self->gt.geotransform[5] * (double)poPixPos->y;
         }
         
         /* --- -------------------------------------------------------- */
@@ -440,14 +434,8 @@
         dfGeoPosY = poGeorefExt->maxy - dY * (double)poPixPos->y;
 
         if (self->gt.rotation_angle != 0) {
-            double dfAlpha, dfCenterX, dfCenterY, dfGeoPosXR, dfGeoPosYR;
-            dfAlpha = self->gt.rotation_angle * 3.14159265358979323846 / 180.0;
-            dfCenterX = (poGeorefExt->minx + poGeorefExt->maxx) / 2;
-            dfCenterY = (poGeorefExt->miny + poGeorefExt->maxy) / 2;
-            dfGeoPosXR = (dfGeoPosX - dfCenterX) * cos(dfAlpha) - (dfGeoPosY - dfCenterY) * sin(dfAlpha) + dfCenterX;
-            dfGeoPosYR = (dfGeoPosX - dfCenterX) * sin(dfAlpha) + (dfGeoPosY - dfCenterY) * cos(dfAlpha) + dfCenterY;
-            dfGeoPosX = dfGeoPosXR;
-            dfGeoPosY = dfGeoPosYR;
+            dfGeoPosX = self->gt.geotransform[0] + self->gt.geotransform[1] * (double)poPixPos->x + self->gt.geotransform[2] * (double)poPixPos->y;
+            dfGeoPosY = self->gt.geotransform[3] + self->gt.geotransform[4] * (double)poPixPos->x + self->gt.geotransform[5] * (double)poPixPos->y;
         }
         
         /* ------------------------------------------------------------ */
