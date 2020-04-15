@@ -769,3 +769,12 @@ int msyyerror(char *s) {
   msSetError(MS_PARSEERR, "%s", "msyyparse()", s);
   return(0);
 }
+
+/* cleanup any open includes */
+void msyycleanup_includes() {
+  while( --include_stack_ptr >= 0 ) {
+    fclose(YY_CURRENT_BUFFER->yy_input_file);
+    msyy_delete_buffer( YY_CURRENT_BUFFER );
+    msyy_switch_to_buffer(include_stack[include_stack_ptr]);
+  }
+}

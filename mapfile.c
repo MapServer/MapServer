@@ -44,6 +44,7 @@
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
 extern int msyylex_destroy(void);
+extern void msyycleanup_includes();
 
 extern double msyynumber;
 extern int msyylineno;
@@ -6578,6 +6579,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
     msFreeMap(map);
     msReleaseLock( TLOCK_PARSER );
     if( msyyin ) {
+      msyycleanup_includes();
       fclose(msyyin);
       msyyin = NULL;
     }
