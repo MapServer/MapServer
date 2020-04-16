@@ -304,6 +304,34 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
       bindIntegerAttribute(&label->shadowsizey, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index]);
     }
 
+    if(label->bindings[MS_LABEL_BINDING_OFFSET_X].index != -1) {
+      label->offsetx = 0;
+      bindIntegerAttribute(&label->offsetx, shape->values[label->bindings[MS_LABEL_BINDING_OFFSET_X].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_OFFSET_Y].index != -1) {
+      label->offsety = 0;
+      bindIntegerAttribute(&label->offsety, shape->values[label->bindings[MS_LABEL_BINDING_OFFSET_Y].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_ALIGN].index != -1) {
+      int tmpAlign = 0;
+      bindIntegerAttribute(&tmpAlign, shape->values[label->bindings[MS_LABEL_BINDING_ALIGN].index]);
+      if(tmpAlign != 0) { /* is this test sufficient? */
+        label->align = tmpAlign;
+      } else { /* Integer binding failed, look for strings like cc, ul, lr, etc... */
+        if(strlen(shape->values[label->bindings[MS_LABEL_BINDING_ALIGN].index]) >= 4) {
+          char *va = shape->values[label->bindings[MS_LABEL_BINDING_ALIGN].index];
+          if(!strncasecmp(va,"center",5))
+            label->align = MS_ALIGN_CENTER;
+          else if(!strncasecmp(va,"left",4))
+            label->align = MS_ALIGN_LEFT;
+          else if(!strncasecmp(va,"right",5))
+            label->align = MS_ALIGN_RIGHT;
+        }
+      }
+    }
+
     if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
       int tmpPosition = 0;
       bindIntegerAttribute(&tmpPosition, shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]);
@@ -2264,10 +2292,10 @@ void msRGBtoHSL(colorObj *rgb, double *h, double *s, double *l) {
   double r = rgb->red/255.0, g = rgb->green/255.0, b = rgb->blue/255.0;
   double maxv = MS_MAX(MS_MAX(r, g), b), minv = MS_MIN(MS_MIN(r, g), b);
   double d = maxv - minv;
-  
+
   *h = 0, *s = 0;
   *l = (maxv + minv) / 2;
-  
+
   if (maxv != minv)
   {
     *s = *l > 0.5 ? d / (2 - maxv - minv) : d / (maxv + minv);
@@ -2289,11 +2317,11 @@ static double hue_to_rgb(double p, double q, double t) {
 
 void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
   double r, g, b;
-  
+
   if(s == 0){
     r = g = b = l;
   } else {
-    
+
     double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     double p = 2 * l - q;
     r = hue_to_rgb(p, q, h + 0.33333333333333333);
@@ -2530,7 +2558,7 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   port = getenv("HTTP_X_FORWARDED_PORT");
   if(!port)
     port = getenv("SERVER_PORT");
-  
+
   script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
@@ -2715,15 +2743,15 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
 
   if (shape->numlines<1)
     return newShape;
-  
+
   /* Clean shape */
   for (int i=0; i < newShape->numlines; i++)
     free(newShape->line[i].point);
   newShape->numlines = 0;
   if (newShape->line) free(newShape->line);
-    
+
   msAddLine(newShape, &newLine);
-  
+
   if (shape->line[0].numpoints==0) {
     return newShape;
   }
@@ -2737,7 +2765,7 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
   {
       double dX1 = shape->line[0].point[i].x;
       double dY1 = shape->line[0].point[i].y;
-     
+
       const double dX = dX1-dX0;
       const double dY = dY1-dY0;
       const double dSqDist = dX*dX + dY*dY;
@@ -2746,15 +2774,15 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
           pointObj p;
           p.x = dX1;
           p.y = dY1;
-          
+
           /* Keep this point (always keep the last point) */
           msAddPointToLine(&newShape->line[0],
-                           &p);          
+                           &p);
           dX0 = dX1;
           dY0 = dY1;
         }
     }
-   
+
   return newShape;
 }
 
