@@ -1,0 +1,56 @@
+
+# RUN_PARMS: label_align_attribute.png [SHP2IMG] -e -0.0 -0.0 1.0 1.0 -s 1000 1000 -l align_attribute -m [MAPFILE] -o [RESULT]
+# RUN_PARMS: label_offset_attribute.png [SHP2IMG] -e -0.0 -0.0 1.0 1.0 -s 1000 1000 -l offset_attribute -m [MAPFILE] -o [RESULT]
+
+map
+
+imagetype png
+size 200 200
+extent 0 0 1.5 1.5
+shapepath "data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+layer
+    type point
+    status off
+    data "label_alias_offset.shp"
+    extent -.5 -.5 1.5 1.5
+    projection
+      "init=epsg:4326"
+    end
+    name "align_attribute"
+    labelitem "label"
+    class
+      label
+        font "default"
+        type truetype
+        size 9
+        color 0 0 0
+        align [align]
+     end
+   end
+end
+layer
+    type point
+    status off
+    data "label_alias_offset.shp"
+    extent -.5 -.5 1.5 1.5
+    projection
+      "init=epsg:4326"
+    end
+    name "offset_attribute"
+    labelitem "label"
+    class
+      label
+        font "default"
+        type truetype
+        size 9
+        color 0 0 0
+        offset [offset_x] [offset_y]
+     end
+   end
+end
+
+
+end
