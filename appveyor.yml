@@ -72,7 +72,8 @@ build_script:
   - cd %BUILD_FOLDER%/build
   - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%
   - set PROJ_LIB=%SDK_BIN%/proj/SHARE
-  - echo %PATH%
+  # check the mapserver exe can run
+  - mapserv -v
   - cmake --build . --target pythonmapscript-wheel --config Release
 
 before_test:
@@ -95,8 +96,8 @@ after_test:
   - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
-on_finish:
- - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
+# on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
 
 artifacts:
   - path: mapserver.zip
