@@ -100,20 +100,20 @@ add_custom_command(
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMAND ${PYTHON_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log
-    COMMAND ${PYTHON_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
-    COMMENT "Building and installing the mapscript Python wheel"
+    COMMENT "Building the mapscript Python wheel"
 )
 
 add_custom_command(
-    WORKING_DIRECTORY ${PYTHON_VENV_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py on Linux
+    WORKING_DIRECTORY ${PYTHON_VENV_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py
     DEPENDS mapscriptwheel.stamp
     OUTPUT mapscripttests.stamp
-    COMMAND pytest --pyargs mapscript.tests
-    COMMAND python -m mapscript.examples.project_csv ${PROJECT_SOURCE_DIR}/tests/cities.csv 2 1 EPSG:4326 EPSG:3857 > test.csv
-    COMMAND python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
-    COMMAND python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
-    COMMAND python -m mapscript.examples.wxs ${PROJECT_SOURCE_DIR}/tests/test.map > response.xml
-    COMMENT "Testing the wheel in the virtual environment, then running tests and examples"
+    COMMAND ${PYTHON_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
+    COMMAND ${PYTHON_VENV_SCRIPTS}/pytest --pyargs mapscript.tests
+    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.project_csv ${PROJECT_SOURCE_DIR}/tests/cities.csv 2 1 EPSG:4326 EPSG:3857 > test.csv
+    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
+    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
+    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.wxs ${PROJECT_SOURCE_DIR}/tests/test.map > response.xml
+    COMMENT "Installing the Python wheel and testing it in the virtual environment, then running tests and examples"
 )
 
 add_custom_command(
