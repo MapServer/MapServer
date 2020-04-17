@@ -5058,16 +5058,16 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
     for(i=0; i<request->NumParams; i++) {
       if (request->ParamNames[i] && request->ParamValues[i]) {
         if( msWFSSetParam(&(wfsparams->pszVersion), request, i, "VERSION") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszUpdateSequence), request, i, "UPDATESEQUENCE") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszRequest), request, i, "REQUEST") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszService), request, i, "SERVICE") )
-            ;
+        {}
 
         else if (strcasecmp(request->ParamNames[i], "MAXFEATURES") == 0)
           wfsparams->nMaxFeatures = atoi(request->ParamValues[i]);
@@ -5080,58 +5080,58 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
           wfsparams->nStartIndex = atoi(request->ParamValues[i]);
 
         else if( msWFSSetParam(&(wfsparams->pszBbox), request, i, "BBOX") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszSrs), request, i, "SRSNAME") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszResultType), request, i, "RESULTTYPE") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszTypeName), request, i, "TYPENAME") )
-            ;
+        {}
 
         /* WFS 2.0 */
         else if( msWFSSetParam(&(wfsparams->pszTypeName), request, i, "TYPENAMES") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszFilter), request, i, "FILTER") )
-            ;
+        {}
 
         /* WFS 2.0 */
         else if( msWFSSetParam(&(wfsparams->pszFilterLanguage), request, i, "FILTER_LANGUAGE") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszOutputFormat), request, i, "OUTPUTFORMAT") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszFeatureId), request, i, "FEATUREID") )
-            ;
+        {}
 
         /* WFS 2.0 */
         else if( msWFSSetParam(&(wfsparams->pszFeatureId), request, i, "RESOURCEID") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszPropertyName), request, i, "PROPERTYNAME") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszAcceptVersions), request, i, "ACCEPTVERSIONS") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszSections), request, i, "SECTIONS") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszSortBy), request, i, "SORTBY") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszLanguage), request, i, "LANGUAGE") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszValueReference), request, i, "VALUEREFERENCE") )
-            ;
+        {}
 
         else if( msWFSSetParam(&(wfsparams->pszStoredQueryId), request, i, "STOREDQUERY_ID") )
-            ;
+        {}
       }
     }
     /* version is optional is the GetCapabilities. If not */
