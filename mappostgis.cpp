@@ -3018,6 +3018,7 @@ static int msPostGISLayerGetItems(layerObj *layer)
 #endif
 }
 
+#ifdef USE_POSTGIS
 static std::string addTableNameAndFilterToSelectFrom(layerObj *layer,
                                             const std::string& selectFrom)
 {
@@ -3051,6 +3052,7 @@ static std::string addTableNameAndFilterToSelectFrom(layerObj *layer,
     }
     return strSQL;
 }
+#endif
 
 /*
 ** msPostGISLayerGetExtent()
@@ -3192,6 +3194,7 @@ static int msPostGISLayerGetNumFeatures(layerObj *layer)
 #endif
 }
 
+#ifdef USE_POSTGIS
 /*
  * make sure that the timestring is complete and acceptable
  * to the date_trunc function :
@@ -3402,6 +3405,7 @@ static int createPostgresTimeCompareLessThan(const char *timestring, char *dest,
   snprintf(dest, destsize,"(date_trunc('%s',%s) + interval '1 %s' - interval '1 second')", interval, timestamp, interval);
   return MS_SUCCESS;
 }
+#endif
 
 static char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
 {
