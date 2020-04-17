@@ -101,7 +101,7 @@ add_custom_command(
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMAND ${PYTHON_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log
     COMMAND ${PYTHON_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
-    COMMENT "Building and insalling the mapscript Python wheel"
+    COMMENT "Building and installing the mapscript Python wheel"
 )
 
 add_custom_command(
