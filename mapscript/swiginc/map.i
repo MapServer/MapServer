@@ -111,6 +111,17 @@
     {
         return msMapSetSize(self, width, height);
     }
+
+    void pixelToGeoref(double pixPosX, double pixPosY, pointObj *geoPos)
+    {
+       geoPos->x = self->gt.geotransform[0] + self->gt.geotransform[1] * pixPosX + self->gt.geotransform[2] * pixPosY;
+       geoPos->y = self->gt.geotransform[3] + self->gt.geotransform[4] * pixPosX + self->gt.geotransform[5] * pixPosY;
+    }
+
+    double getRotation() 
+    {
+        return self->gt.rotation_angle;
+    }
     
     int setRotation( double rotation_angle ) 
     {
