@@ -1471,7 +1471,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             msStringBufferAppend(property, psRoot->psChild->pszValue);
             msStringBufferAppend(property, "]");
             msStringBufferAppend(property, strDelim);
-            msInitExpression(&(psStyle->exprBindings[binding]));
+            msInitExpression(&(exprBindings[binding]));
             exprBindings[binding].string =
                 msStringBufferReleaseStringAndFree(property);
             exprBindings[binding].type = MS_EXPRESSION;
