@@ -580,7 +580,7 @@ extern "C" {
     char *filter;
     struct _CompositingFilter *next;
   } CompositingFilter;
-  
+
   typedef struct _LayerCompositer{
     CompositingOperation comp_op;
     int opacity;
@@ -625,8 +625,8 @@ extern "C" {
   /* Define supported bindings here (only covers existing bindings at first). Not accessible directly using MapScript. */
 #define MS_STYLE_BINDING_LENGTH 12
   enum MS_STYLE_BINDING_ENUM { MS_STYLE_BINDING_SIZE, MS_STYLE_BINDING_WIDTH, MS_STYLE_BINDING_ANGLE, MS_STYLE_BINDING_COLOR, MS_STYLE_BINDING_OUTLINECOLOR, MS_STYLE_BINDING_SYMBOL, MS_STYLE_BINDING_OUTLINEWIDTH, MS_STYLE_BINDING_OPACITY, MS_STYLE_BINDING_OFFSET_X, MS_STYLE_BINDING_OFFSET_Y, MS_STYLE_BINDING_POLAROFFSET_PIXEL, MS_STYLE_BINDING_POLAROFFSET_ANGLE };
-#define MS_LABEL_BINDING_LENGTH 9
-  enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY, MS_LABEL_BINDING_POSITION, MS_LABEL_BINDING_SHADOWSIZEX, MS_LABEL_BINDING_SHADOWSIZEY };
+#define MS_LABEL_BINDING_LENGTH 12
+  enum MS_LABEL_BINDING_ENUM { MS_LABEL_BINDING_SIZE, MS_LABEL_BINDING_ANGLE, MS_LABEL_BINDING_COLOR, MS_LABEL_BINDING_OUTLINECOLOR, MS_LABEL_BINDING_FONT, MS_LABEL_BINDING_PRIORITY, MS_LABEL_BINDING_POSITION, MS_LABEL_BINDING_SHADOWSIZEX, MS_LABEL_BINDING_SHADOWSIZEY, MS_LABEL_BINDING_OFFSET_X, MS_LABEL_BINDING_OFFSET_Y,MS_LABEL_BINDING_ALIGN };
 
   /************************************************************************/
   /*                         attributeBindingObj                          */
@@ -770,7 +770,7 @@ extern "C" {
     colorObj *pixel; /* for raster layers */
     shapeObj *shape; /* for vector layers */
     double dblval; /* for map cellsize used by simplify */
-    double dblval2; /* for data cellsize */    
+    double dblval2; /* for data cellsize */
     expressionObj *expr; /* expression to be evaluated (contains tokens) */
     int type; /* type of parse: boolean, string/text or shape/geometry */
     parseResultObj result; /* parse result */
@@ -879,10 +879,10 @@ extern "C" {
     long tileindex;
     int clear_resultcache;
 
-    int  maxfeatures; /* global maxfeatures */    
+    int  maxfeatures; /* global maxfeatures */
     int  startindex;
     int  only_cache_result_count; /* set to 1 sometimes by WFS 2.0 GetFeature request */
-    
+
     expressionObj filter; /* by filter */
     char *filteritem;
 
@@ -1150,7 +1150,7 @@ extern "C" {
 #endif /* not SWIG */
 
   };
-  
+
 #ifdef SWIG
 #ifdef	__cplusplus
 extern "C" {
@@ -1167,7 +1167,7 @@ typedef struct labelObj labelObj;
     lineObj *poly;
     rectObj bbox;
   } label_bounds;
-  
+
   typedef struct {
     labelObj *label;
     char *annotext;
@@ -1190,14 +1190,14 @@ typedef struct labelObj labelObj;
   /*                                                                      */
   /*      basic symbolization and classification information              */
   /************************************************************************/
-  
+
   struct classObj {
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
 #endif
 
     int status;
-    int isfallback; // TRUE if this class should be applied if and only if      
+    int isfallback; // TRUE if this class should be applied if and only if
                     // no other class is applicable (e.g. SLD <ElseFilter/>)
 
 #ifndef SWIG
@@ -1594,7 +1594,7 @@ typedef struct labelObj labelObj;
     double maxscale;
     char *value;
   } scaleTokenEntryObj;
-  
+
   typedef struct {
      char *name;
      int n_entries;
@@ -1679,7 +1679,7 @@ typedef struct labelObj labelObj;
     scaleTokenObj *scaletokens;
     int numscaletokens;
     originalScaleTokenStrings *orig_st;
-    
+
 #endif
 
     char *data; /* filename, can be relative or full path */
@@ -1805,7 +1805,7 @@ typedef struct labelObj labelObj;
 #endif
     char *mask;
 
-#ifndef SWIG    
+#ifndef SWIG
     expressionObj _geomtransform;
 #endif
 
@@ -1819,7 +1819,7 @@ typedef struct labelObj labelObj;
 #ifndef SWIG
     sortByClause sortBy;
 #endif
-    
+
     LayerCompositer *compositer;
 
     hashTableObj connectionoptions;
@@ -2565,7 +2565,7 @@ extern "C" {
   MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msUVRASTERLayerInitializeVirtualTable(layerObj *layer);
-  MS_DLL_EXPORT int msContourLayerInitializeVirtualTable(layerObj *layer);  
+  MS_DLL_EXPORT int msContourLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
@@ -2586,7 +2586,7 @@ extern "C" {
   MS_DLL_EXPORT int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
   MS_DLL_EXPORT int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
   MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
-  
+
 #define MS_DRAWMODE_FEATURES    0x00001
 #define MS_DRAW_FEATURES(mode) (MS_DRAWMODE_FEATURES&(mode))
 #define MS_DRAWMODE_LABELS      0x00002
@@ -2732,7 +2732,7 @@ extern "C" {
   MS_DLL_EXPORT unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format);
   MS_DLL_EXPORT shapeObj* msOffsetPolyline(shapeObj* shape, double offsetx, double offsety);
   MS_DLL_EXPORT int msMapSetLayerProjections(mapObj* map);
-  
+
   /* Functions to chnage the drawing order of the layers. */
   /* Defined in mapobject.c */
   MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
@@ -2978,8 +2978,8 @@ extern "C" {
   MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *s, char *transform);
   MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
 
-  MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape);  
-  
+  MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape);
+
   /* ==================================================================== */
   /*      end of prototypes for functions in mapgeomtransform.c                 */
   /* ==================================================================== */
@@ -2999,7 +2999,7 @@ extern "C" {
   /*      prototypes for functions in mapsmoothing.c                      */
   /* ==================================================================== */
   MS_DLL_EXPORT shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing);
-  
+
   /* ==================================================================== */
   /*      end of prototypes for functions in mapsmoothing.c               */
   /* ==================================================================== */
@@ -3014,7 +3014,7 @@ extern "C" {
   MS_DLL_EXPORT char* msV8GetFeatureStyle(mapObj *map, const char *filename,
                                           layerObj *layer, shapeObj *shape);
   MS_DLL_EXPORT shapeObj *msV8TransformShape(shapeObj *shape,
-                                             const char* filename);  
+                                             const char* filename);
 #endif
   /* ==================================================================== */
   /*      end of prototypes for functions in mapv8.cpp                    */
@@ -3144,10 +3144,10 @@ extern "C" {
   int msSaveRasterBuffer(mapObj *map, rasterBufferObj *data, FILE *stream, outputFormatObj *format);
   int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer, outputFormatObj *format);
   int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb);
-  
+
   /* in mapagg.cpp */
   void msApplyBlurringCompositingFilter(rasterBufferObj *rb, unsigned int radius);
-  
+
   int WARN_UNUSED msApplyCompositingFilter(mapObj *map, rasterBufferObj *rb, CompositingFilter *filter);
 
   void msBufferInit(bufferObj *buffer);
