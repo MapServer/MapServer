@@ -12,6 +12,13 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.0-rc3 release (2020-04-24)
+------------------------------
+
+- Handle special characters in paths on Windows (#5995)
+
+- Add attribute binding for label ALIGN, OFFSET, POSITION (#6052)
+
 7.6.0-rc2 release (2020-04-10)
 ------------------------------
 
