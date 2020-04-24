@@ -1384,7 +1384,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
             propertyString = msStringConcatenate(propertyString, "]");
             propertyString = msStringConcatenate(propertyString, strDelim);
-            msInitExpression(&(psStyle->exprBindings[binding]));
+            msInitExpression(&(exprBindings[binding])); 
             exprBindings[binding].string = propertyString;
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
