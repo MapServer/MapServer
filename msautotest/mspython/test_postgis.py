@@ -167,6 +167,7 @@ def test_postgis_invalid_data(data):
 @pytest.mark.parametrize("data",
                          ["the_geom from multipolygon3d",
                           "the_geom from (select * from multipolygon3d) as foo using unique id",
+                          "the_geom FROM (SELECT * FROM multipolygon3d) AS foo USING UNIQUE id",
                           "the_geom from multipolygon3d using unique id",
                           "the_geom from multipolygon3d using srid=27700",
                           "the_geom from multipolygon3d using srid=27700 using unique id",
