@@ -1344,9 +1344,9 @@ int msPostGISParseData(layerObj *layer)
   if ( pos_use_2nd )
   {
     for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
-    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+    if ( strncasecmp ( tmp, "unique ", 7 ) == 0 )
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
-    if ( strncmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
+    if ( strncasecmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
   };
 
   /*
@@ -1355,7 +1355,7 @@ int msPostGISParseData(layerObj *layer)
   if ( pos_use_1st )
   {
     for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
-    if ( strncmp ( tmp, "unique ", 7 ) == 0 )
+    if ( strncasecmp ( tmp, "unique ", 7 ) == 0 )
     {
       if ( pos_uid )
       {
@@ -1365,7 +1365,7 @@ int msPostGISParseData(layerObj *layer)
       };
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
     };
-    if ( strncmp ( tmp, "srid=", 5 ) == 0 )
+    if ( strncasecmp ( tmp, "srid=", 5 ) == 0 )
     {
       if ( pos_srid )
       {
