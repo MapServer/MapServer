@@ -12,6 +12,13 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.0-rc4 release (2020-05-04)
+------------------------------
+
+- Fix case insensitive 'using unique' for PostGIS connections (#6062)
+
+- Add handling essential WMS layers (#6061)
+
 7.6.0-rc3 release (2020-04-24)
 ------------------------------
 
