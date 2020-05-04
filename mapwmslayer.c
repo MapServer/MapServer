@@ -1278,6 +1278,18 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   int currentconnectiontype;
   int numclasses;
   char *mem_filename = NULL;
+  const char *pszTmp;
+  int bIsEssential;
+
+  /* ------------------------------------------------------------------
+   * Sometimes a requested layer is essential for the map, so if the
+   * request fails or an error is delivered, the map has not to be drawn
+   * ------------------------------------------------------------------ */
+  bIsEssential = MS_FALSE;
+  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
+                                    "MO", "essential")) != NULL) {
+    bIsEssential = atoi(pszTmp);
+  }
 
   /* ------------------------------------------------------------------
    * Find the request info for this layer in the array, based on nLayerId
@@ -1297,8 +1309,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   if ( !MS_HTTP_SUCCESS( pasReqInfo[iReq].nStatus ) ) {
     /* ====================================================================
           Failed downloading layer... we log an error but we still return
-          SUCCESS here so that the layer is only skipped intead of aborting
+          SUCCESS here so that the layer is only skipped instead of aborting
           the whole draw map.
+          If the layer is essential the map is not to be drawn.
      ==================================================================== */
     msSetError(MS_WMSERR,
                "WMS GetMap request failed for layer '%s' (Status %d: %s).",
@@ -1306,14 +1319,18 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
                (lp->name?lp->name:"(null)"),
                pasReqInfo[iReq].nStatus, pasReqInfo[iReq].pszErrBuf );
 
-    return MS_SUCCESS;
+    if (!bIsEssential)
+      return MS_SUCCESS;
+    else
+      return MS_FAILURE;
   }
 
   /* ------------------------------------------------------------------
    * Check the Content-Type of the response to see if we got an exception,
    * if yes then try to parse it and pass the info to msSetError().
    * We log an error but we still return SUCCESS here so that the layer
-   * is only skipped intead of aborting the whole draw map.
+   * is only skipped instead of aborting the whole draw map.
+   * If the layer is essential the map is not to be drawn.
    * ------------------------------------------------------------------ */
   if (pasReqInfo[iReq].pszContentType &&
       (strcmp(pasReqInfo[iReq].pszContentType, "text/xml") == 0 ||
@@ -1358,7 +1375,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
                "msDrawWMSLayerLow()",
                (lp->name?lp->name:"(null)"), szBuf );
 
-    return MS_SUCCESS;
+    if (!bIsEssential)
+      return MS_SUCCESS;
+    else
+      return MS_FAILURE;
   }
 
   /* ------------------------------------------------------------------
