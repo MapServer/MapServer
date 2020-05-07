@@ -886,7 +886,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
-      
+
     if (!bIsEssential) {
       if (pszExceptionsParam == NULL) {
         if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
@@ -894,17 +894,9 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         else
           pszExceptionsParam = "INIMAGE";
       }
-    }
-    /* if layer is essential, set EXCEPTIONS parameter to XML */    
-    else {                        
-      if (nVersion >= OWS_1_3_0)
-        pszExceptionsParam = "XML";
-      else if (nVersion >= OWS_1_1_0) /* 1.1.0 to 1.1.0 */
-        pszExceptionsParam = "application/vnd.ogc.se_xml";
-      else if (nVersion > OWS_1_0_0)  /* 1.0.1 to 1.0.7 */
-        pszExceptionsParam = "SE_XML";
-      else
-        pszExceptionsParam = "WMS_XML";                
+    } else {
+      /* if layer is essential, do not emit EXCEPTIONS parameter (defaults to XML) */
+      pszExceptionsParam = NULL;
     }
 
     msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
@@ -920,7 +912,9 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
     }
     msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE, nVersion);
-    msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE, nVersion);
+    if( pszExceptionsParam ) {
+      msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE, nVersion);
+    }
   }
 
   free(pszEPSG);
