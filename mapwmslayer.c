@@ -429,7 +429,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   int bUseStrictAxisOrder = MS_FALSE; /* this is the assumption up to 1.1.0 */
   int bFlipAxisOrder = MS_FALSE;
   const char *pszTmp;
-  int bIsEssential;
+  int bIsEssential = MS_FALSE;
   
   if (lp->connectiontype != MS_WMS) {
     msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
@@ -785,10 +785,14 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    * Sometimes a requested layer is essential for the map, so if the
    * request fails or an error is delivered, the map has not to be drawn
    * ------------------------------------------------------------------ */
-  bIsEssential = MS_FALSE;
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
                                     "MO", "essential")) != NULL) {
-    bIsEssential = atoi(pszTmp);
+    if( strcasecmp(pszTmp,"true") == 0
+        || strcasecmp(pszTmp,"on") == 0
+        || strcasecmp(pszTmp,"yes") == 0 )
+      bIsEssential = MS_TRUE;
+    else
+      bIsEssential = atoi(pszTmp);       
   }
 
   if (nRequestType == WMS_GETFEATUREINFO) {
@@ -1299,16 +1303,20 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   int numclasses;
   char *mem_filename = NULL;
   const char *pszTmp;
-  int bIsEssential;
+  int bIsEssential = MS_FALSE;
 
   /* ------------------------------------------------------------------
    * Sometimes a requested layer is essential for the map, so if the
    * request fails or an error is delivered, the map has not to be drawn
    * ------------------------------------------------------------------ */
-  bIsEssential = MS_FALSE;
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
                                     "MO", "essential")) != NULL) {
-    bIsEssential = atoi(pszTmp);
+    if( strcasecmp(pszTmp,"true") == 0
+        || strcasecmp(pszTmp,"on") == 0
+        || strcasecmp(pszTmp,"yes") == 0 )
+      bIsEssential = MS_TRUE;
+    else
+      bIsEssential = atoi(pszTmp);      
   }
 
   /* ------------------------------------------------------------------
