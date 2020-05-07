@@ -428,7 +428,9 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   int nVersion=OWS_VERSION_NOTSET;
   int bUseStrictAxisOrder = MS_FALSE; /* this is the assumption up to 1.1.0 */
   int bFlipAxisOrder = MS_FALSE;
-
+  const char *pszTmp;
+  int bIsEssential;
+  
   if (lp->connectiontype != MS_WMS) {
     msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
                "msBuildWMSLayerURL()");
@@ -779,6 +781,16 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    *   QUERY_LAYERS (for queryable layers only)
    * ------------------------------------------------------------------ */
 
+  /* ------------------------------------------------------------------
+   * Sometimes a requested layer is essential for the map, so if the
+   * request fails or an error is delivered, the map has not to be drawn
+   * ------------------------------------------------------------------ */
+  bIsEssential = MS_FALSE;
+  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
+                                    "MO", "essential")) != NULL) {
+    bIsEssential = atoi(pszTmp);
+  }
+
   if (nRequestType == WMS_GETFEATUREINFO) {
     char szBuf[100] = "";
 
@@ -874,11 +886,25 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
-    if (pszExceptionsParam == NULL) {
-      if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
-        pszExceptionsParam = "application/vnd.ogc.se_inimage";
+      
+    if (!bIsEssential) {
+      if (pszExceptionsParam == NULL) {
+        if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
+          pszExceptionsParam = "application/vnd.ogc.se_inimage";
+        else
+          pszExceptionsParam = "INIMAGE";
+      }
+    }
+    /* if layer is essential, set EXCEPTIONS parameter to XML */    
+    else {                        
+      if (nVersion >= OWS_1_3_0)
+        pszExceptionsParam = "XML";
+      else if (nVersion >= OWS_1_1_0) /* 1.1.0 to 1.1.0 */
+        pszExceptionsParam = "application/vnd.ogc.se_xml";
+      else if (nVersion > OWS_1_0_0)  /* 1.0.1 to 1.0.7 */
+        pszExceptionsParam = "SE_XML";
       else
-        pszExceptionsParam = "INIMAGE";
+        pszExceptionsParam = "WMS_XML";                
     }
 
     msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
