@@ -12,6 +12,11 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.0 release (2020-05-08)
+--------------------------
+
+- for essential WMS client layers set EXCEPTIONS to XML by default (#6066)
+
 7.6.0-rc4 release (2020-05-04)
 ------------------------------
 
