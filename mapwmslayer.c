@@ -428,7 +428,9 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   int nVersion=OWS_VERSION_NOTSET;
   int bUseStrictAxisOrder = MS_FALSE; /* this is the assumption up to 1.1.0 */
   int bFlipAxisOrder = MS_FALSE;
-
+  const char *pszTmp;
+  int bIsEssential = MS_FALSE;
+  
   if (lp->connectiontype != MS_WMS) {
     msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
                "msBuildWMSLayerURL()");
@@ -779,6 +781,20 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    *   QUERY_LAYERS (for queryable layers only)
    * ------------------------------------------------------------------ */
 
+  /* ------------------------------------------------------------------
+   * Sometimes a requested layer is essential for the map, so if the
+   * request fails or an error is delivered, the map has not to be drawn
+   * ------------------------------------------------------------------ */
+  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
+                                    "MO", "essential")) != NULL) {
+    if( strcasecmp(pszTmp,"true") == 0
+        || strcasecmp(pszTmp,"on") == 0
+        || strcasecmp(pszTmp,"yes") == 0 )
+      bIsEssential = MS_TRUE;
+    else
+      bIsEssential = atoi(pszTmp);       
+  }
+
   if (nRequestType == WMS_GETFEATUREINFO) {
     char szBuf[100] = "";
 
@@ -874,11 +890,17 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
-    if (pszExceptionsParam == NULL) {
-      if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
-        pszExceptionsParam = "application/vnd.ogc.se_inimage";
-      else
-        pszExceptionsParam = "INIMAGE";
+
+    if (!bIsEssential) {
+      if (pszExceptionsParam == NULL) {
+        if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
+          pszExceptionsParam = "application/vnd.ogc.se_inimage";
+        else
+          pszExceptionsParam = "INIMAGE";
+      }
+    } else {
+      /* if layer is essential, do not emit EXCEPTIONS parameter (defaults to XML) */
+      pszExceptionsParam = NULL;
     }
 
     msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE, nVersion);
@@ -894,7 +916,9 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
     }
     msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE, nVersion);
-    msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE, nVersion);
+    if( pszExceptionsParam ) {
+      msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE, nVersion);
+    }
   }
 
   free(pszEPSG);
@@ -1279,16 +1303,20 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   int numclasses;
   char *mem_filename = NULL;
   const char *pszTmp;
-  int bIsEssential;
+  int bIsEssential = MS_FALSE;
 
   /* ------------------------------------------------------------------
    * Sometimes a requested layer is essential for the map, so if the
    * request fails or an error is delivered, the map has not to be drawn
    * ------------------------------------------------------------------ */
-  bIsEssential = MS_FALSE;
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
                                     "MO", "essential")) != NULL) {
-    bIsEssential = atoi(pszTmp);
+    if( strcasecmp(pszTmp,"true") == 0
+        || strcasecmp(pszTmp,"on") == 0
+        || strcasecmp(pszTmp,"yes") == 0 )
+      bIsEssential = MS_TRUE;
+    else
+      bIsEssential = atoi(pszTmp);      
   }
 
   /* ------------------------------------------------------------------
