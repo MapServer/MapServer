@@ -1466,13 +1466,14 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           case MS_LABEL_BASE + MS_LABEL_BINDING_OUTLINECOLOR:
             strDelim = "\"";
           default:
-            propertyString = msStringConcatenate(propertyString, strDelim);
-            propertyString = msStringConcatenate(propertyString, "[");
-            propertyString = msStringConcatenate(propertyString, psRoot->psChild->pszValue);
-            propertyString = msStringConcatenate(propertyString, "]");
-            propertyString = msStringConcatenate(propertyString, strDelim);
-            msInitExpression(&(exprBindings[binding])); 
-            exprBindings[binding].string = propertyString;
+            msStringBufferAppend(property, strDelim);
+            msStringBufferAppend(property, "[");
+            msStringBufferAppend(property, psRoot->psChild->pszValue);
+            msStringBufferAppend(property, "]");
+            msStringBufferAppend(property, strDelim);
+            msInitExpression(&(exprBindings[binding]));
+            exprBindings[binding].string =
+            msStringBufferReleaseStringAndFree(property);
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
             break;
