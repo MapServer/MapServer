@@ -1155,6 +1155,7 @@ static int msPostGISParseData(layerObj *layer)
   */
   if ( pos_use_2nd )
   {
+    const char* tmp;
     for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
     if ( strncasecmp ( tmp, "unique ", 7 ) == 0 )
       for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
@@ -1166,6 +1167,7 @@ static int msPostGISParseData(layerObj *layer)
   */
   if ( pos_use_1st )
   {
+    const char* tmp;
     for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
     if ( strncasecmp ( tmp, "unique ", 7 ) == 0 )
     {
