@@ -12,6 +12,55 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.0 release (2020-05-08)
+--------------------------
+
+- for essential WMS client layers set EXCEPTIONS to XML by default (#6066)
+
+7.6.0-rc4 release (2020-05-04)
+------------------------------
+
+- Fix case insensitive 'using unique' for PostGIS connections (#6062)
+
+- Add handling essential WMS layers (#6061)
+
+7.6.0-rc3 release (2020-04-24)
+------------------------------
+
+- Handle special characters in paths on Windows (#5995)
+
+- Add attribute binding for label ALIGN, OFFSET, POSITION (#6052)
+
+7.6.0-rc2 release (2020-04-10)
+------------------------------
+
+- Fix memory corruption in msGEOSGetCentroid (#6041)
+
+7.6.0-rc1 release (2020-04-05)
+------------------------------
+
+- Fix alpha value for hex colors (#6023)
+
+7.6.0-beta2 release (2020-03-28)
+--------------------------------
+
+- fixed build with PHPNG + gnu_source (#6015)
+
+- fixed rendermode with geomtransform (#6021)
+
+7.6.0-beta1 release (2020-03-22)
+--------------------------------
+
+- Full support for PROJ6 API (#5888)
+
+- Enable PointZM data support (X,Y,Z,M coordinates) by default
+
+- SLD support enhancements (RFC 124) except PR#5832
+
+- CONNECTIONOPTIONS support in mapfile LAYER (RFC 125)
+
+- Enforce C99 and C++11 build requirements (RFC 128)
+
 7.4.4 release (2020-3-20)
 -------------------------
 

@@ -1155,38 +1155,27 @@ static int msPostGISParseData(layerObj *layer)
   */
   if ( pos_use_2nd )
   {
-    const char* tmp;
-    for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ )
-    {
-    }
-    if ( strncasecmp ( tmp, "unique ", 7 ) == 0 ) {
-      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ )
-      {
-      }
-    }
+    for ( tmp = pos_use_2nd + 5; *tmp == ' '; tmp++ );
+    if ( strncasecmp ( tmp, "unique ", 7 ) == 0 )
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
     if ( strncasecmp ( tmp, "srid=", 5 ) == 0 ) pos_srid = tmp + 5;
-  }
+  };
 
   /*
   ** What clause appear after 1st 'using', if set?
   */
   if ( pos_use_1st )
   {
-    const char* tmp;
-    for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ )
-    {
-    }
+    for ( tmp = pos_use_1st + 5; *tmp == ' '; tmp++ );
     if ( strncasecmp ( tmp, "unique ", 7 ) == 0 )
     {
       if ( pos_uid )
       {
         msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Too many 'USING UNIQUE' found! %s", "msPostGISParseData()", layer->data);
         return MS_FAILURE;
-      }
-      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ )
-      {
-      }
-    }
+      };
+      for ( pos_uid = tmp + 7; *pos_uid == ' '; pos_uid++ );
+    };
     if ( strncasecmp ( tmp, "srid=", 5 ) == 0 )
     {
       if ( pos_srid )
