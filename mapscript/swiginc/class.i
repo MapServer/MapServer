@@ -30,6 +30,15 @@
 
 %extend classObj {
 
+%pythoncode %{
+
+    debug = property()
+    """:data:`MS_TRUE` or :data:`MS_FALSE`. See :ref:`DEBUG <mapfile-class-debug>`"""
+
+    maxscaledenom = property()
+    """`double`. See :ref:`MAXSCALEDENOM <mapfile-class-maxscaledenom>`"""
+    
+%}
     // manually add parameter here or get mapscript.mapscript.layerObj in output docs
     %feature("autodoc", "classObj.__init__(layerObj layer=None)
 
@@ -164,7 +173,7 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   }
 
   %feature("docstring") getTextString 
-  "Return a string representation of :mapfile:`TEXT <class.html#index-22>`";
+  "Return a string representation of :ref:`TEXT <mapfile-class-text>`";
   %newobject getTextString;
   char *getTextString() {
     return msGetExpressionString(&(self->text));
