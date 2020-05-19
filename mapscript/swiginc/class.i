@@ -28,6 +28,8 @@
    ===========================================================================
 */
 
+%feature("autodoc", ""); // turn off autodoc
+
 %extend classObj {
 
     %feature("autodoc", "Create a new child classObj instance at the tail (highest index) of the 
