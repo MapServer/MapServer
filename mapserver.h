@@ -1190,10 +1190,17 @@ typedef struct labelObj labelObj;
   /*                                                                      */
   /*      basic symbolization and classification information              */
   /************************************************************************/
-
+#ifdef SWIG
+    %feature("autodoc");
+#endif
   struct classObj {
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
+#endif
+
+#ifdef SWIG
+    %mutable;
+    %feature("docstring", ":data:`MS_ON` or :data:`MS_OFF` - draw features of this class or do not. See :ref:`STATUS <mapfile-class-status>`") status;
 #endif
 
     int status;
@@ -1207,11 +1214,15 @@ typedef struct labelObj labelObj;
 
 #ifdef SWIG
     %immutable;
+    %feature("docstring", "**immutable**. Number of styles for class") numstyles;
+    %feature("docstring", "**immutable**. Number of labels for class") numlabels;
 #endif
     int numstyles;
     int numlabels;
 #ifdef SWIG
     %mutable;
+    %feature("docstring", "See :ref:`NAME <mapfile-class-name>`") name;
+    %feature("docstring", "See :ref:`NAME <mapfile-class-title>`") title;
 #endif
 
 #ifndef SWIG
@@ -1233,23 +1244,33 @@ typedef struct labelObj labelObj;
 
 #ifdef SWIG
     %immutable;
+    %feature("docstring", "**immutable**. See :ref:`METADATA <mapfile-class-metadata>`") metadata;
+    %feature("docstring", "**immutable**. See :ref:`VALIDATION <mapfile-class-validation>`") validation;
 #endif /* SWIG */
     hashTableObj metadata;
     hashTableObj validation;
 #ifdef SWIG
     %mutable;
+    %feature("docstring", "See :ref:`MINSCALEDENOM <mapfile-class-minscaledenom>`") minscaledenom;
+    %feature("docstring", "See :ref:`MAXSCALEDENOM <mapfile-CLASS-maxscaledenom>`") maxscaledenom;
+    %feature("docstring", "See :ref:`MINFEATURESIZE <mapfile-class-minfeaturesize>`") minfeaturesize;
 #endif /* SWIG */
-
     double minscaledenom, maxscaledenom;
     int minfeaturesize; /* minimum feature size (in pixels) to shape */
 #ifdef SWIG
     %immutable;
+    %feature("docstring", "**immutable** Reference to the parent layer") layer;
+    %feature("docstring", "**immutable**. See :ref:`LEADER <mapfile-class-leader>`") leader;
 #endif /* SWIG */
     int refcount;
     struct layerObj *layer;
     labelLeaderObj *leader;
 #ifdef SWIG
     %mutable;
+    %feature("docstring", ":data:`MS_TRUE` or :data:`MS_FALSE`. See :ref:`DEBUG <mapfile-class-debug>`") debug;
+    %feature("docstring", "See :ref:`KEYIMAGE <mapfile-class-keyimage>`") keyimage;
+    %feature("docstring", "See :ref:`GROUP <mapfile-class-group>`") group;
+    %feature("docstring", "Supersedes layer's sizeunits and applies to all styles and labels. See :ref:`LAYER SIZEUNITS <mapfile-layer-sizeunits>`") sizeunits;
 #endif /* SWIG */
     int debug;
 

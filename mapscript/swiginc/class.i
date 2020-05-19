@@ -30,19 +30,7 @@
 
 %extend classObj {
 
-#ifdef SWIGPYTHON
-    %pythoncode %{
-
-    debug = property() #: :data:`MS_TRUE` or :data:`MS_FALSE`. See :ref:`DEBUG <mapfile-class-debug>`
-    maxscaledenom = property() #: `double`. See :ref:`MAXSCALEDENOM <mapfile-class-maxscaledenom>`
-
-    %}
-#endif /* SWIGPYTHON */
-
-    // manually add parameter here or get mapscript.mapscript.layerObj in output docs
-    %feature("autodoc", "classObj.__init__(layerObj layer=None)
-
-Create a new child classObj instance at the tail (highest index) of the 
+    %feature("autodoc", "Create a new child classObj instance at the tail (highest index) of the 
 class array of the parent_layer. A class can be created outside the 
 context of a parent layer by omitting the layerObj constructor argument") classObj;
 
@@ -143,7 +131,7 @@ context of a parent layer by omitting the layerObj constructor argument") classO
     }
 
   %feature("docstring") setExpression 
-  "Set :mapfile:`EXPRESSION <class.html#index-4>` string where `expression` is a MapServer regular, logical or string expression. 
+  "Set :ref:`EXPRESSION <mapfile-class-expression>` string where `expression` is a MapServer regular, logical or string expression. 
 Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int setExpression(char *expression) 
   {
@@ -155,14 +143,14 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   }
 
   %feature("docstring") getExpressionString 
-  "Return a string representation of the :mapfile:`EXPRESSION <class.html#index-4>` enclosed in the quote characters appropriate to the expression type";
+  "Return a string representation of the :ref:`EXPRESSION <mapfile-class-expression>` enclosed in the quote characters appropriate to the expression type";
   %newobject getExpressionString;
   char *getExpressionString() {
     return msGetExpressionString(&(self->expression));
   }
 
   %feature("docstring") setText 
-  "Set :mapfile:`TEXT <class.html#index-22>` string where `text` is a MapServer text expression.
+  "Set :ref:`TEXT <mapfile-class-text>` string where `text` is a MapServer text expression.
 Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int setText(char *text) {
     if (!text || strlen(text) == 0) {
@@ -262,7 +250,7 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
 
   %feature("docstring") removeLabel 
   "Remove the :class:`labelObj` at *index* from the labels array and return a
-reference to the :class:`labelObj`.  numlabels is decremented, and the array is updated";
+reference to the :class:`labelObj`. numlabels is decremented, and the array is updated";
   %newobject removeLabel;
   labelObj *removeLabel(int index) {
     labelObj* label = (labelObj *) msRemoveLabelFromClass(self, index);
