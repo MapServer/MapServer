@@ -28,11 +28,10 @@
    ===========================================================================
 */
 
-%feature("autodoc", ""); // turn off autodoc
 
 %extend classObj {
 
-    %feature("autodoc", "Create a new child classObj instance at the tail (highest index) of the 
+    %feature("docstring", "Create a new child classObj instance at the tail (highest index) of the 
 class array of the parent_layer. A class can be created outside the 
 context of a parent layer by omitting the layerObj constructor argument") classObj;
 

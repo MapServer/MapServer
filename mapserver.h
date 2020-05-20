@@ -1194,7 +1194,6 @@ typedef struct labelObj labelObj;
   struct classObj {
 
 #ifdef SWIG
-    %feature("autodoc"); // setting this adds types to properties but breaks Sphinx links of function parameters
     %immutable;
     %feature("docstring", "**immutable**. See :ref:`METADATA <mapfile-class-metadata>`") metadata;
     %feature("docstring", "**immutable**. See :ref:`VALIDATION <mapfile-class-validation>`") validation;
@@ -1238,6 +1237,12 @@ typedef struct labelObj labelObj;
     char *group;
     int sizeunits; // supersedes layer's sizeunits and applies to all styles and labels
 
+#ifndef __cplusplus
+    char *template;
+#else /* __cplusplus */
+    char *_template; // keyword in cplusplus
+#endif /* __cplusplus */
+
 #ifndef SWIG
     expressionObj text;
     expressionObj expression; /* the expression to be matched */
@@ -1247,12 +1252,6 @@ typedef struct labelObj labelObj;
     styleObj **styles;
     double scalefactor; // computed, not set
 #endif /* not SWIG */
-
-#ifndef __cplusplus
-    char *template;
-#else /* __cplusplus */
-    char *_template;
-#endif /* __cplusplus */
 
   };
 
