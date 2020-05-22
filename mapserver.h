@@ -1192,73 +1192,64 @@ typedef struct labelObj labelObj;
   /************************************************************************/
 
   struct classObj {
-#ifndef SWIG
-    expressionObj expression; /* the expression to be matched */
-#endif
-
-    int status;
-    int isfallback; // TRUE if this class should be applied if and only if
-                    // no other class is applicable (e.g. SLD <ElseFilter/>)
-
-#ifndef SWIG
-    styleObj **styles;
-    int maxstyles;
-#endif
 
 #ifdef SWIG
     %immutable;
-#endif
+    %feature("docstring", "**immutable**. See :ref:`METADATA <mapfile-class-metadata>`") metadata;
+    %feature("docstring", "**immutable**. See :ref:`VALIDATION <mapfile-class-validation>`") validation;
+    %feature("docstring", "**immutable**. Number of styles for class") numstyles;
+    %feature("docstring", "**immutable**. Number of labels for class") numlabels;
+    %feature("docstring", "**immutable** Reference to the parent layer") layer;
+    %feature("docstring", "**immutable**. See :ref:`LEADER <mapfile-class-leader>`") leader;
+#endif /* SWIG */
+
+    hashTableObj metadata;
+    hashTableObj validation;
     int numstyles;
     int numlabels;
+    int refcount;
+    struct layerObj *layer;
+    labelLeaderObj *leader;
+
 #ifdef SWIG
     %mutable;
+    %feature("docstring", ":data:`MS_ON` or :data:`MS_OFF` - draw features of this class or do not. See :ref:`STATUS <mapfile-class-status>`") status;
+    %feature("docstring", "See :ref:`NAME <mapfile-class-name>`") name;
+    %feature("docstring", "See :ref:`NAME <mapfile-class-title>`") title;
+    %feature("docstring", "See :ref:`MINSCALEDENOM <mapfile-class-minscaledenom>`") minscaledenom;
+    %feature("docstring", "See :ref:`MAXSCALEDENOM <mapfile-CLASS-maxscaledenom>`") maxscaledenom;
+    %feature("docstring", "See :ref:`MINFEATURESIZE <mapfile-class-minfeaturesize>`") minfeaturesize;
+    %feature("docstring", ":data:`MS_TRUE` or :data:`MS_FALSE`. See :ref:`DEBUG <mapfile-class-debug>`") debug;
+    %feature("docstring", "See :ref:`KEYIMAGE <mapfile-class-keyimage>`") keyimage;
+    %feature("docstring", "See :ref:`GROUP <mapfile-class-group>`") group;
+    %feature("docstring", "Supersedes layer's sizeunits and applies to all styles and labels. See :ref:`LAYER SIZEUNITS <mapfile-layer-sizeunits>`") sizeunits;
 #endif
 
-#ifndef SWIG
-    labelObj **labels;
-    int maxlabels;
-#endif
+    int status;
+    int isfallback; // TRUE if this class should be applied if and only if no other class is applicable (e.g. SLD <ElseFilter/>)
     char *name; /* should be unique within a layer */
     char *title; /* used for legend labelling */
-
-#ifndef SWIG
-    expressionObj text;
-#endif /* not SWIG */
+    double minscaledenom;
+    double maxscaledenom;
+    int minfeaturesize; /* minimum feature size (in pixels) to shape */
+    int debug;
+    char *keyimage;
+    char *group;
+    int sizeunits; // supersedes layer's sizeunits and applies to all styles and labels
 
 #ifndef __cplusplus
     char *template;
 #else /* __cplusplus */
-    char *_template;
+    char *_template; // keyword in cplusplus
 #endif /* __cplusplus */
 
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    hashTableObj metadata;
-    hashTableObj validation;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-    double minscaledenom, maxscaledenom;
-    int minfeaturesize; /* minimum feature size (in pixels) to shape */
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    int refcount;
-    struct layerObj *layer;
-    labelLeaderObj *leader;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-    int debug;
-
-    char *keyimage;
-
-    char *group;
-
-    int sizeunits; // supersedes layer's sizeunits and applies to all styles and labels
 #ifndef SWIG
+    expressionObj text;
+    expressionObj expression; /* the expression to be matched */
+    labelObj **labels;
+    int maxlabels;
+    int maxstyles;
+    styleObj **styles;
     double scalefactor; // computed, not set
 #endif /* not SWIG */
 
