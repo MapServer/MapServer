@@ -29,6 +29,7 @@
 %extend clusterObj
 {
 
+
   %feature("docstring") updateFromString 
   "Update a cluster from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int updateFromString(char *snippet)
@@ -45,7 +46,7 @@
   }
 
   %feature("docstring") setGroup 
-  "Set :mapfile:`GROUP <cluster.html#index-5>` string where `group` is a MapServer text expression.
+  "Set :ref:`GROUP <mapfile-cluster-group>` string where `group` is a MapServer text expression.
 Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int setGroup(char *group) 
   {
@@ -57,14 +58,14 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   }
 
   %feature("docstring") getGroupString 
-  "Return a string representation of :mapfile:`GROUP <cluster.html#index-5>`";
+  "Return a string representation of :ref:`GROUP <mapfile-cluster-group>`";
   %newobject getGroupString;
   char *getGroupString() {
     return msGetExpressionString(&(self->group));
   }
 
   %feature("docstring") setFilter 
-  "Set :mapfile:`FILTER <cluster.html#index-6>` string where `filter` is a MapServer text expression.
+  "Set :ref:`FILTER <mapfile-cluster-filter>` string where `filter` is a MapServer text expression.
 Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   int setFilter(char *filter) {
     if (!filter || strlen(filter) == 0) {
@@ -75,7 +76,7 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
   }
 
   %feature("docstring") getFilterString 
-  "Return a string representation of :mapfile:`FILTER <cluster.html#index-6>`";
+  "Return a string representation of :ref:`FILTER <mapfile-cluster-filter>`";
   %newobject getFilterString;
   char *getFilterString() {
     return msGetExpressionString(&(self->filter));
