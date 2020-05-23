@@ -106,8 +106,6 @@ artifacts:
 
 deploy_script:
   - ps: |
-deploy_script:
-  - ps: |
         if ($env:APPVEYOR_REPO_TAG -ne $TRUE -and ($env:APPVEYOR_REPO_TAG -cSplit "-").Count -eq 4) { return }
             if ($env:PYTHON_EXECUTABLE -eq "c:/python36-x64/python.exe") {
             # create a single source dist
