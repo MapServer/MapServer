@@ -106,11 +106,12 @@ artifacts:
 
 deploy_script:
   - ps: |
-        if ($env:APPVEYOR_REPO_BRANCH -ne "master" -or $env:APPVEYOR_REPO_TAG -ne $TRUE) { return }
+        if ($env:APPVEYOR_REPO_TAG -ne $TRUE -and ($env:APPVEYOR_REPO_TAG -cSplit "-").Count -eq 4) { return }
             if ($env:PYTHON_EXECUTABLE -eq "c:/python36-x64/python.exe") {
+            # create a single source dist
             cd $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release
                 & $env:PYTHON_EXECUTABLE setup.py sdist
             }
             echo "Deploying Python Wheel to PyPI"
             & $env:PYTHON_EXECUTABLE -m pip --disable-pip-version-check install twine
-            & $env:PYTHON_EXECUTABLE -m twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release\dist\*
+            & $env:PYTHON_EXECUTABLE -m twine upload --repository-url https://pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release\dist\*
