@@ -779,6 +779,12 @@ extern "C" {
 
   /* MS RFC 69*/
   typedef struct {
+#ifdef SWIG
+    %feature("docstring", "The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.") clusterObj;
+    %feature("docstring", "See :ref:`BUFFER <mapfile-class-maxdistance>`") maxdistance;
+    %feature("docstring", "See :ref:`MAXDISTANCE <mapfile-class-buffer>`") buffer;
+    %feature("docstring", "See :ref:`REGION <mapfile-class-region>`") region;
+#endif /* SWIG */
     double maxdistance; /* max distance between clusters */
     double buffer;      /* the buffer size around the selection area */
     char* region;       /* type of the cluster region (rectangle or ellipse) */
@@ -1191,6 +1197,10 @@ typedef struct labelObj labelObj;
   /*      basic symbolization and classification information              */
   /************************************************************************/
 
+#ifdef SWIG
+    %feature("docstring", "The :ref:`CLASS <class>` object. Used for symbolization and classification information.") classObj;
+#endif /* SWIG */
+
   struct classObj {
 
 #ifdef SWIG
@@ -1214,8 +1224,9 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
     %mutable;
     %feature("docstring", ":data:`MS_ON` or :data:`MS_OFF` - draw features of this class or do not. See :ref:`STATUS <mapfile-class-status>`") status;
+    %feature("docstring", ":data:`MS_TRUE` or :data:`MS_FALSE`. :data:`MS_TRUE` if this class should be applied if and only if no other class is applicable") isfallback;
     %feature("docstring", "See :ref:`NAME <mapfile-class-name>`") name;
-    %feature("docstring", "See :ref:`NAME <mapfile-class-title>`") title;
+    %feature("docstring", "See :ref:`TITLE <mapfile-class-title>`") title;
     %feature("docstring", "See :ref:`MINSCALEDENOM <mapfile-class-minscaledenom>`") minscaledenom;
     %feature("docstring", "See :ref:`MAXSCALEDENOM <mapfile-CLASS-maxscaledenom>`") maxscaledenom;
     %feature("docstring", "See :ref:`MINFEATURESIZE <mapfile-class-minfeaturesize>`") minfeaturesize;
