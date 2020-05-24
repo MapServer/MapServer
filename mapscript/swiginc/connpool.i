@@ -28,5 +28,5 @@
 
 %feature("docstring") msConnPoolCloseUnreferenced 
 "Some memory leaks can be avoided by calling 
-msConnPoolCloseUnreferenced from time to time. See https://github.com/mapserver/mapserver/issues/1661";
+``msConnPoolCloseUnreferenced`` from time to time. See https://github.com/mapserver/mapserver/issues/1661";
 void msConnPoolCloseUnreferenced();

@@ -43,6 +43,13 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
 
 /* COLOR OBJECT */
 typedef struct {
+#ifdef SWIG
+  %feature("docstring", "An object representing a color.") colorObj;
+  %feature("docstring", "Red component of color in range [0-255]") red;
+  %feature("docstring", "Green component of color in range [0-255]") green;
+  %feature("docstring", "Blue component of color in range [0-255]") blue;
+  %feature("docstring", "Alpha (opacity) component of color in range [0-255]") alpha;
+#endif /* SWIG */
   int red;
   int green;
   int blue;

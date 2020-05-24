@@ -31,9 +31,8 @@
 %extend colorObj 
 {
 
-    %feature("autodoc", "colorObj.__init__()
-
-Create a new instance. The color arguments are optional.") colorObj;
+    %feature("docstring") colorObj
+    "Create a new instance. The color arguments are optional";
     colorObj(int red=0, int green=0, int blue=0, int alpha=255) 
     {
         colorObj *color;
@@ -59,7 +58,7 @@ Create a new instance. The color arguments are optional.") colorObj;
         free(self);
     }
 
-    %feature("docstring") setRGB 
+    %feature("docstring") setRGB
     "Set all four RGBA components. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int setRGB(int red, int green, int blue, int alpha = 255) 
     {
@@ -73,11 +72,11 @@ Create a new instance. The color arguments are optional.") colorObj;
         return MS_SUCCESS;
     }
 
-    %feature("docstring") setHex 
+    %feature("docstring") setHex
     "Set the color to values specified in case-independent hexadecimal notation. 
-hex must start with a '#' followed by three or four hex bytes, e.g. '#ffffff' 
-or '#ffffffff'. If only three hex bytes are supplied, the alpha will be set 
-to 255. Calling setHex('#ffffff') therefore assigns values of 255 to each 
+hex must start with a ``#`` followed by three or four hex bytes, e.g. ``#ffffff``
+or ``#ffffffff``. If only three hex bytes are supplied, the alpha will be set 
+to 255. Calling ``setHex('#ffffff')`` therefore assigns values of 255 to each 
 color component, including the alpha. 
 Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     int setHex(char *psHexColor) 
@@ -105,9 +104,9 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     }   
 
     %feature("docstring") toHex 
-    "Complement to setHex, returning a hexadecimal representation of the color 
-components. If alpha is 255 then this is three hex bytes '#rrggbb', 
-otherwise four hex bytes '#rrggbbaa'";
+    "Complement to ``setHex``, returning a hexadecimal representation of the color 
+components. If alpha is ``255`` then this is three hex bytes ``#rrggbb``, 
+otherwise four hex bytes ``#rrggbbaa``";
     %newobject toHex;
     char *toHex() 
     {
