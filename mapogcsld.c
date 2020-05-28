@@ -74,6 +74,7 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
   int nStatus = MS_FAILURE;
 
   if (map && szURL) {
+    map->sldurl = (char*)szURL;
     pszSLDTmpFile = msTmpFile(map, map->mappath, NULL, "sld.xml");
     if (pszSLDTmpFile == NULL) {
       pszSLDTmpFile = msTmpFile(map, NULL, NULL, "sld.xml" );
@@ -112,6 +113,7 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
       if (pszSLDbuf)
         nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
+    map->sldurl = NULL;
   }
 
   msFree(pszSLDbuf);
@@ -2392,10 +2394,35 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
       if (psTmp && psTmp->psChild) {
         pszURL = (char*)psTmp->psChild->pszValue;
 
+        char *symbolurl = NULL;
+        // Handle relative URL for ExternalGraphic
+        if (map->sldurl && !strstr(pszURL,"://"))
+        {
+          if (pszURL[0] != '/') {
+            // Symbol file is relative to SLD file
+            symbolurl = malloc(sizeof(char)*MS_MAXPATHLEN);
+            char * slddir = msGetPath(map->sldurl);
+            msBuildPath(symbolurl,slddir,pszURL);
+            msFree(slddir);
+          }
+          else
+          {
+            // TODO: Symbol file is relative to the root of SLD server
+            /// Fallback to absolute URL (meaning server's filesystem)
+            symbolurl = msStrdup(pszURL);
+          }
+        }
+        else
+        {
+          // Absolute URL
+          symbolurl = msStrdup(pszURL);
+        }
+
         /* validate the ExternalGraphic parameter */
-        if(msValidateParameter(pszURL, msLookupHashTable(&(map->web.validation), "sld_external_graphic"),
+        if(msValidateParameter(symbolurl, msLookupHashTable(&(map->web.validation), "sld_external_graphic"),
                                NULL, NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_WEBERR, "SLD ExternalGraphic OnlineResource value fails to validate against sld_external_graphic VALIDATION", "mapserv()");
+          msFree(symbolurl);
           return MS_FAILURE;
         }
 
@@ -2403,8 +2430,9 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
         /*external symbols using http will be automaticallly downloaded. The file should be
           saved in a temporary directory (msAddImageSymbol) #2305*/
         psStyle->symbol = msGetSymbolIndex(&map->symbolset,
-                                           pszURL,
+                                           symbolurl,
                                            MS_TRUE);
+        msFree(symbolurl);
 
         if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
           psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);
