@@ -399,7 +399,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
           unlink(tmpfullfilename); 
           msFree(tmpfilename);
           msFree(tmppath);
-          return MS_FAILURE;
+          return -1;
         }
       }
       msFree(tmpfilename);
