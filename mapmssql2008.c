@@ -1363,11 +1363,11 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 
   	or for geography columns
 	
-    "Geography::STGeomFromText('CURVEPOLYGON(CIRCULARSTRING())',)" + terminator = 60 chars
+    "Geography::STGeomFromText('CURVEPOLYGON(())',)" + terminator = 46 chars
     Plus 18 formatted doubles (15 digits of precision, a decimal point, a space/comma delimiter each = 17 chars each)
     Plus SRID + comma - if SRID is a long...we'll be safe with 10 chars
   */
-  char        box3d[60 + 18 * 22 + 11];
+  char        box3d[46 + 18 * 22 + 11];
   int         t;
 
   char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
@@ -1428,7 +1428,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 	  double maxx = rect.maxx >= 180? 179.999: rect.maxx;
 	  double miny = rect.miny < -90? -90: rect.miny;
 	  double maxy = rect.maxy > 90? 90: rect.maxy;
-	  sprintf(box3d, "Geography::STGeomFromText('CURVEPOLYGON(CIRCULARSTRING(%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
+	  sprintf(box3d, "Geography::STGeomFromText('CURVEPOLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)", /* %s.STSrid)", */
           minx, miny,
           minx + (maxx - minx) / 2, miny,
           maxx, miny,
