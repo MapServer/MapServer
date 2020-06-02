@@ -1926,7 +1926,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     char *mappath; /* path of the mapfile, all path are relative to this path */
     char *sldurl; // URL of SLD document as specified with "&SLD=..."
                   // WMS parameter.  Currently this reference is used
-                  // only in mapogcsld.c and has an undefined value
+                  // only in mapogcsld.c and has a NULL value
                   // outside that context.
 
 #ifndef SWIG
