@@ -34,8 +34,9 @@
                 <Graphic>
                   <Size>30</Size>
                   <ExternalGraphic>
-                    <OnlineResource xlink:type="simple" xlink:href="ship.svg" />
+                    <OnlineResource xlink:type="simple" xlink:href="/sld/data/ship.svg" />
                     <!--
+                    <OnlineResource xlink:type="simple" xlink:href="ship.svg" />
                     <OnlineResource xlink:type="simple" xlink:href="http://localhost:8000/sld/data/ship.svg" />
                     <OnlineResource xlink:type="simple" xlink:href="/sld/data/ship.svg" />
                     -->

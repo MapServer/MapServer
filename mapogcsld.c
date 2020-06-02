@@ -2398,23 +2398,42 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
         // Handle relative URL for ExternalGraphic
         if (map->sldurl && !strstr(pszURL,"://"))
         {
+          char *baseurl = NULL;
+          char *relpath = NULL;
+          symbolurl = malloc(sizeof(char)*MS_MAXPATHLEN);
           if (pszURL[0] != '/') {
             // Symbol file is relative to SLD file
-            symbolurl = malloc(sizeof(char)*MS_MAXPATHLEN);
-            char * slddir = msGetPath(map->sldurl);
-            msBuildPath(symbolurl,slddir,pszURL);
-            msFree(slddir);
+            // e.g. SLD   : http://example.com/path/to/sld.xml
+            //  and symbol: assets/symbol.svg
+            //     lead to: http://example.com/path/to/assets/symbol.svg
+            baseurl = msGetPath(map->sldurl);
+            relpath = pszURL;
           }
           else
           {
-            // TODO: Symbol file is relative to the root of SLD server
-            /// Fallback to absolute URL (meaning server's filesystem)
-            symbolurl = msStrdup(pszURL);
+            // Symbol file is relative to the root of SLD server
+            // e.g. SLD   : http://example.com/path/to/sld.xml
+            //  and symbol: /path/to/assets/symbol.svg
+            //     lead to: http://example.com/path/to/assets/symbol.svg
+            baseurl = msStrdup(map->sldurl);
+            relpath = pszURL+1;
+            char * sep = strstr(baseurl,"://");
+            if (sep)
+              sep += 3;
+            else
+              sep = baseurl;
+            sep = strchr(sep,'/');
+            if (!sep)
+              sep = baseurl + strlen(baseurl);
+            sep[1] = '\0';
           }
+          msBuildPath(symbolurl,baseurl,relpath);
+          msFree(baseurl);
         }
         else
         {
           // Absolute URL
+          // e.g. symbol: http://example.com/path/to/assets/symbol.svg
           symbolurl = msStrdup(pszURL);
         }
 
