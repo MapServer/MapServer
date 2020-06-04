@@ -1924,6 +1924,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
     char *shapepath; /* where are the shape files located */
     char *mappath; /* path of the mapfile, all path are relative to this path */
+    char *sldurl; // URL of SLD document as specified with "&SLD=..."
+                  // WMS parameter.  Currently this reference is used
+                  // only in mapogcsld.c and has a NULL value
+                  // outside that context.
 
 #ifndef SWIG
     paletteObj palette; /* holds a map palette */

@@ -74,6 +74,7 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
   int nStatus = MS_FAILURE;
 
   if (map && szURL) {
+    map->sldurl = (char*)szURL;
     pszSLDTmpFile = msTmpFile(map, map->mappath, NULL, "sld.xml");
     if (pszSLDTmpFile == NULL) {
       pszSLDTmpFile = msTmpFile(map, NULL, NULL, "sld.xml" );
@@ -112,6 +113,7 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
       if (pszSLDbuf)
         nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
+    map->sldurl = NULL;
   }
 
   msFree(pszSLDbuf);
@@ -2392,10 +2394,54 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
       if (psTmp && psTmp->psChild) {
         pszURL = (char*)psTmp->psChild->pszValue;
 
+        char *symbolurl = NULL;
+        // Handle relative URL for ExternalGraphic
+        if (map->sldurl && !strstr(pszURL,"://"))
+        {
+          char *baseurl = NULL;
+          char *relpath = NULL;
+          symbolurl = malloc(sizeof(char)*MS_MAXPATHLEN);
+          if (pszURL[0] != '/') {
+            // Symbol file is relative to SLD file
+            // e.g. SLD   : http://example.com/path/to/sld.xml
+            //  and symbol: assets/symbol.svg
+            //     lead to: http://example.com/path/to/assets/symbol.svg
+            baseurl = msGetPath(map->sldurl);
+            relpath = pszURL;
+          }
+          else
+          {
+            // Symbol file is relative to the root of SLD server
+            // e.g. SLD   : http://example.com/path/to/sld.xml
+            //  and symbol: /path/to/assets/symbol.svg
+            //     lead to: http://example.com/path/to/assets/symbol.svg
+            baseurl = msStrdup(map->sldurl);
+            relpath = pszURL+1;
+            char * sep = strstr(baseurl,"://");
+            if (sep)
+              sep += 3;
+            else
+              sep = baseurl;
+            sep = strchr(sep,'/');
+            if (!sep)
+              sep = baseurl + strlen(baseurl);
+            sep[1] = '\0';
+          }
+          msBuildPath(symbolurl,baseurl,relpath);
+          msFree(baseurl);
+        }
+        else
+        {
+          // Absolute URL
+          // e.g. symbol: http://example.com/path/to/assets/symbol.svg
+          symbolurl = msStrdup(pszURL);
+        }
+
         /* validate the ExternalGraphic parameter */
-        if(msValidateParameter(pszURL, msLookupHashTable(&(map->web.validation), "sld_external_graphic"),
+        if(msValidateParameter(symbolurl, msLookupHashTable(&(map->web.validation), "sld_external_graphic"),
                                NULL, NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_WEBERR, "SLD ExternalGraphic OnlineResource value fails to validate against sld_external_graphic VALIDATION", "mapserv()");
+          msFree(symbolurl);
           return MS_FAILURE;
         }
 
@@ -2403,8 +2449,9 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
         /*external symbols using http will be automaticallly downloaded. The file should be
           saved in a temporary directory (msAddImageSymbol) #2305*/
         psStyle->symbol = msGetSymbolIndex(&map->symbolset,
-                                           pszURL,
+                                           symbolurl,
                                            MS_TRUE);
+        msFree(symbolurl);
 
         if (psStyle->symbol > 0 && psStyle->symbol < map->symbolset.numsymbols)
           psStyle->symbolname = msStrdup(map->symbolset.symbol[psStyle->symbol]->name);

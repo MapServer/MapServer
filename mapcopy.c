@@ -1226,6 +1226,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
   MS_COPYSTELEM(resolution);
   MS_COPYSTRING(dst->shapepath, src->shapepath);
   MS_COPYSTRING(dst->mappath, src->mappath);
+  MS_COPYSTELEM(sldurl);
 
   MS_COPYCOLOR(&(dst->imagecolor), &(src->imagecolor));
 
