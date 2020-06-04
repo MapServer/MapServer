@@ -5890,6 +5890,7 @@ int initMap(mapObj *map)
   map->cellsize = 0;
   map->shapepath = NULL;
   map->mappath = NULL;
+  map->sldurl = NULL;
 
   MS_INIT_COLOR(map->imagecolor, 255,255,255,255); /* white */
 
