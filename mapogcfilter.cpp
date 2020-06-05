@@ -1036,6 +1036,8 @@ static CPLXMLNode* FLTFindGeometryNode(CPLXMLNode* psXMLNode,
         *pbPolygon = 1;
       else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
         *pbPolygon = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Envelope")))
+        *pbPolygon = 1;
       else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
         *pbLine = 1;
       else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiLineString")))
