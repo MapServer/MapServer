@@ -33,9 +33,9 @@
 
 %extend webObj 
 {
-    %feature("docstring", "Instances of webObj are always are always embedded inside the mapObj. 
+    %feature("docstring") "Instances of webObj are always are always embedded inside the mapObj. 
 Has no other existence than as an attribute of a mapObj. Serves as a container for various run-time 
-web application definitions like temporary file paths, template paths, etc.")
+web application definitions like temporary file paths, template paths, etc."
     webObj() 
     {
         webObj *web;
