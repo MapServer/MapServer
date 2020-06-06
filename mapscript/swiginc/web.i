@@ -1,13 +1,11 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript webObj extensions
    Author:   Steve Lime 
              Umberto Nicoletti unicoletti@prometeo.it
              
    ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+   Copyright (c) 1996-2020 Regents of the University of Minnesota.
    
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -29,15 +27,15 @@
    ===========================================================================
 */
 
-
-%include "../../mapserver.h"
-
 /* Constructor and destructor for webObj
-   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */
+   See https://github.com/mapserver/mapserver/issues/1798 */
+
 
 %extend webObj 
 {
-    
+    %feature("docstring", "Instances of webObj are always are always embedded inside the mapObj. 
+Has no other existence than as an attribute of a mapObj. Serves as a container for various run-time 
+web application definitions like temporary file paths, template paths, etc.")
     webObj() 
     {
         webObj *web;
@@ -49,15 +47,19 @@
     ~webObj() 
     {
         if (!self) return;
-	freeWeb(self);
+        freeWeb(self);
         free(self);
     }
 
+    %feature("docstring")
+    "Update a web object from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int updateFromString(char *snippet)
     {
         return msUpdateWebFromString(self, snippet, MS_FALSE);
     }
-    
+
+    %feature("docstring")
+    "Output the WEB objects as a Mapfile string. Provides the inverse option for updateFromString. "
     %newobject convertToString;
     char* convertToString()
     {

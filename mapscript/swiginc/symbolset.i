@@ -1,13 +1,11 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript symbolSetObj extensions
    Author:   Steve Lime 
              Sean Gillies, sgillies@frii.com
              
    ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+   Copyright (c) 1996-2020 Regents of the University of Minnesota.
    
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -32,6 +30,8 @@
 %extend symbolSetObj 
 {
 
+    %feature("docstring")
+    "Create new instance. If symbolfile is specified, symbols will be loaded from the file." 
     symbolSetObj(const char *symbolfile=NULL) 
     {
         symbolSetObj *symbolset;
@@ -55,18 +55,22 @@
         free(self);
     }
 
-	%newobject getSymbol;
+    %feature("docstring")
+    "Returns a reference to the symbol at index." 
+    %newobject getSymbol;
     symbolObj *getSymbol(int i) 
     {
         if (i >= 0 && i < self->numsymbols) {
-			symbolObj *s=self->symbol[i];
-			MS_REFCNT_INCR(s);
+            symbolObj *s=self->symbol[i];
+            MS_REFCNT_INCR(s);
             return s;
         } else
             return NULL;
     }
 
-	%newobject getSymbolByName;
+    %feature("docstring")
+    "Returns a reference to the symbol named name." 
+    %newobject getSymbolByName;
     symbolObj *getSymbolByName(char *symbolname) 
     {
         int i;
@@ -76,32 +80,40 @@
         i = msGetSymbolIndex(self, symbolname, MS_TRUE);
         if (i == -1)
             return NULL;
-		else {
-			MS_REFCNT_INCR(self->symbol[i]);
+        else {
+            MS_REFCNT_INCR(self->symbol[i]);
             return self->symbol[i];
-		}
+        }
     }
 
+    %feature("docstring")
+    "Return the index of the symbol named name or -1 in the case that no such symbol is found." 
     int index(char *symbolname) 
     {
         return msGetSymbolIndex(self, symbolname, MS_TRUE);
     }
 
+    %feature("docstring")
+    "Add a copy of symbol to the symbolset and return its index." 
     int appendSymbol(symbolObj *symbol) 
     {
         return msAppendSymbol(self, symbol);
     }
- 
+
+    %feature("docstring")
+    "Remove the symbol at index and return a copy of the symbol." 
     %newobject removeSymbol;
     symbolObj *removeSymbol(int index) 
     {
         symbolObj *s=msRemoveSymbol(self, index);
-		if (s!=NULL) {
-			MS_REFCNT_INCR(s);
-		}
+        if (s!=NULL) {
+            MS_REFCNT_INCR(s);
+        }
         return s;
     }
 
+    %feature("docstring")
+    "Save symbol set to a file. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int save(const char *filename) {
         return msSaveSymbolSet(self, filename);
     }

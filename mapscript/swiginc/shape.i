@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript shapeObj extensions
    Author:   Steve Lime 
@@ -31,12 +29,15 @@
 
 %extend shapeObj 
 {
-  
+    %feature("docstring")
+    "Return a new shapeObj of the specified type. See the type attribute above. No attribute values created by default. 
+initValues should be explicitly called to create the required number of values. 
+Each feature of a layer's data is a shapeObj. Each part of the shape is a closed lineObj"
     shapeObj(int type=MS_SHAPE_NULL) 
     {
         shapeObj *shape;
 
-	shape = (shapeObj *)malloc(sizeof(shapeObj));
+    shape = (shapeObj *)malloc(sizeof(shapeObj));
         if (!shape)
             return NULL;
 
@@ -52,24 +53,30 @@
         free(self);		
     }
 
+    %feature("docstring")
+    "Returns a new shapeObj based on a well-known text representation of a geometry. Requires GEOS support. Returns NULL/undef on failure."
     %newobject fromWKT;
     static shapeObj *fromWKT(char *wkt)
     {
-	shapeObj *shape;
+    shapeObj *shape;
         
         if(!wkt) return NULL;
 
         shape = msShapeFromWKT(wkt);
-	if(!shape) return NULL;
+    if(!shape) return NULL;
 
-	return shape;
+    return shape;
     }
 
+    %feature("docstring")
+    "Reproject shape from proj_in to proj_out. Transformation is done in place. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int project(projectionObj *projin, projectionObj *projout) 
     {
         return msProjectShape(projin, projout, self);
     }
 
+    %feature("docstring")
+    "Returns a reference to part at index. Reference is valid only during the life of the shapeObj."
     lineObj *get(int i) {
         if (i<0 || i>=self->numlines)
             return NULL;
@@ -77,20 +84,29 @@
             return &(self->line[i]);
     }
 
+    %feature("docstring")
+    "Add line (i.e. a part) to the shape. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int add(lineObj *line) {
         return msAddLine(self, line);
     }
 
+    %feature("docstring")
+    "Draws the individual shape using layer. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int draw(mapObj *map, layerObj *layer, imageObj *image) {
         return msDrawShape(map, layer, self, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
     }
 
+    %feature("docstring")
+    "Must be called to calculate new bounding box after new parts have been added.
+**TODO**:  should return int and set msSetError."
     void setBounds() 
     {    
         msComputeBounds(self);
         return;
     }
 
+    %feature("docstring")
+    "Return an independent copy of the shape."
 #if defined (SWIGJAVA) || defined (SWIGPHP)
     %newobject cloneShape;
     shapeObj *cloneShape()
@@ -109,41 +125,64 @@
         return shape;
     }
 
+    %feature("docstring")
+    "Copy the shape to shape_copy. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int copy(shapeObj *dest) 
     {
         return(msCopyShape(self, dest));
     }
 
+    %feature("docstring")
+    "Returns the well-known text representation of a shapeObj. Requires GEOS support. Returns NULL/undefined on failure."
     %newobject toWKT;
     char *toWKT()
     {
         return msShapeToWKT(self);
     }
 
+    %feature("docstring")
+    "Returns a new buffered shapeObj based on the supplied distance (given in the coordinates 
+of the existing shapeObj). Requires GEOS support. Returns NULL/undefined on failure."
     %newobject buffer;
     shapeObj *buffer(double width) { return msGEOSBuffer(self, width); }
 
-    %newobject simplify;
+    %feature("docstring")
+    "Given a tolerance, returns a simplified shape object or NULL on error. Requires GEOS support (>=3.0)."
+    %newobject simplify;    
     shapeObj *simplify(double tolerance) { return msGEOSSimplify(self, tolerance); }
 
+    %feature("docstring")
+    "Given a tolerance, returns a simplified shape object or NULL on error. Requires GEOS support (>=3.0)."
     %newobject topologyPreservingSimplify;
     shapeObj *topologyPreservingSimplify(double tolerance) { return msGEOSTopologyPreservingSimplify(self, tolerance); }
 
+    %feature("docstring")
+    "Returns the convex hull of the existing shape. Requires GEOS support. Returns NULL/undef on failure."
     %newobject convexHull;
     shapeObj *convexHull() { return msGEOSConvexHull(self); }
 
+    %feature("docstring")
+    "Returns the boundary of the existing shape. Requires GEOS support. Returns NULL/undef on failure."
     %newobject boundary;
     shapeObj *boundary() { return msGEOSBoundary(self); }
 
+    %feature("docstring")
+    "Returns the centroid for the existing shape. Requires GEOS support. Returns NULL/undef on failure."
     %newobject getCentroid;
     pointObj *getCentroid() { return msGEOSGetCentroid(self); }
 
+    %feature("docstring")
+    "Returns the union of the existing and supplied shape. Shapes must be of the same type. Requires GEOS support. Returns NULL/undef on failure."
     %newobject Union;
     shapeObj *Union(shapeObj *shape) { return msGEOSUnion(self, shape); }
 
+    %feature("docstring")
+    "Returns the computed intersection of the supplied and existing shape. Requires GEOS support. Returns NULL/undef on failure."
     %newobject intersection;
     shapeObj *intersection(shapeObj *shape) { return msGEOSIntersection(self, shape); }
 
+    %feature("docstring")
+    "Returns the computed difference of the supplied and existing shape. Requires GEOS support. Returns NULL/undef on failure."
     %newobject difference;
     shapeObj *difference(shapeObj *shape) { return msGEOSDifference(self, shape); }
 
@@ -185,7 +224,7 @@
 
     double distanceToShape(shapeObj *shape) 
     {
-	return msGEOSDistance(self, shape); /* note this calls msDistanceShapeToShape() if GEOS support is not present */
+    return msGEOSDistance(self, shape); /* note this calls msDistanceShapeToShape() if GEOS support is not present */
     }
 
     %newobject getLabelPoint;

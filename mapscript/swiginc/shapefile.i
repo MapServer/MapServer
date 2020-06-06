@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript shapefileObj extensions
    Author:   Steve Lime 
@@ -32,6 +30,9 @@
 %extend shapefileObj 
 {
 
+    %feature("docstring")
+    "Create a new instance. Omit the type argument or use a value of -1 to open an existing shapefile.
+Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, :data:`MS_SHP_POLYGON` or :data:`MS_SHP_MULTIPOINT`" 
     shapefileObj(char *filename, int type=-1) 
     {    
         shapefileObj *shapefile;
@@ -63,6 +64,8 @@
         free(self);  
     }
 
+    %feature("docstring")
+    "Get the shapefile feature from index i and store it in shape. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
     int get(int i, shapeObj *shape) 
     {
         if (i<0 || i>=self->numshapes)
@@ -74,6 +77,8 @@
         return MS_SUCCESS;
     }
 
+    %feature("docstring")
+    "Returns the shapefile feature at index i. More efficient than get." 
     %newobject getShape;
     shapeObj *getShape(int i)
     {
@@ -88,6 +93,8 @@
 
     }
 
+    %feature("docstring")
+    "Returns the point feature at index i and store it in pointObj." 
     int getPoint(int i, pointObj *point) 
     {
         if (i<0 || i>=self->numshapes)
@@ -97,6 +104,9 @@
         return MS_SUCCESS;
     }
 
+    %feature("docstring")
+    "Returns the feature at index i, simplify it, and store it in shape. Uses the
+map extent and cellsize for simplification. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
     int getTransformed(mapObj *map, int i, shapeObj *shape) 
     {
         if (i<0 || i>=self->numshapes)
@@ -109,11 +119,15 @@
         return MS_SUCCESS;
     }
 
+    %feature("docstring")
+    "Retrieve a shape's bounding box by index and stores it in rect."
     void getExtent(int i, rectObj *rect) 
     {
         msSHPReadBounds(self->hSHP, i, rect);
     }
 
+    %feature("docstring")
+    "Appends a shape to the open shapefile. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int add(shapeObj *shape) 
     {
         /* Trap NULL or empty shapes -- bug 1201 */
@@ -128,17 +142,20 @@
             return MS_FAILURE;
         }
 
-        return msSHPWriteShape(self->hSHP, shape);	
-    }	
+        return msSHPWriteShape(self->hSHP, shape);
+    }
 
+    %feature("docstring")
+    "Appends a point to the open shapefile. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int addPoint(pointObj *point) 
     {    
-        return msSHPWritePoint(self->hSHP, point);	
+        return msSHPWritePoint(self->hSHP, point);
     }
-    
+
+    %feature("docstring")
+    "Returns a DBFInfo object containing information on the associated DBF"
     DBFInfo *getDBF() {
-    	return self->hDBF;
+        return self->hDBF;
     }
-    
 }
 
