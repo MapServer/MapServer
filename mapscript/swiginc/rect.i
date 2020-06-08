@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript rectObj extensions
    Author:   Steve Lime
@@ -31,10 +29,14 @@
 
 %extend rectObj {
 
+    %feature("docstring")
+    "Create new instance. The four easting and northing arguments are optional and "
+    "default to -1.0. Note the new optional fifth argument which allows creation "
+    "of rectangles in image (pixel/line) units which are also tested for validity."
     rectObj(double minx=-1.0, double miny=-1.0, 
             double maxx=-1.0, double maxy=-1.0,
             int imageunits=MS_FALSE) 
-    {	
+    {
         rectObj *rect;
     
         if (imageunits == MS_FALSE)
@@ -67,21 +69,29 @@
         rect->maxx = maxx;
         rect->maxy = maxy;
 
-        return(rect);    	
+        return(rect);
     }
 
     ~rectObj() {
         free(self);
     }
 
+    %feature("docstring")
+    "Reproject rectangle from proj_in to proj_out. Transformation is done in place. "
+    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int project(projectionObj *projin, projectionObj *projout) {
         return msProjectRect(projin, projout, self);
     }
 
+    %feature("docstring")
+    "Adjust the rect to fit the width and height. Returns cellsize of rect."
     double fit(int width, int height) {
         return  msAdjustExtent(self, width, height);
     } 
 
+    %feature("docstring")
+    "Draw rectangle into img using style defined by the classindex class of layer. The rectangle is labeled with the string text. "
+    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int draw(mapObj *map, layerObj *layer, imageObj *image, 
              int classindex, char *text) 
     {
@@ -102,6 +112,8 @@
         return ret;
     }
     
+    %feature("docstring")
+    "Return the center point of the rectangle."
     %newobject getCenter;
     pointObj *getCenter() 
     {
@@ -117,6 +129,8 @@
         return center;
     }
 
+    %feature("docstring")
+    "Convert to a polygon of five vertices."
     %newobject toPolygon;
     shapeObj *toPolygon() 
     {
@@ -150,6 +164,12 @@
         return shape;
     }
 
+    %feature("docstring")
+    "Return a string formatted like: ``{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }``"
+    "with the bounding values substituted appropriately. Python users can get the same effect via the rectObj __str__ method:"
+    ">>> r = mapscript.rectObj(0, 0, 1, 1)"
+    ">>> str(r)"
+    "{ 'minx': 0 , 'miny': 0 , 'maxx': 1 , 'maxy': 1 }"
     %newobject toString;
     char *toString()
     {
@@ -158,6 +178,4 @@
         msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
         return msStrdup(buffer);
     }
-    
 }
-

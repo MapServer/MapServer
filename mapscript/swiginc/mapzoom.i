@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  MapServer
  * Purpose:  Map zooming convenience methods for MapScript
  * Author:   Sean Gillies, sgillies@frii.com

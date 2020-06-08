@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for manipulating OGC request stuff via
              mapscript.
@@ -47,12 +45,13 @@ static char *msGetEnvURL( const char *key, void *thread_context )
 
 %rename(OWSRequest) cgiRequestObj;
 
-%include "../../cgiutil.h"
-
 /* Class for programming OWS services - SG */
 
 %extend cgiRequestObj {
 
+    %feature("docstring")
+    "Not associated with other mapscript classes. Serves as a message intermediary "
+    "between an application and MapServer’s OWS capabilities. Using it permits creation of lightweight WMS services."
     cgiRequestObj()
     {
         cgiRequestObj *request;
@@ -71,18 +70,29 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         msFreeCgiObj(self);
     }
 
+    %feature("docstring")
+    "Initializes the OWSRequest object from the cgi environment variables "
+    "``REQUEST_METHOD``, ``QUERY_STRING`` and ``HTTP_COOKIE``. Returns the number of name/value pairs collected. "
+    "Warning: most errors will result in a process exit!"
     int loadParams()
     {
-	self->NumParams = loadParams( self, NULL, NULL, 0, NULL);
-	return self->NumParams;
+        self->NumParams = loadParams( self, NULL, NULL, 0, NULL);
+        return self->NumParams;
     }
 
+    %feature("docstring")
+    "Initializes the OWSRequest object from the provided URL which is treated like a ``QUERY_STRING``. "
+    "Note that ``REQUEST_METHOD=GET`` and no post data is assumed in this case. "
     int loadParamsFromURL( const char *url )
     {
-	self->NumParams = loadParams( self, msGetEnvURL, NULL, 0, (void*)url );
-	return self->NumParams;
+        self->NumParams = loadParams( self, msGetEnvURL, NULL, 0, (void*)url );
+        return self->NumParams;
     }
 
+    %feature("docstring")
+    "Set a request parameter. For example:"
+    "request.setParameter('REQUEST', 'GetMap')"
+    "request.setParameter('BBOX', '-107.0,40.0,-106.0,41.0')"
     void setParameter(char *name, char *value) 
     {
         int i;
@@ -104,7 +114,12 @@ static char *msGetEnvURL( const char *key, void *thread_context )
             self->NumParams++;
         }
     }
-    
+
+    %feature("docstring")
+    "Add a request parameter, even if the parameter key was previously set. "
+    "\This is useful when multiple parameters with the same key are required. For example: "
+    "request.addParameter('SIZE', 'x(100)')"
+    "request.addParameter('SIZE', 'y(100)')"
     void addParameter(char *name, char *value)
     {
         if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
@@ -115,6 +130,8 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         self->NumParams++;
     }
 
+    %feature("docstring")
+    "Return the name of the parameter at ``index`` in the request's array of parameter names."
     char *getName(int index) 
     {
         if (index < 0 || index >= self->NumParams) {
@@ -124,6 +141,8 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         return self->ParamNames[index];
     }
 
+    %feature("docstring")
+    "Return the value of the parameter at ``index`` in the request’s array of parameter values."
     char *getValue(int index) 
     {
         if (index < 0 || index >= self->NumParams) {
@@ -133,6 +152,8 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         return self->ParamValues[index];
     }
 
+    %feature("docstring")
+    "Return the value associated with the parameter ``name``."
     char *getValueByName(const char *name) 
     {
         int i;
@@ -145,4 +166,3 @@ static char *msGetEnvURL( const char *key, void *thread_context )
     }
 
 }
-

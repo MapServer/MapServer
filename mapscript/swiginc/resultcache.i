@@ -1,6 +1,4 @@
 /* ===========================================================================   
-   $Id$
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript resultCacheObj extensions
    Author:   Steve Lime
@@ -31,7 +29,8 @@
 
 %extend resultCacheObj
 {
-
+    %feature("docstring")
+    "Returns the result at index i, like ``layerObj.getResult``, or ``NULL`` if index is outside the range of results."
     resultObj *getResult(int i)
     {
         if (i >= 0 && i < self->numresults) {

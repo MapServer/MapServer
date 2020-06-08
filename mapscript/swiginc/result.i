@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id: shape.i 9558 2009-11-20 18:11:50Z sdlime $
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript shapeObj extensions
    Author:   Steve Lime 
@@ -31,7 +29,11 @@
 
 %extend resultObj 
 {
-  
+
+    %feature("docstring")
+    "The result object is a handle, of sorts, for a feature of the layer, having 
+``shapeindex`` and ``tileindex`` attributes that can be used as arguments to 
+``getFeature``"
     resultObj(long shapeindex) 
     {
         resultObj *result = (resultObj *) msSmallMalloc(sizeof(resultObj));
@@ -45,6 +47,6 @@
 
     ~resultObj() 
     {
-        free(self);		
+        free(self);
     }
 }

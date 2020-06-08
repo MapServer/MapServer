@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript outputFormatObj extensions
    Author:   Steve Lime 
@@ -31,7 +29,8 @@
 
 %extend outputFormatObj 
 {
-    
+    %feature("docstring")
+    "Create new instance. If name is not provided, the value of driver is used as a name."
     outputFormatObj(const char *driver, char *name=NULL) 
     {
         outputFormatObj *format;
@@ -50,7 +49,7 @@
         msInitializeRendererVTable(format);
 
         MS_REFCNT_INIT(format);
-	format->inmapfile = MS_TRUE;
+        format->inmapfile = MS_TRUE;
 
         return format;
     }
@@ -60,6 +59,10 @@
         msFreeOutputFormat( self );
     }
 
+    %feature("docstring")
+    "Set file extension for output format such as  'png' or 'jpg'. "
+    "Method could probably be deprecated since the extension attribute is mutable."
+    "Not in Java extension"
 #ifndef SWIGJAVA
     void setExtension( const char *extension ) 
     {
@@ -67,6 +70,10 @@
         self->extension = msStrdup(extension);
     }
 
+    %feature("docstring")
+    "Set mimetype for output format such as ``image/png`` or ``image/jpeg``."
+    "Method could probably be deprecated since the mimetype attribute is mutable."
+    "Not in Java extension"
     void setMimetype( const char *mimetype ) 
     {
         msFree( self->mimetype );
@@ -74,22 +81,33 @@
     }
 #endif
 
+    %feature("docstring")
+    "Set the format option at ``key`` to ``value``. Format options are mostly driver specific."
     void setOption( const char *key, const char *value ) 
     {
         msSetOutputFormatOption( self, key, value );
     }
 
+    %feature("docstring")
+    "Checks some internal consistency issues, and returns :data:`MS_TRUE` if things are OK "
+    "and :data:`MS_FALSE` if there are problems. Some problems are fixed up internally. May produce debug output if issues encountered."
     int validate() 
     {
-       	return msOutputFormatValidate( self, MS_FALSE );
+        return msOutputFormatValidate(self, MS_FALSE );
     }
 
+    %feature("docstring")
+    "Return the format option at ``key`` or ``defaultvalue`` if key is not a valid hash index."
     %newobject getOption;
     char *getOption(const char *key, const char *value="") 
     {
         return msStrdup(msGetOutputFormatOption(self, key, value));
     }
 
+    %feature("docstring")
+    "Returns the option at ``idx`` or NULL if the index is beyond the array bounds. "
+    "The option is returned as the original KEY=VALUE string. "
+    "The number of available options can be obtained by calling getNumformatoptions."
     %newobject getOptionAt;
     char* getOptionAt(int i) {
        if( i >= 0 && i < self->numformatoptions ) {
@@ -97,12 +115,12 @@
        }
        return NULL;
     }
-    
+
+    %feature("docstring")
+    ""
     void attachDevice( void *device ) 
     {
         self->device = device;
     }
     
 }
-
-
