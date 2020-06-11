@@ -529,7 +529,7 @@
 
   %feature("docstring")
   "Returns an array of layer indexes in drawing order."
-  "Note Unless the proper typemap is implemented for the module’s language a user is more likely to get back an unusable SWIG pointer to the integer array."
+  "Note Unless the proper typemap is implemented for the module's language a user is more likely to get back an unusable SWIG pointer to the integer array."
   %newobject getLayersDrawingOrder;
   intarray *getLayersDrawingOrder() {
     int i;
@@ -546,7 +546,7 @@
 
   %feature("docstring")
   "Set map layer drawing order."
-  "Note Unless the proper typemap is implemented for the module’s language users will not be able to pass arrays or lists to this method and it will be unusable."
+  "Note Unless the proper typemap is implemented for the module's language users will not be able to pass arrays or lists to this method and it will be unusable."
   int setLayersDrawingOrder(int *panIndexes) {
     return msSetLayersdrawingOrder(self, panIndexes); 
   }
@@ -616,7 +616,7 @@
     }
 
     %feature("docstring")
-    "Process MapServer query template and return HTML."
+    "Process MapServer query template and return HTML. \n"
     "Note None of the three template processing methods will be usable unless the proper "
     "typemaps are implemented in the module for the target language.Currently the typemaps "
     "are not implemented."
@@ -629,7 +629,7 @@
     "Return the output format corresponding to driver name imagetype or to format name "
     "imagetype. This works exactly the same as the IMAGETYPE directive in a mapfile, is "
     "case insensitive and allows an output format to be found either by driver "
-    "(like ‘GD/PNG’) or name (like ‘PNG24’)."
+    "(like 'GD/PNG') or name (like 'PNG24')."
     outputFormatObj *getOutputFormatByName(char *name) {
         return msSelectOutputFormat(self, name); 
     }

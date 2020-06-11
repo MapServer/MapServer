@@ -60,7 +60,7 @@ will be of type :data:`MS_SYMBOL_PIXMAP`."
     }
 
     %feature("docstring")
-    "Sets the imagefile path for a :data:`MS_SYMBOL_PIXMAP. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    "Sets the imagefile path for a :data:`MS_SYMBOL_PIXMAP`. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int setImagepath(const char *imagefile) {
         return msLoadImageSymbol(self, imagefile);
     }

@@ -51,7 +51,7 @@ static char *msGetEnvURL( const char *key, void *thread_context )
 
     %feature("docstring")
     "Not associated with other mapscript classes. Serves as a message intermediary "
-    "between an application and MapServer’s OWS capabilities. Using it permits creation of lightweight WMS services."
+    "between an application and MapServer's OWS capabilities. Using it permits creation of lightweight WMS services."
     cgiRequestObj()
     {
         cgiRequestObj *request;
@@ -142,7 +142,7 @@ static char *msGetEnvURL( const char *key, void *thread_context )
     }
 
     %feature("docstring")
-    "Return the value of the parameter at ``index`` in the request’s array of parameter values."
+    "Return the value of the parameter at ``index`` in the request's array of parameter values."
     char *getValue(int index) 
     {
         if (index < 0 || index >= self->NumParams) {
