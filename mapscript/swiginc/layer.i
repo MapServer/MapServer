@@ -1,7 +1,5 @@
 
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript layerObj extensions
    Author:   Steve Lime 
@@ -687,15 +685,14 @@
       }
     }
 
-    %feature("autodoc", "3");
-    %feature("docstring") getItemType 
-"Returns the requested item's field type.
-A layer must be open to retrieve the item definition. 
+    /**
+    Returns the requested item's field type.
+    A layer must be open to retrieve the item definition. 
 
-Pass in the attribute index to retrieve the type. The 
-layer's numitems property contains the number of items 
-available, and the first item is index zero."
-
+    Pass in the attribute index to retrieve the type. The 
+    layer's numitems property contains the number of items 
+    available, and the first item is index zero."
+    */
     char *getItemType(int i)
     {
 
@@ -712,7 +709,6 @@ available, and the first item is index zero."
         }
 
         return itemType;
-
     }
 
 

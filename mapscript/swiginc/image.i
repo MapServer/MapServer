@@ -28,18 +28,16 @@
 
 %extend imageObj {
 
-    // manually add parameter here or get mapscript.mapscript.layerObj in output docs
-    %feature("autodoc",
-"imageObj.__init__(int width, int height, outputFormatObj format=None, char * filename, double resolution=72, double defresolution=72)
-
-Create a new imageObj instance. If *filename* is specified, an imageObj
-is created from the file and any specified *width*, *height*, and
-*format* parameters will be overridden by values of the image in 
-*filename*.  Otherwise, if *format* is specified (as an :class:`outputFormatObj`) an imageObj is created
-using that format. If *filename* is not specified, then *width* and *height* should be specified. 
-The default resolution is currently 72 and defined by MS_DEFAULT_RESOLUTION - this setting is 
-not available in MapScript. ") imageObj;
-    imageObj(int width, int height, outputFormatObj *input_format=NULL,
+  /**
+  Create a new imageObj instance. If *filename* is specified, an imageObj
+  is created from the file and any specified *width*, *height*, and
+  *format* parameters will be overridden by values of the image in 
+  *filename*.  Otherwise, if *format* is specified (as an :class:`outputFormatObj`) an imageObj is created
+  using that format. If *filename* is not specified, then *width* and *height* should be specified. 
+  The default resolution is currently 72 and defined by MS_DEFAULT_RESOLUTION - this setting is 
+  not available in MapScript. 
+  */
+  imageObj(int width, int height, outputFormatObj *input_format=NULL,
              const char *file=NULL,
              double resolution=MS_DEFAULT_RESOLUTION, double defresolution=MS_DEFAULT_RESOLUTION)
     {
@@ -103,8 +101,8 @@ not available in MapScript. ") imageObj;
         msFreeImage(self);
     }
 
-    %feature("docstring") save 
-    "Save image to filename. The optional map parameter must be specified if saving GeoTIFF images.";
+    /// Save image to filename. The optional map parameter must be specified if 
+    /// saving GeoTIFF images.
     void save(char *filename, mapObj *map=NULL)
     {
         msSaveImage(map, self, filename );
@@ -179,14 +177,15 @@ vary by mapscript language (e.g. a string in Python, byte[] array in Java and C#
         return buffer;
     }
 
-    %feature("docstring") getSize 
-    "Returns the size of the binary buffer representing the image buffer
+    /**
+    Returns the size of the binary buffer representing the image buffer
 
-.. note:: 
+    .. note:: 
 
-  The getSize method is inefficient as it does a call to getBytes and 
-  then computes the size of the byte array. The byte array is then immediately discarded. 
-  In most cases it is more efficient to call getBytes directly.";
+    The getSize method is inefficient as it does a call to getBytes and 
+    then computes the size of the byte array. The byte array is then immediately discarded. 
+    In most cases it is more efficient to call getBytes directly.
+    */
     int getSize() {
         gdBuffer buffer;
         int size=0;

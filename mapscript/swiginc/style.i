@@ -26,13 +26,13 @@
    DEALINGS IN THE SOFTWARE.
    ===========================================================================
 
-   See Bugzilla issue 548 about work on styleObj and classObj
-*/
+   */
 
 %extend styleObj {
 
-    %feature("docstring")
-    "Returns new default styleObj instance. The parent_class is optional." 
+    /// Returns new default styleObj instance. The parent_class is optional. 
+    /// See https://github.com/mapserver/mapserver/issues/548 about work on 
+    // :class:`styleObj` and :class`classObj`
     styleObj(classObj *parent_class=NULL) 
     {
     
@@ -61,7 +61,7 @@
                                        "initStyle()");
                 msFree(style);
                 return NULL;
-        }
+            }
         }
         return style;
     }
@@ -69,35 +69,33 @@
     ~styleObj() 
     {
         if (self) { 
-        if ( freeStyle(self) == MS_SUCCESS ) {
-                    free(self);
-            self=NULL;
+            if ( freeStyle(self) == MS_SUCCESS ) {
+                        free(self);
+                self=NULL;
+            }
         }
     }
-    }
 
-    %feature("docstring")
-    "Update a style from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+    /// Update a style from a string snippet. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
     int updateFromString(char *snippet)
     {
         return msUpdateStyleFromString(self, snippet, MS_FALSE);
     }
 
-    %feature("docstring")
-    "Saves the object to a string. Provides the inverse option for updateFromString." 
     %newobject convertToString;
+    /// Saves the object to a string. Provides the inverse option for updateFromString 
     char* convertToString()
     {
         return msWriteStyleToString(self);
     }
 
-    %feature("docstring")
-    "Returns an independent copy of the style with no parent class." 
 #if defined (SWIGJAVA) || defined (SWIGPHP)
     %newobject cloneStyle;
     styleObj *cloneStyle() 
 #else
     %newobject clone;
+    /// Returns an independent copy of the style with no parent class. 
     styleObj *clone() 
 #endif
     {
@@ -127,8 +125,8 @@
         return style;
     }
 
-    %feature("docstring")
-    "Setting the symbol of the styleObj given the reference of the map object and the symbol name." 
+    /// Setting the symbol of the styleObj given the reference of the map 
+    /// object and the symbol name. 
     int setSymbolByName(mapObj *map, char* symbolname) 
     {
         self->symbol = msGetSymbolIndex(&map->symbolset, symbolname, MS_TRUE);
@@ -138,8 +136,7 @@
         return self->symbol;
     }
 
-    %feature("docstring")
-    "Remove the attribute binding for a specified style property." 
+    /// Remove the attribute binding for a specified style property. 
     int removeBinding(int binding) 
     {
         if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
@@ -154,8 +151,7 @@
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Remove the attribute binding for a specified style property." 
+    /// Remove the attribute binding for a specified style property. 
     int setBinding(int binding, char *item) 
     {
         if(!item) return MS_FAILURE;
@@ -174,8 +170,8 @@
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Get the attribute binding for a specified style property. Returns NULL if there is no binding for this property." 
+    /// Get the attribute binding for a specified style property. 
+    /// Returns NULL if there is no binding for this property. 
     char *getBinding(int binding) 
     {
         if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return NULL;
@@ -183,15 +179,13 @@
         return self->bindings[binding].item;
     }
 
-    %feature("docstring")
-    "Get the geomtransform for the style." 
+    /// Get the geomtransform for the style
     char *getGeomTransform() 
     {
         return self->_geomtransform.string;
     }
 
-    %feature("docstring")
-    "Set the geomtransform for the style."
+    /// Set the geomtransform for the style 
     void setGeomTransform(char *transform) 
     {
         msStyleSetGeomTransform(self, transform);

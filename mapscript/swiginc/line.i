@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript lineObj extensions
    Author:   Steve Lime 
@@ -68,14 +66,14 @@
     int add(pointObj *p)
     {
         if (self->numpoints == 0) { /* new */	
-        self->point = (pointObj *)malloc(sizeof(pointObj));      
+        self->point = (pointObj *)malloc(sizeof(pointObj));
         if (!self->point)
-	        return MS_FAILURE;
+            return MS_FAILURE;
         } else { /* extend array */
             self->point = (pointObj *)realloc(self->point, 
                                       sizeof(pointObj)*(self->numpoints+1));
         if (!self->point)
-	        return MS_FAILURE;
+            return MS_FAILURE;
         }
 
         self->point[self->numpoints].x = p->x;
@@ -96,4 +94,3 @@
     }
     
 }
-

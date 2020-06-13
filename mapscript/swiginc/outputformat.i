@@ -29,8 +29,7 @@
 
 %extend outputFormatObj 
 {
-    %feature("docstring")
-    "Create new instance. If name is not provided, the value of driver is used as a name."
+    /// Create new instance. If name is not provided, the value of driver is used as a name.
     outputFormatObj(const char *driver, char *name=NULL) 
     {
         outputFormatObj *format;
@@ -59,10 +58,11 @@
         msFreeOutputFormat( self );
     }
 
-    %feature("docstring")
-    "Set file extension for output format such as  'png' or 'jpg'. "
-    "Method could probably be deprecated since the extension attribute is mutable."
-    "Not in Java extension"
+    /**
+    * Set file extension for output format such as  'png' or 'jpg'. 
+    * Method could probably be deprecated since the extension attribute is mutable.
+    * Not in Java extension
+    */
 #ifndef SWIGJAVA
     void setExtension( const char *extension ) 
     {
@@ -70,10 +70,11 @@
         self->extension = msStrdup(extension);
     }
 
-    %feature("docstring")
-    "Set mimetype for output format such as ``image/png`` or ``image/jpeg``."
-    "Method could probably be deprecated since the mimetype attribute is mutable."
-    "Not in Java extension"
+    /**
+    * Set mimetype for output format such as ``image/png`` or ``image/jpeg``.
+    * Method could probably be deprecated since the mimetype attribute is mutable.
+    * Not in Java extension
+    */
     void setMimetype( const char *mimetype ) 
     {
         msFree( self->mimetype );
@@ -88,27 +89,28 @@
         msSetOutputFormatOption( self, key, value );
     }
 
-    %feature("docstring")
-    "Checks some internal consistency issues, and returns :data:`MS_TRUE` if things are OK "
-    "and :data:`MS_FALSE` if there are problems. Some problems are fixed up internally. May produce debug output if issues encountered."
+    /// Checks some internal consistency issues, and returns :data:`MS_TRUE` 
+    /// if things are OK and :data:`MS_FALSE` if there are problems. 
+    /// Some problems are fixed up internally. May produce debug output if issues encountered."
     int validate() 
     {
         return msOutputFormatValidate(self, MS_FALSE );
     }
 
-    %feature("docstring")
-    "Return the format option at ``key`` or ``defaultvalue`` if key is not a valid hash index."
     %newobject getOption;
+    /// Return the format option at ``key`` or ``defaultvalue`` 
+    /// if key is not a valid hash index.
     char *getOption(const char *key, const char *value="") 
     {
         return msStrdup(msGetOutputFormatOption(self, key, value));
     }
 
-    %feature("docstring")
-    "Returns the option at ``idx`` or NULL if the index is beyond the array bounds. "
-    "The option is returned as the original KEY=VALUE string. "
-    "The number of available options can be obtained by calling getNumformatoptions."
     %newobject getOptionAt;
+    /**
+    * Returns the option at ``idx`` or NULL if the index is beyond the array bounds. 
+    * The option is returned as the original KEY=VALUE string. 
+    * The number of available options can be obtained by calling getNumformatoptions.
+    */
     char* getOptionAt(int i) {
        if( i >= 0 && i < self->numformatoptions ) {
           return msStrdup(self->formatoptions[i]);
@@ -116,8 +118,7 @@
        return NULL;
     }
 
-    %feature("docstring")
-    ""
+    /// Set the device property of the output format
     void attachDevice( void *device ) 
     {
         self->device = device;

@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id: $
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript legendObj extensions
    Author:   Steve Lime

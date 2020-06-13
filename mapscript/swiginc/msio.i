@@ -28,47 +28,41 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-%feature("docstring")
-"Resets the default stdin and stdout handlers in place of buffer based handlers."
+/// Resets the default stdin and stdout handlers in place of buffer based handlers.
 void msIO_resetHandlers(void);
 
-%feature("docstring")
-"Installs a mapserver IO handler directing future stdout output to a memory buffer."
+/// Installs a mapserver IO handler directing future stdout output to a memory buffer.
 void msIO_installStdoutToBuffer(void);
 
-%feature("docstring")
-"Installs a mapserver IO handler directing future stdin reading (i.e. post request capture) to come from a buffer."
+/// Installs a mapserver IO handler directing future stdin reading 
+/// (i.e. post request capture) to come from a buffer.
 void msIO_installStdinFromBuffer(void);
 
-%feature("docstring")
-"Strip the Content-type header off the stdout buffer if it has one, and if a content type "
-"is found it is returned (otherwise NULL/None/etc)."
 %newobject msIO_stripStdoutBufferContentType;
+/// Strip the Content-type header off the stdout buffer if it has one, and if a content type 
+/// is found it is returned (otherwise NULL/None/etc).
 const char *msIO_stripStdoutBufferContentType();
 
-%feature("docstring")
-"Strip all Content-* headers off the stdout buffer if it has any."
+/// Strip all Content-* headers off the stdout buffer if it has any.
 void msIO_stripStdoutBufferContentHeaders(void);
 
 /* mapscript only extensions */
 
-%feature("docstring")
-"Fetch the current stdout buffer contents as a string. This method does not clear the buffer."
+/// Fetch the current stdout buffer contents as a string. 
+/// This method does not clear the buffer.
 const char *msIO_getStdoutBufferString(void);
 
-%feature("docstring")
-"TODO"
+/// TODO
 gdBuffer msIO_getStdoutBufferBytes(void);
 
-%feature("docstring")
-"TODO"
 %newobject msIO_getAndStripStdoutBufferMimeHeaders;
+/// TODO
 hashTableObj* msIO_getAndStripStdoutBufferMimeHeaders(void);
 
 %{
 
-%feature("docstring")
-"Fetch the current stdout buffer contents as a string. This method does not clear the buffer."
+/// Fetch the current stdout buffer contents as a string. 
+/// This method does not clear the buffer.
 const char *msIO_getStdoutBufferString() {
     msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
@@ -92,10 +86,11 @@ const char *msIO_getStdoutBufferString() {
     return (const char *) (buf->data);
 }
 
-%feature("docstring")
-"Fetch the current stdout buffer contents as a binary buffer. The exact form of this buffer "
-"will vary by mapscript language (e.g. string in Python, byte[] array in Java and C#, "
-"unhandled in perl)"
+/**
+Fetch the current stdout buffer contents as a binary buffer. The exact form of this buffer 
+will vary by mapscript language (e.g. string in Python, byte[] array in Java and C#, 
+unhandled in perl)
+*/
 gdBuffer msIO_getStdoutBufferBytes() {
     msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;

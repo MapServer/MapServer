@@ -30,8 +30,7 @@
 %extend labelCacheObj 
 {
 
-    %feature("docstring")
-    "Free the labelcache"
+    /// Free the labelcache
     void freeCache() 
     {
         msFreeLabelCache(self);

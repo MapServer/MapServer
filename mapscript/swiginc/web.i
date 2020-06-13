@@ -27,17 +27,13 @@
    ===========================================================================
 */
 
-/* Constructor and destructor for webObj
-   See https://github.com/mapserver/mapserver/issues/1798 */
-
-%feature("docstring") "";
-
 %extend webObj 
 {
     /**
     * Instances of webObj are always are always embedded inside the :class:`mapObj`. 
     * Has no other existence than as an attribute of a :class:`mapObj`. Serves as a container for various run-time 
     * web application definitions like temporary file paths, template paths, etc.
+    * See https://github.com/mapserver/mapserver/issues/1798
     */
     webObj() 
     {
@@ -67,5 +63,3 @@
         return msWriteWebToString(self);
     }
 }
-
-

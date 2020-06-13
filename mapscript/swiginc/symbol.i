@@ -27,16 +27,12 @@
    ===========================================================================
 */
 
-/* Full support for symbols and addition of them to the map symbolset
-   is done to resolve MapServer bug 579
-   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */
-
 %extend symbolObj 
 {
 
-    %feature("docstring")
-    "Create new default symbol named name. If imagefile is specified, then the symbol 
-will be of type :data:`MS_SYMBOL_PIXMAP`."
+    /// Create new default symbol named name. If imagefile is specified, then the symbol 
+    /// will be of type :data:`MS_SYMBOL_PIXMAP`. 
+    /// See also https://github.com/mapserver/mapserver/issues/579
     symbolObj(char *symbolname, const char *imagefile=NULL) 
     {
         symbolObj *symbol;
@@ -59,14 +55,13 @@ will be of type :data:`MS_SYMBOL_PIXMAP`."
         }
     }
 
-    %feature("docstring")
-    "Sets the imagefile path for a :data:`MS_SYMBOL_PIXMAP`. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Sets the imagefile path for a :data:`MS_SYMBOL_PIXMAP`. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setImagepath(const char *imagefile) {
         return msLoadImageSymbol(self, imagefile);
     }
 
-    %feature("docstring")
-    "Sets the symbol points from the points of line. Returns the updated number of points."
+    /// Sets the symbol points from the points of line. Returns the updated number of points. 
     int setPoints(lineObj *line) {
         int i;
     self->sizex = 0;
@@ -80,9 +75,8 @@ will be of type :data:`MS_SYMBOL_PIXMAP`."
         return self->numpoints;
     }
 
-    %feature("docstring")
-    "Returns the symbol points as a lineObj."
     %newobject getPoints;
+    /// Returns the symbol points as a lineObj. 
     lineObj *getPoints() 
     {
         int i;
@@ -97,9 +91,8 @@ will be of type :data:`MS_SYMBOL_PIXMAP`."
         return line;
     }
 
-    %feature("docstring")
-    "Returns a pixmap symbol's imagery as an imageObj."
     %newobject getImage;
+    /// Returns a pixmap symbol's imagery as an imageObj. 
     imageObj *getImage(outputFormatObj *input_format)
     {
         imageObj *image = NULL;
@@ -147,8 +140,8 @@ will be of type :data:`MS_SYMBOL_PIXMAP`."
         return image;
     }
 
-    %feature("docstring")
-    "Set a pixmap symbol's imagery from image. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Set a pixmap symbol's imagery from image. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int setImage(imageObj *image)
     {
         rendererVTableObj *renderer = NULL;

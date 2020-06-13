@@ -28,16 +28,15 @@
 
 %extend referenceMapObj
 {
-  %feature("docstring")
-  "Update a reference map from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+  /// Update a reference map from a string snippet. 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
     return msUpdateReferenceMapFromString(self, snippet, MS_FALSE);
   }
-  
-  %feature("docstring")
-  "Saves the object to a string. Provides the inverse option for updateFromString." 
+
   %newobject convertToString;
+  /// Saves the object to a string. Provides the inverse option for updateFromString.
   char* convertToString()
   {
     return msWriteReferenceMapToString(self);

@@ -29,8 +29,8 @@
 
 %extend resultCacheObj
 {
-    %feature("docstring")
-    "Returns the result at index i, like ``layerObj.getResult``, or ``NULL`` if index is outside the range of results."
+    /// Returns the result at index i, like :method:`layerObj.getResult`, 
+    /// or ``NULL`` if index is outside the range of results."
     resultObj *getResult(int i)
     {
         if (i >= 0 && i < self->numresults) {

@@ -31,8 +31,13 @@
 {
 
     %feature("docstring")
-    "Create a new instance. Omit the type argument or use a value of -1 to open an existing shapefile.
-Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, :data:`MS_SHP_POLYGON` or :data:`MS_SHP_MULTIPOINT`" 
+    /**
+    * Create a new instance. Omit the type argument or use a value of -1 to open 
+    * an existing shapefile.
+    *
+    * Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, 
+    * :data:`MS_SHP_POLYGON` or :data:`MS_SHP_MULTIPOINT`
+    */
     shapefileObj(char *filename, int type=-1) 
     {    
         shapefileObj *shapefile;
@@ -64,8 +69,8 @@ Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, :data:`MS_SHP_PO
         free(self);  
     }
 
-    %feature("docstring")
-    "Get the shapefile feature from index i and store it in shape. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+    /// Get the shapefile feature from index i and store it in shape. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
     int get(int i, shapeObj *shape) 
     {
         if (i<0 || i>=self->numshapes)
@@ -77,9 +82,8 @@ Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, :data:`MS_SHP_PO
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Returns the shapefile feature at index i. More efficient than get." 
     %newobject getShape;
+    /// Returns the shapefile feature at index i. More efficient than get.
     shapeObj *getShape(int i)
     {
         shapeObj *shape;
@@ -93,8 +97,7 @@ Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, :data:`MS_SHP_PO
 
     }
 
-    %feature("docstring")
-    "Returns the point feature at index i and store it in pointObj." 
+    /// Returns the point feature at index i and store it in pointObj.
     int getPoint(int i, pointObj *point) 
     {
         if (i<0 || i>=self->numshapes)
@@ -104,9 +107,9 @@ Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, :data:`MS_SHP_PO
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Returns the feature at index i, simplify it, and store it in shape. Uses the
-map extent and cellsize for simplification. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+    /// Returns the feature at index i, simplify it, and store it in shape. Uses the
+    /// map extent and cellsize for simplification. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
     int getTransformed(mapObj *map, int i, shapeObj *shape) 
     {
         if (i<0 || i>=self->numshapes)
@@ -119,15 +122,14 @@ map extent and cellsize for simplification. Returns :data:`MS_SUCCESS` or :data:
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Retrieve a shape's bounding box by index and stores it in rect."
+    /// Retrieve a shape's bounding box by index and stores it in rect.
     void getExtent(int i, rectObj *rect) 
     {
         msSHPReadBounds(self->hSHP, i, rect);
     }
 
-    %feature("docstring")
-    "Appends a shape to the open shapefile. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Appends a shape to the open shapefile. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int add(shapeObj *shape) 
     {
         /* Trap NULL or empty shapes -- bug 1201 */
@@ -145,15 +147,14 @@ map extent and cellsize for simplification. Returns :data:`MS_SUCCESS` or :data:
         return msSHPWriteShape(self->hSHP, shape);
     }
 
-    %feature("docstring")
-    "Appends a point to the open shapefile. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Appends a point to the open shapefile. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int addPoint(pointObj *point) 
     {    
         return msSHPWritePoint(self->hSHP, point);
     }
 
-    %feature("docstring")
-    "Returns a DBFInfo object containing information on the associated DBF"
+    /// Returns a DBFInfo object containing information on the associated DBF
     DBFInfo *getDBF() {
         return self->hDBF;
     }

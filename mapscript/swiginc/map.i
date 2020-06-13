@@ -411,20 +411,19 @@
     return msLoadQuery(self, filename);
   }
 
-  %feature("docstring")
-  ""
+  /// Clear layer query result caches. Default is -1, or all layers.
   void freeQuery(int qlayer=-1) {
     msQueryFree(self, qlayer);
   }
 
   %feature("docstring")
-  ""
+  // Save query to disk. 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int saveQueryAsGML(char *filename, const char *ns="GOMF") {
     return msGMLWriteQuery(self, filename, ns);
   }
 
-  %feature("docstring")
-  ""
+  /// Deprecated
   char *getMetaData(char *name) {
     char *value = NULL;
     if (!name) {
@@ -439,34 +438,30 @@
     return value;
   }
 
-  %feature("docstring")
-  ""
+  /// Deprecated
   int setMetaData(char *name, char *value) {
     if (msInsertHashTable(&(self->web.metadata), name, value) == NULL)
         return MS_FAILURE;
     return MS_SUCCESS;
   }
 
-  %feature("docstring")
-  ""
+  /// Deprecated
   int removeMetaData(char *name) {
     return(msRemoveHashTable(&(self->web.metadata), name));
   }
 
-  %feature("docstring")
-  ""
+  /// Deprecated
   char *getFirstMetaDataKey() {
     return (char *) msFirstKeyFromHashTable(&(self->web.metadata));
   }
 
-  %feature("docstring")
-  ""
+  /// Deprecated
   char *getNextMetaDataKey(char *lastkey) {
     return (char *) msNextKeyFromHashTable(&(self->web.metadata), lastkey);
   }
 
-  %feature("docstring")
-  ""
+  /// Load symbols defined in filename into map symbolset. The existing symbolset is cleared. 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int setSymbolSet(char *szFileName) {
     msFreeSymbolSet(&self->symbolset);
     msInitSymbolSet(&self->symbolset);
@@ -479,14 +474,13 @@
     return msLoadSymbolSet(&self->symbolset, self);
   }
 
-  %feature("docstring")
-  ""
+  /// Return the number of symbols in map
   int getNumSymbols() {
     return self->symbolset.numsymbols;
   }
 
-  %feature("docstring")
-  ""
+  ///. Load fonts defined in filename into map fontset. The existing fontset is cleared. 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int setFontSet(char *filename) {
     msFreeFontSet(&(self->fontset));
     msInitFontSet(&(self->fontset));
@@ -501,36 +495,36 @@
    members are read-only. Use the setFontSet method to actually change the
    fontset. To get the filename do $map->{fontset}->{filename}; -- SG */
 
-  %feature("docstring")
-  ""
+  /// Save map definition to disk as OGC-compliant XML. 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int saveMapContext(char *szFileName) {
     return msSaveMapContext(self, szFileName);
   }
 
-  %feature("docstring")
-  ""
+  /// Load an OGC map context file to define extents and layers of a map
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int loadMapContext(char *szFileName, int useUniqueNames=MS_FALSE) {
     return msLoadMapContext(self, szFileName, useUniqueNames);
   }
 
-  %feature("docstring")
-  "Move the layer at layerindex up in the drawing order array, meaning that it is drawn earlier."
-  "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+  /// Move the layer at layerindex up in the drawing order array, meaning 
+  /// that it is drawn earlier.
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int  moveLayerUp(int layerindex) {
     return msMoveLayerUp(self, layerindex);
   }
 
-  %feature("docstring")
-  "Move the layer at layerindex down in the drawing order array, meaning that it is drawn later. "
-  "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+  /// Move the layer at layerindex down in the drawing order array, meaning 
+  /// that it is drawn later. 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int  moveLayerDown(int layerindex) {
     return msMoveLayerDown(self, layerindex);
   }
 
-  %feature("docstring")
-  "Returns an array of layer indexes in drawing order."
-  "Note Unless the proper typemap is implemented for the module's language a user is more likely to get back an unusable SWIG pointer to the integer array."
   %newobject getLayersDrawingOrder;
+  /// Returns an array of layer indexes in drawing order.
+  /// Note Unless the proper typemap is implemented for the module's language 
+  /// a user is more likely to get back an unusable SWIG pointer to the integer array.
   intarray *getLayersDrawingOrder() {
     int i;
     intarray *order;
@@ -544,60 +538,57 @@
     return order;
   }
 
-  %feature("docstring")
-  "Set map layer drawing order."
-  "Note Unless the proper typemap is implemented for the module's language users will not be able to pass arrays or lists to this method and it will be unusable."
+  /// Set map layer drawing order.
+  /// Note Unless the proper typemap is implemented for the module's language 
+  /// users will not be able to pass arrays or lists to this method and it will be unusable.
   int setLayersDrawingOrder(int *panIndexes) {
     return msSetLayersdrawingOrder(self, panIndexes); 
   }
 
-  %feature("docstring")
-  "Set the indicated key configuration option to the indicated value. Equivalent to including a CONFIG keyword in a map file."
+  /// Set the indicated key configuration option to the indicated value. 
+  /// Equivalent to including a CONFIG keyword in a map file.
   void setConfigOption(char *key, char *value) {
     msSetConfigOption(self,key,value);
   }
 
-  %feature("docstring")
-  "Fetches the value of the requested configuration key if set. Returns NULL if the key is not set."
+  /// Fetches the value of the requested configuration key if set. 
+  /// Returns NULL if the key is not set.
   char *getConfigOption(char *key) {
     return (char *) msGetConfigOption(self,key);
   }
 
-  %feature("docstring")
-  "Apply the defined configuration options set by setConfigOption()"
+  /// Apply the defined configuration options set by setConfigOption()
   void applyConfigOptions() {
     msApplyMapConfigOptions( self );
   } 
 
   /* SLD */
 
-    %feature("docstring")
-    "Parse the SLD XML string sldxml and apply to map layers. "
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Parse the SLD XML string sldxml and apply to map layers. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int applySLD(char *sld) {
       return msSLDApplySLD(self, sld, -1, NULL, NULL);
     }
 
-    %feature("docstring")
-    "Fetch SLD XML from the URL sldurl and apply to map layers."
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Fetch SLD XML from the URL sldurl and apply to map layers.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int applySLDURL(char *sld) {
       return msSLDApplySLDURL(self, sld, -1, NULL, NULL);
     }
 
-    %feature("docstring")
-    "Return SLD XML as a string for map layers that have STATUS on."
     %newobject generateSLD;
+    /// Return SLD XML as a string for map layers that have STATUS on.
     char *generateSLD(char *sldVersion=NULL) {
         return (char *) msSLDGenerateSLD(self, -1, sldVersion);
     }
 
-    %feature("docstring")
-    "Process MapServer template and return HTML."
-    "Note None of the three template processing methods will be usable unless the proper "
-    "typemaps are implemented in the module for the target language.Currently the typemaps "
-    "are not implemented."
     %newobject processTemplate;
+    /**
+    Process MapServer template and return HTML.
+    Note None of the three template processing methods will be usable unless the proper 
+    typemaps are implemented in the module for the target language.Currently the typemaps 
+    are not implemented.
+    */
     char *processTemplate(int bGenerateImages, char **names, char **values,
                           int numentries)
     {
@@ -605,88 +596,89 @@
                                  numentries);
     }
 
-    %feature("docstring")
-    "Process MapServer legend template and return HTML."
-    "Note None of the three template processing methods will be usable unless the proper "
-    "typemaps are implemented in the module for the target language.Currently the typemaps "
-    "are not implemented."
     %newobject processLegendTemplate;
+    /**
+    Process MapServer legend template and return HTML.
+    Note None of the three template processing methods will be usable unless the proper 
+    typemaps are implemented in the module for the target language.Currently the typemaps 
+    are not implemented.
+    */
     char *processLegendTemplate(char **names, char **values, int numentries) {
         return msProcessLegendTemplate(self, names, values, numentries);
     }
 
-    %feature("docstring")
-    "Process MapServer query template and return HTML. \n"
-    "Note None of the three template processing methods will be usable unless the proper "
-    "typemaps are implemented in the module for the target language.Currently the typemaps "
-    "are not implemented."
     %newobject processQueryTemplate;
+    /**
+    * Process MapServer query template and return HTML. 
+    * Note None of the three template processing methods will be usable unless the proper 
+    * typemaps are implemented in the module for the target language.Currently the typemaps 
+    * are not implemented.
+    */
     char *processQueryTemplate(char **names, char **values, int numentries) {
         return msProcessQueryTemplate(self, 1, names, values, numentries);
     }
 
-    %feature("docstring")
-    "Return the output format corresponding to driver name imagetype or to format name "
-    "imagetype. This works exactly the same as the IMAGETYPE directive in a mapfile, is "
-    "case insensitive and allows an output format to be found either by driver "
-    "(like 'GD/PNG') or name (like 'PNG24')."
+    /**
+    Return the output format corresponding to driver name imagetype or to format name 
+    imagetype. This works exactly the same as the IMAGETYPE directive in a mapfile, is 
+    case insensitive and allows an output format to be found either by driver 
+    (like 'GD/PNG') or name (like 'PNG24').
+    */
     outputFormatObj *getOutputFormatByName(char *name) {
         return msSelectOutputFormat(self, name); 
     }
 
-    %feature("docstring")
-    "Attach format to the map's output format list. Returns the updated number of output formats."
+    /// Attach format to the map's output format list. 
+    /// Returns the updated number of output formats.
     int appendOutputFormat(outputFormatObj *format) {
         return msAppendOutputFormat(self, format);
     }
 
-    %feature("docstring")
-    "Removes the format named name from the map's output format list. "
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Removes the format named name from the map's output format list. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int removeOutputFormat(char *name) {
         return msRemoveOutputFormat(self, name);
     }
 
-    %feature("docstring")
-    "Load OWS request parameters (BBOX, LAYERS, &c.) into map. "
+    /// Load OWS request parameters (BBOX, LAYERS, &c.) into map. 
     "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
     int loadOWSParameters(cgiRequestObj *request, char *wmtver_string="1.1.1") 
     {
         return msMapLoadOWSParameters(self, request, wmtver_string);
     }
 
-    %feature("docstring")
-    "Processes and executes the passed OpenGIS Web Services request on the map. "
-    "Returns :data:`MS_DONE` (2) if there is no valid OWS request in the req object, "
-    ":data:`MS_SUCCESS` (0) if an OWS request was successfully processed and :data:`MS_FAILURE` (1) "
-    "if an OWS request was not successfully processed. OWS requests include WMS, WFS, WCS "
-    "and SOS requests supported by MapServer. Results of a dispatched request are written to "
-    "stdout and can be captured using the msIO services (i.e. :func:`mapscript.msIO_installStdoutToBuffer` "
-    "and :func:`mapscript.msIO_getStdoutBufferString()`)"
+    /**
+    Processes and executes the passed OpenGIS Web Services request on the map. 
+    Returns :data:`MS_DONE` (2) if there is no valid OWS request in the req object, 
+    :data:`MS_SUCCESS` (0) if an OWS request was successfully processed and :data:`MS_FAILURE` (1) 
+    if an OWS request was not successfully processed. OWS requests include WMS, WFS, WCS 
+    and SOS requests supported by MapServer. Results of a dispatched request are written to 
+    stdout and can be captured using the msIO services (i.e. :func:`mapscript.msIO_installStdoutToBuffer` 
+    and :func:`mapscript.msIO_getStdoutBufferString()`
+    */
     int OWSDispatch( cgiRequestObj *req )
     {
         return msOWSDispatch( self, req, MS_TRUE );
     }
 
-    %feature("docstring")
-    "Saves the object to a string. Provides the inverse option for updateFromString." 
     %newobject convertToString;
+    /// Saves the object to a string. Provides the inverse option for updateFromString.
     char* convertToString()
     {
         return msWriteMapToString(self);
     }
 
-    %feature("docstring")
-    "Apply any default values defined in a VALIDATION block used for runtime substitutions"
+    /// Apply any default values defined in a VALIDATION block used for runtime substitutions
     void applyDefaultSubstitutions()
     {
         msApplyDefaultSubstitutions(self);
     }
 
-    %feature("docstring")
-    "Pass in runtime substitution keys and values and apply them to the map. "
-    "**Note** This method is currently enabled for Python only. "
-    "Typemaps are needed for other mapscript languages."
+    /**
+    Pass in runtime substitution keys and values and apply them to the map. 
+    **Note** This method is currently enabled for Python only. 
+    Typemaps are needed for other mapscript languages.
+    */
     void applySubstitutions(char **names, char **values, int npairs)
     {
         msApplySubstitutions(self, names, values, npairs);

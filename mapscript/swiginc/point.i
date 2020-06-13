@@ -30,9 +30,12 @@
 %extend pointObj 
 {
 
-/* Java pointObj constructors are in java/javaextend.i (bug 1106) */
     %feature("docstring")
-    "Create new instance. Easting, northing, and measure arguments are optional."
+    /** 
+    * Create new instance. Easting, northing, and measure arguments are optional.
+    * Java pointObj constructors are in java/javaextend.i
+    * See https://github.com/mapserver/mapserver/issues/1106
+    */
 #ifndef SWIGJAVA
     pointObj(double x=0.0, double y=0.0, double z=0.0, double m=-2e38) 
     {
@@ -54,48 +57,47 @@
         free(self);
     }
 
-    %feature("docstring")
-    "Reproject point from proj_in to proj_out. Transformation is done in place."
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Reproject point from proj_in to proj_out. Transformation is done in place.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int project(projectionObj *projin, projectionObj *projout) 
     {
         return msProjectPoint(projin, projout, self);
     }
 
-    %feature("docstring")
-    "Draw the point using the styles defined by the classindex class of layer and labeled with string text. "
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Draw the point using the styles defined by the classindex class of layer and 
+    /// labeled with string text. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, 
              char *text) 
     {
         return msDrawPoint(map, layer, self, image, classindex, text);
     }
 
-    %feature("docstring")
-    "Returns the distance to point."
+    /// Returns the distance to point.
     double distanceToPoint(pointObj *point) 
     {
         return msDistancePointToPoint(self, point);
     }
 
-    %feature("docstring")
-    "Returns the minimum distance to a hypothetical line segment connecting point1 and point2."
+    /// Returns the minimum distance to a hypothetical line segment connecting point1 
+    /// and point2.
     double distanceToSegment(pointObj *a, pointObj *b) 
     {
         return msDistancePointToSegment(self, a, b);
     }
 
-    %feature("docstring")
-    "Returns the minimum distance to shape."
+    /// Returns the minimum distance to shape.
     double distanceToShape(shapeObj *shape) 
     {
         return msDistancePointToShape(self, shape);
     }
 
-    %feature("docstring")
-    "Set spatial coordinate and, optionally, measure values simultaneously. "
-    "The measure will be set only if the value of m is greater than the ESRI measure no-data value of -1e38. "
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /**
+    * Set spatial coordinate and, optionally, measure values simultaneously. "
+    * The measure will be set only if the value of m is greater than the ESRI measure 
+    * no-data value of -1e38. 
+    * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setXY(double x, double y, double m=-2e38) 
     {
         self->x = x;
@@ -107,10 +109,12 @@
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Set spatial coordinate and, optionally, measure values simultaneously. "
-    "The measure will be set only if the value of m is greater than the ESRI measure no-data value of -1e38. "
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /**
+    * Set spatial coordinate and, optionally, measure values simultaneously. 
+    * The measure will be set only if the value of m is greater than the ESRI measure 
+    * no-data value of -1e38. 
+    * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setXYZ(double x, double y, double z, double m=-2e38) 
     {
         self->x = x;
@@ -122,10 +126,12 @@
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    "Set spatial coordinate and, optionally, measure values simultaneously. "
-    "The measure will be set only if the value of m is greater than the ESRI measure no-data value of -1e38. "
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /**
+    * Set spatial coordinate and, optionally, measure values simultaneously.
+    * The measure will be set only if the value of m is greater than the ESRI measure
+    * no-data value of -1e38.
+    * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setXYZM(double x, double y, double z, double m) 
     {
         self->x = x;
@@ -158,9 +164,8 @@
         return msStrdup(buffer);
     }
 
-    %feature("docstring")
-    ""
     %newobject toShape;
+    /// Convert to a new :class:`shapeObj`
     shapeObj *toShape() 
     {
       shapeObj *shape;

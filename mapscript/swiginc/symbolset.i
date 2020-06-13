@@ -30,8 +30,8 @@
 %extend symbolSetObj 
 {
 
-    %feature("docstring")
-    "Create new instance. If symbolfile is specified, symbols will be loaded from the file." 
+    /// Create new instance. If symbolfile is specified, symbols will be 
+    /// loaded from the file. 
     symbolSetObj(const char *symbolfile=NULL) 
     {
         symbolSetObj *symbolset;
@@ -55,9 +55,8 @@
         free(self);
     }
 
-    %feature("docstring")
-    "Returns a reference to the symbol at index." 
     %newobject getSymbol;
+    /// Returns a reference to the symbol at index.
     symbolObj *getSymbol(int i) 
     {
         if (i >= 0 && i < self->numsymbols) {
@@ -68,9 +67,8 @@
             return NULL;
     }
 
-    %feature("docstring")
-    "Returns a reference to the symbol named name." 
     %newobject getSymbolByName;
+    /// Returns a reference to the symbol named name.
     symbolObj *getSymbolByName(char *symbolname) 
     {
         int i;
@@ -86,23 +84,21 @@
         }
     }
 
-    %feature("docstring")
-    "Return the index of the symbol named name or -1 in the case that no such symbol is found." 
+    /// Return the index of the symbol named name or -1 in the case that no such 
+    /// symbol is found. 
     int index(char *symbolname) 
     {
         return msGetSymbolIndex(self, symbolname, MS_TRUE);
     }
 
-    %feature("docstring")
-    "Add a copy of symbol to the symbolset and return its index." 
+    /// Add a copy of symbol to the symbolset and return its index. 
     int appendSymbol(symbolObj *symbol) 
     {
         return msAppendSymbol(self, symbol);
     }
 
-    %feature("docstring")
-    "Remove the symbol at index and return a copy of the symbol." 
     %newobject removeSymbol;
+    /// Remove the symbol at index and return a copy of the symbol.
     symbolObj *removeSymbol(int index) 
     {
         symbolObj *s=msRemoveSymbol(self, index);
@@ -112,8 +108,7 @@
         return s;
     }
 
-    %feature("docstring")
-    "Save symbol set to a file. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Save symbol set to a file. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int save(const char *filename) {
         return msSaveSymbolSet(self, filename);
     }
