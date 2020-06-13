@@ -94,7 +94,7 @@ const char *msIO_getStdoutBufferString() {
 
 %feature("docstring")
 "Fetch the current stdout buffer contents as a binary buffer. The exact form of this buffer "
-"will vary by mapscript language (eg. string in Python, byte[] array in Java and C#, "
+"will vary by mapscript language (e.g. string in Python, byte[] array in Java and C#, "
 "unhandled in perl)"
 gdBuffer msIO_getStdoutBufferBytes() {
     msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );

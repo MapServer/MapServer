@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript labelCacheObj extensions
    Author:   Steve Lime 
@@ -31,12 +29,13 @@
 
 %extend labelCacheObj 
 {
-  
+
+    %feature("docstring")
+    "Free the labelcache"
     void freeCache() 
     {
-        msFreeLabelCache(self);    
+        msFreeLabelCache(self);
     }
-  
 }
 
 

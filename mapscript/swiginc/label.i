@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id: $
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript labelObj extensions
    Author:   Steve Lime
@@ -31,6 +29,8 @@
 %extend labelObj
 {
 
+  %feature("docstring")
+  ""
   labelObj() 
     {
       labelObj *label;
@@ -49,18 +49,23 @@
       freeLabel(self);
     }
 
-    
+  %feature("docstring")
+  ""
   int updateFromString(char *snippet)
   {
     return msUpdateLabelFromString(self, snippet,MS_FALSE);
   }
-  
+
+  %feature("docstring")
+  ""
   %newobject convertToString;
   char* convertToString()
   {
     return msWriteLabelToString(self);
   }
 
+  %feature("docstring")
+  ""
   int removeBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
@@ -75,6 +80,8 @@
     return MS_SUCCESS;
   }
 
+  %feature("docstring")
+  ""
   char *getBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return NULL;
@@ -82,6 +89,8 @@
     return self->bindings[binding].item;
   }
 
+  %feature("docstring")
+  ""
   int setBinding(int binding, char *item) 
   {
     if(!item) return MS_FAILURE;
@@ -99,7 +108,9 @@
 
     return MS_SUCCESS;
   }
-  
+
+  %feature("docstring")
+  ""
   int setExpression(char *expression) 
   {
     if (!expression || strlen(expression) == 0) {
@@ -109,11 +120,15 @@
     else return msLoadExpressionString(&self->expression, expression);
   }
 
+  %feature("docstring")
+  ""
   %newobject getExpressionString;
   char *getExpressionString() {
     return msGetExpressionString(&(self->expression));
   }
 
+  %feature("docstring")
+  ""
   int setText(char *text) {
     if (!text || strlen(text) == 0) {
       msFreeExpression(&self->text);
@@ -122,11 +137,15 @@
     else return msLoadExpressionString(&self->text, text);
   }
 
+  %feature("docstring")
+  ""
   %newobject getTextString;
   char *getTextString() {
     return msGetExpressionString(&(self->text));
   }
 
+  %feature("docstring")
+  ""
   %newobject getStyle;
   styleObj *getStyle(int i) {
       if (i >= 0 && i < self->numstyles) {
@@ -141,6 +160,8 @@
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {styleObj *style};
 #endif
+    %feature("docstring")
+    ""
     int insertStyle(styleObj *style, int index=-1) {
         return msInsertLabelStyle(self, style, index);
     }
@@ -148,18 +169,24 @@
 %clear styleObj *style;
 #endif
 
+    %feature("docstring")
+    ""
     %newobject removeStyle;
     styleObj *removeStyle(int index) {
-	styleObj* style = (styleObj *) msRemoveLabelStyle(self, index);
-	if (style)
-		MS_REFCNT_INCR(style);
+    styleObj* style = (styleObj *) msRemoveLabelStyle(self, index);
+    if (style)
+        MS_REFCNT_INCR(style);
         return style;
     }
 
+    %feature("docstring")
+    ""
     int moveStyleUp(int index) {
         return msMoveLabelStyleUp(self, index);
     }
 
+    %feature("docstring")
+    ""
     int moveStyleDown(int index) {
        return msMoveLabelStyleDown(self, index);
     }

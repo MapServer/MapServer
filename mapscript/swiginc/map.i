@@ -661,8 +661,8 @@
     ":data:`MS_SUCCESS` (0) if an OWS request was successfully processed and :data:`MS_FAILURE` (1) "
     "if an OWS request was not successfully processed. OWS requests include WMS, WFS, WCS "
     "and SOS requests supported by MapServer. Results of a dispatched request are written to "
-    "stdout and can be captured using the msIO services (i.e. ``msIO_installStdoutToBuffer`` "
-    "and ``msIO_getStdoutBufferString``)"
+    "stdout and can be captured using the msIO services (i.e. :func:`mapscript.msIO_installStdoutToBuffer` "
+    "and :func:`mapscript.msIO_getStdoutBufferString()`)"
     int OWSDispatch( cgiRequestObj *req )
     {
         return msOWSDispatch( self, req, MS_TRUE );

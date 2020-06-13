@@ -30,12 +30,15 @@
 /* Constructor and destructor for webObj
    See https://github.com/mapserver/mapserver/issues/1798 */
 
+%feature("docstring") "";
 
 %extend webObj 
 {
-    %feature("docstring") "Instances of webObj are always are always embedded inside the mapObj. 
-Has no other existence than as an attribute of a mapObj. Serves as a container for various run-time 
-web application definitions like temporary file paths, template paths, etc."
+    /**
+    * Instances of webObj are always are always embedded inside the :class:`mapObj`. 
+    * Has no other existence than as an attribute of a :class:`mapObj`. Serves as a container for various run-time 
+    * web application definitions like temporary file paths, template paths, etc.
+    */
     webObj() 
     {
         webObj *web;
@@ -51,16 +54,14 @@ web application definitions like temporary file paths, template paths, etc."
         free(self);
     }
 
-    %feature("docstring")
-    "Update a web object from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Update a web object from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
         return msUpdateWebFromString(self, snippet, MS_FALSE);
     }
 
-    %feature("docstring")
-    "Output the WEB objects as a Mapfile string. Provides the inverse option for updateFromString. "
     %newobject convertToString;
+    /// Output the WEB object as a Mapfile string. Provides the inverse option for updateFromString.
     char* convertToString()
     {
         return msWriteWebToString(self);
