@@ -30,7 +30,7 @@
 %extend symbolSetObj 
 {
 
-    /// Create new instance. If symbolfile is specified, symbols will be 
+    /// Create new :class:`symbolSetObj` instance. If symbolfile is specified, symbols will be 
     /// loaded from the file. 
     symbolSetObj(const char *symbolfile=NULL) 
     {

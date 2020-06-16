@@ -27,12 +27,13 @@
    ===========================================================================
 */
 
+/// See also https://github.com/mapserver/mapserver/issues/579
+
 %extend symbolObj 
 {
 
-    /// Create new default symbol named name. If imagefile is specified, then the symbol 
+    /// Create new default :class:`symbolObj` named ``symbolname``. If ``imagefile`` is specified, then the symbol 
     /// will be of type :data:`MS_SYMBOL_PIXMAP`. 
-    /// See also https://github.com/mapserver/mapserver/issues/579
     symbolObj(char *symbolname, const char *imagefile=NULL) 
     {
         symbolObj *symbol;
@@ -55,7 +56,7 @@
         }
     }
 
-    /// Sets the imagefile path for a :data:`MS_SYMBOL_PIXMAP`. 
+    /// Sets the ``imagefile`` path for a :data:`MS_SYMBOL_PIXMAP`. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setImagepath(const char *imagefile) {
         return msLoadImageSymbol(self, imagefile);
@@ -76,7 +77,7 @@
     }
 
     %newobject getPoints;
-    /// Returns the symbol points as a lineObj. 
+    /// Returns the symbol points as a :class:`lineObj`. 
     lineObj *getPoints() 
     {
         int i;
@@ -92,7 +93,7 @@
     }
 
     %newobject getImage;
-    /// Returns a pixmap symbol's imagery as an imageObj. 
+    /// Returns a pixmap symbol's imagery as an :class:`imageObj`. 
     imageObj *getImage(outputFormatObj *input_format)
     {
         imageObj *image = NULL;
@@ -141,7 +142,7 @@
     }
 
     /// Set a pixmap symbol's imagery from image. 
-    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setImage(imageObj *image)
     {
         rendererVTableObj *renderer = NULL;
@@ -161,5 +162,4 @@
         self->type = MS_SYMBOL_PIXMAP;
         return renderer->getRasterBufferCopy(image, self->pixmap_buffer);
     }
-
 }

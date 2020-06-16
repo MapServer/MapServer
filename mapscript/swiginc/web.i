@@ -27,13 +27,14 @@
    ===========================================================================
 */
 
+// See https://github.com/mapserver/mapserver/issues/1798 for a related issue
+
 %extend webObj 
 {
     /**
-    * Instances of webObj are always are always embedded inside the :class:`mapObj`. 
+    * Instances of :class:`webObj` are always are always embedded inside the :class:`mapObj`. 
     * Has no other existence than as an attribute of a :class:`mapObj`. Serves as a container for various run-time 
     * web application definitions like temporary file paths, template paths, etc.
-    * See https://github.com/mapserver/mapserver/issues/1798
     */
     webObj() 
     {
@@ -50,14 +51,14 @@
         free(self);
     }
 
-    /// Update a web object from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    /// Update a :class:`webObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
         return msUpdateWebFromString(self, snippet, MS_FALSE);
     }
 
     %newobject convertToString;
-    /// Output the WEB object as a Mapfile string. Provides the inverse option for updateFromString.
+    /// Output the :ref:`web` object as a Mapfile string. Provides the inverse option for :func:`webObj.updateFromString`.
     char* convertToString()
     {
         return msWriteWebToString(self);

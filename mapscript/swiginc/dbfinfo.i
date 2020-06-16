@@ -27,13 +27,9 @@
    ===========================================================================
 */
 
-/*
- class extensions for DBFInfo - TP mods
-*/
 %extend DBFInfo 
 {
-    %feature("docstring") getFieldName 
-    "Get the field name of a DBF using the field index `iField`";
+    /// Get the field name of a DBF using the field index ``iField``
     char *getFieldName(int iField) 
     {
         static char pszFieldName[1000];
@@ -44,8 +40,7 @@
         return pszFieldName;
     }
 
-    %feature("docstring") getFieldWidth 
-    "Get the field width of a DBF using the field index `iField`";
+    /// Get the field width of a DBF using the field index ``iField``
     int getFieldWidth(int iField) 
     {
         char pszFieldName[1000];
@@ -56,8 +51,7 @@
         return pnWidth;
     }
 
-    %feature("docstring") getFieldWidth 
-    "Get the field decimals of a DBF using the field index `iField`";
+    /// Get the field decimals of a DBF using the field index ``iField``
     int getFieldDecimals(int iField) 
     {
         char pszFieldName[1000];
@@ -68,9 +62,8 @@
         return pnDecimals;
     }
 
-    %feature("docstring") getFieldType 
-    "Get the field type of a DBF using the field index `iField`. 
-Field types are one of FTString, FTInteger, FTDouble, FTInvalid";
+    /// Get the field type of a DBF using the field index ``iField``.
+    /// Field types are one of FTString, FTInteger, FTDouble, FTInvalid
     int getFieldType(int iField) 
     {
         return msDBFGetFieldInfo(self, iField, NULL, NULL, NULL);

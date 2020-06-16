@@ -29,12 +29,11 @@
 %extend imageObj {
 
   /**
-  Create a new imageObj instance. If *filename* is specified, an imageObj
-  is created from the file and any specified *width*, *height*, and
-  *format* parameters will be overridden by values of the image in 
-  *filename*.  Otherwise, if *format* is specified (as an :class:`outputFormatObj`) an imageObj is created
+  Create a new :class:`imageObj` instance. If *filename* is specified, an imageObj
+  is created from the file and any specified *width*, *height*, and *format* parameters 
+  will be overridden by values of the image in *filename*.  Otherwise, if *format* is specified (as an :class:`outputFormatObj`) an imageObj is created
   using that format. If *filename* is not specified, then *width* and *height* should be specified. 
-  The default resolution is currently 72 and defined by MS_DEFAULT_RESOLUTION - this setting is 
+  The default resolution is currently 72 and defined by :data:`MS_DEFAULT_RESOLUTION` - this setting is 
   not available in MapScript. 
   */
   imageObj(int width, int height, outputFormatObj *input_format=NULL,
@@ -108,13 +107,11 @@
         msSaveImage(map, self, filename );
     }
 
-    /* ======================================================================
-       write()
-
-       Write image data to an open file handle.  Intended to replace
-       saveToString.  See python/pyextend.i for the Python specific
-       version of this method.
-    ====================================================================== */
+    /**
+    Write image data to an open file handle. Intended to replace
+    saveToString.  See python/pyextend.i for the Python specific
+    version of this method.
+    */
 #ifndef SWIGPYTHON
     int write( FILE *file=NULL )
     {
@@ -156,9 +153,8 @@
     -------------------------------------------------------------------------
     */
 
-    %feature("docstring") getBytes 
-    "Returns the image contents as a binary buffer. The exact form of this buffer will 
-vary by mapscript language (e.g. a string in Python, byte[] array in Java and C#, unhandled in Perl)";
+    /// Returns the image contents as a binary buffer. The exact form of this buffer will 
+    /// vary by mapscript language (e.g. a string in Python, byte[] array in Java and C#, unhandled in Perl)
     gdBuffer getBytes()
     {
         gdBuffer buffer;
@@ -182,9 +178,9 @@ vary by mapscript language (e.g. a string in Python, byte[] array in Java and C#
 
     .. note:: 
 
-    The getSize method is inefficient as it does a call to getBytes and 
-    then computes the size of the byte array. The byte array is then immediately discarded. 
-    In most cases it is more efficient to call getBytes directly.
+        The getSize method is inefficient as it does a call to getBytes and 
+        then computes the size of the byte array. The byte array is then immediately discarded. 
+        In most cases it is more efficient to call getBytes directly.
     */
     int getSize() {
         gdBuffer buffer;

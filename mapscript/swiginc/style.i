@@ -28,11 +28,11 @@
 
    */
 
+// See https://github.com/mapserver/mapserver/issues/548
+
 %extend styleObj {
 
-    /// Returns new default styleObj instance. The parent_class is optional. 
-    /// See https://github.com/mapserver/mapserver/issues/548 about work on 
-    // :class:`styleObj` and :class`classObj`
+    /// Returns new default :class:`styleObj` instance. The ``parent_class`` is optional. 
     styleObj(classObj *parent_class=NULL) 
     {
     
@@ -77,14 +77,14 @@
     }
 
     /// Update a style from a string snippet. 
-    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
         return msUpdateStyleFromString(self, snippet, MS_FALSE);
     }
 
     %newobject convertToString;
-    /// Saves the object to a string. Provides the inverse option for updateFromString 
+    /// Saves the object to a string. Provides the inverse option for :func:`styleObj.updateFromString` 
     char* convertToString()
     {
         return msWriteStyleToString(self);
@@ -125,7 +125,7 @@
         return style;
     }
 
-    /// Setting the symbol of the styleObj given the reference of the map 
+    /// Setting the symbol of the :class:`styleObj` given the reference of the map 
     /// object and the symbol name. 
     int setSymbolByName(mapObj *map, char* symbolname) 
     {
@@ -179,13 +179,13 @@
         return self->bindings[binding].item;
     }
 
-    /// Get the geomtransform for the style
+    /// Get the :ref:`GEOMTRANSFORM <mapfile-style-geomtransform>` for the style. 
     char *getGeomTransform() 
     {
         return self->_geomtransform.string;
     }
 
-    /// Set the geomtransform for the style 
+    /// Set the :ref:`GEOMTRANSFORM <mapfile-style-geomtransform>` for the style. 
     void setGeomTransform(char *transform) 
     {
         msStyleSetGeomTransform(self, transform);

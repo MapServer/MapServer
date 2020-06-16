@@ -29,7 +29,6 @@
 
 %extend shapeObj 
 {
-    %feature("docstring")
     /**
     * Return a new shapeObj of the specified type. See the type attribute. 
     * No attribute values created by default. 
@@ -101,7 +100,7 @@
     }
 
     /// Must be called to calculate new bounding box after new parts have been added.
-    /// **TODO**: should return int and set msSetError.
+    /// TODO: should return int and set msSetError.
     void setBounds() 
     {    
         msComputeBounds(self);
@@ -201,7 +200,10 @@
     int equals(shapeObj *shape) { return msGEOSEquals(self, shape); }
     int disjoint(shapeObj *shape) { return msGEOSDisjoint(self, shape); }
 
+    /// Returns the area of the shape (if applicable). Requires GEOS support. 
     double getArea() { return msGEOSArea(self); }
+
+    /// Returns the length (or perimeter) of the shape. Requires GEOS support. 
     double getLength() { return msGEOSLength(self); }
 
     char *getValue(int i) 

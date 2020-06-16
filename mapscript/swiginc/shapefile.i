@@ -29,8 +29,6 @@
 
 %extend shapefileObj 
 {
-
-    %feature("docstring")
     /**
     * Create a new instance. Omit the type argument or use a value of -1 to open 
     * an existing shapefile.
@@ -70,7 +68,7 @@
     }
 
     /// Get the shapefile feature from index i and store it in shape. 
-    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int get(int i, shapeObj *shape) 
     {
         if (i<0 || i>=self->numshapes)
@@ -109,7 +107,7 @@
 
     /// Returns the feature at index i, simplify it, and store it in shape. Uses the
     /// map extent and cellsize for simplification. 
-    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int getTransformed(mapObj *map, int i, shapeObj *shape) 
     {
         if (i<0 || i>=self->numshapes)
@@ -129,7 +127,7 @@
     }
 
     /// Appends a shape to the open shapefile. 
-    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int add(shapeObj *shape) 
     {
         /* Trap NULL or empty shapes -- bug 1201 */
@@ -148,13 +146,13 @@
     }
 
     /// Appends a point to the open shapefile. 
-    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int addPoint(pointObj *point) 
     {    
         return msSHPWritePoint(self->hSHP, point);
     }
 
-    /// Returns a DBFInfo object containing information on the associated DBF
+    /// Returns a :class:`DBFInfo` object containing information on the associated DBF
     DBFInfo *getDBF() {
         return self->hDBF;
     }

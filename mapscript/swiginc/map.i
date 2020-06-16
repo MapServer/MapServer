@@ -416,8 +416,7 @@
     msQueryFree(self, qlayer);
   }
 
-  %feature("docstring")
-  // Save query to disk. 
+  /// Save query to disk. 
   /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int saveQueryAsGML(char *filename, const char *ns="GOMF") {
     return msGMLWriteQuery(self, filename, ns);
@@ -641,7 +640,7 @@
     }
 
     /// Load OWS request parameters (BBOX, LAYERS, &c.) into map. 
-    "Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`"
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int loadOWSParameters(cgiRequestObj *request, char *wmtver_string="1.1.1") 
     {
         return msMapLoadOWSParameters(self, request, wmtver_string);

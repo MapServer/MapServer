@@ -29,8 +29,6 @@
 
 %extend pointObj 
 {
-
-    %feature("docstring")
     /** 
     * Create new instance. Easting, northing, and measure arguments are optional.
     * Java pointObj constructors are in java/javaextend.i

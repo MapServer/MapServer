@@ -26,19 +26,6 @@
    ===========================================================================
 */
 
-/* ignore the hashObj struct */
-%ignore hashObj;
-
-/* ignore items and make numitems immutable */
-%ignore items;
-%immutable numitems;
-
-
-
-/* ======================================================================== 
- * Extension methods
- * ======================================================================== */
-
 %extend hashTableObj {
     
     /// Create a new instance
