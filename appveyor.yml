@@ -8,7 +8,7 @@ cache:
   - '%LOCALAPPDATA%\pip\Cache'
   - '%APPVEYOR_BUILD_FOLDER%\swigwin-3.0.12.zip'
   - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.0.1.zip'
-  
+
 environment:
 
   global:
@@ -39,6 +39,7 @@ shallow_clone: false
 clone_depth: 5
 
 build_script:
+  - ps: Write-Host "Build tags - $env:APPVEYOR_REPO_TAG $env:APPVEYOR_REPO_TAG_NAME"
   - set "BUILD_FOLDER=%APPVEYOR_BUILD_FOLDER:\=/%"
   - if "%platform%" == "x64" SET VS_FULL=%VS_VERSION% Win64
   - if "%platform%" == "x86" SET VS_FULL=%VS_VERSION%
@@ -106,12 +107,12 @@ artifacts:
 
 deploy_script:
   - ps: |
-        if ($env:APPVEYOR_REPO_TAG -ne $TRUE -and ($env:APPVEYOR_REPO_TAG -cSplit "-").Count -eq 4) { return }
-            if ($env:PYTHON_EXECUTABLE -eq "c:/python36-x64/python.exe") {
-            # create a single source dist
+        if ($env:APPVEYOR_REPO_TAG -ne $TRUE -or ($env:APPVEYOR_REPO_TAG_NAME -cSplit "-").Count -ne 4) { return }
+        if ($env:PYTHON_EXECUTABLE -eq "c:/python36-x64/python.exe") {
+            Write-Host "Deploying Python source distribution to PyPI. Tag $env:APPVEYOR_REPO_TAG_NAME"
             cd $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release
                 & $env:PYTHON_EXECUTABLE setup.py sdist
-            }
-            echo "Deploying Python Wheel to PyPI"
-            & $env:PYTHON_EXECUTABLE -m pip --disable-pip-version-check install twine
-            & $env:PYTHON_EXECUTABLE -m twine upload --repository-url https://pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release\dist\*
+        }
+        Write-Host "Deploying Python Wheel to PyPI. Tag $env:APPVEYOR_REPO_TAG_NAME"
+        & $env:PYTHON_EXECUTABLE -W ignore -m pip --disable-pip-version-check install twine
+        & $env:PYTHON_EXECUTABLE -m twine upload --repository-url https://upload.pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release\dist\*
