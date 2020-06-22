@@ -114,7 +114,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
         PyObject* val = PyList_GetItem(values, i);
 
         %#if PY_MAJOR_VERSION >= 3
-            // Changed in version 3.7: The return type is now const char * rather of char *.
+            // Changed in version 3.7: The return type is now const char * rather than char *
             // avoid warning C4090: '=': different 'const' qualifiers
             $1[i] = (char *)PyUnicode_AsUTF8(key);
             $2[i] = (char *)PyUnicode_AsUTF8(val);
