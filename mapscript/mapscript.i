@@ -38,7 +38,7 @@
 #endif
 %}
 
-#ifndef SWIGPHPNG
+#ifndef SWIGPHP7
 %module mapscript
 #else
 %module mapscriptng
