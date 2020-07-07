@@ -12,6 +12,7 @@ cache:
 environment:
 
   global:
+    SWIG_VER: swigwin-4.0.1
     TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
@@ -24,10 +25,10 @@ environment:
     SWIG_VER: swigwin-3.0.12
   - platform: x64
     PYTHON_EXECUTABLE: c:/python27-x64/python.exe
-    SWIG_VER: swigwin-4.0.1
   - platform: x64
     PYTHON_EXECUTABLE: c:/python36-x64/python.exe
-    SWIG_VER: swigwin-4.0.1
+  - platform: x64
+    PYTHON_EXECUTABLE: c:/python37-x64/python.exe
 
 services:
   - mssql2017
@@ -37,6 +38,15 @@ matrix:
 
 shallow_clone: false
 clone_depth: 5
+
+init:
+  - ps: |
+        if ($env:APPVEYOR_REPO_TAG -ne $TRUE) {
+            if ("c:/python27-x64/python.exe","c:/python36-x64/python.exe" -contains $env:PYTHON_EXECUTABLE -eq $TRUE) {
+                Write-Host "Skipping build, not a tagged release."
+                Exit-AppVeyorBuild
+            }
+        }
 
 build_script:
   - ps: Write-Host "Build tags - $env:APPVEYOR_REPO_TAG $env:APPVEYOR_REPO_TAG_NAME"
