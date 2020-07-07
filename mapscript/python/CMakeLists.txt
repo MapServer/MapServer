@@ -108,7 +108,9 @@ add_custom_command(
     DEPENDS mapscriptwheel.stamp
     OUTPUT mapscripttests.stamp
     COMMAND ${PYTHON_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
-    COMMAND ${PYTHON_VENV_SCRIPTS}/pytest --pyargs mapscript.tests
+    # ERROR: file or package not found: mapscript.tests (missing __init__.py?) is caused by
+    # ImportError: DLL load failed while importing _mapscript: The specified module could not be found.
+    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m pytest --pyargs mapscript.tests
     COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.project_csv ${PROJECT_SOURCE_DIR}/tests/cities.csv 2 1 EPSG:4326 EPSG:3857 > test.csv
     COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
     COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
