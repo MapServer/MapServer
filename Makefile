@@ -56,7 +56,7 @@ csharp-testcase:
 
 perl-testcase:
 	cd "$(PERL_MAPSCRIPT_PATH)" \
-	&& PERL5LIB=`pwd` \
+	&& export PERL5LIB=`pwd` \
 	&& prove tests \
 	&& perl examples/RFC24.pl ../../../tests/test.map \
 	&& perl examples/shp_in_shp.pl --infile1 ../../../tests/line.shp --infile1_shpid 0 --infile2 ../../../tests/polygon.shp --infile2_shpid 0 \

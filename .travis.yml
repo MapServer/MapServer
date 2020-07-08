@@ -2,19 +2,11 @@ branches:
   except:
   - /^(cherry-pick-)?backport-\d+-to-/
 
-dist: trusty
+dist: bionic
 language: php
 
 matrix:
   include:
-
-    - php: 5.6
-      env:
-        - BUILD_NAME=PHP_5.6
-
-    - php: 7.0
-      env:
-        - BUILD_NAME=PHP_7.0
 
     - php: 7.1
       env:
@@ -26,7 +18,7 @@ matrix:
 
     - php: 7.3
       env:
-        - BUILD_NAME=PHP_7.3_WITH_PROJ6
+        - BUILD_NAME=PHP_7.3_WITH_PROJ7
 
 cache:
     apt: true
