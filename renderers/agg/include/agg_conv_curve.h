@@ -156,8 +156,8 @@ namespace mapserver
 
         double ct2_x = 0;
         double ct2_y = 0;
-        double end_x;
-        double end_y;
+        double end_x = 0;
+        double end_y = 0;
 
         unsigned cmd = m_source->vertex(x, y);
         switch(cmd)
