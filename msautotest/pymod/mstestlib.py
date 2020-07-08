@@ -564,6 +564,8 @@ def _run(map, out_file, command, extra_args):
     else:
         command = command.replace('[RENDERER]', '' )
 
+    os.environ['MS_PDF_CREATION_DATE'] = 'dummy date'
+
     #support for environment variable of type [ENV foo=bar]
     begin = command.find('[ENV')
     envirkey = ''
