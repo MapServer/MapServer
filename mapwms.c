@@ -1021,17 +1021,18 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     if (strcasecmp(names[i], "SLD") == 0 || strcasecmp(names[i], "SLD_BODY") == 0) {
       sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
-      if (sldenabled == NULL)
+      if (sldenabled == NULL) {
         sldenabled = "true";
+      }
 
-        if (strcasecmp(sldenabled, "true") == 0) {
-          if (strcasecmp(names[i], "SLD") == 0) {
-            sld_url =  values[i];
-          }
-          if (strcasecmp(names[i], "SLD_BODY") == 0) {
-            sld_body =  values[i];
-          }
+      if (strcasecmp(sldenabled, "true") == 0) {
+        if (strcasecmp(names[i], "SLD") == 0) {
+          sld_url =  values[i];
         }
+        if (strcasecmp(names[i], "SLD_BODY") == 0) {
+          sld_body =  values[i];
+        }
+      }
     }
   }
 
