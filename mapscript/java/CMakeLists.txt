@@ -15,7 +15,10 @@ set (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
 set(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
 
 # hide warnings
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
+endif ()
+
 
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
     swig_add_library(javamapscript TYPE MODULE LANGUAGE java SOURCES ../mapscript.i)
