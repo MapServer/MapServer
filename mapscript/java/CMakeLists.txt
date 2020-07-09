@@ -4,7 +4,7 @@ include(${SWIG_USE_FILE})
 find_package(JNI)
 find_package(Java)
 if(NOT JNI_INCLUDE_DIRS OR NOT Java_JAVAC_EXECUTABLE OR NOT Java_JAR_EXECUTABLE)
-   message(SEND_ERROR "Could not find required Java componenents. Try setting the JAVA_HOME environment variable (required on e.g. Ubuntu)")
+   message(SEND_ERROR "Could not find required Java components. Try setting the JAVA_HOME environment variable (required on e.g. Ubuntu)")
 endif(NOT JNI_INCLUDE_DIRS OR NOT Java_JAVAC_EXECUTABLE OR NOT Java_JAR_EXECUTABLE)
 
 include_directories(${JNI_INCLUDE_DIRS})
@@ -13,6 +13,12 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/java)
 set (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
 set(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
+
+# hide warnings
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
+endif ()
+
 
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
     swig_add_library(javamapscript TYPE MODULE LANGUAGE java SOURCES ../mapscript.i)
