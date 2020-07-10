@@ -1843,6 +1843,7 @@ void msCopyTextPath(textPathObj *dst, textPathObj *src);
 void freeTextPath(textPathObj *tp);
 void initTextSymbol(textSymbolObj *ts);
 void freeTextSymbol(textSymbolObj *ts);
+void copyLabelBounds(label_bounds *dst, label_bounds *src);
 void msCopyTextSymbol(textSymbolObj *dst, textSymbolObj *src);
 void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char *string, double scalefactor, double resolutionfactor, label_cache_mode cache);
 #endif /* SWIG */
