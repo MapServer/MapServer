@@ -143,6 +143,16 @@ void msCopyTextSymbol(textSymbolObj *dst, textSymbolObj *src) {
     dst->textpath = msSmallMalloc(sizeof(textPathObj));
     msCopyTextPath(dst->textpath,src->textpath);
   }
+  if(dst->style_bounds) {
+    int i;
+    dst->style_bounds = msSmallCalloc(src->label->numstyles, sizeof(label_bounds*));
+    for(i=0; i<src->label->numstyles; i++) {
+      if(src->style_bounds[i]) {
+        dst->style_bounds[i] = msSmallMalloc(sizeof(label_bounds));
+        copyLabelBounds(dst->style_bounds[i], src->style_bounds[i]);
+      }
+    }
+  }
 }
 
 static int labelNeedsDeepCopy(labelObj *label) {
