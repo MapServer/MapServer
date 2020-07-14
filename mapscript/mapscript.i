@@ -259,7 +259,6 @@ typedef struct {
 %include "../../mapshape.h"
 %include "../../mapproject.h"
 %include "../../mapsymbol.h"
-%include "../../cgiutil.h"
 %include "../../maphash.h"
 %include "../../maperror.h"
 
