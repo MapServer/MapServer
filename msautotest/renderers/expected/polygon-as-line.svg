@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
 <defs>
-<image id="image8" width="12" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAICAYAAADN5B7xAAAABmJLR0QA/wD/AP+gvaeTAAAAR0lEQVQYlWNgwA+sGBgYXjMwMDgRUIcCrBkYGN4wMDD4kqWJkYGBoYNITVYMDAzGLAwMDO+J1PCZFCf5Qp1kRXXFlgxowQoAMHMLeEI3yPAAAAAASUVORK5CYII="/>
+<image id="image8" width="12" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAICAYAAADN5B7xAAAABmJLR0QA/wD/AP+gvaeTAAAAQUlEQVQYlWNgwA8sGBgYXjEwMDgQUIcCbBgYGF4yMDA4kaWJkYGBoZwETU4sDAwMgkRq4CPFSbYMJPiDJMUYwQoA1HUJfJJ5g0AAAAAASUVORK5CYII="/>
 <pattern id="pattern0" patternUnits="userSpaceOnUse" width="12" height="8" >
   <use xlink:href="#image8"/>
 </pattern>

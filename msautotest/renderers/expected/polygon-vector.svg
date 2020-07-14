@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
 <defs>
-<image id="image8" width="24" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAYAAAAMJL+VAAAABmJLR0QA/wD/AP+gvaeTAAAA/0lEQVQ4ja3UvytGYRjG8c+RH71lMPCeUSIlFoNIyqyUZLIblMFoNdsVSlaT/0DJ34BSUgj1kkEGizI859Sr3s4v56p7uZ/r+dZz31dPpLz60UxqEENJxZjAEk6xXoGdqUnc4xb7abO7JvgqjrCFKfzUxBVhFy+YTXoH2EwN/3lBAycYwwyek36MVmrqqgiPcY4+LLbBCctvdbpUVNN4EkYTdTi/w3hV+AreZEfwEwNV4DvCMuczPA18lwX34hhXGMnxDuOxvZGXoibO8IE5fOX4/ySI7BSN4gLXWCsAJ6TqoYDPMt6xUcRcVtt4xULd4B4c4kYYT+3aw6Xw9damX3AWJ9VAJFB5AAAAAElFTkSuQmCC"/>
+<image id="image8" width="24" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAYAAAAMJL+VAAAABmJLR0QA/wD/AP+gvaeTAAABA0lEQVQ4ja3SvStFcRzH8ddxqVsoA/fa7sDg4Q+QhxSDKGZ2pSSr2SSbTWYp+TcMym4ShfK46G4WZTjn1O2o83TPp371+32/n96/vg+B4qpjBKNoRPdmdCaxiitslWCnagoPuMNpHOytCL6CcxxgHL8VccEO3rEYvc+wGye7qaCGEyxhFk9RvIGvbj8YxGX0yQLaHbkmPuNHTwn4GG7xio0EnEQFRTWPN+yleNoYKgPfxgeWUzx1/CAoAq7hGPeYyPC28NIZyBryAC7Qjxl8Z/j/9T9tyC3cCHu+lgNO2KLnHD5zwi3Zz2NOqC/LsCnc4/US8FQFOMQjpquGwxGuMVwl9A9VDyfozjZ0VgAAAABJRU5ErkJggg=="/>
 <pattern id="pattern0" patternUnits="userSpaceOnUse" width="24" height="16" >
   <use xlink:href="#image8"/>
 </pattern>
-<image id="image12" width="12" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAICAYAAADN5B7xAAAABmJLR0QA/wD/AP+gvaeTAAAAR0lEQVQYlWNgwA+sGBgYXjMwMDgRUIcCrBkYGN4wMDD4kqWJkYGBoYNITVYMDAzGLAwMDO+J1PCZFCf5Qp1kRXXFlgxowQoAMHMLeEI3yPAAAAAASUVORK5CYII="/>
+<image id="image12" width="12" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAICAYAAADN5B7xAAAABmJLR0QA/wD/AP+gvaeTAAAAQUlEQVQYlWNgwA8sGBgYXjEwMDgQUIcCbBgYGF4yMDA4kaWJkYGBoZwETU4sDAwMgkRq4CPFSbYMJPiDJMUYwQoA1HUJfJJ5g0AAAAAASUVORK5CYII="/>
 <pattern id="pattern1" patternUnits="userSpaceOnUse" width="12" height="8" >
   <use xlink:href="#image12"/>
 </pattern>

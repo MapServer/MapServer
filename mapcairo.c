@@ -475,6 +475,17 @@ imageObj* createImageCairo(int width, int height, outputFormatObj *format,colorO
                      _stream_write_fn,
                      r->outputStream,
                      width,height);
+#if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1,15,10)
+      {
+          const char* msPDFCreationDate = getenv("MS_PDF_CREATION_DATE");
+          if( msPDFCreationDate )
+          {
+              cairo_pdf_surface_set_metadata (r->surface,
+                                              CAIRO_PDF_METADATA_CREATE_DATE,
+                                              msPDFCreationDate);
+          }
+      }
+#endif
     } else if(!strcasecmp(format->driver,"cairo/svg")) {
       r->outputStream = (bufferObj*)malloc(sizeof(bufferObj));
       msBufferInit(r->outputStream);
