@@ -189,15 +189,40 @@
     shapeObj *difference(shapeObj *shape) { return msGEOSDifference(self, shape); }
 
     %newobject symDifference;
+    /// Returns the computed symmetric difference of the supplied and existing shape. 
+    /// Requires GEOS support. Returns NULL/undef on failure.
     shapeObj *symDifference(shapeObj *shape) { return msGEOSSymDifference(self, shape); }
 
+    /// Returns :data:`MS_TRUE` if shape2 is entirely inside the shape, returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int contains(shapeObj *shape) { return msGEOSContains(self, shape); }
+
+    /// Returns :data:`MS_TRUE` if shape2 overlaps shape, returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int overlaps(shapeObj *shape) { return msGEOSOverlaps(self, shape); }
+
+    /// Returns :data:`MS_TRUE` if shape is entirely within shape2, returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int within(shapeObj *shape) { return msGEOSWithin(self, shape); }
+
+    /// Returns :data:`MS_TRUE` if shape2 crosses the shape, returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int crosses(shapeObj *shape) { return msGEOSCrosses(self, shape); }
+
+    /// Returns :data:`MS_TRUE` if shape and shape2 intersect, and :data:`MS_FALSE` otherwise.
+    /// Does not require GEOS support but will use GEOS functions if available.
     int intersects(shapeObj *shape) { return msGEOSIntersects(self, shape); } /* if GEOS is not present an alternative computation is provided, see mapgeos.c */
+
+    /// Returns :data:`MS_TRUE` if shape and shape2 touch, returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int touches(shapeObj *shape) { return msGEOSTouches(self, shape); }
+
+    /// Returns :data:`MS_TRUE` if shape and shape2 are equal (geometry only), returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int equals(shapeObj *shape) { return msGEOSEquals(self, shape); }
+
+    /// Returns :data:`MS_TRUE` if shape and shape2 are disjoint, returns -1 on error and :data:`MS_FALSE` otherwise.
+    /// Requires GEOS support.
     int disjoint(shapeObj *shape) { return msGEOSDisjoint(self, shape); }
 
     /// Returns the area of the shape (if applicable). Requires GEOS support. 
@@ -206,6 +231,7 @@
     /// Returns the length (or perimeter) of the shape. Requires GEOS support. 
     double getLength() { return msGEOSLength(self); }
 
+    /// Return the shape attribute at index i.
     char *getValue(int i) 
     {
         if (i >= 0 && i < self->numvalues && self->values)
@@ -214,6 +240,7 @@
             return NULL;
     }
 
+    /// Returns :data:`MS_TRUE` if the point is inside the shape, :data:`MS_FALSE` otherwise
     int contains(pointObj *point) 
     {
         if (self->type == MS_SHAPE_POLYGON)
@@ -222,17 +249,20 @@
         return -1;
     }
 
+    /// Returns the distance to point.
     double distanceToPoint(pointObj *point) 
     {
         return msDistancePointToShape(point, self); /* should there be a GEOS version of this? */
     }
 
+    /// Returns the minimum distance to shape.
     double distanceToShape(shapeObj *shape) 
     {
-    return msGEOSDistance(self, shape); /* note this calls msDistanceShapeToShape() if GEOS support is not present */
+        return msGEOSDistance(self, shape); /* note this calls msDistanceShapeToShape() if GEOS support is not present */
     }
 
     %newobject getLabelPoint;
+    /// Given a shape, return a point object suitable for labelling it. 
     pointObj *getLabelPoint()
     {
         pointObj *point = (pointObj *)calloc(1, sizeof(pointObj));
@@ -248,6 +278,7 @@
         return NULL;
     }
 
+    /// Set the shape value at index i to value.
     int setValue(int i, char *value)
     {
         if (!self->values || !value)
@@ -272,7 +303,8 @@
             return MS_FAILURE;
         }
     }
-    
+
+    /// Allocates memory for the requested number of values.
     void initValues(int numvalues)
     {
         int i;

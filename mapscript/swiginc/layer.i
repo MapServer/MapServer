@@ -1,4 +1,3 @@
-
 /* ===========================================================================
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript layerObj extensions
@@ -31,6 +30,10 @@
 %extend layerObj 
 {
 
+    /**
+    A :class:`layerObj` is associated with :class:`mapObj`. An instance of 
+    :class:`layerObj` can exist outside of a :class:`mapObj`. 
+    */
     layerObj(mapObj *map=NULL) 
     {
         layerObj *layer;
@@ -69,12 +72,15 @@
             return (map->layers[map->numlayers-1]);
         }
     }
-    
+ 
+    /// Sets an opacity for the layer, where the value is an integer in range [0, 100]. 
+    /// A new :ref:`composite` block is generated, containing this ``OPACITY`` value.
     void setOpacity(int opacity)
     {
       msSetLayerOpacity(self, opacity);
     }
 
+    /// Returns the opacity value for the layer.
     int getOpacity() {
       if(self->compositer) return (self->compositer->opacity);
       return (100);
@@ -95,6 +101,9 @@
     layerObj *cloneLayer() 
 #else
     %newobject clone;
+    /**
+    Return an independent copy of the layer with no parent map.
+    */
     layerObj *clone() 
 #endif
     {
@@ -125,12 +134,14 @@
         return layer;
     }
 
+    /// Update a :class:`layerObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
         return msUpdateLayerFromString(self, snippet, MS_FALSE);
     }
     
     %newobject convertToString;
+    /// Output the :ref:`layerObj` object as a Mapfile string. Provides the inverse option for :func:`layerObj.updateFromString`.
     char* convertToString()
     {
         return msWriteLayerToString(self);
@@ -139,6 +150,8 @@
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {classObj *classobj};
 #endif
+    /// Insert a **copy** of the class into the layer at the requested *index*. 
+    /// Default index of -1 means insertion at the end of the array of classes. Returns the index at which the class was inserted.
     int insertClass(classObj *classobj, int index=-1)
     {
         return msInsertClass(self, classobj, index);
@@ -146,9 +159,12 @@
 #ifdef SWIGCSHARP
 %clear classObj *classobj;
 #endif
-    
-    /* removeClass() */
+
+
     %newobject removeClass;
+    /// Removes the class at *index* and returns a copy, or NULL in the case of a failure. 
+    /// Note that subsequent classes will be renumbered by this operation. 
+    /// The numclasses field contains the number of classes available.
     classObj *removeClass(int index) 
     {
         classObj* c = msRemoveClass(self, index);
@@ -158,6 +174,8 @@
     return c;
     }
 
+    /// Opens the underlying layer. This is required before operations like :func:`layerObj.getFeature`
+    /// will work, but is not required before a draw or query call.
     int open() 
     {
         int status;
@@ -168,6 +186,13 @@
         return status;
     }
 
+    /**
+    Performs a spatial, and optionally an attribute based feature search. 
+    The function basically prepares things so that candidate features can be accessed by 
+    query or drawing functions (e.g using :func:`layerObj.nextShape` function). 
+    Returns :data:`MS_SUCCESS`, :data:`MS_FAILURE` or :data:`MS_DONE`.
+    MS_DONE is returned if the layer extent does not overlap *rect*.
+    */
     int whichShapes(rectObj rect)
     {
         int oldconnectiontype = self->connectiontype;
@@ -183,6 +208,25 @@
     }    
 
     %newobject nextShape;
+    /**
+    Called after :func:`layerObj.whichShapes` has been called to actually 
+    retrieve shapes within a given area returns a shape object or :data:`MS_FALSE`
+    Example of usage:
+
+    .. code-block::
+
+        mapObj map = new mapObj("d:/msapps/gmap-ms40/htdocs/gmap75.map");
+        layerObj layer = map.getLayerByName('road');
+        int status = layer.open();
+        status = layer.whichShapes(map.extent);
+        shapeObj shape;
+        while ((shape = layer.nextShape()) != null)
+        {
+          ...
+        }
+        layer.close();
+
+    */
     shapeObj *nextShape() 
     {
        int status;
@@ -201,12 +245,14 @@
          return shape;
     }
 
+    /// Close the underlying layer.
     void close() 
     {
         msLayerClose(self);
     }
 
     %newobject getShape;
+    /// Get a shape from layer data. Argument is a result cache member from :func:`layerObj.getResult`
     shapeObj *getShape(resultObj *record) 
     {
         int retval;
@@ -229,6 +275,7 @@
         return shape;
     }
 
+    /// Returns the number of entries in the query result cache for this layer.
     int getNumResults() 
     {
         if (!self->resultcache) return 0;
@@ -236,6 +283,7 @@
     }
 
     %newobject getResultsBounds;
+    /// Returns the bounds of the features in the result cache.
     rectObj *getResultsBounds() 
     {
         rectObj *bounds;
@@ -245,6 +293,9 @@
         return bounds;
     }
 
+    /// Fetches the requested query result cache entry, or NULL if the index is outside 
+    /// the range of available results. This method would normally only be used after 
+    /// issuing a query operation.
     resultObj *getResult(int i) 
     {
         if (!self->resultcache) return NULL;
@@ -255,6 +306,8 @@
     }
 
     %newobject getClass;
+    /// Fetch the requested class object at *i*. Returns NULL if the class index is out of the legal range. 
+    /// The numclasses field contains the number of classes available, and the first class is index 0.
     classObj *getClass(int i) 
     {
     classObj *result=NULL;
@@ -265,6 +318,8 @@
     return result;
     }
 
+    /// Returns the requested item. Items are attribute fields, and this method returns the 
+    /// item name (field name). The numitems field contains the number of items available, and the first item is index zero.
     char *getItem(int i) 
     {
   
@@ -274,23 +329,31 @@
             return NULL;
     }
 
+    /// Set the items to be retrieved with a particular shape.
     int setItems(char **items, int numitems) {
         return msLayerSetItems(self, items, numitems);
     }
 
+    /// Renders this layer into the target image, adding labels to the cache if required. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`. 
+    // TODO: Does the map need to be the map on which the layer is defined? I suspect so.
     int draw(mapObj *map, imageObj *image) 
     {
         return msDrawLayer(map, self, image);    
     }
 
+    /// Draw query map for a single layer into the target image. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`. 
     int drawQuery(mapObj *map, imageObj *image) 
     {
         return msDrawQueryLayer(map, self, image);    
     }
 
-    /* For querying, we switch layer status ON and then back to original
-       value before returning. */
-
+    /**
+    Query by the filter *string*. 
+    For querying, we switch layer status ON and then back to original
+    value before returning. 
+    */
     int queryByFilter(mapObj *map, char *string)
     {
         int status;
@@ -305,15 +368,22 @@
         map->query.filter.type = MS_EXPRESSION;
         
         map->query.layer = self->index;
-           map->query.rect = map->extent;
+        map->query.rect = map->extent;
 
-          status = self->status;
-          self->status = MS_ON;
+        status = self->status;
+        self->status = MS_ON;
         retval = msQueryByFilter(map);
         self->status = status;
-          return retval;
+        return retval;
     }
 
+    /**
+    Query layer for shapes that intersect current map extents. *qitem* is the item (attribute) 
+    on which the query is performed, and *qstring* is the expression to match. 
+    The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
+    Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
+    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    */
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
     {
         int status;
@@ -341,6 +411,12 @@
         return retval;
     }
 
+    /**
+    Query layer at point location specified in georeferenced map coordinates (i.e. not pixels). 
+    The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
+    Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
+    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    */
     int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) 
     {
         int status;
@@ -362,6 +438,12 @@
         return retval;
     }
 
+    /**
+    Query layer using a rectangle specified in georeferenced map coordinates (i.e. not pixels).
+    The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
+    Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
+    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    */
     int queryByRect(mapObj *map, rectObj rect) 
     {
         int status;
@@ -382,6 +464,11 @@
         return retval;
     }
 
+    /**
+    Perform a query set based on a previous set of results from another layer. 
+    At present the results MUST be based on a polygon layer. 
+    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    */
     int queryByFeatures(mapObj *map, int slayer) 
     {
         int status;
@@ -397,6 +484,10 @@
         return retval;
     }
 
+    /**
+    Query layer based on a single shape, the shape has to be a polygon at this point. 
+    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    */
     int queryByShape(mapObj *map, shapeObj *shape) 
     {
         int status;
@@ -418,6 +509,8 @@
         return retval;
     }
 
+    /// Pop a query result member into the layer's result cache. By default clobbers existing cache.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int queryByIndex(mapObj *map, int tileindex, int shapeindex, int bAddToQuery=MS_FALSE)
     {
         int status;
@@ -439,11 +532,14 @@
         return retval;
     }
     
+    /// Returns a reference to layer's result cache. Should be NULL prior to any query, or after a failed query or query with no results.
     resultCacheObj *getResults(void)
     {
         return self->resultcache;
     }
-        
+
+    /// Sets a filter expression similarly to the FILTER expression in a map file. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE` if the expression fails to parse.
     int setFilter(char *filter) 
     {
         if (!filter || strlen(filter) == 0) {
@@ -454,11 +550,14 @@
     }
 
     %newobject getFilterString;
+    /// Returns the current filter expression.
     char *getFilterString() 
     {
         return msGetExpressionString(&(self->filter));
     }
 
+    /// Set the layer projection using OpenGIS Well Known Text format. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setWKTProjection(char *wkt) 
     {
         self->project = MS_TRUE;
@@ -466,17 +565,25 @@
     }
 
     %newobject getProjection;
+    /// Returns the PROJ definition of the layer's projection.
     char *getProjection() 
     {    
         return (char *) msGetProjectionString(&(self->projection));
     }
 
+    /**
+    Set the layer projection using a PROJ format projection definition 
+    (i.e. "+proj=utm +zone=11 +datum=WGS84" or "init=EPSG:26911"). 
+    Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setProjection(char *proj4) 
     {
         self->project = MS_TRUE;
         return msLoadProjectionString(&(self->projection), proj4);
     }
 
+    /// Add a new inline feature on a layer. Returns -1 on error. 
+    /// TODO: Is this similar to inline features in a mapfile? Does it work for any kind of layer or connection type?
     int addFeature(shapeObj *shape) 
     {    
         self->connectiontype = MS_INLINE;
@@ -489,15 +596,15 @@
         return MS_SUCCESS;
     }
 
-    /*
-    Returns the number of inline feature of a layer
-    */
+    /// Returns the number of inline features in a layer. 
+    /// TODO: is this really only online features or will it return the number of non-inline features on a regular layer?
     int getNumFeatures() 
     {
         return msLayerGetNumFeatures(self);
     }
 
     %newobject getExtent;
+    /// Fetches the extents of the data in the layer. This normally requires a full read pass through the features of the layer and does not work for raster layers.
     rectObj *getExtent() 
     {
         rectObj *extent;
@@ -506,6 +613,8 @@
         return extent;
     }
 
+    /// Sets the extent of a layer. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setExtent(double minx=-1.0, double miny=-1.0,
                   double maxx=-1.0, double maxy=-1.0)
     {
@@ -524,7 +633,14 @@
     promoted the metadata member of layerObj to a first-class mapscript
     object.  See hashtable.i.  Not yet scheduled for deprecation but 
     perhaps in the next major release?  --SG
-    */ 
+    */
+
+    /**
+    .. note::
+
+        Function is deprecated and will be removed in a future version. 
+        Replaced by direct metadata access, see :class:`hashTableObj`
+    */
     char *getMetaData(char *name) 
     {
         char *value = NULL;
@@ -548,6 +664,12 @@
         return value;
     }
 
+    /**
+    .. note::
+
+        Function is deprecated and will be removed in a future version. 
+        Replaced by direct metadata access, see :class:`hashTableObj`
+    */
     int setMetaData(char *name, char *value) 
     {
         if (msInsertHashTable(&(self->metadata), name, value) == NULL)
@@ -555,22 +677,49 @@
         return MS_SUCCESS;
     }
 
+    /**
+    .. note::
+
+        Function is deprecated and will be removed in a future version. 
+        Replaced by direct metadata access, see :class:`hashTableObj`
+    */
     int removeMetaData(char *name) 
     {
         return(msRemoveHashTable(&(self->metadata), name));
     }
 
+    /**
+    .. note::
+
+        Function is deprecated and will be removed in a future version. 
+        Replaced by direct metadata access, see :class:`hashTableObj`
+    */
     char *getFirstMetaDataKey() 
     {
         return (char *) msFirstKeyFromHashTable(&(self->metadata));
     }
- 
+
+    /**
+    .. note::
+
+        Function is deprecated and will be removed in a future version. 
+        Replaced by direct metadata access, see :class:`hashTableObj`
+    */
     char *getNextMetaDataKey(char *lastkey) 
     {
         return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
     }
   
     %newobject getWMSFeatureInfoURL;
+    /**
+    Return a WMS GetFeatureInfo URL (works only for WMS layers) *clickX*, *clickY*
+    is the location of to query in pixel coordinates with (0,0) at the top 
+    left of the image. *featureCount* is the number of results to return. *infoFormat* 
+    is the format the format in which the result should be requested. 
+    Depends on remote server's capabilities. MapServer WMS servers support only "MIME" 
+    (and should support "GML.1" soon). Returns "" and outputs a warning if layer is not a 
+    WMS layer or if it is not queryable.
+    */
     char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y,
                                int feature_count, char *info_format)
     {
@@ -579,27 +728,43 @@
     }
  
     %newobject executeWFSGetFeature;
+    /// Executes a GetFeature request on a WFS layer and returns the name of the temporary GML file created. Returns an empty string on error.
     char *executeWFSGetFeature(layerObj *layer) 
     {
         return (char *) msWFSExecuteGetFeature(layer);
     }
 
+    /**
+    Apply the SLD document to the layer object. The matching between the SLD document and the 
+    layer will be done using the layer's name. If a *stylelayer* argument is passed (argument is optional), 
+    the NamedLayer in the SLD that matches it will be used to style the layer. 
+    See SLD HOWTO for more information on the SLD support.
+    */
     int applySLD(char *sld, char *stylelayer) 
     {
       return msSLDApplySLD(self->map, sld, self->index, stylelayer, NULL);
     }
 
+    /**
+    Apply the SLD document pointed by the URL to the layer object. The matching between the SLD document and the 
+    layer will be done using the layer's name. If a *stylelayer* argument is passed (argument is optional), 
+    the NamedLayer in the SLD that matches it will be used to style the layer. 
+    See SLD HOWTO for more information on the SLD support.
+    */
     int applySLDURL(char *sld, char *stylelayer) 
     {
       return msSLDApplySLDURL(self->map, sld, self->index, stylelayer, NULL);
     }
 
     %newobject generateSLD; 
+    /// Returns an SLD XML string based on all the classes found in the layer (the layer must have ``STATUS ON```).
     char *generateSLD() 
     {
         return (char *) msSLDGenerateSLD(self->map, self->index, NULL);
     }
 
+    /// Returns :data:`MS_TRUE` or :data:`MS_FALSE` after considering the layer status, 
+    /// minscaledenom, and maxscaledenom within the context of the parent map.
     int isVisible()
     {
         if (!self->map)
@@ -612,47 +777,80 @@
         return msLayerIsVisible(self->map, self);
     }
 
+    /**
+    The class specified by the class index will be moved up in the array of classes. 
+    Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`. For example ``moveClassUp(1)`` will have the effect 
+    of moving class 1 up to position 0, and the class at position 0 will be moved to position 1.
+    */
     int moveClassUp(int index) 
     {
         return msMoveClassUp(self, index);
     }
 
+    /**
+    The class specified by the class index will be moved up into the array of classes. 
+    Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`. For example ``moveClassDown(1)`` will have the effect 
+    of moving class 1 down to position 2, and the class at position 2 will be moved to position 1.
+    */
     int moveClassDown(int index) 
     {
         return msMoveClassDown(self, index);
     }
 
+    /**
+    Adds or replaces a processing directive of the form "key=value". 
+    Unlike the :func:`layerObj.addProcessing` function, this will replace an existing processing directive 
+    for the given key value. Processing directives supported are specific to the layer type 
+    and underlying renderer.
+    */
     void setProcessingKey(const char *key, const char *value) 
     {
        msLayerSetProcessingKey( self, key, value );
     }
  
-    /* this method is deprecated ... should use addProcessing() */
+    /// Deprecated
     void setProcessing(const char *directive ) 
     {
         msLayerAddProcessing( self, directive );
     }
 
+    /// Adds a new processing directive line to a layer, similar to the PROCESSING directive 
+    /// in a map file. Processing directives supported are specific to the layer type and 
+    /// underlying renderer.
     void addProcessing(const char *directive ) 
     {
         msLayerAddProcessing( self, directive );
     }
 
+    /// Return the raster processing directive at *index*.
     char *getProcessing(int index) 
     {
         return (char *) msLayerGetProcessing(self, index);
     }
 
+    /// Return the processing directive specified by *key*.
     char *getProcessingKey(const char *key)
     {
       return (char *) msLayerGetProcessingKey(self, key);
     }    
 
+    /**
+    Clears the layer's raster processing directives. 
+    Returns the subsequent number of directives, which will equal :data:`MS_SUCCESS` if the 
+    directives have been cleared.
+    */
     int clearProcessing() 
     {
         return msLayerClearProcessing(self);
     }
-    
+
+    /**
+    Changes the connectiontype of the layer and recreates the vtable according to the new 
+    connection type. This method should be used instead of setting the *connectiontype*
+    parameter directly. In case when the layer.connectiontype = :data:`MS_PLUGIN` the *library_str* 
+    parameter should also be specified so as to select the library to load by MapServer. 
+    For the other connection types this parameter is not used. 
+    */
     int setConnectionType(int connectiontype, const char *library_str) 
     {    
         /* Caller is responsible to close previous layer correctly before
@@ -663,15 +861,24 @@
         return msConnectLayer(self, connectiontype, library_str);
     }
 
+    /**
+    Get the class index for a shape in the layer.
+    */
     int getClassIndex(mapObj *map, shapeObj *shape, int *classgroup=NULL, int numclasses=0) {
         return msShapeGetClass(self, map, shape, classgroup, numclasses);
     }
 
+    /**
+    Return the geomtransform string for the layer. 
+    */
     char *getGeomTransform() 
     {
       return self->_geomtransform.string;
     }
-    
+
+    /**
+    Set the geomtransform string for the layer. 
+    */
     void setGeomTransform(char *transform) 
     {
       msFree(self->_geomtransform.string);
@@ -691,7 +898,7 @@
 
     Pass in the attribute index to retrieve the type. The 
     layer's numitems property contains the number of items 
-    available, and the first item is index zero."
+    available, and the first item is index zero.
     */
     char *getItemType(int i)
     {
@@ -710,6 +917,4 @@
 
         return itemType;
     }
-
-
 }

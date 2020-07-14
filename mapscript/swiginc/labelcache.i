@@ -30,7 +30,7 @@
 %extend labelCacheObj 
 {
 
-    /// Free the labelcache
+    /// Free the labelCache
     void freeCache() 
     {
         msFreeLabelCache(self);

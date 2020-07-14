@@ -61,7 +61,7 @@
     /**
     * Set file extension for output format such as  'png' or 'jpg'. 
     * Method could probably be deprecated since the extension attribute is mutable.
-    * Not in Java extension
+    * Not in Java extension.
     */
 #ifndef SWIGJAVA
     void setExtension( const char *extension ) 
@@ -82,8 +82,7 @@
     }
 #endif
 
-    %feature("docstring")
-    "Set the format option at ``key`` to ``value``. Format options are mostly driver specific."
+    /// Set the format option at ``key`` to ``value``. Format options are mostly driver specific.
     void setOption( const char *key, const char *value ) 
     {
         msSetOutputFormatOption( self, key, value );

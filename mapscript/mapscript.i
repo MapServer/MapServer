@@ -261,6 +261,7 @@ typedef struct {
 %include "../../mapsymbol.h"
 %include "../../cgiutil.h"
 %include "../../maphash.h"
+%include "../../maperror.h"
 
 // clear autodoc for SWIG functions as we can use the -py3 flag to add typehints
 // which can be read by Sphinx

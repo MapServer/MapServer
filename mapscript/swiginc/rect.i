@@ -163,13 +163,13 @@
 
     %newobject toString;
     /**
-    * Return a string formatted like: ``{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }``
-    * with the bounding values substituted appropriately. Python users can get the same effect 
-    * via the rectObj __str__ method:
-    *
-    * >>> r = mapscript.rectObj(0, 0, 1, 1)
-    * >>> str(r)
-    * { 'minx': 0 , 'miny': 0 , 'maxx': 1 , 'maxy': 1 }
+    Return a string formatted like: ``{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }``
+    with the bounding values substituted appropriately. Python users can get the same effect 
+    via the rectObj __str__ method:
+    
+    >>> r = mapscript.rectObj(0, 0, 1, 1)
+    >>> str(r)
+    { 'minx': 0 , 'miny': 0 , 'maxx': 1 , 'maxy': 1 }
     */
     char *toString()
     {

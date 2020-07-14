@@ -29,14 +29,14 @@
 %extend scalebarObj
 {
   /// Update a scalebar from a string snippet. 
-  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`" 
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
     return msUpdateScalebarFromString(self, snippet, MS_FALSE);
   }
   
   %newobject convertToString;
-  /// Saves the object to a string. Provides the inverse option for updateFromString." 
+  /// Saves the object to a string. Provides the inverse option for updateFromString.
   char* convertToString()
   {
     return msWriteScalebarToString(self);

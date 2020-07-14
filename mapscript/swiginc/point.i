@@ -63,7 +63,7 @@
     }
 
     /// Draw the point using the styles defined by the classindex class of layer and 
-    /// labeled with string text. 
+    /// labelled with string text. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, 
              char *text) 
@@ -91,7 +91,7 @@
     }
 
     /**
-    * Set spatial coordinate and, optionally, measure values simultaneously. "
+    * Set spatial coordinate and, optionally, measure values simultaneously. 
     * The measure will be set only if the value of m is greater than the ESRI measure 
     * no-data value of -1e38. 
     * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
@@ -141,9 +141,16 @@
         return MS_SUCCESS;
     }
 
-    %feature("docstring")
-    ""
     %newobject toString;
+    /**
+    Return a string formatted like: ``{ 'x': %f , 'y': %f, 'z': %f }``
+    with the coordinate values substituted appropriately. Python users can get the same effect 
+    via the pointObj  __str__ method:
+    
+    >>> p = mapscript.pointObj(1, 1)
+    >>> str(p)
+    { 'x': 1.000000 , 'y': 1.000000, 'z': 1.000000 }
+    */
     char *toString() 
     {
         char buffer[256];

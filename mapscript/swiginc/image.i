@@ -154,7 +154,7 @@
     */
 
     /// Returns the image contents as a binary buffer. The exact form of this buffer will 
-    /// vary by mapscript language (e.g. a string in Python, byte[] array in Java and C#, unhandled in Perl)
+    /// vary by MapScript language (e.g. a string in Python, byte[] array in Java and C#, unhandled in Perl)
     gdBuffer getBytes()
     {
         gdBuffer buffer;

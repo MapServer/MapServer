@@ -176,19 +176,19 @@
     return value;
   }
 
-  /// **/To be removed in 8.0** -  use the metadata property
+  /// **/To be removed** -  use the metadata property
   int setMetaData(char *name, char *value) {
     if (msInsertHashTable(&(self->metadata), name, value) == NULL)
         return MS_FAILURE;
     return MS_SUCCESS;
   }
 
-  /// **/To be removed in 8.0** -  use the metadata property
+  /// **/To be removed** -  use the metadata property
   char *getFirstMetaDataKey() {
     return (char *) msFirstKeyFromHashTable(&(self->metadata));
   }
 
-  /// **/To be removed in 8.0** -  use the metadata property
+  /// **To be removed** -  use the metadata property
   char *getNextMetaDataKey(char *lastkey) {
     return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
   }

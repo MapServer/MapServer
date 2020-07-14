@@ -29,8 +29,15 @@
 %extend labelObj
 {
 
-  %feature("docstring")
-  ""
+  /**
+  Create a new :class:`labelObj`. A :class:`labelObj` is associated with a 
+  :class:`classObj` a :class:`scalebarObj` or a :class:`legendObj`. 
+  An instance of :class:`labelObj` can exist outside of a :class:`classObj` container and be 
+  explicitly inserted into the :class:`classObj`:
+  
+  >>> new_label = new labelObj()
+  >>> the_class.addLabel(new_label)
+  */
   labelObj() 
     {
       labelObj *label;
@@ -49,23 +56,20 @@
       freeLabel(self);
     }
 
-  %feature("docstring")
-  ""
+  /// Update a :class:`labelObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
     return msUpdateLabelFromString(self, snippet,MS_FALSE);
   }
 
-  %feature("docstring")
-  ""
   %newobject convertToString;
+  /// Output the :ref:`labelObj` object as a Mapfile string. Provides the inverse option for :func:`labelObj.updateFromString`.
   char* convertToString()
   {
     return msWriteLabelToString(self);
   }
 
-  %feature("docstring")
-  ""
+  /// Remove the attribute binding for a specified label property.
   int removeBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
@@ -80,8 +84,7 @@
     return MS_SUCCESS;
   }
 
-  %feature("docstring")
-  ""
+  /// Get the attribute binding for a specified label property. Returns NULL if there is no binding for this property.
   char *getBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return NULL;
@@ -89,8 +92,8 @@
     return self->bindings[binding].item;
   }
 
-  %feature("docstring")
-  ""
+  /// Set the attribute binding for a specified label property. Binding constants look like this: ``MS_LABEL_BINDING_[attribute name]``:
+  /// >>> new_label.setBinding(MS_LABEL_BINDING_COLOR, "FIELD_NAME_COLOR")
   int setBinding(int binding, char *item) 
   {
     if(!item) return MS_FAILURE;
@@ -109,8 +112,7 @@
     return MS_SUCCESS;
   }
 
-  %feature("docstring")
-  ""
+  /// Set the label expression.
   int setExpression(char *expression) 
   {
     if (!expression || strlen(expression) == 0) {
@@ -120,15 +122,13 @@
     else return msLoadExpressionString(&self->expression, expression);
   }
 
-  %feature("docstring")
-  ""
+  /// Returns the label expression string.
   %newobject getExpressionString;
   char *getExpressionString() {
     return msGetExpressionString(&(self->expression));
   }
 
-  %feature("docstring")
-  ""
+  /// Set the label text.
   int setText(char *text) {
     if (!text || strlen(text) == 0) {
       msFreeExpression(&self->text);
@@ -137,16 +137,14 @@
     else return msLoadExpressionString(&self->text, text);
   }
 
-  %feature("docstring")
-  ""
+  /// Returns the label text string.
   %newobject getTextString;
   char *getTextString() {
     return msGetExpressionString(&(self->text));
   }
 
-  %feature("docstring")
-  ""
   %newobject getStyle;
+  /// Return a reference to the :class:`styleObj` at index *i* in the styles array.
   styleObj *getStyle(int i) {
       if (i >= 0 && i < self->numstyles) {
           MS_REFCNT_INCR(self->styles[i]);
@@ -160,8 +158,9 @@
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {styleObj *style};
 #endif
-    %feature("docstring")
-    ""
+
+    /// Insert a copy of style into the styles array at index *index*. 
+    /// Default is -1, or the end of the array. Returns the index at which the style was inserted.
     int insertStyle(styleObj *style, int index=-1) {
         return msInsertLabelStyle(self, style, index);
     }
@@ -169,24 +168,21 @@
 %clear styleObj *style;
 #endif
 
-    %feature("docstring")
-    ""
     %newobject removeStyle;
+    /// Remove the styleObj at *index* from the styles array and return a copy.
     styleObj *removeStyle(int index) {
-    styleObj* style = (styleObj *) msRemoveLabelStyle(self, index);
-    if (style)
-        MS_REFCNT_INCR(style);
-        return style;
+        styleObj* style = (styleObj *) msRemoveLabelStyle(self, index);
+        if (style)
+            MS_REFCNT_INCR(style);
+            return style;
     }
 
-    %feature("docstring")
-    ""
+    /// Swap the styleObj at *index* with the styleObj index - 1.
     int moveStyleUp(int index) {
         return msMoveLabelStyleUp(self, index);
     }
 
-    %feature("docstring")
-    ""
+    /// Swap the styleObj at *index* with the styleObj index + 1.
     int moveStyleDown(int index) {
        return msMoveLabelStyleDown(self, index);
     }

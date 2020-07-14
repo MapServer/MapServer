@@ -52,17 +52,16 @@ void msIO_stripStdoutBufferContentHeaders(void);
 /// This method does not clear the buffer.
 const char *msIO_getStdoutBufferString(void);
 
-/// TODO
+/// Fetch the current stdout buffer contents as a binary buffer. The exact form of this buffer will vary by 
+/// MapScript language (e/g. string in Python, byte[] array in Java and C#, unhandled in Perl).
 gdBuffer msIO_getStdoutBufferBytes(void);
 
 %newobject msIO_getAndStripStdoutBufferMimeHeaders;
-/// TODO
+/// Strip off all MIME headers and return them in a hashTableObj
 hashTableObj* msIO_getAndStripStdoutBufferMimeHeaders(void);
 
 %{
 
-/// Fetch the current stdout buffer contents as a string. 
-/// This method does not clear the buffer.
 const char *msIO_getStdoutBufferString() {
     msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
@@ -86,11 +85,6 @@ const char *msIO_getStdoutBufferString() {
     return (const char *) (buf->data);
 }
 
-/**
-Fetch the current stdout buffer contents as a binary buffer. The exact form of this buffer 
-will vary by mapscript language (e.g. string in Python, byte[] array in Java and C#, 
-unhandled in perl)
-*/
 gdBuffer msIO_getStdoutBufferBytes() {
     msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
     msIOBuffer  *buf;
