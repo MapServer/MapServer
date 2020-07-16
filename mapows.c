@@ -261,11 +261,13 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   }
 
   if (ows_request.service == NULL) {
+#ifdef USE_LIBXML2
     if (ows_request.request && EQUAL(ows_request.request, "GetMetadata")) {
       status = msMetadataDispatch(map, request, &ows_request);
       msOWSClearRequestObj(&ows_request);
       return status;
     }
+#endif
 #ifdef USE_WFS_SVR
     if( msOWSLookupMetadata(&(map->web.metadata), "FO", "cite_wfs2") != NULL ) {
       status = msWFSException(map, "service", MS_OWS_ERROR_MISSING_PARAMETER_VALUE, NULL );

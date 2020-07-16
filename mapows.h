@@ -410,12 +410,12 @@ typedef struct {
   int numnamespaces;
 } gmlNamespaceListObj;
 
+MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces);
+MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
 MS_DLL_EXPORT int msItemInGroups(const char *name, gmlGroupListObj *groupList);
-MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces);
-MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
 MS_DLL_EXPORT gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeConstants(gmlConstantListObj *constantList);
 MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces, int bWithDefaultGeom);
