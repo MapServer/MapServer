@@ -2267,7 +2267,7 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 #else
     msSetError(MS_MISCERR, "OWS support is not available.",
                "FLTGetSQLExpression()");
-    return(MS_FAILURE);
+    return NULL;
 #endif
 
   }
