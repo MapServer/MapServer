@@ -31,6 +31,7 @@
 #include "mapowscommon.h"
 #include "maplibxml2.h"
 
+#ifdef USE_LIBXML2
 
 /************************************************************************/
 /*                   _msMetadataGetCharacterString                      */
@@ -859,6 +860,8 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *o
 
   return status;
 }
+
+#endif /* USE_LIBXML2 */
 
 /************************************************************************/
 /*                           msMetadataCreateParamsObj                  */
