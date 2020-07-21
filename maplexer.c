@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 #line 2 "/home/even/mapserver/mapserver/maplexer.c"
 
 #line 4 "/home/even/mapserver/mapserver/maplexer.c"
+=======
+#line 2 "/Users/sdlime/mapserver/sdlime/mapserver/maplexer.c"
+
+#line 4 "/Users/sdlime/mapserver/sdlime/mapserver/maplexer.c"
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
 
 #define  YY_INT_ALIGNED short int
 
@@ -66,6 +72,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -73,6 +80,7 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
+#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -102,8 +110,6 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
-
-#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -161,15 +167,7 @@ typedef unsigned int flex_uint32_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
-#ifdef __ia64__
-/* On IA-64, the buffer size is 16k, not 8k.
- * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
- * Ditto for the __ia64__ case accordingly.
- */
-#define YY_BUF_SIZE 32768
-#else
 #define YY_BUF_SIZE 16384
-#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -230,7 +228,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -300,7 +298,11 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when msyytext is formed. */
 static char yy_hold_char;
+<<<<<<< HEAD
 static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+=======
+static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
 yy_size_t msyyleng;
 
 /* Points to current character in buffer. */
@@ -390,7 +392,7 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	msyyleng = (size_t) (yy_cp - yy_bp); \
+	msyyleng = (yy_size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -2337,7 +2339,11 @@ char path[MS_MAXPATHLEN];
 
 
 
+<<<<<<< HEAD
 #line 2341 "/home/even/mapserver/mapserver/maplexer.c"
+=======
+#line 2326 "/Users/sdlime/mapserver/sdlime/mapserver/maplexer.c"
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
 
 #define INITIAL 0
 #define URL_VARIABLE 1
@@ -2420,12 +2426,7 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
-#ifdef __ia64__
-/* On IA-64, the buffer size is 16k, not 8k */
-#define YY_READ_BUF_SIZE 16384
-#else
 #define YY_READ_BUF_SIZE 8192
-#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -2433,7 +2434,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( msyytext, msyyleng, 1, msyyout )) {} } while (0)
+#define ECHO fwrite( msyytext, msyyleng, 1, msyyout )
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -2444,7 +2445,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		yy_size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( msyyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -2629,7 +2630,37 @@ YY_DECL
          break;
        }
 
+<<<<<<< HEAD
 #line 2633 "/home/even/mapserver/mapserver/maplexer.c"
+=======
+#line 2582 "/Users/sdlime/mapserver/sdlime/mapserver/maplexer.c"
+
+	if ( !(yy_init) )
+		{
+		(yy_init) = 1;
+
+#ifdef YY_USER_INIT
+		YY_USER_INIT;
+#endif
+
+		if ( ! (yy_start) )
+			(yy_start) = 1;	/* first start state */
+
+		if ( ! msyyin )
+			msyyin = stdin;
+
+		if ( ! msyyout )
+			msyyout = stdout;
+
+		if ( ! YY_CURRENT_BUFFER ) {
+			msyyensure_buffer_stack ();
+			YY_CURRENT_BUFFER_LVALUE =
+				msyy_create_buffer(msyyin,YY_BUF_SIZE );
+		}
+
+		msyy_load_buffer_state( );
+		}
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -4662,7 +4693,11 @@ YY_RULE_SETUP
 #line 757 "maplexer.l"
 ECHO;
 	YY_BREAK
+<<<<<<< HEAD
 #line 4666 "/home/even/mapserver/mapserver/maplexer.c"
+=======
+#line 4641 "/Users/sdlime/mapserver/sdlime/mapserver/maplexer.c"
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
 case YY_STATE_EOF(URL_VARIABLE):
 case YY_STATE_EOF(URL_STRING):
 case YY_STATE_EOF(EXPRESSION_STRING):
@@ -5012,8 +5047,13 @@ static int yy_get_next_buffer (void)
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
+<<<<<<< HEAD
 		yy_size_t number_to_move = (yy_n_chars) + 2;
 		char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
+=======
+		register yy_size_t number_to_move = (yy_n_chars) + 2;
+		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
 		char *source =
 				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
@@ -5087,7 +5127,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( msyywrap( ) )
-						return EOF;
+						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -5427,8 +5467,8 @@ YY_BUFFER_STATE msyy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to msyylex() will
  * scan from a @e copy of @a bytes.
- * @param yybytes the byte buffer to scan
- * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
+ * @param bytes the byte buffer to scan
+ * @param len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
@@ -5436,8 +5476,12 @@ YY_BUFFER_STATE msyy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_le
 {
 	YY_BUFFER_STATE b;
 	char *buf;
+<<<<<<< HEAD
 	yy_size_t n;
 	yy_size_t i;
+=======
+	yy_size_t n, i;
+>>>>>>> dbac24d7... Merge pull request #6050 from sdlime/issue-5942
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -5685,5 +5729,14 @@ int msyywrap() /* override */
 int msyyerror(char *s) {
   msSetError(MS_PARSEERR, "%s", "msyyparse()", s);
   return(0);
+}
+
+/* cleanup any open includes */
+void msyycleanup_includes() {
+  while( --include_stack_ptr >= 0 ) {
+    fclose(YY_CURRENT_BUFFER->yy_input_file);
+    msyy_delete_buffer( YY_CURRENT_BUFFER );
+    msyy_switch_to_buffer(include_stack[include_stack_ptr]);
+  }
 }
 
