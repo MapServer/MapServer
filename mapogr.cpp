@@ -3447,7 +3447,11 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
                                           pSpatialFilterNode);
   }
 
-  if( (expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS || expr->m_nToken == MS_TOKEN_COMPARISON_CONTAINS ) &&
+  if( (expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
+      expr->m_nToken == MS_TOKEN_COMPARISON_OVERLAPS ||
+      expr->m_nToken == MS_TOKEN_COMPARISON_CROSSES ||
+      expr->m_nToken == MS_TOKEN_COMPARISON_WITHIN ||
+      expr->m_nToken == MS_TOKEN_COMPARISON_CONTAINS) &&
       expr->m_aoChildren.size() == 2 &&
       expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_SHAPE )
   {
