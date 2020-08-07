@@ -47,6 +47,8 @@ static char *olUrl = "//www.mapserver.org/lib/OpenLayers-ms60.js";
 static char *olTemplate = \
                           "<html>\n"
                           "<head>\n"
+                          "<meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\">\n"
+                          "<meta content=\"utf-8\" http-equiv=\"encoding\">\n"
                           "  <title>MapServer Simple Viewer</title>\n"
                           "    <script type=\"text/javascript\" src=\"[openlayers_js_url]\"></script>\n"
                           "    </head>\n"
