@@ -50,6 +50,7 @@ static char *olTemplate = \
                           "<meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\">\n"
                           "  <title>MapServer Simple Viewer</title>\n"
                           "    <script type=\"text/javascript\" src=\"[openlayers_js_url]\"></script>\n"
+                          "    <link rel=\"shortcut icon\" type=\"image/x-icon\" href=\"_static/mapserver.ico\"/>\n"
                           "    </head>\n"
                           "    <body>\n"
                           "      <div style=\"width:[mapwidth]; height:[mapheight]\" id=\"map\"></div>\n"
