@@ -3672,6 +3672,47 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     }
                   }
 
+                  // Set the "gml_select_items" metadata items that is used by
+                  // msQueryByRect() to restrict the number of properties to
+                  // select for faster results.
+                  if( msOWSLookupMetadata(&(lp->metadata), "OFG", "groups") == NULL )
+                  {
+                      auto properties = msStringSplit(papszPropertyName[k], ',');
+                      std::string selectItems;
+                      const char* featureid = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
+                      bool foundFeatureId = false;
+                      for( const auto& prop: properties )
+                      {
+                          bool isGeom = false;
+                          const char* propNoNS = prop.c_str();
+                          const char* pszColon = strchr(propNoNS, ':');
+                          if( pszColon )
+                            propNoNS = pszColon+1;
+                          for(z=0; z<geometryList->numgeometries; z++) {
+                            if (strcasecmp(propNoNS, geometryList->geometries[z].name) == 0) {
+                                isGeom = true;
+                                break;
+                            }
+                          }
+                          if( !isGeom ) {
+                              if( !selectItems.empty() )
+                                  selectItems += ',';
+                              selectItems += prop;
+                          }
+                          if( featureid && featureid == prop ) {
+                              foundFeatureId =  true;
+                          }
+                      }
+                      if( featureid && !foundFeatureId ) {
+                        if( !selectItems.empty() )
+                            selectItems += ',';
+                        selectItems += featureid;
+                      }
+                      if( !selectItems.empty() ) {
+                        msInsertHashTable(&(lp->metadata), "gml_select_items", selectItems.c_str());
+                      }
+                  }
+
                   papszGMLIncludeItems[lp->index] = msStrdup(papszPropertyName[k]);
 
                   for(z=0; z<geometryList->numgeometries; z++) {

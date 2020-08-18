@@ -776,6 +776,95 @@ parse_error:
   return MS_FAILURE;
 }
 
+
+static void buildLayerItemList(layerObj *layer)
+{
+  int i, j, k, l;
+  /*
+  ** build layer item list, compute item indexes for explicity item references (e.g. classitem) or item bindings
+  */
+
+  /* layer items */
+  if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
+  if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
+  if(layer->styleitem && (strcasecmp(layer->styleitem, "AUTO") != 0) && (strncasecmp(layer->styleitem, "javascript://",13) != 0)) 
+    layer->styleitemindex = string2list(layer->items, &(layer->numitems), layer->styleitem);
+  if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+  if(layer->utfitem) layer->utfitemindex = string2list(layer->items, &(layer->numitems), layer->utfitem);
+
+  /* layer classes */
+  for(i=0; i<layer->numclasses; i++) {
+    
+    if(layer->class[i]->expression.type == MS_EXPRESSION) /* class expression */
+      msTokenizeExpression(&(layer->class[i]->expression), layer->items, &(layer->numitems));
+
+    /* class styles (items, bindings, geomtransform) */
+    for(j=0; j<layer->class[i]->numstyles; j++) {
+      if(layer->class[i]->styles[j]->rangeitem) 
+        layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
+      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
+        if(layer->class[i]->styles[j]->bindings[k].item) 
+          layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
+        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->styles[j]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
+      }
+      if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
+        msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
+    }
+
+    /* class labels and label styles (items, bindings, geomtransform) */
+    for(l=0; l<layer->class[i]->numlabels; l++) {
+      for(j=0; j<layer->class[i]->labels[l]->numstyles; j++) {
+        if(layer->class[i]->labels[l]->styles[j]->rangeitem) 
+          layer->class[i]->labels[l]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->styles[j]->rangeitem);
+        for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
+          if(layer->class[i]->labels[l]->styles[j]->bindings[k].item) 
+            layer->class[i]->labels[l]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->styles[j]->bindings[k].item);
+          if(layer->class[i]->labels[l]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
+            msTokenizeExpression(&(layer->class[i]->labels[l]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
+        }
+      }
+      for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {
+        if(layer->class[i]->labels[l]->bindings[k].item) 
+          layer->class[i]->labels[l]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->bindings[k].item);
+        if (layer->class[i]->labels[l]->exprBindings[k].type == MS_EXPRESSION)
+        {
+          msTokenizeExpression(
+              &(layer->class[i]->labels[l]->exprBindings[k]),
+              layer->items, &(layer->numitems));
+        }
+      }
+
+       /* label expression */
+      if(layer->class[i]->labels[l]->expression.type == MS_EXPRESSION) msTokenizeExpression(&(layer->class[i]->labels[l]->expression), layer->items, &(layer->numitems));
+
+      /* label text */
+      if(layer->class[i]->labels[l]->text.type == MS_EXPRESSION || (layer->class[i]->labels[l]->text.string && strchr(layer->class[i]->labels[l]->text.string,'[') != NULL && strchr(layer->class[i]->labels[l]->text.string,']') != NULL))
+        msTokenizeExpression(&(layer->class[i]->labels[l]->text), layer->items, &(layer->numitems));
+    }
+
+    /* class text */
+    if(layer->class[i]->text.type == MS_EXPRESSION || (layer->class[i]->text.string && strchr(layer->class[i]->text.string,'[') != NULL && strchr(layer->class[i]->text.string,']') != NULL))
+      msTokenizeExpression(&(layer->class[i]->text), layer->items, &(layer->numitems));
+  }
+
+  /* layer filter */
+  if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
+
+  /* cluster expressions */
+  if(layer->cluster.group.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.group), layer->items, &(layer->numitems));
+  if(layer->cluster.filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.filter), layer->items, &(layer->numitems));
+
+  /* utfdata */
+  if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL)) {
+    msTokenizeExpression(&(layer->utfdata), layer->items, &(layer->numitems));
+  }
+}
+
 /*
 ** This function builds a list of items necessary to draw or query a particular layer by
 ** examining the contents of the various xxxxitem parameters and expressions. That list is
@@ -884,8 +973,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   */
 
   /* always retrieve all items in some cases */
-  if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE ||
+  if(layer->connectiontype == MS_INLINE ||
       (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
+    get_all = MS_TRUE;
+  }
+  if( get_all ) {
     rv = msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/
       layer->items = (char **)msSmallRealloc(layer->items, sizeof(char *)*(layer->numitems + nt));
@@ -895,89 +987,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   if(rv != MS_SUCCESS)
     return rv;
 
-  /*
-  ** build layer item list, compute item indexes for explicity item references (e.g. classitem) or item bindings
-  */
-
-  /* layer items */
-  if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
-  if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
-  if(layer->styleitem && (strcasecmp(layer->styleitem, "AUTO") != 0) && (strncasecmp(layer->styleitem, "javascript://",13) != 0)) 
-    layer->styleitemindex = string2list(layer->items, &(layer->numitems), layer->styleitem);
-  if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
-  if(layer->utfitem) layer->utfitemindex = string2list(layer->items, &(layer->numitems), layer->utfitem);
-
-  /* layer classes */
-  for(i=0; i<layer->numclasses; i++) {
-    
-    if(layer->class[i]->expression.type == MS_EXPRESSION) /* class expression */
-      msTokenizeExpression(&(layer->class[i]->expression), layer->items, &(layer->numitems));
-
-    /* class styles (items, bindings, geomtransform) */
-    for(j=0; j<layer->class[i]->numstyles; j++) {
-      if(layer->class[i]->styles[j]->rangeitem) 
-        layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
-      for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
-        if(layer->class[i]->styles[j]->bindings[k].item) 
-          layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
-        if (layer->class[i]->styles[j]->exprBindings[k].type == MS_EXPRESSION)
-        {
-          msTokenizeExpression(
-              &(layer->class[i]->styles[j]->exprBindings[k]),
-              layer->items, &(layer->numitems));
-        }
-      }
-      if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
-        msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
-    }
-
-    /* class labels and label styles (items, bindings, geomtransform) */
-    for(l=0; l<layer->class[i]->numlabels; l++) {
-      for(j=0; j<layer->class[i]->labels[l]->numstyles; j++) {
-        if(layer->class[i]->labels[l]->styles[j]->rangeitem) 
-          layer->class[i]->labels[l]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->styles[j]->rangeitem);
-        for(k=0; k<MS_STYLE_BINDING_LENGTH; k++) {
-          if(layer->class[i]->labels[l]->styles[j]->bindings[k].item) 
-            layer->class[i]->labels[l]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->styles[j]->bindings[k].item);
-          if(layer->class[i]->labels[l]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
-            msTokenizeExpression(&(layer->class[i]->labels[l]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
-        }
-      }
-      for(k=0; k<MS_LABEL_BINDING_LENGTH; k++) {
-        if(layer->class[i]->labels[l]->bindings[k].item) 
-          layer->class[i]->labels[l]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->bindings[k].item);
-        if (layer->class[i]->labels[l]->exprBindings[k].type == MS_EXPRESSION)
-        {
-          msTokenizeExpression(
-              &(layer->class[i]->labels[l]->exprBindings[k]),
-              layer->items, &(layer->numitems));
-        }
-      }
-
-       /* label expression */
-      if(layer->class[i]->labels[l]->expression.type == MS_EXPRESSION) msTokenizeExpression(&(layer->class[i]->labels[l]->expression), layer->items, &(layer->numitems));
-
-      /* label text */
-      if(layer->class[i]->labels[l]->text.type == MS_EXPRESSION || (layer->class[i]->labels[l]->text.string && strchr(layer->class[i]->labels[l]->text.string,'[') != NULL && strchr(layer->class[i]->labels[l]->text.string,']') != NULL))
-        msTokenizeExpression(&(layer->class[i]->labels[l]->text), layer->items, &(layer->numitems));
-    }
-
-    /* class text */
-    if(layer->class[i]->text.type == MS_EXPRESSION || (layer->class[i]->text.string && strchr(layer->class[i]->text.string,'[') != NULL && strchr(layer->class[i]->text.string,']') != NULL))
-      msTokenizeExpression(&(layer->class[i]->text), layer->items, &(layer->numitems));
-  }
-
-  /* layer filter */
-  if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
-
-  /* cluster expressions */
-  if(layer->cluster.group.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.group), layer->items, &(layer->numitems));
-  if(layer->cluster.filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.filter), layer->items, &(layer->numitems));
-
-  /* utfdata */
-  if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL)) {
-    msTokenizeExpression(&(layer->utfdata), layer->items, &(layer->numitems));
-  }
+  buildLayerItemList(layer);
 
   if(metadata) {
     char **tokens;
@@ -990,7 +1000,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       for(i=0; i<n; i++) {
         bFound = 0;
         for(j=0; j<layer->numitems; j++) {
-          if(strcmp(tokens[i], layer->items[j]) == 0) {
+          if(strcasecmp(tokens[i], layer->items[j]) == 0) {
             bFound = 1;
             break;
           }
@@ -1004,6 +1014,70 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       }
       msFreeCharArray(tokens, n);
     }
+
+    /* If we didn't retrieve all items of the layer, then do it, so that the */
+    /* order of the layer->items array is consistent with it. This is */
+    /* important so that WFS DescribeFeatureType and GetFeature requests */
+    /* return items in the same order */
+    if( !get_all && layer->numitems ) {
+        char** unsorted_items = layer->items;
+        int numitems = layer->numitems;
+
+        /* Retrieve all items */
+        layer->items = NULL;
+        layer->numitems = 0;
+        rv = msLayerGetItems(layer);
+        if( rv != MS_SUCCESS ) {
+            msFreeCharArray(unsorted_items, numitems);
+            return rv;
+        }
+
+        /* Sort unsorted_items in the order of layer->items */
+        char** sorted_items = (char **)msSmallMalloc(sizeof(char*) * numitems);
+        int num_sorted_items = 0;
+        for( i = 0; i < layer->numitems; i++ )
+        {
+            if( layer->items[i] )
+            {
+                for( j = 0; j < numitems; j++ )
+                {
+                    if( unsorted_items[j] &&
+                        strcasecmp(layer->items[i], unsorted_items[j]) == 0 )
+                    {
+                        sorted_items[num_sorted_items] = layer->items[i];
+                        num_sorted_items ++;
+
+                        layer->items[i] = NULL;
+                        msFree(unsorted_items[j]);
+                        unsorted_items[j] = NULL;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /* Add items that are not returned by msLayerGetItems() (not sure if that can happen) */
+        for( j = 0; j < numitems; j++ )
+        {
+            if( unsorted_items[j] )
+            {
+                sorted_items[num_sorted_items] = unsorted_items[j];
+                num_sorted_items ++;
+            }
+        }
+
+        if(layer->items) {
+            msFreeCharArray(layer->items, layer->numitems);
+        }
+        msFreeCharArray(unsorted_items, numitems);
+
+        layer->items = sorted_items;
+        layer->numitems = numitems;
+
+        /* Re-run buildLayerItemList() with the now correctly sorted items */
+        buildLayerItemList(layer);
+    }
+
   }
 
   /* populate the iteminfo array */
