@@ -1,13 +1,11 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript symbolObj extensions
    Author:   Steve Lime 
              Sean Gillies, sgillies@frii.com
              
    ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+   Copyright (c) 1996-2020 Regents of the University of Minnesota.
    
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -29,16 +27,13 @@
    ===========================================================================
 */
 
-
-%include "../../mapsymbol.h"
-
-/* Full support for symbols and addition of them to the map symbolset
-   is done to resolve MapServer bug 579
-   http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */
+/// See also https://github.com/mapserver/mapserver/issues/579
 
 %extend symbolObj 
 {
-    
+
+    /// Create new default :class:`symbolObj` named ``symbolname``. If ``imagefile`` is specified, then the symbol 
+    /// will be of type :data:`MS_SYMBOL_PIXMAP`. 
     symbolObj(char *symbolname, const char *imagefile=NULL) 
     {
         symbolObj *symbol;
@@ -61,10 +56,13 @@
         }
     }
 
+    /// Sets the ``imagefile`` path for a :data:`MS_SYMBOL_PIXMAP`. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setImagepath(const char *imagefile) {
-    return msLoadImageSymbol(self, imagefile);
+        return msLoadImageSymbol(self, imagefile);
     }
 
+    /// Sets the symbol points from the points of line. Returns the updated number of points. 
     int setPoints(lineObj *line) {
         int i;
     self->sizex = 0;
@@ -79,6 +77,7 @@
     }
 
     %newobject getPoints;
+    /// Returns the symbol points as a :class:`lineObj`. 
     lineObj *getPoints() 
     {
         int i;
@@ -92,9 +91,9 @@
         line->numpoints = self->numpoints;
         return line;
     }
-    
 
     %newobject getImage;
+    /// Returns a pixmap symbol's imagery as an :class:`imageObj`. 
     imageObj *getImage(outputFormatObj *input_format)
     {
         imageObj *image = NULL;
@@ -142,6 +141,8 @@
         return image;
     }
 
+    /// Set a pixmap symbol's imagery from image. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setImage(imageObj *image)
     {
         rendererVTableObj *renderer = NULL;
@@ -161,5 +162,4 @@
         self->type = MS_SYMBOL_PIXMAP;
         return renderer->getRasterBufferCopy(image, self->pixmap_buffer);
     }
-
 }

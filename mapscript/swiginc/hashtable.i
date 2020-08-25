@@ -26,31 +26,9 @@
    ===========================================================================
 */
 
-%{
-#include "../../maphash.h"
-%}
-
-/* ========================================================================
- * Include maphash header, first stating declarations to ignore
- * ======================================================================== */
-
-/* ignore the hashObj struct */
-%ignore hashObj;
-
-/* ignore items and make numitems immutable */
-%ignore items;
-%immutable numitems;
-
-%include "../../maphash.h"
-
-/* ======================================================================== 
- * Extension methods
- * ======================================================================== */
-
 %extend hashTableObj {
     
-    %feature("autodoc", "hashTableObj.__init__()
-Create a new instance") hashTableObj;
+    /// Create a new instance
 #if defined(SWIGJAVA) || defined(SWIGCSHARP)
     hashTableObj() {
 #else
@@ -64,8 +42,8 @@ Create a new instance") hashTableObj;
         msFreeHashTable(self);
     }
 
-    %feature("docstring") set 
-    "Set a hash item given key and value. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+    /// Set a hash item given key and value. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int set(char *key, char *value) {
         if (msInsertHashTable(self, key, value) == NULL) {
             return MS_FAILURE;
@@ -73,8 +51,7 @@ Create a new instance") hashTableObj;
         return MS_SUCCESS;
     }
 
-    %feature("docstring") get 
-    "Returns the value of the item by its key, or default if the key does not exist";
+    /// Returns the value of the item by its key, or default if the key does not exist
     char *get(char *key, char *default_value=NULL) {
         char *value = NULL;
         if (!key) {
@@ -88,22 +65,20 @@ Create a new instance") hashTableObj;
         return value;
     }
 
-    %feature("docstring") remove 
-    "Removes the hash item by its key. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+    /// Removes the hash item by its key. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int remove(char *key) {
         return msRemoveHashTable(self, key);
     }
 
-    %feature("docstring") clear 
-    "Empties the table of all items";
+    /// Empties the table of all items
     void clear(void) {
         msFreeHashItems(self);
         initHashTable(self);
     }
 
-    %feature("docstring") nextKey 
-    "Returns the name of the next key or NULL if there is no valid next key. 
-If the input key is NULL, returns the first key";
+    /// Returns the name of the next key or NULL if there is no valid next key.
+    /// If the input key is NULL, returns the first key
     const char *nextKey(char *prevkey=NULL) {
         return msNextKeyFromHashTable(self, (const char *) prevkey);
     }

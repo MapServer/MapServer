@@ -31,10 +31,9 @@
 
 %extend classObj {
 
-    %feature("docstring", "Create a new child classObj instance at the tail (highest index) of the 
-class array of the parent_layer. A class can be created outside the 
-context of a parent layer by omitting the layerObj constructor argument") classObj;
-
+    /// Create a new child classObj instance at the tail (highest index) of the 
+    /// class array of the parent_layer. A class can be created outside the 
+    /// context of a parent layer by omitting the layerObj constructor argument
     classObj(layerObj *layer=NULL) 
     {
         classObj *new_class=NULL;
@@ -79,16 +78,14 @@ context of a parent layer by omitting the layerObj constructor argument") classO
         }
     }
 
-    %feature("docstring") updateFromString 
-    "Update a class from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+    /// Update a class from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
         return msUpdateClassFromString(self, snippet, MS_FALSE);
     }
 
-    %feature("docstring") convertToString 
-    "Output the CLASS as a Mapfile string"
     %newobject convertToString;
+    /// Output the CLASS as a Mapfile string
     char* convertToString()
     {
         return msWriteClassToString(self);
@@ -98,9 +95,8 @@ context of a parent layer by omitting the layerObj constructor argument") classO
     %newobject cloneClass;
     classObj *cloneClass() 
 #else
-    %feature("docstring") clone 
-    "Return an independent copy of the class without a parent layer"
     %newobject clone;
+    /// Return an independent copy of the class without a parent layer
     classObj *clone() 
 #endif
     {
@@ -131,9 +127,8 @@ context of a parent layer by omitting the layerObj constructor argument") classO
         return new_class;
     }
 
-  %feature("docstring") setExpression 
-  "Set :ref:`EXPRESSION <mapfile-class-expression>` string where `expression` is a MapServer regular, logical or string expression. 
-Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+  /// Set :ref:`EXPRESSION <mapfile-class-expression>` string where `expression` is a MapServer regular, 
+  /// logical or string expression. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int setExpression(char *expression) 
   {
     if (!expression || strlen(expression) == 0) {
@@ -143,16 +138,15 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     else return msLoadExpressionString(&self->expression, expression);
   }
 
-  %feature("docstring") getExpressionString 
-  "Return a string representation of the :ref:`EXPRESSION <mapfile-class-expression>` enclosed in the quote characters appropriate to the expression type";
   %newobject getExpressionString;
+  /// Return a string representation of the :ref:`EXPRESSION <mapfile-class-expression>` enclosed in 
+  /// the quote characters appropriate to the expression type
   char *getExpressionString() {
     return msGetExpressionString(&(self->expression));
   }
 
-  %feature("docstring") setText 
-  "Set :ref:`TEXT <mapfile-class-text>` string where `text` is a MapServer text expression.
-Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+  /// Set :ref:`TEXT <mapfile-class-text>` string where `text` is a MapServer text expression.
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int setText(char *text) {
     if (!text || strlen(text) == 0) {
       msFreeExpression(&self->text);
@@ -161,15 +155,13 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     else return msLoadExpressionString(&self->text, text);
   }
 
-  %feature("docstring") getTextString 
-  "Return a string representation of :ref:`TEXT <mapfile-class-text>`";
   %newobject getTextString;
+  /// Return a string representation of :ref:`TEXT <mapfile-class-text>`
   char *getTextString() {
     return msGetExpressionString(&(self->text));
   }
 
-  %feature("docstring") getMetaData 
-  "**To be removed in 8.0** -  use the metadata property";
+  /// **/To be removed in 8.0** -  use the metadata property
   char *getMetaData(char *name) {
     char *value = NULL;
     if (!name) {
@@ -184,28 +176,24 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     return value;
   }
 
-  %feature("docstring") setMetaData 
-  "**To be removed in 8.0** -  use the metadata property";
+  /// **/To be removed** -  use the metadata property
   int setMetaData(char *name, char *value) {
     if (msInsertHashTable(&(self->metadata), name, value) == NULL)
         return MS_FAILURE;
     return MS_SUCCESS;
   }
 
-  %feature("docstring") getFirstMetaDataKey 
-  "**To be removed in 8.0** -  use the metadata property";
+  /// **/To be removed** -  use the metadata property
   char *getFirstMetaDataKey() {
     return (char *) msFirstKeyFromHashTable(&(self->metadata));
   }
 
-  %feature("docstring") getNextMetaDataKey 
-  "**To be removed in 8.0** -  use the metadata property";
+  /// **To be removed** -  use the metadata property
   char *getNextMetaDataKey(char *lastkey) {
     return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
   }
 
-  %feature("docstring") drawLegendIcon 
-  "Draw the legend icon onto *image* at *dstx*, *dsty*.  Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+  /// Draw the legend icon onto *image* at *dstx*, *dsty*.  Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {    
     if(layer->sizeunits != MS_PIXELS) {
       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
@@ -217,16 +205,14 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     return msDrawLegendIcon(map, layer, self, width, height, dstImage, dstX, dstY, MS_TRUE, NULL);
   }
 
-  %feature("docstring") createLegendIcon 
-  "Draw and return a new legend icon";
   %newobject createLegendIcon;
+  /// Draw and return a new legend icon
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
     return msCreateLegendIcon(map, layer, self, width, height, MS_TRUE);
   } 
 
-  %feature("docstring") getLabel 
-  "Return a reference to the :class:`labelObj` at *index* in the labels array";
   %newobject getLabel;
+  /// Return a reference to the :class:`labelObj` at *index* in the labels array
   labelObj *getLabel(int i) {
     if (i >= 0 && i < self->numlabels) {
       MS_REFCNT_INCR(self->labels[i]);
@@ -240,8 +226,7 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {labelObj *label};
 #endif
-  %feature("docstring") addLabel 
-  "Add a :class:`labelObj` to the :class:`classObj` and return its index in the labels array";
+  /// Add a :class:`labelObj` to the :class:`classObj` and return its index in the labels array
   int addLabel(labelObj *label) {
     return msAddLabelToClass(self, label);
   }
@@ -249,9 +234,8 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
 %clear labelObj *label;
 #endif
 
-  %feature("docstring") removeLabel 
-  "Remove the :class:`labelObj` at *index* from the labels array and return a
-reference to the :class:`labelObj`. numlabels is decremented, and the array is updated";
+  /// Remove the :class:`labelObj` at *index* from the labels array and return a
+  /// reference to the :class:`labelObj`. numlabels is decremented, and the array is updated
   %newobject removeLabel;
   labelObj *removeLabel(int index) {
     labelObj* label = (labelObj *) msRemoveLabelFromClass(self, index);
@@ -259,10 +243,10 @@ reference to the :class:`labelObj`. numlabels is decremented, and the array is u
     return label;
   }
   
-  /* See Bugzilla issue 548 for more details about the *Style methods */
-  %feature("docstring") getStyle 
-  "Return a reference to the :class:`styleObj` at *index* in the styles array";
+  // See https://github.com/mapserver/mapserver/issues/548 for more details about the Style methods
+
   %newobject getStyle;
+  /// Return a reference to the :class:`styleObj` at *index* in the styles array
   styleObj *getStyle(int i) {
     if (i >= 0 && i < self->numstyles) {
       MS_REFCNT_INCR(self->styles[i]);
@@ -276,9 +260,8 @@ reference to the :class:`labelObj`. numlabels is decremented, and the array is u
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {styleObj *style};
 #endif
-  %feature("docstring") insertStyle 
-  "Insert a **copy** of *style* into the styles array at index *index*.
-Default is -1, or the end of the array.  Returns the index at which the style was inserted.";
+  /// Insert a **copy** of *style* into the styles array at index *index*
+  /// Default is -1, or the end of the array.  Returns the index at which the style was inserted.
   int insertStyle(styleObj *style, int index=-1) {
     return msInsertStyle(self, style, index);
   }
@@ -286,24 +269,22 @@ Default is -1, or the end of the array.  Returns the index at which the style wa
 %clear styleObj *style;
 #endif
 
-  %feature("docstring") removeStyle 
-  "Remove the :class:`styleObj` at *index* from the styles array and return a copy.";
   %newobject removeStyle;
+  /// Remove the :class:`styleObj` at *index* from the styles array and return a copy.
   styleObj *removeStyle(int index) {
     styleObj* style = (styleObj *) msRemoveStyle(self, index);
     if (style) MS_REFCNT_INCR(style);
     return style;
   }
 
-  %feature("docstring") moveStyleUp 
-  "Swap the :class:`styleObj` at *index* with the styleObj at *index* - 1";
+  /// Swap the :class:`styleObj` at *index* with the styleObj at *index* - 1
   int moveStyleUp(int index) {
     return msMoveStyleUp(self, index);
   }
 
-  %feature("docstring") moveStyleDown 
-  "Swap the :class:`styleObj` at *index* with the :class:`styleObj` at *index* + 1";
+  /// Swap the :class:`styleObj` at *index* with the :class:`styleObj` at *index* + 1
   int moveStyleDown(int index) {
     return msMoveStyleDown(self, index);
   }
+
 }

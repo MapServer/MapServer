@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript projectionObj extensions
    Author:   Steve Lime 
@@ -31,7 +29,9 @@
 
 %extend projectionObj 
 {
-  
+
+    /// Create new instance of projectionObj. Input parameter proj4 is a 
+    /// PROJ definition string such as 'init=EPSG:4269'
     projectionObj(char *proj4) 
     {
         int status;
@@ -54,18 +54,18 @@
     ~projectionObj() 
     {
         msFreeProjection(self);
-        free(self);		
+        free(self);
     }
 
+    /// Update the projectionObj using an OGC WKT definition
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setWKTProjection(char* wkt) {
         /* no debug output here */
         return msOGCWKT2ProjectionObj(wkt, self, MS_FALSE);
     }
 
+    /// Returns the units of a projection object. Returns -1 on error.
     int getUnits() {
       return GetMapserverUnitUsingProj(self);
     }
 }
-
-
-

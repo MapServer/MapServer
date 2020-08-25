@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id: $
-
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript legendObj extensions
    Author:   Steve Lime
@@ -30,12 +28,14 @@
 
 %extend legendObj
 {
+  /// Update a :class:`legendObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
     return msUpdateLegendFromString(self, snippet, MS_FALSE);
   }
   
   %newobject convertToString;
+  /// Output the :ref:`legendObj` object as a Mapfile string. Provides the inverse option for :func:`legendObj.updateFromString`.
   char* convertToString()
   {
     return msWriteLegendToString(self);

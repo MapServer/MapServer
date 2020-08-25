@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  MapServer
  * Purpose:  Map zooming convenience methods for MapScript
  * Author:   Sean Gillies, sgillies@frii.com
@@ -13,14 +11,14 @@
 
 %extend mapObj {
 
-    /* 
-    -----------------------------------------------------------------------
+    /*
     Zoom by the given factor to a pixel position within the width
-     and height bounds.  If max_extent is not NULL, the zoom is 
+    and height bounds. If max_extent is not NULL, the zoom is 
     constrained to the max_extents
-    -----------------------------------------------------------------------
+
+    Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+
     */
-  
     int zoomPoint(int zoomfactor, pointObj *poPixPos, int width, int height, rectObj *poGeorefExt, rectObj *poMaxGeorefExt)
     {
         double      dfGeoPosX, dfGeoPosY;
@@ -117,7 +115,7 @@
         }
 
         /* ============================================================ */
-        /*  we do a spcial case for zoom in : we try to zoom as much as */
+        /*  we do a special case for zoom in : we try to zoom as much as */
         /*  possible using the mincale set in the .map.                 */
         /* ============================================================ */
         if (self->web.minscaledenom > 0 && dfNewScale < self->web.minscaledenom && zoomfactor > 1) {
@@ -204,6 +202,10 @@
         return MS_SUCCESS;
     }
 
+    /*
+    Set the map extents to a given extents. 
+    Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE` on error
+    */
     int zoomRectangle(rectObj *poPixRect, int width, int height, rectObj *poGeorefExt, rectObj *poMaxGeorefExt)
     {
         double      dfDeltaX, dfDeltaY;
@@ -369,13 +371,10 @@
     }
 
     /*
-    -------------------------------------------------------------------
      Zoom by the given factor to a pixel position within the width
      and height bounds.  If max_extent is not NULL, the zoom is 
      constrained to the max_extents
-    -------------------------------------------------------------------
     */
-  
     int zoomScale(double scale, pointObj *poPixPos, int width, int height,
                   rectObj *poGeorefExt, rectObj *poMaxGeorefExt)
     {

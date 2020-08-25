@@ -401,6 +401,7 @@ def fromstring(data, mappath=None):
 
 %extend styleObj {
 
+    /// **Python Only** Set the pattern for the style.
     void pattern_set(int nListSize, double* pListValues)
     {
         if( nListSize < 2 )
@@ -417,6 +418,7 @@ def fromstring(data, mappath=None):
         self->patternlength = nListSize;
     }
 
+    /// **Python Only** Get the pattern for the style.
     void pattern_get(double** argout, int* pnListSize)
     {
         *pnListSize = self->patternlength;
@@ -427,7 +429,7 @@ def fromstring(data, mappath=None):
 
 %pythoncode %{
 
-pattern = property(pattern_get, pattern_set)
+pattern = property(pattern_get, pattern_set, doc=r"""pattern : list **Python Only**""")
 
 %}
 }

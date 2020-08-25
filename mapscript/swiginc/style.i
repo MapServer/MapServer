@@ -1,13 +1,11 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript styleObj extensions
    Author:   Steve Lime 
              Sean Gillies, sgillies@frii.com
              
    ===========================================================================
-   Copyright (c) 1996-2001 Regents of the University of Minnesota.
+   Copyright (c) 1996-2020 Regents of the University of Minnesota.
    
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -28,11 +26,13 @@
    DEALINGS IN THE SOFTWARE.
    ===========================================================================
 
-   See Bugzilla issue 548 about work on styleObj and classObj
-*/
+   */
+
+// See https://github.com/mapserver/mapserver/issues/548
 
 %extend styleObj {
 
+    /// Returns new default :class:`styleObj` instance. The ``parent_class`` is optional. 
     styleObj(classObj *parent_class=NULL) 
     {
     
@@ -61,7 +61,7 @@
                                        "initStyle()");
                 msFree(style);
                 return NULL;
-	    }
+            }
         }
         return style;
     }
@@ -69,19 +69,22 @@
     ~styleObj() 
     {
         if (self) { 
-		if ( freeStyle(self) == MS_SUCCESS ) {
-            		free(self);
-			self=NULL;
-		}
-	}
+            if ( freeStyle(self) == MS_SUCCESS ) {
+                        free(self);
+                self=NULL;
+            }
+        }
     }
 
+    /// Update a style from a string snippet. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
         return msUpdateStyleFromString(self, snippet, MS_FALSE);
     }
-    
+
     %newobject convertToString;
+    /// Saves the object to a string. Provides the inverse option for :func:`styleObj.updateFromString` 
     char* convertToString()
     {
         return msWriteStyleToString(self);
@@ -92,6 +95,7 @@
     styleObj *cloneStyle() 
 #else
     %newobject clone;
+    /// Returns an independent copy of the style with no parent class. 
     styleObj *clone() 
 #endif
     {
@@ -120,7 +124,9 @@
         
         return style;
     }
-    
+
+    /// Setting the symbol of the :class:`styleObj` given the reference of the map 
+    /// object and the symbol name. 
     int setSymbolByName(mapObj *map, char* symbolname) 
     {
         self->symbol = msGetSymbolIndex(&map->symbolset, symbolname, MS_TRUE);
@@ -130,52 +136,58 @@
         return self->symbol;
     }
 
-  int removeBinding(int binding) 
-  {
-    if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
+    /// Remove the attribute binding for a specified style property. 
+    int removeBinding(int binding) 
+    {
+        if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
 
-    if(self->bindings[binding].item) {
-      free(self->bindings[binding].item);
-      self->bindings[binding].item = NULL;
-      self->bindings[binding].index = -1;
-      self->numbindings--;
+        if(self->bindings[binding].item) {
+            free(self->bindings[binding].item);
+            self->bindings[binding].item = NULL;
+            self->bindings[binding].index = -1;
+            self->numbindings--;
+        }
+
+        return MS_SUCCESS;
     }
 
-    return MS_SUCCESS;
-  }
+    /// Remove the attribute binding for a specified style property. 
+    int setBinding(int binding, char *item) 
+    {
+        if(!item) return MS_FAILURE;
+        if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
 
-  int setBinding(int binding, char *item) 
-  {
-    if(!item) return MS_FAILURE;
-    if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
+        if(self->bindings[binding].item) {
+            free(self->bindings[binding].item);
+            self->bindings[binding].item = NULL;
+            self->bindings[binding].index = -1;
+            self->numbindings--;
+        }
 
-    if(self->bindings[binding].item) {
-      free(self->bindings[binding].item);
-      self->bindings[binding].item = NULL;
-      self->bindings[binding].index = -1;
-      self->numbindings--;
+        self->bindings[binding].item = msStrdup(item);
+        self->numbindings++;
+
+        return MS_SUCCESS;
     }
 
-    self->bindings[binding].item = msStrdup(item);
-    self->numbindings++;
+    /// Get the attribute binding for a specified style property. 
+    /// Returns NULL if there is no binding for this property. 
+    char *getBinding(int binding) 
+    {
+        if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return NULL;
 
-    return MS_SUCCESS;
-  }
+        return self->bindings[binding].item;
+    }
 
-  char *getBinding(int binding) 
-  {
-    if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return NULL;
+    /// Get the :ref:`GEOMTRANSFORM <mapfile-style-geomtransform>` for the style. 
+    char *getGeomTransform() 
+    {
+        return self->_geomtransform.string;
+    }
 
-    return self->bindings[binding].item;
-  }
-  
-  char *getGeomTransform() 
-  {
-    return self->_geomtransform.string;
-  }
-  
-  void setGeomTransform(char *transform) 
-  {
-    msStyleSetGeomTransform(self, transform);
-  }
+    /// Set the :ref:`GEOMTRANSFORM <mapfile-style-geomtransform>` for the style. 
+    void setGeomTransform(char *transform) 
+    {
+        msStyleSetGeomTransform(self, transform);
+    }
 }

@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript lineObj extensions
    Author:   Steve Lime 
@@ -31,7 +29,8 @@
 
 %extend lineObj 
 {
-  
+
+    /// A :class:`lineObj` is composed of one or more :class:`pointObj` instances
     lineObj() 
     {
         lineObj *line;
@@ -52,11 +51,14 @@
         free(self);		
     }
 
+    /// Transform line in place from proj_in to proj_out.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int project(projectionObj *projin, projectionObj *projout) 
     {
         return msProjectLine(projin, projout, self);
     }
 
+    /// Return reference to point at index *i*.
     pointObj *get(int i) 
     {
         if (i<0 || i>=self->numpoints)
@@ -65,17 +67,19 @@
             return &(self->point[i]);
     }
 
+    /// Add point *p* to the line.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int add(pointObj *p)
     {
         if (self->numpoints == 0) { /* new */	
-        self->point = (pointObj *)malloc(sizeof(pointObj));      
+        self->point = (pointObj *)malloc(sizeof(pointObj));
         if (!self->point)
-	        return MS_FAILURE;
+            return MS_FAILURE;
         } else { /* extend array */
             self->point = (pointObj *)realloc(self->point, 
                                       sizeof(pointObj)*(self->numpoints+1));
         if (!self->point)
-	        return MS_FAILURE;
+            return MS_FAILURE;
         }
 
         self->point[self->numpoints].x = p->x;
@@ -85,6 +89,8 @@
         return MS_SUCCESS;
     }
 
+    /// Set the point at index *i* to point *p*. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int set(int i, pointObj *p)
     {
         if (i<0 || i>=self->numpoints)
@@ -92,8 +98,7 @@
 
         self->point[i].x = p->x;
         self->point[i].y = p->y;
-        return MS_SUCCESS;    
+        return MS_SUCCESS;
     }
-    
-}
 
+}

@@ -1,6 +1,4 @@
 /* ===========================================================================
-   $Id$
- 
    Project:  MapServer
    Purpose:  SWIG interface file for mapscript pointObj extensions
    Author:   Steve Lime 
@@ -31,8 +29,11 @@
 
 %extend pointObj 
 {
-
-/* Java pointObj constructors are in java/javaextend.i (bug 1106) */
+    /** 
+    * Create new instance. Easting, northing, and measure arguments are optional.
+    * Java pointObj constructors are in java/javaextend.i
+    * See https://github.com/mapserver/mapserver/issues/1106
+    */
 #ifndef SWIGJAVA
     pointObj(double x=0.0, double y=0.0, double z=0.0, double m=-2e38) 
     {
@@ -42,7 +43,7 @@
         p->x = x;
         p->y = y;
 #ifdef USE_POINT_Z_M
-    	p->z = z;
+        p->z = z;
         p->m = m;
 #endif /* USE_POINT_Z_M */
         return p;
@@ -54,44 +55,64 @@
         free(self);
     }
 
+    /// Reproject point from proj_in to proj_out. Transformation is done in place.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int project(projectionObj *projin, projectionObj *projout) 
     {
         return msProjectPoint(projin, projout, self);
-    }	
+    }
 
+    /// Draw the point using the styles defined by the classindex class of layer and 
+    /// labelled with string text. 
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, 
              char *text) 
     {
         return msDrawPoint(map, layer, self, image, classindex, text);
     }
 
+    /// Returns the distance to point.
     double distanceToPoint(pointObj *point) 
     {
         return msDistancePointToPoint(self, point);
     }
 
+    /// Returns the minimum distance to a hypothetical line segment connecting point1 
+    /// and point2.
     double distanceToSegment(pointObj *a, pointObj *b) 
     {
         return msDistancePointToSegment(self, a, b);
     }
 
+    /// Returns the minimum distance to shape.
     double distanceToShape(shapeObj *shape) 
     {
         return msDistancePointToShape(self, shape);
     }
 
+    /**
+    * Set spatial coordinate and, optionally, measure values simultaneously. 
+    * The measure will be set only if the value of m is greater than the ESRI measure 
+    * no-data value of -1e38. 
+    * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setXY(double x, double y, double m=-2e38) 
     {
         self->x = x;
         self->y = y;
 #ifdef USE_POINT_Z_M
-	self->z = 0.0;
+    self->z = 0.0;
         self->m = m;
 #endif /* USE_POINT_Z_M */
-	
         return MS_SUCCESS;
     }
 
+    /**
+    * Set spatial coordinate and, optionally, measure values simultaneously. 
+    * The measure will be set only if the value of m is greater than the ESRI measure 
+    * no-data value of -1e38. 
+    * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setXYZ(double x, double y, double z, double m=-2e38) 
     {
         self->x = x;
@@ -103,6 +124,12 @@
         return MS_SUCCESS;
     }
 
+    /**
+    * Set spatial coordinate and, optionally, measure values simultaneously.
+    * The measure will be set only if the value of m is greater than the ESRI measure
+    * no-data value of -1e38.
+    * Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    */
     int setXYZM(double x, double y, double z, double m) 
     {
         self->x = x;
@@ -115,25 +142,35 @@
     }
 
     %newobject toString;
+    /**
+    Return a string formatted like: ``{ 'x': %f , 'y': %f, 'z': %f }``
+    with the coordinate values substituted appropriately. Python users can get the same effect 
+    via the pointObj  __str__ method:
+    
+    >>> p = mapscript.pointObj(1, 1)
+    >>> str(p)
+    { 'x': 1.000000 , 'y': 1.000000, 'z': 1.000000 }
+    */
     char *toString() 
     {
         char buffer[256];
         const char *fmt;
 
 #ifdef USE_POINT_Z_M
-	if( self->m < -1e38 )
-	    fmt = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g }";
-	else
-	    fmt = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g, 'm': %.16g }";
+    if( self->m < -1e38 )
+        fmt = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g }";
+    else
+        fmt = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g, 'm': %.16g }";
 #else
         fmt = "{ 'x': %.16g, 'y': %.16g }";
 #endif /* USE_POINT_Z_M */
-	
+
         msPointToFormattedString(self, fmt, (char *) &buffer, 256);
         return msStrdup(buffer);
     }
 
     %newobject toShape;
+    /// Convert to a new :class:`shapeObj`
     shapeObj *toShape() 
     {
       shapeObj *shape;

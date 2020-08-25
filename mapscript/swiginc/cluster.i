@@ -30,24 +30,21 @@
 {
 
 
-  %feature("docstring") updateFromString 
-  "Update a cluster from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+  /// Update a cluster from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
     return msUpdateClusterFromString(self, snippet);
   }
 
-  %feature("docstring") convertToString 
-  "Output the CLUSTER as a Mapfile string"
   %newobject convertToString;
+  /// Output the :ref:`cluster` as a Mapfile string
   char* convertToString()
   {
     return msWriteClusterToString(self);
   }
 
-  %feature("docstring") setGroup 
-  "Set :ref:`GROUP <mapfile-cluster-group>` string where `group` is a MapServer text expression.
-Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+  /// Set :ref:`GROUP <mapfile-cluster-group>` string where `group` is a MapServer text expression.
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int setGroup(char *group) 
   {
     if (!group || strlen(group) == 0) {
@@ -57,16 +54,14 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     else return msLoadExpressionString(&self->group, group);
   }
 
-  %feature("docstring") getGroupString 
-  "Return a string representation of :ref:`GROUP <mapfile-cluster-group>`";
   %newobject getGroupString;
+  /// Return a string representation of :ref:`GROUP <mapfile-cluster-group>`
   char *getGroupString() {
     return msGetExpressionString(&(self->group));
   }
 
-  %feature("docstring") setFilter 
-  "Set :ref:`FILTER <mapfile-cluster-filter>` string where `filter` is a MapServer text expression.
-Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
+  /// Set :ref:`FILTER <mapfile-cluster-filter>` string where `filter` is a MapServer text expression.
+  /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int setFilter(char *filter) {
     if (!filter || strlen(filter) == 0) {
       msFreeExpression(&self->filter);
@@ -75,8 +70,7 @@ Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`";
     else return msLoadExpressionString(&self->filter, filter);
   }
 
-  %feature("docstring") getFilterString 
-  "Return a string representation of :ref:`FILTER <mapfile-cluster-filter>`";
+  /// Return a string representation of :ref:`FILTER <mapfile-cluster-filter>`
   %newobject getFilterString;
   char *getFilterString() {
     return msGetExpressionString(&(self->filter));

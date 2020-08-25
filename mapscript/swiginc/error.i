@@ -28,16 +28,12 @@
 */
 
 
-/* wrap the errorObj and a few functions */
-%include "../../maperror.h"
-
 /* A few things necessary for automatically wrapped functions */
 %newobject msGetErrorString;
 
-%extend errorObj 
+%extend errorObj
 {
-    %feature("autodoc", "errorObj.__init__()
-Create a new instance") errorObj;
+    /// Create a new instance
     errorObj() 
     {    
         return msGetErrorObj();
@@ -45,8 +41,7 @@ Create a new instance") errorObj;
 
     ~errorObj() {}
 
-    %feature("docstring") next
-    "Returns the next error in the stack or NULL if the end has been reached";
+    /// Returns the next error in the stack or NULL if the end has been reached
     errorObj *next() 
     {
         errorObj *ep;
