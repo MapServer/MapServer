@@ -38,6 +38,7 @@
 #include "mapthread.h"
 #include "mapows.h"
 #include "mapwcs.h"
+#include "mapgdal.h"
 #include <float.h>
 #include "gdal.h"
 #include "cpl_port.h"
@@ -2328,8 +2329,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     if( pszExtension == NULL )
       pszExtension = "img.tmp";
 
-    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
-        != NULL ) {
+    if( msGDALDriverSupportsVirtualIOOutput(hDriver) ) {
       base_dir = msTmpFile(map, map->mappath, "/vsimem/wcsout", NULL);
       if( fo_filename )
         filename = msStrdup(CPLFormFilename(base_dir,

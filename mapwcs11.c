@@ -35,7 +35,7 @@
 #include "mapthread.h"
 #include "mapows.h"
 #include "mapwcs.h"
-
+#include "mapgdal.h"
 
 
 #if defined(USE_WCS_SVR)
@@ -1188,8 +1188,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     if( pszExtension == NULL )
       pszExtension = "img.tmp";
 
-    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
-        != NULL ) {
+    if( msGDALDriverSupportsVirtualIOOutput(hDriver) ) {
       base_dir = msTmpFile(map, map->mappath, "/vsimem/wcsout", NULL);
       if( fo_filename )
         filename = msStrdup(CPLFormFilename(base_dir,
