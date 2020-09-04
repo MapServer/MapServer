@@ -37,11 +37,11 @@
 #include "mapwcs.h"
 
 
-
 #if defined(USE_WCS_SVR)
 #include "mapwcs.h"
 #include "gdal.h"
 #include "cpl_string.h" /* GDAL string handling */
+#include "mapgdal.h"
 #endif
 
 #if defined(USE_LIBXML2)
@@ -1187,8 +1187,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     if( pszExtension == NULL )
       pszExtension = "img.tmp";
 
-    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
-        != NULL ) {
+    if( msGDALDriverSupportsVirtualIOOutput(hDriver) ) {
       base_dir = msTmpFile(map, map->mappath, "/vsimem/wcsout", NULL);
       if( fo_filename )
         filename = msStrdup(CPLFormFilename(base_dir,
