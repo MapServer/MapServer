@@ -29,6 +29,7 @@
 
 #include "mapserver.h"
 #include "mapthread.h"
+#include "mapgdal.h"
 #include <assert.h>
 
 
@@ -192,11 +193,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
       pszExtension = "img.tmp";
 
     if( bUseXmp == MS_FALSE &&
-        GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL ) != NULL &&
-        /* We need special testing here for the netCDF driver, since recent */
-        /* GDAL versions advertize VirtualIO support, but this is only for the */
-        /* read-side of the driver, not the write-side. */
-        !EQUAL(gdal_driver_shortname, "netCDF") ) {
+        msGDALDriverSupportsVirtualIOOutput(hOutputDriver) ) {
       msCleanVSIDir( "/vsimem/msout" );
       filenameToFree = msTmpFile(map, NULL, "/vsimem/msout/", pszExtension );
     }
@@ -651,4 +648,17 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
 #endif /* defined USE_GDAL or USE_OGR */
 }
 
+#ifdef USE_GDAL
+/************************************************************************/
+/*                    msGDALDriverSupportsVirtualIOOutput()             */
+/************************************************************************/
 
+int msGDALDriverSupportsVirtualIOOutput( GDALDriverH hDriver )
+{
+    /* We need special testing here for the netCDF driver, since recent */
+    /* GDAL versions advertize VirtualIO support, but this is only for the */
+    /* read-side of the driver, not the write-side. */
+    return GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL ) != NULL &&
+           !EQUAL(GDALGetDescription(hDriver), "netCDF");
+}
+#endif

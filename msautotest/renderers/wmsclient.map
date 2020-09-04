@@ -33,7 +33,7 @@ LAYER
     "wms_srs"             "EPSG:4326"
     "wms_name"            "world_merc"
     "wms_server_version"  "1.1.1"
-    "wms_format"          "image/gif"
+    "wms_format"          "image/png"
   END
 END
 
