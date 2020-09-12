@@ -1,4 +1,4 @@
 # point to OSGeo sponsor page
 github: [OSGeo]
 # point to PayPal directly
-custom: ["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KRJ2X44N3HA6U&source=url", PayPal]
+custom: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KRJ2X44N3HA6U&source=url
