@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding="UTF-8" ?>
+<schema
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://www.w3.org/2001/XMLSchema"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   elementFormDefault="qualified" version="0.1" >
+
+  <import namespace="http://www.opengis.net/gml/3.2"
+          schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd" />
+
+  <element name="cities_custom_gml_type"
+           type="ms:cities_custom_gml_typeType"
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="cities_custom_gml_typeType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:GeometryPropertyType" minOccurs="0" maxOccurs="1"/>
+          <element name="ogr_fid" minOccurs="0" type="long"/>
+          <element name="name" minOccurs="0" nillable="true" type="string"/>
+          <element name="name_ar" minOccurs="0" nillable="true" type="string"/>
+          <element name="name_hi" minOccurs="0" nillable="true" type="string"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

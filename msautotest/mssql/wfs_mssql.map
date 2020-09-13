@@ -6,6 +6,8 @@
 # RUN_PARMS: wfs_mssql_maxfeatures.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: wfs_mssql_maxfeatures_order.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=cities_with_order&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: wfs_mssql_maxfeatures_qs.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson&MAXFEATURES=2" > [RESULT_DEMIME]
+# RUN_PARMS: wfs_mssql_describefeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=cities" > [RESULT_DEMIME]
+# RUN_PARMS: wfs_mssql_describefeature_custom_type.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=cities_custom_gml_type" > [RESULT_DEMIME]
 
 MAP
   NAME 'wfs_mssql'
@@ -59,5 +61,16 @@ MAP
     END
   END
 
+  LAYER
+    NAME 'cities_custom_gml_type'
+    EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
+    INCLUDE 'include/cities_mssql.map'
+    DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857"
+    METADATA
+        "gml_include_items" "all"
+        "gml_types" "auto"
+        "gml_ogr_fid_type" "long" # override the default gml type
+    END
+  END
 
 END

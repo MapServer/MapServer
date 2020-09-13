@@ -887,17 +887,17 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
             sprintf( gml_width, "%u", (unsigned int)columnSize );
 
       snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", buffer );
-      if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+      if( msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
         msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
 
       snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", buffer );
       if( strlen(gml_width) > 0
-          && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+          && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
         msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
 
       snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",buffer );
       if( strlen(gml_precision) > 0
-          && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+          && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
         msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
 
       snprintf( md_item_name, sizeof(md_item_name), "gml_%s_nillable",buffer );
