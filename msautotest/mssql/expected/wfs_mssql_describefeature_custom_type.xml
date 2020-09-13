@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding="UTF-8" ?>
 <schema
-   targetNamespace="http://mapserver.gis.umn.edu/mapserver"
-   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver" 
    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
    xmlns="http://www.w3.org/2001/XMLSchema"
    xmlns:gml="http://www.opengis.net/gml/3.2"
@@ -10,8 +10,8 @@
   <import namespace="http://www.opengis.net/gml/3.2"
           schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd" />
 
-  <element name="cities_custom_gml_type"
-           type="ms:cities_custom_gml_typeType"
+  <element name="cities_custom_gml_type" 
+           type="ms:cities_custom_gml_typeType" 
            substitutionGroup="gml:AbstractFeature" />
 
   <complexType name="cities_custom_gml_typeType">

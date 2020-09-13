@@ -6,8 +6,8 @@
 # RUN_PARMS: wfs_mssql_maxfeatures.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: wfs_mssql_maxfeatures_order.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=cities_with_order&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: wfs_mssql_maxfeatures_qs.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson&MAXFEATURES=2" > [RESULT_DEMIME]
-# RUN_PARMS: wfs_mssql_describefeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=cities" > [RESULT_DEMIME]
-# RUN_PARMS: wfs_mssql_describefeature_custom_type.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=cities_custom_gml_type" > [RESULT_DEMIME]
+# RUN_PARMS: wfs_mssql_describefeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=cities" > [RESULT_DEMIME_DEVERSION]
+# RUN_PARMS: wfs_mssql_describefeature_custom_type.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=cities_custom_gml_type" > [RESULT_DEMIME_DEVERSION]
 
 MAP
   NAME 'wfs_mssql'
