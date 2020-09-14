@@ -836,7 +836,6 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
     *itemType = dataType;
 
     if (pass_field_def) {
-      char md_item_name[256];
       char gml_width[32], gml_precision[32];
       const char *gml_type = NULL;
 
@@ -886,23 +885,7 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
       if( columnSize > 0 )
             sprintf( gml_width, "%u", (unsigned int)columnSize );
 
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", buffer );
-      if( msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
-        msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
-
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", buffer );
-      if( strlen(gml_width) > 0
-          && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
-        msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
-
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",buffer );
-      if( strlen(gml_precision) > 0
-          && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
-        msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
-
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_nillable",buffer );
-      if( nullable > 0 )
-        msInsertHashTable(&(layer->metadata), md_item_name, "true" );
+      updateGMLFieldMetadata(layer, buffer, gml_type, gml_width, gml_precision, (const short) nullable);
     }
     return 1;
   } else {

@@ -2891,20 +2891,8 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
       gml_type = "DateTime";
     }
 
-    char md_item_name[256];
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-    if( msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+    updateGMLFieldMetadata(layer, item, gml_type, gml_width.c_str(), gml_precision.c_str(), 0);
 
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
-    if( !gml_width.empty()
-        && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_width.c_str() );
-
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
-    if( !gml_precision.empty()
-        && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name)==NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_precision.c_str() );
   }
 }
 #endif /* defined(USE_POSTGIS) */

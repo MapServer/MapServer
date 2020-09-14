@@ -2904,6 +2904,41 @@ outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format,
   return psFormat;
 }
 
+/************************************************************************/
+/*                         updateGMLFieldMetadata                       */
+/*                                                                      */
+/*      Updates a fields GML metadata if it has not already             */
+/*      been set. Nullable is not implemented for all drivers           */
+/*      and can be set to 0 if unknown                                  */
+/************************************************************************/
+int updateGMLFieldMetadata(layerObj *layer, const char *field_name, const char *gml_type, const char *gml_width, 
+                        const char *gml_precision, const short nullable)
+{
+
+    char md_item_name[256];
+
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", field_name );
+    if( msLookupHashTable(&(layer->metadata), md_item_name) == NULL )
+    msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", field_name );
+    if( strlen(gml_width) > 0
+        && msLookupHashTable(&(layer->metadata), md_item_name) == NULL )
+    msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
+
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision", field_name );
+    if( strlen(gml_precision) > 0
+        && msLookupHashTable(&(layer->metadata), md_item_name) == NULL )
+    msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+
+    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_nillable", field_name );
+    if( nullable > 0 
+        && msLookupHashTable(&(layer->metadata), md_item_name) == NULL )
+    msInsertHashTable(&(layer->metadata), md_item_name, "true" );
+
+    return MS_TRUE;
+}
+
 #endif /* USE_WMS_SVR || USE_WFS_SVR  || USE_WCS_SVR */
 
 

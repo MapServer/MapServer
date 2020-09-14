@@ -2869,7 +2869,6 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
 
 {
   const char *gml_type = "Character";
-  char md_item_name[256];
   char gml_width[32], gml_precision[32];
   int success;
   ub2 rzttype, nOCILen;
@@ -2951,19 +2950,7 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
       gml_type = "Character";
   }
 
-  snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-  if( msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == 0 )
-    msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
-
-  snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
-  if( strlen(gml_width) > 0
-      && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == 0 )
-    msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
-
-  snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
-  if( strlen(gml_precision) > 0
-      && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name)==0 )
-    msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+    updateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
 }
 
 int msOracleSpatialLayerGetItems( layerObj *layer )
