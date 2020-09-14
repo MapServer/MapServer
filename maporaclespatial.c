@@ -2952,17 +2952,17 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
   }
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-  if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == 0 )
+  if( msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == 0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
   if( strlen(gml_width) > 0
-      && msOWSLookupMetadata(&(layer->metadata), "G", "width") == 0 )
+      && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == 0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
   if( strlen(gml_precision) > 0
-      && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==0 )
+      && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name)==0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
 }
 

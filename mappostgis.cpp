@@ -2893,17 +2893,17 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
 
     char md_item_name[256];
     snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-    if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+    if( msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
       msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
 
     snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
     if( !gml_width.empty()
-        && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+        && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name) == NULL )
       msInsertHashTable(&(layer->metadata), md_item_name, gml_width.c_str() );
 
     snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
     if( !gml_precision.empty()
-        && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+        && msOWSLookupMetadata(&(layer->metadata), NULL, md_item_name)==NULL )
       msInsertHashTable(&(layer->metadata), md_item_name, gml_precision.c_str() );
   }
 }
