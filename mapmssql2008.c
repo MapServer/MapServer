@@ -885,7 +885,7 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
       if( columnSize > 0 )
             sprintf( gml_width, "%u", (unsigned int)columnSize );
 
-      updateGMLFieldMetadata(layer, buffer, gml_type, gml_width, gml_precision, (const short) nullable);
+      msUpdateGMLFieldMetadata(layer, buffer, gml_type, gml_width, gml_precision, (const short) nullable);
     }
     return 1;
   } else {

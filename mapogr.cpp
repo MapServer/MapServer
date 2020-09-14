@@ -2679,7 +2679,7 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
         break;
     }
 
-    updateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
   }
 
   /* Should we try to address style items, or other special items? */

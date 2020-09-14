@@ -150,8 +150,8 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
     const char *namespaces,
     const char *name);
 
-MS_DLL_EXPORT int updateGMLFieldMetadata(layerObj *layer, const char *field_name, const char *gml_type, const char *gml_width, 
-                        const char *gml_precision, const short nullable);
+MS_DLL_EXPORT int msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name,
+    const char *gml_type, const char *gml_width, const char *gml_precision, const short nullable);
 
 void msOWSInitRequestObj(owsRequestObj *ows_request);
 void msOWSClearRequestObj(owsRequestObj *ows_request);

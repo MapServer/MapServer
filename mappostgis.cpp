@@ -2891,7 +2891,7 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
       gml_type = "DateTime";
     }
 
-    updateGMLFieldMetadata(layer, item, gml_type, gml_width.c_str(), gml_precision.c_str(), 0);
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width.c_str(), gml_precision.c_str(), 0);
 
   }
 }

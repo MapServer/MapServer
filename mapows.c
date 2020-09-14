@@ -2905,14 +2905,14 @@ outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format,
 }
 
 /************************************************************************/
-/*                         updateGMLFieldMetadata                       */
+/*                         msUpdateGMLFieldMetadata                     */
 /*                                                                      */
 /*      Updates a fields GML metadata if it has not already             */
 /*      been set. Nullable is not implemented for all drivers           */
 /*      and can be set to 0 if unknown                                  */
 /************************************************************************/
-int updateGMLFieldMetadata(layerObj *layer, const char *field_name, const char *gml_type, const char *gml_width, 
-                        const char *gml_precision, const short nullable)
+int msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name, const char *gml_type,
+                             const char *gml_width, const char *gml_precision, const short nullable)
 {
 
     char md_item_name[256];

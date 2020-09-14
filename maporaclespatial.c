@@ -2950,7 +2950,7 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
       gml_type = "Character";
   }
 
-    updateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
 }
 
 int msOracleSpatialLayerGetItems( layerObj *layer )

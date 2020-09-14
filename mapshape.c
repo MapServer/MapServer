@@ -2522,7 +2522,7 @@ static void msSHPPassThroughFieldDefinitions( layerObj *layer, DBFHandle hDBF )
         break;
     }
 
-    updateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
 
   }
 }
