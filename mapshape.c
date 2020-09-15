@@ -2494,7 +2494,6 @@ static void msSHPPassThroughFieldDefinitions( layerObj *layer, DBFHandle hDBF )
   for(i=0; i<numitems; i++) {
     char item[16];
     int  nWidth=0, nPrecision=0;
-    char md_item_name[64];
     char gml_width[32], gml_precision[32];
     DBFFieldType eType;
     const char *gml_type = NULL;
@@ -2523,19 +2522,8 @@ static void msSHPPassThroughFieldDefinitions( layerObj *layer, DBFHandle hDBF )
         break;
     }
 
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-    if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
 
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
-    if( strlen(gml_width) > 0
-        && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
-
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
-    if( strlen(gml_precision) > 0
-        && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
   }
 }
 

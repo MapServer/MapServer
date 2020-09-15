@@ -2628,7 +2628,6 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
 
   for(i=0; i<numitems; i++) {
     OGRFieldDefnH hField = OGR_FD_GetFieldDefn( hDefn, i );
-    char md_item_name[256];
     char gml_width[32], gml_precision[32];
     const char *gml_type = NULL;
     const char *item = OGR_Fld_GetNameRef( hField );
@@ -2680,19 +2679,7 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
         break;
     }
 
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-    if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
-
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
-    if( strlen(gml_width) > 0
-        && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
-
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
-    if( strlen(gml_precision) > 0
-        && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
   }
 
   /* Should we try to address style items, or other special items? */
