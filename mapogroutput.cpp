@@ -267,7 +267,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRGeometryH hMP = NULL;
     int j;
 
-
     if( shape->numlines == 1 && shape->line[0].numpoints > 1 )
     {
       hGeom = OGR_G_CreateGeometry( wkbMultiPoint );
@@ -341,17 +340,18 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRGeometryH hML = NULL;
     int j;
 
-    if( shape->line[0].numpoints < 2 ) {
-      msSetError(MS_MISCERR,
-                 "Failed on odd line geometry.",
-                 "msOGRWriteShape()");
-      return MS_FAILURE;
-    }
-
     if( shape->numlines > 1 )
       hML = OGR_G_CreateGeometry( wkbMultiLineString );
 
     for( j = 0; j < shape->numlines; j++ ) {
+
+      if( shape->line[j].numpoints < 2 ) {
+        msSetError(MS_MISCERR,
+                   "Failed on odd line geometry.",
+                   "msOGRWriteShape()");
+        return MS_FAILURE;
+      }
+
       hGeom = OGR_G_CreateGeometry( wkbLineString );
 
       msOGRSetPoints( hGeom, &(shape->line[j]), bWant2DOutput);
