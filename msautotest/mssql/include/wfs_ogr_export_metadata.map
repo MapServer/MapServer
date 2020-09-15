@@ -1,0 +1,5 @@
+METADATA
+    "gml_include_items" "all"
+    "gml_types" "auto"
+    "wfs_use_default_extent_for_getfeature" "false"
+END

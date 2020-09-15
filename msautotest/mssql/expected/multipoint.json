@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 1,
+"name": "multipoint",
+"features": [
+{ "type": "Feature", "properties": { "fid": 1 }, "geometry": { "type": "MultiPoint", "coordinates": [ [ 10.0, 40.0 ], [ 40.0, 30.0 ], [ 20.0, 20.0 ], [ 30.0, 10.0 ] ] } }
+]
+}

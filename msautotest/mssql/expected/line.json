@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 1,
+"name": "line",
+"features": [
+{ "type": "Feature", "properties": { "fid": 1 }, "geometry": { "type": "LineString", "coordinates": [ [ 30.0, 10.0 ], [ 10.0, 30.0 ], [ 40.0, 40.0 ] ] } }
+]
+}
