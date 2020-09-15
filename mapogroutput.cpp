@@ -267,13 +267,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRGeometryH hMP = NULL;
     int j;
 
-    if( shape->numlines < 1 ) {
-      msSetError(MS_MISCERR,
-                 "Failed on odd point geometry.",
-                 "msOGRWriteShape()");
-      return MS_FAILURE;
-    }
-    
+
     if( shape->numlines == 1 && shape->line[0].numpoints > 1 )
     {
       hGeom = OGR_G_CreateGeometry( wkbMultiPoint );
@@ -347,7 +341,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRGeometryH hML = NULL;
     int j;
 
-    if( shape->numlines < 1 || shape->line[0].numpoints < 2 ) {
+    if( shape->line[0].numpoints < 2 ) {
       msSetError(MS_MISCERR,
                  "Failed on odd line geometry.",
                  "msOGRWriteShape()");
@@ -376,13 +370,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     int iRing, iOuter;
     int *outer_flags;
     OGRGeometryH hMP;
-
-    if( shape->numlines < 1 ) {
-      msSetError(MS_MISCERR,
-                 "Failed on odd polygon geometry.",
-                 "msOGRWriteShape()");
-      return MS_FAILURE;
-    }
 
     outer_flags = msGetOuterList( shape );
     hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
