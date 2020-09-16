@@ -3,6 +3,6 @@
 "numberMatched": 1,
 "name": "null_polygon",
 "features": [
-{ "type": "Feature", "properties": { "fid": 1 }, "geometry": { "type": "Polygon", "coordinates": [ ] } }
+{ "type": "Feature", "properties": { "fid": 1 }, "geometry": null }
 ]
 }

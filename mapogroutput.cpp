@@ -369,10 +369,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   else if( shape->type == MS_SHAPE_POLYGON ) {
     int iRing, iOuter;
     int *outer_flags;
-    OGRGeometryH hMP;
+    OGRGeometryH hMP = NULL;
+
+    if( shape->numlines > 1 )
+        hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
 
     outer_flags = msGetOuterList( shape );
-    hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
 
     for( iOuter = 0; iOuter < shape->numlines; iOuter++ ) {
       int *inner_flags;
@@ -417,7 +419,8 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
       hGeom = OGR_G_Clone( OGR_G_GetGeometryRef( hMP, 0 ) );
       OGR_G_DestroyGeometry( hMP );
     } else {
-      hGeom = hMP;
+        if( hMP != NULL )
+            hGeom = hMP;
     }
   }
 
