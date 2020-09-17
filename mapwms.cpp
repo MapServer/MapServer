@@ -1018,7 +1018,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         /* SRS=EPSG:xxxx */
 
         /* don't need to copy init=xxx since the srsbuffer is only
-           used with msLoadProjection and that does alreay the job */
+           used with msLoadProjection and that does already the job */
 
         srsbuffer = "EPSG:";
         srsbuffer += (values[i]+5);
@@ -1035,7 +1035,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         }
 
         /* we need to wait until all params are read before */
-        /* loding the projection into the map. This will help */
+        /* loading the projection into the map. This will help */
         /* insure that the passes srs is valid for all layers. */
         /*
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
@@ -1192,7 +1192,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     rectObj rect;
     projectionObj proj;
 
-    /*we have already validated that the request format when reding
+    /*we have already validated that the request format when reading
      the request parameters*/
     rect = map->extent;
 
@@ -1208,7 +1208,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msFreeProjection( &proj );
     }
     /*if the CRS is AUTO2:auto_crs_id,factor,lon0,lat0,
-     we need to grab the factor patameter and use it with the bbox*/
+     we need to grab the factor parameter and use it with the bbox*/
     if (srsbuffer.size() > 1 && strncasecmp(srsbuffer.c_str(), "AUTO2:", 6) == 0) {
       const auto args = msStringSplit(srsbuffer.c_str(), ',');
       if (args.size() == 4) {
@@ -1262,8 +1262,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   }
 
   /*
-  ** Check/apply  wms dimensions
-  ** all dimension requests shoul start with dim_xxxx, except time and elevation.
+  ** Check/apply wms dimensions
+  ** all dimension requests should start with dim_xxxx, except time and elevation.
   */
   for (int i=0; i<map->numlayers; i++) {
     layerObj *lp = (GET_LAYER(map, i));
@@ -1535,7 +1535,7 @@ this request. Check wms/ows_enable_request settings.",
   }
 
   /* Validate Styles :
-  ** MapServer advertize styles through th group setting in a class object.
+  ** MapServer advertize styles through the group setting in a class object.
   ** If no styles are set MapServer expects to have empty values
   ** for the styles parameter (...&STYLES=&...) Or for multiple Styles/Layers,
   ** we could have ...&STYLES=,,,. If that is not the
@@ -1544,6 +1544,9 @@ this request. Check wms/ows_enable_request settings.",
   if(styles && strlen(styles) > 0) {
     bool hasCheckedLayerUnicity = false;
     int n=0;
+    int layerCopyIndex = -1;
+    int layerFilterIndex = -1;
+
     char** tokens = msStringSplitComplex(styles, ",",&n,MS_ALLOWEMPTYTOKENS);
     for (int i=0; i<n; i++) {
       if (tokens[i] && strlen(tokens[i]) > 0 &&
@@ -1576,7 +1579,16 @@ this request. Check wms/ows_enable_request settings.",
                     msFree(psTmpLayer->name);
                   psTmpLayer->name = msStrdup(tmpId);
                   wmslayers[l] = tmpId;
-                  msInsertLayer(map, psTmpLayer, -1);
+
+                  layerCopyIndex = msInsertLayer(map, psTmpLayer, -1);
+                  layerFilterIndex = ows_request->layerwmsfilterindex[nIndex];
+                  // if the WMS layer has a filter applied, make sure this is also applied to the layer copy
+                  if (layerFilterIndex > -1) {
+                    // expand the array mapping map layer index to filter indexes
+                    ows_request->layerwmsfilterindex = (int*)msSmallRealloc(ows_request->layerwmsfilterindex, map->numlayers * sizeof(int));
+                    ows_request->layerwmsfilterindex[layerCopyIndex] = layerFilterIndex;
+                  }
+
                   bLayerInserted = true;
                   /* layer was copied, we need to decrement its refcount */
                   MS_REFCNT_DECR(psTmpLayer);
