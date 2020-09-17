@@ -981,7 +981,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                 GET_LAYER(map, j)->status = MS_ON;
               }
             }
-            ows_request->layerwmsfilterindex[j] = k; /* Assign the corresponding filter */
+            /* if a layer name is repeated assign the first matching filter */
+            /* duplicate names will be assigned filters later when layer copies are created */
+            if (ows_request->layerwmsfilterindex[j] == -1) {
+                ows_request->layerwmsfilterindex[j] = k;
+            }
             validlayers++;
             layerfound = true;
           }
@@ -1581,13 +1585,10 @@ this request. Check wms/ows_enable_request settings.",
                   wmslayers[l] = tmpId;
 
                   layerCopyIndex = msInsertLayer(map, psTmpLayer, -1);
-                  layerFilterIndex = ows_request->layerwmsfilterindex[nIndex];
-                  // if the WMS layer has a filter applied, make sure this is also applied to the layer copy
-                  if (layerFilterIndex > -1) {
-                    // expand the array mapping map layer index to filter indexes
-                    ows_request->layerwmsfilterindex = (int*)msSmallRealloc(ows_request->layerwmsfilterindex, map->numlayers * sizeof(int));
-                    ows_request->layerwmsfilterindex[layerCopyIndex] = layerFilterIndex;
-                  }
+
+                  // expand the array mapping map layer index to filter indexes
+                  ows_request->layerwmsfilterindex = (int*)msSmallRealloc(ows_request->layerwmsfilterindex, map->numlayers * sizeof(int));
+                  ows_request->layerwmsfilterindex[layerCopyIndex] = l; // the filter index matches the index of the layer name in the WMS param
 
                   bLayerInserted = true;
                   /* layer was copied, we need to decrement its refcount */
