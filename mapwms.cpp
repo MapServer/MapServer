@@ -1548,8 +1548,7 @@ this request. Check wms/ows_enable_request settings.",
   if(styles && strlen(styles) > 0) {
     bool hasCheckedLayerUnicity = false;
     int n=0;
-    int layerCopyIndex = -1;
-    int layerFilterIndex = -1;
+    int layerCopyIndex;
 
     char** tokens = msStringSplitComplex(styles, ",",&n,MS_ALLOWEMPTYTOKENS);
     for (int i=0; i<n; i++) {

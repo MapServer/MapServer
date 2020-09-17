@@ -159,6 +159,7 @@ LAYER
   METADATA
     "wms_title"       "road"
     "wms_description" "Roads of I.P.E."
+    "wfs_use_default_extent_for_getfeature" "false"
   END
   TYPE LINE
   STATUS ON
