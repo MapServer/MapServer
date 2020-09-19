@@ -1190,66 +1190,42 @@ typedef struct labelObj labelObj;
 #define MS_LABEL_PERPENDICULAR_TOP_OFFSET 99
 #define IS_PERPENDICULAR_OFFSET(offsety) ((offsety) == MS_LABEL_PERPENDICULAR_OFFSET || (offsety) == MS_LABEL_PERPENDICULAR_TOP_OFFSET)
 
-
-  /************************************************************************/
-  /*                               classObj                               */
-  /*                                                                      */
-  /*      basic symbolization and classification information              */
-  /************************************************************************/
-
-#ifdef SWIG
-    %feature("docstring", "The :ref:`CLASS <class>` object. Used for symbolization and classification information.") classObj;
-#endif /* SWIG */
-
+/**
+ * The :ref:`CLASS <class>` object. Used for symbolization and classification information.
+ *
+ */
   struct classObj {
 
 #ifdef SWIG
     %immutable;
-    %feature("docstring", "**immutable**. See :ref:`METADATA <mapfile-class-metadata>`") metadata;
-    %feature("docstring", "**immutable**. See :ref:`VALIDATION <mapfile-class-validation>`") validation;
-    %feature("docstring", "**immutable**. Number of styles for class") numstyles;
-    %feature("docstring", "**immutable**. Number of labels for class") numlabels;
-    %feature("docstring", "**immutable** Reference to the parent layer") layer;
-    %feature("docstring", "**immutable**. See :ref:`LEADER <mapfile-class-leader>`") leader;
 #endif /* SWIG */
-
-    hashTableObj metadata;
-    hashTableObj validation;
-    int numstyles;
-    int numlabels;
+    
+    hashTableObj metadata; ///< \**immutable** see :ref:`METADATA <mapfile-class-metadata>`
+    hashTableObj validation; ///< \**immutable** see :ref:`VALIDATION <mapfile-class-validation>`
+    int numstyles; ///< \**immutable** number of styles for class
+    int numlabels;  ///< \**immutable** number of labels for class
     int refcount;
-    struct layerObj *layer;
-    labelLeaderObj *leader;
+    struct layerObj *layer; ///< \**immutable** reference to the parent layer
+    labelLeaderObj *leader; ///< \**immutable** see :ref:`LEADER <mapfile-class-leader>`
 
 #ifdef SWIG
     %mutable;
-    %feature("docstring", ":data:`MS_ON` or :data:`MS_OFF` - draw features of this class or do not. See :ref:`STATUS <mapfile-class-status>`") status;
-    %feature("docstring", ":data:`MS_TRUE` or :data:`MS_FALSE`. :data:`MS_TRUE` if this class should be applied if and only if no other class is applicable") isfallback;
-    %feature("docstring", "See :ref:`NAME <mapfile-class-name>`") name;
-    %feature("docstring", "See :ref:`TITLE <mapfile-class-title>`") title;
-    %feature("docstring", "See :ref:`MINSCALEDENOM <mapfile-class-minscaledenom>`") minscaledenom;
-    %feature("docstring", "See :ref:`MAXSCALEDENOM <mapfile-CLASS-maxscaledenom>`") maxscaledenom;
-    %feature("docstring", "See :ref:`MINFEATURESIZE <mapfile-class-minfeaturesize>`") minfeaturesize;
-    %feature("docstring", ":data:`MS_TRUE` or :data:`MS_FALSE`. See :ref:`DEBUG <mapfile-class-debug>`") debug;
-    %feature("docstring", "See :ref:`KEYIMAGE <mapfile-class-keyimage>`") keyimage;
-    %feature("docstring", "See :ref:`GROUP <mapfile-class-group>`") group;
-    %feature("docstring", "Supersedes layer's sizeunits and applies to all styles and labels. See :ref:`LAYER SIZEUNITS <mapfile-layer-sizeunits>`") sizeunits;
 #endif
 
-    int status;
-    int isfallback; // TRUE if this class should be applied if and only if no other class is applicable (e.g. SLD <ElseFilter/>)
-    char *name; /* should be unique within a layer */
-    char *title; /* used for legend labelling */
-    double minscaledenom;
-    double maxscaledenom;
-    int minfeaturesize; /* minimum feature size (in pixels) to shape */
-    int debug;
-    char *keyimage;
-    char *group;
-    int sizeunits; // supersedes layer's sizeunits and applies to all styles and labels
+    int status; ///< :data:`MS_ON` or :data:`MS_OFF` - draw features of this class or do not - see :ref:`STATUS <mapfile-class-status>`
+    int isfallback; ///< :data:`MS_TRUE` or :data:`MS_FALSE` use :data:`MS_TRUE` if this class should be applied if and only if no other class is applicable
+    char *name; ///< See :ref:`NAME <mapfile-class-name>` should be unique within a layer
+    char *title; ///< See :ref:`TITLE <mapfile-class-title>`
+    double minscaledenom; ///< See :ref:`MINSCALEDENOM <mapfile-class-minscaledenom>`
+    double maxscaledenom; ///< See :ref:`MAXSCALEDENOM <mapfile-CLASS-maxscaledenom>`
+    int minfeaturesize; ///< See :ref:`MINFEATURESIZE <mapfile-class-minfeaturesize>` minimum feature size in pixels
+    int debug; ///< :data:`MS_TRUE` or :data:`MS_FALSE` - see :ref:`DEBUG <mapfile-class-debug>`
+    char *keyimage; ///< See :ref:`KEYIMAGE <mapfile-class-keyimage>`
+    char *group; ///< See :ref:`GROUP <mapfile-class-group>`
+    int sizeunits; ///< Supersedes layer's sizeunits and applies to all styles and labels - see :ref:`LAYER SIZEUNITS <mapfile-layer-sizeunits>`
 
 #ifndef __cplusplus
-    char *template;
+    char *template; ///< See :ref:`TEMPLATE <mapfile-class-template>`
 #else /* __cplusplus */
     char *_template; // keyword in cplusplus
 #endif /* __cplusplus */
