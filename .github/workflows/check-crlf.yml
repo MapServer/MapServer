@@ -14,4 +14,4 @@ jobs:
       - name: Use action to check for CRLF endings
         uses: erclu/check-crlf@v1
         with:
-          exclude: tests msautotest    
+          exclude: ./tests ./msautotest    
