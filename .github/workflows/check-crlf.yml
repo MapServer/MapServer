@@ -6,12 +6,11 @@ jobs:
   Check-CRLF:
     name: verify that only LF linefeeds are used
     runs-on: ubuntu-18.04
+    exclude: tests msautotest    
 
     steps:
       - name: Checkout repository contents
         uses: actions/checkout@v1
 
       - name: Use action to check for CRLF endings
-        uses: erclu/check-crlf@v1.1.0
-        
-    exclude: tests msautotest
+        uses: erclu/check-crlf@v1
