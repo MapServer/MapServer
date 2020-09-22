@@ -41,7 +41,8 @@ MAP
   LAYER
     NAME 'cities'
     EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
-    INCLUDE 'include/cities_mssql.map'
+    INCLUDE 'include/mssql_connection.map'
+    TYPE POINT
     DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857"
     METADATA
         "gml_include_items" "all"
@@ -53,7 +54,8 @@ MAP
   LAYER
     NAME 'cities_with_order'
     EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
-    INCLUDE 'include/cities_mssql.map'
+    INCLUDE 'include/mssql_connection.map'
+    TYPE POINT
     DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857 ORDER BY ogr_fid DESC"
     METADATA
         "gml_include_items" "all"
@@ -64,7 +66,8 @@ MAP
   LAYER
     NAME 'cities_custom_gml_type'
     EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
-    INCLUDE 'include/cities_mssql.map'
+    INCLUDE 'include/mssql_connection.map'
+    TYPE POINT
     DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857"
     METADATA
         "gml_include_items" "all"

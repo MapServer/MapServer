@@ -251,20 +251,15 @@ typedef struct {
 =============================================================================
 */
 
-%feature("autodoc"); // autodoc all struct properties in the header files
-
 %include "../../mapserver.h"
 %include "../../mapserver-version.h"
 %include "../../mapprimitive.h"
+%include "../../maperror.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"
 %include "../../mapsymbol.h"
 %include "../../maphash.h"
 %include "../../maperror.h"
-
-// clear autodoc for SWIG functions as we can use the -py3 flag to add typehints
-// which can be read by Sphinx
-%feature("autodoc", "");
 
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };

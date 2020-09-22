@@ -7,12 +7,26 @@ dpkg -l | grep postgis
 sudo apt-get remove --purge postgresql* libpq-dev libpq5
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
-sudo apt-get install --allow-unauthenticated protobuf-c-compiler libprotobuf-c0-dev bison flex python-lxml libfribidi-dev cmake librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal-dev libproj-dev libxml2-dev python-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin ccache curl pyflakes postgresql-server-dev-10 postgresql-10-postgis-3 postgresql-10-postgis-3-scripts swig
+sudo apt-get install --allow-unauthenticated protobuf-c-compiler libprotobuf-c0-dev bison flex libfribidi-dev cmake librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin ccache curl postgresql-server-dev-10 postgresql-10-postgis-3 postgresql-10-postgis-3-scripts swig
+# following are already installed on Travis CI
+#sudo apt-get install --allow-unauthenticated php-dev python-dev python3-dev
 sudo apt-get install --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs
-#sudo apt-get install --allow-unauthenticated php-dev
 sudo apt-get install --allow-unauthenticated libperl-dev
-sudo pip install cpp-coveralls
-sudo pip install -U -r msautotest/requirements.txt
+
+# list installed and available Python versions
+# pyenv versions
+# echo $(pyenv root)
+
+# set the global Python version
+pyenv global $PYTHON_VERSION
+
+# check we are using the correct versions
+pyenv which pip
+pyenv which python
+
+pip install cpp-coveralls pyflakes lxml
+pip install -r msautotest/requirements.txt
+
 export CC="ccache gcc"
 export CXX="ccache g++"
 
@@ -21,9 +35,16 @@ sudo sed -i  's/peer/trust/' /etc/postgresql/10/main/pg_hba.conf
 sudo service postgresql restart 10
 
 cd msautotest
-pyflakes .
+python -m pyflakes .
 ./create_postgis_test_data.sh
-python -m SimpleHTTPServer &> /dev/null &
+
+if [ $PYTHON_VERSION = "2.7" ]; then
+    python -m SimpleHTTPServer &> /dev/null &
+else
+    # py3
+    python -m http.server &> /dev/null &
+fi
+
 cd ..
 touch maplexer.l
 touch mapparser.y

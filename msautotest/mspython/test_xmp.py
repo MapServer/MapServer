@@ -64,7 +64,7 @@ def test_xmp():
     img.save(resultfile, map )
 
     f = open(resultfile, 'rb')
-    data = f.read()
+    data = f.read().decode('utf-8', 'ignore')
     f.close()
 
     def dump_md():

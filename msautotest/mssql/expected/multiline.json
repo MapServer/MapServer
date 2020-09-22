@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 1,
+"name": "multiline",
+"features": [
+{ "type": "Feature", "properties": { "fid": 1 }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 10.0, 10.0 ], [ 20.0, 20.0 ], [ 10.0, 40.0 ] ], [ [ 40.0, 40.0 ], [ 30.0, 30.0 ], [ 40.0, 20.0 ], [ 30.0, 10.0 ] ] ] } }
+]
+}

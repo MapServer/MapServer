@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 1,
+"name": "null_multiline",
+"features": [
+{ "type": "Feature", "properties": { "fid": 1 }, "geometry": null }
+]
+}
