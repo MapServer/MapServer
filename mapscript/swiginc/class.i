@@ -161,7 +161,7 @@
     return msGetExpressionString(&(self->text));
   }
 
-  /// **/To be removed in 8.0** -  use the metadata property
+  /// \**To be removed in 8.0** -  use the metadata property
   char *getMetaData(char *name) {
     char *value = NULL;
     if (!name) {
@@ -176,19 +176,19 @@
     return value;
   }
 
-  /// **/To be removed** -  use the metadata property
+  /// \**To be removed** -  use the metadata property
   int setMetaData(char *name, char *value) {
     if (msInsertHashTable(&(self->metadata), name, value) == NULL)
         return MS_FAILURE;
     return MS_SUCCESS;
   }
 
-  /// **/To be removed** -  use the metadata property
+  /// \**To be removed** -  use the metadata property
   char *getFirstMetaDataKey() {
     return (char *) msFirstKeyFromHashTable(&(self->metadata));
   }
 
-  /// **To be removed** -  use the metadata property
+  /// \**To be removed** -  use the metadata property
   char *getNextMetaDataKey(char *lastkey) {
     return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
   }
@@ -234,9 +234,9 @@
 %clear labelObj *label;
 #endif
 
+  %newobject removeLabel;
   /// Remove the :class:`labelObj` at *index* from the labels array and return a
   /// reference to the :class:`labelObj`. numlabels is decremented, and the array is updated
-  %newobject removeLabel;
   labelObj *removeLabel(int index) {
     labelObj* label = (labelObj *) msRemoveLabelFromClass(self, index);
     if (label) MS_REFCNT_INCR(label);
