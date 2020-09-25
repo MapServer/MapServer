@@ -109,19 +109,28 @@ extern "C" {
   typedef SHPInfo * SHPHandle;
 #endif
 
+  /************************************************************************/
+  /*                          DBFInfo                                     */
+  /************************************************************************/
 
-
+/**
+ * An object containing information about a DBF file
+ *
+ */
   typedef struct {
 #ifdef SWIG
     %immutable;
 #endif
+
+    int   nRecords; ///< Number of records in the DBF
+    int   nFields; ///< Number of fields in the DBF
+
+
+#ifndef SWIG
     VSILFILE  *fp;
-
-    int   nRecords;
-
     unsigned int nRecordLength;
     int   nHeaderLength;
-    int   nFields;
+
     int   *panFieldOffset;
     int   *panFieldSize;
     int   *panFieldDecimals;
@@ -138,41 +147,39 @@ extern "C" {
 
     char  *pszStringField;
     int   nStringFieldLen;
-#ifdef SWIG
-    %mutable;
-#endif
+#endif /* not SWIG */
   } DBFInfo;
+
   typedef DBFInfo * DBFHandle;
 
   typedef enum {FTString, FTInteger, FTDouble, FTInvalid} DBFFieldType;
 
-  /* Shapefile object, no write access via scripts */
+  /************************************************************************/
+  /*                          shapefileObj                                */
+  /************************************************************************/
+
+/**
+ * An object representing a Shapefile. There is no write access to this object
+ * using MapScript.
+ */
   typedef struct {
 #ifdef SWIG
     %immutable;
 #endif
+
+    int type; ///< Shapefile type - see mapshape.h for values of type
+    int numshapes; ///< Number of shapes
+    rectObj bounds; ///< Extent of shapes
+
+#ifndef SWIG
     char source[MS_PATH_LENGTH]; /* full path to this file data */
-
-#ifndef SWIG
+    int lastshape;
+    ms_bitarray status;
+    int isopen;
     SHPHandle hSHP; /* SHP/SHX file pointer */
-#endif
-
-    int type; /* shapefile type */
-    int numshapes; /* number of shapes */
-    rectObj bounds; /* shape extent */
-
-#ifndef SWIG
     DBFHandle hDBF; /* DBF file pointer */
 #endif
 
-    int lastshape;
-
-    ms_bitarray status;
-
-    int isopen;
-#ifdef SWIG
-    %mutable;
-#endif
   } shapefileObj;
 
 #ifndef SWIG
