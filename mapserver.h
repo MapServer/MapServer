@@ -777,17 +777,17 @@ extern "C" {
   } parseObj;
 #endif
 
-  /* MS RFC 69*/
+  /************************************************************************/
+  /*                          clusterObj                                  */
+  /************************************************************************/
+
+/**
+The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
+*/
   typedef struct {
-#ifdef SWIG
-    %feature("docstring", "The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.") clusterObj;
-    %feature("docstring", "See :ref:`BUFFER <mapfile-class-maxdistance>`") maxdistance;
-    %feature("docstring", "See :ref:`MAXDISTANCE <mapfile-class-buffer>`") buffer;
-    %feature("docstring", "See :ref:`REGION <mapfile-class-region>`") region;
-#endif /* SWIG */
-    double maxdistance; /* max distance between clusters */
-    double buffer;      /* the buffer size around the selection area */
-    char* region;       /* type of the cluster region (rectangle or ellipse) */
+    double maxdistance; ///< Maximum distance between clusters - see :ref:`MAXDISTANCE <mapfile-cluster-maxdistance>`
+    double buffer; ///< The buffer size around the selection area - see :ref:`BUFFER <mapfile-cluster-buffer>`
+    char* region; ///< The type of the cluster region (rectangle or ellipse) - see :ref:`REGION <mapfile-cluster-region>`
 #ifndef SWIG
     expressionObj group; /* expression to identify the groups */
     expressionObj filter; /* expression for filtering the shapes */
@@ -1190,6 +1190,10 @@ typedef struct labelObj labelObj;
 #define MS_LABEL_PERPENDICULAR_TOP_OFFSET 99
 #define IS_PERPENDICULAR_OFFSET(offsety) ((offsety) == MS_LABEL_PERPENDICULAR_OFFSET || (offsety) == MS_LABEL_PERPENDICULAR_TOP_OFFSET)
 
+  /************************************************************************/
+  /*                          classObj                                    */
+  /************************************************************************/
+
 /**
  * The :ref:`CLASS <class>` object. Used for symbolization and classification information.
  *
@@ -1204,7 +1208,7 @@ typedef struct labelObj labelObj;
     hashTableObj validation; ///< \**immutable** see :ref:`VALIDATION <mapfile-class-validation>`
     int numstyles; ///< \**immutable** number of styles for class
     int numlabels;  ///< \**immutable** number of labels for class
-    int refcount;
+    int refcount; ///< \**immutable** number of references to this object
     struct layerObj *layer; ///< \**immutable** reference to the parent layer
     labelLeaderObj *leader; ///< \**immutable** see :ref:`LEADER <mapfile-class-leader>`
 
