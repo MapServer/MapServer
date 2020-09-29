@@ -1896,6 +1896,86 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
 #endif
 }
 
+wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
+{
+#ifdef USE_ICONV
+  wchar_t* output = NULL;
+  const char* errormessage = NULL;
+  iconv_t cd = NULL;
+  size_t nStr;
+  size_t nInSize;
+  size_t nOutSize;
+  size_t iconv_status = -1;
+  size_t nBufferSize;
+
+  const char* pszUTF8 = NULL;
+  wchar_t* pwszWide = NULL;
+
+  if (string != NULL) {
+    nStr = strlen (string);
+    nBufferSize = ((nStr * 6) + 1);
+    output = (wchar_t*) msSmallMalloc (nBufferSize);
+
+    if (nStr == 0) {
+      /* return an empty 8 byte string */
+      output[0] = '\0';
+      return output;
+    }
+
+    cd = iconv_open(encoding, "UTF-8");
+
+    nOutSize = nBufferSize;
+    if ((iconv_t)-1 != cd) {
+      nInSize = sizeof (char)*nStr;
+      pszUTF8 = string;
+      pwszWide = output;
+      iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
+      if ((size_t)-1 == iconv_status) {
+        switch (errno) {
+          case E2BIG:
+            errormessage = "There is not sufficient room in buffer";
+            break;
+          case EILSEQ:
+            errormessage = "An invalid multibyte sequence has been encountered in the input";
+            break;
+          case EINVAL:
+            errormessage = "An incomplete multibyte sequence has been encountered in the input";
+            break;
+          default:
+            errormessage = "Unknown";
+            break;
+        }
+        msSetError(MS_MISCERR, "Unable to convert string in UTF8 to encoding '%s' %s",
+                   "msConvertWideStringFromUTF8()",
+                   encoding, errormessage);
+        iconv_close(cd);
+        msFree(output);
+        return NULL;
+      }
+      iconv_close(cd);
+    } else {
+      msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).",
+                 "msConvertWideStringFromUTF8()",
+                 encoding);
+      msFree(output);
+      return NULL;
+    }
+  } else {
+    /* we were given a NULL wide string, nothing we can do here */
+    return NULL;
+  }
+
+  /* NULL-terminate the output string */
+  if (nOutSize >= sizeof (wchar_t))
+    *((wchar_t *) pwszWide) = L'\0';
+
+  return output;
+#else
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msConvertWideStringFromUTF8()");
+  return NULL;
+#endif
+}
+
 /*
 ** Returns the next glyph in string and advances *in_ptr to the next
 ** character.
