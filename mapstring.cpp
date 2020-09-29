@@ -1900,7 +1900,7 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
 {
 #ifdef USE_ICONV
   wchar_t* output = NULL;
-  char* errormessage = NULL;
+  const char* errormessage = NULL;
   iconv_t cd = NULL;
   size_t nStr;
   size_t nInSize;
@@ -1929,7 +1929,7 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
       nInSize = sizeof (char)*nStr;
       pszUTF8 = string;
       pwszWide = output;
-      iconv_status = iconv(cd, &pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
+      iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
           case E2BIG:
@@ -1947,7 +1947,7 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
         }
         msSetError(MS_MISCERR, "Unable to convert string in UTF8 to encoding '%s' %s",
                    "msConvertWideStringFromUTF8()",
-                   encoding,errormessage);
+                   encoding, errormessage);
         iconv_close(cd);
         msFree(output);
         return NULL;
