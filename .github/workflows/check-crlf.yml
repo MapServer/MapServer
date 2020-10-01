@@ -1,0 +1,18 @@
+# check for Windows CRLF in files
+# homepage: https://github.com/marketplace/actions/check-crlf
+
+name: Check CRLF
+
+on: [push, pull_request]
+
+jobs:
+  Check-CRLF:
+    name: verify that only LF linefeeds are used
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v1
+
+      - name: Use action to check for CRLF endings
+        uses: erclu/check-crlf@v1.0.0
