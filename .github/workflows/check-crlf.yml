@@ -9,11 +9,11 @@ jobs:
   Check-CRLF:
     name: verify that only LF linefeeds are used
     runs-on: ubuntu-18.04
-    exclude: msautotest/misc/data/ /msautotest/renderers/expected/
 
     steps:
       - name: Checkout repository contents
         uses: actions/checkout@v1
 
       - name: Use action to check for CRLF endings
-        uses: erclu/check-crlf@v1.1.1        
+        uses: erclu/check-crlf@v1.1.1
+        exclude: msautotest/misc/data/ /msautotest/renderers/expected/       
