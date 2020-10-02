@@ -15,6 +15,6 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Use action to check for CRLF endings
-        uses: erclu/check-crlf@v2
+        uses: erclu/check-crlf@v1.1.0
         exclude: msautotest/misc/data/ /msautotest/renderers/expected/
         
