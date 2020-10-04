@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
+#include "ogr_srs_api.h"
+
 static char *ms_proj_lib = NULL;
 #if PROJ_VERSION_MAJOR >= 6
 static unsigned ms_proj_lib_change_counter = 0;
@@ -2398,6 +2400,14 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
     ms_proj_lib = msStrdup( proj_lib );
 #endif
   msReleaseLock( TLOCK_PROJ );
+
+#if GDAL_VERSION_MAJOR >= 3
+  if( ms_proj_lib != NULL )
+  {
+    const char* const apszPaths[] = { ms_proj_lib, NULL };
+    OSRSetPROJSearchPaths(apszPaths);
+  }
+#endif
 
   if ( extended_path )
     msFree( extended_path );
