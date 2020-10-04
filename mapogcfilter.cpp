@@ -2174,10 +2174,6 @@ const char* FLTGetDuring(FilterEncodingNode *psFilterNode, const char** ppszTime
 char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   char *pszExpression = NULL;
-  const char *pszAttribute = NULL;
-  char szTmp[256];
-  char **tokens = NULL;
-  int nTokens = 0, i=0, bString=0;
 
   if (psFilterNode == NULL || lp == NULL)
     return NULL;
@@ -2215,6 +2211,11 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     /* TODO */
   } else if (psFilterNode->eType == FILTER_NODE_TYPE_FEATUREID) {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+    const char *pszAttribute = NULL;
+    char szTmp[256];
+    char **tokens = NULL;
+    int nTokens = 0, i=0, bString=0;
+
     if (psFilterNode->pszValue) {
       pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
       if (pszAttribute) {
@@ -3126,12 +3127,11 @@ static void FLTRemoveGroupName(FilterEncodingNode *psFilterNode,
 void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
                                mapObj *map, int i, const char *namespaces)
 {
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
   layerObj *lp=NULL;
   char szTmp[256];
   const char *pszFullName = NULL;
   int layerWasOpened =  MS_FALSE;
-
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
   if (psFilterNode && map && i>=0 && i<map->numlayers) {
     /*strip name spaces before hand*/
