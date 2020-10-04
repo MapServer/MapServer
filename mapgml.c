@@ -1250,6 +1250,68 @@ static void msGMLWriteConstant(FILE *stream, gmlConstantObj *constant, const cha
   return;
 }
 
+static void msGMLWriteGroup(FILE *stream,
+                            gmlGroupObj *group, shapeObj *shape,
+                            gmlItemListObj *itemList,
+                            gmlConstantListObj *constantList,
+                            const char *namespace, const char *tab,
+                            OWSGMLVersion outputformat,
+                            const char *pszFID)
+{
+  int i,j;
+  int add_namespace = MS_TRUE;
+  char *itemtab;
+
+  gmlItemObj *item=NULL;
+  gmlConstantObj *constant=NULL;
+
+  if(!stream || !group) return;
+
+  /* setup the item/constant tab */
+  itemtab = (char *) msSmallMalloc(sizeof(char)*strlen(tab)+3);
+
+  sprintf(itemtab, "%s  ", tab);
+
+  if(!namespace || strchr(group->name, ':') != NULL) add_namespace = MS_FALSE;
+
+  /* start the group */
+  if(add_namespace == MS_TRUE)
+    msIO_fprintf(stream, "%s<%s:%s>\n", tab, namespace, group->name);
+  else
+    msIO_fprintf(stream, "%s<%s>\n", tab, group->name);
+
+  /* now the items/constants in the group */
+  for(i=0; i<group->numitems; i++) {
+    for(j=0; j<constantList->numconstants; j++) {
+      constant = &(constantList->constants[j]);
+      if(strcasecmp(constant->name, group->items[i]) == 0) {
+        msGMLWriteConstant(stream, constant, namespace, itemtab);
+        break;
+      }
+    }
+    if(j != constantList->numconstants) continue; /* found this one */
+    for(j=0; j<itemList->numitems; j++) {
+      item = &(itemList->items[j]);
+      if(strcasecmp(item->name, group->items[i]) == 0) {
+        /* the number of items matches the number of values exactly */
+        msGMLWriteItem(stream, item, shape->values[j], namespace, itemtab, outputformat, pszFID);
+        break;
+      }
+    }
+  }
+
+  /* end the group */
+  if(add_namespace == MS_TRUE)
+    msIO_fprintf(stream, "%s</%s:%s>\n", tab, namespace, group->name);
+  else
+    msIO_fprintf(stream, "%s</%s>\n", tab, group->name);
+
+  msFree(itemtab);
+
+  return;
+}
+#endif
+
 gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces)
 {
   int i;
@@ -1321,68 +1383,6 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
 
   free(groupList);
 }
-
-static void msGMLWriteGroup(FILE *stream,
-                            gmlGroupObj *group, shapeObj *shape,
-                            gmlItemListObj *itemList,
-                            gmlConstantListObj *constantList,
-                            const char *namespace, const char *tab,
-                            OWSGMLVersion outputformat,
-                            const char *pszFID)
-{
-  int i,j;
-  int add_namespace = MS_TRUE;
-  char *itemtab;
-
-  gmlItemObj *item=NULL;
-  gmlConstantObj *constant=NULL;
-
-  if(!stream || !group) return;
-
-  /* setup the item/constant tab */
-  itemtab = (char *) msSmallMalloc(sizeof(char)*strlen(tab)+3);
-
-  sprintf(itemtab, "%s  ", tab);
-
-  if(!namespace || strchr(group->name, ':') != NULL) add_namespace = MS_FALSE;
-
-  /* start the group */
-  if(add_namespace == MS_TRUE)
-    msIO_fprintf(stream, "%s<%s:%s>\n", tab, namespace, group->name);
-  else
-    msIO_fprintf(stream, "%s<%s>\n", tab, group->name);
-
-  /* now the items/constants in the group */
-  for(i=0; i<group->numitems; i++) {
-    for(j=0; j<constantList->numconstants; j++) {
-      constant = &(constantList->constants[j]);
-      if(strcasecmp(constant->name, group->items[i]) == 0) {
-        msGMLWriteConstant(stream, constant, namespace, itemtab);
-        break;
-      }
-    }
-    if(j != constantList->numconstants) continue; /* found this one */
-    for(j=0; j<itemList->numitems; j++) {
-      item = &(itemList->items[j]);
-      if(strcasecmp(item->name, group->items[i]) == 0) {
-        /* the number of items matches the number of values exactly */
-        msGMLWriteItem(stream, item, shape->values[j], namespace, itemtab, outputformat, pszFID);
-        break;
-      }
-    }
-  }
-
-  /* end the group */
-  if(add_namespace == MS_TRUE)
-    msIO_fprintf(stream, "%s</%s:%s>\n", tab, namespace, group->name);
-  else
-    msIO_fprintf(stream, "%s</%s>\n", tab, group->name);
-
-  msFree(itemtab);
-
-  return;
-}
-#endif
 
 /* Dump GML query results for WMS GetFeatureInfo */
 int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
