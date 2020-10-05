@@ -737,12 +737,31 @@ static void setConnError(msODBCconn *conn)
   conn->errorMessage[len] = 0;
 }
 
+#ifdef USE_ICONV
+static SQLWCHAR* convertCwchartToSQLWCHAR(const wchar_t* inStr)
+{
+    SQLWCHAR* outStr;
+    int i, len;
+    for( len = 0; inStr[len] != 0; ++len )
+    {
+        /* do nothing */
+    }
+    outStr = (SQLWCHAR*)msSmallMalloc(sizeof(SQLWCHAR) * (len + 1));
+    for( i = 0; i <= len; i++ )
+    {
+        outStr[i] = (SQLWCHAR)inStr[i];
+    }
+    return outStr;
+}
+#endif
+
 /* Connect to db */
-static msODBCconn * mssql2008Connect(char * connString)
+static msODBCconn * mssql2008Connect(const char * connString)
 {
   SQLSMALLINT outConnStringLen;
   SQLRETURN rc;
   msODBCconn * conn = msSmallMalloc(sizeof(msODBCconn));
+  char fullConnString[1024];
 
   memset(conn, 0, sizeof(*conn));
 
@@ -754,27 +773,19 @@ static msODBCconn * mssql2008Connect(char * connString)
 
   if (strcasestr(connString, "DRIVER=") == 0)
   {
-      SQLCHAR fullConnString[1024];
+      snprintf(fullConnString, sizeof(fullConnString), "DRIVER={SQL Server};%s", connString);
 
-      snprintf((char*)fullConnString, sizeof(fullConnString), "DRIVER={SQL Server};%s", connString);
-
-#ifdef USE_ICONV
-      wchar_t *decodedConnString = msConvertWideStringFromUTF8(fullConnString, "UCS-2LE");
-      wchar_t outConnString[1024];
-      rc = SQLDriverConnectW(conn->hdbc, NULL, decodedConnString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
-      msFree(decodedConnString);
-#else
-      SQLCHAR outConnString[1024];
-      rc = SQLDriverConnect(conn->hdbc, NULL, fullConnString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
-#endif
+      connString = fullConnString;
   }
-  else
+
   {
 #ifdef USE_ICONV
       wchar_t *decodedConnString = msConvertWideStringFromUTF8(connString, "UCS-2LE");
-      wchar_t outConnString[1024];
-      rc = SQLDriverConnectW(conn->hdbc, NULL, decodedConnString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
+      SQLWCHAR outConnString[1024];
+      SQLWCHAR* decodedConnStringSQLWCHAR = convertCwchartToSQLWCHAR(decodedConnString);
+      rc = SQLDriverConnectW(conn->hdbc, NULL, decodedConnStringSQLWCHAR, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
       msFree(decodedConnString);
+      msFree(decodedConnStringSQLWCHAR);
 #else
       SQLCHAR outConnString[1024];
       rc = SQLDriverConnect(conn->hdbc, NULL, (SQLCHAR*)connString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
@@ -810,9 +821,13 @@ static int executeSQL(msODBCconn *conn, const char * sql)
   SQLCloseCursor(conn->hstmt);
 
 #ifdef USE_ICONV
-  wchar_t *decodedSql = msConvertWideStringFromUTF8(sql, "UCS-2LE");
-  rc = SQLExecDirectW(conn->hstmt, decodedSql, SQL_NTS);
-  msFree(decodedSql);
+  {
+    wchar_t *decodedSql = msConvertWideStringFromUTF8(sql, "UCS-2LE");
+    SQLWCHAR* decodedSqlSQLWCHAR = convertCwchartToSQLWCHAR(decodedSql);
+    rc = SQLExecDirectW(conn->hstmt, decodedSqlSQLWCHAR, SQL_NTS);
+    msFree(decodedSql);
+    msFree(decodedSqlSQLWCHAR);
+  }
 #else
   rc = SQLExecDirect(conn->hstmt, (SQLCHAR *) sql, SQL_NTS);
 #endif
