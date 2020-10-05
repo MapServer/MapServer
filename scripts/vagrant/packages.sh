@@ -10,6 +10,13 @@ add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 apt-get update
 apt-get -y upgrade
 
+# Add repo to recent cmake from Kitware (see https://apt.kitware.com/)
+sudo apt-get update
+sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+sudo apt-get update
+
 # install packages we need
 apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
     libpq-dev python-all-dev libproj-dev libxml2-dev postgis php-dev \
