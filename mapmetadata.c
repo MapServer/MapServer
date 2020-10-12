@@ -249,35 +249,6 @@ xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, const char *parent_element
 
 
 /************************************************************************/
-/*                   _msMetadataGetDate                                 */
-/*                                                                      */
-/*      Create a gmd:date or gmd:dateStamp element pattern              */
-/************************************************************************/
-
-static
-xmlNodePtr _msMetadataGetDate(xmlNsPtr namespace, const char *parent_element, const char *date_type, const char *value, xmlNsPtr* ppsNsGco) {
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psNode2 = NULL;
-
-  if( *ppsNsGco == NULL )
-    *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
-
-  psNode = xmlNewNode(namespace, BAD_CAST parent_element);
-
-  if (date_type == NULL) {  /* it's a gmd:dateStamp */
-      xmlNewChild(psNode, *ppsNsGco, BAD_CAST "Date", BAD_CAST value);
-      return psNode;
-  }
-
-  psNode2 = xmlNewChild(psNode, namespace, BAD_CAST "date", NULL);
-  xmlNewChild(psNode2, *ppsNsGco, BAD_CAST "Date", BAD_CAST value);
-  xmlAddChild(psNode, _msMetadataGetCodeList(namespace, "dateType", "CI_DateTypeCode", date_type));
-
-  return psNode;
-}
-
-
-/************************************************************************/
 /*                   _msMetadataGetGMLTimePeriod                        */
 /*                                                                      */
 /*      Create a gml:TimePeriod element pattern                         */
@@ -527,13 +498,12 @@ xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, lay
   xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "title", value, ppsNsGco));
 
   psDNode = xmlNewChild(psCINode, namespace, BAD_CAST "date", NULL);
+  xmlNewNsProp(psDNode, *ppsNsGco, BAD_CAST "nilReason", BAD_CAST "missing");
 
   value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "attribution_title");
   if (value) {
       xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "otherCitationDetails", value, ppsNsGco));
   }
-
-  xmlAddChild(psDNode, _msMetadataGetDate(namespace, "CI_Date", "publication", "2011", ppsNsGco));
 
   value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "abstract");
   if (!value)
