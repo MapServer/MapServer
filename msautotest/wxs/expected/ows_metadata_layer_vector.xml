@@ -123,6 +123,9 @@ Content-type: text/xml
               </gmd:dateType>
             </gmd:CI_Date>
           </gmd:date>
+          <gmd:otherCitationDetails>
+            <gco:CharacterString>MapServer</gco:CharacterString>
+          </gmd:otherCitationDetails>
         </gmd:CI_Citation>
       </gmd:citation>
       <gmd:abstract>

@@ -528,6 +528,11 @@ xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, lay
 
   psDNode = xmlNewChild(psCINode, namespace, BAD_CAST "date", NULL);
 
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "attribution_title");
+  if (value) {
+      xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "otherCitationDetails", value, ppsNsGco));
+  }
+
   xmlAddChild(psDNode, _msMetadataGetDate(namespace, "CI_Date", "publication", "2011", ppsNsGco));
 
   value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "abstract");
@@ -691,7 +696,7 @@ xmlNodePtr msMetadataGetExceptionReport(mapObj *map, char *code, char *locator, 
 /************************************************************************/
 /*                   msMetadataGetLayerMetadata                         */
 /*                                                                      */
-/*      Generate an ISO 19139:2007 representation of layer metadata     */
+/*      Generate an ISO 19139-1:2019 representation of layer metadata   */
 /************************************************************************/
 
 static
