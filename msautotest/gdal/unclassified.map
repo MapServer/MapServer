@@ -26,6 +26,7 @@ LAYER
   STATUS default
   DATA data/rgba.tif
   PROCESSING "BANDS=1,2,3"
+  PROCESSING "USE_MASK_BAND=NO"
   CLASS
     KEYIMAGE "data/grid.gif"
   END

@@ -31,6 +31,7 @@ LAYER
   STATUS default
   DATA ../gdal/data/rgba.tif
   PROCESSING "BANDS=1,2,3"
+  PROCESSING "USE_MASK_BAND=NO"
   COMPOSITE
     OPACITY 45
     COMPOP "multiply"
