@@ -259,7 +259,6 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
                     ext.minx, ext.miny,
                     ext.maxx, ext.maxy));
   } else {
-    xmlNewChild(psRootNode, psNsOws, BAD_CAST "WGS84BoundingBox", NULL);
     xmlAddSibling(psNode,
                   xmlNewComment(BAD_CAST "WARNING: Optional WGS84BoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wfs_extent metadata. Also check that your data exists in the DATA statement"));
   }
