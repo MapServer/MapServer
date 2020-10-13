@@ -163,6 +163,9 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Title>province</Title>
         <Abstract>province</Abstract>
         <LatLonBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+    <Attribution>
+        <Title>MapServer</Title>
+    </Attribution>
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ows?request=GetMetadata&amp;layer=province"/>

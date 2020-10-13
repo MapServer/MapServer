@@ -128,6 +128,7 @@ LAYER
     "ows_title" "province"
     "ows_abstract" "province"
     "wfs_featureid" "NAME_E"
+    "ows_attribution_title" "MapServer"
   END
   TYPE POINT
   STATUS ON
