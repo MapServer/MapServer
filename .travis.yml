@@ -81,9 +81,6 @@ after_success:
   - ./ci/travis/after_success.sh
 
 notifications:
-  email:
-    recipients:
-      - thomas.bonfort@gmail.com
   irc:
     channels:
       - "irc.freenode.org#mapserver"
