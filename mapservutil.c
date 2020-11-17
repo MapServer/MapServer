@@ -32,6 +32,7 @@
 #include "mapserv.h"
 #include "maptime.h"
 #include "mapows.h"
+#include "mapogcapi.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
@@ -382,9 +383,9 @@ int msCGIDispatchAPIRequest(mapservObj *mapserv)
   // should be a more elegant way to do this (perhaps similar to how drivers are handled)
   if(strncasecmp("ogcapi", mapserv->api_path[1], 6) == 0) {
 #ifdef USE_OGCAPI_SVR
-    msSetError(MS_WEBERR, "API Signature: %s", "msCGIDispatchAPIRequest()", mapserv->api_path[1]);
+    return msOGCAPIDispatchRequest(mapserv->map, mapserv->request, mapserv->api_path, mapserv->api_path_length);
 #else
-    msSetError(MS_WEBERR, "OGCAPI server support is not enabled.", "msCGIDispatchAPIRequest()");
+    msSetError(MS_WEBERR, "OGC API server support is not enabled.", "msCGIDispatchAPIRequest()");
 #endif
   } else {
     msSetError(MS_WEBERR, "Invalid API signature.", "msCGIDispatchAPIRequest()");
