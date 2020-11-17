@@ -198,21 +198,30 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 {
   int i, j;
   mapObj *map = NULL;
+  char *mapfile = NULL;
 
-  for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
-    if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
+  if(mapserv->api_path != NULL) {
+    mapfile = mapserv->api_path[2]; /* mapfile is *always* in the second position (/{signature}/{mapfile}) of an API call */
+  } else {
+    for(i=0; i<mapserv->request->NumParams; i++) { /* find the map parameter */
+      if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
+        mapfile = mapserv->request->ParamValues[i];
+        break;
+      }
+    }
+  }
 
-  if(i == mapserv->request->NumParams) {
+  if(mapfile == NULL) {
     char *ms_mapfile = getenv("MS_MAPFILE");
     if(ms_mapfile) {
-      map = msLoadMap(ms_mapfile,NULL);
+      map = msLoadMap(ms_mapfile, NULL);
     } else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
       return NULL;
     }
   } else {
-    if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
-      map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
+    if(getenv(mapfile)) /* an environment variable references the actual file to use */
+      map = msLoadMap(getenv(mapfile), NULL);
     else {
       /* by here we know the request isn't for something in an environment variable */
       if(getenv("MS_MAP_NO_PATH")) {
@@ -220,13 +229,15 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
         return NULL;
       }
 
-      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+      // TODO, no ..'s?
+
+      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapfile) != MS_TRUE) {
         msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
         return NULL;
       }
 
       /* ok to try to load now */
-      map = msLoadMap(mapserv->request->ParamValues[i], NULL);
+      map = msLoadMap(mapfile, NULL);
     }
   }
   
@@ -353,14 +364,11 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 {
   const char *path_info;
 
-  int api_path_length = 0;
-  char **api_path = NULL;
-
   path_info = getenv("PATH_INFO");
-  fprintf(stderr, "%s\n", path_info); 
   if(path_info != NULL && strlen(path_info) > 0) {
-    api_path = msStringSplit(path_info, '/', &api_path_length);
-    fprintf(stderr, "api_path_length=%d\n", api_path_length);
+    mapserv->api_path = msStringSplit(path_info, '/', &(mapserv->api_path_length));
+    if(mapserv->api_path_length >= 3) /* /{signature}/{mapfile} so 3 components at a minimum (1st component is a zero-length string) */ 
+      return MS_TRUE;
   }
 
   return MS_FALSE;
