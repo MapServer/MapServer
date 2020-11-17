@@ -36,8 +36,6 @@
 #include "mapserver.h"
 #include "cgiutil.h"
 
-
-
 #define LF 10
 #define CR 13
 
@@ -55,23 +53,26 @@ int readPostBody( cgiRequestObj *request, char **data )
     data_max = (size_t) atoi(getenv("CONTENT_LENGTH"));
     /* Test for suspicious CONTENT_LENGTH (negative value or SIZE_MAX) */
     if( data_max >= SIZE_MAX ) {
-      msIO_setHeader("Content-Type","text/html");
-      msIO_sendHeaders();
-      msIO_printf("Suspicious Content-Length.\n");
+      // msIO_setHeader("Content-Type","text/html");
+      // msIO_sendHeaders();
+      // msIO_printf("Suspicious Content-Length.\n");
+      msSetError(MS_WEBERR, "Suspicious Content-Length.", "readPostBody()");
       return MS_FAILURE;
     }
     *data = (char *) malloc(data_max+1);
     if( *data == NULL ) {
-      msIO_setHeader("Content-Type","text/html");
-      msIO_sendHeaders();
-      msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n", (unsigned int)data_max );
+      // msIO_setHeader("Content-Type","text/html");
+      // msIO_sendHeaders();
+      // msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n", (unsigned int)data_max );
+      msSetError(MS_WEBERR, "malloc() failed, Content-Length: %u unreasonably large?", "readPostBody()", (unsigned int)data_max);
       return MS_FAILURE;
     }
 
     if( (int) msIO_fread(*data, 1, data_max, stdin) < data_max ) {
-      msIO_setHeader("Content-Type","text/html");
-      msIO_sendHeaders();
-      msIO_printf("POST body is short\n");
+      // msIO_setHeader("Content-Type","text/html");
+      // msIO_sendHeaders();
+      // msIO_printf("POST body is short\n");
+      msSetError(MS_WEBERR, "POST body is short.", "readPostBody()");
       return MS_FAILURE;
     }
 
@@ -93,9 +94,10 @@ int readPostBody( cgiRequestObj *request, char **data )
     if( data_len == data_max ) {
       /* Realloc buffer, making sure we check for possible size_t overflow */
       if ( data_max > SIZE_MAX - (DATA_ALLOC_SIZE+1) ) {
-        msIO_setHeader("Content-Type","text/html");
-        msIO_sendHeaders();
-        msIO_printf("Possible size_t overflow, cannot reallocate input buffer, POST body too large?\n" );
+        // msIO_setHeader("Content-Type","text/html");
+        // msIO_sendHeaders();
+        // msIO_printf("Possible size_t overflow, cannot reallocate input buffer, POST body too large?\n" );
+	msSetError(MS_WEBERR, "Possible size_t overflow, cannot reallocate input buffer, POST body too large?", "readPostBody()");
         return MS_FAILURE;
       }
 
@@ -207,9 +209,10 @@ int loadParams(cgiRequestObj *request,
 
       s = getenv2("QUERY_STRING", thread_context);
       if(s == NULL) {
-        msIO_setHeader("Content-Type","text/html");
-        msIO_sendHeaders();
-        msIO_printf("No query information to decode. QUERY_STRING not set.\n");
+        // msIO_setHeader("Content-Type","text/html");
+        // msIO_sendHeaders();
+        // msIO_printf("No query information to decode. QUERY_STRING not set.\n");
+	msSetError(MS_WEBERR, "No query information to decode. QUERY_STRING not set.", "loadParams()");
         return -1;
       }
 
@@ -217,9 +220,10 @@ int loadParams(cgiRequestObj *request,
         msDebug("loadParams() QUERY_STRING: %s\n", s);
 
       if(strlen(s)==0) {
-        msIO_setHeader("Content-Type","text/html");
-        msIO_sendHeaders();
-        msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
+        // msIO_setHeader("Content-Type","text/html");
+        // msIO_sendHeaders();
+        // msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
+	msSetError(MS_WEBERR, "No query information to decode. QUERY_STRING is set, but empty.", "loadParams()");
         return -1;
       }
 
@@ -238,9 +242,10 @@ int loadParams(cgiRequestObj *request,
         m++;
       }
     } else {
-      msIO_setHeader("Content-Type","text/html");
-      msIO_sendHeaders();
-      msIO_printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
+      // msIO_setHeader("Content-Type","text/html");
+      // msIO_sendHeaders();
+      // msIO_printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
+      msSetError(MS_WEBERR, "This script should be referenced with a METHOD of GET or METHOD of POST.", "loadParams()");
       return -1;
     }
   }
