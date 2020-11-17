@@ -269,7 +269,7 @@ endif(WIN32)
 
 set(mapserver_SOURCES fontcache.c 
 cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.cpp classobject.c
-mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
+mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c mapogcapi.cpp
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
 maphttp.c mapparser.c mapstring.cpp mapxmp.c mapcairo.c mapimageio.c
 mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
@@ -291,7 +291,7 @@ set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
 mapaxisorder.h mapcopy.h mapentities.h maperror.h mapfile.h mapgml.h maphash.h
 maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
-mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h
+mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h mapogcapi.h
 mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
 mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h)
