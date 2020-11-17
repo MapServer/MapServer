@@ -277,14 +277,15 @@ int main(int argc, char *argv[])
     }
 #endif
 
-
-
-
-    if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+    if(mapserv->api_path != NULL) {
+      if(msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
+	msCGIWriteError(mapserv);
+	goto end_request;
+      }
+    } else if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
       msCGIWriteError(mapserv);
       goto end_request;
     }
-
 
 end_request:
     if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {

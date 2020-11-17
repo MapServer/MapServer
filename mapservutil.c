@@ -381,7 +381,8 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 
 int msCGIDispatchAPIRequest(mapservObj *mapserv) 
 {
-  return MS_FALSE;
+  msSetError(MS_WEBERR, "API Signature: %s", "msCGIDispatchAPIRequest()", mapserv->api_path[1]);
+  return MS_FAILURE;
 }
 
 /*
