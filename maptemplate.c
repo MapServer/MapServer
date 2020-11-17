@@ -4617,6 +4617,9 @@ mapservObj *msAllocMapServObj()
 
   mapserv->hittest = NULL;
 
+  mapserv->api_path_length = 0;
+  mapserv->api_path = NULL;
+
   return mapserv;
 }
 
