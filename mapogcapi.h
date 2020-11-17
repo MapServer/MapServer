@@ -29,6 +29,14 @@
 #ifndef MAPOGCAPI_H
 #define MAPOGCAPI_H
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif
