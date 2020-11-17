@@ -367,8 +367,13 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
   path_info = getenv("PATH_INFO");
   if(path_info != NULL && strlen(path_info) > 0) {
     mapserv->api_path = msStringSplit(path_info, '/', &(mapserv->api_path_length));
-    if(mapserv->api_path_length >= 3) /* /{signature}/{mapfile} so 3 components at a minimum (1st component is a zero-length string) */ 
+    if(mapserv->api_path_length >= 3) // /{signature}/{mapfile} so 3 components at a minimum (1st component is a zero-length string)
       return MS_TRUE;
+    else {
+      msFreeCharArray(mapserv->api_path, mapserv->api_path_length);
+      mapserv->api_path = NULL; // reset
+      mapserv->api_path_length = 0;
+    }
   }
 
   return MS_FALSE;

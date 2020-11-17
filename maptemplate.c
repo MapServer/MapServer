@@ -4654,6 +4654,11 @@ void msFreeMapServObj(mapservObj* mapserv)
     msFree(mapserv->SelectLayer);
     msFree(mapserv->QueryFile);
 
+    if(mapserv->api_path) {
+      msFreeCharArray(mapserv->api_path, mapserv->api_path_length);
+      mapserv->api_path_length = 0;
+    }
+
     msFree(mapserv);
   }
 }
