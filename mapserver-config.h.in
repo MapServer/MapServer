@@ -11,6 +11,7 @@
 #cmakedefine USE_WCS_SVR 1
 #cmakedefine USE_WFS_SVR 1
 #cmakedefine USE_SOS_SVR 1
+#cmakedefine USE_OGCAPI_SVR 1
 #cmakedefine USE_WFS_LYR 1
 #cmakedefine USE_WMS_LYR 1
 #cmakedefine USE_CURL 1

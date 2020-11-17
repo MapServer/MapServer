@@ -43,8 +43,6 @@ static char *modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGE
                                 "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
                                };
 
-static char *apiSignatures[2] = { "OGCAPI", NULL };
-
 int msCGIWriteLog(mapservObj *mapserv, int show_error)
 {
   FILE *stream;
@@ -381,7 +379,17 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 
 int msCGIDispatchAPIRequest(mapservObj *mapserv) 
 {
-  msSetError(MS_WEBERR, "API Signature: %s", "msCGIDispatchAPIRequest()", mapserv->api_path[1]);
+  // should be a more elegant way to do this (perhaps similar to how drivers are handled)
+  if(strncasecmp("ogcapi", mapserv->api_path[1], 6) == 0) {
+#ifdef USE_OGCAPI_SVR
+    msSetError(MS_WEBERR, "API Signature: %s", "msCGIDispatchAPIRequest()", mapserv->api_path[1]);
+#else
+    msSetError(MS_WEBERR, "OGCAPI server support is not enabled.", "msCGIDispatchAPIRequest()");
+#endif
+  } else {
+    msSetError(MS_WEBERR, "Invalid API signature.", "msCGIDispatchAPIRequest()");
+  }
+
   return MS_FAILURE;
 }
 
