@@ -577,6 +577,9 @@ char *msGetVersion()
 #ifdef USE_SOS_SVR
   strcat(version, " SUPPORTS=SOS_SERVER");
 #endif
+#ifdef USE_OGCAPI_SVR
+  strcat(version, " SUPPORTS=OGCAPI_SERVER");
+#endif
 #ifdef USE_FASTCGI
   strcat(version, " SUPPORTS=FASTCGI");
 #endif
