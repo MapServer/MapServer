@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  OGCAPI Implementation
- * Author:   Stephen Lime and the MapServer team.
+ * Author:   Steve Lime and the MapServer team.
  *
  **********************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota. 
@@ -25,12 +25,18 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
-
 #include "mapserver.h"
-#include "mapows.h"
+#include "mapogcapi.h"
 
 #include <string>
 
+int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
+{
 #ifdef USE_OGCAPI_SVR
-
+  msSetError(MS_WEBERR, "Woot!", "msOGCAPIDispatchRequest()");
+  return MS_FAILURE;
+#else
+  msSetError(MS_WEBERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
+  return MS_FAILURE;
 #endif
+}
