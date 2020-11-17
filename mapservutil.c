@@ -43,6 +43,8 @@ static char *modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGE
                                 "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
                                };
 
+static char *apiSignatures[2] = { "OGCAPI", NULL };
+
 int msCGIWriteLog(mapservObj *mapserv, int show_error)
 {
   FILE *stream;
@@ -344,8 +346,30 @@ int msCGISetMode(mapservObj *mapserv)
   return MS_SUCCESS;
 }
 
+/*
+** API-related funtions.
+*/
+int msCGIIsAPIRequest(mapservObj *mapserv) 
+{
+  const char *path_info;
 
+  int api_path_length = 0;
+  char **api_path = NULL;
 
+  path_info = getenv("PATH_INFO");
+  fprintf(stderr, "%s\n", path_info); 
+  if(path_info != NULL && strlen(path_info) > 0) {
+    api_path = msStringSplit(path_info, '/', &api_path_length);
+    fprintf(stderr, "api_path_length=%d\n", api_path_length);
+  }
+
+  return MS_FALSE;
+}
+
+int msCGIDispatchAPIRequest(mapservObj *mapserv) 
+{
+  return MS_FALSE;
+}
 
 /*
 ** Process CGI parameters.
