@@ -197,10 +197,10 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 {
   int i, j;
   mapObj *map = NULL;
-  char *mapfile = NULL;
+  const char *mapfile = NULL;
 
   if(mapserv->api_path != NULL) {
-    mapfile = mapserv->api_path[2]; /* mapfile is *always* in the second position (/{signature}/{mapfile}) of an API call */
+    mapfile = mapserv->api_path[1]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
   } else {
     for(i=0; i<mapserv->request->NumParams; i++) { /* find the map parameter */
       if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
@@ -366,7 +366,7 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
   path_info = getenv("PATH_INFO");
   if(path_info != NULL && strlen(path_info) > 0) {
     mapserv->api_path = msStringSplit(path_info, '/', &(mapserv->api_path_length));
-    if(mapserv->api_path_length >= 3) // /{signature}/{mapfile} so 3 components at a minimum (1st component is a zero-length string)
+    if(mapserv->api_path_length >= 3) // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
       return MS_TRUE;
     else {
       msFreeCharArray(mapserv->api_path, mapserv->api_path_length);
@@ -381,7 +381,7 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 int msCGIDispatchAPIRequest(mapservObj *mapserv) 
 {
   // should be a more elegant way to do this (perhaps similar to how drivers are handled)
-  if(strncasecmp("ogcapi", mapserv->api_path[1], 6) == 0) {
+  if(strncasecmp("ogcapi", mapserv->api_path[2], 6) == 0) {
 #ifdef USE_OGCAPI_SVR
     return msOGCAPIDispatchRequest(mapserv->map, mapserv->request, mapserv->api_path, mapserv->api_path_length);
 #else
