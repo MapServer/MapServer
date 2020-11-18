@@ -28,12 +28,18 @@
 #include "mapserver.h"
 #include "mapogcapi.h"
 
+#include "third-party/include_nlohmann_json.hpp"
 #include <string>
+
+using json = nlohmann::json;
 
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
 {
 #ifdef USE_OGCAPI_SVR
-  msSetError(MS_WEBERR, "Woot!", "msOGCAPIDispatchRequest()");
+  json j;
+  j["message"] = "Woot!";
+  std::string s = j.dump();
+  msSetError(MS_WEBERR, "JSON: %s", "msOGCAPIDispatchRequest()", s.c_str());
   return MS_FAILURE;
 #else
   msSetError(MS_WEBERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
