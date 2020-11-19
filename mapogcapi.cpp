@@ -29,20 +29,92 @@
 #include "mapogcapi.h"
 
 #include "third-party/include_nlohmann_json.hpp"
+
 #include <string>
+#include <iostream>
 
 using json = nlohmann::json;
+
+#define JSON_MIMETYPE "application/json"
+#define HTML_MIMETYPE "text/html"
+
+#ifdef USE_OGCAPI_SVR
+
+/*
+** private functions
+*/
+
+/*
+** Returns a JSON object using MapServer error codes and a description.
+**   - should this be JSON only?
+**   - should this rely on the msSetError() pipeline or be stand-alone?
+*/
+static void processError(int code, const char *description)
+{
+  json j;
+
+  j["code"] = msGetErrorCodeString(code);
+  j["description"] = description;
+
+  msIO_setHeader("Content-Type", JSON_MIMETYPE);
+  msIO_sendHeaders();
+  msIO_printf("%s\n", j.dump().c_str());
+
+  return;
+}
+
+/*
+** Returns the value associated with an item from the request's query string and NULL if the item was not found.
+*/
+static const char *getRequestParamter(cgiRequestObj *request, const char *item)
+{
+  return NULL;
+}
+
+static int processLandingRequest(mapObj *map)
+{
+  processError(MS_OGCAPIERR, "Landing request support coming soon...");
+  return MS_SUCCESS;
+}
+
+static int processConformanceRequest(mapObj *map)
+{
+  processError(MS_OGCAPIERR, "Conformance request support coming soon...");
+  return MS_SUCCESS;
+}
+
+static int processCollectionsRequest(mapObj *map)
+{
+  processError(MS_OGCAPIERR, "Collections request support coming soon...");
+  return MS_SUCCESS;
+}
+
+static int processHtmlTemplate() 
+{
+  return MS_SUCCESS;
+}
+#endif
 
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
 {
 #ifdef USE_OGCAPI_SVR
-  json j;
-  j["message"] = "Woot!";
-  std::string s = j.dump();
-  msSetError(MS_WEBERR, "JSON: %s", "msOGCAPIDispatchRequest()", s.c_str());
-  return MS_FAILURE;
+  if(api_path_length == 3) {
+
+    return processLandingRequest(map);
+
+  } else if(api_path_length == 4) {
+
+    if(strncasecmp(api_path[3], "conformance", 11) == 0)
+      return processConformanceRequest(map);
+    else if(strncasecmp(api_path[3], "collections", 11) == 0)
+      return processCollectionsRequest(map);
+
+  }
+
+  processError(MS_OGCAPIERR, "Invalid API request.");
+  return MS_SUCCESS; // avoid any downstream MapServer processing
 #else
-  msSetError(MS_WEBERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
+  msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
   return MS_FAILURE;
 #endif
 }
