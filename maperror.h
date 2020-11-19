@@ -82,8 +82,9 @@ extern "C" {
 #define MS_OWSERR 40
 #define MS_OGLERR 41
 #define MS_RENDERERERR 42
-#define MS_V8ERR 43  
-#define MS_NUMERRORCODES 44
+#define MS_V8ERR 43
+#define MS_OGCAPIERR 44
+#define MS_NUMERRORCODES 45
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
