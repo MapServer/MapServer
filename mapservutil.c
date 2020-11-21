@@ -381,11 +381,11 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 int msCGIDispatchAPIRequest(mapservObj *mapserv) 
 {
   // should be a more elegant way to do this (perhaps similar to how drivers are handled)
-  if(strncasecmp("ogcapi", mapserv->api_path[2], 6) == 0) {
+  if(strcmp("ogcapi", mapserv->api_path[2]) == 0) {
 #ifdef USE_OGCAPI_SVR
     return msOGCAPIDispatchRequest(mapserv->map, mapserv->request, mapserv->api_path, mapserv->api_path_length);
 #else
-    msSetError(MS_WEBERR, "OGC API server support is not enabled.", "msCGIDispatchAPIRequest()");
+    msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msCGIDispatchAPIRequest()");
 #endif
   } else {
     msSetError(MS_WEBERR, "Invalid API signature.", "msCGIDispatchAPIRequest()");

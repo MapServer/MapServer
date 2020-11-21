@@ -99,16 +99,12 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 {
 #ifdef USE_OGCAPI_SVR
   if(api_path_length == 3) {
-
     return processLandingRequest(map);
-
   } else if(api_path_length == 4) {
-
-    if(strncasecmp(api_path[3], "conformance", 11) == 0)
+    if(strcmp(api_path[3], "conformance") == 0)
       return processConformanceRequest(map);
-    else if(strncasecmp(api_path[3], "collections", 11) == 0)
+    else if(strcmp(api_path[3], "collections") == 0)
       return processCollectionsRequest(map);
-
   }
 
   processError(MS_OGCAPIERR, "Invalid API request.");
