@@ -446,6 +446,17 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     return MS_FAILURE;
   }
 
+  {
+      // Copy nodata value from source dataset to memory dataset
+      int bHasNoData = FALSE;
+      double dfNoDataValue = GDALGetRasterNoDataValue(hBand, &bHasNoData);
+      if( bHasNoData )
+      {
+          GDALSetRasterNoDataValue(GDALGetRasterBand(clinfo->hDS, 1),
+                                   dfNoDataValue);
+      }
+  }
+
   adfGeoTransform[0] = copyRect.minx;
   adfGeoTransform[1] = dst_cellsize_x;
   adfGeoTransform[2] = 0;
@@ -533,6 +544,8 @@ static int msContourLayerGenerateContour(layerObj *layer)
   int levelCount = 0;
   GDALRasterBandH hBand = NULL;
   CPLErr eErr;
+  int bHasNoData = FALSE;
+  double dfNoDataValue;
 
   contourLayerInfo *clinfo = (contourLayerInfo *) layer->layerinfo;
 
@@ -613,10 +626,12 @@ static int msContourLayerGenerateContour(layerObj *layer)
     CSLDestroy(levelsTmp);
     free(option);
   }
-    
+
+  dfNoDataValue = GDALGetRasterNoDataValue(hBand, &bHasNoData);
+
   eErr = GDALContourGenerate( hBand, interval, 0.0,
                               levelCount, levels,
-                              FALSE, 0.0, hLayer,
+                              bHasNoData, dfNoDataValue, hLayer,
                               OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn( hLayer),
                                                     "ID" ),
                               (elevItem == NULL) ? -1 :
