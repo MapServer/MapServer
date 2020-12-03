@@ -362,7 +362,7 @@ int msCGISetMode(mapservObj *mapserv)
 int msCGIIsAPIRequest(mapservObj *mapserv) 
 {
   const char *path_info;
-
+  
   path_info = getenv("PATH_INFO");
   if(path_info != NULL && strlen(path_info) > 0) {
     mapserv->api_path = msStringSplit(path_info, '/', &(mapserv->api_path_length));
