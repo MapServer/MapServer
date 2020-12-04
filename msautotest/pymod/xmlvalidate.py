@@ -32,9 +32,14 @@
 
 import os
 import sys
-import urllib2
 import socket
 from lxml import etree
+
+# handle urllib for both Python 2 & 3
+from future.standard_library import install_aliases
+install_aliases()
+from urllib.request import ProxyHandler, build_opener, install_opener, urlopen, HTTPHandler
+from urllib.error import HTTPError
 
 ###############################################################################
 # Remove mime header if found
@@ -206,26 +211,26 @@ def gdalurlopen(url):
 
         if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
             proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
-            proxyHandler = urllib2.ProxyHandler({"http" : \
+            proxyHandler = ProxyHandler({"http" : \
                 "http://%s@%s" % (proxyuserpwd, proxy)})
         else:
             proxyuserpwd = None
-            proxyHandler = urllib2.ProxyHandler({"http" : \
+            proxyHandler = ProxyHandler({"http" : \
                 "http://%s" % (proxy)})
 
-        opener = urllib2.build_opener(proxyHandler, urllib2.HTTPHandler)
+        opener = build_opener(proxyHandler, HTTPHandler)
 
-        urllib2.install_opener(opener)
+        install_opener(opener)
 
     try:
-        handle = urllib2.urlopen(url)
+        handle = urlopen(url)
         socket.setdefaulttimeout(old_timeout)
         return handle
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
         print('HTTP service for %s is down (HTTP Error: %d)' % (url, e.code))
         socket.setdefaulttimeout(old_timeout)
         return None
-    except urllib2.URLError as e:
+    except URLError as e:
         print('HTTP service for %s is down (HTTP Error: %s)' % (url, e.reason))
         socket.setdefaulttimeout(old_timeout)
         return None
@@ -305,33 +310,33 @@ def transform_abs_links_to_ref_links(path, level = 0):
                 l = lines[i]
                 if l[-1] == '\n':
                     l = l[0:-1]
-                pos = l.find('http://schemas.opengis.net/')
+                pos = l.find(b'http://schemas.opengis.net/')
                 if pos >= 0:
                     rewrite = True
                     s = l[0:pos]
                     for j in range(level):
-                        s = s + "../"
-                    s = s + l[pos + len('http://schemas.opengis.net/'):]
+                        s = s + b"../"
+                    s = s + l[pos + len(b'http://schemas.opengis.net/'):]
                     l = s
                     lines[i] = l
 
-                pos = l.find('http://www.w3.org/1999/xlink.xsd')
+                pos = l.find(b'http://www.w3.org/1999/xlink.xsd')
                 if pos >= 0:
                     rewrite = True
                     s = l[0:pos]
                     for j in range(level):
-                        s = s + "../"
-                    s = s + l[pos + len('http://www.w3.org/1999/'):]
+                        s = s + b"../"
+                    s = s + l[pos + len(b'http://www.w3.org/1999/'):]
                     l = s
                     lines[i] = l
 
-                pos = l.find('http://www.w3.org/2001/xml.xsd')
+                pos = l.find(b'http://www.w3.org/2001/xml.xsd')
                 if pos >= 0:
                     rewrite = True
                     s = l[0:pos]
                     for j in range(level):
-                        s = s + "../"
-                    s = s + l[pos + len('http://www.w3.org/2001/'):]
+                        s = s + b"../"
+                    s = s + l[pos + len(b'http://www.w3.org/2001/'):]
                     l = s
                     lines[i] = l
 
@@ -360,14 +365,14 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
                 if l[-1] == '\n':
                     l = l[0:-1]
 
-                pos = l.find('http://schemas.opengis.net/')
+                pos = l.find(b'http://schemas.opengis.net/')
                 if pos >= 0:
                     rewrite = True
                     s = l[0:pos]
                     for j in range(level):
-                        s = s + "../"
-                    s = s + "../SCHEMAS_OPENGIS_NET/"
-                    s = s + l[pos + len('http://schemas.opengis.net/'):]
+                        s = s + b"../"
+                    s = s + b"../SCHEMAS_OPENGIS_NET/"
+                    s = s + l[pos + len(b'http://schemas.opengis.net/'):]
                     l = s
                     lines[i] = l
 
