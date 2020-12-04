@@ -56,7 +56,7 @@ static void writeJson(json j)
   msIO_printf("%s\n", j.dump().c_str());
 }
 
-static void writeTemplate(const char *path, const char *filename, json j) 
+static void writeTemplate(const char *path, const char *filename, json j)
 {
   std::string _path(path);
   std::string _filename(filename);
@@ -65,6 +65,8 @@ static void writeTemplate(const char *path, const char *filename, json j)
   // ERB-style instead of Mustache (we'll see)
   env.set_expression("<%=", "%>");
   env.set_statement("<%", "%>");
+
+  // extend the JSON with a few things that the we need for templating
 
   Template t = env.parse_template(_filename);
   std::string result = env.render(t, j);
