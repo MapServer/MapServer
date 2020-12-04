@@ -29,20 +29,50 @@
 #include "mapogcapi.h"
 
 #include "third-party/include_nlohmann_json.hpp"
+#include "third-party/include_pantor_inja.hpp"
 
 #include <string>
 #include <iostream>
 
+using namespace inja;
 using json = nlohmann::json;
 
-#define JSON_MIMETYPE "application/json"
-#define HTML_MIMETYPE "text/html"
+#define OGCAPI_FORMAT_JSON 1
+#define OGCAPI_FORMAT_HTML 2
+
+#define OGCAPI_MIMETYPE_JSON "application/json"
+#define OGCAPI_MIMETYPE_HTML "text/html"
 
 #ifdef USE_OGCAPI_SVR
 
 /*
 ** private functions
 */
+
+static void writeJson(json j) 
+{
+  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_JSON);
+  msIO_sendHeaders();
+  msIO_printf("%s\n", j.dump().c_str());
+}
+
+static void writeTemplate(const char *path, const char *filename, json j) 
+{
+  std::string _path(path);
+  std::string _filename(filename);
+  Environment env {_path};
+
+  // ERB-style instead of Mustache (we'll see)
+  env.set_expression("<%=", "%>");
+  env.set_statement("<%", "%>");
+
+  Template t = env.parse_template(_filename);
+  std::string result = env.render(t, j);
+
+  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_HTML);
+  msIO_sendHeaders();
+  msIO_printf("%s\n", result.c_str()); 
+}
 
 /*
 ** Returns a JSON object using MapServer error codes and a description.
@@ -53,43 +83,69 @@ static void processError(int code, const char *description)
 {
   json j;
 
-  j["code"] = msGetErrorCodeString(code);
+  j["code"] = code;
   j["description"] = description;
 
-  msIO_setHeader("Content-Type", JSON_MIMETYPE);
-  msIO_sendHeaders();
-  msIO_printf("%s\n", j.dump().c_str());
-
+  writeJson(j);
   return;
 }
 
 /*
 ** Returns the value associated with an item from the request's query string and NULL if the item was not found.
 */
-static const char *getRequestParamter(cgiRequestObj *request, const char *item)
+static const char *getRequestParameter(cgiRequestObj *request, const char *item)
 {
+  int i;
+
+  for(i=0; i<request->NumParams; i++) {
+    if(strcmp(item, request->ParamNames[i]) == 0)
+      return request->ParamValues[i];
+  }
+
   return NULL;
+}
+
+static const char *getTemplatePath(mapObj *map)
+{
+  return "/Users/sdlime/mapserver/sdlime/mapserver/share/ogcapi/templates/";
 }
 
 static int processLandingRequest(mapObj *map)
 {
-  processError(MS_OGCAPIERR, "Landing request support coming soon...");
+  processError(400, "Landing request support coming soon...");
   return MS_SUCCESS;
 }
 
-static int processConformanceRequest(mapObj *map)
+static int processConformanceRequest(mapObj *map, int format)
 {
-  processError(MS_OGCAPIERR, "Conformance request support coming soon...");
+  json j;
+
+  j = {
+    { "conformsTo", {
+        "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core",
+        "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections"
+      }
+    }
+  };
+
+  if(format == OGCAPI_FORMAT_JSON) {
+    writeJson(j);
+  } else if(format == OGCAPI_FORMAT_HTML) {
+    writeTemplate(getTemplatePath(map), "conformance.html", j);
+  } else {
+    processError(400, "Unsupported format requested.");
+  }
+
   return MS_SUCCESS;
 }
 
 static int processCollectionsRequest(mapObj *map)
 {
-  processError(MS_OGCAPIERR, "Collections request support coming soon...");
+  processError(400, "Collections request support coming soon...");
   return MS_SUCCESS;
 }
 
-static int processHtmlTemplate() 
+static int processHtmlTemplate()
 {
   return MS_SUCCESS;
 }
@@ -97,17 +153,34 @@ static int processHtmlTemplate()
 
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
 {
+  int format;
+  const char *f;
+
+  f = getRequestParameter(request, "f");
+  if(f && (strcmp(f, "json") == 0 || strcmp(f, OGCAPI_MIMETYPE_JSON) == 0))
+    format = OGCAPI_FORMAT_JSON;
+  else if(f && (strcmp(f, "html") == 0 || strcmp(f, OGCAPI_MIMETYPE_HTML) == 0))
+    format = OGCAPI_FORMAT_HTML;
+  else if(f)
+    processError(500, "Unsupported format requested.");
+  else {
+    format = OGCAPI_FORMAT_JSON; // default for now, need to derive from http headers
+  }
+
 #ifdef USE_OGCAPI_SVR
   if(api_path_length == 3) {
     return processLandingRequest(map);
   } else if(api_path_length == 4) {
-    if(strcmp(api_path[3], "conformance") == 0)
-      return processConformanceRequest(map);
-    else if(strcmp(api_path[3], "collections") == 0)
+    if(strcmp(api_path[3], "conformance") == 0) {
+      return processConformanceRequest(map, format);
+    } else if(strcmp(api_path[3], "conformance.html") == 0) {
+      return processConformanceRequest(map, OGCAPI_FORMAT_HTML);
+    } else if(strcmp(api_path[3], "collections") == 0) {
       return processCollectionsRequest(map);
+    }
   }
 
-  processError(MS_OGCAPIERR, "Invalid API request.");
+  processError(500, "Invalid API request.");
   return MS_SUCCESS; // avoid any downstream MapServer processing
 #else
   msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
