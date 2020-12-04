@@ -12,9 +12,8 @@ build utilities (make on unixes, visual studio on windows, xcode on osx, etc...)
 Install CMake
 -------------
 
-MapServer requires at least CMake version 2.6.0, although the build process with
-such an old version has not been thouroughly tested. 2.8.0 and above are 
-recommended.
+MapServer now requires at least CMake version 3.0, although the CMake process was
+first implemented in MapServer 6.4 with CMake 2.6.0.
 
 Distro Packaged Version
 .......................
