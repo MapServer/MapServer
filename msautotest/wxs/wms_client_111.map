@@ -46,7 +46,7 @@ MAP
 		NAME client
 		TYPE RASTER
 		STATUS ON
-		CONNECTION "http://demo.mapserver.org/cgi-bin/wms?"
+		CONNECTION "https://demo.mapserver.org/cgi-bin/wms?"
 		CONNECTIONTYPE WMS
 		TEMPLATE "dummy"
 		METADATA
