@@ -13,9 +13,9 @@ respond to a variety of spatial requests like making maps, scalebars,
 and point, area and feature queries. Virtually all aspects of an 
 application, from web interface to map appearance can be developed 
 without any programming. For the more ambitious user, MapServer 
-applications can be enhanced using Java, JavaScript or many other web 
-technologies. For more  information and complete documentation please 
-visit:
+applications can be enhanced using Python, PHP, Java, JavaScript or 
+many other web technologies. For more  information and complete 
+documentation please visit:
 
   https://mapserver.org/
 
@@ -23,7 +23,7 @@ Bug reports and enhancement submissions can be reported in the MapServer
 issue tracker at the following url.   If you do make changes and/or enhancements, 
 please let us know so that they might be incorporated into future releases.
 
-  https://github.com/mapserver/mapserver/issues
+  https://github.com/MapServer/MapServer/issues
 
 
 Join the MapServer user mailing list online at:
@@ -91,8 +91,8 @@ License
   SOFTWARE.
 
 
-.. |Build Status| image:: https://travis-ci.org/mapserver/mapserver.svg?branch=master
-   :target: https://travis-ci.org/mapserver/mapserver
+.. |Build Status| image:: https://travis-ci.com/MapServer/MapServer.svg?branch=master
+   :target: https://travis-ci.com/MapServer/MapServer
 
 .. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true
    :target: https://ci.appveyor.com/project/mapserver/mapserver

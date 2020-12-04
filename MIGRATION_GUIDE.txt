@@ -3,12 +3,13 @@ MapServer Migration Guide
 *****************************************************************************
 
 The current version of the MapServer Migration Guide is available online
-at http://www.mapserver.org/MIGRATION_GUIDE.html.
+at https://mapserver.org/MIGRATION_GUIDE.html.
 
 
 For developers:
 
 The master copy of the MIGRATION_GUIDE is now located in the root of the 
-mapserver/docs source tree (https://github.com/mapserver/docs). Developers
-are welcome and encouraged to edit/update the guide in the docs tree directly.
+/MapServer/MapServer-documentation source tree ( https://github.com/MapServer/MapServer-documentation ). 
+Developers are welcome and encouraged to edit/update the guide in the documentation 
+tree directly.
 
