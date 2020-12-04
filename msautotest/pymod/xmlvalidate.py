@@ -39,7 +39,7 @@ from lxml import etree
 from future.standard_library import install_aliases
 install_aliases()
 from urllib.request import ProxyHandler, build_opener, install_opener, urlopen, HTTPHandler
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 ###############################################################################
 # Remove mime header if found
