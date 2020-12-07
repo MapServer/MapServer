@@ -27,6 +27,7 @@
  ****************************************************************************/
 #include "mapserver.h"
 #include "mapogcapi.h"
+#include "mapows.h"
 
 #include "third-party/include_nlohmann_json.hpp"
 #include "third-party/include_pantor_inja.hpp"
@@ -36,6 +37,10 @@
 
 using namespace inja;
 using json = nlohmann::json;
+
+#define OGCAPI_TEMPLATE_HTML_LANDING "landing.html"
+#define OCGAPI_TEMPLATE_HTML_CONFORMANCE "conformance.html"
+#define OCGAPI_TEMPLATE_HTML_COLLECTIONS "collections.html"
 
 #define OGCAPI_FORMAT_JSON 1
 #define OGCAPI_FORMAT_HTML 2
@@ -56,7 +61,7 @@ static void writeJson(json j)
   msIO_printf("%s\n", j.dump().c_str());
 }
 
-static void writeTemplate(const char *path, const char *filename, json j)
+static void writeHtml(const char *path, const char *filename, json j)
 {
   std::string _path(path);
   std::string _filename(filename);
@@ -67,6 +72,11 @@ static void writeTemplate(const char *path, const char *filename, json j)
   env.set_statement("<%", "%>");
 
   // extend the JSON with a few things that the we need for templating
+  j["request"] = {
+    { "route", getenv("PATH_INFO") },
+    { "host", getenv("HTTP_HOST") },
+    { "port", getenv("SERVER_PORT") }
+  };
 
   Template t = env.parse_template(_filename);
   std::string result = env.render(t, j);
@@ -107,9 +117,18 @@ static const char *getRequestParameter(cgiRequestObj *request, const char *item)
   return NULL;
 }
 
-static const char *getTemplatePath(mapObj *map)
+static const char *getTemplateDirectory(mapObj *map)
 {
-  return "/Users/sdlime/mapserver/sdlime/mapserver/share/ogcapi/templates/";
+  const char *directory;
+
+  // TODO: if directory is provided then perhaps we need to check for a trailing slash
+
+  if((directory = msOWSLookupMetadata(&(map->web.metadata), "AO","template_directory")) != NULL) 
+    return directory;
+  else if((directory = getenv("OGCAPI_TEMPLATE_DIRECTORY")) != NULL)
+    return directory;
+  else
+    return NULL;
 }
 
 static int processLandingRequest(mapObj *map)
@@ -121,7 +140,8 @@ static int processLandingRequest(mapObj *map)
 static int processConformanceRequest(mapObj *map, int format)
 {
   json j;
-
+ 
+  // build response object
   j = {
     { "conformsTo", {
         "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core",
@@ -130,10 +150,11 @@ static int processConformanceRequest(mapObj *map, int format)
     }
   };
 
+  // outout response
   if(format == OGCAPI_FORMAT_JSON) {
     writeJson(j);
   } else if(format == OGCAPI_FORMAT_HTML) {
-    writeTemplate(getTemplatePath(map), "conformance.html", j);
+    writeHtml(getTemplateDirectory(map), OCGAPI_TEMPLATE_HTML_CONFORMANCE, j);
   } else {
     processError(400, "Unsupported format requested.");
   }
@@ -144,11 +165,6 @@ static int processConformanceRequest(mapObj *map, int format)
 static int processCollectionsRequest(mapObj *map)
 {
   processError(400, "Collections request support coming soon...");
-  return MS_SUCCESS;
-}
-
-static int processHtmlTemplate()
-{
   return MS_SUCCESS;
 }
 #endif
