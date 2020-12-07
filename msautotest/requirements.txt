@@ -7,3 +7,8 @@ pytest>=3.6.0,<5.0.0; python_version < '3.0'
 pytest>=3.6.0; python_version >= '3.0'
 pytest-sugar
 pytest-env
+<<<<<<< HEAD
+=======
+lxml
+future
+>>>>>>> 5e0381f7 (Merge pull request #6194 from jmckenna/msautotest-python3)
