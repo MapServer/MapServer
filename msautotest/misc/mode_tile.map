@@ -1,0 +1,36 @@
+#
+# Test of mode=tile (CGI "tile mode").  A 256x256 tile should be generated
+# in the "gmap" tilemode, reprojected to the Google Mercator (EPSG:3857)
+# and displayed at the global extent.
+#
+# REQUIRES: INPUT=OGR OUTPUT=PNG SUPPORTS=PROJ
+#
+# RUN_PARMS: mode_tile_output.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&MODE=tile&TILEMODE=gmap&TILE=0+0+0&LAYERS=canada-poly" > [RESULT_DEMIME]
+#
+MAP
+  NAME "MODE_TILE_TEST"
+  IMAGETYPE PNG
+  EXTENT -140.992892 41.976786 -55.630945 71.990315
+  SIZE 400 400
+  
+  PROJECTION
+    "init=epsg:4326"
+  END #projection
+
+  LAYER
+    NAME "canada-poly"
+    TYPE POLYGON
+    STATUS DEFAULT
+    CONNECTIONTYPE OGR
+    CONNECTION "data/canada.dgn"
+    DATA "elements"
+    PROJECTION
+      "init=epsg:4326"
+    END #projection
+    CLASS
+      OUTLINECOLOR 0 0 0 
+      COLOR 120 120 120 
+    END #class
+  END #layer
+  
+END #map

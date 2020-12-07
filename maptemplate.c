@@ -4612,6 +4612,7 @@ mapservObj *msAllocMapServObj()
   mapserv->ShapeIndex=-1;
   mapserv->TileIndex=-1;
   mapserv->TileMode=TILE_GMAP;
+  mapserv->TileCoords=NULL;
   mapserv->QueryCoordSource=NONE;
   mapserv->ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
 
@@ -4650,6 +4651,8 @@ void msFreeMapServObj(mapservObj* mapserv)
     msFree(mapserv->QueryLayer);
     msFree(mapserv->SelectLayer);
     msFree(mapserv->QueryFile);
+
+    msFree(mapserv->TileCoords);
 
     msFree(mapserv);
   }
