@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"

@@ -38,69 +38,29 @@
 using namespace inja;
 using json = nlohmann::json;
 
+#define OGCAPI_DEFAULT_TITLE "MapServer OGC API"
+
 #define OGCAPI_TEMPLATE_HTML_LANDING "landing.html"
-#define OCGAPI_TEMPLATE_HTML_CONFORMANCE "conformance.html"
-#define OCGAPI_TEMPLATE_HTML_COLLECTIONS "collections.html"
+#define OGCAPI_TEMPLATE_HTML_CONFORMANCE "conformance.html"
+#define OGCAPI_TEMPLATE_HTML_COLLECTION "collection.html"
+#define OGCAPI_TEMPLATE_HTML_COLLECTIONS "collections.html"
 
 #define OGCAPI_FORMAT_JSON 1
-#define OGCAPI_FORMAT_HTML 2
+#define OGCAPI_FORMAT_GEOJSON 2
+#define OGCAPI_FORMAT_HTML 3
 
 #define OGCAPI_MIMETYPE_JSON "application/json"
+#define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
 #define OGCAPI_MIMETYPE_HTML "text/html"
 
 #ifdef USE_OGCAPI_SVR
 
-/*
-** private functions
-*/
-
-static void writeJson(json j) 
-{
-  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_JSON);
-  msIO_sendHeaders();
-  msIO_printf("%s\n", j.dump().c_str());
-}
-
-static void writeHtml(const char *path, const char *filename, json j)
-{
-  std::string _path(path);
-  std::string _filename(filename);
-  Environment env {_path};
-
-  // ERB-style instead of Mustache (we'll see)
-  env.set_expression("<%=", "%>");
-  env.set_statement("<%", "%>");
-
-  // extend the JSON with a few things that the we need for templating
-  j["request"] = {
-    { "route", getenv("PATH_INFO") },
-    { "host", getenv("HTTP_HOST") },
-    { "port", getenv("SERVER_PORT") }
-  };
-
-  Template t = env.parse_template(_filename);
-  std::string result = env.render(t, j);
-
-  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_HTML);
-  msIO_sendHeaders();
-  msIO_printf("%s\n", result.c_str()); 
-}
+/* prototypes */
+static void processError(int code, const char *description);
 
 /*
-** Returns a JSON object using MapServer error codes and a description.
-**   - should this be JSON only?
-**   - should this rely on the msSetError() pipeline or be stand-alone?
+** Get stuff...
 */
-static void processError(int code, const char *description)
-{
-  json j;
-
-  j["code"] = code;
-  j["description"] = description;
-
-  writeJson(j);
-  return;
-}
 
 /*
 ** Returns the value associated with an item from the request's query string and NULL if the item was not found.
@@ -117,13 +77,16 @@ static const char *getRequestParameter(cgiRequestObj *request, const char *item)
   return NULL;
 }
 
+/*
+** Returns the template directory location or NULL if it isn't set.
+*/
 static const char *getTemplateDirectory(mapObj *map)
 {
   const char *directory;
 
   // TODO: if directory is provided then perhaps we need to check for a trailing slash
 
-  if((directory = msOWSLookupMetadata(&(map->web.metadata), "AO","template_directory")) != NULL) 
+  if((directory = msOWSLookupMetadata(&(map->web.metadata), "AO", "template_directory")) != NULL) 
     return directory;
   else if((directory = getenv("OGCAPI_TEMPLATE_DIRECTORY")) != NULL)
     return directory;
@@ -131,9 +94,169 @@ static const char *getTemplateDirectory(mapObj *map)
     return NULL;
 }
 
-static int processLandingRequest(mapObj *map)
+/*
+** Returns the service title from oga|ows_title or a default value if not set.
+*/
+static const char *getTitle(mapObj *map)
 {
-  processError(400, "Landing request support coming soon...");
+  const char *title;
+
+  if((title = msOWSLookupMetadata(&(map->web.metadata), "AO", "title")) != NULL)
+    return title;
+  else
+    return OGCAPI_DEFAULT_TITLE;
+}
+
+/*
+** Returns the API root URL from oga_onlineresource or builds a value if not set.
+*/
+std::string getApiRootUrl(mapObj *map)
+{
+  const char *root;
+
+  if((root = msOWSLookupMetadata(&(map->web.metadata), "A", "onlineresource")) != NULL)
+    return std::string(root);
+  else
+    return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
+}
+
+/*
+** Output stuff...
+*/
+
+static void outputJson(json j) 
+{
+  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_JSON);
+  msIO_sendHeaders();
+  msIO_printf("%s\n", j.dump().c_str());
+}
+
+static void outputGeoJson(json j) 
+{
+  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_GEOJSON);
+  msIO_sendHeaders();
+  msIO_printf("%s\n", j.dump().c_str());
+}
+
+static void outputHtml(const char *directory, const char *filename, json j)
+{
+  std::string _directory(directory);
+  std::string _filename(filename);
+  Environment env {_directory}; // catch
+
+  // ERB-style instead of Mustache (we'll see)
+  env.set_expression("<%=", "%>");
+  env.set_statement("<%", "%>");
+
+  Template t = env.parse_template(_filename); // catch
+  std::string result = env.render(t, j);
+
+  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_HTML);
+  msIO_sendHeaders();
+  msIO_printf("%s\n", result.c_str()); 
+}
+
+/*
+** Generic response outputr.
+*/
+static void outputResponse(mapObj *map, int format, const char *filename, json j)
+{
+  const char *directory = NULL;
+
+  if(format == OGCAPI_FORMAT_JSON) {
+    outputJson(j);
+  } else if(format == OGCAPI_FORMAT_GEOJSON) {
+    outputGeoJson(j);
+  } else if(format == OGCAPI_FORMAT_HTML) {
+    if((directory = getTemplateDirectory(map)) == NULL) {
+      processError(400, "Template directory not set.");
+      return; // bail
+    }
+
+    // extend the JSON with a few things that we need for templating
+    j["template"] = {
+      { "path", msStringSplit(getenv("PATH_INFO"), '/') },
+      { "api_root", getApiRootUrl(map) },
+      { "title", getTitle(map) },
+    };
+
+    outputHtml(directory, filename, j);
+  } else {
+    processError(400, "Unsupported format requested.");
+  }
+}
+
+/*
+** Process stuff...
+*/
+
+/*
+** Returns a JSON object using MapServer error codes and a description.
+**   - should this be JSON only?
+**   - should this rely on the msSetError() pipeline or be stand-alone?
+*/
+static void processError(int code, const char *description)
+{
+  json j;
+
+  j["code"] = code;
+  j["description"] = description;
+
+  outputJson(j);
+}
+
+static int processLandingRequest(mapObj *map, int format)
+{
+  json j;
+
+  // define ambiguous elements
+  const char *description = msOWSLookupMetadata(&(map->web.metadata), "AO", "description");
+  if(!description) description = msOWSLookupMetadata(&(map->web.metadata), "AO", "abstract"); // fallback on abstract if necessary
+
+  // define api root url
+  std::string api_root = getApiRootUrl(map);
+
+  // build response object
+  j =  {
+    { "title", getTitle(map) },
+    { "description", description?description:"" },
+    { "links", {
+        {
+	  { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+	  { "type", OGCAPI_MIMETYPE_JSON },
+	  { "title", "This document as JSON." },
+	  { "href", api_root + "?f=json" }
+        },{
+	  { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+	  { "type", OGCAPI_MIMETYPE_HTML },
+	  { "title", "This document as HTML." },
+	  { "href", api_root + "?f=html" }
+        },{
+          { "rel", "conformance" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "OCG API conformance classes implemented by this server (JSON)." },
+          { "href", api_root + "/conformance?f=json" }
+        },{
+          { "rel", "conformance" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "OCG API conformance classes implemented by this server." },
+          { "href", api_root + "/conformance?f=html" }
+        },{
+          { "rel", "data" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "Information about feature collections available from this server (JSON)." },
+          { "href", api_root + "/collections?f=json" }
+        },{
+          { "rel", "data" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "Information about feature collections available from this server." },
+          { "href", api_root + "/collections?f=html" }
+        }
+      }
+    }
+  };
+
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_LANDING, j);
   return MS_SUCCESS;
 }
 
@@ -150,21 +273,20 @@ static int processConformanceRequest(mapObj *map, int format)
     }
   };
 
-  // outout response
-  if(format == OGCAPI_FORMAT_JSON) {
-    writeJson(j);
-  } else if(format == OGCAPI_FORMAT_HTML) {
-    writeHtml(getTemplateDirectory(map), OCGAPI_TEMPLATE_HTML_CONFORMANCE, j);
-  } else {
-    processError(400, "Unsupported format requested.");
-  }
-
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_CONFORMANCE, j);
   return MS_SUCCESS;
 }
 
-static int processCollectionsRequest(mapObj *map)
+static int processCollectionsRequest(mapObj *map, int format)
 {
-  processError(400, "Collections request support coming soon...");
+  json j;
+
+  // build response object
+  j = {
+    // here
+  };
+
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTIONS, j);
   return MS_SUCCESS;
 }
 #endif
@@ -175,30 +297,33 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
   const char *f;
 
   f = getRequestParameter(request, "f");
-  if(f && (strcmp(f, "json") == 0 || strcmp(f, OGCAPI_MIMETYPE_JSON) == 0))
+  if(f && (strcmp(f, "json") == 0 || strcmp(f, OGCAPI_MIMETYPE_JSON) == 0)) {
     format = OGCAPI_FORMAT_JSON;
-  else if(f && (strcmp(f, "html") == 0 || strcmp(f, OGCAPI_MIMETYPE_HTML) == 0))
+  } else if(f && (strcmp(f, "html") == 0 || strcmp(f, OGCAPI_MIMETYPE_HTML) == 0)) {
     format = OGCAPI_FORMAT_HTML;
-  else if(f)
+  } else if(f) {
     processError(500, "Unsupported format requested.");
-  else {
-    format = OGCAPI_FORMAT_JSON; // default for now, need to derive from http headers
+    return MS_SUCCESS; // avoid any downstream MapServer processing
+  } else {
+    format = OGCAPI_FORMAT_HTML; // default for now, need to derive from http headers (possible w/CGI?)
   }
 
 #ifdef USE_OGCAPI_SVR
   if(api_path_length == 3) {
-    return processLandingRequest(map);
+    return processLandingRequest(map, format);
   } else if(api_path_length == 4) {
     if(strcmp(api_path[3], "conformance") == 0) {
       return processConformanceRequest(map, format);
     } else if(strcmp(api_path[3], "conformance.html") == 0) {
       return processConformanceRequest(map, OGCAPI_FORMAT_HTML);
     } else if(strcmp(api_path[3], "collections") == 0) {
-      return processCollectionsRequest(map);
+      return processCollectionsRequest(map, format);
+    } else if(strcmp(api_path[3], "collections.html") == 0) {
+      return processCollectionsRequest(map, OGCAPI_FORMAT_HTML);
     }
   }
 
-  processError(500, "Invalid API request.");
+  processError(500, "Invalid API request."); 
   return MS_SUCCESS; // avoid any downstream MapServer processing
 #else
   msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");

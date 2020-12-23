@@ -1,0 +1,23 @@
+<% include "header.html" %>
+
+<nav aria-label="breadcrumb">  
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item active" aria-current="page">Home</li>
+    <li class="ml-auto json-link"><a target="_blank" href="<%= template.api_root %>?f=json">JSON</a></li>
+  </ol>
+</nav>
+
+<h1><%= title %></h1>
+<p>
+  <%= description %>
+</p>
+
+<ul>
+<% for link in links %>
+  <% if link.type == "text/html" and link.rel != "self" %>
+  <li> <a target="_blank" href="<%= link.href %>"><%= link.title %></a></li>
+  <% endif %>
+<% endfor %>
+</ul>
+
+<% include "footer.html" %>

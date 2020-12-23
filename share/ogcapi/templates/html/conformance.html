@@ -1,12 +1,20 @@
 <% include "header.html" %>
 
-<h1>Conformance</h1>
-<p>
-  This API implements the conformance classes from standards and community specifications that are listed below.
-</p>
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item"><a href="<%= template.api_root %>?f=html">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Conformance</li>
+    <li class="ml-auto json-link"><a target="_blank" href="<%= template.api_root %>/conformance?f=json">JSON</a></li>
+  </ol>
+</nav>
+
+<h1><%= template.title %> - Conformance</h1>
+
+<p>This API implements the conformance classes from standards and community specifications that are listed below.</p>
+
 <ul>
 <% for url in conformsTo %>
-  <a target="_blank" href="<%= url %>"><%= url %></a><br>
+  <li> <a target="_blank" href="<%= url %>"><%= url %></a></li>
 <% endfor %>
 </ul>
 
