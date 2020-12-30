@@ -14,9 +14,7 @@
 
 <ul>
 <% for link in links %>
-  <% if link.type == "text/html" and link.rel != "self" %>
-  <li> <a target="_blank" href="<%= link.href %>"><%= link.title %></a></li>
-  <% endif %>
+  <li> <a href="<%= link.href %>"><%= link.title %></a></li>
 <% endfor %>
 </ul>
 
