@@ -120,25 +120,88 @@ std::string getApiRootUrl(mapObj *map)
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
 }
 
+json getCollection(mapObj *map, layerObj *layer, int format)
+{
+  json collection; // empty (null)
+
+  if(!map || !layer) return collection;
+
+  // initialize some things
+  std::string api_root = getApiRootUrl(map);
+
+  const char *description = msOWSLookupMetadata(&(layer->metadata), "AO", "description");
+  if(!description) description = msOWSLookupMetadata(&(layer->metadata), "AOF", "abstract"); // fallback on abstract
+
+  const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+
+  const char *id = layer->name;
+  char *id_encoded = msEncodeUrl(id);
+
+  // build layer object
+  collection = {
+    { "id", id },
+    { "description", description?description:"" },
+    { "title", title?title:"" },
+    { "links", {
+        {
+          { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "This collection as JSON" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=json" }
+        },{
+          { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "This collection as HTML" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
+        },
+      }
+    }
+  };  
+
+  // handle keywords (optional)
+  const char *value = msOWSLookupMetadata(&(layer->metadata), "A", "keywords");
+  if(!value) value = msOWSLookupMetadata(&(layer->metadata), "AOF", "keywordlist"); // fallback on keywordlist
+  if(value) {
+    std::vector<std::string> keywords = msStringSplit(value, ',');
+    for(std::string keyword : keywords) {
+      collection["keywords"].push_back(keyword);
+    }
+  }
+
+  // handle custom links (optional)
+  value = msOWSLookupMetadata(&(layer->metadata), "A", "links");
+  if(value) {
+    std::vector<std::string> names = msStringSplit(value, ',');
+    for(std::string name : names) {
+      const char *link = msOWSLookupMetadata(&(layer->metadata), "A", ("link_" + name).c_str()); 
+      if(link) {
+        try {  
+          collection["links"].push_back(json::parse(link));
+        } catch(...) {
+	  // skip this link
+        }
+      }
+    }
+  }
+
+  // clean up
+  msFree(id_encoded);
+
+  return collection;
+}
+
 /*
 ** Output stuff...
 */
 
-static void outputJson(json j) 
+static void outputJson(json j, const char *mimetype)
 {
-  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_JSON);
+  msIO_setHeader("Content-Type", "%s", mimetype);
   msIO_sendHeaders();
   msIO_printf("%s\n", j.dump().c_str());
 }
 
-static void outputGeoJson(json j) 
-{
-  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_GEOJSON);
-  msIO_sendHeaders();
-  msIO_printf("%s\n", j.dump().c_str());
-}
-
-static void outputHtml(const char *directory, const char *filename, json j)
+static void outputTemplate(const char *directory, const char *filename, json j, const char *mimetype)
 {
   std::string _directory(directory);
   std::string _filename(filename);
@@ -148,25 +211,35 @@ static void outputHtml(const char *directory, const char *filename, json j)
   env.set_expression("<%=", "%>");
   env.set_statement("<%", "%>");
 
-  Template t = env.parse_template(_filename); // catch
-  std::string result = env.render(t, j);
+  // callbacks, need:
+  //   - match (regex)
+  //   - contains (substring)
+  //   - URL encode
 
-  msIO_setHeader("Content-Type", OGCAPI_MIMETYPE_HTML);
-  msIO_sendHeaders();
-  msIO_printf("%s\n", result.c_str()); 
+  try {
+    Template t = env.parse_template(_filename); // catch
+    std::string result = env.render(t, j);
+
+    msIO_setHeader("Content-Type", "%s", mimetype);
+    msIO_sendHeaders();
+    msIO_printf("%s\n", result.c_str()); 
+  } catch(...) {
+    processError(400, "Template parsing error.");
+    return;
+  }
 }
 
 /*
 ** Generic response outputr.
 */
-static void outputResponse(mapObj *map, int format, const char *filename, json j)
+static void outputResponse(mapObj *map, int format, const char *filename, json response)
 {
   const char *directory = NULL;
 
   if(format == OGCAPI_FORMAT_JSON) {
-    outputJson(j);
+    outputJson(response, OGCAPI_MIMETYPE_JSON);
   } else if(format == OGCAPI_FORMAT_GEOJSON) {
-    outputGeoJson(j);
+    outputJson(response, OGCAPI_MIMETYPE_GEOJSON);
   } else if(format == OGCAPI_FORMAT_HTML) {
     if((directory = getTemplateDirectory(map)) == NULL) {
       processError(400, "Template directory not set.");
@@ -174,13 +247,13 @@ static void outputResponse(mapObj *map, int format, const char *filename, json j
     }
 
     // extend the JSON with a few things that we need for templating
-    j["template"] = {
+    response["template"] = {
       { "path", msStringSplit(getenv("PATH_INFO"), '/') },
       { "api_root", getApiRootUrl(map) },
       { "title", getTitle(map) },
     };
 
-    outputHtml(directory, filename, j);
+    outputTemplate(directory, filename, response, OGCAPI_MIMETYPE_HTML);
   } else {
     processError(400, "Unsupported format requested.");
   }
@@ -202,70 +275,88 @@ static void processError(int code, const char *description)
   j["code"] = code;
   j["description"] = description;
 
-  outputJson(j);
+  outputJson(j, OGCAPI_MIMETYPE_JSON);
 }
 
 static int processLandingRequest(mapObj *map, int format)
 {
-  json j;
+  json response;
 
   // define ambiguous elements
   const char *description = msOWSLookupMetadata(&(map->web.metadata), "AO", "description");
-  if(!description) description = msOWSLookupMetadata(&(map->web.metadata), "AO", "abstract"); // fallback on abstract if necessary
+  if(!description) description = msOWSLookupMetadata(&(map->web.metadata), "AOF", "abstract"); // fallback on abstract if necessary
 
   // define api root url
   std::string api_root = getApiRootUrl(map);
 
   // build response object
-  j =  {
+  //   - consider conditionally excluding links for HTML format
+  response =  {
     { "title", getTitle(map) },
     { "description", description?description:"" },
     { "links", {
         {
 	  { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
 	  { "type", OGCAPI_MIMETYPE_JSON },
-	  { "title", "This document as JSON." },
+	  { "title", "This document as JSON" },
 	  { "href", api_root + "?f=json" }
         },{
 	  { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
 	  { "type", OGCAPI_MIMETYPE_HTML },
-	  { "title", "This document as HTML." },
+	  { "title", "This document as HTML" },
 	  { "href", api_root + "?f=html" }
         },{
-          { "rel", "conformance" },
+          { "rel", "data" },
           { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "OCG API conformance classes implemented by this server (JSON)." },
+          { "title", "OCG API conformance classes implemented by this server (JSON)" },
           { "href", api_root + "/conformance?f=json" }
         },{
           { "rel", "conformance" },
           { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "OCG API conformance classes implemented by this server." },
+          { "title", "OCG API conformance classes implemented by this server" },
           { "href", api_root + "/conformance?f=html" }
         },{
           { "rel", "data" },
           { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "Information about feature collections available from this server (JSON)." },
+          { "title", "Information about feature collections available from this server (JSON)" },
           { "href", api_root + "/collections?f=json" }
         },{
-          { "rel", "data" },
+          { "rel", "collections" },
           { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "Information about feature collections available from this server." },
+          { "title", "Information about feature collections available from this server" },
           { "href", api_root + "/collections?f=html" }
         }
       }
     }
   };
 
-  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_LANDING, j);
+  // handle custom links (optional)
+  const char *links = msOWSLookupMetadata(&(map->web.metadata), "A", "links");
+  if(links) {
+    std::vector<std::string> names = msStringSplit(links, ',');
+    for(std::string name : names) {
+      const char *link = msOWSLookupMetadata(&(map->web.metadata), "A", ("link_" + name).c_str()); 
+      if(link) {
+        try {  
+          response["links"].push_back(json::parse(link));
+        } catch(...) {
+          processError(400, "Link JSON parse error.");
+          return MS_SUCCESS;
+        }
+      }
+    }
+  }
+
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_LANDING, response);
   return MS_SUCCESS;
 }
 
 static int processConformanceRequest(mapObj *map, int format)
 {
-  json j;
+  json response;
  
   // build response object
-  j = {
+  response = {
     { "conformsTo", {
         "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core",
         "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections"
@@ -273,20 +364,44 @@ static int processConformanceRequest(mapObj *map, int format)
     }
   };
 
-  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_CONFORMANCE, j);
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_CONFORMANCE, response);
   return MS_SUCCESS;
 }
 
 static int processCollectionsRequest(mapObj *map, int format)
 {
-  json j;
+  json response;
+  int i;
+
+  // define api root url
+  std::string api_root = getApiRootUrl(map);
 
   // build response object
-  j = {
-    // here
+  response = {
+    { "links", {
+        {
+          { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "This document as JSON" },
+          { "href", api_root + "/collections?f=json" }
+        },{
+          { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "This document as HTML" },
+          { "href", api_root + "/collections?f=html" }
+        }
+      }
+    },{
+      "collections", json::array()
+    }
   };
 
-  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTIONS, j);
+  for(i=0; i<map->numlayers; i++) {
+    json collection = getCollection(map, map->layers[i], format);
+    if(!collection.is_null()) response["collections"].push_back(collection);
+  }
+
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTIONS, response);
   return MS_SUCCESS;
 }
 #endif
