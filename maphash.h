@@ -54,6 +54,11 @@ extern "C" {
   };
 #endif /*SWIG*/
 
+
+/**
+ * An object to store key-value pairs
+ *
+ */
   typedef struct {
 #ifndef SWIG
     struct hashObj **items;  /* the hash table */
@@ -61,7 +66,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /*SWIG*/
-    int              numitems;  /* number of items */
+    int              numitems;  ///< \**immutable** number of items
 #ifdef SWIG
     %mutable;
 #endif /*SWIG*/

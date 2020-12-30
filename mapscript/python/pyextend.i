@@ -322,13 +322,11 @@ def fromstring(data, mappath=None):
     
 %extend imageObj {
 
-    /* ======================================================================
-       write()
-
-       Write image data to an open Python file or file-like object.
-       Overrides extension method in mapscript/swiginc/image.i.
-       Intended to replace saveToString.
-    ====================================================================== */
+    /**
+    Write image data to an open file handle. Intended to replace
+    saveToString.  See ``python/pyextend.i`` for the Python specific
+    version of this method.
+    */
     int write( PyObject *file=Py_None )
     {
         unsigned char *imgbuffer=NULL;
@@ -375,7 +373,9 @@ def fromstring(data, mappath=None):
         return retval;
     }
 
-    /* Deprecated */  
+    /**
+    \**Deprecated** - replaced by the :func:`imageObj.write` method
+    */
     PyObject *saveToString() {
         int size=0;
         unsigned char *imgbytes;
@@ -458,6 +458,10 @@ pattern = property(pattern_get, pattern_set, doc=r"""pattern : list **Python Onl
         return self.numitems
 
     def keys(self):
+        """
+        **Python-only**. In Python MapScript the ``hashTableObj`` can be used and accessed
+        as a dictionary. The ``keys`` method returns a view of all the keys in the ``hashTableObj``.
+        """
 
         keys = []
         k = None
