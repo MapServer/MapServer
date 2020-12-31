@@ -136,7 +136,7 @@ json getCollection(mapObj *map, layerObj *layer, int format)
     else
       msOWSProjectToWGS84(&map->projection, &bbox);
   } else {
-    throw std::runtime_error("Unable to get collection bounding box.");
+    throw std::runtime_error("Unable to get collection bounding box."); // might be too harsh since extent is optional
   }
 
   const char *description = msOWSLookupMetadata(&(layer->metadata), "AO", "description");
@@ -174,7 +174,7 @@ json getCollection(mapObj *map, layerObj *layer, int format)
         },
       }
     },
-    { "itemType", "Feature" }
+    { "itemType", "feature" }
   };
 
   // handle keywords (optional)
@@ -386,6 +386,35 @@ static int processConformanceRequest(mapObj *map, int format)
   return MS_SUCCESS;
 }
 
+static int processCollectionRequest(mapObj *map, const char *collectionId, int format)
+{
+  json response;
+  int i;
+
+  for(i=0; i<map->numlayers; i++) {
+    if(strcmp(map->layers[i]->name, collectionId) == 0) break; // match
+  }
+
+  if(i == map->numlayers) { // invalid collectionId
+    processError(404, "Invalid collection.");
+    return MS_SUCCESS;
+  }
+
+  try {
+    response = getCollection(map, map->layers[i], format);
+    if(response.is_null()) { // same as not found
+      processError(404, "Invalid collection.");
+      return MS_SUCCESS;
+    }
+  } catch (const std::runtime_error &e) {
+    processError(400, "Error getting collection. " + std::string(e.what()));
+    return MS_SUCCESS;
+  }
+
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTION, response);
+  return MS_SUCCESS;
+}
+
 static int processCollectionsRequest(mapObj *map, int format)
 {
   json response;
@@ -448,8 +477,11 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 
 #ifdef USE_OGCAPI_SVR
   if(api_path_length == 3) {
+
     return processLandingRequest(map, format);
+
   } else if(api_path_length == 4) {
+
     if(strcmp(api_path[3], "conformance") == 0) {
       return processConformanceRequest(map, format);
     } else if(strcmp(api_path[3], "conformance.html") == 0) {
@@ -459,6 +491,13 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
     } else if(strcmp(api_path[3], "collections.html") == 0) {
       return processCollectionsRequest(map, OGCAPI_FORMAT_HTML);
     }
+
+  } else if(api_path_length == 5) {
+
+    if(strcmp(api_path[3], "collections") == 0) { // next argument is collectionId
+      return processCollectionRequest(map, api_path[4], format);
+    }
+
   }
 
   processError(500, "Invalid API request."); 
