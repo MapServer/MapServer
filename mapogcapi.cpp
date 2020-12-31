@@ -56,7 +56,7 @@ using json = nlohmann::json;
 #ifdef USE_OGCAPI_SVR
 
 /* prototypes */
-static void processError(int code, const char *description);
+static void processError(int code, std::string description);
 
 /*
 ** Get stuff...
@@ -123,11 +123,21 @@ std::string getApiRootUrl(mapObj *map)
 json getCollection(mapObj *map, layerObj *layer, int format)
 {
   json collection; // empty (null)
+  rectObj bbox;
 
   if(!map || !layer) return collection;
 
   // initialize some things
   std::string api_root = getApiRootUrl(map);
+
+  if(msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
+    if (layer->projection.numargs > 0)
+      msOWSProjectToWGS84(&layer->projection, &bbox);
+    else
+      msOWSProjectToWGS84(&map->projection, &bbox);
+  } else {
+    throw std::runtime_error("Unable to get collection bounding box.");
+  }
 
   const char *description = msOWSLookupMetadata(&(layer->metadata), "AO", "description");
   if(!description) description = msOWSLookupMetadata(&(layer->metadata), "AOF", "abstract"); // fallback on abstract
@@ -137,11 +147,19 @@ json getCollection(mapObj *map, layerObj *layer, int format)
   const char *id = layer->name;
   char *id_encoded = msEncodeUrl(id);
 
-  // build layer object
+  // build collection object
   collection = {
     { "id", id },
     { "description", description?description:"" },
     { "title", title?title:"" },
+    { "extent", {
+	{ "spatial", {
+	    { "bbox", {{ bbox.minx, bbox.miny, bbox.maxx, bbox.maxy }}},
+	    { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
+	  }
+	}
+      }
+    },
     { "links", {
         {
           { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
@@ -155,8 +173,9 @@ json getCollection(mapObj *map, layerObj *layer, int format)
           { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
         },
       }
-    }
-  };  
+    },
+    { "itemType", "Feature" }
+  };
 
   // handle keywords (optional)
   const char *value = msOWSLookupMetadata(&(layer->metadata), "A", "keywords");
@@ -268,7 +287,7 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
 **   - should this be JSON only?
 **   - should this rely on the msSetError() pipeline or be stand-alone?
 */
-static void processError(int code, const char *description)
+static void processError(int code, std::string description)
 {
   json j;
 
@@ -340,8 +359,7 @@ static int processLandingRequest(mapObj *map, int format)
         try {  
           response["links"].push_back(json::parse(link));
         } catch(...) {
-          processError(400, "Link JSON parse error.");
-          return MS_SUCCESS;
+          // skip this link
         }
       }
     }
@@ -397,8 +415,13 @@ static int processCollectionsRequest(mapObj *map, int format)
   };
 
   for(i=0; i<map->numlayers; i++) {
-    json collection = getCollection(map, map->layers[i], format);
-    if(!collection.is_null()) response["collections"].push_back(collection);
+    try {
+      json collection = getCollection(map, map->layers[i], format);
+      if(!collection.is_null()) response["collections"].push_back(collection);
+    } catch (const std::runtime_error &e) {
+      processError(400, "Error getting collection. " + std::string(e.what()));
+      return MS_SUCCESS;
+    }
   }
 
   outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTIONS, response);

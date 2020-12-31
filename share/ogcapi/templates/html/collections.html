@@ -25,7 +25,7 @@
       <tr>
         <td><%= loop.index1 %></td>
         <td><a href="<%= template.api_root %>/collections/<%= collection.id %>?f=html"><%= collection.title %></a></td>
-        <td>TODO</td>
+        <td><%= collection.itemType %></td>
         <td><%= collection.description %></td>
       </tr>
 <% endfor %>
