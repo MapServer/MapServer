@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title><%= template.title %></title>
+    <title>{{ template.title }}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <style>
       html { position: relative; min-height: 100%; }
       body { padding-top: 5rem; margin-bottom: 40px; }
@@ -23,11 +24,11 @@
       <div class="collapse navbar-collapse" id="navbar">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="<%= template.api_root %>?f=html" id="links" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Links</a>
+            <a class="nav-link dropdown-toggle" href="{{ template.api_root }}?f=html" id="links" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Links</a>
             <div class="dropdown-menu" aria-labelledby="account">
-              <a class="dropdown-item" href="<%= template.api_root %>?f=html">Home</a>
-              <a class="dropdown-item" href="<%= template.api_root %>/conformance?f=html">Conformance</a>
-              <a class="dropdown-item" href="<%= template.api_root %>/collections?f=html">Collections</a>
+              <a class="dropdown-item" href="{{ template.api_root }}?f=html">Home</a>
+              <a class="dropdown-item" href="{{ template.api_root }}/conformance?f=html">Conformance</a>
+              <a class="dropdown-item" href="{{ template.api_root }}/collections?f=html">Collections</a>
             </div>
           </li>
         </ul>

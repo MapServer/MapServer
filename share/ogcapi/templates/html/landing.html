@@ -1,21 +1,21 @@
-<% include "header.html" %>
+{% include "header.html" %}
 
 <nav aria-label="breadcrumb">  
   <ol class="breadcrumb bg-light">
     <li class="breadcrumb-item active" aria-current="page">Home</li>
-    <li class="ml-auto json-link"><a target="_blank" href="<%= template.api_root %>?f=json">JSON</a></li>
+    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}?f=json">JSON</a></li>
   </ol>
 </nav>
 
-<h1><%= title %></h1>
+<h1>{{ title }}</h1>
 <p>
-  <%= description %>
+  {{ description }}
 </p>
 
 <ul>
-<% for link in links %>
-  <li> <a href="<%= link.href %>"><%= link.title %></a></li>
-<% endfor %>
+{% for link in links %}
+  <li> <a href="{{ link.href }}">{{ link.title }}</a></li>
+{% endfor %}
 </ul>
 
-<% include "footer.html" %>
+{% include "footer.html" %}

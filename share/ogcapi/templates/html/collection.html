@@ -1,14 +1,37 @@
-<% include "header.html" %>
+{% include "header.html" %}
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-light">
-    <li class="breadcrumb-item"><a href="<%= template.api_root %>?f=html">Home</a></li>
-    <li class="breadcrumb-item"><a href="<%= template.api_root %>/collections?f=html">Collections</a></li>
-    <li class="breadcrumb-item active" aria-current="page"><%= title %></li>
-    <li class="ml-auto json-link"><a target="_blank" href="<%= template.api_root %>/collections/<%= id %>?f=json">JSON</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ id }}?f=json">JSON</a></li>
   </ol>
 </nav>
 
-<h1><%= template.title %> - Collection: <%= title %></h1>
+<h1>{{ template.title }} - Collection: {{ title }}</h1>
+<p>
+  {{ description }}
+{% if exists("keywords") %}
+  {% if length(keywords) > 0 %}
+  <div id="keywords">
+  {% for keyword in keywords %}
+    <span class="badge badge-secondary">{{ keyword }}</span>
+  {% endfor %}
+  </div>
+  {% endif %}
+{% endif %}
+</p>
 
-<% include "footer.html" %>
+<!-- location map -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+<script>
+</script>
+
+<ul>
+{% for link in links %}
+  <li> <a href="{{ link.href }}">{{ link.title }}</a></li>
+{% endfor %}
+</ul>
+
+{% include "footer.html" %}

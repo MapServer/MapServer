@@ -227,8 +227,8 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
   Environment env {_directory}; // catch
 
   // ERB-style instead of Mustache (we'll see)
-  env.set_expression("<%=", "%>");
-  env.set_statement("<%", "%>");
+  // env.set_expression("<%=", "%>");
+  // env.set_statement("<%", "%>");
 
   // callbacks, need:
   //   - match (regex)
@@ -242,8 +242,11 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
     msIO_setHeader("Content-Type", "%s", mimetype);
     msIO_sendHeaders();
     msIO_printf("%s\n", result.c_str()); 
+  } catch(const inja::RenderError &e) {
+    processError(400, "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").");
+    return;
   } catch(...) {
-    processError(400, "Template parsing error.");
+    processError(400, "General template handling error.");
     return;
   }
 }
