@@ -268,14 +268,18 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
       return; // bail
     }
 
+    json j;
+
+    j["response"] = response; // nest the response so we could write the whole object in the template
+
     // extend the JSON with a few things that we need for templating
-    response["template"] = {
+    j["template"] = {
       { "path", msStringSplit(getenv("PATH_INFO"), '/') },
       { "api_root", getApiRootUrl(map) },
       { "title", getTitle(map) },
     };
 
-    outputTemplate(directory, filename, response, OGCAPI_MIMETYPE_HTML);
+    outputTemplate(directory, filename, j, OGCAPI_MIMETYPE_HTML);
   } else {
     processError(400, "Unsupported format requested.");
   }
