@@ -86,7 +86,7 @@ static const char *getTemplateDirectory(mapObj *map)
 
   // TODO: if directory is provided then perhaps we need to check for a trailing slash
 
-  if((directory = msOWSLookupMetadata(&(map->web.metadata), "AO", "template_directory")) != NULL) 
+  if((directory = msOWSLookupMetadata(&(map->web.metadata), "A", "template_directory")) != NULL) 
     return directory;
   else if((directory = getenv("OGCAPI_TEMPLATE_DIRECTORY")) != NULL)
     return directory;
@@ -139,8 +139,8 @@ json getCollection(mapObj *map, layerObj *layer, int format)
     throw std::runtime_error("Unable to get collection bounding box."); // might be too harsh since extent is optional
   }
 
-  const char *description = msOWSLookupMetadata(&(layer->metadata), "AO", "description");
-  if(!description) description = msOWSLookupMetadata(&(layer->metadata), "AOF", "abstract"); // fallback on abstract
+  const char *description = msOWSLookupMetadata(&(layer->metadata), "A", "description");
+  if(!description) description = msOWSLookupMetadata(&(layer->metadata), "OF", "abstract"); // fallback on abstract
 
   const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
 
@@ -179,7 +179,7 @@ json getCollection(mapObj *map, layerObj *layer, int format)
 
   // handle keywords (optional)
   const char *value = msOWSLookupMetadata(&(layer->metadata), "A", "keywords");
-  if(!value) value = msOWSLookupMetadata(&(layer->metadata), "AOF", "keywordlist"); // fallback on keywordlist
+  if(!value) value = msOWSLookupMetadata(&(layer->metadata), "OF", "keywordlist"); // fallback on keywordlist
   if(value) {
     std::vector<std::string> keywords = msStringSplit(value, ',');
     for(std::string keyword : keywords) {
@@ -281,7 +281,7 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
     };
 
     // add custom tags (optional)
-    const char *tags = msOWSLookupMetadata(&(map->web.metadata), "A", "html_template_tags");
+    const char *tags = msOWSLookupMetadata(&(map->web.metadata), "A", "html_tags");
     if(tags) {
       std::vector<std::string> names = msStringSplit(tags, ',');
       for(std::string name : names) {
@@ -322,8 +322,8 @@ static int processLandingRequest(mapObj *map, int format)
   json response;
 
   // define ambiguous elements
-  const char *description = msOWSLookupMetadata(&(map->web.metadata), "AO", "description");
-  if(!description) description = msOWSLookupMetadata(&(map->web.metadata), "AOF", "abstract"); // fallback on abstract if necessary
+  const char *description = msOWSLookupMetadata(&(map->web.metadata), "A", "description");
+  if(!description) description = msOWSLookupMetadata(&(map->web.metadata), "OF", "abstract"); // fallback on abstract if necessary
 
   // define api root url
   std::string api_root = getApiRootUrl(map);
