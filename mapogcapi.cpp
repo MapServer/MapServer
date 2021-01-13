@@ -277,7 +277,20 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
       { "path", msStringSplit(getenv("PATH_INFO"), '/') },
       { "api_root", getApiRootUrl(map) },
       { "title", getTitle(map) },
+      { "tags", json::object() }
     };
+
+    // add custom tags (optional)
+    const char *tags = msOWSLookupMetadata(&(map->web.metadata), "A", "html_template_tags");
+    if(tags) {
+      std::vector<std::string> names = msStringSplit(tags, ',');
+      for(std::string name : names) {
+	const char *value = msOWSLookupMetadata(&(map->web.metadata), "A", ("tag_" + name).c_str());
+	if(value) {
+          j["template"]["tags"].update({{ name, value }}); // add object
+	}
+      }
+    }
 
     outputTemplate(directory, filename, j, OGCAPI_MIMETYPE_HTML);
   } else {
