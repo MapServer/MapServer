@@ -12,6 +12,16 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.6.2 release (2020-12-07)
+-------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.6.1 release (2020-07-31)
+-------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
 7.6.0 release (2020-05-08)
 --------------------------
 
