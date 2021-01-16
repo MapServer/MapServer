@@ -2,7 +2,7 @@ Python MapScript for MapServer README
 =====================================
 
 :Author: MapServer Team
-:Last Updated: 2020-03-02
+:Last Updated: 2021-01-16
 
 Introduction
 ------------
@@ -35,7 +35,7 @@ Advantages of ready-made wheels on PyPI include:
 + mapscript can be easily added to a Python `Virtual Environment <https://docs.python-guide.org/dev/virtualenvs/>`_
 + Python2 or Python3 versions of mapscript can be installed and work with a single installation of MapServer
 
-Wheels are built based on the `Appveyor build environments <https://github.com/mapserver/mapserver/blob/master/appveyor.yml>`_. 
+Wheels are built based on the `Appveyor build environments <https://github.com/MapServer/MapServer/blob/main/appveyor.yml>`_. 
 These are as follows at the time of writing:
 
 + Python 2.7 x32
@@ -67,6 +67,10 @@ On Windows you can use the following, replacing ``C:\MapServer\bin`` with the lo
 Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`_. 
 To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1911-x64-gdal-2-3-mapserver-7-4``
 for mapscript 7.4. 
+
+.. NOTE::
+   `MS4W <https://www.ms4w.com>`_ (MapServer for Windows) is a full installer that contains Python & Python
+   MapScript already configured out-of-the-box, as well as default OGC web services and over 60 working mapfiles.
 
 When using these packages the MapServer path will be similar to ``C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin``. 
 
