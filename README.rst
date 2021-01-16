@@ -91,7 +91,7 @@ License
   SOFTWARE.
 
 
-.. |Build Status| image:: https://travis-ci.com/MapServer/MapServer.svg?branch=master
+.. |Build Status| image:: https://travis-ci.com/MapServer/MapServer.svg?branch=main
    :target: https://travis-ci.com/MapServer/MapServer
 
 .. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true
