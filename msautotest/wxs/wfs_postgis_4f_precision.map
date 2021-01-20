@@ -58,7 +58,7 @@ MAP
     METADATA
       "wfs_title"         "popplace"
       "wfs_description"   "Cities"
-      "gml_include_items" "auto"
+      "gml_include_items" "all"
      END
     TYPE POINT
     STATUS ON
@@ -78,7 +78,7 @@ MAP
       "wfs_title"         "popplace"
       "wfs_description"   "Cities"
       "wfs_geometry_precision" "10"
-      "gml_include_items" "auto"
+      "gml_include_items" "all"
       
      END
     TYPE POINT
