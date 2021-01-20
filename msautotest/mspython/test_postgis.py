@@ -316,3 +316,35 @@ def test_postgis_box_bind_values_queryByRect():
             break
         count += 1
     assert count == 15
+
+###############################################################################
+# Test fix for https://github.com/MapServer/MapServer/pull/5520
+
+
+def test_postgis_queryByFilter_bad_filteritem():
+
+    map = mapscript.mapObj()
+    layer = mapscript.layerObj(map)
+    layer.updateFromString("""
+        LAYER
+            CONNECTIONTYPE postgis
+            CONNECTION "dbname=msautotest user=postgres"
+            DATA "the_geom from (select * from province order by gid) as foo using unique gid"
+            NAME mylayer
+            TYPE POLYGON
+            TEMPLATE "junk.tmpl"
+            FILTER 'Cape Breton Island'
+            FILTERITEM 'bad_filter_item'
+        END
+        """)
+
+    layer.open()
+    try:
+        layer.queryByFilter( map, "1 = 1" )
+        assert False
+    except mapscript.MapServerError:
+        pass
+
+    # Check that original filter and filteritem are properly restored
+    assert layer.getFilterString() == '"Cape Breton Island"'
+    assert layer.filteritem == "bad_filter_item"
