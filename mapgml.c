@@ -858,20 +858,15 @@ static int gmlWriteBounds(FILE *stream, OWSGMLVersion format, rectObj *rect,
 static int gmlWriteGeometry(FILE *stream, gmlGeometryListObj *geometryList,
                             OWSGMLVersion format, shapeObj *shape,
                             const char *srsname, const char *namespace,
-                            const char *tab, const char* pszFID, int nSRSDimension, mapObj *map)
+                            const char *tab, const char* pszFID, int nSRSDimension, int geometry_precision)
 {
-
-    int wfs_geometry_precision = 6;
-    if(msOWSLookupMetadata(&map->web.metadata, "F", "geometry_precision"))
-        wfs_geometry_precision=atoi(msOWSLookupMetadata(&map->web.metadata, "F", "geometry_precision"));
-
   switch(format) {
     case(OWS_GML2):
-      return gmlWriteGeometry_GML2(stream, geometryList, shape, srsname, namespace, tab, nSRSDimension, wfs_geometry_precision);
+      return gmlWriteGeometry_GML2(stream, geometryList, shape, srsname, namespace, tab, nSRSDimension, geometry_precision);
       break;
     case(OWS_GML3):
     case(OWS_GML32):
-      return gmlWriteGeometry_GML3(stream, geometryList, shape, srsname, namespace, tab, pszFID, format, nSRSDimension, wfs_geometry_precision);
+      return gmlWriteGeometry_GML3(stream, geometryList, shape, srsname, namespace, tab, pszFID, format, nSRSDimension, geometry_precision);
       break;
     default:
       msSetError(MS_IOERR, "Unsupported GML format.", "gmlWriteGeometry()");
@@ -1531,7 +1526,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         if(!(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
           gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), pszOutputSRS, "\t\t\t", "gml");
           if (geometryList && geometryList->numgeometries > 0 )
-            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), pszOutputSRS, NULL, "\t\t\t", "", nSRSDimension, map);
+            gmlWriteGeometry(stream, geometryList, OWS_GML2, &(shape), pszOutputSRS, NULL, "\t\t\t", "", nSRSDimension, 6);
         }
 
         /* write any item/values */
@@ -1691,6 +1686,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       int nSRSDimension = 2;
       const char* geomtype;
       reprojectionObj* reprojector = NULL;
+      int geometry_precision = 6;
 
       /* setup namespace, a layer can override the default */
       namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
@@ -1847,8 +1843,15 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
             strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
           if( !bGetPropertyValueRequest )
             gmlWriteBounds(stream, outputformat, &(shape.bounds), srs, "        ", "gml");
+        
+          if(msOWSLookupMetadata(&(lp->metadata), "F", "geometry_precision")){
+            geometry_precision=atoi(msOWSLookupMetadata(&(lp->metadata), "F", "geometry_precision"));
+          } else if(msOWSLookupMetadata(&map->web.metadata, "F", "geometry_precision")){
+            geometry_precision=atoi(msOWSLookupMetadata(&map->web.metadata, "F", "geometry_precision"));
+          }
+
           gmlWriteGeometry(stream, geometryList, outputformat, &(shape), srs,
-                           namespace_prefix, "        ", pszFID, nSRSDimension,map);
+                           namespace_prefix, "        ", pszFID, nSRSDimension,geometry_precision);
         }
 
         /* write any item/values */
