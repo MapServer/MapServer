@@ -348,3 +348,25 @@ def test_postgis_queryByFilter_bad_filteritem():
     # Check that original filter and filteritem are properly restored
     assert layer.getFilterString() == '"Cape Breton Island"'
     assert layer.filteritem == "bad_filter_item"
+
+###############################################################################
+#
+
+
+def test_postgis_queryByFilter_bad_expression():
+
+    map = mapscript.mapObj()
+    layer = mapscript.layerObj(map)
+    layer.updateFromString("""
+        LAYER
+            CONNECTIONTYPE postgis
+            CONNECTION "dbname=msautotest user=postgres"
+            DATA "the_geom from (select * from province order by gid) as foo using unique gid"
+            NAME mylayer
+            TYPE POLYGON
+            TEMPLATE "junk.tmpl"
+        END
+        """)
+
+    layer.open()
+    layer.queryByFilter( map, "ERROR" )

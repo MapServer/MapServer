@@ -3687,19 +3687,29 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
         case MS_TOKEN_COMPARISON_CONTAINS:
         case MS_TOKEN_COMPARISON_EQUALS:
         case MS_TOKEN_COMPARISON_DWITHIN:
+        {
           if(node->next->token != '(') goto cleanup;
           native_string += "st_";
-          native_string += msExpressionTokenToString(node->token);
+          const char* str = msExpressionTokenToString(node->token);
+          if( str == nullptr )
+              goto cleanup;
+          native_string += str;
           break;
+        }
 
 	/* functions */
         case MS_TOKEN_FUNCTION_LENGTH:
         case MS_TOKEN_FUNCTION_AREA:
         case MS_TOKEN_FUNCTION_BUFFER:
         case MS_TOKEN_FUNCTION_DIFFERENCE:
+        {
           native_string += "st_";
-          native_string += msExpressionTokenToString(node->token);
+          const char* str = msExpressionTokenToString(node->token);
+          if( str == nullptr )
+              goto cleanup;
+          native_string += str;
           break;
+        }
 
 	case MS_TOKEN_COMPARISON_IEQ:
             if( ieq_expected )
@@ -3724,6 +3734,7 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
           break;
 
         default:
+        {
           /* by default accept the general token to string conversion */
 
           if(node->token == MS_TOKEN_COMPARISON_EQ && node->next != nullptr && node->next->token == MS_TOKEN_LITERAL_TIME) break; /* skip, handled with the next token */
@@ -3736,8 +3747,12 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
               break;
           }
 
-          native_string += msExpressionTokenToString(node->token);
+          const char* str = msExpressionTokenToString(node->token);
+          if( str == nullptr )
+              goto cleanup;
+          native_string += str;
           break;
+        }
         }
 
       node = node->next;
