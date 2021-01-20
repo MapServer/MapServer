@@ -97,5 +97,5 @@ License
 .. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true
    :target: https://ci.appveyor.com/project/mapserver/mapserver
 
-.. |Coveralls Status| image:: https://coveralls.io/repos/github/mapserver/mapserver/badge.svg?branch=master
-   :target: https://coveralls.io/github/mapserver/mapserver?branch=master
+.. |Coveralls Status| image:: https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main
+   :target: https://coveralls.io/github/MapServer/MapServer?branch=main
