@@ -792,13 +792,25 @@ void msGEOSFreeWKT(char* pszGEOSWKT)
 
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
 #if defined USE_GEOS && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3))
-  GEOSGeom g1, g2;
+  int typeChanged = 0;
+  GEOSGeom g1, g2 = NULL;
   GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!p) 
     return NULL;
 
-  if(!p->geometry) /* if no geometry for the shape then build one */
+  /*
+   * GEOSOffsetCurve_r() uses BufferBuilder.bufferLineSingleSided(), which
+   * works with lines, naturally. In order to allow offsets for a MapServer
+   * polygonObj, it has to be processed as line and afterwards reverted.
+   */
+  if(p->type == MS_SHAPE_POLYGON) {
+    p->type = MS_SHAPE_LINE;
+    typeChanged = 1;
+    msGEOSFreeGeometry(p);
+  }
+
+  if(typeChanged || !p->geometry)
     p->geometry = (GEOSGeom) msGEOSShape2Geometry(p);
 
   g1 = (GEOSGeom) p->geometry;
@@ -820,7 +832,20 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
   {
     g2 = GEOSOffsetCurve_r(handle,g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
   }
-  return msGEOSGeometry2Shape(g2);
+
+  /*
+   * Undo change of geometry type. We won't re-create the geos gemotry here,
+   * it's up to each geos function to create it.
+   */
+  if(typeChanged) {
+    msGEOSFreeGeometry(p);
+    p->type = MS_SHAPE_POLYGON;
+  }
+
+  if (g2)
+    return msGEOSGeometry2Shape(g2);
+
+  return NULL;
 #else
   msSetError(MS_GEOSERR, "GEOS Offset Curve support is not available.", "msGEOSingleSidedBuffer()");
   return NULL;
