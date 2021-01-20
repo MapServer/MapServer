@@ -861,7 +861,7 @@ static int gmlWriteGeometry(FILE *stream, gmlGeometryListObj *geometryList,
                             const char *tab, const char* pszFID, int nSRSDimension, mapObj *map)
 {
 
-    int wfs_geometry_precision = 8;
+    int wfs_geometry_precision = 6;
     if(msOWSLookupMetadata(&map->web.metadata, "F", "geometry_precision"))
         wfs_geometry_precision=atoi(msOWSLookupMetadata(&map->web.metadata, "F", "geometry_precision"));
 
