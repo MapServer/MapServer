@@ -4,9 +4,9 @@
 # REQUIRES: SUPPORTS=WFS INPUT=POSTGIS
 #
 #
-# RUN_PARMS: wfs_postgis_precision_web_4f_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace" > [RESULT]
-# RUN_PARMS: wfs_postgis_precision_web_4f_gml3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace" > [RESULT]
-# RUN_PARMS: wfs_postgis_precision_web_4f_layer_10f_gml3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace_10" > [RESULT]
+# RUN_PARMS: wfs_postgis_precision_web_4f_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&MAXFEATURES=1" > [RESULT]
+# RUN_PARMS: wfs_postgis_precision_web_4f_gml3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&MAXFEATURES=1" > [RESULT]
+# RUN_PARMS: wfs_postgis_precision_web_4f_layer_10f_gml3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace_10&MAXFEATURES=1" > [RESULT]
 
 MAP
   #CONFIG "MS_ERRORFILE" "stderr"
