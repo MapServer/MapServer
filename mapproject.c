@@ -119,11 +119,23 @@ static int msProjectHasLonWrapOrOver(projectionObj *in) {
 /* Return to be freed with proj_destroy() if *pbFreePJ = TRUE */
 static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFreePJ)
 {
+    if( in->proj == out->proj )
+    {
+        /* Special case to avoid out_str below to cause in_str to become invalid */
+        *pbFreePJ = TRUE;
+#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR == 0
+        /* 6.0 didn't support proj=noop */
+        return proj_create(in->proj_ctx->proj_ctx, "+proj=affine");
+#else
+        return proj_create(in->proj_ctx->proj_ctx, "+proj=noop");
+#endif
+    }
+
     const char* const wkt_options[] = { "MULTILINE=NO", NULL };
-    const char* in_str = (in && msProjectHasLonWrapOrOver(in)) ?
+    const char* in_str = msProjectHasLonWrapOrOver(in) ?
         proj_as_proj_string(in->proj_ctx->proj_ctx, in->proj, PJ_PROJ_4, NULL) :
         proj_as_wkt(in->proj_ctx->proj_ctx, in->proj, PJ_WKT2_2018, wkt_options);
-    const char* out_str = (out && msProjectHasLonWrapOrOver(out)) ?
+    const char* out_str = msProjectHasLonWrapOrOver(out) ?
         proj_as_proj_string(out->proj_ctx->proj_ctx, out->proj, PJ_PROJ_4, NULL) :
         proj_as_wkt(out->proj_ctx->proj_ctx, out->proj, PJ_WKT2_2018, wkt_options);
     PJ* pj_raw;
