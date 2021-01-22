@@ -65,7 +65,6 @@ MAP
       "init=epsg:3978"
     END
   
-    DUMP TRUE
     LabelItem "Name"
   END # Layer
 END # Map File
