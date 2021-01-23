@@ -1079,6 +1079,9 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
   /*      parameters needed to annotate a layer, legend or scalebar       */
   /************************************************************************/
 
+/**
+The :ref:`LABEL <label>` object
+*/
   struct labelObj{
 #ifdef SWIG
     %immutable;
@@ -1152,7 +1155,21 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
     int nexprbindings;
 
     double scalefactor; // computed, not set
+#endif /* not SWIG */
 
+  };
+
+#ifdef SWIG
+#ifdef	__cplusplus
+extern "C" {
+#endif
+typedef struct labelObj labelObj;
+#ifdef	__cplusplus
+}
+#endif
+#endif
+
+#ifndef SWIG
   /* lightweight structure containing information to render a labelObj */
   typedef struct {
     lineObj *poly;
@@ -1169,19 +1186,6 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
     //rectObj bbox;
     label_bounds **style_bounds;
   } textSymbolObj;
-
-#endif /* not SWIG */
-
-  };
-
-#ifdef SWIG
-#ifdef	__cplusplus
-extern "C" {
-#endif
-typedef struct labelObj labelObj;
-#ifdef	__cplusplus
-}
-#endif
 #endif
 
 #define MS_LABEL_PERPENDICULAR_OFFSET -99
