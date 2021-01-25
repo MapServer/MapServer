@@ -27,7 +27,7 @@ For example (please modify !!!): I expected the following request to work
 
 For example (please modify !!!): "mapserv -nh QUERY_STRING='map=test.map&...'"
 
-## Attach simple test case
+## Attach simple test case (drag/drop it here)
 
 Please create a .zip file that contains:
  - small .map file
