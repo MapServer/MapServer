@@ -1079,6 +1079,9 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
   /*      parameters needed to annotate a layer, legend or scalebar       */
   /************************************************************************/
 
+/**
+The :ref:`LABEL <label>` object
+*/
   struct labelObj{
 #ifdef SWIG
     %immutable;
@@ -1088,70 +1091,69 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
     %mutable;
 #endif /* SWIG */
 
-    char *font;
-    colorObj color;
-    colorObj outlinecolor;
-    int outlinewidth;
+    char *font; ///< Name of TrueType font  see :ref:`FONT <mapfile-label-font>`
+    colorObj color; ///< Foreground color - see :ref:`COLOR <mapfile-label-color>`
+    colorObj outlinecolor; ///< Color of one point outline - see :ref:`OUTLINECOLOR <mapfile-label-outlinecolor>`
+    int outlinewidth; ///< See :ref:`OUTLINEWIDTH <mapfile-label-outlinewidth>`
 
-    colorObj shadowcolor;
-    int shadowsizex, shadowsizey;
+    colorObj shadowcolor; ///< See :ref:`SHADOWCOLOR <mapfile-label-shadowcolor>`
+    int shadowsizex; ///< See :ref:`SHADOWSIZE <mapfile-label-shadowsize>`
+    int shadowsizey; ///< See :ref:`SHADOWSIZE <mapfile-label-shadowsize>`
 
-    int size;
-    int minsize, maxsize;
+    int size; ///< Annotation height in pixels - see :ref:`SIZE <mapfile-label-size>`
+    int minsize; ///< Minimum height in pixels - see :ref:`MINSIZE <mapfile-label-minsize>`
+    int maxsize; ///< Maximum height in pixels for scaled labels. See :ref:`MAXSIZE <mapfile-label-maxsize>`
 
-    int position;
-    int offsetx, offsety;
+    int position; ///< See :ref:`POSTION <mapfile-label-position>`
+    int offsetx; ///< Horizontal offset of label - see :ref:`OFFSET <mapfile-label-offset>`
+    int offsety; ///< Vertical offset of label - see :ref:`OFFSET <mapfile-label-offset>`
 
-    double angle;
-    enum MS_POSITIONS_ENUM anglemode;
+    double angle; ///< See :ref:`ANGLE <mapfile-label-angle>`
+    enum MS_POSITIONS_ENUM anglemode; ///< One of :data:`AUTO` :data:`AUTO2`, or :data:`FOLLOW` - see :ref:`ANGLE <mapfile-label-angle>`
 
-    int buffer; /* space to reserve around a label */
+    int buffer; ///< Space to reserve around a label (padding) - see :ref:`BUFFER <mapfile-label-buffer>`
 
-    int align;
+    int align; ///< See :ref:`ALIGN <mapfile-label-align>`
 
-    char wrap;
-    int maxlength;
-    int minlength;
-    double space_size_10; /*cached size of a single space character used for label text alignment of rfc40 */
+    char wrap; ///< See :ref:`WRAP <mapfile-label-wrap>`
+    int maxlength; ///< See :ref:`MAXLENGTH <mapfile-label-maxlength>`
+    int minlength; ///< This is a valid Mapfile keyword but is currently unused
+    double space_size_10; ///< Cached size of a single space character used for label text alignment of rfc40
 
-    int minfeaturesize; /* minimum feature size (in pixels) to label */
-    int autominfeaturesize; /* true or false */
+    int minfeaturesize; ///< Minimum feature size (in pixels) to label, features of this size or greater will be labeled - see :ref:`MINFEATURESIZE  <mapfile-label-minfeaturesize>`
+    int autominfeaturesize; ///< :data:`MS_TRUE` or :data:`MS_FALSE`
 
-    double minscaledenom, maxscaledenom;
+    double minscaledenom; ///< See :ref:`MINSCALEDENOM  <mapfile-label-minscaledenom>`
+    double maxscaledenom; ///< See :ref:`MAXSCALEDENOM  <mapfile-label-maxscaledenom>`
 
-    int mindistance;
-    int repeatdistance;
-    double maxoverlapangle;
-    int partials; /* can labels run of an image */
+    int mindistance; ///< Minimum distance in pixels between duplicate labels - see :ref:`MINDISTANCE <mapfile-label-mindistance>`
+    int repeatdistance; ///< See :ref:`REPEATDISTANCE <mapfile-label-repeatdistance>`
+    double maxoverlapangle; ///< See :ref:`MAXOVERLAPANGLE <mapfile-label-maxoverlapangle>`
+    int partials; ///< Indicates if labels can run off the edge of an image, either :data:`MS_TRUE` (default) or :data:`MS_FALSE` - see :ref:`PARTIALS <mapfile-label-partials>`
 
-    int force; /* labels *must* be drawn */
+    int force; ///< Indicates if labels **must** be drawn - see :ref:`FORCE <mapfile-label-force>`
 
-    char *encoding;
+    char *encoding; ///< Supported encoding format to be used for labels - see :ref:`ENCODING <mapfile-label-encoding>`
 
-    int priority;  /* Priority level 1 to MS_MAX_LABEL_PRIORITY, default=1 */
+    int priority; ///< Priority level 1 to :data:`MS_MAX_LABEL_PRIORITY`, default=1 - see :ref:`PRIORITY <mapfile-label-priority>`
+    int numstyles; ///< The number of styles associated with the label
 
-#ifndef SWIG
-    expressionObj expression;
-    expressionObj text;
-#endif
+    int sizeunits; ///< Supersedes class's sizeunits, defaults to :data:`MS_INHERIT`.
 
 #ifndef SWIG
     styleObj **styles;
     int maxstyles;
-#endif
-    int numstyles;
 
-#ifndef SWIG
+    expressionObj expression;
+    expressionObj text;
+
+    labelLeaderObj *leader;
+
     attributeBindingObj bindings[MS_LABEL_BINDING_LENGTH];
     int numbindings;
     expressionObj exprBindings[MS_LABEL_BINDING_LENGTH];
     int nexprbindings;
-#endif
 
-    labelLeaderObj *leader;
-
-    int sizeunits; // supersedes class's sizeunits
-#ifndef SWIG
     double scalefactor; // computed, not set
 #endif /* not SWIG */
 
