@@ -7,12 +7,12 @@ https://lists.osgeo.org/mailman/listinfo/mapserver-user
 or other support forums. GitHub issues are for bug
 reports and suggestions for new features.
 
-The Mapserver project is made of contributions from various individuals and
+The MapServer project is made of contributions from various individuals and
 organizations, each with their own focus. The issue you are facing is
 not necessarily in the priority list of those contributors and consequently
 there is no guarantee that it will be addressed in a timely manner.
 If this bug report or feature request is high-priority for you, and you
-cannot address it yourself, we suggest engaging a Mapserver developer or support
+cannot address it yourself, we suggest engaging a MapServer developer or support
 organisation (some of them listed at https://mapserver.org/community/service_providers.html)
 and financially sponsoring a fix.
 
@@ -20,18 +20,25 @@ and financially sponsoring a fix.
 
 ## Expected behavior and actual behavior.
 
-For example (please modify !!!): I expected the following request to work (
-provide as a .zip attachment the request, minimum mapfile and dataset(s) to
-reproduce the issue) and it returns an error message instead.
+For example (please modify !!!): I expected the following request to work 
+(paste request) and it returns an error message instead (paste error).
 
 ## Steps to reproduce the problem.
 
-For example (please modify !!!): "mapserver -nh QUERY_STRING='map=test.map&...'"
+For example (please modify !!!): "mapserv -nh QUERY_STRING='map=test.map&...'"
+
+## Attach simple test case
+
+Please create a .zip file that contains:
+ - small .map file
+ - data
+ - commands.txt (containing commands to reproduce your problem such as 
+   shp2img, mapserv, etc.
 
 ## Operating system
 
 For example (please modify !!!): Ubuntu 16.04 64 bit
 
-## Mapserver version and provenance
+## MapServer version and installation method
 
 For example (please modify !!!): the 7.6.1 version from ubuntugis-unstable PPA
