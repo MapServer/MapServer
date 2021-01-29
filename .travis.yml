@@ -23,6 +23,11 @@ matrix:
         - BUILD_NAME=PHP_7.3_WITH_PROJ7
         - PYTHON_VERSION=3.7
 
+    - php: 7.4
+      env:
+        - BUILD_NAME=PHP_7.4
+        - PYTHON_VERSION=3.8
+
 cache:
     apt: true
     directories:
