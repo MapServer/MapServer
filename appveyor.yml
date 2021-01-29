@@ -29,6 +29,8 @@ environment:
     Python_ROOT_DIR: c:/python36-x64
   - platform: x64
     Python_ROOT_DIR: c:/python37-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python38-x64
 
 services:
   - mssql2017
@@ -82,6 +84,8 @@ build_script:
   - cmake --build . --config Release
   - cd %BUILD_FOLDER%/build
   - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%
+  # set the MapScript custom environment variable for py 3.8
+  - set MAPSERVER_DLL_PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%
   - set PROJ_LIB=%SDK_BIN%/proj/SHARE
   # check the mapserver exe can run
   - mapserv -v
