@@ -1,5 +1,33 @@
+import sys
+import platform
+import os
 import inspect
+
+# As of Python 3.8 PATH can no longer be used to resolve the MapServer
+# DLLs on Windows. Instead users will be required to set a new MAPSERVER_DLL_PATH
+# environment variable.
+# See https://docs.python.org/3/whatsnew/3.8.html#changes-in-the-python-api
+
+
+def add_dll_path(pth):
+    if (3, 8) <= sys.version_info:
+        os.add_dll_directory(pth)
+    else:
+        # add the directory to the Windows path for earlier Python version
+        os.environ['PATH'] = pth + ';' + os.environ['PATH']
+
+
+if platform.system() == 'Windows':
+    mapserver_dll_path = os.getenv('MAPSERVER_DLL_PATH', '')
+    dll_paths = mapserver_dll_path.split(';')
+    # add paths in the order listed in the string
+    dll_paths.reverse()
+    for pth in dll_paths:
+        add_dll_path(pth)
+
+
 from .mapscript import *
+
 
 # change all the class module names from mapscript.mapscript to mapscript
 
