@@ -2736,7 +2736,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     msIO_fprintf(stream, "GEOMTRANSFORM (%s)\n", style->_geomtransform.string);
   }
   else if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
+    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 8,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
