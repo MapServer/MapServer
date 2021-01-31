@@ -485,14 +485,6 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;
-#ifdef include_deprecated
-  if(shape) {
-    cachePtr->shapetype = shape->type;
-  } else {
-    cachePtr->shapetype = MS_SHAPE_POINT;
-  }
-#endif
-
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
 
