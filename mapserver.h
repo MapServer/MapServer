@@ -1261,62 +1261,67 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
   %immutable;
 #endif /* SWIG */
+  /**
+  An individual feature label. The labelCacheMemberObj class is associated with labelCacheObj.
+  */
   typedef struct {
-#ifdef include_deprecated
-    styleObj *styles; /* copied from the classObj, only present if there is a marker to be drawn */
-    int numstyles;
-#endif
+    int numtextsymbols; ///< Number of text symbols found in textsymbols
+    int layerindex; ///< The index of the layer of the labelled feature
+    int classindex; ///< Index of the class of the labelled feature
+    int status; ///< Has this label been drawn or not?
+    int markerid;  ///< Corresponding marker (POINT layers only)
 
+    pointObj point; ///< Label point
+    rectObj bbox; ///< Bounds of the whole cachePtr. Individual text and symbol sub bounds are found in textsymbols
+
+    lineObj *leaderline; ///< Leader lineObj
+    rectObj *leaderbbox; ///< Leader rectObj
+
+#ifndef SWIG
     textSymbolObj **textsymbols;
-    int numtextsymbols;
-
-    int layerindex; /* indexes */
-    int classindex;
-
-#ifdef include_deprecated
-    int shapetype; /* source geometry type, can be removed once annotation layers are dropped */
 #endif
 
-    pointObj point; /* label point */
-    rectObj bbox; /* bounds of the whole cachePtr. Individual text and symbol sub bounds are found in the textsymbols */
-
-    int status; /* has this label been drawn or not */
-
-    int markerid; /* corresponding marker (POINT layers only) */
-    lineObj *leaderline;
-    rectObj *leaderbbox;
   } labelCacheMemberObj;
 
   /************************************************************************/
   /*                         markerCacheMemberObj                         */
   /************************************************************************/
+  /**
+  An individual marker. The markerCacheMemberObj class is associated with labelCacheObj.
+  */
   typedef struct {
-    int id; /* corresponding label */
-    rectObj bounds;
+    int id; ///< Corresponding label
+    rectObj bounds; ///< Bounds of the markerCacheMemberObj
   } markerCacheMemberObj;
 
   /************************************************************************/
   /*                          labelCacheSlotObj                           */
   /************************************************************************/
   typedef struct {
+    int numlabels; ///< Number of label members
+    int cachesize; ///< TODO
+    int nummarkers; ///< Number of marker members
+    int markercachesize; ///< TODO
     labelCacheMemberObj *labels;
-    int numlabels;
-    int cachesize;
     markerCacheMemberObj *markers;
-    int nummarkers;
-    int markercachesize;
   } labelCacheSlotObj;
 
   /************************************************************************/
   /*                            labelCacheObj                             */
   /************************************************************************/
+  /**
+  Set of a map's cached labels. Has no other existence other than as a labelcache
+  attribute of a mapObj. Associated with labelCacheMemberObj and markerCacheMemberObj.
+  */
   typedef struct {
+    int num_rendered_members; ///< Number of rendered labels
+#ifndef SWIG
     /* One labelCacheSlotObj for each priority level */
     labelCacheSlotObj slots[MS_MAX_LABEL_PRIORITY];
     int gutter; /* space in pixels around the image where labels cannot be placed */
     labelCacheMemberObj **rendered_text_symbols;
     int num_allocated_rendered_members;
-    int num_rendered_members;
+#endif
   } labelCacheObj;
 
   /************************************************************************/

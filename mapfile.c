@@ -6042,10 +6042,6 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot)
       }
       msFree(cacheslot->labels[i].textsymbols);
 
-#ifdef include_deprecated
-      for(j=0; j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
-      msFree(cacheslot->labels[i].styles);
-#endif
       if(cacheslot->labels[i].leaderline) {
         msFree(cacheslot->labels[i].leaderline->point);
         msFree(cacheslot->labels[i].leaderline);
