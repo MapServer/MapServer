@@ -1314,13 +1314,13 @@ typedef struct labelObj labelObj;
   attribute of a mapObj. Associated with labelCacheMemberObj and markerCacheMemberObj.
   */
   typedef struct {
+    int num_rendered_members; ///< Number of rendered labels
 #ifndef SWIG
     /* One labelCacheSlotObj for each priority level */
     labelCacheSlotObj slots[MS_MAX_LABEL_PRIORITY];
     int gutter; /* space in pixels around the image where labels cannot be placed */
     labelCacheMemberObj **rendered_text_symbols;
     int num_allocated_rendered_members;
-    int num_rendered_members;
 #endif
   } labelCacheObj;
 
