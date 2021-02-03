@@ -67,11 +67,6 @@
 #include <pixman.h>
 #endif
 
-#ifdef AGG_ALIASED_ENABLED
-#include "renderers/agg/include/agg_renderer_primitives.h"
-#include "renderers/agg/include/agg_rasterizer_outline.h"
-#endif
-
 typedef mapserver::order_bgra band_order;
 
 #define AGG_LINESPACE 1.33
@@ -89,16 +84,13 @@ typedef mapserver::rendering_buffer rendering_buffer;
 typedef mapserver::renderer_base<pixel_format> renderer_base;
 typedef mapserver::renderer_base<compop_pixel_format> compop_renderer_base;
 typedef mapserver::renderer_scanline_aa_solid<renderer_base> renderer_scanline;
+typedef mapserver::renderer_scanline_bin_solid<renderer_base> renderer_scanline_aliased;
 typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 typedef mapserver::font_engine_freetype_int16 font_engine_type;
 typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
 typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
 
-#ifdef AGG_ALIASED_ENABLED
-typedef mapserver::renderer_primitives<renderer_base> renderer_primitives;
-typedef mapserver::rasterizer_outline<renderer_primitives> rasterizer_outline;
-#endif
 static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
 
 #define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
@@ -116,11 +108,6 @@ class AGG2Renderer
 public:
 
   AGG2Renderer()
-#ifdef AGG_ALIASED_ENABLED
-    :
-    m_renderer_primitives(m_renderer_base),
-    m_rasterizer_primitives(m_renderer_primitives)
-#endif
   {
     stroke = NULL;
     dash = NULL;
@@ -146,10 +133,7 @@ public:
   renderer_base m_renderer_base;
   compop_renderer_base m_compop_renderer_base;
   renderer_scanline m_renderer_scanline;
-#ifdef AGG_ALIASED_ENABLED
-  renderer_primitives m_renderer_primitives;
-  rasterizer_outline m_rasterizer_primitives;
-#endif
+  renderer_scanline_aliased m_renderer_scanline_aliased;
   rasterizer_scanline m_rasterizer_aa;
   rasterizer_scanline m_rasterizer_aa_gamma;
   mapserver::scanline_p8 sl_poly; /*packed scanlines, works faster when the area is larger
@@ -201,16 +185,16 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
   AGG2Renderer *r = AGG_RENDERER(img);
   line_adaptor lines = line_adaptor(p);
 
-#ifdef AGG_ALIASED_ENABLED
-  r->m_rasterizer_primitives.reset();
-  r->m_renderer_primitives.line_color(aggColor(style->color));
-  r->m_rasterizer_primitives.add_path(lines);
-  return MS_SUCCESS;
-#endif
-
   r->m_rasterizer_aa.reset();
   r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-  r->m_renderer_scanline.color(aggColor(style->color));
+  if (style->antialiased== MS_FALSE)
+  {
+    r->m_renderer_scanline_aliased.color(aggColor(style->color));
+  }
+  else
+  {
+    r->m_renderer_scanline.color(aggColor(style->color));
+  }
 
   if (style->patternlength <= 0) {
     if(!r->stroke) {
@@ -262,7 +246,10 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
     }
     r->m_rasterizer_aa.add_path(*r->stroke_dash);
   }
-  mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
+  if (style->antialiased == MS_FALSE)
+    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline_aliased);
+  else 
+    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   return MS_SUCCESS;
 }
 
@@ -841,6 +828,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   r->m_renderer_base.attach(r->m_pixel_format);
   r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
   r->m_renderer_scanline.attach(r->m_renderer_base);
+  r->m_renderer_scanline_aliased.attach(r->m_renderer_base);
   r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
   if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
     r->default_gamma = 0.75;
