@@ -10,12 +10,12 @@ fontset "../misc/fonts.lst"
 symbolset "symbolset"
 
 OUTPUTFORMAT
-      NAME "png"
-	  DRIVER AGG/PNG
-	  MIMETYPE "image/png"
-	  IMAGEMODE RGBA
-	  EXTENSION "png"
-	  FORMATOPTION "GAMMA=1.0"
+    NAME "png"
+    DRIVER AGG/PNG
+    MIMETYPE "image/png"
+    IMAGEMODE RGBA
+    EXTENSION "png"
+    FORMATOPTION "GAMMA=1.0"
 END
 
 layer
@@ -27,7 +27,7 @@ layer
         style
             color 128 128 128
             width 5
-            ANTIALIAS TRUE            
+            ANTIALIAS TRUE
         end
     end
 end

@@ -189,10 +189,12 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
   r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
   if (style->antialiased== MS_FALSE)
   {
-	r->m_renderer_scanline_aliased.color(aggColor(style->color));
+    r->m_renderer_scanline_aliased.color(aggColor(style->color));
   }
   else
-  	r->m_renderer_scanline.color(aggColor(style->color));
+  {
+    r->m_renderer_scanline.color(aggColor(style->color));
+  }
 
   if (style->patternlength <= 0) {
     if(!r->stroke) {
@@ -245,9 +247,9 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
     r->m_rasterizer_aa.add_path(*r->stroke_dash);
   }
   if (style->antialiased == MS_FALSE)
-  	mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline_aliased);
+    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline_aliased);
   else 
-  	mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
+    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   return MS_SUCCESS;
 }
 

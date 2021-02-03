@@ -2428,9 +2428,10 @@ int loadStyle(styleObj *style)
         }
         break;
       case(ANTIALIAS):
-		if ((symbol = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
-        if (symbol == MS_FALSE)
-        	style->antialiased = MS_FALSE;
+        if ((symbol = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+        if (symbol == MS_FALSE) {
+            style->antialiased = MS_FALSE;
+        }
         break;
       case(BACKGROUNDCOLOR):
         if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
