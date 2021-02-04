@@ -3564,10 +3564,9 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
               node->tokenval.dblval == (int)node->tokenval.dblval )
               native_string += std::to_string((int)node->tokenval.dblval);
           else {
-              char* snippet = (char *) msSmallMalloc(32);
-              sprintf(snippet, "%.18g", node->tokenval.dblval);
-              native_string += snippet;
-              msFree(snippet);
+              char buffer[32];
+              snprintf(buffer, sizeof(buffer), "%.18g", node->tokenval.dblval);
+              native_string += buffer;
           }
           break;
         }
@@ -3670,10 +3669,9 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
           break;
         case MS_TOKEN_BINDING_MAP_CELLSIZE:
         {
-          char* snippet = (char *) msSmallMalloc( 64);
-          snprintf(snippet, 64,  "%lf", layer->map->cellsize);
-          native_string += snippet;
-          msFree(snippet);
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.18g", layer->map->cellsize);
+          native_string += buffer;
 	  break;
         }
 
