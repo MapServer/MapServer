@@ -1779,9 +1779,9 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
         out = msStrdup(" NOT ");
         break;
     case MS_TOKEN_LITERAL_NUMBER:
-        nOutSize = 80;
+        nOutSize = 32;
         out = (char *)msSmallMalloc(nOutSize);
-        snprintf(out, nOutSize, "%lf",  n->tokenval.dblval);
+        snprintf(out, nOutSize, "%.18g", n->tokenval.dblval);
         break;
     case MS_TOKEN_LITERAL_STRING: {
         char *stresc = msOGREscapeSQLParam(layer, n->tokenval.strval);

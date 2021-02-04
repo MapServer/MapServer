@@ -3584,25 +3584,24 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
            native_string = msStringConcatenate(native_string, " )");  
            break;   
         case MS_TOKEN_LITERAL_NUMBER:
-          strtmpl = "%lf";
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-          sprintf(snippet, strtmpl, node->tokenval.dblval);  // TODO: escape strval
+        {
+          char buffer[32];
           if (dwithin == MS_TRUE) {
             dfDistance = node->tokenval.dblval;
             if (layer->units == MS_DD){
               dfDistance *= msInchesPerUnit(MS_DD,0)/msInchesPerUnit(MS_METERS,0);
               //msDebug("Converted Distance value is %lf\n", dfDistance);
             }
-            sprintf(snippet, strtmpl, dfDistance); 
+            snprintf(buffer, sizeof(buffer), "%.18g", dfDistance);
             native_string = msStringConcatenate(native_string, "'distance=");
-            native_string = msStringConcatenate(native_string, snippet);
+            native_string = msStringConcatenate(native_string, buffer);
             native_string = msStringConcatenate(native_string, "'");
           } else {
-            native_string = msStringConcatenate(native_string, snippet);
+            snprintf(buffer, sizeof(buffer), "%.18g", node->tokenval.dblval);
+            native_string = msStringConcatenate(native_string, buffer);
           }  
-          free(snippet);
-            
           break;
+        }
         case MS_TOKEN_LITERAL_STRING:    
           strtmpl = "%s";
           snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(node->tokenval.strval));
@@ -3695,12 +3694,12 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           native_string = msStringConcatenate(native_string, geom_column_name);
           break;
         case MS_TOKEN_BINDING_MAP_CELLSIZE:
-          strtmpl = "%lf";
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-          sprintf(snippet, strtmpl, layer->map->cellsize);
-          native_string = msStringConcatenate(native_string, snippet);
-          free(snippet);
+        {
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.18g", layer->map->cellsize);
+          native_string = msStringConcatenate(native_string, buffer);
           break;
+        }
         case MS_TOKEN_LOGICAL_AND:
           native_string = msStringConcatenate(native_string, " AND ");
           break;

@@ -3121,12 +3121,12 @@ int process_node(layerObj* layer, expressionObj *filter)
         filter->native_string = msStringConcatenate(filter->native_string, "0");
       break;
     case MS_TOKEN_LITERAL_NUMBER:
-      strtmpl = "%lf";
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-      sprintf(snippet, strtmpl, layerinfo->current_node->tokenval.dblval);
-      filter->native_string = msStringConcatenate(filter->native_string, snippet);
-      msFree(snippet);
+    {
+      char buffer[32];
+      snprintf(buffer, sizeof(buffer), "%.18g", layerinfo->current_node->tokenval.dblval);
+      filter->native_string = msStringConcatenate(filter->native_string, buffer);
       break;
+    }
     case MS_TOKEN_LITERAL_STRING:
       strtmpl = "'%s'";
       stresc = msMSSQL2008LayerEscapeSQLParam(layer, layerinfo->current_node->tokenval.strval);
@@ -3212,12 +3212,12 @@ int process_node(layerObj* layer, expressionObj *filter)
       filter->native_string = msStringConcatenate(filter->native_string, layerinfo->geom_column);
       break;
     case MS_TOKEN_BINDING_MAP_CELLSIZE:
-      strtmpl = "%lf";
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-      sprintf(snippet, strtmpl, layer->map->cellsize);
-      filter->native_string = msStringConcatenate(filter->native_string, snippet);
-      msFree(snippet);
+    {
+      char buffer[32];
+      snprintf(buffer, sizeof(buffer), "%.18g", layer->map->cellsize);
+      filter->native_string = msStringConcatenate(filter->native_string, buffer);
       break;
+    }
 
     /* comparisons */
     case MS_TOKEN_COMPARISON_IN:
