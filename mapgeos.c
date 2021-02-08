@@ -516,7 +516,6 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
   GEOSGeom part;
 
   shapeObj *shape=NULL;
-  lineObj line;
   GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g) return NULL;
