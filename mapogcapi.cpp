@@ -145,7 +145,7 @@ json getCollection(mapObj *map, layerObj *layer, int format)
   const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
 
   const char *id = layer->name;
-  char *id_encoded = msEncodeUrl(id);
+  char *id_encoded = msEncodeUrl(id); // free after use
 
   // build collection object
   collection = {
@@ -177,7 +177,9 @@ json getCollection(mapObj *map, layerObj *layer, int format)
     { "itemType", "feature" }
   };
 
-  // handle keywords (optional)
+  msFree(id_encoded); // done
+
+  // handle optional configuration (keywords and links)
   const char *value = msOWSLookupMetadata(&(layer->metadata), "A", "keywords");
   if(!value) value = msOWSLookupMetadata(&(layer->metadata), "OF", "keywordlist"); // fallback on keywordlist
   if(value) {
@@ -187,7 +189,6 @@ json getCollection(mapObj *map, layerObj *layer, int format)
     }
   }
 
-  // handle custom links (optional)
   value = msOWSLookupMetadata(&(layer->metadata), "A", "links");
   if(value) {
     std::vector<std::string> names = msStringSplit(value, ',');
@@ -197,14 +198,11 @@ json getCollection(mapObj *map, layerObj *layer, int format)
         try {  
           collection["links"].push_back(json::parse(link));
         } catch(...) {
-	  // skip this link
+          throw std::runtime_error("Error parsing custom link (link_" + name + ").");
         }
       }
     }
   }
-
-  // clean up
-  msFree(id_encoded);
 
   return collection;
 }
@@ -379,7 +377,7 @@ static int processLandingRequest(mapObj *map, int format)
         try {  
           response["links"].push_back(json::parse(link));
         } catch(...) {
-          // skip this link
+          // TODO: generate an error (see getCollection)
         }
       }
     }
