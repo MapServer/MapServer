@@ -121,7 +121,11 @@ def read_test_directives( mapfile_name ):
     runparms_list = []
     require_list = []
     
-    lines = open(mapfile_name).readlines()
+    from sys import version_info
+    if version_info >= (3,0,0):
+        lines = open(mapfile_name, encoding="utf8").readlines()
+    else:
+        lines = open(mapfile_name).readlines()
     for line in lines:
         req_off = line.find( 'REQUIRES:' )
         if req_off != -1:

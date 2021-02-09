@@ -45,6 +45,16 @@ LAYER
         WIDTH 1
         GEOMTRANSFORM (buffer([shape], -1))
     END
+    STYLE
+        OUTLINECOLOR 180 0 180
+        WIDTH 1
+        OFFSET 10 10
+    END
+    STYLE
+        OUTLINECOLOR 180 0 180
+        WIDTH 1
+        OFFSET -10 -10
+    END
   END
 END
 

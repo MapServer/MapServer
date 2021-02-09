@@ -51,9 +51,6 @@ MATH(EXPR MapServer_VERSION_NUM "${MapServer_VERSION_MAJOR}*10000+${MapServer_VE
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-# Add custom function to check Python modules are installed
-include(FindPythonModule)
-
 if (APPLE)
   set(CMAKE_FIND_FRAMEWORK "LAST")
 endif (APPLE)
@@ -150,8 +147,8 @@ option(WITH_MYSQL "Choose if MYSQL joining support should be built in" OFF)
 option(WITH_FCGI "Choose if FastCGI support should be built in" ON)
 option(WITH_GEOS "Choose if GEOS geometry operations support should be built in" ON)
 option(WITH_POSTGIS "Choose if Postgis input support should be built in" ON)
-option(WITH_CLIENT_WMS "Enable Client WMS Layer support (requires CURL and GDAL support)" OFF)
-option(WITH_CLIENT_WFS "Enable Client WMS Layer support (requires CURL and OGR support)" OFF)
+option(WITH_CLIENT_WMS "Enable Client WMS Layer support (requires CURL)" OFF)
+option(WITH_CLIENT_WFS "Enable Client WMS Layer support (requires CURL)" OFF)
 option(WITH_CURL "Enable Curl HTTP support (required for wms/wfs client, and remote SLD)" OFF)
 option(WITH_WFS "Enable WFS Server support (requires PROJ and OGR support)" ON)
 option(WITH_WCS "Enable WCS Server support (requires PROJ and GDAL support)" ON)
@@ -284,7 +281,8 @@ mapogcfiltercommon.cpp maprendering.c mapwcs20.cpp mapogcsld.c mapmetadata.c
 mapresample.c mapwfs.cpp mapgdal.c mapogcsos.c mapscale.c mapwfs11.cpp mapwfs20.c
 mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
-mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c 
+mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c
+idw.c interpolation.c
 mapcompositingfilter.c mapmvt.c mapiconv.c)
 
 set(mapserver_HEADERS

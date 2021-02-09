@@ -1,0 +1,163 @@
+#
+# Test WFS GetFeature with the MSSQL driver plugin and exporting various geometry types to GeoJSON
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+#
+# RUN_PARMS: null_point.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_point&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: null_line.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_line&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: null_polygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_polygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: null_multipoint.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_multipoint&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: null_multiline.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_multiline&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: null_multipolygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_multipolygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+
+# RUN_PARMS: point.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=point&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: line.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=line&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: polygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=polygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: polygon_with_hole.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=polygon_with_hole&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+
+# RUN_PARMS: multipoint.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=multipoint&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: multiline.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=multiline&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: multipolygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=multipolygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: multipolygon_with_hole.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=multipolygon_with_hole&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+
+MAP
+  NAME 'wfs_export_mssql'
+  UNITS METERS
+
+  WEB
+    METADATA
+      "wfs_title"            "Test wfs export"
+      "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+      "wfs_srs"              "EPSG:3857 EPSG:4326"
+      "wfs_getfeature_formatlist" "gml,geojson"
+      "ows_enable_request" "*"
+    END
+  END
+
+  OUTPUTFORMAT
+      NAME "geojson"
+      DRIVER "OGR/GEOJSON"
+      MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+      FORMATOPTION "FORM=SIMPLE"
+      FORMATOPTION "STORAGE=memory"
+      FORMATOPTION "LCO:NATIVE_MEDIA_TYPE=application/vnd.geo+json"
+  END
+
+  # test all null cases
+
+  LAYER
+    NAME 'null_point'
+    TYPE POINT
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POINT EMPTY', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'null_line'
+    TYPE LINE
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('LINESTRING EMPTY', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'null_polygon'
+    TYPE POLYGON
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POLYGON EMPTY', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'null_multipoint'
+    TYPE POINT
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTIPOINT EMPTY', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'null_multiline'
+    TYPE LINE
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTILINESTRING EMPTY', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'null_multipolygon'
+    TYPE POLYGON
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTIPOLYGON EMPTY', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  # examples of WKT taken from https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
+
+  LAYER
+    NAME 'point'
+    TYPE POINT
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POINT (30 10)', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'line'
+    TYPE LINE
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('LINESTRING (30 10, 10 30, 40 40)', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'polygon'
+    TYPE POLYGON
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'polygon_with_hole'
+    TYPE POLYGON
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10), (20 30, 35 35, 30 20, 20 30))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'multipoint'
+    TYPE POINT
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTIPOINT ((10 40), (40 30), (20 20), (30 10))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'multiline'
+    TYPE LINE
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTILINESTRING ((10 10, 20 20, 10 40), (40 40, 30 30, 40 20, 30 10))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'multipolygon'
+    TYPE POLYGON
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTIPOLYGON (((30 20, 45 40, 10 40, 30 20)), ((15 5, 40 10, 10 20, 5 10, 15 5)))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+  LAYER
+    NAME 'multipolygon_with_hole'
+    TYPE POLYGON
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), 
+    ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), (30 20, 20 15, 20 25, 30 20)))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+
+END

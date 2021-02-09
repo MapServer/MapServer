@@ -149,7 +149,10 @@ MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
     hashTableObj *sec,
     const char *namespaces,
     const char *name);
-    
+
+MS_DLL_EXPORT int msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name,
+    const char *gml_type, const char *gml_width, const char *gml_precision, const short nullable);
+
 void msOWSInitRequestObj(owsRequestObj *ows_request);
 void msOWSClearRequestObj(owsRequestObj *ows_request);
 
@@ -183,16 +186,20 @@ MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *re
 MS_DLL_EXPORT int msOWSParseVersionString(const char *pszVersion);
 MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
 
+MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
+MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
+MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
+MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
+
+void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne, char **epsgProj);
+void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext);
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions);
-MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
-MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT char *msOWSGetOnlineResource2(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req, const char *validated_language);
-MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 MS_DLL_EXPORT const char *msOWSGetInspireSchemasLocation(mapObj *map);
-MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 MS_DLL_EXPORT char **msOWSGetLanguageList(mapObj *map, const char *namespaces, int *numitems);
 MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *requested_language);
 MS_DLL_EXPORT char *msOWSLanguageNegotiation(mapObj *map, const char *namespaces, char **accept_languages, int num_accept_languages);
@@ -282,7 +289,6 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
                               char delimiter, const char *startTag,
                               const char *endTag, const char *format,
                               const char *default_value);
-void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
                                  projectionObj *wfsproj, OWSServiceType nService);
@@ -308,7 +314,6 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
                            int nErrorCode, const char *pszFuncName);
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
                             const char *pszExt);
-void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne, char **epsgProj);
 char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 
@@ -420,11 +425,12 @@ MS_DLL_EXPORT gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char 
 MS_DLL_EXPORT void msGMLFreeConstants(gmlConstantListObj *constantList);
 MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces, int bWithDefaultGeom);
 MS_DLL_EXPORT void msGMLFreeGeometries(gmlGeometryListObj *geometryList);
-MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces);
-MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
 MS_DLL_EXPORT gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList);
 #endif
+
+MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces);
+MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
 
 /* export to fix bug 851 */
 MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces);
@@ -478,6 +484,7 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
 /*====================================================================
  *   mapmetadata.c
  *====================================================================*/
+
 metadataParamsObj *msMetadataCreateParamsObj(void);
 void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
 int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,

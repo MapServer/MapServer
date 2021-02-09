@@ -2,7 +2,7 @@ Python MapScript for MapServer README
 =====================================
 
 :Author: MapServer Team
-:Last Updated: 2020-03-02
+:Last Updated: 2021-01-29
 
 Introduction
 ------------
@@ -35,12 +35,14 @@ Advantages of ready-made wheels on PyPI include:
 + mapscript can be easily added to a Python `Virtual Environment <https://docs.python-guide.org/dev/virtualenvs/>`_
 + Python2 or Python3 versions of mapscript can be installed and work with a single installation of MapServer
 
-Wheels are built based on the `Appveyor build environments <https://github.com/mapserver/mapserver/blob/master/appveyor.yml>`_. 
+Wheels are built based on the `Appveyor build environments <https://github.com/MapServer/MapServer/blob/main/appveyor.yml>`_. 
 These are as follows at the time of writing:
 
 + Python 2.7 x32
 + Python 2.7 x64
 + Python 3.6 x64
++ Python 3.7 x64
++ Python 3.8 x64
 
 The mapscript wheels have been compiled using Visual Studio 2017 version 15 (``MSVC++ 14.11 _MSC_VER == 1911``). 
 Linux Wheels may also be available in the future using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
@@ -58,15 +60,45 @@ Installation on Windows
 -----------------------
 
 To use mapscript you will need to add the MapServer binaries to your system path. 
-On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries. 
+
+For Python 3.8+
++++++++++++++++
+
+As of `Python 3.8 <https://docs.python.org/3/whatsnew/3.8.html#changes-in-the-python-api>`_ ``PATH`` 
+and the current working directory are no longer used when searching for the MapServer DLLs.
+A new environment variable ``MAPSERVER_DLL_PATH`` has been introduced to set the location of the MapServer DLLs.
+On Windows you can use the following, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries.
+
+.. code-block:: bat
+
+    SET MAPSERVER_DLL_PATH=C:\MapServer\bin
+
+If several folders are required (e.g. GDAL DLLs) multiple paths can be provided separated by semi-colons:
+
+.. code-block:: bat
+
+    SET MAPSERVER_DLL_PATH=C:\MapServer\bin;C:\GDAL\bin
+
+For Earlier Python Versions
++++++++++++++++++++++++++++
+
+For Python 3.7 and earlier (including Python 2.7) you can use either the ``MAPSERVER_DLL_PATH`` variable documented above,
+or the system ``PATH`` variable as below, replacing ``C:\MapServer\bin`` with the location of your MapServer binaries. 
 
 .. code-block:: bat
 
     SET PATH=C:\MapServer\bin;%PATH%
 
+Windows Binaries
+++++++++++++++++
+
 Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`_. 
-To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1911-x64-gdal-2-3-mapserver-7-4``
-for mapscript 7.4. 
+To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1928-x64-gdal-3-2-mapserver-7-6``
+for mapscript 7.6. 
+
+.. NOTE::
+   `MS4W <https://www.ms4w.com>`_ (MapServer for Windows) is a full installer that contains Python & Python
+   MapScript already configured out-of-the-box, as well as default OGC web services and over 60 working mapfiles.
 
 When using these packages the MapServer path will be similar to ``C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin``. 
 
@@ -93,7 +125,7 @@ Now you should be able to import mapscript:
 .. code-block:: python
 
     python -c "import mapscript;print(mapscript.msGetVersion())"
-    MapServer version 7.4.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
+    MapServer version 7.6.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
 
 If you failed to add the MapServer binaries to your system path you may see one of the following errors:
 
@@ -235,8 +267,8 @@ Make sure the MapServer binaries are on the system path, and that the PROJ_LIB v
 
 .. code-block:: bat
 
-    SET PATH=C:\release-1911-x64-gdal-2-3-mapserver-7-4\bin;%PATH%
-    SET PROJ_LIB=C:\release-1911-x64-gdal-2-3-mapserver-7-4\bin\proj\SHARE
+    SET PATH=C:\release-1928-x64-gdal-3-2-mapserver-7-6\bin;%PATH%
+    SET PROJ_LIB=C:\release-1928-x64-gdal-3-2-mapserver-7-6\bin\proj\SHARE
 
 Finally run the command below to run the test suite: 
 

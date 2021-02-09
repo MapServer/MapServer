@@ -126,6 +126,7 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
 #endif
 }
 
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 /* -------------------------------------------------------------------- */
 /*      If the same layer is given more that once, we need to           */
 /*      duplicate it.                                                   */
@@ -165,6 +166,7 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj 
       }
     }
 }
+#endif
 
 /************************************************************************/
 /*                              msSLDApplySLD                           */

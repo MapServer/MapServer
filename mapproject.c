@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
+#include "ogr_srs_api.h"
+
 static char *ms_proj_lib = NULL;
 #if PROJ_VERSION_MAJOR >= 6
 static unsigned ms_proj_lib_change_counter = 0;
@@ -117,11 +119,23 @@ static int msProjectHasLonWrapOrOver(projectionObj *in) {
 /* Return to be freed with proj_destroy() if *pbFreePJ = TRUE */
 static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFreePJ)
 {
+    if( in->proj == out->proj )
+    {
+        /* Special case to avoid out_str below to cause in_str to become invalid */
+        *pbFreePJ = TRUE;
+#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR == 0
+        /* 6.0 didn't support proj=noop */
+        return proj_create(in->proj_ctx->proj_ctx, "+proj=affine");
+#else
+        return proj_create(in->proj_ctx->proj_ctx, "+proj=noop");
+#endif
+    }
+
     const char* const wkt_options[] = { "MULTILINE=NO", NULL };
-    const char* in_str = (in && msProjectHasLonWrapOrOver(in)) ?
+    const char* in_str = msProjectHasLonWrapOrOver(in) ?
         proj_as_proj_string(in->proj_ctx->proj_ctx, in->proj, PJ_PROJ_4, NULL) :
         proj_as_wkt(in->proj_ctx->proj_ctx, in->proj, PJ_WKT2_2018, wkt_options);
-    const char* out_str = (out && msProjectHasLonWrapOrOver(out)) ?
+    const char* out_str = msProjectHasLonWrapOrOver(out) ?
         proj_as_proj_string(out->proj_ctx->proj_ctx, out->proj, PJ_PROJ_4, NULL) :
         proj_as_wkt(out->proj_ctx->proj_ctx, out->proj, PJ_WKT2_2018, wkt_options);
     PJ* pj_raw;
@@ -2398,6 +2412,14 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
     ms_proj_lib = msStrdup( proj_lib );
 #endif
   msReleaseLock( TLOCK_PROJ );
+
+#if GDAL_VERSION_MAJOR >= 3
+  if( ms_proj_lib != NULL )
+  {
+    const char* const apszPaths[] = { ms_proj_lib, NULL };
+    OSRSetPROJSearchPaths(apszPaths);
+  }
+#endif
 
   if ( extended_path )
     msFree( extended_path );

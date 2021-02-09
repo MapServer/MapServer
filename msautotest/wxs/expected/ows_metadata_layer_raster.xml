@@ -111,16 +111,7 @@ Content-type: text/xml
           <gmd:title>
             <gco:CharacterString>Toronto</gco:CharacterString>
           </gmd:title>
-          <gmd:date>
-            <gmd:CI_Date>
-              <gmd:date>
-                <gco:Date>2011</gco:Date>
-              </gmd:date>
-              <gmd:dateType>
-                <gmd:CI_DateTypeCode codeSpace="ISOTC211/19115" codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication">publication</gmd:CI_DateTypeCode>
-              </gmd:dateType>
-            </gmd:CI_Date>
-          </gmd:date>
+          <gmd:date gco:nilReason="missing"/>
         </gmd:CI_Citation>
       </gmd:citation>
       <gmd:abstract>

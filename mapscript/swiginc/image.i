@@ -107,12 +107,12 @@
         msSaveImage(map, self, filename );
     }
 
+#ifndef SWIGPYTHON
     /**
     Write image data to an open file handle. Intended to replace
-    saveToString.  See python/pyextend.i for the Python specific
+    saveToString.  See ``python/pyextend.i`` for the Python specific
     version of this method.
     */
-#ifndef SWIGPYTHON
     int write( FILE *file=NULL )
     {
         int retval=MS_FAILURE;

@@ -267,13 +267,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRGeometryH hMP = NULL;
     int j;
 
-    if( shape->numlines < 1 ) {
-      msSetError(MS_MISCERR,
-                 "Failed on odd point geometry.",
-                 "msOGRWriteShape()");
-      return MS_FAILURE;
-    }
-    
     if( shape->numlines == 1 && shape->line[0].numpoints > 1 )
     {
       hGeom = OGR_G_CreateGeometry( wkbMultiPoint );
@@ -347,17 +340,18 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     OGRGeometryH hML = NULL;
     int j;
 
-    if( shape->numlines < 1 || shape->line[0].numpoints < 2 ) {
-      msSetError(MS_MISCERR,
-                 "Failed on odd line geometry.",
-                 "msOGRWriteShape()");
-      return MS_FAILURE;
-    }
-
     if( shape->numlines > 1 )
       hML = OGR_G_CreateGeometry( wkbMultiLineString );
 
     for( j = 0; j < shape->numlines; j++ ) {
+
+      if( shape->line[j].numpoints < 2 ) {
+        msSetError(MS_MISCERR,
+                   "Failed on odd line geometry.",
+                   "msOGRWriteShape()");
+        return MS_FAILURE;
+      }
+
       hGeom = OGR_G_CreateGeometry( wkbLineString );
 
       msOGRSetPoints( hGeom, &(shape->line[j]), bWant2DOutput);
@@ -375,17 +369,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   else if( shape->type == MS_SHAPE_POLYGON ) {
     int iRing, iOuter;
     int *outer_flags;
-    OGRGeometryH hMP;
+    OGRGeometryH hMP = NULL;
 
-    if( shape->numlines < 1 ) {
-      msSetError(MS_MISCERR,
-                 "Failed on odd polygon geometry.",
-                 "msOGRWriteShape()");
-      return MS_FAILURE;
-    }
+    if( shape->numlines > 1 )
+        hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
 
     outer_flags = msGetOuterList( shape );
-    hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
 
     for( iOuter = 0; iOuter < shape->numlines; iOuter++ ) {
       int *inner_flags;
@@ -430,7 +419,8 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
       hGeom = OGR_G_Clone( OGR_G_GetGeometryRef( hMP, 0 ) );
       OGR_G_DestroyGeometry( hMP );
     } else {
-      hGeom = hMP;
+        if( hMP != NULL )
+            hGeom = hMP;
     }
   }
 

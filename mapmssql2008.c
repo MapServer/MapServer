@@ -737,13 +737,31 @@ static void setConnError(msODBCconn *conn)
   conn->errorMessage[len] = 0;
 }
 
-/* Connect to db */
-static msODBCconn * mssql2008Connect(char * connString)
+#ifdef USE_ICONV
+static SQLWCHAR* convertCwchartToSQLWCHAR(const wchar_t* inStr)
 {
-  SQLCHAR outConnString[1024];
+    SQLWCHAR* outStr;
+    int i, len;
+    for( len = 0; inStr[len] != 0; ++len )
+    {
+        /* do nothing */
+    }
+    outStr = (SQLWCHAR*)msSmallMalloc(sizeof(SQLWCHAR) * (len + 1));
+    for( i = 0; i <= len; i++ )
+    {
+        outStr[i] = (SQLWCHAR)inStr[i];
+    }
+    return outStr;
+}
+#endif
+
+/* Connect to db */
+static msODBCconn * mssql2008Connect(const char * connString)
+{
   SQLSMALLINT outConnStringLen;
   SQLRETURN rc;
   msODBCconn * conn = msSmallMalloc(sizeof(msODBCconn));
+  char fullConnString[1024];
 
   memset(conn, 0, sizeof(*conn));
 
@@ -755,16 +773,24 @@ static msODBCconn * mssql2008Connect(char * connString)
 
   if (strcasestr(connString, "DRIVER=") == 0)
   {
-      SQLCHAR fullConnString[1024];
+      snprintf(fullConnString, sizeof(fullConnString), "DRIVER={SQL Server};%s", connString);
 
-      snprintf((char*)fullConnString, sizeof(fullConnString), "DRIVER={SQL Server};%s", connString);
-
-      rc = SQLDriverConnect(conn->hdbc, NULL, fullConnString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
+      connString = fullConnString;
   }
-  else
+
   {
+#ifdef USE_ICONV
+      wchar_t *decodedConnString = msConvertWideStringFromUTF8(connString, "UCS-2LE");
+      SQLWCHAR outConnString[1024];
+      SQLWCHAR* decodedConnStringSQLWCHAR = convertCwchartToSQLWCHAR(decodedConnString);
+      rc = SQLDriverConnectW(conn->hdbc, NULL, decodedConnStringSQLWCHAR, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
+      msFree(decodedConnString);
+      msFree(decodedConnStringSQLWCHAR);
+#else
+      SQLCHAR outConnString[1024];
       rc = SQLDriverConnect(conn->hdbc, NULL, (SQLCHAR*)connString, SQL_NTS, outConnString, 1024, &outConnStringLen, SQL_DRIVER_NOPROMPT);
-  }
+#endif
+  }  
 
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
     setConnError(conn);
@@ -794,7 +820,17 @@ static int executeSQL(msODBCconn *conn, const char * sql)
 
   SQLCloseCursor(conn->hstmt);
 
+#ifdef USE_ICONV
+  {
+    wchar_t *decodedSql = msConvertWideStringFromUTF8(sql, "UCS-2LE");
+    SQLWCHAR* decodedSqlSQLWCHAR = convertCwchartToSQLWCHAR(decodedSql);
+    rc = SQLExecDirectW(conn->hstmt, decodedSqlSQLWCHAR, SQL_NTS);
+    msFree(decodedSql);
+    msFree(decodedSqlSQLWCHAR);
+  }
+#else
   rc = SQLExecDirect(conn->hstmt, (SQLCHAR *) sql, SQL_NTS);
+#endif
 
   if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
     return 1;
@@ -836,7 +872,6 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
     *itemType = dataType;
 
     if (pass_field_def) {
-      char md_item_name[256];
       char gml_width[32], gml_precision[32];
       const char *gml_type = NULL;
 
@@ -886,23 +921,7 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
       if( columnSize > 0 )
             sprintf( gml_width, "%u", (unsigned int)columnSize );
 
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", buffer );
-      if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
-        msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
-
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", buffer );
-      if( strlen(gml_width) > 0
-          && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
-        msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
-
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",buffer );
-      if( strlen(gml_precision) > 0
-          && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
-        msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
-
-      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_nillable",buffer );
-      if( nullable > 0 )
-        msInsertHashTable(&(layer->metadata), md_item_name, "true" );
+      msUpdateGMLFieldMetadata(layer, buffer, gml_type, gml_width, gml_precision, (const short) nullable);
     }
     return 1;
   } else {
@@ -2238,38 +2257,63 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
       shape->numvalues = layer->numitems;
 
       for(t=0; t < layer->numitems; t++) {
-        /* figure out how big the buffer needs to be */
-        rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), SQL_C_BINARY, dummyBuffer, 0, &needLen);
+        /* Startwith a 64 character long buffer. This may need to be increased after calling SQLGetData. */
+        SQLLEN emptyLen = 64;
+        valueBuffer = (char*) msSmallMalloc(emptyLen);
+        if ( valueBuffer == NULL ) {
+          msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
+          return MS_FAILURE;
+        }
+
+#ifdef USE_ICONV
+        SQLSMALLINT targetType = SQL_WCHAR;
+#else
+        SQLSMALLINT targetType = SQL_CHAR;
+#endif
+        SQLLEN totalLen = 0;
+        char *bufferLocation = valueBuffer;
+        int r = 0;
+        while (r < 20) {
+          rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), targetType, bufferLocation, emptyLen, &retLen);
+
+          if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+            totalLen += retLen > emptyLen || retLen == SQL_NO_TOTAL ? emptyLen : retLen;
+
+          if (rc == SQL_SUCCESS_WITH_INFO && rc != SQL_NO_DATA) {
+            /* We must compensate for the last null termination that SQLGetData include */
+            /* If we get SQL_NO_TOTAL we do not know how big buffer we need so we increase it with 512. */
+#ifdef USE_ICONV
+            totalLen -= sizeof(wchar_t);
+            emptyLen = retLen != SQL_NO_TOTAL? retLen - emptyLen + 2 * sizeof(wchar_t): 512;
+#else
+            totalLen -= sizeof(char);
+            emptyLen = retLen != SQL_NO_TOTAL? retLen - emptyLen + 2 * sizeof(char): 512;
+#endif
+
+            valueBuffer = (char *)msSmallRealloc(valueBuffer, totalLen + emptyLen);
+            bufferLocation = valueBuffer + totalLen;
+          } else
+            break;
+          
+          r++;
+        }
+
         if (rc == SQL_ERROR)
           handleSQLError(layer);
 
-        if (needLen > 0) {
-          /* allocate the buffer - this will be a null-terminated string so alloc for the null too */
-          valueBuffer = (char*) msSmallMalloc( needLen + 2 );
-          if ( valueBuffer == NULL ) {
-            msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
-            return MS_FAILURE;
-          }
-
-          /* Now grab the data */
-          rc = SQLGetData(layerinfo->conn->hstmt, (SQLUSMALLINT)(t + 1), SQL_C_BINARY, valueBuffer, needLen, &retLen);
-          if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
-            handleSQLError(layer);
-
-          /* Terminate the buffer */
-          valueBuffer[retLen] = 0; /* null terminate it */
-
+        if (totalLen > 0) {
           /* Pop the value into the shape's value array */
 #ifdef USE_ICONV
-          valueBuffer[retLen + 1] = 0;
           shape->values[t] = msConvertWideStringToUTF8((wchar_t*)valueBuffer, "UCS-2LE");
           msFree(valueBuffer);
 #else
           shape->values[t] = valueBuffer;
 #endif
-        } else
+        } else {
           /* Copy empty sting for NULL values */
           shape->values[t] = msStrdup("");
+          msFree(valueBuffer);
+        }
       }
 
       /* Get shape geometry */
@@ -3077,12 +3121,12 @@ int process_node(layerObj* layer, expressionObj *filter)
         filter->native_string = msStringConcatenate(filter->native_string, "0");
       break;
     case MS_TOKEN_LITERAL_NUMBER:
-      strtmpl = "%lf";
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-      sprintf(snippet, strtmpl, layerinfo->current_node->tokenval.dblval);
-      filter->native_string = msStringConcatenate(filter->native_string, snippet);
-      msFree(snippet);
+    {
+      char buffer[32];
+      snprintf(buffer, sizeof(buffer), "%.18g", layerinfo->current_node->tokenval.dblval);
+      filter->native_string = msStringConcatenate(filter->native_string, buffer);
       break;
+    }
     case MS_TOKEN_LITERAL_STRING:
       strtmpl = "'%s'";
       stresc = msMSSQL2008LayerEscapeSQLParam(layer, layerinfo->current_node->tokenval.strval);
@@ -3168,12 +3212,12 @@ int process_node(layerObj* layer, expressionObj *filter)
       filter->native_string = msStringConcatenate(filter->native_string, layerinfo->geom_column);
       break;
     case MS_TOKEN_BINDING_MAP_CELLSIZE:
-      strtmpl = "%lf";
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-      sprintf(snippet, strtmpl, layer->map->cellsize);
-      filter->native_string = msStringConcatenate(filter->native_string, snippet);
-      msFree(snippet);
+    {
+      char buffer[32];
+      snprintf(buffer, sizeof(buffer), "%.18g", layer->map->cellsize);
+      filter->native_string = msStringConcatenate(filter->native_string, buffer);
       break;
+    }
 
     /* comparisons */
     case MS_TOKEN_COMPARISON_IN:

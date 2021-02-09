@@ -1,0 +1,70 @@
+#
+# Test rounding geometry floating point number to 10 decimal places support in PostGIS input and GML/WFS output
+#
+# REQUIRES: SUPPORTS=WFS INPUT=POSTGIS
+#
+#
+# RUN_PARMS: wfs_postgis_10f_precision_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&MAXFEATURES=1" > [RESULT]
+# RUN_PARMS: wfs_postgis_10f_precision_gml3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&MAXFEATURES=1" > [RESULT]
+
+MAP
+  #CONFIG "MS_ERRORFILE" "stderr"
+  NAME WFS_FILTER
+  STATUS ON
+  SIZE 400 300
+  #EXTENT   2018000 -73300 3410396 647400
+  #UNITS METERS
+  EXTENT -67.5725 42 -58.9275 48.5
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  SHAPEPATH ./data
+  SYMBOLSET etc/symbols.sym
+  FONTSET etc/fonts.txt
+  
+  
+  #
+  # Start of web interface definition
+  #
+  WEB
+  
+   IMAGEPATH "/tmp/ms_tmp/"
+   IMAGEURL "/ms_tmp/"
+  
+    METADATA
+      "ows_updatesequence"   "123"
+      "wfs_title"		   "Test simple wfs"
+      "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+      "wfs_srs"		   "EPSG:4326 EPSG:4269"
+      "ows_schemas_location" "http://ogc.dmsolutions.ca"
+      "ows_enable_request" "*" 
+      "wfs_geometry_precision" "10"
+
+    END
+  END
+  
+  PROJECTION
+    "init=epsg:4326"
+  END
+  
+  #
+  # Start of layer definitions
+  #
+  
+  LAYER
+    NAME popplace
+    INCLUDE "postgis.include"
+    DATA "the_geom from (select * from popplace order by gid) as foo using srid=3978 using unique gid"
+    METADATA
+      "wfs_title"         "popplace"
+      "wfs_description"   "Cities"
+      "gml_include_items" "all"
+     END
+    TYPE POINT
+    STATUS ON
+    PROJECTION
+      "init=epsg:3978"
+    END
+  
+    LabelItem "Name"
+  END # Layer
+END # Map File

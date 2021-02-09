@@ -485,14 +485,6 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;
-#ifdef include_deprecated
-  if(shape) {
-    cachePtr->shapetype = shape->type;
-  } else {
-    cachePtr->shapetype = MS_SHAPE_POINT;
-  }
-#endif
-
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
 
@@ -971,7 +963,7 @@ pointObj get_metrics(pointObj *p, int position, textPathObj *tp, int ox, int oy,
   }
   else {
     q.x = p->x + x1 - tp->bounds.bbox.minx;
-    q.y = p->y + y1 ;
+    q.y = p->y + y1 - tp->bounds.bbox.maxy;
 
     if(bounds) {
       /* no rotation, we only need to return a bbox */

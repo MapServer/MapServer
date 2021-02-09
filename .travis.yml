@@ -11,14 +11,22 @@ matrix:
     - php: 7.1
       env:
         - BUILD_NAME=PHP_7.1
+        - PYTHON_VERSION=2.7
 
     - php: 7.2
       env:
         - BUILD_NAME=PHP_7.2_WITH_ASAN
+        - PYTHON_VERSION=3.6
 
     - php: 7.3
       env:
         - BUILD_NAME=PHP_7.3_WITH_PROJ7
+        - PYTHON_VERSION=3.7
+
+    - php: 7.4
+      env:
+        - BUILD_NAME=PHP_7.4
+        - PYTHON_VERSION=3.8
 
 cache:
     apt: true
@@ -73,9 +81,6 @@ after_success:
   - ./ci/travis/after_success.sh
 
 notifications:
-  email:
-    recipients:
-      - thomas.bonfort@gmail.com
   irc:
     channels:
       - "irc.freenode.org#mapserver"

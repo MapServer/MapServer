@@ -2891,20 +2891,8 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
       gml_type = "DateTime";
     }
 
-    char md_item_name[256];
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-    if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width.c_str(), gml_precision.c_str(), 0);
 
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
-    if( !gml_width.empty()
-        && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_width.c_str() );
-
-    snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
-    if( !gml_precision.empty()
-        && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
-      msInsertHashTable(&(layer->metadata), md_item_name, gml_precision.c_str() );
   }
 }
 #endif /* defined(USE_POSTGIS) */
@@ -3576,10 +3564,9 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
               node->tokenval.dblval == (int)node->tokenval.dblval )
               native_string += std::to_string((int)node->tokenval.dblval);
           else {
-              char* snippet = (char *) msSmallMalloc(32);
-              sprintf(snippet, "%.18g", node->tokenval.dblval);
-              native_string += snippet;
-              msFree(snippet);
+              char buffer[32];
+              snprintf(buffer, sizeof(buffer), "%.18g", node->tokenval.dblval);
+              native_string += buffer;
           }
           break;
         }
@@ -3682,10 +3669,9 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
           break;
         case MS_TOKEN_BINDING_MAP_CELLSIZE:
         {
-          char* snippet = (char *) msSmallMalloc( 64);
-          snprintf(snippet, 64,  "%lf", layer->map->cellsize);
-          native_string += snippet;
-          msFree(snippet);
+          char buffer[32];
+          snprintf(buffer, sizeof(buffer), "%.18g", layer->map->cellsize);
+          native_string += buffer;
 	  break;
         }
 
@@ -3699,19 +3685,29 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
         case MS_TOKEN_COMPARISON_CONTAINS:
         case MS_TOKEN_COMPARISON_EQUALS:
         case MS_TOKEN_COMPARISON_DWITHIN:
+        {
           if(node->next->token != '(') goto cleanup;
           native_string += "st_";
-          native_string += msExpressionTokenToString(node->token);
+          const char* str = msExpressionTokenToString(node->token);
+          if( str == nullptr )
+              goto cleanup;
+          native_string += str;
           break;
+        }
 
 	/* functions */
         case MS_TOKEN_FUNCTION_LENGTH:
         case MS_TOKEN_FUNCTION_AREA:
         case MS_TOKEN_FUNCTION_BUFFER:
         case MS_TOKEN_FUNCTION_DIFFERENCE:
+        {
           native_string += "st_";
-          native_string += msExpressionTokenToString(node->token);
+          const char* str = msExpressionTokenToString(node->token);
+          if( str == nullptr )
+              goto cleanup;
+          native_string += str;
           break;
+        }
 
 	case MS_TOKEN_COMPARISON_IEQ:
             if( ieq_expected )
@@ -3736,6 +3732,7 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
           break;
 
         default:
+        {
           /* by default accept the general token to string conversion */
 
           if(node->token == MS_TOKEN_COMPARISON_EQ && node->next != nullptr && node->next->token == MS_TOKEN_LITERAL_TIME) break; /* skip, handled with the next token */
@@ -3748,8 +3745,12 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
               break;
           }
 
-          native_string += msExpressionTokenToString(node->token);
+          const char* str = msExpressionTokenToString(node->token);
+          if( str == nullptr )
+              goto cleanup;
+          native_string += str;
           break;
+        }
         }
 
       node = node->next;

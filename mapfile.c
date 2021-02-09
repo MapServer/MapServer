@@ -2364,6 +2364,7 @@ int initStyle(styleObj *style)
   style->polaroffsetpixel = style->polaroffsetangle = 0; /* no polar offset */
   style->angle = 0;
   style->autoangle= MS_FALSE;
+  style->antialiased = MS_TRUE;
   style->opacity = 100; /* fully opaque */
 
   msInitExpression(&(style->_geomtransform));
@@ -2426,8 +2427,11 @@ int loadStyle(styleObj *style)
           style->autoangle=MS_TRUE;
         }
         break;
-      case(ANTIALIAS): /*ignore*/
-        msyylex();
+      case(ANTIALIAS):
+        if ((symbol = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+        if (symbol == MS_FALSE) {
+            style->antialiased = MS_FALSE;
+        }
         break;
       case(BACKGROUNDCOLOR):
         if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
@@ -2736,7 +2740,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     msIO_fprintf(stream, "GEOMTRANSFORM (%s)\n", style->_geomtransform.string);
   }
   else if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
+    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 8,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
@@ -4122,7 +4126,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         }
         break;
       case(CONNECTIONTYPE):
-        if((type = getSymbol(11, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY)) == -1) return(-1);
+        if((type = getSymbol(12, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY, MS_IDW)) == -1) return(-1);
         layer->connectiontype = type;
         break;
       case(DATA):
@@ -4682,7 +4686,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeCluster(stream, indent, &(layer->cluster));
   writeLayerCompositer(stream, indent, layer->compositer);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 11, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY", MS_IDW, "IDW");
   writeHashTableInline(stream, indent, "CONNECTIONOPTIONS", &(layer->connectionoptions));
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
@@ -6042,10 +6046,6 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot)
       }
       msFree(cacheslot->labels[i].textsymbols);
 
-#ifdef include_deprecated
-      for(j=0; j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
-      msFree(cacheslot->labels[i].styles);
-#endif
       if(cacheslot->labels[i].leaderline) {
         msFree(cacheslot->labels[i].leaderline->point);
         msFree(cacheslot->labels[i].leaderline);

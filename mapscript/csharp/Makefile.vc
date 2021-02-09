@@ -13,7 +13,7 @@
 
 
 # Flag indicating to the option files that this is the build of C#/MapScript
-!INCLUDE ../../nmake.opt
+#!INCLUDE ../../nmake.opt
 
 # Be aware when setting different options for libmap.dll and mapscript.dll (Bug 1476)
 # To change the options for mapscript.dll uncomment the following line

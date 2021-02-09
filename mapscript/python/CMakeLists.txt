@@ -1,37 +1,14 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
-find_package(PythonInterp)
-find_python_module(setuptools REQUIRED)
 
-# Python library/header finding doesn't seem to honor the python
-# interpreter that was found beforehand, and defaults to the system
-# python. We first try to find python.h and libpython.so ourselves
-# from the hints given by distutils and sys
+find_package (Python REQUIRED COMPONENTS Interpreter Development)
 
-execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_inc; print(get_python_inc(True))" OUTPUT_VARIABLE PYTHON_INC OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.prefix)" OUTPUT_VARIABLE PYTHON_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process (COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True))" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-find_path(PYTHON_INCLUDE_PATH Python.h
-  HINTS ${PYTHON_INC}
-)
-
-find_library(PYTHON_LIBRARIES
-  NAMES python${PYTHON_VERSION_STRING} python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} python
-  HINTS ${PYTHON_PREFIX}/lib
-)
-
-#if that failed, fall back to the default cmake method of finding python dev files
-if(NOT PYTHON_INCLUDE_PATH OR NOT PYTHON_LIBRARIES)
-  find_package(PythonLibs)
-endif()
-
-include_directories(${PYTHON_INCLUDE_PATH})
+include_directories(${Python_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
-if (${PYTHON_VERSION_MAJOR} VERSION_GREATER 2)
+if (${Python_VERSION_MAJOR} GREATER_EQUAL 3)
     set_property(SOURCE ../mapscript.i PROPERTY SWIG_FLAGS "-py3")
 endif ()
 
@@ -41,7 +18,7 @@ else ()
     swig_add_module(pythonmapscript python ../mapscript.i)
 endif ()
 
-swig_link_libraries(pythonmapscript ${PYTHON_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
+swig_link_libraries(pythonmapscript ${Python_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
 
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT_NAME _mapscript)
@@ -65,9 +42,9 @@ endif()
 
 if(WIN32)
     # Windows venv binaries are in a different location than Linux
-    set(PYTHON_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
+    set(Python_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
 else()
-    set(PYTHON_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/bin)
+    set(Python_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/bin)
 endif()
 
 add_custom_target(
@@ -79,10 +56,10 @@ add_custom_command(
     DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME}
     OUTPUT mapscriptvenv.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMAND ${PYTHON_EXECUTABLE} -m pip install virtualenv
-    COMMAND ${PYTHON_EXECUTABLE} -m virtualenv mapscriptvenv
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m pip install pip --upgrade --force-reinstall > pip_update.log
-    COMMAND ${PYTHON_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt > requires.log
+    COMMAND ${Python_EXECUTABLE} -m pip install pip --upgrade
+    COMMAND ${Python_EXECUTABLE} -m pip install virtualenv
+    COMMAND ${Python_EXECUTABLE} -m virtualenv mapscriptvenv
+    COMMAND ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt > requires.log
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
 
@@ -90,8 +67,8 @@ add_custom_command(
     DEPENDS mapscriptvenv.stamp
     OUTPUT mapscriptlinting.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMAND ${PYTHON_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests --max-line-length=120
-    COMMAND ${PYTHON_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples --max-line-length=120
+    COMMAND ${Python_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests --max-line-length=120
+    COMMAND ${Python_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples --max-line-length=120
     COMMENT "Linting test suite and examples with flake8" # note only one comment is output per custom command block
 )
 
@@ -99,22 +76,22 @@ add_custom_command(
     DEPENDS mapscriptlinting.stamp
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log
+    COMMAND ${Python_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log
     COMMENT "Building the mapscript Python wheel"
 )
 
 add_custom_command(
-    WORKING_DIRECTORY ${PYTHON_VENV_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py
+    WORKING_DIRECTORY ${Python_VENV_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py
     DEPENDS mapscriptwheel.stamp
     OUTPUT mapscripttests.stamp
-    COMMAND ${PYTHON_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
+    COMMAND ${Python_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
     # ERROR: file or package not found: mapscript.tests (missing __init__.py?) is caused by
     # ImportError: DLL load failed while importing _mapscript: The specified module could not be found.
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m pytest --pyargs mapscript.tests
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.project_csv ${PROJECT_SOURCE_DIR}/tests/cities.csv 2 1 EPSG:4326 EPSG:3857 > test.csv
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
-    COMMAND ${PYTHON_VENV_SCRIPTS}/python -m mapscript.examples.wxs ${PROJECT_SOURCE_DIR}/tests/test.map > response.xml
+    COMMAND ${Python_VENV_SCRIPTS}/python -m pytest --pyargs mapscript.tests
+    COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.project_csv ${PROJECT_SOURCE_DIR}/tests/cities.csv 2 1 EPSG:4326 EPSG:3857 > test.csv
+    COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
+    COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
+    COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.wxs ${PROJECT_SOURCE_DIR}/tests/test.map > response.xml
     COMMENT "Installing the Python wheel and testing it in the virtual environment, then running tests and examples"
 )
 
@@ -135,7 +112,7 @@ add_custom_command(
 install(  
   CODE "
   
-    SET(ENV{PYTHONPATH} \${PYTHON_SITE_PACKAGES}:\$ENV{PYTHONPATH})
+    SET(ENV{PYTHONPATH} \${Python_SITELIB}:\$ENV{PYTHONPATH})
       
     if(DEFINED ENV{DESTDIR})
       SET(PYTHON_ROOT \"--root=\$ENV{DESTDIR}\")
@@ -146,7 +123,7 @@ install(
     endif()
 
     execute_process(
-      COMMAND ${PYTHON_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_PREFIX}
+      COMMAND ${Python_EXECUTABLE} setup.py install \${Python_ROOT} \${Python_PREFIX}
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "
@@ -155,5 +132,6 @@ install(
 message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
-message(STATUS "Python Executable: ${PYTHON_EXECUTABLE}")
-message(STATUS "Python site packages: ${PYTHON_SITE_PACKAGES}")
+message(STATUS "Python Executable: ${Python_EXECUTABLE}")
+message(STATUS "Python Version: ${Python_VERSION}")
+message(STATUS "Python site packages: ${Python_SITELIB}")

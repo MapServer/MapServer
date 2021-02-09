@@ -703,7 +703,7 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
 
 int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer)
 {
-  if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY)) {
+  if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY || layer->connectiontype==MS_IDW)) {
     if(layer->debug == MS_TRUE)
       msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
     return(0);
@@ -832,9 +832,9 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *imag
       done = MS_TRUE; /* only one image so we're done after this */
     }
     
-    if(layer->connectiontype == MS_KERNELDENSITY) {
+    if(layer->connectiontype == MS_KERNELDENSITY || layer->connectiontype == MS_IDW) {
       msAcquireLock( TLOCK_GDAL );
-      status = msComputeKernelDensityDataset(map, image, layer, &hDS, &kernel_density_cleanup_ptr);
+      status = msInterpolationDataset(map, image, layer, &hDS, &kernel_density_cleanup_ptr);
       if(status != MS_SUCCESS) {
         msReleaseLock( TLOCK_GDAL );
         final_status = status;
@@ -942,7 +942,7 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer, imageObj *imag
     ** default to keeping open for single data files, and
     ** to closing for tile indexes
     */
-    if(layer->connectiontype == MS_KERNELDENSITY) {
+    if(layer->connectiontype == MS_KERNELDENSITY || layer->connectiontype == MS_IDW) {
       /*
       ** Fix issue #5330
       ** The in-memory kernel density heatmap gdal dataset handle (hDS) gets re-used
@@ -966,8 +966,8 @@ cleanup:
   if(layer->tileindex) { /* tiling clean-up */
     msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
   }
-  if(layer->connectiontype == MS_KERNELDENSITY && kernel_density_cleanup_ptr) {
-    msCleanupKernelDensityDataset(map, image, layer, kernel_density_cleanup_ptr);
+  if(kernel_density_cleanup_ptr) {
+    msCleanupInterpolationDataset(map, image, layer, kernel_density_cleanup_ptr);
   }
 
   return final_status;

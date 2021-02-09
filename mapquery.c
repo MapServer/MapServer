@@ -806,7 +806,7 @@ int msQueryByFilter(mapObj *map)
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
-    if(status != MS_SUCCESS) goto query_error;
+    if(status != MS_SUCCESS) return MS_FAILURE;
     msLayerEnablePaging(lp, paging);
 
     /* disable driver paging */
@@ -825,7 +825,7 @@ int msQueryByFilter(mapObj *map)
       lp->filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);      
       if(!lp->filter.string) {
 	msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");
-        goto query_error;
+        goto restore_old_filter;
       }      
     } else {
       msCopyExpression(&lp->filter, &map->query.filter); /* apply new filter */
@@ -833,7 +833,7 @@ int msQueryByFilter(mapObj *map)
 
     /* build item list, we want *all* items, note this *also* build tokens for the layer filter */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
-    if(status != MS_SUCCESS) goto query_error;
+    if(status != MS_SUCCESS) goto restore_old_filter;
 
     search_rect = map->query.rect;
 
@@ -904,7 +904,7 @@ int msQueryByFilter(mapObj *map)
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
-    } else if(status != MS_SUCCESS) goto query_error;
+    } else if(status != MS_SUCCESS) goto restore_old_filter;
 
     lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
     initResultCache( lp->resultcache);
@@ -985,7 +985,7 @@ int msQueryByFilter(mapObj *map)
 
     msProjectDestroyReprojector(reprojector);
 
-    if(status != MS_DONE) goto query_error;
+    if(status != MS_DONE) return MS_FAILURE;
     if(!map->query.only_cache_result_count && lp->resultcache->numresults == 0) 
       msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
@@ -999,12 +999,11 @@ int msQueryByFilter(mapObj *map)
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()");
   return MS_FAILURE;
 
-query_error:
-  // msFree(lp->filteritem);
-  // lp->filteritem = old_filteritem;
-  // msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-  // msFreeExpression(&old_filter);
-  // msLayerClose(lp);
+restore_old_filter:
+  lp->filteritem = old_filteritem;
+  msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+  msFreeExpression(&old_filter);
+  msLayerClose(lp);
   return MS_FAILURE;
 }
 

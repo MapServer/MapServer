@@ -676,7 +676,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( hBandAlpha == NULL ) {
     int nMaskFlags = GDALGetMaskFlags(hBand1);
 
-    if( (CSLFetchNameValue( layer->processing, "BANDS" ) == NULL ) &&
+    if( CSLTestBoolean(CSLFetchNameValueDef( layer->processing, "USE_MASK_BAND", "YES" )) &&
         (nMaskFlags & GMF_PER_DATASET) != 0 &&
         (nMaskFlags & (GMF_NODATA|GMF_ALL_VALID)) == 0 ) {
       CPLErr eErr;

@@ -499,6 +499,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
   MS_COPYSTELEM(gap);
   MS_COPYSTELEM(linejoin);
   MS_COPYSTELEM(linejoinmaxsize);
+  MS_COPYSTELEM(antialiased);
   MS_COPYSTELEM(linecap);
   MS_COPYSTELEM(symbol);
   MS_COPYSTELEM(size);

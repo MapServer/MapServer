@@ -13,9 +13,9 @@ respond to a variety of spatial requests like making maps, scalebars,
 and point, area and feature queries. Virtually all aspects of an 
 application, from web interface to map appearance can be developed 
 without any programming. For the more ambitious user, MapServer 
-applications can be enhanced using Java, JavaScript or many other web 
-technologies. For more  information and complete documentation please 
-visit:
+applications can be enhanced using Python, PHP, Java, JavaScript or 
+many other web technologies. For more  information and complete 
+documentation please visit:
 
   https://mapserver.org/
 
@@ -23,7 +23,7 @@ Bug reports and enhancement submissions can be reported in the MapServer
 issue tracker at the following url.   If you do make changes and/or enhancements, 
 please let us know so that they might be incorporated into future releases.
 
-  https://github.com/mapserver/mapserver/issues
+  https://github.com/MapServer/MapServer/issues
 
 
 Join the MapServer user mailing list online at:
@@ -69,7 +69,7 @@ License
 
 ::
 
-  Copyright (c) 2008-2020 Open Source Geospatial Foundation.
+  Copyright (c) 2008-2021 Open Source Geospatial Foundation.
   Copyright (c) 1996-2008 Regents of the University of Minnesota.
 
   Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -91,11 +91,11 @@ License
   SOFTWARE.
 
 
-.. |Build Status| image:: https://travis-ci.org/mapserver/mapserver.svg?branch=master
-   :target: https://travis-ci.org/mapserver/mapserver
+.. |Build Status| image:: https://travis-ci.com/MapServer/MapServer.svg?branch=main
+   :target: https://travis-ci.com/MapServer/MapServer
 
 .. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true
    :target: https://ci.appveyor.com/project/mapserver/mapserver
 
-.. |Coveralls Status| image:: https://coveralls.io/repos/github/mapserver/mapserver/badge.svg?branch=master
-   :target: https://coveralls.io/github/mapserver/mapserver?branch=master
+.. |Coveralls Status| image:: https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main
+   :target: https://coveralls.io/github/MapServer/MapServer?branch=main

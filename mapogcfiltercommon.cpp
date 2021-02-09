@@ -516,9 +516,9 @@ std::string FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, 
 static std::string FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   std::string expr;
-  bool bString= false;
 
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) || defined(USE_SOS_SVR)
+  bool bString= false;
   if (psFilterNode->pszValue) {
     const char* pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
     if (pszAttribute) {

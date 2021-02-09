@@ -87,6 +87,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = { "",
 };
 
 #ifndef USE_THREAD
+
+// Get the MapServer error object
 errorObj *msGetErrorObj()
 {
   static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, 0, NULL};

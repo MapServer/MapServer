@@ -1,0 +1,77 @@
+#RUN_PARMS: idw.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=idw&BBOX=-79.369542201052,-39.684771100526,79.369542201052,39.684771100526&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+
+map
+
+  size 1000 500
+  extent -180 -90 180 90
+  name "test idw"
+  imagetype "png"
+  units dd
+
+  web
+    metadata
+      "ows_srs" "epsg:4326  epsg:3857 epsg:900913"
+      "ows_enable_request" "*"
+    end
+  end
+
+  projection
+    "+init=epsg:4326"
+  end
+  CONFIG "MS_ERRORFILE" "stderr"
+  layer
+    name "idw"
+    type raster
+    connectiontype idw #interpolation method
+    connection "points" #layer that contain data
+    status on
+    processing "RANGE_COLORSPACE=HSL"
+    processing "IDW_RADIUS=200"    #optional param for interpolation
+    processing "IDW_POWER=1"    #optional param for interpolation
+    processing "IDW_COMPUTE_BORDERS=OFF"    #optional param for interpolation
+    offsite 0 0 0
+    class
+      style
+        COLORRANGE  "#00ff0000"  "#00ff00ff"
+        DATARANGE 0 3
+      end
+      style
+        COLORRANGE  "#00ff00ff"  "#ff0000ff"
+        DATARANGE 3 30
+      end
+    end
+  end
+
+  layer
+    name "points"
+    status on
+    type POINT
+    data "data/pnts.shp"
+    CLASS
+     MAXSCALEDENOM 255000000
+     STYLE
+      SIZE [VAL]
+     END
+    END
+    CLASS
+     MAXSCALEDENOM 265000000
+     STYLE
+      SIZE 0.1
+     END
+    END
+    CLASS
+     MAXSCALEDENOM 275000000
+     EXPRESSION ([VAL]>1)
+     STYLE
+      SIZE 1
+     END
+    END
+    CLASS
+     MAXSCALEDENOM 275000000
+     STYLE
+      SIZE 2
+     END
+    END
+  end
+
+end
