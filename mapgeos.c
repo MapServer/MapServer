@@ -1273,7 +1273,7 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
 {
 #if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5 
   int i;
-  shapeObj *shape2, *shape3, *shapetmp=NULL, *shapeptr;
+  shapeObj *shape2, *shape3, *shapeptr=NULL;
 
   int segmentCount; // after intersection
   double segmentRatio;
@@ -1282,29 +1282,22 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
   if(!shape1) return NULL;
   if(shape1->type != MS_SHAPE_POLYGON) return NULL;
 
+  // shapeptr is our starting point, might just be shape1 or it mighe be computed
   if(tolerance > 0) { // densify
-    shapetmp = densify(shape1, tolerance);
-    if(!shapetmp) return NULL;
+    shapeptr = densify(shape1, tolerance);
+    if(!shapeptr) return NULL;
   } else if (tolerance < 0) { // simplify 
-    shapetmp = msGEOSSimplify(shape1, MS_ABS(tolerance));
-    if(!shapetmp) return NULL;
-  }
-
-  if(shapetmp != NULL) {
-    shape2 = msGEOSVoronoiDiagram(shapetmp, 0.0, MS_TRUE);
-    if(!shape2) {
-      msFreeShape(shapetmp);
-      return NULL;
-    }
-  } else {
-    shape2 = msGEOSVoronoiDiagram(shape1, 0.0, MS_TRUE);
-    if(!shape2) return NULL;
-  }
-
-  if(tolerance < 0)
-    shapeptr = shapetmp;
-  else
+    shapeptr = msGEOSSimplify(shape1, MS_ABS(tolerance));
+    if(!shapeptr) return NULL;
+  } else { // no change
     shapeptr = shape1;
+  }
+
+  shape2 = msGEOSVoronoiDiagram(shapeptr, 0.0, MS_TRUE);
+  if(!shape2) {
+    if(tolerance != 0) msFreeShape(shapeptr);
+    return NULL;
+  }
 
   // process the edges
   shape3 = (shapeObj *) malloc(sizeof(shapeObj));
@@ -1333,8 +1326,7 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
     segmentRatio = 1.0*shape2->numlines/segmentCount;
   }
 
-  shapeptr = NULL;
-  if(shapetmp != NULL) msFreeShape(shapetmp);
+  if(tolerance != 0) msFreeShape(shapeptr); // clean up only if we densified/simplified
 
   return shape2;
 #else
