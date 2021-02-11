@@ -1381,34 +1381,36 @@ this request. Check wms/ows_enable_request settings.",
     }
   }
 
-  /* Validate requested image size.
-   */
-  if(map->width > map->maxsize || map->height > map->maxsize ||
-      map->width < 1 || map->height < 1) {
-    msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
+  if (request == NULL || strcasecmp(request, "DescribeLayer") != 0) {
+    /* Validate requested image size.
+    */
+    if(map->width > map->maxsize || map->height > map->maxsize ||
+        map->width < 1 || map->height < 1) {
+      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
 
-    /* Restore valid default values in case errors INIMAGE are used */
-    map->width = 400;
-    map->height= 300;
-    return msWMSException(map, nVersion, NULL, wms_exception_format);
-  }
+      /* Restore valid default values in case errors INIMAGE are used */
+      map->width = 400;
+      map->height= 300;
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+    }
 
-  /* Check whether requested BBOX and width/height result in non-square pixels
-   */
-  nonsquare_enabled = msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) != MS_FALSE;
-  if (!nonsquare_enabled) {
-    const double dx = MS_ABS(map->extent.maxx - map->extent.minx);
-    const double dy = MS_ABS(map->extent.maxy - map->extent.miny);
+    /* Check whether requested BBOX and width/height result in non-square pixels
+    */
+    nonsquare_enabled = msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) != MS_FALSE;
+    if (!nonsquare_enabled) {
+      const double dx = MS_ABS(map->extent.maxx - map->extent.minx);
+      const double dy = MS_ABS(map->extent.maxy - map->extent.miny);
 
-    const double reqy = ((double)map->width) * dy / dx;
+      const double reqy = ((double)map->width) * dy / dx;
 
-    /* Allow up to 1 pixel of error on the width/height ratios. */
-    /* If more than 1 pixel then enable non-square pixels */
-    if ( MS_ABS((reqy - (double)map->height)) > 1.0 ) {
-      if (map->debug)
-        msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.\n");
-      msSetConfigOption(map, "MS_NONSQUARE", "YES");
-      nonsquare_enabled = true;
+      /* Allow up to 1 pixel of error on the width/height ratios. */
+      /* If more than 1 pixel then enable non-square pixels */
+      if ( MS_ABS((reqy - (double)map->height)) > 1.0 ) {
+        if (map->debug)
+            msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.\n");
+        msSetConfigOption(map, "MS_NONSQUARE", "YES");
+        nonsquare_enabled = true;
+      }
     }
   }
 
