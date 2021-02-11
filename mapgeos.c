@@ -1209,6 +1209,7 @@ static shapeObj *deDangle(shapeObj *shape1)
   shapeObj *shape2, *shape3;
   char *start, *end; // counters
 
+  // fprintf(stderr, "    (before) shape1 numlines: %d\n", shape1->numlines);
   start = (char *) calloc(shape1->numlines, sizeof(char));
   end = (char *) calloc(shape1->numlines, sizeof(char));
 
@@ -1242,6 +1243,7 @@ static shapeObj *deDangle(shapeObj *shape1)
   for(i=0; i<shape1->numlines; i++) {
     if(start[i] > 1 && end[i] > 1) msAddLine(shape2, &shape1->line[i]);
   }
+  // fprintf(stderr, "    (after) shape2 numlines: %d\n", shape2->numlines);
 
   shape3 = msGEOSLineMerge(shape2);
 
@@ -1275,7 +1277,7 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
 
   int segmentCount; // after intersection
   double segmentRatio;
-  double segmentRatioThreshold = 0.10; // after de-dangle
+  double segmentRatioThreshold = 0.10; // after de-dangle (might want to make this tunable)
 
   if(!shape1) return NULL;
   if(shape1->type != MS_SHAPE_POLYGON) return NULL;
@@ -1320,8 +1322,9 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
   msFreeShape(shape3);
 
   segmentRatio = 1.0*shape2->numlines/segmentCount;
-  while(segmentRatio > segmentRatioThreshold) {
+  while(shape2->numlines > 1 && segmentRatio > segmentRatioThreshold) {
     shape3 = deDangle(shape2);
+    if(shape3 == NULL) break; // to much de-dangling, revert
 
     msFreeShape(shape2);
     shape2 = shape3; // re-point
