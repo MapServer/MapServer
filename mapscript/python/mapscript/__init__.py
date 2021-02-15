@@ -19,7 +19,7 @@ def add_dll_path(pth):
 
 if platform.system() == 'Windows':
     mapserver_dll_path = os.getenv('MAPSERVER_DLL_PATH', '')
-    dll_paths = mapserver_dll_path.split(';')
+    dll_paths = list(filter(os.path.exists, mapserver_dll_path.split(';')))
     # add paths in the order listed in the string
     dll_paths.reverse()
     for pth in dll_paths:
