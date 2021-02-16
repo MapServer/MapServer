@@ -49,7 +49,7 @@ int yyerror(parseObj *, const char *);
 %left AREA LENGTH COMMIFY ROUND
 %left UPPER LOWER INITCAP FIRSTCAP
 %left TOSTRING
-%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA MEDIALAXIS JAVASCRIPT
+%left YYBUFFER INNER OUTER DIFFERENCE DENSIFY SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA SKELETONIZE JAVASCRIPT
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -652,31 +652,61 @@ shape_exp: SHAPE
     s->scratch = MS_TRUE;
     $$ = s;
   }
-  | MEDIALAXIS '(' shape_exp ')' {
+  | INNER '(' shape_exp ')' {
     shapeObj *s;
-    s = msGEOSMedialAxis($3, 0.0);
+    s = msRings2Shape($3, MS_FALSE);
     if(!s) {
-      yyerror(p, "Executing medialaxis failed.");
+      yyerror(p, "Executing inner failed.");
       return(-1);
     }
     s->scratch = MS_TRUE;
     $$ = s;
   }
-  | MEDIALAXIS '(' shape_exp ',' math_exp ')' {
-  shapeObj *s;
-  s = msGEOSMedialAxis($3, $5);
-  if(!s) {
-    yyerror(p, "Executing medialaxis failed.");
-    return(-1);
+  | OUTER '(' shape_exp ')' {
+    shapeObj *s;
+    s = msRings2Shape($3, MS_TRUE);
+    if(!s) {
+      yyerror(p, "Executing outer failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
   }
-  s->scratch = MS_TRUE;
-  $$ = s;
+  | SKELETONIZE '(' shape_exp ')' {
+    shapeObj *s;
+    s = msGEOSSkeletonize($3, -1);
+    if(!s) {
+      yyerror(p, "Executing skeletonize failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | SKELETONIZE '(' shape_exp ',' math_exp ')' {
+    shapeObj *s;
+    s = msGEOSSkeletonize($3, $5);
+    if(!s) {
+      yyerror(p, "Executing skeletonize failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
   }
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
     shapeObj *s;
     s = msGEOSDifference($3, $5);
     if(!s) {
       yyerror(p, "Executing difference failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | DENSIFY '(' shape_exp ',' math_exp ')' {
+    shapeObj *s;
+    s = msDensify($3, $5);
+    if(!s) {
+      yyerror(p, "Executing densify failed.");
       return(-1);
     }
     s->scratch = MS_TRUE;
@@ -958,7 +988,10 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
   case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
   case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;
-  case MS_TOKEN_FUNCTION_MEDIALAXIS: token = MEDIALAXIS; break;
+  case MS_TOKEN_FUNCTION_SKELETONIZE: token = SKELETONIZE; break;
+  case MS_TOKEN_FUNCTION_DENSIFY: token = DENSIFY; break;
+  case MS_TOKEN_FUNCTION_INNER: token = INNER; break;
+  case MS_TOKEN_FUNCTION_OUTER: token = OUTER; break;
   case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;
 
   default:

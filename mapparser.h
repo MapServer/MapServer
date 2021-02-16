@@ -83,14 +83,17 @@ extern int yydebug;
     FIRSTCAP = 293,
     TOSTRING = 294,
     YYBUFFER = 295,
-    DIFFERENCE = 296,
-    SIMPLIFY = 297,
-    SIMPLIFYPT = 298,
-    GENERALIZE = 299,
-    SMOOTHSIA = 300,
-    MEDIALAXIS = 301,
-    JAVASCRIPT = 302,
-    NEG = 303
+    INNER = 296,
+    OUTER = 297,
+    DIFFERENCE = 298,
+    DENSIFY = 299,
+    SIMPLIFY = 300,
+    SIMPLIFYPT = 301,
+    GENERALIZE = 302,
+    SMOOTHSIA = 303,
+    SKELETONIZE = 304,
+    JAVASCRIPT = 305,
+    NEG = 306
   };
 #endif
 /* Tokens.  */
@@ -132,14 +135,17 @@ extern int yydebug;
 #define FIRSTCAP 293
 #define TOSTRING 294
 #define YYBUFFER 295
-#define DIFFERENCE 296
-#define SIMPLIFY 297
-#define SIMPLIFYPT 298
-#define GENERALIZE 299
-#define SMOOTHSIA 300
-#define MEDIALAXIS 301
-#define JAVASCRIPT 302
-#define NEG 303
+#define INNER 296
+#define OUTER 297
+#define DIFFERENCE 298
+#define DENSIFY 299
+#define SIMPLIFY 300
+#define SIMPLIFYPT 301
+#define GENERALIZE 302
+#define SMOOTHSIA 303
+#define SKELETONIZE 304
+#define JAVASCRIPT 305
+#define NEG 306
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -154,7 +160,7 @@ union YYSTYPE
   struct tm tmval;
   shapeObj *shpval;
 
-#line 158 "/vagrant/mapparser.h" /* yacc.c:1909  */
+#line 164 "/vagrant/mapparser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

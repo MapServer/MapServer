@@ -1132,18 +1132,17 @@ shapeObj *msGEOSLineMerge(shapeObj *shape1)
 #endif
 }
 
-shapeObj *msGEOSVoronoiDiagram(shapeObj *shape1, double tolerance, int onlyEdges)
+shapeObj *msGEOSVoronoiDiagram(shapeObj *shape, double tolerance, int onlyEdges)
 {
 #if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5
   GEOSGeom g1, g2;
   GEOSContextHandle_t handle = msGetGeosContextHandle();
 
-  if(!shape1)
-    return NULL;
+  if(!shape) return NULL;
 
-  if(!shape1->geometry) /* if no geometry for the shape then build one */
-    shape1->geometry = (GEOSGeom) msGEOSShape2Geometry(shape1);
-  g1 = (GEOSGeom) shape1->geometry;
+  if(!shape->geometry) /* if no geometry for the shape then build one */
+    shape->geometry = (GEOSGeom) msGEOSShape2Geometry(shape);
+  g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
   g2 = GEOSVoronoiDiagram_r(handle, g1, NULL, tolerance, onlyEdges);
@@ -1154,56 +1153,9 @@ shapeObj *msGEOSVoronoiDiagram(shapeObj *shape1, double tolerance, int onlyEdges
 #endif
 }
 
-static shapeObj *densify(shapeObj *shape1, double tolerance)
-{
-  int i, j, k, l; // counters
-  int n;
-  shapeObj *shape2;
-  lineObj line;
-  double distance, length, c;
-
-  shape2 = (shapeObj *) malloc(sizeof(shapeObj));
-  MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
-  msInitShape(shape2);
-  shape2->type = MS_SHAPE_POLYGON;
-
-  for(i=0; i<shape1->numlines; i++) {
-
-    line.numpoints = shape1->line[i].numpoints;
-    line.point = (pointObj *) malloc(sizeof(pointObj)*line.numpoints); // best case we don't have to add any points
-    MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, NULL);
-
-    for(j=0, l=0; j<shape1->line[i].numpoints-1; j++, l++) {
-      line.point[l] = shape1->line[i].point[j];
-
-      distance = msDistancePointToPoint(&(shape1->line[i].point[j]), &(shape1->line[i].point[j+1]));
-      if(distance > tolerance) {
-        n = (int) floor(distance/tolerance); // number of new points, n+1 is the number of new segments
-        length = distance/(n+1); // segment length
-
-        line.numpoints += n;        
-        line.point = (pointObj *) realloc(line.point, sizeof(pointObj)*line.numpoints);
-        MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, NULL);
-
-        for(k=0; k<n; k++) {
-          c = (k+1)*length/distance;
-          l++;
-          line.point[l].x = shape1->line[i].point[j].x + c*(shape1->line[i].point[j+1].x - shape1->line[i].point[j].x);
-          line.point[l].y = shape1->line[i].point[j].y + c*(shape1->line[i].point[j+1].y - shape1->line[i].point[j].y);
-        }
-      }
-    }
-    line.point[l] = shape1->line[i].point[j];
-    
-    msAddLineDirectly(shape2, &line);
-  }
-
-  return shape2;
-}
-
 #define COMPARE_POINTS(a,b) (((a).x!=(b).x || (a).y!=(b).y)?MS_FALSE:MS_TRUE)
 
-static shapeObj *deDangle(shapeObj *shape1)
+static shapeObj *prune(shapeObj *shape1)
 {
   int i, j;
   shapeObj *shape2, *shape3;
@@ -1269,33 +1221,19 @@ static int keepEdge(lineObj *segment, shapeObj *polygon)
   return(MS_TRUE);
 }
 
-shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
+shapeObj *msGEOSSkeletonize(shapeObj *shape, int depth)
 {
 #if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5 
-  int i;
-  shapeObj *shape2, *shape3, *shapeptr=NULL;
+  int i, d;
+  shapeObj *shape2, *shape3;
+ 
+  int numlines;
 
-  int segmentCount; // after intersection
-  double segmentRatio;
-  double segmentRatioThreshold = 0.10; // after de-dangle (might want to make this tunable)
+  if(!shape) return NULL;
+  if(shape->type != MS_SHAPE_POLYGON) return NULL;
 
-  if(!shape1) return NULL;
-  if(shape1->type != MS_SHAPE_POLYGON) return NULL;
-
-  // shapeptr is our starting point, might just be shape1 or it mighe be computed
-  if(tolerance > 0) { // densify
-    shapeptr = densify(shape1, tolerance);
-    if(!shapeptr) return NULL;
-  } else if (tolerance < 0) { // simplify 
-    shapeptr = msGEOSSimplify(shape1, MS_ABS(tolerance));
-    if(!shapeptr) return NULL;
-  } else { // no change
-    shapeptr = shape1;
-  }
-
-  shape2 = msGEOSVoronoiDiagram(shapeptr, 0.0, MS_TRUE);
+  shape2 = msGEOSVoronoiDiagram(shape, 0.0, MS_TRUE);
   if(!shape2) {
-    if(tolerance != 0) msFreeShape(shapeptr);
     return NULL;
   }
 
@@ -1306,27 +1244,27 @@ shapeObj *msGEOSMedialAxis(shapeObj *shape1, double tolerance)
   shape3->type = MS_SHAPE_LINE;
 
   for(i=0; i<shape2->numlines; i++) {
-    if(keepEdge(&shape2->line[i], shapeptr) == MS_TRUE) msAddLine(shape3, &shape2->line[i]);
+    if(keepEdge(&shape2->line[i], shape) == MS_TRUE) msAddLine(shape3, &shape2->line[i]);
   }
   msFreeShape(shape2);
-  segmentCount = shape3->numlines; // save
 
   shape2 = msGEOSLineMerge(shape3);
   msFreeShape(shape3);
 
-  segmentRatio = 1.0*shape2->numlines/segmentCount;
-  while(shape2->numlines > 1 && segmentRatio > segmentRatioThreshold) {
-    shape3 = deDangle(shape2);
+  d = 0;
+  numlines = shape2->numlines;
+  while(shape2->numlines > 2 && (depth == -1 || d < depth)) { // two disconnected lines or there'd be just one, so no need to go any further
+    shape3 = prune(shape2);
     if(shape3 == NULL) break; // to much de-dangling, revert
 
     msFreeShape(shape2);
     shape2 = shape3; // re-point
     shape3 = NULL;
 
-    segmentRatio = 1.0*shape2->numlines/segmentCount;
+    if(shape2->numlines == numlines) break; // no improvement, bail
+    numlines = shape2->numlines;
+    d++;
   }
-
-  if(tolerance != 0) msFreeShape(shapeptr); // clean up only if we densified/simplified
 
   return shape2;
 #else
