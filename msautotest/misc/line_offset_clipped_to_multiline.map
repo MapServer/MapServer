@@ -1,0 +1,34 @@
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG
+#
+# Test shifted offset when line is being clipped to a multi-line containing multi-lines.
+#
+
+MAP
+    EXTENT 387200 6544755 388224 6545779
+    SIZE 128 128
+    IMAGETYPE png
+   
+    LAYER
+        NAME "Test"
+        STATUS ON
+        TYPE LINE
+        FEATURE
+            POINTS
+                387184.7628 6544765.9766500005
+                387189.844 6544759.04235
+                387215.864 6544756.3572
+                387212.7508 6544765.81515
+                387183.058 6544782.9486
+                387186.706 6544811.9778
+                389248 6546803
+            END
+        END
+  
+        CLASS
+            STYLE
+                COLOR 255 0 0
+                OFFSET -1 -99
+            END
+        END
+    END
+END
