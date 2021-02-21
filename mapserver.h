@@ -1700,7 +1700,6 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    enum MS_CONNECTION_TYPE connectiontype; ///< the layer connection type - see :ref:`CONNECTIONTYPE <mapfile-layer-connectiontype>`
     int refcount; ///< reference counting, RFC24
     int numclasses; ///< Number of layer classes
     int maxclasses; ///< Used to track of the maximum number of classes - see RFC-17
@@ -1740,6 +1739,7 @@ typedef struct labelObj labelObj;
     enum MS_RENDER_MODE rendermode; ///< :data:`MS_FIRST_MATCHING_CLASS` - default and historic MapServer behavior, :data:`MS_ALL_MATCHING_CLASSES` - SLD behavior
     char *data; ///< Layer data definition, values depend upon connectiontype - see :ref:`DATA <mapfile-layer-data>`
     enum MS_LAYER_TYPE type; ///< the layer type - see :ref:`TYPE <mapfile-layer-type>`
+    enum MS_CONNECTION_TYPE connectiontype; ///< the layer connection type - see :ref:`CONNECTIONTYPE <mapfile-layer-connectiontype>`
 
     double tolerance; ///< search buffer for point and line queries (in toleranceunits) - see :ref:`TOLERANCE <mapfile-layer-tolerance>`
     int toleranceunits; ///< See :ref:`TOLERANCEUNITS <mapfile-layer-toleranceunits>`
