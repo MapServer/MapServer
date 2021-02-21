@@ -1700,93 +1700,96 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
+    enum MS_CONNECTION_TYPE connectiontype; ///< the layer connection type - see :ref:`CONNECTIONTYPE <mapfile-layer-connectiontype>`
     int refcount; ///< reference counting, RFC24
     int numclasses; ///< Number of layer classes
     int maxclasses; ///< Used to track of the maximum number of classes - see RFC-17
     int index; ///< Index of layer within parent map's layers array
-    struct mapObj *map;
-    int numitems;
+    struct mapObj *map; ///< Reference to parent map
+    int numitems; ///< Number of layer feature attributes (items)
     hashTableObj metadata; ///< See :ref:`METADATA <mapfile-layer-metadata>`
     hashTableObj validation; ///< See :ref:`VALIDATION <mapfile-layer-validation>`
-    hashTableObj bindvals;
+    hashTableObj bindvals; ///< Relates to RFC59
+    hashTableObj connectionoptions; ///< See :ref:`CONNECTIONOPTIONS <mapfile-layer-connectionoptions>`
+
     clusterObj cluster; ///< See :ref:`CLUSTER <mapfile-layer-cluster>`
-    rectObj extent; ///< See :ref:`EXTENT <mapfile-layer-extent>`
-    int numprocessing;
-    int numjoins;
+    rectObj extent; ///< optional limiting extent for layer features - see :ref:`EXTENT <mapfile-layer-extent>`
+    int numprocessing; ///< Number of raster processing directives
+    int numjoins; ///< Number of layer joins
+
+    expressionObj utfdata; ///< See :ref:`UTFDATA <mapfile-layer-utfdata>`
+    LayerCompositer *compositer; ///< See :ref:`COMPOSITE <mapfile-layer-composite>`
 
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
 
-    char *classitem; ///< See :ref:`CLASSITEM <mapfile-layer-classitem>`. The item to be used for symbol lookup.
-    char *header, *footer; /* only used with multi result queries */
+    char *classitem; ///< the attribute used to classify layer data - see :ref:`CLASSITEM <mapfile-layer-classitem>`
+    char *header; ///< filename to a template for result's header - see :ref:`HEADER <mapfile-layer-header>`
+    char *footer; ///< filename to a template for result's footer - see :ref:`FOOTER <mapfile-layer-footer>`
 
 #ifndef __cplusplus
-    char *template; ///< See :ref:`TEMPLATE <mapfile-layer-template>`. Global template, used across all classes
+    char *template; ///< See :ref:`TEMPLATE <mapfile-layer-template>` - global template, used across all classes
 #else /* __cplusplus */
     char *_template;
 #endif /* __cplusplus */
 
-    char *name; ///< See :ref:`NAME <mapfile-layer-name>`. Should be unique.
-    char *group; ///< See :ref:`GROUP <mapfile-layer-group>`
-    int status; ///< See :ref:`STATUS <mapfile-layer-status>`. On or off.
-    enum MS_RENDER_MODE rendermode;
-            // MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
-            // MS_ALL_MATCHING_CLASSES: SLD behavior
+    char *name; ///< See :ref:`NAME <mapfile-layer-name>` - should be unique
+    char *group; ///< Name of a group of layers - see :ref:`GROUP <mapfile-layer-group>`
+    int status; ///< See :ref:`STATUS <mapfile-layer-status>`:data:`MS_ON`, :data:`MS_OFF` or :data:`MS_DEFAULT`
+    enum MS_RENDER_MODE rendermode; ///< :data:`MS_FIRST_MATCHING_CLASS` - default and historic MapServer behavior, :data:`MS_ALL_MATCHING_CLASSES` - SLD behavior
+    char *data; ///< Layer data definition, values depend upon connectiontype - see :ref:`DATA <mapfile-layer-data>`
+    enum MS_LAYER_TYPE type; ///< the layer type - see :ref:`TYPE <mapfile-layer-type>`
 
-    char *data; ///< See :ref:`DATA <mapfile-layer-data>`
-    enum MS_LAYER_TYPE type; ///< See :ref:`TYPE <mapfile-layer-type>`
-
-    double tolerance; ///< See :ref:`TOLERANCE <mapfile-layer-tolerance>`. Search buffer for point and line queries (in toleranceunits)
+    double tolerance; ///< search buffer for point and line queries (in toleranceunits) - see :ref:`TOLERANCE <mapfile-layer-tolerance>`
     int toleranceunits; ///< See :ref:`TOLERANCEUNITS <mapfile-layer-toleranceunits>`
 
-    double symbolscaledenom; /* scale at which symbols are default size */
-    double minscaledenom, maxscaledenom;
-    int minfeaturesize; /* minimum feature size (in pixels) to shape */
-    double labelminscaledenom, labelmaxscaledenom;
-    double mingeowidth, maxgeowidth; /* map width (in map units) at which the layer should be drawn */
+    double symbolscaledenom; ///< scale at which symbols are default size - see :ref:`SYMBOLSCALEDENOM <mapfile-layer-symbolscaledenom>`
+    double minscaledenom; ///< Maximum scale at which layer will be drawn - see :ref:`MINSCALEDENOM <mapfile-layer-minscaledenom>`
+    double maxscaledenom; ///< Minimum scale at which layer will be drawn - see :ref:`MAXSCALEDENOM <mapfile-layer-maxscaledenom>`
+    int minfeaturesize; ///< minimum feature size (in pixels) for shape
+    double labelminscaledenom; ///< See :ref:`LABELMINSCALEDENOM <mapfile-layer-labelminscaledenom>`
+    double labelmaxscaledenom; ///< See :ref:`LABELMAXSCALEDENOM <mapfile-layer-labelmaxscaledenom>`
+    double mingeowidth; ///< min map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
+    double maxgeowidth; ///< max map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
 
-    int sizeunits; /* applies to all classes */
+    int sizeunits; ///< applies to all classes - see :ref:`SIZEUNITES <mapfile-layer-sizeunits>`
 
-    int maxfeatures;
-    int startindex;
+    int maxfeatures; ///< Maximum number of layer features that will be drawn - see :ref:`MAXFEATURES <mapfile-layer-maxfeatures>`
+    int startindex; ///< Feature start index - used for paging
 
-    colorObj offsite; /* transparent pixel value for raster images */
+    colorObj offsite; ///< transparent pixel value for raster images - see :ref:`OFFSITE <mapfile-layer-offsite>`
 
-    int transform; /* does this layer have to be transformed to file coordinates */
+    int transform; ///< :data:`MS_TRUE` (default) or :data:`MS_FALSE` whether or not layer data is to be transformed to image units - see :ref:`TRANSFORM <mapfile-layer-transform>`
 
-    int labelcache, postlabelcache; /* on or off */
+    int labelcache; ///< :data:`MS_ON` (default) or :data:`MS_OFF` - see :ref:`LABELCACHE <mapfile-layer-labelcache>`
+    int postlabelcache; ///< :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`POSTLABELCACHE <mapfile-layer-postlabelcache>`
 
-    char *labelitem;
-    char *tileitem;
-    char *tileindex; /* layer index file for tiling support */
-    char *tilesrs;
-    int units; /* units of the projection */
+    char *labelitem; ///< attribute defining feature label text - see :ref:`LABELITEM <mapfile-layer-labelitem>`
+    char *tileitem; ///< attribute defining tile paths - see :ref:`TILEITEM <mapfile-layer-tileitem>`
+    char *tileindex; ///< layer index file for tiling support - see :ref:`TILEINDEX <mapfile-layer-tileindex>`
+    char *tilesrs; ///< name of the attribute that contains the SRS of an individual tile - see :ref:`TILESRS <mapfile-layer-tilesrs>`
+    int units; ///< units of the layer - see :ref:`UNITS <mapfile-layer-units>`
 
-    char *connection;
-    char *plugin_library;
-    char *plugin_library_original; /* this is needed for mapfile writing */
-    enum MS_CONNECTION_TYPE connectiontype;
-    char *bandsitem; /* which item in a tile contains bands to use (tiled raster data only) */
-    char *filteritem;
-    char *styleitem; /* item to be used for style lookup - can also be 'AUTO' */
+    char *connection; ///< layer connection or data source name - see :ref:`CONNECTION <mapfile-layer-connection>`
+    char *plugin_library; ///< Used to select the library to load by MapServer
+    char *plugin_library_original; ///< this is needed for Mapfile writing
+    char *bandsitem; ///< The attribute from the index file used to select the source raster band(s) to be used - normally NULL for default bands processing
+    char *filteritem; ///< Attribute defining filter - see :ref:`FILTERITEM <mapfile-layer-filteritem>`
+    char *styleitem; ///< item to be used for style lookup - can also be 'AUTO' - see :ref:`STYLEITEM <mapfile-layer-styleitem>`
 
-    char *requires; /* context expressions, simple enough to not use expressionObj */
-    char *labelrequires;
+    char *requires; ///< Context expressions, simple enough to not use expressionObj - see :ref:`REQUIRES <mapfile-layer-requires>`
+    char *labelrequires;  ///< Simple logical expression - see :ref:`LABELREQUIRES <mapfile-layer-labelrequires>`
 
-    int dump; ///< TODO. Deprecated - to remove
-    int debug; ///< See :ref:`DEBUG <mapfile-layer-debug>`
+    int dump; ///< TODO deprecated - to remove
+    int debug; ///< Enable debugging of layer-  :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`DEBUG <mapfile-layer-debug>`
     char *classgroup; ///< See :ref:`CLASSGROUP <mapfile-layer-classgroup>`
     char *mask; ///< See :ref:`MASK <mapfile-layer-mask>`
-    char *encoding; /* for iconving shape attributes. ignored if NULL or "utf-8" */
+    char *encoding; ///< For iconving shape attributes, ignored if NULL or "utf-8" - see :ref:`ENCODING <mapfile-layer-encoding>`
 
-  /* RFC93 UTFGrid support */
+    /* RFC93 UTFGrid support */
     char *utfitem; ///< See :ref:`UTFITEM <mapfile-layer-utfitem>`
     int utfitemindex; ///< See :ref:`CLASSITEM <mapfile-layer-classitem>`
-    expressionObj utfdata;
-    LayerCompositer *compositer;
-
-    hashTableObj connectionoptions;
   };
 
 
