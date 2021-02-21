@@ -1223,13 +1223,13 @@ typedef struct labelObj labelObj;
     %immutable;
 #endif /* SWIG */
     
-    hashTableObj metadata; ///< \**immutable** see :ref:`METADATA <mapfile-class-metadata>`
-    hashTableObj validation; ///< \**immutable** see :ref:`VALIDATION <mapfile-class-validation>`
-    int numstyles; ///< \**immutable** number of styles for class
-    int numlabels;  ///< \**immutable** number of labels for class
-    int refcount; ///< \**immutable** number of references to this object
-    struct layerObj *layer; ///< \**immutable** reference to the parent layer
-    labelLeaderObj *leader; ///< \**immutable** see :ref:`LEADER <mapfile-class-leader>`
+    hashTableObj metadata; ///< see :ref:`METADATA <mapfile-class-metadata>`
+    hashTableObj validation; ///< see :ref:`VALIDATION <mapfile-class-validation>`
+    int numstyles; ///< number of styles for class
+    int numlabels;  ///< number of labels for class
+    int refcount; ///< number of references to this object
+    struct layerObj *layer; ///< reference to the parent layer
+    labelLeaderObj *leader; ///< see :ref:`LEADER <mapfile-class-leader>`
 
 #ifdef SWIG
     %mutable;
@@ -1562,14 +1562,14 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
     %immutable;
 #endif
-    int width; ///< \**immutable** image width in pixels
-    int height; ///< \**immutable** image height in pixels
-    double resolution; ///< \**immutable** image resolution in pixels per inch
-    double resolutionfactor; ///< \**immutable** resolution factor
+    int width; ///< image width in pixels
+    int height; ///< image height in pixels
+    double resolution; ///< image resolution in pixels per inch
+    double resolutionfactor; ///< resolution factor
 
-    char *imagepath; ///< \**immutable** if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEPATH <mapfile-web-imagepath>`
-    char *imageurl; ///< \**immutable** if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEURL <mapfile-web-imageurl>`
-    outputFormatObj *format; ///< \**immutable** an :class:`outputFormatObj` representing the output format of the image
+    char *imagepath; ///< if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEPATH <mapfile-web-imagepath>`
+    char *imageurl; ///< if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEURL <mapfile-web-imageurl>`
+    outputFormatObj *format; ///< an :class:`outputFormatObj` representing the output format of the image
 
 #ifndef SWIG
     tileCacheObj *tilecache;
