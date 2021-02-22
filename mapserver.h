@@ -1223,13 +1223,13 @@ typedef struct labelObj labelObj;
     %immutable;
 #endif /* SWIG */
     
-    hashTableObj metadata; ///< \**immutable** see :ref:`METADATA <mapfile-class-metadata>`
-    hashTableObj validation; ///< \**immutable** see :ref:`VALIDATION <mapfile-class-validation>`
-    int numstyles; ///< \**immutable** number of styles for class
-    int numlabels;  ///< \**immutable** number of labels for class
-    int refcount; ///< \**immutable** number of references to this object
-    struct layerObj *layer; ///< \**immutable** reference to the parent layer
-    labelLeaderObj *leader; ///< \**immutable** see :ref:`LEADER <mapfile-class-leader>`
+    hashTableObj metadata; ///< see :ref:`METADATA <mapfile-class-metadata>`
+    hashTableObj validation; ///< see :ref:`VALIDATION <mapfile-class-validation>`
+    int numstyles; ///< number of styles for class
+    int numlabels;  ///< number of labels for class
+    int refcount; ///< number of references to this object
+    struct layerObj *layer; ///< reference to the parent layer
+    labelLeaderObj *leader; ///< see :ref:`LEADER <mapfile-class-leader>`
 
 #ifdef SWIG
     %mutable;
@@ -1314,6 +1314,9 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                          labelCacheSlotObj                           */
   /************************************************************************/
+  /**
+  A cache slot to hold labels grouped by priority
+  */
   typedef struct {
     int numlabels; ///< Number of label members
     int cachesize; ///< TODO
@@ -1559,14 +1562,14 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
     %immutable;
 #endif
-    int width; ///< \**immutable** image width in pixels
-    int height; ///< \**immutable** image height in pixels
-    double resolution; ///< \**immutable** image resolution in pixels per inch
-    double resolutionfactor; ///< \**immutable** resolution factor
+    int width; ///< image width in pixels
+    int height; ///< image height in pixels
+    double resolution; ///< image resolution in pixels per inch
+    double resolutionfactor; ///< resolution factor
 
-    char *imagepath; ///< \**immutable** if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEPATH <mapfile-web-imagepath>`
-    char *imageurl; ///< \**immutable** if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEURL <mapfile-web-imageurl>`
-    outputFormatObj *format; ///< \**immutable** an :class:`outputFormatObj` representing the output format of the image
+    char *imagepath; ///< if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEPATH <mapfile-web-imagepath>`
+    char *imageurl; ///< if image is drawn by :func:`mapObj.draw` this is :ref:`IMAGEURL <mapfile-web-imageurl>`
+    outputFormatObj *format; ///< an :class:`outputFormatObj` representing the output format of the image
 
 #ifndef SWIG
     tileCacheObj *tilecache;
@@ -1639,9 +1642,49 @@ typedef struct labelObj labelObj;
   } originalScaleTokenStrings;
 #endif
 
+  /**
+  The :ref:`LAYER <layer>` object
+  */
   struct layerObj {
 
-    char *classitem; /* .DBF item to be used for symbol lookup */
+#ifndef SWIG
+    /* RFC86 Scale-dependent token replacements */
+    scaleTokenObj *scaletokens;
+    int numscaletokens;
+    originalScaleTokenStrings *orig_st;
+    int labelitemindex;
+
+    int tileitemindex;
+    projectionObj projection; /* projection information for the layer */
+    int project; /* boolean variable, do we need to project this layer or not */
+    reprojectionObj* reprojectorLayerToMap;
+    reprojectionObj* reprojectorMapToLayer;
+
+    featureListNodeObjPtr features; /* linked list so we don't need a counter */
+    featureListNodeObjPtr currentfeature; /* pointer to the current feature */
+
+    layerVTableObj *vtable;
+
+    /* SDL has converted OracleSpatial, SDE, Graticules */
+    void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
+    void *wfslayerinfo; /* For WFS layers, will contain a msWFSLayerInfo struct */
+
+    char **items;
+    void *iteminfo; /* connection specific information necessary to retrieve values */
+    expressionObj filter; /* connection specific attribute filter */
+    int bandsitemindex;
+    int filteritemindex;
+    int styleitemindex;
+
+    char **processing;
+    joinObj *joins;
+
+    imageObj *maskimage;
+    graticuleObj* grid;
+    expressionObj _geomtransform;
+    sortByClause sortBy;
+
+#endif
 
 #ifndef SWIG
     int classitemindex;
@@ -1657,181 +1700,96 @@ typedef struct labelObj labelObj;
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    /* reference counting, RFC24 */
-    int refcount;
-    int numclasses;
-    int maxclasses;
-    int index;
-    struct mapObj *map;
+    int refcount; ///< reference counting, RFC24
+    int numclasses; ///< Number of layer classes
+    int maxclasses; ///< Used to track of the maximum number of classes - see RFC-17
+    int index; ///< Index of layer within parent map's layers array
+    struct mapObj *map; ///< Reference to parent map
+    int numitems; ///< Number of layer feature attributes (items)
+    hashTableObj metadata; ///< See :ref:`METADATA <mapfile-layer-metadata>`
+    hashTableObj validation; ///< See :ref:`VALIDATION <mapfile-layer-validation>`
+    hashTableObj bindvals; ///< Relates to RFC59
+    hashTableObj connectionoptions; ///< See :ref:`CONNECTIONOPTIONS <mapfile-layer-connectionoptions>`
+
+    clusterObj cluster; ///< See :ref:`CLUSTER <mapfile-layer-cluster>`
+    rectObj extent; ///< optional limiting extent for layer features - see :ref:`EXTENT <mapfile-layer-extent>`
+    int numprocessing; ///< Number of raster processing directives
+    int numjoins; ///< Number of layer joins
+
+    expressionObj utfdata; ///< See :ref:`UTFDATA <mapfile-layer-utfdata>`
+    LayerCompositer *compositer; ///< See :ref:`COMPOSITE <mapfile-layer-composite>`
+
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
 
-    char *header, *footer; /* only used with multi result queries */
+    char *classitem; ///< the attribute used to classify layer data - see :ref:`CLASSITEM <mapfile-layer-classitem>`
+    char *header; ///< filename to a template for result's header - see :ref:`HEADER <mapfile-layer-header>`
+    char *footer; ///< filename to a template for result's footer - see :ref:`FOOTER <mapfile-layer-footer>`
 
 #ifndef __cplusplus
-    char *template; /* global template, used across all classes */
+    char *template; ///< See :ref:`TEMPLATE <mapfile-layer-template>` - global template, used across all classes
 #else /* __cplusplus */
     char *_template;
 #endif /* __cplusplus */
 
-    char *name; /* should be unique */
-    char *group; /* shouldn't be unique it's supposed to be a group right? */
+    char *name; ///< See :ref:`NAME <mapfile-layer-name>` - should be unique
+    char *group; ///< Name of a group of layers - see :ref:`GROUP <mapfile-layer-group>`
+    int status; ///< See :ref:`STATUS <mapfile-layer-status>`:data:`MS_ON`, :data:`MS_OFF` or :data:`MS_DEFAULT`
+    enum MS_RENDER_MODE rendermode; ///< :data:`MS_FIRST_MATCHING_CLASS` - default and historic MapServer behavior, :data:`MS_ALL_MATCHING_CLASSES` - SLD behavior
+    char *data; ///< Layer data definition, values depend upon connectiontype - see :ref:`DATA <mapfile-layer-data>`
+    enum MS_LAYER_TYPE type; ///< the layer type - see :ref:`TYPE <mapfile-layer-type>`
+    enum MS_CONNECTION_TYPE connectiontype; ///< the layer connection type - see :ref:`CONNECTIONTYPE <mapfile-layer-connectiontype>`
 
-    int status; /* on or off */
-    enum MS_RENDER_MODE rendermode;
-            // MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
-            // MS_ALL_MATCHING_CLASSES: SLD behavior
+    double tolerance; ///< search buffer for point and line queries (in toleranceunits) - see :ref:`TOLERANCE <mapfile-layer-tolerance>`
+    int toleranceunits; ///< See :ref:`TOLERANCEUNITS <mapfile-layer-toleranceunits>`
 
-#ifndef SWIG
-    /* RFC86 Scale-dependent token replacements */
-    scaleTokenObj *scaletokens;
-    int numscaletokens;
-    originalScaleTokenStrings *orig_st;
+    double symbolscaledenom; ///< scale at which symbols are default size - see :ref:`SYMBOLSCALEDENOM <mapfile-layer-symbolscaledenom>`
+    double minscaledenom; ///< Maximum scale at which layer will be drawn - see :ref:`MINSCALEDENOM <mapfile-layer-minscaledenom>`
+    double maxscaledenom; ///< Minimum scale at which layer will be drawn - see :ref:`MAXSCALEDENOM <mapfile-layer-maxscaledenom>`
+    int minfeaturesize; ///< minimum feature size (in pixels) for shape
+    double labelminscaledenom; ///< See :ref:`LABELMINSCALEDENOM <mapfile-layer-labelminscaledenom>`
+    double labelmaxscaledenom; ///< See :ref:`LABELMAXSCALEDENOM <mapfile-layer-labelmaxscaledenom>`
+    double mingeowidth; ///< min map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
+    double maxgeowidth; ///< max map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
 
-#endif
+    int sizeunits; ///< applies to all classes - see :ref:`SIZEUNITES <mapfile-layer-sizeunits>`
 
-    char *data; /* filename, can be relative or full path */
+    int maxfeatures; ///< Maximum number of layer features that will be drawn - see :ref:`MAXFEATURES <mapfile-layer-maxfeatures>`
+    int startindex; ///< Feature start index - used for paging
 
-    enum MS_LAYER_TYPE type;
+    colorObj offsite; ///< transparent pixel value for raster images - see :ref:`OFFSITE <mapfile-layer-offsite>`
 
-    double tolerance; /* search buffer for point and line queries (in toleranceunits) */
-    int toleranceunits;
+    int transform; ///< :data:`MS_TRUE` (default) or :data:`MS_FALSE` whether or not layer data is to be transformed to image units - see :ref:`TRANSFORM <mapfile-layer-transform>`
 
-    double symbolscaledenom; /* scale at which symbols are default size */
-    double minscaledenom, maxscaledenom;
-    int minfeaturesize; /* minimum feature size (in pixels) to shape */
-    double labelminscaledenom, labelmaxscaledenom;
-    double mingeowidth, maxgeowidth; /* map width (in map units) at which the layer should be drawn */
+    int labelcache; ///< :data:`MS_ON` (default) or :data:`MS_OFF` - see :ref:`LABELCACHE <mapfile-layer-labelcache>`
+    int postlabelcache; ///< :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`POSTLABELCACHE <mapfile-layer-postlabelcache>`
 
-    int sizeunits; /* applies to all classes */
+    char *labelitem; ///< attribute defining feature label text - see :ref:`LABELITEM <mapfile-layer-labelitem>`
+    char *tileitem; ///< attribute defining tile paths - see :ref:`TILEITEM <mapfile-layer-tileitem>`
+    char *tileindex; ///< layer index file for tiling support - see :ref:`TILEINDEX <mapfile-layer-tileindex>`
+    char *tilesrs; ///< name of the attribute that contains the SRS of an individual tile - see :ref:`TILESRS <mapfile-layer-tilesrs>`
+    int units; ///< units of the layer - see :ref:`UNITS <mapfile-layer-units>`
 
-    int maxfeatures;
-    int startindex;
+    char *connection; ///< layer connection or data source name - see :ref:`CONNECTION <mapfile-layer-connection>`
+    char *plugin_library; ///< Used to select the library to load by MapServer
+    char *plugin_library_original; ///< this is needed for Mapfile writing
+    char *bandsitem; ///< The attribute from the index file used to select the source raster band(s) to be used - normally NULL for default bands processing
+    char *filteritem; ///< Attribute defining filter - see :ref:`FILTERITEM <mapfile-layer-filteritem>`
+    char *styleitem; ///< item to be used for style lookup - can also be 'AUTO' - see :ref:`STYLEITEM <mapfile-layer-styleitem>`
 
-    colorObj offsite; /* transparent pixel value for raster images */
+    char *requires; ///< Context expressions, simple enough to not use expressionObj - see :ref:`REQUIRES <mapfile-layer-requires>`
+    char *labelrequires;  ///< Simple logical expression - see :ref:`LABELREQUIRES <mapfile-layer-labelrequires>`
 
-    int transform; /* does this layer have to be transformed to file coordinates */
+    int dump; ///< TODO deprecated - to remove
+    int debug; ///< Enable debugging of layer-  :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`DEBUG <mapfile-layer-debug>`
+    char *classgroup; ///< See :ref:`CLASSGROUP <mapfile-layer-classgroup>`
+    char *mask; ///< See :ref:`MASK <mapfile-layer-mask>`
+    char *encoding; ///< For iconving shape attributes, ignored if NULL or "utf-8" - see :ref:`ENCODING <mapfile-layer-encoding>`
 
-    int labelcache, postlabelcache; /* on or off */
-
-    char *labelitem;
-#ifndef SWIG
-    int labelitemindex;
-#endif /* not SWIG */
-
-    char *tileitem;
-    char *tileindex; /* layer index file for tiling support */
-    char *tilesrs;
-
-#ifndef SWIG
-    int tileitemindex;
-    projectionObj projection; /* projection information for the layer */
-    int project; /* boolean variable, do we need to project this layer or not */
-    reprojectionObj* reprojectorLayerToMap;
-    reprojectionObj* reprojectorMapToLayer;
-#endif /* not SWIG */
-
-    int units; /* units of the projection */
-
-#ifndef SWIG
-    featureListNodeObjPtr features; /* linked list so we don't need a counter */
-    featureListNodeObjPtr currentfeature; /* pointer to the current feature */
-#endif /* SWIG */
-
-    char *connection;
-    char *plugin_library;
-    char *plugin_library_original; /* this is needed for mapfile writing */
-    enum MS_CONNECTION_TYPE connectiontype;
-
-#ifndef SWIG
-    layerVTableObj *vtable;
-
-    /* SDL has converted OracleSpatial, SDE, Graticules */
-    void *layerinfo; /* all connection types should use this generic pointer to a vendor specific structure */
-    void *wfslayerinfo; /* For WFS layers, will contain a msWFSLayerInfo struct */
-#endif /* not SWIG */
-
-    /* attribute/classification handling components */
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    int numitems;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-#ifndef SWIG
-    char **items;
-    void *iteminfo; /* connection specific information necessary to retrieve values */
-    expressionObj filter; /* connection specific attribute filter */
-    int bandsitemindex;
-    int filteritemindex;
-    int styleitemindex;
-#endif /* not SWIG */
-
-    char *bandsitem; /* which item in a tile contains bands to use (tiled raster data only) */
-    char *filteritem;
-    char *styleitem; /* item to be used for style lookup - can also be 'AUTO' */
-
-    char *requires; /* context expressions, simple enough to not use expressionObj */
-    char *labelrequires;
-
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    hashTableObj metadata;
-    hashTableObj validation;
-    hashTableObj bindvals;
-    clusterObj cluster;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-    int dump;
-    int debug;
-#ifndef SWIG
-    char **processing;
-    joinObj *joins;
-#endif /* not SWIG */
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-
-    rectObj extent;
-
-    int numprocessing;
-    int numjoins;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-    char *classgroup;
-
-#ifndef SWIG
-    imageObj *maskimage;
-    graticuleObj* grid;
-#endif
-    char *mask;
-
-#ifndef SWIG
-    expressionObj _geomtransform;
-#endif
-
-    char *encoding; /* for iconving shape attributes. ignored if NULL or "utf-8" */
-
-  /* RFC93 UTFGrid support */
-    char *utfitem;
-    int utfitemindex;
-    expressionObj utfdata;
-
-#ifndef SWIG
-    sortByClause sortBy;
-#endif
-
-    LayerCompositer *compositer;
-
-    hashTableObj connectionoptions;
+    /* RFC93 UTFGrid support */
+    char *utfitem; ///< See :ref:`UTFITEM <mapfile-layer-utfitem>`
+    int utfitemindex; ///< See :ref:`CLASSITEM <mapfile-layer-classitem>`
   };
 
 
