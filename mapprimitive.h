@@ -51,11 +51,14 @@ typedef struct {
 #endif
 } pointObj;
 
+/**
+A lineObj is composed of one or more pointObj instances
+*/
 typedef struct {
 #ifdef SWIG
   %immutable;
 #endif
-  int numpoints;
+  int numpoints; ///< Number of points in the line
 #ifndef SWIG
   pointObj *point;
 #endif
