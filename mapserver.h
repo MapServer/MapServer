@@ -2944,6 +2944,7 @@ extern "C" {
   MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
+  MS_DLL_EXPORT shapeObj *msGEOSDelaunayTriangulation(shapeObj *shape, double tolerance, int onlyEdges);
   MS_DLL_EXPORT shapeObj *msGEOSVoronoiDiagram(shapeObj *shape, double tolerance, int onlyEdges);
   MS_DLL_EXPORT shapeObj *msGEOSSkeletonize(shapeObj *shape, int depth);
 
