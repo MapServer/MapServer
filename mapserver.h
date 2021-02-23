@@ -1466,38 +1466,40 @@ typedef struct labelObj labelObj;
   /*                              legendObj                               */
   /************************************************************************/
 
+  /**
+  The :ref:`LEGEND <legend>` object
+  */
   typedef struct {
-    colorObj imagecolor;
+
+#ifndef SWIG
+      int transparent; // TODO remove deprecated since 4.6
+      int interlace; // TODO remove deprecated since 4.6
+#endif /* not SWIG */
+
 #ifdef SWIG
     %immutable;
 #endif
-    labelObj label;
+    labelObj label; ///< See :ref:`LABEL <mapfile-legend-label>`
+    struct mapObj *map; ///< Instances of legendObj are always are always embedded inside the mapObj
 #ifdef SWIG
     %mutable;
 #endif
-    int keysizex, keysizey;
-    int keyspacingx, keyspacingy;
-    colorObj outlinecolor; /* Color of outline of box, -1 for no outline */
-    int status; /* ON, OFF or EMBED */
-    int height, width;
-    int position; /* for embeded legends */
-#ifndef SWIG
-    int transparent;
-    int interlace;
-#endif /* not SWIG */
-    int postlabelcache;
+    colorObj imagecolor; ///< Legend background color - see :ref:`IMAGECOLOR <mapfile-legend-imagecolor>`
+    int keysizex; ///< Width in pixels of legend keys - see :ref:`KEYSIZE <mapfile-legend-keysize>`
+    int keysizey; ///< Height in pixels of legend keys - see :ref:`KEYSIZE <mapfile-legend-keysize>`
+    int keyspacingx; ///< Horizontal padding around keys in pixels - see :ref:`KEYSPACING <mapfile-legend-keyspacing>`
+    int keyspacingy; ///< Vertical padding around keys in pixels - see :ref:`KEYSPACING <mapfile-legend-keyspacing>`
+    colorObj outlinecolor; ///< Key outline color, -1 for no outline - see :ref:`OUTLINECOLOR <mapfile-legend-outlinecolor>`
+    int status; ///< :data:`MS_ON`, :data:`MS_OFF` or :data:`MS_EMBED`- see :ref:`STATUS <mapfile-legend-status>`
+    int height; ///< Legend height
+    int width; ///< Legend width
+    int position; ///< Used for embedded legends, see :ref:`POSITION  <mapfile-legend-position>`
+    int postlabelcache; ///< :data:`MS_TRUE`, :data:`MS_FALSE` - see :ref:`POSTLABELCACHE  <mapfile-legend-postlabelcache>`
 #ifndef __cplusplus
-    char *template;
+    char *template; ///< See :ref:`TEMPLATE <mapfile-legend-template>`
 #else /* __cplusplus */
     char *_template;
 #endif /* __cplusplus */
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    struct mapObj *map;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
   } legendObj;
 
   /************************************************************************/
