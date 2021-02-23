@@ -80,15 +80,15 @@ static const char *getRequestParameter(cgiRequestObj *request, const char *item)
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-static const char *getTemplateDirectory(mapObj *map)
+static const char *getTemplateDirectory(mapObj *map, const char *key, const char *envvar)
 {
   const char *directory;
 
   // TODO: if directory is provided then perhaps we need to check for a trailing slash
 
-  if((directory = msOWSLookupMetadata(&(map->web.metadata), "A", "template_directory")) != NULL) 
+  if((directory = msOWSLookupMetadata(&(map->web.metadata), "A", key)) != NULL) 
     return directory;
-  else if((directory = getenv("OGCAPI_TEMPLATE_DIRECTORY")) != NULL)
+  else if((directory = getenv(envvar)) != NULL)
     return directory;
   else
     return NULL;
@@ -261,7 +261,7 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
   } else if(format == OGCAPI_FORMAT_GEOJSON) {
     outputJson(response, OGCAPI_MIMETYPE_GEOJSON);
   } else if(format == OGCAPI_FORMAT_HTML) {
-    if((directory = getTemplateDirectory(map)) == NULL) {
+    if((directory = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
       processError(400, "Template directory not set.");
       return; // bail
     }
