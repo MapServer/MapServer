@@ -8,11 +8,6 @@ language: php
 matrix:
   include:
 
-    - php: 7.1
-      env:
-        - BUILD_NAME=PHP_7.1
-        - PYTHON_VERSION=2.7
-
     - php: 7.2
       env:
         - BUILD_NAME=PHP_7.2_WITH_ASAN
