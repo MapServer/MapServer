@@ -3641,8 +3641,6 @@ int initLayer(layerObj *layer, mapObj *map)
   initHashTable(&(layer->bindvals));
   initHashTable(&(layer->validation));
 
-  layer->dump = MS_FALSE;
-
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
@@ -4143,9 +4141,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(DEBUG):
         if((layer->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
         if(layer->debug == MS_NUMBER) layer->debug = (int) msyynumber;
-        break;
-      case(DUMP):
-        if((layer->dump = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadLayer()");
