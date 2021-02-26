@@ -90,7 +90,6 @@
     <connectionType>SDE</connectionType>
     <data>../data</data>
     <debug>1</debug>
-    <dump>FALSE</dump>
     <extent>-180.0 -90.0 180.0 90.0</extent>
     <Feature>
       <wkt>POINT(2000 2500)</wkt>
