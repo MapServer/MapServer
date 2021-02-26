@@ -707,7 +707,6 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
         if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
             continue;
 
-        /* List only vector layers in which DUMP=TRUE */
         if (msWFSIsLayerSupported(lp))
         {
           if( psFtNode != NULL ) {
