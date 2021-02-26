@@ -635,8 +635,7 @@
 				</xs:simpleType>
 			</xs:element>
 			<xs:element name="data" type="xs:string" minOccurs="0"/>
-			<xs:element name="debug" type="ms:debugModeEnum" default="OFF" minOccurs="0"/>
-			<xs:element name="dump" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
+			<xs:element name="debug" type="ms:debugModeEnum" default="OFF" minOccurs="0"/>			
 			<xs:element name="extent" minOccurs="0">
 				<xs:simpleType>
 					<xs:list itemType="xs:double"/>
