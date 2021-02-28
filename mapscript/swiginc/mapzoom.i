@@ -11,7 +11,7 @@
 
 %extend mapObj {
 
-    /*
+    /**
     Zoom by the given factor to a pixel position within the width
     and height bounds. If max_extent is not NULL, the zoom is 
     constrained to the max_extents
@@ -202,7 +202,7 @@
         return MS_SUCCESS;
     }
 
-    /*
+    /**
     Set the map extents to a given extents. 
     Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE` on error
     */
@@ -370,7 +370,7 @@
         return MS_SUCCESS;
     }
 
-    /*
+    /**
      Zoom by the given factor to a pixel position within the width
      and height bounds.  If max_extent is not NULL, the zoom is 
      constrained to the max_extents

@@ -1845,125 +1845,89 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /*      application.                                                    */
   /************************************************************************/
 
-  /* MAP OBJECT -  */
+  /**
+  The :ref:`MAP <map>` object
+  */
   struct mapObj { /* structure for a map */
-    char *name; /* small identifier for naming etc. */
-    int status; /* is map creation on or off */
-    int height, width;
-    int maxsize;
 
 #ifndef SWIG
-    layerObj **layers;
+      layerObj **layers;
+      geotransformObj gt; /* rotation / geotransform */
+      rectObj saved_extent;
+      paletteObj palette; /* holds a map palette */
+      outputFormatObj **outputformatlist;
+      projectionObj projection; /* projection information for output map */
+      projectionObj latlon; /* geographic projection definition */
+
+      /* Private encryption key information - see mapcrypto.c */
+      int encryption_key_loaded;        /* MS_TRUE once key has been loaded */
+      unsigned char encryption_key[MS_ENCRYPTION_KEY_SIZE]; /* 128bits encryption key */
+      queryObj query;
+      projectionContext* projContext;
+
 #endif /* SWIG */
 
 #ifdef SWIG
-    %immutable;
+      %immutable;
 #endif /* SWIG */
-    /* reference counting, RFC24 */
-    int refcount;
-    int numlayers; /* number of layers in mapfile */
-    int maxlayers; /* allocated size of layers[] array */
+      int refcount; ///< Used for reference counting see RFC24
+      int numlayers; ///< Number of layers in mapfile
+      int maxlayers; ///< Allocated size of layers[] array
 
-    symbolSetObj symbolset;
-    fontSetObj fontset;
+      hashTableObj configoptions; ///< A hash table of configuration options from CONFIG keywords in the map - see :ref:`CONFIG <mapfile-map-config>`
 
-    labelCacheObj labelcache; /* we need this here so multiple feature processors can access it */
+      symbolSetObj symbolset; ///< See :ref:`SYMBOLSET <mapfile-map-symbolset>`
+      fontSetObj fontset; ///< See :ref:`FONTSET <mapfile-map-fontset>`
+
+      labelCacheObj labelcache; ///< We need this here so multiple feature processors can access it
+      int numoutputformats; ///< Number of output formats available in the map
+      outputFormatObj *outputformat; ///< See :ref:`OUTPUTFORMAT <mapfile-map-outputformat>`
+      char *imagetype; ///< Name of current outputformat
+
+      referenceMapObj reference; ///< See :ref:`SCALEBAR <mapfile-map-scalebar>`
+      scalebarObj scalebar; ///< See :ref:`SCALEBAR <mapfile-map-scalebar>`
+      legendObj legend; ///< See :ref:`LEGEND <mapfile-map-legend>`
+      queryMapObj querymap; ///< See :ref:`QUERYMAP <mapfile-map-querymap>`
+      webObj web; ///< See :ref:`WEB <mapfile-map-web>`
+
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
 
-    int transparent; /* TODO - Deprecated */
-    int interlace; /* TODO - Deprecated */
-    int imagequality; /* TODO - Deprecated */
+    int transparent; ///< TODO - Deprecated
+    int interlace; ///< TODO - Deprecated
+    int imagequality; ///< TODO - Deprecated
+    char *datapattern; ///< TODO - Deprecated use VALIDATION ... END block instead
+    char *templatepattern; ///< TODO - Deprecated use VALIDATION ... END block instead
 
-    rectObj extent; /* map extent array */
-    double cellsize; /* in map units */
+    char *name; ///< Small identifier for naming etc - see :ref:`NAME <mapfile-map-name>`
+    int status;  ///< Is map creation on or off - see :ref:`STATUS <mapfile-map-status>`
+    int height; ///< See :ref:`SIZE <mapfile-map-size>`
+    int width; ///< See :ref:`SIZE <mapfile-map-size>`
+    int maxsize; ///< See :ref:`MAXSIZE  <mapfile-map-maxsize>`
 
+    rectObj extent; ///< Map extent array - see :ref:`EXTENT <mapfile-map-extent>`
+    double cellsize; ///< Pixel size in map units
 
-#ifndef SWIG
-    geotransformObj gt; /* rotation / geotransform */
-    rectObj saved_extent;
-#endif /*SWIG*/
+    enum MS_UNITS units; ///< Units of the projection - see :ref:`UNITS <mapfile-map-units>`
+    double scaledenom; ///< The nominal map scale, a value of 25000 means 1:25000 scale - see :ref:`SCALEDENOM  <mapfile-map-scaledenom>`
+    double resolution; ///< See :ref:`RESOLUTION <mapfile-map-resolution>`
+    double defresolution; ///< Default resolution - used to calculate the scalefactor, see :ref:`DEFRESOLUTION <mapfile-map-defresolution>`
 
-    enum MS_UNITS units; /* units of the projection */
-    double scaledenom; /* scale of the output image */
-    double resolution;
-    double defresolution; /* default resolution: used for calculate the scalefactor */
+    char *shapepath; ///< Where are the shape files located - see :ref:`SHAPEPATH <mapfile-map-shapepath>`
+    char *mappath; ///< Path of the mapfile, all paths are relative to this path
+    char *sldurl; ///< URL of SLD document as specified with "&SLD=..." WMS parameter d- currently this reference is used only in mapogcsld.c 
+                  ///< and has a NULL value outside that context
 
-    char *shapepath; /* where are the shape files located */
-    char *mappath; /* path of the mapfile, all path are relative to this path */
-    char *sldurl; // URL of SLD document as specified with "&SLD=..."
-                  // WMS parameter.  Currently this reference is used
-                  // only in mapogcsld.c and has a NULL value
-                  // outside that context.
+    colorObj imagecolor; ///< Holds the initial image color value - see :ref:`IMAGECOLOR <mapfile-map-imagecolor>`
 
-#ifndef SWIG
-    paletteObj palette; /* holds a map palette */
-#endif /*SWIG*/
-    colorObj imagecolor; /* holds the initial image color value */
-
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    int numoutputformats;
-#ifndef SWIG
-    outputFormatObj **outputformatlist;
-#endif /*SWIG*/
-    outputFormatObj *outputformat;
-
-    char *imagetype; /* name of current outputformat */
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-#ifndef SWIG
-    projectionObj projection; /* projection information for output map */
-    projectionObj latlon; /* geographic projection definition */
-#endif /* not SWIG */
-
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    referenceMapObj reference;
-    scalebarObj scalebar;
-    legendObj legend;
-
-    queryMapObj querymap;
-
-    webObj web;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-    int *layerorder;
-
-    int debug;
-
-    char *datapattern, *templatepattern; /* depricated, use VALIDATION ... END block instead */
-
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    hashTableObj configoptions;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
-
-#ifndef SWIG
-    /* Private encryption key information - see mapcrypto.c */
-    int encryption_key_loaded;        /* MS_TRUE once key has been loaded */
-    unsigned char encryption_key[MS_ENCRYPTION_KEY_SIZE]; /* 128bits encryption key */
-
-    queryObj query;
-#endif
+    int *layerorder; ///< Used to modify the order in which the layers are drawn - TODO should be immutable?
+    int debug; ///< See :ref:`DEBUG <mapfile-map-debug>`
 
 #ifdef USE_V8_MAPSCRIPT
     void *v8context;
 #endif
 
-#ifndef SWIG
-    projectionContext* projContext;
-#endif
   };
 
   /************************************************************************/
