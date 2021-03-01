@@ -210,7 +210,7 @@
       return msGetSymbolIndex(&self->symbolset, name, MS_TRUE);
     }
 
-    /// **TODO** this function only calculates the scale or am I missing something?
+    /// \**TODO** this function only calculates the scale or am I missing something?
     void prepareQuery() {
       int status;
 
