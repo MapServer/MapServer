@@ -55,29 +55,36 @@ extern "C" {
 
 typedef struct projectionContext projectionContext;
 
+/**
+The :ref:`PROJECTION <projection>` object
+MapServer's Maps and Layers have Projection attributes, and these are C projectionObj structures, 
+but are not directly exposed by the mapscript module
+*/
   typedef struct {
+#ifndef SWIG
+      char **args; /* variable number of projection args */
+#if PROJ_VERSION_MAJOR >= 6
+      PJ* proj;
+      projectionContext* proj_ctx;
+#else
+      projPJ proj; /* a projection structure for the PROJ package */
+#if PJ_VERSION >= 480
+      projCtx proj_ctx;
+#endif
+#endif
+      geotransformObj gt; /* extra transformation to apply */
+#endif
+
 #ifdef SWIG
     %immutable;
 #endif
-    int numargs; /* actual number of projection args */
-    int automatic; /* projection object was to fetched from the layer */
+    int numargs; ///< Actual number of projection args
+    int automatic; ///< Projection object was to fetched from the layer
 #ifdef SWIG
     %mutable;
 #endif
-#ifndef SWIG
-    char **args; /* variable number of projection args */
-#if PROJ_VERSION_MAJOR >= 6
-    PJ* proj;
-    projectionContext* proj_ctx;
-#else
-    projPJ proj; /* a projection structure for the PROJ package */
-#if PJ_VERSION >= 480
-    projCtx proj_ctx;
-#endif
-#endif
-    geotransformObj gt; /* extra transformation to apply */
-#endif
-    int wellknownprojection;
+
+    int wellknownprojection; ///< One of ``wkp_none 0``, ``wkp_lonlat 1``, or ``wkp_gmerc 2``
   } projectionObj;
 
 #ifndef SWIG
