@@ -844,32 +844,35 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
   /*                                                                      */
   /*      see mapoutput.c for most related code.                          */
   /************************************************************************/
-
+ 
+/**
+The :ref:`OUTPUTFORMAT <outputformat>` object
+*/
   typedef struct {
 #ifndef SWIG
     int refcount;
     char **formatoptions;
+    rendererVTableObj *vtable;
+    void *device; /* for supporting direct rendering onto a device context */
 #endif /* SWIG */
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int  numformatoptions;
+    int  numformatoptions; ///< The number of option values set on this format - can be used to 
+                           ///< iterate over the options array in conjunction with ``getOptionAt``
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
-    char *name;
-    char *mimetype;
-    char *driver;
-    char *extension;
-    int  renderer;  /* MS_RENDER_WITH_* */
-    int  imagemode; /* MS_IMAGEMODE_* value. */
-    int  transparent;
-    int  bands;
-    int inmapfile; /* boolean value for writing */
-#ifndef SWIG
-    rendererVTableObj *vtable;
-    void *device; /* for supporting direct rendering onto a device context */
-#endif
+    char *name; ///< See :ref:`NAME <mapfile-outputformat-name>`
+    char *mimetype; ///< See :ref:`MIMETYPE <mapfile-outputformat-mimetype>`
+    char *driver; ///< See :ref:`DRIVER <mapfile-outputformat-driver>`
+    char *extension; ///< See :ref:`EXTENSION <mapfile-outputformat-extension>`
+    int  renderer;  ///< ``MS_RENDER_WITH_*`` value - normally set internally based on the driver and some other setting in the constructor.
+    int  imagemode; ///< ``MS_IMAGEMODE_*`` value - see :ref:`IMAGEMODE <mapfile-outputformat-imagemode>`
+    int  transparent; ///< See :ref:`TRANSPARENT <mapfile-outputformat-transparent>`
+    int  bands; ///< The number of bands in the raster, normally set via the BAND_COUNT formatoption - this field should be considered read-only
+                ///< Only used for the "raw" modes, MS_IMAGEMODE_BYTE, MS_IMAGEMODE_INT16, and MS_IMAGEMODE_FLOAT32
+    int inmapfile; ///< Boolean value indicating if the format is in the Mapfile
   } outputFormatObj;
 
   /* The following is used for "don't care" values in transparent, interlace and
