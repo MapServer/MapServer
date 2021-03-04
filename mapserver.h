@@ -1014,21 +1014,21 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
     int refcount;
     char *symbolname; ///< Name of the style's symbol - see :ref:`symbolname <mapfile-style-symbolname>`
 
+#ifdef SWIG
+    %mutable;
+#endif /* SWIG */
+
 #if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
-    %immutable;
+    % immutable;
 #endif
     int patternlength; ///< Number of elements in the pattern attribute
 #if defined(SWIG) && defined(SWIGPYTHON)
-    %mutable;
+    % mutable;
 #endif
 
 #if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
     double pattern[MS_MAXPATTERNLENGTH]; ///< List of on, off values to define a dash pattern for line work (lines, polygon outlines, hatch lines)
 #endif
-
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
 
     double angle; ///< Angle, given in degrees, to draw the line work, default is 0, for symbols of Type HATCH, this is the angle of the 
                   ///< hatched lines - see :ref:`ANGLE <mapfile-style-angle>`
