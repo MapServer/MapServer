@@ -1019,11 +1019,11 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
 #endif /* SWIG */
 
 #if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
-    % immutable;
+    %immutable;
 #endif
     int patternlength; ///< Number of elements in the pattern attribute
 #if defined(SWIG) && defined(SWIGPYTHON)
-    % mutable;
+    %mutable;
 #endif
 
 #if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
