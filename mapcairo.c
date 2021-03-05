@@ -901,7 +901,6 @@ void freeSVGCache(symbolObj *s) {
 #ifdef USE_SVG_CAIRO
       svg_cairo_destroy(cache->svgc);
 #else
-      rsvg_handle_close(cache->svgc, NULL);
   #if LIBRSVG_CHECK_VERSION(2,35,0)
       g_object_unref(cache->svgc);
   #else
