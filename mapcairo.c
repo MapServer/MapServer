@@ -990,15 +990,42 @@ int msPreloadSVGSymbol(symbolObj *symbol)
   }
 #else
   {
-    RsvgDimensionData dim;
     cache->svgc = rsvg_handle_new_from_file(symbol->full_pixmap_path,NULL);
     if(!cache->svgc) {
       msSetError(MS_RENDERERERR,"failed to load svg file %s", "msPreloadSVGSymbol()", symbol->full_pixmap_path);
       return MS_FAILURE;
     }
+#if LIBRSVG_CHECK_VERSION(2,46,0)
+    /* rsvg_handle_get_dimensions_sub() is deprecated since librsvg 2.46 */
+    /* It seems rsvg_handle_get_intrinsic_dimensions() is the best equivalent */
+    /* when the <svg> root node includes a width and height attributes in pixels */
+    gboolean has_width = FALSE;
+    RsvgLength width = {0, RSVG_UNIT_PX};
+    gboolean has_height = FALSE;
+    RsvgLength height = {0, RSVG_UNIT_PX};
+    rsvg_handle_get_intrinsic_dimensions(cache->svgc,
+                                         &has_width, &width,
+                                         &has_height, &height,
+                                         NULL, NULL);
+    if( has_width && width.unit == RSVG_UNIT_PX &&
+        has_height && height.unit == RSVG_UNIT_PX )
+    {
+        symbol->sizex = width.length;
+        symbol->sizey = height.length;
+    }
+    else
+    {
+        RsvgRectangle ink_rect = { 0, 0, 0, 0 };
+        rsvg_handle_get_geometry_for_element (cache->svgc, NULL, &ink_rect, NULL, NULL);
+        symbol->sizex = ink_rect.width;
+        symbol->sizey = ink_rect.height;
+    }
+#else
+    RsvgDimensionData dim;
     rsvg_handle_get_dimensions_sub (cache->svgc, &dim, NULL);
     symbol->sizex = dim.width;
     symbol->sizey = dim.height;
+#endif
   }
 #endif
 
