@@ -197,6 +197,25 @@ static hb_bool_t _ms_get_glyph_func (hb_font_t *font, void *font_data,
   }
 }
 
+#if HB_VERSION_ATLEAST(1,2,3)
+static hb_bool_t _ms_get_nominal_glyph_func(hb_font_t *font, void *font_data,
+                                            hb_codepoint_t unicode,
+                                            hb_codepoint_t *glyph,
+                                            void *user_data)
+{
+    return _ms_get_glyph_func(font, font_data, unicode, 0, glyph, user_data);
+}
+
+static hb_bool_t _ms_get_variation_glyph_func(hb_font_t *font, void *font_data,
+                                              hb_codepoint_t unicode,
+                                              hb_codepoint_t variation_selector,
+                                              hb_codepoint_t *glyph,
+                                              void *user_data)
+{
+    return _ms_get_glyph_func(font, font_data, unicode, variation_selector, glyph, user_data);
+}
+#endif
+
 static hb_position_t _ms_get_glyph_h_advance_func (hb_font_t *font, void *font_data,
 			   hb_codepoint_t glyph, void *user_data)
 {
@@ -322,7 +341,12 @@ hb_font_t* get_hb_font(struct _ms_hb_user_data *font_data) {
     hbf->hbfont = hb_font_create_sub_font(hbf->hbparentfont);
     hbf->funcs = hb_font_funcs_create();
     hb_font_funcs_set_glyph_h_advance_func(hbf->funcs, _ms_get_glyph_h_advance_func, NULL, NULL);
+#if HB_VERSION_ATLEAST(1,2,3)
+    hb_font_funcs_set_nominal_glyph_func(hbf->funcs, _ms_get_nominal_glyph_func, NULL, NULL);
+    hb_font_funcs_set_variation_glyph_func(hbf->funcs, _ms_get_variation_glyph_func, NULL, NULL);
+#else
     hb_font_funcs_set_glyph_func(hbf->funcs, _ms_get_glyph_func, NULL, NULL);
+#endif
     hb_font_funcs_set_glyph_v_advance_func(hbf->funcs, _ms_get_glyph_v_advance_func, NULL, NULL);
     hbf->cursize = reqsize;
     fcache->hbfont = hbf;
