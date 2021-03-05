@@ -922,11 +922,17 @@ The :ref:`OUTPUTFORMAT <outputformat>` object
   /*                                                                      */
   /*      used to visualize query results                                 */
   /************************************************************************/
+
+/**
+The :ref:`QUERYMAP <querymap>` object.
+Instances of querymapObj are always are always embedded inside the :class:`mapObj`.
+*/
   typedef struct {
-    int height, width;
-    int status;
-    int style; /* HILITE, SELECTED or NORMAL */
-    colorObj color;
+    int height; ///< See :ref:`SIZE <mapfile-querymap-size>`
+    int width; ///< See :ref:`SIZE <mapfile-querymap-size>`
+    int status; ///< See :ref:`STATUS <mapfile-querymap-status>`
+    int style; ///< ``HILITE``, ``SELECTED`` or ``NORMAL`` - see :ref:`STYLE <mapfile-querymap-style>`
+    colorObj color; ///< See :ref:`COLOR <mapfile-querymap-color>`
   } queryMapObj;
 
   /************************************************************************/
@@ -935,42 +941,49 @@ The :ref:`OUTPUTFORMAT <outputformat>` object
   /*      holds parameters for a mapserver/mapscript interface            */
   /************************************************************************/
 
+/**
+The :ref:`WEB <web>` object.
+Has no other existence than as an attribute of a :class:`mapObj`. 
+Serves as a container for various run-time web application definitions like temporary file paths, template paths, etc.
+*/
   typedef struct {
-    char *log;
-    char *imagepath, *imageurl, *temppath;
 
 #ifdef SWIG
-    %immutable;
+      %immutable;
 #endif /* SWIG */
-    struct mapObj *map;
+      hashTableObj metadata; ///< Metadata hash table - see :ref:`METADATA <mapfile-web-metadata>`
+      hashTableObj validation; ///< See :ref:`VALIDATION <mapfile-web-validation>`
+      struct mapObj *map; ///< Reference to parent :class:`mapObj`
+
 #ifdef SWIG
-    %mutable;
+      %mutable;
 #endif /* SWIG */
+
+    rectObj extent; ///< The clipping extent - see :ref:`EXTENT <mapfile-web-extent>`
+
+    char *log; ///< TODO - deprecated - see :ref:`LOG <mapfile-web-log>`
+    char *imagepath; ///< Filesystem path to temporary image location - see :ref:`IMAGEPATH <mapfile-web-imagepath>`
+    char *imageurl; ///< URL to temporary image location - see :ref:`IMAGEURL <mapfile-web-imageurl>`
+    char *temppath; ///< See :ref:`TEMPPATH <mapfile-web-temppath>`
+    char *header; ///< Path to header document - see :ref:`HEADER <mapfile-web-header>`
+    char *footer; ///< Path to footer document - see :ref:`FOOTER <mapfile-web-footer>`
+    char *empty; ///< See :ref:`EMPTY <mapfile-web-empty>`
+    char *error; ///< Error handling - see :ref:`ERROR <mapfile-web-error>`
+
+    double minscaledenom; ///< Maximum map scale - see :ref:`MINSCALEDENOM <mapfile-web-minscaledenom>`
+    double maxscaledenom; ///< Minimum map scale - see :ref:`MAXSCALEDENOM <mapfile-web-maxscaledenom>`
+    char *mintemplate; ///< See :ref:`MINTEMPLATE <mapfile-web-mintemplate>`
+    char *maxtemplate; ///< See :ref:`MAXTEMPLATE <mapfile-web-maxtemplate>`
+
+    char *queryformat; ///< See :ref:`QUERYFORMAT <mapfile-web-queryformat>` /* what format is the query to be returned, given as a MIME type */
+    char *legendformat; ///< See :ref:`LEGENDFORMAT <mapfile-web-legendformat>`
+    char *browseformat; ///< See :ref:`BROWSEFORMAT <mapfile-web-browseformat>`
 
 #ifndef __cplusplus
-    char *template;
+    char *template; ///< Path to template document - see :ref:`TEMPLATE <mapfile-web-template>`
 #else
     char *_template;
 #endif
-
-    char *header, *footer;
-    char *empty, *error; /* error handling */
-    rectObj extent; /* clipping extent */
-    double minscaledenom, maxscaledenom;
-    char *mintemplate, *maxtemplate;
-
-    char *queryformat; /* what format is the query to be returned, given as a MIME type */
-    char *legendformat;
-    char *browseformat;
-
-#ifdef SWIG
-    %immutable;
-#endif /* SWIG */
-    hashTableObj metadata;
-    hashTableObj validation;
-#ifdef SWIG
-    %mutable;
-#endif /* SWIG */
 
   } webObj;
 
@@ -981,86 +994,95 @@ The :ref:`OUTPUTFORMAT <outputformat>` object
   /*      applied within a classObj                                       */
   /************************************************************************/
 
+/**
+The :ref:`STYLE <style>` object. An instance of styleObj is associated with one instance of :class:`classObj`.
+*/
   struct styleObj{
+
+#ifndef SWIG
+      /* private vars for rfc 48 & 64 */
+      expressionObj _geomtransform;
+      double scalefactor; // computed, not set
+      attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
+      int numbindings;
+      expressionObj exprBindings[MS_STYLE_BINDING_LENGTH];
+      int nexprbindings;
+#endif
+
+
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
+
     int refcount;
-    char *symbolname;
+    char *symbolname; ///< Name of the style's symbol - see :ref:`symbolname <mapfile-style-symbolname>`
+
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
 
-#ifndef SWIG
-    /* private vars for rfc 48 & 64 */
-    expressionObj _geomtransform;
+#if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
+    %immutable;
+#endif
+    int patternlength; ///< Number of elements in the pattern attribute
+#if defined(SWIG) && defined(SWIGPYTHON)
+    %mutable;
 #endif
 
+#if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
+    double pattern[MS_MAXPATTERNLENGTH]; ///< List of on, off values to define a dash pattern for line work (lines, polygon outlines, hatch lines)
+#endif
+
+    double angle; ///< Angle, given in degrees, to draw the line work, default is 0, for symbols of Type HATCH, this is the angle of the 
+                  ///< hatched lines - see :ref:`ANGLE <mapfile-style-angle>`
     /*should an angle be automatically computed*/
-    int autoangle;
+    int autoangle; ///< If the angle is set to ``AUTO`` - see :ref:`ANGLE <mapfile-style-angle>`
 
     /* should lines be drawn with antialiasing (default)? */
-    int antialiased;
+    int antialiased; ///< See :ref:`ANTIALIAS <mapfile-style-antialias>`
 
-    colorObj color;
-    colorObj backgroundcolor;
-    colorObj outlinecolor;
+    colorObj color; ///< Foreground or fill pen color - see :ref:`COLOR <mapfile-style-color>`
+    colorObj backgroundcolor; ///< See :ref:`BACKGROUNDCOLOR <mapfile-style-backgroundcolor>`
+    colorObj outlinecolor; ///< Outline pen color - see :ref:`OUTLINECOLOR <mapfile-style-outlinecolor>`
 
-    int opacity;
+    int opacity; ///< See :ref:`OPACITY <mapfile-style-opacity>`
 
     /* Stuff to handle Color Range Styles */
-    colorObj mincolor;
-    colorObj maxcolor;
-    double minvalue;
-    double maxvalue;
-    char *rangeitem;
-    int rangeitemindex;
+    colorObj mincolor; ///< Minimum color in the :ref:`COLORRANGE <mapfile-style-colorrange>`
+    colorObj maxcolor; ///< Maximum color in the :ref:`COLORRANGE <mapfile-style-colorrange>`
+    double minvalue; ///< related to color ranges
+    double maxvalue; ///< related to color ranges
+    char *rangeitem; ///< Attribute/field that stores the values for the Color Range Mapping  - see :ref:`RANGEITEM <mapfile-style-rangeitem>`
+    int rangeitemindex; ///< The index of the range item - see :ref:`RANGEITEM <mapfile-style-rangeitem>`
 
-    int symbol;
-    double size;
-    double minsize, maxsize;
+    int symbol; ///< The index within the map symbolset of the style's symbol - see :ref:`SYMBOL <mapfile-style-symbol>`
+    double size; ///< Pixel width of the style's pen or symbol - see :ref:`SIZE <mapfile-style-size>`
+    double minsize; ///< Minimum pen or symbol width for scaling styles - see :ref:`MINSIZE <mapfile-style-minsize>`
+    double maxsize; ///< Maximum pen or symbol width for scaling - see :ref:`MAXSIZE <mapfile-style-maxsize>`
 
-#if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
-  %immutable;
-#endif
-    int patternlength;  /*moved from symbolObj in version 6.0*/
-#if defined(SWIG) && defined(SWIGPYTHON)
-  %mutable;
-#endif
-#if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
-    double pattern[MS_MAXPATTERNLENGTH]; /*moved from symbolObj in version 6.0*/
-#endif
+    double gap; ///< See :ref:`GAP <mapfile-style-gap>` - moved from symbolObj in version 6.0
+    double initialgap; ///< See :ref:`INITIALGAP <mapfile-style-initialgap>`
+    int position; ///< See :ref:`POSITION <mapfile-style-position>` - moved from symbolObj in version 6.0
 
-    double gap; /*moved from symbolObj in version 6.0*/
-    double initialgap;
-    int position; /*moved from symbolObj in version 6.0*/
+    int linecap; ///< See :ref:`LINECAP <mapfile-style-linecap>`
+    int linejoin; ///< See :ref:`LINEJOIN <mapfile-style-linejoin>` - moved from symbolObj in version 6.0
+    double linejoinmaxsize; ///< See :ref:`LINEJOINMAXSIZE <mapfile-style-linejoinmaxsize>` - moved from symbolObj in version 6.0
 
-    int linecap, linejoin; /*moved from symbolObj in version 6.0*/
-    double linejoinmaxsize; /*moved from symbolObj in version 6.0*/
+    double width; ///< Width refers to the thickness of line work drawn, in pixels - default is 1,
+                  ///< for symbols of type ``HATCH``, the with is how thick the hatched lines are - see :ref:`WIDTH <mapfile-style-width>`
+    double outlinewidth; ///< See :ref:`OUTLINEWIDTH <mapfile-style-outlinewidth>`
+    double minwidth; ///< Minimum width of the symbol - see :ref:`MINWIDTH <mapfile-style-minwidth>`
+    double maxwidth; ///< Maximum width of the symbol - see :ref:`MAXWIDTH <mapfile-style-maxwidth>`
 
-    double width;
-    double outlinewidth;
-    double minwidth, maxwidth;
+    double offsetx; ///< Draw with pen or symbol offset from map data, for shadows, hollow symbols, etc - see :ref:`OFFSET <mapfile-style-offset>`
+    double offsety; ///< Draw with pen or symbol offset from map data, for shadows, hollow symbols, etc - see :ref:`OFFSET <mapfile-style-offset>`
+    double polaroffsetpixel; ///< Specifies the radius/distance - see :ref:`POLAROFFSET <mapfile-style-polaroff>`
+    double polaroffsetangle; ///< Specified the angle - see :ref:`POLAROFFSET <mapfile-style-polaroff>`
 
-    double offsetx, offsety; /* for shadows, hollow symbols, etc... */
-    double polaroffsetpixel, polaroffsetangle;
 
-    double angle;
-
-    double minscaledenom, maxscaledenom;
-
-#ifndef SWIG
-    attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
-    int numbindings;
-    expressionObj exprBindings[MS_STYLE_BINDING_LENGTH];
-    int nexprbindings;
-#endif
-
-    int sizeunits; // supersedes class's sizeunits
-#ifndef SWIG
-    double scalefactor; // computed, not set
-#endif /* not SWIG */
-
+    double minscaledenom; ///< See :ref:`MINSCALEDENOM <mapfile-style-minscaledenom>`
+    double maxscaledenom; ///< See :ref:`MAXSCALEDENOM <mapfile-style-maxscaledenom>`
+    int sizeunits; ///< See :ref:`SIZEUNITS <mapfile-style-sizeunits>` - supersedes class's sizeunits
   };
 
 #define MS_STYLE_SINGLE_SIDED_OFFSET -99
@@ -1419,25 +1441,30 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                           referenceMapObj                            */
   /************************************************************************/
+
+/**
+The :ref:`REFERENCE <reference>` object
+*/
   typedef struct {
-    rectObj extent;
-    int height, width;
-    colorObj color;
-    colorObj outlinecolor;
-    char *image;
-    int status;
-    int marker;
-    char *markername;
-    int markersize;
-    int minboxsize;
-    int maxboxsize;
 #ifdef SWIG
-    %immutable;
+      %immutable;
 #endif /* SWIG */
-    struct mapObj *map;
+      struct mapObj *map; ///< Reference to parent :class:`mapObj`
 #ifdef SWIG
-    %mutable;
+      %mutable;
 #endif /* SWIG */
+    rectObj extent; ///< Spatial extent of reference in units of parent map - see :ref:`EXTENT <mapfile-reference-extent>`
+    int height; ///< Height of reference map in pixels - see :ref:`SIZE <mapfile-reference-size>`
+    int width; ///< Width of reference map in pixels - see :ref:`SIZE <mapfile-reference-size>`
+    colorObj color; ///< Color of reference box - see :ref:`COLOR <mapfile-reference-color>`
+    colorObj outlinecolor; ///< Outline color of reference box - see :ref:`OUTLINECOLOR <mapfile-reference-outlinecolor>`
+    char *image; ///< Filename of reference map image - see :ref:`IMAGE <mapfile-reference-image>`
+    int status; ///< :data:`MS_ON` or :data:`MS_OFF` - see :ref:`STATUS <mapfile-reference-status>`
+    int marker; ///< Index of a symbol in the map symbol set to use for marker - see :ref:`MARKER <mapfile-reference-marker>`
+    char *markername; ///< Name of a symbol - see :ref:`MARKERNAME <mapfile-reference-markername>`
+    int markersize; ///< Size of marker - see :ref:`MARKERSIZE <mapfile-reference-markersize>`
+    int minboxsize; ///< In pixels - see :ref:`MINBOXSIZE <mapfile-reference-minboxsize>`
+    int maxboxsize; ///< In pixels - see :ref:`MAXBOXSIZE <mapfile-reference-maxboxsize>`
   } referenceMapObj;
 
   /************************************************************************/
