@@ -620,7 +620,10 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       original_offset = cur_run_start = runs[i].offset;
       original_num_glyphs = runs[i].length;
       fribidi_get_bidi_types(glyphs.unicodes + original_offset, runs[i].length, glyphs.ctypes + original_offset);
-      fribidi_get_par_embedding_levels(glyphs.ctypes + original_offset, runs[i].length, &dir, glyphs.bidi_levels + runs[i].offset);
+      {
+          FriBidiLevel level = fribidi_get_par_embedding_levels(glyphs.ctypes + original_offset, runs[i].length, &dir, glyphs.bidi_levels + runs[i].offset);
+          (void)level;
+      }
       /* if we have different embedding levels, create a run for each one */
       runs[i].rtl = prevlevel = glyphs.bidi_levels[original_offset];
       line_descs[runs[i].line_number].rtl = (prevlevel%2) ? MS_RTL_RTL:MS_RTL_LTR;
