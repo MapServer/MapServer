@@ -1691,12 +1691,24 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     FriBidiLevel *levels;
     FriBidiStrIndex new_len;
     fribidi_boolean log2vis;
-    int i, j;
 
     visual = (FriBidiChar *) msSmallMalloc (sizeof (FriBidiChar) * (len + 1));
     ltov = NULL;
     vtol = NULL;
     levels = NULL;
+
+    // fribidi_log2vis() doesn't support multi-line paragraphs.
+    // See: https://lists.freedesktop.org/archives/fribidi/2008-January/000515.html
+    for( size_t i = 0; i < len; i++ )
+    {
+        if (logical[i] == '\n') {
+          msSetError(MS_IDENTERR,
+                     "Input string is a multi-line paragraph, which is not supported.",
+                     "msGetFriBidiEncodedString()");
+          msFree(visual);
+          return NULL;
+        }
+    }
 
     /* Create a bidi string. */
     log2vis = fribidi_log2vis (logical, len, &base,
@@ -1706,6 +1718,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     if (!log2vis) {
       msSetError(MS_IDENTERR, "Failed to create bidi string.",
                  "msGetFriBidiEncodedString()");
+      msFree(visual);
       return NULL;
     }
 
@@ -1728,7 +1741,8 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 
     /* scan str and compress out FRIBIDI_CHAR_FILL UTF8 characters */
 
-    for (i=0, j=0; i<new_len; i++, j++) {
+    int j=0;
+    for (int i=0; i<new_len; i++, j++) {
       if (outstring[i] == '\xef' && outstring[i+1] == '\xbb' && outstring[i+2] == '\xbf') {
         i += 3;
       }
@@ -1740,7 +1754,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 
 #endif
 
-    free(visual);
+    msFree(visual);
     return msStrdup(outstring);
   }
 }
