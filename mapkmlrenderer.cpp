@@ -1013,8 +1013,8 @@ const char* KmlRenderer::lookupPlacemarkStyle()
       sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[0].color->blue,
               LineStyle[i].color->green, LineStyle[i].color->red);
 
-      char lineStyleName[32];
-      sprintf(lineStyleName, "_line_%s_w%.1f", lineHexColor, LineStyle[i].width);
+      char lineStyleName[64];
+      snprintf(lineStyleName, sizeof(lineStyleName), "_line_%s_w%.1f", lineHexColor, LineStyle[i].width);
       styleName = msStringConcatenate(styleName, lineStyleName);
     }
   }
