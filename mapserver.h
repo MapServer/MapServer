@@ -1372,19 +1372,18 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                         resultObj                                    */
   /************************************************************************/
+  /**
+  The result object is a handle, of sorts, for a feature of the layer
+  */
   typedef struct {
-    long shapeindex;
-    int tileindex;
-    int resultindex;
-    int classindex;
 #ifndef SWIG
-    shapeObj* shape;
+      shapeObj* shape;
 #endif
+    long shapeindex; ///< The shape index of the result
+    int tileindex; ///< The tile index of the result
+    int resultindex; ///< The index of the result
+    int classindex; ///< The class index of the result
   } resultObj;
-#ifdef SWIG
-  %mutable;
-#endif /* SWIG */
-
 
   /************************************************************************/
   /*                            resultCacheObj                            */

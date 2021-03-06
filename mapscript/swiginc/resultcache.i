@@ -29,7 +29,7 @@
 
 %extend resultCacheObj
 {
-    /// Returns the result at index i, like :method:`layerObj.getResult`,
+    /// Returns the result at index i, like :meth:`layerObj.getResult`,
     /// or ``NULL`` if index is outside the range of results.
     resultObj *getResult(int i)
     {
