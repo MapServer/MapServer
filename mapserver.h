@@ -1389,28 +1389,31 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                            resultCacheObj                            */
   /************************************************************************/
+  /**
+  A cached result object
+  */
   typedef struct {
 
 #ifndef SWIG
     resultObj *results;
     int cachesize;
+    rectObj previousBounds; /* bounds at previous iteration */
 #endif /* not SWIG */
 
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int numresults;
-    rectObj bounds;
-#ifndef SWIG
-    rectObj previousBounds; /* bounds at previous iteration */
-#endif
+    int numresults; ///< Length of result set
+    rectObj bounds; ///< Bounding box of query results
+
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
 
-    /* TODO: remove for 6.0, confirm with Assefa */
-    /*used to force the result retreiving to use getshape instead of resultgetshape*/
-    int usegetshape;
+    /* TODO: remove for 6.0, confirm with Assefa  - unused in codebase
+    Used to force the result retrieving to use getshape instead of resultgetshape
+    */
+    int usegetshape; ///< \**TODO** Unused - remove
 
   } resultCacheObj;
 
@@ -1418,24 +1421,30 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                             symbolSetObj                             */
   /************************************************************************/
+  /**
+  A :class:`symbolSetObj` is an attribute of a :class:`mapObj` and is associated with instances of :class:`symbolObj`.
+  */
   typedef struct {
-    char *filename;
-    int imagecachesize;
+#ifndef SWIG
+      int refcount;
+      symbolObj** symbol;
+      struct mapObj *map;
+      fontSetObj *fontset; /* a pointer to the main mapObj version */
+      struct imageCacheObj *imagecache;
+#endif /* not SWIG */
+
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int numsymbols;
-    int maxsymbols;
+    int numsymbols; ///< Number of symbols in the set
+    int maxsymbols; ///< Maximum number of allowed symbols
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
-#ifndef SWIG
-    int refcount;
-    symbolObj** symbol;
-    struct mapObj *map;
-    fontSetObj *fontset; /* a pointer to the main mapObj version */
-    struct imageCacheObj *imagecache;
-#endif /* not SWIG */
+
+    char *filename; ///< Symbolset filename
+    int imagecachesize; ///< Symbols in the cache
+
   } symbolSetObj;
 
   /************************************************************************/
