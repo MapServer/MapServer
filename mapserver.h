@@ -1096,22 +1096,23 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
   /*  offsetted from its original position                            */
   /********************************************************************/
 
+/**
+The :ref:`LEADER <leader>` object
+*/
   typedef struct {
-    int maxdistance;
-    int gridstep;
 #ifndef SWIG
     styleObj **styles;
     int maxstyles;
 #endif
-
 #ifdef SWIG
     %immutable;
 #endif
-    int numstyles;
+    int numstyles; ///< Number of styles used
 #ifdef SWIG
     %mutable;
 #endif
-
+    int maxdistance; ///< See :ref:`MAXDISTANCE <mapfile-leader-maxdistance>`
+    int gridstep; ///< See :ref:`GRIDSTEP <mapfile-leader-gridstep>`
   } labelLeaderObj;
 
 
