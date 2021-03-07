@@ -110,14 +110,14 @@ Instances of errorObj are created internally by MapServer as errors happen.
 Errors are managed as a chained list with the first item being the most recent error.
 */
   typedef struct errorObj {
-#ifndef SWIG
-      struct errorObj *next;
-#endif
     int code; ///< MapServer error code such as :data:`MS_IMGERR`
     char routine[ROUTINELENGTH]; ///< MapServer function in which the error was set
     char message[MESSAGELENGTH]; ///< Context-dependent error message
     int isreported; ///< :data:`MS_TRUE` or :data:`MS_FALSE` flag indicating if the error has been output
     int errorcount; ///< Number of subsequent errors
+#ifndef SWIG
+    struct errorObj *next;
+#endif
   } errorObj;
 
   /*
