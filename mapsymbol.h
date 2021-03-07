@@ -151,67 +151,68 @@ struct imageCacheObj {
 
 #endif /* SWIG */
 
-
+/**
+The :ref:`SYMBOL <symbol>` object
+*/
 struct symbolObj{
-  char *name;
-  int type;
-  int inmapfile; /* boolean value for writing */
 
+    /*
+    ** MS_SYMBOL_PIXMAP options
+    */
 #ifndef SWIG
-  /*
-  ** Pointer to his map
-  */
-  struct mapObj *map;
+    rendererVTableObj *renderer;
+    void(*renderer_free_func)(symbolObj *self);
+    rasterBufferObj *pixmap_buffer;
+    void *renderer_cache;
+    char *full_pixmap_path;
+
+    /*
+    ** Pointer to his map
+    */
+    struct mapObj *map;
+
+    pointObj points[MS_MAXVECTORPOINTS];
+
 #endif /* SWIG */
+
+#ifdef SWIG
+    %immutable;
+#endif /* SWIG */
+    int refcount; ///< Reference counter
+    int numpoints; ///< Number of points of a vector symbol
+    char *imagepath; ///< Path to pixmap file - see :ref:`IMAGE <mapfile-symbol-image>`
+
+#ifdef SWIG
+    %mutable;
+#endif /* SWIG */
+
+  char *name; ///< Symbol name - see :ref:`NAME <mapfile-symbol-name>`
+  int type; ///< See :ref:`TYPE <mapfile-symbol-type>`
+  int inmapfile; ///< Boolean value for writing - if set to :data:`TRUE`, the symbol will be saved inside the Mapfile. Added in MapServer 5.6.1
+
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
-  double sizex, sizey;
-  double minx,miny,maxx,maxy;
+  double sizex; ///< :data:`MS_SYMBOL_VECTOR` and :data:`MS_SYMBOL_ELLIPSE` option
+  double sizey; ///< :data:`MS_SYMBOL_VECTOR` and :data:`MS_SYMBOL_ELLIPSE` option
 
-#ifndef SWIG
-  pointObj points[MS_MAXVECTORPOINTS];
-#endif
+  double minx; ///< :data:`MS_SYMBOL_VECTOR` and :data:`MS_SYMBOL_ELLIPSE` option
+  double miny; ///< :data:`MS_SYMBOL_VECTOR` and :data:`MS_SYMBOL_ELLIPSE` option
+  double maxx; ///< :data:`MS_SYMBOL_VECTOR` and :data:`MS_SYMBOL_ELLIPSE` option
+  double maxy; ///< :data:`MS_SYMBOL_VECTOR` and :data:`MS_SYMBOL_ELLIPSE` option
 
-#ifdef SWIG
-  %immutable;
-#endif /* SWIG */
-  int refcount;
-  int numpoints;
-#ifdef SWIG
-  %mutable;
-#endif /* SWIG */
-  int filled;
+  int filled; ///< :data:`MS_TRUE` or :data:`MS_FALSE` - see :ref:`FILLED <mapfile-symbol-filled>`
+  double anchorpoint_x; ///< See :ref:`ANCHORPOINT <mapfile-symbol-anchorpoint>`
+  double anchorpoint_y; ///< See :ref:`ANCHORPOINT <mapfile-symbol-anchorpoint>`
 
-  double anchorpoint_x, anchorpoint_y;
-
-  /*
-  ** MS_SYMBOL_PIXMAP options
-  */
-#ifndef SWIG
-  rendererVTableObj *renderer;
-  void (*renderer_free_func)(symbolObj *self);
-  rasterBufferObj *pixmap_buffer;
-  void *renderer_cache;
-  char *full_pixmap_path;
-#endif /* SWIG */
-
-#ifdef SWIG
-  %immutable;
-#endif /* SWIG */
-  char *imagepath;
-#ifdef SWIG
-  %mutable;
-#endif /* SWIG */
-
-  int transparent;
-  int transparentcolor;
+  int transparent; ///< \**TODO** Remove
+  int transparentcolor; ///< \**TODO** Remove
 
   /*
   ** MS_SYMBOL_TRUETYPE options
   */
-  char *character;
-  char *font;
+  char *character; ///< For TrueType symbols - see :ref:`CHARACTER <mapfile-symbol-character>`
+  char *font; ///< For TrueType symbols - see :ref:`FONT <mapfile-symbol-font>`
 } ;
 
 #endif /* MAPSYMBOL_H */

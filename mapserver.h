@@ -1096,22 +1096,23 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
   /*  offsetted from its original position                            */
   /********************************************************************/
 
+/**
+The :ref:`LEADER <leader>` object
+*/
   typedef struct {
-    int maxdistance;
-    int gridstep;
 #ifndef SWIG
     styleObj **styles;
     int maxstyles;
 #endif
-
 #ifdef SWIG
     %immutable;
 #endif
-    int numstyles;
+    int numstyles; ///< Number of styles used
 #ifdef SWIG
     %mutable;
 #endif
-
+    int maxdistance; ///< See :ref:`MAXDISTANCE <mapfile-leader-maxdistance>`
+    int gridstep; ///< See :ref:`GRIDSTEP <mapfile-leader-gridstep>`
   } labelLeaderObj;
 
 
@@ -1372,45 +1373,47 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                         resultObj                                    */
   /************************************************************************/
+  /**
+  The result object is a handle, of sorts, for a feature of the layer
+  */
   typedef struct {
-    long shapeindex;
-    int tileindex;
-    int resultindex;
-    int classindex;
 #ifndef SWIG
-    shapeObj* shape;
+      shapeObj* shape;
 #endif
+    long shapeindex; ///< The shape index of the result
+    int tileindex; ///< The tile index of the result
+    int resultindex; ///< The index of the result
+    int classindex; ///< The class index of the result
   } resultObj;
-#ifdef SWIG
-  %mutable;
-#endif /* SWIG */
-
 
   /************************************************************************/
   /*                            resultCacheObj                            */
   /************************************************************************/
+  /**
+  A cached result object
+  */
   typedef struct {
 
 #ifndef SWIG
     resultObj *results;
     int cachesize;
+    rectObj previousBounds; /* bounds at previous iteration */
 #endif /* not SWIG */
 
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int numresults;
-    rectObj bounds;
-#ifndef SWIG
-    rectObj previousBounds; /* bounds at previous iteration */
-#endif
+    int numresults; ///< Length of result set
+    rectObj bounds; ///< Bounding box of query results
+
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
 
-    /* TODO: remove for 6.0, confirm with Assefa */
-    /*used to force the result retreiving to use getshape instead of resultgetshape*/
-    int usegetshape;
+    /* TODO: remove for 6.0, confirm with Assefa  - unused in codebase
+    Used to force the result retrieving to use getshape instead of resultgetshape
+    */
+    int usegetshape; ///< \**TODO** Unused - remove
 
   } resultCacheObj;
 
@@ -1418,24 +1421,30 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                             symbolSetObj                             */
   /************************************************************************/
+  /**
+  A :class:`symbolSetObj` is an attribute of a :class:`mapObj` and is associated with instances of :class:`symbolObj`.
+  */
   typedef struct {
-    char *filename;
-    int imagecachesize;
+#ifndef SWIG
+      int refcount;
+      symbolObj** symbol;
+      struct mapObj *map;
+      fontSetObj *fontset; /* a pointer to the main mapObj version */
+      struct imageCacheObj *imagecache;
+#endif /* not SWIG */
+
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int numsymbols;
-    int maxsymbols;
+    int numsymbols; ///< Number of symbols in the set
+    int maxsymbols; ///< Maximum number of allowed symbols
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
-#ifndef SWIG
-    int refcount;
-    symbolObj** symbol;
-    struct mapObj *map;
-    fontSetObj *fontset; /* a pointer to the main mapObj version */
-    struct imageCacheObj *imagecache;
-#endif /* not SWIG */
+
+    char *filename; ///< Symbolset filename
+    int imagecachesize; ///< Symbols in the cache
+
   } symbolSetObj;
 
   /************************************************************************/
@@ -1470,26 +1479,35 @@ The :ref:`REFERENCE <reference>` object
   /************************************************************************/
   /*                             scalebarObj                              */
   /************************************************************************/
+
+  /**
+  The :ref:`SCALEBAR <scalebar>` object
+  */
   typedef struct {
-    colorObj imagecolor;
-    int height, width;
-    int style;
-    int intervals;
-    labelObj label;
-    colorObj color;
-    colorObj backgroundcolor;
-    colorObj outlinecolor;
-    int units;
-    int status; /* ON, OFF or EMBED */
-    int position; /* for embeded scalebars */
+
 #ifndef SWIG
-    int transparent;
-    int interlace;
+      int transparent; // TODO deprecated since 4.6 - remove
+      int interlace; // TODO deprecated since 4.6 - remove
 #endif /* not SWIG */
-    int postlabelcache;
-    int align;
-    int offsetx;
-    int offsety;
+
+      colorObj imagecolor; ///< Background color of scalebar - see :ref:`IMAGECOLOR <mapfile-scalebar-imagecolor>`
+      int height; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
+      int width; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
+      int style; ///< 0 or 1 - see :ref:`STYLE <mapfile-scalebar-style>`
+      int intervals; ///< Number of intervals - see :ref:`INTERVALS <mapfile-scalebar-intervals>`
+      labelObj label; ///< Scalebar label - see :ref:`LABEL <mapfile-scalebar-label>`
+      colorObj color; ///< Scalebar foreground color - see :ref:`COLOR <mapfile-scalebar-color>`
+      colorObj backgroundcolor; ///< Scalebar background color - see :ref:`BACKGROUNDCOLOR <mapfile-scalebar-backgroundcolor>`
+      colorObj outlinecolor; ///< Foreground outline color - see :ref:`OUTLINECOLOR <mapfile-scalebar-outlinecolor>`
+      int units; ///< See :ref:`UNITS <mapfile-scalebar-units>`
+      int status; ///< ON, OFF or EMBED - see :ref:`STATUS <mapfile-scalebar-status>` - :data:`MS_ON`, :data:`MS_OFF`, or :data:`MS_EMBED`.
+      int position; ///< For embeded scalebars - see :ref:`POSITION <mapfile-scalebar-position>` - 
+                    ///< :data:`MS_UL`, :data:`MS_UC`, :data:`MS_UR`, :data:`MS_LL`, :data:`MS_LC`, or :data:`MS_LR`
+
+      int postlabelcache; ///< See :ref:`POSTLABELCACHE <mapfile-scalebar-postlabelcache>` - :data:`MS_TRUE` or :data:`MS_FALSE`
+      int align; ///< See :ref:`ALIGN <mapfile-scalebar-align>`
+      int offsetx; ///< See :ref:`OFFSET <mapfile-scalebar-offset>`
+      int offsety; ///< See :ref:`OFFSET <mapfile-scalebar-offset>`
   } scalebarObj;
 
   /************************************************************************/
