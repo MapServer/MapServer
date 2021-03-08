@@ -6,7 +6,7 @@
 #    PROJ_LIBRARY
 
 
-FIND_PATH(PROJ_INCLUDE_DIR proj_api.h)
+FIND_PATH(PROJ_INCLUDE_DIR NAMES proj.h proj_api.h)
 
 FIND_LIBRARY(PROJ_LIBRARY NAMES proj proj_i)
 
