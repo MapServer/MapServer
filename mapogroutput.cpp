@@ -244,7 +244,8 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
 
 static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                             shapeObj *shape, gmlItemListObj *item_list,
-                            int nFirstOGRFieldIndex, const char *pszFeatureid )
+                            int nFirstOGRFieldIndex, const char *pszFeatureid,
+                            bool geomTypeForced )
 
 {
   OGRGeometryH hGeom = NULL;
@@ -371,9 +372,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     int *outer_flags;
     OGRGeometryH hMP = NULL;
 
-    if( shape->numlines > 1 )
-        hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
-
     outer_flags = msGetOuterList( shape );
 
     for( iOuter = 0; iOuter < shape->numlines; iOuter++ ) {
@@ -383,6 +381,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
       if( !outer_flags[iOuter] )
         continue;
 
+      if( hGeom != nullptr )
+      {
+          assert( hMP == nullptr );
+          hMP = OGR_G_CreateGeometry( wkbMultiPolygon );
+          OGR_G_AddGeometryDirectly( hMP, hGeom );
+      }
       hGeom = OGR_G_CreateGeometry( wkbPolygon );
 
       /* handle outer ring */
@@ -410,17 +414,19 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 
       free(inner_flags);
 
-      OGR_G_AddGeometryDirectly( hMP, hGeom );
+      if( hMP )
+      {
+          OGR_G_AddGeometryDirectly( hMP, hGeom );
+          hGeom = nullptr;
+      }
     }
 
     free(outer_flags);
 
-    if( OGR_G_GetGeometryCount( hMP ) == 1 ) {
-      hGeom = OGR_G_Clone( OGR_G_GetGeometryRef( hMP, 0 ) );
-      OGR_G_DestroyGeometry( hMP );
-    } else {
-        if( hMP != NULL )
-            hGeom = hMP;
+    if( hMP != nullptr )
+    {
+        assert( hGeom == nullptr );
+        hGeom = hMP;
     }
   }
 
@@ -433,7 +439,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
         wkbFlatten(OGR_G_GetGeometryType( hGeom ));
 
     if( eFlattenFeatureGType != eFlattenLayerGType ) {
-      if( eFlattenLayerGType == wkbPolygon )
+      if( eFlattenLayerGType == wkbPolygon && geomTypeForced )
         hGeom = OGR_G_ForceToPolygon( hGeom );
 
       else if( eFlattenLayerGType == wkbMultiPolygon )
@@ -912,7 +918,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     /*      deriving something from the type of the mapserver layer.        */
     /* -------------------------------------------------------------------- */
     value = msOWSLookupMetadata(&(layer->metadata), "FOG", "geomtype");
+    bool geomTypeForced = true;
     if( value == NULL ) {
+      geomTypeForced = false;
       if( layer->type == MS_LAYER_POINT )
         value = "Point";
       else if( layer->type == MS_LAYER_LINE )
@@ -1157,7 +1165,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       if( status == MS_SUCCESS )
         status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
-                                  item_list, nFirstOGRFieldIndex, pszFeatureid );
+                                  item_list, nFirstOGRFieldIndex, pszFeatureid,
+                                  geomTypeForced );
 
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );
