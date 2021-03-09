@@ -60,7 +60,7 @@ Content-Type: text/xml; charset=UTF-8
         <CSVSTREAM/>
         <OGRGML/>
         <OGRGPX/>
-        <OGRBNAZIP/>
+        <OGRCSVZIP/>
         <SHAPEZIP/>
         <MIDMIF/>
         <MultiMIDMIF/>

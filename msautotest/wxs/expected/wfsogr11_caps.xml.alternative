@@ -91,7 +91,7 @@ Content-Type: text/xml; charset=UTF-8
         <ows:Value>text/csv; streamed</ows:Value>
         <ows:Value>text/xml; subtype=gml/2.1.2; driver=ogr</ows:Value>
         <ows:Value>application/gpx+xml; streamed</ows:Value>
-        <ows:Value>application/zip; driver=ogr/bna</ows:Value>
+        <ows:Value>application/zip; driver=ogr/csv</ows:Value>
         <ows:Value>application/shapefile</ows:Value>
         <ows:Value>MIDMIF</ows:Value>
         <ows:Value>MultiMIDMIF</ows:Value>
@@ -113,7 +113,7 @@ Content-Type: text/xml; charset=UTF-8
         <Format>text/csv; streamed</Format>
         <Format>text/xml; subtype=gml/2.1.2; driver=ogr</Format>
         <Format>application/gpx+xml; streamed</Format>
-        <Format>application/zip; driver=ogr/bna</Format>
+        <Format>application/zip; driver=ogr/csv</Format>
         <Format>application/shapefile</Format>
         <Format>MIDMIF</Format>
         <Format>MultiMIDMIF</Format>
@@ -153,7 +153,7 @@ Content-Type: text/xml; charset=UTF-8
         <Format>text/csv; streamed</Format>
         <Format>text/xml; subtype=gml/2.1.2; driver=ogr</Format>
         <Format>application/gpx+xml; streamed</Format>
-        <Format>application/zip; driver=ogr/bna</Format>
+        <Format>application/zip; driver=ogr/csv</Format>
         <Format>application/shapefile</Format>
         <Format>MIDMIF</Format>
         <Format>MultiMIDMIF</Format>
@@ -174,7 +174,7 @@ Content-Type: text/xml; charset=UTF-8
         <Format>text/csv; streamed</Format>
         <Format>text/xml; subtype=gml/2.1.2; driver=ogr</Format>
         <Format>application/gpx+xml; streamed</Format>
-        <Format>application/zip; driver=ogr/bna</Format>
+        <Format>application/zip; driver=ogr/csv</Format>
         <Format>application/shapefile</Format>
         <Format>MIDMIF</Format>
         <Format>MultiMIDMIF</Format>
