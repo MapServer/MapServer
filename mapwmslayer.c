@@ -734,8 +734,8 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         msRectIntersect( &bbox, &layer_rect );
 
-        bbox_width = ceil((bbox.maxx - bbox.minx) / cellsize);
-        bbox_height = ceil((bbox.maxy - bbox.miny) / cellsize);
+        bbox_width = round((bbox.maxx - bbox.minx) / cellsize);
+        bbox_height = round((bbox.maxy - bbox.miny) / cellsize);
 
         /* Force going through the resampler if we're going to receive a clipped BBOX (#4931) */
         if(msLayerGetProcessingKey(lp, "RESAMPLE") == NULL) {
