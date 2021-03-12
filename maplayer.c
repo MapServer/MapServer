@@ -32,7 +32,7 @@
 #include "mapogcfilter.h"
 #include "mapthread.h"
 #include "mapfile.h"
-
+#include "mapows.h"
 #include "mapparser.h"
 
 #include <assert.h>
@@ -969,7 +969,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
     nt += msCountChars(layer->utfdata.string, '[');
 
   // if we are using a GetMap request with a WMS filter we don't need to return all items
-  if (msOWSLookupMetadata(&(layer->metadata), "G", "wms_filter_flag") != NULL) {
+  if (msOWSLookupMetadata(&(layer->metadata), "G", "wmsfilter_flag") != NULL) {
       get_all = MS_FALSE;
   }
 
