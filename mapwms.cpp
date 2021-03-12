@@ -452,7 +452,12 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         }
     }
 
+    msInsertHashTable(&(lp->metadata), "gml_wms_filter_flag", "true");
+
     int ret = FLTApplyFilterToLayer(psNode, map, lp->index);
+
+    msRemoveHashTable(&(lp->metadata), "gml_wms_filter_flag");
+
     if( !old_value_wfs_use_default_extent_for_getfeature.empty() )
     {
         msInsertHashTable(&(lp->metadata), "wfs_use_default_extent_for_getfeature",
