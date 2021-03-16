@@ -12,7 +12,6 @@ MAP
     GROUP "TEST"
     STATUS DEFAULT
     TYPE RASTER
-    DUMP TRUE
 
     # A RGB image with a transparency mask
     #DATA "test3_with_1mask_1bit.tif"

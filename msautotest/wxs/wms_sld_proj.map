@@ -70,7 +70,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS
@@ -96,7 +95,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   LabelItem "Name"
   CLASSITEM "Capital" 
 
@@ -131,8 +129,6 @@ LAYER
   PROJECTION
     "init=epsg:3978"
   END
-
-  DUMP TRUE
 
   CLASSITEM "Name_e"
   CLASS

@@ -31,7 +31,6 @@ LAYER
   NAME grey
   TYPE raster
   STATUS default
-  DUMP TRUE
   TEMPLATE "fake.html"
   TILEINDEX tindex
   TILEITEM "location"

@@ -272,7 +272,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS
@@ -298,7 +297,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   CLASS
     NAME "Parks"
     COLOR 200 255 0
@@ -324,7 +322,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   LabelItem "Name"
   CLASSITEM "Capital" 
 
@@ -361,8 +358,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
-
   CLASSITEM "Name_e"
   CLASS
     NAME "Roads"
@@ -386,7 +381,6 @@ LAYER
     "init=epsg:4326"
   END
 
-  DUMP TRUE
 END # Layer
 
 END # Map File

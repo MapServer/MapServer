@@ -15,7 +15,6 @@ LAYER
   NAME "TEST"
   STATUS DEFAULT
   TYPE RASTER
-  DUMP TRUE
 
   # At full resolution red_square.tif is a red square indeed
   # but we created an overview which is yellow.

@@ -39,7 +39,6 @@ LAYER
    CONNECTION 'smoke.hobu.net,port:5151,sde,sde,osgeo' 
    DATA 'SDE.CENTERLINES,SHAPE,SDE.DEFAULT' 
    PROCESSING "CLOSE_CONNECTION=DEFER" 
-   DUMP TRUE 
    PROJECTION
       "init=epsg:2274"
    END 

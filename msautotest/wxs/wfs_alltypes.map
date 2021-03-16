@@ -75,7 +75,6 @@ LAYER
   END
   TYPE LINE
   STATUS ON
-  DUMP TRUE
 END # Layer
 
 END # Map File

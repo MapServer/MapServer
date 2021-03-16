@@ -102,15 +102,12 @@ LAYER
     "init=epsg:32611"
   END
 
-  DUMP TRUE
-
 END # Layer
 
 LAYER 
   NAME grey
   TYPE raster
   STATUS ON
-  DUMP TRUE
   TILEINDEX "wcs_index.shp"
   TILEITEM "location"
 
