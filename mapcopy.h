@@ -45,20 +45,12 @@
         (_dst)->maxy = (_src)->maxy;  \
     MS_MACROEND
 
-#ifdef USE_POINT_Z_M
 #define MS_COPYPOINT(_dst, _src)      \
     MS_MACROBEGIN                     \
         (_dst)->x = (_src)->x;        \
         (_dst)->y = (_src)->y;        \
         (_dst)->m = (_src)->m;        \
     MS_MACROEND
-#else
-#define MS_COPYPOINT(_dst, _src)      \
-    MS_MACROBEGIN                     \
-        (_dst)->x = (_src)->x;        \
-        (_dst)->y = (_src)->y;        \
-    MS_MACROEND
-#endif
 
 #define MS_COPYCOLOR(_dst, _src)      \
     MS_MACROBEGIN                     \

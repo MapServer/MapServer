@@ -290,10 +290,8 @@ PHP_FUNCTION(ms_newPointObj)
 
   point->x = 0;
   point->y = 0;
-#ifdef USE_POINT_Z_M
   point->z = 0;
   point->m = 0;
-#endif
 
   /* Return point object */
   MAPSCRIPT_MAKE_PARENT(NULL, NULL);

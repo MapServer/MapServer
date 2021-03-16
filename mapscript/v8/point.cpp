@@ -45,10 +45,8 @@ void Point::Initialize(Handle<Object> target)
 
   SET_ATTRIBUTE(c, "x", getProp, setProp);
   SET_ATTRIBUTE(c, "y", getProp, setProp);
-#ifdef USE_POINT_Z_M
   SET_ATTRIBUTE(c, "z", getProp, setProp);
   SET_ATTRIBUTE(c, "m", getProp, setProp);
-#endif
 
   NODE_SET_PROTOTYPE_METHOD(c, "setXY", setXY);
   NODE_SET_PROTOTYPE_METHOD(c, "setXYZ", setXYZ);
@@ -98,10 +96,8 @@ void Point::New(const v8::FunctionCallbackInfo<Value>& args)
 
     p->x = 0;
     p->y = 0;
-#ifdef USE_POINT_Z_M
     p->z = 0;
     p->m = 0;
-#endif
 
     Point *point = new Point(p);
     point->Wrap(args.Holder());
@@ -128,12 +124,10 @@ void Point::getProp(Local<String> property,
       value = Number::New(p->get()->x);
     else if (name == "y")
       value = Number::New(p->get()->y);
-#ifdef USE_POINT_Z_M
     else if (name == "z")
       value = Number::New(p->get()->z);
     else if (name == "m")
       value = Number::New(p->get()->m);
-#endif
 
     info.GetReturnValue().Set(value);
 }
@@ -153,14 +147,11 @@ void Point::setProp(Local<String> property,
     } else if (name == "y") {
       p->get()->y = value->NumberValue();
     }
-#ifdef USE_POINT_Z_M
     else if (name == "z") {
       p->get()->z = value->NumberValue();
     } else if (name == "m") {
       p->get()->m = value->NumberValue();
     }
-#endif
-
 }
 
 void Point::setXY(const v8::FunctionCallbackInfo<v8::Value>& args)
@@ -194,13 +185,10 @@ void Point::setXYZ(const v8::FunctionCallbackInfo<v8::Value>& args)
   p->get()->x = args[0]->NumberValue();
   p->get()->y = args[1]->NumberValue();
 
-#ifdef USE_POINT_Z_M
   p->get()->z = args[2]->NumberValue();
   if (args.Length() > 3 && args[3]->IsNumber()) {
     p->get()->m = args[3]->NumberValue();
   }
-#endif
-
 }
 
 #endif

@@ -228,11 +228,7 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
         OGR_G_SetPoint( hGeom, i,
                         line->point[i].x,
                         line->point[i].y,
-#ifdef USE_POINT_Z_M
                         line->point[i].z
-#else
-                        0.0
-#endif
                       );
       }
     }
@@ -282,11 +278,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             OGR_G_SetPoint( hPoint, 0,
                             shape->line[0].point[j].x,
                             shape->line[0].point[j].y,
-#ifdef USE_POINT_Z_M
                             shape->line[0].point[j].z
-#else
-                            0.0
-#endif
                             );
         }
 
@@ -316,11 +308,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
             OGR_G_SetPoint( hGeom, 0,
                             shape->line[j].point[0].x,
                             shape->line[j].point[0].y,
-#ifdef USE_POINT_Z_M
                             shape->line[j].point[0].z
-#else
-                            0.0
-#endif
                             );
         }
 

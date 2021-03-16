@@ -170,13 +170,13 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
               msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
             else
               msIO_fprintf(stream, "%s<gml:Point>\n", tab);
-#ifdef USE_POINT_Z_M
+
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%s  <gml:coordinates>%.*f,%.*f,%.*f</gml:coordinates>\n",
                            tab, geometry_precision,shape->line[i].point[j].x, geometry_precision,shape->line[i].point[j].y, geometry_precision,shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
+
             msIO_fprintf(stream, "%s  <gml:coordinates>%.*f,%.*f</gml:coordinates>\n", tab, geometry_precision,shape->line[i].point[j].x, geometry_precision,shape->line[i].point[j].y);
 
             msIO_fprintf(stream, "%s</gml:Point>\n", tab);
@@ -197,14 +197,12 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           for(j=0; j<shape->line[i].numpoints; j++) {
             msIO_fprintf(stream, "%s  <gml:pointMember>\n", tab);
             msIO_fprintf(stream, "%s    <gml:Point>\n", tab);
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%s      <gml:coordinates>%.*f,%.*f,%.*f</gml:coordinates>\n",
                            tab, geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y,
                            geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
             msIO_fprintf(stream, "%s      <gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
             msIO_fprintf(stream, "%s    </gml:Point>\n", tab);
             msIO_fprintf(stream, "%s  </gml:pointMember>\n", tab);
@@ -240,13 +238,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s  <gml:coordinates>", tab);
           for(j=0; j<shape->line[i].numpoints; j++)
           {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f,%.*f,%.*f ", geometry_precision,shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y,
                            geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
             msIO_fprintf(stream, "%.*f,%.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
           }
           msIO_fprintf(stream, "</gml:coordinates>\n");
@@ -271,13 +267,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s      <gml:coordinates>", tab);
           for(i=0; i<shape->line[j].numpoints; i++)
           {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f,%.*f,%.*f ", geometry_precision, shape->line[j].point[i].x, geometry_precision, shape->line[j].point[i].y,
                            geometry_precision, shape->line[j].point[i].z);
             else
                 /* fall-through */
-#endif
             msIO_fprintf(stream, "%.*f,%.*f ", geometry_precision, shape->line[j].point[i].x, geometry_precision, shape->line[j].point[i].y);
           }
           msIO_fprintf(stream, "</gml:coordinates>\n");
@@ -329,13 +323,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s      <gml:coordinates>", tab);
           for(j=0; j<shape->line[i].numpoints; j++)
           {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f,%.*f,%.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y,
                            geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
             msIO_fprintf(stream, "%.*f,%.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
           }
           msIO_fprintf(stream, "</gml:coordinates>\n");
@@ -351,13 +343,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
               msIO_fprintf(stream, "%s      <gml:coordinates>", tab);
               for(j=0; j<shape->line[k].numpoints; j++)
               {
-#ifdef USE_POINT_Z_M
                 if( nSRSDimension == 3 )
                   msIO_fprintf(stream, "%.*f,%.*f,%.*f ", geometry_precision,shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y,
                            geometry_precision,shape->line[k].point[j].z);
                 else
                   /* fall-through */
-#endif
                 msIO_fprintf(stream, "%.*f,%.*f ",geometry_precision, shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y);
               }
               msIO_fprintf(stream, "</gml:coordinates>\n");
@@ -396,13 +386,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
             msIO_fprintf(stream, "%s        <gml:coordinates>", tab);
             for(j=0; j<shape->line[i].numpoints; j++)
             {
-#ifdef USE_POINT_Z_M
               if( nSRSDimension == 3 )
                 msIO_fprintf(stream, "%.*f,%.*f,%.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y,
                              geometry_precision, shape->line[i].point[j].z);
               else
                 /* fall-through */
-#endif
               msIO_fprintf(stream, "%.*f,%.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
             }
             msIO_fprintf(stream, "</gml:coordinates>\n");
@@ -418,13 +406,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
                 msIO_fprintf(stream, "%s        <gml:coordinates>", tab);
                 for(j=0; j<shape->line[k].numpoints; j++)
                 {
-#ifdef USE_POINT_Z_M
                   if( nSRSDimension == 3 )
                     msIO_fprintf(stream, "%.*f,%.*f,%.*f ", geometry_precision,shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y,
                                 geometry_precision,shape->line[k].point[j].z);
                   else
                     /* fall-through */
-#endif
                   msIO_fprintf(stream, "%.*f,%.*f ", geometry_precision,shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y);
                 }
                 msIO_fprintf(stream, "</gml:coordinates>\n");
@@ -523,12 +509,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
             else
               msIO_fprintf(stream, "%s  <gml:Point%s>\n", tab, pszGMLId);
 
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%s    <gml:pos srsDimension=\"3\">%.*f %.*f %.*f</gml:pos>\n", tab, geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y, geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
             msIO_fprintf(stream, "%s    <gml:pos>%.*f %.*f</gml:pos>\n", tab, geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
 
             msIO_fprintf(stream, "%s  </gml:Point>\n", tab);
@@ -554,12 +538,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
             msIO_fprintf(stream, "%s    <gml:pointMember>\n", tab);
             pszGMLId = gmlCreateGeomId(nGMLVersion, pszFID, &id);
             msIO_fprintf(stream, "%s      <gml:Point%s>\n", tab, pszGMLId);
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%s        <gml:pos srsDimension=\"3\">%.*f %.*f %.*f</gml:pos>\n", tab, geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y, geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
             msIO_fprintf(stream, "%s        <gml:pos>%.*f %.*f</gml:pos>\n", tab, geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
             msIO_fprintf(stream, "%s      </gml:Point>\n", tab);
             msFree(pszGMLId);
@@ -598,12 +580,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s    <gml:posList srsDimension=\"%d\">", tab, nSRSDimension);
           for(j=0; j<shape->line[i].numpoints; j++)
           {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f %.*f %.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y, geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
               msIO_fprintf(stream, "%.*f %.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
           }
           msIO_fprintf(stream, "</gml:posList>\n");
@@ -632,12 +612,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s        <gml:posList srsDimension=\"%d\">", tab, nSRSDimension);
           for(j=0; j<shape->line[i].numpoints; j++)
           {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f %.*f %.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y, geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
               msIO_fprintf(stream, "%.*f %.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
           }
 
@@ -693,12 +671,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s        <gml:posList srsDimension=\"%d\">", tab, nSRSDimension);
           for(j=0; j<shape->line[i].numpoints; j++)
           {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f %.*f %.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y, geometry_precision, shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
               msIO_fprintf(stream, "%.*f %.*f ", geometry_precision, shape->line[i].point[j].x, geometry_precision, shape->line[i].point[j].y);
           }
 
@@ -715,12 +691,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
               msIO_fprintf(stream, "%s        <gml:posList srsDimension=\"%d\">", tab, nSRSDimension);
               for(j=0; j<shape->line[k].numpoints; j++)
               {
-#ifdef USE_POINT_Z_M
                 if( nSRSDimension == 3 )
                     msIO_fprintf(stream, "%.*f %.*f %.*f ", geometry_precision,shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y, geometry_precision,shape->line[k].point[j].z);
                 else
                         /* fall-through */
-#endif
                 msIO_fprintf(stream, "%.*f %.*f ", geometry_precision,shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y);
               }
 
@@ -768,12 +742,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
             msIO_fprintf(stream, "%s            <gml:posList srsDimension=\"%d\">", tab, nSRSDimension);
             for(j=0; j<shape->line[i].numpoints; j++)
             {
-#ifdef USE_POINT_Z_M
             if( nSRSDimension == 3 )
               msIO_fprintf(stream, "%.*f %.*f %.*f ", geometry_precision,shape->line[i].point[j].x, geometry_precision,shape->line[i].point[j].y, geometry_precision,shape->line[i].point[j].z);
             else
                 /* fall-through */
-#endif
               msIO_fprintf(stream, "%.*f %.*f ", geometry_precision,shape->line[i].point[j].x, geometry_precision,shape->line[i].point[j].y);
             }
 
@@ -790,12 +762,10 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
                 msIO_fprintf(stream, "%s            <gml:posList srsDimension=\"%d\">", tab, nSRSDimension);
                 for(j=0; j<shape->line[k].numpoints; j++)
                 {
-#ifdef USE_POINT_Z_M
                   if( nSRSDimension == 3 )
                     msIO_fprintf(stream, "%.*f %.*f %.*f ", geometry_precision, shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y, geometry_precision,shape->line[k].point[j].z);
                   else
                         /* fall-through */
-#endif
                   msIO_fprintf(stream, "%.*f %.*f ", geometry_precision,shape->line[k].point[j].x, geometry_precision,shape->line[k].point[j].y);
                 }
                 msIO_fprintf(stream, "</gml:posList>\n");
@@ -1465,11 +1435,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       geomtype = msOWSLookupMetadata(&(lp->metadata), "OFG", "geomtype");
       if( geomtype != NULL && (strstr(geomtype, "25d") != NULL || strstr(geomtype, "25D") != NULL) )
       {
-#ifdef USE_POINT_Z_M
           nSRSDimension = 3;
-#else
-          msIO_fprintf(stream, "<!-- WARNING: 25d requested forn typename '%s' but MapServer compiled without USE_POINT_Z_M support. -->\n", lp->name);
-#endif
       }
 
       /* populate item and group metadata structures */
@@ -1695,11 +1661,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       geomtype = msOWSLookupMetadata(&(lp->metadata), "OFG", "geomtype");
       if( geomtype != NULL && (strstr(geomtype, "25d") != NULL || strstr(geomtype, "25D") != NULL) )
       {
-#ifdef USE_POINT_Z_M
           nSRSDimension = 3;
-#else
-          msIO_fprintf(stream, "<!-- WARNING: 25d requested forn typename '%s' but MapServer compiled without USE_POINT_Z_M support. -->\n", lp->name);
-#endif
       }
 
       value = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");

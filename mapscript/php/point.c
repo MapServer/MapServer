@@ -106,10 +106,8 @@ PHP_METHOD(pointObj, __construct)
 
   php_point->point->x = 0;
   php_point->point->y = 0;
-#ifdef USE_POINT_Z_M
   php_point->point->z = 0;
   php_point->point->m = 0;
-#endif
 }
 /* }}} */
 
@@ -132,10 +130,8 @@ PHP_METHOD(pointObj, __get)
 
   IF_GET_DOUBLE("x", php_point->point->x)
   else IF_GET_DOUBLE("y", php_point->point->y)
-#ifdef USE_POINT_Z_M
     else IF_GET_DOUBLE("z", php_point->point->z)
       else IF_GET_DOUBLE("m", php_point->point->m)
-#endif
         else {
           mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
         }
@@ -161,10 +157,8 @@ PHP_METHOD(pointObj, __set)
 
   IF_SET_DOUBLE("x", php_point->point->x, value)
   else IF_SET_DOUBLE("y", php_point->point->y, value)
-#ifdef USE_POINT_Z_M
     else IF_SET_DOUBLE("z", php_point->point->z, value)
       else IF_SET_DOUBLE("m", php_point->point->m, value)
-#endif
         else {
           mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
         }
@@ -192,11 +186,9 @@ PHP_METHOD(pointObj, setXY)
   php_point->point->x = x;
   php_point->point->y = y;
 
-#ifdef USE_POINT_Z_M
   if (ZEND_NUM_ARGS() == 3) {
     php_point->point->m = m;
   }
-#endif
 
   RETURN_LONG(MS_SUCCESS);
 }
@@ -224,13 +216,11 @@ PHP_METHOD(pointObj, setXYZ)
   php_point->point->x = x;
   php_point->point->y = y;
 
-#ifdef USE_POINT_Z_M
   php_point->point->z = z;
 
   if (ZEND_NUM_ARGS() == 4) {
     php_point->point->m = m;
   }
-#endif
 
   RETURN_LONG(MS_SUCCESS);
 }

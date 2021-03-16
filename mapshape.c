@@ -456,22 +456,6 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   ms_int32 i32;
   double dValue;
 
-#ifndef USE_POINT_Z_M
-  if( nShapeType == SHP_POLYGONZ
-      || nShapeType == SHP_POLYGONM
-      || nShapeType == SHP_ARCZ
-      || nShapeType == SHP_ARCM
-      || nShapeType == SHP_POINTZ
-      || nShapeType == SHP_POINTM
-      || nShapeType == SHP_MULTIPOINTZ
-      || nShapeType == SHP_MULTIPOINTM ) {
-    msSetError( MS_SHPERR,
-                "Attempt to create M/Z shapefile but without having enabled Z/M support.",
-                "msSHPCreate()" );
-    return NULL;
-  }
-#endif
-
   /* -------------------------------------------------------------------- */
   /*      Establish the byte order on this system.                        */
   /* -------------------------------------------------------------------- */
@@ -709,9 +693,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   int nShapeType;
 
   ms_int32  i32, nPoints, nParts;
-#ifdef USE_POINT_Z_M
   double dfMMin, dfMMax = 0;
-#endif
   psSHP->bUpdated = MS_TRUE;
 
   /* Fill the SHX buffer if it is not already full. */
@@ -797,7 +779,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
     }
 
     nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
-#ifdef USE_POINT_Z_M
+
     /* -------------------------------------------------------------------- */
     /*      measured shape : polygon and arc.                               */
     /* -------------------------------------------------------------------- */
@@ -850,7 +832,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
         }
       }
     }
-#endif /* def USE_POINT_Z_M */
   }
 
   /* -------------------------------------------------------------------- */
@@ -880,7 +861,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 
     nRecordSize = 40 + 16 * t_nPoints;
 
-#ifdef USE_POINT_Z_M
     if (psSHP->nShapeType == SHP_MULTIPOINTM) {
       dfMMin = shape->line[0].point[0].m;
       dfMMax = shape->line[0].point[shape->line[0].numpoints-1].m;
@@ -918,7 +898,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
         nRecordSize += 8;
       }
     }
-#endif /* USE_POINT_Z_M */
   }
 
   /* -------------------------------------------------------------------- */
@@ -936,7 +915,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 
     nRecordSize = 20;
 
-#ifdef USE_POINT_Z_M
     if (psSHP->nShapeType == SHP_POINTM) {
       ByteCopy( &(shape->line[0].point[0].m), pabyRec + nRecordSize, 8 );
       if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
@@ -948,7 +926,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
       nRecordSize += 8;
     }
-#endif /* USE_POINT_Z_M */
   }
 
   /* -------------------------------------------------------------------- */
@@ -981,26 +958,20 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
     if( psSHP->nRecords == 1 ) {
       psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = shape->line[0].point[0].x;
       psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = shape->line[0].point[0].y;
-#ifdef USE_POINT_Z_M
       psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = shape->line[0].point[0].z;
       psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = shape->line[0].point[0].m;
-#endif
     }
 
     for( i=0; i<shape->numlines; i++ ) {
       for( j=0; j<shape->line[i].numpoints; j++ ) {
         psSHP->adBoundsMin[0] = MS_MIN(psSHP->adBoundsMin[0], shape->line[i].point[j].x);
         psSHP->adBoundsMin[1] = MS_MIN(psSHP->adBoundsMin[1], shape->line[i].point[j].y);
-#ifdef USE_POINT_Z_M
         psSHP->adBoundsMin[2] = MS_MIN(psSHP->adBoundsMin[2], shape->line[i].point[j].z);
         psSHP->adBoundsMin[3] = MS_MIN(psSHP->adBoundsMin[3], shape->line[i].point[j].m);
-#endif
         psSHP->adBoundsMax[0] = MS_MAX(psSHP->adBoundsMax[0], shape->line[i].point[j].x);
         psSHP->adBoundsMax[1] = MS_MAX(psSHP->adBoundsMax[1], shape->line[i].point[j].y);
-#ifdef USE_POINT_Z_M
         psSHP->adBoundsMax[2] = MS_MAX(psSHP->adBoundsMax[2], shape->line[i].point[j].z);
         psSHP->adBoundsMax[3] = MS_MAX(psSHP->adBoundsMax[3], shape->line[i].point[j].m);
-#endif
       }
     }
 
@@ -1241,9 +1212,7 @@ int msSHXReadSize( SHPHandle psSHP, int hEntity )
 void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 {
   int i, j, k;
-#ifdef USE_POINT_Z_M
   int nOffset = 0;
-#endif
   int nEntitySize, nRequiredSize;
 
   msInitShape(shape); /* initialize the shape */
@@ -1408,7 +1377,6 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
           SwapWord( 8, &(shape->line[i].point[j].y) );
         }
 
-#ifdef USE_POINT_Z_M
         /* -------------------------------------------------------------------- */
         /*      Polygon, Arc with Z values.                                     */
         /* -------------------------------------------------------------------- */
@@ -1432,7 +1400,6 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
             if( bBigEndian ) SwapWord( 8, &(shape->line[i].point[j].m) );
           }
         }
-#endif /* USE_POINT_Z_M */
         k++;
       }
     }
@@ -1524,7 +1491,6 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         SwapWord( 8, &(shape->line[0].point[i].y) );
       }
 
-#ifdef USE_POINT_Z_M
       /* -------------------------------------------------------------------- */
       /*      MulipointZ                                                      */
       /* -------------------------------------------------------------------- */
@@ -1544,7 +1510,6 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         memcpy(&(shape->line[0].point[i].m), psSHP->pabyRec + nOffset + 16 + i*8, 8 );
         if( bBigEndian ) SwapWord( 8, &(shape->line[0].point[i].m));
       }
-#endif /* USE_POINT_Z_M */
     }
 
     shape->type = MS_SHAPE_POINT;
@@ -1581,7 +1546,6 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       SwapWord( 8, &(shape->line[0].point[0].y));
     }
 
-#ifdef USE_POINT_Z_M
     /* -------------------------------------------------------------------- */
     /*      PointZ                                                          */
     /* -------------------------------------------------------------------- */
@@ -1605,7 +1569,6 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         if( bBigEndian ) SwapWord( 8, &(shape->line[0].point[0].m));
       }
     }
-#endif /* USE_POINT_Z_M */
 
     /* set the bounding box to the point */
     shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;

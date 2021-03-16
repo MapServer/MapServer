@@ -55,10 +55,8 @@ A :class:`pointObj` instance may be associated with a :class:`lineObj`.
 typedef struct {
   double x; ///< The x coordinate of the point
   double y; ///< The y coordinate of the point
-#ifdef USE_POINT_Z_M
   double z; ///< The z (height) coordinate of the point
   double m; ///< The m (measure) of the point, used for linear referencing
-#endif
 } pointObj;
 
 /**

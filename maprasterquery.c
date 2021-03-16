@@ -1196,9 +1196,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
     point.x = rlinfo->qc_x[shapeindex];
     point.y = rlinfo->qc_y[shapeindex];
-#ifdef USE_POINT_Z_M
     point.m = 0.0;
-#endif
 
     msAddLine( shape, &line );
     msComputeBounds( shape );

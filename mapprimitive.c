@@ -2303,11 +2303,7 @@ void msRectToFormattedString(rectObj *rect, char *format, char *buffer, int buff
 
 void msPointToFormattedString(pointObj *point, const char *format, char *buffer, int buffer_length)
 {
-#ifdef USE_POINT_Z_M
   snprintf(buffer, buffer_length, format, point->x, point->y, point->z, point->m);
-#else
-  snprintf(buffer, buffer_length, format, point->x, point->y);
-#endif
 }
 
 /* Returns true if a shape contains only degenerate parts */

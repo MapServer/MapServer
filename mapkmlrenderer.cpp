@@ -657,11 +657,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
     if( mElevationFromAttribute ) {
       sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, mCurrentElevationValue);
     } else if (AltitudeMode == relativeToGround || AltitudeMode == absolute) {
-#ifdef USE_POINT_Z_M
       sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, pts[i].z);
-#else
-      msSetError(MS_MISCERR, "Z coordinates support not available  (mapserver not compiled with USE_POINT_Z_M option)", "KmlRenderer::addCoordsNode()");
-#endif
     } else
       sprintf(lineBuf, "\t%.8f,%.8f\n", pts[i].x, pts[i].y);
 
@@ -746,9 +742,7 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
 
   p.x = symbol->sizex * symstyle->scale / 2;
   p.y = symbol->sizey *symstyle->scale / 2;
-#ifdef USE_POINT_Z_M
   p.z = 0.0;
-#endif
 
   status = msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
   if( status != MS_SUCCESS )
