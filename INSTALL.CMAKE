@@ -168,7 +168,6 @@ you know what you are doing:
  - option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
  - option(WITH_APACHE_MODULE "include (experimental) support for apache module" OFF)
  - option(WITH_GENERIC_NINT "generic rounding" OFF)
- - option(WITH_POINT_Z_M "include Z and M coordinates in point structure (advanced, not recommended)" OFF)
 
 The following are some common CMake options not specific to MapServer itself:
 

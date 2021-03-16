@@ -1697,10 +1697,8 @@ int msProjectRectGrid(reprojectionObj* reprojector, rectObj *rect)
 
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
-#ifdef USE_POINT_Z_M
   prj_point.z = 0.0;
   prj_point.m = 0.0;
-#endif /* USE_POINT_Z_M */
 
   msProjectGrowRect(reprojector,&prj_rect,&prj_point,
                     &failure);

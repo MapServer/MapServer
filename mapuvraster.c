@@ -866,9 +866,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
             shapeindex, point.x, point.y);
 
-#ifdef USE_POINT_Z_M
   point.m = 0.0;
-#endif
 
   shape->type = MS_SHAPE_POINT;
   line.numpoints = 1;

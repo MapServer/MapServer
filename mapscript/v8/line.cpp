@@ -169,10 +169,8 @@ void Line::addXY(const v8::FunctionCallbackInfo<Value>& args)
 
   line->point[line->numpoints].x = args[0]->NumberValue();
   line->point[line->numpoints].y = args[1]->NumberValue();
-#ifdef USE_POINT_Z_M
   if (args.Length() > 2 && args[2]->IsNumber())
     line->point[line->numpoints].m = args[2]->NumberValue();
-#endif
 
   line->numpoints++;
 }
@@ -197,11 +195,9 @@ void Line::addXYZ(const v8::FunctionCallbackInfo<Value>& args)
 
   line->point[line->numpoints].x = args[0]->NumberValue();
   line->point[line->numpoints].y = args[1]->NumberValue();
-#ifdef USE_POINT_Z_M
   line->point[line->numpoints].z = args[2]->NumberValue();
   if (args.Length() > 3 && args[3]->IsNumber())
     line->point[line->numpoints].m = args[3]->NumberValue();
-#endif
   line->numpoints++;
 }
 
@@ -227,11 +223,9 @@ void Line::addPoint(const v8::FunctionCallbackInfo<Value>& args)
 
   line->point[line->numpoints].x = point->x;
   line->point[line->numpoints].y = point->y;
-#ifdef USE_POINT_Z_M
   line->point[line->numpoints].z = point->z;
   if (args.Length() > 3 && args[3]->IsNumber())
     line->point[line->numpoints].m = point->m;
-#endif
   line->numpoints++;
 }
 

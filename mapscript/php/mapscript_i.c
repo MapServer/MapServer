@@ -1264,9 +1264,8 @@ int lineObj_add(lineObj *self, pointObj *p)
 
   self->point[self->numpoints].x = p->x;
   self->point[self->numpoints].y = p->y;
-#ifdef USE_POINT_Z_M
+  self->point[self->numpoints].z = p->z;
   self->point[self->numpoints].m = p->m;
-#endif
   self->numpoints++;
 
   return MS_SUCCESS;

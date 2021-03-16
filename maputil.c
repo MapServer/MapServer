@@ -1191,7 +1191,6 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
 /************************************************************************/
 pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
 {
-#ifdef USE_POINT_Z_M
   pointObj    *point = NULL;
   lineObj     line;
   double      dfMin = 0;
@@ -1272,12 +1271,6 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
   }
 
   return NULL;
-#else
-  msSetError(MS_MISCERR,
-             "The \"m\" parameter for points is unavailable in your build.",
-             "msGetPointUsingMeasure()");
-  return NULL;
-#endif /* USE_POINT_Z_M */
 }
 
 
@@ -1389,9 +1382,7 @@ pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
       result->x = a->x + r*(b->x - a->x);
       result->y = a->y + r*(b->y - a->y);
     }
-#ifdef USE_POINT_Z_M
     result->m = 0;
-#endif
   }
 
   return result;
@@ -1414,10 +1405,8 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
   int         i, j = 0;
   lineObj     line;
   pointObj    *poIntersectionPt = NULL;
-#ifdef USE_POINT_Z_M
   double      dfFactor = 0;
   double      dfDistTotal, dfDistToIntersection = 0;
-#endif
 
   if (shape && point) {
     for (i=0; i<shape->numlines; i++) {
@@ -1432,15 +1421,11 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
         if (dfDist < dfMinDist) {
           oFirst.x = line.point[j].x;
           oFirst.y = line.point[j].y;
-#ifdef USE_POINT_Z_M
           oFirst.m = line.point[j].m;
-#endif
 
           oSecond.x =  line.point[j+1].x;
           oSecond.y =  line.point[j+1].y;
-#ifdef USE_POINT_Z_M
           oSecond.m =  line.point[j+1].m;
-#endif
 
           dfMinDist = dfDist;
         }
@@ -1453,7 +1438,6 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
     /* -------------------------------------------------------------------- */
     poIntersectionPt = msIntersectionPointLine(point, &oFirst, &oSecond);
     if (poIntersectionPt) {
-#ifdef USE_POINT_Z_M
       dfDistTotal = sqrt(((oSecond.x - oFirst.x)*(oSecond.x - oFirst.x)) +
                          ((oSecond.y - oFirst.y)*(oSecond.y - oFirst.y)));
 
@@ -1465,8 +1449,6 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
       dfFactor = dfDistToIntersection / dfDistTotal;
 
       poIntersectionPt->m = oFirst.m + (oSecond.m - oFirst.m)*dfFactor;
-#endif
-
       return poIntersectionPt;
     }
 
@@ -1815,10 +1797,8 @@ static pointObj point_diff(const pointObj a, const pointObj b)
   pointObj retv;
   retv.x = a.x-b.x;
   retv.y = a.y-b.y;
-#ifdef USE_POINT_Z_M
   retv.z = a.z-b.z;
   retv.m = a.m-b.m;
-#endif
   return retv;
 }
 
@@ -1828,10 +1808,8 @@ static pointObj point_sum(const pointObj a, const pointObj b)
   pointObj retv;
   retv.x = a.x+b.x;
   retv.y = a.y+b.y;
-#ifdef USE_POINT_Z_M
   retv.z = a.z+b.z;
   retv.m = a.m+b.m;
-#endif
   return retv;
 }
 
@@ -1841,21 +1819,15 @@ static pointObj point_mul(const pointObj a, double b)
   pointObj retv;
   retv.x = a.x*b;
   retv.y = a.y*b;
-#ifdef USE_POINT_Z_M
   retv.z = a.z*b;
   retv.m = a.m*b;
-#endif
   return retv;
 }
 
 /* vector ??? */
 static double point_abs2(const pointObj a)
 {
-#ifdef USE_POINT_Z_M
   return a.x*a.x+a.y*a.y+a.z*a.z+a.m*a.m;
-#else
-  return a.x*a.x+a.y*a.y;
-#endif
 }
 
 /* vector normal */
@@ -1866,9 +1838,8 @@ static pointObj point_norm(const pointObj a)
   int norm_vector;
 
   norm_vector = a.x==0 && a.y==0;
-#ifdef USE_POINT_Z_M
   norm_vector = norm_vector && a.z==0 && a.m==0;
-#endif
+
   if (norm_vector)
     return a;
 
@@ -1876,10 +1847,8 @@ static pointObj point_norm(const pointObj a)
 
   retv.x = a.x*lenmul;
   retv.y = a.y*lenmul;
-#ifdef USE_POINT_Z_M
   retv.z = a.z*lenmul;
   retv.m = a.m*lenmul;
-#endif
 
   return retv;
 }

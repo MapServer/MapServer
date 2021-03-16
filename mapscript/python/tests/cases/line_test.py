@@ -76,7 +76,7 @@ class LineObjTestCase(MapPrimitivesTestCase):
 
     def testLineGeoInterface(self):
         """return line using the  __geo_interface__ protocol"""
-        assert self.line.__geo_interface__ == {"type": "LineString", "coordinates": [(0.0, 1.0), (2.0, 3.0)]}
+        assert self.line.__geo_interface__ == {"type": "LineString", "coordinates": [(0.0, 1.0, 0.0), (2.0, 3.0, 0.0)]}
 
 
 if __name__ == '__main__':
