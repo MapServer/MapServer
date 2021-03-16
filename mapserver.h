@@ -1831,7 +1831,6 @@ The :ref:`REFERENCE <reference>` object
     char *requires; ///< Context expressions, simple enough to not use expressionObj - see :ref:`REQUIRES <mapfile-layer-requires>`
     char *labelrequires;  ///< Simple logical expression - see :ref:`LABELREQUIRES <mapfile-layer-labelrequires>`
 
-    int dump; ///< TODO deprecated - to remove
     int debug; ///< Enable debugging of layer-  :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`DEBUG <mapfile-layer-debug>`
     char *classgroup; ///< See :ref:`CLASSGROUP <mapfile-layer-classgroup>`
     char *mask; ///< See :ref:`MASK <mapfile-layer-mask>`
