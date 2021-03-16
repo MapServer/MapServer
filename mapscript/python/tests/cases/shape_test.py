@@ -122,7 +122,7 @@ class InlineFeatureTestCase(MapTestCase):
                 'coordinates': [[(0.0, 51.477222, 0.0)]]
             },
             'type': 'Feature',
-            'bbox': (0.0, 51.477222, 0.0, 51.477222, 0.0),
+            'bbox': (0.0, 51.477222, 0.0, 51.477222),
             'properties': {'FNAME': 'A Point', 'FID': 1}
          }
 
