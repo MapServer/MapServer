@@ -1264,6 +1264,7 @@ int lineObj_add(lineObj *self, pointObj *p)
 
   self->point[self->numpoints].x = p->x;
   self->point[self->numpoints].y = p->y;
+  self->point[self->numpoints].z = p->z;
   self->point[self->numpoints].m = p->m;
   self->numpoints++;
 

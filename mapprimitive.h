@@ -49,7 +49,7 @@ typedef struct {
 #endif /*SWIG*/
 
 /**
-A :class:`pointObj` has an x, y and optionally z and m values.
+A :class:`pointObj` has an x, y, z and m values.
 A :class:`pointObj` instance may be associated with a :class:`lineObj`.
 */
 typedef struct {
