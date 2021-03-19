@@ -5,7 +5,7 @@ MAP
 
     IMAGETYPE png
 
-
+    DEBUG 3
     SIZE 100 100
     EXTENT -20 -20 20 20
     IMAGECOLOR '#ffffff'
