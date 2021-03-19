@@ -2023,7 +2023,6 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   /*we always want to add rownum is the selection to allow paging to work*/
   query_str = msStringConcatenate(query_str, "rownum, ");
 
-  snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), "%s FROM %s", geom_column_name, table_name );
   query_str = msStringConcatenate(query_str, geom_column_name);
   query_str = msStringConcatenate(query_str, " FROM ");
   query_str = msStringConcatenate(query_str, table_name);
