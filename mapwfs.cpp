@@ -3310,7 +3310,9 @@ static void msWFSSetShapeCache(mapObj* map)
     {
         map->query.cache_shapes = MS_TRUE;
         map->query.max_cached_shape_count = atoi(pszFeaturesCacheCount);
-        msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
+        if (map->debug >= MS_DEBUGLEVEL_V){
+           msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
+        }
     }
 
     if( pszFeaturesCacheSize )
@@ -3319,7 +3321,9 @@ static void msWFSSetShapeCache(mapObj* map)
         map->query.max_cached_shape_ram_amount = atoi(pszFeaturesCacheSize);
         if( strstr(pszFeaturesCacheSize, "mb") || strstr(pszFeaturesCacheSize, "MB") )
              map->query.max_cached_shape_ram_amount *= 1024 * 1024;
-        msDebug("Caching up to %d bytes of shapes\n", map->query.max_cached_shape_ram_amount);
+        if (map->debug >= MS_DEBUGLEVEL_V) {
+            msDebug("Caching up to %d bytes of shapes\n", map->query.max_cached_shape_ram_amount);
+        }
     }
 }
 
