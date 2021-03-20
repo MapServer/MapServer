@@ -142,6 +142,7 @@ MAP
 
     NAME "TN" 
     STATUS ON
+    DEBUG 3
     MAXSIZE 2048
     SIZE 500 76
     
