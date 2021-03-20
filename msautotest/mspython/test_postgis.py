@@ -356,6 +356,7 @@ def test_postgis_queryByFilter_bad_filteritem():
 def test_postgis_queryByFilter_bad_expression():
 
     map = mapscript.mapObj()
+    map.debug = 3
     layer = mapscript.layerObj(map)
     layer.updateFromString("""
         LAYER
