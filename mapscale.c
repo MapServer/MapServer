@@ -226,17 +226,17 @@ imageObj *msDrawScalebar(mapObj *map)
   }
   image = msImageCreate(map->scalebar.width, sy, format,
                         map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->scalebar.imagecolor);
-  image->map = map;
-
-  /* drop this reference to output format */
-  msApplyOutputFormat( &format, NULL,
-                       MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   /* did we succeed in creating the image? */
   if(!image) {
     msSetError(MS_MISCERR, "Unable to initialize image.", "msDrawScalebar()");
     return NULL;
   }
+  image->map = map;
+
+  /* drop this reference to output format */
+  msApplyOutputFormat( &format, NULL,
+                       MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   switch(map->scalebar.align) {
     case(MS_ALIGN_LEFT):

@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <assert.h>
+
 #include "mapserver.h"
 #include "mapcopy.h"
 #include "fontcache.h"
@@ -145,6 +147,7 @@ tileCacheObj *addTileCache(imageObj *img,
 
     /*go to the before last cache object*/
     while(cachep->next && cachep->next->next) cachep = cachep->next;
+    assert( cachep->next );
 
     /*free the last tile's data*/
     msFreeImage(cachep->next->image);

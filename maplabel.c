@@ -860,6 +860,8 @@ int msGetTextSymbolSize(mapObj *map, textSymbolObj *ts, rectObj *r) {
     if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
       return MS_FAILURE;
   }
+  if(!ts->textpath)
+    return MS_FAILURE;
   *r = ts->textpath->bounds.bbox;
   return MS_SUCCESS;
 }

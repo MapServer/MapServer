@@ -55,19 +55,19 @@
 
 int msCopyProjectionExtended(projectionObj *dst, const projectionObj *src, char ** args, int num_args)
 {
-
-  int i;
-
   MS_COPYSTELEM(numargs);
   MS_COPYSTELEM(gt);
   MS_COPYSTELEM(automatic);
 
-  for (i = 0; i < dst->numargs; i++) {
+  for (int i = 0; i < dst->numargs; i++) {
     /* Our destination consists of unallocated pointers */
     dst->args[i] = msStrdup(src->args[i]);
   }
-  for(i=0 ; i< num_args; i++) {
-    dst->args[dst->numargs++] = msStrdup(args[i]);
+  if( args )
+  {
+      for(int i=0 ; i< num_args; i++) {
+        dst->args[dst->numargs++] = msStrdup(args[i]);
+      }
   }
   msProjectionInheritContextFrom(dst, src);
   if (dst->numargs != 0) {

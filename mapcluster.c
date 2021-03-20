@@ -906,6 +906,7 @@ int selectClusterShape(layerObj* layer, long shapeindex)
     ++i;
     current = current->next;
   }
+  assert(current);
 
   current->next = current->siblings;
   layerinfo->current = current;
@@ -1665,6 +1666,7 @@ int msClusterLayerOpen(layerObj *layer)
     if (msInitializeVirtualTable(layer) != MS_SUCCESS)
       return MS_FAILURE;
   }
+  assert(layer->vtable);
   msClusterLayerCopyVirtualTable(layer->vtable);
 
   if (msCopyLayer(&layerinfo->srcLayer, layer) != MS_SUCCESS)

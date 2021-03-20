@@ -1041,7 +1041,7 @@ char ** msStringSplitComplex( const char * pszString,
    * If the last token was empty, then we need to capture
    * it now, as the loop would skip it.
    */
-  if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0
+  if( pszString != NULL && *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0
       && strchr(pszDelimiters,*(pszString-1)) != NULL ) {
     if( nRetLen >= nRetMax - 1 ) {
       nRetMax = nRetMax * 2 + 10;

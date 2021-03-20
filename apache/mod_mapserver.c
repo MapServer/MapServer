@@ -144,11 +144,12 @@ mapserver_read_post_data (request_rec *r)
     return NULL;
 
   buffer = (char*) apr_palloc (r->pool, r->remaining + 1);
-  size = r->remaining;
-  buffer [size] = '\0';
 
   if (!buffer)
     return NULL;
+
+  size = r->remaining;
+  buffer [size] = '\0';
 
   while ((blen = ap_get_client_block (r, buf, sizeof (buf))) > 0) {
     if (rpos + blen > size) {

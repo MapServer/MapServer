@@ -1612,7 +1612,7 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
   struct polyline_lengths pll;
   int i, ret = MS_SUCCESS;
   double minfeaturesize = -1;
-  assert(ts->annotext);
+  assert(ts == NULL || ts->annotext);
 
 
   if(label && ts) {
@@ -1621,6 +1621,8 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
         if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
           return MS_FAILURE;
       }
+      if(!ts->textpath)
+        return MS_FAILURE;
       minfeaturesize = ts->textpath->bounds.bbox.maxx;
     } else if(label->minfeaturesize) {
       minfeaturesize = label->minfeaturesize * resolutionfactor;
@@ -1798,6 +1800,8 @@ int msPolylineLabelPath(mapObj *map, imageObj *image, shapeObj *p, textSymbolObj
         return MS_FAILURE;
       }
     }
+    if(!ts->textpath)
+      return MS_FAILURE;
     minfeaturesize = ts->textpath->bounds.bbox.maxx;
   } else if(label->minfeaturesize) {
     minfeaturesize = label->minfeaturesize * image->resolutionfactor;

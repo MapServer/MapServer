@@ -257,19 +257,8 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     if( MS_RENDERER_PLUGIN(outputFormat) ) {
       msInitializeRendererVTable(outputFormat);
     }
-    
-    /* if( MS_RENDERER_MVT(outputFormat) ) {
-      if( mapserv != NULL )
-	checkWebScale(mapserv);
-
-      status = msMVTWriteFromQuery(map, outputFormat, mapserv->sendheaders);
-
-      return status;
-      } */
-
     if( MS_RENDERER_OGR(outputFormat) ) {
-      if( mapserv != NULL )
-        checkWebScale(mapserv);
+      checkWebScale(mapserv);
 
       status = msOGRWriteFromQuery(map, outputFormat, mapserv->sendheaders);
 
@@ -279,15 +268,14 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
       outputFormatObj *tempOutputFormat = map->outputformat; /* save format */
 
-      if( mapserv != NULL )
-        checkWebScale(mapserv);
+      checkWebScale(mapserv);
 
       map->outputformat = outputFormat; /* override what was given for IMAGETYPE */
       img = msDrawMap(map, MS_TRUE);
       if(!img) return MS_FAILURE;
       map->outputformat = tempOutputFormat; /* restore format */
 
-      if(mapserv == NULL || mapserv->sendheaders) {
+      if(mapserv->sendheaders) {
         msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(outputFormat));
         msIO_sendHeaders();
       }
@@ -303,7 +291,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   ** style made up of external files slammed together. Either way we may have to compute a query map and other
   ** images. We only create support images IF the querymap has status=MS_ON.
   */
-  if(map->querymap.status && mapserv != NULL ) {
+  if(map->querymap.status) {
     checkWebScale(mapserv);
     if(msGenerateImages(mapserv, MS_TRUE, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
@@ -316,7 +304,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       return MS_FAILURE;
     }
 
-    if(mapserv == NULL || mapserv->sendheaders) {
+    if(mapserv->sendheaders) {
       const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL );
       if(attachment)
         msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
@@ -3051,7 +3039,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /*      Save the current drawing order. The drawing order is reset      */
   /*      at the end of the function.                                     */
   /* -------------------------------------------------------------------- */
-  if(mapserv && mapserv->map && mapserv->map->numlayers > 0) {
+  if(mapserv->map && mapserv->map->numlayers > 0) {
     panCurrentDrawingOrder =
       (int *)msSmallMalloc(sizeof(int)*mapserv->map->numlayers);
 

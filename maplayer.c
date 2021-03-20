@@ -37,6 +37,10 @@
 
 #include <assert.h>
 
+#ifndef cppcheck_assert
+#define cppcheck_assert(x) do {} while(0)
+#endif
+
 static int populateVirtualTable(layerVTableObj *vtable);
 
 /*
@@ -54,6 +58,7 @@ int msLayerInitItemInfo(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerInitItemInfo(layer);
 }
 
@@ -61,9 +66,10 @@ void msLayerFreeItemInfo(layerObj *layer)
 {
   if ( ! layer->vtable) {
     int rv =  msInitializeVirtualTable(layer);
-    if (rv != MS_SUCCESS)
+    if( rv != MS_SUCCESS )
       return;
   }
+  cppcheck_assert(layer->vtable);
   layer->vtable->LayerFreeItemInfo(layer);
 
   /*
@@ -238,6 +244,7 @@ int msLayerOpen(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerOpen(layer);
 }
 
@@ -251,6 +258,7 @@ int msLayerIsOpen(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerIsOpen(layer);
 }
 
@@ -264,6 +272,7 @@ int msLayerSupportsCommonFilters(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerSupportsCommonFilters(layer);
 }
 
@@ -274,6 +283,7 @@ int msLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteri
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerTranslateFilter(layer, filter, filteritem);
 }
 
@@ -297,6 +307,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerWhichShapes(layer, rect, isQuery);
 }
 
@@ -315,6 +326,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
 
 #ifdef USE_V8_MAPSCRIPT
   /* we need to force the GetItems for the geomtransform attributes */
@@ -392,6 +404,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     if(rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
 
   /*
   ** TODO: This is where dynamic joins could happen. Joined attributes would be
@@ -437,6 +450,7 @@ int msLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProje
     if(rv != MS_SUCCESS)
       return -1;
   }
+  cppcheck_assert(layer->vtable);
 
   return layer->vtable->LayerGetShapeCount(layer, rect, rectProjection);
 }
@@ -507,6 +521,7 @@ int msLayerGetItems(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
 
   /* At the end of switch case (default -> break; -> return MS_FAILURE),
    * was following TODO ITEM:
@@ -555,6 +570,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
       return rv;
     }
   }
+  cppcheck_assert(layer->vtable);
   status = layer->vtable->LayerGetExtent(layer, extent);
 
   if (need_to_close)
@@ -879,6 +895,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
     rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS) return rv;
   }
+  cppcheck_assert(layer->vtable);
 
   /* Cleanup any previous item selection */
   msLayerFreeItemInfo(layer);
@@ -1131,6 +1148,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* sha
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerGetAutoStyle(map, layer, c, shape);
 }
 
@@ -1231,6 +1249,7 @@ int msLayerGetNumFeatures(layerObj *layer)
         if (rv != MS_SUCCESS)
             return result;
     }
+    cppcheck_assert(layer->vtable);
 
     result = layer->vtable->LayerGetNumFeatures(layer);
 
@@ -1593,15 +1612,16 @@ makeTimeFilter(layerObj *lp,
   set the filter parameter for a time filter
 **/
 
-int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
+int msLayerSetTimeFilter(layerObj *layer, const char *timestring,
                          const char *timefield)
 {
-  if ( ! lp->vtable) {
-    int rv =  msInitializeVirtualTable(lp);
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
       return rv;
   }
-  return lp->vtable->LayerSetTimeFilter(lp, timestring, timefield);
+  cppcheck_assert(layer->vtable);
+  return layer->vtable->LayerSetTimeFilter(layer, timestring, timefield);
 }
 
 int
@@ -1841,6 +1861,7 @@ int msLayerGetPaging(layerObj *layer)
       return MS_FAILURE;
     }
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerGetPaging(layer);
 }
 
@@ -1853,6 +1874,7 @@ void msLayerEnablePaging(layerObj *layer, int value)
       return;
     }
   }
+  cppcheck_assert(layer->vtable);
   layer->vtable->LayerEnablePaging(layer, value);
 }
 
@@ -2353,6 +2375,7 @@ char  *msLayerEscapeSQLParam(layerObj *layer, const char*pszString)
     if (rv != MS_SUCCESS)
       return "";
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerEscapeSQLParam(layer, pszString);
 }
 
@@ -2363,6 +2386,7 @@ char  *msLayerEscapePropertyName(layerObj *layer, const char*pszString)
     if (rv != MS_SUCCESS)
       return "";
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerEscapePropertyName(layer, pszString);
 }
 

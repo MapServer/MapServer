@@ -3848,7 +3848,7 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
             node = node->next; // skip )
             char *eq = msOGRGetToken(layer, &node);
             char *rval = msOGRGetToken(layer, &node);
-            if (strcmp(eq, " != ") == 0 || strcmp(rval, "FALSE") == 0) {
+            if ((eq && strcmp(eq, " != ") == 0) || (rval && strcmp(rval, "FALSE") == 0)) {
                 sql = msStringConcatenate(sql, "NOT ");
             }
             // FIXME: case rval is more complex

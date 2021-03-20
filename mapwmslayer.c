@@ -1176,7 +1176,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if(pszHTTPCookieData == NULL || sThisWMSParams.httpcookiedata == NULL) {
       bOkToMerge = MS_FALSE;
     }
-    if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0) {
+    else if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0) {
       bOkToMerge = MS_FALSE;
     }
   }

@@ -420,6 +420,7 @@ int loadColor(colorObj *color, attributeBindingObj *binding)
       return MS_FAILURE;
     }
   } else {
+    assert(binding);
     binding->item = msStrdup(msyystring_buffer);
     binding->index = -1;
   }
