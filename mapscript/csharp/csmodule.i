@@ -275,7 +275,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
           int size = self->width * self->height * 4 * sizeof(unsigned char);
           
           status = renderer->getRasterBufferHandle(self,&rb);
-          if(UNLIKELY(status == MS_FAILURE)) {
+          if(MS_UNLIKELY(status == MS_FAILURE)) {
             return MS_FAILURE;
           }
           memcpy(pixels, rb.data.rgba.pixels, size);

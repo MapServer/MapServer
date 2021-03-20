@@ -64,12 +64,12 @@
 
 #if defined(__GNUC__)
 #define WARN_UNUSED __attribute__((warn_unused_result))
-#define LIKELY(x)   __builtin_expect((x),1)
-#define UNLIKELY(x) __builtin_expect((x),0)
+#define MS_LIKELY(x)   __builtin_expect((x),1)
+#define MS_UNLIKELY(x) __builtin_expect((x),0)
 #else
 #define WARN_UNUSED
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
+#define MS_LIKELY(x) (x)
+#define MS_UNLIKELY(x) (x)
 #endif
 
 /* definition of  ms_int32/ms_uint32 */

@@ -276,14 +276,14 @@ imageObj *msDrawScalebar(mapObj *map)
         else if(MS_VALID_COLOR(map->scalebar.backgroundcolor))
           status = renderer->renderPolygon(image,&shape,&map->scalebar.backgroundcolor);
 
-        if(UNLIKELY(status == MS_FAILURE)) {
+        if(MS_UNLIKELY(status == MS_FAILURE)) {
           goto scale_cleanup;
         }
 
         if(strokeStyle.color) {
           status = renderer->renderLine(image,&shape,&strokeStyle);
 
-          if(UNLIKELY(status == MS_FAILURE)) {
+          if(MS_UNLIKELY(status == MS_FAILURE)) {
             goto scale_cleanup;
           }
         }
@@ -293,7 +293,7 @@ imageObj *msDrawScalebar(mapObj *map)
         p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
         p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
         status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,1.0);
-        if(UNLIKELY(status == MS_FAILURE)) {
+        if(MS_UNLIKELY(status == MS_FAILURE)) {
           goto scale_cleanup;
         }
         state = -state;
@@ -305,7 +305,7 @@ imageObj *msDrawScalebar(mapObj *map)
       p.x = ox; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
       status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,1.0);
-      if(UNLIKELY(status == MS_FAILURE)) {
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         goto scale_cleanup;
       }
       break;
@@ -324,7 +324,7 @@ imageObj *msDrawScalebar(mapObj *map)
       points[0].x = ox;
       points[1].x = ox + isx*map->scalebar.intervals;
       status = renderer->renderLine(image,&shape,&strokeStyle);
-      if(UNLIKELY(status == MS_FAILURE)) {
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         goto scale_cleanup;
       }
 
@@ -334,7 +334,7 @@ imageObj *msDrawScalebar(mapObj *map)
       for(j=0; j<=map->scalebar.intervals; j++) {
         points[0].x = points[1].x = ox + j*isx;
         status = renderer->renderLine(image,&shape,&strokeStyle);
-        if(UNLIKELY(status == MS_FAILURE)) {
+        if(MS_UNLIKELY(status == MS_FAILURE)) {
           goto scale_cleanup;
         }
 
@@ -348,7 +348,7 @@ imageObj *msDrawScalebar(mapObj *map)
           p.x = ox + j*isx - MS_NINT((strlen(label)*fontWidth)/2.0);
         }
         status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,1.0);
-        if(UNLIKELY(status == MS_FAILURE)) {
+        if(MS_UNLIKELY(status == MS_FAILURE)) {
           goto scale_cleanup;
         }
       }
@@ -361,7 +361,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
 scale_cleanup:
   freeTextSymbol(&ts);
-  if(UNLIKELY(status == MS_FAILURE)) {
+  if(MS_UNLIKELY(status == MS_FAILURE)) {
     msFreeImage(image);
     return NULL;
   }
@@ -478,7 +478,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
     if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
     GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
     status = msDrawMarkerSymbol(map, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
-    if(UNLIKELY(status == MS_FAILURE)) {
+    if(MS_UNLIKELY(status == MS_FAILURE)) {
       goto embed_cleanup;
     }
   } else {
@@ -499,7 +499,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
     }
     GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->symbol = s;
     status = msAddLabel(map, img, GET_LAYER(map, l)->class[0]->labels[0], l, 0, NULL, &point, -1, NULL);
-    if(UNLIKELY(status == MS_FAILURE)) {
+    if(MS_UNLIKELY(status == MS_FAILURE)) {
       goto embed_cleanup;
     }
   }

@@ -145,7 +145,7 @@ int WARN_UNUSED msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
   left = center->x-barWidth/2.;
 
   for(c=0; c<numvalues; c++) {
-    if(UNLIKELY(MS_FAILURE == drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c])))
+    if(MS_UNLIKELY(MS_FAILURE == drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c])))
       return MS_FAILURE;
     cur -= values[c];
   }
@@ -203,11 +203,11 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
       (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
     if(y!=vertOriginClipped) { /*don't draw bars of height == 0 (i.e. either values==0, or clipped)*/
       if(values[c]>0) {
-        if(UNLIKELY(MS_FAILURE == drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c])))
+        if(MS_UNLIKELY(MS_FAILURE == drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c])))
           return MS_FAILURE;
       }
       else {
-        if(UNLIKELY(MS_FAILURE == drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c])))
+        if(MS_UNLIKELY(MS_FAILURE == drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c])))
           return MS_FAILURE;
       }
     }
@@ -235,7 +235,7 @@ int WARN_UNUSED msDrawPieChart(mapObj *map, imageObj *image,
     double angle = values[i];
     if(angle==0) continue; /*no need to draw. causes artifacts with outlines*/
     angle*=360.0/dTotal;
-    if(UNLIKELY(MS_FAILURE == msDrawPieSlice(map ,image, center, styles[i], diameter/2., start, start+angle)))
+    if(MS_UNLIKELY(MS_FAILURE == msDrawPieSlice(map ,image, center, styles[i], diameter/2., start, start+angle)))
       return MS_FAILURE;
 
     start+=angle;

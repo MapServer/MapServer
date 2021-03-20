@@ -1075,7 +1075,7 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
       bufferObj buffer;
       msBufferInit(&buffer);
       status = renderer->getRasterBufferHandle(image,&data);
-      if(UNLIKELY(status == MS_FAILURE)) {
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         return NULL;
       }
       msSaveRasterBufferToBuffer(&data,&buffer,format);
@@ -2437,11 +2437,11 @@ void *msSmallMalloc( size_t nSize )
 {
   void        *pReturn;
 
-  if( UNLIKELY(nSize == 0) )
+  if( MS_UNLIKELY(nSize == 0) )
     return NULL;
 
   pReturn = malloc( nSize );
-  if( UNLIKELY(pReturn == NULL) ) {
+  if( MS_UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
                  (long) nSize );
     exit(1);
@@ -2460,12 +2460,12 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 {
   void        *pReturn;
 
-  if ( UNLIKELY(nNewSize == 0) )
+  if ( MS_UNLIKELY(nNewSize == 0) )
     return NULL;
 
   pReturn = realloc( pData, nNewSize );
 
-  if( UNLIKELY(pReturn == NULL) ) {
+  if( MS_UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
                  (long)nNewSize );
     exit(1);
@@ -2484,11 +2484,11 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
 {
   void  *pReturn;
 
-  if( UNLIKELY(nSize * nCount == 0) )
+  if( MS_UNLIKELY(nSize * nCount == 0) )
     return NULL;
 
   pReturn = calloc( nCount, nSize );
-  if( UNLIKELY(pReturn == NULL) ) {
+  if( MS_UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
                  (long)(nCount*nSize));
     exit(1);

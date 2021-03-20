@@ -637,11 +637,11 @@ int msGetCharacterSize(mapObj *map, char* font, int size, char *character, rectO
   unsigned int unicode, codepoint;
   glyph_element *glyph;
   face_element *face = msGetFontFace(font, &map->fontset);
-  if(UNLIKELY(!face)) return MS_FAILURE;
+  if(MS_UNLIKELY(!face)) return MS_FAILURE;
   msUTF8ToUniChar(character, &unicode);
   codepoint = msGetGlyphIndex(face,unicode);
   glyph = msGetGlyphByIndex(face,size,codepoint);
-  if(UNLIKELY(!glyph)) return MS_FAILURE;
+  if(MS_UNLIKELY(!glyph)) return MS_FAILURE;
   if(glyph) {
     r->minx = glyph->metrics.minx;
     r->maxx = glyph->metrics.maxx;
@@ -695,7 +695,7 @@ int msGetMarkerSize(mapObj *map, styleObj *style, double *width, double *height,
 
     case(MS_SYMBOL_TRUETYPE): {
       rectObj gbounds;
-      if(UNLIKELY(MS_FAILURE == msGetCharacterSize(map,symbol->font,size,symbol->character, &gbounds)))
+      if(MS_UNLIKELY(MS_FAILURE == msGetCharacterSize(map,symbol->font,size,symbol->character, &gbounds)))
         return MS_FAILURE;
 
       *width = MS_MAX(*width, (gbounds.maxx-gbounds.minx));

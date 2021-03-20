@@ -1075,7 +1075,7 @@ template<class VertexSource> int renderPolygonHatches(imageObj *img,VertexSource
           break;
         case mapserver::path_cmd_end_poly|mapserver::path_flags_close:
           if(shape.line[0].numpoints > 2) {
-            if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color))) {
+            if(MS_UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color))) {
               free(shape.line[0].point);
               return MS_FAILURE;
             }

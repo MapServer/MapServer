@@ -2266,7 +2266,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     }
   } else {
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(UNLIKELY(status == MS_FAILURE)) {
+    if(MS_UNLIKELY(status == MS_FAILURE)) {
       msWCSFreeCoverageMetadata(&cm);
       msDrawRasterLayerLowCloseDataset(lp, hDS);
       return MS_FAILURE;
