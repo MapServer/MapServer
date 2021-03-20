@@ -1680,7 +1680,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       if(shape->numlines > 0) {
         struct label_auto_result lar;
         memset(&lar,0,sizeof(struct label_auto_result));
-        if(UNLIKELY(MS_FAILURE == msPolylineLabelPoint(layer->map, shape, NULL, NULL, &lar, 0))) {
+        if(MS_UNLIKELY(MS_FAILURE == msPolylineLabelPoint(layer->map, shape, NULL, NULL, &lar, 0))) {
           free(lar.angles);
           free(lar.label_points);
           return MS_FAILURE;

@@ -216,7 +216,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
       rasterBufferObj rb;
       int x,y;
       memset(&rb,0,sizeof(rasterBufferObj));
-      if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb))) {
+      if(MS_UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb))) {
         return MS_FAILURE;
       }
       x = MS_NINT(point->x);
@@ -262,7 +262,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
     msPopulateTextSymbolForLabelAndString(ts,lbl,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
 
     if(annotext && *annotext && lbl->autominfeaturesize && featuresize > 0) {
-      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+      if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
         freeTextSymbol(ts);
         free(ts);
         return MS_FAILURE;
@@ -398,7 +398,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     if (maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
       rasterBufferObj rb;
       memset(&rb, 0, sizeof (rasterBufferObj));
-      if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage, &rb))) {
+      if(MS_UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage, &rb))) {
         return MS_FAILURE;
       }
       assert(rb.type == MS_BUFFER_BYTE_RGBA);
@@ -454,7 +454,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
 
   if(annotext && label->autominfeaturesize && featuresize > 0) {
     if(!ts->textpath) {
-      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+      if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
         return MS_FAILURE;
     }
     if(featuresize > (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
@@ -743,7 +743,7 @@ int msGetStringSize(mapObj *map, labelObj *label, int size, char *string, rectOb
   initTextSymbol(&ts);
   label->size = size;
   msPopulateTextSymbolForLabelAndString(&ts,label,msStrdup(string),1,1,0);
-  if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&ts,r)))
+  if(MS_UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&ts,r)))
     return MS_FAILURE;
   label->size = lsize;
   freeTextSymbol(&ts);
@@ -857,7 +857,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
 int msGetTextSymbolSize(mapObj *map, textSymbolObj *ts, rectObj *r) {
   if(!ts->textpath) {
-    if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+    if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
       return MS_FAILURE;
   }
   *r = ts->textpath->bounds.bbox;

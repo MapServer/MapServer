@@ -1618,7 +1618,7 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
   if(label && ts) {
     if(label->autominfeaturesize) {
       if(!ts->textpath) {
-        if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+        if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
           return MS_FAILURE;
       }
       minfeaturesize = ts->textpath->bounds.bbox.maxx;
@@ -1666,7 +1666,7 @@ int msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_len
     repeat_distance = label->repeatdistance * resolutionfactor;
   }
 
-  if(UNLIKELY(p->numpoints < 2))
+  if(MS_UNLIKELY(p->numpoints < 2))
     return MS_FAILURE;
   point_distance = 0;
   point_repeat = 1;
@@ -1794,7 +1794,7 @@ int msPolylineLabelPath(mapObj *map, imageObj *image, shapeObj *p, textSymbolObj
  
   if(label->autominfeaturesize) {
     if(!ts->textpath) {
-      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+      if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
         return MS_FAILURE;
       }
     }
@@ -1929,7 +1929,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
     return msLineLabelPoint(map,p,ts,ll,&lfr->lar,label, img->resolutionfactor);
   
   if(!ts->textpath) {
-    if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+    if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
       return MS_FAILURE;
     }
   }

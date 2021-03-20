@@ -245,7 +245,7 @@ int WARN_UNUSED check_single_font(fontSetObj *fontset, char *fontkey, text_run *
   if(!fcache)
     fcache = msGetFontFace(fontkey, fontset);
   run->face = fcache;
-  if(UNLIKELY(!fcache)) return MS_FAILURE;
+  if(MS_UNLIKELY(!fcache)) return MS_FAILURE;
   for(i=0; i<run->length; i++) {
     int codepoint = msGetGlyphIndex(fcache, glyphs->unicodes[run->offset+i]);
     if(codepoint || ignore_missing)
@@ -696,7 +696,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 
   for(i=0; i<nruns; i++) {
     ret = get_face_for_run(fontset, ts->label->font, runs+i, &glyphs);
-    if(UNLIKELY(ret == MS_FAILURE))
+    if(MS_UNLIKELY(ret == MS_FAILURE))
       goto cleanup;
   }
 

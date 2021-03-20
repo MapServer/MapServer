@@ -4883,7 +4883,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   } else {
     rasterBufferObj rb;
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(LIKELY(status == MS_SUCCESS)) {
+    if(MS_LIKELY(status == MS_SUCCESS)) {
       if( doDrawRasterLayerDraw ) {
         status = msDrawRasterLayerLowWithDataset( map, layer, image, &rb, hDS );
       } else {

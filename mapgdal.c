@@ -211,7 +211,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   if( format->imagemode == MS_IMAGEMODE_RGB ) {
     nBands = 3;
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
-    if(UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
+    if(MS_UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
       msReleaseLock( TLOCK_GDAL );
       return MS_FAILURE;
     }
@@ -224,7 +224,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     }
     nBands = 4;
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
-    if(UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
+    if(MS_UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
       msReleaseLock( TLOCK_GDAL );
       return MS_FAILURE;
     }

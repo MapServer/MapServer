@@ -232,7 +232,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
     imageObj *tileimg;
     double p_x,p_y;
     tileimg = msImageCreate(width,height,img->format,NULL,NULL,img->resolution, img->resolution, NULL);
-    if(UNLIKELY(!tileimg)) {
+    if(MS_UNLIKELY(!tileimg)) {
       return NULL;
     }
     if(!seamlessmode) {
@@ -244,18 +244,18 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           unsigned int unicode;
           glyph_element *glyphc;
           face_element *face = msGetFontFace(symbol->font, &img->map->fontset);
-          if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
+          if(MS_UNLIKELY(!face)) { status = MS_FAILURE; break; }
           msUTF8ToUniChar(symbol->character, &unicode);
           unicode = msGetGlyphIndex(face,unicode);
           glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s->scale),1), unicode);
-          if(UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
+          if(MS_UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
           status = drawGlyphMarker(tileimg, face, glyphc, p_x, p_y, s->scale, s->rotation,
                 s->color, s->outlinecolor, s->outlinewidth);
         }
           break;
         case (MS_SYMBOL_PIXMAP):
           status = msPreloadImageSymbol(renderer,symbol);
-          if(UNLIKELY(status == MS_FAILURE)) { break; }
+          if(MS_UNLIKELY(status == MS_FAILURE)) { break; }
           status = renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
           break;
         case (MS_SYMBOL_ELLIPSE):
@@ -268,7 +268,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
         case (MS_SYMBOL_SVG):
 #if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
           status = msPreloadSVGSymbol(symbol);
-          if(LIKELY(status == MS_SUCCESS)) {
+          if(MS_LIKELY(status == MS_SUCCESS)) {
             if (renderer->supports_svg) {
               status = renderer->renderSVGSymbol(tileimg, p_x, p_y, symbol, s);
             } else {
@@ -285,7 +285,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           status = MS_FAILURE;
           break;
       }
-      if(UNLIKELY(status == MS_FAILURE)) {
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         msFreeImage(tileimg);
         return NULL;
       }
@@ -308,18 +308,18 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
               unsigned int unicode;
               glyph_element *glyphc;
               face_element *face = msGetFontFace(symbol->font, &img->map->fontset);
-              if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
+              if(MS_UNLIKELY(!face)) { status = MS_FAILURE; break; }
               msUTF8ToUniChar(symbol->character, &unicode);
               unicode = msGetGlyphIndex(face,unicode);
               glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s->scale),1), unicode);
-              if(UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
+              if(MS_UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
               status = drawGlyphMarker(tileimg, face, glyphc, p_x, p_y, s->scale, s->rotation,
                     s->color, s->outlinecolor, s->outlinewidth);
             }
               break;
             case (MS_SYMBOL_PIXMAP):
               status = msPreloadImageSymbol(renderer,symbol);
-              if(UNLIKELY(status == MS_FAILURE)) { break; }
+              if(MS_UNLIKELY(status == MS_FAILURE)) { break; }
               status = renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
               break;
             case (MS_SYMBOL_ELLIPSE):
@@ -332,19 +332,19 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
               msSetError(MS_SYMERR, "BUG: Seamless mode is only for vector symbols", "getTile()");
               return NULL;
           }
-          if(UNLIKELY(status == MS_FAILURE)) {
+          if(MS_UNLIKELY(status == MS_FAILURE)) {
             msFreeImage(tile3img);
             return NULL;
           }
         }
       }
-      if(UNLIKELY(status == MS_FAILURE)) {
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         msFreeImage(tile3img);
         return NULL;
       }
 
       status = MS_IMAGE_RENDERER(tile3img)->getRasterBufferHandle(tile3img,&tmpraster);
-      if(UNLIKELY(status == MS_FAILURE)) {
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         msFreeImage(tile3img);
         return NULL;
       }
@@ -354,7 +354,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
                                  );
       msFreeImage(tile3img);
     }
-    if(UNLIKELY(status == MS_FAILURE)) {
+    if(MS_UNLIKELY(status == MS_FAILURE)) {
       msFreeImage(tileimg);
       return NULL;
     }
@@ -382,10 +382,10 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
     unsigned int unicode;
     msUTF8ToUniChar(symbol->character, &unicode);
     face = msGetFontFace(symbol->font, &image->map->fontset);
-    if(UNLIKELY(!face)) return MS_FAILURE;
+    if(MS_UNLIKELY(!face)) return MS_FAILURE;
     unicode = msGetGlyphIndex(face,unicode);
     glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(style->scale),1), unicode);
-    if(UNLIKELY(!glyphc)) return MS_FAILURE;
+    if(MS_UNLIKELY(!glyphc)) return MS_FAILURE;
     symbol_width = glyphc->metrics.maxx - glyphc->metrics.minx;
     symbol_height = glyphc->metrics.maxy - glyphc->metrics.miny;
   }
@@ -886,7 +886,7 @@ int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p, styleObj *styl
       if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
         double sx,sy;
         double ox, oy;
-        if(UNLIKELY(MS_FAILURE == msGetMarkerSize(map, style, &sx, &sy, scalefactor))) {
+        if(MS_UNLIKELY(MS_FAILURE == msGetMarkerSize(map, style, &sx, &sy, scalefactor))) {
           return MS_FAILURE;
         }
         ox = (0.5 - symbol->anchorpoint_x) * sx;
@@ -920,11 +920,11 @@ int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p, styleObj *styl
           unsigned int unicode;
           glyph_element *glyphc;
           face_element *face = msGetFontFace(symbol->font, &map->fontset);
-          if(UNLIKELY(!face)) return MS_FAILURE;
+          if(MS_UNLIKELY(!face)) return MS_FAILURE;
           msUTF8ToUniChar(symbol->character,&unicode);
           unicode = msGetGlyphIndex(face,unicode);
           glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s.scale),1), unicode);
-          if(UNLIKELY(!glyphc)) return MS_FAILURE;
+          if(MS_UNLIKELY(!glyphc)) return MS_FAILURE;
           ret = drawGlyphMarker(image, face, glyphc, p_x, p_y, s.scale, s.rotation, s.color, s.outlinecolor, s.outlinewidth);
         }
         break;

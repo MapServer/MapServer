@@ -1703,12 +1703,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     psrc_rb = &src_rb;
     memset( psrc_rb, 0, sizeof(rasterBufferObj) );
     if( srcImage->format->vtable->supports_pixel_buffer ) {
-      if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb ))) {
+      if(MS_UNLIKELY(MS_FAILURE == srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb ))) {
         msFree(mask_rb);
         return -1;
       }
     } else {
-      if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA))) {
+      if(MS_UNLIKELY(MS_FAILURE == srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA))) {
         msFree(mask_rb);
         return -1;
       }
