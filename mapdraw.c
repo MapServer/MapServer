@@ -400,7 +400,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   for(i=0; i<map->numlayers; i++) {
 
     if(map->layerorder[i] != -1) {
-      char *force_draw_label_cache = NULL;
+      const char *force_draw_label_cache = NULL;
 
       lp = (GET_LAYER(map,  map->layerorder[i]));
 
@@ -1066,7 +1066,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   //    MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
   //    MS_ALL_MATCHING_CLASSES: SLD behavior
   int ref_rendermode;
-  char * rendermodestr = msLayerGetProcessingKey(layer, "RENDERMODE");
+  const char * rendermodestr = msLayerGetProcessingKey(layer, "RENDERMODE");
   if (layer->rendermode == MS_ALL_MATCHING_CLASSES)
   {
     // SLD takes precedence
@@ -3546,7 +3546,7 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   if (image) {
     if( MS_RENDERER_PLUGIN(image->format) ) {
-      char *approximation_scale = msLayerGetProcessingKey( layer, "APPROXIMATION_SCALE" );
+      const char *approximation_scale = msLayerGetProcessingKey( layer, "APPROXIMATION_SCALE" );
       if(approximation_scale) {
         if(!strncasecmp(approximation_scale,"ROUND",5)) {
           MS_IMAGE_RENDERER(image)->transform_mode = MS_TRANSFORM_ROUND;

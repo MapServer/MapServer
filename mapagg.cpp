@@ -860,7 +860,7 @@ int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format
 int agg2StartNewLayer(imageObj *img, mapObj*map, layerObj *layer)
 {
   AGG2Renderer *r = AGG_RENDERER(img);
-  char *sgamma = msLayerGetProcessingKey( layer, "GAMMA" );
+  const char *sgamma = msLayerGetProcessingKey( layer, "GAMMA" );
   double gamma;
   if(sgamma) {
     gamma = atof(sgamma);

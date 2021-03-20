@@ -3742,7 +3742,7 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
     info->pszWHERE = NULL;
 
     // reasons to not produce native string: not simple layer, or an explicit deny
-    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    const char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
     if (do_this && strcmp(do_this, "NO") == 0) {
         return MS_SUCCESS;
     }
@@ -4098,7 +4098,7 @@ int msOGRIsSpatialite(layerObj* layer)
       EQUAL(psInfo->dialect, "Spatialite") )
   {
     // reasons to not produce native string: not simple layer, or an explicit deny
-    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    const char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
     if (do_this && strcmp(do_this, "NO") == 0) {
         return MS_FALSE;
     }

@@ -997,7 +997,7 @@ int RebuildClusters(layerObj *layer, int isQuery)
   int status;
   clusterInfo* current;
   int depth;
-  char *pszProcessing;
+  const char *pszProcessing;
 #ifdef USE_CLUSTER_EXTERNAL
   int layerIndex;
 #endif

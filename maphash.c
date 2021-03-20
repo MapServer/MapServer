@@ -81,7 +81,7 @@ void msFreeHashTable( hashTableObj *table )
   }
 }
 
-int msHashIsEmpty( hashTableObj *table )
+int msHashIsEmpty( const hashTableObj *table )
 {
   if (table->numitems == 0 )
     return MS_TRUE;
@@ -149,7 +149,7 @@ struct hashObj *msInsertHashTable(hashTableObj *table,
   return tp;
 }
 
-const char *msLookupHashTable(hashTableObj *table, const char *key)
+const char *msLookupHashTable(const hashTableObj *table, const char *key)
 {
   struct hashObj *tp;
 
@@ -209,7 +209,7 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
   return status;
 }
 
-const char *msFirstKeyFromHashTable( hashTableObj *table )
+const char *msFirstKeyFromHashTable( const hashTableObj *table )
 {
   int hash_index;
 
@@ -226,7 +226,7 @@ const char *msFirstKeyFromHashTable( hashTableObj *table )
   return NULL;
 }
 
-const char *msNextKeyFromHashTable( hashTableObj *table, const char *lastKey )
+const char *msNextKeyFromHashTable( const hashTableObj *table, const char *lastKey )
 {
   int hash_index;
   struct hashObj *link;

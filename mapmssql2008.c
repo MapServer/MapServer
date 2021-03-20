@@ -1106,7 +1106,7 @@ static int getMSSQLMajorVersion(layerObj* layer)
     return 0;
 
   if (layerinfo->mssqlversion_major == 0) {
-    char* mssqlversion_major = msLayerGetProcessingKey(layer, "MSSQL_VERSION_MAJOR");
+    const char* mssqlversion_major = msLayerGetProcessingKey(layer, "MSSQL_VERSION_MAJOR");
     if (mssqlversion_major != NULL) {
       layerinfo->mssqlversion_major = atoi(mssqlversion_major);
     }

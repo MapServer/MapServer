@@ -638,7 +638,7 @@ void msFreeProjectionExceptContext(projectionObj *p)
 /*                 msProjectionInheritContextFrom()                     */
 /************************************************************************/
 
-void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc)
+void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pSrc)
 {
 #if PROJ_VERSION_MAJOR >= 6
     if( pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL)

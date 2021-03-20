@@ -1300,7 +1300,7 @@ void msLayerAddProcessing( layerObj *layer, const char *directive )
   layer->processing[layer->numprocessing] = NULL;
 }
 
-char *msLayerGetProcessing( layerObj *layer, int proc_index)
+const char *msLayerGetProcessing( const layerObj *layer, int proc_index)
 {
   if (proc_index < 0 || proc_index >= layer->numprocessing) {
     msSetError(MS_CHILDERR, "Invalid processing index.", "msLayerGetProcessing()");
@@ -1310,7 +1310,7 @@ char *msLayerGetProcessing( layerObj *layer, int proc_index)
   }
 }
 
-char *msLayerGetProcessingKey( layerObj *layer, const char *key )
+const char *msLayerGetProcessingKey( const layerObj *layer, const char *key )
 {
   int i, len = strlen(key);
 

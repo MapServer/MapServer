@@ -916,7 +916,7 @@ int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol)
  * gdImageCreate(), gdImageCopy()                                      *
  **********************************************************************/
 
-int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map)
+int msCopySymbol(symbolObj *dst, const symbolObj *src, mapObj *map)
 {
   int i;
 
@@ -957,7 +957,7 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map)
  * Copy a symbolSetObj using msCopyFontSet(), msCopySymbol()           *
  **********************************************************************/
 
-int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
+int msCopySymbolSet(symbolSetObj *dst, const symbolSetObj *src, mapObj *map)
 {
   int i, return_value;
 

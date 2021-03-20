@@ -107,7 +107,7 @@ void msInitShape(shapeObj *shape)
   shape->scratch = MS_FALSE; /* not a temporary/scratch shape */
 }
 
-int msCopyShape(shapeObj *from, shapeObj *to)
+int msCopyShape(const shapeObj *from, shapeObj *to)
 {
   int i;
 
