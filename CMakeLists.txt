@@ -279,7 +279,7 @@ mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.cpp maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
 mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
-maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
+maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.cpp
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.cpp maperror.c mapogcfilter.cpp mapregex.c mapwcs11.cpp mapfile.c
