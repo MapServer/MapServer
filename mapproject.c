@@ -1123,7 +1123,7 @@ static int msProjectSegment( reprojectionObj* reprojector,
 
   while( fabs(subStart.x - subEnd.x)
          + fabs(subStart.y - subEnd.y) > TOLERANCE ) {
-    pointObj midPoint;
+    pointObj midPoint = {0};
 
     midPoint.x = (subStart.x + subEnd.x) * 0.5;
     midPoint.y = (subStart.y + subEnd.y) * 0.5;

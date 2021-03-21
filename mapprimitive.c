@@ -1153,7 +1153,7 @@ static pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c, poi
 void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 {
   int i, j;
-  pointObj a;
+  pointObj a = {0};
   lineObj inside, outside;
   double angle;
   double dx, dy;

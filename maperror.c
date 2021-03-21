@@ -404,7 +404,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   int nEnd = 0;
   int nLength = 0;
   char **papszLines = NULL;
-  pointObj pnt;
+  pointObj pnt = { 0 };
   int nWidthTxt = 0;
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");

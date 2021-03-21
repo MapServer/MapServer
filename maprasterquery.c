@@ -575,7 +575,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* -------------------------------------------------------------------- */
   for( iLine = 0; iLine < nWinYSize; iLine++ ) {
     for( iPixel = 0; iPixel < nWinXSize; iPixel++ ) {
-      pointObj  sPixelLocation,sReprojectedPixelLocation;
+      pointObj  sPixelLocation = {0};
 
       if( rlinfo->query_results == rlinfo->query_result_hard_max )
         break;
@@ -593,7 +593,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       /* search shape.  Save the original pixel location coordinates */
       /* in sPixelLocationInLayerSRS, so that we can return those */
       /* coordinates if we have a hit */
-      sReprojectedPixelLocation = sPixelLocation;
+      pointObj sReprojectedPixelLocation = sPixelLocation;
       if( reprojector )
       {
 #if PROJ_VERSION_MAJOR < 6
