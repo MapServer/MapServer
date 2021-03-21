@@ -1711,7 +1711,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           pszValue ++;
       if(pszValue == NULL || strlen(pszValue) < 1) {
         /* Check if the style is in the connection URL */
-        pszURL = "";
+
         if(GET_LAYER(map, i)->connection)
           pszURL = msStrdup( GET_LAYER(map, i)->connection );
         else

@@ -122,7 +122,9 @@ int WARN_UNUSED drawRectangle(mapObj *map, imageObj *image, double mx, double my
 
   point[0].x = point[4].x = point[3].x = mx;
   point[0].y = point[4].y = point[1].y = my;
+  /* cppcheck-suppress unreadVariable */
   point[1].x = point[2].x = Mx;
+  /* cppcheck-suppress unreadVariable */
   point[2].y = point[3].y = My;
 
   return msDrawShadeSymbol(map,image,&shape,style,1.0);

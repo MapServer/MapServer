@@ -473,7 +473,6 @@ xmlNodePtr _msMetadataGetContact(xmlNsPtr namespace, char *contact_element, mapO
 static
 xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer, xmlNsPtr *ppsNsGco)
 {
-  int i = 0;
   int n;
   char *value;
   char **tokens = NULL;
@@ -518,7 +517,7 @@ xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, lay
 
     tokens = msStringSplit(value, ',', &n);
     if (tokens && n > 0) {
-      for (i=0; i<n; i++) {
+      for (int i=0; i<n; i++) {
         xmlAddChild(psMDKNode, _msMetadataGetCharacterString(namespace, "keyword", tokens[i], ppsNsGco));
       }
       msFreeCharArray(tokens, n);
@@ -882,13 +881,11 @@ void msMetadataFreeParamsObj(metadataParamsObj *metadataparams)
 int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
                       metadataParamsObj *metadataparams)
 {
-  int i = 0;
-
   if (!request || !metadataparams)
     return MS_FAILURE;
 
   if (request->NumParams > 0) {
-    for(i=0; i<request->NumParams; i++) {
+    for(int i=0; i<request->NumParams; i++) {
       if (request->ParamNames[i] && request->ParamValues[i]) {
         if (strcasecmp(request->ParamNames[i], "LAYER") == 0)
           metadataparams->pszLayer = msStrdup(request->ParamValues[i]);

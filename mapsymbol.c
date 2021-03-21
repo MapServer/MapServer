@@ -68,13 +68,12 @@ void freeImageCache(struct imageCacheObj *ic)
 */
 double msSymbolGetDefaultSize(symbolObj *s)
 {
-  double size;
+  double size = 1;
   if(s == NULL)
     return 1;
 
   switch(s->type) {
     case(MS_SYMBOL_TRUETYPE):
-      size = 1;
       break;
     case(MS_SYMBOL_PIXMAP):
       assert(s->pixmap_buffer != NULL);
@@ -82,7 +81,6 @@ double msSymbolGetDefaultSize(symbolObj *s)
       size = (double)s->pixmap_buffer->height;
       break;
     case(MS_SYMBOL_SVG):
-      size = 1;
 #if defined(USE_SVG_CAIRO) || defined (USE_RSVG)
       assert(s->renderer_cache != NULL);
       size = s->sizey;

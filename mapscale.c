@@ -567,25 +567,21 @@ double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int 
 double Pix2Georef(int nPixPos, int nPixMin, int nPixMax,
                   double dfGeoMin, double dfGeoMax, int bULisYOrig)
 {
-  double      dfWidthGeo = 0.0;
-  int         nWidthPix = 0;
-  double      dfPixToGeo = 0.0;
   double      dfPosGeo = 0.0;
-  double      dfDeltaGeo = 0.0;
-  int         nDeltaPix = 0;
 
-  dfWidthGeo = dfGeoMax - dfGeoMin;
-  nWidthPix = nPixMax - nPixMin;
+  const double dfWidthGeo = dfGeoMax - dfGeoMin;
+  const int nWidthPix = nPixMax - nPixMin;
 
   if (dfWidthGeo > 0.0 && nWidthPix > 0) {
-    dfPixToGeo = dfWidthGeo / (double)nWidthPix;
+    const double dfPixToGeo = dfWidthGeo / (double)nWidthPix;
 
+    int nDeltaPix;
     if (!bULisYOrig)
       nDeltaPix = nPixPos - nPixMin;
     else
       nDeltaPix = nPixMax - nPixPos;
 
-    dfDeltaGeo = nDeltaPix * dfPixToGeo;
+    const double dfDeltaGeo = nDeltaPix * dfPixToGeo;
 
     dfPosGeo = dfGeoMin + dfDeltaGeo;
   }

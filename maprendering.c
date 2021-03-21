@@ -174,7 +174,6 @@ tileCacheObj *addTileCache(imageObj *img,
   cachep->outlinewidth = style->outlinewidth;
   cachep->scale = style->scale;
   cachep->rotation = style->rotation;
-  cachep->outlinewidth = style->outlinewidth;
   if(style->color) MS_COPYCOLOR(&cachep->color,style->color);
   if(style->outlinecolor) MS_COPYCOLOR(&cachep->outlinecolor,style->outlinecolor);
   if(style->backgroundcolor) MS_COPYCOLOR(&cachep->backgroundcolor,style->backgroundcolor);
@@ -989,6 +988,11 @@ int msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds, styleObj
     pnts1[2].x = pnts1[3].x = bnds->bbox.maxx;
     pnts1[0].y = pnts1[3].y = pnts1[4].y = bnds->bbox.miny;
     pnts1[1].y = pnts1[2].y = bnds->bbox.maxy;
+    (void)pnts1[0].x; (void)pnts1[0].y;
+    (void)pnts1[1].x; (void)pnts1[1].y;
+    (void)pnts1[2].x; (void)pnts1[2].y;
+    (void)pnts1[3].x; (void)pnts1[3].y;
+    (void)pnts1[4].x; (void)pnts1[4].y;
     shape.line = &l; // must return from this block
     return msDrawShadeSymbol(map,image,&shape,style,scalefactor);
   }

@@ -227,7 +227,7 @@ void msUnsetLimitedPatternToUse()
 void msSetLimitedPatternsToUse(const char *patternstring)
 {
   int *limitedpatternindice = NULL;
-  int numpatterns=0, i=0, j=0, ntmp=0;
+  int numpatterns=0, ntmp=0;
   char **patterns = NULL;
   msTimeSetup();
 
@@ -240,8 +240,8 @@ void msSetLimitedPatternsToUse(const char *patternstring)
     patterns = msStringSplit(patternstring, ',', &ntmp);
     if (patterns && ntmp >= 1) {
 
-      for (i=0; i<ntmp; i++) {
-        for (j=0; j<MS_NUMTIMEFORMATS; j++) {
+      for (int i=0; i<ntmp; i++) {
+        for (int j=0; j<MS_NUMTIMEFORMATS; j++) {
           if (strcasecmp( ms_timeFormats[j].userformat, patterns[i]) ==0) {
             limitedpatternindice[numpatterns] = j;
             numpatterns++;
@@ -254,7 +254,7 @@ void msSetLimitedPatternsToUse(const char *patternstring)
   }
 
   if (numpatterns > 0) {
-    for (i=0; i<numpatterns; i++)
+    for (int i=0; i<numpatterns; i++)
       ms_limited_pattern[i] = limitedpatternindice[i];
 
     ms_num_limited_pattern = numpatterns;
@@ -264,7 +264,6 @@ void msSetLimitedPatternsToUse(const char *patternstring)
 
 int msParseTime(const char *string, struct tm *tm)
 {
-  int i, indice = 0;
   int num_patterns = 0;
   
   if(MS_STRING_IS_NULL_OR_EMPTY(string)) return MS_FALSE; /* nothing to parse so bail */
@@ -279,8 +278,9 @@ int msParseTime(const char *string, struct tm *tm)
   else
     num_patterns = MS_NUMTIMEFORMATS;
 
-  for(i=0; i<num_patterns; i++) {
+  for(int i=0; i<num_patterns; i++) {
     int match;
+    int indice;
     if (ms_num_limited_pattern > 0)
       indice = ms_limited_pattern[i];
     else

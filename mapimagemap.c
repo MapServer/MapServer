@@ -465,7 +465,6 @@ void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style
   symbolObj *symbol;
   int i,j,l;
   char first = 1;
-  double size;
   DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 
 
@@ -474,13 +473,6 @@ void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style
 
   if(style->symbol > map->symbolset.numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   symbol = map->symbolset.symbol[style->symbol];
-  if(style->size == -1) {
-    size = msSymbolGetDefaultSize( symbol );
-    size = MS_NINT(size*scalefactor);
-  } else
-    size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize*img->resolutionfactor);
-  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
   if(style->symbol == 0) { /* just draw a single width line */
@@ -547,20 +539,12 @@ void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *styl
   symbolObj *symbol;
   int i,j,l;
   char first = 1;
-  double size;
 
   DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
   if(p->numlines <= 0) return;
 
   symbol = map->symbolset.symbol[style->symbol];
-  if(style->size == -1) {
-    size = msSymbolGetDefaultSize( symbol );
-    size = MS_NINT(size*scalefactor);
-  } else
-    size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize*img->resolutionfactor);
-  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color //     */
@@ -642,7 +626,6 @@ int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
 {
   FILE *stream;
   char workbuffer[5000];
-  int nSize=0, size=0, iIndice=0;
 
   DEBUG_IF printf("msSaveImageIM\n<BR>");
 
@@ -677,11 +660,11 @@ int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
     } else {
       msIO_fprintf(stream, "<map name=\"%s\" width=\"%d\" height=\"%d\">\n", mapName, img->width, img->height);
     }
-    nSize = sizeof(workbuffer);
+    const int nSize = sizeof(workbuffer);
 
-    size = strlen(img->img.imagemap);
+    const int size = strlen(img->img.imagemap);
     if (size > nSize) {
-      iIndice = 0;
+      int iIndice = 0;
       while ((iIndice + nSize) <= size) {
         snprintf(workbuffer, sizeof(workbuffer), "%s", img->img.imagemap+iIndice );
         workbuffer[nSize-1] = '\0';

@@ -1353,7 +1353,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
 
   renderer->freeImage = &agg2FreeImage;
   renderer->freeSymbol = &agg2FreeSymbol;
-  renderer->cleanup = agg2Cleanup;
 
   return MS_SUCCESS;
 }

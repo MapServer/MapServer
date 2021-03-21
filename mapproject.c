@@ -2429,13 +2429,13 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 char *msGetProjectionString(projectionObj *proj)
 {
   char        *pszProjString = NULL;
-  int         i = 0, nLen = 0;
+  int         nLen = 0;
 
   if (proj) {
     /* -------------------------------------------------------------------- */
     /*      Alloc buffer large enough to hold the whole projection defn     */
     /* -------------------------------------------------------------------- */
-    for (i=0; i<proj->numargs; i++) {
+    for (int i=0; i<proj->numargs; i++) {
       if (proj->args[i])
         nLen += (strlen(proj->args[i]) + 2);
     }
@@ -2446,7 +2446,7 @@ char *msGetProjectionString(projectionObj *proj)
     /* -------------------------------------------------------------------- */
     /*      Plug each arg into the string with a '+' prefix                 */
     /* -------------------------------------------------------------------- */
-    for (i=0; i<proj->numargs; i++) {
+    for (int i=0; i<proj->numargs; i++) {
       if (!proj->args[i] || strlen(proj->args[i]) == 0)
         continue;
       if (pszProjString[0] == '\0') {

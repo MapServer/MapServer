@@ -437,8 +437,6 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
   int force_pc256 = MS_FALSE;
   int force_palette = MS_FALSE;
 
-  int ret = MS_FAILURE;
-
   const char *force_string,*zlib_compression;
   int compression = -1;
 
@@ -471,6 +469,7 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
     qrb.height = rb->height;
     qrb.data.palette.pixels = (unsigned char*)malloc(qrb.width*qrb.height*sizeof(unsigned char));
     qrb.data.palette.scaling_maxval = 255;
+    int ret;
     if(force_pc256) {
       qrb.data.palette.palette = palette;
       qrb.data.palette.num_entries = atoi(msGetOutputFormatOption( format, "QUANTIZE_COLORS", "256"));
@@ -505,7 +504,7 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
       }
     }
     if(ret != MS_FAILURE) {
-      ret = msClassifyRasterBuffer(rb,&qrb);
+      msClassifyRasterBuffer(rb,&qrb);
       ret = savePalettePNG(&qrb,info,compression);
     }
     msFree(qrb.data.palette.pixels);

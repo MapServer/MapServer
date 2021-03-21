@@ -382,12 +382,7 @@ double msSquareDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b)
 
 double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, pointObj *pd)
 {
-  vectorObj dP;
   vectorObj u, v, w;
-  double a, b, c, d, e;
-  double D;
-  double sc, sN, sD; /* N=numerator, D=demoninator */
-  double tc, tN, tD;
 
   /* check for strictly parallel segments first */
   /* if(((pa->x == pb->x) && (pc->x == pd->x)) || (slope(pa,pb) == slope(pc,pd))) { // vertical (infinite slope) || otherwise parallel */
@@ -404,19 +399,21 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
   w.x = pa->x - pc->x; /* w = pa - pc */
   w.y = pa->y - pc->y;
 
-  a = dot(u,u);
-  b = dot(u,v);
-  c = dot(v,v);
-  d = dot(u,w);
-  e = dot(v,w);
+  const double a = dot(u,u);
+  const double b = dot(u,v);
+  const double c = dot(v,v);
+  const double d = dot(u,w);
+  const double e = dot(v,w);
 
-  D = a*c - b*b;
-  sc = sN = sD = D;
-  tc = tN = tD = D;
+  const double D = a*c - b*b;
+  /* N=numerator, D=demoninator */
+  double sN = 0;
+  double sD = D;
+  double tD = D;
+  double tN = D;
 
   /* compute the line parameters of the two closest points */
   if(D < SMALL_NUMBER) { /* lines are parallel or almost parallel */
-    sN = 0.0;
     sD = 1.0;
     tN = e;
     tD = c;
@@ -436,8 +433,9 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
 
   if(tN < 0) {
     tN = 0.0;
-    if(-d < 0)
-      sN = 0.0;
+    if(-d < 0) {
+      /* sN = 0.0 */
+    }
     else if(-d > a)
       sN = sD;
     else {
@@ -446,8 +444,9 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
     }
   } else if(tN > tD) {
     tN = tD;
-    if((-d + b) < 0)
-      sN = 0.0;
+    if((-d + b) < 0) {
+      /* sN = 0.0 */
+    }
     else if((-d + b) > a)
       sN = sD;
     else {
@@ -457,9 +456,10 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
   }
 
   /* finally do the division to get sc and tc */
-  sc = sN/sD;
-  tc = tN/tD;
+  const double sc = sN/sD;
+  const double tc = tN/tD;
 
+  vectorObj dP;
   dP.x = w.x + (sc*u.x) - (tc*v.x);
   dP.y = w.y + (sc*u.y) - (tc*v.y);
 

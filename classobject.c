@@ -189,11 +189,10 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex)
  */
 int msDeleteStyle(classObj *class, int nStyleIndex)
 {
-  int i = 0;
   if (class && nStyleIndex < class->numstyles && nStyleIndex >=0) {
     if (freeStyle(class->styles[nStyleIndex]) == MS_SUCCESS)
       msFree(class->styles[nStyleIndex]);
-    for (i=nStyleIndex; i< class->numstyles-1; i++) {
+    for (int i=nStyleIndex; i< class->numstyles-1; i++) {
       class->styles[i] = class->styles[i+1];
     }
     class->styles[class->numstyles-1] = NULL;

@@ -1849,12 +1849,11 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
 {
   int c = shape->classindex;
   int ret = MS_SUCCESS;
-  int i, s, l = 0;
 
   /* RFC48: loop through the styles, and pass off to the type-specific
   function if the style has an appropriate type */
   if(MS_DRAW_FEATURES(drawmode)) {
-    for (s = 0; s < layer->class[c]->numstyles; s++) {
+    for (int s = 0; s < layer->class[c]->numstyles; s++) {
       if (msScaleInBounds(map->scaledenom,
           layer->class[c]->styles[s]->minscaledenom,
           layer->class[c]->styles[s]->maxscaledenom)) {
@@ -1873,7 +1872,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
   }
   
   if(MS_DRAW_LABELS(drawmode)) {
-    for (l = 0; l < layer->class[c]->numlabels; l++) {
+    for (int l = 0; l < layer->class[c]->numlabels; l++) {
       labelObj *label = layer->class[c]->labels[l];
       textSymbolObj ts;
       char *annotext;
@@ -1899,14 +1898,14 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
         memset(&lfr,0,sizeof(lfr));
         msPolylineLabelPath(map, image, anno_shape, &ts, label, &lfr);
 
-        for (i = 0; i < lfr.num_follow_labels; i++) {
+        for (int i = 0; i < lfr.num_follow_labels; i++) {
           if (msAddLabel(map, image, label, layer->index, c, anno_shape, NULL, -1, lfr.follow_labels[i]) != MS_SUCCESS) {
             ret = MS_FAILURE;
             goto line_cleanup;
           }
         }
         free(lfr.follow_labels);
-        for(i=0; i<lfr.lar.num_label_points; i++) {
+        for(int i=0; i<lfr.lar.num_label_points; i++) {
           textSymbolObj *ts_auto = msSmallMalloc(sizeof(textSymbolObj));
           initTextSymbol(ts_auto);
           msCopyTextSymbol(ts_auto,&ts);
@@ -1939,7 +1938,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
         if (label->angle != 0)
           label->angle -= map->gt.rotation_angle; /* apply rotation angle */
 
-        for(i=0; i<lar.num_label_points; i++) {
+        for(int i=0; i<lar.num_label_points; i++) {
           textSymbolObj *ts_auto = msSmallMalloc(sizeof(textSymbolObj));
           initTextSymbol(ts_auto);
           msCopyTextSymbol(ts_auto,&ts);
@@ -3622,17 +3621,13 @@ void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
  */
 int msShapeToRange(styleObj *style, shapeObj *shape)
 {
-  double fieldVal;
-  char* fieldStr;
-
   /*first, get the value of the rangeitem, which should*/
   /*evaluate to a double*/
-  fieldStr = shape->values[style->rangeitemindex];
+  const char* fieldStr = shape->values[style->rangeitemindex];
   if (fieldStr == NULL) { /*if there's not value, bail*/
     return MS_FAILURE;
   }
-  fieldVal = 0.0;
-  fieldVal = atof(fieldStr); /*faith that it's ok -- */
+  double fieldVal = atof(fieldStr); /*faith that it's ok -- */
   /*should switch to strtod*/
   return msValueToRange(style, fieldVal, MS_COLORSPACE_RGB);
 }

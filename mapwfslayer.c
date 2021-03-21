@@ -68,7 +68,6 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   wfsParamsObj *psParams = NULL;
   rectObj bbox;
   const char *pszTmp;
-  int nLength, i = 0;
   char *pszVersion, *pszTypeName;
 
   if (!map || !lp || !bbox_ret)
@@ -129,9 +128,10 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (pszTmp) {
       pszTypeName = strchr(pszTmp, '=')+1;
       if (pszTypeName) {
-        nLength = strlen(pszTypeName);
+        const int nLength = strlen(pszTypeName);
         if (nLength > 0) {
-          for (i=0; i<nLength; i++) {
+          int i=0;
+          for (; i<nLength; i++) {
             if (pszTypeName[i] == '&')
               break;
           }

@@ -627,7 +627,7 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
   /*      Export as a WKT string.                                         */
   /* -------------------------------------------------------------------- */
   if( eErr == OGRERR_NONE )
-    eErr = OSRExportToWkt( hSRS, &pszWKT );
+    OSRExportToWkt( hSRS, &pszWKT );
 
   OSRDestroySpatialReference( hSRS );
 

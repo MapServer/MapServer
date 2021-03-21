@@ -349,18 +349,14 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     rv = layer->vtable->LayerNextShape(layer, shape);
     if(rv != MS_SUCCESS) return rv;
 
-    filter_passed = MS_TRUE;  /* By default accept ANY shape */
-    
     /* attributes need to be iconv'd to UTF-8 before any filter logic is applied */
     if(layer->encoding) {
       rv = msLayerEncodeShapeAttributes(layer,shape);
       if(rv != MS_SUCCESS)
         return rv;
     }
-    
-    // if(layer->numitems > 0 && layer->iteminfo) {
-      filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
-    // }
+
+    filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
 
     if(!filter_passed) msFreeShape(shape);
   } while(!filter_passed);
@@ -1010,12 +1006,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
     char **tokens;
     int n = 0;
     int j;
-    int bFound = 0;
 
     tokens = msStringSplit(metadata, ',', &n);
     if(tokens) {
       for(i=0; i<n; i++) {
-        bFound = 0;
+        int bFound = 0;
         for(j=0; j<layer->numitems; j++) {
           if(strcasecmp(tokens[i], layer->items[j]) == 0) {
             bFound = 1;

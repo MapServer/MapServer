@@ -258,13 +258,13 @@ int WARN_UNUSED check_single_font(fontSetObj *fontset, char *fontkey, text_run *
 
 int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *run, TextInfo *glyphs) {
   char *startfont, *endfont;
-  int ok;
 #if defined(USE_HARFBUZZ) && defined(USE_FRIBIDI)
   const char *prefix = NULL;
 #endif
 
   if(!fontset || !fontlist) {
-    ok = check_single_font(fontset,fontlist,run,glyphs,0);
+    int ok = check_single_font(fontset,fontlist,run,glyphs,0);
+    (void)ok;
     return MS_SUCCESS;
   }
 
@@ -287,7 +287,7 @@ int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *
       if(!strncmp(startfont,prefix,prefixlen)) {
         startfont += strlen(prefix);
         if(endfont) *endfont = 0;
-        ok = check_single_font(fontset,startfont,run,glyphs,0);
+        int ok = check_single_font(fontset,startfont,run,glyphs,0);
         if(endfont) {
           *endfont = ',';
           if(ok == MS_SUCCESS) return MS_SUCCESS;
@@ -310,7 +310,7 @@ int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *
     if(!*startfont) break;
     endfont = strchr(startfont,',');
     if(endfont) *endfont = 0;
-    ok = check_single_font(fontset,startfont,run,glyphs,!endfont); /* ignore failing glyphs if we're using the last font in the list */
+    int ok = check_single_font(fontset,startfont,run,glyphs,!endfont); /* ignore failing glyphs if we're using the last font in the list */
     if(endfont) {
       *endfont = ',';
       if(ok == MS_SUCCESS) return MS_SUCCESS;

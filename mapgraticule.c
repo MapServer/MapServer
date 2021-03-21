@@ -556,25 +556,24 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shap
 /************************************************************************/
 void msGraticuleLayerFreeIntersectionPoints( graticuleIntersectionObj *psValue)
 {
-  int i=0;
   if (psValue) {
-    for (i=0; i<psValue->nTop; i++)
+    for (int i=0; i<psValue->nTop; i++)
       msFree(psValue->papszTopLabels[i]);
     msFree(psValue->papszTopLabels);
     msFree(psValue->pasTop);
 
-    for (i=0; i<psValue->nBottom; i++)
+    for (int i=0; i<psValue->nBottom; i++)
       msFree(psValue->papszBottomLabels[i]);
     msFree(psValue->papszBottomLabels);
     msFree(psValue->pasBottom);
 
 
-    for (i=0; i<psValue->nLeft; i++)
+    for (int i=0; i<psValue->nLeft; i++)
       msFree(psValue->papszLeftLabels[i]);
     msFree(psValue->papszLeftLabels);
     msFree(psValue->pasLeft);
 
-    for (i=0; i<psValue->nRight; i++)
+    for (int i=0; i<psValue->nRight; i++)
       msFree(psValue->papszRightLabels[i]);
     msFree(psValue->papszRightLabels);
     msFree(psValue->pasRight);

@@ -131,13 +131,12 @@ mapserver_decode_args (apr_pool_t *p, char *args,
 static char*
 mapserver_read_post_data (request_rec *r)
 {
-  int   status;
   int   size;
   long  blen, rsize, rpos = 0;
   char *buffer = NULL;
   char  buf [512];
 
-  if ((status = ap_setup_client_block (r, REQUEST_CHUNKED_ERROR)) != OK)
+  if (ap_setup_client_block (r, REQUEST_CHUNKED_ERROR) != OK)
     return NULL;
 
   if (!ap_should_client_block (r))

@@ -1056,6 +1056,16 @@ int intersectLabelPolygons(lineObj *l1, rectObj *r1, lineObj *l2, rectObj *r2)
   } else {
     p2 = l2;
   }
+  (void)pnts1[0].x; (void)pnts1[0].y;
+  (void)pnts1[1].x; (void)pnts1[1].y;
+  (void)pnts1[2].x; (void)pnts1[2].y;
+  (void)pnts1[3].x; (void)pnts1[3].y;
+  (void)pnts1[4].x; (void)pnts1[4].y;
+  (void)pnts2[0].x; (void)pnts2[0].y;
+  (void)pnts2[1].x; (void)pnts2[1].y;
+  (void)pnts2[2].x; (void)pnts2[2].y;
+  (void)pnts2[3].x; (void)pnts2[3].y;
+  (void)pnts2[4].x; (void)pnts2[4].y;
 
   /* STEP 1: look for intersecting line segments */
   for(v1=1; v1<p1->numpoints; v1++)
@@ -1080,8 +1090,6 @@ int intersectLabelPolygons(lineObj *l1, rectObj *r1, lineObj *l2, rectObj *r2)
 /* For MapScript, exactly the same the msInsertStyle */
 int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
 {
-  int i;
-
   if (!style) {
     msSetError(MS_CHILDERR, "Can't insert a NULL Style", "msInsertLabelStyle()");
     return -1;
@@ -1103,7 +1111,7 @@ int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
   } else {
     /* Move styles existing at the specified nStyleIndex or greater */
     /* to a higher nStyleIndex */
-    for (i=label->numstyles-1; i>=nStyleIndex; i--) {
+    for (int i=label->numstyles-1; i>=nStyleIndex; i--) {
       label->styles[i+1] = label->styles[i];
     }
     label->styles[nStyleIndex]=style;
@@ -1118,9 +1126,8 @@ int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
  */
 int msMoveLabelStyleUp(labelObj *label, int nStyleIndex)
 {
-  styleObj *psTmpStyle = NULL;
   if (label && nStyleIndex < label->numstyles && nStyleIndex >0) {
-    psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
+    styleObj* psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
     initStyle(psTmpStyle);
 
     msCopyStyle(psTmpStyle, label->styles[nStyleIndex]);
@@ -1169,11 +1176,10 @@ int msMoveLabelStyleDown(labelObj *label, int nStyleIndex)
  */
 int msDeleteLabelStyle(labelObj *label, int nStyleIndex)
 {
-  int i = 0;
   if (label && nStyleIndex < label->numstyles && nStyleIndex >=0) {
     if (freeStyle(label->styles[nStyleIndex]) == MS_SUCCESS)
       msFree(label->styles[nStyleIndex]);
-    for (i=nStyleIndex; i< label->numstyles-1; i++) {
+    for (int i=nStyleIndex; i< label->numstyles-1; i++) {
       label->styles[i] = label->styles[i+1];
     }
     label->styles[label->numstyles-1] = NULL;

@@ -1262,22 +1262,20 @@ double msGetPolygonArea(shapeObj *p)
 */
 static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
 {
-  int i, j;
-  double area=0;
-  double sx=0, sy=0, tsx, tsy, s; /* sums */
-  double a;
-
+  double sx=0, sy=0; /* sums */
   double largestArea=0;
 
-  for(i=0; i<p->numlines; i++) {
-    tsx = tsy = s = 0; /* reset the ring sums */
-    for(j=0; j<p->line[i].numpoints-1; j++) {
-      a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
+  for(int i=0; i<p->numlines; i++) {
+    double tsx = 0;
+    double tsy = 0;
+    double s = 0; /* reset the ring sums */
+    for(int j=0; j<p->line[i].numpoints-1; j++) {
+      double a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
       s += a;
       tsx += (p->line[i].point[j].x + p->line[i].point[j+1].x)*a;
       tsy += (p->line[i].point[j].y + p->line[i].point[j+1].y)*a;
     }
-    area = MS_ABS(s/2);
+    double area = MS_ABS(s/2);
 
     if(area > largestArea) {
       largestArea = area;

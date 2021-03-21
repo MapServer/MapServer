@@ -287,7 +287,6 @@ char *strcasestr(const char *s, const char *find)
 int strncasecmp(const char *s1, const char *s2, size_t len)
 {
   const char *cp1, *cp2;
-  int cmp = 0;
 
   cp1 = s1;
   cp2 = s2;
@@ -301,6 +300,7 @@ int strncasecmp(const char *s1, const char *s2, size_t len)
     return 1;
 
   while(*cp1 && *cp2 && len) {
+    int cmp;
     if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
       return(cmp);
     cp1++;
@@ -325,7 +325,6 @@ int strncasecmp(const char *s1, const char *s2, size_t len)
 int strcasecmp(const char *s1, const char *s2)
 {
   const char *cp1, *cp2;
-  int cmp = 0;
 
   cp1 = s1;
   cp2 = s2;
@@ -333,6 +332,7 @@ int strcasecmp(const char *s1, const char *s2)
     return (0);
   }
   while(*cp1 && *cp2) {
+    int cmp;
     if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
       return(cmp);
     cp1++;
@@ -1723,8 +1723,6 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
       return NULL;
     }
 
-    new_len = len;
-
     /* Convert it to utf-8 for display. */
 #ifdef FRIBIDI_NO_CHARSETS
     {
@@ -1841,7 +1839,6 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
   size_t nStr;
   size_t nInSize;
   size_t nOutSize;
-  size_t iconv_status = -1;
   size_t nBufferSize;
 
   char* pszUTF8 = NULL;
@@ -1865,7 +1862,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
       nInSize = sizeof (wchar_t)*nStr;
       pszUTF8 = output;
       pwszWide = string;
-      iconv_status = msIconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+      size_t iconv_status = msIconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
           case E2BIG:
@@ -1920,7 +1917,6 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
   size_t nStr;
   size_t nInSize;
   size_t nOutSize;
-  size_t iconv_status = -1;
   size_t nBufferSize;
 
   const char* pszUTF8 = NULL;
@@ -1944,7 +1940,7 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
       nInSize = sizeof (char)*nStr;
       pszUTF8 = string;
       pwszWide = output;
-      iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
+      size_t iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
           case E2BIG:

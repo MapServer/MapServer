@@ -879,8 +879,6 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString)
 /************************************************************************/
 int FLTValidFilterNode(FilterEncodingNode *psFilterNode)
 {
-  int  bReturn = 0;
-
   if (!psFilterNode)
     return 0;
 
@@ -888,7 +886,7 @@ int FLTValidFilterNode(FilterEncodingNode *psFilterNode)
     return 0;
 
   if (psFilterNode->psLeftNode) {
-    bReturn = FLTValidFilterNode(psFilterNode->psLeftNode);
+    const int bReturn = FLTValidFilterNode(psFilterNode->psLeftNode);
     if (bReturn == 0)
       return 0;
     else if (psFilterNode->psRightNode)
@@ -1092,7 +1090,6 @@ static CPLXMLNode* FLTGetNextSibblingNode(CPLXMLNode* psXMLNode)
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode)
 {
-  int nStrLength = 0;
   char *pszTmp = NULL;
   FilterEncodingNode *psCurFilNode= NULL;
   CPLXMLNode *psCurXMLNode = NULL;
@@ -1505,7 +1502,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BOUNDARY;
 
           /* adding a ; between bounary values */
-          nStrLength = strlen(pszLowerNode) + strlen(pszUpperNode) + 2;
+          const int nStrLength = strlen(pszLowerNode) + strlen(pszUpperNode) + 2;
 
           psFilterNode->psRightNode->pszValue =
               (char *)malloc(sizeof(char)*(nStrLength));
@@ -1614,13 +1611,6 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /* -------------------------------------------------------------------- */
     else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue)) {
       psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-      pszFeatureId = CPLGetXMLValue(psXMLNode, "fid", NULL);
-      /*for FE 1.1.0 GmlObjectId */
-      if (pszFeatureId == NULL)
-        pszFeatureId = CPLGetXMLValue(psXMLNode, "id", NULL);
-      /*for FE 2.0 ResourceId */
-      if (pszFeatureId == NULL)
-        pszFeatureId = CPLGetXMLValue(psXMLNode, "rid", NULL);
       pszFeatureIdList = NULL;
 
       psFeatureIdNode = psXMLNode;
@@ -2273,7 +2263,6 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 {
   char *pszBuffer = NULL;
   char *pszTmp = NULL;
-  int nTmp = 0;
 
   if (lp == NULL)
     return NULL;
@@ -2335,7 +2324,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 
     free( pszTmp );
 
-    nTmp = strlen(pszBuffer);
+    const size_t nTmp = strlen(pszBuffer);
     pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, lp);
     if (!pszTmp) {
       free(pszBuffer);
@@ -3467,10 +3456,10 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Spatial_Capabilities", NULL);
 
   psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "GeometryOperands", NULL);
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Point");
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:LineString");
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Polygon");
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Envelope");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Point");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:LineString");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Polygon");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Envelope");
 
   psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "SpatialOperators", NULL);
 #ifdef USE_GEOS
@@ -3501,8 +3490,8 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   if (bTemporal) {
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Temporal_Capabilities", NULL);
     psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperands", NULL);
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimePeriod");
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimeInstant");
+    xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimePeriod");
+    xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimeInstant");
 
     psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperators", NULL);
     psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperator", NULL);
@@ -3511,14 +3500,14 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Scalar_Capabilities", NULL);
   xmlNewChild(psNode, psNsOgc, BAD_CAST "LogicalOperators", NULL);
   psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperators", NULL);
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThan");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThan");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThanEqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThanEqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "EqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "NotEqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Like");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Between");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThan");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThan");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThanEqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThanEqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "EqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "NotEqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Like");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Between");
 
   psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Id_Capabilities", NULL);
   xmlNewChild(psNode, psNsOgc, BAD_CAST "EID", NULL);

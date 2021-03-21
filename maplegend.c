@@ -461,7 +461,6 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 {
   imageObj *image;
   outputFormatObj *format = NULL;
-  int i = 0;
 
   rendererVTableObj *renderer = MS_MAP_RENDERER(map);
 
@@ -496,7 +495,7 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
         return NULL;
       }
     } else {
-      for (i=0; i<lp->numclasses; i++) {
+      for (int i=0; i<lp->numclasses; i++) {
         if(MS_UNLIKELY(MS_FAILURE == msDrawLegendIcon(map, lp, lp->class[i], width, height, image, 0, 0, scale_independant, NULL))) {
           msFreeImage(image);
           return NULL;

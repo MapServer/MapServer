@@ -1108,7 +1108,6 @@ PHP_METHOD(layerObj, getResult)
 {
   zval *zobj = getThis();
   long index;
-  resultObj *result = NULL;
   php_layer_object *php_layer;
   parent_object parent;
 
@@ -1122,7 +1121,7 @@ PHP_METHOD(layerObj, getResult)
 
   php_layer = MAPSCRIPT_OBJ_P(php_layer_object, zobj);
 
-  if ((result = layerObj_getResult(php_layer->layer, index)) == NULL) {
+  if (layerObj_getResult(php_layer->layer, index) == NULL) {
     mapscript_throw_exception("Invalid result index." TSRMLS_CC);
     return;
   }

@@ -394,18 +394,10 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 {
   imageObj *img;
   int width=400, height=300;
-  int nMargin =5;
-  int nTextLength = 0;
-  int nUsableWidth = 0;
-  int nMaxCharsPerLine = 0;
-  int nLines = 0;
-  int i = 0;
-  int nStart = 0;
-  int nEnd = 0;
-  int nLength = 0;
+  const int nMargin =5;
+
   char **papszLines = NULL;
   pointObj pnt = { 0 };
-  int nWidthTxt = 0;
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");
   errorObj *error = msGetErrorObj();
@@ -443,29 +435,30 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 
   img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,imagecolorptr);
 
-  nTextLength = strlen(errormsg);
-  nWidthTxt  =  nTextLength * charWidth;
-  nUsableWidth = width - (nMargin*2);
+  const int nTextLength = strlen(errormsg);
+  const int nWidthTxt  =  nTextLength * charWidth;
+  const int nUsableWidth = width - (nMargin*2);
 
   /* Check to see if it all fits on one line. If not, split the text on several lines. */
   if(!blank) {
+    int nLines;
     if (nWidthTxt > nUsableWidth) {
-      nMaxCharsPerLine =  nUsableWidth/charWidth;
+      const int nMaxCharsPerLine =  nUsableWidth/charWidth;
       nLines = (int) ceil ((double)nTextLength / (double)nMaxCharsPerLine);
       if (nLines > 0) {
         papszLines = (char **)malloc(nLines*sizeof(char *));
-        for (i=0; i<nLines; i++) {
+        for (int i=0; i<nLines; i++) {
           papszLines[i] = (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
           papszLines[i][0] = '\0';
         }
       }
-      for (i=0; i<nLines; i++) {
-        nStart = i*nMaxCharsPerLine;
-        nEnd = nStart + nMaxCharsPerLine;
+      for (int i=0; i<nLines; i++) {
+        const int nStart = i*nMaxCharsPerLine;
+        int nEnd = nStart + nMaxCharsPerLine;
         if (nStart < nTextLength) {
           if (nEnd > nTextLength)
             nEnd = nTextLength;
-          nLength = nEnd-nStart;
+          const int nLength = nEnd-nStart;
 
           strncpy(papszLines[i], errormsg+nStart, nLength);
           papszLines[i][nLength] = '\0';
@@ -483,7 +476,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 
     label.size = MS_SMALL;
     MS_REFCNT_INCR((&label));
-    for (i=0; i<nLines; i++) {
+    for (int i=0; i<nLines; i++) {
       pnt.y = charHeight * ((i*2) +1);
       pnt.x = charWidth;
       initTextSymbol(&ts);
