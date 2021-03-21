@@ -77,7 +77,6 @@ void msFreeHashTable( hashTableObj *table )
   if( table != NULL ) {
     msFreeHashItems(table);
     free(table);
-    table = NULL;
   }
 }
 
