@@ -779,7 +779,6 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 {
   VSILFILE *stream;
   const char* line;
-  char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
   char *path;
   char szPath[MS_MAXPATHLEN];
   int i;
@@ -814,10 +813,28 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     if(line[0] == '#' || line[0] == '\n' || line[0] == '\r' || line[0] == ' ')
       continue; /* skip comments and blank lines */
 
-    sscanf(line,"%s %s", alias,  file1);
+    char alias[64];
+    snprintf(alias, sizeof(alias), "%s", line);
+    char* ptr = strchr(alias, ' ');
+    if( !ptr )
+        continue;
+    *ptr = '\0';
 
-    if (!(*file1) || !(*alias) || (strlen(file1) <= 0))
+    const char* file1StartPtr = line + (ptr - alias);
+    file1StartPtr ++;
+    /* Skip leading spaces */
+    while( *file1StartPtr == ' ' )
+        file1StartPtr ++;
+
+    if (!(*file1StartPtr) || !(*alias))
       continue;
+
+    char file1[MS_PATH_LENGTH];
+    snprintf(file1, sizeof(file1), "%s", file1StartPtr);
+    /* Remove trailing spaces */
+    ptr = strrchr(file1, ' ');
+    if( ptr )
+        *ptr = '\0';
 
     bFullPath = 0;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -831,6 +848,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     if(bFullPath) { /* already full path */
       msInsertHashTable(&(fontset->fonts), alias, file1);
     } else {
+      char file2[MS_PATH_LENGTH];
       snprintf(file2, sizeof(file2), "%s%s", path, file1);
       /* msInsertHashTable(fontset->fonts, alias, file2); */
 
