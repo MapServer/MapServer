@@ -1262,13 +1262,6 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
           }
 
           mapserv->map->query.type = MS_QUERY_BY_POINT;
-          mapserv->map->query.mode = MS_QUERY_SINGLE;
-
-          mapserv->map->query.point = mapserv->mappnt;
-          mapserv->map->query.buffer = mapserv->Buffer;
-
-          mapserv->map->query.layer = mapserv->QueryLayerIndex;
-          mapserv->map->query.slayer = mapserv->SelectLayerIndex; /* this will trigger the feature query eventually */
         } else { /* FEATURENQUERY */
           switch(mapserv->QueryCoordSource) {
             case FROMIMGPNT:
