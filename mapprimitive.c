@@ -343,6 +343,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
 
   memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
 
+  // cppcheck-suppress memleak
   return msAddLineDirectly( p, &lineCopy );
 }
 
@@ -356,11 +357,20 @@ int msAddLineDirectly(shapeObj *p, lineObj *new_line)
 
   if( p->numlines == 0 ) {
     p->line = (lineObj *) malloc(sizeof(lineObj));
-    MS_CHECK_ALLOC(p->line, sizeof(lineObj), MS_FAILURE);
   } else {
-    p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
-    MS_CHECK_ALLOC(p->line, (p->numlines+1)*sizeof(lineObj), MS_FAILURE);
+    lineObj* newline = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
+    if( !newline ) {
+        free(p->line);
+    }
+    p->line = newline;
   }
+  if( !p->line )
+  {
+    free(new_line->point );
+    new_line->point = NULL;
+    new_line->numpoints = 0;
+  }
+  MS_CHECK_ALLOC(p->line, (p->numlines+1)*sizeof(lineObj), MS_FAILURE);
 
   /* Copy the new line onto the end of the extended line array */
   c= p->numlines;

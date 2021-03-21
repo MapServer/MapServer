@@ -994,12 +994,17 @@ imageObj *msDrawReferenceMap(mapObj *map)
 
   if(MS_SUCCESS != renderer->loadImageFromFile(msBuildPath(szPath, map->mappath, map->reference.image),refImage)) {
     msSetError(MS_MISCERR,"error loading reference image %s","msDrawREferenceMap()",szPath);
+    free(refImage);
     return NULL;
   }
 
   image = msImageCreate(refImage->width, refImage->height, map->outputformat,
                         map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &(map->reference.color));
-  if(!image) return NULL;
+  if(!image)
+  {
+      free(refImage);
+      return NULL;
+  }
 
   status = renderer->mergeRasterBuffer(image,refImage,1.0,0,0,0,0,refImage->width, refImage->height);
   msFreeRasterBuffer(refImage);
