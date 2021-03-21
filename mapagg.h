@@ -37,7 +37,7 @@
 class line_adaptor
 {
 public:
-  line_adaptor(shapeObj *shape):s(shape) {
+  explicit line_adaptor(shapeObj *shape):s(shape) {
     m_line=s->line; /*first line*/
     m_point=m_line->point; /*current vertex is first vertex of first line*/
     m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
@@ -88,7 +88,7 @@ protected:
 class polygon_adaptor
 {
 public:
-  polygon_adaptor(shapeObj *shape):s(shape) {
+  explicit polygon_adaptor(shapeObj *shape):s(shape) {
     m_line=s->line; /*first lines*/
     m_point=m_line->point; /*first vertex of first line*/
     m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
