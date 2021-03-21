@@ -715,7 +715,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
 
 
-    if(shapegrid.numlines >= 1 && shapegrid.line[0].numpoints >=2) { /* && shapegrid.text) */
+    {
       int iTmpLine = 0;
       int nNumPoints = 0;
       /*grid code seems to retunr lines that can double cross the extenst??*/

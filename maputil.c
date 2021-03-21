@@ -1877,7 +1877,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
   for (i = 0; i < p->numlines; i++) {
-    pointObj old_pt = {0}, old_diffdir, old_offdir;
+    pointObj old_diffdir, old_offdir;
     if(p->line[i].numpoints<2) {
       ret->line[i].numpoints = 0;
       continue; /* skip degenerate points */
@@ -1891,8 +1891,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     first = 1;
 
     /* saved metrics of the last processed point */
-    if (p->line[i].numpoints>0)
-      old_pt=p->line[i].point[0];
+    pointObj old_pt=p->line[i].point[0];
     for(j=1; j<p->line[i].numpoints; j++) {
       const pointObj pt = p->line[i].point[j]; /* place of the point */
       const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */

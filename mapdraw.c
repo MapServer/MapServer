@@ -1910,22 +1910,14 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           initTextSymbol(ts_auto);
           msCopyTextSymbol(ts_auto,&ts);
           ts_auto->rotation = lfr.lar.angles[i];
-          if (layer->labelcache) {
+          {
             if (msAddLabel(map, image, label, layer->index, c, anno_shape, &lfr.lar.label_points[i], -1, ts_auto) != MS_SUCCESS) {
               ret = MS_FAILURE;
               free(lfr.lar.angles);
               free(lfr.lar.label_points);
               goto line_cleanup;
             }
-          } else {
-            ret = msDrawTextSymbol(map,image,lfr.lar.label_points[i],ts_auto);
-            freeTextSymbol(ts_auto);
-            free(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
-                            * we cannot for now, as the rendering code will modify the glyph positions to apply
-                            * the labelpoint and rotation offsets */
-            if(MS_UNLIKELY(MS_FAILURE == ret)) goto line_cleanup;
           }
-          
         }
         free(lfr.lar.angles);
         free(lfr.lar.label_points);
@@ -2900,7 +2892,7 @@ int computeMarkerBounds(mapObj *map, pointObj *annopoint, textSymbolObj *ts, lab
             point[p].y += aoy;
           }
         }
-        if(style->angle) {
+        {
           double rot = -style->angle * MS_DEG_TO_RAD;
           double sina = sin(rot);
           double cosa = cos(rot);

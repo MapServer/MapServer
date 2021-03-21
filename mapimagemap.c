@@ -611,7 +611,7 @@ int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, la
 
   if (dxf == 2) {
     im_iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
-  } else if (dxf) {
+  } else {
     im_iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
   }
   return(0);

@@ -410,9 +410,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   rv = layer->vtable->LayerGetShape(layer, shape, record);
   if(rv != MS_SUCCESS)
     return rv;
-  
+
   /* RFC89 Apply Layer GeomTransform */
-  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE && rv == MS_SUCCESS) {
+  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
     rv = msGeomTransformShape(layer->map, layer, shape); 
     if(rv != MS_SUCCESS)
       return rv;
@@ -1078,7 +1078,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
             }
         }
 
-        if(layer->items) {
+        if(layer->numitems > 0) {
             msFreeCharArray(layer->items, layer->numitems);
         }
         msFreeCharArray(unsorted_items, numitems);
