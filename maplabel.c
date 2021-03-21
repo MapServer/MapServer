@@ -597,7 +597,7 @@ static inline int testSegmentLabelBBoxIntersection(const rectObj *leaderbbox, co
         }
       }
     } else {
-      pointObj tp1,tp2;
+      pointObj tp1 = {0},tp2 = {0};
       tp1.x = test->bbox.minx;
       tp1.y = test->bbox.miny;
       tp2.x = test->bbox.minx;
