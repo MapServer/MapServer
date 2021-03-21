@@ -2869,8 +2869,8 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         }
       }
     } else if ((psCategorize = CPLGetXMLNode(psColorMap, "Categorize"))) {
-      char** papszValues = (char **)malloc(sizeof(char*)*nMaxValues);
-      char** papszThresholds = (char **)malloc(sizeof(char*)*nMaxThreshold);
+      char** papszValues = (char **)msSmallMalloc(sizeof(char*)*nMaxValues);
+      char** papszThresholds = (char **)msSmallMalloc(sizeof(char*)*nMaxThreshold);
       psNode =  CPLGetXMLNode(psCategorize, "Value");
       while (psNode && psNode->pszValue &&
              psNode->psChild && psNode->psChild->pszValue)
@@ -2881,14 +2881,14 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
           nValues++;
           if (nValues == nMaxValues) {
             nMaxValues +=100;
-            papszValues = (char **)realloc(papszValues, sizeof(char*)*nMaxValues);
+            papszValues = (char **)msSmallRealloc(papszValues, sizeof(char*)*nMaxValues);
           }
         } else if (strcasecmp(psNode->pszValue, "Threshold") == 0) {
           papszThresholds[nThresholds] =  psNode->psChild->pszValue;
           nThresholds++;
           if (nValues == nMaxThreshold) {
             nMaxThreshold += 100;
-            papszThresholds = (char **)realloc(papszThresholds, sizeof(char*)*nMaxThreshold);
+            papszThresholds = (char **)msSmallRealloc(papszThresholds, sizeof(char*)*nMaxThreshold);
           }
         }
         psNode = psNode->psNext;
@@ -2960,8 +2960,8 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
           }
         }
       }
-      free(papszValues);
-      free(papszThresholds);
+      msFree(papszValues);
+      msFree(papszThresholds);
 
 
     } else {

@@ -2649,7 +2649,7 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
 
     if( strlen(urn) > 0 ) {
       bufferSize = strlen(result)+strlen(urn)+2;
-      result = (char *) realloc(result, bufferSize);
+      result = (char *) msSmallRealloc(result, bufferSize);
 
       if( strlen(result) > 0 )
         strlcat( result, " ", bufferSize);
@@ -2707,7 +2707,7 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
       strlcpy( urn, "", sizeof(urn) );
 
     if( strlen(urn) > 0 ) {
-      result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
+      result = (char *) msSmallRealloc(result,strlen(result)+strlen(urn)+2);
 
       if( strlen(result) > 0 )
         strcat( result, " " );

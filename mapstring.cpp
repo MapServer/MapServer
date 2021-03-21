@@ -1289,6 +1289,7 @@ char *msEncodeHTMLEntities(const char *string)
       /* If we had to realloc then this string must contain several */
       /* entities... so let's go with twice the previous buffer size */
       buflen *= 2;
+      /* cppcheck-suppress memleakOnRealloc */
       newstring = (char*)realloc(newstring, buflen+1);
       MS_CHECK_ALLOC(newstring, buflen+1, NULL);
     }
