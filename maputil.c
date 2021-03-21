@@ -1737,8 +1737,10 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     return NULL;
   }
 
-  if(!image)
+  if(!image) {
     msSetError(MS_IMGERR, "Unable to initialize image.", "msImageCreate()");
+    return NULL;
+  }
   image->refpt.x = image->refpt.y = 0;
   return image;
 }

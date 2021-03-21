@@ -457,6 +457,9 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
       if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
         return MS_FAILURE;
     }
+    if(!ts->textpath) {
+      return MS_FAILURE;
+    }
     if(featuresize > (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
       /* feature is too big to be drawn, skip it */
       freeTextSymbol(ts);

@@ -138,10 +138,10 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         int src_rb_off;
         rgbaArrayObj *src,*dst;
+        assert( src_rb && dst_rb );
         assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
         src = &src_rb->data.rgba;
         dst = &dst_rb->data.rgba;
-        assert( src_rb && dst_rb );
         src_rb_off = nSrcX * src->pixel_step
                       + nSrcY * src->row_step;
 

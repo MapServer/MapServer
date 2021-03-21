@@ -238,13 +238,13 @@ static void msUVRasterLayerInfoFree( layerObj *layer )
 
 int msUVRASTERLayerOpen(layerObj *layer)
 {
-  uvRasterLayerInfo *uvlinfo;
-
   /* If we don't have info, initialize an empty one now */
   if( layer->layerinfo == NULL )
     msUVRasterLayerInfoInitialize( layer );
+  if( layer->layerinfo == NULL )
+    return MS_FAILURE;
 
-  uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
+  uvRasterLayerInfo* uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
 
   uvlinfo->refcount = uvlinfo->refcount + 1;
 

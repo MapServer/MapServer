@@ -662,6 +662,8 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerInd
     if (rv != MS_SUCCESS)
       return rv;
   }
+  if( !layer->vtable )
+      return MS_FAILURE;
   return layer->vtable->LayerApplyFilterToLayer(psNode, map,  iLayerIndex);
 }
 

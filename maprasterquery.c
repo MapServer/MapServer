@@ -947,9 +947,7 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 
   status = msRasterQueryByRect( map, layer, searchrect );
 
-  rlinfo = (rasterLayerInfo *) layer->layerinfo;
-  if( rlinfo )
-    rlinfo->searchshape = NULL;
+  rlinfo->searchshape = NULL;
 
   return status;
 }
@@ -1064,6 +1062,8 @@ int msRASTERLayerOpen(layerObj *layer)
   /* If we don't have info, initialize an empty one now */
   if( layer->layerinfo == NULL )
     msRasterLayerInfoInitialize( layer );
+  if( layer->layerinfo == NULL )
+    return MS_FAILURE;
 
   rlinfo = (rasterLayerInfo *) layer->layerinfo;
 

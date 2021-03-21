@@ -3034,7 +3034,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /*      Save the current drawing order. The drawing order is reset      */
   /*      at the end of the function.                                     */
   /* -------------------------------------------------------------------- */
-  if(mapserv->map && mapserv->map->numlayers > 0) {
+  if(mapserv->map->numlayers > 0) {
     panCurrentDrawingOrder =
       (int *)msSmallMalloc(sizeof(int)*mapserv->map->numlayers);
 

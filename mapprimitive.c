@@ -1945,6 +1945,9 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
       return MS_FAILURE;
     }
   }
+  if(!ts->textpath) {
+    return MS_FAILURE;
+  }
   
   /* skip the label and use the normal algorithm if it has fewer than 2 characters */
   if(ts->textpath->numglyphs < 2)
