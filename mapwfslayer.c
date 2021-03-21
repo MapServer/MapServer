@@ -199,8 +199,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     msProjectRect(&(map->projection), &(lp->projection), &bbox);
   }
 
-  if (bbox_ret != NULL)
-    *bbox_ret = bbox;
+  *bbox_ret = bbox;
 
   return psParams;
 
@@ -302,7 +301,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
   char *pszURL = NULL, *pszOnlineResource=NULL;
   const char *pszTmp;
   char *pszVersion, *pszService, *pszTypename = NULL;
-  int bVersionInConnection = 0, bServiceInConnection = 0;
+  int bVersionInConnection = 0;
   int bTypenameInConnection = 0;
   size_t bufferSize = 0;
 
@@ -403,8 +402,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&VERSION=%s", pszVersion);
 
   /* SERVICE */
-  if (!bServiceInConnection)
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&SERVICE=%s", pszService);
+  snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&SERVICE=%s", pszService);
 
   /* TYPENAME */
   if (!bTypenameInConnection)

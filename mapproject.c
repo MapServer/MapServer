@@ -1620,10 +1620,7 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 
 int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 {
-  int i, be_careful = 1;
-
-  if( be_careful )
-    be_careful = reprojector->out->proj != NULL &&
+  int be_careful = reprojector->out->proj != NULL &&
                  msProjIsGeographicCRS(reprojector->out)
                  && !msProjIsGeographicCRS(reprojector->in);
 
@@ -1632,7 +1629,7 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 
     startPoint = line->point[0];
 
-    for(i=0; i<line->numpoints; i++) {
+    for(int i=0; i<line->numpoints; i++) {
       double  dist;
 
       thisPoint = line->point[i];
@@ -1658,7 +1655,7 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
       }
     }
   } else {
-    for(i=0; i<line->numpoints; i++) {
+    for(int i=0; i<line->numpoints; i++) {
       if( msProjectPointEx(reprojector, &(line->point[i])) == MS_FAILURE )
         return MS_FAILURE;
     }

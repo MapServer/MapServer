@@ -151,7 +151,7 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex)
     MS_REFCNT_INCR(style);
     class->numstyles++;
     return class->numstyles-1;
-  } else if (nStyleIndex >= 0 && nStyleIndex < class->numstyles) {
+  } else {
     /* Move styles existing at the specified nStyleIndex or greater */
     /* to a higher nStyleIndex */
     for (i=class->numstyles-1; i>=nStyleIndex; i--) {
@@ -161,9 +161,6 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex)
     MS_REFCNT_INCR(style);
     class->numstyles++;
     return nStyleIndex;
-  } else {
-    msSetError(MS_CHILDERR, "Invalid nStyleIndex", "insertStyle()");
-    return -1;
   }
 }
 

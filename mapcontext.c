@@ -1148,9 +1148,6 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
   if( psRoot == NULL ) {
     msSetError( MS_MAPCONTEXTERR, "Invalid XML file (%s)",
                 "msLoadMapContext()", filename );
-    if(psRoot != NULL)
-      CPLDestroyXMLNode(psRoot);
-
     return MS_FAILURE;
   }
 

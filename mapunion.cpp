@@ -458,10 +458,7 @@ int msUnionLayerNextShape(layerObj * const layer, shapeObj *shape)
           if(layerinfo->classIndex < 0 || layerinfo->classIndex >= srclayer->numclasses) {
             /*  this shape is not visible, skip it */
             msFreeShape(shape);
-            if (rv == MS_SUCCESS)
-              continue;
-            else
-              break;
+            continue;
           }
           if(srclayer->styleitem && strcasecmp(srclayer->styleitem, "AUTO") != 0) {
             /* Generic feature style handling as per RFC-61 */

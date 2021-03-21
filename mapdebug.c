@@ -101,7 +101,7 @@ debugInfoObj *msGetDebugInfoObj()
   }
 
   /* If the link is not already at the head of the list, promote it */
-  else if( link != NULL && link->next != NULL ) {
+  else {
     debugInfoObj *target = link->next;
 
     link->next = link->next->next;

@@ -468,7 +468,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     hColorMap = GDALGetRasterColorTable( hBand1 );
     if( hColorMap != NULL )
       hColorMap = GDALCloneColorTable( hColorMap );
-    else if( hBand2 == NULL ) {
+    else {
       hColorMap = GDALCreateColorTable( GPI_RGB );
       isDefaultGreyscale = true;
 

@@ -1100,7 +1100,7 @@ int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
     MS_REFCNT_INCR(style);
     label->numstyles++;
     return label->numstyles-1;
-  } else if (nStyleIndex >= 0 && nStyleIndex < label->numstyles) {
+  } else {
     /* Move styles existing at the specified nStyleIndex or greater */
     /* to a higher nStyleIndex */
     for (i=label->numstyles-1; i>=nStyleIndex; i--) {
@@ -1110,9 +1110,6 @@ int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
     MS_REFCNT_INCR(style);
     label->numstyles++;
     return nStyleIndex;
-  } else {
-    msSetError(MS_CHILDERR, "Invalid nStyleIndex", "insertLabelStyle()");
-    return -1;
   }
 }
 

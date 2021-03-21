@@ -149,12 +149,10 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 
 char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter)
 {
-  int bIscharacter, bSqlLayer=MS_FALSE;
+  int bIscharacter;
   char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
   char **paszElements = NULL, **papszRangeElements=NULL;
   int numelements,i,nrangeelements;
-
-  /* TODO: remove the bSqlLayer checks since we want to write MapServer expressions only. */
 
   /* double minval, maxval; */
   if (lp && item && value) {
@@ -170,9 +168,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
         pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
         for (i=0; i<numelements; i++) {
           pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
-          if (bSqlLayer)
-            pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-          else {
+          {
             if (bIscharacter)
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
             pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
@@ -182,9 +178,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
           }
           if (bIscharacter) {
-            if (bSqlLayer)
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, " = '");
-            else
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " = \"");
           } else
             pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
@@ -193,9 +186,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
           pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
 
           if (bIscharacter) {
-            if (bSqlLayer)
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, "'");
-            else
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
           }
           pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
@@ -228,9 +218,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
               minval = atof(papszRangeElements[0]);
               maxval = atof(papszRangeElements[1]);
               */
-              if (bSqlLayer)
-                pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-              else {
+              {
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");
@@ -245,9 +233,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " AND ");
 
-              if (bSqlLayer)
-                pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-              else {
+              {
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");
@@ -263,9 +249,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
               pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
             } else if (nrangeelements == 1) {
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
-              if (bSqlLayer)
-                pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-              else {
+              {
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");

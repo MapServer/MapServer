@@ -142,7 +142,7 @@ errorObj *msGetErrorObj()
   }
 
   /* If the link is not already at the head of the list, promote it */
-  else if( link != NULL && link->next != NULL ) {
+  else {
     te_info_t *target = link->next;
 
     link->next = link->next->next;

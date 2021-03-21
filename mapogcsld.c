@@ -952,6 +952,7 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
   LOOP_ON_CHILD_ELEMENT(psRoot, psRasterSymbolizer, "RasterSymbolizer")
   {
     msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer, pszUserStyleName);
+    /* cppcheck-suppress knownConditionTrueFalse */
     if (nSymbolizer == 0)
     {
       psLayer->type = MS_LAYER_RASTER;
@@ -961,6 +962,7 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer, const char* pszUserSty
   /* Polygon symbolizer */
   LOOP_ON_CHILD_ELEMENT(psRoot, psPolygonSymbolizer, "PolygonSymbolizer")
   {
+    /* cppcheck-suppress knownConditionTrueFalse */
     const int bNewClass = (nSymbolizer == 0);
     msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer,
                                 bNewClass, pszUserStyleName);

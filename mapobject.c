@@ -548,7 +548,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     MS_REFCNT_INCR(layer);
     map->numlayers++;
     return map->numlayers-1;
-  } else if (nIndex >= 0 && nIndex < map->numlayers) {
+  } else  {
     /* Move existing layers at the specified nIndex or greater */
     /* to an index one higher */
     int i;
@@ -576,9 +576,6 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     MS_REFCNT_INCR(layer);
     map->numlayers++;
     return nIndex;
-  } else {
-    msSetError(MS_CHILDERR, "Invalid index", "msInsertLayer()");
-    return -1;
   }
 }
 

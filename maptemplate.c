@@ -3337,7 +3337,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
           if(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group, papszGroups[i]) == 0) {
             /* for all classes in layer */
-            if(legClassHtml) {
+
               for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
                 /* process all class tags */
                 if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
@@ -3362,7 +3362,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
                   legClassHtmlCopy = NULL;
                 }
               }
-            }
+
           }
         }
       }

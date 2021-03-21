@@ -642,12 +642,10 @@ int msGetCharacterSize(mapObj *map, char* font, int size, char *character, rectO
   codepoint = msGetGlyphIndex(face,unicode);
   glyph = msGetGlyphByIndex(face,size,codepoint);
   if(MS_UNLIKELY(!glyph)) return MS_FAILURE;
-  if(glyph) {
-    r->minx = glyph->metrics.minx;
-    r->maxx = glyph->metrics.maxx;
-    r->miny = - glyph->metrics.maxy;
-    r->maxy = - glyph->metrics.miny;
-  }
+  r->minx = glyph->metrics.minx;
+  r->maxx = glyph->metrics.maxx;
+  r->miny = - glyph->metrics.maxy;
+  r->maxy = - glyph->metrics.miny;
   return MS_SUCCESS;
 }
 

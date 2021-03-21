@@ -212,6 +212,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   /*  Establish the byte order on this machine.         */
   /* -------------------------------------------------------------------- */
   i = 1;
+  /* cppcheck-suppress knownConditionTrueFalse */
   if( *((uchar *) &i) == 1 )
     bBigEndian = MS_FALSE;
   else
@@ -460,6 +461,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   /*      Establish the byte order on this system.                        */
   /* -------------------------------------------------------------------- */
   i = 1;
+  /* cppcheck-suppress knownConditionTrueFalse */
   if( *((uchar *) &i) == 1 )
     bBigEndian = MS_FALSE;
   else
