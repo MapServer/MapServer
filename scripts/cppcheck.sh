@@ -39,6 +39,8 @@ ret_code=0
 grep -v "unmatchedSuppression" ${LOG_FILE} \
     | grep -v "/renderers/agg" \
     | grep -v "/build" \
+    | grep -v "yacc.c" \
+    | grep -v "maplexer.c" \
     > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
