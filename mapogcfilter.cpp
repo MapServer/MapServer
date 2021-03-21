@@ -2333,7 +2333,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
       return NULL;
     }
 
-    pszBuffer = (char *)realloc(pszBuffer,
+    pszBuffer = (char *)msSmallRealloc(pszBuffer,
                                 sizeof(char) * (strlen(pszTmp) + nTmp +3));
     strcat(pszBuffer, pszTmp);
     strcat(pszBuffer, ") ");

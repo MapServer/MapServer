@@ -7163,12 +7163,16 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 
     if(numtokens_allocated <= numtokens) {
       numtokens_allocated *= 2; /* double size of the array every time we reach the limit */
-      tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
-      if(tokens == NULL) {
+      char** tokensNew = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
+      if(tokensNew == NULL) {
         msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
         fclose(msyyin);
+        for(int i=0; i<numtokens; i++)
+            msFree(tokens[i]);
+        msFree(tokens);
         return NULL;
       }
+      tokens = tokensNew;
     }
 
     switch(msyylex()) {
