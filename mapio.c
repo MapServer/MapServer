@@ -415,7 +415,6 @@ int msIO_fprintf( FILE *fp, const char *format, ... )
 int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
 
 {
-  va_list args_copy;
   int     return_val;
   msIOContext *context;
   char workBuf[8000];
@@ -432,6 +431,7 @@ int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
 
 #else
 
+  va_list args_copy;
 #ifdef va_copy
   va_copy( args_copy, ap );
 #else
