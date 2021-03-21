@@ -293,17 +293,21 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
   chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
   if(chartRangeProcessingKey==NULL)
     return MS_FALSE;
-  attrib = msSmallMalloc(strlen(chartRangeProcessingKey)+1);
-  switch(sscanf(chartRangeProcessingKey,"%s %lf %lf %lf %lf",attrib,
-                &mindiameter,&maxdiameter,&minvalue,&maxvalue)) {
-    case 1: /*we only have the attribute*/
-    case 5: /*we have the attribute and the four range values*/
-      break;
-    default:
-      free(attrib);
-      msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
-      return MS_FAILURE;
+  attrib = msStrdup(chartRangeProcessingKey);
+  char* space = strchr(attrib, ' ');
+  if( space ) {
+      *space = '\0';
+      switch(sscanf(space+1,"%lf %lf %lf %lf",
+                    &mindiameter,&maxdiameter,&minvalue,&maxvalue)) {
+        case 4: /*we have the attribute and the four range values*/
+          break;
+        default:
+          free(attrib);
+          msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
+          return MS_FAILURE;
+      }
   }
+
   /*create a new class in the layer containing the wanted attribute
    * as the SIZE of its first STYLE*/
   newclass=msGrowLayerClasses(layer);
