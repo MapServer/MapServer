@@ -454,13 +454,14 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   /* Alloc symbol[] array and ensure there is at least 1 symbol:
    * symbol 0 which is the default symbol with all default params.
    */
-  if (msGrowSymbolSet(symbolset) == NULL)
+  symbolObj* symbol = msGrowSymbolSet(symbolset);
+  if (symbol == NULL)
     return; /* alloc failed */
-  symbolset->symbol[0]->type = MS_SYMBOL_ELLIPSE;
-  symbolset->symbol[0]->filled = MS_TRUE;
-  symbolset->symbol[0]->numpoints = 1;
-  symbolset->symbol[0]->points[0].x = 1;
-  symbolset->symbol[0]->points[0].y = 1;
+  symbol->type = MS_SYMBOL_ELLIPSE;
+  symbol->filled = MS_TRUE;
+  symbol->numpoints = 1;
+  symbol->points[0].x = 1;
+  symbol->points[0].y = 1;
 
   /* Just increment numsymbols to reserve symbol 0.
    * initSymbol() has already been called
