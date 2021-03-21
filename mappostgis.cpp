@@ -2420,6 +2420,7 @@ static PGresult* runPQexecParamsWithBindSubstitution(layerObj *layer, const char
 **
 ** Registered vtable->LayerWhichShapes function.
 */
+// cppcheck-suppress passedByValue
 static int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
 #ifdef USE_POSTGIS
@@ -2542,6 +2543,7 @@ static int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape)
 ** msPostGISLayerGetShape()
 **
  */
+// cppcheck-suppress passedByValue
 static int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
 {
 #ifdef USE_POSTGIS

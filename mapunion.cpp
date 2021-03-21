@@ -354,6 +354,7 @@ int msUnionLayerInitItemInfo(layerObj * const layer)
   return MS_SUCCESS;
 }
 
+// cppcheck-suppress passedByValue
 int msUnionLayerWhichShapes(layerObj * const layer, rectObj rect, int isQuery)
 {
   msUnionLayerInfo* layerinfo = (msUnionLayerInfo*)layer->layerinfo;
