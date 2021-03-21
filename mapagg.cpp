@@ -67,6 +67,10 @@
 #include <pixman.h>
 #endif
 
+#include <memory>
+#include <new>
+#include <vector>
+
 typedef mapserver::order_bgra band_order;
 
 #define AGG_LINESPACE 1.33
@@ -106,27 +110,7 @@ public:
 class AGG2Renderer
 {
 public:
-
-  AGG2Renderer()
-  {
-    stroke = NULL;
-    dash = NULL;
-    stroke_dash = NULL;
-  }
-
-  ~AGG2Renderer() {
-    if(stroke) {
-      delete stroke;
-    }
-    if(dash) {
-      delete dash;
-    }
-    if(stroke_dash) {
-      delete stroke_dash;
-    }
-  }
-
-  band_type* buffer;
+  std::vector<band_type> buffer{};
   rendering_buffer m_rendering_buffer;
   pixel_format m_pixel_format;
   compop_pixel_format m_compop_pixel_format;
@@ -140,11 +124,11 @@ public:
     than the perimeter, in number of pixels*/
   mapserver::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
     equal to the perimeter, in number of pixels*/
-  bool use_alpha;
-  mapserver::conv_stroke<line_adaptor> *stroke;
-  mapserver::conv_dash<line_adaptor> *dash;
-  mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > *stroke_dash;
-  double default_gamma;
+  bool use_alpha = false;
+  std::unique_ptr<mapserver::conv_stroke<line_adaptor>> stroke{};
+  std::unique_ptr<mapserver::conv_dash<line_adaptor>> dash{};
+  std::unique_ptr<mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> >> stroke_dash{};
+  double default_gamma = 0.0;
   mapserver::gamma_linear gamma_function;
 };
 
@@ -198,7 +182,7 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
 
   if (style->patternlength <= 0) {
     if(!r->stroke) {
-      r->stroke = new mapserver::conv_stroke<line_adaptor>(lines);
+      r->stroke.reset(new mapserver::conv_stroke<line_adaptor>(lines));
     } else {
       r->stroke->attach(lines);
     }
@@ -212,14 +196,14 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
     r->m_rasterizer_aa.add_path(*r->stroke);
   } else {
     if(!r->dash) {
-      r->dash = new mapserver::conv_dash<line_adaptor>(lines);
+      r->dash.reset(new mapserver::conv_dash<line_adaptor>(lines));
     } else {
       r->dash->remove_all_dashes();
       r->dash->dash_start(0.0);
       r->dash->attach(lines);
     }
     if(!r->stroke_dash) {
-      r->stroke_dash = new mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > (*r->dash);
+      r->stroke_dash.reset(new mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > (*r->dash));
     } else {
       r->stroke_dash->attach(*r->dash);
     }
@@ -752,7 +736,7 @@ int aggGetRasterBufferHandle(imageObj *img, rasterBufferObj * rb)
 {
   AGG2Renderer *r = AGG_RENDERER(img);
   rb->type =MS_BUFFER_BYTE_RGBA;
-  rb->data.rgba.pixels = r->buffer;
+  rb->data.rgba.pixels = r->buffer.data();
   rb->data.rgba.row_step = r->m_rendering_buffer.stride();
   rb->data.rgba.pixel_step = 4;
   rb->width = r->m_rendering_buffer.width();
@@ -772,7 +756,7 @@ int aggGetRasterBufferCopy(imageObj *img, rasterBufferObj *rb)
   AGG2Renderer *r = AGG_RENDERER(img);
   aggInitializeRasterBuffer(rb, img->width, img->height, MS_IMAGEMODE_RGBA);
   int nBytes = r->m_rendering_buffer.stride()*r->m_rendering_buffer.height();
-  memcpy(rb->data.rgba.pixels,r->buffer, nBytes);
+  memcpy(rb->data.rgba.pixels,r->buffer.data(), nBytes);
   return MS_SUCCESS;
 }
 
@@ -814,15 +798,18 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
     return NULL;
   }
 
-  r->buffer = (band_type*)malloc(bufSize);
-  if (r->buffer == NULL) {
+  try
+  {
+      r->buffer.resize(bufSize / sizeof(band_type));
+  }
+  catch( const std::bad_alloc& ) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
                __FILE__, __LINE__, bufSize64);
     free(image);
     delete r;
     return NULL;
   }
-  r->m_rendering_buffer.attach(r->buffer, width, height, width * 4);
+  r->m_rendering_buffer.attach(r->buffer.data(), width, height, width * 4);
   r->m_pixel_format.attach(r->m_rendering_buffer);
   r->m_compop_pixel_format.attach(r->m_rendering_buffer);
   r->m_renderer_base.attach(r->m_pixel_format);
@@ -883,7 +870,6 @@ int agg2CloseNewLayer(imageObj *img, mapObj *map, layerObj *layer)
 int agg2FreeImage(imageObj * image)
 {
   AGG2Renderer *r = AGG_RENDERER(image);
-  free(r->buffer);
   delete r;
   image->img.plugin = NULL;
   return MS_SUCCESS;
@@ -1278,7 +1264,7 @@ int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay, Compositi
   pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,overlay->width,overlay->height,
                        (uint32_t*)overlay->data.rgba.pixels,overlay->data.rgba.row_step);
   pixman_image_t *bi = pixman_image_create_bits(PIXMAN_a8r8g8b8,dest->width,dest->height,
-                       (uint32_t*)r->buffer,dest->width*4);
+                       reinterpret_cast<uint32_t*>(&(r->buffer[0])),dest->width*4);
   pixman_image_t *alpha_mask_i=NULL, *alpha_mask_i_ptr;
   pixman_image_set_filter(si,PIXMAN_FILTER_NEAREST, NULL, 0);
   unsigned char *alpha_mask = NULL;
