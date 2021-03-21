@@ -206,17 +206,13 @@ static int matchdxfcolor(colorObj col)
   if (lastcolor != -1)
     return lastcolor;
   while (tcolor < 256 && (ctable[tcolor].r != col.red || ctable[tcolor].g != col.green || ctable[tcolor].b != col.blue)) {
-    if (abs(
-          (ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+
-          (ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) +
-          (ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green) < delta)
-       ) {
+    const int dr = ctable[tcolor].r - col.red;
+    const int dg = ctable[tcolor].g - col.green;
+    const int db = ctable[tcolor].b - col.blue;
+    const int newdelta = dr * dr + dg * dg + db * db;
+    if (newdelta < delta) {
       best = tcolor;
-      delta = abs(
-                (ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+
-                (ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) +
-                (ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green)
-              );
+      delta = newdelta;
     }
     tcolor++;
   }
