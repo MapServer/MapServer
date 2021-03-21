@@ -341,7 +341,7 @@ int _msValidateTime(const char *timestring,  const char *timeextent)
   if (!timestring || !timeextent)
     return MS_FALSE;
 
-  if (strlen(timestring) <= 0 || strlen(timeextent) <= 0)
+  if (strlen(timestring) == 0 || strlen(timeextent) == 0)
     return MS_FALSE;
 
   /* we first need to parse the timesting that is passed

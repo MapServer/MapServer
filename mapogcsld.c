@@ -296,7 +296,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
                     const char* pszFullName;
                     char szTmp[512];
                     char* pszTmp1;
-                    if (!lp->items[z] || strlen(lp->items[z]) <= 0)
+                    if (!lp->items[z] || strlen(lp->items[z]) == 0)
                       continue;
                     snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[z]);
                     pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
@@ -519,7 +519,7 @@ layerObj  *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers)
   int nLayers = 0;
 
 
-  if (map == NULL || psSLDXML == NULL || strlen(psSLDXML) <= 0 ||
+  if (map == NULL || psSLDXML == NULL || strlen(psSLDXML) == 0 ||
       (strstr(psSLDXML, "StyledLayerDescriptor") == NULL)) {
     msSetError(MS_WMSERR, "Invalid SLD document", "");
     return NULL;
@@ -4928,7 +4928,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
   char *pszFinalAttributeName=NULL, *pszFinalAttributeValue=NULL;
   int bSingleQuote = 0, bDoubleQuote = 0;
 
-  if (!pszExpression || !pszComparionValue || strlen(pszExpression) <=0)
+  if (!pszExpression || !pszComparionValue || strlen(pszExpression) ==0)
     return NULL;
 
   szCompare[0] = '\0';
@@ -5363,7 +5363,7 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
   char *pszFLTExpression = NULL;
   char *pszTmp = NULL;
 
-  if (!pszExpression || strlen(pszExpression) <=0)
+  if (!pszExpression || strlen(pszExpression) ==0)
     return NULL;
 
   psNode = BuildExpressionTree(pszExpression, NULL);

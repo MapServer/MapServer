@@ -785,7 +785,7 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *o
   }
 
   /* if layer= is not specified, */
-  if (paramsObj->pszLayer==NULL || strlen(paramsObj->pszLayer)<=0) {
+  if (paramsObj->pszLayer==NULL || strlen(paramsObj->pszLayer)==0) {
     psRootNode = msMetadataGetExceptionReport(map, "MissingParameterValue", "layer", "Missing layer parameter", &psNsOws);
     status = MS_FAILURE;
   }

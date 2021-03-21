@@ -392,7 +392,7 @@ PHP_METHOD(styleObj, setBinding)
     return;
   }
 
-  if (!value || strlen(value) <= 0) {
+  if (!value || strlen(value) == 0) {
     mapscript_throw_exception("Invalid binding value." TSRMLS_CC);
     return;
   }

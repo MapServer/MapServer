@@ -822,7 +822,7 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString)
   CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
   FilterEncodingNode *psFilterNode = NULL;
 
-  if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
+  if (szXMLString == NULL || strlen(szXMLString) == 0 ||
       (strstr(szXMLString, "Filter") == NULL))
     return NULL;
 
@@ -3320,7 +3320,7 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
           int i;
           gmlItemListObj* items = msGMLGetItems(lp, "G");
           for(i=0; i<items->numitems; i++) {
-            if (!items->items[i].name || strlen(items->items[i].name) <= 0 ||
+            if (!items->items[i].name || strlen(items->items[i].name) == 0 ||
                 !items->items[i].visible)
               continue;
             if (strcasecmp(items->items[i].name, psFilterNode->psLeftNode->pszValue) == 0) {
