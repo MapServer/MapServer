@@ -568,7 +568,7 @@ void msStringTrimBlanks(char *string)
 
 void msStringTrimBlanks(std::string& string)
 {
-  const size_t npos = string.find_last_not_of(string, ' ');
+  const size_t npos = string.find_last_not_of(' ');
   if( npos != std::string::npos )
     string.resize(npos+1);
 }
