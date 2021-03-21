@@ -623,7 +623,7 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
       }
 
       return p.result.intval;
-      break;
+
     }
     case(MS_REGEX):
       if(itemindex == -1) {

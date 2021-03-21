@@ -1129,8 +1129,6 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 
   /* populate the iteminfo array */
   return(msLayerInitItemInfo(layer));
-
-  return(MS_SUCCESS);
 }
 
 /*
