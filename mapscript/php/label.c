@@ -306,7 +306,7 @@ PHP_METHOD(labelObj, setBinding)
 
   php_label = MAPSCRIPT_OBJ_P(php_label_object, zobj);
 
-  if (bindingId < 0 || bindingId > MS_LABEL_BINDING_LENGTH) {
+  if (bindingId < 0 || bindingId >= MS_LABEL_BINDING_LENGTH) {
     mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
     return;
   }
@@ -349,7 +349,7 @@ PHP_METHOD(labelObj, getBinding)
 
   php_label = MAPSCRIPT_OBJ_P(php_label_object, zobj);
 
-  if (bindingId < 0 || bindingId > MS_LABEL_BINDING_LENGTH) {
+  if (bindingId < 0 || bindingId >= MS_LABEL_BINDING_LENGTH) {
     mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
     return;
   }
@@ -381,7 +381,7 @@ PHP_METHOD(labelObj, removeBinding)
 
   php_label = MAPSCRIPT_OBJ_P(php_label_object, zobj);
 
-  if (bindingId < 0 || bindingId > MS_LABEL_BINDING_LENGTH) {
+  if (bindingId < 0 || bindingId >= MS_LABEL_BINDING_LENGTH) {
     mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
     return;
   }
