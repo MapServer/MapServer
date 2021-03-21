@@ -251,6 +251,9 @@ nextshape:
 }
 
 int msCleanupInterpolationDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr) {
+    (void)map;
+    (void)image;
+    (void)layer;
     free(cleanup_ptr);
     return MS_SUCCESS;
 }

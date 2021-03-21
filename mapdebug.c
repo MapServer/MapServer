@@ -374,4 +374,5 @@ void msDebug( const char * pszFormat, ... )
 */
 void msDebug2( int level, ... )
 {
+    (void)level;
 }

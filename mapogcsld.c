@@ -1460,7 +1460,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       {
         // Parse a <ogc:PropertyName> element
         msStringBuffer * property = msStringBufferAlloc();
-        char * strDelim = "";
+        const char * strDelim = "";
 
         switch (lbinding)
         {
@@ -1469,6 +1469,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           case MS_LABEL_BASE + MS_LABEL_BINDING_COLOR:
           case MS_LABEL_BASE + MS_LABEL_BINDING_OUTLINECOLOR:
             strDelim = "\"";
+            /* FALLTHROUGH */
           default:
             msStringBufferAppend(property, strDelim);
             msStringBufferAppend(property, "[");
@@ -1800,9 +1801,10 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 /*      Marker symbol and set the style for that symbol.                */
 /************************************************************************/
 int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
-                                  char *pszDashValue,
+                                  char *pszDashValue_unused,
                                   styleObj *psStyle, mapObj *map)
 {
+  (void)pszDashValue_unused;
   CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize, *psGap, *psInitialGap;
   CPLXMLNode *psWellKnownName, *psStroke, *psFill;
   CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
@@ -2287,8 +2289,9 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled)
 /*      the symbol id.                                                  */
 /************************************************************************/
 int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName,  char* extGraphicName,
-                          int nGap)
+                          int nGap_ignored)
 {
+  (void)nGap_ignored;
   int nSymbolId = 0;
   symbolObj *psSymbol = NULL;
 

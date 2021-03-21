@@ -1668,6 +1668,7 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
 
 int msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_auto_result *lar, labelObj *label, double resolutionfactor)
 {
+  (void)map;
   int j, l, n, point_repeat;
   double t, theta, fwd_length, point_distance;
   double center_point_position, left_point_position, right_point_position, point_position;

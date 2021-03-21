@@ -170,6 +170,9 @@ static hb_bool_t _ms_get_glyph_func (hb_font_t *font, void *font_data,
 		void *user_data)
 
 {
+  (void)font;
+  (void)variation_selector;
+  (void)user_data;
   /* first check our run, as we have probably already computed this */
   int i;
   struct _ms_hb_user_data *ud = font_data;
@@ -219,6 +222,8 @@ static hb_bool_t _ms_get_variation_glyph_func(hb_font_t *font, void *font_data,
 static hb_position_t _ms_get_glyph_h_advance_func (hb_font_t *font, void *font_data,
 			   hb_codepoint_t glyph, void *user_data)
 {
+  (void)font;
+  (void)user_data;
   struct _ms_hb_user_data *ud = font_data;
   glyph_element *glyphc = msGetGlyphByIndex(ud->run->face,ud->glyph_size,glyph);
   if(!glyphc)
@@ -229,6 +234,10 @@ static hb_position_t _ms_get_glyph_h_advance_func (hb_font_t *font, void *font_d
 static hb_position_t _ms_get_glyph_v_advance_func (hb_font_t *font, void *font_data,
     hb_codepoint_t glyph, void *user_data)
 {
+  (void)font;
+  (void)font_data;
+  (void)glyph;
+  (void)user_data;
   return 0; /* we don't support vertical layouts */
 }
 #endif
@@ -474,7 +483,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 #ifdef USE_ICONV
   if(ts->label->encoding && strcasecmp(ts->label->encoding,"UTF-8")) {
     iconv_t cd;
-    size_t len, iconv_status,bufleft;
+    size_t len, bufleft;
     char *encoded_text,*outp;
     len = strlen(ts->annotext);
     bufleft = len*6;
@@ -491,8 +500,8 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     outp = encoded_text;
 
     while(len>0) {
-      iconv_status = iconv(cd, &inp, &len, &outp, &bufleft);
-      if(iconv_status == -1) {
+      const size_t iconv_status = iconv(cd, &inp, &len, &outp, &bufleft);
+      if(iconv_status == (size_t)-1) {
         break;
       }
     }
@@ -549,7 +558,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     if(ts->label->wrap && ts->label->maxlength == 0) {
       for(i=0;i<num_glyphs;i++) {
         /* replace all occurences of the wrap character with a newline */
-        if(glyphs.unicodes[i]== ts->label->wrap)
+        if(glyphs.unicodes[i]== (unsigned)ts->label->wrap)
           glyphs.unicodes[i]= '\n';
       }
     } else {
@@ -559,7 +568,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
         for(i=0; i<num_glyphs; i++) {
           /* wrap at wrap character or at ZERO WIDTH SPACE (unicode 0x200b), if
            * current line is too long */
-          if((glyphs.unicodes[i] == ts->label->wrap || glyphs.unicodes[i] == 0x200b)
+          if((glyphs.unicodes[i] == (unsigned)ts->label->wrap || glyphs.unicodes[i] == (unsigned)0x200b)
               && num_cur_glyph_on_line >= ts->label->maxlength) {
             glyphs.unicodes[i]= '\n';
             num_cur_glyph_on_line = 0;
@@ -716,7 +725,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 
 
   for(i=0;i<nruns;i++) {
-    unsigned int glyph_count,j;
+    unsigned int glyph_count;
     if(!runs[i].face) continue;
     peny = (1 - tgret->numlines + runs[i].line_number) * tgret->line_height;
     if(peny != oldpeny) {
@@ -734,7 +743,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       unsigned int *codepoint = glyphs.codepoints + runs[i].offset;
       alloc_glyphs += runs[i].length;
       tgret->glyphs = msSmallRealloc(tgret->glyphs, alloc_glyphs * sizeof(glyphObj));
-      for(j=0;j<runs[i].length;j++) {
+      for(int j=0;j<runs[i].length;j++) {
         glyphObj *g = &tgret->glyphs[tgret->numglyphs + j];
         g->glyph = msGetGlyphByIndex(runs[i].face,tgret->glyph_size, *codepoint);
         g->face = runs[i].face;
@@ -770,7 +779,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       glyph_pos = hb_buffer_get_glyph_positions(buf, &glyph_count);
       alloc_glyphs += glyph_count;
       tgret->glyphs = msSmallRealloc(tgret->glyphs, alloc_glyphs * sizeof(glyphObj));
-      for(j=0;j<glyph_count;j++) {
+      for(unsigned j=0;j<glyph_count;j++) {
         glyphObj *g = &tgret->glyphs[tgret->numglyphs + j];
         g->glyph = msGetGlyphByIndex(runs[i].face,tgret->glyph_size,glyph_info[j].codepoint);
         g->face = runs[i].face;

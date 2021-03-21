@@ -69,7 +69,7 @@ msDrawRasterLayerGDAL_RawMode(
 static int
 msDrawRasterLayerGDAL_16BitClassification(
   mapObj *map, layerObj *layer, rasterBufferObj *rb,
-  GDALDatasetH hDS, GDALRasterBandH hBand,
+  GDALRasterBandH hBand,
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
 
@@ -451,7 +451,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( classified
       && hBand1 != NULL && GDALGetRasterDataType( hBand1 ) != GDT_Byte ) {
     return msDrawRasterLayerGDAL_16BitClassification(
-             map, layer, rb, hDS, hBand1,
+             map, layer, rb, hBand1,
              src_xoff, src_yoff, src_xsize, src_ysize,
              dst_xoff, dst_yoff, dst_xsize, dst_ysize );
   }
@@ -1968,7 +1968,7 @@ msDrawRasterLayerGDAL_RawMode(
 static int
 msDrawRasterLayerGDAL_16BitClassification(
   mapObj *map, layerObj *layer, rasterBufferObj *rb,
-  GDALDatasetH hDS, GDALRasterBandH hBand,
+  GDALRasterBandH hBand,
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
 

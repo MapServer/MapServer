@@ -1637,36 +1637,47 @@ msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring,
  */
 int LayerDefaultInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
 void LayerDefaultFreeItemInfo(layerObj *layer)
 {
-  return;
+  (void)layer;
 }
 
 int LayerDefaultOpen(layerObj *layer)
 {
+  (void)layer;
   return MS_FAILURE;
 }
 
 int LayerDefaultIsOpen(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 int LayerDefaultWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)layer;
+  (void)rect;
+  (void)isQuery;
   return MS_SUCCESS;
 }
 
 int LayerDefaultNextShape(layerObj *layer, shapeObj *shape)
 {
+  (void)layer;
+  (void)shape;
   return MS_FAILURE;
 }
 
 int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  (void)layer;
+  (void)shape;
+  (void)record;
   return MS_FAILURE;
 }
 
@@ -1752,11 +1763,13 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
 
 int LayerDefaultClose(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
 int LayerDefaultGetItems(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS; /* returning no items is legit */
 }
 
@@ -1873,17 +1886,24 @@ void msLayerEnablePaging(layerObj *layer, int value)
 
 int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
 {
+  (void)layer;
+  (void)extent;
   return MS_FAILURE;
 }
 
 int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj *shape)
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
   return MS_FAILURE;
 }
 
 int LayerDefaultCloseConnection(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -1941,17 +1961,22 @@ int LayerDefaultGetNumFeatures(layerObj *layer)
 
 int LayerDefaultAutoProjection(layerObj *layer, projectionObj* projection)
 {
+  (void)layer;
+  (void)projection;
   msSetError(MS_MISCERR, "This data driver does not implement AUTO projection support", "LayerDefaultAutoProjection()");
   return MS_FAILURE;
 }
 
 int LayerDefaultSupportsCommonFilters(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 int LayerDefaultTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem) 
 {
+  (void)layer;
+  (void)filteritem;
   if(!filter->string) return MS_SUCCESS; /* nothing to do, not an error */
 
   msSetError(MS_MISCERR, "This data driver does not implement filter translation support", "LayerDefaultTranslateFilter()");
@@ -1960,12 +1985,14 @@ int LayerDefaultTranslateFilter(layerObj *layer, expressionObj *filter, char *fi
 
 int msLayerDefaultGetPaging(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 void msLayerDefaultEnablePaging(layerObj *layer, int value)
 {
-  return;
+  (void)layer;
+  (void)value;
 }
 
 /************************************************************************/
@@ -1977,6 +2004,7 @@ void msLayerDefaultEnablePaging(layerObj *layer, int value)
 /************************************************************************/
 char *LayerDefaultEscapeSQLParam(layerObj *layer, const char* pszString)
 {
+  (void)layer;
   char *pszEscapedStr=NULL;
   if (pszString) {
     int nSrcLen;
@@ -2263,6 +2291,7 @@ int msINLINELayerClose(layerObj *layer)
 
 int msINLINELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   msINLINELayerInfo *layerinfo = NULL;  
   layerinfo = (msINLINELayerInfo*) layer->layerinfo;
 

@@ -131,7 +131,7 @@ errorObj *msGetErrorObj()
   /* We don't have one ... initialize one. */
   else if( link == NULL || link->next == NULL ) {
     te_info_t *new_link;
-    errorObj   error_obj = { MS_NOERR, "", "", 0 };
+    errorObj   error_obj = { MS_NOERR, "", "", 0, 0, NULL };
 
     new_link = (te_info_t *) malloc(sizeof(te_info_t));
     new_link->next = error_list;

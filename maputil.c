@@ -2488,6 +2488,7 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
 */
 char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 {
+  (void)map;
   char *online_resource = NULL;
   const char *value, *hostname, *port, *script, *protocol="http", *mapparam=NULL;
   char **hostname_array = NULL;

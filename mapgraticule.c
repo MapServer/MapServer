@@ -127,6 +127,7 @@ int msGraticuleLayerIsOpen(layerObj *layer)
  */
 int msGraticuleLayerClose(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -135,6 +136,7 @@ int msGraticuleLayerClose(layerObj *layer)
  */
 int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   graticuleObj *pInfo = layer->grid;
   int iAxisTickCount = 0;
   rectObj rectMapCoordinates;
@@ -506,6 +508,7 @@ int msGraticuleLayerGetItems(layerObj *layer)
  */
 int msGraticuleLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -514,7 +517,7 @@ int msGraticuleLayerInitItemInfo(layerObj *layer)
  */
 void msGraticuleLayerFreeItemInfo(layerObj *layer)
 {
-  return;
+  (void)layer;
 }
 
 /**********************************************************************************************************************
@@ -522,6 +525,9 @@ void msGraticuleLayerFreeItemInfo(layerObj *layer)
  */
 int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  (void)layer;
+  (void)shape;
+  (void)record;
   return MS_FAILURE;
 }
 
@@ -545,6 +551,10 @@ int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent)
  */
 int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   return MS_SUCCESS;
 }
 

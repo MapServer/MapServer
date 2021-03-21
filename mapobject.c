@@ -433,6 +433,9 @@ int msMapComputeGeotransform( mapObj * map )
 void msMapPixelToGeoref( mapObj *map, double *x, double *y )
 
 {
+  (void)map;
+  (void)x;
+  (void)y;
   msSetError(MS_MISCERR, NULL, "msMapPixelToGeoref() not yet implemented");
 }
 
@@ -443,6 +446,9 @@ void msMapPixelToGeoref( mapObj *map, double *x, double *y )
 void msMapGeorefToPixel( mapObj *map, double *x, double *y )
 
 {
+  (void)map;
+  (void)x;
+  (void)y;
   msSetError(MS_MISCERR, NULL, "msMapGeorefToPixel() not yet implemented");
 }
 

@@ -867,6 +867,10 @@ if(BUILD_DYNAMIC)
   set_target_properties(mapserver PROPERTIES
     PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
+
+  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+     target_compile_options(mapserver PRIVATE -Wall -Wextra -Werror=format-security)
+  endif()
 endif(BUILD_DYNAMIC)
 
 if (NOT("${LIBMAPSERVER_EXTRA_FLAGS}" STREQUAL ""))

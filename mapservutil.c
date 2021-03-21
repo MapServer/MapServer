@@ -1059,7 +1059,7 @@ int setExtentFromShapes(mapservObj *mapserv)
   double dx, dy, cellsize;
 
   rectObj tmpext= {-1.0,-1.0,-1.0,-1.0};
-  pointObj tmppnt= {-1.0,-1.0};
+  pointObj tmppnt= {-1.0,-1.0,-1.0,-1.0};
 
   msGetQueryResultBounds(mapserv->map, &(tmpext));
 

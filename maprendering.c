@@ -108,6 +108,7 @@ tileCacheObj *searchTileCache(imageObj *img, symbolObj *symbol, symbolStyleObj *
 }
 
 int preloadSymbol(symbolSetObj *symbolset, symbolObj *symbol, rendererVTableObj *renderer) {
+  (void)symbolset;
   switch(symbol->type) {
   case MS_SYMBOL_VECTOR:
   case MS_SYMBOL_ELLIPSE:
@@ -1000,6 +1001,7 @@ int msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds, styleObj
 
 int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbolObj *ts)
 {
+  (void)map;
   rendererVTableObj *renderer = image->format->vtable;
   colorObj *c = NULL, *oc = NULL;
   int ow;

@@ -1481,12 +1481,14 @@ int msClusterLayerInitItemInfo(layerObj *layer)
 /* Execute a query for this layer */
 int msClusterLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)rect;
   /* rebuild the cluster database */
   return RebuildClusters(layer, isQuery);
 }
 
 static int prepareShape(layerObj* layer, msClusterLayerInfo* layerinfo, clusterInfo* current, shapeObj* shape)
 {
+  (void)layer;
   if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
     msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msClusterLayerNextShape()");
     return MS_FAILURE;
@@ -1578,6 +1580,10 @@ int msClusterLayerGetNumFeatures(layerObj *layer)
 static int msClusterLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                       shapeObj* shape)
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   /* TODO */
   return MS_SUCCESS;
 }
@@ -1691,6 +1697,7 @@ int msClusterLayerOpen(layerObj *layer)
 
 int msClusterLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
 {
+  (void)filter;
   msClusterLayerInfo* layerinfo = layer->layerinfo;
 
   if (!layerinfo) {
@@ -1730,12 +1737,14 @@ int msClusterLayerGetAutoProjection(layerObj *layer, projectionObj* projection)
 
 int msClusterLayerGetPaging(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 void msClusterLayerEnablePaging(layerObj *layer, int value)
 {
-  return;
+  (void)layer;
+  (void)value;
 }
 
 void msClusterLayerCopyVirtualTable(layerVTableObj* vtable)

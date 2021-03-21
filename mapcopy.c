@@ -537,9 +537,10 @@ int msCopyStyle(styleObj *dst, const styleObj *src)
  * msCopyLabel(), msCreateHashTable(), msCopyHashTable()               *
  **********************************************************************/
 
-int msCopyClass(classObj *dst, const classObj *src, layerObj *layer)
+int msCopyClass(classObj *dst, const classObj *src, layerObj *layer_unused)
 {
   int i, return_value;
+  (void)layer_unused;
 
   return_value = msCopyExpression(&(dst->expression),&(src->expression));
   if (return_value != MS_SUCCESS) {

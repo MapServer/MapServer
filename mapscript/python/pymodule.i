@@ -238,11 +238,13 @@ static void _raise_ms_exception() {
             case -1:
                 break;
             case MS_IOERR:
+                /*
                 if (strcmp(ms_error->routine, "msSearchDiskTree()") != 0) {
                     _raise_ms_exception();
                     msResetErrorList();
                     return NULL;
                 }
+                */
             default:
                 _raise_ms_exception();
                 msResetErrorList();

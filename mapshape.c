@@ -1147,7 +1147,7 @@ int msSHXLoadAll( SHPHandle psSHP )
   uchar *pabyBuf;
 
   pabyBuf = (uchar *) msSmallMalloc(8 * psSHP->nRecords );
-  if(psSHP->nRecords != VSIFReadL( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )) {
+  if((size_t)psSHP->nRecords != VSIFReadL( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )) {
     msSetError(MS_IOERR, "failed to read shx records", "msSHXLoadAll()");
     free(pabyBuf);
     return MS_FAILURE;
@@ -2537,6 +2537,7 @@ int msTiledSHPLayerIsOpen(layerObj *layer)
 
 int msTiledSHPLayerSupportsCommonFilters(layerObj *layer)
 {
+  (void)layer;
   return MS_TRUE;
 }
 
@@ -2678,6 +2679,7 @@ int msSHPLayerIsOpen(layerObj *layer)
 
 int msSHPLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   int status;
   shapefileObj *shpfile;
 
@@ -2804,6 +2806,7 @@ int msSHPLayerGetExtent(layerObj *layer, rectObj *extent)
 
 int msSHPLayerSupportsCommonFilters(layerObj *layer)
 {
+  (void)layer;
   return MS_TRUE;
 }
 

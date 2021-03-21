@@ -646,6 +646,9 @@ void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pS
         pDst->proj_ctx = pSrc->proj_ctx;
         pDst->proj_ctx->ref_count ++;
     }
+#else
+    (void)pDst;
+    (void)pSrc;
 #endif
 }
 
@@ -661,6 +664,9 @@ void msProjectionSetContext(projectionObj *p, projectionContext* ctx)
         p->proj_ctx = ctx;
         p->proj_ctx->ref_count ++;
     }
+#else
+    (void)p;
+    (void)ctx;
 #endif
 }
 

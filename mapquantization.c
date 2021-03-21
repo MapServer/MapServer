@@ -128,18 +128,18 @@ static void pam_freeacolorhash (acolorhash_table acht);
  */
 int msQuantizeRasterBuffer(rasterBufferObj *rb,
                            unsigned int *reqcolors, rgbaPixel *palette,
-                           rgbaPixel *forced_palette, int num_forced_palette_entries,
+                           rgbaPixel *forced_palette_ignored, int num_forced_palette_entries_ignored,
                            unsigned int *palette_scaling_maxval)
 {
+  (void)forced_palette_ignored;
+  (void)num_forced_palette_entries_ignored;
   rgbaPixel **apixels=NULL; /* pointer to the start rows of truecolor pixels */
 
   register rgbaPixel *pP;
-  register int col;
 
   unsigned char newmaxval;
   acolorhist_vector achv, acolormap=NULL;
 
-  int row;
   int colors;
   int newcolors = 0;
 
@@ -152,7 +152,7 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
 
   apixels=(rgbaPixel**)msSmallMalloc(rb->height*sizeof(rgbaPixel*));
 
-  for(row=0; row<rb->height; row++) {
+  for(unsigned row=0; row<rb->height; row++) {
     apixels[row]=(rgbaPixel*)(&(rb->data.rgba.pixels[row * rb->data.rgba.row_step]));
   }
 
@@ -169,12 +169,15 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
     if ( achv != (acolorhist_vector) 0 )
       break;
     newmaxval = *palette_scaling_maxval / 2;
-    for ( row = 0; row < rb->height; ++row )
-      for ( col = 0, pP = apixels[row]; col < rb->width; ++col, ++pP )
+    for ( unsigned row = 0; row < rb->height; ++row )
+    {
+      pP = apixels[row];
+      for (unsigned col = 0 ; col < rb->width; ++col, ++pP )
         PAM_DEPTH( *pP, *pP, *palette_scaling_maxval, newmaxval );
+    }
     *palette_scaling_maxval = newmaxval;
   }
-  newcolors = MS_MIN(colors, *reqcolors);
+  newcolors = MS_MIN(colors, (int)*reqcolors);
   acolormap = mediancut(achv, colors, rb->width*rb->height, *palette_scaling_maxval, newcolors);
   pam_freeacolorhist(achv);
 
@@ -201,7 +204,7 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb)
   unsigned char *outrow,*pQ;
   register rgbaPixel *pP;
   acolorhash_table acht;
-  int usehash, row, col;
+  int usehash;
   /*
    ** Step 4: map the colors in the image to their closest match in the
    ** new colormap, and write 'em out.
@@ -209,9 +212,9 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb)
   acht = pam_allocacolorhash( );
   usehash = 1;
 
-  for ( row = 0; row < qrb->height; ++row ) {
+  for ( unsigned row = 0; row < qrb->height; ++row ) {
     outrow = &(qrb->data.palette.pixels[row*qrb->width]);
-    col = 0;
+    unsigned col = 0;
     pP = (rgbaPixel*)(&(rb->data.rgba.pixels[row * rb->data.rgba.row_step]));;
     pQ = outrow;
     do {
@@ -219,7 +222,7 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb)
       ind = pam_lookupacolor( acht, pP );
       if ( ind == -1 ) {
         /* No; search acolormap for closest match. */
-        register int i, r1, g1, b1, a1, r2, g2, b2, a2;
+        register int r1, g1, b1, a1, r2, g2, b2, a2;
         register long dist, newdist;
 
         r1 = PAM_GETR( *pP );
@@ -227,7 +230,7 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb)
         b1 = PAM_GETB( *pP );
         a1 = PAM_GETA( *pP );
         dist = 2000000000;
-        for ( i = 0; i < qrb->data.palette.num_entries; ++i ) {
+        for ( unsigned i = 0; i < qrb->data.palette.num_entries; ++i ) {
           r2 = PAM_GETR( qrb->data.palette.palette[i] );
           g2 = PAM_GETG( qrb->data.palette.palette[i] );
           b2 = PAM_GETB( qrb->data.palette.palette[i] );

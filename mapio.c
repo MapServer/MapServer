@@ -440,7 +440,7 @@ int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
 
   char* largerBuf = NULL;
   return_val = vsnprintf( workBuf, sizeof(workBuf), format, ap );
-  if (return_val == -1 || return_val >= sizeof(workBuf)-1) {
+  if (return_val == -1 || return_val >= (int)sizeof(workBuf)-1) {
     return_val = _ms_vsprintf(&largerBuf, format, args_copy );
   }
   va_end(args_copy);
@@ -1097,9 +1097,9 @@ int msIO_bufferWrite( void *cbData, void *data, int byteCount )
 int msIO_bufferRead( void *cbData, void *data, int byteCount )
 
 {
-  /*    msIOBuffer *buf = (msIOBuffer *) cbData; */
-
+  (void)cbData;
+  (void)data;
+  (void)byteCount;
   /* not implemented yet. */
-
   return 0;
 }

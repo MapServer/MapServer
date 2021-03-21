@@ -57,15 +57,18 @@ struct utfpix32
     v(c.v) {}
 
   //--------------------------------------------------------------------
+  utfpix32& operator= (const self_type&) = default;
+
+  //--------------------------------------------------------------------
   void clear()
   {
     v = 0;
   }
 
   //--------------------------------------------------------------------
-  AGG_INLINE void add(const self_type& c, unsigned cover)
+  AGG_INLINE void add(const self_type& c, unsigned /*cover*/)
   {
-    *this = c;          
+    *this = c;
   }
 };
 
@@ -211,7 +214,7 @@ public:
   void blend_hline(int x, int y, 
                    unsigned len, 
                    const color_type& c, 
-                   mapserver::int8u cover)
+                   mapserver::int8u /*cover*/)
   {
     value_type* p = (value_type*) 
         m_rbuf->row_ptr(x, y, len) + x * Step + Offset;

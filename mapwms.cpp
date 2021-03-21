@@ -493,7 +493,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 **                        as set through the WMS_LAYER_GROUP metadata
 */
 static
-void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup)
+void msWMSPrepareNestedGroups(mapObj* map, int /* nVersion */, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup)
 {
   //Create set to hold unique groups
   std::set<std::string> uniqgroups;
@@ -791,8 +791,8 @@ bool msWMSApplyDimensionLayer(layerObj *lp, const char *item, const char *value,
 }
 
 static
-bool msWMSApplyDimension(layerObj *lp, int version, const char *dimensionname, const char *value,
-                        const char *wms_exception_format)
+bool msWMSApplyDimension(layerObj *lp, int /* version */, const char *dimensionname, const char *value,
+                        const char * /* wms_exception_format */)
 {
   bool forcecharacter = false;
   bool result = false;
@@ -844,7 +844,7 @@ bool msWMSApplyDimension(layerObj *lp, int version, const char *dimensionname, c
 */
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           char **names, char **values, int numentries, const char *wms_exception_format,
-                          const char *wms_request, owsRequestObj *ows_request)
+                          const char * /*wms_request*/, owsRequestObj *ows_request)
 {
   bool adjust_extent = false;
   bool nonsquare_enabled = false;
@@ -1836,7 +1836,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
 
 void msWMSPrintAttribution(FILE *stream, const char *tabspace,
                            hashTableObj *metadata,
-                           const char *namespaces)
+                           const char * /*namespaces*/)
 {
   if (stream && metadata) {
     const char* title = msOWSLookupMetadata(metadata, "MO",
@@ -3837,7 +3837,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 }
 
 static
-int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, const char *wms_exception_format)
+int msDumpResult(mapObj *map, int nVersion, const char *wms_exception_format)
 {
   int numresults=0;
 
@@ -3925,7 +3925,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
                      const char *wms_exception_format, owsRequestObj *ows_request)
 {
   int feature_count=1, numlayers_found=0;
-  pointObj point = {-1.0, -1.0};
+  pointObj point = {-1.0, -1.0, -1.0, -1.0};
   const char *info_format="MIME";
   errorObj *ms_error = msGetErrorObj();
   int query_status=MS_NOERR;
@@ -4176,7 +4176,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     msIO_sendHeaders();
     msIO_printf("GetFeatureInfo results:\n");
 
-    numresults = msDumpResult(map, 0, nVersion, wms_exception_format);
+    numresults = msDumpResult(map, nVersion, wms_exception_format);
 
     if (numresults == 0) msIO_printf("\n  Search returned no results.\n");
 

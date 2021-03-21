@@ -3864,6 +3864,7 @@ scaleTokenObj *msGrowLayerScaletokens( layerObj *layer )
 }
 
 int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
+  (void)layer;
   for(;;) {
     int stop = 0;
     switch(msyylex()) {

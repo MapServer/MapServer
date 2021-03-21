@@ -112,6 +112,7 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
 
 double msInchesPerUnit(int units, double center_lat)
 {
+  (void)center_lat;
   double lat_adj = 1.0, ipu = 1.0;
 
   switch (units) {

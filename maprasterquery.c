@@ -1088,7 +1088,9 @@ int msRASTERLayerIsOpen(layerObj *layer)
 /*                     msRASTERLayerFreeItemInfo()                      */
 /************************************************************************/
 void msRASTERLayerFreeItemInfo(layerObj *layer)
-{}
+{
+  (void)layer;
+}
 
 /************************************************************************/
 /*                     msRASTERLayerInitItemInfo()                      */
@@ -1098,6 +1100,7 @@ void msRASTERLayerFreeItemInfo(layerObj *layer)
 
 int msRASTERLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -1107,6 +1110,7 @@ int msRASTERLayerInitItemInfo(layerObj *layer)
 int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
 {
+  (void)isQuery;
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   rlinfo->which_rect = rect;

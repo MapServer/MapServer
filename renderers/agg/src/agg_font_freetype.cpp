@@ -755,7 +755,7 @@ namespace mapserver
     }
 
     //------------------------------------------------------------------------
-    bool font_engine_freetype_base::char_map(FT_Encoding char_map)
+    bool font_engine_freetype_base::char_map(FT_Encoding /*char_map*/)
     {
         if(m_cur_face)
         {

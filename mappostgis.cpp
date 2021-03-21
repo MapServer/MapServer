@@ -2423,6 +2423,7 @@ static PGresult* runPQexecParamsWithBindSubstitution(layerObj *layer, const char
 // cppcheck-suppress passedByValue
 static int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
 #ifdef USE_POSTGIS
   assert(layer != nullptr);
   assert(layer->layerinfo != nullptr);

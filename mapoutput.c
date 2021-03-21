@@ -1163,12 +1163,10 @@ void msOutputFormatResolveFromImage( mapObj *map, imageObj* img )
       (void)ret;
       if( rb.data.rgba.a )
       {
-        int row;
-        for(row=0; row<rb.height && !has_non_opaque_pixels; row++) {
-          int col;
+        for(unsigned row=0; row<rb.height && !has_non_opaque_pixels; row++) {
           unsigned char *a;
           a=rb.data.rgba.a+row*rb.data.rgba.row_step;
-          for(col=0; col<rb.width && !has_non_opaque_pixels; col++) {
+          for(unsigned col=0; col<rb.width && !has_non_opaque_pixels; col++) {
             if(*a < 255) {
               has_non_opaque_pixels = MS_TRUE;
             }

@@ -531,7 +531,8 @@ int agg2RenderPolygonTiled(imageObj *img, shapeObj *p, imageObj * tile)
   return MS_SUCCESS;
 }
 
-int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
+int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int /*isMarker*/) {
+    
   mapserver::path_storage glyphs;
   mapserver::trans_affine trans;
   AGG2Renderer *r = AGG_RENDERER(img);
@@ -703,7 +704,7 @@ int agg2RenderEllipseSymbol(imageObj *image, double x, double y,
   return MS_SUCCESS;
 }
 
-int agg2RenderTile(imageObj *img, imageObj *tile, double x, double y)
+int agg2RenderTile(imageObj * /*img*/, imageObj * /*tile*/, double /*x*/, double /*y*/)
 {
   /*
   AGG2Renderer *imgRenderer = agg2GetRenderer(img);
@@ -837,14 +838,14 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   return image;
 }
 
-int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format)
+int agg2SaveImage(imageObj * /*img*/, mapObj* /*map*/, FILE * /*fp*/, outputFormatObj * /*format*/)
 {
   
 
   return MS_FAILURE;
 }
 
-int agg2StartNewLayer(imageObj *img, mapObj*map, layerObj *layer)
+int agg2StartNewLayer(imageObj *img, mapObj* /*map*/, layerObj *layer)
 {
   AGG2Renderer *r = AGG_RENDERER(img);
   const char *sgamma = msLayerGetProcessingKey( layer, "GAMMA" );
@@ -862,7 +863,7 @@ int agg2StartNewLayer(imageObj *img, mapObj*map, layerObj *layer)
   return MS_SUCCESS;
 }
 
-int agg2CloseNewLayer(imageObj *img, mapObj *map, layerObj *layer)
+int agg2CloseNewLayer(imageObj * /*img*/, mapObj * /*map*/, layerObj * /*layer*/)
 {
   return MS_SUCCESS;
 }
@@ -875,7 +876,7 @@ int agg2FreeImage(imageObj * image)
   return MS_SUCCESS;
 }
 
-int agg2FreeSymbol(symbolObj * symbol)
+int agg2FreeSymbol(symbolObj * /*symbol*/)
 {
   return MS_SUCCESS;
 }

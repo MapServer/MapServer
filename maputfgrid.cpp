@@ -262,7 +262,7 @@ static int utfgridRenderPath(imageObj *img, vertex_source &path)
  * Initialize the renderer, create buffer, allocate memory.
  */
 static
-imageObj *utfgridCreateImage(int width, int height, outputFormatObj *format, colorObj * bg)
+imageObj *utfgridCreateImage(int width, int height, outputFormatObj *format, colorObj * /*bg*/)
 {
   auto r = std::unique_ptr<UTFGridRenderer>(new UTFGridRenderer);
 
@@ -372,7 +372,7 @@ int utfgridCleanData(imageObj *img)
  * Print the renderer data as JSON.
  */
 static
-int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)
+int utfgridSaveImage(imageObj *img, mapObj * /*map*/, FILE *fp, outputFormatObj * /*format*/)
 {
   utfgridCleanData(img);
 
@@ -463,7 +463,7 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
  * Starts a layer for UTFGrid renderer.
  */
 static
-int utfgridStartLayer(imageObj *img, mapObj *map, layerObj *layer)
+int utfgridStartLayer(imageObj *img, mapObj * /*map*/, layerObj *layer)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -498,7 +498,7 @@ int utfgridStartLayer(imageObj *img, mapObj *map, layerObj *layer)
  * Tell renderer the layer is done.
  */
 static
-int utfgridEndLayer(imageObj *img, mapObj *map, layerObj *layer)
+int utfgridEndLayer(imageObj *img, mapObj * /*map*/, layerObj *layer)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -533,7 +533,7 @@ int utfgridStartShape(imageObj *img, shapeObj *shape)
  * Tells the renderer that the shape's rendering is done.
  */
 static
-int utfgridEndShape(imageObj *img, shapeObj *shape)
+int utfgridEndShape(imageObj *img, shapeObj *)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -545,7 +545,7 @@ int utfgridEndShape(imageObj *img, shapeObj *shape)
  * Function that renders polygons into UTFGrid.
  */
 static
-int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *color)
+int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *)
 {
   const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -688,7 +688,7 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
 }
 
 static
-int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
+int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj * /*c*/, colorObj * /*oc*/, int /*ow*/, int isMarker) {
 
   const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -734,7 +734,7 @@ int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *o
 }
 
 static
-int utfgridFreeSymbol(symbolObj * symbol)
+int utfgridFreeSymbol(symbolObj *)
 {
   return MS_SUCCESS;
 }

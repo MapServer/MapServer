@@ -213,8 +213,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed
  * by the caller.
  **********************************************************************/
-static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
-                                        rectObj *bbox, wfsParamsObj *psParams)
+static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams)
 {
   char *pszPostReq = NULL;
   char *pszFilter = NULL;
@@ -295,7 +294,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed
  * by the caller.
  **********************************************************************/
-static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
+static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
                                    wfsParamsObj *psParams)
 {
   char *pszURL = NULL, *pszOnlineResource=NULL;
@@ -561,7 +560,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
                                     "FO", "request_method")) != NULL) {
     if (strncmp(pszTmp, "GET", 3) ==0) {
-      pszURL = msBuildWFSLayerGetURL(map, lp, &bbox, psParams);
+      pszURL = msBuildWFSLayerGetURL(lp, &bbox, psParams);
       if (!pszURL) {
         /* an error was already reported. */
         return MS_FAILURE;
@@ -633,7 +632,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (bPostRequest) {
     pasReqInfo[(*numRequests)].pszPostRequest =
-      msBuildWFSLayerPostRequest(map, lp, &bbox, psParams);
+      msBuildWFSLayerPostRequest(&bbox, psParams);
     pasReqInfo[(*numRequests)].pszPostContentType =
       msStrdup("text/xml");
   }
@@ -869,6 +868,7 @@ int msWFSLayerIsOpen(layerObj *lp)
 
 int msWFSLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   /* Nothing to do here.  OGR will do its own initialization when it */
   /* opens the actual file. */
   /* Note that we didn't implement our own msWFSLayerFreeItemInfo() */

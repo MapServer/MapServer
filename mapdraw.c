@@ -3583,6 +3583,8 @@ void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image)
 void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
                       shapeObj *shape)
 {
+  (void)map;
+  (void)layer;
   if (image) {
     if(MS_RENDERER_PLUGIN(image->format)) {
       if (image->format->vtable->startShape)
@@ -3602,6 +3604,8 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
 void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
                     shapeObj *shape)
 {
+  (void)map;
+  (void)layer;
   if(MS_RENDERER_PLUGIN(image->format)) {
     if (image->format->vtable->endShape)
       image->format->vtable->endShape(image, shape);

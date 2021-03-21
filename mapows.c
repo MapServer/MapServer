@@ -263,7 +263,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   if (ows_request.service == NULL) {
 #ifdef USE_LIBXML2
     if (ows_request.request && EQUAL(ows_request.request, "GetMetadata")) {
-      status = msMetadataDispatch(map, request, &ows_request);
+      status = msMetadataDispatch(map, request);
       msOWSClearRequestObj(&ows_request);
       return status;
     }
@@ -755,8 +755,6 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
   int disableFlag = MS_FALSE;
   int allFlag = MS_FALSE;
   char *bufferPtr, *ptr = NULL;
-  int i;
-  size_t len = 0;
 
   *disabled = MS_FALSE;
 
@@ -764,11 +762,11 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
     return MS_FALSE;
 
   ptr = (char*)metadata;
-  len = strlen(ptr);
+  const size_t len = strlen(ptr);
   requestBuffer[0] = '\0';
   bufferPtr = requestBuffer;
 
-  for (i=0; i<=len; ++i,++ptr) {
+  for (size_t i=0; i<=len; ++i,++ptr) {
 
     if (!wordFlag && isspace(*ptr))
       continue;
@@ -2425,6 +2423,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext)
 {
+  (void)map;
   const char *value;
 
   if ((value = msOWSLookupMetadata(&(lp->metadata), namespaces, "extent")) != NULL) {

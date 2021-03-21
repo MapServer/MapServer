@@ -191,7 +191,7 @@ SegmentType (1 byte)
 
 #define FigureAttribute(iFigure) (ReadByte(gpi->nFigurePos + (iFigure) * 5))
 #define PointOffset(iFigure) (ReadInt32(gpi->nFigurePos + (iFigure) * 5 + 1))
-#define NextPointOffset(iFigure) (iFigure + 1 < gpi->nNumFigures? PointOffset((iFigure) +1) : gpi->nNumPoints)
+#define NextPointOffset(iFigure) (iFigure + 1 < gpi->nNumFigures? PointOffset((iFigure) +1) : (unsigned)gpi->nNumPoints)
 
 #define ReadX(iPoint) (ReadDouble(gpi->nPointPos + 16 * (iPoint)))
 #define ReadY(iPoint) (ReadDouble(gpi->nPointPos + 16 * (iPoint) + 8))
@@ -662,7 +662,6 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
   char    *needle_lower;
   size_t  len_hay,len_need, match;
   int    found = MS_FALSE;
-  int     t;
   char    *loc;
 
   len_hay = strlen(haystack);
@@ -671,7 +670,7 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
   hay_lower = (char*) msSmallMalloc(len_hay + 1);
   needle_lower =(char*) msSmallMalloc(len_need + 1);
 
-
+  size_t t;
   for(t = 0; t < len_hay; t++) {
     hay_lower[t] = (char)tolower(haystack[t]);
   }
@@ -1651,6 +1650,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 /* Execute SQL query for this layer */
 int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   msMSSQL2008LayerInfo  *layerinfo = 0;
   char    *query_str = 0;
   int     set_up_result;
@@ -2417,7 +2417,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
       if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
         handleSQLError(layer);
 
-      if (retLen < sizeof(oidBuffer))
+      if (retLen < (int)sizeof(oidBuffer))
 	  {
 		oidBuffer[retLen] = 0;
 		record_oid = strtol(oidBuffer, NULL, 10);
@@ -3005,8 +3005,9 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
 
 char *msMSSQL2008LayerEscapePropertyName(layerObj *layer, const char* pszString)
 {
+  (void)layer;
   char* pszEscapedStr=NULL;
-  int i, j = 0;
+  int j = 0;
 
   if (pszString && strlen(pszString) > 0) {
     size_t nLength = strlen(pszString);
@@ -3014,7 +3015,7 @@ char *msMSSQL2008LayerEscapePropertyName(layerObj *layer, const char* pszString)
     pszEscapedStr = (char*) msSmallMalloc( 1 + nLength + 1 + 1);
     pszEscapedStr[j++] = '[';
 
-    for (i=0; i<nLength; i++)
+    for (size_t i=0; i<nLength; i++)
       pszEscapedStr[j++] = pszString[i];
 
     pszEscapedStr[j++] = ']';
@@ -3025,6 +3026,7 @@ char *msMSSQL2008LayerEscapePropertyName(layerObj *layer, const char* pszString)
 
 char *msMSSQL2008LayerEscapeSQLParam(layerObj *layer, const char *pszString)
 {
+  (void)layer;
   char *pszEscapedStr=NULL;
   if (pszString) {
     int nSrcLen;

@@ -1242,7 +1242,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         char *pszSRS = NULL;
         const char* pszPropertyName = NULL;
         CPLXMLNode *psBox = NULL, *psEnvelope=NULL;
-        rectObj sBox = {0};
+        rectObj sBox = {0,0,0,0};
 
         int bCoordinatesValid = 0;
 

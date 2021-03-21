@@ -227,6 +227,8 @@ static int dxf;
 
 void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image)
 {
+  (void)map;
+  (void)image;
   DEBUG_IF printf("ImageStartLayerIM\n<BR>");
   free(lname);
   if (layer->name)
@@ -460,8 +462,10 @@ void msDrawMarkerSymbolIM(mapObj *map, imageObj* img, pointObj *p, styleObj *sty
 /* ------------------------------------------------------------------------- */
 /* Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------- */
-void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
+void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor_ignored)
 {
+  (void)img;
+  (void)scalefactor_ignored;
   symbolObj *symbol;
   int i,j,l;
   char first = 1;
@@ -534,8 +538,10 @@ void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style
 /* ------------------------------------------------------------------------- */
 /* Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------- */
-void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
+void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor_ignored)
 {
+  (void)img;
+  (void)scalefactor_ignored;
   symbolObj *symbol;
   int i,j,l;
   char first = 1;
@@ -604,6 +610,8 @@ void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *styl
  */
 int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
+  (void)map;
+  (void)img;
   DEBUG_IF printf("msDrawText<BR>\n");
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);

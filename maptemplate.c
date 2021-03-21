@@ -181,6 +181,7 @@ int setExtent(mapservObj *mapserv)
 
 int checkWebExtent(mapservObj *mapserv)
 {
+  (void)mapserv;
   return MS_SUCCESS;
 }
 
@@ -1184,7 +1185,7 @@ enum ITEM_ESCAPING {ESCAPE_HTML, ESCAPE_URL, ESCAPE_JSON, ESCAPE_NONE};
 
 static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 {
-  int i, j;
+  int i;
 
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
@@ -1295,9 +1296,9 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
       /* apply other effects */
       if(uc == MS_TRUE)
-        for(j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
+        for(unsigned j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
       if(lc == MS_TRUE)
-        for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
+        for(unsigned j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
 
       tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
       msFree(itemValue);

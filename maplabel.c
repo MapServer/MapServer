@@ -222,7 +222,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
       x = MS_NINT(point->x);
       y = MS_NINT(point->y);
       /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
-      if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+      if (x >= 0 && x < (int)rb.width && y >= 0 && y < (int)rb.height) {
         assert(rb.type == MS_BUFFER_BYTE_RGBA);
         alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
         if(!*alphapixptr) {
@@ -406,7 +406,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
         int x = MS_NINT(point->x);
         int y = MS_NINT(point->y);
         /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
-        if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+        if (x >= 0 && x < (int)rb.width && y >= 0 && y < (int)rb.height) {
           alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
           if(!*alphapixptr) {
             /* label point does not intersect mask */
@@ -425,7 +425,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
         for (i = 0; i < ts->textpath->numglyphs; i++) {
           int x = MS_NINT(ts->textpath->glyphs[i].pnt.x);
           int y = MS_NINT(ts->textpath->glyphs[i].pnt.y);
-          if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+          if (x >= 0 && x < (int)rb.width && y >= 0 && y < (int)rb.height) {
             alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
               freeTextSymbol(ts);

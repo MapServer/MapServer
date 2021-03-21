@@ -53,7 +53,7 @@ static void msGEOSError(const char *format, ...)
 
 static void msGEOSNotice(const char *fmt, ...)
 {
-  return; /* do nothing with notices at this point */
+  (void)fmt; /* do nothing with notices at this point */
 }
 
 #ifndef USE_THREAD

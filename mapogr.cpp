@@ -4094,7 +4094,7 @@ int msOGRIsSpatialite(layerObj* layer)
  * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
  * layer's FILTER overlaps the selected region.
  **********************************************************************/
-int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
+int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int /*isQuery*/)
 {
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   status;
@@ -4498,7 +4498,7 @@ static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
                                     OGRStyleToolH hPenStyle, int bIsBrush, int* pbPriority);
 static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
                                       OGRStyleToolH hBrushStyle, int* pbIsBrush, int* pbPriority);
-static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+static int msOGRUpdateStyleParseSymbol(mapObj *map, styleObj *s,
                                        OGRStyleToolH hSymbolStyle, int* pbPriority);
 
 static int msOGRUpdateStyleCheckPenBrushOnly(OGRStyleMgrH hStyleMgr)
@@ -4658,7 +4658,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       }
       s = c->styles[nIndex];
 
-      msOGRUpdateStyleParseSymbol(map, layer, s, hStylePart, &nPriority);
+      msOGRUpdateStyleParseSymbol(map, s, hStylePart, &nPriority);
     }
 
     /* Memorize the explicit priority and apparition order of the parsed tool/style */
@@ -5077,7 +5077,7 @@ static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
       return MS_SUCCESS;
 }
 
-static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+static int msOGRUpdateStyleParseSymbol(mapObj *map, styleObj *s,
                                        OGRStyleToolH hSymbolStyle,
                                        int* pbPriority)
 {
@@ -5284,7 +5284,7 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
   return pszEscapedStr;
 }
 
-static int msOGRLayerSupportsCommonFilters(layerObj *layer)
+static int msOGRLayerSupportsCommonFilters(layerObj *)
 {
   return MS_FALSE;
 }

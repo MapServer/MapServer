@@ -140,16 +140,6 @@ static int msWFSIncludeSection(wfsParamsObj *params, const char* pszSection)
 }
 
 /************************************************************************/
-/*                       msWFSAddGlobalSRSNameParam                     */
-/************************************************************************/
-
-static void msWFSAddGlobalSRSNameParam(xmlNodePtr psMainNode,
-                                       xmlNsPtr psNsOws,
-                                       mapObj* map)
-{
-}
-
-/************************************************************************/
 /*                       msWFSConstraintDefaultValue                    */
 /************************************************************************/
 
@@ -613,8 +603,6 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                 "Parameter", "version",
                 "2.0.0,1.1.0,1.0.0"));
 
-    msWFSAddGlobalSRSNameParam(psMainNode, psNsOws, map);
-
     /* Conformance declaration */
     xmlAddChild(psMainNode, msWFSConstraintDefaultValue(psNsOws, psNsOws, "ImplementsBasicWFS", "TRUE"));
     xmlAddChild(psMainNode, msWFSConstraintDefaultValue(psNsOws, psNsOws, "ImplementsTransactionalWFS", "FALSE"));
@@ -949,8 +937,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
 /*                       msWFSListStoredQueries20                       */
 /************************************************************************/
 
-int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
-                             cgiRequestObj *req, owsRequestObj *ows_request)
+int msWFSListStoredQueries20(mapObj *map, owsRequestObj *ows_request)
 {
   xmlDocPtr psDoc;
   xmlChar *buffer = NULL;
@@ -1139,7 +1126,7 @@ int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
 /************************************************************************/
 
 int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
-                             cgiRequestObj *req, owsRequestObj *ows_request)
+                                 owsRequestObj *ows_request)
 {
   xmlDocPtr psDoc;
   xmlChar *buffer = NULL;

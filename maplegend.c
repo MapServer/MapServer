@@ -44,7 +44,6 @@ static int msDrawGradientSymbol(rendererVTableObj* renderer,
                                 int height,
                                 styleObj* style)
 {
-    int i, j;
     unsigned char *r,*g,*b,*a;
     symbolObj symbol;
     rasterBufferObj* rb;
@@ -65,9 +64,9 @@ static int msDrawGradientSymbol(rendererVTableObj* renderer,
     g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
     r = rb->data.rgba.r = &rb->data.rgba.pixels[2];
     a = rb->data.rgba.a = &rb->data.rgba.pixels[3];
-    for( j = 0; j < rb->height; j++ )
+    for( unsigned j = 0; j < rb->height; j++ )
     {
-        for( i = 0; i < rb->width; i++ )
+        for( unsigned i = 0; i < rb->width; i++ )
         {
             msValueToRange(style, style->minvalue +
                 (double)i / rb->width * (style->maxvalue - style->minvalue), MS_COLORSPACE_RGB);

@@ -33,6 +33,10 @@
 
 #ifdef USE_LIBXML2
 
+static
+int msMetadataParseRequest(cgiRequestObj *request,
+                      metadataParamsObj *metadataparams);
+
 /************************************************************************/
 /*                   _msMetadataGetCharacterString                      */
 /*                                                                      */
@@ -669,7 +673,7 @@ xmlNodePtr msMetadataGetExceptionReport(mapObj *map, char *code, char *locator, 
 /************************************************************************/
 
 static
-xmlNodePtr msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, cgiRequestObj *cgi_request, owsRequestObj *ows_request, xmlNsPtr* ppsNsOws, xmlNsPtr* ppsNsXsi, xmlNsPtr* ppsNsGmd, xmlNsPtr* ppsNsGco)
+xmlNodePtr msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, cgiRequestObj *cgi_request, xmlNsPtr* ppsNsOws, xmlNsPtr* ppsNsXsi, xmlNsPtr* ppsNsGmd, xmlNsPtr* ppsNsGco)
 {
   int i;
   int layer_found = MS_FALSE;
@@ -759,7 +763,7 @@ xmlNodePtr msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj,
 /*   MapServer request.                                                 */
 /************************************************************************/
 
-int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *ows_request)
+int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request)
 {
   int i;
   int status = MS_SUCCESS;
@@ -778,7 +782,7 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *o
 
   xml_document = xmlNewDoc(BAD_CAST "1.0");
 
-  if (msMetadataParseRequest(map, cgi_request, ows_request, paramsObj) == MS_FAILURE) {
+  if (msMetadataParseRequest(cgi_request, paramsObj) == MS_FAILURE) {
     psRootNode = msMetadataGetExceptionReport(map, "InvalidRequest", "layer", "Request parsing failed", &psNsOws);
     status = MS_FAILURE;
   }
@@ -803,7 +807,7 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request, owsRequestObj *o
       msIO_sendHeaders();
     }
     else {
-      psRootNode = msMetadataGetLayerMetadata(map, paramsObj, cgi_request, ows_request, &psNsOws, &psNsXsi, &psNsGmd, &psNsGco);
+      psRootNode = msMetadataGetLayerMetadata(map, paramsObj, cgi_request, &psNsOws, &psNsXsi, &psNsGmd, &psNsGco);
     }
   }
 
@@ -878,7 +882,8 @@ void msMetadataFreeParamsObj(metadataParamsObj *metadataparams)
 /*      Parse request into the params object.                           */
 /************************************************************************/
 
-int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+static
+int msMetadataParseRequest(cgiRequestObj *request,
                       metadataParamsObj *metadataparams)
 {
   if (!request || !metadataparams)
