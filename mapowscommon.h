@@ -151,6 +151,8 @@ extern "C" {
 #define MS_OWS_ERROR_OPTION_NOT_SUPPORTED       "OptionNotSupported"
 #define MS_OWS_ERROR_NO_APPLICABLE_CODE         "NoApplicableCode"
 
+#define MS_OWS_ERROR_NOT_FOUND                  "NotFound"
+
 #define MS_WFS_ERROR_OPERATION_PROCESSING_FAILED "OperationProcessingFailed"
 
 #ifdef USE_LIBXML2

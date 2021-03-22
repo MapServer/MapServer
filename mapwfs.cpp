@@ -3384,7 +3384,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
   /* Is it a WFS 2.0 GetFeatureById stored query with an unknown id ? */
   /* If so, CITE interprets the spec as requesting to issue a OperationProcessingFailed */
-  /* exception. A bit strange when a similar request but with RESOURCEID= should */
+  /* exception. But it only checks that the HTTP error code is 403 or 404. So emit 404. */
+  /* A bit strange when a similar request but with RESOURCEID= should */
   /* produce an empty FeatureCollection */
   if( nWFSVersion >= OWS_2_0_0 &&
       paramsObj->pszTypeName != NULL && strcmp(paramsObj->pszTypeName, "?") == 0 &&
@@ -3403,7 +3404,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         {
             msSetError(MS_WFSERR, "Invalid rid '%s'", "msWFSGetFeature()", rid);
             CPLDestroyXMLNode(psDoc);
-            return msWFSException(map, NULL, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED,
+            return msWFSException(map, NULL, MS_OWS_ERROR_NOT_FOUND,
                                   paramsObj->pszVersion );
         }
         CPLDestroyXMLNode(psDoc);
@@ -4112,7 +4113,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             }
             else
             {
-                status = msWFSException(map, NULL, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED,
+                status = msWFSException(map, NULL, MS_OWS_ERROR_NOT_FOUND,
                                         paramsObj->pszVersion );
             }
         }
