@@ -35,17 +35,12 @@ static void msTileResetMetatileLevel(mapObj *map)
 {
   hashTableObj *meta = &(map->web.metadata);
   const char *zero = "0";
-  const char *value = NULL;
 
   /*  Is the tile_metatile_levetl set... */
-  if((value = msLookupHashTable(meta, "tile_metatile_level")) != NULL) {
+  if(msLookupHashTable(meta, "tile_metatile_level") != NULL) {
     msRemoveHashTable(meta, "tile_metatile_level");
-    msInsertHashTable(meta, "tile_metatile_level", zero);
   }
-  /* No tile_metatile_level value. */
-  else {
-    msInsertHashTable(meta, "tile_metatile_level", zero);
-  }
+  msInsertHashTable(meta, "tile_metatile_level", zero);
 }
 #endif
 
@@ -184,10 +179,9 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
 
   } else if( msObj->TileMode == TILE_VE ) {
     int tsize;
-    int i = 0;
-    char j = 0;
 
-    if( (int)strlen( msObj->TileCoords ) - params.metatile_level < 0 ) {
+    const int lenTileCoords = (int)strlen( msObj->TileCoords );
+    if( lenTileCoords - params.metatile_level < 0 ) {
       return(NULL);
     }
 
@@ -195,10 +189,10 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
     ** Process the last elements of the VE coordinate string to place the
     ** requested tile in the context of the metatile
     */
-    for( i = strlen( msObj->TileCoords ) - params.metatile_level;
-         i < strlen( msObj->TileCoords );
+    for( int i = lenTileCoords - params.metatile_level;
+         i < lenTileCoords;
          i++ ) {
-      j = msObj->TileCoords[i];
+      char j = msObj->TileCoords[i];
       tsize = width / zoom;
       if( j == '1' || j == '3' ) mini += tsize;
       if( j == '2' || j == '3' ) minj += tsize;
@@ -307,7 +301,7 @@ int msTileSetup(mapservObj* msObj)
       return(MS_FAILURE);
     }
 
-    if( params.metatile_level >= strlen(msObj->TileCoords) ) {
+    if( params.metatile_level >= (int)strlen(msObj->TileCoords) ) {
       msTileResetMetatileLevel(msObj->map);
     }
 
@@ -394,15 +388,13 @@ int msTileSetExtent(mapservObj* msObj)
     double maxy = SPHEREMERC_GROUND_SIZE / 2.0;
     double zoom = 2.0;
     double tsize;
-    int i = 0;
-    char j = 0;
 
     /*
     ** Walk down the VE URL string, adjusting the extent each time.
     ** For meta-tiling cases, we stop early, to draw a larger image.
     */
-    for( i = 0; i < strlen( msObj->TileCoords ) - params.metatile_level; i++ ) {
-      j = msObj->TileCoords[i];
+    for( int i = 0; i < (int)strlen( msObj->TileCoords ) - params.metatile_level; i++ ) {
+      char j = msObj->TileCoords[i];
       tsize = SPHEREMERC_GROUND_SIZE / zoom;
       if( j == '1' || j == '3' ) minx += tsize;
       if( j == '0' || j == '2' ) maxx -= tsize;

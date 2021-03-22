@@ -400,7 +400,7 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   for(i=0; i<map->numlayers; i++) {
 
     if(map->layerorder[i] != -1) {
-      char *force_draw_label_cache = NULL;
+      const char *force_draw_label_cache = NULL;
 
       lp = (GET_LAYER(map,  map->layerorder[i]));
 
@@ -1066,7 +1066,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   //    MS_FIRST_MATCHING_CLASS: Default and historic MapServer behavior
   //    MS_ALL_MATCHING_CLASSES: SLD behavior
   int ref_rendermode;
-  char * rendermodestr = msLayerGetProcessingKey(layer, "RENDERMODE");
+  const char * rendermodestr = msLayerGetProcessingKey(layer, "RENDERMODE");
   if (layer->rendermode == MS_ALL_MATCHING_CLASSES)
   {
     // SLD takes precedence
@@ -1849,12 +1849,11 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
 {
   int c = shape->classindex;
   int ret = MS_SUCCESS;
-  int i, s, l = 0;
 
   /* RFC48: loop through the styles, and pass off to the type-specific
   function if the style has an appropriate type */
   if(MS_DRAW_FEATURES(drawmode)) {
-    for (s = 0; s < layer->class[c]->numstyles; s++) {
+    for (int s = 0; s < layer->class[c]->numstyles; s++) {
       if (msScaleInBounds(map->scaledenom,
           layer->class[c]->styles[s]->minscaledenom,
           layer->class[c]->styles[s]->maxscaledenom)) {
@@ -1873,7 +1872,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
   }
   
   if(MS_DRAW_LABELS(drawmode)) {
-    for (l = 0; l < layer->class[c]->numlabels; l++) {
+    for (int l = 0; l < layer->class[c]->numlabels; l++) {
       labelObj *label = layer->class[c]->labels[l];
       textSymbolObj ts;
       char *annotext;
@@ -1899,34 +1898,26 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
         memset(&lfr,0,sizeof(lfr));
         msPolylineLabelPath(map, image, anno_shape, &ts, label, &lfr);
 
-        for (i = 0; i < lfr.num_follow_labels; i++) {
+        for (int i = 0; i < lfr.num_follow_labels; i++) {
           if (msAddLabel(map, image, label, layer->index, c, anno_shape, NULL, -1, lfr.follow_labels[i]) != MS_SUCCESS) {
             ret = MS_FAILURE;
             goto line_cleanup;
           }
         }
         free(lfr.follow_labels);
-        for(i=0; i<lfr.lar.num_label_points; i++) {
+        for(int i=0; i<lfr.lar.num_label_points; i++) {
           textSymbolObj *ts_auto = msSmallMalloc(sizeof(textSymbolObj));
           initTextSymbol(ts_auto);
           msCopyTextSymbol(ts_auto,&ts);
           ts_auto->rotation = lfr.lar.angles[i];
-          if (layer->labelcache) {
+          {
             if (msAddLabel(map, image, label, layer->index, c, anno_shape, &lfr.lar.label_points[i], -1, ts_auto) != MS_SUCCESS) {
               ret = MS_FAILURE;
               free(lfr.lar.angles);
               free(lfr.lar.label_points);
               goto line_cleanup;
             }
-          } else {
-            ret = msDrawTextSymbol(map,image,lfr.lar.label_points[i],ts_auto);
-            freeTextSymbol(ts_auto);
-            free(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
-                            * we cannot for now, as the rendering code will modify the glyph positions to apply
-                            * the labelpoint and rotation offsets */
-            if(MS_UNLIKELY(MS_FAILURE == ret)) goto line_cleanup;
           }
-          
         }
         free(lfr.lar.angles);
         free(lfr.lar.label_points);
@@ -1939,7 +1930,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
         if (label->angle != 0)
           label->angle -= map->gt.rotation_angle; /* apply rotation angle */
 
-        for(i=0; i<lar.num_label_points; i++) {
+        for(int i=0; i<lar.num_label_points; i++) {
           textSymbolObj *ts_auto = msSmallMalloc(sizeof(textSymbolObj));
           initTextSymbol(ts_auto);
           msCopyTextSymbol(ts_auto,&ts);
@@ -2901,7 +2892,7 @@ int computeMarkerBounds(mapObj *map, pointObj *annopoint, textSymbolObj *ts, lab
             point[p].y += aoy;
           }
         }
-        if(style->angle) {
+        {
           double rot = -style->angle * MS_DEG_TO_RAD;
           double sina = sin(rot);
           double cosa = cos(rot);
@@ -3546,7 +3537,7 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   if (image) {
     if( MS_RENDERER_PLUGIN(image->format) ) {
-      char *approximation_scale = msLayerGetProcessingKey( layer, "APPROXIMATION_SCALE" );
+      const char *approximation_scale = msLayerGetProcessingKey( layer, "APPROXIMATION_SCALE" );
       if(approximation_scale) {
         if(!strncasecmp(approximation_scale,"ROUND",5)) {
           MS_IMAGE_RENDERER(image)->transform_mode = MS_TRANSFORM_ROUND;
@@ -3592,6 +3583,8 @@ void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image)
 void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
                       shapeObj *shape)
 {
+  (void)map;
+  (void)layer;
   if (image) {
     if(MS_RENDERER_PLUGIN(image->format)) {
       if (image->format->vtable->startShape)
@@ -3611,6 +3604,8 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
 void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
                     shapeObj *shape)
 {
+  (void)map;
+  (void)layer;
   if(MS_RENDERER_PLUGIN(image->format)) {
     if (image->format->vtable->endShape)
       image->format->vtable->endShape(image, shape);
@@ -3622,17 +3617,13 @@ void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
  */
 int msShapeToRange(styleObj *style, shapeObj *shape)
 {
-  double fieldVal;
-  char* fieldStr;
-
   /*first, get the value of the rangeitem, which should*/
   /*evaluate to a double*/
-  fieldStr = shape->values[style->rangeitemindex];
+  const char* fieldStr = shape->values[style->rangeitemindex];
   if (fieldStr == NULL) { /*if there's not value, bail*/
     return MS_FAILURE;
   }
-  fieldVal = 0.0;
-  fieldVal = atof(fieldStr); /*faith that it's ok -- */
+  double fieldVal = atof(fieldStr); /*faith that it's ok -- */
   /*should switch to strtod*/
   return msValueToRange(style, fieldVal, MS_COLORSPACE_RGB);
 }

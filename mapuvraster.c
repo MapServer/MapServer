@@ -238,13 +238,13 @@ static void msUVRasterLayerInfoFree( layerObj *layer )
 
 int msUVRASTERLayerOpen(layerObj *layer)
 {
-  uvRasterLayerInfo *uvlinfo;
-
   /* If we don't have info, initialize an empty one now */
   if( layer->layerinfo == NULL )
     msUVRasterLayerInfoInitialize( layer );
+  if( layer->layerinfo == NULL )
+    return MS_FAILURE;
 
-  uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
+  uvRasterLayerInfo* uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
 
   uvlinfo->refcount = uvlinfo->refcount + 1;
 
@@ -914,7 +914,6 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
   shapefileObj *tileshpfile;
-  int tilelayerindex = -1;
 
   if( (!layer->data || strlen(layer->data) == 0)
       && layer->tileindex == NULL) {
@@ -928,7 +927,7 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   /* If the layer use a tileindex, return the extent of the tileindex shapefile/referenced layer */
   if (layer->tileindex) {
-    tilelayerindex = msGetLayerIndex(map, layer->tileindex);
+    const int tilelayerindex = msGetLayerIndex(map, layer->tileindex);
     if(tilelayerindex != -1) /* does the tileindex reference another layer */
       return msLayerGetExtent(GET_LAYER(map, tilelayerindex), extent);
     else {

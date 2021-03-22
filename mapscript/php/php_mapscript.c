@@ -721,6 +721,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferBytes)
   gdBuf.data = buf->data;
   gdBuf.size = buf->data_offset;
   gdBuf.owns_data = MS_FALSE;
+  (void)gdBuf.owns_data;
 
   /* we are seizing ownership of the buffer contents */
   buf->data_offset = 0;

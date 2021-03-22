@@ -107,7 +107,7 @@ void msInitShape(shapeObj *shape)
   shape->scratch = MS_FALSE; /* not a temporary/scratch shape */
 }
 
-int msCopyShape(shapeObj *from, shapeObj *to)
+int msCopyShape(const shapeObj *from, shapeObj *to)
 {
   int i;
 
@@ -343,6 +343,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
 
   memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
 
+  // cppcheck-suppress memleak
   return msAddLineDirectly( p, &lineCopy );
 }
 
@@ -356,11 +357,20 @@ int msAddLineDirectly(shapeObj *p, lineObj *new_line)
 
   if( p->numlines == 0 ) {
     p->line = (lineObj *) malloc(sizeof(lineObj));
-    MS_CHECK_ALLOC(p->line, sizeof(lineObj), MS_FAILURE);
   } else {
-    p->line = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
-    MS_CHECK_ALLOC(p->line, (p->numlines+1)*sizeof(lineObj), MS_FAILURE);
+    lineObj* newline = (lineObj *) realloc(p->line, (p->numlines+1)*sizeof(lineObj));
+    if( !newline ) {
+        free(p->line);
+    }
+    p->line = newline;
   }
+  if( !p->line )
+  {
+    free(new_line->point );
+    new_line->point = NULL;
+    new_line->numpoints = 0;
+  }
+  MS_CHECK_ALLOC(p->line, (p->numlines+1)*sizeof(lineObj), MS_FAILURE);
 
   /* Copy the new line onto the end of the extended line array */
   c= p->numlines;
@@ -1153,7 +1163,7 @@ static pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c, poi
 void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 {
   int i, j;
-  pointObj a;
+  pointObj a = {0};
   lineObj inside, outside;
   double angle;
   double dx, dy;
@@ -1252,22 +1262,20 @@ double msGetPolygonArea(shapeObj *p)
 */
 static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
 {
-  int i, j;
-  double area=0;
-  double sx=0, sy=0, tsx, tsy, s; /* sums */
-  double a;
-
+  double sx=0, sy=0; /* sums */
   double largestArea=0;
 
-  for(i=0; i<p->numlines; i++) {
-    tsx = tsy = s = 0; /* reset the ring sums */
-    for(j=0; j<p->line[i].numpoints-1; j++) {
-      a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
+  for(int i=0; i<p->numlines; i++) {
+    double tsx = 0;
+    double tsy = 0;
+    double s = 0; /* reset the ring sums */
+    for(int j=0; j<p->line[i].numpoints-1; j++) {
+      double a = p->line[i].point[j].x*p->line[i].point[j+1].y - p->line[i].point[j+1].x*p->line[i].point[j].y;
       s += a;
       tsx += (p->line[i].point[j].x + p->line[i].point[j+1].x)*a;
       tsy += (p->line[i].point[j].y + p->line[i].point[j+1].y)*a;
     }
-    area = MS_ABS(s/2);
+    double area = MS_ABS(s/2);
 
     if(area > largestArea) {
       largestArea = area;
@@ -1612,7 +1620,7 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
   struct polyline_lengths pll;
   int i, ret = MS_SUCCESS;
   double minfeaturesize = -1;
-  assert(ts->annotext);
+  assert(ts == NULL || ts->annotext);
 
 
   if(label && ts) {
@@ -1621,6 +1629,8 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
         if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
           return MS_FAILURE;
       }
+      if(!ts->textpath)
+        return MS_FAILURE;
       minfeaturesize = ts->textpath->bounds.bbox.maxx;
     } else if(label->minfeaturesize) {
       minfeaturesize = label->minfeaturesize * resolutionfactor;
@@ -1658,6 +1668,7 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
 
 int msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_auto_result *lar, labelObj *label, double resolutionfactor)
 {
+  (void)map;
   int j, l, n, point_repeat;
   double t, theta, fwd_length, point_distance;
   double center_point_position, left_point_position, right_point_position, point_position;
@@ -1798,6 +1809,8 @@ int msPolylineLabelPath(mapObj *map, imageObj *image, shapeObj *p, textSymbolObj
         return MS_FAILURE;
       }
     }
+    if(!ts->textpath)
+      return MS_FAILURE;
     minfeaturesize = ts->textpath->bounds.bbox.maxx;
   } else if(label->minfeaturesize) {
     minfeaturesize = label->minfeaturesize * image->resolutionfactor;
@@ -1932,6 +1945,9 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
     if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
       return MS_FAILURE;
     }
+  }
+  if(!ts->textpath) {
+    return MS_FAILURE;
   }
   
   /* skip the label and use the normal algorithm if it has fewer than 2 characters */

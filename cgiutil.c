@@ -46,6 +46,8 @@ int readPostBody( cgiRequestObj *request, char **data )
   size_t data_max, data_len;
   int chunk_size;
 
+  (void)request;
+
   msIO_needBinaryStdin();
 
   /* -------------------------------------------------------------------- */
@@ -68,7 +70,7 @@ int readPostBody( cgiRequestObj *request, char **data )
       return MS_FAILURE;
     }
 
-    if( (int) msIO_fread(*data, 1, data_max, stdin) < data_max ) {
+    if( (int) msIO_fread(*data, 1, data_max, stdin) < (int) data_max ) {
       msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("POST body is short\n");
@@ -110,6 +112,7 @@ int readPostBody( cgiRequestObj *request, char **data )
 
 static char* msGetEnv(const char *name, void* thread_context)
 {
+  (void)thread_context;
   return getenv(name);
 }
 

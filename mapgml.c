@@ -1902,13 +1902,12 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
   char *pszTmp = NULL;
   char *pszTmp2 = NULL;
   char *pszEpsg = NULL;
-  size_t bufferSize = 0;
 
   psNode = xmlNewNode(psNs, BAD_CAST "boundedBy");
   psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "Envelope", NULL);
 
   if (psEpsg) {
-    bufferSize = strlen(psEpsg)+1;
+    const size_t bufferSize = strlen(psEpsg)+1;
     pszEpsg = (char*) msSmallMalloc(bufferSize);
     snprintf(pszEpsg, bufferSize, "%s", psEpsg);
     msStringToLower(pszEpsg);
@@ -1958,37 +1957,33 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
 
 xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, double x, double y)
 {
-  xmlNodePtr psNode = NULL;
-  char *pszTmp = NULL;
-  int dimension = 2;
-  char *pszSrsName = NULL;
-  char *pszTmp2 = NULL;
-  size_t bufferSize = 0;
-
-  psNode = xmlNewNode(psNs, BAD_CAST "Point");
+  
+  xmlNodePtr psNode = xmlNewNode(psNs, BAD_CAST "Point");
 
   if (id) {
     xmlNewNsProp(psNode, psNs, BAD_CAST "id", BAD_CAST id);
   }
 
   if (psSrsName) {
-    bufferSize = strlen(psSrsName)+1;
-    pszSrsName = (char *) msSmallMalloc(bufferSize);
+    const size_t bufferSize = strlen(psSrsName)+1;
+    char* pszSrsName = (char *) msSmallMalloc(bufferSize);
     snprintf(pszSrsName, bufferSize, "%s", psSrsName);
     msStringToLower(pszSrsName);
+    char *pszTmp = NULL;
     pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
     pszTmp = msStringConcatenate(pszTmp, pszSrsName);
     xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST pszTmp);
     free(pszSrsName);
     free(pszTmp);
+    const int dimension = 2;
     pszTmp = msIntToString(dimension);
     xmlNewProp(psNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
     free(pszTmp);
   }
 
-  pszTmp = msDoubleToString(x, MS_TRUE);
+  char* pszTmp = msDoubleToString(x, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, " ");
-  pszTmp2 = msDoubleToString(y, MS_TRUE);
+  char* pszTmp2 = msDoubleToString(y, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
 

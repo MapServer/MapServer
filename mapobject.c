@@ -433,6 +433,9 @@ int msMapComputeGeotransform( mapObj * map )
 void msMapPixelToGeoref( mapObj *map, double *x, double *y )
 
 {
+  (void)map;
+  (void)x;
+  (void)y;
   msSetError(MS_MISCERR, NULL, "msMapPixelToGeoref() not yet implemented");
 }
 
@@ -443,6 +446,9 @@ void msMapPixelToGeoref( mapObj *map, double *x, double *y )
 void msMapGeorefToPixel( mapObj *map, double *x, double *y )
 
 {
+  (void)map;
+  (void)x;
+  (void)y;
   msSetError(MS_MISCERR, NULL, "msMapGeorefToPixel() not yet implemented");
 }
 
@@ -548,7 +554,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     MS_REFCNT_INCR(layer);
     map->numlayers++;
     return map->numlayers-1;
-  } else if (nIndex >= 0 && nIndex < map->numlayers) {
+  } else  {
     /* Move existing layers at the specified nIndex or greater */
     /* to an index one higher */
     int i;
@@ -576,9 +582,6 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     MS_REFCNT_INCR(layer);
     map->numlayers++;
     return nIndex;
-  } else {
-    msSetError(MS_CHILDERR, "Invalid index", "msInsertLayer()");
-    return -1;
   }
 }
 
@@ -640,9 +643,8 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
 int msMoveLayerUp(mapObj *map, int nLayerIndex)
 {
   int iCurrentIndex = -1;
-  int i = 0;
   if (map && nLayerIndex < map->numlayers && nLayerIndex >=0) {
-    for (i=0; i<map->numlayers; i++) {
+    for (int i=0; i<map->numlayers; i++) {
       if ( map->layerorder[i] == nLayerIndex) {
         iCurrentIndex = i;
         break;
@@ -672,9 +674,8 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
 int msMoveLayerDown(mapObj *map, int nLayerIndex)
 {
   int iCurrentIndex = -1;
-  int i = 0;
   if (map && nLayerIndex < map->numlayers && nLayerIndex >=0) {
-    for (i=0; i<map->numlayers; i++) {
+    for (int i=0; i<map->numlayers; i++) {
       if ( map->layerorder[i] == nLayerIndex) {
         iCurrentIndex = i;
         break;
@@ -714,15 +715,11 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
 */
 int msSetLayersdrawingOrder(mapObj *self, int *panIndexes)
 {
-  int nElements = 0;
-  int i, j = 0;
-  int bFound = 0;
-
   if (self && panIndexes) {
-    nElements = self->numlayers;
-    for (i=0; i<nElements; i++) {
-      bFound = 0;
-      for (j=0; j<nElements; j++) {
+    const int nElements = self->numlayers;
+    for (int i=0; i<nElements; i++) {
+      int bFound = 0;
+      for (int j=0; j<nElements; j++) {
         if (panIndexes[j] == i) {
           bFound = 1;
           break;
@@ -734,7 +731,7 @@ int msSetLayersdrawingOrder(mapObj *self, int *panIndexes)
     /* -------------------------------------------------------------------- */
     /*    At this point the array is valid so update the layers order array.*/
     /* -------------------------------------------------------------------- */
-    for (i=0; i<nElements; i++) {
+    for (int i=0; i<nElements; i++) {
       self->layerorder[i] = panIndexes[i];
     }
     return 1;

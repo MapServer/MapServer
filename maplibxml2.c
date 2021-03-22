@@ -83,6 +83,7 @@ void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elnam
 
 xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath)
 {
+  (void)doc;
   xmlXPathObjectPtr result;
   result = xmlXPathEval(xpath, context);
   if (result == NULL) {

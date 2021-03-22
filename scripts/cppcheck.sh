@@ -23,7 +23,10 @@ for dirname in ${TOPDIR}/.; do
     if ! cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=c99 --std=c++11 --std=posix \
         "-I${TOPDIR}" \
-        -DUSE_CURL -DUSE_CAIRO -DUSE_RSVG -DUSE_ICONV -DUSE_FRIBIDI -DUSE_HARFBUZZ -DUSE_EXEMPI -DUSE_GEOS -DUSE_LIBXML2 -DUSE_THREAD -DUSE_FASTCGI -DUSE_WFS_LYR -DUSE_WMS_LYR\
+        -DUSE_CURL -DUSE_CAIRO -DUSE_RSVG -DUSE_ICONV -DUSE_FRIBIDI -DUSE_HARFBUZZ -DUSE_EXEMPI -DUSE_GEOS -DUSE_LIBXML2 -DUSE_THREAD -DUSE_FASTCGI -DUSE_WFS_LYR -DUSE_WMS_LYR \
+        -DGEOS_VERSION_MAJOR=3 -DGEOS_VERSION_MINOR=8 \
+        -DRETURN_FALSE="return false" \
+        -Dcppcheck_assert=assert \
         "$dirname" \
         -j 8 >>${LOG_FILE} 2>&1 ; then
         echo "cppcheck failed"
@@ -36,6 +39,8 @@ ret_code=0
 grep -v "unmatchedSuppression" ${LOG_FILE} \
     | grep -v "/renderers/agg" \
     | grep -v "/build" \
+    | grep -v "yacc.c" \
+    | grep -v "maplexer.c" \
     > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 

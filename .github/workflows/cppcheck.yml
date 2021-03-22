@@ -17,5 +17,4 @@ jobs:
           sudo apt install -y cppcheck
 
       - name: Run cppcheck test
-        # TODO remove || /bin/true when we have fixed issues!
-        run: ./scripts/cppcheck.sh || /bin/true
+        run: ./scripts/cppcheck.sh

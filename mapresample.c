@@ -79,7 +79,6 @@ int InvGeoTransform( double *gt_in, double *gt_out )
 static int
 msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
-                          int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
                           int debug, rasterBufferObj *mask_rb,
                           int bWrapAtLeftRight )
@@ -138,10 +137,10 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         int src_rb_off;
         rgbaArrayObj *src,*dst;
+        assert( src_rb && dst_rb );
         assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
         src = &src_rb->data.rgba;
         dst = &dst_rb->data.rgba;
-        assert( src_rb && dst_rb );
         src_rb_off = nSrcX * src->pixel_step
                       + nSrcY * src->row_step;
 
@@ -301,7 +300,6 @@ static void msSourceSample( imageObj *psSrcImage, rasterBufferObj *rb,
 static int
 msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                            imageObj *psDstImage, rasterBufferObj *dst_rb,
-                           int *panCMap,
                            SimpleTransformer pfnTransform, void *pCBData,
                            int debug, rasterBufferObj *mask_rb,
                            int bWrapAtLeftRight )
@@ -521,7 +519,6 @@ msAverageSample( imageObj *psSrcImage, rasterBufferObj *src_rb,
 static int
 msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
-                          int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
                           int debug, rasterBufferObj *mask_rb )
 
@@ -1347,7 +1344,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   imageObj   *srcImage;
   void  *pTCBData;
   void  *pACBData;
-  int         anCMap[256];
   char       **papszAlteredProcessing = NULL;
   int         nLoadImgXSize, nLoadImgYSize;
   double      dfOversampleRatio;
@@ -1781,17 +1777,17 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   if( EQUAL(resampleMode,"AVERAGE") )
     result =
       msAverageRasterResampler( srcImage, psrc_rb, image, rb,
-                                anCMap, msApproxTransformer, pACBData,
+                                msApproxTransformer, pACBData,
                                 layer->debug, mask_rb );
   else if( EQUAL(resampleMode,"BILINEAR") )
     result =
       msBilinearRasterResampler( srcImage, psrc_rb, image, rb,
-                                 anCMap, msApproxTransformer, pACBData,
+                                 msApproxTransformer, pACBData,
                                  layer->debug, mask_rb, bWrapAtLeftRight );
   else
     result =
       msNearestRasterResampler( srcImage, psrc_rb, image, rb,
-                                anCMap, msApproxTransformer, pACBData,
+                                msApproxTransformer, pACBData,
                                 layer->debug, mask_rb, bWrapAtLeftRight );
 
   /* -------------------------------------------------------------------- */

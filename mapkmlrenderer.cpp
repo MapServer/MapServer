@@ -41,7 +41,7 @@
 
 #define  KML_MAXFEATURES_TODRAW 1000
 
-KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/)
+KmlRenderer::KmlRenderer(int width, int height, outputFormatObj * /*format*/, colorObj* /*color*/)
   : Width(width), Height(height), MapCellsize(1.0), XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL),
     PlacemarkNode(NULL), GeomNode(NULL),
     Items(NULL), NumItems(0), FirstLayer(MS_TRUE), map(NULL), currentLayer(NULL),
@@ -417,7 +417,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
   return MS_SUCCESS;
 }
 
-int KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
+int KmlRenderer::closeNewLayer(imageObj *, layerObj *)
 {
   flushPlacemark();
 
@@ -666,7 +666,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
   xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
 
-void KmlRenderer::renderGlyphs(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
+void KmlRenderer::renderGlyphs(imageObj *, pointObj *labelpnt, char *text, double /*angle*/, colorObj *clr, colorObj * /*olcolor*/, int /*olwidth*/)
 {
   xmlNodePtr node;
 

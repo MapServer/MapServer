@@ -222,7 +222,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
       x = MS_NINT(point->x);
       y = MS_NINT(point->y);
       /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
-      if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+      if (x >= 0 && x < (int)rb.width && y >= 0 && y < (int)rb.height) {
         assert(rb.type == MS_BUFFER_BYTE_RGBA);
         alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
         if(!*alphapixptr) {
@@ -406,7 +406,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
         int x = MS_NINT(point->x);
         int y = MS_NINT(point->y);
         /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
-        if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+        if (x >= 0 && x < (int)rb.width && y >= 0 && y < (int)rb.height) {
           alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
           if(!*alphapixptr) {
             /* label point does not intersect mask */
@@ -425,7 +425,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
         for (i = 0; i < ts->textpath->numglyphs; i++) {
           int x = MS_NINT(ts->textpath->glyphs[i].pnt.x);
           int y = MS_NINT(ts->textpath->glyphs[i].pnt.y);
-          if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+          if (x >= 0 && x < (int)rb.width && y >= 0 && y < (int)rb.height) {
             alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
               freeTextSymbol(ts);
@@ -456,6 +456,9 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     if(!ts->textpath) {
       if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
         return MS_FAILURE;
+    }
+    if(!ts->textpath) {
+      return MS_FAILURE;
     }
     if(featuresize > (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
       /* feature is too big to be drawn, skip it */
@@ -597,7 +600,7 @@ static inline int testSegmentLabelBBoxIntersection(const rectObj *leaderbbox, co
         }
       }
     } else {
-      pointObj tp1,tp2;
+      pointObj tp1 = {0},tp2 = {0};
       tp1.x = test->bbox.minx;
       tp1.y = test->bbox.miny;
       tp2.x = test->bbox.minx;
@@ -779,7 +782,6 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 {
   VSILFILE *stream;
   const char* line;
-  char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
   char *path;
   char szPath[MS_MAXPATHLEN];
   int i;
@@ -814,10 +816,28 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     if(line[0] == '#' || line[0] == '\n' || line[0] == '\r' || line[0] == ' ')
       continue; /* skip comments and blank lines */
 
-    sscanf(line,"%s %s", alias,  file1);
+    char alias[64];
+    snprintf(alias, sizeof(alias), "%s", line);
+    char* ptr = strchr(alias, ' ');
+    if( !ptr )
+        continue;
+    *ptr = '\0';
 
-    if (!(*file1) || !(*alias) || (strlen(file1) <= 0))
+    const char* file1StartPtr = line + (ptr - alias);
+    file1StartPtr ++;
+    /* Skip leading spaces */
+    while( *file1StartPtr == ' ' )
+        file1StartPtr ++;
+
+    if (!(*file1StartPtr) || !(*alias))
       continue;
+
+    char file1[MS_PATH_LENGTH];
+    snprintf(file1, sizeof(file1), "%s", file1StartPtr);
+    /* Remove trailing spaces */
+    ptr = strrchr(file1, ' ');
+    if( ptr )
+        *ptr = '\0';
 
     bFullPath = 0;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -831,6 +851,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     if(bFullPath) { /* already full path */
       msInsertHashTable(&(fontset->fonts), alias, file1);
     } else {
+      char file2[MS_PATH_LENGTH];
       snprintf(file2, sizeof(file2), "%s%s", path, file1);
       /* msInsertHashTable(fontset->fonts, alias, file2); */
 
@@ -860,6 +881,8 @@ int msGetTextSymbolSize(mapObj *map, textSymbolObj *ts, rectObj *r) {
     if(MS_UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
       return MS_FAILURE;
   }
+  if(!ts->textpath)
+    return MS_FAILURE;
   *r = ts->textpath->bounds.bbox;
   return MS_SUCCESS;
 }
@@ -1036,6 +1059,16 @@ int intersectLabelPolygons(lineObj *l1, rectObj *r1, lineObj *l2, rectObj *r2)
   } else {
     p2 = l2;
   }
+  (void)pnts1[0].x; (void)pnts1[0].y;
+  (void)pnts1[1].x; (void)pnts1[1].y;
+  (void)pnts1[2].x; (void)pnts1[2].y;
+  (void)pnts1[3].x; (void)pnts1[3].y;
+  (void)pnts1[4].x; (void)pnts1[4].y;
+  (void)pnts2[0].x; (void)pnts2[0].y;
+  (void)pnts2[1].x; (void)pnts2[1].y;
+  (void)pnts2[2].x; (void)pnts2[2].y;
+  (void)pnts2[3].x; (void)pnts2[3].y;
+  (void)pnts2[4].x; (void)pnts2[4].y;
 
   /* STEP 1: look for intersecting line segments */
   for(v1=1; v1<p1->numpoints; v1++)
@@ -1060,8 +1093,6 @@ int intersectLabelPolygons(lineObj *l1, rectObj *r1, lineObj *l2, rectObj *r2)
 /* For MapScript, exactly the same the msInsertStyle */
 int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
 {
-  int i;
-
   if (!style) {
     msSetError(MS_CHILDERR, "Can't insert a NULL Style", "msInsertLabelStyle()");
     return -1;
@@ -1080,19 +1111,16 @@ int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
     MS_REFCNT_INCR(style);
     label->numstyles++;
     return label->numstyles-1;
-  } else if (nStyleIndex >= 0 && nStyleIndex < label->numstyles) {
+  } else {
     /* Move styles existing at the specified nStyleIndex or greater */
     /* to a higher nStyleIndex */
-    for (i=label->numstyles-1; i>=nStyleIndex; i--) {
+    for (int i=label->numstyles-1; i>=nStyleIndex; i--) {
       label->styles[i+1] = label->styles[i];
     }
     label->styles[nStyleIndex]=style;
     MS_REFCNT_INCR(style);
     label->numstyles++;
     return nStyleIndex;
-  } else {
-    msSetError(MS_CHILDERR, "Invalid nStyleIndex", "insertLabelStyle()");
-    return -1;
   }
 }
 
@@ -1101,9 +1129,8 @@ int msInsertLabelStyle(labelObj *label, styleObj *style, int nStyleIndex)
  */
 int msMoveLabelStyleUp(labelObj *label, int nStyleIndex)
 {
-  styleObj *psTmpStyle = NULL;
   if (label && nStyleIndex < label->numstyles && nStyleIndex >0) {
-    psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
+    styleObj* psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
     initStyle(psTmpStyle);
 
     msCopyStyle(psTmpStyle, label->styles[nStyleIndex]);
@@ -1152,11 +1179,10 @@ int msMoveLabelStyleDown(labelObj *label, int nStyleIndex)
  */
 int msDeleteLabelStyle(labelObj *label, int nStyleIndex)
 {
-  int i = 0;
   if (label && nStyleIndex < label->numstyles && nStyleIndex >=0) {
     if (freeStyle(label->styles[nStyleIndex]) == MS_SUCCESS)
       msFree(label->styles[nStyleIndex]);
-    for (i=nStyleIndex; i< label->numstyles-1; i++) {
+    for (int i=nStyleIndex; i< label->numstyles-1; i++) {
       label->styles[i] = label->styles[i+1];
     }
     label->styles[label->numstyles-1] = NULL;

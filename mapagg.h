@@ -37,7 +37,7 @@
 class line_adaptor
 {
 public:
-  line_adaptor(shapeObj *shape):s(shape) {
+  explicit line_adaptor(shapeObj *shape):s(shape) {
     m_line=s->line; /*first line*/
     m_point=m_line->point; /*current vertex is first vertex of first line*/
     m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
@@ -88,7 +88,7 @@ protected:
 class polygon_adaptor
 {
 public:
-  polygon_adaptor(shapeObj *shape):s(shape),m_stop(false) {
+  explicit polygon_adaptor(shapeObj *shape):s(shape) {
     m_line=s->line; /*first lines*/
     m_point=m_line->point; /*first vertex of first line*/
     m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
@@ -140,12 +140,13 @@ public:
   }
 protected:
   shapeObj *s;
-  double ox,oy;
+  double ox = 0.0;
+  double oy = 0.0;
   lineObj *m_line, /*pointer to current line*/
           *m_lend; /*pointer to after last line of the shape*/
   pointObj *m_point, /*pointer to current vertex*/
            *m_pend; /*pointer to after last vertex of current line*/
-  bool m_stop; /*should next call return stop command*/
+  bool m_stop = false; /*should next call return stop command*/
 };
 
 mapserver::path_storage imageVectorSymbol(symbolObj *);

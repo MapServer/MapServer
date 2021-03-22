@@ -206,17 +206,13 @@ static int matchdxfcolor(colorObj col)
   if (lastcolor != -1)
     return lastcolor;
   while (tcolor < 256 && (ctable[tcolor].r != col.red || ctable[tcolor].g != col.green || ctable[tcolor].b != col.blue)) {
-    if (abs(
-          (ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+
-          (ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) +
-          (ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green) < delta)
-       ) {
+    const int dr = ctable[tcolor].r - col.red;
+    const int dg = ctable[tcolor].g - col.green;
+    const int db = ctable[tcolor].b - col.blue;
+    const int newdelta = dr * dr + dg * dg + db * db;
+    if (newdelta < delta) {
       best = tcolor;
-      delta = abs(
-                (ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+
-                (ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) +
-                (ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green)
-              );
+      delta = newdelta;
     }
     tcolor++;
   }
@@ -231,6 +227,8 @@ static int dxf;
 
 void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image)
 {
+  (void)map;
+  (void)image;
   DEBUG_IF printf("ImageStartLayerIM\n<BR>");
   free(lname);
   if (layer->name)
@@ -464,12 +462,13 @@ void msDrawMarkerSymbolIM(mapObj *map, imageObj* img, pointObj *p, styleObj *sty
 /* ------------------------------------------------------------------------- */
 /* Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------- */
-void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
+void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor_ignored)
 {
+  (void)img;
+  (void)scalefactor_ignored;
   symbolObj *symbol;
   int i,j,l;
   char first = 1;
-  double size;
   DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 
 
@@ -478,13 +477,6 @@ void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style
 
   if(style->symbol > map->symbolset.numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   symbol = map->symbolset.symbol[style->symbol];
-  if(style->size == -1) {
-    size = msSymbolGetDefaultSize( symbol );
-    size = MS_NINT(size*scalefactor);
-  } else
-    size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize*img->resolutionfactor);
-  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
   if(style->symbol == 0) { /* just draw a single width line */
@@ -546,25 +538,19 @@ void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style
 /* ------------------------------------------------------------------------- */
 /* Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------- */
-void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
+void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor_ignored)
 {
+  (void)img;
+  (void)scalefactor_ignored;
   symbolObj *symbol;
   int i,j,l;
   char first = 1;
-  double size;
 
   DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
   if(p->numlines <= 0) return;
 
   symbol = map->symbolset.symbol[style->symbol];
-  if(style->size == -1) {
-    size = msSymbolGetDefaultSize( symbol );
-    size = MS_NINT(size*scalefactor);
-  } else
-    size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize*img->resolutionfactor);
-  size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color //     */
@@ -624,6 +610,8 @@ void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *styl
  */
 int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
+  (void)map;
+  (void)img;
   DEBUG_IF printf("msDrawText<BR>\n");
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
@@ -631,7 +619,7 @@ int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, la
 
   if (dxf == 2) {
     im_iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
-  } else if (dxf) {
+  } else {
     im_iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
   }
   return(0);
@@ -646,7 +634,6 @@ int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
 {
   FILE *stream;
   char workbuffer[5000];
-  int nSize=0, size=0, iIndice=0;
 
   DEBUG_IF printf("msSaveImageIM\n<BR>");
 
@@ -681,11 +668,11 @@ int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
     } else {
       msIO_fprintf(stream, "<map name=\"%s\" width=\"%d\" height=\"%d\">\n", mapName, img->width, img->height);
     }
-    nSize = sizeof(workbuffer);
+    const int nSize = sizeof(workbuffer);
 
-    size = strlen(img->img.imagemap);
+    const int size = strlen(img->img.imagemap);
     if (size > nSize) {
-      iIndice = 0;
+      int iIndice = 0;
       while ((iIndice + nSize) <= size) {
         snprintf(workbuffer, sizeof(workbuffer), "%s", img->img.imagemap+iIndice );
         workbuffer[nSize-1] = '\0';

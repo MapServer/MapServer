@@ -957,7 +957,8 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
 /*      Add a member node used for getObservation request using         */
 /*      Observation as the result format.                               */
 /************************************************************************/
-xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsSos, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, layerObj *lp, const char *pszProcedure)
+static
+xmlNodePtr msSOSAddMemberNodeObservation(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psParent, mapObj *map, layerObj *lp, const char *pszProcedure)
 {
   char *pszTmp = NULL;
   xmlNodePtr psNode=NULL, psObsNode=NULL, psMemberNode=NULL;
@@ -2400,7 +2401,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             layer defined using sos_procedure)*/
           if (msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "S", "procedure_item") == NULL) {
             pszProcedure = msOWSLookupMetadata(&(lp->metadata), "S", "procedure");
-            psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
+            psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsOm, psNsSwe, psNsXLink, psRootNode, map, (GET_LAYER(map, i)),
                                 pszProcedure);
             /*add a result node*/
             psResultNode = xmlNewChild(psObservationNode, NULL, BAD_CAST "result", NULL);
@@ -2459,7 +2460,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
                                    *nDiffrentProc);
 
                 paDiffrentProc[nDiffrentProc-1].pszProcedure = msStrdup(pszProcedureValue);
-                psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsSos, psNsOm, psNsSwe, psNsXLink, psRootNode, map,
+                psObservationNode = msSOSAddMemberNodeObservation(psNsGml, psNsOm, psNsSwe, psNsXLink, psRootNode, map,
                                     (GET_LAYER(map, i)),
                                     pszProcedureValue);
 

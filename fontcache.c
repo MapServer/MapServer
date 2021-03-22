@@ -345,6 +345,7 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph) {
     }
     error = FT_Outline_New(cache->library, face->face->glyph->outline.n_points,
         face->face->glyph->outline.n_contours, &oc->outline);
+    (void)error;
     FT_Outline_Copy(&face->face->glyph->outline, &oc->outline);
     oc->key = key;
     UT_HASH_ADD(hh,face->outline_cache,key,sizeof(outline_element_key), oc);

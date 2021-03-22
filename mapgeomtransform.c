@@ -176,10 +176,12 @@ int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleO
       msComputeBounds(shape);
       bbox_points[0].x=bbox_points[4].x=bbox_points[1].x =
                                           (shape->bounds.minx < -padding) ? -padding : shape->bounds.minx;
+      /* cppcheck-suppress unreadVariable */
       bbox_points[2].x=bbox_points[3].x =
                          (shape->bounds.maxx > image->width+padding) ? image->width+padding : shape->bounds.maxx;
       bbox_points[0].y=bbox_points[4].y=bbox_points[3].y =
                                           (shape->bounds.miny < -padding) ? -padding : shape->bounds.miny;
+      /* cppcheck-suppress unreadVariable */
       bbox_points[1].y=bbox_points[2].y =
                          (shape->bounds.maxy > image->height+padding) ? image->height+padding : shape->bounds.maxy;
       status = msDrawShadeSymbol(map, image, &bbox, style, scalefactor);
@@ -221,10 +223,12 @@ int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleO
 
       switch (tmpshp->type) {
         case MS_SHAPE_POINT:
-        case MS_SHAPE_POLYGON:        
+        case MS_SHAPE_POLYGON:
+          /* cppcheck-suppress unreadVariable */
           status = msDrawShadeSymbol(map, image, tmpshp, style, scalefactor);
           break;
         case MS_SHAPE_LINE:
+          /* cppcheck-suppress unreadVariable */
           status = msDrawLineSymbol(map, image, tmpshp, style, scalefactor);
           break;
       }

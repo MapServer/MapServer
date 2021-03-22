@@ -213,14 +213,15 @@ void msConnPoolRegister( layerObj *layer,
 
   if( connectionCount == connectionMax ) {
     connectionMax += 10;
-    connections = (connectionObj *)
+    connectionObj* newConnections = (connectionObj *)
                   realloc(connections,
                           sizeof(connectionObj) * connectionMax );
-    if( connections == NULL ) {
+    if( newConnections == NULL ) {
       msSetError(MS_MEMERR, NULL, "msConnPoolRegister()");
       msReleaseLock( TLOCK_POOL );
       return;
     }
+    connections = newConnections;
   }
 
   /* -------------------------------------------------------------------- */

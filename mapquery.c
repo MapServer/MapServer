@@ -164,8 +164,7 @@ static void initQueryCache(queryCacheObj* queryCache)
  * limits allowed in map->query.max_cached_shape_count and
  * map->query.max_cached_shape_ram_amount.
  */
-static int canCacheShape(mapObj* map, queryCacheObj *queryCache,
-                         shapeObj* shape, int shape_ram_size)
+static int canCacheShape(mapObj* map, queryCacheObj *queryCache, int shape_ram_size)
 {
   if( !map->query.cache_shapes )
       return MS_FALSE;
@@ -205,7 +204,7 @@ static int addResult(mapObj* map, resultCacheObj *cache,
   int i;
   int shape_ram_size = (map->query.max_cached_shape_ram_amount > 0) ? 
                                             msGetShapeRAMSize( shape ) : 0;
-  int store_shape = canCacheShape (map, queryCache, shape, shape_ram_size);
+  int store_shape = canCacheShape (map, queryCache, shape_ram_size);
 
   if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)

@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
   /*    index format                                                      */
   /* -------------------------------------------------------------------- */
   i = 1;
+  /* cppcheck-suppress knownConditionTrueFalse */
   if( *((uchar *) &i) == 1 )
     byte_order = MS_NEW_LSB_ORDER;
   else

@@ -196,12 +196,12 @@ static int msOCIGet4DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
 static int msOCIConvertCircle( pointObj *pt );
 static void osFilteritem(layerObj *layer, int function, char *query_str, size_t size, int mode);
 static void osAggrGetExtent(layerObj *layer, char *query_str, size_t size, char *geom_column_name, char *table_name);
-static void osConvexHullGetExtent(layerObj *layer, char *query_str, size_t size, char *geom_column_name, char *table_name);
-static void osGeodeticData(int function, int version, char *query_str, size_t size, char *geom_column_name, char *index_column_name, char *srid, rectObj rect);
-static void osNoGeodeticData(int function, int version, char *query_str, size_t size, char *geom_column_name, char *index_column_name, char *srid, rectObj rect);
+/* static void osConvexHullGetExtent(layerObj *layer, char *query_str, size_t size, char *geom_column_name, char *table_name); */
+static void osGeodeticData(int function, char *query_str, size_t size, char *geom_column_name, char *index_column_name);
+static void osNoGeodeticData(int function, int version, char *query_str, size_t size, char *geom_column_name, char *index_column_name);
 static double osCalculateArcRadius(pointObj *pnt);
-static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
-static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d, int data4d);
+static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
+static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int data3d, int data4d);
 static void osShapeBounds ( shapeObj *shp );
 static void osCloneShape(shapeObj *shape, shapeObj *newshape, int data3d, int data4d);
 static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, int interpretation, int data3d, int data4d);
@@ -287,6 +287,7 @@ OCIType *get_tdo(char *typename, msOracleSpatialHandler *hand, msOracleSpatialDa
  * otherwise, returns 0 */
 static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDataHandler *dthand )
 {
+  (void)dthand;
   if (hand->last_oci_status == MS_FAILURE) {
     /* there was an error */
     msSetError( MS_ORACLESPATIALERR, "OracleSpatial server returned an error, check logs for more details", routine );
@@ -717,7 +718,7 @@ static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo )
 }
 
 /*function that creates the correct sql for geoditical srid for version 9i*/
-static void osGeodeticData(int function, int version, char *query_str, size_t size, char *geom_column_name, char *index_column_name, char *srid, rectObj rect)
+static void osGeodeticData(int function, char *query_str, size_t size, char *geom_column_name, char *index_column_name)
 {
   char *filter_field=index_column_name[0]=='\0' ? geom_column_name : index_column_name;
   switch (function) {
@@ -767,7 +768,7 @@ static void osGeodeticData(int function, int version, char *query_str, size_t si
 }
 
 /*function that generate the correct sql for no geoditic srid's*/
-static void osNoGeodeticData(int function, int version, char *query_str, size_t size, char *geom_column_name, char *index_column_name, char *srid, rectObj rect)
+static void osNoGeodeticData(int function, int version, char *query_str, size_t size, char *geom_column_name, char *index_column_name)
 {
    char *filter_field= index_column_name[0]=='\0' ? geom_column_name : index_column_name;
    switch (function) {
@@ -999,7 +1000,6 @@ static int msOCIConvertCircle( pointObj *pt )
 /*function that creates the correct sql for filter and filteritem*/
 static void osFilteritem(layerObj *layer, int function, char *query_str, size_t size, int mode)
 {
-  char *native_filter; 
   if (layer->filter.native_string != NULL) {
     if (mode == 1)
       strlcat( query_str, " WHERE ", size);
@@ -1029,7 +1029,7 @@ static void osFilteritem(layerObj *layer, int function, char *query_str, size_t 
      if ((function == FUNCTION_NONE)&&(layer->filter.native_string != NULL)) {
      strlcat( query_str, " AND ", size);
      }
-    native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+    const char* native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
     snprintf(query_str + strlen(query_str) , size-strlen(query_str), " %s ", native_filter);
     if (function != FUNCTION_NONE) {
      strlcat( query_str, " AND ", size);
@@ -1059,6 +1059,7 @@ static void osAggrGetExtent(layerObj *layer, char *query_str, size_t size, char 
     msDebug("osAggrGetExtent was called: %s.\n", query_str);
 }
 
+/*
 static void osConvexHullGetExtent(layerObj *layer, char *query_str, size_t size, char *geom_column_name, char *table_name)
 {
   char query_str2[6000];
@@ -1075,6 +1076,7 @@ static void osConvexHullGetExtent(layerObj *layer, char *query_str, size_t size,
 
   snprintf( query_str, size, "SELECT SDO_GEOM.SDO_CONVEXHULL(%s, %f) AS GEOM from %s)", geom_column_name, TOLERANCE, query_str2);
 }
+*/
 
 static double osCalculateArcRadius(pointObj *pnt)
 {
@@ -1089,7 +1091,7 @@ static double osCalculateArcRadius(pointObj *pnt)
   return ( ( r1*r2*r3 )/( 4*sqrt( rc * (rc-r1) * (rc-r2) * (rc-r3) ) ) );
 }
 
-static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double area, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
+static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double radius, double npoints, int side, lineObj arcline, shapeObj *shape)
 {
   double length, ctrl, angle;
   double divbas, plusbas, cosbas, sinbas = 0;
@@ -1101,7 +1103,8 @@ static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double area, d
     ctrl = length/(2*radius);
 
     if (data3d||data4d) {
-      zrange = labs(pnt[0].z-pnt[1].z)/npoints;
+      /* is this cast (long) legit... ? */
+      zrange = labs((long)(pnt[0].z-pnt[1].z))/npoints;
       if ((pnt[0].z > pnt[1].z) && side == 1)
         zrange *= -1;
       else if ((pnt[0].z < pnt[1].z) && side == 1)
@@ -1173,7 +1176,7 @@ static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double area, d
 /* Part of this function was based on Terralib function TeGenerateArc
  * found in TeGeometryAlgorith.cpp (www.terralib.org).
  * Part of this function was based on Dr. Ialo (Univali/Cttmar) functions. */
-static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n, int data3d, int data4d)
+static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int data3d, int data4d)
 {
   double mult, plus1, plus2, plus3, bpoint;
   double cx, cy;
@@ -1228,15 +1231,15 @@ static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int 
     area = ((points.point[i].x + points.point[i+1].x) * (points.point[i+1].y - points.point[i].y))
            + ((points.point[i+1].x + points.point[i+2].x) * (points.point[i+2].y - points.point[i+1].y));
 
-    npoints = labs(area/radius);
+    npoints = labs((long)(area/radius));
 
     point5[0] = points.point[i];
     point5[1] = points.point[i+1];
-    osCalculateArc(point5, data3d, data4d, area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
+    osCalculateArc(point5, data3d, data4d, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
 
     point5[0] = points.point[i+1];
     point5[1] = points.point[i+2];
-    osCalculateArc(point5, data3d, data4d,  area, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
+    osCalculateArc(point5, data3d, data4d, radius, (npoints>1000)?1000:npoints, side, arcline, shape);
 
   } else {
     arcline.point = (pointObj *)malloc(sizeof(pointObj)*(2));
@@ -1453,7 +1456,7 @@ static void osArcPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeome
     points.numpoints = n;
 
     for (i = 0; i < n-2; i = i+2)
-      osGenerateArc(shape, arcpoints, points, i, n, data3d, data4d);
+      osGenerateArc(shape, arcpoints, points, i, data3d, data4d);
   }
   free (points.point);
 }
@@ -2005,9 +2008,9 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   }
 
   if ((((atol(srid) >= 8192) && (atol(srid) <= 8330)) || (atol(srid) == 2) || (atol(srid) == 5242888) || (atol(srid) == 2000001)) && (version == VERSION_9i))
-    osGeodeticData(function, version, query_str, sizeof(query_str), geom_column_name, indexfield, srid, rect);
+    osGeodeticData(function, query_str, sizeof(query_str), geom_column_name, indexfield);
   else
-    osNoGeodeticData(function, version, query_str, sizeof(query_str), geom_column_name, indexfield, srid, rect);
+    osNoGeodeticData(function, version, query_str, sizeof(query_str), geom_column_name, indexfield);
 
   if( layer->sortBy.nProperties > 0 ) {
       msDebug("Layer sorting is requested\n");
@@ -2081,9 +2084,6 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   /* do the actual binding */
 
   if (success && function != FUNCTION_NONE) {
-    const char* bind_key;
-    char* bind_value;
-    char* bind_tag;
     success = TRY( hand,
                    /* bind in srid */
                    OCIBindByName( sthand->stmthp, &bnd2p,  hand->errhp, (text *) ":srid", strlen(":srid"),(ub1 *) srid,  strlen(srid)+1, SQLT_STR,
@@ -2096,10 +2096,10 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
                      OCIBindObject(bnd1p, hand->errhp, ordinates_tdo, (dvoid **)&ordinates, (ub4 *)0, (dvoid **)0, (ub4 *)0));
 
     /* bind the variables from the bindvals hash */
-    bind_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
+    const char* bind_key = msFirstKeyFromHashTable(&layer->bindvals);
     while(bind_key != NULL) {
-      bind_value = msLookupHashTable(&layer->bindvals, bind_key);
-      bind_tag = (char*)malloc(sizeof(char) * strlen(bind_key) + 2);
+      const char* bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+      char* bind_tag = (char*)malloc(sizeof(char) * strlen(bind_key) + 2);
       sprintf(bind_tag, ":%s", bind_key);
 
       success = success && TRY(hand, OCIBindByName( sthand->stmthp, &bnd2p,  hand->errhp, (text *)bind_tag, strlen(bind_tag),(ub1 *) bind_value,  strlen(bind_value)+1, SQLT_STR,
@@ -2310,7 +2310,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
       return MS_FAILURE;
     }
 
-    if (resultindex >= sthand->rows_count) {
+    if ((unsigned)resultindex >= sthand->rows_count) {
       if (layer->debug >= 5)
                msDebug("msOracleSpatialLayerGetShape problem with cursor. Trying to fetch record = %d of %d, falling back to GetShape\n", resultindex, sthand->rows_count);
 
@@ -2723,7 +2723,6 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
   OCIBind *bnd1p = NULL,  *bnd2p = NULL;
 
   msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
-  msOracleSpatialDataHandler *dthand = NULL;
   msOracleSpatialHandler *hand = NULL;
   msOracleSpatialStatement *sthand = NULL;
 
@@ -2734,7 +2733,6 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
     msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetAutoProjection called on unopened layer","msOracleSpatialLayerGetAutoProjection()");
     return MS_FAILURE;
   } else {
-    dthand = (msOracleSpatialDataHandler *)layerinfo->oradatahandlers;
     hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
     sthand = (msOracleSpatialStatement *) layerinfo->orastmt;
   }
@@ -2927,7 +2925,6 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
   OCIParam *pard = (OCIParam *) 0;
 
   msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *) layer->layerinfo;
-  msOracleSpatialDataHandler *dthand = NULL;
   msOracleSpatialHandler *hand = NULL;
   msOracleSpatialStatement *sthand = NULL;
   int get_field_details = 0;
@@ -2940,7 +2937,6 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetItems called on unopened layer", "msOracleSpatialLayerGetItems()" );
     return MS_FAILURE;
   } else {
-    dthand = (msOracleSpatialDataHandler *)layerinfo->oradatahandlers;
     hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
     sthand = (msOracleSpatialStatement *) layerinfo->orastmt;
   }
@@ -3362,6 +3358,10 @@ void msOracleSpatialLayerFreeItemInfo( layerObj *layer )
 
 int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c, shapeObj *shape )
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   msSetError( MS_ORACLESPATIALERR, "Function not implemented yet", "msLayerGetAutoStyle()" );
   return MS_FAILURE;
 }
@@ -3811,89 +3811,116 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
 
 int msOracleSpatialLayerOpen(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerOpen()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerIsOpen(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerIsOpen()" );
   return MS_FALSE;
 }
 
 int msOracleSpatialLayerClose(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerClose()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)layer;
+  (void)rect;
+  (void)isQuery;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerWhichShapes()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerNextShape(layerObj *layer, shapeObj *shape)
 {
+  (void)layer;
+  (void)shape;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerNextShape()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerGetItems(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerGetItems()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *record )
 {
+  (void)layer;
+  (void)shape;
+  (void)record;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerGetShape()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
 {
+  (void)layer;
+  (void)extent;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerGetExtent()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerInitItemInfo()" );
   return MS_FAILURE;
 }
 
 void msOracleSpatialLayerFreeItemInfo(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msOracleSpatialLayerFreeItemInfo()" );
 }
 
 int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c, shapeObj *shape )
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerGetAutoStyle()" );
   return MS_FAILURE;
 }
 
 void msOracleSpatialEnablePaging(layerObj *layer, int value)
 {
+  (void)layer;
+  (void)value;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerEnablePaging()" );
   return;
 }
 
 int msOracleSpatialGetPaging(layerObj *layer)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerGetPaging()" );
   return MS_FAILURE;
 }
 
 int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
 {
+  (void)layer;
+  (void)filter;
+  (void)filteritem;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerTranslateFilter()" );
   return MS_FAILURE;
 }
 
 char *msOracleSpatialEscapePropertyName(layerObj *layer, const char* pszString)
 {
+  (void)layer;
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerEscapePropertyName()" );
   return msStrdup(pszString);
 }

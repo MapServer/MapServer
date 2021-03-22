@@ -37,6 +37,10 @@
 
 #include <assert.h>
 
+#ifndef cppcheck_assert
+#define cppcheck_assert(x) do {} while(0)
+#endif
+
 static int populateVirtualTable(layerVTableObj *vtable);
 
 /*
@@ -54,6 +58,7 @@ int msLayerInitItemInfo(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerInitItemInfo(layer);
 }
 
@@ -61,9 +66,10 @@ void msLayerFreeItemInfo(layerObj *layer)
 {
   if ( ! layer->vtable) {
     int rv =  msInitializeVirtualTable(layer);
-    if (rv != MS_SUCCESS)
+    if( rv != MS_SUCCESS )
       return;
   }
+  cppcheck_assert(layer->vtable);
   layer->vtable->LayerFreeItemInfo(layer);
 
   /*
@@ -238,6 +244,7 @@ int msLayerOpen(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerOpen(layer);
 }
 
@@ -251,6 +258,7 @@ int msLayerIsOpen(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerIsOpen(layer);
 }
 
@@ -264,6 +272,7 @@ int msLayerSupportsCommonFilters(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerSupportsCommonFilters(layer);
 }
 
@@ -274,6 +283,7 @@ int msLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteri
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerTranslateFilter(layer, filter, filteritem);
 }
 
@@ -297,6 +307,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerWhichShapes(layer, rect, isQuery);
 }
 
@@ -315,6 +326,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
 
 #ifdef USE_V8_MAPSCRIPT
   /* we need to force the GetItems for the geomtransform attributes */
@@ -337,18 +349,14 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     rv = layer->vtable->LayerNextShape(layer, shape);
     if(rv != MS_SUCCESS) return rv;
 
-    filter_passed = MS_TRUE;  /* By default accept ANY shape */
-    
     /* attributes need to be iconv'd to UTF-8 before any filter logic is applied */
     if(layer->encoding) {
       rv = msLayerEncodeShapeAttributes(layer,shape);
       if(rv != MS_SUCCESS)
         return rv;
     }
-    
-    // if(layer->numitems > 0 && layer->iteminfo) {
-      filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
-    // }
+
+    filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
 
     if(!filter_passed) msFreeShape(shape);
   } while(!filter_passed);
@@ -392,6 +400,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     if(rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
 
   /*
   ** TODO: This is where dynamic joins could happen. Joined attributes would be
@@ -401,9 +410,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   rv = layer->vtable->LayerGetShape(layer, shape, record);
   if(rv != MS_SUCCESS)
     return rv;
-  
+
   /* RFC89 Apply Layer GeomTransform */
-  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE && rv == MS_SUCCESS) {
+  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
     rv = msGeomTransformShape(layer->map, layer, shape); 
     if(rv != MS_SUCCESS)
       return rv;
@@ -437,6 +446,7 @@ int msLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProje
     if(rv != MS_SUCCESS)
       return -1;
   }
+  cppcheck_assert(layer->vtable);
 
   return layer->vtable->LayerGetShapeCount(layer, rect, rectProjection);
 }
@@ -507,6 +517,7 @@ int msLayerGetItems(layerObj *layer)
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
 
   /* At the end of switch case (default -> break; -> return MS_FAILURE),
    * was following TODO ITEM:
@@ -555,6 +566,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
       return rv;
     }
   }
+  cppcheck_assert(layer->vtable);
   status = layer->vtable->LayerGetExtent(layer, extent);
 
   if (need_to_close)
@@ -879,6 +891,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
     rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS) return rv;
   }
+  cppcheck_assert(layer->vtable);
 
   /* Cleanup any previous item selection */
   msLayerFreeItemInfo(layer);
@@ -993,12 +1006,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
     char **tokens;
     int n = 0;
     int j;
-    int bFound = 0;
 
     tokens = msStringSplit(metadata, ',', &n);
     if(tokens) {
       for(i=0; i<n; i++) {
-        bFound = 0;
+        int bFound = 0;
         for(j=0; j<layer->numitems; j++) {
           if(strcasecmp(tokens[i], layer->items[j]) == 0) {
             bFound = 1;
@@ -1066,7 +1078,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
             }
         }
 
-        if(layer->items) {
+        if(layer->numitems > 0) {
             msFreeCharArray(layer->items, layer->numitems);
         }
         msFreeCharArray(unsorted_items, numitems);
@@ -1112,8 +1124,6 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 
   /* populate the iteminfo array */
   return(msLayerInitItemInfo(layer));
-
-  return(MS_SUCCESS);
 }
 
 /*
@@ -1131,6 +1141,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* sha
     if (rv != MS_SUCCESS)
       return rv;
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerGetAutoStyle(map, layer, c, shape);
 }
 
@@ -1231,6 +1242,7 @@ int msLayerGetNumFeatures(layerObj *layer)
         if (rv != MS_SUCCESS)
             return result;
     }
+    cppcheck_assert(layer->vtable);
 
     result = layer->vtable->LayerGetNumFeatures(layer);
 
@@ -1300,7 +1312,7 @@ void msLayerAddProcessing( layerObj *layer, const char *directive )
   layer->processing[layer->numprocessing] = NULL;
 }
 
-char *msLayerGetProcessing( layerObj *layer, int proc_index)
+const char *msLayerGetProcessing( const layerObj *layer, int proc_index)
 {
   if (proc_index < 0 || proc_index >= layer->numprocessing) {
     msSetError(MS_CHILDERR, "Invalid processing index.", "msLayerGetProcessing()");
@@ -1310,7 +1322,7 @@ char *msLayerGetProcessing( layerObj *layer, int proc_index)
   }
 }
 
-char *msLayerGetProcessingKey( layerObj *layer, const char *key )
+const char *msLayerGetProcessingKey( const layerObj *layer, const char *key )
 {
   int i, len = strlen(key);
 
@@ -1593,15 +1605,16 @@ makeTimeFilter(layerObj *lp,
   set the filter parameter for a time filter
 **/
 
-int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
+int msLayerSetTimeFilter(layerObj *layer, const char *timestring,
                          const char *timefield)
 {
-  if ( ! lp->vtable) {
-    int rv =  msInitializeVirtualTable(lp);
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
       return rv;
   }
-  return lp->vtable->LayerSetTimeFilter(lp, timestring, timefield);
+  cppcheck_assert(layer->vtable);
+  return layer->vtable->LayerSetTimeFilter(layer, timestring, timefield);
 }
 
 int
@@ -1624,36 +1637,47 @@ msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring,
  */
 int LayerDefaultInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
 void LayerDefaultFreeItemInfo(layerObj *layer)
 {
-  return;
+  (void)layer;
 }
 
 int LayerDefaultOpen(layerObj *layer)
 {
+  (void)layer;
   return MS_FAILURE;
 }
 
 int LayerDefaultIsOpen(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 int LayerDefaultWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)layer;
+  (void)rect;
+  (void)isQuery;
   return MS_SUCCESS;
 }
 
 int LayerDefaultNextShape(layerObj *layer, shapeObj *shape)
 {
+  (void)layer;
+  (void)shape;
   return MS_FAILURE;
 }
 
 int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  (void)layer;
+  (void)shape;
+  (void)record;
   return MS_FAILURE;
 }
 
@@ -1739,11 +1763,13 @@ int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rect
 
 int LayerDefaultClose(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
 int LayerDefaultGetItems(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS; /* returning no items is legit */
 }
 
@@ -1841,6 +1867,7 @@ int msLayerGetPaging(layerObj *layer)
       return MS_FAILURE;
     }
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerGetPaging(layer);
 }
 
@@ -1853,22 +1880,30 @@ void msLayerEnablePaging(layerObj *layer, int value)
       return;
     }
   }
+  cppcheck_assert(layer->vtable);
   layer->vtable->LayerEnablePaging(layer, value);
 }
 
 int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
 {
+  (void)layer;
+  (void)extent;
   return MS_FAILURE;
 }
 
 int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj *shape)
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
   return MS_FAILURE;
 }
 
 int LayerDefaultCloseConnection(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -1926,17 +1961,22 @@ int LayerDefaultGetNumFeatures(layerObj *layer)
 
 int LayerDefaultAutoProjection(layerObj *layer, projectionObj* projection)
 {
+  (void)layer;
+  (void)projection;
   msSetError(MS_MISCERR, "This data driver does not implement AUTO projection support", "LayerDefaultAutoProjection()");
   return MS_FAILURE;
 }
 
 int LayerDefaultSupportsCommonFilters(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 int LayerDefaultTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem) 
 {
+  (void)layer;
+  (void)filteritem;
   if(!filter->string) return MS_SUCCESS; /* nothing to do, not an error */
 
   msSetError(MS_MISCERR, "This data driver does not implement filter translation support", "LayerDefaultTranslateFilter()");
@@ -1945,12 +1985,14 @@ int LayerDefaultTranslateFilter(layerObj *layer, expressionObj *filter, char *fi
 
 int msLayerDefaultGetPaging(layerObj *layer)
 {
+  (void)layer;
   return MS_FALSE;
 }
 
 void msLayerDefaultEnablePaging(layerObj *layer, int value)
 {
-  return;
+  (void)layer;
+  (void)value;
 }
 
 /************************************************************************/
@@ -1962,6 +2004,7 @@ void msLayerDefaultEnablePaging(layerObj *layer, int value)
 /************************************************************************/
 char *LayerDefaultEscapeSQLParam(layerObj *layer, const char* pszString)
 {
+  (void)layer;
   char *pszEscapedStr=NULL;
   if (pszString) {
     int nSrcLen;
@@ -2248,6 +2291,7 @@ int msINLINELayerClose(layerObj *layer)
 
 int msINLINELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   msINLINELayerInfo *layerinfo = NULL;  
   layerinfo = (msINLINELayerInfo*) layer->layerinfo;
 
@@ -2353,6 +2397,7 @@ char  *msLayerEscapeSQLParam(layerObj *layer, const char*pszString)
     if (rv != MS_SUCCESS)
       return "";
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerEscapeSQLParam(layer, pszString);
 }
 
@@ -2363,6 +2408,7 @@ char  *msLayerEscapePropertyName(layerObj *layer, const char*pszString)
     if (rv != MS_SUCCESS)
       return "";
   }
+  cppcheck_assert(layer->vtable);
   return layer->vtable->LayerEscapePropertyName(layer, pszString);
 }
 

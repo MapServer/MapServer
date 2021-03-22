@@ -149,12 +149,10 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 
 char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter)
 {
-  int bIscharacter, bSqlLayer=MS_FALSE;
+  int bIscharacter;
   char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
   char **paszElements = NULL, **papszRangeElements=NULL;
   int numelements,i,nrangeelements;
-
-  /* TODO: remove the bSqlLayer checks since we want to write MapServer expressions only. */
 
   /* double minval, maxval; */
   if (lp && item && value) {
@@ -170,9 +168,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
         pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
         for (i=0; i<numelements; i++) {
           pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
-          if (bSqlLayer)
-            pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-          else {
+          {
             if (bIscharacter)
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
             pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
@@ -182,9 +178,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
           }
           if (bIscharacter) {
-            if (bSqlLayer)
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, " = '");
-            else
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " = \"");
           } else
             pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
@@ -193,9 +186,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
           pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
 
           if (bIscharacter) {
-            if (bSqlLayer)
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, "'");
-            else
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
           }
           pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
@@ -228,9 +218,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
               minval = atof(papszRangeElements[0]);
               maxval = atof(papszRangeElements[1]);
               */
-              if (bSqlLayer)
-                pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-              else {
+              {
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");
@@ -245,9 +233,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " AND ");
 
-              if (bSqlLayer)
-                pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-              else {
+              {
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");
@@ -263,9 +249,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
               pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
             } else if (nrangeelements == 1) {
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
-              if (bSqlLayer)
-                pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
-              else {
+              {
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");
@@ -678,6 +662,8 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerInd
     if (rv != MS_SUCCESS)
       return rv;
   }
+  if( !layer->vtable )
+      return MS_FAILURE;
   return layer->vtable->LayerApplyFilterToLayer(psNode, map,  iLayerIndex);
 }
 
@@ -838,7 +824,7 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString)
   CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
   FilterEncodingNode *psFilterNode = NULL;
 
-  if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
+  if (szXMLString == NULL || strlen(szXMLString) == 0 ||
       (strstr(szXMLString, "Filter") == NULL))
     return NULL;
 
@@ -895,8 +881,6 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString)
 /************************************************************************/
 int FLTValidFilterNode(FilterEncodingNode *psFilterNode)
 {
-  int  bReturn = 0;
-
   if (!psFilterNode)
     return 0;
 
@@ -904,7 +888,7 @@ int FLTValidFilterNode(FilterEncodingNode *psFilterNode)
     return 0;
 
   if (psFilterNode->psLeftNode) {
-    bReturn = FLTValidFilterNode(psFilterNode->psLeftNode);
+    const int bReturn = FLTValidFilterNode(psFilterNode->psLeftNode);
     if (bReturn == 0)
       return 0;
     else if (psFilterNode->psRightNode)
@@ -1108,7 +1092,6 @@ static CPLXMLNode* FLTGetNextSibblingNode(CPLXMLNode* psXMLNode)
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode)
 {
-  int nStrLength = 0;
   char *pszTmp = NULL;
   FilterEncodingNode *psCurFilNode= NULL;
   CPLXMLNode *psCurXMLNode = NULL;
@@ -1259,7 +1242,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         char *pszSRS = NULL;
         const char* pszPropertyName = NULL;
         CPLXMLNode *psBox = NULL, *psEnvelope=NULL;
-        rectObj sBox = {0};
+        rectObj sBox = {0,0,0,0};
 
         int bCoordinatesValid = 0;
 
@@ -1521,7 +1504,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BOUNDARY;
 
           /* adding a ; between bounary values */
-          nStrLength = strlen(pszLowerNode) + strlen(pszUpperNode) + 2;
+          const int nStrLength = strlen(pszLowerNode) + strlen(pszUpperNode) + 2;
 
           psFilterNode->psRightNode->pszValue =
               (char *)malloc(sizeof(char)*(nStrLength));
@@ -1630,13 +1613,6 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /* -------------------------------------------------------------------- */
     else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue)) {
       psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-      pszFeatureId = CPLGetXMLValue(psXMLNode, "fid", NULL);
-      /*for FE 1.1.0 GmlObjectId */
-      if (pszFeatureId == NULL)
-        pszFeatureId = CPLGetXMLValue(psXMLNode, "id", NULL);
-      /*for FE 2.0 ResourceId */
-      if (pszFeatureId == NULL)
-        pszFeatureId = CPLGetXMLValue(psXMLNode, "rid", NULL);
       pszFeatureIdList = NULL;
 
       psFeatureIdNode = psXMLNode;
@@ -2289,7 +2265,6 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 {
   char *pszBuffer = NULL;
   char *pszTmp = NULL;
-  int nTmp = 0;
 
   if (lp == NULL)
     return NULL;
@@ -2351,14 +2326,14 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 
     free( pszTmp );
 
-    nTmp = strlen(pszBuffer);
+    const size_t nTmp = strlen(pszBuffer);
     pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, lp);
     if (!pszTmp) {
       free(pszBuffer);
       return NULL;
     }
 
-    pszBuffer = (char *)realloc(pszBuffer,
+    pszBuffer = (char *)msSmallRealloc(pszBuffer,
                                 sizeof(char) * (strlen(pszTmp) + nTmp +3));
     strcat(pszBuffer, pszTmp);
     strcat(pszBuffer, ") ");
@@ -3336,7 +3311,7 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
           int i;
           gmlItemListObj* items = msGMLGetItems(lp, "G");
           for(i=0; i<items->numitems; i++) {
-            if (!items->items[i].name || strlen(items->items[i].name) <= 0 ||
+            if (!items->items[i].name || strlen(items->items[i].name) == 0 ||
                 !items->items[i].visible)
               continue;
             if (strcasecmp(items->items[i].name, psFilterNode->psLeftNode->pszValue) == 0) {
@@ -3483,10 +3458,10 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Spatial_Capabilities", NULL);
 
   psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "GeometryOperands", NULL);
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Point");
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:LineString");
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Polygon");
-  psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Envelope");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Point");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:LineString");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Polygon");
+  xmlNewChild(psSubNode, psNsOgc, BAD_CAST "GeometryOperand", BAD_CAST "gml:Envelope");
 
   psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "SpatialOperators", NULL);
 #ifdef USE_GEOS
@@ -3517,8 +3492,8 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   if (bTemporal) {
     psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Temporal_Capabilities", NULL);
     psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperands", NULL);
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimePeriod");
-    psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimeInstant");
+    xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimePeriod");
+    xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperand", BAD_CAST "gml:TimeInstant");
 
     psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "TemporalOperators", NULL);
     psSubSubNode = xmlNewChild(psSubNode, psNsOgc, BAD_CAST "TemporalOperator", NULL);
@@ -3527,14 +3502,14 @@ xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTempor
   psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Scalar_Capabilities", NULL);
   xmlNewChild(psNode, psNsOgc, BAD_CAST "LogicalOperators", NULL);
   psNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperators", NULL);
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThan");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThan");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThanEqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThanEqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "EqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "NotEqualTo");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Like");
-  psSubNode = xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Between");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThan");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThan");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "LessThanEqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "GreaterThanEqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "EqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "NotEqualTo");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Like");
+  xmlNewChild(psNode, psNsOgc, BAD_CAST "ComparisonOperator", BAD_CAST "Between");
 
   psNode = xmlNewChild(psRootNode, psNsOgc, BAD_CAST "Id_Capabilities", NULL);
   xmlNewChild(psNode, psNsOgc, BAD_CAST "EID", NULL);

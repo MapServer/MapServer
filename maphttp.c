@@ -220,7 +220,7 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
             psReq->nLayerId, (int)(size*nmemb));
   }
 
-  if(psReq->nMaxBytes > 0 && (psReq->result_size + size*nmemb) > psReq->nMaxBytes) {
+  if(psReq->nMaxBytes > 0 && (psReq->result_size + size*nmemb) > (size_t)psReq->nMaxBytes) {
       msSetError(MS_HTTPERR, "Requested transfer larger than configured maximum %d.",
                  "msHTTPWriteFct()",
                  psReq->nMaxBytes );
@@ -237,7 +237,7 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
     if( psReq->result_data == NULL ) {
       psReq->result_buf_size = size*nmemb + 10000;
       psReq->result_data = (char *) msSmallMalloc( psReq->result_buf_size );
-    } else if( psReq->result_size + nmemb * size > psReq->result_buf_size ) {
+    } else if( psReq->result_size + nmemb * size > (size_t)psReq->result_buf_size ) {
       psReq->result_buf_size = psReq->result_size + nmemb*size + 10000;
       psReq->result_data = (char *) msSmallRealloc( psReq->result_data,
                            psReq->result_buf_size );
@@ -695,9 +695,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     if(pasReqInfo[i].pszHTTPCookieData != NULL) {
       /* Check if there's no end of line in the Cookie string */
       /* This could break the HTTP Header */
-      int nPos;
-
-      for(nPos=0; nPos<strlen(pasReqInfo[i].pszHTTPCookieData); nPos++) {
+      for(size_t nPos=0; nPos<strlen(pasReqInfo[i].pszHTTPCookieData); nPos++) {
         if(pasReqInfo[i].pszHTTPCookieData[nPos] == '\n') {
           msSetError(MS_HTTPERR, "Can't use cookie containing a newline character.",
                      "msHTTPExecuteRequests()");

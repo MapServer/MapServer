@@ -53,7 +53,7 @@ static void msGEOSError(const char *format, ...)
 
 static void msGEOSNotice(const char *fmt, ...)
 {
-  return; /* do nothing with notices at this point */
+  (void)fmt; /* do nothing with notices at this point */
 }
 
 #ifndef USE_THREAD
@@ -107,7 +107,7 @@ static GEOSContextHandle_t msGetGeosContextHandle()
   }
 
   /* If the link is not already at the head of the list, promote it */
-  else if( link != NULL && link->next != NULL ) {
+  else {
     geos_thread_info_t *target = link->next;
 
     link->next = link->next->next;
@@ -690,21 +690,16 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
     case GEOS_GEOMETRYCOLLECTION:
       if (!GEOSisEmpty_r(handle,g))
       {
-        int i, j, numGeoms;
-        shapeObj* shape;
-
-        numGeoms = GEOSGetNumGeometries_r(handle,g);
-
-        shape = (shapeObj *) malloc(sizeof(shapeObj));
+        shapeObj* shape = (shapeObj *) malloc(sizeof(shapeObj));
         msInitShape(shape);
         shape->type = MS_SHAPE_LINE;
         shape->geometry = (GEOSGeom) g;
-        
-        numGeoms = GEOSGetNumGeometries_r(handle,g);
-        for(i = 0; i < numGeoms; i++) { /* for each geometry */
+
+        const int numGeoms = GEOSGetNumGeometries_r(handle,g);
+        for(int i = 0; i < numGeoms; i++) { /* for each geometry */
            shapeObj* shape2 = msGEOSGeometry2Shape((GEOSGeom)GEOSGetGeometryN_r(handle,g, i));
            if (shape2) {
-              for (j = 0; j < shape2->numlines; j++)
+              for (int j = 0; j < shape2->numlines; j++)
                  msAddLineDirectly(shape, &shape2->line[j]);
               shape2->numlines = 0;
               shape2->geometry = NULL; /* not owned */

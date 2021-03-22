@@ -420,7 +420,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 {
 #ifdef USE_WMS_LYR
   char *pszEPSG = NULL;
-  const char *pszVersion, *pszRequestParam, *pszExceptionsParam,
+  const char *pszVersion, *pszRequestParam,
         *pszSrsParamName="SRS", *pszLayer=NULL, *pszQueryLayers=NULL,
         *pszUseStrictAxisOrder;
   rectObj bbox;
@@ -803,6 +803,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     else
       pszRequestParam = "feature_info";
 
+    const char* pszExceptionsParam;
     if (nVersion >= OWS_1_3_0)
       pszExceptionsParam = "XML";
     else if (nVersion >= OWS_1_1_0) /* 1.1.0 to 1.1.0 */
@@ -860,14 +861,15 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
     pszRequestParam = "GetLegendGraphic";
 
-    pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
+    /*
+    const char* pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
     if (pszExceptionsParam == NULL) {
       if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
         pszExceptionsParam = "application/vnd.ogc.se_inimage";
       else
         pszExceptionsParam = "INIMAGE";
-    }
+    }*/
 
     if (pszLayer) { /* not set in CONNECTION string */
       msSetWMSParamString(psWMSParams, "LAYER", pszLayer, MS_FALSE, nVersion);
@@ -888,7 +890,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     else
       pszRequestParam = "map";
 
-    pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
+    const char* pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
 
     if (!bIsEssential) {
@@ -1176,7 +1178,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if(pszHTTPCookieData == NULL || sThisWMSParams.httpcookiedata == NULL) {
       bOkToMerge = MS_FALSE;
     }
-    if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0) {
+    else if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0) {
       bOkToMerge = MS_FALSE;
     }
   }
