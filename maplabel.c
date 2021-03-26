@@ -818,7 +818,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
     char alias[64];
     snprintf(alias, sizeof(alias), "%s", line);
-    char* ptr = strchr(alias, ' ');
+    char* ptr = strpbrk(alias, " \t");
     if( !ptr )
         continue;
     *ptr = '\0';
@@ -826,7 +826,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     const char* file1StartPtr = line + (ptr - alias);
     file1StartPtr ++;
     /* Skip leading spaces */
-    while( *file1StartPtr == ' ' )
+    while( isspace((int)*file1StartPtr) )
         file1StartPtr ++;
 
     if (!(*file1StartPtr) || !(*alias))
@@ -835,9 +835,12 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     char file1[MS_PATH_LENGTH];
     snprintf(file1, sizeof(file1), "%s", file1StartPtr);
     /* Remove trailing spaces */
-    ptr = strrchr(file1, ' ');
-    if( ptr )
+    ptr = file1 + strlen(file1) - 1;
+    while( ptr >= file1 && isspace((int)*ptr) )
+    {
         *ptr = '\0';
+        --ptr;
+    }
 
     bFullPath = 0;
 #if defined(_WIN32) && !defined(__CYGWIN__)
