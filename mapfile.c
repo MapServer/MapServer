@@ -6378,6 +6378,10 @@ static int loadMapInternal(mapObj *map)
         break;
       case(DEFRESOLUTION):
         if(getDouble(&(map->defresolution)) == -1) return MS_FAILURE;
+        if (map->defresolution <= 0) {
+            msSetError(MS_MISCERR, "DEFRESOLUTION must be greater than 0", "loadMapInternal()");
+            return MS_FAILURE;
+        }
         break;
       case(SCALE):
       case(SCALEDENOM):
@@ -6801,6 +6805,10 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyylex();
 
           if(getDouble(&(map->defresolution)) == -1) break;
+          if (map->defresolution <= 0) {
+              msSetError(MS_MISCERR, "DEFRESOLUTION must be greater than 0", "msUpdateMapFromURL()");
+              break;
+          }
           break;
         case(SCALEBAR):
           return msUpdateScalebarFromString(&(map->scalebar), string, MS_TRUE);
