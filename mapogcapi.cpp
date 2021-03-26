@@ -44,6 +44,7 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_CONFORMANCE "conformance.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTION "collection.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTIONS "collections.html"
+#define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS "collection-items.html"
 
 #define OGCAPI_FORMAT_JSON 1
 #define OGCAPI_FORMAT_GEOJSON 2
@@ -52,6 +53,9 @@ using json = nlohmann::json;
 #define OGCAPI_MIMETYPE_JSON "application/json"
 #define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
 #define OGCAPI_MIMETYPE_HTML "text/html"
+
+#define OGCAPI_LIMIT_DEFAULT 10 // by specification
+#define OGCAPI_LIMIT_MAXIMUM 10000
 
 #ifdef USE_OGCAPI_SVR
 
@@ -75,6 +79,48 @@ static const char *getRequestParameter(cgiRequestObj *request, const char *item)
   }
 
   return NULL;
+}
+
+/*
+** Returns the limit as an int - between 1 and OGCAPI_LIMIT_MAXIMUM. We always return a valid value...
+*/
+static int getLimit(mapObj *map, cgiRequestObj *request, int *limit)  
+{
+  const char *p;
+
+  p = getRequestParameter(request, "limit");
+  if(!p) {
+    *limit = OGCAPI_LIMIT_DEFAULT;
+  } else {
+    *limit = strtol(p, NULL, 10);
+    if(*limit <= 0) { // conversion error, 0 or negative number (all get the default)
+      *limit = OGCAPI_LIMIT_DEFAULT;
+    } else {
+      *limit = (int)MS_MIN(*limit, OGCAPI_LIMIT_MAXIMUM);
+    }
+  }
+
+  return MS_SUCCESS;
+}
+
+/*
+** Returns the bbox in SRS of the map. If not set, the map's EXTENT is used.
+*/
+static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox) 
+{
+  const char *p;
+
+  p = getRequestParameter(request, "bbox");
+  if(!p) {
+    bbox->minx = map->extent.minx; // no projection necessary
+    bbox->miny = map->extent.miny;
+    bbox->maxx = map->extent.maxx;
+    bbox->maxy = map->extent.maxy;
+  } else {
+    return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
 }
 
 /*
@@ -118,6 +164,29 @@ std::string getApiRootUrl(mapObj *map)
     return std::string(root);
   else
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
+}
+
+/*
+** Return a GeoJSON representation of a shape.
+*/
+json getFeature(layerObj *layer, shapeObj *shape) 
+{
+  json feature; // empty (null)
+
+  if(!layer || !shape) return feature;
+
+  // initialize
+  feature = {
+    {"type", "Feature" }
+  };
+
+  // id
+
+  // properties
+
+  // geometry
+
+  return feature;
 }
 
 json getCollection(mapObj *map, layerObj *layer, int format)
@@ -171,7 +240,17 @@ json getCollection(mapObj *map, layerObj *layer, int format)
           { "type", OGCAPI_MIMETYPE_HTML },
           { "title", "This collection as HTML" },
           { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
-        },
+        },{
+          { "rel", "items" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "Items for his collection as JSON" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" }
+        },{
+          { "rel", "items" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "Items for this collection as HTML" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" }
+        }
       }
     },
     { "itemType", "feature" }
@@ -404,10 +483,11 @@ static int processConformanceRequest(mapObj *map, int format)
   return MS_SUCCESS;
 }
 
-static int processCollectionRequest(mapObj *map, const char *collectionId, int format)
+static int processCollectionItemsRequest(mapObj *map, const char *collectionId, const char *itemId, rectObj bbox, int limit, int format)
 {
   json response;
-  int i;
+  int i, j;
+  layerObj *lp;
 
   for(i=0; i<map->numlayers; i++) {
     if(strcmp(map->layers[i]->name, collectionId) == 0) break; // match
@@ -418,8 +498,59 @@ static int processCollectionRequest(mapObj *map, const char *collectionId, int f
     return MS_SUCCESS;
   }
 
+  lp = map->layers[i]; // for convenience
+  lp->status = MS_ON; // force on (do we need to save and reset?)
+
+  if(itemId) {
+    // TODO
+  } else { // bbox query
+    map->query.type = MS_QUERY_BY_RECT;
+    map->query.mode = MS_QUERY_MULTIPLE;
+    map->query.layer = i;
+    map->query.rect = bbox;
+  }
+
+  if(msExecuteQuery(map) != MS_SUCCESS) {
+    processError(404, "Collection items query failed.");
+    // processError(404, msGetErrorString(","));
+    return MS_SUCCESS;
+  }
+
+  // build response object
+  response = {
+    { "type", "FeatureCollection" },
+    { "numMatched", lp->resultcache->numresults },
+    { "numReturned", MS_MIN(limit, lp->resultcache->numresults) },
+    { "features", json::array() }
+  };
+  
+  // features
+  for(i=0, j=0; i<lp->resultcache->numresults && j<MS_MIN(limit, lp->resultcache->numresults); i++, j++) {
+
+  }
+
+  // links
+
+  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS, response);
+  return MS_SUCCESS;
+}
+
+static int processCollectionRequest(mapObj *map, const char *collectionId, int format)
+{
+  json response;
+  int l;
+
+  for(l=0; l<map->numlayers; l++) {
+    if(strcmp(map->layers[l]->name, collectionId) == 0) break; // match
+  }
+
+  if(l == map->numlayers) { // invalid collectionId
+    processError(404, "Invalid collection.");
+    return MS_SUCCESS;
+  }
+
   try {
-    response = getCollection(map, map->layers[i], format);
+    response = getCollection(map, map->layers[l], format);
     if(response.is_null()) { // same as not found
       processError(404, "Invalid collection.");
       return MS_SUCCESS;
@@ -478,15 +609,15 @@ static int processCollectionsRequest(mapObj *map, int format)
 
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
 {
-  int format;
-  const char *f;
+  int format, limit;
+  rectObj bbox;
 
-  f = getRequestParameter(request, "f");
-  if(f && (strcmp(f, "json") == 0 || strcmp(f, OGCAPI_MIMETYPE_JSON) == 0)) {
+  const char *p = getRequestParameter(request, "f");
+  if(p && (strcmp(p, "json") == 0 || strcmp(p, OGCAPI_MIMETYPE_JSON) == 0)) {
     format = OGCAPI_FORMAT_JSON;
-  } else if(f && (strcmp(f, "html") == 0 || strcmp(f, OGCAPI_MIMETYPE_HTML) == 0)) {
+  } else if(p && (strcmp(p, "html") == 0 || strcmp(p, OGCAPI_MIMETYPE_HTML) == 0)) {
     format = OGCAPI_FORMAT_HTML;
-  } else if(f) {
+  } else if(p) {
     processError(500, "Unsupported format requested.");
     return MS_SUCCESS; // avoid any downstream MapServer processing
   } else {
@@ -512,8 +643,25 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 
   } else if(api_path_length == 5) {
 
-    if(strcmp(api_path[3], "collections") == 0) { // next argument is collectionId
+    if(strcmp(api_path[3], "collections") == 0) { // next argument (4) is collectionId
       return processCollectionRequest(map, api_path[4], format);
+    }
+
+  } else if(api_path_length == 6) {
+
+    if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId
+      
+      if(getLimit(map, request, &limit) != MS_SUCCESS) {
+        processError(500, "Invalid value for limit.");
+        return MS_SUCCESS;
+      }
+
+      if(getBbox(map, request, &bbox) != MS_SUCCESS) {
+	processError(500, "Invalid value for bbox.");
+	return MS_SUCCESS;
+      }
+      
+      return processCollectionItemsRequest(map, api_path[4], NULL, bbox, limit, format);
     }
 
   }
