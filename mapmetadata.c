@@ -687,6 +687,11 @@ xmlNodePtr msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj,
     if(strcasecmp(GET_LAYER(map, i)->name, paramsObj->pszLayer) == 0) {
         layer_found = MS_TRUE;
         layer = GET_LAYER(map, i);
+        // when checking a layer with clustering msLayerGetExtent does not have access
+        // to the source layer, so remove clustering first
+        if (layer->cluster.region) {
+            layer->cluster.region = NULL;
+        }
         break;
     }
   }
