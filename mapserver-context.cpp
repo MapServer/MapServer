@@ -75,7 +75,6 @@ static int loadContext(contextObj *context)
 contextObj *msLoadContext()
 {
   contextObj *context = NULL;
-  int token;
 
   context = (contextObj *)calloc(sizeof(contextObj), 1);
   MS_CHECK_ALLOC(context, sizeof(contextObj), NULL);
