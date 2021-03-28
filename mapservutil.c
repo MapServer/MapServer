@@ -27,11 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"
 #include "mapows.h"
+
+#include "mapserver-context.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
@@ -192,10 +193,12 @@ static void setClassGroup(layerObj *layer, char *classgroup)
 ** Extract Map File name from params and load it.
 ** Returns map object or NULL on error.
 */
-mapObj *msCGILoadMap(mapservObj *mapserv)
+mapObj *msCGILoadMap(mapservObj *mapserv, contextObj *context)
 {
   int i, j;
   mapObj *map = NULL;
+
+  fprintf(stderr, "MS_MAP_NO_PATH=%s\n", msLookupHashTable(&context->environment, "MS_MAP_NO_PATH"));
 
   for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
@@ -1801,11 +1804,13 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   int x,m=0;
   struct mstimeval execstarttime = {0}, execendtime = {0};
   struct mstimeval requeststarttime = {0}, requestendtime = {0};
-  mapservObj* mapserv = NULL;
+  mapservObj *mapserv = NULL;
   char *queryString = NULL;
   int maxParams = MS_DEFAULT_CGI_PARAMS;
   msIOContext *ctx;
   msIOBuffer  *buf;
+
+  contextObj *context = NULL;
 
   msIO_installStdoutToBuffer();
 
@@ -1825,6 +1830,12 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("No query information to decode. QUERY_STRING not set.\n");
+    goto end_request;
+  }
+
+  context = msLoadContext();
+  if(context == NULL) {
+    msCGIWriteError(mapserv);
     goto end_request;
   }
   
@@ -1860,7 +1871,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     goto end_request;
   }
 
-  mapserv->map = msCGILoadMap(mapserv);
+  mapserv->map = msCGILoadMap(mapserv, context);
   if(!mapserv->map) {
     msCGIWriteError(mapserv);
     goto end_request;
@@ -1868,7 +1879,6 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
 
   if( mapserv->map->debug >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&requeststarttime, NULL);
-
 
   if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
     msCGIWriteError(mapserv);
@@ -1886,6 +1896,7 @@ end_request:
     }
     msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
+    msFreeContext(context);
   }
 
   /* normal case, processing is complete */

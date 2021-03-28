@@ -147,7 +147,8 @@ int main(int argc, char *argv[])
   int sendheaders = MS_TRUE;
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
-  mapservObj* mapserv = NULL;
+  mapservObj  *mapserv = NULL;
+  contextObj *context = NULL;
 
   /* -------------------------------------------------------------------- */
   /*      Initialize mapserver.  This sets up threads, GD and GEOS as     */
@@ -259,7 +260,13 @@ int main(int argc, char *argv[])
       goto end_request;
     }
 
-    mapserv->map = msCGILoadMap(mapserv);
+    context = msLoadContext();
+    if(context == NULL) {
+      msCGIWriteError(mapserv);
+      goto end_request;
+    }
+
+    mapserv->map = msCGILoadMap(mapserv, context);
     if(!mapserv->map) {
       msCGIWriteError(mapserv);
       goto end_request;
@@ -277,14 +284,10 @@ int main(int argc, char *argv[])
     }
 #endif
 
-
-
-
     if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
       msCGIWriteError(mapserv);
       goto end_request;
     }
-
 
 end_request:
     if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
@@ -295,6 +298,7 @@ end_request:
     }
     msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
+    msFreeContext(context);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */
     msResetErrorList();

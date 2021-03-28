@@ -118,7 +118,7 @@ typedef struct face_element face_element;
 
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
-typedef ms_uint32 *     ms_bitarray;
+typedef ms_uint32 *ms_bitarray;
 typedef const ms_uint32 *ms_const_bitarray;
 
 #include "maperror.h"
@@ -131,7 +131,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include <assert.h>
 #include "mapproject.h"
 #include "cgiutil.h"
-
+#include "mapserver-context.h"
 
 #include <sys/types.h> /* regular expression support */
 
@@ -2071,6 +2071,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int initLayerCompositer(LayerCompositer *compositer);
   MS_DLL_EXPORT void initLeader(labelLeaderObj *leader);
   MS_DLL_EXPORT void freeGrid( graticuleObj *pGraticule);
+  int loadHashTable(hashTableObj *ptable); // used by other file loading code
 
   MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
   MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
