@@ -84,7 +84,6 @@ contextObj *msLoadContext()
     return NULL;
   }
 
-
   msAcquireLock(TLOCK_PARSER);
 
   std::string filename = MS_CONTEXT_PATH;
@@ -101,7 +100,7 @@ contextObj *msLoadContext()
   msyystate = MS_TOKENIZE_CONTEXT;
   msyylex(); // sets things up, but doesn't process any tokens
 
-  msyyrestart(msyyin); // start at line begining, line 1
+  msyyrestart(msyyin); // start at line 1
   msyylineno = 1;
 
   if(loadContext(context) != MS_SUCCESS) {
