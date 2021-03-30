@@ -3510,7 +3510,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
   int nodeCount = 0;
 
   int function = 0, version = 0, dwithin = 0, regexp_like = 0, case_ins = 0, ieq = 0;
-  char *table_name;
+  char *table_name = NULL;
   char *geom_column_name = NULL, *unique = NULL, *srid = NULL, *indexfield=NULL;
   char *snippet = NULL;
   char *strtmpl = NULL;
@@ -3533,14 +3533,21 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
     if (srid) free(srid);
     if (unique) free(unique);
     if (indexfield) free(indexfield);
-    free(table_name);
+    if (table_name) free(table_name);
 
     return MS_FAILURE;
   }
 
   //msDebug("filter.string was set: %s\n",filter->string);
-  if(!filter->string) return MS_SUCCESS;
+  if(!filter->string) {
+    if (geom_column_name) free(geom_column_name);
+    if (srid) free(srid);
+    if (unique) free(unique);
+    if (indexfield) free(indexfield);
+    if (table_name) free(table_name);
 
+    return MS_SUCCESS;
+  }
   /* for backwards compatibility we continue to allow SQL snippets as a string */
 
  if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair */
@@ -3858,6 +3865,12 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
             msDebug("Token not caught, exiting: Token is %i\n", node->token);
           }
 
+          if (geom_column_name) free(geom_column_name);
+          if (srid) free(srid);
+          if (unique) free(unique);
+          if (indexfield) free(indexfield);
+          if (table_name) free(table_name);
+
           return MS_SUCCESS; /* not an error */
         }
       nodeCount++;
@@ -3871,6 +3884,13 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
       msDebug("total filter tokens are %i\n,", nodeCount);
     msFree(native_string);
   }
+
+  if (geom_column_name) free(geom_column_name);
+  if (srid) free(srid);
+  if (unique) free(unique);
+  if (indexfield) free(indexfield);
+  if (table_name) free(table_name);
+  
   return MS_SUCCESS;
 }
 
