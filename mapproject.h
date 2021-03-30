@@ -113,7 +113,7 @@ but are not directly exposed by the mapscript module
   MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
   MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
   MS_DLL_EXPORT int msInitProjection(projectionObj *p);
-  MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc);
+  MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pSrc);
   MS_DLL_EXPORT void msProjectionSetContext(projectionObj *p, projectionContext* ctx);
   MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
   MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);

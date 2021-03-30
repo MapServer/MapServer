@@ -55,7 +55,7 @@ extern "C" {
     return image;
   }
 
-  int msSaveImageKml(imageObj *img, mapObj* map, FILE *fp, outputFormatObj *format)
+  int msSaveImageKml(imageObj *img, mapObj* /*map*/, FILE *fp, outputFormatObj *format)
   {
     KmlRenderer* renderer = getKmlRenderer(img);
     return renderer->saveImage(img, fp, format);
@@ -75,13 +75,13 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msRenderPolygonTiledKml(imageObj *img, shapeObj *p,  imageObj *tile)
+  int msRenderPolygonTiledKml(imageObj * /*img*/, shapeObj * /*p*/,  imageObj * /*tile*/)
   {
     /*KmlRenderer* renderer = getKmlRenderer(img);*/
     return MS_SUCCESS;
   }
 
-  int msRenderLineTiledKml(imageObj *img, shapeObj *p, imageObj *tile)
+  int msRenderLineTiledKml(imageObj * /*img*/, shapeObj * /*p*/, imageObj * /*tile*/)
   {
     return MS_SUCCESS;
   }
@@ -126,19 +126,19 @@ extern "C" {
   }
 
 
-  int msRenderTileKml(imageObj *img, imageObj *tile, double x, double y)
+  int msRenderTileKml(imageObj * /*img*/, imageObj * /*tile*/, double /*x*/, double /*y*/)
   {
     return MS_SUCCESS;
   }
 
-  int msGetRasterBufferKml(imageObj *img,rasterBufferObj *rb)
+  int msGetRasterBufferKml(imageObj * /*img*/,rasterBufferObj * /*rb*/)
   {
     return MS_FAILURE; //not supported for kml
   }
 
 
-  int msGetTruetypeTextBBoxKml(rendererVTableObj *r,char** fonts, int numfonts, double size, char *string,
-                               rectObj *rect, double **advances, int bAdjustBaseline)
+  int msGetTruetypeTextBBoxKml(rendererVTableObj * /*r*/,char** /*fonts*/, int /*numfonts*/, double size, char *string,
+                               rectObj *rect, double **advances, int /*bAdjustBaseline*/)
   {
     rect->minx=0.0;
     rect->maxx=0.0;
@@ -154,13 +154,13 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msStartNewLayerKml(imageObj *img, mapObj *map, layerObj *layer)
+  int msStartNewLayerKml(imageObj *img, mapObj * /*map*/, layerObj *layer)
   {
     KmlRenderer* renderer = getKmlRenderer(img);
     return renderer->startNewLayer(img, layer);
   }
 
-  int msCloseNewLayerKml(imageObj *img, mapObj *map, layerObj *layer)
+  int msCloseNewLayerKml(imageObj *img, mapObj * /*map*/, layerObj *layer)
   {
     KmlRenderer* renderer = getKmlRenderer(img);
     return renderer->closeNewLayer(img, layer);
@@ -176,7 +176,7 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msFreeSymbolKml(symbolObj *symbol)
+  int msFreeSymbolKml(symbolObj * /*symbol*/)
   {
     return MS_SUCCESS;
   }
@@ -195,8 +195,8 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msMergeRasterBufferKml(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX,
-                             int srcY, int dstX, int dstY, int width, int height)
+  int msMergeRasterBufferKml(imageObj *dest, rasterBufferObj *overlay, double /*opacity*/, int /*srcX*/,
+                             int /*srcY*/, int /*dstX*/, int /*dstY*/, int /*width*/, int /*height*/)
   {
     KmlRenderer* renderer = getKmlRenderer(dest);
     return renderer->mergeRasterBuffer(dest,overlay);

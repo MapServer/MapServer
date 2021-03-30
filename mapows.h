@@ -487,9 +487,7 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
 
 metadataParamsObj *msMetadataCreateParamsObj(void);
 void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
-int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
-                      metadataParamsObj *metadataparams);
-int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
+int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj);
 void msMetadataSetGetMetadataURL(layerObj *lp, const char *url);
 
 /*====================================================================
@@ -498,8 +496,6 @@ void msMetadataSetGetMetadataURL(layerObj *lp, const char *url);
 
 MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
                                 owsRequestObj *ows_request, int force_wfs_mode);
-int msWFSParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
-                      wfsParamsObj *, int force_wfs_mode);
 wfsParamsObj *msWFSCreateParamsObj(void);
 int msWFSHandleUpdateSequence(mapObj *map, wfsParamsObj *wfsparams, const char* pszFunction);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
@@ -525,10 +521,9 @@ int msWFSException20(mapObj *map, const char *locator,
                      const char *exceptionCode);
 int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                            cgiRequestObj *req, owsRequestObj *ows_request);
-int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
-                             cgiRequestObj *req, owsRequestObj *ows_request);
+int msWFSListStoredQueries20(mapObj *map, owsRequestObj *ows_request);
 int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
-                             cgiRequestObj *req, owsRequestObj *ows_request);
+                                 owsRequestObj *ows_request);
 char* msWFSGetResolvedStoredQuery20(mapObj *map,
                                     wfsParamsObj *wfsparams,
                                     const char* id,

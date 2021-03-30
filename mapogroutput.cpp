@@ -238,7 +238,7 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
 /*                          msOGRWriteShape()                           */
 /************************************************************************/
 
-static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
+static int msOGRWriteShape( OGRLayerH hOGRLayer,
                             shapeObj *shape, gmlItemListObj *item_list,
                             int nFirstOGRFieldIndex, const char *pszFeatureid,
                             bool geomTypeForced )
@@ -1152,7 +1152,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       */
 
       if( status == MS_SUCCESS )
-        status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
+        status = msOGRWriteShape( hOGRLayer, &resultshape,
                                   item_list, nFirstOGRFieldIndex, pszFeatureid,
                                   geomTypeForced );
 
@@ -1382,6 +1382,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
 int msPopulateRendererVTableOGR( rendererVTableObj *renderer )
 {
+  (void)renderer;
   /* we aren't really a normal renderer so we leave everything default */
   return MS_SUCCESS;
 }

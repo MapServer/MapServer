@@ -41,6 +41,8 @@
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+#include <memory>
+
 #define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
 #define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
 
@@ -2330,7 +2332,6 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             filter = msStringConcatenate(filter, ")");
         }
 
-        bool bOffsetAlreadyAdded = false;
         // use spatial index
         if (psInfo->dialect && bIsValidRect ) {
             if (EQUAL(psInfo->dialect, "PostgreSQL")) {
@@ -2427,7 +2428,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             select = msStringConcatenate(select, szLimit);
         }
 
-        if ( !bOffsetAlreadyAdded && psInfo->bPaging && layer->startindex > 0 ) {
+        if ( psInfo->bPaging && layer->startindex > 0 ) {
             char szOffset[50];
             snprintf(szOffset, sizeof(szOffset), " OFFSET %d", layer->startindex-1);
             select = msStringConcatenate(select, szOffset);
@@ -3102,21 +3103,13 @@ NextFile:
 class msExprNode
 {
     public:
-        std::vector<msExprNode*> m_aoChildren;
-        int         m_nToken;
-        std::string m_osVal;
-        double      m_dfVal;
-        struct tm   m_tmVal;
-
-        msExprNode() : m_nToken(0), m_dfVal(0.0) {}
-       ~msExprNode();
+        std::vector<std::unique_ptr<msExprNode>> m_aoChildren{};
+        int         m_nToken = 0;
+        std::string m_osVal{};
+        double      m_dfVal = 0;
+        struct tm   m_tmVal{};
 };
 
-msExprNode::~msExprNode()
-{
-    for(size_t i=0;i<m_aoChildren.size();++i)
-        delete m_aoChildren[i];
-}
 
 /************************************************************************/
 /*                        exprGetPriority()                             */
@@ -3155,23 +3148,22 @@ static int exprGetPriority(int token)
 /*                           BuildExprTree()                            */
 /************************************************************************/
 
-static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
+static std::unique_ptr<msExprNode> BuildExprTree(tokenListNodeObjPtr node,
                                  tokenListNodeObjPtr* pNodeNext,
                                  int nParenthesisLevel)
 {
-    msExprNode* poRet = NULL;
-    std::vector<msExprNode*> aoStackOp, aoStackVal;
+    std::vector<std::unique_ptr<msExprNode>> aoStackOp, aoStackVal;
     while( node != NULL )
     {
         if( node->token == '(' )
         {
-            msExprNode* subExpr = BuildExprTree(node->next, &node,
+            auto subExpr = BuildExprTree(node->next, &node,
                                                 nParenthesisLevel + 1);
             if( subExpr == NULL )
             {
-                goto fail;
+                return nullptr;
             }
-            aoStackVal.push_back(subExpr);
+            aoStackVal.emplace_back(std::move(subExpr));
             continue;
         }
         else if( node->token == ')' )
@@ -3180,7 +3172,7 @@ static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
             {
                 break;
             }
-            goto fail;
+            return nullptr;
         }
         else if( node->token == '+' ||
                  node->token == '-' ||
@@ -3206,34 +3198,32 @@ static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
                    exprGetPriority(node->token) <=
                         exprGetPriority(aoStackOp.back()->m_nToken))
             {
-                msExprNode* val1 = NULL;
-                msExprNode* val2 = NULL;
-                msExprNode* newNode = NULL;
+                std::unique_ptr<msExprNode> val1;
+                std::unique_ptr<msExprNode> val2;
                 if (aoStackOp.back()->m_nToken != MS_TOKEN_LOGICAL_NOT)
                 {
                     if( aoStackVal.empty() )
-                        goto fail;
-                    val2 = aoStackVal.back();
+                        return nullptr;
+                    val2.reset(aoStackVal.back().release());
                     aoStackVal.pop_back();
                 }
                 if( aoStackVal.empty() )
-                    goto fail;
-                val1 = aoStackVal.back();
+                    return nullptr;
+                val1.reset(aoStackVal.back().release());
                 aoStackVal.pop_back();
 
-                newNode = new msExprNode;
+                std::unique_ptr<msExprNode> newNode(new msExprNode);
                 newNode->m_nToken = aoStackOp.back()->m_nToken;
-                newNode->m_aoChildren.push_back(val1);
+                newNode->m_aoChildren.emplace_back(std::move(val1));
                 if( val2 )
-                    newNode->m_aoChildren.push_back(val2);
-                aoStackVal.push_back(newNode);
-                delete aoStackOp.back();
+                    newNode->m_aoChildren.emplace_back(std::move(val2));
+                aoStackVal.emplace_back(std::move(newNode));
                 aoStackOp.pop_back();
             }
 
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
-            aoStackOp.push_back(newNode);
+            aoStackOp.emplace_back(std::move(newNode));
         }
         else if( node->token == ',' )
         {
@@ -3269,76 +3259,74 @@ static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
             if( node->next && node->next->token == '(' )
             {
                 int node_token = node->token;
-                msExprNode* subExpr = BuildExprTree(node->next->next, &node,
+                auto subExpr = BuildExprTree(node->next->next, &node,
                                                     nParenthesisLevel + 1);
                 if( subExpr == NULL )
                 {
-                    goto fail;
+                    return nullptr;
                 }
-                msExprNode* newNode = new msExprNode;
+                std::unique_ptr<msExprNode> newNode(new msExprNode);
                 newNode->m_nToken = node_token;
                 if( subExpr->m_nToken == 0 )
                 {
-                    newNode->m_aoChildren = subExpr->m_aoChildren;
-                    subExpr->m_aoChildren.clear();
-                    delete subExpr;
+                    newNode->m_aoChildren = std::move(subExpr->m_aoChildren);
                 }
                 else
                 {
-                    newNode->m_aoChildren.push_back(subExpr);
+                    newNode->m_aoChildren.emplace_back(std::move(subExpr));
                 }
-                aoStackVal.push_back(newNode);
+                aoStackVal.emplace_back(std::move(newNode));
                 continue;
             }
             else
-                goto fail;
+                return nullptr;
         }
         else if( node->token == MS_TOKEN_LITERAL_NUMBER ||
                  node->token == MS_TOKEN_LITERAL_BOOLEAN )
         {
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
             newNode->m_dfVal = node->tokenval.dblval;
-            aoStackVal.push_back(newNode);
+            aoStackVal.emplace_back(std::move(newNode));
         }
         else if( node->token == MS_TOKEN_LITERAL_STRING )
         {
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
             newNode->m_osVal = node->tokenval.strval;
-            aoStackVal.push_back(newNode);
+            aoStackVal.emplace_back(std::move(newNode));
         }
         else if( node->token == MS_TOKEN_LITERAL_TIME )
         {
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
             newNode->m_tmVal = node->tokenval.tmval;
-            aoStackVal.push_back(newNode);
+            aoStackVal.emplace_back(std::move(newNode));
         }
         else if( node->token == MS_TOKEN_LITERAL_SHAPE )
         {
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
             char *wkt = msShapeToWKT(node->tokenval.shpval);
             newNode->m_osVal = wkt;
             msFree(wkt);
-            aoStackVal.push_back(newNode);
+            aoStackVal.emplace_back(std::move(newNode));
         }
         else if( node->token == MS_TOKEN_BINDING_DOUBLE ||
                  node->token == MS_TOKEN_BINDING_INTEGER ||
                  node->token == MS_TOKEN_BINDING_STRING ||
                  node->token == MS_TOKEN_BINDING_TIME )
         {
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
             newNode->m_osVal = node->tokenval.bindval.item;
-            aoStackVal.push_back(newNode);
+            aoStackVal.emplace_back(std::move(newNode));
         }
         else
         {
-            msExprNode* newNode = new msExprNode;
+            std::unique_ptr<msExprNode> newNode(new msExprNode);
             newNode->m_nToken = node->token;
-            aoStackVal.push_back(newNode);
+            aoStackVal.emplace_back(std::move(newNode));
         }
 
         node = node->next;
@@ -3346,50 +3334,42 @@ static msExprNode* BuildExprTree(tokenListNodeObjPtr node,
 
     while( !aoStackOp.empty() )
     {
-        msExprNode* val1 = NULL;
-        msExprNode* val2 = NULL;
-        msExprNode* newNode = NULL;
+        std::unique_ptr<msExprNode> val1 = NULL;
+        std::unique_ptr<msExprNode> val2 = NULL;
         if (aoStackOp.back()->m_nToken != MS_TOKEN_LOGICAL_NOT)
         {
             if( aoStackVal.empty() )
-                goto fail;
-            val2 = aoStackVal.back();
+                return nullptr;
+            val2.reset(aoStackVal.back().release());
             aoStackVal.pop_back();
         }
         if( aoStackVal.empty() )
-            goto fail;
-        val1 = aoStackVal.back();
+            return nullptr;
+        val1.reset(aoStackVal.back().release());
         aoStackVal.pop_back();
 
-        newNode = new msExprNode;
+        std::unique_ptr<msExprNode> newNode(new msExprNode);
         newNode->m_nToken = aoStackOp.back()->m_nToken;
-        newNode->m_aoChildren.push_back(val1);
+        newNode->m_aoChildren.emplace_back(std::move(val1));
         if( val2 )
-            newNode->m_aoChildren.push_back(val2);
-        aoStackVal.push_back(newNode);
-        delete aoStackOp.back();
+            newNode->m_aoChildren.emplace_back(std::move(val2));
+        aoStackVal.emplace_back(std::move(newNode));
         aoStackOp.pop_back();
     }
 
+    std::unique_ptr<msExprNode> poRet;
     if( aoStackVal.size() == 1 )
-        poRet = aoStackVal.back();
+        poRet.reset(aoStackVal.back().release());
     else if( aoStackVal.size() > 1 )
     {
-        poRet = new msExprNode;
-        poRet->m_aoChildren = aoStackVal;
+        poRet.reset(new msExprNode);
+        poRet->m_aoChildren = std::move(aoStackVal);
     }
 
     if( pNodeNext )
         *pNodeNext = node ? node->next : NULL;
 
     return poRet;
-
-fail:
-    for( size_t i=0; i<aoStackOp.size(); ++i )
-        delete aoStackOp[i];
-    for( size_t i=0; i<aoStackVal.size(); ++i )
-        delete aoStackVal[i];
-    return NULL;
 }
 
 /**********************************************************************
@@ -3409,7 +3389,7 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
       expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_BOOLEAN &&
       expr->m_aoChildren[1]->m_dfVal == 1.0 )
   {
-      return msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[0],
+      return msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[0].get(),
                                           pSpatialFilterNode);
   }
 
@@ -3449,9 +3429,9 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
   if( expr->m_nToken == MS_TOKEN_LOGICAL_AND &&
       expr->m_aoChildren.size() == 2 )
   {
-      return msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[0],
+      return msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[0].get(),
                                           pSpatialFilterNode) &&
-             msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[1],
+             msOGRExtractTopSpatialFilter(info, expr->m_aoChildren[1].get(),
                                           pSpatialFilterNode);
   }
 
@@ -3498,7 +3478,7 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
         case MS_TOKEN_LOGICAL_NOT:
         {
             std::string osTmp(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[0], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[0].get(), spatialFilterNode, bPartialFilter ));
             if( osTmp.empty() )
                 return std::string();
             return "(NOT " + osTmp + ")";
@@ -3508,9 +3488,9 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
         {
             // We can deal with partially translated children
             std::string osTmp1(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[0], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[0].get(), spatialFilterNode, bPartialFilter ));
             std::string osTmp2(msOGRTranslatePartialInternal( 
-                layer, expr->m_aoChildren[1], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[1].get(), spatialFilterNode, bPartialFilter ));
             if( !osTmp1.empty() && !osTmp2.empty() )
             {
                 return "(" + osTmp1 + " AND " + osTmp2 + ")";
@@ -3525,9 +3505,9 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
         {
             // We can NOT deal with partially translated children
             std::string osTmp1(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[0], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[0].get(), spatialFilterNode, bPartialFilter ));
             std::string osTmp2(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[1], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[1].get(), spatialFilterNode, bPartialFilter ));
             if( !osTmp1.empty() && !osTmp2.empty() )
             {
                 return "(" + osTmp1 + " OR " + osTmp2 + ")";
@@ -3549,9 +3529,9 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
         case MS_TOKEN_COMPARISON_NE:
         {
             std::string osTmp1(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[0], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[0].get(), spatialFilterNode, bPartialFilter ));
             std::string osTmp2(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[1], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[1].get(), spatialFilterNode, bPartialFilter ));
             if( !osTmp1.empty() && !osTmp2.empty() )
             {
                 if( expr->m_nToken == MS_TOKEN_COMPARISON_EQ &&
@@ -3582,7 +3562,7 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
         case MS_TOKEN_COMPARISON_RE:
         {
             std::string osTmp1(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[0], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[0].get(), spatialFilterNode, bPartialFilter ));
             if( expr->m_aoChildren[1]->m_nToken != MS_TOKEN_LITERAL_STRING )
             {
                 return std::string();
@@ -3651,14 +3631,14 @@ static std::string msOGRTranslatePartialInternal(layerObj* layer,
         case MS_TOKEN_COMPARISON_IN:
         {
             std::string osTmp1(msOGRTranslatePartialInternal(
-                layer, expr->m_aoChildren[0], spatialFilterNode, bPartialFilter ));
+                layer, expr->m_aoChildren[0].get(), spatialFilterNode, bPartialFilter ));
             std::string osRet = "(" + osTmp1 + " IN (";
             for( size_t i=0; i< expr->m_aoChildren[1]->m_aoChildren.size(); ++i )
             {
                 if( i > 0 )
                     osRet += ", ";
                 osRet += msOGRTranslatePartialInternal(
-                            layer, expr->m_aoChildren[1]->m_aoChildren[i],
+                            layer, expr->m_aoChildren[1]->m_aoChildren[i].get(),
                             spatialFilterNode, bPartialFilter );
             }
             osRet += ")";
@@ -3742,17 +3722,17 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
     info->pszWHERE = NULL;
 
     // reasons to not produce native string: not simple layer, or an explicit deny
-    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    const char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
     if (do_this && strcmp(do_this, "NO") == 0) {
         return MS_SUCCESS;
     }
 
     tokenListNodeObjPtr node = psFilter->tokens;
-    msExprNode* expr = BuildExprTree(node, NULL, 0);
+    auto expr = BuildExprTree(node, NULL, 0);
     info->rect_is_defined = MS_FALSE;
     const msExprNode* spatialFilterNode = NULL;
     if( expr )
-        msOGRExtractTopSpatialFilter( info, expr, &spatialFilterNode );
+        msOGRExtractTopSpatialFilter( info, expr.get(), &spatialFilterNode );
 
     // more reasons to not produce native string: not a recognized driver
     if (!info->dialect)
@@ -3761,7 +3741,7 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
         if( filteritem == NULL && expr )
         {
             bool bPartialFilter = false;
-            std::string osSQL( msOGRTranslatePartialInternal(layer, expr,
+            std::string osSQL( msOGRTranslatePartialInternal(layer, expr.get(),
                                                              spatialFilterNode,
                                                              bPartialFilter) );
             if( !osSQL.empty() )
@@ -3779,7 +3759,6 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
                 msDebug("Filter could not be translated to OGR filter\n");
             }
         }
-        delete expr;
         return MS_SUCCESS;
     }
 
@@ -3848,7 +3827,7 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
             node = node->next; // skip )
             char *eq = msOGRGetToken(layer, &node);
             char *rval = msOGRGetToken(layer, &node);
-            if (strcmp(eq, " != ") == 0 || strcmp(rval, "FALSE") == 0) {
+            if ((eq && strcmp(eq, " != ") == 0) || (rval && strcmp(rval, "FALSE") == 0)) {
                 sql = msStringConcatenate(sql, "NOT ");
             }
             // FIXME: case rval is more complex
@@ -3894,7 +3873,6 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
     }
 
     layer->filter.native_string = sql;
-    delete expr;
     return MS_SUCCESS;
 fail:
     // error producing native string
@@ -3905,7 +3883,7 @@ fail:
     if( expr )
     {
         bool bPartialFilter = false;
-        std::string osSQL( msOGRTranslatePartialInternal(layer, expr,
+        std::string osSQL( msOGRTranslatePartialInternal(layer, expr.get(),
                                                             spatialFilterNode,
                                                             bPartialFilter) );
         if( !osSQL.empty() )
@@ -3923,7 +3901,6 @@ fail:
             msDebug("Filter could not be translated to OGR filter\n");
         }
     }
-    delete expr;
 
     return MS_SUCCESS;
 }
@@ -4098,7 +4075,7 @@ int msOGRIsSpatialite(layerObj* layer)
       EQUAL(psInfo->dialect, "Spatialite") )
   {
     // reasons to not produce native string: not simple layer, or an explicit deny
-    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    const char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
     if (do_this && strcmp(do_this, "NO") == 0) {
         return MS_FALSE;
     }
@@ -4117,7 +4094,7 @@ int msOGRIsSpatialite(layerObj* layer)
  * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
  * layer's FILTER overlaps the selected region.
  **********************************************************************/
-int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
+int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int /*isQuery*/)
 {
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   int   status;
@@ -4521,7 +4498,7 @@ static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
                                     OGRStyleToolH hPenStyle, int bIsBrush, int* pbPriority);
 static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
                                       OGRStyleToolH hBrushStyle, int* pbIsBrush, int* pbPriority);
-static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+static int msOGRUpdateStyleParseSymbol(mapObj *map, styleObj *s,
                                        OGRStyleToolH hSymbolStyle, int* pbPriority);
 
 static int msOGRUpdateStyleCheckPenBrushOnly(OGRStyleMgrH hStyleMgr)
@@ -4681,7 +4658,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       }
       s = c->styles[nIndex];
 
-      msOGRUpdateStyleParseSymbol(map, layer, s, hStylePart, &nPriority);
+      msOGRUpdateStyleParseSymbol(map, s, hStylePart, &nPriority);
     }
 
     /* Memorize the explicit priority and apparition order of the parsed tool/style */
@@ -5100,7 +5077,7 @@ static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
       return MS_SUCCESS;
 }
 
-static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+static int msOGRUpdateStyleParseSymbol(mapObj *map, styleObj *s,
                                        OGRStyleToolH hSymbolStyle,
                                        int* pbPriority)
 {
@@ -5307,7 +5284,7 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
   return pszEscapedStr;
 }
 
-static int msOGRLayerSupportsCommonFilters(layerObj *layer)
+static int msOGRLayerSupportsCommonFilters(layerObj *)
 {
   return MS_FALSE;
 }

@@ -420,6 +420,7 @@ int loadColor(colorObj *color, attributeBindingObj *binding)
       return MS_FAILURE;
     }
   } else {
+    assert(binding);
     binding->item = msStrdup(msyystring_buffer);
     binding->index = -1;
   }
@@ -1608,9 +1609,6 @@ static int loadLabel(labelObj *label)
       case(LEADER):
         msSetError(MS_MISCERR, "LABEL LEADER not implemented. LEADER goes at the CLASS level." , "loadLabel()");
         return(-1);
-        label->leader = msSmallMalloc(sizeof(labelLeaderObj));
-        if(loadLeader(label->leader) == -1) return(-1);
-        break;
       case(MAXSIZE):
         if(getInteger(&(label->maxsize)) == -1) return(-1);
         break;
@@ -3864,6 +3862,7 @@ scaleTokenObj *msGrowLayerScaletokens( layerObj *layer )
 }
 
 int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
+  (void)layer;
   for(;;) {
     int stop = 0;
     switch(msyylex()) {
@@ -6374,6 +6373,10 @@ static int loadMapInternal(mapObj *map)
         break;
       case(DEFRESOLUTION):
         if(getDouble(&(map->defresolution)) == -1) return MS_FAILURE;
+        if (map->defresolution <= 0) {
+            msSetError(MS_MISCERR, "DEFRESOLUTION must be greater than 0", "loadMapInternal()");
+            return MS_FAILURE;
+        }
         break;
       case(SCALE):
       case(SCALEDENOM):
@@ -6797,6 +6800,10 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyylex();
 
           if(getDouble(&(map->defresolution)) == -1) break;
+          if (map->defresolution <= 0) {
+              msSetError(MS_MISCERR, "DEFRESOLUTION must be greater than 0", "msUpdateMapFromURL()");
+              break;
+          }
           break;
         case(SCALEBAR):
           return msUpdateScalebarFromString(&(map->scalebar), string, MS_TRUE);
@@ -7160,12 +7167,16 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 
     if(numtokens_allocated <= numtokens) {
       numtokens_allocated *= 2; /* double size of the array every time we reach the limit */
-      tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
-      if(tokens == NULL) {
+      char** tokensNew = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
+      if(tokensNew == NULL) {
         msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
         fclose(msyyin);
+        for(int i=0; i<numtokens; i++)
+            msFree(tokens[i]);
+        msFree(tokens);
         return NULL;
       }
+      tokens = tokensNew;
     }
 
     switch(msyylex()) {

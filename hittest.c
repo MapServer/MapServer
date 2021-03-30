@@ -30,6 +30,7 @@
 
 
 void initStyleHitTests(styleObj *s, style_hittest *sh, int default_status) {
+  (void)s;
   sh->status = default_status;
 }
 
@@ -84,6 +85,7 @@ void initMapHitTests(mapObj *map, map_hittest *mh) {
 }
 
 void freeLabelHitTests(labelObj *l, label_hittest *lh) {
+  (void)l;
   free(lh->stylehits);
 }
 

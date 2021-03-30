@@ -638,7 +638,7 @@ void msFreeProjectionExceptContext(projectionObj *p)
 /*                 msProjectionInheritContextFrom()                     */
 /************************************************************************/
 
-void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc)
+void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pSrc)
 {
 #if PROJ_VERSION_MAJOR >= 6
     if( pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL)
@@ -646,6 +646,9 @@ void msProjectionInheritContextFrom(projectionObj *pDst, projectionObj* pSrc)
         pDst->proj_ctx = pSrc->proj_ctx;
         pDst->proj_ctx->ref_count ++;
     }
+#else
+    (void)pDst;
+    (void)pSrc;
 #endif
 }
 
@@ -661,6 +664,9 @@ void msProjectionSetContext(projectionObj *p, projectionContext* ctx)
         p->proj_ctx = ctx;
         p->proj_ctx->ref_count ++;
     }
+#else
+    (void)p;
+    (void)ctx;
 #endif
 }
 
@@ -1123,7 +1129,7 @@ static int msProjectSegment( reprojectionObj* reprojector,
 
   while( fabs(subStart.x - subEnd.x)
          + fabs(subStart.y - subEnd.y) > TOLERANCE ) {
-    pointObj midPoint;
+    pointObj midPoint = {0};
 
     midPoint.x = (subStart.x + subEnd.x) * 0.5;
     midPoint.y = (subStart.y + subEnd.y) * 0.5;
@@ -1620,10 +1626,7 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 
 int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 {
-  int i, be_careful = 1;
-
-  if( be_careful )
-    be_careful = reprojector->out->proj != NULL &&
+  int be_careful = reprojector->out->proj != NULL &&
                  msProjIsGeographicCRS(reprojector->out)
                  && !msProjIsGeographicCRS(reprojector->in);
 
@@ -1632,7 +1635,7 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
 
     startPoint = line->point[0];
 
-    for(i=0; i<line->numpoints; i++) {
+    for(int i=0; i<line->numpoints; i++) {
       double  dist;
 
       thisPoint = line->point[i];
@@ -1658,7 +1661,7 @@ int msProjectLineEx(reprojectionObj* reprojector, lineObj *line)
       }
     }
   } else {
-    for(i=0; i<line->numpoints; i++) {
+    for(int i=0; i<line->numpoints; i++) {
       if( msProjectPointEx(reprojector, &(line->point[i])) == MS_FAILURE )
         return MS_FAILURE;
     }
@@ -2432,13 +2435,13 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 char *msGetProjectionString(projectionObj *proj)
 {
   char        *pszProjString = NULL;
-  int         i = 0, nLen = 0;
+  int         nLen = 0;
 
   if (proj) {
     /* -------------------------------------------------------------------- */
     /*      Alloc buffer large enough to hold the whole projection defn     */
     /* -------------------------------------------------------------------- */
-    for (i=0; i<proj->numargs; i++) {
+    for (int i=0; i<proj->numargs; i++) {
       if (proj->args[i])
         nLen += (strlen(proj->args[i]) + 2);
     }
@@ -2449,7 +2452,7 @@ char *msGetProjectionString(projectionObj *proj)
     /* -------------------------------------------------------------------- */
     /*      Plug each arg into the string with a '+' prefix                 */
     /* -------------------------------------------------------------------- */
-    for (i=0; i<proj->numargs; i++) {
+    for (int i=0; i<proj->numargs; i++) {
       if (!proj->args[i] || strlen(proj->args[i]) == 0)
         continue;
       if (pszProjString[0] == '\0') {

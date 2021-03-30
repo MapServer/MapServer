@@ -387,12 +387,12 @@ PHP_METHOD(styleObj, setBinding)
 
   php_style = MAPSCRIPT_OBJ_P(php_style_object, zobj);
 
-  if (bindingId < 0 || bindingId > MS_STYLE_BINDING_LENGTH) {
+  if (bindingId < 0 || bindingId >= MS_STYLE_BINDING_LENGTH) {
     mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
     return;
   }
 
-  if (!value || strlen(value) <= 0) {
+  if (!value || strlen(value) == 0) {
     mapscript_throw_exception("Invalid binding value." TSRMLS_CC);
     return;
   }
@@ -430,7 +430,7 @@ PHP_METHOD(styleObj, getBinding)
 
   php_style = MAPSCRIPT_OBJ_P(php_style_object, zobj);
 
-  if (bindingId < 0 || bindingId > MS_STYLE_BINDING_LENGTH) {
+  if (bindingId < 0 || bindingId >= MS_STYLE_BINDING_LENGTH) {
     mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
     return;
   }
@@ -462,7 +462,7 @@ PHP_METHOD(styleObj, removeBinding)
 
   php_style = MAPSCRIPT_OBJ_P(php_style_object, zobj);
 
-  if (bindingId < 0 || bindingId > MS_STYLE_BINDING_LENGTH) {
+  if (bindingId < 0 || bindingId >= MS_STYLE_BINDING_LENGTH) {
     mapscript_throw_exception("Invalid binding id." TSRMLS_CC);
     return;
   }

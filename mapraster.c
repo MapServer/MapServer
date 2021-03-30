@@ -994,17 +994,22 @@ imageObj *msDrawReferenceMap(mapObj *map)
 
   if(MS_SUCCESS != renderer->loadImageFromFile(msBuildPath(szPath, map->mappath, map->reference.image),refImage)) {
     msSetError(MS_MISCERR,"error loading reference image %s","msDrawREferenceMap()",szPath);
+    free(refImage);
     return NULL;
   }
 
   image = msImageCreate(refImage->width, refImage->height, map->outputformat,
                         map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &(map->reference.color));
-  if(!image) return NULL;
+  if(!image)
+  {
+      free(refImage);
+      return NULL;
+  }
 
   status = renderer->mergeRasterBuffer(image,refImage,1.0,0,0,0,0,refImage->width, refImage->height);
   msFreeRasterBuffer(refImage);
   free(refImage);
-  if(UNLIKELY(status == MS_FAILURE))
+  if(MS_UNLIKELY(status == MS_FAILURE))
     return NULL;
 
   /* make sure the extent given in mapfile fits the image */
@@ -1052,7 +1057,7 @@ imageObj *msDrawReferenceMap(mapObj *map)
     if( map->reference.maxboxsize == 0 ||
         ((abs(x2 - x1) < map->reference.maxboxsize) &&
          (abs(y2 - y1) < map->reference.maxboxsize)) ) {
-      if(UNLIKELY(MS_FAILURE == msDrawShadeSymbol(map, image, &rect, &style, 1.0))) {
+      if(MS_UNLIKELY(MS_FAILURE == msDrawShadeSymbol(map, image, &rect, &style, 1.0))) {
         msFreeImage(image);
         return NULL;
       }
@@ -1076,7 +1081,7 @@ imageObj *msDrawReferenceMap(mapObj *map)
           style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername, MS_TRUE);
         }
 
-        if(UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, image, &point, &style, 1.0))) {
+        if(MS_UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, image, &point, &style, 1.0))) {
           msFreeImage(image);
           return NULL;
         }
@@ -1115,7 +1120,7 @@ imageObj *msDrawReferenceMap(mapObj *map)
         cross.line[3].point[1].x = x21+8;
         cross.line[3].point[1].y = y21;
 
-        if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map,image,&cross,&style,1.0))) {
+        if(MS_UNLIKELY(MS_FAILURE == msDrawLineSymbol(map,image,&cross,&style,1.0))) {
           msFreeImage(image);
           return NULL;
         }

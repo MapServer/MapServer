@@ -282,7 +282,7 @@ PHP_METHOD(imageObj, saveImage)
     php_map = MAPSCRIPT_OBJ_P(php_map_object, zmap);
 
   if(filename_len > 0) {
-    if ((status = msSaveImage((zmap ? php_map->map:NULL), php_image->image, filename) != MS_SUCCESS)) {
+    if (((status = msSaveImage((zmap ? php_map->map:NULL), php_image->image, filename)) != MS_SUCCESS)) {
       mapscript_throw_mapserver_exception("Failed writing image to %s" TSRMLS_CC, filename);
       return;
     }

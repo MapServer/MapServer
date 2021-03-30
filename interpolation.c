@@ -229,7 +229,7 @@ nextshape:
     double adfGeoTransform[6];
     memset(pointer, 0, sizeof(pointer));
     CPLPrintPointer(pointer, iValues, sizeof(pointer));
-    snprintf(ds_string,1024,"MEM:::DATAPOINTER=%s,PIXELS=%u,LINES=%u,BANDS=1,DATATYPE=Byte,PIXELOFFSET=1,LINEOFFSET=%u",
+    snprintf(ds_string,1024,"MEM:::DATAPOINTER=%s,PIXELS=%d,LINES=%d,BANDS=1,DATATYPE=Byte,PIXELOFFSET=1,LINEOFFSET=%d",
         pointer,image->width,image->height,image->width);
     hDS = GDALOpenShared( ds_string, GA_ReadOnly );
     if(hDS == NULL) {
@@ -251,6 +251,9 @@ nextshape:
 }
 
 int msCleanupInterpolationDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr) {
+    (void)map;
+    (void)image;
+    (void)layer;
     free(cleanup_ptr);
     return MS_SUCCESS;
 }

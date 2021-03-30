@@ -187,7 +187,7 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
 /*                    msWCSPrintRequestCapability()                     */
 /************************************************************************/
 
-static void msWCSPrintRequestCapability(const char *version, const char *request_tag, const char *script_url)
+static void msWCSPrintRequestCapability(const char *request_tag, const char *script_url)
 {
   msIO_printf("    <%s>\n", request_tag);
 
@@ -282,6 +282,7 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
                                        coverageMetadataObj *cm,
                                        layerObj *lp )
 {
+  (void)params;
 
   /* This function will provide default rangeset information for the "special" */
   /* "bands" rangeset if it appears in the axes list but has no specifics provided */
@@ -790,11 +791,11 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   /* describe the types of requests the server can handle */
   msIO_printf("  <Request>\n");
 
-  msWCSPrintRequestCapability(params->version, "GetCapabilities", script_url_encoded);
+  msWCSPrintRequestCapability("GetCapabilities", script_url_encoded);
   if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_FALSE))
-    msWCSPrintRequestCapability(params->version, "DescribeCoverage", script_url_encoded);
+    msWCSPrintRequestCapability("DescribeCoverage", script_url_encoded);
   if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_FALSE))
-    msWCSPrintRequestCapability(params->version, "GetCoverage", script_url_encoded);
+    msWCSPrintRequestCapability("GetCoverage", script_url_encoded);
 
   msIO_printf("  </Request>\n");
 
@@ -857,7 +858,7 @@ static void  msWCSPrintMetadataLink(layerObj *layer, const char *script_url_enco
 /*             msWCSGetCapabilities_CoverageOfferingBrief()             */
 /************************************************************************/
 
-static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParamsObj *params, const char *script_url_encoded)
+static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, const char *script_url_encoded)
 {
   coverageMetadataObj cm;
   int status;
@@ -933,7 +934,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
       if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
         continue;
 
-      if(msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params, script_url_encoded) != MS_SUCCESS ) {
+      if(msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), script_url_encoded) != MS_SUCCESS ) {
         msIO_printf("  <!-- WARNING: There was a problem with one of layers. See server log for details. -->\n");
       }
     }
@@ -1524,7 +1525,7 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
 /************************************************************************/
 
 static int msWCSGetCoverage_ImageCRSSetup(
-  mapObj *map, cgiRequestObj *request, wcsParamsObj *params,
+  mapObj *map, wcsParamsObj *params,
   coverageMetadataObj *cm, layerObj *layer )
 
 {
@@ -1860,7 +1861,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
         return msWCSException( map, NULL, NULL,params->version);
     } else if( strcasecmp(crs_to_use,"imageCRS") == 0 ) {
       /* use layer native CRS, and rework bounding box accordingly */
-      if( msWCSGetCoverage_ImageCRSSetup( map, request, params, &cm, lp ) != MS_SUCCESS ) {
+      if( msWCSGetCoverage_ImageCRSSetup( map, params, &cm, lp ) != MS_SUCCESS ) {
         msWCSFreeCoverageMetadata(&cm);
         return MS_FAILURE;
       }
@@ -2266,7 +2267,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     }
   } else {
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(UNLIKELY(status == MS_FAILURE)) {
+    if(MS_UNLIKELY(status == MS_FAILURE)) {
       msWCSFreeCoverageMetadata(&cm);
       msDrawRasterLayerLowCloseDataset(lp, hDS);
       return MS_FAILURE;

@@ -181,6 +181,7 @@ int setExtent(mapservObj *mapserv)
 
 int checkWebExtent(mapservObj *mapserv)
 {
+  (void)mapserv;
   return MS_SUCCESS;
 }
 
@@ -257,19 +258,8 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     if( MS_RENDERER_PLUGIN(outputFormat) ) {
       msInitializeRendererVTable(outputFormat);
     }
-    
-    /* if( MS_RENDERER_MVT(outputFormat) ) {
-      if( mapserv != NULL )
-	checkWebScale(mapserv);
-
-      status = msMVTWriteFromQuery(map, outputFormat, mapserv->sendheaders);
-
-      return status;
-      } */
-
     if( MS_RENDERER_OGR(outputFormat) ) {
-      if( mapserv != NULL )
-        checkWebScale(mapserv);
+      checkWebScale(mapserv);
 
       status = msOGRWriteFromQuery(map, outputFormat, mapserv->sendheaders);
 
@@ -279,15 +269,14 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
     if( !MS_RENDERER_TEMPLATE(outputFormat) ) { /* got an image format, return the query results that way */
       outputFormatObj *tempOutputFormat = map->outputformat; /* save format */
 
-      if( mapserv != NULL )
-        checkWebScale(mapserv);
+      checkWebScale(mapserv);
 
       map->outputformat = outputFormat; /* override what was given for IMAGETYPE */
       img = msDrawMap(map, MS_TRUE);
       if(!img) return MS_FAILURE;
       map->outputformat = tempOutputFormat; /* restore format */
 
-      if(mapserv == NULL || mapserv->sendheaders) {
+      if(mapserv->sendheaders) {
         msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(outputFormat));
         msIO_sendHeaders();
       }
@@ -303,7 +292,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
   ** style made up of external files slammed together. Either way we may have to compute a query map and other
   ** images. We only create support images IF the querymap has status=MS_ON.
   */
-  if(map->querymap.status && mapserv != NULL ) {
+  if(map->querymap.status) {
     checkWebScale(mapserv);
     if(msGenerateImages(mapserv, MS_TRUE, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
@@ -316,7 +305,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       return MS_FAILURE;
     }
 
-    if(mapserv == NULL || mapserv->sendheaders) {
+    if(mapserv->sendheaders) {
       const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL );
       if(attachment)
         msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
@@ -356,7 +345,6 @@ int isOn(mapservObj *mapserv, char *name, char *group)
 int sortLayerByOrder(mapObj *map, const char* pszOrder)
 {
   int *panCurrentOrder = NULL;
-  int i = 0;
 
   if(!map) {
     msSetError(MS_WEBERR, "Invalid pointer.", "sortLayerByOrder()");
@@ -373,11 +361,11 @@ int sortLayerByOrder(mapObj *map, const char* pszOrder)
   /* -------------------------------------------------------------------- */
   if(map->layerorder) {
     panCurrentOrder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
-    for (i=0; i<map->numlayers ; i++)
+    for (int i=0; i<map->numlayers ; i++)
       panCurrentOrder[i] = map->layerorder[i];
 
     if(strcasecmp(pszOrder, "DESCENDING") == 0) {
-      for (i=0; i<map->numlayers; i++)
+      for (int i=0; i<map->numlayers; i++)
         map->layerorder[i] = panCurrentOrder[map->numlayers-1-i];
     }
 
@@ -697,7 +685,6 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
   char *pszIfTag;
   char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
   int nInst = 0;
-  int bEmpty = 0;
   int nLength;
 
   hashTableObj *ifArgs=NULL;
@@ -751,7 +738,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
     if(pszOperator == NULL) /* Default operator if not set is "eq" */
       pszOperator = "eq";
 
-    bEmpty = 0;
+    int bEmpty = 0;
 
     if(pszName) {
       /* build the complete if tag ([if all_args]then string[/if]) */
@@ -1008,7 +995,6 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
   const char *layerName=NULL;
   const char *nodata=NULL;
 
-  int layerIndex=-1;
   layerObj *lp;
 
   if(!*line) {
@@ -1037,7 +1023,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
       return(MS_FAILURE);
     }
 
-    layerIndex = msGetLayerIndex(mapserv->map, layerName);
+    const int layerIndex = msGetLayerIndex(mapserv->map, layerName);
     if(layerIndex>=mapserv->map->numlayers || layerIndex<0) {
       msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
       msFreeHashTable(tagArgs);
@@ -1199,7 +1185,7 @@ enum ITEM_ESCAPING {ESCAPE_HTML, ESCAPE_URL, ESCAPE_JSON, ESCAPE_NONE};
 
 static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 {
-  int i, j;
+  int i;
 
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
@@ -1310,9 +1296,9 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
       /* apply other effects */
       if(uc == MS_TRUE)
-        for(j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
+        for(unsigned j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
       if(lc == MS_TRUE)
-        for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
+        for(unsigned j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
 
       tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
       msFree(itemValue);
@@ -1392,7 +1378,6 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   char *encodedTagValue=NULL, *tagValue=NULL;
 
   rectObj tempExtent;
-  int escape;
 
   char number[64]; /* holds a single number in the extent */
   char numberFormat[16];
@@ -1407,15 +1392,14 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
   /* It is OK to have no include tags, just return. */
   if(!tagStart) return MS_SUCCESS;
 
-  /* hack to handle tags like 'mapext_esc' easily */
-  if(strstr(name, "_esc")) escape = ESCAPE_URL;
-
   while(tagStart) {
     double xExpand = 0, yExpand = 0; /* set tag argument defaults */
     int precision = -1;
     const char* format = "$minx $miny $maxx $maxy";
     const char* projectionString = NULL;
 
+    /* hack to handle tags like 'mapext_esc' easily */
+    int escape;
     if(strstr(name, "_esc"))
       escape = ESCAPE_URL;
     else
@@ -1557,7 +1541,6 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
   int precision=0;
   int clip_to_map=MS_TRUE;
   int use_label_settings=MS_FALSE;
-  double cellsize=0;
   int labelposvalid = MS_FALSE;
   pointObj labelPos;
   int status;
@@ -1625,6 +1608,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     tShape.line[0].point = NULL; /* initialize the line */
     tShape.line[0].numpoints = 0;
 
+    double cellsize;
     if(layer->map->cellsize <= 0)
       cellsize = MS_MAX(MS_CELLSIZE(layer->map->extent.minx, layer->map->extent.maxx, layer->map->width), MS_CELLSIZE(layer->map->extent.miny, layer->map->extent.maxy, layer->map->height));
     else
@@ -1680,7 +1664,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       if(shape->numlines > 0) {
         struct label_auto_result lar;
         memset(&lar,0,sizeof(struct label_auto_result));
-        if(UNLIKELY(MS_FAILURE == msPolylineLabelPoint(layer->map, shape, NULL, NULL, &lar, 0))) {
+        if(MS_UNLIKELY(MS_FAILURE == msPolylineLabelPoint(layer->map, shape, NULL, NULL, &lar, 0))) {
           free(lar.angles);
           free(lar.label_points);
           return MS_FAILURE;
@@ -3051,7 +3035,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /*      Save the current drawing order. The drawing order is reset      */
   /*      at the end of the function.                                     */
   /* -------------------------------------------------------------------- */
-  if(mapserv && mapserv->map && mapserv->map->numlayers > 0) {
+  if(mapserv->map->numlayers > 0) {
     panCurrentDrawingOrder =
       (int *)msSmallMalloc(sizeof(int)*mapserv->map->numlayers);
 
@@ -3349,7 +3333,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
           if(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group, papszGroups[i]) == 0) {
             /* for all classes in layer */
-            if(legClassHtml) {
+
               for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
                 /* process all class tags */
                 if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
@@ -3374,7 +3358,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
                   legClassHtmlCopy = NULL;
                 }
               }
-            }
+
           }
         }
       }
@@ -4169,7 +4153,6 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
   char line[MS_BUFFER_LENGTH], *tmpline;
   int   nBufferSize = 0;
   int   nCurrentSize = 0;
-  int   nExpandBuffer = 0;
 
   ms_regex_t re; /* compiled regular expression to be matched */
   char szPath[MS_MAXPATHLEN];
@@ -4207,11 +4190,9 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
       (*papszBuffer)[0] = '\0';
       nBufferSize = MS_TEMPLATE_BUFFER;
       nCurrentSize = 0;
-      nExpandBuffer = 1;
     } else {
       nCurrentSize = strlen((*papszBuffer));
       nBufferSize = nCurrentSize;
-      nExpandBuffer = (nCurrentSize/MS_TEMPLATE_BUFFER) + 1;
     }
   }
 
@@ -4224,7 +4205,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
 
       if(papszBuffer) {
         if(nBufferSize <= (int)(nCurrentSize + strlen(tmpline) + 1)) {
-          nExpandBuffer = (strlen(tmpline) /  MS_TEMPLATE_BUFFER) + 1;
+          const int nExpandBuffer = (strlen(tmpline) /  MS_TEMPLATE_BUFFER) + 1;
           nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer + strlen((*papszBuffer));
           (*papszBuffer) = (char *) msSmallRealloc((*papszBuffer),sizeof(char)*nBufferSize);
         }
@@ -4237,7 +4218,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
     } else {
       if(papszBuffer) {
         if(nBufferSize <= (int)(nCurrentSize + strlen(line))) {
-          nExpandBuffer = (strlen(line) /  MS_TEMPLATE_BUFFER) + 1;
+          const int nExpandBuffer = (strlen(line) /  MS_TEMPLATE_BUFFER) + 1;
           nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer + strlen((*papszBuffer));
           (*papszBuffer) = (char *)msSmallRealloc((*papszBuffer),sizeof(char)*nBufferSize);
         }

@@ -95,6 +95,7 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
   /*  Establish the byte order on this machine.         */
   /* -------------------------------------------------------------------- */
   i = 1;
+  /* cppcheck-suppress knownConditionTrueFalse */
   if( *((uchar *) &i) == 1 )
     bBigEndian = MS_FALSE;
   else
@@ -763,6 +764,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   /*  Establish the byte order on this machine.         */
   /* -------------------------------------------------------------------- */
   i = 1;
+  /* cppcheck-suppress knownConditionTrueFalse */
   if( *((uchar *) &i) == 1 )
     mtBigEndian = MS_FALSE;
   else

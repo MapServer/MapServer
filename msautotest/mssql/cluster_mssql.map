@@ -1,0 +1,51 @@
+#
+# Test a clustered layer with the MSSQL driver plugin
+#
+# REQUIRES: OUTPUT=PNG
+#
+# RUN_PARMS: cluster_mssql.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: cluster_mssql_getmetadata.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=cities" > [RESULT_DEMIME]
+
+MAP
+  NAME 'cluster_mssql'
+
+  SYMBOL 
+    NAME "circle"
+    TYPE ellipse
+    POINTS 1 1 END
+    FILLED true
+  END
+
+  EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
+  UNITS METERS
+  SIZE 300 300
+  IMAGETYPE png24
+  LAYER
+    NAME 'cities'
+    INCLUDE 'include/mssql_connection.map'
+    TYPE POINT
+    PROCESSING "CLUSTER_ALGORITHM=SIMPLE"
+    PROCESSING "CLUSTER_GET_ALL_SHAPES=OFF"
+    PROCESSING "CLUSTER_KEEP_LOCATIONS=OFF"
+    INCLUDE 'include/mssql_connection.map'
+    STATUS ON
+    DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857"
+    CLUSTER
+        MAXDISTANCE 50
+        REGION "ELLIPSE"
+    END
+    CLASSGROUP "Clustered"
+    CLASS
+        EXPRESSION ( "[Cluster_FeatureCount]" != "1" )
+        GROUP "Clustered"
+        STYLE
+            SYMBOL "circle"
+            SIZE 6
+            COLOR "#ffd966"
+        END
+        LABEL
+            TEXT "[Cluster_FeatureCount]"
+        END
+    END
+  END
+END

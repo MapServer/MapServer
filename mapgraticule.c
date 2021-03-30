@@ -127,6 +127,7 @@ int msGraticuleLayerIsOpen(layerObj *layer)
  */
 int msGraticuleLayerClose(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -135,6 +136,7 @@ int msGraticuleLayerClose(layerObj *layer)
  */
 int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   graticuleObj *pInfo = layer->grid;
   int iAxisTickCount = 0;
   rectObj rectMapCoordinates;
@@ -506,6 +508,7 @@ int msGraticuleLayerGetItems(layerObj *layer)
  */
 int msGraticuleLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -514,7 +517,7 @@ int msGraticuleLayerInitItemInfo(layerObj *layer)
  */
 void msGraticuleLayerFreeItemInfo(layerObj *layer)
 {
-  return;
+  (void)layer;
 }
 
 /**********************************************************************************************************************
@@ -522,6 +525,9 @@ void msGraticuleLayerFreeItemInfo(layerObj *layer)
  */
 int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  (void)layer;
+  (void)shape;
+  (void)record;
   return MS_FAILURE;
 }
 
@@ -545,6 +551,10 @@ int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent)
  */
 int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
+  (void)map;
+  (void)layer;
+  (void)c;
+  (void)shape;
   return MS_SUCCESS;
 }
 
@@ -556,25 +566,24 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shap
 /************************************************************************/
 void msGraticuleLayerFreeIntersectionPoints( graticuleIntersectionObj *psValue)
 {
-  int i=0;
   if (psValue) {
-    for (i=0; i<psValue->nTop; i++)
+    for (int i=0; i<psValue->nTop; i++)
       msFree(psValue->papszTopLabels[i]);
     msFree(psValue->papszTopLabels);
     msFree(psValue->pasTop);
 
-    for (i=0; i<psValue->nBottom; i++)
+    for (int i=0; i<psValue->nBottom; i++)
       msFree(psValue->papszBottomLabels[i]);
     msFree(psValue->papszBottomLabels);
     msFree(psValue->pasBottom);
 
 
-    for (i=0; i<psValue->nLeft; i++)
+    for (int i=0; i<psValue->nLeft; i++)
       msFree(psValue->papszLeftLabels[i]);
     msFree(psValue->papszLeftLabels);
     msFree(psValue->pasLeft);
 
-    for (i=0; i<psValue->nRight; i++)
+    for (int i=0; i<psValue->nRight; i++)
       msFree(psValue->papszRightLabels[i]);
     msFree(psValue->papszRightLabels);
     msFree(psValue->pasRight);
@@ -716,7 +725,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
 
 
-    if(shapegrid.numlines >= 1 && shapegrid.line[0].numpoints >=2) { /* && shapegrid.text) */
+    {
       int iTmpLine = 0;
       int nNumPoints = 0;
       /*grid code seems to retunr lines that can double cross the extenst??*/

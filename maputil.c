@@ -623,7 +623,7 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
       }
 
       return p.result.intval;
-      break;
+
     }
     case(MS_REGEX):
       if(itemindex == -1) {
@@ -940,26 +940,24 @@ double msAdjustExtent(rectObj *rect, int width, int height)
 */
 int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay)
 {
-  double offset=0;
-
   /* check left edge, and if necessary the right edge of bounds */
   if(rect->maxx <= bounds->minx) {
-    offset = overlay*(rect->maxx - rect->minx);
+    const double offset = overlay*(rect->maxx - rect->minx);
     rect->minx += offset; /* shift right */
     rect->maxx += offset;
   } else if(rect->minx >= bounds->maxx) {
-    offset = overlay*(rect->maxx - rect->minx);
+    const double offset = overlay*(rect->maxx - rect->minx);
     rect->minx -= offset; /* shift left */
     rect->maxx -= offset;
   }
 
   /* check top edge, and if necessary the bottom edge of bounds */
   if(rect->maxy <= bounds->miny) {
-    offset = overlay*(rect->maxy - rect->miny);
+    const double offset = overlay*(rect->maxy - rect->miny);
     rect->miny -= offset; /* shift down */
     rect->maxy -= offset;
   } else if(rect->miny >= bounds->maxy) {
-    offset = overlay*(rect->maxy - rect->miny);
+    const double offset = overlay*(rect->maxy - rect->miny);
     rect->miny += offset; /* shift up */
     rect->maxy += offset;
   }
@@ -1066,7 +1064,6 @@ int msSaveImage(mapObj *map, imageObj *img, const char *filename)
 
 unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format)
 {
-  int status = MS_SUCCESS;
   *size_ptr = 0;
   if( MS_RENDERER_PLUGIN(image->format)) {
     rasterBufferObj data;
@@ -1074,8 +1071,8 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
     if(renderer->supports_pixel_buffer) {
       bufferObj buffer;
       msBufferInit(&buffer);
-      status = renderer->getRasterBufferHandle(image,&data);
-      if(UNLIKELY(status == MS_FAILURE)) {
+      const int status = renderer->getRasterBufferHandle(image,&data);
+      if(MS_UNLIKELY(status == MS_FAILURE)) {
         return NULL;
       }
       msSaveRasterBufferToBuffer(&data,&buffer,format);
@@ -1192,10 +1189,6 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
 pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
 {
   pointObj    *point = NULL;
-  lineObj     line;
-  double      dfMin = 0;
-  double      dfMax = 0;
-  int         i,j = 0;
   int         bFound = 0;
   double      dfFirstPointX = 0;
   double      dfFirstPointY = 0;
@@ -1203,39 +1196,37 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
   double      dfSecondPointX = 0;
   double      dfSecondPointY = 0;
   double      dfSecondPointM = 0;
-  double      dfCurrentM = 0;
-  double      dfFactor = 0;
 
   if (shape &&  shape->numlines > 0) {
     /* -------------------------------------------------------------------- */
     /*      check fir the first value (min) and the last value(max) to      */
     /*      see if the m is contained between these min and max.            */
     /* -------------------------------------------------------------------- */
-    line = shape->line[0];
-    dfMin = line.point[0].m;
-    line = shape->line[shape->numlines-1];
-    dfMax = line.point[line.numpoints-1].m;
+    const lineObj* lineFirst = &(shape->line[0]);
+    const double dfMin = lineFirst->point[0].m;
+    const lineObj* lineLast = &(shape->line[shape->numlines-1]);
+    const double dfMax = lineLast->point[lineLast->numpoints-1].m;
 
     if (m >= dfMin && m <= dfMax) {
-      for (i=0; i<shape->numlines; i++) {
-        line = shape->line[i];
+      for (int i=0; i<shape->numlines; i++) {
+        const lineObj* line = &(shape->line[i]);
 
-        for (j=0; j<line.numpoints; j++) {
-          dfCurrentM = line.point[j].m;
+        for (int j=0; j<line->numpoints; j++) {
+          const double dfCurrentM = line->point[j].m;
           if (dfCurrentM > m) {
             bFound = 1;
 
-            dfSecondPointX = line.point[j].x;
-            dfSecondPointY = line.point[j].y;
-            dfSecondPointM = line.point[j].m;
+            dfSecondPointX = line->point[j].x;
+            dfSecondPointY = line->point[j].y;
+            dfSecondPointM = line->point[j].m;
 
             /* -------------------------------------------------------------------- */
             /*      get the previous node xy values.                                */
             /* -------------------------------------------------------------------- */
             if (j > 0) { /* not the first point of the line */
-              dfFirstPointX = line.point[j-1].x;
-              dfFirstPointY = line.point[j-1].y;
-              dfFirstPointM = line.point[j-1].m;
+              dfFirstPointX = line->point[j-1].x;
+              dfFirstPointY = line->point[j-1].y;
+              dfFirstPointM = line->point[j-1].m;
             } else { /* get last point of previous line */
               dfFirstPointX = shape->line[i-1].point[0].x;
               dfFirstPointY = shape->line[i-1].point[0].y;
@@ -1254,10 +1245,9 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
     /*      extrapolate the m value to get t he xy coordinate.              */
     /* -------------------------------------------------------------------- */
 
+    double dfFactor = 0;
     if (dfFirstPointM != dfSecondPointM)
       dfFactor = (m-dfFirstPointM)/(dfSecondPointM - dfFirstPointM);
-    else
-      dfFactor = 0;
 
     point = (pointObj *)msSmallMalloc(sizeof(pointObj));
 
@@ -1349,18 +1339,15 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
 /************************************************************************/
 pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
 {
-  double r = 0;
-  double L = 0;
   pointObj *result = NULL;
 
   if (p && a && b) {
-    L = sqrt(((b->x - a->x)*(b->x - a->x)) +
+    const double L = sqrt(((b->x - a->x)*(b->x - a->x)) +
              ((b->y - a->y)*(b->y - a->y)));
 
+    double r = 0;
     if (L != 0)
       r = ((p->x - a->x)*(b->x - a->x) + (p->y - a->y)*(b->y - a->y))/(L*L);
-    else
-      r = 0;
 
     result = (pointObj *)msSmallMalloc(sizeof(pointObj));
     /* -------------------------------------------------------------------- */
@@ -1398,26 +1385,20 @@ pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
 /************************************************************************/
 pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 {
-  double      dfMinDist = 1e35;
-  double      dfDist = 0;
   pointObj    oFirst;
   pointObj    oSecond;
-  int         i, j = 0;
-  lineObj     line;
-  pointObj    *poIntersectionPt = NULL;
-  double      dfFactor = 0;
-  double      dfDistTotal, dfDistToIntersection = 0;
 
   if (shape && point) {
-    for (i=0; i<shape->numlines; i++) {
-      line = shape->line[i];
+    double      dfMinDist = 1e35;
+    for (int i=0; i<shape->numlines; i++) {
+      lineObj line = shape->line[i];
       /* -------------------------------------------------------------------- */
       /*      for each line (2 consecutive lines) get the distance between    */
       /*      the line and the point and determine which line segment is      */
       /*      the closeset to the point.                                      */
       /* -------------------------------------------------------------------- */
-      for (j=0; j<line.numpoints-1; j++) {
-        dfDist = msDistancePointToSegment(point, &line.point[j], &line.point[j+1]);
+      for (int j=0; j<line.numpoints-1; j++) {
+        const double dfDist = msDistancePointToSegment(point, &line.point[j], &line.point[j+1]);
         if (dfDist < dfMinDist) {
           oFirst.x = line.point[j].x;
           oFirst.y = line.point[j].y;
@@ -1436,17 +1417,17 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
     /*      which is the nearest intersection between the line and the      */
     /*      point.                                                          */
     /* -------------------------------------------------------------------- */
-    poIntersectionPt = msIntersectionPointLine(point, &oFirst, &oSecond);
+    pointObj* poIntersectionPt = msIntersectionPointLine(point, &oFirst, &oSecond);
     if (poIntersectionPt) {
-      dfDistTotal = sqrt(((oSecond.x - oFirst.x)*(oSecond.x - oFirst.x)) +
+      const double dfDistTotal = sqrt(((oSecond.x - oFirst.x)*(oSecond.x - oFirst.x)) +
                          ((oSecond.y - oFirst.y)*(oSecond.y - oFirst.y)));
 
-      dfDistToIntersection = sqrt(((poIntersectionPt->x - oFirst.x)*
+      const double dfDistToIntersection = sqrt(((poIntersectionPt->x - oFirst.x)*
                                    (poIntersectionPt->x - oFirst.x)) +
                                   ((poIntersectionPt->y - oFirst.y)*
                                    (poIntersectionPt->y - oFirst.y)));
 
-      dfFactor = dfDistToIntersection / dfDistTotal;
+      const double dfFactor = dfDistToIntersection / dfDistTotal;
 
       poIntersectionPt->m = oFirst.m + (oSecond.m - oFirst.m)*dfFactor;
       return poIntersectionPt;
@@ -1464,9 +1445,6 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 char **msGetAllGroupNames(mapObj *map, int *numTok)
 {
   char        **papszGroups = NULL;
-  int         bFound = 0;
-  int         nCount = 0;
-  int         i = 0, j = 0;
 
   assert(map);
   *numTok = 0;
@@ -1477,24 +1455,24 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
     /*
      * Initiate to default order
      */
-    for (i=0; i<map->numlayers; i++)
+    for (int i=0; i<map->numlayers; i++)
       map->layerorder[i] = i;
   }
 
   if (map->numlayers > 0) {
-    nCount = map->numlayers;
+    const int nCount = map->numlayers;
     papszGroups = (char **)msSmallMalloc(sizeof(char *)*nCount);
 
-    for (i=0; i<nCount; i++)
+    for (int i=0; i<nCount; i++)
       papszGroups[i] = NULL;
 
-    for (i=0; i<nCount; i++) {
+    for (int i=0; i<nCount; i++) {
       layerObj *lp;
       lp = (GET_LAYER(map, map->layerorder[i]));
 
-      bFound = 0;
+      int bFound = 0;
       if (lp->group && lp->status != MS_DELETE) {
-        for (j=0; j<*numTok; j++) {
+        for (int j=0; j<*numTok; j++) {
           if (papszGroups[j] &&
               strcmp(lp->group, papszGroups[j]) == 0) {
             bFound = 1;
@@ -1759,8 +1737,10 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     return NULL;
   }
 
-  if(!image)
+  if(!image) {
     msSetError(MS_IMGERR, "Unable to initialize image.", "msImageCreate()");
+    return NULL;
+  }
   image->refpt.x = image->refpt.y = 0;
   return image;
 }
@@ -1897,7 +1877,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
   for (i = 0; i < p->numlines; i++) {
-    pointObj old_pt = {0}, old_diffdir, old_offdir;
+    pointObj old_diffdir, old_offdir;
     if(p->line[i].numpoints<2) {
       ret->line[i].numpoints = 0;
       continue; /* skip degenerate points */
@@ -1911,8 +1891,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     first = 1;
 
     /* saved metrics of the last processed point */
-    if (p->line[i].numpoints>0)
-      old_pt=p->line[i].point[0];
+    pointObj old_pt=p->line[i].point[0];
     for(j=1; j<p->line[i].numpoints; j++) {
       const pointObj pt = p->line[i].point[j]; /* place of the point */
       const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */
@@ -2437,11 +2416,11 @@ void *msSmallMalloc( size_t nSize )
 {
   void        *pReturn;
 
-  if( UNLIKELY(nSize == 0) )
+  if( MS_UNLIKELY(nSize == 0) )
     return NULL;
 
   pReturn = malloc( nSize );
-  if( UNLIKELY(pReturn == NULL) ) {
+  if( MS_UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
                  (long) nSize );
     exit(1);
@@ -2460,12 +2439,12 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 {
   void        *pReturn;
 
-  if ( UNLIKELY(nNewSize == 0) )
+  if ( MS_UNLIKELY(nNewSize == 0) )
     return NULL;
 
   pReturn = realloc( pData, nNewSize );
 
-  if( UNLIKELY(pReturn == NULL) ) {
+  if( MS_UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
                  (long)nNewSize );
     exit(1);
@@ -2484,11 +2463,11 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
 {
   void  *pReturn;
 
-  if( UNLIKELY(nSize * nCount == 0) )
+  if( MS_UNLIKELY(nSize * nCount == 0) )
     return NULL;
 
   pReturn = calloc( nCount, nSize );
-  if( UNLIKELY(pReturn == NULL) ) {
+  if( MS_UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
                  (long)(nCount*nSize));
     exit(1);
@@ -2509,6 +2488,7 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
 */
 char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 {
+  (void)map;
   char *online_resource = NULL;
   const char *value, *hostname, *port, *script, *protocol="http", *mapparam=NULL;
   char **hostname_array = NULL;

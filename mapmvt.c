@@ -197,22 +197,21 @@ static void freeMvtValue( VectorTile__Tile__Value *mvt_value ) {
 }
 
 static void freeMvtLayer( VectorTile__Tile__Layer *mvt_layer ) {
-  int i;
   if(mvt_layer->keys) {
-    for(i=0;i<mvt_layer->n_keys; i++) {
+    for(unsigned i=0;i<mvt_layer->n_keys; i++) {
       msFree(mvt_layer->keys[i]);
     }
     msFree(mvt_layer->keys);
   }
   if(mvt_layer->values) {
-    for(i=0;i<mvt_layer->n_values; i++) {
+    for(unsigned i=0;i<mvt_layer->n_values; i++) {
         freeMvtValue(mvt_layer->values[i]);
         msFree(mvt_layer->values[i]);
     }
     msFree(mvt_layer->values);
   }
   if(mvt_layer->features) {
-    for(i=0;i<mvt_layer->n_features; i++) {
+    for(unsigned i=0;i<mvt_layer->n_features; i++) {
         freeMvtFeature(mvt_layer->features[i]);
         msFree(mvt_layer->features[i]);
     }
@@ -360,8 +359,7 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
 }
 
 static void freeMvtTile( VectorTile__Tile *mvt_tile ) {
-  int iLayer;
-  for(iLayer=0;iLayer<mvt_tile->n_layers;iLayer++) {
+  for(unsigned iLayer=0;iLayer<mvt_tile->n_layers;iLayer++) {
     freeMvtLayer(mvt_tile->layers[iLayer]);
     msFree(mvt_tile->layers[iLayer]);
   }
@@ -399,7 +397,7 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
     value_lookup *cur_value_lookup, *tmp_value_lookup;
     rectObj rect;
 
-    int features_size = 0;
+    unsigned features_size = 0;
 
     if(!msLayerIsVisible(map, layer)) continue;
 
@@ -559,6 +557,7 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
 }
 
 int msPopulateRendererVTableMVT(rendererVTableObj * renderer) {
+  (void)renderer;
   return MS_SUCCESS;
 }
 #else

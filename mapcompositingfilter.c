@@ -34,10 +34,10 @@
 #define pixerase(rb,x,y) memset(rb->data.rgba.pixels+y*rb->data.rgba.row_step+x*4,0,4)
 
 void msApplyTranslationCompositingFilter(rasterBufferObj *rb, int xtrans, int ytrans) {
-  int src_sx,src_sy,dst_sx,dst_sy,x,y,dst_x,dst_y;
-  if(abs(xtrans)>=rb->width || abs(ytrans)>=rb->height) {
-    for(y = 0; y<rb->height; y++)
-      for(x = 0; x<rb->width; x++)
+  int src_sx,src_sy,dst_sx,dst_sy;
+  if((unsigned)abs(xtrans)>=rb->width || (unsigned)abs(ytrans)>=rb->height) {
+    for(unsigned y = 0; y<rb->height; y++)
+      for(unsigned x = 0; x<rb->width; x++)
         pixerase(rb,x,y);
   }
   if(xtrans == 0 && ytrans == 0)
@@ -48,32 +48,32 @@ void msApplyTranslationCompositingFilter(rasterBufferObj *rb, int xtrans, int yt
       src_sy = rb->height - ytrans - 1;
       dst_sx = rb->width - 1;
       dst_sy = rb->height -1;
-      for(y = src_sy,dst_y= dst_sy;y>=0;y--,dst_y--) {
-        for(x = src_sx,dst_x= dst_sx;x>=0;x--,dst_x--) {
+      for(int y = src_sy,dst_y= dst_sy;y>=0;y--,dst_y--) {
+        for(int x = src_sx,dst_x= dst_sx;x>=0;x--,dst_x--) {
           pixmove(rb,x,y,dst_x,dst_y);
         }
       }
-      for(y=0;y<ytrans;y++)
-        for(x=0;x<rb->width;x++)
+      for(int y=0;y<ytrans;y++)
+        for(unsigned x=0;x<rb->width;x++)
           pixerase(rb,x,y);  
-      for(y=ytrans;y<rb->height;y++)
-        for(x=0;x<xtrans;x++)
+      for(unsigned y=ytrans;y<rb->height;y++)
+        for(int x=0;x<xtrans;x++)
           pixerase(rb,x,y);
     } else {
       src_sx = rb->width - xtrans - 1;
       src_sy = - ytrans;
       dst_sx = rb->width - 1;
       dst_sy = 0;
-      for(y = src_sy,dst_y= dst_sy;y<rb->height;y++,dst_y++) {
-        for(x = src_sx,dst_x= dst_sx;x>=0;x--,dst_x--) {
+      for(unsigned y = src_sy,dst_y= dst_sy;y<rb->height;y++,dst_y++) {
+        for(int x = src_sx,dst_x= dst_sx;x>=0;x--,dst_x--) {
           pixmove(rb,x,y,dst_x,dst_y);
         }
       }
-      for(y=0;y<rb->height+ytrans;y++)
-        for(x=0;x<xtrans;x++)
+      for(unsigned y=0;y<rb->height+ytrans;y++)
+        for(int x=0;x<xtrans;x++)
           pixerase(rb,x,y);  
-      for(y=rb->height+ytrans;y<rb->height;y++)
-        for(x=0;x<rb->width;x++)
+      for(unsigned y=rb->height+ytrans;y<rb->height;y++)
+        for(unsigned x=0;x<rb->width;x++)
           pixerase(rb,x,y);
     }
   } else {
@@ -82,45 +82,44 @@ void msApplyTranslationCompositingFilter(rasterBufferObj *rb, int xtrans, int yt
       src_sy = rb->height - ytrans - 1;
       dst_sx = 0;
       dst_sy = rb->height -1;
-      for(y = src_sy,dst_y= dst_sy;y>=0;y--,dst_y--) {
-        for(x = src_sx,dst_x= dst_sx;x<rb->width;x++,dst_x++) {
+      for(int y = src_sy,dst_y= dst_sy;y>=0;y--,dst_y--) {
+        for(unsigned x = src_sx,dst_x= dst_sx;x<rb->width;x++,dst_x++) {
           pixmove(rb,x,y,dst_x,dst_y);
         }
       }
-      for(y=0;y<ytrans;y++)
-        for(x=0;x<rb->width;x++)
+      for(int y=0;y<ytrans;y++)
+        for(unsigned x=0;x<rb->width;x++)
           pixerase(rb,x,y);
-      for(y=ytrans;y<rb->height;y++)
-        for(x=rb->width+xtrans;x<rb->width;x++)
+      for(unsigned y=ytrans;y<rb->height;y++)
+        for(unsigned x=rb->width+xtrans;x<rb->width;x++)
           pixerase(rb,x,y);
     } else {
       src_sx = - xtrans;
       src_sy = - ytrans;
       dst_sx = 0;
       dst_sy = 0;
-      for(y = src_sy,dst_y= dst_sy;y<rb->height;y++,dst_y++) {
-        for(x = src_sx,dst_x= dst_sx;x<rb->width;x++,dst_x++) {
+      for(unsigned y = src_sy,dst_y= dst_sy;y<rb->height;y++,dst_y++) {
+        for(unsigned x = src_sx,dst_x= dst_sx;x<rb->width;x++,dst_x++) {
           pixmove(rb,x,y,dst_x,dst_y);
         }
       }
-      for(y=0;y<rb->height+ytrans;y++)
-        for(x=rb->width+xtrans;x<rb->width;x++)
+      for(unsigned y=0;y<rb->height+ytrans;y++)
+        for(unsigned x=rb->width+xtrans;x<rb->width;x++)
           pixerase(rb,x,y);
-      for(y=rb->height+ytrans;y<rb->height;y++)
-        for(x=0;x<rb->width;x++)
+      for(unsigned y=rb->height+ytrans;y<rb->height;y++)
+        for(unsigned x=0;x<rb->width;x++)
           pixerase(rb,x,y);
     }
   }
 }
 
 void msApplyBlackeningCompositingFilter(rasterBufferObj *rb) {
-  int row,col;
   unsigned char *r,*g,*b;
-  for(row=0;row<rb->height;row++) {
+  for(unsigned row=0;row<rb->height;row++) {
     r = rb->data.rgba.r + row*rb->data.rgba.row_step;
     g = rb->data.rgba.g + row*rb->data.rgba.row_step;
     b = rb->data.rgba.b + row*rb->data.rgba.row_step;
-    for(col=0;col<rb->width;col++) {
+    for(unsigned col=0;col<rb->width;col++) {
       *r = *g = *b = 0;
       r+=4;g+=4;b+=4;
     }    
@@ -128,14 +127,13 @@ void msApplyBlackeningCompositingFilter(rasterBufferObj *rb) {
 }
 
 void msApplyWhiteningCompositingFilter(rasterBufferObj *rb) {
-  int row,col;
   unsigned char *r,*g,*b,*a;
-  for(row=0;row<rb->height;row++) {
+  for(unsigned row=0;row<rb->height;row++) {
     r = rb->data.rgba.r + row*rb->data.rgba.row_step;
     g = rb->data.rgba.g + row*rb->data.rgba.row_step;
     b = rb->data.rgba.b + row*rb->data.rgba.row_step;
     a = rb->data.rgba.a + row*rb->data.rgba.row_step;
-    for(col=0;col<rb->width;col++) {
+    for(unsigned col=0;col<rb->width;col++) {
       *r = *g = *b = *a;
       r+=4;g+=4;b+=4;a+=4;
     }    
@@ -143,13 +141,12 @@ void msApplyWhiteningCompositingFilter(rasterBufferObj *rb) {
 }
 
 void msApplyGrayscaleCompositingFilter(rasterBufferObj *rb) {
-  int row,col;
   unsigned char *r,*g,*b;
-  for(row=0;row<rb->height;row++) {
+  for(unsigned row=0;row<rb->height;row++) {
     r = rb->data.rgba.r + row*rb->data.rgba.row_step;
     g = rb->data.rgba.g + row*rb->data.rgba.row_step;
     b = rb->data.rgba.b + row*rb->data.rgba.row_step;
-    for(col=0;col<rb->width;col++) {
+    for(unsigned col=0;col<rb->width;col++) {
       unsigned int mix = (unsigned int)*r + (unsigned int)*g + (unsigned int)*b;
       mix /=3;
       *r = *g = *b = (unsigned char)mix;

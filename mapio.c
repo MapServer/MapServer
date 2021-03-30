@@ -415,10 +415,9 @@ int msIO_fprintf( FILE *fp, const char *format, ... )
 int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
 
 {
-  va_list args_copy;
   int     return_val;
   msIOContext *context;
-  char workBuf[8000], *largerBuf = NULL;
+  char workBuf[8000];
 
 #if !defined(HAVE_VSNPRINTF)
   return_val = vsprintf( workBuf, format, ap);
@@ -428,34 +427,42 @@ int msIO_vfprintf( FILE *fp, const char *format, va_list ap )
     return -1;
   }
 
+  char* outbuf = workBuf;
+
 #else
 
+  va_list args_copy;
 #ifdef va_copy
   va_copy( args_copy, ap );
 #else
   args_copy = ap;
 #endif /* va_copy */
 
+  char* largerBuf = NULL;
   return_val = vsnprintf( workBuf, sizeof(workBuf), format, ap );
-  if (return_val == -1 || return_val >= sizeof(workBuf)-1) {
+  if (return_val == -1 || return_val >= (int)sizeof(workBuf)-1) {
     return_val = _ms_vsprintf(&largerBuf, format, args_copy );
   }
   va_end(args_copy);
 
-#endif /* HAVE_VSNPRINTF */
-
   if (return_val < 0)
     return -1;
 
+  char* outbuf = largerBuf?largerBuf:workBuf;
+
+#endif /* HAVE_VSNPRINTF */
+
   context = msIO_getHandler( fp );
   if( context == NULL )
-    return_val = fwrite( largerBuf?largerBuf:workBuf, 1, return_val, fp );
+    return_val = fwrite(outbuf , 1, return_val, fp );
   else
     return_val =  msIO_contextWrite( context,
-                                     largerBuf?largerBuf:workBuf,
+                                     outbuf,
                                      return_val );
 
+#if defined(HAVE_VSNPRINTF)
   msFree(largerBuf);
+#endif
 
   return return_val;
 }
@@ -1090,9 +1097,9 @@ int msIO_bufferWrite( void *cbData, void *data, int byteCount )
 int msIO_bufferRead( void *cbData, void *data, int byteCount )
 
 {
-  /*    msIOBuffer *buf = (msIOBuffer *) cbData; */
-
+  (void)cbData;
+  (void)data;
+  (void)byteCount;
   /* not implemented yet. */
-
   return 0;
 }

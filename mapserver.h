@@ -64,12 +64,12 @@
 
 #if defined(__GNUC__)
 #define WARN_UNUSED __attribute__((warn_unused_result))
-#define LIKELY(x)   __builtin_expect((x),1)
-#define UNLIKELY(x) __builtin_expect((x),0)
+#define MS_LIKELY(x)   __builtin_expect((x),1)
+#define MS_UNLIKELY(x) __builtin_expect((x),0)
 #else
 #define WARN_UNUSED
-#define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
+#define MS_LIKELY(x) (x)
+#define MS_UNLIKELY(x) (x)
 #endif
 
 /* definition of  ms_int32/ms_uint32 */
@@ -2335,9 +2335,9 @@ extern "C" {
   MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
   /* Use this threadsafe wrapper everywhere else */
   MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map);
-  MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
-  MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
-  MS_DLL_EXPORT int msCopyHashTable(hashTableObj *dst, hashTableObj *src);
+  MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, const symbolObj *src, mapObj *map);
+  MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, const symbolSetObj *src, mapObj *map);
+  MS_DLL_EXPORT int msCopyHashTable(hashTableObj *dst, const hashTableObj *src);
   MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
   MS_DLL_EXPORT symbolObj *msGrowSymbolSet( symbolSetObj *symbolset );
   MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
@@ -2386,7 +2386,7 @@ extern "C" {
   MS_DLL_EXPORT char *msShapeToWKT(shapeObj *shape);
   MS_DLL_EXPORT void msInitShape(shapeObj *shape);
   MS_DLL_EXPORT void msShapeDeleteLine( shapeObj *shape, int line );
-  MS_DLL_EXPORT int msCopyShape(shapeObj *from, shapeObj *to);
+  MS_DLL_EXPORT int msCopyShape(const shapeObj *from, shapeObj *to);
   MS_DLL_EXPORT int msIsOuterRing(shapeObj *shape, int r);
   MS_DLL_EXPORT int *msGetOuterList(shapeObj *shape);
   MS_DLL_EXPORT int *msGetInnerList(shapeObj *shape, int r, int *outerlist);
@@ -2491,8 +2491,8 @@ extern "C" {
   MS_DLL_EXPORT int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape);
   MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
   MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value);
-  MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
-  MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
+  MS_DLL_EXPORT const char *msLayerGetProcessing( const layerObj *layer, int proc_index);
+  MS_DLL_EXPORT const char *msLayerGetProcessingKey( const layerObj *layer, const char *);
   MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
   MS_DLL_EXPORT void msLayerSubstituteProcessing( layerObj *layer, const char *from, const char *to );
   MS_DLL_EXPORT char *msLayerGetFilterString( layerObj *layer );
@@ -2849,22 +2849,22 @@ extern "C" {
   /* ==================================================================== */
   /*      prototypes for functions in mapcopy                             */
   /* ==================================================================== */
-  MS_DLL_EXPORT int msCopyMap(mapObj *dst, mapObj *src);
-  MS_DLL_EXPORT int msCopyLayer(layerObj *dst, layerObj *src);
-  MS_DLL_EXPORT int msCopyScaleToken(scaleTokenObj *src, scaleTokenObj *dst);
-  MS_DLL_EXPORT int msCopyPoint(pointObj *dst, pointObj *src);
-  MS_DLL_EXPORT int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map);
-  MS_DLL_EXPORT void copyProperty(void *dst, void *src, int size);
-  MS_DLL_EXPORT char *copyStringProperty(char **dst, char *src);
-  MS_DLL_EXPORT int msCopyClass(classObj *dst, classObj *src, layerObj *layer);
-  MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
-  MS_DLL_EXPORT int msCopyLabel(labelObj *dst, labelObj *src);
-  MS_DLL_EXPORT int msCopyLabelLeader(labelLeaderObj *dst, labelLeaderObj *src);
-  MS_DLL_EXPORT int msCopyLine(lineObj *dst, lineObj *src);
-  MS_DLL_EXPORT int msCopyProjection(projectionObj *dst, projectionObj *src);
-  MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args);
-  int msCopyExpression(expressionObj *dst, expressionObj *src);
-  int msCopyProjection(projectionObj *dst, projectionObj *src);
+  MS_DLL_EXPORT int msCopyMap(mapObj *dst, const mapObj *src);
+  MS_DLL_EXPORT int msCopyLayer(layerObj *dst, const layerObj *src);
+  MS_DLL_EXPORT int msCopyScaleToken(const scaleTokenObj *src, scaleTokenObj *dst);
+  MS_DLL_EXPORT int msCopyPoint(pointObj *dst, const pointObj *src);
+  MS_DLL_EXPORT int msCopyFontSet(fontSetObj *dst, const fontSetObj *src, mapObj *map);
+  MS_DLL_EXPORT void copyProperty(void *dst, const void *src, int size);
+  MS_DLL_EXPORT char *copyStringProperty(char **dst, const char *src);
+  MS_DLL_EXPORT int msCopyClass(classObj *dst, const classObj *src, layerObj *layer);
+  MS_DLL_EXPORT int msCopyStyle(styleObj *dst, const styleObj *src);
+  MS_DLL_EXPORT int msCopyLabel(labelObj *dst, const labelObj *src);
+  MS_DLL_EXPORT int msCopyLabelLeader(labelLeaderObj *dst, const labelLeaderObj *src);
+  MS_DLL_EXPORT int msCopyLine(lineObj *dst, const lineObj *src);
+  MS_DLL_EXPORT int msCopyProjection(projectionObj *dst, const projectionObj *src);
+  MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst, const projectionObj *src, char ** args, int num_args);
+  int msCopyExpression(expressionObj *dst, const expressionObj *src);
+  int msCopyProjection(projectionObj *dst, const projectionObj *src);
   MS_DLL_EXPORT int msCopyRasterBuffer(rasterBufferObj *dst, const rasterBufferObj *src);
 
   /* ==================================================================== */

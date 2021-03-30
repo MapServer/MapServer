@@ -575,7 +575,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* -------------------------------------------------------------------- */
   for( iLine = 0; iLine < nWinYSize; iLine++ ) {
     for( iPixel = 0; iPixel < nWinXSize; iPixel++ ) {
-      pointObj  sPixelLocation,sReprojectedPixelLocation;
+      pointObj  sPixelLocation = {0};
 
       if( rlinfo->query_results == rlinfo->query_result_hard_max )
         break;
@@ -593,7 +593,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       /* search shape.  Save the original pixel location coordinates */
       /* in sPixelLocationInLayerSRS, so that we can return those */
       /* coordinates if we have a hit */
-      sReprojectedPixelLocation = sPixelLocation;
+      pointObj sReprojectedPixelLocation = sPixelLocation;
       if( reprojector )
       {
 #if PROJ_VERSION_MAJOR < 6
@@ -947,9 +947,7 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 
   status = msRasterQueryByRect( map, layer, searchrect );
 
-  rlinfo = (rasterLayerInfo *) layer->layerinfo;
-  if( rlinfo )
-    rlinfo->searchshape = NULL;
+  rlinfo->searchshape = NULL;
 
   return status;
 }
@@ -1064,6 +1062,8 @@ int msRASTERLayerOpen(layerObj *layer)
   /* If we don't have info, initialize an empty one now */
   if( layer->layerinfo == NULL )
     msRasterLayerInfoInitialize( layer );
+  if( layer->layerinfo == NULL )
+    return MS_FAILURE;
 
   rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
@@ -1088,7 +1088,9 @@ int msRASTERLayerIsOpen(layerObj *layer)
 /*                     msRASTERLayerFreeItemInfo()                      */
 /************************************************************************/
 void msRASTERLayerFreeItemInfo(layerObj *layer)
-{}
+{
+  (void)layer;
+}
 
 /************************************************************************/
 /*                     msRASTERLayerInitItemInfo()                      */
@@ -1098,6 +1100,7 @@ void msRASTERLayerFreeItemInfo(layerObj *layer)
 
 int msRASTERLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -1107,6 +1110,7 @@ int msRASTERLayerInitItemInfo(layerObj *layer)
 int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
 {
+  (void)isQuery;
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   rlinfo->which_rect = rect;
@@ -1316,7 +1320,6 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
   shapefileObj *tileshpfile;
-  int tilelayerindex = -1;
 
   if( (!layer->data || strlen(layer->data) == 0)
       && layer->tileindex == NULL) {
@@ -1330,7 +1333,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   /* If the layer use a tileindex, return the extent of the tileindex shapefile/referenced layer */
   if (layer->tileindex) {
-    tilelayerindex = msGetLayerIndex(map, layer->tileindex);
+    const int tilelayerindex = msGetLayerIndex(map, layer->tileindex);
     if(tilelayerindex != -1) /* does the tileindex reference another layer */
       return msLayerGetExtent(GET_LAYER(map, tilelayerindex), extent);
     else {

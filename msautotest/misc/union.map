@@ -1,0 +1,57 @@
+#
+# Test UNION LAYER
+#
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 478300 4762880 481650 4765610
+SIZE 400 300
+
+IMAGETYPE png
+SHAPEPATH ./data/union
+
+LAYER
+  STATUS default
+  NAME 'shppoly'
+  TYPE POLYGON
+  CONNECTIONTYPE UNION
+  CONNECTION "layer1,layer2" # reference to the source layers
+  STYLEITEM "AUTO"
+  # Define an empty class that will be filled at runtime from the color and
+  # styles read from each source layer.
+  CLASS
+  END
+END
+
+
+LAYER
+  STATUS OFF
+  NAME 'layer1'
+  TYPE POLYGON
+  DATA 'layer1'
+  CLASSITEM "AREA"
+  CLASS
+    NAME "green"
+    COLOR 0 255 0
+    OUTLINECOLOR 255 0 0
+  END
+END
+
+
+LAYER
+  STATUS OFF
+  NAME 'layer2'
+  TYPE POLYGON
+  DATA 'layer2'
+  CLASSITEM "AREA"
+  CLASS
+    NAME "red"
+    COLOR 255 0 0
+    OUTLINECOLOR 255 0 0
+  END
+END
+
+
+END
