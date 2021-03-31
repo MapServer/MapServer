@@ -569,6 +569,10 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
   cppcheck_assert(layer->vtable);
   status = layer->vtable->LayerGetExtent(layer, extent);
 
+  if (status == MS_SUCCESS) {
+      layer->extent = *extent;
+  }
+
   if (need_to_close)
     msLayerClose(layer);
 
