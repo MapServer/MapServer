@@ -189,7 +189,7 @@ char path[MS_MAXPATHLEN];
 <URL_VARIABLE>_|\.                             ;
 
 <CONTEXT_FILE>context                          { MS_LEXER_RETURN_TOKEN(MS_CONTEXT_SECTION); }
-<CONTEXT_FILE>environment                      { MS_LEXER_RETURN_TOKEN(MS_CONTEXT_SECTION_ENVIRONMENT); }
+<CONTEXT_FILE>env                              { MS_LEXER_RETURN_TOKEN(MS_CONTEXT_SECTION_ENV); }
 <CONTEXT_FILE>maps                             { MS_LEXER_RETURN_TOKEN(MS_CONTEXT_SECTION_MAPS); }
 <CONTEXT_FILE>plugins                          { MS_LEXER_RETURN_TOKEN(MS_CONTEXT_SECTION_PLUGINS) }
 

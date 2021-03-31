@@ -17,7 +17,7 @@ static int initContext(contextObj *context)
     return MS_FAILURE;
   }
 
-  if(initHashTable(&(context->environment)) != MS_SUCCESS) return MS_FAILURE;
+  if(initHashTable(&(context->env)) != MS_SUCCESS) return MS_FAILURE;
   if(initHashTable(&(context->maps)) != MS_SUCCESS) return MS_FAILURE;
   if(initHashTable(&(context->plugins)) != MS_SUCCESS) return MS_FAILURE;
 
@@ -27,7 +27,7 @@ static int initContext(contextObj *context)
 void msFreeContext(contextObj *context)
 {
   if(context == NULL) return;
-  if(&(context->environment)) msFreeHashItems(&(context->environment));
+  if(&(context->env)) msFreeHashItems(&(context->env));
   if(&(context->maps)) msFreeHashItems(&(context->maps));
   if(&(context->plugins)) msFreeHashItems(&(context->plugins));
 }
@@ -36,7 +36,7 @@ static int loadContext(contextObj *context)
 {
   int token;
 
-  if(!context) return MS_FAILURE;
+  if(context == NULL) return MS_FAILURE;
 
   token = msyylex();
   if(token != MS_CONTEXT_SECTION) {
@@ -46,8 +46,8 @@ static int loadContext(contextObj *context)
 
   for(;;) {
     switch(msyylex()) {
-    case(MS_CONTEXT_SECTION_ENVIRONMENT):
-      if(loadHashTable(&(context->environment)) != MS_SUCCESS) return MS_FAILURE;
+    case(MS_CONTEXT_SECTION_ENV):
+      if(loadHashTable(&(context->env)) != MS_SUCCESS) return MS_FAILURE;
       break;
     case(MS_CONTEXT_SECTION_MAPS):
       if(loadHashTable(&(context->maps)) != MS_SUCCESS) return MS_FAILURE;
@@ -115,4 +115,35 @@ contextObj *msLoadContext()
   }
 
   return context;  
+}
+
+/*
+** Couple of helper functions that check environment variables first, then the context object.
+*/
+const char *msContextGetEnv(contextObj *context, const char *key) 
+{
+  const char *value;
+
+  if(context == NULL) return NULL;
+
+  value = getenv(key); // check environment vars first
+  if(value == NULL) {
+    value = msLookupHashTable(&context->env, key);
+  }
+
+  return value;
+}
+
+const char *msContextGetMap(contextObj *context, const char *key)
+{
+  const char *value;
+
+  if(context ==NULL) return NULL;
+
+  value = getenv(key); // check environment vars first
+  if(value == NULL) {
+    value = msLookupHashTable(&context->maps, key);
+  }
+
+  return value;
 }

@@ -254,14 +254,14 @@ int main(int argc, char *argv[])
     mapserv = msAllocMapServObj();
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
-    mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
-    if( mapserv->request->NumParams == -1 ) {
+    context = msLoadContext();
+    if(context == NULL) {
       msCGIWriteError(mapserv);
       goto end_request;
     }
 
-    context = msLoadContext();
-    if(context == NULL) {
+    mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
+    if( mapserv->request->NumParams == -1 ) {
       msCGIWriteError(mapserv);
       goto end_request;
     }

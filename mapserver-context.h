@@ -10,11 +10,11 @@ extern "C" {
 #define MS_CONTEXT_PATH "" // set at compile time
 #define MS_CONTEXT_FILENAME "mapserver.ctx"
 
-enum MS_CONTEXT_SECTIONS { MS_CONTEXT_SECTION=3000, MS_CONTEXT_SECTION_ENVIRONMENT, MS_CONTEXT_SECTION_MAPS, MS_CONTEXT_SECTION_PLUGINS };
+enum MS_CONTEXT_SECTIONS { MS_CONTEXT_SECTION=3000, MS_CONTEXT_SECTION_ENV, MS_CONTEXT_SECTION_MAPS, MS_CONTEXT_SECTION_PLUGINS };
 
 #ifndef SWIG
 typedef struct {
-  hashTableObj environment;
+  hashTableObj env;
   hashTableObj maps;
   hashTableObj plugins;
 } contextObj;
@@ -22,6 +22,8 @@ typedef struct {
 
 MS_DLL_EXPORT contextObj *msLoadContext();
 MS_DLL_EXPORT void msFreeContext(contextObj *context);
+MS_DLL_EXPORT const char *msContextGetEnv(contextObj *context, const char *key);
+MS_DLL_EXPORT const char *msContextGetMap(contextObj *context, const char *key);
 
 #ifdef __cplusplus
 } /* extern C */
