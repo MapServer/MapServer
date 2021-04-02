@@ -1938,6 +1938,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
       queryMapObj querymap; ///< See :ref:`QUERYMAP <mapfile-map-querymap>`
       webObj web; ///< See :ref:`WEB <mapfile-map-web>`
 
+      const contextObj *context;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */

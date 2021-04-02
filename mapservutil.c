@@ -250,6 +250,8 @@ mapObj *msCGILoadMap(mapservObj *mapserv, contextObj *context)
   
   if(!map) return NULL;
 
+  map->context = context; // create a read-only reference
+
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
     /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
     /* services can take advantage of these "vendor specific" extensions */

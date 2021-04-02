@@ -5974,6 +5974,8 @@ int initMap(mapObj *map)
   map->v8context = NULL;
 #endif
 
+  map->context = NULL;
+
   return(0);
 }
 
