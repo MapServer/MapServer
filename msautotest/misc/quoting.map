@@ -31,7 +31,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   LabelItem "Name"
   CLASSITEM "Name" 
 

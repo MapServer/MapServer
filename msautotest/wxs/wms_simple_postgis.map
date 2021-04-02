@@ -154,8 +154,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
-
   CLASSITEM "name_e"
   CLASS
     NAME "Roads"

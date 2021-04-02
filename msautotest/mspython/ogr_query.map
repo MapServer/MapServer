@@ -14,7 +14,6 @@ IMAGETYPE png
 LAYER
   NAME shppoly
   TYPE polygon
-  DUMP TRUE
   TEMPLATE "junk.tmpl"
   CONNECTIONTYPE OGR
   CONNECTION "../misc/data/shppoly"

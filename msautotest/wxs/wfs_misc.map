@@ -81,7 +81,6 @@ LAYER
     "init=./data/epsg2:42304"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS
@@ -107,7 +106,6 @@ LAYER
     "init=./data/epsg2:42304"
   END
 
-  DUMP TRUE
   CLASS
     NAME "Parks"
     COLOR 200 255 0
@@ -132,7 +130,6 @@ LAYER
     "init=./data/epsg2:42304"
   END
 
-  DUMP TRUE
   LabelItem "Name"
   CLASSITEM "Capital" 
 
@@ -168,8 +165,6 @@ LAYER
   PROJECTION
     "init=./data/epsg2:42304"
   END
-
-  DUMP TRUE
 
   CLASSITEM "Name_e"
   CLASS

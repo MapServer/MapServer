@@ -83,7 +83,6 @@ LAYER
 #    "init=epsg:42304"
   END
 
-  DUMP TRUE
   CLASSITEM "name_e"
 
   CLASS
@@ -110,7 +109,6 @@ LAYER
 #    "init=epsg:42304"
   END
 
-  DUMP TRUE
   LabelItem "name"
   CLASSITEM "capital" 
 
@@ -147,8 +145,6 @@ LAYER
   "init=epsg:3978"
 #    "init=epsg:42304"
   END
-
-  DUMP TRUE
 
   CLASSITEM "name_e"
   CLASS

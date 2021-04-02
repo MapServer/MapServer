@@ -118,7 +118,6 @@ LAYER
   NAME grey
   TYPE raster
   STATUS ON
-  DUMP TRUE
   TILEINDEX "wcs_index.shp"
   TILEITEM "location"
 

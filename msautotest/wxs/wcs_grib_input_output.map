@@ -81,7 +81,6 @@ LAYER
   NAME temperatures
   TYPE raster
   STATUS ON
-  DUMP TRUE
   DATA "temperatures.grb2"
 
   PROJECTION

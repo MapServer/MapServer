@@ -67,7 +67,6 @@ LAYER
   PROJECTION
     "init=./data/epsg2:42304"
   END
-  DUMP TRUE
   CLASS
     SYMBOL 2
     SIZE 40

@@ -100,7 +100,6 @@ LAYER
   END
 
   TEMPLATE "wfs_ogr.map"
-  DUMP TRUE
 END # Layer
 
 END # Map File

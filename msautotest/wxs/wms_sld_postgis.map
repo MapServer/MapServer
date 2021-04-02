@@ -170,7 +170,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   CLASSITEM "name_e"
 
   CLASS
@@ -197,7 +196,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
   LabelItem "name"
   CLASSITEM "capital" 
 
@@ -234,8 +232,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
-
   CLASSITEM "name_e"
   CLASS
     NAME "Roads"
@@ -260,8 +256,6 @@ LAYER
   PROJECTION
     "init=epsg:3978"
   END
-
-  DUMP TRUE
 END # Layer
 
 
@@ -278,8 +272,6 @@ LAYER
   PROJECTION
     "init=epsg:3978"
   END
-
-  DUMP TRUE
 
   CLASSITEM "name_e"
   CLASSGROUP 'style_red'
