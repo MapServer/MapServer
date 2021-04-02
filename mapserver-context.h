@@ -7,8 +7,7 @@
 extern "C" {
 #endif
 
-#define MS_CONTEXT_PATH "" // set at compile time
-#define MS_CONTEXT_FILENAME "mapserver.ctx"
+#define MS_DEFAULT_CONTEXT_FILE "unset" // set at compile time
 
 enum MS_CONTEXT_SECTIONS { MS_CONTEXT_SECTION=3000, MS_CONTEXT_SECTION_ENV, MS_CONTEXT_SECTION_MAPS, MS_CONTEXT_SECTION_PLUGINS };
 

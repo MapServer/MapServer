@@ -75,6 +75,7 @@ static int loadContext(contextObj *context)
 contextObj *msLoadContext()
 {
   contextObj *context = NULL;
+  static char *ms_context_file = NULL;
 
   context = (contextObj *)calloc(sizeof(contextObj), 1);
   MS_CHECK_ALLOC(context, sizeof(contextObj), NULL);
@@ -86,11 +87,15 @@ contextObj *msLoadContext()
 
   msAcquireLock(TLOCK_PARSER);
 
-  std::string filename = MS_CONTEXT_PATH;
-  filename.append(MS_CONTEXT_FILENAME);
+  // get context filename, check environment first
+  ms_context_file = getenv("MS_CONTEXT_FILE");
+  if(ms_context_file == NULL && strcmp(MS_DEFAULT_CONTEXT_FILE, "unset") != 0) { // try
+    ms_context_file = MS_DEFAULT_CONTEXT_FILE;
+  }
+  if(ms_context_file == NULL) return NULL;
 
-  if((msyyin = fopen(filename.c_str(), "r")) == NULL) {    
-    msSetError(MS_IOERR, "(%s)", "msLoadContext()", filename.c_str());
+  if((msyyin = fopen(ms_context_file, "r")) == NULL) {    
+    msSetError(MS_IOERR, "(%s)", "msLoadContext()", ms_context_file);
     msReleaseLock(TLOCK_PARSER);
     msFreeContext(context);
     msFree(context);
