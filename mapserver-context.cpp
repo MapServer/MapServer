@@ -77,6 +77,13 @@ contextObj *msLoadContext()
   contextObj *context = NULL;
   static char *ms_context_file = NULL;
 
+  // get context filename from environment
+  ms_context_file = getenv("MS_CONTEXT_FILE");
+  if(ms_context_file == NULL) {
+    msSetError(MS_MISCERR, "No context file set.", "msLoadContext()");
+    return NULL;
+  }
+
   context = (contextObj *)calloc(sizeof(contextObj), 1);
   MS_CHECK_ALLOC(context, sizeof(contextObj), NULL);
 
@@ -86,13 +93,6 @@ contextObj *msLoadContext()
   }
 
   msAcquireLock(TLOCK_PARSER);
-
-  // get context filename, check environment first
-  ms_context_file = getenv("MS_CONTEXT_FILE");
-  if(ms_context_file == NULL && strcmp(MS_DEFAULT_CONTEXT_FILE, "unset") != 0) { // try
-    ms_context_file = MS_DEFAULT_CONTEXT_FILE;
-  }
-  if(ms_context_file == NULL) return NULL;
 
   if((msyyin = fopen(ms_context_file, "r")) == NULL) {    
     msSetError(MS_IOERR, "(%s)", "msLoadContext()", ms_context_file);

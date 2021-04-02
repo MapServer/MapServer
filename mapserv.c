@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
     context = msLoadContext();
-    if(context == NULL) {
+    if(context == NULL) {      
       msCGIWriteError(mapserv);
       goto end_request;
     }
