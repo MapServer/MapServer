@@ -32,7 +32,7 @@
 #include "maptime.h"
 #include "mapows.h"
 
-#include "mapserver-context.h"
+#include "mapserver-config.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
@@ -193,7 +193,7 @@ static void setClassGroup(layerObj *layer, char *classgroup)
 ** Extract Map File name from params and load it.
 ** Returns map object or NULL on error.
 */
-mapObj *msCGILoadMap(mapservObj *mapserv, contextObj *context)
+mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 {
   int i, j;
   mapObj *map = NULL;
@@ -204,7 +204,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, contextObj *context)
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
   if(i == mapserv->request->NumParams) { /* no map parameter found */
-    const char *ms_mapfile = msContextGetEnv(context, "MS_MAPFILE");
+    const char *ms_mapfile = msConfigGetEnv(config, "MS_MAPFILE");
     if(ms_mapfile) {
       map = msLoadMap(ms_mapfile, NULL);
     } else {
@@ -212,14 +212,14 @@ mapObj *msCGILoadMap(mapservObj *mapserv, contextObj *context)
       return NULL;
     }
   } else {
-    const char *mapfile = msContextGetMap(context, mapserv->request->ParamValues[i]);
+    const char *mapfile = msConfigGetMap(config, mapserv->request->ParamValues[i]);
 
     if(mapfile) { /* parmeter references environment variable that defines the mapfile */
       map = msLoadMap(mapfile, NULL);
     } else { /* request isn't for something referencing an environment variable so validate */
-      const char *ms_map_no_path = msContextGetEnv(context, "MS_MAP_NO_PATH");
-      const char *ms_map_pattern = msContextGetEnv(context, "MS_MAP_PATTERN");
-      const char *ms_map_bad_pattern = msContextGetEnv(context, "MS_MAP_BAD_PATTERN");
+      const char *ms_map_no_path = msConfigGetEnv(config, "MS_MAP_NO_PATH");
+      const char *ms_map_pattern = msConfigGetEnv(config, "MS_MAP_PATTERN");
+      const char *ms_map_bad_pattern = msConfigGetEnv(config, "MS_MAP_BAD_PATTERN");
       if(ms_map_bad_pattern == NULL) ms_map_bad_pattern = ms_map_bad_pattern_default;
 
       if(ms_map_no_path != NULL) {
@@ -250,7 +250,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, contextObj *context)
   
   if(!map) return NULL;
 
-  map->context = context; // create a read-only reference
+  map->config = config; // create a read-only reference
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
     /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
@@ -1828,7 +1828,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   msIOContext *ctx;
   msIOBuffer  *buf;
 
-  contextObj *context = NULL;
+  configObj *config = NULL;
 
   msIO_installStdoutToBuffer();
 
@@ -1851,8 +1851,8 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     goto end_request;
   }
 
-  context = msLoadContext();
-  if(context == NULL) {
+  config = msLoadConfig();
+  if(config == NULL) {
     msCGIWriteError(mapserv);
     goto end_request;
   }
@@ -1889,7 +1889,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     goto end_request;
   }
 
-  mapserv->map = msCGILoadMap(mapserv, context);
+  mapserv->map = msCGILoadMap(mapserv, config);
   if(!mapserv->map) {
     msCGIWriteError(mapserv);
     goto end_request;
@@ -1914,7 +1914,7 @@ end_request:
     }
     msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
-    msFreeContext(context);
+    msFreeConfig(config);
   }
 
   /* normal case, processing is complete */

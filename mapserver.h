@@ -131,7 +131,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include <assert.h>
 #include "mapproject.h"
 #include "cgiutil.h"
-#include "mapserver-context.h"
+#include "mapserv-config.h"
 
 #include <sys/types.h> /* regular expression support */
 
@@ -1938,7 +1938,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
       queryMapObj querymap; ///< See :ref:`QUERYMAP <mapfile-map-querymap>`
       webObj web; ///< See :ref:`WEB <mapfile-map-web>`
 
-      const contextObj *context;
+      const configObj *config;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
