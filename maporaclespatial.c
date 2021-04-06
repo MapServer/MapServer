@@ -146,7 +146,7 @@ struct {
   SDOGeometryObj *obj[ARRAY_SIZE]; /* spatial object buffer */
   SDOGeometryInd *ind[ARRAY_SIZE]; /* object indicator (null) buffer */
 
-  int uniqueidindex; /*allows to keep whic attribute id index is used as unique id*/
+  int uniqueidindex; /*allows to keep which attribute id index is used as unique id*/
 
 
 } msOracleSpatialStatement;
@@ -2020,7 +2020,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
     query_str = msStringConcatenate(query_str, ",");
   }
 
-  /*we always want to add rownum is the selection to allow paging to work*/
+  /*we always want to add rownum in the selection to allow paging to work*/
   query_str = msStringConcatenate(query_str, "rownum, ");
 
   query_str = msStringConcatenate(query_str, geom_column_name);
