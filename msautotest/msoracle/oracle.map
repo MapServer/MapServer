@@ -1,0 +1,36 @@
+# RUN_PARMS: oracle.png [SHP2IMG] -s 640 480 -m oracle.map -l oracle -o result/oracle.png
+# REQUIRES: INPUT=ORACLESPATIAL
+MAP
+  NAME "OGC:WMS"
+  EXTENT -180 -90 180 90
+  UNITS DD
+
+  DEBUG 5
+
+  CONFIG "MS_ERRORFILE" stderr
+
+
+  LEGEND
+      STATUS ON
+      KEYSIZE 18 12
+      LABEL
+          FONT Arial
+          TYPE truetype
+          SIZE 8
+          COLOR 0 0 89
+      END
+  END
+
+  LAYER
+        NAME "oracle"
+        TYPE POINT
+        DUMP TRUE
+        STATUS OFF
+        EXTENT -180 -90 180 90
+        UNITS DD
+        CONNECTION "SCOTT/TIGER@TESTSERVER"
+        CONNECTIONTYPE oraclespatial
+        DATA "POSITION from (select ID, POSITION from schema.table_point) using unique ID none"
+    END
+END
+
