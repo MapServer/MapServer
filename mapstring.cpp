@@ -349,6 +349,34 @@ int strcasecmp(const char *s1, const char *s2)
 }
 #endif
 
+/*
+** msStringToInt() and msStringToDouble() are helper functions to convert strings to numbers. They
+** return MS_FAILURE if the input string is NULL or if the entire string did not convert successfully.
+*/
+int msStringToInt(const char *str, int *value, int base)
+{
+  char *parse_check = NULL;
+
+  if(!str) return MS_FAILURE;
+
+  *value = (int)strtol(str, &parse_check, base);
+  if(*parse_check != '\0') return MS_FAILURE;
+
+  return MS_SUCCESS;
+}
+
+int msStringToDouble(const char *str, double *value)
+{
+  char *parse_check = NULL;
+
+  if(!str) return MS_FAILURE;
+
+  *value = strtod(str, &parse_check);
+  if(*parse_check != '\0') return MS_FAILURE;
+
+  return MS_SUCCESS;
+}
+
 char *msLongToString(long value)
 {
   size_t bufferSize = 256;

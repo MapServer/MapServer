@@ -2319,6 +2319,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msStringBufferReleaseStringAndFree(msStringBuffer* sb);
   MS_DLL_EXPORT int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString);
 
+  MS_DLL_EXPORT int msStringToInt(const char *str, int *value, int base);
+  MS_DLL_EXPORT int msStringToDouble(const char *str, double *value);
+
 #ifdef __cplusplus
 }
   std::string msStdStringEscape( const char * pszString );

@@ -86,17 +86,22 @@ static const char *getRequestParameter(cgiRequestObj *request, const char *item)
 */
 static int getLimit(mapObj *map, cgiRequestObj *request, int *limit)  
 {
+  int status;
   const char *p;
 
   p = getRequestParameter(request, "limit");
   if(!p) {
-    *limit = OGCAPI_LIMIT_DEFAULT;
+    *limit = OGCAPI_LIMIT_DEFAULT; // limit not explicitly set
   } else {
-    *limit = strtol(p, NULL, 10);
-    if(*limit <= 0) { // conversion error, 0 or negative number (all get the default)
+    status = msStringToInt(p, limit, 10);
+
+    if(status != MS_SUCCESS)
+      return MS_FAILURE;
+
+    if(*limit <= 0) {
       *limit = OGCAPI_LIMIT_DEFAULT;
     } else {
-      *limit = (int)MS_MIN(*limit, OGCAPI_LIMIT_MAXIMUM);
+      *limit = MS_MIN(*limit, OGCAPI_LIMIT_MAXIMUM);
     }
   }
 
@@ -108,6 +113,7 @@ static int getLimit(mapObj *map, cgiRequestObj *request, int *limit)
 */
 static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox) 
 {
+  int status;
   const char *p;
 
   p = getRequestParameter(request, "bbox");
@@ -117,7 +123,32 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxx = map->extent.maxx;
     bbox->maxy = map->extent.maxy;
   } else {
-    return MS_FAILURE;
+    int ntokens = 0;
+    char **tokens = NULL;
+    double values[4];
+
+    tokens = msStringSplit(p, ',', &ntokens);
+    if(tokens == NULL || ntokens != 4) {
+      msFreeCharArray(tokens, ntokens);
+      return MS_FAILURE;
+    }
+
+    for(int i=0; i<4; i++) {
+      status = msStringToDouble(tokens[i], &values[i]);
+      if(status != MS_SUCCESS) {
+        msFreeCharArray(tokens, ntokens);
+        return MS_FAILURE;
+      }
+    }
+
+    bbox->minx = values[0]; // assign
+    bbox->miny = values[1];
+    bbox->maxx = values[2];
+    bbox->maxy = values[3];
+
+    msFreeCharArray(tokens, ntokens); // done with tokens
+
+    // TODO: handle projection
   }
 
   return MS_SUCCESS;
