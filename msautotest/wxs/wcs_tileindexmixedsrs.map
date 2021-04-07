@@ -59,7 +59,6 @@ LAYER
   NAME grey_26711
   TYPE raster
   STATUS ON
-  DUMP TRUE
   TILEINDEX "../gdal/data/tile_index_mixed_srs_26711.shp"
   TILEITEM "location"
   TILESRS "src_srs"

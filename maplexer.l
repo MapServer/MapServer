@@ -258,7 +258,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>datapattern                           { MS_LEXER_RETURN_TOKEN(DATAPATTERN); }
 <INITIAL>debug                                 { MS_LEXER_RETURN_TOKEN(DEBUG); }
 <INITIAL>driver                                { MS_LEXER_RETURN_TOKEN(DRIVER); }
-<INITIAL>dump                                  { MS_LEXER_RETURN_TOKEN(DUMP); }
 <INITIAL>empty                                 { MS_LEXER_RETURN_TOKEN(EMPTY); }
 <INITIAL>encoding                              { MS_LEXER_RETURN_TOKEN(ENCODING); }
 <INITIAL,URL_STRING>end                        { MS_LEXER_RETURN_TOKEN(END); }

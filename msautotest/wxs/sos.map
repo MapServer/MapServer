@@ -162,7 +162,6 @@ MAP
   DEBUG ON
   TYPE POINT
   STATUS ON
-  DUMP TRUE
   DATA "./data/obs.shp"
   PROJECTION
     "init=epsg:4326"

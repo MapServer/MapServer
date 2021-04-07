@@ -258,7 +258,6 @@ LAYER
   END
 
   TEMPLATE "wfs_ogr.map"
-  DUMP TRUE
 END # Layer
 
 LAYER
@@ -282,7 +281,6 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
 END # Layer
 
 # To test wfs_additional_files_in_output
@@ -306,7 +304,6 @@ LAYER
   END
 
   TEMPLATE "wfs_ogr.map"
-  DUMP TRUE
 END # Layer
 
 # To test wfs_additional_files_in_output
@@ -330,7 +327,6 @@ LAYER
   END
 
   TEMPLATE "wfs_ogr.map"
-  DUMP TRUE
 END # Layer
 
 LAYER
@@ -353,8 +349,6 @@ LAYER
   PROJECTION
     "init=epsg:27700"
   END
-
-  DUMP TRUE
 END
 
 LAYER
@@ -377,8 +371,6 @@ LAYER
   PROJECTION
     "init=epsg:27700"
   END
-
-  DUMP TRUE
 END
 
 END # Map File

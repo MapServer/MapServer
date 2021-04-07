@@ -95,7 +95,6 @@ MAP
   DEBUG ON
   DATA "../wxs/data/popplace.shp"
   TYPE POINT
-  DUMP TRUE
   TEMPLATE "dummy"
   TOLERANCE 30 
   PROJECTION

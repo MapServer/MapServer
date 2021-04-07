@@ -89,7 +89,6 @@ LAYER
 #    "init=epsg:42304"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS

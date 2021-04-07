@@ -1246,10 +1246,6 @@
     </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
-      <xsl:with-param name="node" select="'ms:dump'"/>
-    </xsl:call-template>
-    <xsl:call-template name="print">
-      <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:extent'"/>
     </xsl:call-template>
     <xsl:apply-templates select="ms:Feature">

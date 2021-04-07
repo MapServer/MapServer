@@ -1128,7 +1128,6 @@ int msCopyLayer(layerObj *dst, const layerObj *src)
   }
   msCopyHashTable(&dst->validation,&src->validation);
 
-  MS_COPYSTELEM(dump);
   MS_COPYSTELEM(debug);
 
   /* No need to copy the numprocessing member, as it is incremented by

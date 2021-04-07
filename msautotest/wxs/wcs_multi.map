@@ -123,7 +123,6 @@ LAYER
   NAME multi
   TYPE raster
   STATUS ON
-  DUMP TRUE
 
   DATA data/multiband.tif
 
@@ -156,7 +155,6 @@ LAYER
   NAME multi_new
   TYPE raster
   STATUS ON
-  DUMP TRUE
 
   DATA data/multiband.tif
 
@@ -205,7 +203,6 @@ LAYER
   NAME multi_no_metadata
   TYPE raster
   STATUS ON
-  DUMP TRUE
 
   DATA data/multiband.tif
 
