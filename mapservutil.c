@@ -197,13 +197,15 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   int i, j;
   mapObj *map = NULL;
 
+  const char *ms_map_bad_pattern_default = "^\\/{2}|^\\\\{2}|\\.{2}|,{2}";
+
   for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
   if(i == mapserv->request->NumParams) {
     char *ms_mapfile = getenv("MS_MAPFILE");
     if(ms_mapfile) {
-      map = msLoadMap(ms_mapfile,NULL);
+      map = msLoadMap(ms_mapfile, NULL);
     } else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
       return NULL;
@@ -212,13 +214,29 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
     if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
       map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
     else {
-      /* by here we know the request isn't for something in an environment variable */
-      if(getenv("MS_MAP_NO_PATH")) {
+      /* request isn't for something referencing an environment variable so validate */
+      const char *ms_map_no_path = getenv("MS_MAP_NO_PATH");
+      const char *ms_map_pattern = getenv("MS_MAP_PATTERN");
+      const char *ms_map_bad_pattern = getenv("MS_MAP_BAD_PATTERN");
+      if(ms_map_bad_pattern == NULL) ms_map_bad_pattern = ms_map_bad_pattern_default;
+
+      if(ms_map_no_path != NULL) {
         msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
         return NULL;
       }
 
-      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+      /* no MS_MAP_NO_PATH, check for MS_MAP_PATTERN */
+      if(ms_map_pattern == NULL) {
+        msSetError(MS_WEBERR, "Missing method to limit mapfile access, cannot continue. See mapserver.org/limit_mapfile_access.html for information.", "msCGILoadMap()");
+        return NULL;
+      }
+
+      if(msEvalRegex(ms_map_bad_pattern, mapserv->request->ParamValues[i]) == MS_TRUE) {
+        msSetError(MS_WEBERR, "Parameter 'map' contains bad values.", "msCGILoadMap()");
+        return NULL;
+      }
+
+      if(msEvalRegex(ms_map_pattern, mapserv->request->ParamValues[i]) != MS_TRUE) {
         msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
         return NULL;
       }
@@ -228,7 +246,6 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
     }
   }
   
-
   if(!map) return NULL;
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
