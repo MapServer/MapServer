@@ -12,6 +12,10 @@ sudo apt-get install --allow-unauthenticated protobuf-c-compiler libprotobuf-c0-
 sudo apt-get install --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs
 sudo apt-get install --allow-unauthenticated php5-dev || sudo apt-get install --allow-unauthenticated php7-dev
 sudo apt-get install --allow-unauthenticated libperl-dev
+
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+sudo python get-pip.py
+
 sudo pip install cpp-coveralls
 sudo pip install -U -r msautotest/requirements.txt
 # install swig 3.0.12 (defaults to 2.0.11 on trusty)
