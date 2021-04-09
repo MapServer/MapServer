@@ -60,7 +60,7 @@ using json = nlohmann::json;
 #ifdef USE_OGCAPI_SVR
 
 /* prototypes */
-static void processError(int code, std::string description);
+static void processError(int code);
 
 /*
 ** Get stuff...
@@ -148,7 +148,9 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
 
     msFreeCharArray(tokens, ntokens); // done with tokens
 
-    // TODO: handle projection
+    // at the moment we are assuming the bbox is given in lat/lon
+    status = msProjectRect(&map->latlon, &map->projection, bbox);
+    if(status != MS_SUCCESS) return MS_FAILURE;
   }
 
   return MS_SUCCESS;
@@ -351,10 +353,13 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
     msIO_sendHeaders();
     msIO_printf("%s\n", result.c_str()); 
   } catch(const inja::RenderError &e) {
-    processError(400, "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").");
+    std::string message = "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").";
+    msSetError(MS_OGCAPIERR, message.c_str(), "outputTemplate()");
+    processError(400);
     return;
   } catch(...) {
-    processError(400, "General template handling error.");
+    msSetError(MS_OGCAPIERR, "General template handling error.", "outputTemplate()");
+    processError(400);
     return;
   }
 }
@@ -372,7 +377,8 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
     outputJson(response, OGCAPI_MIMETYPE_GEOJSON);
   } else if(format == OGCAPI_FORMAT_HTML) {
     if((directory = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
-      processError(400, "Template directory not set.");
+      msSetError(MS_OGCAPIERR, "Template directory not set.", "outputResponse()");
+      processError(400);
       return; // bail
     }
 
@@ -402,7 +408,8 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
 
     outputTemplate(directory, filename, j, OGCAPI_MIMETYPE_HTML);
   } else {
-    processError(400, "Unsupported format requested.");
+    msSetError(MS_OGCAPIERR, "Unsupported format requested.", "outputResponse()");
+    processError(400);
   }
 }
 
@@ -412,15 +419,13 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
 
 /*
 ** Returns a JSON object using MapServer error codes and a description.
-**   - should this be JSON only?
-**   - should this rely on the msSetError() pipeline or be stand-alone?
 */
-static void processError(int code, std::string description)
+static void processError(int code)
 {
   json j;
 
   j["code"] = code;
-  j["description"] = description;
+  j["description"] = msGetErrorString(" ");
 
   outputJson(j, OGCAPI_MIMETYPE_JSON);
 }
@@ -525,7 +530,8 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   }
 
   if(i == map->numlayers) { // invalid collectionId
-    processError(404, "Invalid collection.");
+    msSetError(MS_OGCAPIERR, "Invalid collection.", "processCollectionItemsRequest()");
+    processError(404);
     return MS_SUCCESS;
   }
 
@@ -542,8 +548,8 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   }
 
   if(msExecuteQuery(map) != MS_SUCCESS) {
-    processError(404, "Collection items query failed.");
-    // processError(404, msGetErrorString(","));
+    msSetError(MS_OGCAPIERR, "Collection items query failed.", "processCollectionItemsRequest()");
+    processError(404);
     return MS_SUCCESS;
   }
 
@@ -576,18 +582,22 @@ static int processCollectionRequest(mapObj *map, const char *collectionId, int f
   }
 
   if(l == map->numlayers) { // invalid collectionId
-    processError(404, "Invalid collection.");
+    msSetError(MS_OGCAPIERR, "Invalid collection.", "processCollection()");
+    processError(404);
     return MS_SUCCESS;
   }
 
   try {
     response = getCollection(map, map->layers[l], format);
     if(response.is_null()) { // same as not found
-      processError(404, "Invalid collection.");
+      msSetError(MS_OGCAPIERR, "Invalid collection.", "processCollection()");
+      processError(404);
       return MS_SUCCESS;
     }
   } catch (const std::runtime_error &e) {
-    processError(400, "Error getting collection. " + std::string(e.what()));
+    std::string message = "Error getting collection. " + std::string(e.what());
+    msSetError(MS_OGCAPIERR, message.c_str(), "processCollection()");
+    processError(400);
     return MS_SUCCESS;
   }
 
