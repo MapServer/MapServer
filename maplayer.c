@@ -990,6 +990,13 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
       get_all = MS_FALSE;
   }
 
+  // item set by mapwfs.cpp to restrict the number of columns selected
+  const char *value = msOWSLookupMetadata(&(layer->metadata), "G", "select_items");
+  if (value) {
+      /* get only selected items */
+      get_all = MS_FALSE;
+  }
+
   /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE ||
       (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
