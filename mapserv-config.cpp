@@ -124,16 +124,13 @@ configObj *msLoadConfig()
   return config;  
 }
 
-/*
-** Couple of helper functions that check environment variables first, then the config object.
-*/
 const char *msConfigGetEnv(configObj *config, const char *key) 
 {
   const char *value;
 
   if(config == NULL) return NULL;
 
-  value = getenv(key); // check environment vars first
+  value = getenv(key);
   if(value == NULL) {
     value = msLookupHashTable(&config->env, key);
   }
@@ -143,14 +140,6 @@ const char *msConfigGetEnv(configObj *config, const char *key)
 
 const char *msConfigGetMap(configObj *config, const char *key)
 {
-  const char *value;
-
   if(config ==NULL) return NULL;
-
-  value = getenv(key); // check environment vars first
-  if(value == NULL) {
-    value = msLookupHashTable(&config->maps, key);
-  }
-
-  return value;
+  return msLookupHashTable(&config->maps, key);
 }

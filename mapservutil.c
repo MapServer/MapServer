@@ -198,7 +198,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
   int i, j;
   mapObj *map = NULL;
 
-  const char *ms_map_bad_pattern_default = "^\\/{2}|^\\\\{2}|\\.{2}|,{2}";
+  const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
 
   for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
@@ -212,9 +212,9 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
       return NULL;
     }
   } else {
-    const char *mapfile = msConfigGetMap(config, mapserv->request->ParamValues[i]);
+    const char *mapfile = msConfigGetMap(config, mapserv->request->ParamValues[i]); /* does *not* check the environment, only the config */
 
-    if(mapfile) { /* parmeter references environment variable that defines the mapfile */
+    if(mapfile) { /* parmeter references configuration element that defines the mapfile */
       map = msLoadMap(mapfile, NULL);
     } else { /* request isn't for something referencing an environment variable so validate */
       const char *ms_map_no_path = msConfigGetEnv(config, "MS_MAP_NO_PATH");
