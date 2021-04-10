@@ -200,12 +200,25 @@ std::string getApiRootUrl(mapObj *map)
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
 }
 
+json getConstant(gmlConstantObj *constant)
+{
+  json j; // empty (null)
+
+  if(!constant) throw std::runtime_error("Null constant metadata.");
+  if(!constant->value) return j;
+  
+  // initialize
+  j = { { constant->name, constant->value } };  
+
+  return j;
+}
+
 json getItem(gmlItemObj *item, char *value)
 {
   json j; // empty (null)
   const char *key;
 
-  if(!item) throw std::runtime_error("Null arguments.");
+  if(!item) throw std::runtime_error("Null item metadata.");
   if(!item->visible) return j;
 
   if(item->alias)
@@ -245,6 +258,17 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
         if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
       } catch (const std::runtime_error &e) {
 	throw std::runtime_error("Error fetching item.");
+      }
+    }
+  }
+
+  for(int i=0; i<constants->numconstants; i++) {
+    if(msItemInGroups(constants->constants[i].name, groups) == MS_FALSE) {
+      try {
+        json constant = getConstant(&(constants->constants[i]));
+        if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
+      } catch (const std::runtime_error &e) {
+        throw std::runtime_error("Error fetching constant.");
       }
     }
   }
