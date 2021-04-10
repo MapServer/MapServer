@@ -28,6 +28,7 @@
 #include "mapserver.h"
 #include "mapogcapi.h"
 #include "mapows.h"
+#include "mapgml.h"
 
 #include "third-party/include_nlohmann_json.hpp"
 #include "third-party/include_pantor_inja.hpp"
@@ -60,7 +61,7 @@ using json = nlohmann::json;
 #ifdef USE_OGCAPI_SVR
 
 /* prototypes */
-static void processError(int code);
+static void processError(int code, std::string message, const char *routine);
 
 /*
 ** Get stuff...
@@ -199,23 +200,54 @@ std::string getApiRootUrl(mapObj *map)
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
 }
 
+json getItem(gmlItemObj *item, char *value)
+{
+  json j; // empty (null)
+  const char *key;
+
+  if(!item) throw std::runtime_error("Null arguments.");
+  if(!item->visible) return j;
+
+  if(item->alias)
+    key = item->alias;
+  else
+    key = item->name;
+
+  // initialize
+  j = { { key, value } };
+
+  return j;
+}
+
 /*
 ** Return a GeoJSON representation of a shape.
 */
-json getFeature(layerObj *layer, shapeObj *shape) 
+json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, gmlGroupListObj *groups)
 {
   json feature; // empty (null)
 
-  if(!layer || !shape) return feature;
+  if(!layer || !shape) throw std::runtime_error("Null arguments.");
 
   // initialize
   feature = {
-    {"type", "Feature" }
+    { "type", "Feature" },
+    { "properties", json::object() }
   };
 
   // id
 
   // properties
+
+  for(int i=0; i<items->numitems; i++) {    
+    if(msItemInGroups(items->items[i].name, groups) == MS_FALSE) {
+      try {
+        json item = getItem(&(items->items[i]), shape->values[i]);
+        if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
+      } catch (const std::runtime_error &e) {
+	throw std::runtime_error("Error fetching item.");
+      }
+    }
+  }
 
   // geometry
 
@@ -353,13 +385,10 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
     msIO_sendHeaders();
     msIO_printf("%s\n", result.c_str()); 
   } catch(const inja::RenderError &e) {
-    std::string message = "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").";
-    msSetError(MS_OGCAPIERR, message.c_str(), "outputTemplate()");
-    processError(400);
+    processError(400, "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").", "outputTemplate()");
     return;
   } catch(...) {
-    msSetError(MS_OGCAPIERR, "General template handling error.", "outputTemplate()");
-    processError(400);
+    processError(400, "General template handling error.", "outputTemplate()");
     return;
   }
 }
@@ -377,8 +406,7 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
     outputJson(response, OGCAPI_MIMETYPE_GEOJSON);
   } else if(format == OGCAPI_FORMAT_HTML) {
     if((directory = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
-      msSetError(MS_OGCAPIERR, "Template directory not set.", "outputResponse()");
-      processError(400);
+      processError(400, "Template directory not set.", "outputResponse()");
       return; // bail
     }
 
@@ -408,8 +436,7 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
 
     outputTemplate(directory, filename, j, OGCAPI_MIMETYPE_HTML);
   } else {
-    msSetError(MS_OGCAPIERR, "Unsupported format requested.", "outputResponse()");
-    processError(400);
+    processError(400, "Unsupported format requested.", "outputResponse()");
   }
 }
 
@@ -420,9 +447,11 @@ static void outputResponse(mapObj *map, int format, const char *filename, json r
 /*
 ** Returns a JSON object using MapServer error codes and a description.
 */
-static void processError(int code)
+static void processError(int code, std::string message, const char *routine)
 {
   json j;
+
+  msSetError(MS_OGCAPIERR, "%s", routine, message.c_str());
 
   j["code"] = code;
   j["description"] = msGetErrorString(" ");
@@ -530,8 +559,7 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   }
 
   if(i == map->numlayers) { // invalid collectionId
-    msSetError(MS_OGCAPIERR, "Invalid collection.", "processCollectionItemsRequest()");
-    processError(404);
+    processError(404, "Invalid collection.", "processCollectionItemsRequest()");
     return MS_SUCCESS;
   }
 
@@ -548,8 +576,7 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   }
 
   if(msExecuteQuery(map) != MS_SUCCESS) {
-    msSetError(MS_OGCAPIERR, "Collection items query failed.", "processCollectionItemsRequest()");
-    processError(404);
+    processError(404, "Collection items query failed.", "processCollectionItemsRequest()");
     return MS_SUCCESS;
   }
 
@@ -560,10 +587,69 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
     { "numReturned", MS_MIN(limit, lp->resultcache->numresults) },
     { "features", json::array() }
   };
-  
-  // features
-  for(i=0, j=0; i<lp->resultcache->numresults && j<MS_MIN(limit, lp->resultcache->numresults); i++, j++) {
 
+  // features (items) - if found
+  if(lp->resultcache && lp->resultcache->numresults > 0) {
+    shapeObj shape;
+    msInitShape(&shape);
+
+    // we piggyback on GML configuration
+    gmlItemListObj *items = msGMLGetItems(lp, "AG");
+    gmlConstantListObj *constants = msGMLGetConstants(lp, "AG");
+    gmlGroupListObj *groups = msGMLGetGroups(lp, "AG");    
+
+    if(!items || !constants || !groups) {
+      msGMLFreeItems(items);
+      msGMLFreeConstants(constants);
+      msGMLFreeGroups(groups);
+      processError(400, "Error fetching layer attribute metadata.", "processCollectionItemsRequest()");
+      return MS_SUCCESS;
+    }
+
+    // reprojection
+    reprojectionObj *reprojector = NULL;
+    if(msProjectionsDiffer(&(lp->projection), &(map->latlon))) {
+      reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+      if(reprojector == NULL) {
+	msGMLFreeItems(items);
+	msGMLFreeConstants(constants);
+	msGMLFreeGroups(groups);
+        processError(400, "Error creating re-projector.", "processCollectionItemsRequest()");
+	return MS_SUCCESS;
+      }
+    }
+
+    int start = 0; // TODO: will need to pass in
+    int end = start + MS_MIN(limit, lp->resultcache->numresults);
+
+    for(i=start; i<end; i++) {
+      int status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[i]));
+      if(status != MS_SUCCESS) {
+	msGMLFreeItems(items);
+        msGMLFreeConstants(constants);
+        msGMLFreeGroups(groups);
+        msProjectDestroyReprojector(reprojector);
+	processError(400, "Error fetching feature.", "processCollectionItemsRequest()");
+        return MS_SUCCESS;
+      }
+
+      try {
+	json feature = getFeature(lp, &shape, items, constants, groups);
+	if(!feature.is_null()) response["features"].push_back(feature);
+      } catch (const std::runtime_error &e) {
+        msGMLFreeItems(items);
+        msGMLFreeConstants(constants);
+        msGMLFreeGroups(groups);
+        msProjectDestroyReprojector(reprojector);
+	processError(400, "Error getting feature. " + std::string(e.what()), "processCollectionItemsRequest()");
+	return MS_SUCCESS;
+      }
+    }
+
+    msGMLFreeItems(items); // clean up
+    msGMLFreeConstants(constants);
+    msGMLFreeGroups(groups);
+    msProjectDestroyReprojector(reprojector);
   }
 
   // links
@@ -582,22 +668,18 @@ static int processCollectionRequest(mapObj *map, const char *collectionId, int f
   }
 
   if(l == map->numlayers) { // invalid collectionId
-    msSetError(MS_OGCAPIERR, "Invalid collection.", "processCollection()");
-    processError(404);
+    processError(404, "Invalid collection.", "processCollectionRequest()");
     return MS_SUCCESS;
   }
 
   try {
     response = getCollection(map, map->layers[l], format);
     if(response.is_null()) { // same as not found
-      msSetError(MS_OGCAPIERR, "Invalid collection.", "processCollection()");
-      processError(404);
+      processError(404, "Invalid collection.", "processCollectionRequest()");
       return MS_SUCCESS;
     }
   } catch (const std::runtime_error &e) {
-    std::string message = "Error getting collection. " + std::string(e.what());
-    msSetError(MS_OGCAPIERR, message.c_str(), "processCollection()");
-    processError(400);
+    processError(400, "Error getting collection. " + std::string(e.what()), "processCollectionRequest()");
     return MS_SUCCESS;
   }
 
@@ -638,7 +720,7 @@ static int processCollectionsRequest(mapObj *map, int format)
       json collection = getCollection(map, map->layers[i], format);
       if(!collection.is_null()) response["collections"].push_back(collection);
     } catch (const std::runtime_error &e) {
-      processError(400, "Error getting collection. " + std::string(e.what()));
+      processError(400, "Error getting collection." + std::string(e.what()), "processCollectionsRequest()");
       return MS_SUCCESS;
     }
   }
@@ -659,7 +741,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
   } else if(p && (strcmp(p, "html") == 0 || strcmp(p, OGCAPI_MIMETYPE_HTML) == 0)) {
     format = OGCAPI_FORMAT_HTML;
   } else if(p) {
-    processError(500, "Unsupported format requested.");
+    processError(500, "Unsupported format requested.", "msOGCAPIDispatchRequest()");
     return MS_SUCCESS; // avoid any downstream MapServer processing
   } else {
     format = OGCAPI_FORMAT_HTML; // default for now, need to derive from http headers (possible w/CGI?)
@@ -693,12 +775,12 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
     if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId
       
       if(getLimit(map, request, &limit) != MS_SUCCESS) {
-        processError(500, "Invalid value for limit.");
+        processError(500, "Bad value for limit.", "msOGCAPIDispatchRequest()");
         return MS_SUCCESS;
       }
 
       if(getBbox(map, request, &bbox) != MS_SUCCESS) {
-	processError(500, "Invalid value for bbox.");
+	processError(500, "Bad value for bbox.", "msOGCAPIDispatchRequest()");
 	return MS_SUCCESS;
       }
       
@@ -707,7 +789,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 
   }
 
-  processError(500, "Invalid API request."); 
+  processError(500, "Invalid API request.", "msOGCAPIDispatchRequest()");
   return MS_SUCCESS; // avoid any downstream MapServer processing
 #else
   msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
