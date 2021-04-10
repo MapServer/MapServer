@@ -235,7 +235,7 @@ json getItem(gmlItemObj *item, char *value)
 /*
 ** Return a GeoJSON representation of a shape.
 */
-json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, gmlGroupListObj *groups)
+json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants)
 {
   json feature; // empty (null)
 
@@ -249,27 +249,23 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
 
   // id
 
-  // properties
+  // properties - build from items and constants, no group support for now
 
   for(int i=0; i<items->numitems; i++) {    
-    if(msItemInGroups(items->items[i].name, groups) == MS_FALSE) {
-      try {
-        json item = getItem(&(items->items[i]), shape->values[i]);
-        if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
-      } catch (const std::runtime_error &e) {
-	throw std::runtime_error("Error fetching item.");
-      }
+    try {
+      json item = getItem(&(items->items[i]), shape->values[i]);
+      if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
+    } catch (const std::runtime_error &e) {
+      throw std::runtime_error("Error fetching item.");
     }
   }
 
   for(int i=0; i<constants->numconstants; i++) {
-    if(msItemInGroups(constants->constants[i].name, groups) == MS_FALSE) {
-      try {
-        json constant = getConstant(&(constants->constants[i]));
-        if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
-      } catch (const std::runtime_error &e) {
-        throw std::runtime_error("Error fetching constant.");
-      }
+    try {
+      json constant = getConstant(&(constants->constants[i]));
+      if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
+    } catch (const std::runtime_error &e) {
+      throw std::runtime_error("Error fetching constant.");  
     }
   }
 
@@ -620,12 +616,10 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
     // we piggyback on GML configuration
     gmlItemListObj *items = msGMLGetItems(lp, "AG");
     gmlConstantListObj *constants = msGMLGetConstants(lp, "AG");
-    gmlGroupListObj *groups = msGMLGetGroups(lp, "AG");    
 
-    if(!items || !constants || !groups) {
+    if(!items || !constants) {
       msGMLFreeItems(items);
       msGMLFreeConstants(constants);
-      msGMLFreeGroups(groups);
       processError(400, "Error fetching layer attribute metadata.", "processCollectionItemsRequest()");
       return MS_SUCCESS;
     }
@@ -637,7 +631,6 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
       if(reprojector == NULL) {
 	msGMLFreeItems(items);
 	msGMLFreeConstants(constants);
-	msGMLFreeGroups(groups);
         processError(400, "Error creating re-projector.", "processCollectionItemsRequest()");
 	return MS_SUCCESS;
       }
@@ -651,19 +644,17 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
       if(status != MS_SUCCESS) {
 	msGMLFreeItems(items);
         msGMLFreeConstants(constants);
-        msGMLFreeGroups(groups);
         msProjectDestroyReprojector(reprojector);
 	processError(400, "Error fetching feature.", "processCollectionItemsRequest()");
         return MS_SUCCESS;
       }
 
       try {
-	json feature = getFeature(lp, &shape, items, constants, groups);
+	json feature = getFeature(lp, &shape, items, constants);
 	if(!feature.is_null()) response["features"].push_back(feature);
       } catch (const std::runtime_error &e) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
-        msGMLFreeGroups(groups);
         msProjectDestroyReprojector(reprojector);
 	processError(400, "Error getting feature. " + std::string(e.what()), "processCollectionItemsRequest()");
 	return MS_SUCCESS;
@@ -672,7 +663,6 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
 
     msGMLFreeItems(items); // clean up
     msGMLFreeConstants(constants);
-    msGMLFreeGroups(groups);
     msProjectDestroyReprojector(reprojector);
   }
 
