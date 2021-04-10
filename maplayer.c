@@ -991,8 +991,8 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   }
 
   // item set by mapwfs.cpp to restrict the number of columns selected
-  const char *value = msOWSLookupMetadata(&(layer->metadata), "G", "select_items");
-  if (value) {
+  metadata = msOWSLookupMetadata(&(layer->metadata), "G", "select_items");
+  if (metadata) {
       /* get only selected items */
       get_all = MS_FALSE;
   }
