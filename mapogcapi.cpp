@@ -200,7 +200,7 @@ std::string getApiRootUrl(mapObj *map)
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
 }
 
-json getConstant(gmlConstantObj *constant)
+json getFeatureConstant(gmlConstantObj *constant)
 {
   json j; // empty (null)
 
@@ -213,7 +213,7 @@ json getConstant(gmlConstantObj *constant)
   return j;
 }
 
-json getItem(gmlItemObj *item, char *value)
+json getFeatureItem(gmlItemObj *item, char *value)
 {
   json j; // empty (null)
   const char *key;
@@ -230,6 +230,110 @@ json getItem(gmlItemObj *item, char *value)
   j = { { key, value } };
 
   return j;
+}
+
+json getFeatureGeometry(shapeObj *shape)
+{
+  json geometry; // empty (null)
+  int *outerList=NULL, numOuterRings=0;
+
+  if(!shape) throw std::runtime_error("Null shape.");
+
+  switch(shape->type) {
+  case(MS_SHAPE_POINT):
+    if(shape->numlines == 0 || shape->line[0].numpoints == 0) // not enough info for a point
+      return geometry;
+
+    if(shape->line[0].numpoints == 1) {
+      geometry["type"] = "Point";
+      geometry["coordinates"] = { shape->line[0].point[0].x, shape->line[0].point[0].y };
+    } else {
+      geometry["type"] = "MultiPoint";
+      geometry["coordinates"] = json::array();
+      for(int j=0; j<shape->line[0].numpoints; j++) {
+        geometry["coordinates"].push_back( { shape->line[0].point[j].x, shape->line[0].point[j].y } );
+      }
+    }
+    break;
+  case(MS_SHAPE_LINE):
+    if(shape->numlines == 0 || shape->line[0].numpoints < 2) // not enough info for a line
+      return geometry;
+
+    if(shape->numlines == 1) {
+      geometry["type"] = "LineString";
+      geometry["coordinates"] = json::array();
+      for(int j=0; j<shape->line[0].numpoints; j++) {
+	geometry["coordinates"].push_back( { shape->line[0].point[j].x, shape->line[0].point[j].y } );
+      }
+    } else {
+      geometry["type"] = "MultiLineString";
+      geometry["coordinates"] = json::array();
+      for(int i=0; i<shape->numlines; i++) {
+        json part = json::array();
+        for(int j=0; j<shape->line[i].numpoints; j++) {
+          part.push_back( { shape->line[i].point[j].x, shape->line[i].point[j].y } );
+        }
+        geometry["coordinates"].push_back(part);
+      }
+    }
+    break;
+  case(MS_SHAPE_POLYGON):
+    if(shape->numlines == 0 || shape->line[0].numpoints < 4) // not enough info for a polygon (first=last)
+      return geometry;
+
+    outerList = msGetOuterList(shape);
+    if(outerList == NULL) throw std::runtime_error("Unable to allocate list of outer rings.");
+    for(int k=0; k<shape->numlines; k++) {
+      if(outerList[k] == MS_TRUE)
+	numOuterRings++;
+    }
+
+    if(numOuterRings == 1) {
+      geometry["type"] = "Polygon";
+      geometry["coordinates"] = json::array();
+      for(int i=0; i<shape->numlines; i++) {
+        json part = json::array();
+        for(int j=0; j<shape->line[i].numpoints; j++) {
+          part.push_back( { shape->line[i].point[j].x, shape->line[i].point[j].y } );
+        }
+        geometry["coordinates"].push_back(part);
+      }
+    } else {
+      geometry["type"] = "MultiPolygon";
+      geometry["coordinates"] = json::array();
+
+      for(int k=0; k<shape->numlines; k++) {
+	if(outerList[k] == MS_TRUE) { // outer ring: generate polygon and add to coordinates
+          int *innerList = msGetInnerList(shape, k, outerList);
+          if(innerList == NULL) {
+            msFree(outerList);
+            throw std::runtime_error("Unable to allocate list of inner rings.");
+	  }
+
+	  json polygon = json::array();
+          for(int i=0; i<shape->numlines; i++) {
+            if(i == k || outerList[i] == MS_TRUE) { // add outer ring (k) and any inner rings
+              json part = json::array();
+              for(int j=0; j<shape->line[i].numpoints; j++) {
+                part.push_back( { shape->line[i].point[j].x, shape->line[i].point[j].y } );
+              }
+              polygon.push_back(part);
+            }
+          }
+
+          msFree(innerList);
+          geometry["coordinates"].push_back(polygon);
+        }
+      }
+    }
+    msFree(outerList);
+    break;
+  default:
+    throw std::runtime_error("Invalid shape type.");
+    break;
+  }
+
+  return geometry;
 }
 
 /*
@@ -253,7 +357,7 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
 
   for(int i=0; i<items->numitems; i++) {    
     try {
-      json item = getItem(&(items->items[i]), shape->values[i]);
+      json item = getFeatureItem(&(items->items[i]), shape->values[i]);
       if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
     } catch (const std::runtime_error &e) {
       throw std::runtime_error("Error fetching item.");
@@ -262,7 +366,7 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
 
   for(int i=0; i<constants->numconstants; i++) {
     try {
-      json constant = getConstant(&(constants->constants[i]));
+      json constant = getFeatureConstant(&(constants->constants[i]));
       if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
     } catch (const std::runtime_error &e) {
       throw std::runtime_error("Error fetching constant.");  
@@ -270,6 +374,12 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
   }
 
   // geometry
+  try {
+    json geometry = getFeatureGeometry(shape);
+    if(!geometry.is_null()) feature["geometry"] = geometry;
+  } catch (const std::runtime_error &e) {
+    throw std::runtime_error("Error fetching geometry.");
+  }
 
   return feature;
 }
@@ -586,6 +696,15 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   lp = map->layers[i]; // for convenience
   lp->status = MS_ON; // force on (do we need to save and reset?)
 
+  /*
+  ** Note this implementation needs to take advantage general paging support, which means (I think):
+  **   - setting query startindex and maxfeatures
+  **   - set query only_cache_result_count=true
+  **   - execute query to get total
+  **   - set query only_cache_result_count=false
+  **   - execute query
+  */
+
   if(itemId) {
     // TODO
   } else { // bbox query
@@ -649,6 +768,18 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
         return MS_SUCCESS;
       }
 
+      if(reprojector) {
+	status = msProjectShapeEx(reprojector, &shape);
+	if(status != MS_SUCCESS) {
+          msGMLFreeItems(items);
+	  msGMLFreeConstants(constants);
+	  msProjectDestroyReprojector(reprojector);
+          msFreeShape(&shape);
+	  processError(400, "Error reprojecting feature.", "processCollectionItemsRequest()");
+	  return MS_SUCCESS;
+	}
+      }
+
       try {
 	json feature = getFeature(lp, &shape, items, constants);
 	if(!feature.is_null()) response["features"].push_back(feature);
@@ -656,9 +787,12 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
         msProjectDestroyReprojector(reprojector);
+        msFreeShape(&shape);
 	processError(400, "Error getting feature. " + std::string(e.what()), "processCollectionItemsRequest()");
 	return MS_SUCCESS;
       }
+
+      msFreeShape(&shape); // next
     }
 
     msGMLFreeItems(items); // clean up
