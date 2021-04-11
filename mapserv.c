@@ -242,9 +242,23 @@ int main(int argc, char *argv[])
 #ifdef USE_FASTCGI
   msIO_installFastCGIRedirect();
 
+  // retrieve environment variables before FCGI_Accept
+  const char *pszCurlCABundle = NULL;
+  pszCurlCABundle = getenv("CURL_CA_BUNDLE");
+
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
   while( FCGI_Accept() >= 0 ) {
+
+    if(pszCurlCABundle != NULL){
+
+        char *pszEnvironValue;
+        char *pszEnvironKey = "CURL_CA_BUNDLE";
+
+        pszEnvironValue = (char*)malloc(strlen(pszCurlCABundle) + strlen(pszEnvironKey) + 2);
+        sprintf(pszEnvironValue, "%s=%s", pszEnvironKey, pszCurlCABundle);
+        putenv(pszEnvironValue);
+    }
 #endif /* def USE_FASTCGI */
 
     /* -------------------------------------------------------------------- */
