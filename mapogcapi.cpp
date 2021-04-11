@@ -684,6 +684,8 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   int i;
   layerObj *lp;
 
+  int numMatched = 0;
+
   for(i=0; i<map->numlayers; i++) {
     if(strcmp(map->layers[i]->name, collectionId) == 0) break; // match
   }
@@ -696,15 +698,6 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   lp = map->layers[i]; // for convenience
   lp->status = MS_ON; // force on (do we need to save and reset?)
 
-  /*
-  ** Note this implementation needs to take advantage general paging support, which means (I think):
-  **   - setting query startindex and maxfeatures
-  **   - set query only_cache_result_count=true
-  **   - execute query to get total
-  **   - set query only_cache_result_count=false
-  **   - execute query
-  */
-
   if(itemId) {
     // TODO
   } else { // bbox query
@@ -712,6 +705,18 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = i;
     map->query.rect = bbox;
+    map->query.only_cache_result_count = MS_TRUE;
+
+    // get number matched
+    if(msExecuteQuery(map) != MS_SUCCESS) {
+      processError(404, "Collection items query failed.", "processCollectionItemsRequest()");
+      return MS_SUCCESS;
+    }
+    numMatched = lp->resultcache->numresults;
+
+    map->query.only_cache_result_count = MS_FALSE;
+    // map->query.startindex = start;
+    map->query.maxfeatures = limit;
   }
 
   if(msExecuteQuery(map) != MS_SUCCESS) {
@@ -722,8 +727,8 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
   // build response object
   response = {
     { "type", "FeatureCollection" },
-    { "numMatched", lp->resultcache->numresults },
-    { "numReturned", MS_MIN(limit, lp->resultcache->numresults) },
+    { "numMatched", numMatched },
+    { "numReturned", lp->resultcache->numresults },
     { "features", json::array() }
   };
 
@@ -743,10 +748,10 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
       return MS_SUCCESS;
     }
 
-    // reprojection
+    // reprojection (layer projection to EPSG:4326)
     reprojectionObj *reprojector = NULL;
     if(msProjectionsDiffer(&(lp->projection), &(map->latlon))) {
-      reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
+      reprojector = msProjectCreateReprojector(&(lp->projection), &(map->latlon));
       if(reprojector == NULL) {
 	msGMLFreeItems(items);
 	msGMLFreeConstants(constants);
@@ -755,10 +760,7 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
       }
     }
 
-    int start = 0; // TODO: will need to pass in
-    int end = start + MS_MIN(limit, lp->resultcache->numresults);
-
-    for(i=start; i<end; i++) {
+    for(i=0; i<lp->resultcache->numresults; i++) {
       int status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[i]));
       if(status != MS_SUCCESS) {
 	msGMLFreeItems(items);
