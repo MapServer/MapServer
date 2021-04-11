@@ -232,10 +232,18 @@ json getFeatureItem(gmlItemObj *item, char *value)
   return j;
 }
 
+// https://stackoverflow.com/questions/25925290/c-round-a-double-up-to-2-decimal-places
+double round_up(double value, int decimal_places) {
+  const double multiplier = std::pow(10.0, decimal_places);
+  return std::ceil(value * multiplier) / multiplier;
+}
+
 json getFeatureGeometry(shapeObj *shape)
 {
   json geometry; // empty (null)
   int *outerList=NULL, numOuterRings=0;
+
+  int precision = 6;
 
   if(!shape) throw std::runtime_error("Null shape.");
 
@@ -246,12 +254,12 @@ json getFeatureGeometry(shapeObj *shape)
 
     if(shape->line[0].numpoints == 1) {
       geometry["type"] = "Point";
-      geometry["coordinates"] = { shape->line[0].point[0].x, shape->line[0].point[0].y };
+      geometry["coordinates"] = { round_up(shape->line[0].point[0].x, precision), round_up(shape->line[0].point[0].y, precision) };
     } else {
       geometry["type"] = "MultiPoint";
       geometry["coordinates"] = json::array();
       for(int j=0; j<shape->line[0].numpoints; j++) {
-        geometry["coordinates"].push_back( { shape->line[0].point[j].x, shape->line[0].point[j].y } );
+        geometry["coordinates"].push_back( { round_up(shape->line[0].point[j].x, precision), round_up(shape->line[0].point[j].y, precision) } );
       }
     }
     break;
@@ -263,7 +271,7 @@ json getFeatureGeometry(shapeObj *shape)
       geometry["type"] = "LineString";
       geometry["coordinates"] = json::array();
       for(int j=0; j<shape->line[0].numpoints; j++) {
-	geometry["coordinates"].push_back( { shape->line[0].point[j].x, shape->line[0].point[j].y } );
+	geometry["coordinates"].push_back( { round_up(shape->line[0].point[j].x, precision), round_up(shape->line[0].point[j].y, precision) } );
       }
     } else {
       geometry["type"] = "MultiLineString";
@@ -271,7 +279,7 @@ json getFeatureGeometry(shapeObj *shape)
       for(int i=0; i<shape->numlines; i++) {
         json part = json::array();
         for(int j=0; j<shape->line[i].numpoints; j++) {
-          part.push_back( { shape->line[i].point[j].x, shape->line[i].point[j].y } );
+          part.push_back( { round_up(shape->line[i].point[j].x, precision), round_up(shape->line[i].point[j].y, precision) } );
         }
         geometry["coordinates"].push_back(part);
       }
@@ -294,7 +302,7 @@ json getFeatureGeometry(shapeObj *shape)
       for(int i=0; i<shape->numlines; i++) {
         json part = json::array();
         for(int j=0; j<shape->line[i].numpoints; j++) {
-          part.push_back( { shape->line[i].point[j].x, shape->line[i].point[j].y } );
+          part.push_back( { round_up(shape->line[i].point[j].x, precision), round_up(shape->line[i].point[j].y, precision) } );
         }
         geometry["coordinates"].push_back(part);
       }
@@ -315,7 +323,7 @@ json getFeatureGeometry(shapeObj *shape)
             if(i == k || outerList[i] == MS_TRUE) { // add outer ring (k) and any inner rings
               json part = json::array();
               for(int j=0; j<shape->line[i].numpoints; j++) {
-                part.push_back( { shape->line[i].point[j].x, shape->line[i].point[j].y } );
+                part.push_back( { round_up(shape->line[i].point[j].x, precision), round_up(shape->line[i].point[j].y, precision) } );
               }
               polygon.push_back(part);
             }
