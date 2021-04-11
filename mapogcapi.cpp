@@ -681,7 +681,7 @@ static int processConformanceRequest(mapObj *map, int format)
 static int processCollectionItemsRequest(mapObj *map, const char *collectionId, const char *itemId, rectObj bbox, int limit, int format)
 {
   json response;
-  int i, j;
+  int i;
   layerObj *lp;
 
   for(i=0; i<map->numlayers; i++) {
