@@ -47,6 +47,7 @@
 #include <signal.h>
 #endif
 
+extern char **environ;
 
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
@@ -239,26 +240,33 @@ int main(int argc, char *argv[])
   signal( SIGTERM, msCleanupOnSignal );
 #endif
 
+  // make a copy of the original environment
+  int i = 0;
+  int j;
+  char **env = environ;
+
+  while (env[i] != NULL)
+      i++;
+
+  char **envCopy = malloc(sizeof(char*) * i + 1);
+
+  for (j = 0; j < i; j++) {
+      envCopy[j] = malloc(strlen(env[j]));
+      strcpy(envCopy[j], env[j]);
+  }
+
 #ifdef USE_FASTCGI
   msIO_installFastCGIRedirect();
-
-  // retrieve environment variables before FCGI_Accept
-  const char *pszCurlCABundle = NULL;
-  pszCurlCABundle = getenv("CURL_CA_BUNDLE");
 
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
   while( FCGI_Accept() >= 0 ) {
 
-    if(pszCurlCABundle != NULL){
+      // copy across all environ variables to the request environment
+      for (j = 0; j < i; j++) {
+          putenv(envCopy[j]);
+      }
 
-        char *pszEnvironValue;
-        char *pszEnvironKey = "CURL_CA_BUNDLE";
-
-        pszEnvironValue = (char*)malloc(strlen(pszCurlCABundle) + strlen(pszEnvironKey) + 2);
-        sprintf(pszEnvironValue, "%s=%s", pszEnvironKey, pszCurlCABundle);
-        putenv(pszEnvironValue);
-    }
 #endif /* def USE_FASTCGI */
 
     /* -------------------------------------------------------------------- */
