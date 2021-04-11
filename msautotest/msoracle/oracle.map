@@ -2,13 +2,12 @@
 # REQUIRES: INPUT=ORACLESPATIAL
 MAP
   NAME "OGC:WMS"
-  EXTENT -180 -90 180 90
+  EXTENT -72 67 -65 79
   UNITS DD
 
   DEBUG 5
 
   CONFIG "MS_ERRORFILE" stderr
-
 
   LEGEND
       STATUS ON
@@ -24,13 +23,76 @@ MAP
   LAYER
         NAME "oracle"
         TYPE POINT
-        DUMP TRUE
         STATUS OFF
-        EXTENT -180 -90 180 90
+        EXTENT -72 67 -65 79
         UNITS DD
-        CONNECTION "SCOTT/TIGER@TESTSERVER"
+        DEBUG 5
+        CONNECTION "SYSTEM/adminpass@XE"
         CONNECTIONTYPE oraclespatial
-        DATA "POSITION from (select ID, POSITION from schema.table_point) using unique ID none"
-    END
-END
+        LABELITEM "name"
+        DATA "GEOM from (select \"pk\", \"name\", GEOM from SYSTEM.SOME_DATA ) using unique \"pk\" SRID 4326"
+
+
+        CLASS
+          # Start of the first Style
+          STYLE
+            # Symbol to be used (reference)
+            SYMBOL "square"
+            # Size of the symbol in pixels
+            SIZE 16
+            # Colour (RGB) - red
+            COLOR 255 0 0
+            # Outline colour (RGB) - black
+            OUTLINECOLOR 0 0 0
+          END # end of STYLE
+          # Start of the second Style
+          STYLE
+            # Symbol to be used (reference)
+            SYMBOL "circle"
+            # Size of the symbol in pixels
+            SIZE 10
+            # Colour (RGB) - blue
+            COLOR 0 0 255
+          END # end of STYLE
+        END # end of CLASS
+
+  END # LAYER
+
+  SYMBOL
+    # Symbol name (referenced in STYLEs)
+    NAME "square"
+    TYPE vector # Type of symbol
+    # Start of the symbol geometry
+    POINTS
+      0 0
+      0 1
+      1 1
+      1 0
+      0 0
+    END # end of POINTS
+    # The symbol should be filled
+    FILLED true
+    # Place the according to its center
+    ANCHORPOINT 0.5 0.5
+  END # end of SYMBOL
+  
+  # Start of symbol definition
+  SYMBOL
+    # Symbol name (referenced in STYLEs)
+    NAME "circle"
+    TYPE ellipse # Type of symbol
+    # Start of the symbol geometry
+    POINTS
+      1 1
+    END # end of POINTS
+    # The symbol should be filled
+    FILLED true
+    # Place the according to its center
+    ANCHORPOINT 0.5 0.5
+  END # end of SYMBOL
+
+
+
+END # MAP
+
 
