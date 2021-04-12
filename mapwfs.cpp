@@ -2253,8 +2253,6 @@ static int msWFSRunBasicGetFeature(mapObj* map,
             msProjectRect(&lp->projection, &map->projection, &(ext));
         }
         map->query.rect = ext;
-
-        msFree(pszMapSRS);
     }
 
     if(msQueryByRect(map) != MS_SUCCESS) {
