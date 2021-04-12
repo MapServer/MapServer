@@ -46,6 +46,7 @@
 #ifndef WIN32
 #include <signal.h>
 #include <unistd.h>
+extern char **environ;
 #endif
 
 /************************************************************************/
