@@ -45,6 +45,7 @@
 
 #ifndef WIN32
 #include <signal.h>
+#include <unistd.h>
 #endif
 
 /************************************************************************/
@@ -239,18 +240,17 @@ int main(int argc, char *argv[])
 #endif
 
   // make a copy of the original environment
-  int i = 0;
-  int j;
+  int num_env_var = 0;
   char **env = environ;
 
-  while (env[i] != NULL)
-      i++;
+  while (env[num_env_var] != NULL)
+      num_env_var++;
 
-  char **envCopy = malloc(sizeof(char*) * i + 1);
+  char **envCopy = malloc(sizeof(char*) * num_env_var);
 
-  for (j = 0; j < i; j++) {
-      envCopy[j] = malloc(strlen(env[j]));
-      strcpy(envCopy[j], env[j]);
+  for (int i = 0; i < num_env_var; i++) {
+      envCopy[i] = malloc(strlen(env[i])+1);
+      strcpy(envCopy[i], env[i]);
   }
 
 #ifdef USE_FASTCGI
@@ -260,10 +260,10 @@ int main(int argc, char *argv[])
   /* use we only accept and process one request.  */
   while( FCGI_Accept() >= 0 ) {
 
-      // copy across all environ variables to the request environment
-      for (j = 0; j < i; j++) {
-          putenv(envCopy[j]);
-      }
+    // copy across all environ variables to the request environment
+    for (int i = 0; i < num_env_var; i++) {
+        putenv(envCopy[i]);
+    }
 
 #endif /* def USE_FASTCGI */
 
