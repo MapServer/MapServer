@@ -1,11 +1,11 @@
 <?php
 
-class LayerObjTest extends PHPUnit_Framework_TestCase
+class LayerObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $layer;
     protected $map;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->map = new mapObj('maps/filter.map');
         $this->layer = $this->map->getLayer(0);

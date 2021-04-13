@@ -1,10 +1,10 @@
 <?php
 
-class ErrorObjTest extends PHPUnit_Framework_TestCase
+class ErrorObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $error;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->error = ms_GetErrorObj();
     }

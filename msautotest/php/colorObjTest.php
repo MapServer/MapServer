@@ -1,12 +1,12 @@
 <?php
 
-class ColorObjTest extends PHPUnit_Framework_TestCase
+class ColorObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $color;
 	protected $original = "#00ff00";
 	protected $originalAlpha = 255;
 
-    public function setUp()
+    public function setUp(): void
     {
         $map_file = 'maps/labels.map';
         $map = new mapObj($map_file);
