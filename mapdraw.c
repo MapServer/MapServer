@@ -1987,7 +1987,7 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
 {
 
   int c = shape->classindex;
-  pointObj annopnt;
+  pointObj annopnt = {0,0,0,0}; // initialize
   int i;
 
   if(MS_DRAW_FEATURES(drawmode)) {
