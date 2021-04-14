@@ -3620,11 +3620,14 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = msStringConcatenate(outbuf, line);
 
     fclose(stream);
+    stream = NULL;
   }
 
   /* clear any data associated with the join */
   msFreeCharArray(join->values, join->numitems);
   join->values = NULL;
+
+  if(stream) fclose(stream);
 
   return(outbuf);
 }
@@ -4200,8 +4203,10 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
 
     if(strchr(line, '[') != NULL) {
       tmpline = processLine(mapserv, line, stream, mode);
-      if(!tmpline)
+      if(!tmpline) {
+        fclose(stream);
         return MS_FAILURE;
+      }
 
       if(papszBuffer) {
         if(nBufferSize <= (int)(nCurrentSize + strlen(tmpline) + 1)) {

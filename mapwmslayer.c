@@ -430,7 +430,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   int bFlipAxisOrder = MS_FALSE;
   const char *pszTmp;
   int bIsEssential = MS_FALSE;
-  
+
   if (lp->connectiontype != MS_WMS) {
     msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
                "msBuildWMSLayerURL()");
@@ -619,24 +619,30 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     char* pszEPSGCodeFromLayer = NULL;
     msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszEPSGCodeFromLayer);
     if (pszEPSGCodeFromLayer == NULL || strcasecmp(pszEPSG, pszEPSGCodeFromLayer) != 0) {
-      char *ows_srs;
-      msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
+      char *ows_srs = NULL;
+      msOWSGetEPSGProj(NULL, &(lp->metadata), "MO", MS_FALSE, &ows_srs);
       /* no need to set lp->proj if it is already set and there is only
       one item in the _srs metadata for this layer - we will assume
       the projection block matches the _srs metadata (the search for ' '
       in ows_srs is a test to see if there are multiple EPSG: codes) */
       if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
-        msFree(ows_srs);
         if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
           char szProj[20];
           snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
-          if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+          if (msLoadProjectionString(&(lp->projection), szProj) != 0) {
+            msFree(pszEPSGCodeFromLayer);
+            msFree(ows_srs);
             return MS_FAILURE;
+          }
         } else {
-          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
+          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0) {
+            msFree(pszEPSGCodeFromLayer);
+            msFree(ows_srs);
             return MS_FAILURE;
+          }
         }
       }
+      msFree(ows_srs);
     }
     msFree(pszEPSGCodeFromLayer);
   }

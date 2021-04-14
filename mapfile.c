@@ -6452,7 +6452,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if(initMap(map) == -1) { /* initialize this map */
-    msFree(map);
+    msFreeMap(map);
     return(NULL);
   }
 
@@ -6544,7 +6544,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if(initMap(map) == -1) { /* initialize this map */
-    msFree(map);
+    msFreeMap(map);
     return(NULL);
   }
 
