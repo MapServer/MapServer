@@ -34,7 +34,7 @@
 #include "maptime.h"
 
 
-/* Use only mapgml.c if WMS or WFS is available (with minor exceptions at end)*/
+/* Use only mapgml.c if WMS or WFS is available (with minor exceptions at end) */
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
@@ -1485,23 +1485,25 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
         reprojector = msProjectCreateReprojector(&(lp->projection), &(map->projection));
         if( reprojector == NULL ) {
-           msGMLFreeGroups(groupList);
-           msGMLFreeConstants(constantList);
-           msGMLFreeItems(itemList);
-           msGMLFreeGeometries(geometryList);
-           return MS_FAILURE;
+          msGMLFreeGroups(groupList);
+          msGMLFreeConstants(constantList);
+          msGMLFreeItems(itemList);
+          msGMLFreeGeometries(geometryList);
+          msFree(pszOutputSRS);
+          return MS_FAILURE;
         }
       }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
         if(status != MS_SUCCESS) {
-           msGMLFreeGroups(groupList);
-           msGMLFreeConstants(constantList);
-           msGMLFreeItems(itemList);
-           msGMLFreeGeometries(geometryList);
-           msProjectDestroyReprojector(reprojector);
-           return(status);
+          msGMLFreeGroups(groupList);
+          msGMLFreeConstants(constantList);
+          msGMLFreeItems(itemList);
+          msGMLFreeGeometries(geometryList);
+          msProjectDestroyReprojector(reprojector);
+          msFree(pszOutputSRS);
+          return MS_FAILURE;
         }
 
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */

@@ -47,7 +47,7 @@ void freeLegend(legendObj *legend);
 
 mapObj *msNewMapObj()
 {
-  mapObj *map;
+  mapObj *map = NULL;
 
   /* create an empty map, no layers etc... */
   map = (mapObj *)calloc(sizeof(mapObj),1);
@@ -57,11 +57,15 @@ mapObj *msNewMapObj()
     return NULL;
   }
 
-  if( initMap( map ) == -1 )
+  if( initMap( map ) == -1 ) {
+    msFreeMap(map);
     return NULL;
+  }
 
-  if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
+  if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE ) {
+    msFreeMap(map);
     return NULL;
+  }
 
   return map;
 }

@@ -3602,6 +3602,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         status = msWCSGetCapabilities20_CoverageSummary(
                    map, params, psDoc, psNode, layer );
         if(status != MS_SUCCESS) {
+          msFree(validated_language);
           xmlFreeDoc(psDoc);
           xmlCleanupParser();
           return msWCSException(map, "Internal", "mapserv", params->version);
