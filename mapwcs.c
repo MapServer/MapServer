@@ -1514,8 +1514,10 @@ static int msWCSGetCoverage_ImageCRSSetup(
   /* -------------------------------------------------------------------- */
   char *layer_proj = msGetProjectionString( &(layer->projection) );
 
-  if (msLoadProjectionString(&(map->projection), layer_proj) != 0)
+  if (msLoadProjectionString(&(map->projection), layer_proj) != 0) {
+    msFree(layer_proj);
     return msWCSException( map, NULL, NULL, params->version );
+  }
 
   free( layer_proj );
   layer_proj = NULL;

@@ -1993,7 +1993,7 @@ void msFreeExpression(expressionObj *exp)
 
 int loadExpression(expressionObj *exp)
 {
-  /* TODO: should we fall msFreeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
+  /* TODO: should we call msFreeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
 
   msyystring_icase = MS_TRUE;
   if((exp->type = getSymbol(6, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX,MS_LIST)) == -1) return(-1);
@@ -2002,6 +2002,7 @@ int loadExpression(expressionObj *exp)
     msFree(exp->native_string);
   }
   exp->string = msStrdup(msyystring_buffer);
+  exp->native_string = NULL;
 
   if(exp->type == MS_ISTRING) {
     exp->flags = exp->flags | MS_EXP_INSENSITIVE;
@@ -6443,7 +6444,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if(initMap(map) == -1) { /* initialize this map */
-    msFree(map);
+    msFreeMap(map);
     return(NULL);
   }
 
@@ -6535,7 +6536,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if(initMap(map) == -1) { /* initialize this map */
-    msFree(map);
+    msFreeMap(map);
     return(NULL);
   }
 
