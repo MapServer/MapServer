@@ -1,10 +1,10 @@
 <?php
 
-class RectObjTest extends PHPUnit_Framework_TestCase
+class RectObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $rect;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->rect = new rectObj();
     }

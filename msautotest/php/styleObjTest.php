@@ -1,10 +1,10 @@
 <?php
 
-class StyleObjTest extends PHPUnit_Framework_TestCase
+class StyleObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $style;
 
-    public function setUp()
+    public function setUp(): void
     {
         $map_file = 'maps/labels.map';
         $map = new mapObj($map_file);

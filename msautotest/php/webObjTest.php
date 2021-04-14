@@ -1,10 +1,10 @@
 <?php
 
-class WebObjTest extends PHPUnit_Framework_TestCase
+class WebObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $web;
 
-    public function setUp()
+    public function setUp(): void
     {
         $map = new mapObj('maps/helloworld-gif.map');
         $this->web = $map->web;

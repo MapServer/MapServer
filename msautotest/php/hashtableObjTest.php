@@ -1,10 +1,10 @@
 <?php
 
-class HashTableObjTest extends PHPUnit_Framework_TestCase
+class HashTableObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $hash;
 
-    public function setUp()
+    public function setUp(): void
     {
         $map_file = 'maps/helloworld-gif.map';
         $map = new mapObj($map_file);
