@@ -196,8 +196,8 @@ static int msOCIGet4DOrdinates( msOracleSpatialHandler *hand, SDOGeometryObj *ob
 static int msOCIConvertCircle( pointObj *pt );
 static char * osFilteritem(layerObj *layer, int function, char *query_str, int mode);
 static char * osAggrGetExtent(layerObj *layer, char *query_str, char *geom_column_name, char *table_name);
-static char * osGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *index_column_name, char *srid, rectObj rect);
-static char * osNoGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *index_column_name, char *srid, rectObj rect);
+static char * osGeodeticData(int function, char *query_str, char *geom_column_name, char *index_column_name);
+static char * osNoGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *index_column_name);
 static double osCalculateArcRadius(pointObj *pnt);
 static void osCalculateArc(pointObj *pnt, int data3d, int data4d, double radius, double npoints, int side, lineObj arcline, shapeObj *shape);
 static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int data3d, int data4d);
@@ -717,7 +717,7 @@ static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo )
 }
 
 /*function that creates the correct sql for geoditical srid for version 9i*/
-static char * osGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *index_column_name, char *srid, rectObj rect)
+static char * osGeodeticData(int function, char *query_str, char *geom_column_name, char *index_column_name)
 {
   char *filter_field=index_column_name[0]=='\0' ? geom_column_name : index_column_name;
   switch (function) {
@@ -774,7 +774,7 @@ static char * osGeodeticData(int function, int version, char *query_str, char *g
 }
 
 /*function that generate the correct sql for no geoditic srid's*/
-static char * osNoGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *index_column_name, char *srid, rectObj rect)
+static char * osNoGeodeticData(int function, int version, char *query_str, char *geom_column_name, char *index_column_name)
 {
    char *filter_field= index_column_name[0]=='\0' ? geom_column_name : index_column_name;
    switch (function) {
@@ -1046,7 +1046,7 @@ static char * osFilteritem(layerObj *layer, int function, char *query_str, int m
      }
      size_t tmpSz;
 
-     char * native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+     const char * native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
      char * tmpBuf = NULL;
 
      tmpSz = sizeof(char) * (strlen(native_filter) + 2 + 1);
@@ -2048,10 +2048,10 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   if ((((atol(srid) >= 8192) && (atol(srid) <= 8330))
    || (atol(srid) == 2) || (atol(srid) == 5242888)
     || (atol(srid) == 2000001)) && (version == VERSION_9i)) {
-    query_str = osGeodeticData(function, version, query_str, geom_column_name, indexfield, srid, rect);
+    query_str = osGeodeticData(function, query_str, geom_column_name, indexfield);
   }
   else {
-    query_str = osNoGeodeticData(function, version, query_str, geom_column_name, indexfield, srid, rect);
+    query_str = osNoGeodeticData(function, version, query_str, geom_column_name, indexfield);
   }
 
   if( layer->sortBy.nProperties > 0 ) {
