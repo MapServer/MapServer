@@ -121,8 +121,8 @@ static int getLimit(mapObj *map, cgiRequestObj *request, int *limit)
   const char *p;
 
   p = getRequestParameter(request, "limit");
-  if(!p) {
-    *limit = OGCAPI_LIMIT_DEFAULT; // limit not explicitly set
+  if(!p || (p && strlen(p) == 0)) { // missing or empty
+    *limit = OGCAPI_LIMIT_DEFAULT;
   } else {
     status = msStringToInt(p, limit, 10);
 
@@ -140,7 +140,7 @@ static int getLimit(mapObj *map, cgiRequestObj *request, int *limit)
 }
 
 /*
-** Returns the bbox in SRS of the map. If not set, the map's EXTENT is used.
+** Returns the bbox in SRS of the map.
 */
 static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox) 
 {
@@ -148,8 +148,8 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
   const char *p;
 
   p = getRequestParameter(request, "bbox");
-  if(!p) {
-    bbox->minx = map->extent.minx; // no projection necessary
+  if(!p || (p && strlen(p) == 0)) { // missing or empty - assign map->extent (no projection necessary)
+    bbox->minx = map->extent.minx;
     bbox->miny = map->extent.miny;
     bbox->maxx = map->extent.maxx;
     bbox->maxy = map->extent.maxy;
@@ -700,14 +700,33 @@ static int processConformanceRequest(mapObj *map, int format)
   return MS_SUCCESS;
 }
 
-static int processCollectionItemsRequest(mapObj *map, const char *collectionId, const char *itemId, rectObj bbox, int limit, int format)
+static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, const char *collectionId, int format)
 {
   json response;
   int i;
   layerObj *layer;
 
+  int limit;
+  rectObj bbox;
+
+  const char *itemId = NULL;
+
   int numMatched = 0;
 
+  //
+  // handle parameters specific to this endpoint
+  //
+  if(getLimit(map, request, &limit) != MS_SUCCESS) {
+    processError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
+    return MS_SUCCESS;
+  }
+
+  if(getBbox(map, request, &bbox) != MS_SUCCESS) {
+    processError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+    return MS_SUCCESS;
+  }
+
+  // find the right layer
   for(i=0; i<map->numlayers; i++) {
     if(strcmp(map->layers[i]->name, collectionId) == 0) break; // match
   }
@@ -728,6 +747,8 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
     map->query.layer = i;
     map->query.rect = bbox;
     map->query.only_cache_result_count = MS_TRUE;
+
+    // fprintf(stderr, "%f %f %f %f\n", bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
 
     // get number matched
     if(msExecuteQuery(map) != MS_SUCCESS) {
@@ -753,16 +774,6 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
     { "numReturned", layer->resultcache->numresults },
     { "features", json::array() }
   };
-
-  // extend the response a bit for templating (HERE)
-  if(format == OGCAPI_FORMAT_HTML) {
-    const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
-    const char *id = layer->name;
-    response["collection"] = {
-      { "id", id },
-      { "title", title?title:"" }
-    };
-  }
 
   // features (items) - if found
   if(layer->resultcache && layer->resultcache->numresults > 0) {
@@ -832,6 +843,21 @@ static int processCollectionItemsRequest(mapObj *map, const char *collectionId, 
     msGMLFreeItems(items); // clean up
     msGMLFreeConstants(constants);
     msProjectDestroyReprojector(reprojector);
+  }
+
+  // extend the response a bit for templating (HERE)
+  if(format == OGCAPI_FORMAT_HTML) {
+    const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    const char *id = layer->name;
+    response["collection"] = {
+      { "id", id },
+      { "title", title?title:"" }
+    };
+    const char *p = getRequestParameter(request, "bbox");
+    response["request"] = {
+      { "limit", limit },
+      { "bbox", p?p:"" }
+    };
   }
 
   // links
@@ -914,8 +940,8 @@ static int processCollectionsRequest(mapObj *map, int format)
 
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
 {
-  int format, limit;
-  rectObj bbox;
+#ifdef USE_OGCAPI_SVR
+  int format; // all endpoints need a format
 
   const char *p = getRequestParameter(request, "f");
   if(p && (strcmp(p, "json") == 0 || strcmp(p, OGCAPI_MIMETYPE_JSON) == 0)) {
@@ -929,7 +955,6 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
     format = OGCAPI_FORMAT_HTML; // default for now, need to derive from http headers (possible w/CGI?)
   }
 
-#ifdef USE_OGCAPI_SVR
   if(api_path_length == 3) {
 
     return processLandingRequest(map, format);
@@ -954,19 +979,8 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 
   } else if(api_path_length == 6) {
 
-    if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId
-      
-      if(getLimit(map, request, &limit) != MS_SUCCESS) {
-        processError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
-        return MS_SUCCESS;
-      }
-
-      if(getBbox(map, request, &bbox) != MS_SUCCESS) {
-	processError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
-	return MS_SUCCESS;
-      }
-      
-      return processCollectionItemsRequest(map, api_path[4], NULL, bbox, limit, format);
+    if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId      
+      return processCollectionItemsRequest(map, request, api_path[4], format);
     }
 
   }
