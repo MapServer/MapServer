@@ -40,3 +40,59 @@ cd "$WORK_DIR"
 
 ci/travis/before_install.sh
 ci/travis/script.sh
+
+#####################################
+# Test MapServer as CGI and FastCGI #
+#####################################
+
+make cmakebuild_nocoverage MFLAGS="-j${nproc}"
+
+ln -s mapserv /tmp/install-mapserver/bin/mapserv.cgi
+ln -s mapserv /tmp/install-mapserver/bin/mapserv.fcgi
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends apache2 libapache2-mod-fcgid
+a2enmod fcgid cgid
+a2disconf serve-cgi-bin
+a2dissite 000-default
+
+echo "ServerName www.example.com" > /etc/apache2/conf-available/servername.conf
+a2enconf servername
+
+cat <<EOF >/etc/apache2/sites-available/001-mapserver.conf
+<VirtualHost *:80>
+ ErrorLog \${APACHE_LOG_DIR}/mapserv-error.log
+ CustomLog \${APACHE_LOG_DIR}/mapserv-access.log combined
+
+ ScriptAlias /cgi-bin/ "/tmp/install-mapserver/bin/"
+ <Directory "/tmp/install-mapserver/bin">
+        AddHandler fcgid-script .fcgi
+        AddHandler cgi-script .cgi
+        AllowOverride All
+        Options +ExecCGI -MultiViews  +FollowSymLinks
+        Order Allow,Deny
+        Allow from all
+        Require all granted
+ </Directory>
+</VirtualHost>
+EOF
+
+a2ensite 001-mapserver
+
+service apache2 restart
+
+# Prepare mapfile and related resources
+cat msautotest/wxs/wfs_simple.map | sed "s/\.\/data\/epsg2/\/tmp\/data\/epsg2/" | sed "s/SHAPEPATH \.\/data/SHAPEPATH \/tmp\/data/" | sed "s/ etc/ \/tmp\/etc/" > /tmp/wfs_simple.map
+cp -r $WORK_DIR/msautotest/wxs/data /tmp
+cp -r $WORK_DIR/msautotest/wxs/etc /tmp
+
+# CGI
+curl -s "http://localhost/cgi-bin/mapserv.cgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
+cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
+
+# Fast CGI
+curl -s "http://localhost/cgi-bin/mapserv.fcgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
+cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
+
+# Again
+curl -s "http://localhost/cgi-bin/mapserv.fcgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
+cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
