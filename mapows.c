@@ -2619,13 +2619,14 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   char *result;
   char **tokens;
   int numtokens, i;
-  char *oldStyle;
+  char *oldStyle = NULL;
   
-  msOWSGetEPSGProj( proj, metadata, namespaces,
-                         bReturnOnlyFirstOne, &oldStyle );
+  msOWSGetEPSGProj( proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle );
 
-  if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 )
+  if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 ) {
+    msFree(oldStyle);
     return NULL;
+  }
 
   result = msStrdup("");
 
@@ -2679,13 +2680,14 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
   char *result;
   char **tokens;
   int numtokens, i;
-  char *oldStyle;
+  char *oldStyle = NULL;
   
-  msOWSGetEPSGProj( proj, metadata, namespaces,
-                         bReturnOnlyFirstOne, &oldStyle);
+  msOWSGetEPSGProj( proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle);
 
-  if( oldStyle == NULL || !EQUALN(oldStyle,"EPSG:",5) )
+  if( oldStyle == NULL || !EQUALN(oldStyle,"EPSG:",5) ) {
+    msFree(oldStyle); // avoid leak
     return NULL;
+  }
 
   result = msStrdup("");
 

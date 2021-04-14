@@ -1143,7 +1143,7 @@ void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize)
 */
 static pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c, pointObj d)
 {
-  pointObj p;
+  pointObj p = {0,0,0,0}; // initialize
   double r;
   double denominator, numerator;
 
