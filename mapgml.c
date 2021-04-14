@@ -1463,7 +1463,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       }
 
       geomtype = msOWSLookupMetadata(&(lp->metadata), "OFG", "geomtype");
-<<<<<<< HEAD
       if( geomtype != NULL && (strstr(geomtype, "25d") != NULL || strstr(geomtype, "25D") != NULL) )
       {
 #ifdef USE_POINT_Z_M
@@ -1471,10 +1470,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 #else
           msIO_fprintf(stream, "<!-- WARNING: 25d requested forn typename '%s' but MapServer compiled without USE_POINT_Z_M support. -->\n", lp->name);
 #endif
-=======
-      if( geomtype != NULL && (strstr(geomtype, "25d") != NULL || strstr(geomtype, "25D") != NULL) ) {
-        nSRSDimension = 3;
->>>>>>> 7e7464e06 (Fix resource leak and pointObj initialization errors. (#6295))
       }
 
       /* populate item and group metadata structures */

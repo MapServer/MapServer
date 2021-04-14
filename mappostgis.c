@@ -752,13 +752,8 @@ arcSegmentSide(const pointObj *p1, const pointObj *p2, const pointObj *q)
 int
 arcCircleCenter(const pointObj *p1, const pointObj *p2, const pointObj *p3, pointObj *center, double *radius)
 {
-<<<<<<< HEAD:mappostgis.c
-  pointObj c;
-  double dx21, dy21, dx31, dy31, h21, h31, d, r;
-=======
   pointObj c = {0,0,0,0}; // initialize
-  double r;
->>>>>>> 7e7464e06 (Fix resource leak and pointObj initialization errors. (#6295)):mappostgis.cpp
+  double dx21, dy21, dx31, dy31, h21, h31, d, r;
 
   /* Circle is closed, so p2 must be opposite p1 & p3. */
   if ((fabs(p1->x - p3->x) < FP_EPSILON) && (fabs(p1->y-p3->y) < FP_EPSILON)) {

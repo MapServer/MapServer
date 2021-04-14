@@ -2586,12 +2586,8 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   char *result;
   char **tokens;
   int numtokens, i;
-<<<<<<< HEAD
   size_t bufferSize = 0;
-  char *oldStyle;
-=======
   char *oldStyle = NULL;
->>>>>>> 7e7464e06 (Fix resource leak and pointObj initialization errors. (#6295))
   
   msOWSGetEPSGProj( proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle );
 
