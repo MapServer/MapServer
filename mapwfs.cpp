@@ -3677,8 +3677,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     }
                   }
 
-                  // Set the "gml_select_items" metadata item to true 
-                  // to restrict the number of fields to select for faster database queries
+                  // Set the "gml_select_items" metadata items that is used by
+                  // msQueryByRect() to restrict the number of properties to
+                  // select for faster results.
                   if( msOWSLookupMetadata(&(lp->metadata), "OFG", "groups") == NULL )
                   {
                       auto properties = msStringSplit(papszPropertyName[k], ',');
@@ -3713,7 +3714,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                         selectItems += featureid;
                       }
                       if( !selectItems.empty() ) {
-                        msInsertHashTable(&(lp->metadata), "gml_select_subset", "true");
+                        msInsertHashTable(&(lp->metadata), "gml_select_items", selectItems.c_str());
                       }
                   }
 

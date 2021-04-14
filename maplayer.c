@@ -985,10 +985,14 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL))
     nt += msCountChars(layer->utfdata.string, '[');
 
+  // if we are using a GetMap request with a WMS filter we don't need to return all items
+  if (msOWSLookupMetadata(&(layer->metadata), "G", "wmsfilter_flag") != NULL) {
+      get_all = MS_FALSE;
+  }
+
   if(metadata == NULL){
       // check item set by mapwfs.cpp to restrict the number of columns selected
-      // or if we are using a GetMap request with a WMS filter we don't need to return all items
-      metadata = msOWSLookupMetadata(&(layer->metadata), "G", "select_subset");
+      metadata = msOWSLookupMetadata(&(layer->metadata), "G", "select_items");
       if (metadata) {
           /* get only selected items */
           get_all = MS_FALSE;

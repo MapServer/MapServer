@@ -452,11 +452,11 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         }
     }
 
-    msInsertHashTable(&(lp->metadata), "gml_select_subset", "true");
+    msInsertHashTable(&(lp->metadata), "gml_wmsfilter_flag", "true");
 
     int ret = FLTApplyFilterToLayer(psNode, map, lp->index);
 
-    msRemoveHashTable(&(lp->metadata), "gml_select_subset");
+    msRemoveHashTable(&(lp->metadata), "gml_wmsfilter_flag");
 
     if( !old_value_wfs_use_default_extent_for_getfeature.empty() )
     {
