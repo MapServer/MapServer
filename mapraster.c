@@ -998,12 +998,8 @@ imageObj *msDrawReferenceMap(mapObj *map)
   MS_CHECK_ALLOC(refImage, sizeof(rasterBufferObj), NULL);
 
   if(MS_SUCCESS != renderer->loadImageFromFile(msBuildPath(szPath, map->mappath, map->reference.image),refImage)) {
-<<<<<<< HEAD
-    msSetError(MS_MISCERR,"error loading reference image %s","msDrawREferenceMap()",szPath);
-=======
     msSetError(MS_MISCERR,"Error loading reference image %s.","msDrawReferenceMap()",szPath);
     free(refImage);
->>>>>>> 00e5b98f3 (Fixes for a couple of things I ran into when doing an upgrade on app (#6297))
     return NULL;
   }
 
