@@ -1,10 +1,10 @@
 <?php
 
-class PointObjTest extends PHPUnit_Framework_TestCase
+class PointObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $point;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->point = new pointObj();
         $this->point->setXY(10, 15);

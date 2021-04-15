@@ -7,16 +7,23 @@ PERL_MAPSCRIPT_PATH=build/mapscript/perl
 BUILDPATH=../../build
 FLEX=flex
 YACC=yacc
-CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage ${CMAKE_C_FLAGS}" -DCMAKE_CXX_FLAGS="--coverage ${CMAKE_CXX_FLAGS}" \
-			  -DCMAKE_SHARED_LINKER_FLAGS="-lgcov" -DWITH_CLIENT_WMS=1 \
+CMAKEFLAGS_NOCOVERAGE=-DWITH_CLIENT_WMS=1 \
 			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_CSHARP=1 -DWITH_PHP=1 -DWITH_PERL=1 \
-			  -DWITH_PYTHON=1 -DWITH_JAVA=1 -DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=0 -DWITH_EXEMPI=1 \
-			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 -DWITH_MSSQL2008=ON ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}"
+			  -DWITH_PYTHON=1 -DWITH_JAVA=1 -DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=1 -DWITH_EXEMPI=1 \
+			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 -DWITH_MSSQL2008=ON ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
+
+CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage ${CMAKE_C_FLAGS}" -DCMAKE_CXX_FLAGS="--coverage ${CMAKE_CXX_FLAGS}" \
+			  -DCMAKE_SHARED_LINKER_FLAGS="-lgcov" ${CMAKEFLAGS_NOCOVERAGE}
+
 all: cmakebuild
 
 cmakebuild: lexer parser
 	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS); fi
 	cd build && $(MAKE) $(MFLAGS)
+
+cmakebuild_nocoverage: lexer parser
+	if test ! -s build_nocoverage/Makefile; then  mkdir -p build_nocoverage ; cd build_nocoverage ; cmake .. $(CMAKEFLAGS_NOCOVERAGE); fi
+	cd build_nocoverage && $(MAKE) $(MFLAGS) && $(MAKE) $(MFLAGS) install
 
 warning:
 	$(error "This Makefile is used to run the \"test\" target")

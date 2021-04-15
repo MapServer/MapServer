@@ -591,6 +591,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
     if(MS_UNLIKELY(MS_FAILURE == msEmbedLegend(map, image))) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+        msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+        msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
 
@@ -600,7 +607,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     /* the scalebar as it uses the extent to recompute cellsize. */
     if(map->gt.need_geotransform)
       msMapRestoreRealExtent(map);
-
 
     if(MS_SUCCESS != msEmbedScalebar(map, image)) {
       msFreeImage( image );
@@ -1987,7 +1993,7 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
 {
 
   int c = shape->classindex;
-  pointObj annopnt;
+  pointObj annopnt = {0,0,0,0}; // initialize
   int i;
 
   if(MS_DRAW_FEATURES(drawmode)) {
