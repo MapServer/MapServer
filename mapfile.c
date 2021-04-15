@@ -6637,17 +6637,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   switch(msyylex()) {
     case(MAP):
       switch(msyylex()) {
-        case(CONFIG): {
-          char *key=NULL, *value=NULL;
-          if((getString(&key) != MS_FAILURE) && (getString(&value) != MS_FAILURE)) {
-            msSetConfigOption( map, key, value );
-            free( key );
-            key=NULL;
-            free( value );
-            value=NULL;
-          }
-        }
-        break;
         case(EXTENT):
           msyystate = MS_TOKENIZE_URL_STRING;
           msyystring = string;
