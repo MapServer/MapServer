@@ -984,16 +984,26 @@ imageObj *msDrawReferenceMap(mapObj *map)
   char szPath[MS_MAXPATHLEN];
   int status = MS_SUCCESS;
 
-  imageObj   *image = NULL;
+  imageObj *image = NULL;
   styleObj style;
 
+  /* check to see if we have enough information to actually proceed */
+  if(!map->reference.image || map->reference.height == 0 || map->reference.width == 0) {
+    msSetError(MS_MISCERR, "Reference map configuration error.", "msDrawReferenceMap()");
+    return NULL;
+  }
 
   rendererVTableObj *renderer = MS_MAP_RENDERER(map);
   rasterBufferObj *refImage = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
   MS_CHECK_ALLOC(refImage, sizeof(rasterBufferObj), NULL);
 
   if(MS_SUCCESS != renderer->loadImageFromFile(msBuildPath(szPath, map->mappath, map->reference.image),refImage)) {
+<<<<<<< HEAD
     msSetError(MS_MISCERR,"error loading reference image %s","msDrawREferenceMap()",szPath);
+=======
+    msSetError(MS_MISCERR,"Error loading reference image %s.","msDrawReferenceMap()",szPath);
+    free(refImage);
+>>>>>>> 00e5b98f3 (Fixes for a couple of things I ran into when doing an upgrade on app (#6297))
     return NULL;
   }
 

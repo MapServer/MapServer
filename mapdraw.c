@@ -2837,7 +2837,7 @@ int computeMarkerBounds(mapObj *map, pointObj *annopoint, textSymbolObj *ts, lab
       double aox,aoy;
       symbolObj *symbol = map->symbolset.symbol[style->symbol];
       if(msGetMarkerSize(map, style, &sx, &sy, ts->scalefactor) != MS_SUCCESS)
-        return MS_FALSE;
+        return -1; /* real error, different from MS_FALSE, return -1 so we can trap it */
       if(style->angle) {
         pointObj *point = poly->poly->point;
         point[0].x = sx / 2.0;
@@ -3125,6 +3125,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                   break; /* the marker collided, break from multi-label loop */
                 }
               }
+              if(have_label_marker == -1) return MS_FAILURE; /* error occured (symbol not found, etc...) */
 
               if(textSymbolPtr->annotext) {
                 /*
