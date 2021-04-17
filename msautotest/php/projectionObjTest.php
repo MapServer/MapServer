@@ -1,10 +1,10 @@
 <?php
 
-class ProjectionObjTest extends PHPUnit_Framework_TestCase
+class ProjectionObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $projection;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->projection = new projectionObj("proj=latlong");
     }

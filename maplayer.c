@@ -32,7 +32,7 @@
 #include "mapogcfilter.h"
 #include "mapthread.h"
 #include "mapfile.h"
-
+#include "mapows.h"
 #include "mapparser.h"
 
 #include <assert.h>
@@ -569,6 +569,10 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
   cppcheck_assert(layer->vtable);
   status = layer->vtable->LayerGetExtent(layer, extent);
 
+  if (status == MS_SUCCESS) {
+      layer->extent = *extent;
+  }
+
   if (need_to_close)
     msLayerClose(layer);
 
@@ -981,15 +985,29 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL))
     nt += msCountChars(layer->utfdata.string, '[');
 
-  /*
-  ** allocate space for the item list (worse case size)
-  */
+  // if we are using a GetMap request with a WMS filter we don't need to return all items
+  if (msOWSLookupMetadata(&(layer->metadata), "G", "wmsfilter_flag") != NULL) {
+      get_all = MS_FALSE;
+  }
+
+  if(metadata == NULL){
+      // check item set by mapwfs.cpp to restrict the number of columns selected
+      metadata = msOWSLookupMetadata(&(layer->metadata), "G", "select_items");
+      if (metadata) {
+          /* get only selected items */
+          get_all = MS_FALSE;
+      }
+  }
 
   /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE ||
       (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
     get_all = MS_TRUE;
   }
+
+  /*
+  ** allocate space for the item list (worse case size)
+  */
   if( get_all ) {
     rv = msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/

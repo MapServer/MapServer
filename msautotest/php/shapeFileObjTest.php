@@ -1,10 +1,10 @@
 <?php
 
-class ShapeFileObjTest extends PHPUnit_Framework_TestCase
+class ShapeFileObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $shapeFile;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->shapeFile = new shapeFileObj('maps/data/lakes2.shp', -2);
     }

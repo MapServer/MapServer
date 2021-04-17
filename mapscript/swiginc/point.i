@@ -148,13 +148,15 @@
         char buffer[256];
         const char *fmt;
 
-        if( self->m < -1e38 )
+        if( self->m < -1e38 ){
             fmt = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g }";
-        else
+        }
+        else {
             fmt = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g, 'm': %.16g }";
+        }
 
-        msPointToFormattedString(self, fmt, (char *) &buffer, 256);
-        return msStrdup(buffer);
+msPointToFormattedString(self, fmt, (char *) &buffer, 256);
+    return msStrdup(buffer);
     }
 
     %newobject toShape;

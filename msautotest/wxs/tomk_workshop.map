@@ -355,9 +355,6 @@ MAP
   # what type of data is this?
   TYPE RASTER
 
-  # allow data access via query and WCS
-  DUMP TRUE
-  
   # always returned with interface
   STATUS ON
 
@@ -546,9 +543,6 @@ MAP
 
   END
 
-  # data is queryable
-  DUMP TRUE
-
   # query templates for HTML-based queries
   # responds to OGC:WMS request=GetFeatureInfo......&info_format=text/html
   HEADER   ./templates/rivers_query_header.html
@@ -577,7 +571,6 @@ MAP
   NAME "toronto"
   STATUS ON
   TYPE RASTER
-  DUMP TRUE
   DATA ./data/toronto.tif
   PROJECTION
    "init=epsg:26917"

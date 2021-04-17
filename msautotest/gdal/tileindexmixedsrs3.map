@@ -20,7 +20,6 @@ LAYER
   NAME mytileindex
   TYPE POLYGON
   STATUS OFF
-  DUMP OFF
   DATA "data/tile_index_mixed_srs_with_data_dir.shp"
   PROJECTION
     AUTO
@@ -31,7 +30,6 @@ LAYER
   NAME grey
   TYPE raster
   STATUS default
-  DUMP TRUE
   TEMPLATE "fake.html"
   TILEINDEX "mytileindex"
   TILEITEM "location"

@@ -1,10 +1,10 @@
 <?php
 
-class SymbolObjTest extends PHPUnit_Framework_TestCase
+class SymbolObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $symbol;
 
-    public function setUp()
+    public function setUp(): void
     {
         $map = new mapObj('maps/labels.map');
         $this->symbol = $map->getSymbolObjectById($map->getSymbolByName("plant"));

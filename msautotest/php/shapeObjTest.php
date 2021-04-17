@@ -1,10 +1,10 @@
 <?php
 
-class ShapeObjTest extends PHPUnit_Framework_TestCase
+class ShapeObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $shape;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->shape = new shapeObj(MS_SHAPE_POINT);
     }

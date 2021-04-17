@@ -1,10 +1,10 @@
 <?php
 
-class LineObjTest extends PHPUnit_Framework_TestCase
+class LineObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $line;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->line = new lineObj();
         $start = new pointObj;
