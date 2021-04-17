@@ -1,5 +1,8 @@
 #include "mapserver.h"
 #include "mapfile.h" // format shares a couple of tokens
+
+#include "cpl_conv.h"
+
 #include <string>
 
 extern "C" int msyylex(void);
@@ -49,14 +52,15 @@ static int loadConfig(configObj *config)
 
   for(;;) {
     switch(msyylex()) {
-    case(MS_CONFIG_SECTION_ENV):
+    case(MS_CONFIG_SECTION_ENV): {
       if(loadHashTable(&(config->env)) != MS_SUCCESS) return MS_FAILURE;
       break;
+    }
     case(MS_CONFIG_SECTION_MAPS):
-      if(loadHashTable(&(config->maps)) != MS_SUCCESS) return MS_FAILURE;
+      if(loadHashTable(&config->maps) != MS_SUCCESS) return MS_FAILURE;
       break;
     case(MS_CONFIG_SECTION_PLUGINS):
-      if(loadHashTable(&(config->plugins)) != MS_SUCCESS) return MS_FAILURE;
+      if(loadHashTable(&config->plugins) != MS_SUCCESS) return MS_FAILURE;
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "msLoadConfig()");
@@ -81,7 +85,7 @@ configObj *msLoadConfig()
   static char *ms_config_file = NULL;
 
   // get config filename from environment
-  ms_config_file = getenv("MS_CONFIG_FILE");
+  ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
   if(ms_config_file == NULL) {
     msSetError(MS_MISCERR, "No config file set.", "msLoadConfig()");
     return NULL;
@@ -121,21 +125,23 @@ configObj *msLoadConfig()
     return NULL;
   }
 
+  // load all of these using CPLSetConfigOption() - only do this *after* we have a good config
+  const char *key = msFirstKeyFromHashTable(&config->env);
+  CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
+
+  const char *last_key = key;
+  while((key = msNextKeyFromHashTable(&config->env, last_key)) != NULL) {
+    CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
+    last_key = key;
+  }
+
   return config;  
 }
 
 const char *msConfigGetEnv(configObj *config, const char *key) 
 {
-  const char *value;
-
   if(config == NULL) return NULL;
-
-  value = getenv(key);
-  if(value == NULL) {
-    value = msLookupHashTable(&config->env, key);
-  }
-
-  return value;
+  return msLookupHashTable(&config->env, key);
 }
 
 const char *msConfigGetMap(configObj *config, const char *key)
