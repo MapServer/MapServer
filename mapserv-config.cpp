@@ -35,7 +35,6 @@ void msFreeConfig(configObj *config)
   if(&(config->plugins)) msFreeHashItems(&(config->plugins));
 
   msFree(config);
-  config = NULL;
 }
 
 static int loadConfig(configObj *config)
