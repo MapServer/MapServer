@@ -188,10 +188,10 @@ char path[MS_MAXPATHLEN];
 
 <URL_VARIABLE>_|\.                             ;
 
-<CONFIG_FILE>config                          { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION); }
-<CONFIG_FILE>env                              { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_ENV); }
-<CONFIG_FILE>maps                             { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_MAPS); }
-<CONFIG_FILE>plugins                          { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_PLUGINS) }
+<CONFIG_FILE>config                            { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION); }
+<CONFIG_FILE>env                               { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_ENV); }
+<CONFIG_FILE>maps                              { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_MAPS); }
+<CONFIG_FILE>plugins                           { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_PLUGINS) }
 
 <EXPRESSION_STRING>or|\|\|                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_OR); }
 <EXPRESSION_STRING>and|&&                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_AND); }
