@@ -150,6 +150,12 @@ int main(int argc, char *argv[])
   mapservObj  *mapserv = NULL;
   configObj *config = NULL;
 
+  config = msLoadConfig(); // is the right spot to do this?
+  if(config == NULL) {
+    msCGIWriteError(mapserv);
+    exit(0);
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Initialize mapserver.  This sets up threads, GD and GEOS as     */
   /*      well as using MS_ERRORFILE and MS_DEBUGLEVEL env vars if set.   */
@@ -157,6 +163,7 @@ int main(int argc, char *argv[])
   if( msSetup() != MS_SUCCESS ) {
     msCGIWriteError(mapserv);
     msCleanup();
+    msFreeConfig(config);
     exit(0);
   }
 
@@ -254,12 +261,6 @@ int main(int argc, char *argv[])
     mapserv = msAllocMapServObj();
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
-    config = msLoadConfig();
-    if(config == NULL) {      
-      msCGIWriteError(mapserv);
-      goto end_request;
-    }
-
     mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
     if( mapserv->request->NumParams == -1 ) {
       msCGIWriteError(mapserv);
@@ -298,7 +299,6 @@ end_request:
     }
     msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
-    msFreeConfig(config);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */
     msResetErrorList();
@@ -314,6 +314,7 @@ end_request:
             (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
   }
   msCleanup();
+  msFreeConfig(config);
 
 #ifdef _WIN32
   /* flush pending writes to stdout */
