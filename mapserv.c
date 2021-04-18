@@ -162,6 +162,17 @@ int main(int argc, char *argv[])
   if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&execstarttime, NULL);
 
+  /* push high-value ENV vars into the CPL global config - primarily for IIS/FastCGI */
+  const char *value = getenv("CURL_CA_BUNDLE");
+  if(value) CPLSetConfigOption("CURL_CA_BUNDLE", value);
+
+  value = getenv("MS_MAPFILE");
+  if(value) CPLSetConfigOption("MS_MAPFILE", value);
+  value = getenv("MS_MAP_NO_PATH");
+  if(value) CPLSetConfigOption("MS_MAP_NO_PATH", value);
+  value = getenv("MS_MAP_PATTERN");
+  if(value) CPLSetConfigOption("MS_MAP_PATTERN", value);
+
   /* -------------------------------------------------------------------- */
   /*      Process arguments.  In normal use as a cgi-bin there are no     */
   /*      commandline switches, but we provide a few for test/debug       */

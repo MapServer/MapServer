@@ -33,6 +33,8 @@
 #include "maptime.h"
 #include "mapows.h"
 
+
+
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
@@ -197,12 +199,15 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   int i, j;
   mapObj *map = NULL;
 
+  const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
+  const char *ms_map_no_path = CPLGetConfigOption("MS_MAP_NO_PATH", NULL);
+  const char *ms_map_pattern = CPLGetConfigOption("MS_MAP_PATTERN", NULL);
+
   for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
   if(i == mapserv->request->NumParams) {
-    char *ms_mapfile = getenv("MS_MAPFILE");
-    if(ms_mapfile) {
+    if(ms_mapfile != NULL) {
       map = msLoadMap(ms_mapfile,NULL);
     } else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
@@ -213,12 +218,12 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
       map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
     else {
       /* by here we know the request isn't for something in an environment variable */
-      if(getenv("MS_MAP_NO_PATH")) {
+      if(ms_map_no_path != NULL) {
         msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
         return NULL;
       }
 
-      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+      if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, mapserv->request->ParamValues[i]) != MS_TRUE) {
         msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
         return NULL;
       }
