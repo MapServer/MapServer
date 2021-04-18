@@ -3387,12 +3387,15 @@ int loadClass(classObj *class, layerObj *layer)
 static int classResolveSymbolNames(classObj *class)
 {
   int i,j;
+  int try_addimage_if_notfound = MS_TRUE;
+
+  if(msyysource == MS_URL_TOKENS) try_addimage_if_notfound = MS_FALSE;
 
   /* step through styles and labels to resolve symbol names */
   /* class styles */
   for(i=0; i<class->numstyles; i++) {
     if(class->styles[i]->symbolname) {
-      if((class->styles[i]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->styles[i]->symbolname, MS_TRUE)) == -1) {
+      if((class->styles[i]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->styles[i]->symbolname, try_addimage_if_notfound)) == -1) {
         msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, style %d of layer %s.", "classResolveSymbolNames()", class->styles[i]->symbolname, i, class->layer->name);
         return MS_FAILURE;
       }
@@ -3403,7 +3406,7 @@ static int classResolveSymbolNames(classObj *class)
   for(i=0; i<class->numlabels; i++) {
     for(j=0; j<class->labels[i]->numstyles; j++) {
       if(class->labels[i]->styles[j]->symbolname) {
-        if((class->labels[i]->styles[j]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->labels[i]->styles[j]->symbolname, MS_TRUE)) == -1) {
+        if((class->labels[i]->styles[j]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->labels[i]->styles[j]->symbolname, try_addimage_if_notfound)) == -1) {
           msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, label style %d of layer %s.", "classResolveSymbolNames()", class->labels[i]->styles[j]->symbolname, j, class->layer->name);
           return MS_FAILURE;
         }
@@ -6646,17 +6649,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   switch(msyylex()) {
     case(MAP):
       switch(msyylex()) {
-        case(CONFIG): {
-          char *key=NULL, *value=NULL;
-          if((getString(&key) != MS_FAILURE) && (getString(&value) != MS_FAILURE)) {
-            msSetConfigOption( map, key, value );
-            free( key );
-            key=NULL;
-            free( value );
-            value=NULL;
-          }
-        }
-        break;
         case(EXTENT):
           msyystate = MS_TOKENIZE_URL_STRING;
           msyystring = string;
@@ -6758,22 +6750,9 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
             if(msUpdateLayerFromString((GET_LAYER(map, i)), string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
           }
 
-          /* make sure any symbol names for this layer have been resolved (bug #2700) */
-          for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
-            for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
-              if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname && GET_LAYER(map, i)->class[j]->styles[k]->symbol == 0) {
-                if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
-                  msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msUpdateMapFromURL()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                  return MS_FAILURE;
-                }
-              }
-              if(!MS_IS_VALID_ARRAY_INDEX(GET_LAYER(map, i)->class[j]->styles[k]->symbol, map->symbolset.numsymbols)) {
-                msSetError(MS_MISCERR, "Invalid symbol index in class %d, style %d of layer %s.", "msUpdateMapFromURL()", j, k, GET_LAYER(map, i)->name);
-                return MS_FAILURE;
-              }
-            }
-          }
-
+          // make sure symbols are resolved
+          if (resolveSymbolNames(map) == MS_FAILURE) return MS_FAILURE;
+ 
           break;
         case(LEGEND):
           if(msyylex() == LABEL) {

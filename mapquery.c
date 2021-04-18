@@ -1115,17 +1115,8 @@ int msQueryByRect(mapObj *map)
     }
     msLayerEnablePaging(lp, paging);
 
-    // Item set by mapwfs.cpp to restrict the number of columns selected
-    const char *value = msOWSLookupMetadata(&(lp->metadata), "G", "select_items");
-    if(value){
-        /* get only selected items */
-        status = msLayerWhichItems(lp, MS_FALSE, value);
-    }
-    else {
-        /* build item list, we want *all* items */
-        status = msLayerWhichItems(lp, MS_TRUE, NULL);
-    }
-
+    /* build item list, we want *all* items */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
 
     if(status != MS_SUCCESS) {
       msFreeShape(&searchshape);
