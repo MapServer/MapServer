@@ -42,8 +42,6 @@
 
 #include "cgiutil.h"
 
-#include "cpl_conv.h"
-
 /*
 ** Defines
 */

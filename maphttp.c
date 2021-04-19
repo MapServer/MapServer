@@ -471,7 +471,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
    * If set then the value is the full path to the ca-bundle.crt file
    * e.g. CURL_CA_BUNDLE=/usr/local/share/curl/curl-ca-bundle.crt
    */
-  pszCurlCABundle = CPLGetConfigOption("CURL_CA_BUNDLE", getenv("CURL_CA_BUNDLE")); // fall back to env
+  pszCurlCABundle = CPLGetConfigOption("CURL_CA_BUNDLE", NULL);
 
   if (debug) {
     msDebug("HTTP: Starting to prepare HTTP requests.\n");
