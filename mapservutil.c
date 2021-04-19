@@ -33,7 +33,7 @@
 #include "maptime.h"
 #include "mapows.h"
 
-
+#include "cpl_conv.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).

@@ -43,6 +43,8 @@
 #include "mapio.h"
 #include "maptime.h"
 
+#include "cpl_conv.h"
+
 #ifndef WIN32
 #include <signal.h>
 #endif
@@ -163,15 +165,13 @@ int main(int argc, char *argv[])
     msGettimeofday(&execstarttime, NULL);
 
   /* push high-value ENV vars into the CPL global config - primarily for IIS/FastCGI */
-  const char *value = getenv("CURL_CA_BUNDLE");
-  if(value) CPLSetConfigOption("CURL_CA_BUNDLE", value);
-
-  value = getenv("MS_MAPFILE");
-  if(value) CPLSetConfigOption("MS_MAPFILE", value);
-  value = getenv("MS_MAP_NO_PATH");
-  if(value) CPLSetConfigOption("MS_MAP_NO_PATH", value);
-  value = getenv("MS_MAP_PATTERN");
-  if(value) CPLSetConfigOption("MS_MAP_PATTERN", value);
+  const char* const apszEnvVars[] = { 
+    "CURL_CA_BUNDLE", "MS_MAPFILE", "MS_MAP_NO_PATH", "MS_MAP_PATTERN",
+     NULL /* guard */ };
+  for( int i = 0; apszEnvVars[i] != NULL; ++i ) {
+    const char* value = getenv(apszEnvVars[i]);
+    if(value) CPLSetConfigOption(apszEnvVars[i], value);
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Process arguments.  In normal use as a cgi-bin there are no     */
