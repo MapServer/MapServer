@@ -8,10 +8,10 @@
 extern "C" int msyylex(void);
 extern "C" void msyyrestart(FILE *);
 
-extern FILE *msyyin;
-extern int msyystate;
-extern int msyylineno;
-extern char *msyystring_buffer;
+extern "C" FILE *msyyin;
+extern "C" int msyystate;
+extern "C" int msyylineno;
+extern "C" char *msyystring_buffer;
 
 static int initConfig(configObj *config)
 {
