@@ -103,7 +103,6 @@ configObj *msLoadConfig()
   if((msyyin = fopen(ms_config_file, "r")) == NULL) {    
     msSetError(MS_IOERR, "(%s)", "msLoadConfig()", ms_config_file);
     msReleaseLock(TLOCK_PARSER);
-    msFreeConfig(config);
     msFree(config);
     return NULL;
   }
@@ -124,7 +123,7 @@ configObj *msLoadConfig()
     return NULL;
   }
 
-  // load all of these using CPLSetConfigOption() - only do this *after* we have a good config
+  // load all env key/values using CPLSetConfigOption() - only do this *after* we have a good config
   const char *key = msFirstKeyFromHashTable(&config->env);
   if(key != NULL) {
     CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
