@@ -32,6 +32,8 @@
 #include "fontcache.h"
 #include "dejavu-sans-condensed.h"
 
+#include "cpl_conv.h"
+
 typedef struct {
   FT_Library library;
   face_element *face_cache;
