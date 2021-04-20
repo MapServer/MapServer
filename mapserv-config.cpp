@@ -126,12 +126,14 @@ configObj *msLoadConfig()
 
   // load all of these using CPLSetConfigOption() - only do this *after* we have a good config
   const char *key = msFirstKeyFromHashTable(&config->env);
-  CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
-
-  const char *last_key = key;
-  while((key = msNextKeyFromHashTable(&config->env, last_key)) != NULL) {
+  if(key != NULL) {
     CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
-    last_key = key;
+
+    const char *last_key = key;
+    while((key = msNextKeyFromHashTable(&config->env, last_key)) != NULL) {
+      CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
+      last_key = key;
+    }
   }
 
   return config;  
