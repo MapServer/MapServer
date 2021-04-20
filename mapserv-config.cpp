@@ -122,6 +122,7 @@ configObj *msLoadConfig()
     }
     return NULL;
   }
+  msReleaseLock(TLOCK_PARSER);
 
   // load all env key/values using CPLSetConfigOption() - only do this *after* we have a good config
   const char *key = msFirstKeyFromHashTable(&config->env);
