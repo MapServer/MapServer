@@ -41,6 +41,8 @@
 #include "mapthread.h"
 #include "maptime.h"
 
+#include "cpl_conv.h"
+
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
 extern int msyylex_destroy(void);
@@ -6530,16 +6532,10 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
     return(NULL);
   }
 
-  if(getenv("MS_MAPFILE_PATTERN")) { /* user override */
-    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
-  } else { /* check the default */
-    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_DEFAULT_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
+  const char *ms_mapfile_pattern = CPLGetConfigOption("MS_MAPFILE_PATTERN", MS_DEFAULT_MAPFILE_PATTERN);
+  if(msEvalRegex(ms_mapfile_pattern, filename) != MS_TRUE) {
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMap()");
+    return(NULL);
   }
 
   /*
@@ -6557,7 +6553,8 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
 
 #ifdef USE_XMLMAPFILE
   /* If the mapfile is an xml mapfile, transform it */
-  if ((getenv("MS_XMLMAPFILE_XSLT")) &&
+  const char *ms_xmlmapfile_xslt = CPLGetConfigOption("MS_XMLMAPFILE_XSLT", NULL);
+  if (ms_xmlmapfile_xslt &&
       (msEvalRegex(MS_DEFAULT_XMLMAPFILE_PATTERN, filename) == MS_TRUE)) {
 
     msyyin = tmpfile();
@@ -6566,7 +6563,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
       msReleaseLock( TLOCK_PARSER );
     }
 
-    if (msTransformXmlMapfile(getenv("MS_XMLMAPFILE_XSLT"), filename, msyyin) != MS_SUCCESS) {
+    if (msTransformXmlMapfile(ms_xmlmapfile_xslt, filename, msyyin) != MS_SUCCESS) {
       fclose(msyyin);
       return NULL;
     }
@@ -7112,16 +7109,10 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
   /*
   ** Check map filename to make sure it's legal
   */
-  if(getenv("MS_MAPFILE_PATTERN")) { /* user override */
-    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
-  } else { /* check the default */
-    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_DEFAULT_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
+  const char *ms_mapfile_pattern = CPLGetConfigOption("MS_MAPFILE_PATTERN", MS_DEFAULT_MAPFILE_PATTERN);
+  if(msEvalRegex(ms_mapfile_pattern, filename) != MS_TRUE) {
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMap()");
+    return(NULL);
   }
 
   if((msyyin = fopen(filename,"r")) == NULL) {

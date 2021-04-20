@@ -34,6 +34,8 @@
 
 #include "mapserver-config.h"
 
+#include "cpl_conv.h"
+
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
@@ -204,7 +206,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
   if(i == mapserv->request->NumParams) { /* no map parameter found */
-    const char *ms_mapfile = msConfigGetEnv(config, "MS_MAPFILE");
+    const char *ms_mapfile = msConfigGetEnv(config, "MS_MAPFILE"); // use CPLGetConfigOption()?
     if(ms_mapfile) {
       map = msLoadMap(ms_mapfile, NULL);
     } else {
@@ -328,7 +330,7 @@ int msCGISetMode(mapservObj *mapserv)
   int i, j;
 
 
-  mode = getenv("MS_MODE");
+  mode = CPLGetConfigOption("MS_MODE", NULL);
   for( i=0; i<mapserv->request->NumParams; i++ ) {
     if(strcasecmp(mapserv->request->ParamNames[i], "mode") == 0) {
       mode = mapserv->request->ParamValues[i];

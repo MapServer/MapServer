@@ -160,7 +160,7 @@ void msFontCacheSetup() {
   ft_cache *c = msGetFontCache();
   msInitFontCache(c);
 #else
-  char* use_global_cache = getenv("MS_USE_GLOBAL_FT_CACHE");
+  const char *use_global_cache = CPLGetConfigOption("MS_USE_GLOBAL_FT_CACHE", NULL);
   if (use_global_cache)
     use_global_ft_cache = atoi(use_global_cache);
   else
