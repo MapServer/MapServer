@@ -206,7 +206,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
   if(i == mapserv->request->NumParams) { /* no map parameter found */
-    const char *ms_mapfile = msConfigGetEnv(config, "MS_MAPFILE"); // use CPLGetConfigOption()?
+    const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
     if(ms_mapfile) {
       map = msLoadMap(ms_mapfile, NULL);
     } else {
@@ -214,14 +214,14 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
       return NULL;
     }
   } else {
-    const char *mapfile = msConfigGetMap(config, mapserv->request->ParamValues[i]); /* does *not* check the environment, only the config */
+    const char *mapfile = msConfigGetMap(config, mapserv->request->ParamValues[i]); /* does NOT check the environment, only the config */
 
-    if(mapfile) { /* parmeter references configuration element that defines the mapfile */
+    if(mapfile) { /* parameter references configuration value that defines the mapfile */
       map = msLoadMap(mapfile, NULL);
     } else { /* request isn't for something referencing an environment variable so validate */
-      const char *ms_map_no_path = msConfigGetEnv(config, "MS_MAP_NO_PATH");
-      const char *ms_map_pattern = msConfigGetEnv(config, "MS_MAP_PATTERN");
-      const char *ms_map_bad_pattern = msConfigGetEnv(config, "MS_MAP_BAD_PATTERN");
+      const char *ms_map_no_path = CPLGetConfigOption("MS_MAP_NO_PATH", NULL);
+      const char *ms_map_pattern = CPLGetConfigOption("MS_MAP_PATTERN", NULL);
+      const char *ms_map_bad_pattern = CPLGetConfigOption("MS_MAP_BAD_PATTERN", NULL);
       if(ms_map_bad_pattern == NULL) ms_map_bad_pattern = ms_map_bad_pattern_default;
 
       if(ms_map_no_path != NULL) {
