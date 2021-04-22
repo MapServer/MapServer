@@ -763,7 +763,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     }
     
     map->query.type = MS_QUERY_BY_FILTER;
-    map->query.mode = MS_QUERY_SINGLE; // ok?
+    map->query.mode = MS_QUERY_SINGLE;
     map->query.layer = i;
     map->query.rect = bbox;
     map->query.filteritem = strdup(featureIdItem);
@@ -776,9 +776,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       processError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
       return MS_SUCCESS;
     }
-
-    numMatched = layer->resultcache->numresults; // should be one
-
   } else { // bbox query
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
@@ -804,12 +801,14 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   }
 
   // build response object
-  response = {
-    { "type", "FeatureCollection" },
-    { "numMatched", numMatched },
-    { "numReturned", layer->resultcache->numresults },
-    { "features", json::array() }
-  };
+  if(!featureId) {
+    response = {
+      { "type", "FeatureCollection" },
+      { "numMatched", numMatched },
+      { "numReturned", layer->resultcache->numresults },
+      { "features", json::array() }
+    };
+  }
 
   // features (items) - if found
   if(layer->resultcache && layer->resultcache->numresults > 0) {
@@ -863,7 +862,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
       try {
 	json feature = getFeature(layer, &shape, items, constants);
-	if(!feature.is_null()) response["features"].push_back(feature);
+        if(featureId) {
+          response = feature;
+        } else {
+          response["features"].push_back(feature);
+        }
       } catch (const std::runtime_error &e) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
@@ -892,7 +895,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     const char *p = getRequestParameter(request, "bbox");
     response["request"] = {
       { "limit", limit },
-      { "id", featureId?featureId:"" },
       { "bbox", p?p:"" }
     };
   }
