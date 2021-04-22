@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id$
+ * $id$
  *
  * Project:  MapServer
  * Purpose:  OGCAPI Implementation
@@ -46,6 +46,7 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_COLLECTION "collection.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTIONS "collections.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS "collection-items.html"
+#define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM "collection-item.html"
 
 #define OGCAPI_FORMAT_JSON 1
 #define OGCAPI_FORMAT_GEOJSON 2
@@ -390,6 +391,14 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
   };
 
   // id
+  const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AOF", "featureid");
+  if(featureIdItem == NULL) throw std::runtime_error("Missing required featureid metadata."); // should have been trapped earlier
+  for(int i=0; i<items->numitems; i++) {
+    if(strcasecmp(featureIdItem, items->items[i].name) == 0) {
+      feature["id"] = shape->values[i];
+      break;
+    }
+  }
 
   // properties - build from items and constants, no group support for now
 
@@ -700,7 +709,7 @@ static int processConformanceRequest(mapObj *map, int format)
   return MS_SUCCESS;
 }
 
-static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, const char *collectionId, int format)
+static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, const char *collectionId, const char *featureId, int format)
 {
   json response;
   int i;
@@ -709,9 +718,9 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   int limit;
   rectObj bbox;
 
-  const char *itemId = NULL;
-
   int numMatched = 0;
+
+  fprintf(stderr, "in processCollectionItemsRequest()\n");
 
   //
   // handle parameters specific to this endpoint
@@ -739,16 +748,43 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   layer = map->layers[i]; // for convenience
   layer->status = MS_ON; // force on (do we need to save and reset?)
 
-  if(itemId) {
-    // TODO
+  if(featureId) {
+    const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AOF", "featureid");
+    if(featureIdItem == NULL) {
+      processError(OGCAPI_CONFIG_ERROR, "Missing required featureid metadata.");
+      return MS_SUCCESS;
+    }
+
+    // optional validation
+    const char *featureIdValidation = msLookupHashTable(&(layer->validation), featureIdItem);
+    if(featureIdValidation && msValidateParameter(featureId, featureIdValidation, NULL, NULL, NULL) != MS_SUCCESS) {
+      processError(OGCAPI_NOT_FOUND_ERROR, "Invalid feature id.");
+      return MS_SUCCESS;
+    }
+    
+    map->query.type = MS_QUERY_BY_FILTER;
+    map->query.mode = MS_QUERY_SINGLE; // ok?
+    map->query.layer = i;
+    map->query.rect = bbox;
+    map->query.filteritem = strdup(featureIdItem);
+
+    msInitExpression(&map->query.filter);
+    map->query.filter.type = MS_STRING;
+    map->query.filter.string = strdup(featureId);
+
+    if(msExecuteQuery(map) != MS_SUCCESS) {
+      processError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
+      return MS_SUCCESS;
+    }
+
+    numMatched = layer->resultcache->numresults; // should be one
+
   } else { // bbox query
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = i;
     map->query.rect = bbox;
     map->query.only_cache_result_count = MS_TRUE;
-
-    // fprintf(stderr, "%f %f %f %f\n", bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
 
     // get number matched
     if(msExecuteQuery(map) != MS_SUCCESS) {
@@ -760,11 +796,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.only_cache_result_count = MS_FALSE;
     // map->query.startindex = start;
     map->query.maxfeatures = limit;
-  }
 
-  if(msExecuteQuery(map) != MS_SUCCESS) {
-    processError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
-    return MS_SUCCESS;
+    if(msExecuteQuery(map) != MS_SUCCESS) {
+      processError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+      return MS_SUCCESS;
+    }
   }
 
   // build response object
@@ -856,13 +892,17 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     const char *p = getRequestParameter(request, "bbox");
     response["request"] = {
       { "limit", limit },
+      { "id", featureId?featureId:"" },
       { "bbox", p?p:"" }
     };
   }
 
   // links
 
-  outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS, response);
+  if(featureId)
+    outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM, response);
+  else
+    outputResponse(map, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS, response);
   return MS_SUCCESS;
 }
 
@@ -943,6 +983,8 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 #ifdef USE_OGCAPI_SVR
   int format; // all endpoints need a format
 
+  fprintf(stderr, "fuck\n");
+
   const char *p = getRequestParameter(request, "f");
   if(p && (strcmp(p, "json") == 0 || strcmp(p, OGCAPI_MIMETYPE_JSON) == 0)) {
     format = OGCAPI_FORMAT_JSON;
@@ -979,10 +1021,16 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path
 
   } else if(api_path_length == 6) {
 
-    if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId      
-      return processCollectionItemsRequest(map, request, api_path[4], format);
+    if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId
+      return processCollectionItemsRequest(map, request, api_path[4], NULL, format);
     }
 
+  } else if(api_path_length == 7) {
+
+    fprintf(stderr, "api_path_length is 7\n");
+    if(strcmp(api_path[3], "collections") == 0 && strcmp(api_path[5], "items") == 0)  { // middle argument (4) is the collectionId, last argument (6) is featureId
+      return processCollectionItemsRequest(map, request, api_path[4], api_path[6], format);
+    }
   }
 
   processError(OGCAPI_NOT_FOUND_ERROR, "Invalid API path.");

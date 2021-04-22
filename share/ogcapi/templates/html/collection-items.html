@@ -19,15 +19,15 @@
 
 <table class="table">
   <thead>
-    <!-- <th>ID</th> -->
-{% for key, value in response.features.1.properties %}
+    <th>ID</th>
+{% for key, value in response.features.0.properties %}
     <td>{{ key }}</td>
 {% endfor %} 
   </thead>
-  <tbody>
-    <!-- <td>ID</th> -->
+  <tbody>    
 {% for feature in response.features %}
     <tr>
+      <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html">{{ feature.id }}</a></th>
   {% for key, value in feature.properties %}
       <td>{{ value }}</td>
   {% endfor %}
