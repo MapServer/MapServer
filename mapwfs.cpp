@@ -5247,10 +5247,12 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
           }
           /* these are unsupported requests. Just set the  */
           /* request value and return; */
-          else if (msWFSGetIndexUnsupportedOperation(psOperation->pszValue) >= 0) {
+          else {
             int idx = msWFSGetIndexUnsupportedOperation(psOperation->pszValue);
-            wfsparams->pszRequest = msStrdup(wfsUnsupportedOperations[idx]);
-            break;
+            if( idx >= 0 ) {
+              wfsparams->pszRequest = msStrdup(wfsUnsupportedOperations[idx]);
+              break;
+            }
           }
         }
       }
