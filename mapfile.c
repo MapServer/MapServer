@@ -1933,12 +1933,8 @@ char* msWriteLabelToString(labelObj *label)
 
 void msInitExpression(expressionObj *exp)
 {
+  memset(exp, 0, sizeof(*exp));
   exp->type = MS_STRING;
-  exp->string = NULL;
-  exp->native_string = NULL;
-  exp->compiled = MS_FALSE;
-  exp->flags = 0;
-  exp->tokens = exp->curtoken = NULL;
 }
 
 void msFreeExpressionTokens(expressionObj *exp)

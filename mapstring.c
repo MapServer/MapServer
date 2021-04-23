@@ -2212,12 +2212,24 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
     bufleft = bufsize;
     iconv_status = -1;
 
+    bool failedIconv = false;
     while (len > 0) {
+<<<<<<< HEAD:mapstring.c
       iconv_status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
       if(iconv_status == -1) {
         msFree(out);
         continue; /* silently ignore failed conversions */
+=======
+      const size_t iconv_status = msIconv(cd, (char**)&inp, &len, &outp, &bufleft);
+      if(iconv_status == static_cast<size_t>(-1)) {
+        failedIconv = true;
+        break;
+>>>>>>> 3795609ba (Merge pull request #6306 from rouault/coverity_scan_fixes):mapstring.cpp
       }
+    }
+    if( failedIconv ) {
+      msFree(out);
+      continue; /* silently ignore failed conversions */
     }
     out[bufsize - bufleft] = '\0';
     msFree(shape->values[i]);

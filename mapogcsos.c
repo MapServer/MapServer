@@ -2931,15 +2931,21 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     if (psXPathTmp)
       sosparams->pszRequest = msStrdup("GetCapabilities");
 
+    xmlXPathFreeObject(psXPathTmp);
+
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor");
 
     if (psXPathTmp)
       sosparams->pszRequest = msStrdup("DescribeSensor");
 
+    xmlXPathFreeObject(psXPathTmp);
+
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation");
 
     if (psXPathTmp)
       sosparams->pszRequest = msStrdup("GetObservation");
+
+    xmlXPathFreeObject(psXPathTmp);
 
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeObservationType");
 
