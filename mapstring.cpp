@@ -2376,12 +2376,17 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
     bufleft = bufsize;
 
+    bool failedIconv = false;
     while (len > 0) {
       const size_t iconv_status = msIconv(cd, (char**)&inp, &len, &outp, &bufleft);
       if(iconv_status == static_cast<size_t>(-1)) {
-        msFree(out);
-        continue; /* silently ignore failed conversions */
+        failedIconv = true;
+        break;
       }
+    }
+    if( failedIconv ) {
+      msFree(out);
+      continue; /* silently ignore failed conversions */
     }
     out[bufsize - bufleft] = '\0';
     msFree(shape->values[i]);

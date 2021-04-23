@@ -5020,8 +5020,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
           } else
             pszAttributeName[iValue++] = pszExpression[i];
         }
-        pszAttributeName[iValue] = '\0';
       }
+      pszAttributeName[iValue] = '\0';
     }
     msFreeCharArray(aszValues, nTokens);
   } else if (bOneCharCompare == 0) {
@@ -5048,8 +5048,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         } else
           pszAttributeName[iValue++] = pszExpression[i];
       }
-      pszAttributeName[iValue] = '\0';
     }
+    pszAttributeName[iValue] = '\0';
   }
 
   /* -------------------------------------------------------------------- */
