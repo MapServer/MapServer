@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -3757,7 +3759,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
 
       else
-        msDrawLayer(map, GET_LAYER(map, i), img);
+        IGNORE_RET_VAL(msDrawLayer(map, GET_LAYER(map, i), img));
     }
 
   } else {
