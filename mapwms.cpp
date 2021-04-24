@@ -44,6 +44,7 @@
 #include "maptime.h"
 #include "mapproject.h"
 
+#include <cassert>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -364,6 +365,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     const int curfilter = ows_request->layerwmsfilterindex[lp->index];
 
     /* Skip empty filters */
+    assert(paszFilters);
+    assert(curfilter >= 0 && curfilter < numfilters);
     if (paszFilters[curfilter][0] == '\0') {
       continue;
     }
