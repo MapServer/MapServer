@@ -15,6 +15,6 @@ jobs:
         uses: Gaurav0/backport@v1.0.26
         with:
           bot_username: MapServer-backport-bot
-          bot_token: 0cba09450792aa8130ae6ef3de09915654afc8cb
-          bot_token_key: 665c2358a46ddf0589de5e24a316cdcc64820b2e
+          bot_token: ${{ secrets.BOT_TOKEN }}
+          bot_token_key: ${{ secrets.BOT_TOKEN_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
