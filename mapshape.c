@@ -1018,20 +1018,24 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* pszCallingFunction)
 {
 
-  int nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
+  int nEntitySize = msSHXReadSize(psSHP, hEntity);
+  if( nEntitySize > INT_MAX - 8 ) {
+      msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
+                 pszCallingFunction, nEntitySize, hEntity);
+      return(MS_FAILURE);
+  }
+  nEntitySize += 8;
   /* -------------------------------------------------------------------- */
   /*      Ensure our record buffer is large enough.                       */
   /* -------------------------------------------------------------------- */
   if( nEntitySize > psSHP->nBufSize ) {
-    psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
-    if (psSHP->pabyRec == NULL) {
-      /* Reallocate previous successfull size for following features */
-      psSHP->pabyRec = msSmallMalloc(psSHP->nBufSize);
-
+    uchar* pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
+    if (pabyRec == NULL) {
       msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                  pszCallingFunction, nEntitySize, hEntity);
       return(MS_FAILURE);
     }
+    psSHP->pabyRec = pabyRec;
     psSHP->nBufSize = nEntitySize;
   }
   if (psSHP->pabyRec == NULL) {
