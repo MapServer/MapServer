@@ -624,10 +624,10 @@ namespace mapserver
                 {
                     delete [] m_face_names[0];
                     FT_Done_Face(m_faces[0]);
-                    memcpy(m_faces, 
+                    memmove(m_faces, 
                            m_faces + 1, 
                            (m_max_faces - 1) * sizeof(FT_Face));
-                    memcpy(m_face_names, 
+                    memmove(m_face_names, 
                            m_face_names + 1, 
                            (m_max_faces - 1) * sizeof(char*));
                     m_num_faces = m_max_faces - 1;
