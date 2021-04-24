@@ -3223,6 +3223,10 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 
 int msOGRIsSpatialite(layerObj* layer);
 
+#ifdef NEED_IGNORE_RET_VAL
+static inline void IGNORE_RET_VAL(int x) { (void)x; }
+#endif
+
 #endif /* SWIG */
 
 #ifdef __cplusplus
