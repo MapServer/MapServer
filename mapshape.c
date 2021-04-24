@@ -34,6 +34,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include <limits.h>
 #include <assert.h>
 #include "mapserver.h"
@@ -1897,7 +1899,7 @@ static const char* msTiledSHPLoadEntry(layerObj *layer, int i, char* tilename, s
     {
         int idx = msDBFGetItemIndex(tSHP->tileshpfile->hDBF, layer->tilesrs);
         const char* pszWKT = msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, idx);
-        msOGCWKT2ProjectionObj(pszWKT, &(tSHP->sTileProj), layer->debug );
+        IGNORE_RET_VAL(msOGCWKT2ProjectionObj(pszWKT, &(tSHP->sTileProj), layer->debug ));
     }
 
     if(!layer->data) /* assume whole filename is in attribute field */
