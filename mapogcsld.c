@@ -1486,6 +1486,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         status = MS_SUCCESS;
       }
       else if (strcasecmp(psRoot->pszValue,"Function") == 0
+          && psRoot->psChild
           && CPLGetXMLValue(psRoot,"name",NULL)
           && psRoot->psChild->psNext)
       {
