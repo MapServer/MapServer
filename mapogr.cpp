@@ -3080,7 +3080,10 @@ NextFile:
 
 #ifndef IGNORE_MISSING_DATA
   if( psTileInfo == NULL && targetTile == -1 )
+  {
+    msFree(pszSRS);
     goto NextFile;
+  }
 #endif
 
   if( psTileInfo == NULL )

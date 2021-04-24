@@ -2184,7 +2184,7 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   iconv_t cd = NULL;
   const char *inp;
   char *outp, *out = NULL;
-  size_t len, bufsize, bufleft, iconv_status;
+  size_t len, bufsize, bufleft;
   int i;
 
   if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
@@ -2198,6 +2198,7 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   }
 
   for(i=0;i <shape->numvalues; i++) {
+    int failedIconv = FALSE;
     if(!shape->values[i] || (len = strlen(shape->values[i]))==0) {
       continue;    /* Nothing to do */
     }
@@ -2210,14 +2211,17 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
     outp = out;
 
     bufleft = bufsize;
-    iconv_status = -1;
 
     while (len > 0) {
-      iconv_status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
-      if(iconv_status == -1) {
-        msFree(out);
-        continue; /* silently ignore failed conversions */
+      const size_t iconv_status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
+      if(iconv_status == (size_t)(-1)) {
+        failedIconv = TRUE;
+        break;
       }
+    }
+    if( failedIconv ) {
+      msFree(out);
+      continue; /* silently ignore failed conversions */
     }
     out[bufsize - bufleft] = '\0';
     msFree(shape->values[i]);
