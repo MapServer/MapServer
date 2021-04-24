@@ -1018,7 +1018,7 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   gmlGeometryObj *geometry=NULL;
 
   if(!stream || !tab) return;
-  if(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
+  if(geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
 
   if(geometryList->numgeometries == 1) {
     geometry = &(geometryList->geometries[0]);
