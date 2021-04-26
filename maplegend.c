@@ -764,7 +764,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
       ret = msDrawTextSymbol(map,image,textPnt,&cur->ts);
       if(MS_UNLIKELY(ret == MS_FAILURE))
         goto cleanup;
-      freeTextSymbol(&cur->ts);
+      /* Coverity Scan is confused by label refcount, and wrongly believe we */
+      /* might free &map->legend.label, so make it clear we won't */
+      freeTextSymbolEx(&cur->ts, MS_FALSE);
+      MS_REFCNT_DECR(cur->ts.label);
     }
     
     pnt.y += map->legend.keyspacingy; /* bump y for next label */
@@ -777,7 +780,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
 
 cleanup:
   while(cur) {
-    freeTextSymbol(&cur->ts);
+    /* Coverity Scan is confused by label refcount, and wrongly believe we */
+    /* might free &map->legend.label, so make it clear we won't */
+    freeTextSymbolEx(&cur->ts, MS_FALSE);
+    MS_REFCNT_DECR(cur->ts.label);
     head = cur;
     cur = cur->pred;
     free(head);

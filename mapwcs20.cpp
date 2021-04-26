@@ -4767,14 +4767,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   /* create the image object  */
-  if (!map->outputformat) {
-    msWCSClearCoverageMetadata20(&cm);
-    msFree(bandlist);
-    msSetError(MS_WCSERR, "The map outputformat is missing!",
-               "msWCSGetCoverage20()");
-    msDrawRasterLayerLowCloseDataset(layer, hDS);
-    return msWCSException(map, NULL, NULL, params->version);
-  } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
+  if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,
                           map->web.imagepath, map->web.imageurl, map->resolution,
                           map->defresolution, &map->imagecolor);

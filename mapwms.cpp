@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -42,6 +44,7 @@
 #include "maptime.h"
 #include "mapproject.h"
 
+#include <cassert>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -362,6 +365,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     const int curfilter = ows_request->layerwmsfilterindex[lp->index];
 
     /* Skip empty filters */
+    assert(paszFilters);
+    assert(curfilter >= 0 && curfilter < numfilters);
     if (paszFilters[curfilter][0] == '\0') {
       continue;
     }
@@ -3757,7 +3762,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
 
       else
-        msDrawLayer(map, GET_LAYER(map, i), img);
+        IGNORE_RET_VAL(msDrawLayer(map, GET_LAYER(map, i), img));
     }
 
   } else {
