@@ -203,23 +203,29 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   const char *ms_map_no_path = CPLGetConfigOption("MS_MAP_NO_PATH", NULL);
   const char *ms_map_pattern = CPLGetConfigOption("MS_MAP_PATTERN", NULL);
 
+  const char *mapval = NULL;
+
   if(mapserv->api_path != NULL) {
-    ms_mapfile = mapserv->api_path[1]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
+    mapval = mapserv->api_path[1]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
   } else {
     for(i=0; i<mapserv->request->NumParams; i++) { /* find the map parameter */
       if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
-        ms_mapfile = mapserv->request->ParamValues[i];
+        mapval = mapserv->request->ParamValues[i];
         break;
       }
     }
   }
 
-  if(ms_mapfile == NULL) {
-    msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
-    return NULL;
+  if(mapval == NULL) {
+    if(ms_mapfile != NULL) {
+      map = msLoadMap(ms_mapfile, NULL);
+    } else {
+      msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
+      return NULL;
+    }
   } else {
-    if(getenv(mapfile)) /* an environment variable references the actual file to use */
-      map = msLoadMap(getenv(mapfile), NULL);
+    if(getenv(mapval)) /* an environment variable references the actual file to use */
+      map = msLoadMap(getenv(mapval), NULL);
     else {
       /* by here we know the request isn't for something in an environment variable */
       if(ms_map_no_path != NULL) {
@@ -227,17 +233,16 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
         return NULL;
       }
 
-      if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, mapserv->request->ParamValues[i]) != MS_TRUE) {
+      if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, mapval) != MS_TRUE) {
         msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
         return NULL;
       }
 
       /* ok to try to load now */
-      map = msLoadMap(mapfile, NULL);
+      map = msLoadMap(mapval, NULL);
     }
   }
   
-
   if(!map) return NULL;
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
