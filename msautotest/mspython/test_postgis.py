@@ -369,4 +369,8 @@ def test_postgis_queryByFilter_bad_expression():
         """)
 
     layer.open()
-    layer.queryByFilter( map, "ERROR" )
+    try:
+        layer.queryByFilter( map, "ERROR" )
+    except mapscript.MapServerError:
+        pass
+

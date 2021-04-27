@@ -2,11 +2,6 @@
 #
 # Test unclassified scaled raster with NODATA.  
 #
-# Currently (Jan/2011) the NODATA value is excluded from the auto 
-# scaling min/max computation, but is not shown as transparent.  Eventualy 
-# if this is fixed, a new proper result should occur and this tests results 
-# will need to be updated.
-#
 
 MAP
 

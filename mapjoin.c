@@ -543,7 +543,8 @@ typedef struct {
 
 int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 {
-
+  (void)layer;
+  (void)join;
 #ifndef USE_MYSQL
   msSetError(MS_QUERYERR, "MySQL support not available (compile with --with-mysql)", "msMySQLJoinConnect()");
   return(MS_FAILURE);
@@ -683,6 +684,8 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 
 int msMySQLJoinPrepare(joinObj *join, shapeObj *shape)
 {
+  (void)join;
+  (void)shape;
 #ifndef USE_MYSQL
   msSetError(MS_QUERYERR, "MySQL support not available (compile with --with-mysql)", "msMySQLJoinPrepare()");
   return(MS_FAILURE);
@@ -715,11 +718,12 @@ int msMySQLJoinPrepare(joinObj *join, shapeObj *shape)
 
 int msMySQLJoinNext(joinObj *join)
 {
+  (void)join;
 #ifndef USE_MYSQL
   msSetError(MS_QUERYERR, "MySQL support not available (compile with --with-mysql)", "msMySQLJoinNext()");
   return(MS_FAILURE);
 #else
-  int i, n;
+  int i;
   char qbuf[4000];
   msMySQLJoinInfo *joininfo = join->joininfo;
 
@@ -739,7 +743,7 @@ int msMySQLJoinNext(joinObj *join)
     join->values = NULL;
   }
 
-  n = joininfo->rows;
+  /* int n = joininfo->rows; */
 
   /* for(i=joininfo->nextrecord; i<n; i++) { // find a match */
   /* if(strcmp(joininfo->target, msMySQLReadStringAttribute(joininfo->conn, i, joininfo->toindex)) == 0) break; */
@@ -806,6 +810,7 @@ int msMySQLJoinNext(joinObj *join)
 
 int msMySQLJoinClose(joinObj *join)
 {
+  (void)join;
 #ifndef USE_MYSQL
   msSetError(MS_QUERYERR, "MySQL support not available (compile with --with-mysql)", "msMySQLJoinClose()");
   return(MS_FAILURE);

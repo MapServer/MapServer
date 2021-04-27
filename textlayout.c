@@ -170,6 +170,9 @@ static hb_bool_t _ms_get_glyph_func (hb_font_t *font, void *font_data,
 		void *user_data)
 
 {
+  (void)font;
+  (void)variation_selector;
+  (void)user_data;
   /* first check our run, as we have probably already computed this */
   int i;
   struct _ms_hb_user_data *ud = font_data;
@@ -197,9 +200,30 @@ static hb_bool_t _ms_get_glyph_func (hb_font_t *font, void *font_data,
   }
 }
 
+#if HB_VERSION_ATLEAST(1,2,3)
+static hb_bool_t _ms_get_nominal_glyph_func(hb_font_t *font, void *font_data,
+                                            hb_codepoint_t unicode,
+                                            hb_codepoint_t *glyph,
+                                            void *user_data)
+{
+    return _ms_get_glyph_func(font, font_data, unicode, 0, glyph, user_data);
+}
+
+static hb_bool_t _ms_get_variation_glyph_func(hb_font_t *font, void *font_data,
+                                              hb_codepoint_t unicode,
+                                              hb_codepoint_t variation_selector,
+                                              hb_codepoint_t *glyph,
+                                              void *user_data)
+{
+    return _ms_get_glyph_func(font, font_data, unicode, variation_selector, glyph, user_data);
+}
+#endif
+
 static hb_position_t _ms_get_glyph_h_advance_func (hb_font_t *font, void *font_data,
 			   hb_codepoint_t glyph, void *user_data)
 {
+  (void)font;
+  (void)user_data;
   struct _ms_hb_user_data *ud = font_data;
   glyph_element *glyphc = msGetGlyphByIndex(ud->run->face,ud->glyph_size,glyph);
   if(!glyphc)
@@ -210,6 +234,10 @@ static hb_position_t _ms_get_glyph_h_advance_func (hb_font_t *font, void *font_d
 static hb_position_t _ms_get_glyph_v_advance_func (hb_font_t *font, void *font_data,
     hb_codepoint_t glyph, void *user_data)
 {
+  (void)font;
+  (void)font_data;
+  (void)glyph;
+  (void)user_data;
   return 0; /* we don't support vertical layouts */
 }
 #endif
@@ -226,7 +254,7 @@ int WARN_UNUSED check_single_font(fontSetObj *fontset, char *fontkey, text_run *
   if(!fcache)
     fcache = msGetFontFace(fontkey, fontset);
   run->face = fcache;
-  if(UNLIKELY(!fcache)) return MS_FAILURE;
+  if(MS_UNLIKELY(!fcache)) return MS_FAILURE;
   for(i=0; i<run->length; i++) {
     int codepoint = msGetGlyphIndex(fcache, glyphs->unicodes[run->offset+i]);
     if(codepoint || ignore_missing)
@@ -239,13 +267,13 @@ int WARN_UNUSED check_single_font(fontSetObj *fontset, char *fontkey, text_run *
 
 int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *run, TextInfo *glyphs) {
   char *startfont, *endfont;
-  int ok;
 #if defined(USE_HARFBUZZ) && defined(USE_FRIBIDI)
   const char *prefix = NULL;
 #endif
 
   if(!fontset || !fontlist) {
-    ok = check_single_font(fontset,fontlist,run,glyphs,0);
+    int ok = check_single_font(fontset,fontlist,run,glyphs,0);
+    (void)ok;
     return MS_SUCCESS;
   }
 
@@ -268,7 +296,7 @@ int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *
       if(!strncmp(startfont,prefix,prefixlen)) {
         startfont += strlen(prefix);
         if(endfont) *endfont = 0;
-        ok = check_single_font(fontset,startfont,run,glyphs,0);
+        int ok = check_single_font(fontset,startfont,run,glyphs,0);
         if(endfont) {
           *endfont = ',';
           if(ok == MS_SUCCESS) return MS_SUCCESS;
@@ -291,7 +319,7 @@ int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *
     if(!*startfont) break;
     endfont = strchr(startfont,',');
     if(endfont) *endfont = 0;
-    ok = check_single_font(fontset,startfont,run,glyphs,!endfont); /* ignore failing glyphs if we're using the last font in the list */
+    int ok = check_single_font(fontset,startfont,run,glyphs,!endfont); /* ignore failing glyphs if we're using the last font in the list */
     if(endfont) {
       *endfont = ',';
       if(ok == MS_SUCCESS) return MS_SUCCESS;
@@ -322,7 +350,12 @@ hb_font_t* get_hb_font(struct _ms_hb_user_data *font_data) {
     hbf->hbfont = hb_font_create_sub_font(hbf->hbparentfont);
     hbf->funcs = hb_font_funcs_create();
     hb_font_funcs_set_glyph_h_advance_func(hbf->funcs, _ms_get_glyph_h_advance_func, NULL, NULL);
+#if HB_VERSION_ATLEAST(1,2,3)
+    hb_font_funcs_set_nominal_glyph_func(hbf->funcs, _ms_get_nominal_glyph_func, NULL, NULL);
+    hb_font_funcs_set_variation_glyph_func(hbf->funcs, _ms_get_variation_glyph_func, NULL, NULL);
+#else
     hb_font_funcs_set_glyph_func(hbf->funcs, _ms_get_glyph_func, NULL, NULL);
+#endif
     hb_font_funcs_set_glyph_v_advance_func(hbf->funcs, _ms_get_glyph_v_advance_func, NULL, NULL);
     hbf->cursize = reqsize;
     fcache->hbfont = hbf;
@@ -450,7 +483,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 #ifdef USE_ICONV
   if(ts->label->encoding && strcasecmp(ts->label->encoding,"UTF-8")) {
     iconv_t cd;
-    size_t len, iconv_status,bufleft;
+    size_t len, bufleft;
     char *encoded_text,*outp;
     len = strlen(ts->annotext);
     bufleft = len*6;
@@ -467,8 +500,8 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     outp = encoded_text;
 
     while(len>0) {
-      iconv_status = iconv(cd, &inp, &len, &outp, &bufleft);
-      if(iconv_status == -1) {
+      const size_t iconv_status = iconv(cd, &inp, &len, &outp, &bufleft);
+      if(iconv_status == (size_t)-1) {
         break;
       }
     }
@@ -525,7 +558,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     if(ts->label->wrap && ts->label->maxlength == 0) {
       for(i=0;i<num_glyphs;i++) {
         /* replace all occurences of the wrap character with a newline */
-        if(glyphs.unicodes[i]== ts->label->wrap)
+        if(glyphs.unicodes[i]== (unsigned)ts->label->wrap)
           glyphs.unicodes[i]= '\n';
       }
     } else {
@@ -535,7 +568,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
         for(i=0; i<num_glyphs; i++) {
           /* wrap at wrap character or at ZERO WIDTH SPACE (unicode 0x200b), if
            * current line is too long */
-          if((glyphs.unicodes[i] == ts->label->wrap || glyphs.unicodes[i] == 0x200b)
+          if((glyphs.unicodes[i] == (unsigned)ts->label->wrap || glyphs.unicodes[i] == (unsigned)0x200b)
               && num_cur_glyph_on_line >= ts->label->maxlength) {
             glyphs.unicodes[i]= '\n';
             num_cur_glyph_on_line = 0;
@@ -596,7 +629,10 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       original_offset = cur_run_start = runs[i].offset;
       original_num_glyphs = runs[i].length;
       fribidi_get_bidi_types(glyphs.unicodes + original_offset, runs[i].length, glyphs.ctypes + original_offset);
-      fribidi_get_par_embedding_levels(glyphs.ctypes + original_offset, runs[i].length, &dir, glyphs.bidi_levels + runs[i].offset);
+      {
+          FriBidiLevel level = fribidi_get_par_embedding_levels(glyphs.ctypes + original_offset, runs[i].length, &dir, glyphs.bidi_levels + runs[i].offset);
+          (void)level;
+      }
       /* if we have different embedding levels, create a run for each one */
       runs[i].rtl = prevlevel = glyphs.bidi_levels[original_offset];
       line_descs[runs[i].line_number].rtl = (prevlevel%2) ? MS_RTL_RTL:MS_RTL_LTR;
@@ -669,7 +705,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 
   for(i=0; i<nruns; i++) {
     ret = get_face_for_run(fontset, ts->label->font, runs+i, &glyphs);
-    if(UNLIKELY(ret == MS_FAILURE))
+    if(MS_UNLIKELY(ret == MS_FAILURE))
       goto cleanup;
   }
 
@@ -689,7 +725,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 
 
   for(i=0;i<nruns;i++) {
-    unsigned int glyph_count,j;
+    unsigned int glyph_count;
     if(!runs[i].face) continue;
     peny = (1 - tgret->numlines + runs[i].line_number) * tgret->line_height;
     if(peny != oldpeny) {
@@ -707,7 +743,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       unsigned int *codepoint = glyphs.codepoints + runs[i].offset;
       alloc_glyphs += runs[i].length;
       tgret->glyphs = msSmallRealloc(tgret->glyphs, alloc_glyphs * sizeof(glyphObj));
-      for(j=0;j<runs[i].length;j++) {
+      for(int j=0;j<runs[i].length;j++) {
         glyphObj *g = &tgret->glyphs[tgret->numglyphs + j];
         g->glyph = msGetGlyphByIndex(runs[i].face,tgret->glyph_size, *codepoint);
         g->face = runs[i].face;
@@ -743,7 +779,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       glyph_pos = hb_buffer_get_glyph_positions(buf, &glyph_count);
       alloc_glyphs += glyph_count;
       tgret->glyphs = msSmallRealloc(tgret->glyphs, alloc_glyphs * sizeof(glyphObj));
-      for(j=0;j<glyph_count;j++) {
+      for(unsigned j=0;j<glyph_count;j++) {
         glyphObj *g = &tgret->glyphs[tgret->numglyphs + j];
         g->glyph = msGetGlyphByIndex(runs[i].face,tgret->glyph_size,glyph_info[j].codepoint);
         g->face = runs[i].face;

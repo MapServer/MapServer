@@ -420,7 +420,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 {
 #ifdef USE_WMS_LYR
   char *pszEPSG = NULL;
-  const char *pszVersion, *pszRequestParam, *pszExceptionsParam,
+  const char *pszVersion, *pszRequestParam,
         *pszSrsParamName="SRS", *pszLayer=NULL, *pszQueryLayers=NULL,
         *pszUseStrictAxisOrder;
   rectObj bbox;
@@ -430,7 +430,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   int bFlipAxisOrder = MS_FALSE;
   const char *pszTmp;
   int bIsEssential = MS_FALSE;
-  
+
   if (lp->connectiontype != MS_WMS) {
     msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
                "msBuildWMSLayerURL()");
@@ -619,24 +619,30 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     char* pszEPSGCodeFromLayer = NULL;
     msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszEPSGCodeFromLayer);
     if (pszEPSGCodeFromLayer == NULL || strcasecmp(pszEPSG, pszEPSGCodeFromLayer) != 0) {
-      char *ows_srs;
-      msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
+      char *ows_srs = NULL;
+      msOWSGetEPSGProj(NULL, &(lp->metadata), "MO", MS_FALSE, &ows_srs);
       /* no need to set lp->proj if it is already set and there is only
       one item in the _srs metadata for this layer - we will assume
       the projection block matches the _srs metadata (the search for ' '
       in ows_srs is a test to see if there are multiple EPSG: codes) */
       if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
-        msFree(ows_srs);
         if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
           char szProj[20];
           snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
-          if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+          if (msLoadProjectionString(&(lp->projection), szProj) != 0) {
+            msFree(pszEPSGCodeFromLayer);
+            msFree(ows_srs);
             return MS_FAILURE;
+          }
         } else {
-          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
+          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0) {
+            msFree(pszEPSGCodeFromLayer);
+            msFree(ows_srs);
             return MS_FAILURE;
+          }
         }
       }
+      msFree(ows_srs);
     }
     msFree(pszEPSGCodeFromLayer);
   }
@@ -734,8 +740,8 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         msRectIntersect( &bbox, &layer_rect );
 
-        bbox_width = ceil((bbox.maxx - bbox.minx) / cellsize);
-        bbox_height = ceil((bbox.maxy - bbox.miny) / cellsize);
+        bbox_width = round((bbox.maxx - bbox.minx) / cellsize);
+        bbox_height = round((bbox.maxy - bbox.miny) / cellsize);
 
         /* Force going through the resampler if we're going to receive a clipped BBOX (#4931) */
         if(msLayerGetProcessingKey(lp, "RESAMPLE") == NULL) {
@@ -803,6 +809,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     else
       pszRequestParam = "feature_info";
 
+    const char* pszExceptionsParam;
     if (nVersion >= OWS_1_3_0)
       pszExceptionsParam = "XML";
     else if (nVersion >= OWS_1_1_0) /* 1.1.0 to 1.1.0 */
@@ -860,14 +867,15 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
     pszRequestParam = "GetLegendGraphic";
 
-    pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
+    /*
+    const char* pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
     if (pszExceptionsParam == NULL) {
       if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
         pszExceptionsParam = "application/vnd.ogc.se_inimage";
       else
         pszExceptionsParam = "INIMAGE";
-    }
+    }*/
 
     if (pszLayer) { /* not set in CONNECTION string */
       msSetWMSParamString(psWMSParams, "LAYER", pszLayer, MS_FALSE, nVersion);
@@ -888,7 +896,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     else
       pszRequestParam = "map";
 
-    pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
+    const char* pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
                          "MO", "exceptions_format");
 
     if (!bIsEssential) {
@@ -986,6 +994,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   int bbox_width = 0, bbox_height = 0;
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
+  int ret = MS_FAILURE;
 
   if (lp->connectiontype != MS_WMS)
     return MS_FAILURE;
@@ -997,34 +1006,38 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * compute BBOX in that projection.
    * ------------------------------------------------------------------ */
 
-
-  if (nRequestType == WMS_GETMAP &&
-      ( msBuildWMSLayerURL(map, lp, WMS_GETMAP,
+  switch( nRequestType )
+  {
+      case WMS_GETMAP:
+          ret = msBuildWMSLayerURL(map, lp, WMS_GETMAP,
                            0, 0, 0, NULL, &bbox, &bbox_width, &bbox_height,
-                           &sThisWMSParams) != MS_SUCCESS) ) {
-    /* an error was already reported. */
-    msFreeWmsParamsObj(&sThisWMSParams);
-    return MS_FAILURE;
-  }
+                           &sThisWMSParams);
+          break;
 
-  else if (nRequestType == WMS_GETFEATUREINFO &&
-           msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
+      case WMS_GETFEATUREINFO:
+          ret = msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
                               nClickX, nClickY, nFeatureCount, pszInfoFormat,
                               NULL, NULL, NULL,
-                              &sThisWMSParams) != MS_SUCCESS ) {
-    /* an error was already reported. */
-    msFreeWmsParamsObj(&sThisWMSParams);
-    return MS_FAILURE;
-  } else if (nRequestType == WMS_GETLEGENDGRAPHIC &&
-             msBuildWMSLayerURL(map, lp, WMS_GETLEGENDGRAPHIC,
+                              &sThisWMSParams);
+          break;
+
+      case WMS_GETLEGENDGRAPHIC:
+          ret = msBuildWMSLayerURL(map, lp, WMS_GETLEGENDGRAPHIC,
                                 0, 0, 0, NULL,
                                 NULL, NULL, NULL,
-                                &sThisWMSParams) != MS_SUCCESS ) {
+                                &sThisWMSParams);
+          break;
+
+      default:
+          assert(FALSE);
+          break;
+  }
+
+  if( ret != MS_SUCCESS) {
     /* an error was already reported. */
     msFreeWmsParamsObj(&sThisWMSParams);
     return MS_FAILURE;
   }
-
 
   /* ------------------------------------------------------------------
    * Check if the request is empty, perhaps due to reprojection problems
@@ -1176,7 +1189,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     if(pszHTTPCookieData == NULL || sThisWMSParams.httpcookiedata == NULL) {
       bOkToMerge = MS_FALSE;
     }
-    if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0) {
+    else if(strcmp(pszHTTPCookieData, sThisWMSParams.httpcookiedata) != 0) {
       bOkToMerge = MS_FALSE;
     }
   }

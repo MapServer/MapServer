@@ -413,6 +413,7 @@ int renderGlyphs2Cairo(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc
   cairoFaceCache *cairo_face = NULL;
   FT_Face prevface = NULL;
   int g;
+  (void)isMarker;
 
   cairo_set_font_size(r->cr,MS_NINT(tp->glyph_size * 96.0/72.0));
   for(g=0;g<tp->numglyphs;g++) {
@@ -654,8 +655,9 @@ static void msTransformToGeospatialPDF(imageObj *img, mapObj *map, cairo_rendere
   msFree(pszTmpFilename);
 }
 
-int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)
+int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format_unused)
 {
+  (void)format_unused;
   cairo_renderer *r = CAIRO_RENDERER(img);
   if(!strcasecmp(img->format->driver,"cairo/pdf") || !strcasecmp(img->format->driver,"cairo/svg")) {
     cairo_surface_finish (r->surface);
@@ -670,8 +672,9 @@ int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format
   return MS_SUCCESS;
 }
 
-unsigned char* saveImageBufferCairo(imageObj *img, int *size_ptr, outputFormatObj *format)
+unsigned char* saveImageBufferCairo(imageObj *img, int *size_ptr, outputFormatObj *format_unused)
 {
+  (void)format_unused;
   cairo_renderer *r = CAIRO_RENDERER(img);
   unsigned char *data;
   assert(!strcasecmp(img->format->driver,"cairo/pdf") || !strcasecmp(img->format->driver,"cairo/svg"));
@@ -712,6 +715,7 @@ int renderEllipseSymbolCairo(imageObj *img, double x, double y, symbolObj *symbo
 
 int startLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer)
 {
+  (void)map;
   if(layer->compositer && layer->compositer->opacity<100) {
     cairo_renderer *r = CAIRO_RENDERER(img);
     cairo_push_group (r->cr);
@@ -721,6 +725,7 @@ int startLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer)
 
 int closeLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer)
 {
+  (void)map;
   if(layer->compositer && layer->compositer->opacity<100) {
     cairo_renderer *r = CAIRO_RENDERER(img);
     cairo_pop_group_to_source (r->cr);
@@ -731,11 +736,17 @@ int closeLayerVectorCairo(imageObj *img, mapObj *map, layerObj *layer)
 
 int startLayerRasterCairo(imageObj *img, mapObj *map, layerObj *layer)
 {
+  (void)img;
+  (void)map;
+  (void)layer;
   return MS_SUCCESS;
 }
 
 int closeLayerRasterCairo(imageObj *img, mapObj *map, layerObj *layer)
 {
+  (void)img;
+  (void)map;
+  (void)layer;
   return MS_SUCCESS;
 }
 
@@ -901,7 +912,6 @@ void freeSVGCache(symbolObj *s) {
 #ifdef USE_SVG_CAIRO
       svg_cairo_destroy(cache->svgc);
 #else
-      rsvg_handle_close(cache->svgc, NULL);
   #if LIBRSVG_CHECK_VERSION(2,35,0)
       g_object_unref(cache->svgc);
   #else
@@ -938,6 +948,7 @@ int freeSymbolCairo(symbolObj *s)
 
 int initializeRasterBufferCairo(rasterBufferObj *rb, int width, int height, int mode)
 {
+  (void)mode;
   rb->type = MS_BUFFER_BYTE_RGBA;
   rb->width = width;
   rb->height = height;
@@ -991,15 +1002,42 @@ int msPreloadSVGSymbol(symbolObj *symbol)
   }
 #else
   {
-    RsvgDimensionData dim;
     cache->svgc = rsvg_handle_new_from_file(symbol->full_pixmap_path,NULL);
     if(!cache->svgc) {
       msSetError(MS_RENDERERERR,"failed to load svg file %s", "msPreloadSVGSymbol()", symbol->full_pixmap_path);
       return MS_FAILURE;
     }
+#if LIBRSVG_CHECK_VERSION(2,46,0)
+    /* rsvg_handle_get_dimensions_sub() is deprecated since librsvg 2.46 */
+    /* It seems rsvg_handle_get_intrinsic_dimensions() is the best equivalent */
+    /* when the <svg> root node includes a width and height attributes in pixels */
+    gboolean has_width = FALSE;
+    RsvgLength width = {0, RSVG_UNIT_PX};
+    gboolean has_height = FALSE;
+    RsvgLength height = {0, RSVG_UNIT_PX};
+    rsvg_handle_get_intrinsic_dimensions(cache->svgc,
+                                         &has_width, &width,
+                                         &has_height, &height,
+                                         NULL, NULL);
+    if( has_width && width.unit == RSVG_UNIT_PX &&
+        has_height && height.unit == RSVG_UNIT_PX )
+    {
+        symbol->sizex = width.length;
+        symbol->sizey = height.length;
+    }
+    else
+    {
+        RsvgRectangle ink_rect = { 0, 0, 0, 0 };
+        rsvg_handle_get_geometry_for_element (cache->svgc, NULL, &ink_rect, NULL, NULL);
+        symbol->sizex = ink_rect.width;
+        symbol->sizey = ink_rect.height;
+    }
+#else
+    RsvgDimensionData dim;
     rsvg_handle_get_dimensions_sub (cache->svgc, &dim, NULL);
     symbol->sizex = dim.width;
     symbol->sizey = dim.height;
+#endif
   }
 #endif
 

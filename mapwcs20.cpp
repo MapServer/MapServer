@@ -2024,7 +2024,7 @@ static int msWCSSwapAxes20(char *srs_uri)
 /*      Inserts the BoundedBy section into an existing DOM structure.   */
 /************************************************************************/
 
-static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadataObjPtr cm,
+static void msWCSCommon20_CreateBoundedBy(wcs20coverageMetadataObjPtr cm,
     xmlNsPtr psGmlNs, xmlNodePtr psRoot, projectionObj *projection, int swapAxes)
 {
   xmlNodePtr psBoundedBy, psEnvelope;
@@ -2153,8 +2153,8 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
 /*      Inserts the RangeType section into an existing DOM structure.   */
 /************************************************************************/
 
-static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadataObjPtr cm, char *bands,
-    xmlNsPtr psGmlNs, xmlNsPtr psGmlcovNs, xmlNsPtr psSweNs, xmlNsPtr psXLinkNs, xmlNodePtr psRoot)
+static void msWCSCommon20_CreateRangeType(wcs20coverageMetadataObjPtr cm, char *bands,
+    xmlNsPtr psGmlcovNs, xmlNsPtr psSweNs, xmlNodePtr psRoot)
 {
   xmlNodePtr psRangeType, psDataRecord, psField, psQuantity,
              psUom, psConstraint, psAllowedValues = NULL, psNilValues = NULL;
@@ -2252,7 +2252,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
 /*      Writes out an xml structure to the stream.                      */
 /************************************************************************/
 
-static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
+static int msWCSWriteDocument20(xmlDocPtr psDoc)
 {
   xmlChar *buffer = NULL;
   int size = 0;
@@ -3224,7 +3224,6 @@ static int msWCSGetCapabilities20_CreateProfiles(
 /************************************************************************/
 
 static int msWCSGetCapabilities20_CoverageSummary(
-  mapObj *map, wcs20ParamsObjPtr params,
   xmlDocPtr doc, xmlNodePtr psContents, layerObj *layer )
 {
   wcs20coverageMetadataObj cm;
@@ -3571,8 +3570,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
           continue;
 
         status = msWCSGetCapabilities20_CoverageSummary(
-                   map, params, psDoc, psNode, layer );
+                   psDoc, psNode, layer );
         if(status != MS_SUCCESS) {
+          msFree(validated_language);
           xmlFreeDoc(psDoc);
           xmlCleanupParser();
           return msWCSException(map, "Internal", "mapserv", params->version);
@@ -3583,7 +3583,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
   /*      Write out the document and clean up.                            */
   /* -------------------------------------------------------------------- */
-  msWCSWriteDocument20(map, psDoc);
+  msWCSWriteDocument20(psDoc);
   msFree(validated_language);
   xmlFreeDoc(psDoc);
   if( pInspireTmpDoc )
@@ -3599,8 +3599,8 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 /*      major sections: BoundedBy, DomainSet and RangeType.             */
 /************************************************************************/
 
-static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
-    layerObj *layer, wcs20ParamsObjPtr params, xmlDocPtr psDoc, xmlNodePtr psRootNode )
+static int msWCSDescribeCoverage20_CoverageDescription(
+    layerObj *layer, xmlDocPtr psDoc, xmlNodePtr psRootNode )
 {
   int status, swapAxes;
   wcs20coverageMetadataObj cm;
@@ -3644,7 +3644,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
   /* -------------------------------------------------------------------- */
   /*      gml:boundedBy                                                   */
   /* -------------------------------------------------------------------- */
-  msWCSCommon20_CreateBoundedBy(layer, &cm, psGmlNs, psCD, &(layer->projection), swapAxes);
+  msWCSCommon20_CreateBoundedBy(&cm, psGmlNs, psCD, &(layer->projection), swapAxes);
 
   xmlNewChild(psCD, psWcsNs, BAD_CAST "CoverageId", BAD_CAST layer->name);
 
@@ -3656,7 +3656,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
   /* -------------------------------------------------------------------- */
   /*      gmlcov:rangeType                                                */
   /* -------------------------------------------------------------------- */
-  msWCSCommon20_CreateRangeType(layer, &cm, NULL, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psCD);
+  msWCSCommon20_CreateRangeType(&cm, NULL, psGmlcovNs, psSweNs, psCD);
 
   /* -------------------------------------------------------------------- */
   /*      wcs:ServiceParameters                                           */
@@ -3778,8 +3778,8 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
                               params->version);
       }
       /* create coverage description for the specified layer */
-      if(msWCSDescribeCoverage20_CoverageDescription(map, (GET_LAYER(map, i)),
-          params, psDoc, psRootNode) == MS_FAILURE) {
+      if(msWCSDescribeCoverage20_CoverageDescription((GET_LAYER(map, i)),
+          psDoc, psRootNode) == MS_FAILURE) {
         msSetError(MS_WCSERR, "Error retrieving coverage description.", "msWCSDescribeCoverage20()");
         return msWCSException(map, "MissingParameterValue", "coverage",
                               params->version);
@@ -3793,7 +3793,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
   }
 
   /* write out the DOM document to the stream */
-  msWCSWriteDocument20(map, psDoc);
+  msWCSWriteDocument20(psDoc);
 
   /* cleanup */
   xmlFreeDoc(psDoc);
@@ -3923,7 +3923,7 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
 /*      indices.                                                        */
 /************************************************************************/
 
-static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
+static int msWCSGetCoverage20_GetBands(layerObj *layer,
                                        wcs20ParamsObjPtr params, wcs20coverageMetadataObjPtr cm, char **bandlist)
 {
   int maxlen, index;
@@ -4283,6 +4283,7 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
 int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                        wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
+  (void)request;
   layerObj *layer = NULL;
   wcs20coverageMetadataObj cm;
   imageObj *image = NULL;
@@ -4705,7 +4706,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                           params->version);
   }
 
-  if(msWCSGetCoverage20_GetBands(map, layer, params, &cm, &bandlist) != MS_SUCCESS) {
+  if(msWCSGetCoverage20_GetBands(layer, params, &cm, &bandlist) != MS_SUCCESS) {
     msFree(bandlist);
     msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue", "rangesubset",
@@ -4766,14 +4767,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   /* create the image object  */
-  if (!map->outputformat) {
-    msWCSClearCoverageMetadata20(&cm);
-    msFree(bandlist);
-    msSetError(MS_WCSERR, "The map outputformat is missing!",
-               "msWCSGetCoverage20()");
-    msDrawRasterLayerLowCloseDataset(layer, hDS);
-    return msWCSException(map, NULL, NULL, params->version);
-  } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
+  if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,
                           map->web.imagepath, map->web.imageurl, map->resolution,
                           map->defresolution, &map->imagecolor);
@@ -4883,7 +4877,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   } else {
     rasterBufferObj rb;
     status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    if(LIKELY(status == MS_SUCCESS)) {
+    if(MS_LIKELY(status == MS_SUCCESS)) {
       if( doDrawRasterLayerDraw ) {
         status = msDrawRasterLayerLowWithDataset( map, layer, image, &rb, hDS );
       } else {
@@ -4952,7 +4946,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msFree(srs_uri);
 
     /* Setup layer information  */
-    msWCSCommon20_CreateBoundedBy(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection), swapAxes);
+    msWCSCommon20_CreateBoundedBy(&tmpCm, psGmlNs, psRootNode, &(map->projection), swapAxes);
     msWCSCommon20_CreateDomainSet(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection), swapAxes);
 
     psRangeSet = xmlNewChild(psRootNode, psGmlNs, BAD_CAST "rangeSet", NULL);
@@ -4985,13 +4979,13 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     xmlNewChild(psFile, psGmlNs, BAD_CAST "fileStructure", NULL);
     xmlNewChild(psFile, psGmlNs, BAD_CAST "mimeType", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
 
-    msWCSCommon20_CreateRangeType(layer, &cm, bandlist, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
+    msWCSCommon20_CreateRangeType(&cm, bandlist, psGmlcovNs, psSweNs, psRootNode);
 
     msIO_setHeader("Content-Type","multipart/related; boundary=wcs");
     msIO_sendHeaders();
     msIO_printf("\r\n--wcs\r\n");
 
-    msWCSWriteDocument20(map, psDoc);
+    msWCSWriteDocument20(psDoc);
     msWCSWriteFile20(map, image, params, 1);
 
     xmlFreeDoc(psDoc);

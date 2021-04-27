@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -42,6 +44,7 @@
 #include "maptime.h"
 #include "mapproject.h"
 
+#include <cassert>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -362,6 +365,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     const int curfilter = ows_request->layerwmsfilterindex[lp->index];
 
     /* Skip empty filters */
+    assert(paszFilters);
+    assert(curfilter >= 0 && curfilter < numfilters);
     if (paszFilters[curfilter][0] == '\0') {
       continue;
     }
@@ -452,7 +457,12 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
         }
     }
 
+    msInsertHashTable(&(lp->metadata), "gml_wmsfilter_flag", "true");
+
     int ret = FLTApplyFilterToLayer(psNode, map, lp->index);
+
+    msRemoveHashTable(&(lp->metadata), "gml_wmsfilter_flag");
+
     if( !old_value_wfs_use_default_extent_for_getfeature.empty() )
     {
         msInsertHashTable(&(lp->metadata), "wfs_use_default_extent_for_getfeature",
@@ -493,7 +503,7 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 **                        as set through the WMS_LAYER_GROUP metadata
 */
 static
-void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup)
+void msWMSPrepareNestedGroups(mapObj* map, int /* nVersion */, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup)
 {
   //Create set to hold unique groups
   std::set<std::string> uniqgroups;
@@ -791,8 +801,8 @@ bool msWMSApplyDimensionLayer(layerObj *lp, const char *item, const char *value,
 }
 
 static
-bool msWMSApplyDimension(layerObj *lp, int version, const char *dimensionname, const char *value,
-                        const char *wms_exception_format)
+bool msWMSApplyDimension(layerObj *lp, int /* version */, const char *dimensionname, const char *value,
+                        const char * /* wms_exception_format */)
 {
   bool forcecharacter = false;
   bool result = false;
@@ -844,7 +854,7 @@ bool msWMSApplyDimension(layerObj *lp, int version, const char *dimensionname, c
 */
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           char **names, char **values, int numentries, const char *wms_exception_format,
-                          const char *wms_request, owsRequestObj *ows_request)
+                          const char * /*wms_request*/, owsRequestObj *ows_request)
 {
   bool adjust_extent = false;
   bool nonsquare_enabled = false;
@@ -867,6 +877,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   const char *request = NULL;
   int status = 0;
   const char *layerlimit = NULL;
+  bool tiled = false;
 
   const char *sldenabled=NULL;
   const char *sld_url=NULL;
@@ -1172,6 +1183,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     else if (strcasecmp(names[i], "BBOX_PIXEL_IS_POINT") == 0) {
       bbox_pixel_is_point = (strcasecmp(values[i], "TRUE") == 0);
     }
+    /* Vendor specific TILED (WMS-C) */
+    else if (strcasecmp(names[i], "TILED") == 0) {
+      tiled = (strcasecmp(values[i], "TRUE") == 0);
+    }
     /* Vendor-specific FILTER, added in RFC-118 */
     else if (strcasecmp(names[i], "FILTER") == 0) {
       filter = values[i];
@@ -1237,6 +1252,50 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
     adjust_extent = true;
+  }
+
+  if (tiled) {
+    const char *value;
+    hashTableObj *meta = &(map->web.metadata);
+    int map_edge_buffer = 0;
+
+    if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
+        map_edge_buffer = atoi(value);
+    }
+    if (map_edge_buffer > 0) {
+      /* adjust bbox and width and height to the buffer */
+      const double buffer_x = map_edge_buffer * (map->extent.maxx - map->extent.minx) / (double)map->width;
+      const double buffer_y = map_edge_buffer * (map->extent.maxy - map->extent.miny) / (double)map->height;
+
+      // TODO: we should probably clamp the extent to avoid going outside of -180,-90,180,90 for geographic CRS for example
+      map->extent.minx -= buffer_x;
+      map->extent.maxx += buffer_x;
+      map->extent.miny -= buffer_y;
+      map->extent.maxy += buffer_y;
+
+      map->width += 2 * map_edge_buffer;
+      map->height += 2 * map_edge_buffer;
+
+      if( map_edge_buffer > 0 ) {
+        char tilebufferstr[64];
+
+        /* Write the tile buffer to a string */
+        snprintf(tilebufferstr, sizeof(tilebufferstr), "-%d", map_edge_buffer);
+
+        /* Hm, the labelcache buffer is set... */
+        if((value = msLookupHashTable(meta, "labelcache_map_edge_buffer")) != NULL) {
+          /* If it's too small, replace with a bigger one */
+          if( map_edge_buffer > abs(atoi(value)) ) {
+            msRemoveHashTable(meta, "labelcache_map_edge_buffer");
+            msInsertHashTable(meta, "labelcache_map_edge_buffer", tilebufferstr);
+          }
+        }
+        /* No labelcache buffer value? Then we use the tile buffer. */
+        else {
+          msInsertHashTable(meta, "labelcache_map_edge_buffer", tilebufferstr);
+        }
+      }
+    }
   }
 
   /*
@@ -1381,34 +1440,36 @@ this request. Check wms/ows_enable_request settings.",
     }
   }
 
-  /* Validate requested image size.
-   */
-  if(map->width > map->maxsize || map->height > map->maxsize ||
-      map->width < 1 || map->height < 1) {
-    msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
+  if (request == NULL || strcasecmp(request, "DescribeLayer") != 0) {
+    /* Validate requested image size.
+    */
+    if(map->width > map->maxsize || map->height > map->maxsize ||
+        map->width < 1 || map->height < 1) {
+      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
 
-    /* Restore valid default values in case errors INIMAGE are used */
-    map->width = 400;
-    map->height= 300;
-    return msWMSException(map, nVersion, NULL, wms_exception_format);
-  }
+      /* Restore valid default values in case errors INIMAGE are used */
+      map->width = 400;
+      map->height= 300;
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+    }
 
-  /* Check whether requested BBOX and width/height result in non-square pixels
-   */
-  nonsquare_enabled = msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) != MS_FALSE;
-  if (!nonsquare_enabled) {
-    const double dx = MS_ABS(map->extent.maxx - map->extent.minx);
-    const double dy = MS_ABS(map->extent.maxy - map->extent.miny);
+    /* Check whether requested BBOX and width/height result in non-square pixels
+    */
+    nonsquare_enabled = msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) != MS_FALSE;
+    if (!nonsquare_enabled) {
+      const double dx = MS_ABS(map->extent.maxx - map->extent.minx);
+      const double dy = MS_ABS(map->extent.maxy - map->extent.miny);
 
-    const double reqy = ((double)map->width) * dy / dx;
+      const double reqy = ((double)map->width) * dy / dx;
 
-    /* Allow up to 1 pixel of error on the width/height ratios. */
-    /* If more than 1 pixel then enable non-square pixels */
-    if ( MS_ABS((reqy - (double)map->height)) > 1.0 ) {
-      if (map->debug)
-        msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.\n");
-      msSetConfigOption(map, "MS_NONSQUARE", "YES");
-      nonsquare_enabled = true;
+      /* Allow up to 1 pixel of error on the width/height ratios. */
+      /* If more than 1 pixel then enable non-square pixels */
+      if ( MS_ABS((reqy - (double)map->height)) > 1.0 ) {
+        if (map->debug)
+            msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.\n");
+        msSetConfigOption(map, "MS_NONSQUARE", "YES");
+        nonsquare_enabled = true;
+      }
     }
   }
 
@@ -1785,7 +1846,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
 
 void msWMSPrintAttribution(FILE *stream, const char *tabspace,
                            hashTableObj *metadata,
-                           const char *namespaces)
+                           const char * /*namespaces*/)
 {
   if (stream && metadata) {
     const char* title = msOWSLookupMetadata(metadata, "MO",
@@ -3701,7 +3762,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
 
       else
-        msDrawLayer(map, GET_LAYER(map, i), img);
+        IGNORE_RET_VAL(msDrawLayer(map, GET_LAYER(map, i), img));
     }
 
   } else {
@@ -3714,6 +3775,46 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     }
 
     img = msDrawMap(map, drawquerymap);
+  }
+
+/* see if we have tiled = true and a buffer */
+  /* if so, clip the image */
+  for (int i=0; i<numentries; i++) {
+    if (strcasecmp(names[i], "TILED") == 0 && strcasecmp(values[i], "TRUE") == 0) {
+      hashTableObj *meta = &(map->web.metadata);
+      const char *value;
+
+      if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
+        const int map_edge_buffer = atoi(value);
+        if ( map_edge_buffer > 0 ) {
+          /* we have to clip the image */
+
+          // TODO: we could probably avoid the use of an intermediate image
+          // by playing with the rasterBufferObj's data->rgb.pixels and data->rgb.row_stride values.
+          rendererVTableObj* renderer = MS_MAP_RENDERER(map);
+          rasterBufferObj imgBuffer;
+          if( renderer->getRasterBufferHandle((imageObj*)img,&imgBuffer) != MS_SUCCESS )
+          {
+              msFreeImage(img);
+              return MS_FAILURE;
+          }
+
+          int width = map->width - map_edge_buffer - map_edge_buffer;
+          int height = map->height - map_edge_buffer - map_edge_buffer;
+          imageObj* tmp = msImageCreate( width, height, map->outputformat, NULL, NULL, map->resolution, map->defresolution, NULL);
+
+          if((MS_FAILURE == renderer->mergeRasterBuffer(tmp,&imgBuffer,1.0,map_edge_buffer, map_edge_buffer,0, 0, width, height ))) {
+            msFreeImage(tmp);
+            msFreeImage(img);
+            img = NULL;
+          } else {
+            msFreeImage(img);
+            img = tmp;
+          }
+        }
+      }
+      break;
+    }
   }
 
   if (img == NULL)
@@ -3746,7 +3847,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 }
 
 static
-int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, const char *wms_exception_format)
+int msDumpResult(mapObj *map, int nVersion, const char *wms_exception_format)
 {
   int numresults=0;
 
@@ -3834,7 +3935,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
                      const char *wms_exception_format, owsRequestObj *ows_request)
 {
   int feature_count=1, numlayers_found=0;
-  pointObj point = {-1.0, -1.0};
+  pointObj point = {-1.0, -1.0, -1.0, -1.0};
   const char *info_format="MIME";
   errorObj *ms_error = msGetErrorObj();
   int query_status=MS_NOERR;
@@ -4085,7 +4186,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     msIO_sendHeaders();
     msIO_printf("GetFeatureInfo results:\n");
 
-    numresults = msDumpResult(map, 0, nVersion, wms_exception_format);
+    numresults = msDumpResult(map, nVersion, wms_exception_format);
 
     if (numresults == 0) msIO_printf("\n  Search returned no results.\n");
 

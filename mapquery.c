@@ -164,8 +164,7 @@ static void initQueryCache(queryCacheObj* queryCache)
  * limits allowed in map->query.max_cached_shape_count and
  * map->query.max_cached_shape_ram_amount.
  */
-static int canCacheShape(mapObj* map, queryCacheObj *queryCache,
-                         shapeObj* shape, int shape_ram_size)
+static int canCacheShape(mapObj* map, queryCacheObj *queryCache, int shape_ram_size)
 {
   if( !map->query.cache_shapes )
       return MS_FALSE;
@@ -205,7 +204,7 @@ static int addResult(mapObj* map, resultCacheObj *cache,
   int i;
   int shape_ram_size = (map->query.max_cached_shape_ram_amount > 0) ? 
                                             msGetShapeRAMSize( shape ) : 0;
-  int store_shape = canCacheShape (map, queryCache, shape, shape_ram_size);
+  int store_shape = canCacheShape (map, queryCache, shape_ram_size);
 
   if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)
@@ -996,8 +995,10 @@ int msQueryByFilter(mapObj *map)
       return MS_SUCCESS;
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()");
-  return MS_FAILURE;
+  if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("msQueryByFilter(): No matching record(s) found.");
+  }
+  return(MS_SUCCESS);
 
 restore_old_filter:
   lp->filteritem = old_filteritem;
@@ -1114,17 +1115,8 @@ int msQueryByRect(mapObj *map)
     }
     msLayerEnablePaging(lp, paging);
 
-    // Item set by mapwfs.cpp to restrict the number of columns selected
-    const char *value = msOWSLookupMetadata(&(lp->metadata), "G", "select_items");
-    if(value){
-        /* get only selected items */
-        status = msLayerWhichItems(lp, MS_FALSE, value);
-    }
-    else {
-        /* build item list, we want *all* items */
-        status = msLayerWhichItems(lp, MS_TRUE, NULL);
-    }
-
+    /* build item list, we want *all* items */
+    status = msLayerWhichItems(lp, MS_TRUE, NULL);
 
     if(status != MS_SUCCESS) {
       msFreeShape(&searchshape);
@@ -1311,8 +1303,10 @@ int msQueryByRect(mapObj *map)
       return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()");
-  return(MS_FAILURE);
+  if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("msQueryByRect(): No matching record(s) found.");
+  }
+  return(MS_SUCCESS);
 }
 
 static int is_duplicate(resultCacheObj *resultcache, int shapeindex, int tileindex)
@@ -1635,8 +1629,10 @@ int msQueryByFeatures(mapObj *map)
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0) return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()");
-  return(MS_FAILURE);
+  if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("msQueryByFeatures(): No matching record(s) found.");
+  }
+  return(MS_SUCCESS);
 }
 
 /* msQueryByPoint()
@@ -1879,8 +1875,10 @@ int msQueryByPoint(mapObj *map)
       return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()");
-  return(MS_FAILURE);
+  if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("msQueryByPoint(): No matching record(s) found.");
+  }
+  return(MS_SUCCESS);
 }
 
 int msQueryByShape(mapObj *map)
@@ -2166,8 +2164,10 @@ int msQueryByShape(mapObj *map)
       return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()");
-  return(MS_FAILURE);
+  if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("msQueryByShape(): No matching record(s) found.");
+  }
+  return(MS_SUCCESS);
 }
 
 /* msGetQueryResultBounds()

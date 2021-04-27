@@ -480,7 +480,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
       continue;
 
-    /* List only vector layers in which DUMP=TRUE */
     if (msWFSIsLayerSupported(lp))
       xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0, NULL, script_url));
   }

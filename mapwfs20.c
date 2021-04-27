@@ -94,6 +94,9 @@ int msWFSException20(mapObj *map, const char *locator,
   else if( EQUAL(exceptionCode, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED) ) {
     status = "403 Server processing failed";
   }
+  else if( EQUAL(exceptionCode, MS_OWS_ERROR_NOT_FOUND) ) {
+    status = "404 Not Found";
+  }
   else if( EQUAL(exceptionCode, MS_OWS_ERROR_NO_APPLICABLE_CODE) ) {
     status = "400 Internal Server Error";
   }
@@ -137,16 +140,6 @@ static int msWFSIncludeSection(wfsParamsObj *params, const char* pszSection)
             return TRUE;
     }
     return FALSE;
-}
-
-/************************************************************************/
-/*                       msWFSAddGlobalSRSNameParam                     */
-/************************************************************************/
-
-static void msWFSAddGlobalSRSNameParam(xmlNodePtr psMainNode,
-                                       xmlNsPtr psNsOws,
-                                       mapObj* map)
-{
 }
 
 /************************************************************************/
@@ -613,8 +606,6 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                 "Parameter", "version",
                 "2.0.0,1.1.0,1.0.0"));
 
-    msWFSAddGlobalSRSNameParam(psMainNode, psNsOws, map);
-
     /* Conformance declaration */
     xmlAddChild(psMainNode, msWFSConstraintDefaultValue(psNsOws, psNsOws, "ImplementsBasicWFS", "TRUE"));
     xmlAddChild(psMainNode, msWFSConstraintDefaultValue(psNsOws, psNsOws, "ImplementsTransactionalWFS", "FALSE"));
@@ -707,7 +698,6 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
         if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
             continue;
 
-        /* List only vector layers in which DUMP=TRUE */
         if (msWFSIsLayerSupported(lp))
         {
           if( psFtNode != NULL ) {
@@ -949,8 +939,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
 /*                       msWFSListStoredQueries20                       */
 /************************************************************************/
 
-int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
-                             cgiRequestObj *req, owsRequestObj *ows_request)
+int msWFSListStoredQueries20(mapObj *map, owsRequestObj *ows_request)
 {
   xmlDocPtr psDoc;
   xmlChar *buffer = NULL;
@@ -1139,7 +1128,7 @@ int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
 /************************************************************************/
 
 int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
-                             cgiRequestObj *req, owsRequestObj *ows_request)
+                                 owsRequestObj *ows_request)
 {
   xmlDocPtr psDoc;
   xmlChar *buffer = NULL;

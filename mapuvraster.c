@@ -238,13 +238,13 @@ static void msUVRasterLayerInfoFree( layerObj *layer )
 
 int msUVRASTERLayerOpen(layerObj *layer)
 {
-  uvRasterLayerInfo *uvlinfo;
-
   /* If we don't have info, initialize an empty one now */
   if( layer->layerinfo == NULL )
     msUVRasterLayerInfoInitialize( layer );
+  if( layer->layerinfo == NULL )
+    return MS_FAILURE;
 
-  uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
+  uvRasterLayerInfo* uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
 
   uvlinfo->refcount = uvlinfo->refcount + 1;
 
@@ -511,8 +511,8 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       atoi(CSLFetchNameValue( layer->processing, "UV_SPACING" ));
   }
 
-  width = (int)ceil(layer->map->width/spacing);
-  height = (int)ceil(layer->map->height/spacing);
+  width = (int)(layer->map->width/spacing);
+  height = (int)(layer->map->height/spacing);
 
   /* Initialize our dummy map */
   MS_INIT_COLOR(map_tmp->imagecolor, 255,255,255,255);
@@ -866,9 +866,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
             shapeindex, point.x, point.y);
 
-#ifdef USE_POINT_Z_M
   point.m = 0.0;
-#endif
 
   shape->type = MS_SHAPE_POINT;
   line.numpoints = 1;
@@ -916,7 +914,6 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
   shapefileObj *tileshpfile;
-  int tilelayerindex = -1;
 
   if( (!layer->data || strlen(layer->data) == 0)
       && layer->tileindex == NULL) {
@@ -930,7 +927,7 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
   /* If the layer use a tileindex, return the extent of the tileindex shapefile/referenced layer */
   if (layer->tileindex) {
-    tilelayerindex = msGetLayerIndex(map, layer->tileindex);
+    const int tilelayerindex = msGetLayerIndex(map, layer->tileindex);
     if(tilelayerindex != -1) /* does the tileindex reference another layer */
       return msLayerGetExtent(GET_LAYER(map, tilelayerindex), extent);
     else {

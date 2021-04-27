@@ -16,7 +16,6 @@ LAYER
   NAME "TEST"
   STATUS DEFAULT
   TYPE RASTER
-  DUMP TRUE
   DATA "data/red_square.tif"
   PROJECTION
     "init=epsg:4326"

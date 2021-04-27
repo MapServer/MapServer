@@ -189,7 +189,7 @@
 # RUN_PARMS: wfs_200_exception_getfeature_resourceid_disable_layer.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&RESOURCEID=disabled_province.977" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_getfeature_several_resourceid.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&RESOURCEID=province.977,province.978" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_getfeature_resourceid_notypenames.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&RESOURCEID=province.977" > [RESULT_DEVERSION]
-# RUN_PARMS: wfs_200_exception_getfeature_resourceid_inexisting.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&RESOURCEID=province.123456" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_getfeature_resourceid_inexisting.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&RESOURCEID=province.123456" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_exception_getfeature_resourceid_badstructure.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&RESOURCEID=foo" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_exception_getfeature_resourceid_invalid_typename.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&RESOURCEID=foo.123456" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_exception_getfeature_resourceid_filter_invalid_typename.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&FILTER=(<Filter><ResourceId rid='foo.977'/></Filter>)" > [RESULT_DEVERSION]
@@ -340,7 +340,6 @@ LAYER
 #    "init=epsg:42304"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS
@@ -370,7 +369,6 @@ LAYER
 #    "init=epsg:42304"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS

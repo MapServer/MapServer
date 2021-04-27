@@ -67,7 +67,7 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
     MS_REFCNT_INCR(classobj);
     layer->numclasses++;
     return layer->numclasses-1;
-  } else if (nIndex >= 0 && nIndex < layer->numclasses) {
+  } else {
 
     /* Copy classes existing at the specified nIndex or greater */
     /* to an index one higher */
@@ -88,9 +88,6 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
     /* increment number of classes and return */
     layer->numclasses++;
     return nIndex;
-  } else {
-    msSetError(MS_CHILDERR, "Invalid index", "msInsertClass()");
-    return -1;
   }
 }
 

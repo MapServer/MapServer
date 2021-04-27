@@ -68,7 +68,6 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   wfsParamsObj *psParams = NULL;
   rectObj bbox;
   const char *pszTmp;
-  int nLength, i = 0;
   char *pszVersion, *pszTypeName;
 
   if (!map || !lp || !bbox_ret)
@@ -129,9 +128,10 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (pszTmp) {
       pszTypeName = strchr(pszTmp, '=')+1;
       if (pszTypeName) {
-        nLength = strlen(pszTypeName);
+        const int nLength = strlen(pszTypeName);
         if (nLength > 0) {
-          for (i=0; i<nLength; i++) {
+          int i=0;
+          for (; i<nLength; i++) {
             if (pszTypeName[i] == '&')
               break;
           }
@@ -199,8 +199,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     msProjectRect(&(map->projection), &(lp->projection), &bbox);
   }
 
-  if (bbox_ret != NULL)
-    *bbox_ret = bbox;
+  *bbox_ret = bbox;
 
   return psParams;
 
@@ -214,8 +213,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed
  * by the caller.
  **********************************************************************/
-static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
-                                        rectObj *bbox, wfsParamsObj *psParams)
+static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams)
 {
   char *pszPostReq = NULL;
   char *pszFilter = NULL;
@@ -296,13 +294,13 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed
  * by the caller.
  **********************************************************************/
-static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
+static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
                                    wfsParamsObj *psParams)
 {
   char *pszURL = NULL, *pszOnlineResource=NULL;
   const char *pszTmp;
   char *pszVersion, *pszService, *pszTypename = NULL;
-  int bVersionInConnection = 0, bServiceInConnection = 0;
+  int bVersionInConnection = 0;
   int bTypenameInConnection = 0;
   size_t bufferSize = 0;
 
@@ -403,8 +401,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&VERSION=%s", pszVersion);
 
   /* SERVICE */
-  if (!bServiceInConnection)
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&SERVICE=%s", pszService);
+  snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&SERVICE=%s", pszService);
 
   /* TYPENAME */
   if (!bTypenameInConnection)
@@ -563,7 +560,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
                                     "FO", "request_method")) != NULL) {
     if (strncmp(pszTmp, "GET", 3) ==0) {
-      pszURL = msBuildWFSLayerGetURL(map, lp, &bbox, psParams);
+      pszURL = msBuildWFSLayerGetURL(lp, &bbox, psParams);
       if (!pszURL) {
         /* an error was already reported. */
         return MS_FAILURE;
@@ -635,7 +632,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (bPostRequest) {
     pasReqInfo[(*numRequests)].pszPostRequest =
-      msBuildWFSLayerPostRequest(map, lp, &bbox, psParams);
+      msBuildWFSLayerPostRequest(&bbox, psParams);
     pasReqInfo[(*numRequests)].pszPostContentType =
       msStrdup("text/xml");
   }
@@ -871,6 +868,7 @@ int msWFSLayerIsOpen(layerObj *lp)
 
 int msWFSLayerInitItemInfo(layerObj *layer)
 {
+  (void)layer;
   /* Nothing to do here.  OGR will do its own initialization when it */
   /* opens the actual file. */
   /* Note that we didn't implement our own msWFSLayerFreeItemInfo() */

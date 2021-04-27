@@ -39,6 +39,9 @@
 #include "renderers/agg/include/agg_conv_stroke.h"
 #include "renderers/agg/include/agg_ellipse.h"
 
+#include <memory>
+#include <vector>
+
 typedef mapserver::int32u band_type;
 typedef mapserver::row_ptr_cache<band_type> rendering_buffer;
 typedef pixfmt_utf<utfpix32, rendering_buffer> pixfmt_utf32;
@@ -50,58 +53,29 @@ static utfpix32 UTF_WATER = utfpix32(32);
 
 #define utfitem(c) utfpix32(c)
 
+namespace {
+
 struct shapeData
 {
-  char *datavalues;
-  char *itemvalue;
-  band_type utfvalue;
-  int serialid;
-};
-
-class lookupTable {
-public:
-  lookupTable()
-  {
-    table = (shapeData*) msSmallMalloc(sizeof(shapeData));
-    table->datavalues = NULL;
-    table->itemvalue = NULL;
-    table->utfvalue = 0;
-    table->serialid = 0;
-    size = 1;
-    counter = 0;
-  }
-
-  ~lookupTable()
-  {
-    int i;
-
-    for(i=0; i<size; i++)
-    {
-      if(table[i].datavalues)
-        msFree(table[i].datavalues);
-      if(table[i].itemvalue)
-        msFree(table[i].itemvalue);
-    }
-    msFree(table);
-  }
-
-  shapeData  *table;
-  int size;
-  int counter;
+  std::string datavalues{};
+  std::string itemvalue{};
+  band_type utfvalue = 0;
+  int serialid = 0;
 };
 
 /*
  * UTFGrid specific polygon adaptor.
  */
-class polygon_adaptor_utf:public polygon_adaptor
+class polygon_adaptor_utf final: public polygon_adaptor
 {
 public:
-  polygon_adaptor_utf(shapeObj *shape,int utfres_in):polygon_adaptor(shape)
+  polygon_adaptor_utf(shapeObj *shape,int utfres_in):
+      polygon_adaptor(shape),
+      utfresolution(utfres_in)
   {
-    utfresolution = utfres_in;
   }
 
-  virtual unsigned vertex(double* x, double* y)
+  unsigned vertex(double* x, double* y) override
   {
     if(m_point < m_pend) {
       bool first = m_point == m_line->point;
@@ -133,15 +107,16 @@ private:
 /*
  * UTFGrid specific line adaptor.
  */
-class line_adaptor_utf:public line_adaptor
+class line_adaptor_utf final: public line_adaptor
 {
 public:
-  line_adaptor_utf(shapeObj *shape,int utfres_in):line_adaptor(shape)
+  line_adaptor_utf(shapeObj *shape,int utfres_in):
+      line_adaptor(shape),
+      utfresolution(utfres_in)
   {
-    utfresolution = utfres_in;
   }
 
-  virtual unsigned vertex(double* x, double* y)
+  unsigned vertex(double* x, double* y) override
   {
     if(m_point < m_pend) {
       bool first = m_point == m_line->point;
@@ -167,41 +142,35 @@ private:
 
 class UTFGridRenderer {
 public:
-  UTFGridRenderer()
-  {
-    stroke = NULL;
-  }
-  ~UTFGridRenderer()
-  {
-    if(stroke)
-      delete stroke;
-    delete data;
-  }
-
-  lookupTable *data;
-  int utfresolution;
-  int layerwatch;
-  int renderlayer;
-  int useutfitem;
-  int useutfdata;
-  int duplicates;
-  band_type utfvalue;
-  layerObj *utflayer;
-  band_type *buffer;
-  rendering_buffer m_rendering_buffer;
-  pixfmt_utf32 m_pixel_format;
-  renderer_base m_renderer_base;
-  rasterizer_scanline m_rasterizer;
-  renderer_scanline m_renderer_scanline;
-  mapserver::scanline_bin sl_utf;
-  mapserver::conv_stroke<line_adaptor_utf> *stroke;
+  std::vector<shapeData> table{};
+  int utfresolution = 0;
+  int layerwatch = 0;
+  bool renderlayer = false;
+  bool useutfitem = false;
+  bool useutfdata = false;
+  bool duplicates = false;
+  band_type utfvalue = 0;
+  layerObj *utflayer = nullptr;
+  int width = 0;
+  int height = 0;
+  std::vector<band_type> buffer{};
+  rendering_buffer m_rendering_buffer{};
+  pixfmt_utf32 m_pixel_format{};
+  renderer_base m_renderer_base{};
+  rasterizer_scanline m_rasterizer{};
+  renderer_scanline m_renderer_scanline{};
+  mapserver::scanline_bin sl_utf{};
+  std::unique_ptr<mapserver::conv_stroke<line_adaptor_utf>> stroke{};
 };
 
-#define UTFGRID_RENDERER(image) ((UTFGridRenderer*) (image)->img.plugin)
+} // namespace
+
+#define UTFGRID_RENDERER(image) (static_cast<UTFGridRenderer*>((image)->img.plugin))
 
 /*
  * Encode to avoid unavailable char in the JSON
  */
+static
 unsigned int encodeForRendering(unsigned int toencode)
 {
   unsigned int encoded;
@@ -220,6 +189,7 @@ unsigned int encodeForRendering(unsigned int toencode)
 /*
  * Decode value to have the initial one
  */
+static
 unsigned int decodeRendered(unsigned int todecode)
 {
   unsigned int decoded;
@@ -236,66 +206,39 @@ unsigned int decodeRendered(unsigned int todecode)
 }
 
 /*
- * Allocate more memory to the table if necessary.
- */
-int growTable(lookupTable *data)
-{
-  int i;
-
-  data->table = (shapeData*) msSmallRealloc(data->table,sizeof(*data->table)*data->size*2);
-  data->size = data->size*2;
-
-  for(i=data->counter; i<data->size; i++)
-  {
-    data->table[i].datavalues = NULL;
-    data->table[i].itemvalue = NULL;
-    data->table[i].utfvalue = 0;
-    data->table[i].serialid = 0;
-  }
-  return MS_SUCCESS;
-}
-
-/*
  * Add the shapeObj UTFDATA and UTFITEM to the lookup table.
  */
+static
 band_type addToTable(UTFGridRenderer *r, shapeObj *p)
 {
-  band_type utfvalue;
-
   /* Looks for duplicates. */
-  if(r->duplicates==0 && r->useutfitem==1) {
-    int i;
-    for(i=0; i<r->data->counter; i++) {
-      if(!strcmp(p->values[r->utflayer->utfitemindex],r->data->table[i].itemvalue)) {
+  if(r->duplicates == false && r->useutfitem) {
+    const auto itemvalue = p->values[r->utflayer->utfitemindex];
+    for( const auto& tableItem: r->table ) {
+      if(tableItem.itemvalue == itemvalue) {
         /* Found a copy of the values in the table. */
-        utfvalue = r->data->table[i].utfvalue;
-
-        return utfvalue;
+        return tableItem.utfvalue;
       }
     }
   }
 
-  /* Grow size of table if necessary */
-  if(r->data->size == r->data->counter)
-    growTable(r->data);
-
-  utfvalue = (r->data->counter+1);
-
-  /* Simple operation so we don't have unavailable char in the JSON */
-  utfvalue = encodeForRendering(utfvalue);
-
   /* Data added to the table */
-  r->data->table[r->data->counter].datavalues = msEvalTextExpressionJSonEscape(&r->utflayer->utfdata, p);
+  shapeData table;
+  char* escaped = msEvalTextExpressionJSonEscape(&r->utflayer->utfdata, p);
+  table.datavalues = escaped ? escaped : "";
+  msFree(escaped);
 
   /* If UTFITEM is set in the mapfile we add its value to the table */
   if(r->useutfitem)
-    r->data->table[r->data->counter].itemvalue =  msStrdup(p->values[r->utflayer->utfitemindex]);
+    table.itemvalue = p->values[r->utflayer->utfitemindex];
 
-  r->data->table[r->data->counter].serialid = r->data->counter+1;
+  table.serialid = static_cast<int>(r->table.size()+1);
 
-  r->data->table[r->data->counter].utfvalue = utfvalue;
+  /* Simple operation so we don't have unavailable char in the JSON */
+  const auto utfvalue = encodeForRendering(table.serialid);
+  table.utfvalue = utfvalue;
 
-  r->data->counter++;
+  r->table.emplace_back(std::move(table));
 
   return utfvalue;
 }
@@ -304,7 +247,7 @@ band_type addToTable(UTFGridRenderer *r, shapeObj *p)
  * Use AGG to render any path.
  */
 template<class vertex_source>
-int utfgridRenderPath(imageObj *img, vertex_source &path)
+static int utfgridRenderPath(imageObj *img, vertex_source &path)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
   r->m_rasterizer.reset();
@@ -318,46 +261,33 @@ int utfgridRenderPath(imageObj *img, vertex_source &path)
 /*
  * Initialize the renderer, create buffer, allocate memory.
  */
-imageObj *utfgridCreateImage(int width, int height, outputFormatObj *format, colorObj * bg)
+static
+imageObj *utfgridCreateImage(int width, int height, outputFormatObj *format, colorObj * /*bg*/)
 {
-  UTFGridRenderer *r;
-  r = new UTFGridRenderer;
-
-  r->data = new lookupTable;
+  auto r = std::unique_ptr<UTFGridRenderer>(new UTFGridRenderer);
 
   r->utfresolution = atof(msGetOutputFormatOption(format, "UTFRESOLUTION", "4"));
   if(r->utfresolution < 1) {
     msSetError(MS_MISCERR, "UTFRESOLUTION smaller that 1 in the mapfile.", "utfgridCreateImage()");
-    return NULL;
+    return nullptr;
   }
-
-  r->layerwatch = 0;
-
-  r->renderlayer = 0;
-
-  r->useutfitem = 0;
-
-  r->useutfdata = 0;
-
   r->duplicates = EQUAL("true", msGetOutputFormatOption(format, "DUPLICATES", "true"));
 
-  r->utfvalue = 0;
+  r->width = width/r->utfresolution;
+  r->height = height/r->utfresolution;
 
-  r->buffer = (band_type*)msSmallMalloc(width/r->utfresolution * height/r->utfresolution * sizeof(band_type));
+  r->buffer.resize(r->width * r->height);
 
   /* AGG specific operations */
-  r->m_rendering_buffer.attach(r->buffer, width/r->utfresolution, height/r->utfresolution, width/r->utfresolution);
+  r->m_rendering_buffer.attach(&r->buffer[0], r->width, r->height, r->width);
   r->m_pixel_format.attach(r->m_rendering_buffer);
   r->m_renderer_base.attach(r->m_pixel_format);
   r->m_renderer_scanline.attach(r->m_renderer_base);
   r->m_renderer_base.clear(UTF_WATER);
   r->m_rasterizer.gamma(mapserver::gamma_none());
 
-  r->utflayer = NULL;
-
-  imageObj *image = NULL;
-  image = (imageObj *) msSmallCalloc(1,sizeof(imageObj));
-  image->img.plugin = (void*) r;
+  imageObj *image = (imageObj *) msSmallCalloc(1,sizeof(imageObj));
+  image->img.plugin = r.release();
 
   return image;
 }
@@ -365,11 +295,10 @@ imageObj *utfgridCreateImage(int width, int height, outputFormatObj *format, col
 /*
  * Free all the memory used by the renderer.
  */
+static
 int utfgridFreeImage(imageObj *img)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
-
-  msFree(r->buffer);
   delete r;
 
   img->img.plugin = NULL;
@@ -380,17 +309,15 @@ int utfgridFreeImage(imageObj *img)
 /*
  * Update a character in the utfgrid.
 */
-
+static
 int utfgridUpdateChar(imageObj *img, band_type oldChar, band_type newChar)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
-  int i,bufferLength;
 
-  bufferLength = (img->height/r->utfresolution) * (img->width/r->utfresolution);
-
-  for(i=0;i<bufferLength;i++){
-    if(r->buffer[i] == oldChar)
-      r->buffer[i] = newChar;
+  for( auto& ch: r->buffer ) {
+    if(ch == oldChar) {
+      ch = newChar;
+    }
   }
 
   return MS_SUCCESS;
@@ -399,65 +326,44 @@ int utfgridUpdateChar(imageObj *img, band_type oldChar, band_type newChar)
 /*
  * Remove unnecessary data that didn't made it to the final grid.
  */
-
+static
 int utfgridCleanData(imageObj *img)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
-  unsigned char* usedChar;
-  int i,bufferLength,itemFound,dataCounter;
-  shapeData* updatedData;
-  band_type utfvalue;
 
-  bufferLength = (img->height/r->utfresolution) * (img->width/r->utfresolution);
+  std::vector<bool> usedChar;
+  usedChar.resize(r->table.size());
 
-  usedChar =(unsigned char*) msSmallMalloc(r->data->counter*sizeof(unsigned char));
+  int itemFound=0;
 
-  for(i=0;i<r->data->counter;i++){
-    usedChar[i]=0;
-  }
-
-  itemFound=0;
-
-  for(i=0;i<bufferLength;i++)
+  for(const auto ch: r->buffer)
   {
-    if(decodeRendered(r->buffer[i]) != 0 && usedChar[decodeRendered(r->buffer[i])-1]==0)
+    const auto rendered = decodeRendered(ch);
+    if(rendered != 0 && !usedChar[rendered-1])
     {
       itemFound++;
-      usedChar[decodeRendered(r->buffer[i])-1] = 1;
+      usedChar[rendered-1] = true;
     }
   }
 
-  updatedData = (shapeData*) msSmallMalloc(itemFound * sizeof(shapeData));
-  dataCounter = 0;
+  std::vector<shapeData> updatedData;
+  updatedData.reserve(itemFound);
 
-  for(i=0; i< r->data->counter; i++){
-    if(usedChar[decodeRendered(r->data->table[i].utfvalue)-1]==1){
-        updatedData[dataCounter] = r->data->table[i];
+  for(const auto& tableItem: r->table) {
+    if(usedChar[decodeRendered(tableItem.utfvalue)-1]){
+        updatedData.emplace_back(tableItem);
+        auto& newData = updatedData.back();
 
-        updatedData[dataCounter].serialid=dataCounter+1;
+        newData.serialid=static_cast<int>(updatedData.size());
 
-        utfvalue=encodeForRendering(dataCounter+1);
+        const band_type utfvalue=encodeForRendering(newData.serialid);
 
-        utfgridUpdateChar(img,updatedData[dataCounter].utfvalue,utfvalue);
-        updatedData[dataCounter].utfvalue = utfvalue;
-
-      dataCounter++;
-    }
-    else {
-      if(r->data->table[i].datavalues)
-        msFree(r->data->table[i].datavalues);
-      if(r->data->table[i].itemvalue)
-        msFree(r->data->table[i].itemvalue);
+        utfgridUpdateChar(img,newData.utfvalue,utfvalue);
+        newData.utfvalue = utfvalue;
     }
   }
 
-  msFree(usedChar);
-
-  msFree(r->data->table);
-
-  r->data->table = updatedData;
-  r->data->counter = dataCounter;
-  r->data->size = dataCounter;
+  r->table = std::move(updatedData);
 
   return MS_SUCCESS;
 }
@@ -465,94 +371,87 @@ int utfgridCleanData(imageObj *img)
 /*
  * Print the renderer data as JSON.
  */
-int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)
+static
+int utfgridSaveImage(imageObj *img, mapObj * /*map*/, FILE *fp, outputFormatObj * /*format*/)
 {
-  int row, col, i, imgheight, imgwidth;
-  band_type pixelid;
-  char* pszEscaped;
-
   utfgridCleanData(img);
 
-  UTFGridRenderer *renderer = UTFGRID_RENDERER(img);
+  const UTFGridRenderer *renderer = UTFGRID_RENDERER(img);
 
   if(renderer->layerwatch>1)
     return MS_FAILURE;
 
-  imgheight = img->height/renderer->utfresolution;
-  imgwidth = img->width/renderer->utfresolution;
+  const int imgheight = renderer->height;
+  const int imgwidth = renderer->width;
 
   msIO_fprintf(fp,"{\"grid\":[");
 
   /* Print the buffer */
-  for(row=0; row<imgheight; row++) {
+  std::vector<wchar_t> string;
+  string.resize(imgwidth+1);
+  for(int row=0; row<imgheight; row++) {
 
-    wchar_t *string = (wchar_t*) msSmallMalloc ((imgwidth + 1) * sizeof(wchar_t));
-    wchar_t *stringptr;
-    stringptr = string;
     /* Need a comma between each line but JSON must not start with a comma. */
     if(row!=0)
       msIO_fprintf(fp,",");
     msIO_fprintf(fp,"\"");
-    for(col=0; col<img->width/renderer->utfresolution; col++) {
+    for(int col=0; col<imgwidth; col++) {
       /* Get the data from buffer. */
-      pixelid = renderer->buffer[(row*imgwidth)+col];
-
-      *stringptr = pixelid;
-      stringptr++;
+      band_type pixelid = renderer->buffer[(row*imgwidth)+col];
+      string[col] = pixelid;
     }
 
     /* Conversion to UTF-8 encoding */
-    *stringptr = '\0';
-    char * utf8;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	const char* encoding = "UCS-2LE";
 #else
 	const char* encoding = "UCS-4LE";
 #endif
 
-	  utf8 = msConvertWideStringToUTF8(string, encoding);
+    char* utf8 = msConvertWideStringToUTF8(string.data(), encoding);
     msIO_fprintf(fp,"%s", utf8);
     msFree(utf8);
-    msFree(string);
     msIO_fprintf(fp,"\"");
   }
 
   msIO_fprintf(fp,"],\"keys\":[\"\"");
 
   /* Print the specified key */
-  for(i=0;i<renderer->data->counter;i++) {
+  for(const auto& table: renderer->table) {
       msIO_fprintf(fp,",");
 
     if(renderer->useutfitem)
     {
-      pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
+      char* pszEscaped = msEscapeJSonString(table.itemvalue.c_str());
       msIO_fprintf(fp,"\"%s\"", pszEscaped);
       msFree(pszEscaped);
     }
     /* If no UTFITEM specified use the serial ID as the key */
     else
-      msIO_fprintf(fp,"\"%i\"", renderer->data->table[i].serialid);
+      msIO_fprintf(fp,"\"%i\"", table.serialid);
   }
 
   msIO_fprintf(fp,"],\"data\":{");
 
   /* Print the data */
   if(renderer->useutfdata) {
-    for(i=0;i<renderer->data->counter;i++) {
-      if(i!=0)
+    bool first = true;
+    for(const auto& table: renderer->table) {
+      if(!first)
         msIO_fprintf(fp,",");
+      first = false;
 
       if(renderer->useutfitem)
       {
-        pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
+        char* pszEscaped = msEscapeJSonString(table.itemvalue.c_str());
         msIO_fprintf(fp,"\"%s\":", pszEscaped);
         msFree(pszEscaped);
       }
       /* If no UTFITEM specified use the serial ID as the key */
       else
-        msIO_fprintf(fp,"\"%i\":", renderer->data->table[i].serialid);
+        msIO_fprintf(fp,"\"%i\":", table.serialid);
 
-      msIO_fprintf(fp,"%s", renderer->data->table[i].datavalues);
+      msIO_fprintf(fp,"%s", table.datavalues.c_str());
     }
   }
   msIO_fprintf(fp,"}}");
@@ -563,26 +462,27 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
 /*
  * Starts a layer for UTFGrid renderer.
  */
-int utfgridStartLayer(imageObj *img, mapObj *map, layerObj *layer)
+static
+int utfgridStartLayer(imageObj *img, mapObj * /*map*/, layerObj *layer)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
   /* Look if the layer uses the UTFGrid output format */
   if(layer->utfdata.string!=0) {
-    r->useutfdata = 1;
+    r->useutfdata = true;
   }
 
     /* layerwatch is set to 1 on first layer treated. Doesn't allow multiple layers. */
     if(!r->layerwatch) {
       r->layerwatch++;
 
-      r->renderlayer = 1;
+      r->renderlayer = true;
       r->utflayer = layer;
       layer->refcount++;
 
       /* Verify if renderer needs to use UTFITEM */
       if(r->utflayer->utfitem)
-        r->useutfitem = 1;
+        r->useutfitem = true;
     }
     /* If multiple layers, send error */
     else {
@@ -597,7 +497,8 @@ int utfgridStartLayer(imageObj *img, mapObj *map, layerObj *layer)
 /*
  * Tell renderer the layer is done.
  */
-int utfgridEndLayer(imageObj *img, mapObj *map, layerObj *layer)
+static
+int utfgridEndLayer(imageObj *img, mapObj * /*map*/, layerObj *layer)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -605,7 +506,7 @@ int utfgridEndLayer(imageObj *img, mapObj *map, layerObj *layer)
   if(r->renderlayer) {
     r->utflayer = NULL;
     layer->refcount--;
-    r->renderlayer = 0;
+    r->renderlayer = false;
   }
 
   return MS_SUCCESS;
@@ -614,6 +515,7 @@ int utfgridEndLayer(imageObj *img, mapObj *map, layerObj *layer)
 /*
  * Do the table operations on the shapes. Allow multiple types of data to be rendered.
  */
+static
 int utfgridStartShape(imageObj *img, shapeObj *shape)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
@@ -630,7 +532,8 @@ int utfgridStartShape(imageObj *img, shapeObj *shape)
 /*
  * Tells the renderer that the shape's rendering is done.
  */
-int utfgridEndShape(imageObj *img, shapeObj *shape)
+static
+int utfgridEndShape(imageObj *img, shapeObj *)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
@@ -641,9 +544,10 @@ int utfgridEndShape(imageObj *img, shapeObj *shape)
 /*
  * Function that renders polygons into UTFGrid.
  */
-int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *color)
+static
+int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *)
 {
-  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+  const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
   /* utfvalue is set to 0 if the shape isn't in the table. */
   if(r->utfvalue == 0) {
@@ -661,6 +565,7 @@ int utfgridRenderPolygon(imageObj *img, shapeObj *polygonshape, colorObj *color)
  * Function that renders lines into UTFGrid. Starts by looking if the line is a polygon
  * outline, draw it if it's not.
  */
+static
 int utfgridRenderLine(imageObj *img, shapeObj *lineshape, strokeStyleObj *linestyle)
 {
   UTFGridRenderer *r = UTFGRID_RENDERER(img);
@@ -677,7 +582,7 @@ int utfgridRenderLine(imageObj *img, shapeObj *lineshape, strokeStyleObj *linest
   line_adaptor_utf lines(lineshape, r->utfresolution);
 
   if(!r->stroke) {
-    r->stroke = new mapserver::conv_stroke<line_adaptor_utf>(lines);
+    r->stroke.reset(new mapserver::conv_stroke<line_adaptor_utf>(lines));
   } else {
     r->stroke->attach(lines);
   }
@@ -690,9 +595,10 @@ int utfgridRenderLine(imageObj *img, shapeObj *lineshape, strokeStyleObj *linest
 /*
  * Function that render vector type symbols into UTFGrid.
  */
+static
 int utfgridRenderVectorSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj * style)
 {
-  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+  const UTFGridRenderer *r = UTFGRID_RENDERER(img);
   double ox = symbol->sizex * 0.5;
   double oy = symbol->sizey * 0.5;
 
@@ -721,9 +627,10 @@ int utfgridRenderVectorSymbol(imageObj *img, double x, double y, symbolObj *symb
 /*
  * Function that renders Pixmap type symbols into UTFGrid.
  */
+static
 int utfgridRenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj * style)
 {
-  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+  const UTFGridRenderer *r = UTFGRID_RENDERER(img);
   rasterBufferObj *pixmap = symbol->pixmap_buffer;
 
   /* utfvalue is set to 0 if the shape isn't in the table. */
@@ -750,9 +657,10 @@ int utfgridRenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symb
 /*
  * Function that render ellipse type symbols into UTFGrid.
  */
+static
 int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj * style)
 {
-  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+  const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
   /* utfvalue is set to 0 if the shape isn't in the table. */
   if(r->utfvalue == 0) {
@@ -779,9 +687,10 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
   return MS_SUCCESS;
 }
 
-int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
+static
+int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj * /*c*/, colorObj * /*oc*/, int /*ow*/, int isMarker) {
 
-  UTFGridRenderer *r = UTFGRID_RENDERER(img);
+  const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
   /* If it's not a marker then it's a label or other thing and we dont
    *  want to draw it on the map
@@ -824,7 +733,8 @@ int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *o
   return MS_SUCCESS;
 }
 
-int utfgridFreeSymbol(symbolObj * symbol)
+static
+int utfgridFreeSymbol(symbolObj *)
 {
   return MS_SUCCESS;
 }

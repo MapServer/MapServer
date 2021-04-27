@@ -111,8 +111,6 @@ LAYER
     "init=./data/epsg2:42304"
   END
 
-  DUMP TRUE
-
   CLASSITEM "Name_e"
   CLASS
     NAME "Roads"
@@ -137,7 +135,6 @@ LAYER
 #    "init=epsg:42304"
   END
 
-  DUMP TRUE
   CLASSITEM "Name_e"
 
   CLASS
@@ -161,7 +158,6 @@ LAYER
   PROJECTION
     "init=epsg:32611"
   END
-  DUMP TRUE
 END # Layer
 
 END # Map File

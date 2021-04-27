@@ -53,7 +53,7 @@ static void msGEOSError(const char *format, ...)
 
 static void msGEOSNotice(const char *fmt, ...)
 {
-  return; /* do nothing with notices at this point */
+  (void)fmt; /* do nothing with notices at this point */
 }
 
 #ifndef USE_THREAD
@@ -107,7 +107,7 @@ static GEOSContextHandle_t msGetGeosContextHandle()
   }
 
   /* If the link is not already at the head of the list, promote it */
-  else if( link != NULL && link->next != NULL ) {
+  else {
     geos_thread_info_t *target = link->next;
 
     link->next = link->next->next;
@@ -479,31 +479,23 @@ static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
   return shape;
 }
 
-static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
-{
-  int i, j;
-  int numPoints, numLines;
+static void msGEOSGeometry2Shape_multiline_part(GEOSContextHandle_t handle, GEOSGeom part, shapeObj *shape) {
+  int i;
+  int type, numGeometries, numPoints;
   GEOSCoordSeq coords;
-  GEOSGeom lineString;
-
-  shapeObj *shape=NULL;
   lineObj line;
-  GEOSContextHandle_t handle = msGetGeosContextHandle();
+  
+  type = GEOSGeomTypeId_r(handle,part); 
+  if (type == GEOS_MULTILINESTRING) {
+    numGeometries = GEOSGetNumGeometries_r(handle,part);
 
-  if(!g) return NULL;
-  numLines = GEOSGetNumGeometries_r(handle,g);
-
-  shape = (shapeObj *) malloc(sizeof(shapeObj));
-  msInitShape(shape);
-
-  shape->type = MS_SHAPE_LINE;
-  shape->geometry = (GEOSGeom) g;
-
-  for(j=0; j<numLines; j++) {
-    lineString = (GEOSGeom) GEOSGetGeometryN_r(handle,g, j);
-    numPoints = GEOSGetNumCoordinates_r(handle,lineString);
-    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,lineString);
-
+    for(i=0; i<numGeometries; i++) {
+      GEOSGeom subPart = (GEOSGeom) GEOSGetGeometryN_r(handle, part, i);
+      msGEOSGeometry2Shape_multiline_part(handle, subPart, shape);
+    }
+  } else {
+    numPoints = GEOSGetNumCoordinates_r(handle,part);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,part);
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
 
@@ -514,6 +506,30 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
     }
 
     msAddLineDirectly(shape, &line);
+  }
+}
+
+static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
+{
+  int i;
+  int numGeometries;
+  GEOSGeom part;
+
+  shapeObj *shape=NULL;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
+
+  if(!g) return NULL;
+  numGeometries = GEOSGetNumGeometries_r(handle,g);
+
+  shape = (shapeObj *) malloc(sizeof(shapeObj));
+  msInitShape(shape);
+
+  shape->type = MS_SHAPE_LINE;
+  shape->geometry = (GEOSGeom) g;
+
+  for(i=0; i<numGeometries; i++) {
+    part = (GEOSGeom) GEOSGetGeometryN_r(handle, g, i);
+    msGEOSGeometry2Shape_multiline_part(handle, part, shape);
   }
 
   msComputeBounds(shape);
@@ -674,21 +690,16 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
     case GEOS_GEOMETRYCOLLECTION:
       if (!GEOSisEmpty_r(handle,g))
       {
-        int i, j, numGeoms;
-        shapeObj* shape;
-
-        numGeoms = GEOSGetNumGeometries_r(handle,g);
-
-        shape = (shapeObj *) malloc(sizeof(shapeObj));
+        shapeObj* shape = (shapeObj *) malloc(sizeof(shapeObj));
         msInitShape(shape);
         shape->type = MS_SHAPE_LINE;
         shape->geometry = (GEOSGeom) g;
-        
-        numGeoms = GEOSGetNumGeometries_r(handle,g);
-        for(i = 0; i < numGeoms; i++) { /* for each geometry */
+
+        const int numGeoms = GEOSGetNumGeometries_r(handle,g);
+        for(int i = 0; i < numGeoms; i++) { /* for each geometry */
            shapeObj* shape2 = msGEOSGeometry2Shape((GEOSGeom)GEOSGetGeometryN_r(handle,g, i));
            if (shape2) {
-              for (j = 0; j < shape2->numlines; j++)
+              for (int j = 0; j < shape2->numlines; j++)
                  msAddLineDirectly(shape, &shape2->line[j]);
               shape2->numlines = 0;
               shape2->geometry = NULL; /* not owned */

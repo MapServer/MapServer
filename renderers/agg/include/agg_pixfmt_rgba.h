@@ -1331,7 +1331,7 @@ namespace mapserver
         // Dca' = (Da - Dca) * Sa + Dca.(1 - Sa)
         // Da'  = Sa + Da - Sa.Da 
         static AGG_INLINE void blend_pix(value_type* p, 
-                                         unsigned sr, unsigned sg, unsigned sb, 
+                                         unsigned /*sr*/, unsigned /*sg*/, unsigned /*sb*/, 
                                          unsigned sa, unsigned cover)
         {
             sa = (sa * cover + 255) >> 8;

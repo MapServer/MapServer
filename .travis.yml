@@ -8,15 +8,11 @@ language: php
 matrix:
   include:
 
-    - php: 7.1
-      env:
-        - BUILD_NAME=PHP_7.1
-        - PYTHON_VERSION=2.7
-
     - php: 7.2
       env:
         - BUILD_NAME=PHP_7.2_WITH_ASAN
         - PYTHON_VERSION=3.6
+        - CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module (https://travis-ci.com/github/MapServer/MapServer/jobs/482212623)
 
     - php: 7.3
       env:

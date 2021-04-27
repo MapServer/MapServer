@@ -1,0 +1,12 @@
+version: '3'
+services:
+
+  oracle:
+    image: oslandia/oracle-slim-for-qgis:18.4.0-xe
+    environment:
+      - ORACLE_SID=XE
+      - ORACLE_PWD=adminpass
+      - ORACLE_PDB=ORCLPDBTEST
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - 1521:1521

@@ -1,10 +1,10 @@
 <?php
 
-class LabelObjTest extends PHPUnit_Framework_TestCase
+class LabelObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $label;
 
-    public function setUp()
+    public function setUp(): void
     {
         $map_file = 'maps/labels-leader.map';
         $map = new mapObj($map_file);

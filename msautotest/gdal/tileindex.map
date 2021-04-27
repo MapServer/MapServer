@@ -30,7 +30,6 @@ LAYER
   NAME grey
   TYPE raster
   STATUS default
-  DUMP TRUE
   TEMPLATE "fake.html"
   TILEINDEX "data/tile_index.shp"
   TILEITEM "location"

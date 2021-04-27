@@ -110,11 +110,7 @@ static msPostGISLayerInfo *msPostGISCreateLayerInfo(void)
 {
   msPostGISLayerInfo *layerinfo = new msPostGISLayerInfo;
   layerinfo->paging = MS_TRUE;
-#ifdef USE_POINT_Z_M
   layerinfo->force2d = MS_FALSE;
-#else
-  layerinfo->force2d = MS_TRUE;
-#endif
   return layerinfo;
 }
 
@@ -277,30 +273,22 @@ wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag)
   w->ptr += sizeof(double);
   if( nZMFlag & HAS_Z )
   {
-#ifdef USE_POINT_Z_M
       memcpy(&(p->z), w->ptr, sizeof(double));
-#endif
       w->ptr += sizeof(double);
   }
-#ifdef USE_POINT_Z_M
   else
   {
       p->z = 0;
   }
-#endif
   if( nZMFlag & HAS_M )
   {
-#ifdef USE_POINT_Z_M
       memcpy(&(p->m), w->ptr, sizeof(double));
-#endif
       w->ptr += sizeof(double);
   }
-#ifdef USE_POINT_Z_M
   else
   {
       p->m = 0;
   }
-#endif
 }
 
 /*
@@ -698,7 +686,7 @@ arcSegmentSide(const pointObj &p1, const pointObj &p2, const pointObj &q)
 static int
 arcCircleCenter(const pointObj& p1, const pointObj& p2, const pointObj& p3, pointObj *center, double *radius)
 {
-  pointObj c;
+  pointObj c = {0,0,0,0}; // initialize
   double r;
 
   /* Circle is closed, so p2 must be opposite p1 & p3. */
@@ -2432,8 +2420,10 @@ static PGresult* runPQexecParamsWithBindSubstitution(layerObj *layer, const char
 **
 ** Registered vtable->LayerWhichShapes function.
 */
+// cppcheck-suppress passedByValue
 static int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
 #ifdef USE_POSTGIS
   assert(layer != nullptr);
   assert(layer->layerinfo != nullptr);
@@ -2554,6 +2544,7 @@ static int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape)
 ** msPostGISLayerGetShape()
 **
  */
+// cppcheck-suppress passedByValue
 static int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
 {
 #ifdef USE_POSTGIS

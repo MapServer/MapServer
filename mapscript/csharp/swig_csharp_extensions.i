@@ -289,11 +289,17 @@ extern "C"
 #endif
 #ifdef SWIGEXPORT
 SWIGEXPORT int SWIGSTDCALL SetEnvironmentVariable(const char *envstring) {
-  return putenv(envstring);
+  /* putenv may not make a copy, so do it ourselves despite the memory leak */
+  char* envstringDup = (char*)malloc(strlen(envstring)+1);
+  memcpy(envstringDup, envstring, strlen(envstring)+1);
+  return putenv(envstringDup);
 }
 #else
 DllExport int SWIGSTDCALL SetEnvironmentVariable(const char *envstring) {
-  return putenv(envstring);
+  /* putenv may not make a copy, so do it ourselves despite the memory leak */
+  char* envstringDup = (char*)malloc(strlen(envstring)+1);
+  memcpy(envstringDup, envstring, strlen(envstring)+1);
+  return putenv(envstringDup);
 }
 #endif
 %}

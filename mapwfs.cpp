@@ -63,6 +63,9 @@ static int msWFSRunBasicGetFeature(mapObj* map,
                                    const wfsParamsObj *paramsObj,
                                    int nWFSVersion);
 
+static int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
+                      wfsParamsObj *wfsparams, int force_wfs_mode);
+
 /* Must be sorted from more recent to older one */
 static const int wfsSupportedVersions[] = {OWS_2_0_0, OWS_1_1_0, OWS_1_0_0};
 static const char* const wfsSupportedVersionsStr[] = { "2.0.0", "1.1.0", "1.0.0" };
@@ -261,7 +264,7 @@ char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, int nWFSVersion )
 /*
 **
 */
-static void msWFSPrintRequestCap(const char *wmtver, const char *request,
+static void msWFSPrintRequestCap(const char *request,
                                  const char *script_url,
                                  const char *format_tag,
                                  const char *formats_list)
@@ -862,18 +865,18 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   msIO_printf("<Capability>\n");
 
   msIO_printf("  <Request>\n");
-  msWFSPrintRequestCap(wmtver, "GetCapabilities", script_url_encoded,
+  msWFSPrintRequestCap("GetCapabilities", script_url_encoded,
                        NULL, NULL);
-  /* msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA", "SFE_XMLSCHEMA", NULL); */
-  /* msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", "GML2", "GML3", NULL); */
+  /* msWFSPrintRequestCap("DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA", "SFE_XMLSCHEMA", NULL); */
+  /* msWFSPrintRequestCap("GetFeature", script_url_encoded, "ResultFormat", "GML2", "GML3", NULL); */
 
   /* don't advertise the GML3 or GML for SFE support */
   if (msOWSRequestIsEnabled(map, NULL, "F", "DescribeFeatureType", MS_TRUE))
-    msWFSPrintRequestCap(wmtver, "DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA" );
+    msWFSPrintRequestCap("DescribeFeatureType", script_url_encoded, "SchemaDescriptionLanguage", "XMLSCHEMA" );
 
   if (msOWSRequestIsEnabled(map, NULL, "F", "GetFeature", MS_TRUE)) {
     formats_list = msWFSGetOutputFormatList( map, NULL, OWS_1_0_0 );
-    msWFSPrintRequestCap(wmtver, "GetFeature", script_url_encoded, "ResultFormat", formats_list );
+    msWFSPrintRequestCap("GetFeature", script_url_encoded, "ResultFormat", formats_list );
     msFree( formats_list );
   }
 
@@ -1015,7 +1018,7 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   gmlGeometryObj *geometry=NULL;
 
   if(!stream || !tab) return;
-  if(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
+  if(geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
 
   if(geometryList->numgeometries == 1) {
     geometry = &(geometryList->geometries[0]);
@@ -1999,10 +2002,7 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
 ** Generate the GML file tail closing the collection and cleanup a bit.
 */
 
-static int msWFSGetFeature_GMLPostfix( mapObj *map,
-                                       cgiRequestObj *req,
-                                       WFSGMLInfo *gmlinfo,
-                                       wfsParamsObj *paramsObj,
+static int msWFSGetFeature_GMLPostfix( WFSGMLInfo *gmlinfo,
                                        OWSGMLVersion outputformat,
                                        int maxfeatures,
                                        int iResultTypeHits,
@@ -2223,15 +2223,12 @@ static int msWFSRunBasicGetFeature(mapObj* map,
                 status = msLoadProjectionString(&(map->projection), pszMapSRS);
 
             if (status != 0) {
-                msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s",
-                            "msWFSGetFeature()", pszMapSRS);
+                msSetError(MS_WFSERR, "msLoadProjectionString() failed: %s", "msWFSGetFeature()", pszMapSRS);
                 msFree(pszMapSRS);
-                return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE,
-                                paramsObj->pszVersion);
+                return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, paramsObj->pszVersion);
             }
-            msFree(pszMapSRS);
-
         }
+        msFree(pszMapSRS);
 
         /*make sure that the layer projection is loaded.
             It could come from a ows/wfs_srs metadata*/
@@ -2744,7 +2741,7 @@ static void msWFSCleanupGMLInfo(WFSGMLInfo* pgmlinfo)
   msFree(pgmlinfo->user_namespace_uri_encoded);
 }
 
-static int msWFSGetGMLOutputFormat(mapObj *map, wfsParamsObj *paramsObj,
+static int msWFSGetGMLOutputFormat( wfsParamsObj *paramsObj,
                                     WFSGMLInfo* pgmlinfo,
                                     int nWFSVersion)
 {
@@ -3310,7 +3307,9 @@ static void msWFSSetShapeCache(mapObj* map)
     {
         map->query.cache_shapes = MS_TRUE;
         map->query.max_cached_shape_count = atoi(pszFeaturesCacheCount);
-        msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
+        if (map->debug >= MS_DEBUGLEVEL_V){
+           msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
+        }
     }
 
     if( pszFeaturesCacheSize )
@@ -3319,7 +3318,9 @@ static void msWFSSetShapeCache(mapObj* map)
         map->query.max_cached_shape_ram_amount = atoi(pszFeaturesCacheSize);
         if( strstr(pszFeaturesCacheSize, "mb") || strstr(pszFeaturesCacheSize, "MB") )
              map->query.max_cached_shape_ram_amount *= 1024 * 1024;
-        msDebug("Caching up to %d bytes of shapes\n", map->query.max_cached_shape_ram_amount);
+        if (map->debug >= MS_DEBUGLEVEL_V) {
+            msDebug("Caching up to %d bytes of shapes\n", map->query.max_cached_shape_ram_amount);
+        }
     }
 }
 
@@ -3380,7 +3381,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
   /* Is it a WFS 2.0 GetFeatureById stored query with an unknown id ? */
   /* If so, CITE interprets the spec as requesting to issue a OperationProcessingFailed */
-  /* exception. A bit strange when a similar request but with RESOURCEID= should */
+  /* exception. But it only checks that the HTTP error code is 403 or 404. So emit 404. */
+  /* A bit strange when a similar request but with RESOURCEID= should */
   /* produce an empty FeatureCollection */
   if( nWFSVersion >= OWS_2_0_0 &&
       paramsObj->pszTypeName != NULL && strcmp(paramsObj->pszTypeName, "?") == 0 &&
@@ -3399,7 +3401,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         {
             msSetError(MS_WFSERR, "Invalid rid '%s'", "msWFSGetFeature()", rid);
             CPLDestroyXMLNode(psDoc);
-            return msWFSException(map, NULL, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED,
+            return msWFSException(map, NULL, MS_OWS_ERROR_NOT_FOUND,
                                   paramsObj->pszVersion );
         }
         CPLDestroyXMLNode(psDoc);
@@ -3777,7 +3779,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   }
 
   /* Validate outputformat */
-  status = msWFSGetGMLOutputFormat(map, paramsObj, &gmlinfo, nWFSVersion);
+  status = msWFSGetGMLOutputFormat(paramsObj, &gmlinfo, nWFSVersion);
   if( status < 0 ) {
     psFormat = msWFSGetOtherOutputFormat(map, paramsObj);
     if( psFormat == NULL ) {
@@ -4053,7 +4055,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   msFreeCharArray(papszGMLGeometries, map->numlayers);
 
   if( psFormat == NULL && status == MS_SUCCESS ) {
-    msWFSGetFeature_GMLPostfix( map, req, &gmlinfo, paramsObj,
+    msWFSGetFeature_GMLPostfix( &gmlinfo,
                                 outputformat,
                                 maxfeatures, iResultTypeHits, iNumberOfFeatures,
                                 nWFSVersion );
@@ -4108,7 +4110,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             }
             else
             {
-                status = msWFSException(map, NULL, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED,
+                status = msWFSException(map, NULL, MS_OWS_ERROR_NOT_FOUND,
                                         paramsObj->pszVersion );
             }
         }
@@ -4297,7 +4299,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
   gmlinfo._typename = paramsObj->pszTypeName;
 
   /* Validate outputformat */
-  status = msWFSGetGMLOutputFormat(map, paramsObj, &gmlinfo, nWFSVersion);
+  status = msWFSGetGMLOutputFormat(paramsObj, &gmlinfo, nWFSVersion);
   if( status < 0 ) {
     msSetError(MS_WFSERR,
                 "'%s' is not a permitted output format for GetPropertyValue request.",
@@ -4448,7 +4450,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   paramsObj = msWFSCreateParamsObj();
   /* TODO : store also parameters that are inside the map object */
   /* into the paramsObj.  */
-  status = msWFSParseRequest(map, requestobj, ows_request, paramsObj, force_wfs_mode);
+  status = msWFSParseRequest(map, requestobj, paramsObj, force_wfs_mode);
   if (status != MS_SUCCESS)
   {
     msWFSFreeParamsObj(paramsObj);
@@ -4631,11 +4633,11 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
 
   else if (nWFSVersion >= OWS_2_0_0 &&
            strcasecmp(paramsObj->pszRequest, "ListStoredQueries") == 0)
-    returnvalue = msWFSListStoredQueries20(map, paramsObj, requestobj, ows_request);
+    returnvalue = msWFSListStoredQueries20(map, ows_request);
 
   else if (nWFSVersion >= OWS_2_0_0 &&
            strcasecmp(paramsObj->pszRequest, "DescribeStoredQueries") == 0)
-    returnvalue = msWFSDescribeStoredQueries20(map, paramsObj, requestobj, ows_request);
+    returnvalue = msWFSDescribeStoredQueries20(map, paramsObj, ows_request);
 
   else if (msWFSGetIndexUnsupportedOperation(paramsObj->pszRequest) >= 0 ) {
     /* Unsupported WFS request */
@@ -5086,7 +5088,7 @@ static void msWFSSimplifyPropertyNameAndFilter(wfsParamsObj *wfsparams)
 /*                                                                      */
 /*      Parse request into the params object.                           */
 /************************************************************************/
-int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
                       wfsParamsObj *wfsparams, int force_wfs_mode)
 {
 #ifdef USE_WFS_SVR
@@ -5245,10 +5247,12 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
           }
           /* these are unsupported requests. Just set the  */
           /* request value and return; */
-          else if (msWFSGetIndexUnsupportedOperation(psOperation->pszValue) >= 0) {
+          else {
             int idx = msWFSGetIndexUnsupportedOperation(psOperation->pszValue);
-            wfsparams->pszRequest = msStrdup(wfsUnsupportedOperations[idx]);
-            break;
+            if( idx >= 0 ) {
+              wfsparams->pszRequest = msStrdup(wfsUnsupportedOperations[idx]);
+              break;
+            }
           }
         }
       }

@@ -140,7 +140,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   GDALDriverH  hMemDriver, hOutputDriver;
   int          nBands = 1;
   int          iLine;
-  GByte       *pabyAlphaLine = NULL;
   char        **papszOptions = NULL;
   outputFormatObj *format = image->format;
   rasterBufferObj rb;
@@ -211,20 +210,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   if( format->imagemode == MS_IMAGEMODE_RGB ) {
     nBands = 3;
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
-    if(UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
+    if(MS_UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
       msReleaseLock( TLOCK_GDAL );
       return MS_FAILURE;
     }
   } else if( format->imagemode == MS_IMAGEMODE_RGBA ) {
-    pabyAlphaLine = (GByte *) calloc(image->width,1);
-    if (pabyAlphaLine == NULL) {
-      msReleaseLock( TLOCK_GDAL );
-      msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()", image->width);
-      return MS_FAILURE;
-    }
     nBands = 4;
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
-    if(UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
+    if(MS_UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
       msReleaseLock( TLOCK_GDAL );
       return MS_FAILURE;
     }
@@ -358,9 +351,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
       }
     }
   }
-
-  if( pabyAlphaLine != NULL )
-    free( pabyAlphaLine );
 
   /* -------------------------------------------------------------------- */
   /*      Attach the palette if appropriate.                              */
@@ -637,7 +627,7 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
   /*      Export as a WKT string.                                         */
   /* -------------------------------------------------------------------- */
   if( eErr == OGRERR_NONE )
-    eErr = OSRExportToWkt( hSRS, &pszWKT );
+    OSRExportToWkt( hSRS, &pszWKT );
 
   OSRDestroySpatialReference( hSRS );
 

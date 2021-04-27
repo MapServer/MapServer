@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
       continue;
     }
 
-    if(strcmp(argv[i], "-all_debug") == 0 && i < argc-1 ) { /* global debug */
+    if(i < argc-1 && strcmp(argv[i], "-all_debug") == 0) { /* global debug */
       int debug_level = atoi(argv[++i]);
 
       msSetGlobalDebugLevel(debug_level);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
         i+=2;
       }
 
-      if(strcmp(argv[i], "-all_debug") == 0 && i < argc-1 ) { /* global debug */
+      if(i < argc-1 && strcmp(argv[i], "-all_debug") == 0) { /* global debug */
         int debug_level = atoi(argv[++i]);
 
         /* msSetGlobalDebugLevel() already called. Just need to force debug
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 
       }
 
-      if(strcmp(argv[i], "-map_debug") == 0 && i < argc-1 ) { /* debug */
+      if(i < argc-1 && strcmp(argv[i], "-map_debug") == 0) { /* debug */
         map->debug = atoi(argv[++i]);
 
         /* Send output to stderr by default */
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
           msSetErrorFile("stderr", NULL);
       }
 
-      if(strcmp(argv[i], "-layer_debug") == 0 && i < argc-1 ) { /* debug */
+      if(i < argc-1 && strcmp(argv[i], "-layer_debug") == 0) { /* debug */
         const char *layer_name = argv[++i];
         int debug_level = atoi(argv[++i]);
         int got_layer = 0;

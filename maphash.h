@@ -120,7 +120,7 @@ extern "C" {
    * RETURNS:
    *     string value of item
    */
-  MS_DLL_EXPORT const char *msLookupHashTable( hashTableObj *table, const char *key);
+  MS_DLL_EXPORT const char *msLookupHashTable( const hashTableObj *table, const char *key);
 
   /* msRemoveHashTable - remove item from table at key
    * ARGS:
@@ -137,7 +137,7 @@ extern "C" {
    * RETURNS:
    *     first key as a string
    */
-  MS_DLL_EXPORT const char *msFirstKeyFromHashTable( hashTableObj *table );
+  MS_DLL_EXPORT const char *msFirstKeyFromHashTable( const hashTableObj *table );
 
   /* msNextKeyFromHashTable - get next key
    * ARGS:
@@ -146,7 +146,7 @@ extern "C" {
    * RETURNS:
    *     the key of the item of following prevkey as a string
    */
-  MS_DLL_EXPORT const char *msNextKeyFromHashTable( hashTableObj *table,
+  MS_DLL_EXPORT const char *msNextKeyFromHashTable( const hashTableObj *table,
       const char *prevkey );
 
   /* msHashIsEmpty - get next key
@@ -156,7 +156,7 @@ extern "C" {
    *     MS_TRUE if the table is empty and MS_FALSE if the table has items
    */
 
-  MS_DLL_EXPORT int msHashIsEmpty( hashTableObj* table );
+  MS_DLL_EXPORT int msHashIsEmpty( const hashTableObj* table );
 
 #endif /*SWIG*/
 

@@ -84,6 +84,8 @@
 
         self->point[self->numpoints].x = p->x;
         self->point[self->numpoints].y = p->y;
+        self->point[self->numpoints].z = p->z;
+        self->point[self->numpoints].m = p->m;
         self->numpoints++;
 
         return MS_SUCCESS;
@@ -98,6 +100,8 @@
 
         self->point[i].x = p->x;
         self->point[i].y = p->y;
+        self->point[i].z = p->z;
+        self->point[i].m = p->m;
         return MS_SUCCESS;
     }
 

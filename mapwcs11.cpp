@@ -285,7 +285,7 @@ void msWCS_11_20_PrintMetadataLinks(layerObj *layer, xmlDocPtr doc,
 /************************************************************************/
 
 static int msWCSGetCapabilities11_CoverageSummary(
-  mapObj *map, wcsParamsObj *params, cgiRequestObj *req,
+  mapObj *map,
   xmlDocPtr doc, xmlNodePtr psContents, layerObj *layer )
 
 {
@@ -613,7 +613,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
           continue;
 
         status = msWCSGetCapabilities11_CoverageSummary(
-                   map, params, req, psDoc, psMainNode, layer );
+                   map, psDoc, psMainNode, layer );
         if(status != MS_SUCCESS) {
           msFree(identifier_list);
           return MS_FAILURE;

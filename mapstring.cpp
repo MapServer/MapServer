@@ -287,7 +287,6 @@ char *strcasestr(const char *s, const char *find)
 int strncasecmp(const char *s1, const char *s2, size_t len)
 {
   const char *cp1, *cp2;
-  int cmp = 0;
 
   cp1 = s1;
   cp2 = s2;
@@ -301,6 +300,7 @@ int strncasecmp(const char *s1, const char *s2, size_t len)
     return 1;
 
   while(*cp1 && *cp2 && len) {
+    int cmp;
     if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
       return(cmp);
     cp1++;
@@ -325,7 +325,6 @@ int strncasecmp(const char *s1, const char *s2, size_t len)
 int strcasecmp(const char *s1, const char *s2)
 {
   const char *cp1, *cp2;
-  int cmp = 0;
 
   cp1 = s1;
   cp2 = s2;
@@ -333,6 +332,7 @@ int strcasecmp(const char *s1, const char *s2)
     return (0);
   }
   while(*cp1 && *cp2) {
+    int cmp;
     if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
       return(cmp);
     cp1++;
@@ -596,7 +596,7 @@ void msStringTrimBlanks(char *string)
 
 void msStringTrimBlanks(std::string& string)
 {
-  const size_t npos = string.find_last_not_of(string, ' ');
+  const size_t npos = string.find_last_not_of(' ');
   if( npos != std::string::npos )
     string.resize(npos+1);
 }
@@ -1069,7 +1069,7 @@ char ** msStringSplitComplex( const char * pszString,
    * If the last token was empty, then we need to capture
    * it now, as the loop would skip it.
    */
-  if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0
+  if( pszString != NULL && *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0
       && strchr(pszDelimiters,*(pszString-1)) != NULL ) {
     if( nRetLen >= nRetMax - 1 ) {
       nRetMax = nRetMax * 2 + 10;
@@ -1317,6 +1317,7 @@ char *msEncodeHTMLEntities(const char *string)
       /* If we had to realloc then this string must contain several */
       /* entities... so let's go with twice the previous buffer size */
       buflen *= 2;
+      /* cppcheck-suppress memleakOnRealloc */
       newstring = (char*)realloc(newstring, buflen+1);
       MS_CHECK_ALLOC(newstring, buflen+1, NULL);
     }
@@ -1719,12 +1720,24 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     FriBidiLevel *levels;
     FriBidiStrIndex new_len;
     fribidi_boolean log2vis;
-    int i, j;
 
     visual = (FriBidiChar *) msSmallMalloc (sizeof (FriBidiChar) * (len + 1));
     ltov = NULL;
     vtol = NULL;
     levels = NULL;
+
+    // fribidi_log2vis() doesn't support multi-line paragraphs.
+    // See: https://lists.freedesktop.org/archives/fribidi/2008-January/000515.html
+    for( size_t i = 0; i < len; i++ )
+    {
+        if (logical[i] == '\n') {
+          msSetError(MS_IDENTERR,
+                     "Input string is a multi-line paragraph, which is not supported.",
+                     "msGetFriBidiEncodedString()");
+          msFree(visual);
+          return NULL;
+        }
+    }
 
     /* Create a bidi string. */
     log2vis = fribidi_log2vis (logical, len, &base,
@@ -1734,10 +1747,9 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     if (!log2vis) {
       msSetError(MS_IDENTERR, "Failed to create bidi string.",
                  "msGetFriBidiEncodedString()");
+      msFree(visual);
       return NULL;
     }
-
-    new_len = len;
 
     /* Convert it to utf-8 for display. */
 #ifdef FRIBIDI_NO_CHARSETS
@@ -1756,7 +1768,8 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 
     /* scan str and compress out FRIBIDI_CHAR_FILL UTF8 characters */
 
-    for (i=0, j=0; i<new_len; i++, j++) {
+    int j=0;
+    for (int i=0; i<new_len; i++, j++) {
       if (outstring[i] == '\xef' && outstring[i+1] == '\xbb' && outstring[i+2] == '\xbf') {
         i += 3;
       }
@@ -1768,7 +1781,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 
 #endif
 
-    free(visual);
+    msFree(visual);
     return msStrdup(outstring);
   }
 }
@@ -1854,7 +1867,6 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
   size_t nStr;
   size_t nInSize;
   size_t nOutSize;
-  size_t iconv_status = -1;
   size_t nBufferSize;
 
   char* pszUTF8 = NULL;
@@ -1878,7 +1890,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
       nInSize = sizeof (wchar_t)*nStr;
       pszUTF8 = output;
       pwszWide = string;
-      iconv_status = msIconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+      size_t iconv_status = msIconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
           case E2BIG:
@@ -1933,7 +1945,6 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
   size_t nStr;
   size_t nInSize;
   size_t nOutSize;
-  size_t iconv_status = -1;
   size_t nBufferSize;
 
   const char* pszUTF8 = NULL;
@@ -1957,7 +1968,7 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
       nInSize = sizeof (char)*nStr;
       pszUTF8 = string;
       pwszWide = output;
-      iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
+      size_t iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
           case E2BIG:
@@ -2393,12 +2404,17 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
     bufleft = bufsize;
 
+    bool failedIconv = false;
     while (len > 0) {
       const size_t iconv_status = msIconv(cd, (char**)&inp, &len, &outp, &bufleft);
       if(iconv_status == static_cast<size_t>(-1)) {
-        msFree(out);
-        continue; /* silently ignore failed conversions */
+        failedIconv = true;
+        break;
       }
+    }
+    if( failedIconv ) {
+      msFree(out);
+      continue; /* silently ignore failed conversions */
     }
     out[bufsize - bufleft] = '\0';
     msFree(shape->values[i]);

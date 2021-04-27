@@ -263,7 +263,7 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   if (ows_request.service == NULL) {
 #ifdef USE_LIBXML2
     if (ows_request.request && EQUAL(ows_request.request, "GetMetadata")) {
-      status = msMetadataDispatch(map, request, &ows_request);
+      status = msMetadataDispatch(map, request);
       msOWSClearRequestObj(&ows_request);
       return status;
     }
@@ -755,8 +755,6 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
   int disableFlag = MS_FALSE;
   int allFlag = MS_FALSE;
   char *bufferPtr, *ptr = NULL;
-  int i;
-  size_t len = 0;
 
   *disabled = MS_FALSE;
 
@@ -764,11 +762,11 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
     return MS_FALSE;
 
   ptr = (char*)metadata;
-  len = strlen(ptr);
+  const size_t len = strlen(ptr);
   requestBuffer[0] = '\0';
   bufferPtr = requestBuffer;
 
-  for (i=0; i<=len; ++i,++ptr) {
+  for (size_t i=0; i<=len; ++i,++ptr) {
 
     if (!wordFlag && isspace(*ptr))
       continue;
@@ -1837,12 +1835,11 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
 {
   const char *value;
   char *metadata_name;
-  size_t buffer_size = 0, buffer_size_tmp = 0;
   char *encoded;
   int status = MS_NOERR;
   char *type=NULL, *width=NULL, *height=NULL, *urlfrmt=NULL, *href=NULL;
 
-  buffer_size = strlen(name)+10;
+  const size_t buffer_size = strlen(name)+10;
   metadata_name = (char*)malloc(buffer_size);
 
   /* Get type */
@@ -1851,7 +1848,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(type_format)+strlen(encoded)+1;
+      const size_t buffer_size_tmp = strlen(type_format)+strlen(encoded)+1;
       type = (char*)malloc(buffer_size_tmp);
       snprintf(type, buffer_size_tmp, type_format, encoded);
       msFree(encoded);
@@ -1864,7 +1861,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(width_format)+strlen(encoded)+1;
+      const size_t buffer_size_tmp = strlen(width_format)+strlen(encoded)+1;
       width = (char*)malloc(buffer_size_tmp);
       snprintf(width, buffer_size_tmp, width_format, encoded);
       msFree(encoded);
@@ -1877,7 +1874,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(height_format)+strlen(encoded)+1;
+      const size_t buffer_size_tmp = strlen(height_format)+strlen(encoded)+1;
       height = (char*)malloc(buffer_size_tmp);
       snprintf(height, buffer_size_tmp, height_format, encoded);
       msFree(encoded);
@@ -1890,7 +1887,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(urlfrmt_format)+strlen(encoded)+1;
+      const size_t buffer_size_tmp = strlen(urlfrmt_format)+strlen(encoded)+1;
       urlfrmt = (char*)malloc(buffer_size_tmp);
       snprintf(urlfrmt, buffer_size_tmp, urlfrmt_format, encoded);
       msFree(encoded);
@@ -1903,7 +1900,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(href_format)+strlen(encoded)+1;
+      const size_t buffer_size_tmp = strlen(href_format)+strlen(encoded)+1;
       href = (char*)malloc(buffer_size_tmp);
       snprintf(href, buffer_size_tmp, href_format, encoded);
       msFree(encoded);
@@ -1925,31 +1922,31 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
       }
     } else {
       if(!type && type_format && default_type) {
-        buffer_size_tmp = strlen(type_format) + strlen(default_type) + 2;
+        const size_t buffer_size_tmp = strlen(type_format) + strlen(default_type) + 2;
         type = (char*) malloc(buffer_size_tmp);
         snprintf(type, buffer_size_tmp, type_format, default_type);
       } else if(!type)
         type = msStrdup("");
       if(!width && width_format && default_width) {
-        buffer_size_tmp = strlen(width_format) + strlen(default_width) + 2;
+        const size_t buffer_size_tmp = strlen(width_format) + strlen(default_width) + 2;
         width = (char*) malloc(buffer_size_tmp);
         snprintf(width, buffer_size_tmp, width_format, default_width);
       } else if(!width)
         width = msStrdup("");
       if(!height && height_format && default_height) {
-        buffer_size_tmp =  strlen(height_format) + strlen(default_height) + 2;
+        const size_t buffer_size_tmp =  strlen(height_format) + strlen(default_height) + 2;
         height = (char*) malloc(buffer_size_tmp);
         snprintf(height, buffer_size_tmp, height_format, default_height);
       } else if(!height)
         height = msStrdup("");
       if(!urlfrmt && urlfrmt_format && default_urlfrmt) {
-        buffer_size_tmp = strlen(urlfrmt_format) + strlen(default_urlfrmt) + 2;
+        const size_t buffer_size_tmp = strlen(urlfrmt_format) + strlen(default_urlfrmt) + 2;
         urlfrmt = (char*) malloc(buffer_size_tmp);
         snprintf(urlfrmt, buffer_size_tmp, urlfrmt_format, default_urlfrmt);
       } else if(!urlfrmt)
         urlfrmt = msStrdup("");
       if(!href && href_format && default_href) {
-        buffer_size_tmp = strlen(href_format) + strlen(default_href) + 2;
+        const size_t buffer_size_tmp = strlen(href_format) + strlen(default_href) + 2;
         href = (char*) malloc(buffer_size_tmp);
         snprintf(href, buffer_size_tmp, href_format, default_href);
       } else if(!href)
@@ -2298,7 +2295,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
         }
         /*for wms 1.3.0 we need to make sure that we present the BBOX with
           a reversed axes for some espg codes*/
-        if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0) {
+        if (wms_version >= OWS_1_3_0 && strncasecmp(value, "EPSG:", 5) == 0) {
           msAxisNormalizePoints( &proj, 1, &(ext.minx), &(ext.miny) );
           msAxisNormalizePoints( &proj, 1, &(ext.maxx), &(ext.maxy) );
         }
@@ -2431,6 +2428,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext)
 {
+  (void)map;
   const char *value;
 
   if ((value = msOWSLookupMetadata(&(lp->metadata), namespaces, "extent")) != NULL) {
@@ -2626,14 +2624,14 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   char *result;
   char **tokens;
   int numtokens, i;
-  size_t bufferSize = 0;
-  char *oldStyle;
+  char *oldStyle = NULL;
   
-  msOWSGetEPSGProj( proj, metadata, namespaces,
-                         bReturnOnlyFirstOne, &oldStyle );
+  msOWSGetEPSGProj( proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle );
 
-  if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 )
+  if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 ) {
+    msFree(oldStyle);
     return NULL;
+  }
 
   result = msStrdup("");
 
@@ -2653,8 +2651,8 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
     }
 
     if( strlen(urn) > 0 ) {
-      bufferSize = strlen(result)+strlen(urn)+2;
-      result = (char *) realloc(result, bufferSize);
+      const size_t bufferSize = strlen(result)+strlen(urn)+2;
+      result = (char *) msSmallRealloc(result, bufferSize);
 
       if( strlen(result) > 0 )
         strlcat( result, " ", bufferSize);
@@ -2687,13 +2685,14 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
   char *result;
   char **tokens;
   int numtokens, i;
-  char *oldStyle;
+  char *oldStyle = NULL;
   
-  msOWSGetEPSGProj( proj, metadata, namespaces,
-                         bReturnOnlyFirstOne, &oldStyle);
+  msOWSGetEPSGProj( proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle);
 
-  if( oldStyle == NULL || !EQUALN(oldStyle,"EPSG:",5) )
+  if( oldStyle == NULL || !EQUALN(oldStyle,"EPSG:",5) ) {
+    msFree(oldStyle); // avoid leak
     return NULL;
+  }
 
   result = msStrdup("");
 
@@ -2712,7 +2711,7 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
       strlcpy( urn, "", sizeof(urn) );
 
     if( strlen(urn) > 0 ) {
-      result = (char *) realloc(result,strlen(result)+strlen(urn)+2);
+      result = (char *) msSmallRealloc(result,strlen(result)+strlen(urn)+2);
 
       if( strlen(result) > 0 )
         strcat( result, " " );

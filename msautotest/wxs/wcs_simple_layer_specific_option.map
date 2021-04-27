@@ -71,7 +71,6 @@ LAYER
   NAME grey
   TYPE raster
   STATUS ON
-  DUMP TRUE
   DATA "grey.tif"
 
   PROJECTION

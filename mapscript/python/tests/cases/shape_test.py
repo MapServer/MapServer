@@ -97,8 +97,8 @@ class InlineFeatureTestCase(MapTestCase):
         assert s.__geo_interface__ == {
             'geometry': {
                 'type': 'Polygon',
-                'coordinates': [[(-0.25, 51.227222), (-0.25, 51.727222), (0.25, 51.727222),
-                                 (0.25, 51.227222), (-0.25, 51.227222)]]
+                'coordinates': [[(-0.25, 51.227222, 0.0), (-0.25, 51.727222, 0.0), (0.25, 51.727222, 0.0),
+                                 (0.25, 51.227222, 0.0), (-0.25, 51.227222, 0.0)]]
             },
             'type': 'Feature',
             'bbox': (-0.25, 51.227222, 0.25, 51.727222),
@@ -119,7 +119,7 @@ class InlineFeatureTestCase(MapTestCase):
         assert s.__geo_interface__ == {
             'geometry': {
                 'type': 'Point',
-                'coordinates': [[(0.0, 51.477222)]]
+                'coordinates': [[(0.0, 51.477222, 0.0)]]
             },
             'type': 'Feature',
             'bbox': (0.0, 51.477222, 0.0, 51.477222),

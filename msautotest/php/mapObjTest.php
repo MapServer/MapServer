@@ -1,11 +1,11 @@
 <?php
 
-class MapObjTest extends PHPUnit_Framework_TestCase
+class MapObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $map;
     protected $map_file = 'maps/ogr_query.map';
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->map = new mapObj($this->map_file);
     }

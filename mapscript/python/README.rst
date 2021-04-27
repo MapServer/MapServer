@@ -127,20 +127,6 @@ Now you should be able to import mapscript:
     python -c "import mapscript;print(mapscript.msGetVersion())"
     MapServer version 7.6.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
 
-If you failed to add the MapServer binaries to your system path you may see one of the following errors:
-
-.. code-block:: python
-
-    ImportError: No module named _mapscript # Python 2.x
-    ModuleNotFoundError: No module named '_mapscript' # Python 3.x
-
-If your version of mapscript does not match your version of MapServer you may instead one of the following messages:
-
-.. code-block:: python
-
-    ImportError: DLL load failed: The specified module could not be found.
-    ImportError: DLL load failed: The specified procedure could not be found.
-
 Installation on Unix
 --------------------
 
@@ -174,6 +160,44 @@ to install mapscript to a non-default location. E.g.
 In summary the ``install`` target runs the ``setup.py install`` command using custom paths (when set) similar to below:
 
     python setup.py install --root=${DESTDIR} --prefix={CMAKE_INSTALL_PREFIX}
+
+Installation Troubleshooting
+----------------------------
+
+If the ``_mapscript.pyd`` (or ``_mapscript.so`` on Unix) is missing from the `Lib/site-packages/mapscript` 
+folder (which can happen if the source installation is installed rather than a pre-compiled version) the following error will occur:
+
+.. code-block:: python
+
+    ImportError: cannot import name '_mapscript' from partially initialized module 'mapscript' (most likely due to a circular import)
+
+If the mapscript library is not on your ``PYTHONPATH`` you may see one of the following errors:
+
+.. code-block:: python
+
+    ImportError: No module named _mapscript # Python 2.x
+    ModuleNotFoundError: No module named '_mapscript' # Python 3.x
+
+If the ``MapServer.dll`` cannot be found in your system paths (or ``MAPSERVER_DLL_PATH`` environment variable when using Python 3.8 
+or higher on Windows) you will see the following message:
+
+.. code-block:: python
+
+    ImportError: DLL load failed: The specified module could not be found.
+
+If MapServer has been built with a dependency also used by Python, and the versions don't match you may see the error below. 
+This is a particular problem on Windows with ``sqlite3.dll`` as it is used by both Python and MapServer. Copying the ``sqlite3.dll``
+from the MapServer binaries folder alongside ``_mapscript.pyd`` in `Lib/site-packages/mapscript` can resolve this. 
+
+.. code-block:: python
+
+    ImportError: DLL load failed: The specified procedure could not be found.
+
+If you are using 32 bit Python on Windows and attempt to use a 64 bit version of MapScript the following import error will occur:
+
+.. code-block:: python
+
+    ImportError: DLL load failed while importing _mapscript: %1 is not a valid Win32 application.
 
 Quickstart
 ----------

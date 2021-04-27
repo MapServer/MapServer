@@ -30,9 +30,15 @@
 #ifndef MAPPRIMITIVE_H
 #define MAPPRIMITIVE_H
 
-/* feature primitives */
+ /**
+ A rectObj represents a rectangle or bounding box.
+ A rectObj may be a lone object or an attribute of another object and has no other associations.
+ */
 typedef struct {
-  double minx, miny, maxx, maxy;
+  double minx; ///< Minimum easting
+  double miny; ///< Minimum northing
+  double maxx; ///< Maximum easting
+  double maxy; ///< Maximum northing
 } rectObj;
 
 #ifndef SWIG
@@ -42,20 +48,25 @@ typedef struct {
 } vectorObj;
 #endif /*SWIG*/
 
+/**
+A :class:`pointObj` has an x, y, z and m values.
+A :class:`pointObj` instance may be associated with a :class:`lineObj`.
+*/
 typedef struct {
-  double x;
-  double y;
-#ifdef USE_POINT_Z_M
-  double z;
-  double m;
-#endif
+  double x; ///< The x coordinate of the point
+  double y; ///< The y coordinate of the point
+  double z; ///< The z (height) coordinate of the point
+  double m; ///< The m (measure) of the point, used for linear referencing
 } pointObj;
 
+/**
+A :class:`lineObj` is composed of one or more :class:`pointObj` instances
+*/
 typedef struct {
 #ifdef SWIG
   %immutable;
 #endif
-  int numpoints;
+  int numpoints; ///< Number of points in the line
 #ifndef SWIG
   pointObj *point;
 #endif
@@ -64,38 +75,43 @@ typedef struct {
 #endif
 } lineObj;
 
+/**
+Each feature of a layer's data is a :class:`shapeObj`. Each part of the shape is a closed :class:`lineObj`.
+*/
 typedef struct {
+
+#ifndef SWIG
+    lineObj *line;
+    char **values;
+    void *geometry;
+    void *renderer_cache;
+#endif
+
 #ifdef SWIG
   %immutable;
 #endif
-  int numlines;
-  int numvalues;
-#ifndef SWIG
-  lineObj *line;
-  char **values;
-  void *geometry;
-  void *renderer_cache;
-#endif
+  int numlines; ///< Number of parts
+  int numvalues; ///< Number of shape attributes
 
 #ifdef SWIG
   %mutable;
 #endif
 
-  rectObj bounds;
-  int type; /* MS_SHAPE_TYPE */
-  long index;
-  int tileindex;
-  int classindex;
-  char *text;
+  rectObj bounds; ///< Bounding box of shape
+  int type; ///< MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or MS_SHAPE_NULL
+  long index; ///< Feature index within the layer
+  int tileindex; ///< Index of tiled file for tile-indexed layers
+  int classindex; ///< The class index for features of a classified layer
+  char *text; ///< Shape annotation
 
   int scratch;
-  int resultindex; /* index within a query result set */
+  int resultindex; ///< Index within a query result set
 } shapeObj;
 
 typedef lineObj multipointObj;
 
 #ifndef SWIG
-/* attribute primatives */
+/* attribute primitives */
 typedef struct {
   char *name;
   long type;

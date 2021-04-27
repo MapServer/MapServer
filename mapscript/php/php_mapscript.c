@@ -290,10 +290,8 @@ PHP_FUNCTION(ms_newPointObj)
 
   point->x = 0;
   point->y = 0;
-#ifdef USE_POINT_Z_M
   point->z = 0;
   point->m = 0;
-#endif
 
   /* Return point object */
   MAPSCRIPT_MAKE_PARENT(NULL, NULL);
@@ -723,6 +721,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferBytes)
   gdBuf.data = buf->data;
   gdBuf.size = buf->data_offset;
   gdBuf.owns_data = MS_FALSE;
+  (void)gdBuf.owns_data;
 
   /* we are seizing ownership of the buffer contents */
   buf->data_offset = 0;

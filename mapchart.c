@@ -122,7 +122,9 @@ int WARN_UNUSED drawRectangle(mapObj *map, imageObj *image, double mx, double my
 
   point[0].x = point[4].x = point[3].x = mx;
   point[0].y = point[4].y = point[1].y = my;
+  /* cppcheck-suppress unreadVariable */
   point[1].x = point[2].x = Mx;
+  /* cppcheck-suppress unreadVariable */
   point[2].y = point[3].y = My;
 
   return msDrawShadeSymbol(map,image,&shape,style,1.0);
@@ -145,7 +147,7 @@ int WARN_UNUSED msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
   left = center->x-barWidth/2.;
 
   for(c=0; c<numvalues; c++) {
-    if(UNLIKELY(MS_FAILURE == drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c])))
+    if(MS_UNLIKELY(MS_FAILURE == drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c])))
       return MS_FAILURE;
     cur -= values[c];
   }
@@ -203,11 +205,11 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
       (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
     if(y!=vertOriginClipped) { /*don't draw bars of height == 0 (i.e. either values==0, or clipped)*/
       if(values[c]>0) {
-        if(UNLIKELY(MS_FAILURE == drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c])))
+        if(MS_UNLIKELY(MS_FAILURE == drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c])))
           return MS_FAILURE;
       }
       else {
-        if(UNLIKELY(MS_FAILURE == drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c])))
+        if(MS_UNLIKELY(MS_FAILURE == drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c])))
           return MS_FAILURE;
       }
     }
@@ -235,7 +237,7 @@ int WARN_UNUSED msDrawPieChart(mapObj *map, imageObj *image,
     double angle = values[i];
     if(angle==0) continue; /*no need to draw. causes artifacts with outlines*/
     angle*=360.0/dTotal;
-    if(UNLIKELY(MS_FAILURE == msDrawPieSlice(map ,image, center, styles[i], diameter/2., start, start+angle)))
+    if(MS_UNLIKELY(MS_FAILURE == msDrawPieSlice(map ,image, center, styles[i], diameter/2., start, start+angle)))
       return MS_FAILURE;
 
     start+=angle;
@@ -293,17 +295,21 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
   chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
   if(chartRangeProcessingKey==NULL)
     return MS_FALSE;
-  attrib = msSmallMalloc(strlen(chartRangeProcessingKey)+1);
-  switch(sscanf(chartRangeProcessingKey,"%s %lf %lf %lf %lf",attrib,
-                &mindiameter,&maxdiameter,&minvalue,&maxvalue)) {
-    case 1: /*we only have the attribute*/
-    case 5: /*we have the attribute and the four range values*/
-      break;
-    default:
-      free(attrib);
-      msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
-      return MS_FAILURE;
+  attrib = msStrdup(chartRangeProcessingKey);
+  char* space = strchr(attrib, ' ');
+  if( space ) {
+      *space = '\0';
+      switch(sscanf(space+1,"%lf %lf %lf %lf",
+                    &mindiameter,&maxdiameter,&minvalue,&maxvalue)) {
+        case 4: /*we have the attribute and the four range values*/
+          break;
+        default:
+          free(attrib);
+          msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
+          return MS_FAILURE;
+      }
   }
+
   /*create a new class in the layer containing the wanted attribute
    * as the SIZE of its first STYLE*/
   newclass=msGrowLayerClasses(layer);

@@ -811,7 +811,6 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
 int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
                           char *filename, int unique_layer_names)
 {
-  char *pszProj=NULL;
   char *pszValue;
   const char *pszHash;
   char *pszName=NULL;
@@ -970,7 +969,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   pszHash = msLookupHashTable(&(layer->metadata), "wms_srs");
   if(((pszHash == NULL) || (strcasecmp(pszHash, "") == 0)) &&
       map->projection.numargs != 0) {
-    pszProj = map->projection.args[map->projection.numargs-1];
+    char* pszProj = map->projection.args[map->projection.numargs-1];
 
     if(pszProj != NULL) {
       if(strncasecmp(pszProj, "AUTO:", 5) == 0) {
@@ -987,6 +986,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
                   pszProj);
         }
       }
+      msFree(pszProj);
     }
   }
 
@@ -1148,9 +1148,6 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
   if( psRoot == NULL ) {
     msSetError( MS_MAPCONTEXTERR, "Invalid XML file (%s)",
                 "msLoadMapContext()", filename );
-    if(psRoot != NULL)
-      CPLDestroyXMLNode(psRoot);
-
     return MS_FAILURE;
   }
 
@@ -1313,7 +1310,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 #if defined(USE_WMS_LYR)
   const char * version;
   char *pszEPSG;
-  char * tabspace=NULL, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
+  char * tabspace=NULL, *pszChar,*pszSLD=NULL,*pszSLD2=NULL;
   char *pszStyle, *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
   int i, nValue, nVersion=OWS_VERSION_NOTSET;
@@ -1652,13 +1649,13 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       /* Format */
       if(msLookupHashTable(&(GET_LAYER(map, i)->metadata),"wms_formatlist")==NULL &&
           msLookupHashTable(&(GET_LAYER(map, i)->metadata),"wms_format")==NULL) {
-        pszURL = NULL;
+        char* pszURL;
         if(GET_LAYER(map, i)->connection)
           pszURL = msStrdup( GET_LAYER(map, i)->connection );
         else
           pszURL = msStrdup( "" );
-        pszValueMod = pszURL;
-        pszValueMod = strstr( pszValueMod, "FORMAT=" );
+
+        pszValueMod = strstr( pszURL, "FORMAT=" );
         if( pszValueMod ) {
           pszValueMod += 7;
           pszChar = strchr(pszValueMod, '&');
@@ -1672,8 +1669,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
             msFree(pszEncodedVal);
           }
         }
-        if(pszURL)
-          free(pszURL);
+        free(pszURL);
       } else {
         char **papszFormats;
         int numFormats, nForm;
@@ -1714,14 +1710,14 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           pszValue ++;
       if(pszValue == NULL || strlen(pszValue) < 1) {
         /* Check if the style is in the connection URL */
-        pszURL = "";
+        char* pszURL;
         if(GET_LAYER(map, i)->connection)
           pszURL = msStrdup( GET_LAYER(map, i)->connection );
         else
           pszURL = msStrdup( "" );
-        pszValueMod = pszURL;
+
         /* Grab the STYLES in the URL */
-        pszValueMod = strstr( pszValueMod, "STYLES=" );
+        pszValueMod = strstr( pszURL, "STYLES=" );
         if( pszValueMod ) {
           pszValueMod += 7;
           pszChar = strchr(pszValueMod, '&');
@@ -1791,10 +1787,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
             pszSLD2 = NULL;
           }
         }
-        if(pszURL) {
-          free(pszURL);
-          pszURL = NULL;
-        }
+        free(pszURL);
       } else {
         const char* pszCurrent;
         /* If the style information is not in the connection URL, */

@@ -115,7 +115,6 @@ RUN cd /build && \
       -DWITH_KML=ON \
       -DWITH_LIBXML2=ON \
       -DWITH_OGR=ON \
-      -DWITH_POINT_Z_M=ON \
       -DWITH_PROJ=ON \
       -DWITH_SOS=ON  \
       -DWITH_THREAD_SAFETY=ON \

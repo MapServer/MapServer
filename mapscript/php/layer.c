@@ -286,51 +286,50 @@ PHP_METHOD(layerObj, __get)
                   else IF_GET_STRING("group", php_layer->layer->group)
                     else IF_GET_STRING("data", php_layer->layer->data)
                       else IF_GET_LONG("type",  php_layer->layer->type)
-                        else IF_GET_LONG("dump", php_layer->layer->dump)
-                          else IF_GET_DOUBLE("tolerance", php_layer->layer->tolerance)
-                            else IF_GET_LONG("toleranceunits", php_layer->layer->toleranceunits)
-                              else IF_GET_LONG("sizeunits", php_layer->layer->sizeunits)
-                                else IF_GET_DOUBLE("symbolscaledenom", php_layer->layer->symbolscaledenom)
-                                  else IF_GET_LONG("maxclasses",  php_layer->layer->maxclasses)
-                                    else IF_GET_DOUBLE("minscaledenom", php_layer->layer->minscaledenom)
-                                      else IF_GET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom)
-                                        else IF_GET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom)
-                                          else IF_GET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom)
-                                            else IF_GET_DOUBLE("maxgeowidth", php_layer->layer->maxgeowidth)
-                                              else IF_GET_DOUBLE("mingeowidth", php_layer->layer->mingeowidth)
-                                                else IF_GET_STRING("mask", php_layer->layer->mask)
-                                                  else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
-                                                    else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
-                                                      else IF_GET_LONG("startindex", php_layer->layer->startindex)
-                                                        else IF_GET_LONG("transform", php_layer->layer->transform)
-                                                          else IF_GET_LONG("labelcache", php_layer->layer->labelcache)
-                                                            else IF_GET_LONG("postlabelcache", php_layer->layer->postlabelcache)
-                                                              else IF_GET_STRING("labelitem", php_layer->layer->labelitem)
-                                                                else IF_GET_STRING("tileitem", php_layer->layer->tileitem)
-                                                                  else IF_GET_STRING("tileindex", php_layer->layer->tileindex)
-                                                                    else IF_GET_STRING("header", php_layer->layer->header)
-                                                                      else IF_GET_STRING("footer", php_layer->layer->footer)
-                                                                        else IF_GET_STRING("connection", php_layer->layer->connection)
-                                                                          else IF_GET_LONG("connectiontype", php_layer->layer->connectiontype)
-                                                                            else IF_GET_STRING("filteritem", php_layer->layer->filteritem)
-                                                                              else IF_GET_STRING("template", php_layer->layer->template)
-                                                                                else IF_GET_LONG("opacity", (php_layer->layer->compositer?php_layer->layer->compositer->opacity:100))
-                                                                                  else IF_GET_STRING("styleitem", php_layer->layer->styleitem)
-                                                                                    else IF_GET_LONG("numitems", php_layer->layer->numitems)
-                                                                                      else IF_GET_LONG("numjoins", php_layer->layer->numjoins)
-                                                                                        else IF_GET_LONG("num_processing", php_layer->layer->numprocessing)
-                                                                                          else IF_GET_STRING("requires", php_layer->layer->requires)
-                                                                                            else IF_GET_STRING("labelrequires", php_layer->layer->labelrequires)
-                                                                                              else IF_GET_OBJECT("offsite", mapscript_ce_color, php_layer->offsite, &php_layer->layer->offsite)
-                                                                                                else IF_GET_OBJECT("extent", mapscript_ce_rect, php_layer->extent, &php_layer->layer->extent)
-                                                                                                  else IF_GET_OBJECT("grid",  mapscript_ce_grid, php_layer->grid, (graticuleObj *)(php_layer->layer->layerinfo))
-                                                                                                    else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata)
-                                                                                                      else IF_GET_OBJECT("bindvals", mapscript_ce_hashtable, php_layer->bindvals, &php_layer->layer->bindvals)
-                                                                                                        else IF_GET_OBJECT("cluster", mapscript_ce_cluster, php_layer->cluster, &php_layer->layer->cluster)
-                                                                                                          else IF_GET_OBJECT("projection", mapscript_ce_projection, php_layer->projection, &php_layer->layer->projection)
-                                                                                                            else {
-                                                                                                              mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-                                                                                                            }
+                        else IF_GET_DOUBLE("tolerance", php_layer->layer->tolerance)
+                          else IF_GET_LONG("toleranceunits", php_layer->layer->toleranceunits)
+                            else IF_GET_LONG("sizeunits", php_layer->layer->sizeunits)
+                              else IF_GET_DOUBLE("symbolscaledenom", php_layer->layer->symbolscaledenom)
+                                else IF_GET_LONG("maxclasses",  php_layer->layer->maxclasses)
+                                  else IF_GET_DOUBLE("minscaledenom", php_layer->layer->minscaledenom)
+                                    else IF_GET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom)
+                                      else IF_GET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom)
+                                        else IF_GET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom)
+                                          else IF_GET_DOUBLE("maxgeowidth", php_layer->layer->maxgeowidth)
+                                            else IF_GET_DOUBLE("mingeowidth", php_layer->layer->mingeowidth)
+                                              else IF_GET_STRING("mask", php_layer->layer->mask)
+                                                else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
+                                                  else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
+                                                    else IF_GET_LONG("startindex", php_layer->layer->startindex)
+                                                      else IF_GET_LONG("transform", php_layer->layer->transform)
+                                                        else IF_GET_LONG("labelcache", php_layer->layer->labelcache)
+                                                          else IF_GET_LONG("postlabelcache", php_layer->layer->postlabelcache)
+                                                            else IF_GET_STRING("labelitem", php_layer->layer->labelitem)
+                                                              else IF_GET_STRING("tileitem", php_layer->layer->tileitem)
+                                                                else IF_GET_STRING("tileindex", php_layer->layer->tileindex)
+                                                                  else IF_GET_STRING("header", php_layer->layer->header)
+                                                                    else IF_GET_STRING("footer", php_layer->layer->footer)
+                                                                      else IF_GET_STRING("connection", php_layer->layer->connection)
+                                                                        else IF_GET_LONG("connectiontype", php_layer->layer->connectiontype)
+                                                                          else IF_GET_STRING("filteritem", php_layer->layer->filteritem)
+                                                                            else IF_GET_STRING("template", php_layer->layer->template)
+                                                                              else IF_GET_LONG("opacity", (php_layer->layer->compositer?php_layer->layer->compositer->opacity:100))
+                                                                                else IF_GET_STRING("styleitem", php_layer->layer->styleitem)
+                                                                                  else IF_GET_LONG("numitems", php_layer->layer->numitems)
+                                                                                    else IF_GET_LONG("numjoins", php_layer->layer->numjoins)
+                                                                                      else IF_GET_LONG("num_processing", php_layer->layer->numprocessing)
+                                                                                        else IF_GET_STRING("requires", php_layer->layer->requires)
+                                                                                          else IF_GET_STRING("labelrequires", php_layer->layer->labelrequires)
+                                                                                            else IF_GET_OBJECT("offsite", mapscript_ce_color, php_layer->offsite, &php_layer->layer->offsite)
+                                                                                              else IF_GET_OBJECT("extent", mapscript_ce_rect, php_layer->extent, &php_layer->layer->extent)
+                                                                                                else IF_GET_OBJECT("grid",  mapscript_ce_grid, php_layer->grid, (graticuleObj *)(php_layer->layer->layerinfo))
+                                                                                                  else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata)
+                                                                                                    else IF_GET_OBJECT("bindvals", mapscript_ce_hashtable, php_layer->bindvals, &php_layer->layer->bindvals)
+                                                                                                      else IF_GET_OBJECT("cluster", mapscript_ce_cluster, php_layer->cluster, &php_layer->layer->cluster)
+                                                                                                        else IF_GET_OBJECT("projection", mapscript_ce_projection, php_layer->projection, &php_layer->layer->projection)
+                                                                                                          else {
+                                                                                                            mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                                                                          }
 }
 
 PHP_METHOD(layerObj, __set)
@@ -368,54 +367,53 @@ PHP_METHOD(layerObj, __set)
               else IF_SET_STRING("group", php_layer->layer->group, value)
                 else IF_SET_STRING("data", php_layer->layer->data, value)
                   else IF_SET_LONG("type",  php_layer->layer->type, value)
-                    else IF_SET_LONG("dump", php_layer->layer->dump, value)
-                      else IF_SET_DOUBLE("tolerance", php_layer->layer->tolerance, value)
-                        else IF_SET_LONG("toleranceunits", php_layer->layer->toleranceunits, value)
-                          else IF_SET_LONG("sizeunits", php_layer->layer->sizeunits, value)
-                            else IF_SET_DOUBLE("symbolscaledenom", php_layer->layer->symbolscaledenom, value)
-                              else IF_SET_DOUBLE("minscaledenom", php_layer->layer->minscaledenom, value)
-                                else IF_SET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom, value)
-                                  else IF_SET_LONG("minfeaturesize", php_layer->layer->minfeaturesize, value)
-                                    else IF_SET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom, value)
-                                      else IF_SET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom, value)
-                                        else IF_SET_DOUBLE("maxgeowidth", php_layer->layer->maxgeowidth, value)
-                                          else IF_SET_DOUBLE("mingeowidth", php_layer->layer->mingeowidth, value)
-                                            else IF_SET_STRING("mask", php_layer->layer->mask, value)
-                                              else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
-                                                else IF_SET_LONG("startindex", php_layer->layer->startindex, value)
-                                                  else IF_SET_LONG("transform", php_layer->layer->transform, value)
-                                                    else IF_SET_LONG("labelcache", php_layer->layer->labelcache, value)
-                                                      else IF_SET_LONG("postlabelcache", php_layer->layer->postlabelcache, value)
-                                                        else IF_SET_STRING("labelitem", php_layer->layer->labelitem, value)
-                                                          else IF_SET_STRING("tileitem", php_layer->layer->tileitem, value)
-                                                            else IF_SET_STRING("tileindex", php_layer->layer->tileindex, value)
-                                                              else IF_SET_STRING("header", php_layer->layer->header, value)
-                                                                else IF_SET_STRING("footer", php_layer->layer->footer, value)
-                                                                  else IF_SET_STRING("connection", php_layer->layer->connection, value)
-                                                                    else IF_SET_STRING("filteritem", php_layer->layer->filteritem, value)
-                                                                      else IF_SET_STRING("template", php_layer->layer->template, value)
-                                                                          else IF_SET_STRING("styleitem", php_layer->layer->styleitem, value)
-                                                                            else IF_SET_LONG("num_processing", php_layer->layer->numprocessing, value)
-                                                                              else IF_SET_STRING("requires", php_layer->layer->requires, value)
-                                                                                else IF_SET_STRING("labelrequires", php_layer->layer->labelrequires, value)
-                                                                                  else if ( (STRING_EQUAL("offsite", property)) ||
-                                                                                            (STRING_EQUAL("grid", property)) ||
-                                                                                            (STRING_EQUAL("metadata", property)) ||
-                                                                                            (STRING_EQUAL("bindvals", property)) ||
-                                                                                            (STRING_EQUAL("projection", property)) ||
-                                                                                            (STRING_EQUAL("maxclasses", property)) ||
-                                                                                            (STRING_EQUAL("numitems", property)) ||
-                                                                                            (STRING_EQUAL("numjoins", property)) ||
-                                                                                            (STRING_EQUAL("extent", property)) ||
-                                                                                            (STRING_EQUAL("cluster", property)) ) {
-                                                                                    mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
-                                                                                  } else if ( (STRING_EQUAL("numclasses", property)) ||
-                                                                                              (STRING_EQUAL("index", property)) ||
-                                                                                              (STRING_EQUAL("connectiontype", property)) ) {
-                                                                                    mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
-                                                                                  } else {
-                                                                                    mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-                                                                                  }
+                     else IF_SET_DOUBLE("tolerance", php_layer->layer->tolerance, value)
+                      else IF_SET_LONG("toleranceunits", php_layer->layer->toleranceunits, value)
+                        else IF_SET_LONG("sizeunits", php_layer->layer->sizeunits, value)
+                          else IF_SET_DOUBLE("symbolscaledenom", php_layer->layer->symbolscaledenom, value)
+                            else IF_SET_DOUBLE("minscaledenom", php_layer->layer->minscaledenom, value)
+                              else IF_SET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom, value)
+                                else IF_SET_LONG("minfeaturesize", php_layer->layer->minfeaturesize, value)
+                                  else IF_SET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom, value)
+                                    else IF_SET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom, value)
+                                      else IF_SET_DOUBLE("maxgeowidth", php_layer->layer->maxgeowidth, value)
+                                        else IF_SET_DOUBLE("mingeowidth", php_layer->layer->mingeowidth, value)
+                                          else IF_SET_STRING("mask", php_layer->layer->mask, value)
+                                            else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
+                                              else IF_SET_LONG("startindex", php_layer->layer->startindex, value)
+                                                else IF_SET_LONG("transform", php_layer->layer->transform, value)
+                                                  else IF_SET_LONG("labelcache", php_layer->layer->labelcache, value)
+                                                    else IF_SET_LONG("postlabelcache", php_layer->layer->postlabelcache, value)
+                                                      else IF_SET_STRING("labelitem", php_layer->layer->labelitem, value)
+                                                        else IF_SET_STRING("tileitem", php_layer->layer->tileitem, value)
+                                                          else IF_SET_STRING("tileindex", php_layer->layer->tileindex, value)
+                                                            else IF_SET_STRING("header", php_layer->layer->header, value)
+                                                              else IF_SET_STRING("footer", php_layer->layer->footer, value)
+                                                                else IF_SET_STRING("connection", php_layer->layer->connection, value)
+                                                                  else IF_SET_STRING("filteritem", php_layer->layer->filteritem, value)
+                                                                    else IF_SET_STRING("template", php_layer->layer->template, value)
+                                                                        else IF_SET_STRING("styleitem", php_layer->layer->styleitem, value)
+                                                                          else IF_SET_LONG("num_processing", php_layer->layer->numprocessing, value)
+                                                                            else IF_SET_STRING("requires", php_layer->layer->requires, value)
+                                                                              else IF_SET_STRING("labelrequires", php_layer->layer->labelrequires, value)
+                                                                                else if ( (STRING_EQUAL("offsite", property)) ||
+                                                                                          (STRING_EQUAL("grid", property)) ||
+                                                                                          (STRING_EQUAL("metadata", property)) ||
+                                                                                          (STRING_EQUAL("bindvals", property)) ||
+                                                                                          (STRING_EQUAL("projection", property)) ||
+                                                                                          (STRING_EQUAL("maxclasses", property)) ||
+                                                                                          (STRING_EQUAL("numitems", property)) ||
+                                                                                          (STRING_EQUAL("numjoins", property)) ||
+                                                                                          (STRING_EQUAL("extent", property)) ||
+                                                                                          (STRING_EQUAL("cluster", property)) ) {
+                                                                                  mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
+                                                                                } else if ( (STRING_EQUAL("numclasses", property)) ||
+                                                                                            (STRING_EQUAL("index", property)) ||
+                                                                                            (STRING_EQUAL("connectiontype", property)) ) {
+                                                                                  mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
+                                                                                } else {
+                                                                                  mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                                                }
 }
 
 /* {{{ proto int draw(imageObj image)
@@ -1108,7 +1106,6 @@ PHP_METHOD(layerObj, getResult)
 {
   zval *zobj = getThis();
   long index;
-  resultObj *result = NULL;
   php_layer_object *php_layer;
   parent_object parent;
 
@@ -1122,7 +1119,7 @@ PHP_METHOD(layerObj, getResult)
 
   php_layer = MAPSCRIPT_OBJ_P(php_layer_object, zobj);
 
-  if ((result = layerObj_getResult(php_layer->layer, index)) == NULL) {
+  if (layerObj_getResult(php_layer->layer, index) == NULL) {
     mapscript_throw_exception("Invalid result index." TSRMLS_CC);
     return;
   }

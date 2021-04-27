@@ -2,6 +2,13 @@ cmake_minimum_required (VERSION 3.0)
 
 project (MapServer)
 
+if (${CMAKE_VERSION} GREATER "3.13")
+    cmake_policy(SET CMP0078 OLD) # related to UseSWIG
+endif()
+if (${CMAKE_VERSION} GREATER "3.14")
+    cmake_policy(SET CMP0086 OLD) # related to UseSWIG
+endif()
+
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
       message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:
    mkdir build; cd build; cmake ..
@@ -163,7 +170,6 @@ option(WITH_PERL "Enable Perl mapscript support" OFF)
 option(WITH_RUBY "Enable Ruby mapscript support" OFF)
 option(WITH_JAVA "Enable Java mapscript support" OFF)
 option(WITH_CSHARP "Enable C# mapscript support" OFF)
-option(WITH_POINT_Z_M "include Z and M coordinates in point structure" ON)
 option(WITH_ORACLESPATIAL "include oracle spatial database input support" OFF)
 option(WITH_ORACLE_PLUGIN "include oracle spatial database input support as plugin" OFF)
 option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
@@ -273,7 +279,7 @@ mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.cpp maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
 mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
-maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
+maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.cpp
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.cpp maperror.c mapogcfilter.cpp mapregex.c mapwcs11.cpp mapfile.c
@@ -717,10 +723,6 @@ if(WITH_SOS)
   endif(USE_LIBXML2)
 endif(WITH_SOS)
 
-if(WITH_POINT_Z_M)
-  set(USE_POINT_Z_M 1)
-endif(WITH_POINT_Z_M)
-
 if(WITH_KML)
   if(USE_LIBXML2)
     set(USE_KML 1)
@@ -869,6 +871,10 @@ if(BUILD_DYNAMIC)
   set_target_properties(mapserver PROPERTIES
     PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
+
+  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+     target_compile_options(mapserver PRIVATE -Wall -Wextra -Werror=format-security)
+  endif()
 endif(BUILD_DYNAMIC)
 
 if (NOT("${LIBMAPSERVER_EXTRA_FLAGS}" STREQUAL ""))
@@ -937,7 +943,6 @@ status_optional_feature("WFS CLIENT" "${USE_WFS_LYR}")
 status_optional_feature("ICONV" "${USE_ICONV}")
 status_optional_feature("Thread-safety support" "${USE_THREAD}")
 status_optional_feature("KML output" "${USE_KML}")
-status_optional_feature("Z+M point coordinate support" "${USE_POINT_Z_M}")
 status_optional_feature("XML Mapfile support" "${USE_XMLMAPFILE}")
 
 message(STATUS " * Mapscripts")

@@ -68,13 +68,12 @@ void freeImageCache(struct imageCacheObj *ic)
 */
 double msSymbolGetDefaultSize(symbolObj *s)
 {
-  double size;
+  double size = 1;
   if(s == NULL)
     return 1;
 
   switch(s->type) {
     case(MS_SYMBOL_TRUETYPE):
-      size = 1;
       break;
     case(MS_SYMBOL_PIXMAP):
       assert(s->pixmap_buffer != NULL);
@@ -82,7 +81,6 @@ double msSymbolGetDefaultSize(symbolObj *s)
       size = (double)s->pixmap_buffer->height;
       break;
     case(MS_SYMBOL_SVG):
-      size = 1;
 #if defined(USE_SVG_CAIRO) || defined (USE_RSVG)
       assert(s->renderer_cache != NULL);
       size = s->sizey;
@@ -456,13 +454,14 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   /* Alloc symbol[] array and ensure there is at least 1 symbol:
    * symbol 0 which is the default symbol with all default params.
    */
-  if (msGrowSymbolSet(symbolset) == NULL)
+  symbolObj* symbol = msGrowSymbolSet(symbolset);
+  if (symbol == NULL)
     return; /* alloc failed */
-  symbolset->symbol[0]->type = MS_SYMBOL_ELLIPSE;
-  symbolset->symbol[0]->filled = MS_TRUE;
-  symbolset->symbol[0]->numpoints = 1;
-  symbolset->symbol[0]->points[0].x = 1;
-  symbolset->symbol[0]->points[0].y = 1;
+  symbol->type = MS_SYMBOL_ELLIPSE;
+  symbol->filled = MS_TRUE;
+  symbol->numpoints = 1;
+  symbol->points[0].x = 1;
+  symbol->points[0].y = 1;
 
   /* Just increment numsymbols to reserve symbol 0.
    * initSymbol() has already been called
@@ -637,17 +636,15 @@ int msGetCharacterSize(mapObj *map, char* font, int size, char *character, rectO
   unsigned int unicode, codepoint;
   glyph_element *glyph;
   face_element *face = msGetFontFace(font, &map->fontset);
-  if(UNLIKELY(!face)) return MS_FAILURE;
+  if(MS_UNLIKELY(!face)) return MS_FAILURE;
   msUTF8ToUniChar(character, &unicode);
   codepoint = msGetGlyphIndex(face,unicode);
   glyph = msGetGlyphByIndex(face,size,codepoint);
-  if(UNLIKELY(!glyph)) return MS_FAILURE;
-  if(glyph) {
-    r->minx = glyph->metrics.minx;
-    r->maxx = glyph->metrics.maxx;
-    r->miny = - glyph->metrics.maxy;
-    r->maxy = - glyph->metrics.miny;
-  }
+  if(MS_UNLIKELY(!glyph)) return MS_FAILURE;
+  r->minx = glyph->metrics.minx;
+  r->maxx = glyph->metrics.maxx;
+  r->miny = - glyph->metrics.maxy;
+  r->maxy = - glyph->metrics.miny;
   return MS_SUCCESS;
 }
 
@@ -695,7 +692,7 @@ int msGetMarkerSize(mapObj *map, styleObj *style, double *width, double *height,
 
     case(MS_SYMBOL_TRUETYPE): {
       rectObj gbounds;
-      if(UNLIKELY(MS_FAILURE == msGetCharacterSize(map,symbol->font,size,symbol->character, &gbounds)))
+      if(MS_UNLIKELY(MS_FAILURE == msGetCharacterSize(map,symbol->font,size,symbol->character, &gbounds)))
         return MS_FAILURE;
 
       *width = MS_MAX(*width, (gbounds.maxx-gbounds.minx));
@@ -916,7 +913,7 @@ int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol)
  * gdImageCreate(), gdImageCopy()                                      *
  **********************************************************************/
 
-int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map)
+int msCopySymbol(symbolObj *dst, const symbolObj *src, mapObj *map)
 {
   int i;
 
@@ -957,7 +954,7 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map)
  * Copy a symbolSetObj using msCopyFontSet(), msCopySymbol()           *
  **********************************************************************/
 
-int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
+int msCopySymbolSet(symbolSetObj *dst, const symbolSetObj *src, mapObj *map)
 {
   int i, return_value;
 

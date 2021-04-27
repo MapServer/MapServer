@@ -41,7 +41,7 @@
 
 #define  KML_MAXFEATURES_TODRAW 1000
 
-KmlRenderer::KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color/*=NULL*/)
+KmlRenderer::KmlRenderer(int width, int height, outputFormatObj * /*format*/, colorObj* /*color*/)
   : Width(width), Height(height), MapCellsize(1.0), XmlDoc(NULL), LayerNode(NULL), GroundOverlayNode(NULL),
     PlacemarkNode(NULL), GeomNode(NULL),
     Items(NULL), NumItems(0), FirstLayer(MS_TRUE), map(NULL), currentLayer(NULL),
@@ -417,7 +417,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
   return MS_SUCCESS;
 }
 
-int KmlRenderer::closeNewLayer(imageObj *img, layerObj *layer)
+int KmlRenderer::closeNewLayer(imageObj *, layerObj *)
 {
   flushPlacemark();
 
@@ -657,11 +657,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
     if( mElevationFromAttribute ) {
       sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, mCurrentElevationValue);
     } else if (AltitudeMode == relativeToGround || AltitudeMode == absolute) {
-#ifdef USE_POINT_Z_M
       sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, pts[i].z);
-#else
-      msSetError(MS_MISCERR, "Z coordinates support not available  (mapserver not compiled with USE_POINT_Z_M option)", "KmlRenderer::addCoordsNode()");
-#endif
     } else
       sprintf(lineBuf, "\t%.8f,%.8f\n", pts[i].x, pts[i].y);
 
@@ -670,7 +666,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
   xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
 
-void KmlRenderer::renderGlyphs(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
+void KmlRenderer::renderGlyphs(imageObj *, pointObj *labelpnt, char *text, double /*angle*/, colorObj *clr, colorObj * /*olcolor*/, int /*olwidth*/)
 {
   xmlNodePtr node;
 
@@ -746,9 +742,7 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
 
   p.x = symbol->sizex * symstyle->scale / 2;
   p.y = symbol->sizey *symstyle->scale / 2;
-#ifdef USE_POINT_Z_M
   p.z = 0.0;
-#endif
 
   status = msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
   if( status != MS_SUCCESS )
@@ -1013,8 +1007,8 @@ const char* KmlRenderer::lookupPlacemarkStyle()
       sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[0].color->blue,
               LineStyle[i].color->green, LineStyle[i].color->red);
 
-      char lineStyleName[32];
-      sprintf(lineStyleName, "_line_%s_w%.1f", lineHexColor, LineStyle[i].width);
+      char lineStyleName[64];
+      snprintf(lineStyleName, sizeof(lineStyleName), "_line_%s_w%.1f", lineHexColor, LineStyle[i].width);
       styleName = msStringConcatenate(styleName, lineStyleName);
     }
   }

@@ -240,9 +240,9 @@ def fromstring(data, mappath=None):
 
 %extend mapObj {
   
-    /* getLayerOrder() extension returns the map layerorder as a native
-     sequence */
-
+    /**
+    \**Python MapScript only**  - returns the map layer order as a native sequence
+    */
     PyObject *getLayerOrder() {
         int i;
         PyObject *order;
@@ -253,6 +253,9 @@ def fromstring(data, mappath=None):
         return order;
     } 
 
+    /**
+    \**Python MapScript only** - sets the map layer order using a native sequence
+    */
     int setLayerOrder(PyObject *order) {
         int i;
         Py_ssize_t size = PyTuple_Size(order);
@@ -262,6 +265,9 @@ def fromstring(data, mappath=None):
         return MS_SUCCESS;
     }
     
+    /**
+    \**Python MapScript only** - gets the map size as a tuple
+    */
     PyObject* getSize()
     {
         PyObject* output ;
@@ -274,19 +280,35 @@ def fromstring(data, mappath=None):
 %pythoncode %{
 
     def get_height(self):
+        """
+        **Python MapScript only**
+        Return the map height from the map size
+        """
         return self.getSize()[1] # <-- second member is the height
 
     def get_width(self):
+        """
+        **Python MapScript only**
+        Return the map width from the map size
+        """
         return self.getSize()[0] # <-- first member is the width
 
     def set_height(self, value):
+        """
+        **Python MapScript only**
+        Set the map height value of the map size
+        """
         return self.setSize(self.getSize()[0], value)
 
     def set_width(self, value):
+        """
+        **Python MapScript only**
+        Set the map width value of the map size
+        """
         return self.setSize(value, self.getSize()[1])
 
-    width = property(get_width, set_width)
-    height = property(get_height, set_height)
+    width = property(get_width, set_width, doc="See :ref:`SIZE <mapfile-map-size>`")
+    height = property(get_height, set_height, doc = "See :ref:`SIZE <mapfile-map-size>`")
 
 %}
 }

@@ -86,7 +86,6 @@ LAYER
     "init=epsg:27700"
   END
 
-  DUMP TRUE
 END
 
 END # Map File

@@ -28,7 +28,6 @@
 #cmakedefine USE_MYSQL 1
 #cmakedefine USE_THREAD 1
 #cmakedefine USE_KML 1
-#cmakedefine USE_POINT_Z_M 1
 #cmakedefine USE_ORACLESPATIAL 1
 #cmakedefine USE_EXEMPI 1
 #cmakedefine USE_XMLMAPFILE 1

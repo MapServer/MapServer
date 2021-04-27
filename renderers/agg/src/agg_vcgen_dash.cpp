@@ -148,6 +148,7 @@ namespace mapserver
             {
             case initial:
                 rewind(0);
+                // FALLTHROUGH
 
             case ready:
                 if(m_num_dashes < 2 || m_src_vertices.size() < 2)

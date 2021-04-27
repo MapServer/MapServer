@@ -108,6 +108,7 @@ namespace mapserver
             {
             case initial:
                 rewind(0);
+                // FALLTHROUGH
 
             case ready:
                 if(m_src_vertices.size() < 2 + unsigned(m_closed != 0))
@@ -119,6 +120,7 @@ namespace mapserver
                 cmd = path_cmd_move_to;
                 m_src_vertex = 0;
                 m_out_vertex = 0;
+                // FALLTHROUGH
 
             case outline:
                 if(m_src_vertex >= m_src_vertices.size())
@@ -135,6 +137,7 @@ namespace mapserver
                 ++m_src_vertex;
                 m_status = out_vertices;
                 m_out_vertex = 0;
+                // FALLTHROUGH
 
             case out_vertices:
                 if(m_out_vertex >= m_out_vertices.size())

@@ -1111,7 +1111,6 @@ PHP_METHOD(mapObj, zoomPoint)
   double      dfDeltaX, dfDeltaY;
   rectObj     newGeoRefExtent;
   double      dfNewScale = 0.0;
-  double      dfDeltaExt = -1.0;
   php_point_object *php_pixelPosition;
   php_rect_object *php_geoRefExtent=NULL, *php_maxGeoRefExtent=NULL;
   php_map_object *php_map;
@@ -1234,7 +1233,7 @@ PHP_METHOD(mapObj, zoomPoint)
   /* ==================================================================== */
   if (php_map->map->web.minscaledenom > 0 && dfNewScale <  php_map->map->web.minscaledenom &&
       zoomFactor > 1) {
-    dfDeltaExt =
+    double dfDeltaExt =
       GetDeltaExtentsUsingScale(php_map->map->web.minscaledenom, php_map->map->units,
                                 dfGeoPosY, php_map->map->width,
                                 php_map->map->resolution);
@@ -1330,9 +1329,6 @@ PHP_METHOD(mapObj, zoomRectangle)
   double      dfDeltaX, dfDeltaY;
   rectObj     newGeoRefExtent;
   double      dfNewScale = 0.0;
-  double      dfDeltaExt = -1.0;
-  double      dfMiddleX =0.0;
-  double      dfMiddleY =0.0;
   php_rect_object *php_geoRefExtent=NULL, *php_maxGeoRefExtent=NULL, *php_pixelExtent=NULL;
   php_map_object *php_map;
 
@@ -1420,12 +1416,12 @@ PHP_METHOD(mapObj, zoomRectangle)
   }
 
   if (php_map->map->web.minscaledenom > 0 && dfNewScale <  php_map->map->web.minscaledenom) {
-    dfMiddleX = newGeoRefExtent.minx +
+    double dfMiddleX = newGeoRefExtent.minx +
                 ((newGeoRefExtent.maxx - newGeoRefExtent.minx)/2);
-    dfMiddleY = newGeoRefExtent.miny +
+    double dfMiddleY = newGeoRefExtent.miny +
                 ((newGeoRefExtent.maxy - newGeoRefExtent.miny)/2);
 
-    dfDeltaExt =
+    double dfDeltaExt =
       GetDeltaExtentsUsingScale(php_map->map->web.minscaledenom, php_map->map->units,
                                 dfMiddleY, php_map->map->width,
                                 php_map->map->resolution);
@@ -1588,8 +1584,6 @@ PHP_METHOD(mapObj, zoomScale)
                          php_geoRefExtent->rect->minx, php_geoRefExtent->rect->maxx, 0);
   dfGeoPosY = Pix2Georef((int)php_pixelPosition->point->y, 0, height,
                          php_geoRefExtent->rect->miny, php_geoRefExtent->rect->maxy, 1);
-  dfDeltaX = php_geoRefExtent->rect->maxx - php_geoRefExtent->rect->minx;
-  dfDeltaY = php_geoRefExtent->rect->maxy - php_geoRefExtent->rect->miny;
 
 
   /* -------------------------------------------------------------------- */
@@ -2517,7 +2511,6 @@ PHP_METHOD(mapObj, processTemplate)
   HashTable *indexes_hash = NULL;
   long generateImages;
   char *buffer = NULL;
-  int index = 0;
   int numElements = 0;
   int i, size;
   char        **papszNameValue = NULL;
@@ -2553,7 +2546,7 @@ PHP_METHOD(mapObj, processTemplate)
     papszValue = (char **)malloc(sizeof(char *)*numElements);
 
     for (i=0; i<numElements; i++) {
-      index = i*2;
+      int index = i*2;
       papszName[i] = papszNameValue[index];
       papszValue[i] = papszNameValue[index+1];
     }
@@ -2589,7 +2582,6 @@ PHP_METHOD(mapObj, processQueryTemplate)
   HashTable *indexes_hash = NULL;
   long generateImages = MS_TRUE;
   char *buffer = NULL;
-  int index = 0;
   int numElements = 0;
   int i, size;
   char        **papszNameValue = NULL;
@@ -2626,7 +2618,7 @@ PHP_METHOD(mapObj, processQueryTemplate)
 
 
     for (i=0; i<numElements; i++) {
-      index = i*2;
+      int index = i*2;
       papszName[i] = papszNameValue[index];
       papszValue[i] = papszNameValue[index+1];
     }
@@ -2662,7 +2654,6 @@ PHP_METHOD(mapObj, processLegendTemplate)
   zval *zindexes;
   HashTable *indexes_hash = NULL;
   char *buffer = NULL;
-  int index = 0;
   int numElements = 0;
   int i, size;
   char        **papszNameValue = NULL;
@@ -2699,7 +2690,7 @@ PHP_METHOD(mapObj, processLegendTemplate)
 
 
     for (i=0; i<numElements; i++) {
-      index = i*2;
+      int index = i*2;
       papszName[i] = papszNameValue[index];
       papszValue[i] = papszNameValue[index+1];
     }

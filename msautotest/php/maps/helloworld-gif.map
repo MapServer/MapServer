@@ -21,7 +21,6 @@ MAP
 
        LAYER
                DEBUG 5
-               DUMP TRUE
                NAME "credits"
 
                STATUS DEFAULT

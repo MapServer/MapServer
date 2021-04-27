@@ -36,7 +36,6 @@ LAYER
   PROJECTION
     "init=epsg:32611"
   END
-  DUMP TRUE
 
 END # Layer
 
