@@ -221,7 +221,7 @@ static const char *getTitle(mapObj *map)
 /*
 ** Returns the API root URL from oga_onlineresource or builds a value if not set.
 */
-std::string getApiRootUrl(mapObj *map)
+static std::string getApiRootUrl(mapObj *map)
 {
   const char *root;
 
@@ -231,7 +231,7 @@ std::string getApiRootUrl(mapObj *map)
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
 }
 
-json getFeatureConstant(gmlConstantObj *constant)
+static json getFeatureConstant(gmlConstantObj *constant)
 {
   json j; // empty (null)
 
@@ -244,7 +244,7 @@ json getFeatureConstant(gmlConstantObj *constant)
   return j;
 }
 
-json getFeatureItem(gmlItemObj *item, char *value)
+static json getFeatureItem(gmlItemObj *item, char *value)
 {
   json j; // empty (null)
   const char *key;
@@ -264,12 +264,12 @@ json getFeatureItem(gmlItemObj *item, char *value)
 }
 
 // https://stackoverflow.com/questions/25925290/c-round-a-double-up-to-2-decimal-places
-double round_up(double value, int decimal_places) {
+static double round_up(double value, int decimal_places) {
   const double multiplier = std::pow(10.0, decimal_places);
   return std::ceil(value * multiplier) / multiplier;
 }
 
-json getFeatureGeometry(shapeObj *shape)
+static json getFeatureGeometry(shapeObj *shape)
 {
   json geometry; // empty (null)
   int *outerList=NULL, numOuterRings=0;
@@ -378,7 +378,7 @@ json getFeatureGeometry(shapeObj *shape)
 /*
 ** Return a GeoJSON representation of a shape.
 */
-json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants)
+static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants)
 {
   json feature; // empty (null)
 
@@ -431,7 +431,26 @@ json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlCons
   return feature;
 }
 
-json getCollection(mapObj *map, layerObj *layer, int format)
+static json getLink(hashTableObj *metadata, std::string name)
+{
+  json link;
+
+  const char *href = msOWSLookupMetadata(metadata, "A", (name + "_href").c_str());
+  if(!href) throw std::runtime_error("Missing required link href property.");
+
+  const char *title = msOWSLookupMetadata(metadata, "A", (name + "_title").c_str());
+  const char *type = msOWSLookupMetadata(metadata, "A", (name + "_type").c_str());
+
+  link = {
+    { "href", href },
+    { "title", title?title:href },
+    { "type", type?type:"text/html" }
+  };
+
+  return link;
+}
+
+static json getCollection(mapObj *map, layerObj *layer, int format)
 {
   json collection; // empty (null)
   rectObj bbox;
@@ -514,13 +533,11 @@ json getCollection(mapObj *map, layerObj *layer, int format)
   if(value) {
     std::vector<std::string> names = msStringSplit(value, ',');
     for(std::string name : names) {
-      const char *link = msOWSLookupMetadata(&(layer->metadata), "A", ("link_" + name).c_str()); 
-      if(link) {
-        try {  
-          collection["links"].push_back(json::parse(link));
-        } catch(...) {
-          throw std::runtime_error("Error parsing custom link (link_" + name + ").");
-        }
+      try {
+        json link = getLink(&(layer->metadata), name);
+        collection["links"].push_back(link);
+      } catch(const std::runtime_error &e) {
+        throw e;
       }
     }
   }
@@ -677,13 +694,12 @@ static int processLandingRequest(mapObj *map, int format)
   if(links) {
     std::vector<std::string> names = msStringSplit(links, ',');
     for(std::string name : names) {
-      const char *link = msOWSLookupMetadata(&(map->web.metadata), "A", ("link_" + name).c_str()); 
-      if(link) {
-        try {  
-          response["links"].push_back(json::parse(link));
-        } catch(...) {
-          // TODO: generate an error (see getCollection)
-        }
+      try {
+        json link = getLink(&(map->web.metadata), name);
+        response["links"].push_back(link);
+      } catch(const std::runtime_error &e) {
+        processError(OGCAPI_CONFIG_ERROR, std::string(e.what()));
+        return MS_SUCCESS;
       }
     }
   }
@@ -929,7 +945,7 @@ static int processCollectionRequest(mapObj *map, const char *collectionId, int f
       return MS_SUCCESS;
     }
   } catch (const std::runtime_error &e) {
-    processError(OGCAPI_SERVER_ERROR, "Error getting collection. " + std::string(e.what()));
+    processError(OGCAPI_CONFIG_ERROR, "Error getting collection. " + std::string(e.what()));
     return MS_SUCCESS;
   }
 
@@ -970,7 +986,7 @@ static int processCollectionsRequest(mapObj *map, int format)
       json collection = getCollection(map, map->layers[i], format);
       if(!collection.is_null()) response["collections"].push_back(collection);
     } catch (const std::runtime_error &e) {
-      processError(OGCAPI_SERVER_ERROR, "Error getting collection." + std::string(e.what()));
+      processError(OGCAPI_CONFIG_ERROR, "Error getting collection." + std::string(e.what()));
       return MS_SUCCESS;
     }
   }
