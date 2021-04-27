@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include <assert.h>
 #include <ctype.h>
 
 
@@ -4012,6 +4013,8 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       return(NULL);
     }
   } else { /* return shape and/or values */
+
+    assert(mapserv->resultlayer);
 
     snprintf(repstr, sizeof(repstr), "%f %f", (mapserv->resultshape.bounds.maxx + mapserv->resultshape.bounds.minx)/2, (mapserv->resultshape.bounds.maxy + mapserv->resultshape.bounds.miny)/2);
     outstr = msReplaceSubstring(outstr, "[shpmid]", repstr);

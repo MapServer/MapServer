@@ -89,7 +89,12 @@ void freeTextPath(textPathObj *tp) {
     free(tp->bounds.poly);
   }
 }
+
 void freeTextSymbol(textSymbolObj *ts) {
+    freeTextSymbolEx(ts, MS_TRUE);
+}
+
+void freeTextSymbolEx(textSymbolObj *ts, int doFreeLabel) {
   if(ts->textpath) {
     freeTextPath(ts->textpath);
     free(ts->textpath);
@@ -110,7 +115,7 @@ void freeTextSymbol(textSymbolObj *ts) {
     }
   }
   free(ts->annotext);
-  if(freeLabel(ts->label) == MS_SUCCESS) {
+  if(doFreeLabel && freeLabel(ts->label) == MS_SUCCESS) {
     free(ts->label);
   }
 }

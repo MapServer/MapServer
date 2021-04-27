@@ -511,8 +511,8 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       atoi(CSLFetchNameValue( layer->processing, "UV_SPACING" ));
   }
 
-  width = (int)ceil(layer->map->width/spacing);
-  height = (int)ceil(layer->map->height/spacing);
+  width = (int)(layer->map->width/spacing);
+  height = (int)(layer->map->height/spacing);
 
   /* Initialize our dummy map */
   MS_INIT_COLOR(map_tmp->imagecolor, 255,255,255,255);
