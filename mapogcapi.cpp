@@ -983,10 +983,15 @@ static int processCollectionsRequest(mapObj *map, int format)
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length)
 {
 #ifdef USE_OGCAPI_SVR
+
+  // make sure ogcapi requests are enabled for this map
+  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
+  if(status != MS_TRUE) {
+    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.", "msCGIDispatchAPIRequest()");
+    return MS_FAILURE; // let normal error handling take over
+  }
+
   int format; // all endpoints need a format
-
-  fprintf(stderr, "fuck\n");
-
   const char *p = getRequestParameter(request, "f");
   if(p && (strcmp(p, "json") == 0 || strcmp(p, OGCAPI_MIMETYPE_JSON) == 0)) {
     format = OGCAPI_FORMAT_JSON;
