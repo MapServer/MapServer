@@ -2074,7 +2074,7 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape)
         shape->values[t] = (char*) msSmallMalloc(size + 1);
         memcpy(shape->values[t], val, size);
         shape->values[t][size] = '\0'; /* null terminate it */
-        msStringTrimBlanks(shape->values[t]);
+        // msStringTrimBlanks(shape->values[t]);
       }
       if( layer->debug > 4 ) {
         msDebug("msPostGISReadShape: PQgetlength = %d\n", size);
