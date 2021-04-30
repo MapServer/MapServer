@@ -12,6 +12,12 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 http://mapserver.org/development/changelog/
 
+7.0.8 release (2021-4-30)
+-------------------------
+
+- Security release, see ticket #6313 for more information.
+- Improve setting of key environment vars for FastCGI/IIS, see ticket #6289.
+
 7.0.0 release (2015/07/24)
 --------------------------
 
