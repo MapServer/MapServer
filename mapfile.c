@@ -104,6 +104,7 @@ int msIsValidRegex(const char* e) {
     msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msEvalRegex()", e);
     return(MS_FALSE);
   }
+  ms_regfree(&re);
   return MS_TRUE;
 }
 
