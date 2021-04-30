@@ -2122,7 +2122,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msWriteReferenceMapToString(referenceMapObj *ref);
   MS_DLL_EXPORT char *msWriteLegendToString(legendObj *legend);
   MS_DLL_EXPORT char *msWriteClusterToString(clusterObj *cluster);
+  MS_DLL_EXPORT int msIsValidRegex(const char* e);
   MS_DLL_EXPORT int msEvalRegex(const char *e, const char *s);
+  MS_DLL_EXPORT int msCaseEvalRegex(const char *e, const char *s);
 #ifdef USE_MSFREE
   MS_DLL_EXPORT void msFree(void *p);
 #else

@@ -160,7 +160,8 @@ int main(int argc, char *argv[])
 
   /* push high-value ENV vars into the CPL global config - primarily for IIS/FastCGI */
   const char* const apszEnvVars[] = { 
-    "CURL_CA_BUNDLE", "MS_MAPFILE", "MS_MAP_NO_PATH", "MS_MAP_PATTERN",
+    "CURL_CA_BUNDLE", "MS_MAPFILE", "MS_MAP_NO_PATH", "MS_MAP_PATTERN", "MS_MAP_ENV_PATTERN",
+    "MS_MAP_BAD_PATTERN", "MS_MAP_ENV_BAD_PATTERN",
      NULL /* guard */ };
   for( int i = 0; apszEnvVars[i] != NULL; ++i ) {
     const char* value = getenv(apszEnvVars[i]);
