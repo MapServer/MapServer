@@ -38,14 +38,14 @@ LAYER
     NAME "green"
     EXPRESSION ([pixel] >= -3 and [pixel] < 3)
     STYLE
-        COLOR 255 0 0 
+        COLOR 0 255 0 
     END
   END
   CLASS 
     NAME "blue"
     EXPRESSION ([pixel] >= 3)
     STYLE
-        COLOR 255 0 0 
+        COLOR 0 0 255
     END
   END
 END
