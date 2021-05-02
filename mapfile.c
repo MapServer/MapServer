@@ -3179,7 +3179,6 @@ labelObj *msGrowClassLabels( classObj *class )
 
 int loadClass(classObj *class, layerObj *layer)
 {
-  int state;
   mapObj *map=NULL;
 
   class->layer = (layerObj *) layer;
