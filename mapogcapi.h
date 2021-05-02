@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request, char **api_path, int api_path_length);
+int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request);
 
 #ifdef  __cplusplus
 }

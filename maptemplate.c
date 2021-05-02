@@ -4607,9 +4607,6 @@ mapservObj *msAllocMapServObj()
 
   mapserv->hittest = NULL;
 
-  mapserv->api_path_length = 0;
-  mapserv->api_path = NULL;
-
   return mapserv;
 }
 
@@ -4643,11 +4640,6 @@ void msFreeMapServObj(mapservObj* mapserv)
     msFree(mapserv->QueryLayer);
     msFree(mapserv->SelectLayer);
     msFree(mapserv->QueryFile);
-
-    if(mapserv->api_path) {
-      msFreeCharArray(mapserv->api_path, mapserv->api_path_length);
-      mapserv->api_path_length = 0;
-    }
 
     msFree(mapserv->TileCoords);
 

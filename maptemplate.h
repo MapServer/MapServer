@@ -139,9 +139,6 @@ typedef struct {
 
   map_hittest *hittest;
 
-  int api_path_length;
-  char **api_path;
-
 } mapservObj;
 
 

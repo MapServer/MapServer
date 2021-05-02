@@ -6,7 +6,7 @@
     <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
     <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html">{{ response.collection.title }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">items</li>
-    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=json{% if response.request.bbox != "" %}&bbox={{ response.request.bbox }}{% endif %}">JSON</a></li>
+    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=json{% if existsIn(template.params, "bboxx") %}&bbox={{ template.params.bbox }}{% endif %}">JSON</a></li>
   </ol>
 </nav>
 

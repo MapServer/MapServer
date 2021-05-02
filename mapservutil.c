@@ -203,20 +203,20 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   const char *ms_map_no_path = CPLGetConfigOption("MS_MAP_NO_PATH", NULL);
   const char *ms_map_pattern = CPLGetConfigOption("MS_MAP_PATTERN", NULL);
 
-  const char *mapval = NULL;
+  const char *map_value = NULL;
 
-  if(mapserv->api_path != NULL) {
-    mapval = mapserv->api_path[1]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
+  if(mapserv->request->api_path != NULL) {
+    map_value = mapserv->request->api_path[1]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
   } else {
     for(i=0; i<mapserv->request->NumParams; i++) { /* find the map parameter */
       if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
-        mapval = mapserv->request->ParamValues[i];
+        map_value = mapserv->request->ParamValues[i];
         break;
       }
     }
   }
 
-  if(mapval == NULL) {
+  if(map_value == NULL) {
     if(ms_mapfile != NULL) {
       map = msLoadMap(ms_mapfile, NULL);
     } else {
@@ -224,8 +224,8 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
       return NULL;
     }
   } else {
-    if(getenv(mapval)) /* an environment variable references the actual file to use */
-      map = msLoadMap(getenv(mapval), NULL);
+    if(getenv(map_value)) /* an environment variable references the actual file to use */
+      map = msLoadMap(getenv(map_value), NULL);
     else {
       /* by here we know the request isn't for something in an environment variable */
       if(ms_map_no_path != NULL) {
@@ -233,13 +233,13 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
         return NULL;
       }
 
-      if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, mapval) != MS_TRUE) {
+      if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, map_value) != MS_TRUE) {
         msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
         return NULL;
       }
 
       /* ok to try to load now */
-      map = msLoadMap(mapval, NULL);
+      map = msLoadMap(map_value, NULL);
     }
   }
   
@@ -363,17 +363,15 @@ int msCGISetMode(mapservObj *mapserv)
 */
 int msCGIIsAPIRequest(mapservObj *mapserv) 
 {
-  const char *path_info;
-  
-  path_info = getenv("PATH_INFO");
-  if(path_info != NULL && strlen(path_info) > 0) {
-    mapserv->api_path = msStringSplit(path_info, '/', &(mapserv->api_path_length));
-    if(mapserv->api_path_length >= 3) // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
+  mapserv->request->path_info = getenv("PATH_INFO");
+  if(mapserv->request->path_info != NULL && strlen(mapserv->request->path_info) > 0) {
+    mapserv->request->api_path = msStringSplit(mapserv->request->path_info, '/', &(mapserv->request->api_path_length));
+    if(mapserv->request->api_path_length >= 3) // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
       return MS_TRUE;
     else {
-      msFreeCharArray(mapserv->api_path, mapserv->api_path_length);
-      mapserv->api_path = NULL; // reset
-      mapserv->api_path_length = 0;
+      msFreeCharArray(mapserv->request->api_path, mapserv->request->api_path_length);      
+      mapserv->request->api_path = NULL; // reset
+      mapserv->request->api_path_length = 0;
     }
   }
 
@@ -383,9 +381,9 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 int msCGIDispatchAPIRequest(mapservObj *mapserv) 
 {
   // should be a more elegant way to do this (perhaps similar to how drivers are handled)
-  if(strcmp("ogcapi", mapserv->api_path[2]) == 0) {
+  if(strcmp("ogcapi", mapserv->request->api_path[2]) == 0) {
 #ifdef USE_OGCAPI_SVR
-    return msOGCAPIDispatchRequest(mapserv->map, mapserv->request, mapserv->api_path, mapserv->api_path_length);
+    return msOGCAPIDispatchRequest(mapserv->map, mapserv->request);
 #else
     msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msCGIDispatchAPIRequest()");
 #endif

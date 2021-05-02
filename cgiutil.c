@@ -454,6 +454,10 @@ cgiRequestObj *msAllocCgiObj()
   request->postrequest = NULL;
   request->httpcookiedata = NULL;
 
+  request->path_info = NULL;
+  request->api_path = NULL;
+  request->api_path_length = 0;
+
   return request;
 }
 
@@ -471,6 +475,11 @@ void msFreeCgiObj(cgiRequestObj *request)
   request->contenttype = NULL;
   request->postrequest = NULL;
   request->httpcookiedata = NULL;
+
+  if(request->api_path) {
+    msFreeCharArray(request->api_path, request->api_path_length);
+    request->api_path_length = 0;
+  }
 
   msFree(request);
 }

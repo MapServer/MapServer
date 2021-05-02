@@ -3,13 +3,12 @@
 <div class="card card-body bg-light" style="margin-top:20px;margin-bottom:20px;">
   <h4>Template Data</h4>
   <p>
-    API Root: {{ template.api_root }}<br>
+    API Root: {{ template.api_root }}<br>    
     Path: {{ template.path }}<br>
+    Params: {{ template.params }}<br>
     Title: {{ template.title }}<br>
     Tags: {{ template.tags }}<br>
   </p>
-  <h4>Response JSON</h4>
-  <p>{{ response }}</p>
 </div>
   {% endif %}
 {% endif %}

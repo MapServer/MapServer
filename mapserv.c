@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if(mapserv->api_path != NULL) {
+    if(mapserv->request->api_path != NULL) {
       if(msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
 	msCGIWriteError(mapserv);
 	goto end_request;
