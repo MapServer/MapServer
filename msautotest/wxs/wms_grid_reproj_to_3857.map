@@ -47,16 +47,18 @@ MAP
 
         CLASS
             NAME "Graticule"
-            COLOR 255 153 0
+            STYLE
+                COLOR 255 153 0
+            END
             LABEL
-            COLOR  0 0 0
-            FONT lucida
-            TYPE truetype
-            SIZE 8
-            POSITION AUTO
-            PARTIALS FALSE
-            BUFFER 5
-            OUTLINECOLOR 255 255 255
+                COLOR  0 0 0
+                FONT lucida
+                TYPE truetype
+                SIZE 8
+                POSITION AUTO
+                PARTIALS FALSE
+                BUFFER 5
+                OUTLINECOLOR 255 255 255
             END
         END
 

@@ -78,9 +78,11 @@ LAYER
   STATUS DEFAULT
   DATA pattern4
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END

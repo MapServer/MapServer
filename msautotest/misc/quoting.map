@@ -36,8 +36,11 @@ LAYER
 
   CLASS
     EXPRESSION "\"Tignish"  
-    SYMBOL 2
-    SIZE 8
+    STYLE
+        SYMBOL 2
+        SIZE 8
+        COLOR 0 0 0
+    END
     LABEL
       FORCE true
       COLOR  0 255 0
@@ -48,12 +51,14 @@ LAYER
       PARTIALS FALSE
       OUTLINECOLOR 255 255 255			
     END 
-    COLOR 0 0 0
   END
   CLASS
     EXPRESSION '\'Souris\''  
-    SYMBOL 2
-    SIZE 8
+    STYLE
+        SYMBOL 2
+        SIZE 8
+        COLOR 0 0 0
+    END
     LABEL
       FORCE true
       COLOR  0 0 255
@@ -64,12 +69,14 @@ LAYER
       PARTIALS FALSE
       OUTLINECOLOR 255 255 255			
     END 
-    COLOR 0 0 0
   END
   CLASS
     EXPRESSION ("[NAME]" = "Tr\"uro")
-    SYMBOL 2
-    SIZE 8
+    STYLE
+        SYMBOL 2
+        SIZE 8
+        COLOR 0 0 0
+    END
     LABEL
       FORCE true
       COLOR  255 0 0
@@ -80,12 +87,14 @@ LAYER
       PARTIALS FALSE
       OUTLINECOLOR 255 255 255			
     END 
-    COLOR 0 0 0
   END
   CLASS
     EXPRESSION ("[NAME]" = '\'Cheticamp')
-    SYMBOL 2
-    SIZE 8
+    STYLE
+        SYMBOL 2
+        SIZE 8
+        COLOR 0 0 0
+    END
     LABEL
       FORCE true
       COLOR  255 0 0
@@ -96,11 +105,13 @@ LAYER
       PARTIALS FALSE
       OUTLINECOLOR 255 255 255			
     END 
-    COLOR 0 0 0
   END
   CLASS
-    SYMBOL 2
-    SIZE 8
+    STYLE
+        SYMBOL 2
+        SIZE 8
+        COLOR 0 0 0
+    END
     LABEL
       PRIORITY 10
       COLOR  0 0 0
@@ -111,7 +122,6 @@ LAYER
       PARTIALS FALSE
       OUTLINECOLOR 255 255 255			
     END 
-    COLOR 0 0 0
   END
 END # Layer
 

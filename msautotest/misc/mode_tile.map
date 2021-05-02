@@ -28,8 +28,10 @@ MAP
       "init=epsg:4326"
     END #projection
     CLASS
-      OUTLINECOLOR 0 0 0 
-      COLOR 120 120 120 
+      STYLE
+        OUTLINECOLOR 0 0 0 
+        COLOR 120 120 120 
+      END
     END #class
   END #layer
   

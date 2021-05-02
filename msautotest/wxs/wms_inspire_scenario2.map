@@ -163,14 +163,18 @@ LAYER
   NAME "myclass1"
   GROUP "inspire_common:DEFAULT"
   EXPRESSION "67"
-  COLOR 255 0 0
+  STYLE
+    COLOR 255 0 0
+  END
  END
  
  CLASS
   NAME "myclass2"
   GROUP "inspire_common:DEFAULT"
   EXPRESSION "68"
-  COLOR 0 255 0
+  STYLE
+    COLOR 0 255 0
+  END
  END 
  
 END # Layer
@@ -214,7 +218,9 @@ LAYER
   NAME "myclass3"
   GROUP "inspire_common:DEFAULT"
   EXPRESSION "74"
-  COLOR 0 0 255
+  STYLE
+    COLOR 0 0 255
+  END
  END
  
 END # Layer
@@ -248,7 +254,9 @@ LAYER
   NAME "myclass4"
   GROUP "inspire_common:DEFAULT"
   EXPRESSION "66"
-  COLOR 0 255 255
+  STYLE
+    COLOR 0 255 255
+  END
  END 
  
 END # Layer

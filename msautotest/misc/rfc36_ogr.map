@@ -104,9 +104,11 @@ MAP
   END
   CLASS
    NAME " "
-   SIZE 10
-   SYMBOL 2
-   COLOR 255 0 0
+   STYLE
+     SIZE 10
+     SYMBOL 2
+     COLOR 255 0 0
+   END
   END
  END
 END

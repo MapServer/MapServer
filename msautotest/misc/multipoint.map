@@ -33,9 +33,11 @@ LAYER
   CLASSITEM "FID"
   CLASS
     NAME "test1"
-    COLOR 0 255 0
-    SYMBOL 'cross'
-    SIZE 5
+    STYLE
+      COLOR 0 255 0
+      SYMBOL 'cross'
+      SIZE 5
+    END
   END
 END
 
