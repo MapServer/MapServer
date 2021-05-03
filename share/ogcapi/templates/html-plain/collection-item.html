@@ -1,0 +1,13 @@
+{% include "header.html" %}
+
+<h1>{{ template.title }} - Collection Item: {{ response.collection.title }}</h1>
+
+<h2>Properties:</h2>
+<ul>
+  <li>ID: {{ response.id }}</li>  
+{% for key, value in response.properties %}
+  <li>{{ key }}: {{ value }}</li>
+{% endfor %}
+</ul>
+
+{% include "footer.html" %}

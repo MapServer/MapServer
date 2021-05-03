@@ -1,0 +1,14 @@
+{% include "header.html" %}
+
+<h1>{{ template.title }} - Conformance</h1>
+
+<p>This API implements the conformance classes from standards and community specifications that are listed below.</p>
+
+<h2>Links</h2>
+<ul>
+{% for url in response.conformsTo %}
+  <li> <a target="_blank" href="{{ url }}">{{ url }}</a></li>
+{% endfor %}
+</ul>
+
+{% include "footer.html" %}
