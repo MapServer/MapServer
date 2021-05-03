@@ -598,17 +598,19 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
 */
 static void outputResponse(mapObj *map, cgiRequestObj *request, int format, const char *filename, json response)
 {
-  const char *directory = NULL;
+  const char *path = NULL;
+  char fullpath[MS_MAXPATHLEN];
 
   if(format == OGCAPI_FORMAT_JSON) {
     outputJson(response, OGCAPI_MIMETYPE_JSON);
   } else if(format == OGCAPI_FORMAT_GEOJSON) {
     outputJson(response, OGCAPI_MIMETYPE_GEOJSON);
   } else if(format == OGCAPI_FORMAT_HTML) {
-    if((directory = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
+    if((path = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
       outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
       return; // bail
     }
+    msBuildPath(fullpath, map->mappath, path);
 
     json j;
 
@@ -643,7 +645,7 @@ static void outputResponse(mapObj *map, cgiRequestObj *request, int format, cons
       }
     }
 
-    outputTemplate(directory, filename, j, OGCAPI_MIMETYPE_HTML);
+    outputTemplate(fullpath, filename, j, OGCAPI_MIMETYPE_HTML);
   } else {
     outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
