@@ -204,6 +204,13 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
   psDBF->nRecordLength = nRecLen = pabyBuf[10] + pabyBuf[11]*256;
 
+  if (nHeadLen <= 32) {
+    VSIFCloseL( psDBF->fp );
+    msFree(psDBF);
+    msFree(pabyBuf);
+    return( NULL );
+  }
+
   psDBF->nFields = nFields = (nHeadLen - 32) / 32;
 
   psDBF->pszCurrentRecord = (char *) msSmallMalloc(nRecLen);
