@@ -1730,7 +1730,6 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
 
   bufferSize = strlen(filename)+5;
   dbfFilename = (char *)msSmallMalloc(bufferSize);
-  dbfFilename[0] = '\0';
   strcpy(dbfFilename, filename);
 
   /* clean off any extention the filename might have */
