@@ -1695,6 +1695,14 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
 
   /* load some information about this shapefile */
   msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+
+  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
+    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
+               "msShapefileOpen()", shpfile->numshapes);
+    msSHPClose(shpfile->hSHP);
+    return -1;
+  }
+
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
 
   bufferSize = strlen(filename)+5;
