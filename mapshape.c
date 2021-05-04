@@ -1725,6 +1725,7 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", dbfFilename);
     free(dbfFilename);
+    msSHPClose(shpfile->hSHP);
     return(-1);
   }
   free(dbfFilename);

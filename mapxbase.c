@@ -192,6 +192,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   pabyBuf = (uchar *) msSmallMalloc(500);
   if( VSIFReadL( pabyBuf, 32, 1, psDBF->fp ) != 1 )
   {
+    VSIFCloseL( psDBF->fp );
     msFree(psDBF);
     msFree(pabyBuf);
     return( NULL );
@@ -217,6 +218,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   if( VSIFReadL( pabyBuf, nHeadLen - 32, 1, psDBF->fp ) != 1 )
   {
     msFree(psDBF->pszCurrentRecord);
+    VSIFCloseL( psDBF->fp );
     msFree(psDBF);
     msFree(pabyBuf);
     return( NULL );
