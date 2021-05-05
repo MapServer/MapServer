@@ -1695,11 +1695,18 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
 
   /* load some information about this shapefile */
   msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+
+  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
+    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
+               "msShapefileOpen()", shpfile->numshapes);
+    msSHPClose(shpfile->hSHP);
+    return -1;
+  }
+
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
 
   bufferSize = strlen(filename)+5;
   dbfFilename = (char *)msSmallMalloc(bufferSize);
-  dbfFilename[0] = '\0';
   strcpy(dbfFilename, filename);
 
   /* clean off any extention the filename might have */
@@ -1718,6 +1725,7 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", dbfFilename);
     free(dbfFilename);
+    msSHPClose(shpfile->hSHP);
     return(-1);
   }
   free(dbfFilename);
