@@ -41,6 +41,9 @@ using json = nlohmann::json;
 
 #define OGCAPI_DEFAULT_TITLE "MapServer OGC API"
 
+/*
+** HTML Templates
+*/
 #define OGCAPI_TEMPLATE_HTML_LANDING "landing.html"
 #define OGCAPI_TEMPLATE_HTML_CONFORMANCE "conformance.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTION "collection.html"
@@ -56,8 +59,8 @@ using json = nlohmann::json;
 #define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
 #define OGCAPI_MIMETYPE_HTML "text/html"
 
-#define OGCAPI_LIMIT_DEFAULT 10 // by specification
-#define OGCAPI_LIMIT_MAXIMUM 10000
+#define OGCAPI_DEFAULT_LIMIT 10 // by specification
+#define OGCAPI_MAX_LIMIT 10000
 
 #ifdef USE_OGCAPI_SVR
 
@@ -113,27 +116,46 @@ static const char *getRequestParameter(cgiRequestObj *request, const char *item)
   return NULL;
 }
 
+static int getMaxLimit(mapObj *map, layerObj *layer)
+{
+  int max_limit = OGCAPI_MAX_LIMIT;
+  const char *value;  
+
+  // check metadata, layer then map
+  value = msOWSLookupMetadata(&(layer->metadata), "A", "max_limit");
+  if(value == NULL) value = msOWSLookupMetadata(&(map->web.metadata), "A", "max_limit");
+
+  if(value != NULL) {
+    int status = msStringToInt(value, &max_limit, 10);
+    if(status != MS_SUCCESS) max_limit = OGCAPI_MAX_LIMIT; // conversion failed
+  }
+
+  return max_limit;
+}
+
 /*
-** Returns the limit as an int - between 1 and OGCAPI_LIMIT_MAXIMUM. We always return a valid value...
+** Returns the limit as an int - between 1 and getMaxLimit(). We always return a valid value...
 */
-static int getLimit(mapObj *map, cgiRequestObj *request, int *limit)  
+static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *limit)
 {
   int status;
   const char *p;
 
+  int max_limit;
+  max_limit = getMaxLimit(map, layer);
+
   p = getRequestParameter(request, "limit");
   if(!p || (p && strlen(p) == 0)) { // missing or empty
-    *limit = OGCAPI_LIMIT_DEFAULT;
+    *limit = MS_MIN(OGCAPI_DEFAULT_LIMIT, max_limit); // max could be smaller than the default
   } else {
     status = msStringToInt(p, limit, 10);
-
     if(status != MS_SUCCESS)
       return MS_FAILURE;
 
     if(*limit <= 0) {
-      *limit = OGCAPI_LIMIT_DEFAULT;
+      *limit = MS_MIN(OGCAPI_DEFAULT_LIMIT, max_limit); // max could be smaller than the default
     } else {
-      *limit = MS_MIN(*limit, OGCAPI_LIMIT_MAXIMUM);
+      *limit = MS_MIN(*limit, max_limit);
     }
   }
 
@@ -568,6 +590,8 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
   std::string _filename(filename);
   Environment env {_directory}; // catch
 
+  // somehow need to limit include processing to the directory
+
   // ERB-style instead of Mustache (we'll see)
   // env.set_expression("<%=", "%>");
   // env.set_statement("<%", "%>");
@@ -753,19 +777,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   int numMatched = 0;
 
-  //
-  // handle parameters specific to this endpoint
-  //
-  if(getLimit(map, request, &limit) != MS_SUCCESS) {
-    outputError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
-    return MS_SUCCESS;
-  }
-
-  if(getBbox(map, request, &bbox) != MS_SUCCESS) {
-    outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
-    return MS_SUCCESS;
-  }
-
   // find the right layer
   for(i=0; i<map->numlayers; i++) {
     if(strcmp(map->layers[i]->name, collectionId) == 0) break; // match
@@ -778,6 +789,19 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   layer = map->layers[i]; // for convenience
   layer->status = MS_ON; // force on (do we need to save and reset?)
+
+  //
+  // handle parameters specific to this endpoint
+  //
+  if(getLimit(map, request, layer, &limit) != MS_SUCCESS) {
+    outputError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
+    return MS_SUCCESS;
+  }
+
+  if(getBbox(map, request, &bbox) != MS_SUCCESS) {
+    outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+    return MS_SUCCESS;
+  }
 
   if(featureId) {
     const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AOF", "featureid");
