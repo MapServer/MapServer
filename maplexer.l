@@ -359,13 +359,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>outlinecolor               { MS_LEXER_RETURN_TOKEN(OUTLINECOLOR); }
 <INITIAL,URL_STRING>outlinewidth               { MS_LEXER_RETURN_TOKEN(OUTLINEWIDTH); }
 <INITIAL>outputformat                          { MS_LEXER_RETURN_TOKEN(OUTPUTFORMAT); }
-<INITIAL,URL_STRING>overlaybackgroundcolor     { MS_LEXER_RETURN_TOKEN(OVERLAYBACKGROUNDCOLOR); }
-<INITIAL,URL_STRING>overlaycolor               { MS_LEXER_RETURN_TOKEN(OVERLAYCOLOR); }
-<INITIAL>overlaymaxsize                        { MS_LEXER_RETURN_TOKEN(OVERLAYMAXSIZE); }
-<INITIAL>overlayminsize                        { MS_LEXER_RETURN_TOKEN(OVERLAYMINSIZE); }
-<INITIAL,URL_STRING>overlayoutlinecolor        { MS_LEXER_RETURN_TOKEN(OVERLAYOUTLINECOLOR); }
-<INITIAL,URL_STRING>overlaysize                { MS_LEXER_RETURN_TOKEN(OVERLAYSIZE); }
-<INITIAL,URL_STRING>overlaysymbol              { MS_LEXER_RETURN_TOKEN(OVERLAYSYMBOL); }
 <INITIAL>partials                              { MS_LEXER_RETURN_TOKEN(PARTIALS); }
 <INITIAL,URL_STRING>pattern                    { MS_LEXER_RETURN_TOKEN(PATTERN); }
 <INITIAL,URL_STRING>points                     { MS_LEXER_RETURN_TOKEN(POINTS); }
