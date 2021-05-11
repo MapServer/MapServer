@@ -481,9 +481,7 @@ static json getCollection(mapObj *map, layerObj *layer, int format)
 
   if(!map || !layer) return collection;
 
-
-  int status = msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE);
-  if(status != MS_TRUE) return collection;
+  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) return collection;
 
   // initialize some things
   std::string api_root = getApiRootUrl(map);
@@ -790,6 +788,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   layer = map->layers[i]; // for convenience
   layer->status = MS_ON; // force on (do we need to save and reset?)
 
+  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) {
+    outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+    return MS_SUCCESS;
+  }
+
   //
   // handle parameters specific to this endpoint
   //
@@ -844,13 +847,13 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.only_cache_result_count = MS_TRUE;
 
     // get number matched
-    if(msExecuteQuery(map) != MS_SUCCESS || layer->resultcache->numresults <= 0) {
+    if(msExecuteQuery(map) != MS_SUCCESS) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
 
     if(!layer->resultcache || !(layer->resultcache->numresults > 0)) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
+      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
 
