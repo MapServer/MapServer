@@ -199,9 +199,21 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   int i, j;
   mapObj *map = NULL;
 
+  const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
+  const char *ms_map_env_bad_pattern_default = "^(AUTH_.*|CERT_.*|CONTENT_(LENGTH|TYPE)|DOCUMENT_(ROOT|URI)|GATEWAY_INTERFACE|HTTP.*|QUERY_STRING|PATH_(INFO|TRANSLATED)|REMOTE_.*|REQUEST_(METHOD|URI)|SCRIPT_(FILENAME|NAME)|SERVER_.*)";
+
+  int ms_mapfile_tainted = MS_TRUE;
   const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
+
   const char *ms_map_no_path = CPLGetConfigOption("MS_MAP_NO_PATH", NULL);
   const char *ms_map_pattern = CPLGetConfigOption("MS_MAP_PATTERN", NULL);
+  const char *ms_map_env_pattern = CPLGetConfigOption("MS_MAP_ENV_PATTERN", NULL);
+
+  const char *ms_map_bad_pattern = CPLGetConfigOption("MS_MAP_BAD_PATTERN", NULL);
+  if(ms_map_bad_pattern == NULL) ms_map_bad_pattern = ms_map_bad_pattern_default;
+
+  const char *ms_map_env_bad_pattern = CPLGetConfigOption("MS_MAP_ENV_BAD_PATTERN", NULL);
+  if(ms_map_env_bad_pattern == NULL) ms_map_env_bad_pattern = ms_map_env_bad_pattern_default;
 
   const char *map_value = NULL;
 
@@ -217,32 +229,47 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   }
 
   if(map_value == NULL) {
-    if(ms_mapfile != NULL) {
-      map = msLoadMap(ms_mapfile, NULL);
-    } else {
+    if(ms_mapfile == NULL) {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
       return NULL;
     }
+    ms_mapfile_tainted = MS_FALSE;
   } else {
-    if(getenv(map_value)) /* an environment variable references the actual file to use */
-      map = msLoadMap(getenv(map_value), NULL);
-    else {
-      /* by here we know the request isn't for something in an environment variable */
+    if(getenv(map_value)) { /* an environment variable references the actual file to use */
+      /* validate env variable name */
+      if(msIsValidRegex(ms_map_env_bad_pattern) == MS_FALSE || msCaseEvalRegex(ms_map_env_bad_pattern, map_value) == MS_TRUE) {
+        msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
+        return NULL;
+      }
+      if(ms_map_env_pattern != NULL && msEvalRegex(ms_map_env_pattern, map_value) != MS_TRUE) {
+        msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
+        return NULL;
+      }
+      ms_mapfile = getenv(map_value);
+    } else {
+      /* by now we know the request isn't for something in an environment variable */
       if(ms_map_no_path != NULL) {
-        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
+        msSetError(MS_WEBERR, "CGI variable \"map\" not found in environment and this server is not configured for full paths.", "msCGILoadMap()");
         return NULL;
       }
-
-      if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, map_value) != MS_TRUE) {
-        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
-        return NULL;
-      }
-
-      /* ok to try to load now */
-      map = msLoadMap(map_value, NULL);
+      ms_mapfile = map_value;
     }
   }
-  
+
+  /* validate ms_mapfile if tainted */
+  if(ms_mapfile_tainted == MS_TRUE) {
+    if(msIsValidRegex(ms_map_bad_pattern) == MS_FALSE || msEvalRegex(ms_map_bad_pattern, ms_mapfile) == MS_TRUE) {
+      msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
+      return NULL;
+    }
+    if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
+      msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
+      return NULL;
+    }
+  }
+
+  /* ok to try to load now */
+  map = msLoadMap(ms_mapfile, NULL);
   if(!map) return NULL;
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
