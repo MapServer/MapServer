@@ -831,6 +831,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
       return MS_SUCCESS;
     }
+
+    if(!layer->resultcache || layer->resultcache->numresults != 1) {
+      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
+      return MS_SUCCESS;
+    }
   } else { // bbox query
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
@@ -839,10 +844,16 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.only_cache_result_count = MS_TRUE;
 
     // get number matched
-    if(msExecuteQuery(map) != MS_SUCCESS) {
+    if(msExecuteQuery(map) != MS_SUCCESS || layer->resultcache->numresults <= 0) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
+
+    if(!layer->resultcache || !(layer->resultcache->numresults > 0)) {
+      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
+      return MS_SUCCESS;
+    }
+
     numMatched = layer->resultcache->numresults;
 
     map->query.only_cache_result_count = MS_FALSE;
@@ -1084,7 +1095,6 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
 
   } else if(request->api_path_length == 7) {
 
-    fprintf(stderr, "api_path_length is 7\n");
     if(strcmp(request->api_path[3], "collections") == 0 && strcmp(request->api_path[5], "items") == 0)  { // middle argument (4) is the collectionId, last argument (6) is featureId
       return processCollectionItemsRequest(map, request, request->api_path[4], request->api_path[6], format);
     }
