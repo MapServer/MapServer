@@ -2368,16 +2368,32 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 msFree(points);
                 filter = msStringConcatenate(filter, "))");
             }
-            else if( psInfo->dialect && EQUAL(psInfo->dialect, "Spatialite") &&
-                     psInfo->pszMainTableName != NULL && !psInfo->bHasSpatialIndex )
+            else if( psInfo->dialect &&
+                     (EQUAL(psInfo->dialect, "Spatialite") ||
+                      EQUAL(psInfo->dialect, "GPKG")) &&
+                     psInfo->pszMainTableName != NULL )
             {
+                const bool isGPKG = EQUAL(psInfo->dialect, "GPKG");
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 const char *col = OGR_L_GetGeometryColumn(psInfo->hLayer); // which geom field??
-                filter = msStringConcatenate(filter, " MbrIntersects(\"");
+                filter = msStringConcatenate(filter, " Intersects(");
+                if( isGPKG )
+                {
+                    // Casting GeoPackage geometries to spatialie ones is done
+                    // automatically normally, since GDAL enables the
+                    // "amphibious" mode, but without it
+                    // explicilty specified, spatialite 4.3.0a does an
+                    // out-of-bounds access.
+                    filter = msStringConcatenate(filter, "GeomFromGPB(");
+                }
+                filter = msStringConcatenate(filter, "\"");
                 char* escaped = msLayerEscapePropertyName(layer, col);
                 filter = msStringConcatenate(filter, escaped);
                 msFree(escaped);
-                filter = msStringConcatenate(filter, "\", BuildMbr(");
+                filter = msStringConcatenate(filter, "\"");
+                if( isGPKG )
+                    filter = msStringConcatenate(filter, ")");
+                filter = msStringConcatenate(filter, ", BuildMbr(");
                 char *points = (char *)msSmallMalloc(30*2*5);
                 snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
                 filter = msStringConcatenate(filter, points);
