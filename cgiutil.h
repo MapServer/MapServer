@@ -71,10 +71,11 @@ typedef struct {
 
   char *httpcookiedata;
 
-  // todo, SWIG?
-  char *path_info;
+#ifndef SWIG
+  const char *path_info;
   int api_path_length;
   char **api_path;
+#endif
 
 } cgiRequestObj;
 
