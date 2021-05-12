@@ -293,12 +293,10 @@ static double round_up(double value, int decimal_places) {
   return std::ceil(value * multiplier) / multiplier;
 }
 
-static json getFeatureGeometry(shapeObj *shape)
+static json getFeatureGeometry(shapeObj *shape, int precision)
 {
   json geometry; // empty (null)
   int *outerList=NULL, numOuterRings=0;
-
-  int precision = 6;
 
   if(!shape) throw std::runtime_error("Null shape.");
 
@@ -402,7 +400,7 @@ static json getFeatureGeometry(shapeObj *shape)
 /*
 ** Return a GeoJSON representation of a shape.
 */
-static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants)
+static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, int geometry_precision)
 {
   json feature; // empty (null)
 
@@ -446,7 +444,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
 
   // geometry
   try {
-    json geometry = getFeatureGeometry(shape);
+    json geometry = getFeatureGeometry(shape, geometry_precision);
     if(!geometry.is_null()) feature["geometry"] = geometry;
   } catch (const std::runtime_error &e) {
     throw std::runtime_error("Error fetching geometry.");
@@ -895,6 +893,13 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       return MS_SUCCESS;
     }
 
+    int geometry_precision = 6; // default
+    if(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision")) {
+      geometry_precision = atoi(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision"));
+    } else if(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision")) {
+      geometry_precision = atoi(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision"));
+    }
+
     // reprojection (layer projection to EPSG:4326)
     reprojectionObj *reprojector = NULL;
     if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
@@ -930,7 +935,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       }
 
       try {
-	json feature = getFeature(layer, &shape, items, constants);
+	json feature = getFeature(layer, &shape, items, constants, geometry_precision);
         if(featureId) {
           response = feature;
         } else {
