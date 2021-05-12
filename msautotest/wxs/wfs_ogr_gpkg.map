@@ -8,6 +8,9 @@
 # Filter using startIndex
 # RUN_PARMS: wfs_ogr_gpkg_filter_startindex.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=0" > [RESULT]
 # RUN_PARMS: wfs_ogr_gpkg_filter_startindex2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=10" > [RESULT]
+#
+# RUN_PARMS: wfs_ogr_gpkg_issue_6325.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=test_6325&BBOX=0.75,0.75,9,9&COUNT=1" > [RESULT_DEVERSION]
+#
 
 MAP
 
@@ -79,6 +82,24 @@ LAYER
   STATUS ON
   PROJECTION
     "init=epsg:3978"
+  END
+END # Layer
+
+
+LAYER
+  NAME "test_6325"
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/test_6325.gpkg"
+  METADATA
+    "ows_title"         "test_6325"
+    "wfs_featureid"     "id"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
   END
 END # Layer
 
