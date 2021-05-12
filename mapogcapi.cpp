@@ -413,7 +413,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
   };
 
   // id
-  const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AOF", "featureid");
+  const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
   if(featureIdItem == NULL) throw std::runtime_error("Missing required featureid metadata."); // should have been trapped earlier
   for(int i=0; i<items->numitems; i++) {
     if(strcasecmp(featureIdItem, items->items[i].name) == 0) {
@@ -528,7 +528,7 @@ static json getCollection(mapObj *map, layerObj *layer, int format)
         },{
           { "rel", "items" },
           { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "Items for his collection as JSON" },
+          { "title", "Items for this collection as JSON" },
           { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" }
         },{
           { "rel", "items" },
@@ -805,7 +805,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   }
 
   if(featureId) {
-    const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AOF", "featureid");
+    const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
     if(featureIdItem == NULL) {
       outputError(OGCAPI_CONFIG_ERROR, "Missing required featureid metadata.");
       return MS_SUCCESS;
