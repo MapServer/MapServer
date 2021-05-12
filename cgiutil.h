@@ -72,7 +72,7 @@ typedef struct {
   char *httpcookiedata;
 
   // todo, SWIG?
-  const char *path_info;
+  char *path_info;
   int api_path_length;
   char **api_path;
 
