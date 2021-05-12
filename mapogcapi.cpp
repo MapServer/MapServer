@@ -402,6 +402,7 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
 */
 static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, int geometry_precision)
 {
+  int i;
   json feature; // empty (null)
 
   if(!layer || !shape) throw std::runtime_error("Null arguments.");
@@ -415,12 +416,14 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
   // id
   const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
   if(featureIdItem == NULL) throw std::runtime_error("Missing required featureid metadata."); // should have been trapped earlier
-  for(int i=0; i<items->numitems; i++) {
+  for(i=0; i<items->numitems; i++) {
     if(strcasecmp(featureIdItem, items->items[i].name) == 0) {
       feature["id"] = shape->values[i];
       break;
     }
   }
+
+  if(i == items->numitems) throw std::runtime_error("Feature id not found.");
 
   // properties - build from items and constants, no group support for now
 
@@ -810,6 +813,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       outputError(OGCAPI_CONFIG_ERROR, "Missing required featureid metadata.");
       return MS_SUCCESS;
     }
+
+    // TODO: does featureIdItem exist in the data?
 
     // optional validation
     const char *featureIdValidation = msLookupHashTable(&(layer->validation), featureIdItem);
