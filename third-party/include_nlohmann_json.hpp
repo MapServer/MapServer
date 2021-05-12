@@ -33,6 +33,9 @@
 #pragma GCC system_header
 #endif
 
+// avoid any clash if other packages (e.g. PROJ) are using another version of nlohmann/json.hpp
+#define nlohmann ms_nlohmann
+
 #if !defined(DOXYGEN_ENABLED)
 #include "nlohmann/json.hpp"
 #endif
