@@ -478,6 +478,7 @@ void msFreeCgiObj(cgiRequestObj *request)
 
   if(request->api_path) {
     msFreeCharArray(request->api_path, request->api_path_length);
+    request->api_path = NULL;
     request->api_path_length = 0;
   }
 
