@@ -218,7 +218,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   const char *map_value = NULL;
 
   if(mapserv->request->api_path != NULL) {
-    map_value = mapserv->request->api_path[1]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
+    map_value = mapserv->request->api_path[0]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
   } else {
     for(i=0; i<mapserv->request->NumParams; i++) { /* find the map parameter */
       if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
@@ -390,15 +390,39 @@ int msCGISetMode(mapservObj *mapserv)
 */
 int msCGIIsAPIRequest(mapservObj *mapserv) 
 {
+  char **tmp_api_path=NULL;
+  int i, n, tmp_api_path_length=0;
+
   mapserv->request->path_info = getenv("PATH_INFO");
   if(mapserv->request->path_info != NULL && strlen(mapserv->request->path_info) > 0) {
-    mapserv->request->api_path = msStringSplit(mapserv->request->path_info, '/', &(mapserv->request->api_path_length));
-    if(mapserv->request->api_path_length >= 3) // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
-      return MS_TRUE;
-    else {
-      msFreeCharArray(mapserv->request->api_path, mapserv->request->api_path_length);      
-      mapserv->request->api_path = NULL; // reset
+    tmp_api_path = msStringSplit(mapserv->request->path_info, '/', &tmp_api_path_length); // ignores consecutive delimeters
+    if(tmp_api_path_length >= 3) { // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
+
+      // capture only non-zero length components
+      n = 0;
+      for(i=0; i<tmp_api_path_length; i++) {
+        if(strlen(tmp_api_path[i]) > 0)
+          n++;
+      }
+
+      mapserv->request->api_path = (char **) msSmallMalloc(sizeof(char *)*n);
+      if(mapserv->request->api_path == NULL) {
+        msFreeCharArray(tmp_api_path, tmp_api_path_length);
+	return MS_FALSE;
+      }
+
       mapserv->request->api_path_length = 0;
+      for(i=0; i<tmp_api_path_length; i++) {
+        if(strlen(tmp_api_path[i]) > 0) {
+          mapserv->request->api_path[mapserv->request->api_path_length] = msStrdup(tmp_api_path[i]);
+          mapserv->request->api_path_length++;
+	}
+      }
+      
+      msFreeCharArray(tmp_api_path, tmp_api_path_length);
+      return MS_TRUE;
+    } else {
+      msFreeCharArray(tmp_api_path, tmp_api_path_length);      
     }
   }
 
@@ -408,7 +432,7 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 int msCGIDispatchAPIRequest(mapservObj *mapserv) 
 {
   // should be a more elegant way to do this (perhaps similar to how drivers are handled)
-  if(strcmp("ogcapi", mapserv->request->api_path[2]) == 0) {
+  if(strcmp("ogcapi", mapserv->request->api_path[1]) == 0) {
 #ifdef USE_OGCAPI_SVR
     return msOGCAPIDispatchRequest(mapserv->map, mapserv->request);
 #else

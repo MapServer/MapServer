@@ -1078,38 +1078,38 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
     format = OGCAPI_FORMAT_HTML; // default for now, need to derive from http headers (possible w/CGI?)
   }
 
-  if(request->api_path_length == 3) {
+  if(request->api_path_length == 2) {
 
     return processLandingRequest(map, request, format);
 
+  } else if(request->api_path_length == 3) {
+
+    if(strcmp(request->api_path[2], "conformance") == 0) {
+      return processConformanceRequest(map, request, format);
+    } else if(strcmp(request->api_path[2], "conformance.html") == 0) {
+      return processConformanceRequest(map, request, OGCAPI_FORMAT_HTML);
+    } else if(strcmp(request->api_path[2], "collections") == 0) {
+      return processCollectionsRequest(map, request, format);
+    } else if(strcmp(request->api_path[2], "collections.html") == 0) {
+      return processCollectionsRequest(map, request, OGCAPI_FORMAT_HTML);
+    }
+
   } else if(request->api_path_length == 4) {
 
-    if(strcmp(request->api_path[3], "conformance") == 0) {
-      return processConformanceRequest(map, request, format);
-    } else if(strcmp(request->api_path[3], "conformance.html") == 0) {
-      return processConformanceRequest(map, request, OGCAPI_FORMAT_HTML);
-    } else if(strcmp(request->api_path[3], "collections") == 0) {
-      return processCollectionsRequest(map, request, format);
-    } else if(strcmp(request->api_path[3], "collections.html") == 0) {
-      return processCollectionsRequest(map, request, OGCAPI_FORMAT_HTML);
+    if(strcmp(request->api_path[2], "collections") == 0) { // next argument (3) is collectionId
+      return processCollectionRequest(map, request, request->api_path[3], format);
     }
 
   } else if(request->api_path_length == 5) {
 
-    if(strcmp(request->api_path[3], "collections") == 0) { // next argument (4) is collectionId
-      return processCollectionRequest(map, request, request->api_path[4], format);
+    if(strcmp(request->api_path[2], "collections") == 0 && strcmp(request->api_path[4], "items") == 0)  { // middle argument (3) is the collectionId
+      return processCollectionItemsRequest(map, request, request->api_path[3], NULL, format);
     }
 
   } else if(request->api_path_length == 6) {
 
-    if(strcmp(request->api_path[3], "collections") == 0 && strcmp(request->api_path[5], "items") == 0)  { // middle argument (4) is the collectionId
-      return processCollectionItemsRequest(map, request, request->api_path[4], NULL, format);
-    }
-
-  } else if(request->api_path_length == 7) {
-
-    if(strcmp(request->api_path[3], "collections") == 0 && strcmp(request->api_path[5], "items") == 0)  { // middle argument (4) is the collectionId, last argument (6) is featureId
-      return processCollectionItemsRequest(map, request, request->api_path[4], request->api_path[6], format);
+    if(strcmp(request->api_path[2], "collections") == 0 && strcmp(request->api_path[4], "items") == 0)  { // middle argument (3) is the collectionId, last argument (5) is featureId
+      return processCollectionItemsRequest(map, request, request->api_path[3], request->api_path[5], format);
     }
   }
 
