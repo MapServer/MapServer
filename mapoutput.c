@@ -153,7 +153,7 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
   }
 
   msApplyOutputFormat( &(map->outputformat), format,
-                       map->transparent, map->interlace, map->imagequality );
+      format->transparent, map->interlace, map->imagequality );
 
   return MS_SUCCESS;
 }
@@ -665,7 +665,7 @@ void msApplyOutputFormat( outputFormatObj **target,
   /*      and return.                                                     */
   /* -------------------------------------------------------------------- */
   if( transparent != MS_NOOVERRIDE && !format->transparent != !transparent )
-    change_needed = MS_TRUE;
+      change_needed = MS_TRUE;
 
   old_imagequality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
   if( imagequality != MS_NOOVERRIDE && old_imagequality != imagequality )
@@ -684,9 +684,9 @@ void msApplyOutputFormat( outputFormatObj **target,
       format = msCloneOutputFormat( format );
 
     if( transparent != MS_NOOVERRIDE ) {
-      format->transparent = transparent;
-      if( format->imagemode == MS_IMAGEMODE_RGB )
-        format->imagemode = MS_IMAGEMODE_RGBA;
+        format->transparent = transparent;
+        if( format->imagemode == MS_IMAGEMODE_RGB )
+            format->imagemode = MS_IMAGEMODE_RGBA;
     }
 
     if( imagequality != MS_NOOVERRIDE && imagequality != old_imagequality ) {
