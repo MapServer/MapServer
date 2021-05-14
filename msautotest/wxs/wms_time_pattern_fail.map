@@ -87,9 +87,11 @@ LAYER
   STATUS ON
   DATA pattern12
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -112,9 +114,11 @@ LAYER
   STATUS ON
   DATA pattern13
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END

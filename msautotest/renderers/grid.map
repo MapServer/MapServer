@@ -29,8 +29,10 @@ MAP
       "+proj=merc +datum=WGS84"
     END
     CLASS
-      OUTLINECOLOR 0 0 0 
-      COLOR 255 255 0 
+      STYLE
+        OUTLINECOLOR 0 0 0 
+        COLOR 255 255 0 
+      END
     END
   END
 
@@ -43,7 +45,9 @@ MAP
     STATUS ON
     CLASS
       NAME "Graticule"
-      COLOR 0 0 0
+      STYLE
+        COLOR 0 0 0
+      END
       LABEL
         COLOR  255 0 0
         FONT lucida

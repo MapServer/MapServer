@@ -78,8 +78,10 @@ MAP
   END
   CLASS
     NAME "obs"
-    COLOR 255 0 0
-    SIZE 10
+    STYLE
+        COLOR 255 0 0
+        SIZE 10
+    END
   END
   METADATA
    "sos_offering_id" "Water" # mandatory to tie layers to groups
