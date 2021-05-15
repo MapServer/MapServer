@@ -443,8 +443,8 @@ void msDrawMarkerSymbolIM(mapObj *map, imageObj* img, pointObj *p, styleObj *sty
 
           for(j=0; j < symbol->numpoints; j++) {
             im_iprintf (&imgStr, "%s %d,%d", j == 0 ? "": ",",
-                        MS_NINT(d*symbol->points[j].x + offset_x),
-                        MS_NINT(d*symbol->points[j].y + offset_y) );
+                        (int)MS_NINT(d*symbol->points[j].x + offset_x),
+                        (int)MS_NINT(d*symbol->points[j].y + offset_y) );
           }
           im_iprintf (&imgStr, "\" />\n");
         } /* end of imagemap, filled case. */
