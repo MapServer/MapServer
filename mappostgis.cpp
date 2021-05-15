@@ -583,6 +583,8 @@ wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
   int nZMFlag;
   /*type = */wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
   const int ncomponents = wkbReadInt(w);
+  if( ncomponents > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /*
   * If we can draw any portion of the collection, we will,
