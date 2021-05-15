@@ -31,6 +31,7 @@
 ** maplabel.c: Routines to enable text drawing, BITMAP or TRUETYPE.
 */
 
+#include <assert.h>
 #include <float.h>
 
 #include "mapserver.h"
@@ -529,6 +530,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     if(classPtr->styles != NULL) {
       if(msGetMarkerSize(map, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
         return(MS_FAILURE);
+      assert(point);
       cacheslot->markers[cacheslot->nummarkers].bounds.minx = (point->x - .5 * w);
       cacheslot->markers[cacheslot->nummarkers].bounds.miny = (point->y - .5 * h);
       cacheslot->markers[cacheslot->nummarkers].bounds.maxx = cacheslot->markers[cacheslot->nummarkers].bounds.minx + (w-1);
