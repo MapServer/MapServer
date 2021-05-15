@@ -145,11 +145,11 @@ void msCopyTextSymbol(textSymbolObj *dst, textSymbolObj *src) {
   *dst = *src;
   MS_REFCNT_INCR(src->label);
   dst->annotext = msStrdup(src->annotext);
-  if(dst->textpath) {
+  if(src->textpath) {
     dst->textpath = msSmallMalloc(sizeof(textPathObj));
     msCopyTextPath(dst->textpath,src->textpath);
   }
-  if(dst->style_bounds) {
+  if(src->style_bounds) {
     int i;
     dst->style_bounds = msSmallCalloc(src->label->numstyles, sizeof(label_bounds*));
     for(i=0; i<src->label->numstyles; i++) {
