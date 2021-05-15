@@ -2031,6 +2031,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
       inp = &in_over;
+      /* coverity[dead_error_begin] */
       if( reprojector ) {
           msProjectDestroyReprojector(reprojector);
           reprojector = NULL;
