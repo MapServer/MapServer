@@ -457,25 +457,14 @@ int msValidateTimeValue(const char *timestring, const char *timeextent)
   } else {
     atimes = msStringSplit(timestring, ',', &numtimes);
     if (numtimes >=1) { /* multiple times */
-      if (strstr(atimes[0], "/") == NULL) { /* multiple descrete times */
-        for (i=0; i<numtimes; i++) {          
-          if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
-            msFreeCharArray(atimes, numtimes);
-            return MS_FALSE;
-          }
+      for (i=0; i<numtimes; i++) {
+        if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
+          msFreeCharArray(atimes, numtimes);
+          return MS_FALSE;
         }
-        msFreeCharArray(atimes, numtimes);
-        return MS_TRUE;
-      } else { /* multiple ranges */
-        for (i=0; i<numtimes; i++) {          
-          if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
-            msFreeCharArray(atimes, numtimes);
-            return MS_FALSE;
-          }
-        }
-        msFreeCharArray(atimes, numtimes);
-        return MS_TRUE;
       }
+      msFreeCharArray(atimes, numtimes);
+      return MS_TRUE;
     } else {
       msFreeCharArray(atimes,numtimes);
     }
