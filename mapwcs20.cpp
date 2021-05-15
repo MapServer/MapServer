@@ -2175,8 +2175,8 @@ static void msWCSCommon20_CreateRangeType(wcs20coverageMetadataObjPtr cm, char *
       int found = MS_FALSE, j;
       for(j = 0; j < num; ++j) {
         int repr = 0;
-        msStringParseInteger(arr[j], &repr);
-        if(static_cast<unsigned>(repr) == i + 1) {
+        if(msStringParseInteger(arr[j], &repr) == MS_SUCCESS &&
+           static_cast<unsigned>(repr) == i + 1) {
           found = MS_TRUE;
           break;
         }
