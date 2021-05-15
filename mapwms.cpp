@@ -1262,7 +1262,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
         map_edge_buffer = atoi(value);
     }
-    if (map_edge_buffer > 0) {
+    if (map_edge_buffer > 0 && map->width > 0 && map->height >  0) {
       /* adjust bbox and width and height to the buffer */
       const double buffer_x = map_edge_buffer * (map->extent.maxx - map->extent.minx) / (double)map->width;
       const double buffer_y = map_edge_buffer * (map->extent.maxy - map->extent.miny) / (double)map->height;
