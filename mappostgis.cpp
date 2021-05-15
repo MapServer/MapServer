@@ -1982,19 +1982,21 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape)
 #if TRANSFER_ENCODING == 64
   result = msPostGISBase64Decode(wkb, wkbstr, wkbstrlen - 1);
   w.size = (wkbstrlen - 1)/2;
+  if( ! result ) {
+    if(wkb!=wkbstatic) free(wkb);
+    return MS_FAILURE;
+  }
 #elif TRANSFER_ENCODING == 256
-  result = 1;
   memcpy(wkb, wkbstr, wkbstrlen);
   w.size = wkbstrlen;
 #else
   result = msPostGISHexDecode(wkb, wkbstr, wkbstrlen);
   w.size = (wkbstrlen - 1)/2;
-#endif
-
   if( ! result ) {
     if(wkb!=wkbstatic) free(wkb);
     return MS_FAILURE;
   }
+#endif
 
   /* Initialize our wkbObj */
   w.wkb = (char*)wkb;
