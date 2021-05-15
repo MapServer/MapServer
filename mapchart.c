@@ -594,7 +594,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   int chartType=MS_CHART_TYPE_PIE;
   int status = MS_FAILURE;
 
-  if (image && map && layer) {
+  if (image && map) {
     if( !(MS_RENDERER_PLUGIN(image->format) )) {
       msSetError(MS_MISCERR, "chart drawing currently only supports GD and AGG renderers", "msDrawChartLayer()");
       return MS_FAILURE;
