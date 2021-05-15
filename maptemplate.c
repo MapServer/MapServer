@@ -3550,6 +3550,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     /* want to do this if there are joined records. */
     if(records == MS_FALSE) {
       if(join->header != NULL) {
+        /* coverity[dead_error_line] */
         if(stream) fclose(stream);
         if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->header), "r")) == NULL) {
           msSetError(MS_IOERR, "Error while opening join header file %s.", "processOneToManyJoin()", join->header);
