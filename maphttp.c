@@ -659,6 +659,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       pasReqInfo[i].fp = fp;
     }
 
+    /* coverity[bad_sizeof] */
     curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &(pasReqInfo[i]));
     curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, msHTTPWriteFct);
 
