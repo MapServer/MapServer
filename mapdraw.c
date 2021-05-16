@@ -413,8 +413,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
       if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
-        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
+        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format)) {
+          assert(pasOWSReqInfo);
           status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests,  map, lp, image);
+        }
         else {
           msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
           status = MS_FAILURE;

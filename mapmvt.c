@@ -524,9 +524,9 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
 
       feature_cleanup:
       msFreeShape(&shape);
-      if(retcode != MS_SUCCESS) goto layer_cleanup;
+      if(status != MS_SUCCESS) goto layer_cleanup;
     } /* next shape */
-    layer_cleanup:
+layer_cleanup:
     msLayerClose(layer);
     msGMLFreeItems(item_list);
     UT_HASH_ITER(hh, value_lookup_cache.cache, cur_value_lookup, tmp_value_lookup) {

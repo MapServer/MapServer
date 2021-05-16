@@ -149,8 +149,12 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj 
           initLayer(psTmpLayer, map);
           msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
           /* open the source layer */
-          if ( !psTmpLayer->vtable)
-            msInitializeVirtualTable(psTmpLayer);
+          if ( !psTmpLayer->vtable) {
+            if( msInitializeVirtualTable(psTmpLayer) != MS_SUCCESS ) {
+                MS_REFCNT_DECR(psTmpLayer);
+                continue;
+            }
+          }
 
           /*make the name unique*/
           snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),

@@ -341,10 +341,6 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           }
         }
       }
-      if(MS_UNLIKELY(status == MS_FAILURE)) {
-        msFreeImage(tile3img);
-        return NULL;
-      }
 
       status = MS_IMAGE_RENDERER(tile3img)->getRasterBufferHandle(tile3img,&tmpraster);
       if(MS_UNLIKELY(status == MS_FAILURE)) {

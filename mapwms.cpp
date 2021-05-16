@@ -1262,7 +1262,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
         map_edge_buffer = atoi(value);
     }
-    if (map_edge_buffer > 0) {
+    if (map_edge_buffer > 0 && map->width > 0 && map->height >  0) {
       /* adjust bbox and width and height to the buffer */
       const double buffer_x = map_edge_buffer * (map->extent.maxx - map->extent.minx) / (double)map->width;
       const double buffer_y = map_edge_buffer * (map->extent.maxy - map->extent.miny) / (double)map->height;
@@ -3068,8 +3068,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msGetOutputFormatMimeListImg(map,mime_list,sizeof(mime_list)/sizeof(char*));
 
       if (nVersion >= OWS_1_1_1) {
+        const auto isGetLegendGraphicEnabled =
+            msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE);
         if (nVersion == OWS_1_3_0) {
-          if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE))
+          if (isGetLegendGraphicEnabled)
             msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
                                  mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                                  mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -3080,7 +3082,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_FALSE))
             msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
         } else {
-          if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE))
+          if (isGetLegendGraphicEnabled)
             msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
                                  mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                                  mime_list[4], mime_list[5], mime_list[6], mime_list[7],

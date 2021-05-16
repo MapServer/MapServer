@@ -159,7 +159,7 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
   if(value) {
     n = strlen(value)+strlen(lp->name)+1+1;
     valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
-    snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
+    snprintf(valueToFree, n, "%s:%s", value, lp->name);
 
     psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST valueToFree);
     msFree(valueToFree);

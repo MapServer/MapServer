@@ -6713,6 +6713,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyystring = string;
           msyylex();
 
+          /* coverity[identical_branches] */
           if(getDouble(&(map->resolution)) == -1) break;
           break;
         case(DEFRESOLUTION):

@@ -33,7 +33,7 @@
 #include <unistd.h>
 #endif
 #include <stdlib.h>
-
+#include <limits.h>
 
 
 #ifdef SHPT_POLYGON
@@ -157,7 +157,8 @@ int main( int argc, char ** argv )
 
   bitmap = msSearchDiskTree( argv[1], rect, 0 /* no debug*/, j );
 
-  if ( bitmap ) {
+  /* j < INT_MAX - 1 test just to please Coverity untrusted bound loop warning */
+  if ( bitmap && j < INT_MAX - 1 ) {
     printf ("result of rectangle search was \n");
     for ( i=0; i<j; i++) {
       if ( msGetBit(bitmap,i) ) {
