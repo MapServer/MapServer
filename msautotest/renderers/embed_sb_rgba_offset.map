@@ -1,4 +1,4 @@
-# RUN_PARMS: embed_sb_rgba_offset.png [SHP2IMG] -m [MAPFILE] -i png24 -o [RESULT]
+# RUN_PARMS: embed_sb_rgba_offset.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
 # RUN_PARMS: embed_sb_rgba_offset.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
@@ -22,6 +22,8 @@ OUTPUTFORMAT
   DRIVER CAIRO/PNG
   TRANSPARENT ON
 END
+
+IMAGETYPE png
 
 SCALEBAR
   TRANSPARENT OFF
