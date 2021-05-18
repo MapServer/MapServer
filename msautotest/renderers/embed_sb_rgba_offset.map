@@ -1,4 +1,4 @@
-# RUN_PARMS: embed_sb_rgba_offset.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: embed_sb_rgba_offset.png [SHP2IMG] -m [MAPFILE] -i png24 -o [RESULT]
 # RUN_PARMS: embed_sb_rgba_offset.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
@@ -14,25 +14,14 @@ IMAGECOLOR 0 0 0
 fontset "../misc/fonts.lst"
 
 OUTPUTFORMAT
-  NAME "png"
   DRIVER AGG/PNG
-  MIMETYPE "image/png"
-  IMAGEMODE RGB
-  EXTENSION "png"
-  FORMATOPTION "GAMMA=0.75"
   TRANSPARENT ON
 END
 
 OUTPUTFORMAT
-  NAME "cairopng"
   DRIVER CAIRO/PNG
-  MIMETYPE "image/png"
-  IMAGEMODE RGB
-  EXTENSION "png"
   TRANSPARENT ON
 END
-
-IMAGETYPE png
 
 SCALEBAR
   TRANSPARENT OFF

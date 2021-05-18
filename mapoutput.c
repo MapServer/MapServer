@@ -183,7 +183,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   }
 
   else if( strcasecmp(driver,"AGG/PNG") == 0 ) {
-    if(!name) name="png24";
+    if(!name) name="png";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/png");
     format->imagemode = MS_IMAGEMODE_RGB;
