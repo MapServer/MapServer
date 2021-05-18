@@ -394,26 +394,6 @@ def fromstring(data, mappath=None):
 
         return retval;
     }
-
-    /**
-    \**Deprecated** - replaced by the :func:`imageObj.write` method
-    */
-    PyObject *saveToString() {
-        int size=0;
-        unsigned char *imgbytes;
-        PyObject *imgstring; 
-
-        imgbytes = msSaveImageBuffer(self, &size, self->format);
-        if (size == 0)
-        {
-            msSetError(MS_IMGERR, "failed to get image buffer", "saveToString()");
-            return NULL;
-        }
-        imgstring = PyBytes_FromStringAndSize((const char*) imgbytes, size);
-        free(imgbytes);
-        return imgstring;
-    }
-
 }
 
 

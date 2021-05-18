@@ -196,68 +196,6 @@ class EmptyMapExceptionTestCase(unittest.TestCase):
         self.assertRaises(mapscript.MapServerError, self.map.draw)
 
 
-class MapMetaDataTestCase(MapTestCase):
-
-    def testInvalidKeyAccess(self):
-        """MapMetaDataTestCase.testInvalidKeyAccess: an invalid map metadata key returns proper error"""
-        self.assertRaises(mapscript.MapServerError, self.map.getMetaData, 'foo')
-
-    def testFirstKeyAccess(self):
-        """MapMetaDataTestCase.testFirstKeyAccess: first metadata key is correct value"""
-        key = self.map.getFirstMetaDataKey()
-        assert key == 'key1'
-        val = self.map.getMetaData(key)
-        assert val == 'value1'
-
-    def testLastKeyAccess(self):
-        """MapMetaDataTestCase.testLastKeyAccess: last metadata key is correct value"""
-        key = self.map.getFirstMetaDataKey()
-        for i in range(4):
-            key = self.map.getNextMetaDataKey(key)
-            assert key is not None
-        key = self.map.getNextMetaDataKey(key)
-        assert key is None
-
-    def testMapMetaData(self):
-        """MapMetaDataTestCase.testMapMetaData: map metadata keys are correct values"""
-        keys = []
-        key = self.map.getFirstMetaDataKey()
-        if key is not None:
-            keys.append(key)
-        while 1:
-            key = self.map.getNextMetaDataKey(key)
-            if not key:
-                break
-            keys.append(key)
-        assert keys == ['key1', 'key2', 'key3', 'key4', 'ows_enable_request'], keys
-
-    def testLayerMetaData(self):
-        """MapMetaDataTestCase.testLayerMetaData: layer metadata keys are correct values"""
-        keys = []
-        key = self.map.getLayer(1).getFirstMetaDataKey()
-        if key is not None:
-            keys.append(key)
-        while 1:
-            key = self.map.getLayer(1).getNextMetaDataKey(key)
-            if not key:
-                break
-            keys.append(key)
-        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
-
-    def testClassMetaData(self):
-        """MapMetaDataTestCase.testClassMetaData: class metadata keys are correct values"""
-        keys = []
-        key = self.map.getLayer(1).getClass(0).getFirstMetaDataKey()
-        if key is not None:
-            keys.append(key)
-        while 1:
-            key = self.map.getLayer(1).getClass(0).getNextMetaDataKey(key)
-            if not key:
-                break
-            keys.append(key)
-        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
-
-
 class NoFontSetTestCase(unittest.TestCase):
 
     def testNoGetFontSetFile(self):
