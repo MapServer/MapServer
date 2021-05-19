@@ -157,11 +157,11 @@ class LayerExtentTestCase(MapTestCase):
 
 class LayerRasterProcessingTestCase(MapLayerTestCase):
 
-    def testSetProcessing(self):
-        """setting a layer's processing directive works"""
-        self.layer.setProcessing('directive0=foo')
+    def testAddProcessing(self):
+        """adding a layer's processing directive works"""
+        self.layer.addProcessing('directive0=foo')
         assert self.layer.numprocessing == 1, self.layer.numprocessing
-        self.layer.setProcessing('directive1=bar')
+        self.layer.addProcessing('directive1=bar')
         assert self.layer.numprocessing == 2, self.layer.numprocessing
         directives = [self.layer.getProcessing(i)
                       for i in range(self.layer.numprocessing)]
@@ -169,9 +169,9 @@ class LayerRasterProcessingTestCase(MapLayerTestCase):
 
     def testClearProcessing(self):
         """clearing a self.layer's processing directive works"""
-        self.layer.setProcessing('directive0=foo')
+        self.layer.addProcessing('directive0=foo')
         assert self.layer.numprocessing == 1, self.layer.numprocessing
-        self.layer.setProcessing('directive1=bar')
+        self.layer.addProcessing('directive1=bar')
         assert self.layer.numprocessing == 2, self.layer.numprocessing
         assert self.layer.clearProcessing() == mapscript.MS_SUCCESS
 
