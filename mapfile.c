@@ -5573,7 +5573,6 @@ void initWeb(webObj *web)
   web->error =  web->empty = NULL;
   web->mintemplate = web->maxtemplate = NULL;
   web->minscaledenom = web->maxscaledenom = -1;
-  web->log = NULL;
   web->imagepath = msStrdup("");
   web->temppath = NULL;
   web->imageurl = msStrdup("");
@@ -5596,7 +5595,6 @@ void freeWeb(webObj *web)
   msFree(web->empty);
   msFree(web->maxtemplate);
   msFree(web->mintemplate);
-  msFree(web->log);
   msFree(web->imagepath);
   msFree(web->temppath);
   msFree(web->imageurl);
@@ -5621,7 +5619,6 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   writeString(stream, indent, "TEMPPATH", NULL, web->temppath);
   writeString(stream, indent, "IMAGEURL", "", web->imageurl);
   writeString(stream, indent, "LEGENDFORMAT", "text/html", web->legendformat);
-  writeString(stream, indent, "LOG", NULL, web->log);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, web->maxscaledenom);
   writeString(stream, indent, "MAXTEMPLATE", NULL, web->maxtemplate);
   writeHashTable(stream, indent, "METADATA", &(web->metadata));
@@ -5727,9 +5724,6 @@ int loadWeb(webObj *web, mapObj *map)
         free(web->legendformat);
         web->legendformat = NULL; /* there is a default */
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
-        break;
-      case(LOG):
-        if(getString(&web->log) == MS_FAILURE) return(-1);
         break;
       case(MAXSCALE):
       case(MAXSCALEDENOM):

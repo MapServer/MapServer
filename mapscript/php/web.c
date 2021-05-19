@@ -74,8 +74,7 @@ PHP_METHOD(webObj, __get)
 
   php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
-  IF_GET_STRING("log", php_web->web->log)
-  else IF_GET_STRING("imagepath", php_web->web->imagepath)
+  IF_GET_STRING("imagepath", php_web->web->imagepath)
     else IF_GET_STRING("template", php_web->web->template)
       else IF_GET_STRING("imageurl", php_web->web->imageurl)
         else IF_GET_STRING("temppath", php_web->web->temppath)
@@ -116,8 +115,7 @@ PHP_METHOD(webObj, __set)
 
   php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
-  IF_SET_STRING("log", php_web->web->log, value)
-  else IF_SET_STRING("imagepath", php_web->web->imagepath, value)
+  IF_SET_STRING("imagepath", php_web->web->imagepath, value)
     else IF_SET_STRING("template", php_web->web->template, value)
       else IF_SET_STRING("imageurl", php_web->web->imageurl, value)
         else IF_SET_STRING("temppath", php_web->web->temppath, value)

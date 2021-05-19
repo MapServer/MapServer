@@ -30,7 +30,6 @@ WEB
 #
   IMAGEPATH "/tmp/ms_tmp/" 
   IMAGEURL "/ms_tmp/"
-#  LOG "/tmp/gmap.log"
 END
 
 
