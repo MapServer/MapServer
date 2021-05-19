@@ -214,7 +214,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"MVT") == 0 ) {
     if(!name) name="mvt";
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("application/x-protobuf");
+    format->mimetype = msStrdup("application/vnd.mapbox-vector-tile");
     format->imagemode = MS_IMAGEMODE_FEATURE;
     format->extension = msStrdup("pbf");
     format->renderer = MS_RENDER_WITH_MVT;

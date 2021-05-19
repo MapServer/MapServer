@@ -3,7 +3,7 @@
 #
 # REQUIRES: INPUT=GDAL SUPPORTS=PBF SUPPORTS=WMS
 #
-# RUN_PARMS: wms_mvt.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=&LAYERS=road&FORMAT=application/x-protobuf" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_mvt.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=&LAYERS=road&FORMAT=application/vnd.mapbox-vector-tile" > [RESULT_DEVERSION]
 
 MAP
 
@@ -56,7 +56,7 @@ WEB
     "ows_rootlayer_keywordlist" "layers,list"
     "ows_layerlimit" "1"
     "ows_enable_request" "*" 
-    "wms_getmap_formatlist" "image/png,image/png; mode=24bit,image/jpeg,image/gif,image/png; mode=8bit,image/tiff,application/x-protobuf"
+    "wms_getmap_formatlist" "image/png,image/png; mode=24bit,image/jpeg,image/gif,image/png; mode=8bit,image/tiff,application/vnd.mapbox-vector-tile"
   END
 END
 

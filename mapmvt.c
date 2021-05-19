@@ -544,7 +544,7 @@ layer_cleanup:
   if( sendheaders ) {
     msIO_fprintf( stdout,
 		  "Content-Length: %d\r\n"
-		  "Content-Type: application/x-protobuf\r\n\r\n",
+		  "Content-Type: application/vnd.mapbox-vector-tile\r\n\r\n",
                   len);
   }
   msIO_fwrite(buf,len,1,stdout);

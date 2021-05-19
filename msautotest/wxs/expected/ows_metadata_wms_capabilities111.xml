@@ -64,7 +64,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Format>image/svg+xml</Format>
       <Format>application/vnd.google-earth.kml+xml</Format>
       <Format>application/vnd.google-earth.kmz</Format>
-      <Format>application/x-protobuf</Format>
+      <Format>application/vnd.mapbox-vector-tile</Format>
       <Format>application/json</Format>
       <DCPType>
         <HTTP>
