@@ -121,6 +121,9 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
 #endif
 #ifdef USE_PBF
   {"mvt","MVT","application/vnd.mapbox-vector-tile"},
+  // The following format is added to keep backward compatibility
+  // for the application/x-protobuf media type
+  {"mvtxprotobuf","MVT","application/x-protobuf"},
 #endif
   {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
@@ -164,13 +167,14 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
 
 outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     const char *driver,
-    const char *name )
+    const char *name,
+    const char *mimetype )
 
 {
 
   outputFormatObj *format = NULL;
   if( strncasecmp(driver,"GD/",3) == 0 ) {
-    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
+    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name, mimetype );
   }
 
   if( strcasecmp(driver,"UTFGRID") == 0 ) {
@@ -214,7 +218,12 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"MVT") == 0 ) {
     if(!name) name="mvt";
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("application/vnd.mapbox-vector-tile");
+    if (mimetype) {
+      format->mimetype = msStrdup(mimetype);
+    } else {
+      format->mimetype = msStrdup("application/vnd.mapbox-vector-tile");
+    }
+
     format->imagemode = MS_IMAGEMODE_FEATURE;
     format->extension = msStrdup("pbf");
     format->renderer = MS_RENDER_WITH_MVT;
@@ -410,7 +419,7 @@ void msApplyDefaultOutputFormats( mapObj *map )
   defEntry = defaultoutputformats;
   while(defEntry->name) {
     if( msSelectOutputFormat( map, defEntry->name ) == NULL )
-      msCreateDefaultOutputFormat( map, defEntry->driver, defEntry->name );
+      msCreateDefaultOutputFormat( map, defEntry->driver, defEntry->name, defEntry->mimetype );
     defEntry++;
   }
   if( map->imagetype != NULL )
@@ -609,7 +618,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
     struct defaultOutputFormatEntry *formatEntry = defaultoutputformats;
     while(formatEntry->name) {
       if(!strcasecmp(imagetype,formatEntry->name) || !strcasecmp(imagetype,formatEntry->mimetype)) {
-        format = msCreateDefaultOutputFormat( map, formatEntry->driver, formatEntry->name );
+        format = msCreateDefaultOutputFormat( map, formatEntry->driver, formatEntry->name, formatEntry->mimetype );
         break;
       }
       formatEntry++;

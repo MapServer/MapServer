@@ -4931,7 +4931,7 @@ static int loadOutputFormat(mapObj *map)
           goto load_output_error;
         }
 
-        format = msCreateDefaultOutputFormat( map, driver, name );
+        format = msCreateDefaultOutputFormat( map, driver, name, NULL );
         if( format == NULL ) {
           msSetError(MS_MISCERR,
                      "OUTPUTFORMAT (%s) clause references driver (%s), but this driver isn't configured.",
