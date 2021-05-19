@@ -345,8 +345,8 @@ def fromstring(data, mappath=None):
 %extend imageObj {
 
     /**
-    Write image data to an open file handle. Intended to replace
-    saveToString.  See ``python/pyextend.i`` for the Python specific
+    Write image data to an open file handle. Replaces
+    the removed saveToString function.  See ``python/pyextend.i`` for the Python specific
     version of this method.
     */
     int write( PyObject *file=Py_None )
