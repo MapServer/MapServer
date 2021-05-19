@@ -430,7 +430,6 @@ int msCopyLabel(labelObj *dst, const labelObj *src)
 int msCopyWeb(webObj *dst, const webObj *src, mapObj *map)
 {
 
-  MS_COPYSTRING(dst->log, src->log);
   MS_COPYSTRING(dst->imagepath, src->imagepath);
   MS_COPYSTRING(dst->imageurl, src->imageurl);
   dst->map = map;
