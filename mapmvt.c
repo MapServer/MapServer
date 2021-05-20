@@ -544,8 +544,8 @@ layer_cleanup:
   if( sendheaders ) {
     msIO_fprintf( stdout,
 		  "Content-Length: %d\r\n"
-		  "Content-Type: application/x-protobuf\r\n\r\n",
-                  len);
+		  "Content-Type: %s\r\n\r\n",
+                  len, MS_IMAGE_MIME_TYPE(map->outputformat));
   }
   msIO_fwrite(buf,len,1,stdout);
   msFree(buf);

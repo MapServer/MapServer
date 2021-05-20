@@ -1988,7 +1988,7 @@ outputFormatObj* outputFormatObj_new(const char *driver, char *name)
 {
   outputFormatObj *format;
 
-  format = msCreateDefaultOutputFormat(NULL, driver, name);
+  format = msCreateDefaultOutputFormat(NULL, driver, name, NULL);
 
   /* in the case of unsupported formats, msCreateDefaultOutputFormat
      should return NULL */
@@ -2029,7 +2029,7 @@ imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format)
   if (input_format) {
     format = input_format;
   } else {
-    format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "png");
+    format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "png", NULL);
 
     if (format)
       msInitializeRendererVTable(format);

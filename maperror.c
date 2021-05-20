@@ -422,7 +422,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 
   /* Default to GIF if no suitable GD output format set */
   if (format == NULL || !MS_RENDERER_PLUGIN(format))
-    format = msCreateDefaultOutputFormat( NULL, "AGG/PNG8", "png" );
+    format = msCreateDefaultOutputFormat( NULL, "AGG/PNG8", "png", NULL );
 
   if(!format->transparent) {
     if(map && MS_VALID_COLOR(map->imagecolor)) {

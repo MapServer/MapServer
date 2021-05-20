@@ -1530,7 +1530,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     case TILE:
       msTileSetExtent(mapserv);
 
-      if(!strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/x-protobuf")) {
+      if(!strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/vnd.mapbox-vector-tile") || !strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/x-protobuf")) {
         if(msMVTWriteTile(mapserv->map, mapserv->sendheaders) != MS_SUCCESS) return MS_FAILURE;
         return MS_SUCCESS;
       }
