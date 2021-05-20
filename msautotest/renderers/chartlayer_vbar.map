@@ -22,8 +22,8 @@ IMAGECOLOR 255 255 255
 # Start of web interface definition
 #
 WEB
-  MINSCALE 2000000
-  MAXSCALE 50000000
+  MINSCALEDENOM 2000000
+  MAXSCALEDENOM 50000000
 #
 # On Windows systems, /tmp and /tmp/ms_tmp/ should be created at the root 
 # of the drive where the .MAP file resides.

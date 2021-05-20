@@ -5725,7 +5725,6 @@ int loadWeb(webObj *web, mapObj *map)
         web->legendformat = NULL; /* there is a default */
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
         break;
-      case(MAXSCALE):
       case(MAXSCALEDENOM):
         if(getDouble(&web->maxscaledenom) == -1) return(-1);
         break;
@@ -5735,7 +5734,6 @@ int loadWeb(webObj *web, mapObj *map)
       case(METADATA):
         if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
         break;
-      case(MINSCALE):
       case(MINSCALEDENOM):
         if(getDouble(&web->minscaledenom) == -1) return(-1);
         break;
