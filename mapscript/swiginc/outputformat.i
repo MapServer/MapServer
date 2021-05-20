@@ -34,7 +34,7 @@
     {
         outputFormatObj *format;
 
-        format = msCreateDefaultOutputFormat(NULL, driver, name);
+        format = msCreateDefaultOutputFormat(NULL, driver, name, NULL);
 
         /* in the case of unsupported formats, msCreateDefaultOutputFormat
            should return NULL */
