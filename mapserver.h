@@ -1172,7 +1172,7 @@ The :ref:`LABEL <label>` object
     int mindistance; ///< Minimum distance in pixels between duplicate labels - see :ref:`MINDISTANCE <mapfile-label-mindistance>`
     int repeatdistance; ///< See :ref:`REPEATDISTANCE <mapfile-label-repeatdistance>`
     double maxoverlapangle; ///< See :ref:`MAXOVERLAPANGLE <mapfile-label-maxoverlapangle>`
-    int partials; ///< Indicates if labels can run off the edge of an image, either :data:`MS_TRUE` (default) or :data:`MS_FALSE` - see :ref:`PARTIALS <mapfile-label-partials>`
+    int partials; ///< Indicates if labels can run off the edge of an image, either :data:`MS_TRUE` or :data:`MS_FALSE` (default) - see :ref:`PARTIALS <mapfile-label-partials>`
 
     int force; ///< Indicates if labels **must** be drawn - see :ref:`FORCE <mapfile-label-force>`
 
