@@ -842,7 +842,7 @@ bool ClipperBase::AddPolygon( const Polygon &pg, PolyType polyType)
     if (j == len-1 || j < 2) break;
     len = j +1;
   }
-  if (len < 3) return false;
+  // if (len < 3) return false;
 
   //create a new edge array ...
   TEdge *edges = new TEdge [len];
