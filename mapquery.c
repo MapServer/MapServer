@@ -30,6 +30,8 @@
 #include "mapserver.h"
 #include "mapows.h"
 
+#include "limits.h"
+
 /* This object is used by the various mapQueryXXXXX() functions. It stores
  * the total amount of shapes and their RAM footprint, when they are cached
  * in the resultCacheObj* of layers. This is the total number accross all queried
@@ -445,7 +447,8 @@ static int loadQueryParams(mapObj *map, FILE *stream)
 
           if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
           for(i=0; i<numlines; i++) {
-            if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0) goto parse_error;
+            if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0 ||
+                numpoints > INT_MAX / (int)sizeof(pointObj)) goto parse_error;
 
             line.numpoints = numpoints;
             line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
