@@ -495,10 +495,10 @@ mediancut( acolorhist_vector achv, int colors, int sum, unsigned char maxval, in
     register long r = 0, g = 0, b = 0, a = 0, sum = 0;
 
     for ( i = 0; i < clrs; ++i ) {
-      r += PAM_GETR( achv[indx + i].acolor ) * achv[indx + i].value;
-      g += PAM_GETG( achv[indx + i].acolor ) * achv[indx + i].value;
-      b += PAM_GETB( achv[indx + i].acolor ) * achv[indx + i].value;
-      a += PAM_GETA( achv[indx + i].acolor ) * achv[indx + i].value;
+      r += (long)PAM_GETR( achv[indx + i].acolor ) * achv[indx + i].value;
+      g += (long)PAM_GETG( achv[indx + i].acolor ) * achv[indx + i].value;
+      b += (long)PAM_GETB( achv[indx + i].acolor ) * achv[indx + i].value;
+      a += (long)PAM_GETA( achv[indx + i].acolor ) * achv[indx + i].value;
       sum += achv[indx + i].value;
     }
     if(sum>0) {
