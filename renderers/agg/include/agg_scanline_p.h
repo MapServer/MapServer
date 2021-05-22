@@ -164,7 +164,7 @@ namespace mapserver
         const self_type& operator = (const self_type&);
 
         int                   m_last_x;
-        int                   m_y;
+        int                   m_y = 0;
         pod_array<cover_type> m_covers;
         cover_type*           m_cover_ptr;
         pod_array<span>       m_spans;
