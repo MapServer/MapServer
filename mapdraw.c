@@ -552,7 +552,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
       if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
+      {
+        assert(pasOWSReqInfo);
         status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
+      }
 
 #else
       status = MS_FAILURE;
