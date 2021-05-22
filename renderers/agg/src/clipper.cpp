@@ -919,6 +919,7 @@ TEdge* ClipperBase::AddBoundsToLML(TEdge *e)
       //    but break on horizontal minima if approaching from their left.
       //    This ensures 'local minima' are always on the left of horizontals.
       if (e->next->ytop < e->ytop && e->next->xbot > e->prev->xbot) break;
+      // coverity[copy_paste_error]
       if (e->xtop != e->prev->xbot) SwapX(*e);
       e->nextInLML = e->prev;
     }
