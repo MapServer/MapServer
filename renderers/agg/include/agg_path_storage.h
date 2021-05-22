@@ -324,6 +324,7 @@ namespace mapserver
             m_cmd_blocks   = new_cmds;
             m_max_blocks  += block_pool;
         }
+        assert(m_coord_blocks);
         m_coord_blocks[nb] = 
             pod_allocator<T>::allocate(block_size * 2 + 
                    block_size / (sizeof(T) / sizeof(unsigned char)));
