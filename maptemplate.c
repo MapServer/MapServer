@@ -719,7 +719,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
       pszPatIn  = findTag(pszTmp+1, "if");
       pszPatOut = strstr(pszTmp+1, "[/if]");
 
-    } while (pszTmp != NULL && nInst > 0);
+    } while (nInst > 0);
 
     /* get the then string (if expression is true) */
     if(getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS) {
