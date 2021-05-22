@@ -228,7 +228,7 @@ namespace mapserver
     private:
         int                   m_min_x;
         int                   m_last_x;
-        int                   m_y;
+        int                   m_y = 0;
         pod_array<cover_type> m_covers;
         pod_array<span>       m_spans;
         span*                 m_cur_span;
