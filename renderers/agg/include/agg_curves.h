@@ -185,20 +185,17 @@ namespace mapserver
     class curve4_inc
     {
     public:
-        curve4_inc() :
-            m_num_steps(0), m_step(0), m_scale(1.0) { }
+        curve4_inc() = default;
 
         curve4_inc(double x1, double y1, 
                    double x2, double y2, 
                    double x3, double y3,
-                   double x4, double y4) :
-            m_num_steps(0), m_step(0), m_scale(1.0) 
+                   double x4, double y4)
         { 
             init(x1, y1, x2, y2, x3, y3, x4, y4);
         }
 
-        curve4_inc(const curve4_points& cp) :
-            m_num_steps(0), m_step(0), m_scale(1.0) 
+        curve4_inc(const curve4_points& cp)
         { 
             init(cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7]);
         }
@@ -230,27 +227,27 @@ namespace mapserver
         unsigned vertex(double* x, double* y);
 
     private:
-        int      m_num_steps;
-        int      m_step;
-        double   m_scale;
-        double   m_start_x; 
-        double   m_start_y;
-        double   m_end_x; 
-        double   m_end_y;
-        double   m_fx; 
-        double   m_fy;
-        double   m_dfx; 
-        double   m_dfy;
-        double   m_ddfx; 
-        double   m_ddfy;
-        double   m_dddfx; 
-        double   m_dddfy;
-        double   m_saved_fx; 
-        double   m_saved_fy;
-        double   m_saved_dfx; 
-        double   m_saved_dfy;
-        double   m_saved_ddfx; 
-        double   m_saved_ddfy;
+        int      m_num_steps = 0;
+        int      m_step = 0;
+        double   m_scale = 1.0;
+        double   m_start_x = 0.0; 
+        double   m_start_y = 0.0;
+        double   m_end_x = 0.0; 
+        double   m_end_y = 0.0;
+        double   m_fx = 0.0; 
+        double   m_fy = 0.0;
+        double   m_dfx = 0.0; 
+        double   m_dfy = 0.0;
+        double   m_ddfx = 0.0; 
+        double   m_ddfy = 0.0;
+        double   m_dddfx = 0.0; 
+        double   m_dddfy = 0.0;
+        double   m_saved_fx = 0.0; 
+        double   m_saved_fy = 0.0;
+        double   m_saved_dfx = 0.0; 
+        double   m_saved_dfy = 0.0;
+        double   m_saved_ddfx = 0.0; 
+        double   m_saved_ddfy = 0.0;
     };
 
 
