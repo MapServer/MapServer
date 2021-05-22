@@ -66,10 +66,9 @@ class MapCloningTestCase(MapCloneTestCase):
         """drawing a cloned map works properly"""
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
-        data = msimg.saveToString()
         filename = 'testClone.png'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
     def testDrawCloneJPEG(self):
@@ -78,10 +77,9 @@ class MapCloningTestCase(MapCloneTestCase):
         self.mapobj_clone.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
-        data = msimg.saveToString()
         filename = 'testClone.jpg'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
     def testDrawClonePNG24(self):
@@ -90,10 +88,9 @@ class MapCloningTestCase(MapCloneTestCase):
         self.mapobj_clone.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
-        data = msimg.saveToString()
         filename = 'testClonePNG24.png'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
 

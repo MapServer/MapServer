@@ -627,89 +627,7 @@
 
         return msLayerSetExtent(self, minx, miny, maxx, maxy);
     }
-    
-    /* 
-    The following metadata methods are no longer needed since we have
-    promoted the metadata member of layerObj to a first-class mapscript
-    object.  See hashtable.i.  Not yet scheduled for deprecation but 
-    perhaps in the next major release?  --SG
-    */
 
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    char *getMetaData(char *name) 
-    {
-        char *value = NULL;
-        if (!name) {
-            msSetError(MS_HASHERR, "NULL key", "getMetaData");
-        }
-     
-        value = (char *) msLookupHashTable(&(self->metadata), name);
-    /*
-    Umberto, 05/17/2006
-    Exceptions should be reserved for situations when a serious error occurred
-    and normal program flow must be interrupted.
-    In this case returning null should be more that enough.
-    */
-#ifndef SWIGJAVA
-        if (!value) {
-            msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
-            return NULL;
-        }
-#endif
-        return value;
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    int setMetaData(char *name, char *value) 
-    {
-        if (msInsertHashTable(&(self->metadata), name, value) == NULL)
-        return MS_FAILURE;
-        return MS_SUCCESS;
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    int removeMetaData(char *name) 
-    {
-        return(msRemoveHashTable(&(self->metadata), name));
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    char *getFirstMetaDataKey() 
-    {
-        return (char *) msFirstKeyFromHashTable(&(self->metadata));
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    char *getNextMetaDataKey(char *lastkey) 
-    {
-        return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
-    }
-  
     %newobject getWMSFeatureInfoURL;
     /**
     Return a WMS GetFeatureInfo URL (works only for WMS layers) *clickX*, *clickY*
@@ -808,12 +726,6 @@
        msLayerSetProcessingKey( self, key, value );
     }
  
-    /// Deprecated
-    void setProcessing(const char *directive ) 
-    {
-        msLayerAddProcessing( self, directive );
-    }
-
     /// Adds a new processing directive line to a layer, similar to the PROCESSING directive 
     /// in a map file. Processing directives supported are specific to the layer type and 
     /// underlying renderer.

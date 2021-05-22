@@ -97,10 +97,9 @@ class NewStylesTestCase(MapTestCase):
         assert class0.numstyles == 3, class0.numstyles
         msimg = self.map.draw()
         assert msimg.thisown == 1
-        data = msimg.saveToString()
         filename = 'testAppendNewStyle.png'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
     def testAppendNewStyleOldWay(self):
@@ -114,10 +113,9 @@ class NewStylesTestCase(MapTestCase):
         new_style.symbol = 1
         new_style.size = 3
         msimg = self.map.draw()
-        data = msimg.saveToString()
         filename = 'testAppendNewStyleOldWay.png'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
     def testInsertNewStyleAtIndex0(self):
@@ -133,10 +131,9 @@ class NewStylesTestCase(MapTestCase):
         assert class0.numstyles == 2, class0.numstyles
         msimg = self.map.draw()
         assert msimg.thisown == 1
-        data = msimg.saveToString()
         filename = 'testInsertNewStyleAtIndex0.png'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
     def testRemovePointStyle(self):

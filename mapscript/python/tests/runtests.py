@@ -46,14 +46,12 @@ from cases.owstest import OWSRequestTestCase
 from cases.clonetest import MapCloningTestCase
 
 from cases.imagetest import ImageObjTestCase, ImageWriteTestCase
-from cases.imagetest import SaveToStringTestCase
 
 from cases.maptest import MapConstructorTestCase
 from cases.maptest import MapLayersTestCase
 from cases.maptest import MapExtentTestCase
 from cases.maptest import MapExceptionTestCase
 from cases.maptest import EmptyMapExceptionTestCase
-from cases.maptest import MapMetaDataTestCase
 from cases.maptest import MapSizeTestCase
 
 from cases.layertest import LayerConstructorTestCase
@@ -103,15 +101,13 @@ suite.addTests([HashTableTestCase(), WebMetadataTestCase(),
 suite.addTests([MapCloningTestCase()])
 suite.addTests([OWSRequestTestCase()])
 
-suite.addTests([ImageObjTestCase(), ImageWriteTestCase(),
-                SaveToStringTestCase()])
+suite.addTests([ImageObjTestCase(), ImageWriteTestCase()])
 
 suite.addTests([MapConstructorTestCase(),
                 MapLayersTestCase(),
                 MapExtentTestCase(),
                 MapExceptionTestCase(),
-                EmptyMapExceptionTestCase(),
-                MapMetaDataTestCase()])
+                EmptyMapExceptionTestCase()])
 
 suite.addTests([LayerConstructorTestCase(),
                 LayerExtentTestCase(),

@@ -481,43 +481,6 @@
       return msGMLWriteQuery(self, filename, ns);
     }
 
-    /// Deprecated
-    char *getMetaData(char *name) {
-      char *value = NULL;
-      if (!name) {
-        msSetError(MS_HASHERR, "NULL key", "getMetaData");
-      }
-       
-      value = (char *) msLookupHashTable(&(self->web.metadata), name);
-      if (!value) {
-        msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
-        return NULL;
-      }
-      return value;
-    }
-
-    /// Deprecated
-    int setMetaData(char *name, char *value) {
-      if (msInsertHashTable(&(self->web.metadata), name, value) == NULL)
-          return MS_FAILURE;
-      return MS_SUCCESS;
-    }
-
-    /// Deprecated
-    int removeMetaData(char *name) {
-      return(msRemoveHashTable(&(self->web.metadata), name));
-    }
-
-    /// Deprecated
-    char *getFirstMetaDataKey() {
-      return (char *) msFirstKeyFromHashTable(&(self->web.metadata));
-    }
-
-    /// Deprecated
-    char *getNextMetaDataKey(char *lastkey) {
-      return (char *) msNextKeyFromHashTable(&(self->web.metadata), lastkey);
-    }
-
     /// Load symbols defined in filename into map symbolset. The existing symbolset is cleared. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setSymbolSet(char *szFileName) {
