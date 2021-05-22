@@ -37,6 +37,8 @@
 
 #include <string>
 
+template<class T> inline void IGNORE_RET_VAL(T) {}
+
 /************************************************************************/
 /*                          msWFSException11()                          */
 /************************************************************************/
@@ -207,15 +209,15 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     tokens = msStringSplit(valueToFree, ' ', &n);
     if (tokens && n > 0) {
       if( nWFSVersion == OWS_1_1_0 )
-        psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+        IGNORE_RET_VAL(xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]));
       else
-        psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultCRS", BAD_CAST tokens[0]);
+        IGNORE_RET_VAL(xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultCRS", BAD_CAST tokens[0]));
       for (i=1; i<n; i++)
       {
         if( nWFSVersion == OWS_1_1_0 )
-          psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+          IGNORE_RET_VAL(xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]));
         else
-          psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]);
+          IGNORE_RET_VAL(xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]));
       }
 
       msFreeCharArray(tokens, n);
