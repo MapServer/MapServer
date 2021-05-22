@@ -35,13 +35,11 @@ namespace mapserver
     class curve3_inc
     {
     public:
-        curve3_inc() :
-          m_num_steps(0), m_step(0), m_scale(1.0) { }
+        curve3_inc() = default;
 
         curve3_inc(double x1, double y1, 
                    double x2, double y2, 
-                   double x3, double y3) :
-            m_num_steps(0), m_step(0), m_scale(1.0) 
+                   double x3, double y3)
         { 
             init(x1, y1, x2, y2, x3, y3);
         }
@@ -67,23 +65,23 @@ namespace mapserver
         unsigned vertex(double* x, double* y);
 
     private:
-        int      m_num_steps;
-        int      m_step;
-        double   m_scale;
-        double   m_start_x; 
-        double   m_start_y;
-        double   m_end_x; 
-        double   m_end_y;
-        double   m_fx; 
-        double   m_fy;
-        double   m_dfx; 
-        double   m_dfy;
-        double   m_ddfx; 
-        double   m_ddfy;
-        double   m_saved_fx; 
-        double   m_saved_fy;
-        double   m_saved_dfx; 
-        double   m_saved_dfy;
+        int      m_num_steps = 0;
+        int      m_step = 0;
+        double   m_scale = 1;
+        double   m_start_x = 0; 
+        double   m_start_y = 0;
+        double   m_end_x = 0; 
+        double   m_end_y = 0;
+        double   m_fx = 0; 
+        double   m_fy = 0;
+        double   m_dfx = 0; 
+        double   m_dfy = 0;
+        double   m_ddfx = 0; 
+        double   m_ddfy = 0;
+        double   m_saved_fx = 0; 
+        double   m_saved_fy = 0;
+        double   m_saved_dfx = 0; 
+        double   m_saved_dfy = 0;
     };
 
 
