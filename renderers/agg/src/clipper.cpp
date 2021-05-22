@@ -2320,9 +2320,12 @@ void Clipper::ProcessHorizontal(TEdge *horzEdge)
   }
   else
   {
+    assert(eMaxPair);
     if ( horzEdge->outIdx >= 0 )
+    {
       IntersectEdges( horzEdge, eMaxPair,
-      IntPoint(horzEdge->xtop, horzEdge->ycurr), ipBoth);
+          IntPoint(horzEdge->xtop, horzEdge->ycurr), ipBoth);
+    }
     if (eMaxPair->outIdx >= 0) throw clipperException("ProcessHorizontal error");
     DeleteFromAEL(eMaxPair);
     DeleteFromAEL(horzEdge);
