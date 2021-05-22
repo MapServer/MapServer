@@ -130,15 +130,14 @@ namespace mapserver
     // and 0.0 if it's a polyline.
     struct vertex_dist
     {
-        double   x;
-        double   y;
-        double   dist;
+        double   x = 0;
+        double   y = 0;
+        double   dist = 0;
 
-        vertex_dist() {}
+        vertex_dist() = default;
         vertex_dist(double x_, double y_) :
             x(x_),
-            y(y_),
-            dist(0.0)
+            y(y_)
         {
         }
 
