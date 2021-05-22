@@ -365,29 +365,17 @@ namespace mapserver
     class curve4_div
     {
     public:
-        curve4_div() : 
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_cusp_limit(0.0),
-            m_count(0)
-        {}
+        curve4_div() = default;
 
         curve4_div(double x1, double y1, 
                    double x2, double y2, 
                    double x3, double y3,
-                   double x4, double y4) :
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_cusp_limit(0.0),
-            m_count(0)
+                   double x4, double y4)
         { 
             init(x1, y1, x2, y2, x3, y3, x4, y4);
         }
 
-        curve4_div(const curve4_points& cp) :
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_count(0)
+        curve4_div(const curve4_points& cp)
         { 
             init(cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7]);
         }
@@ -452,11 +440,11 @@ namespace mapserver
                               double x4, double y4,
                               unsigned level);
 
-        double               m_approximation_scale;
-        double               m_distance_tolerance_square;
-        double               m_angle_tolerance;
-        double               m_cusp_limit;
-        unsigned             m_count;
+        double               m_approximation_scale = 1.0;
+        double               m_distance_tolerance_square = 0.0;
+        double               m_angle_tolerance = 0.0;
+        double               m_cusp_limit = 0.0;
+        unsigned             m_count = 0;
         pod_bvector<point_d> m_points;
     };
 
