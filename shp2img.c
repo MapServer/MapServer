@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 
-
+#include "limits.h"
 
 int main(int argc, char *argv[])
 {
@@ -52,6 +52,11 @@ int main(int argc, char *argv[])
   for(i=1; i<argc; i++) {
     if (strcmp(argv[i],"-c") == 0) { /* user specified number of draws */
       iterations = atoi(argv[i+1]);
+      if( iterations < 0 || iterations > INT_MAX - 1 )
+      {
+          printf("Invalid number of iterations");
+          return 1;
+      }
       printf("We will draw %d times...\n", iterations);
       continue;
     }
