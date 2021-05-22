@@ -94,18 +94,11 @@ namespace mapserver
     class curve3_div
     {
     public:
-        curve3_div() : 
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_count(0)
-        {}
+        curve3_div() = default;
 
         curve3_div(double x1, double y1, 
                    double x2, double y2, 
-                   double x3, double y3) :
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_count(0)
+                   double x3, double y3)
         { 
             init(x1, y1, x2, y2, x3, y3);
         }
@@ -150,10 +143,10 @@ namespace mapserver
                               double x3, double y3,
                               unsigned level);
 
-        double               m_approximation_scale;
-        double               m_distance_tolerance_square;
-        double               m_angle_tolerance;
-        unsigned             m_count;
+        double               m_approximation_scale = 1.0;
+        double               m_distance_tolerance_square = 0;
+        double               m_angle_tolerance = 0;
+        unsigned             m_count = 0;
         pod_bvector<point_d> m_points;
     };
 
