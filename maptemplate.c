@@ -790,9 +790,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
         return MS_FAILURE;
       }
 
-      if(pszIfTag)
-        free(pszIfTag);
-
+      free(pszIfTag);
       pszIfTag = NULL;
     }
 
