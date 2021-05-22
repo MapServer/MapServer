@@ -607,7 +607,7 @@ namespace mapserver
 
 
             //-----------------------------------------------------------------
-            embedded_scanline() : m_ptr(0), m_y(0), m_num_spans(0) {}
+            embedded_scanline() = default;
 
             //-----------------------------------------------------------------
             void     reset(int, int)     {}
@@ -639,10 +639,10 @@ namespace mapserver
             }
 
         private:
-            const int8u* m_ptr;
-            int          m_y;
-            unsigned     m_num_spans;
-            int          m_dx;
+            const int8u* m_ptr = nullptr;
+            int          m_y = 0;
+            unsigned     m_num_spans = 0;
+            int          m_dx = 0;
         };
 
 
