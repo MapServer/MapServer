@@ -599,6 +599,11 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
     return NULL;
   }
   if ( disktree->needswap ) SwapWord ( 4, &node->numshapes );
+  if ( node->numshapes < 0 || node->numshapes > INT_MAX / 4 )
+  {
+    free(node);
+    return NULL;
+  }
   if( node->numshapes > 0 )
     node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
   res = fread( node->ids, node->numshapes*4, 1, disktree->fp );
