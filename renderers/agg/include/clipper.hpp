@@ -218,14 +218,14 @@ private:
   PolyOutList       m_PolyOuts;
   JoinList          m_Joins;
   HorzJoinList      m_HorizJoins;
-  ClipType          m_ClipType;
+  ClipType          m_ClipType = ctIntersection;
   Scanbeam         *m_Scanbeam;
   TEdge           *m_ActiveEdges;
   TEdge           *m_SortedEdges;
   IntersectNode    *m_IntersectNodes;
   bool              m_ExecuteLocked;
-  PolyFillType      m_ClipFillType;
-  PolyFillType      m_SubjFillType;
+  PolyFillType      m_ClipFillType = pftEvenOdd;
+  PolyFillType      m_SubjFillType = pftEvenOdd;
   bool              m_ReverseOutput;
   void DisposeScanbeamList();
   void SetWindingCount(TEdge& edge);
