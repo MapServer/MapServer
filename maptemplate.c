@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include "maptemplate.h"
 #include "maphash.h"
 #include "mapserver.h"
@@ -4901,7 +4903,7 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
       msGenerateImages(mapserv, MS_TRUE, MS_FALSE);
 
     mapserv->sendheaders = MS_FALSE;
-    msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, &pszBuffer);
+    IGNORE_RET_VAL(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, &pszBuffer));
 
     mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;
