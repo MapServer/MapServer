@@ -292,7 +292,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
 {
   int i, j, k, n=0;
 
-  if(1 != fread(&n, sizeof(int), 1, stream)) {
+  if(1 != fread(&n, sizeof(int), 1, stream) || n > INT_MAX - 1) {
     msSetError(MS_MISCERR,"failed to read query count from query file stream", "loadQueryResults()");
     return MS_FAILURE;
   }
