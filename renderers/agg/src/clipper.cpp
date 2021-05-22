@@ -3064,10 +3064,10 @@ class PolyOffsetBuilder
 {
 private:
   Polygons m_p;
-  Polygon* m_curr_poly;
+  Polygon* m_curr_poly = nullptr;
   std::vector<DoublePoint> normals;
-  double m_delta, m_RMin, m_R;
-  size_t m_i, m_j, m_k;
+  double m_delta, m_RMin, m_R = 0;
+  size_t m_i, m_j = 0, m_k = 0;
   static const int buffLength = 128;
   JoinType m_jointype;
  
