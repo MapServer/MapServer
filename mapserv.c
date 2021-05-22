@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
+      /* coverity[tainted_string] */
       putenv( argv[iArg] );
     } else if (strcmp(argv[iArg], "--h") == 0 || strcmp(argv[iArg], "--help") == 0) {
       printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
