@@ -89,12 +89,11 @@ PHP_METHOD(webObj, __get)
                           else IF_GET_STRING("queryformat", php_web->web->queryformat)
                             else IF_GET_STRING("legendformat", php_web->web->legendformat)
                               else IF_GET_STRING("browseformat", php_web->web->browseformat)
-                                else IF_GET_OBJECT("extent", mapscript_ce_rect, php_web->extent, &php_web->web->extent)
-                                  else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_web->metadata, &php_web->web->metadata)
-                                    else IF_GET_OBJECT("validation", mapscript_ce_hashtable, php_web->validation, &php_web->web->validation)
-                                      else {
-                                        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-                                      }
+                                else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_web->metadata, &php_web->web->metadata)
+                                  else IF_GET_OBJECT("validation", mapscript_ce_hashtable, php_web->validation, &php_web->web->validation)
+                                    else {
+                                      mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                    }
 }
 
 PHP_METHOD(webObj, __set)
@@ -214,7 +213,6 @@ PHP_METHOD(webObj, free)
 
   php_web = MAPSCRIPT_OBJ_P(php_web_object, zobj);
 
-  MAPSCRIPT_DELREF(php_web->extent);
   MAPSCRIPT_DELREF(php_web->metadata);
   MAPSCRIPT_DELREF(php_web->validation);
 }
@@ -257,7 +255,6 @@ static zend_object *mapscript_web_create_object(zend_class_entry *ce TSRMLS_DC)
   php_web->zobj.handlers = &mapscript_web_object_handlers;
 
   MAPSCRIPT_INIT_PARENT(php_web->parent);
-  ZVAL_UNDEF(&php_web->extent);
   ZVAL_UNDEF(&php_web->metadata);
   ZVAL_UNDEF(&php_web->validation);
 
@@ -271,7 +268,6 @@ static void mapscript_web_free_object(zend_object *object)
   php_web = (php_web_object *)((char *)object - XtOffsetOf(php_web_object, zobj));
 
   MAPSCRIPT_FREE_PARENT(php_web->parent);
-  MAPSCRIPT_DELREF(php_web->extent);
   MAPSCRIPT_DELREF(php_web->metadata);
   MAPSCRIPT_DELREF(php_web->validation);
 
@@ -305,7 +301,6 @@ static void mapscript_web_object_destroy(void *object TSRMLS_DC)
   MAPSCRIPT_FREE_OBJECT(php_web);
 
   MAPSCRIPT_FREE_PARENT(php_web->parent);
-  MAPSCRIPT_DELREF(php_web->extent);
   MAPSCRIPT_DELREF(php_web->metadata);
   MAPSCRIPT_DELREF(php_web->validation);
 
@@ -325,7 +320,6 @@ static zend_object_value mapscript_web_object_new(zend_class_entry *ce TSRMLS_DC
                                 &mapscript_web_object_destroy TSRMLS_CC);
 
   MAPSCRIPT_INIT_PARENT(php_web->parent);
-  php_web->extent = NULL;
   php_web->metadata = NULL;
   php_web->validation = NULL;
 

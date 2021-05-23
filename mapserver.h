@@ -959,8 +959,6 @@ Serves as a container for various run-time web application definitions like temp
       %mutable;
 #endif /* SWIG */
 
-    rectObj extent; ///< The clipping extent - see :ref:`EXTENT <mapfile-web-extent>`
-
     char *imagepath; ///< Filesystem path to temporary image location - see :ref:`IMAGEPATH <mapfile-web-imagepath>`
     char *imageurl; ///< URL to temporary image location - see :ref:`IMAGEURL <mapfile-web-imageurl>`
     char *temppath; ///< See :ref:`TEMPPATH <mapfile-web-temppath>`

@@ -5567,7 +5567,6 @@ char* msWriteQueryMapToString(queryMapObj *querymap)
 */
 void initWeb(webObj *web)
 {
-  web->extent.minx = web->extent.miny = web->extent.maxx = web->extent.maxy = -1.0;
   web->template = NULL;
   web->header = web->footer = NULL;
   web->error =  web->empty = NULL;
@@ -5612,7 +5611,6 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   writeString(stream, indent, "BROWSEFORMAT", "text/html", web->browseformat);
   writeString(stream, indent, "EMPTY", NULL, web->empty);
   writeString(stream, indent, "ERROR", NULL, web->error);
-  writeExtent(stream, indent, "EXTENT", web->extent);
   writeString(stream, indent, "FOOTER", NULL, web->footer);
   writeString(stream, indent, "HEADER", NULL, web->header);
   writeString(stream, indent, "IMAGEPATH", "", web->imagepath);
@@ -5678,16 +5676,6 @@ int loadWeb(webObj *web, mapObj *map)
         break;
       case(ERROR):
         if(getString(&web->error) == MS_FAILURE) return(-1);
-        break;
-      case(EXTENT):
-        if(getDouble(&(web->extent.minx)) == -1) return(-1);
-        if(getDouble(&(web->extent.miny)) == -1) return(-1);
-        if(getDouble(&(web->extent.maxx)) == -1) return(-1);
-        if(getDouble(&(web->extent.maxy)) == -1) return(-1);
-        if (!MS_VALID_EXTENT(web->extent)) {
-          msSetError(MS_MISCERR, "Given web extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "loadWeb()");
-          return(-1);
-        }
         break;
       case(FOOTER):
         if(getString(&web->footer) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
