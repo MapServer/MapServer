@@ -2398,7 +2398,6 @@ int initStyle(styleObj *style)
   style->patternlength = 0; /* solid line */
   style->gap = 0;
   style->initialgap = -1;
-  style->position = MS_CC;
   style->linecap = MS_CJC_DEFAULT_CAPS;
   style->linejoin = MS_CJC_DEFAULT_JOINS;
   style->linejoinmaxsize = MS_CJC_DEFAULT_JOIN_MAXSIZE;
@@ -2600,12 +2599,6 @@ int loadStyle(styleObj *style)
         }
         break;
       }
-      case(POSITION):
-        /* if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1)  */
-        /* return(-1); */
-        if((style->position = getSymbol(9, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1)
-          return(-1);
-        break;
       case(OUTLINEWIDTH):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
@@ -2830,13 +2823,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     msIO_fprintf(stream,"\n");
     writeBlockEnd(stream,indent,"PATTERN");
     indent--;
-  }
-
-  if(style->position != MS_CC) {
-    writeKeyword(stream, indent, "POSITION", style->position, 9,
-                 MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL",
-                 MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC",
-                 MS_LR, "LR");
   }
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)

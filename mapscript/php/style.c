@@ -168,20 +168,19 @@ PHP_METHOD(styleObj, __get)
                                           else IF_GET_DOUBLE("maxscaledenom", php_style->style->maxscaledenom)
                                             else IF_GET_DOUBLE("minscaledenom", php_style->style->minscaledenom)
                                               else IF_GET_LONG("patternlength", php_style->style->patternlength)
-                                                else IF_GET_LONG("position", php_style->style->position)
-                                                  else IF_GET_LONG("linecap", php_style->style->linecap)
-                                                    else IF_GET_LONG("linejoin", php_style->style->linejoin)
-                                                      else IF_GET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize)
-                                                        else IF_GET_DOUBLE("angle", php_style->style->angle)
-                                                          else IF_GET_LONG("autoangle", php_style->style->autoangle)
-                                                            else IF_GET_LONG("opacity", php_style->style->opacity)
-                                                              else IF_GET_OBJECT("color", mapscript_ce_color, php_style->color, &php_style->style->color)
-                                                                else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_style->outlinecolor, &php_style->style->outlinecolor)
-                                                                  else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_style->backgroundcolor, &php_style->style->backgroundcolor)
-                                                                    else IF_GET_OBJECT("mincolor", mapscript_ce_color, php_style->mincolor, &php_style->style->mincolor)
-                                                                      else IF_GET_OBJECT("maxcolor", mapscript_ce_color, php_style->maxcolor, &php_style->style->maxcolor)
-                                                                        else {
-                                                                          mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                else IF_GET_LONG("linecap", php_style->style->linecap)
+                                                  else IF_GET_LONG("linejoin", php_style->style->linejoin)
+                                                    else IF_GET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize)
+                                                      else IF_GET_DOUBLE("angle", php_style->style->angle)
+                                                        else IF_GET_LONG("autoangle", php_style->style->autoangle)
+                                                          else IF_GET_LONG("opacity", php_style->style->opacity)
+                                                            else IF_GET_OBJECT("color", mapscript_ce_color, php_style->color, &php_style->style->color)
+                                                              else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_style->outlinecolor, &php_style->style->outlinecolor)
+                                                                else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_style->backgroundcolor, &php_style->style->backgroundcolor)
+                                                                  else IF_GET_OBJECT("mincolor", mapscript_ce_color, php_style->mincolor, &php_style->style->mincolor)
+                                                                    else IF_GET_OBJECT("maxcolor", mapscript_ce_color, php_style->maxcolor, &php_style->style->maxcolor)
+                                                                      else {
+                                                                        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
                                                                         }
 }
 
@@ -230,73 +229,72 @@ PHP_METHOD(styleObj, __set)
                                       else IF_SET_LONG("rangeitemindex", php_style->style->rangeitemindex, value)
                                         else IF_SET_DOUBLE("gap", php_style->style->gap, value)
                                           else IF_SET_DOUBLE("initialgap", php_style->style->initialgap, value)
-                                            else IF_SET_LONG("position", php_style->style->position, value)
-                                              else IF_SET_LONG("linecap", php_style->style->linecap, value)
-                                                else IF_SET_LONG("linejoin", php_style->style->linejoin, value)
-                                                  else IF_SET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize, value)
-                                                    else IF_SET_DOUBLE("angle", php_style->style->angle, value)
-                                                      else IF_SET_LONG("autoangle", php_style->style->autoangle, value)
-                                                        else if (STRING_EQUAL("opacity", property)) {
-                                                          int alpha;
-                                                          convert_to_long(value);
-                                                          php_style->style->opacity = Z_LVAL_P(value);
+                                            else IF_SET_LONG("linecap", php_style->style->linecap, value)
+                                              else IF_SET_LONG("linejoin", php_style->style->linejoin, value)
+                                                else IF_SET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize, value)
+                                                  else IF_SET_DOUBLE("angle", php_style->style->angle, value)
+                                                    else IF_SET_LONG("autoangle", php_style->style->autoangle, value)
+                                                      else if (STRING_EQUAL("opacity", property)) {
+                                                        int alpha;
+                                                        convert_to_long(value);
+                                                        php_style->style->opacity = Z_LVAL_P(value);
 
-                                                          /* apply opacity as the alpha channel color(s) */
-                                                          if(php_style->style->opacity < 100)
-                                                            alpha = MS_NINT(php_style->style->opacity*2.55);
-                                                          else
-                                                            alpha = 255;
+                                                        /* apply opacity as the alpha channel color(s) */
+                                                        if(php_style->style->opacity < 100)
+                                                          alpha = MS_NINT(php_style->style->opacity*2.55);
+                                                        else
+                                                          alpha = 255;
 
-                                                          php_style->style->color.alpha = alpha;
-                                                          php_style->style->outlinecolor.alpha = alpha;
-                                                          php_style->style->backgroundcolor.alpha = alpha;
-                                                          php_style->style->mincolor.alpha = alpha;
-                                                          php_style->style->maxcolor.alpha = alpha;
-                                                        } else if (STRING_EQUAL("symbolname", property)) {
-                                                          convert_to_string(value);
-                                                          if (php_style->style->symbolname) free(php_style->style->symbolname);
-                                                          if (Z_STRVAL_P(value))
-                                                            php_style->style->symbolname = msStrdup(Z_STRVAL_P(value));
+                                                        php_style->style->color.alpha = alpha;
+                                                        php_style->style->outlinecolor.alpha = alpha;
+                                                        php_style->style->backgroundcolor.alpha = alpha;
+                                                        php_style->style->mincolor.alpha = alpha;
+                                                        php_style->style->maxcolor.alpha = alpha;
+                                                      } else if (STRING_EQUAL("symbolname", property)) {
+                                                        convert_to_string(value);
+                                                        if (php_style->style->symbolname) free(php_style->style->symbolname);
+                                                        if (Z_STRVAL_P(value))
+                                                          php_style->style->symbolname = msStrdup(Z_STRVAL_P(value));
 
-                                                          /* The parent can be a classObj or a labelCacheMemberObj */
-                                                          if (MAPSCRIPT_OBJCE(php_style->parent.val) == mapscript_ce_class) {
-                                                            php_class = MAPSCRIPT_OBJ(php_class_object, php_style->parent.val);
-                                                            /* Can a class have no layer object ? */
-                                                            php_layer = MAPSCRIPT_OBJ(php_layer_object, php_class->parent.val);
-                                                            if (ZVAL_IS_UNDEF(php_layer->parent.val)) {
-                                                              mapscript_throw_exception("No map object associated with this style object." TSRMLS_CC);
-                                                              return;
-                                                            }
-                                                            php_map = MAPSCRIPT_OBJ(php_map_object, php_layer->parent.val);
-#ifdef disabled
-                                                          } else if (MAPSCRIPT_OBJCE(php_style->parent.val) == mapscript_ce_labelcachemember) {
-                                                            /* The parent is always a map */
-                                                            php_labelcachemember = MAPSCRIPT_OBJ(php_labelcachemember_object, php_style->parent.val);
-                                                            if (ZVAL_NOT_UNDEF(php_labelcachemember->parent.val)) {
-                                                              mapscript_throw_exception("No map object associated with this style object." TSRMLS_CC);
-                                                              return;
-                                                            }
-                                                            php_map = MAPSCRIPT_OBJ(php_map_object, php_labelcachemember->parent.val);
-#endif
-                                                          }
-
-                                                          if (styleObj_setSymbolByName(php_style->style,
-                                                                                       php_map->map,
-                                                                                       php_style->style->symbolname) == -1) {
-                                                            mapscript_throw_exception("Symbol not found." TSRMLS_CC);
+                                                        /* The parent can be a classObj or a labelCacheMemberObj */
+                                                        if (MAPSCRIPT_OBJCE(php_style->parent.val) == mapscript_ce_class) {
+                                                          php_class = MAPSCRIPT_OBJ(php_class_object, php_style->parent.val);
+                                                          /* Can a class have no layer object ? */
+                                                          php_layer = MAPSCRIPT_OBJ(php_layer_object, php_class->parent.val);
+                                                          if (ZVAL_IS_UNDEF(php_layer->parent.val)) {
+                                                            mapscript_throw_exception("No map object associated with this style object." TSRMLS_CC);
                                                             return;
                                                           }
-                                                        } else if ( (STRING_EQUAL("color", property)) ||
-                                                                    (STRING_EQUAL("outlinecolor", property)) ||
-                                                                    (STRING_EQUAL("backgroundcolor", property)) ||
-                                                                    (STRING_EQUAL("maxcolor", property)) ||
-                                                                    (STRING_EQUAL("mincolor", property))) {
-                                                          mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
-                                                        } else if ( (STRING_EQUAL("patternlength", property)))    {
-                                                          mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
-                                                        } else {
-                                                          mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                          php_map = MAPSCRIPT_OBJ(php_map_object, php_layer->parent.val);
+#ifdef disabled
+                                                        } else if (MAPSCRIPT_OBJCE(php_style->parent.val) == mapscript_ce_labelcachemember) {
+                                                          /* The parent is always a map */
+                                                          php_labelcachemember = MAPSCRIPT_OBJ(php_labelcachemember_object, php_style->parent.val);
+                                                          if (ZVAL_NOT_UNDEF(php_labelcachemember->parent.val)) {
+                                                            mapscript_throw_exception("No map object associated with this style object." TSRMLS_CC);
+                                                            return;
+                                                          }
+                                                          php_map = MAPSCRIPT_OBJ(php_map_object, php_labelcachemember->parent.val);
+#endif
                                                         }
+
+                                                        if (styleObj_setSymbolByName(php_style->style,
+                                                                                     php_map->map,
+                                                                                     php_style->style->symbolname) == -1) {
+                                                          mapscript_throw_exception("Symbol not found." TSRMLS_CC);
+                                                          return;
+                                                        }
+                                                      } else if ( (STRING_EQUAL("color", property)) ||
+                                                                  (STRING_EQUAL("outlinecolor", property)) ||
+                                                                  (STRING_EQUAL("backgroundcolor", property)) ||
+                                                                  (STRING_EQUAL("maxcolor", property)) ||
+                                                                  (STRING_EQUAL("mincolor", property))) {
+                                                        mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
+                                                      } else if ( (STRING_EQUAL("patternlength", property)))    {
+                                                        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
+                                                      } else {
+                                                        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                      }
 
 }
 

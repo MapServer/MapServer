@@ -1062,7 +1062,6 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
 
     double gap; ///< See :ref:`GAP <mapfile-style-gap>` - moved from symbolObj in version 6.0
     double initialgap; ///< See :ref:`INITIALGAP <mapfile-style-initialgap>`
-    int position; ///< See :ref:`POSITION <mapfile-style-position>` - moved from symbolObj in version 6.0
 
     int linecap; ///< See :ref:`LINECAP <mapfile-style-linecap>`
     int linejoin; ///< See :ref:`LINEJOIN <mapfile-style-linejoin>` - moved from symbolObj in version 6.0
