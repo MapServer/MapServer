@@ -90,7 +90,7 @@
 
     /// Checks some internal consistency issues, and returns :data:`MS_TRUE` 
     /// if things are OK and :data:`MS_FALSE` if there are problems. 
-    /// Some problems are fixed up internally. May produce debug output if issues encountered."
+    /// Some problems are fixed up internally. May produce debug output if issues encountered.
     int validate() 
     {
         return msOutputFormatValidate(self, MS_FALSE );
@@ -108,7 +108,7 @@
     /**
     * Returns the option at ``idx`` or NULL if the index is beyond the array bounds. 
     * The option is returned as the original KEY=VALUE string. 
-    * The number of available options can be obtained by calling getNumformatoptions.
+    * The number of available options can be obtained via :attr:`outputFormatObj.numformatoptions`
     */
     char* getOptionAt(int i) {
        if( i >= 0 && i < self->numformatoptions ) {

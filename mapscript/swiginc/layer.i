@@ -32,7 +32,7 @@
 
     /**
     A :class:`layerObj` is associated with :class:`mapObj`. An instance of 
-    :class:`layerObj` can exist outside of a :class:`mapObj`. 
+    :class:`layerObj` can exist outside of a :class:`mapObj`
     */
     layerObj(mapObj *map=NULL) 
     {
@@ -174,7 +174,7 @@
     return c;
     }
 
-    /// Opens the underlying layer. This is required before operations like :func:`layerObj.getFeature`
+    /// Opens the underlying layer. This is required before operations like :func:`layerObj.getResult`
     /// will work, but is not required before a draw or query call.
     int open() 
     {
@@ -441,7 +441,7 @@
     /**
     Query layer using a rectangle specified in georeferenced map coordinates (i.e. not pixels).
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
-    Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
+    Note that the layer's FILTER/FILTERITEM are ignored by this function. The :data:`MS_MULTIPLE` mode is set by default.
     Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
     */
     int queryByRect(mapObj *map, rectObj rect) 

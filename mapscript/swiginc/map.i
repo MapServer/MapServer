@@ -643,7 +643,7 @@
     Return the output format corresponding to driver name imagetype or to format name 
     imagetype. This works exactly the same as the IMAGETYPE directive in a mapfile, is 
     case insensitive and allows an output format to be found either by driver 
-    (like 'GD/PNG') or name (like 'PNG24').
+    (like 'AGG/PNG') or name (like 'png').
     */
     outputFormatObj *getOutputFormatByName(char *name) {
         return msSelectOutputFormat(self, name); 
