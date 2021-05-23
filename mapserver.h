@@ -858,8 +858,13 @@ The :ref:`OUTPUTFORMAT <outputformat>` object
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int  numformatoptions; ///< The number of option values set on this format - can be used to 
-                           ///< iterate over the options array in conjunction with :func:`outputFormatObj.getOptionAt`
+
+    /**
+    The number of option values set on this format - can be used to
+    iterate over the options array in conjunction with :func:`outputFormatObj.getOptionAt`
+    */
+    int  numformatoptions;
+
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -2015,18 +2020,34 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 #endif /*SWIG*/
 
   /* Function prototypes, wrapable */
-  MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, const char *filename); ///< Saves a map image to a file
 
-  MS_DLL_EXPORT void msFreeImage(imageObj *img); ///< Generic function to free a imageObj
+  /**
+  Saves a map image to a file
+  */
+  MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, const char *filename); 
 
-  MS_DLL_EXPORT int msSetup(void); ///< Sets up threads and font cache - called when MapScript is initialised
+  /**
+  Generic function to free a imageObj
+  */
+  MS_DLL_EXPORT void msFreeImage(imageObj *img);
 
-  MS_DLL_EXPORT void msCleanup(void); ///< Attempts to recover all dynamically allocated resources allocated by MapServer code and 
-                                      ///<  dependent libraries. It it used primarily for final clean-up in scripts that need to do 
-                                      ///< memory leak testing to get rid of "noise" one-time allocations. 
-                                      ///< It should not normally be used by production code.
+  /**
+  Sets up threads and font cache - called when MapScript is initialised
+  */
+  MS_DLL_EXPORT int msSetup(void);
 
-  MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath); ///< Sets up string-based mapfile loading and calls loadMapInternal to do the work
+  /**
+  Attempts to recover all dynamically allocated resources allocated by MapServer code and
+  dependent libraries. It is used primarily for final clean-up in scripts that need to do
+  memory leak testing to get rid of "noise" one-time allocations.
+  It should not normally be used by production code.
+  */
+  MS_DLL_EXPORT void msCleanup(void);
+
+  /**
+  Sets up string-based mapfile loading and calls loadMapInternal to do the work
+  */
+  MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath);
 
   /* Function prototypes, not wrapable */
 
