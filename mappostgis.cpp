@@ -315,6 +315,8 @@ wkbReadLine(wkbObj *w, lineObj *line, int nZMFlag)
 {
   pointObj p;
   const int npoints = wkbReadInt(w);
+  if( npoints > (int)((w->size - (w->ptr - w->wkb)) / 16) )
+    return;
 
   line->numpoints = npoints;
   line->point =(pointObj*) msSmallMalloc(npoints * sizeof(pointObj));
@@ -364,6 +366,8 @@ wkbSkipGeometry(wkbObj *w)
     case WKB_MULTICURVE:
     case WKB_MULTISURFACE: {
       const int ngeoms = wkbReadInt(w);
+      if( ngeoms > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+        return;
       for ( int i = 0; i < ngeoms; i++ ) {
         wkbSkipGeometry(w);
       }
@@ -426,6 +430,8 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
 
   /* How many rings? */
   const int nrings = wkbReadInt(w);
+  if( nrings > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /* Add each ring to the shape */
   lineObj line;
@@ -450,9 +456,11 @@ wkbConvCurvePolygonToShape(wkbObj *w, shapeObj *shape)
   /*endian = */wkbReadChar(w);
   int nZMFlag;
   const int type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
-  const int ncomponents = wkbReadInt(w);
-
   if( type != WKB_CURVEPOLYGON ) return MS_FAILURE;
+
+  const int ncomponents = wkbReadInt(w);
+  if( ncomponents > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /* Lower the allowed dimensionality so we can
   *  catch the linear ring components */
@@ -526,6 +534,8 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
 
   /* How many components in the compound curve? */
   const int ncomponents = wkbReadInt(w);
+  if( ncomponents > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /* We'll load each component onto a line in a shape */
   for( int i = 0; i < ncomponents; i++ )
