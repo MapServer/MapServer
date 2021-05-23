@@ -824,7 +824,7 @@ The :ref:`CLUSTER <cluster>` object. See :ref:`RFC 69 <rfc69>`.
     char *table;
     char *from, *to; /* item names */
 
-    void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access */
+    void *joininfo; /* vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistent access */
 
     char *header, *footer;
 #ifndef __cplusplus
@@ -1168,7 +1168,11 @@ The :ref:`LABEL <label>` object
     int minlength; ///< This is a valid Mapfile keyword but is currently unused
     double space_size_10; ///< Cached size of a single space character used for label text alignment of rfc40
 
-    int minfeaturesize; ///< Minimum feature size (in pixels) to label, features of this size or greater will be labeled - see :ref:`MINFEATURESIZE  <mapfile-label-minfeaturesize>`
+    /**
+    Minimum feature size (in pixels) to label, features of this size or greater will be 
+    labeled - see :ref:`MINFEATURESIZE  <mapfile-label-minfeaturesize>`
+    */
+    int minfeaturesize;
     int autominfeaturesize; ///< :data:`MS_TRUE` or :data:`MS_FALSE`
 
     double minscaledenom; ///< See :ref:`MINSCALEDENOM  <mapfile-label-minscaledenom>`
@@ -1177,7 +1181,12 @@ The :ref:`LABEL <label>` object
     int mindistance; ///< Minimum distance in pixels between duplicate labels - see :ref:`MINDISTANCE <mapfile-label-mindistance>`
     int repeatdistance; ///< See :ref:`REPEATDISTANCE <mapfile-label-repeatdistance>`
     double maxoverlapangle; ///< See :ref:`MAXOVERLAPANGLE <mapfile-label-maxoverlapangle>`
-    int partials; ///< Indicates if labels can run off the edge of an image, either :data:`MS_TRUE` or :data:`MS_FALSE` (default) - see :ref:`PARTIALS <mapfile-label-partials>`
+
+    /**
+    Indicates if labels can run off the edge of an image, either :data:`MS_TRUE` 
+    or :data:`MS_FALSE` (default) - see :ref:`PARTIALS <mapfile-label-partials>`
+    */
+    int partials;
 
     int force; ///< Indicates if labels **must** be drawn - see :ref:`FORCE <mapfile-label-force>`
 
@@ -1815,7 +1824,11 @@ The :ref:`REFERENCE <reference>` object
 
     colorObj offsite; ///< transparent pixel value for raster images - see :ref:`OFFSITE <mapfile-layer-offsite>`
 
-    int transform; ///< :data:`MS_TRUE` (default) or :data:`MS_FALSE` whether or not layer data is to be transformed to image units - see :ref:`TRANSFORM <mapfile-layer-transform>`
+    /**
+    :data:`MS_TRUE` (default) or :data:`MS_FALSE` whether or not layer data is to be transformed to 
+    image units - see :ref:`TRANSFORM <mapfile-layer-transform>`
+    */
+    int transform;
 
     int labelcache; ///< :data:`MS_ON` (default) or :data:`MS_OFF` - see :ref:`LABELCACHE <mapfile-layer-labelcache>`
     int postlabelcache; ///< :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`POSTLABELCACHE <mapfile-layer-postlabelcache>`
@@ -1829,7 +1842,13 @@ The :ref:`REFERENCE <reference>` object
     char *connection; ///< layer connection or data source name - see :ref:`CONNECTION <mapfile-layer-connection>`
     char *plugin_library; ///< Used to select the library to load by MapServer
     char *plugin_library_original; ///< this is needed for Mapfile writing
-    char *bandsitem; ///< The attribute from the index file used to select the source raster band(s) to be used - normally NULL for default bands processing
+
+    /**
+    The attribute from the index file used to select the source raster band(s) to be 
+    used - normally NULL for default bands processing
+    */
+    char *bandsitem;
+
     char *filteritem; ///< Attribute defining filter - see :ref:`FILTERITEM <mapfile-layer-filteritem>`
     char *styleitem; ///< item to be used for style lookup - can also be 'AUTO' - see :ref:`STYLEITEM <mapfile-layer-styleitem>`
 
@@ -1927,7 +1946,11 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
       int numlayers; ///< Number of layers in mapfile
       int maxlayers; ///< Allocated size of layers[] array
 
-      hashTableObj configoptions; ///< A hash table of configuration options from CONFIG keywords in the map - see :ref:`CONFIG <mapfile-map-config>`
+      /**
+      A hash table of configuration options from CONFIG keywords 
+      in the map - see :ref:`CONFIG <mapfile-map-config>`
+      */
+      hashTableObj configoptions;
 
       symbolSetObj symbolset; ///< See :ref:`SYMBOLSET <mapfile-map-symbolset>`
       fontSetObj fontset; ///< See :ref:`FONTSET <mapfile-map-fontset>`
@@ -1969,8 +1992,12 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
     char *shapepath; ///< Where are the shape files located - see :ref:`SHAPEPATH <mapfile-map-shapepath>`
     char *mappath; ///< Path of the mapfile, all paths are relative to this path
-    char *sldurl; ///< URL of SLD document as specified with "&SLD=..." WMS parameter d- currently this reference is used only in mapogcsld.c 
-                  ///< and has a NULL value outside that context
+
+    /**
+    URL of SLD document as specified with "&SLD=..." WMS parameter d- currently this reference is 
+    used only in mapogcsld.c and has a NULL value outside that context
+    */
+    char *sldurl;
 
     colorObj imagecolor; ///< Holds the initial image color value - see :ref:`IMAGECOLOR <mapfile-map-imagecolor>`
 
