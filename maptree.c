@@ -520,6 +520,8 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
   if( fread( &numsubnodes, 4, 1, disktree->fp ) != 1 )
     goto error;
   if ( disktree->needswap ) SwapWord ( 4, &numsubnodes );
+  if( numsubnodes < 0 || numsubnodes > INT_MAX / 4 )
+    goto error;
 
   for(i=0; i<numsubnodes; i++)
     searchDiskTreeNode(disktree, aoi, status);
