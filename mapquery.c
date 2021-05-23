@@ -446,6 +446,7 @@ static int loadQueryParams(mapObj *map, FILE *stream)
           map->query.shape->type = shapetype;
 
           if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
+          if( numlines > INT_MAX - 1 ) goto parse_error;
           for(i=0; i<numlines; i++) {
             if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0 ||
                 numpoints > INT_MAX / (int)sizeof(pointObj)) goto parse_error;

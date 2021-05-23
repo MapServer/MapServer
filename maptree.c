@@ -520,6 +520,8 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
   if( fread( &numsubnodes, 4, 1, disktree->fp ) != 1 )
     goto error;
   if ( disktree->needswap ) SwapWord ( 4, &numsubnodes );
+  if( numsubnodes < 0 || numsubnodes > INT_MAX / 4 )
+    goto error;
 
   for(i=0; i<numsubnodes; i++)
     searchDiskTreeNode(disktree, aoi, status);
@@ -606,13 +608,15 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
     return NULL;
   }
   if( node->numshapes > 0 )
-    node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
-  res = fread( node->ids, node->numshapes*4, 1, disktree->fp );
-  if ( !res )
   {
-    free(node->ids);
-    free(node);
-    return NULL;
+    node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
+    res = fread( node->ids, node->numshapes*4, 1, disktree->fp );
+    if ( !res )
+    {
+      free(node->ids);
+      free(node);
+      return NULL;
+    }
   }
   for( i=0; i < node->numshapes; i++ ) {
     if ( disktree->needswap ) SwapWord ( 4, &node->ids[i] );
