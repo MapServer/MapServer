@@ -333,7 +333,7 @@ int msAddPointToLine(lineObj *line, pointObj *point )
   return MS_SUCCESS;
 }
 
-int msAddLine(shapeObj *p, lineObj *new_line)
+int msAddLine(shapeObj *p, const lineObj *new_line)
 {
   lineObj lineCopy;
 
@@ -341,7 +341,8 @@ int msAddLine(shapeObj *p, lineObj *new_line)
   lineCopy.point = (pointObj *) malloc(new_line->numpoints*sizeof(pointObj));
   MS_CHECK_ALLOC(lineCopy.point, new_line->numpoints*sizeof(pointObj), MS_FAILURE);
 
-  memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
+  if( new_line->point )
+      memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
 
   // cppcheck-suppress memleak
   return msAddLineDirectly( p, &lineCopy );

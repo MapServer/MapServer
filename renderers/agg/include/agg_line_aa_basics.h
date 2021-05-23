@@ -81,7 +81,7 @@ namespace mapserver
     struct line_parameters
     {
         //---------------------------------------------------------------------
-        line_parameters() {}
+        line_parameters() = default;
         line_parameters(int x1_, int y1_, int x2_, int y2_, int len_) :
             x1(x1_), y1(y1_), x2(x2_), y2(y2_), 
             dx(abs(x2_ - x1_)),
@@ -135,11 +135,11 @@ namespace mapserver
         }
         
         //---------------------------------------------------------------------
-        int x1, y1, x2, y2, dx, dy, sx, sy;
-        bool vertical;
-        int inc;
-        int len;
-        int octant;
+        int x1 = 0, y1 = 0, x2 = 0, y2 = 0, dx = 0, dy = 0, sx = 0, sy = 0;
+        bool vertical = false;
+        int inc = 0;
+        int len = 0;
+        int octant = 0;
 
         //---------------------------------------------------------------------
         static const int8u s_orthogonal_quadrant[8];

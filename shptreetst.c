@@ -148,6 +148,11 @@ int main( int argc, char ** argv )
     rect.maxx = atof (argv[4]);
     rect.maxy = atof (argv[5]);
   } else {
+    if( node == NULL )
+    {
+        printf("node == NULL");
+        return 1;
+    }
     printf ("using last read box as a search \n");
     rect.minx =  node->rect.minx;
     rect.miny =  node->rect.miny;

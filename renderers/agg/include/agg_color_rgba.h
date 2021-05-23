@@ -234,13 +234,13 @@ namespace mapserver
         typedef rgba8 self_type;
 
 
-        value_type r;
-        value_type g;
-        value_type b;
-        value_type a;
+        value_type r = 0;
+        value_type g = 0;
+        value_type b = 0;
+        value_type a = 0;
 
         //--------------------------------------------------------------------
-        rgba8() {}
+        rgba8() = default;
 
         //--------------------------------------------------------------------
         rgba8(unsigned r_, unsigned g_, unsigned b_, unsigned a_=base_mask) :

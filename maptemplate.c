@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include "maptemplate.h"
 #include "maphash.h"
 #include "mapserver.h"
@@ -719,7 +721,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
       pszPatIn  = findTag(pszTmp+1, "if");
       pszPatOut = strstr(pszTmp+1, "[/if]");
 
-    } while (pszTmp != NULL && nInst > 0);
+    } while (nInst > 0);
 
     /* get the then string (if expression is true) */
     if(getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS) {
@@ -790,9 +792,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
         return MS_FAILURE;
       }
 
-      if(pszIfTag)
-        free(pszIfTag);
-
+      free(pszIfTag);
       pszIfTag = NULL;
     }
 
@@ -3094,17 +3094,31 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /* open template */
   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, mapserv->map->legend.template), "r")) == NULL) {
     msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
-    if(pszResult)
-      free(pszResult);
+    free(pszResult);
     pszResult=NULL;
     goto error;
   }
 
   fseek(stream, 0, SEEK_END);
-  length = ftell(stream);
+  long lengthLong = ftell(stream);
   rewind(stream);
+  if( lengthLong < 0 || lengthLong > INT_MAX - 1 )
+  {
+    msSetError(MS_IOERR, "Too large template file.", "generateLegendTemplate()");
+    free(pszResult);
+    pszResult=NULL;
+    goto error;
+  }
+  length = (int)lengthLong;
 
-  file = (char*)msSmallMalloc(length + 1);
+  file = (char*)malloc(length + 1);
+  if( file == NULL )
+  {
+    msSetError(MS_IOERR, "Cannot allocate memory for template file.", "generateLegendTemplate()");
+    free(pszResult);
+    pszResult=NULL;
+    goto error;
+  }
 
   /*
    * Read all the template file
@@ -4889,7 +4903,7 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages, char **names, cha
       msGenerateImages(mapserv, MS_TRUE, MS_FALSE);
 
     mapserv->sendheaders = MS_FALSE;
-    msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, &pszBuffer);
+    IGNORE_RET_VAL(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, &pszBuffer));
 
     mapserv->map = NULL;
     mapserv->request->ParamNames = mapserv->request->ParamValues = NULL;

@@ -31,7 +31,7 @@
 #include "mapserver.h"
 #include "maptree.h"
 
-
+#include <limits.h>
 
 /* -------------------------------------------------------------------- */
 /*      If the following is 0.5, nodes will be split in half.  If it    */
@@ -491,10 +491,13 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
   if( fread( &numshapes, 4, 1, disktree->fp ) != 1 )
     goto error;
   if ( disktree->needswap ) SwapWord ( 4, &numshapes );
+  if( numshapes < 0 || numshapes > INT_MAX / 4 )
+    goto error;
 
   if(!msRectOverlap(&rect, &aoi)) { /* skip rest of this node and sub-nodes */
     offset += numshapes*sizeof(ms_int32) + sizeof(ms_int32);
-    fseek(disktree->fp, offset, SEEK_CUR);
+    if( fseek(disktree->fp, offset, SEEK_CUR) < 0 )
+        goto error;
     return;
   }
   if(numshapes > 0) {
@@ -597,6 +600,11 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
     return NULL;
   }
   if ( disktree->needswap ) SwapWord ( 4, &node->numshapes );
+  if ( node->numshapes < 0 || node->numshapes > INT_MAX / 4 )
+  {
+    free(node);
+    return NULL;
+  }
   if( node->numshapes > 0 )
     node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
   res = fread( node->ids, node->numshapes*4, 1, disktree->fp );

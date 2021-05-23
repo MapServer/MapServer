@@ -193,7 +193,10 @@ int msGenerateEncryptionKey(unsigned char *k)
   srand( (unsigned int) time( NULL ));
 
   for(i=0; i<MS_ENCRYPTION_KEY_SIZE; i++)
+  {
+    /* coverity[dont_call] */
     k[i] = (unsigned char)rand();
+  }
 
   return MS_SUCCESS;
 }

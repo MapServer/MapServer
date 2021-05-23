@@ -485,8 +485,8 @@ namespace mapserver
     template<class T> struct point_base
     {
         typedef T value_type;
-        T x,y;
-        point_base() {}
+        T x = 0,y = 0;
+        point_base() = default;
         point_base(T x_, T y_) : x(x_), y(y_) {}
     };
     typedef point_base<int>    point_i; //-----point_i

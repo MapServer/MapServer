@@ -284,7 +284,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
     pszValue = msOWSLookupMetadata(&(lp->metadata), "S",
                                    "observedproperty_name");
     if (pszValue)
-      psNode = xmlNewTextChild(psCompNode, psNsGml,
+      (void) xmlNewTextChild(psCompNode, psNsGml,
                            BAD_CAST "name", BAD_CAST pszValue);
 
     /* add components */

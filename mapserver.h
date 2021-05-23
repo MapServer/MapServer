@@ -2443,7 +2443,7 @@ extern "C" {
   MS_DLL_EXPORT int WARN_UNUSED msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_follow_result *lfr, labelObj *lbl);
   MS_DLL_EXPORT int WARN_UNUSED msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_auto_result *lar, labelObj *lbl, double resolutionfactor);
   MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension);
-  MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
+  MS_DLL_EXPORT int msAddLine(shapeObj *p, const lineObj *new_line);
   MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
   MS_DLL_EXPORT int msAddPointToLine(lineObj *line, pointObj *point );
   MS_DLL_EXPORT double msGetPolygonArea(shapeObj *p);

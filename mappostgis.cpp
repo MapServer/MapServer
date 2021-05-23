@@ -347,6 +347,8 @@ wkbSkipGeometry(wkbObj *w)
     }
     case WKB_POLYGON: {
       const int nrings = wkbReadInt(w);
+      if( nrings > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+        return;
       for ( int i = 0; i < nrings; i++ ) {
         const int npoints = wkbReadInt(w);
         w->ptr += npoints * nCoordDim * sizeof(double);

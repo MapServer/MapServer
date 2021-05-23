@@ -57,14 +57,14 @@ namespace mapserver
         double   m_y;
         double   m_rx;
         double   m_ry;
-        double   m_angle;
+        double   m_angle = 0;
         double   m_start;
         double   m_end;
         double   m_scale;
         double   m_da;
         bool     m_ccw;
         bool     m_initialized;
-        unsigned m_path_cmd;
+        unsigned m_path_cmd = 0;
     };
 
 
