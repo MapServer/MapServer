@@ -3072,10 +3072,10 @@ private:
   Polygons m_p;
   Polygon* m_curr_poly = nullptr;
   std::vector<DoublePoint> normals;
-  double m_delta, m_RMin, m_R = 0;
-  size_t m_i, m_j = 0, m_k = 0;
+  double m_delta = 0, m_RMin = 0, m_R = 0;
+  size_t m_i = 0, m_j = 0, m_k = 0;
   static const int buffLength = 128;
-  JoinType m_jointype;
+  JoinType m_jointype = jtSquare;
  
 public:
 
