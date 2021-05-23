@@ -141,7 +141,7 @@
     }
     
     %newobject convertToString;
-    /// Output the :ref:`layerObj` object as a Mapfile string. Provides the inverse option for :func:`layerObj.updateFromString`.
+    /// Output the :class:`layerObj` object as a Mapfile string. Provides the inverse option for :func:`layerObj.updateFromString`.
     char* convertToString()
     {
         return msWriteLayerToString(self);
