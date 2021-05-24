@@ -49,7 +49,9 @@ extern "C" {
 
 enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 
-/* structure to hold request information */
+/**
+Class for programming OWS services
+*/
 typedef struct {
 #ifndef SWIG
   char **ParamNames;
@@ -59,17 +61,15 @@ typedef struct {
 #ifdef SWIG
   %immutable;
 #endif
-  int NumParams;
+  int NumParams; ///< The number of querystring parameters
 #ifdef SWIG
   %mutable;
 #endif
 
-  enum MS_REQUEST_TYPE type;
-  char *contenttype;
-
-  char *postrequest;
-
-  char *httpcookiedata;
+  enum MS_REQUEST_TYPE type; ///< A :ref:`request type constant<mapfile-constants-requesttype>`
+  char *contenttype; ///< The content type of the request
+  char *postrequest; ///< Any POST data request
+  char *httpcookiedata; ///< Any cookie data associated with the request
 } cgiRequestObj;
 
 

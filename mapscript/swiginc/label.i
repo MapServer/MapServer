@@ -63,7 +63,7 @@
   }
 
   %newobject convertToString;
-  /// Output the :ref:`labelObj` object as a Mapfile string. Provides the inverse option for :func:`labelObj.updateFromString`.
+  /// Output the :class:`labelObj` object as a Mapfile string. Provides the inverse option for :func:`labelObj.updateFromString`.
   char* convertToString()
   {
     return msWriteLabelToString(self);

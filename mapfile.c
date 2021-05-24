@@ -7148,7 +7148,6 @@ void initResultCache(resultCacheObj *resultcache)
     resultcache->cachesize = 0;
     resultcache->bounds.minx = resultcache->bounds.miny = resultcache->bounds.maxx = resultcache->bounds.maxy = -1;
     resultcache->previousBounds = resultcache->bounds;
-    resultcache->usegetshape = MS_FALSE;
   }
 }
 
