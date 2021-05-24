@@ -658,13 +658,16 @@ extern "C" {
   /*      used to hold aliases for TRUETYPE fonts                         */
   /************************************************************************/
 
+  /**
+  The :ref:`FONTSET <fontset>` object
+  */
   typedef struct {
 #ifdef SWIG
     %immutable;
 #endif
-    char *filename;
-    int numfonts;
-    hashTableObj fonts;
+    char *filename; ///< The filename of the fonset
+    int numfonts; ///< The number of fonts in the fontset
+    hashTableObj fonts; ///< Key, value pairs of font name and font file
 #ifdef SWIG
     %mutable;
 #endif
