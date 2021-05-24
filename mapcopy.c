@@ -430,7 +430,6 @@ int msCopyLabel(labelObj *dst, const labelObj *src)
 int msCopyWeb(webObj *dst, const webObj *src, mapObj *map)
 {
 
-  MS_COPYSTRING(dst->log, src->log);
   MS_COPYSTRING(dst->imagepath, src->imagepath);
   MS_COPYSTRING(dst->imageurl, src->imageurl);
   dst->map = map;
@@ -443,8 +442,6 @@ int msCopyWeb(webObj *dst, const webObj *src, mapObj *map)
   MS_COPYSTRING(dst->footer, src->footer);
   MS_COPYSTRING(dst->empty, src->empty);
   MS_COPYSTRING(dst->error, src->error);
-
-  MS_COPYRECT(&(dst->extent), &(src->extent));
 
   MS_COPYSTELEM(minscaledenom);
   MS_COPYSTELEM(maxscaledenom);

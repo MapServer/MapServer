@@ -316,7 +316,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>linecap                               { MS_LEXER_RETURN_TOKEN(LINECAP); }
 <INITIAL>linejoin                              { MS_LEXER_RETURN_TOKEN(LINEJOIN); }
 <INITIAL>linejoinmaxsize                       { MS_LEXER_RETURN_TOKEN(LINEJOINMAXSIZE); }
-<INITIAL>log                                   { MS_LEXER_RETURN_TOKEN(LOG); }
 <INITIAL,URL_VARIABLE>map                      { MS_LEXER_RETURN_TOKEN(MAP); }
 <INITIAL>marker                                { MS_LEXER_RETURN_TOKEN(MARKER); }
 <INITIAL>markersize                            { MS_LEXER_RETURN_TOKEN(MARKERSIZE); }

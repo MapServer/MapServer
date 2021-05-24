@@ -5567,13 +5567,11 @@ char* msWriteQueryMapToString(queryMapObj *querymap)
 */
 void initWeb(webObj *web)
 {
-  web->extent.minx = web->extent.miny = web->extent.maxx = web->extent.maxy = -1.0;
   web->template = NULL;
   web->header = web->footer = NULL;
   web->error =  web->empty = NULL;
   web->mintemplate = web->maxtemplate = NULL;
   web->minscaledenom = web->maxscaledenom = -1;
-  web->log = NULL;
   web->imagepath = msStrdup("");
   web->temppath = NULL;
   web->imageurl = msStrdup("");
@@ -5596,7 +5594,6 @@ void freeWeb(webObj *web)
   msFree(web->empty);
   msFree(web->maxtemplate);
   msFree(web->mintemplate);
-  msFree(web->log);
   msFree(web->imagepath);
   msFree(web->temppath);
   msFree(web->imageurl);
@@ -5614,14 +5611,12 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   writeString(stream, indent, "BROWSEFORMAT", "text/html", web->browseformat);
   writeString(stream, indent, "EMPTY", NULL, web->empty);
   writeString(stream, indent, "ERROR", NULL, web->error);
-  writeExtent(stream, indent, "EXTENT", web->extent);
   writeString(stream, indent, "FOOTER", NULL, web->footer);
   writeString(stream, indent, "HEADER", NULL, web->header);
   writeString(stream, indent, "IMAGEPATH", "", web->imagepath);
   writeString(stream, indent, "TEMPPATH", NULL, web->temppath);
   writeString(stream, indent, "IMAGEURL", "", web->imageurl);
   writeString(stream, indent, "LEGENDFORMAT", "text/html", web->legendformat);
-  writeString(stream, indent, "LOG", NULL, web->log);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, web->maxscaledenom);
   writeString(stream, indent, "MAXTEMPLATE", NULL, web->maxtemplate);
   writeHashTable(stream, indent, "METADATA", &(web->metadata));
@@ -5682,16 +5677,6 @@ int loadWeb(webObj *web, mapObj *map)
       case(ERROR):
         if(getString(&web->error) == MS_FAILURE) return(-1);
         break;
-      case(EXTENT):
-        if(getDouble(&(web->extent.minx)) == -1) return(-1);
-        if(getDouble(&(web->extent.miny)) == -1) return(-1);
-        if(getDouble(&(web->extent.maxx)) == -1) return(-1);
-        if(getDouble(&(web->extent.maxy)) == -1) return(-1);
-        if (!MS_VALID_EXTENT(web->extent)) {
-          msSetError(MS_MISCERR, "Given web extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "loadWeb()");
-          return(-1);
-        }
-        break;
       case(FOOTER):
         if(getString(&web->footer) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         if(msyysource == MS_URL_TOKENS) {
@@ -5728,10 +5713,6 @@ int loadWeb(webObj *web, mapObj *map)
         web->legendformat = NULL; /* there is a default */
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
         break;
-      case(LOG):
-        if(getString(&web->log) == MS_FAILURE) return(-1);
-        break;
-      case(MAXSCALE):
       case(MAXSCALEDENOM):
         if(getDouble(&web->maxscaledenom) == -1) return(-1);
         break;
@@ -5741,7 +5722,6 @@ int loadWeb(webObj *web, mapObj *map)
       case(METADATA):
         if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
         break;
-      case(MINSCALE):
       case(MINSCALEDENOM):
         if(getDouble(&web->minscaledenom) == -1) return(-1);
         break;

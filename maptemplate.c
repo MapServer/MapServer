@@ -182,12 +182,6 @@ int setExtent(mapservObj *mapserv)
   return MS_SUCCESS;
 }
 
-int checkWebExtent(mapservObj *mapserv)
-{
-  (void)mapserv;
-  return MS_SUCCESS;
-}
-
 int checkWebScale(mapservObj *mapserv)
 {
   int status;

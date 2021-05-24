@@ -306,7 +306,6 @@ end_request:
               (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
-    msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */
