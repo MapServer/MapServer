@@ -1942,7 +1942,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     %mutable;
 #endif /* SWIG */
 
-    int transparent; ///< TODO - Deprecated
     int interlace; ///< TODO - Deprecated
     int imagequality; ///< TODO - Deprecated
     char *datapattern; ///< TODO - Deprecated use VALIDATION ... END block instead

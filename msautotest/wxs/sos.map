@@ -122,7 +122,6 @@ MAP
   "init=epsg:4326"
  END
  DEBUG ON
- TRANSPARENT ON
  WEB
   HEADER "templates/query_header.html"
   FOOTER "templates/query_footer.html"

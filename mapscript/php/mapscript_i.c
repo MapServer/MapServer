@@ -395,7 +395,7 @@ int mapObj_selectOutputFormat(mapObj *self,
   format = msSelectOutputFormat(self, imagetype);
   if (format) {
     msApplyOutputFormat( &(self->outputformat), format,
-                         self->transparent, self->interlace,
+                         format->transparent, self->interlace,
                          self->imagequality );
     return(MS_SUCCESS);
   }

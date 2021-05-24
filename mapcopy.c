@@ -1214,7 +1214,6 @@ int msCopyMap(mapObj *dst, const mapObj *src)
   }
 
   /* msCopyLabelCache(&(dst->labelcache), &(src->labelcache)); */
-  MS_COPYSTELEM(transparent);
   MS_COPYSTELEM(interlace);
   MS_COPYSTELEM(imagequality);
 

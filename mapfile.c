@@ -4958,7 +4958,7 @@ static int loadOutputFormat(mapObj *map)
         if( imagemode != MS_NOOVERRIDE ) {
           if(format->renderer != MS_RENDER_WITH_AGG || imagemode != MS_IMAGEMODE_PC256) {
             /* don't force to PC256 with agg, this can happen when using mapfile defined GD
-             * ouputformats that are now falling back to agg/png8
+             * outputformats that are now falling back to agg/png8
              */
             format->imagemode = imagemode;
           }
@@ -5858,7 +5858,6 @@ int initMap(mapObj *map)
 
   map->palette.numcolors = 0;
 
-  map->transparent = MS_NOOVERRIDE;
   map->interlace = MS_NOOVERRIDE;
   map->imagequality = MS_NOOVERRIDE;
 
@@ -6081,7 +6080,6 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   writeKeyword(stream, indent, "STATUS", map->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeString(stream, indent, "SYMBOLSET", NULL, map->symbolset.filename);
   writeString(stream, indent, "TEMPLATEPATTERN", NULL, map->templatepattern); /* depricated */
-  writeKeyword(stream, indent, "TRANSPARENT", map->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeKeyword(stream, indent, "UNITS", map->units, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeLineFeed(stream);
 
@@ -6349,9 +6347,6 @@ static int loadMapInternal(mapObj *map)
         break;
       case(SYMBOLSET):
         if(getString(&map->symbolset.filename) == MS_FAILURE) return MS_FAILURE;
-        break;
-      case(TRANSPARENT):
-        if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(UNITS):
         if((int)(map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) return MS_FAILURE;
@@ -6742,14 +6737,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
             break;
           }
           msMapComputeGeotransform( map );
-          break;
-        case(TRANSPARENT):
-          msyystate = MS_TOKENIZE_URL_STRING;
-          msyystring = string;
-          msyylex();
-
-          if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
-          msPostMapParseOutputFormatSetup( map );
           break;
         case(UNITS):
           msyystate = MS_TOKENIZE_URL_STRING;

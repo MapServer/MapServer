@@ -15,7 +15,15 @@ shapepath "../misc/data"
 IMAGETYPE png
 fontset "../misc/fonts.lst"
 
-transparent on
+OUTPUTFORMAT
+  DRIVER AGG/PNG
+  TRANSPARENT ON
+END
+
+OUTPUTFORMAT
+  DRIVER CAIRO/PNG
+  TRANSPARENT ON
+END
 
 LEGEND 
   POSITION LR
