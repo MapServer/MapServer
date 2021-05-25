@@ -873,7 +873,6 @@ int msCopyScalebar(scalebarObj *dst, const scalebarObj *src)
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(position);
   MS_COPYSTELEM(transparent);
-  MS_COPYSTELEM(interlace);
   MS_COPYSTELEM(postlabelcache);
   MS_COPYSTELEM(align);
 
@@ -911,7 +910,6 @@ int msCopyLegend(legendObj *dst, const legendObj *src, mapObj *map)
   MS_COPYSTELEM(width);
   MS_COPYSTELEM(position);
   MS_COPYSTELEM(transparent);
-  MS_COPYSTELEM(interlace);
   MS_COPYSTELEM(postlabelcache);
 
 #ifndef __cplusplus
@@ -1211,9 +1209,6 @@ int msCopyMap(mapObj *dst, const mapObj *src)
   }
 
   /* msCopyLabelCache(&(dst->labelcache), &(src->labelcache)); */
-  MS_COPYSTELEM(interlace);
-  MS_COPYSTELEM(imagequality);
-
   MS_COPYRECT(&(dst->extent), &(src->extent));
 
   MS_COPYSTELEM(cellsize);
@@ -1250,8 +1245,7 @@ int msCopyMap(mapObj *dst, const mapObj *src)
   /* set the active output format */
   MS_COPYSTRING(dst->imagetype, src->imagetype);
   format = msSelectOutputFormat( dst, dst->imagetype );
-  msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE,
-                      MS_NOOVERRIDE, MS_NOOVERRIDE );
+  msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE);
 
   return_value = msCopyProjection(&(dst->projection),&(src->projection));
   if (return_value != MS_SUCCESS) {

@@ -180,9 +180,7 @@ int main(int argc, char *argv[])
         else {
           msFree( (char *) map->imagetype );
           map->imagetype = msStrdup( argv[i+1] );
-          msApplyOutputFormat( &(map->outputformat), format,
-                               format->transparent, map->interlace,
-                               map->imagequality );
+          msApplyOutputFormat( &(map->outputformat), format, MS_NOOVERRIDE);
         }
         i+=1;
       }

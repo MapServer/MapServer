@@ -1367,8 +1367,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   */
 
   if( format != NULL )
-    msApplyOutputFormat( &(map->outputformat), format, transparent,
-                         MS_NOOVERRIDE, MS_NOOVERRIDE );
+    msApplyOutputFormat( &(map->outputformat), format, transparent);
 
   /* Validate all layers given.
   ** If an invalid layer is sent, return an exception.
@@ -4642,8 +4641,7 @@ this request. Check wms/ows_enable_request settings.",
       return msWMSException(map, nVersion, "InvalidFormat", wms_exception_format);
     }
   }
-  msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
-      MS_NOOVERRIDE, MS_NOOVERRIDE );
+  msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE);
   
   if ( psRule == NULL || nLayers > 1) {
     if ( psScale != NULL ) {

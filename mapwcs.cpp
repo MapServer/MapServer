@@ -2125,7 +2125,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   /* create a temporary outputformat (we likely will need to tweak parts) */
   format = msCloneOutputFormat(msSelectOutputFormat(map,params->format));
-  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE);
 
   if(!bandlist) { /* build a bandlist (default is ALL bands) */
     bufferSize = cm.bandcount*30+30;
@@ -2319,7 +2319,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   /* Cleanup */
   msFreeImage(image);
-  msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&(map->outputformat), NULL, MS_NOOVERRIDE);
   /* msFreeOutputFormat(format); */
 
   msWCSFreeCoverageMetadata(&cm);

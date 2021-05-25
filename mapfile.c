@@ -4278,23 +4278,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(CONNECTIONOPTIONS):
         if(loadHashTable(&(layer->connectionoptions)) != MS_SUCCESS) return(-1);
         break;
-
-      case(OPACITY):
-      case(TRANSPARENCY): /* keyword supported for mapfile backwards compatability */
-      {
-        int opacity;
-        if (getInteger(&opacity) == -1) return(-1);
-        if(opacity != 100) {
-          if(layer->compositer) {
-            msSetError(MS_PARSEERR, "Cannot use OPACITY and COMPOSITER simultaneously at the LAYER level (line %d)", "loadLayer()", msyylineno );
-            return -1;
-          }
-          layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
-          initLayerCompositer(layer->compositer);
-          layer->compositer->opacity = opacity;
-        }
-      }
-        break;
       case(MS_PLUGIN): {
         int rv;
         if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
@@ -5111,7 +5094,6 @@ void initLegend(legendObj *legend)
   legend->keyspacingy = 5;
   legend->status = MS_OFF;
   legend->transparent = MS_NOOVERRIDE;
-  legend->interlace = MS_NOOVERRIDE;
   legend->position = MS_LL;
   legend->postlabelcache = MS_FALSE; /* draw with labels */
   legend->template = NULL;
@@ -5140,9 +5122,6 @@ int loadLegend(legendObj *legend, mapObj *map)
         break;
       case(IMAGECOLOR):
         if(loadColor(&(legend->imagecolor), NULL) != MS_SUCCESS) return(-1);
-        break;
-      case(INTERLACE):
-        if((legend->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
         break;
       case(KEYSIZE):
         if(getInteger(&(legend->keysizex)) == -1) return(-1);
@@ -5220,7 +5199,6 @@ static void writeLegend(FILE *stream, int indent, legendObj *legend)
   writeBlockBegin(stream, indent, "LEGEND");
   MS_INIT_COLOR(c,255,255,255,255);
   writeColor(stream, indent, "IMAGECOLOR", &c, &(legend->imagecolor));
-  writeKeyword(stream, indent, "INTERLACE", legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeDimension(stream, indent, "KEYSIZE", legend->keysizex, legend->keysizey, NULL, NULL);
   writeDimension(stream, indent, "KEYSPACING", legend->keyspacingx, legend->keyspacingy, NULL, NULL);
   writeLabel(stream, indent, &(legend->label));
@@ -5276,7 +5254,6 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
   scalebar->transparent = MS_NOOVERRIDE; /* no transparency */
-  scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; /* draw with labels */
   scalebar->align = MS_ALIGN_CENTER;
   scalebar->offsetx = 0;
@@ -5309,9 +5286,6 @@ int loadScalebar(scalebarObj *scalebar)
         break;
       case(IMAGECOLOR):
         if(loadColor(&(scalebar->imagecolor), NULL) != MS_SUCCESS) return(-1);
-        break;
-      case(INTERLACE):
-        if((scalebar->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
         break;
       case(INTERVALS):
         if(getInteger(&(scalebar->intervals)) == -1) return(-1);
@@ -5399,7 +5373,6 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
   MS_INIT_COLOR(c,0,0,0,255);
   writeColor(stream, indent, "COLOR", &c, &(scalebar->color));
   writeColor(stream, indent, "IMAGECOLOR", NULL, &(scalebar->imagecolor));
-  writeKeyword(stream, indent, "INTERLACE", scalebar->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeNumber(stream, indent, "INTERVALS", -1, scalebar->intervals);
   writeLabel(stream, indent, &(scalebar->label));
   writeColor(stream, indent, "OUTLINECOLOR", NULL, &(scalebar->outlinecolor));
@@ -5824,9 +5797,6 @@ int initMap(mapObj *map)
 
   map->palette.numcolors = 0;
 
-  map->interlace = MS_NOOVERRIDE;
-  map->imagequality = MS_NOOVERRIDE;
-
   for(i=0; i<MS_MAX_LABEL_PRIORITY; i++) {
     map->labelcache.slots[i].labels = NULL; /* cache is initialize at draw time */
     map->labelcache.slots[i].cachesize = 0;
@@ -6037,7 +6007,6 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   MS_INIT_COLOR(c,255,255,255,255);
   writeColor(stream, indent, "IMAGECOLOR", &c, &(map->imagecolor));
   writeString(stream, indent, "IMAGETYPE", NULL, map->imagetype);
-  writeKeyword(stream, indent, "INTERLACE", map->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeNumber(stream, indent, "MAXSIZE", MS_MAXIMAGESIZE_DEFAULT, map->maxsize);
   writeString(stream, indent, "NAME", NULL, map->name);
   writeNumber(stream, indent, "RESOLUTION", 72.0, map->resolution);
@@ -6227,15 +6196,9 @@ static int loadMapInternal(mapObj *map)
       case(IMAGECOLOR):
         if(loadColor(&(map->imagecolor), NULL) != MS_SUCCESS) return MS_FAILURE;
         break;
-      case(IMAGEQUALITY):
-        if(getInteger(&(map->imagequality)) == -1) return MS_FAILURE;
-        break;
       case(IMAGETYPE):
         msFree(map->imagetype);
         map->imagetype = getToken();
-        break;
-      case(INTERLACE):
-        if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(LATLON):
         msFreeProjectionExceptContext(&map->latlon);
