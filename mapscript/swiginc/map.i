@@ -244,8 +244,7 @@
         {  
             msFree( self->imagetype );
             self->imagetype = msStrdup(imagetype);
-            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
-                                 MS_NOOVERRIDE, MS_NOOVERRIDE );
+            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE);
         }
     }
 
@@ -265,8 +264,7 @@
         {   
             msFree( self->imagetype );
             self->imagetype = msStrdup(imagetype);
-            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
-                                 MS_NOOVERRIDE, MS_NOOVERRIDE );
+            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE);
         }
     }
 
@@ -288,8 +286,7 @@
 
     /// Sets map outputformat.
     void setOutputFormat( outputFormatObj *format ) {
-        msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
-                             MS_NOOVERRIDE, MS_NOOVERRIDE );
+        msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE);
     }
 
     %newobject draw;

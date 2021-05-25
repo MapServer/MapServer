@@ -155,8 +155,7 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
     return MS_FAILURE;
   }
 
-  msApplyOutputFormat( &(map->outputformat), format,
-      format->transparent, map->interlace, map->imagequality );
+  msApplyOutputFormat( &(map->outputformat), format, MS_NOOVERRIDE);
 
   return MS_SUCCESS;
 }
@@ -644,13 +643,10 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
 
 void msApplyOutputFormat( outputFormatObj **target,
                           outputFormatObj *format,
-                          int transparent,
-                          int interlaced,
-                          int imagequality )
+                          int transparent)
 
 {
   int       change_needed = MS_FALSE;
-  int       old_imagequality, old_interlaced;
   outputFormatObj *formatToFree = NULL;
 
   assert( target != NULL );
@@ -676,18 +672,7 @@ void msApplyOutputFormat( outputFormatObj **target,
   if( transparent != MS_NOOVERRIDE && !format->transparent != !transparent )
       change_needed = MS_TRUE;
 
-  old_imagequality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
-  if( imagequality != MS_NOOVERRIDE && old_imagequality != imagequality )
-    change_needed = MS_TRUE;
-
-  old_interlaced =
-    strcasecmp(msGetOutputFormatOption( format, "INTERLACE", "ON"),
-               "OFF") != 0;
-  if( interlaced != MS_NOOVERRIDE && !interlaced != !old_interlaced )
-    change_needed = MS_TRUE;
-
   if( change_needed ) {
-    char new_value[128];
 
     if( format->refcount > 0 )
       format = msCloneOutputFormat( format );
@@ -696,18 +681,6 @@ void msApplyOutputFormat( outputFormatObj **target,
         format->transparent = transparent;
         if( format->imagemode == MS_IMAGEMODE_RGB )
             format->imagemode = MS_IMAGEMODE_RGBA;
-    }
-
-    if( imagequality != MS_NOOVERRIDE && imagequality != old_imagequality ) {
-      snprintf( new_value, sizeof(new_value), "%d", imagequality );
-      msSetOutputFormatOption( format, "QUALITY", new_value );
-    }
-
-    if( interlaced != MS_NOOVERRIDE && !interlaced != !old_interlaced ) {
-      if( interlaced )
-        msSetOutputFormatOption( format, "INTERLACE", "ON" );
-      else
-        msSetOutputFormatOption( format, "INTERLACE", "OFF" );
     }
   }
 
@@ -1215,9 +1188,7 @@ void msOutputFormatResolveFromImage( mapObj *map, imageObj* img )
 
     msApplyOutputFormat( &(map->outputformat),
                          new_format,
-                         has_non_opaque_pixels,
-                         MS_NOOVERRIDE,
-                         MS_NOOVERRIDE );
+                         has_non_opaque_pixels);
 
     msFreeOutputFormat( format );
     img->format = map->outputformat;
