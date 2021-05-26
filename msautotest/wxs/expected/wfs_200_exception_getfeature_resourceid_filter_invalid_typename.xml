@@ -1,9 +1,9 @@
-Status: 400 Internal Server Error
+Status: 400 Bad request
 Content-Type: text/xml; charset=UTF-8
 
 <?xml version="1.0" encoding="UTF-8"?>
 <ows:ExceptionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd">
-   <ows:Exception exceptionCode="InvalidParameterValue" locator="resourceid">
+  <ows:Exception exceptionCode="InvalidParameterValue" locator="resourceid">
     <ows:ExceptionText>FLTPreParseFilterForAlias(): General error message. Feature id foo.977 not consistent with feature type name province.</ows:ExceptionText>
   </ows:Exception>
 </ows:ExceptionReport>
