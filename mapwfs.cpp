@@ -2126,7 +2126,7 @@ static int msWFSRunFilter(mapObj* map,
     if( FLTCheckFeatureIdFilters(psNode, map, lp->index) == MS_FAILURE)
     {
         FLTFreeFilterEncodingNode( psNode );
-        return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, paramsObj->pszVersion);
+        return msWFSException(map, "resourceid", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
     /* FIXME?: could probably apply to WFS 1.1 too */
