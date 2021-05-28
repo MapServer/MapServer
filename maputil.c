@@ -247,7 +247,6 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int dra
     alpha = MS_NINT(style->opacity*2.55);
     style->color.alpha = alpha;
     style->outlinecolor.alpha = alpha;
-    style->backgroundcolor.alpha = alpha;
     style->mincolor.alpha = alpha;
     style->maxcolor.alpha = alpha;
   }

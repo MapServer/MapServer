@@ -176,12 +176,11 @@ PHP_METHOD(styleObj, __get)
                                                           else IF_GET_LONG("opacity", php_style->style->opacity)
                                                             else IF_GET_OBJECT("color", mapscript_ce_color, php_style->color, &php_style->style->color)
                                                               else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_style->outlinecolor, &php_style->style->outlinecolor)
-                                                                else IF_GET_OBJECT("backgroundcolor", mapscript_ce_color, php_style->backgroundcolor, &php_style->style->backgroundcolor)
-                                                                  else IF_GET_OBJECT("mincolor", mapscript_ce_color, php_style->mincolor, &php_style->style->mincolor)
-                                                                    else IF_GET_OBJECT("maxcolor", mapscript_ce_color, php_style->maxcolor, &php_style->style->maxcolor)
-                                                                      else {
-                                                                        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-                                                                        }
+                                                                else IF_GET_OBJECT("mincolor", mapscript_ce_color, php_style->mincolor, &php_style->style->mincolor)
+                                                                  else IF_GET_OBJECT("maxcolor", mapscript_ce_color, php_style->maxcolor, &php_style->style->maxcolor)
+                                                                    else {
+                                                                      mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                                      }
 }
 
 PHP_METHOD(styleObj, __set)
@@ -247,7 +246,6 @@ PHP_METHOD(styleObj, __set)
 
                                                         php_style->style->color.alpha = alpha;
                                                         php_style->style->outlinecolor.alpha = alpha;
-                                                        php_style->style->backgroundcolor.alpha = alpha;
                                                         php_style->style->mincolor.alpha = alpha;
                                                         php_style->style->maxcolor.alpha = alpha;
                                                       } else if (STRING_EQUAL("symbolname", property)) {
@@ -496,7 +494,6 @@ PHP_METHOD(styleObj, free)
 
   MAPSCRIPT_DELREF(php_style->color);
   MAPSCRIPT_DELREF(php_style->outlinecolor);
-  MAPSCRIPT_DELREF(php_style->backgroundcolor);
 }
 /* }}} */
 
@@ -675,7 +672,6 @@ static zend_object *mapscript_style_create_object(zend_class_entry *ce TSRMLS_DC
   MAPSCRIPT_INIT_PARENT(php_style->parent);
   ZVAL_UNDEF(&php_style->color);
   ZVAL_UNDEF(&php_style->outlinecolor);
-  ZVAL_UNDEF(&php_style->backgroundcolor);
 
   return &php_style->zobj;
 }
@@ -689,7 +685,6 @@ static void mapscript_style_free_object(zend_object *object)
   MAPSCRIPT_FREE_PARENT(php_style->parent);
   MAPSCRIPT_DELREF(php_style->color);
   MAPSCRIPT_DELREF(php_style->outlinecolor);
-  MAPSCRIPT_DELREF(php_style->backgroundcolor);
 
   /* We don't need to free the styleObj, the mapObj will do it */
 
@@ -741,7 +736,6 @@ static void mapscript_style_object_destroy(void *object TSRMLS_DC)
   MAPSCRIPT_FREE_PARENT(php_style->parent);
   MAPSCRIPT_DELREF(php_style->color);
   MAPSCRIPT_DELREF(php_style->outlinecolor);
-  MAPSCRIPT_DELREF(php_style->backgroundcolor);
 
   /* We don't need to free the styleObj, the mapObj will do it */
   efree(object);
@@ -764,7 +758,6 @@ static zend_object_value mapscript_style_object_new_ex(zend_class_entry *ce, php
   MAPSCRIPT_INIT_PARENT(php_style->parent);
   php_style->color = NULL;
   php_style->outlinecolor = NULL;
-  php_style->backgroundcolor = NULL;
 
   return retval;
 }

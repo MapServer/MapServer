@@ -483,7 +483,6 @@ int msCopyStyle(styleObj *dst, const styleObj *src)
 
   MS_COPYCOLOR(&(dst->color), &(src->color));
   MS_COPYCOLOR(&(dst->outlinecolor),&(src->outlinecolor));
-  MS_COPYCOLOR(&(dst->backgroundcolor), &(src->backgroundcolor));
 
   MS_COPYCOLOR(&(dst->mincolor), &(src->mincolor));
   MS_COPYCOLOR(&(dst->maxcolor), &(src->maxcolor));

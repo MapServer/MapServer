@@ -2451,8 +2451,8 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
         pszSymbolNameHash = msHashString(style->symbolname);
 
       snprintf(szStyleCode+strlen(szStyleCode), 255,
-               "s%d_%x_%x_%x_%d_%s_%g",
-               i, MS_COLOR_GETRGB(style->color), MS_COLOR_GETRGB(style->backgroundcolor), MS_COLOR_GETRGB(style->outlinecolor),
+               "s%d_%x_%x_%d_%s_%g",
+               i, MS_COLOR_GETRGB(style->color),MS_COLOR_GETRGB(style->outlinecolor),
                style->symbol, pszSymbolNameHash?pszSymbolNameHash:"",
                style->angle);
       msFree(pszSymbolNameHash);

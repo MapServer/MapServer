@@ -1047,7 +1047,6 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
     int antialiased; ///< See :ref:`ANTIALIAS <mapfile-style-antialias>`
 
     colorObj color; ///< Foreground or fill pen color - see :ref:`COLOR <mapfile-style-color>`
-    colorObj backgroundcolor; ///< See :ref:`BACKGROUNDCOLOR <mapfile-style-backgroundcolor>`
     colorObj outlinecolor; ///< Outline pen color - see :ref:`OUTLINECOLOR <mapfile-style-outlinecolor>`
 
     int opacity; ///< See :ref:`OPACITY <mapfile-style-opacity>`

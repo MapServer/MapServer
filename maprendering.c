@@ -59,11 +59,6 @@ void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, dou
     s->color = NULL;
   }
 
-
-  if(MS_VALID_COLOR(src->backgroundcolor)) {
-    s->backgroundcolor = &(src->backgroundcolor);
-  }
-
   target_size = style_size * scalefactor;
   target_size = MS_MAX(target_size, src->minsize*resolutionfactor);
   target_size = MS_MIN(target_size, src->maxsize*resolutionfactor);
@@ -177,7 +172,6 @@ tileCacheObj *addTileCache(imageObj *img,
   cachep->rotation = style->rotation;
   if(style->color) MS_COPYCOLOR(&cachep->color,style->color);
   if(style->outlinecolor) MS_COPYCOLOR(&cachep->outlinecolor,style->outlinecolor);
-  if(style->backgroundcolor) MS_COPYCOLOR(&cachep->backgroundcolor,style->backgroundcolor);
   cachep->width = width;
   cachep->height = height;
   cachep->symbol = symbol;
@@ -743,10 +737,6 @@ int msDrawShadeSymbol(mapObj *map, imageObj *image, shapeObj *p, styleObj *style
         double pattern[MS_MAXPATTERNLENGTH];
         int i;
 
-        if(MS_VALID_COLOR(style->backgroundcolor)) {
-          ret = renderer->renderPolygon(image,offsetPolygon, &style->backgroundcolor);
-          if(ret != MS_SUCCESS) goto cleanup;
-        }
         width = (style->width <= 0)?scalefactor:style->width*scalefactor;
         width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
         width = MS_MAX(width, style->minwidth*image->resolutionfactor);
