@@ -1395,7 +1395,6 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             int alpha = MS_NINT(psStyle->opacity*2.55);
             psStyle->color.alpha = alpha;
             psStyle->outlinecolor.alpha = alpha;
-            psStyle->backgroundcolor.alpha = alpha;
             psStyle->mincolor.alpha = alpha;
             psStyle->maxcolor.alpha = alpha;
           }
