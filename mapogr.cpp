@@ -4664,7 +4664,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
 
       if (!bBgColorIsNull) {
 
-       if (msMaybeAllocateClassStyle(c, 0)) {
+       if (msMaybeAllocateClassStyle(c, nIndex)) {
             OGR_ST_Destroy(hStylePart);
             msFree(pasSortStruct);
             return(MS_FAILURE);
@@ -4676,9 +4676,10 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       }
 
 
-      nIndex = ( bIsPenBrushOnly ) ? 0 : c->numstyles;
+      nIndex = ( bIsPenBrushOnly ) ? nIndex : c->numstyles;
 
       if (!bBgColorIsNull) {
+          // if we have a bgcolor style we need to increase the index
           nIndex += 1;
       }
 
