@@ -99,6 +99,12 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         return self->NumParams;
     }
 
+    int loadParamsFromPost( const char *postData)
+    {
+        self->NumParams = loadParams( self, msGetEnvURL, postData, strlen(postData), NULL );
+        return self->NumParams;
+    }
+
     /**
     Set a request parameter. For example:
     
