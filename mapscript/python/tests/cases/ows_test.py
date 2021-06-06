@@ -25,6 +25,7 @@
 # ===========================================================================
 
 import unittest
+import xml.dom.minidom
 import mapscript
 from .testing import MapTestCase
 
@@ -89,13 +90,12 @@ class OWSRequestTestCase(MapTestCase):
 
     def testWFSPostRequest(self):
         """OWSRequestTestCase.testLoadWMSRequest: OWS can POST a WFS request"""
-        
+
         self.map.web.metadata.set("ows_onlineresource", "http://dummy.org/")
         request = mapscript.OWSRequest()
         request.contenttype = "application/xml"
 
-
-        post_data = """<wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc" service="WFS" 
+        post_data = """<wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc" service="WFS"
         version="1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <wfs:Query typeName="*:POINT" xmlns:feature="http://www.openplans.org/topp">
             <ogc:Filter>
@@ -108,13 +108,12 @@ class OWSRequestTestCase(MapTestCase):
         </wfs:GetFeature>
         """
 
-        qs = "" # additional parameters can be passed via the querystring
+        qs = ""  # additional parameters can be passed via the querystring
         request.loadParamsFromPost(post_data, qs)
         mapscript.msIO_installStdoutToBuffer()
         status = map.OWSDispatch(request)
         assert status == mapscript.MS_SUCCESS, status
 
-        content_type = mapscript.msIO_stripStdoutBufferContentType()
         mapscript.msIO_stripStdoutBufferContentHeaders()
         result = mapscript.msIO_getStdoutBufferBytes()
         dom = xml.dom.minidom.parseString(result)
