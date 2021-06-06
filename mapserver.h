@@ -1492,12 +1492,8 @@ The :ref:`REFERENCE <reference>` object
   */
   typedef struct {
 
-#ifndef SWIG
-      int transparent; // TODO deprecated since 4.6 - remove
-      int interlace; // TODO deprecated since 4.6 - remove
-#endif /* not SWIG */
-
-      colorObj imagecolor; ///< Background color of scalebar - see :ref:`IMAGECOLOR <mapfile-scalebar-imagecolor>`
+     int transparent; ///< Allows transparency for an embedded scalebar - see :ref:`TRANSPARENT <mapfile-scalebar-transparent>`
+     colorObj imagecolor; ///< Background color of scalebar - see :ref:`IMAGECOLOR <mapfile-scalebar-imagecolor>`
       int height; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
       int width; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
       int style; ///< 0 or 1 - see :ref:`STYLE <mapfile-scalebar-style>`
@@ -1526,11 +1522,6 @@ The :ref:`REFERENCE <reference>` object
   */
   typedef struct {
 
-#ifndef SWIG
-      int transparent; // TODO remove deprecated since 4.6
-      int interlace; // TODO remove deprecated since 4.6
-#endif /* not SWIG */
-
 #ifdef SWIG
     %immutable;
 #endif
@@ -1539,6 +1530,7 @@ The :ref:`REFERENCE <reference>` object
 #ifdef SWIG
     %mutable;
 #endif
+    int transparent; ///< Allows transparency for an embedded legend - see :ref:`TRANSPARENT <mapfile-legend-transparent>`
     colorObj imagecolor; ///< Legend background color - see :ref:`IMAGECOLOR <mapfile-legend-imagecolor>`
     int keysizex; ///< Width in pixels of legend keys - see :ref:`KEYSIZE <mapfile-legend-keysize>`
     int keysizey; ///< Height in pixels of legend keys - see :ref:`KEYSIZE <mapfile-legend-keysize>`
@@ -1969,8 +1961,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     %mutable;
 #endif /* SWIG */
 
-    int interlace; ///< TODO - Deprecated
-    int imagequality; ///< TODO - Deprecated
     char *datapattern; ///< TODO - Deprecated use VALIDATION ... END block instead
     char *templatepattern; ///< TODO - Deprecated use VALIDATION ... END block instead
 
@@ -2858,7 +2848,7 @@ extern "C" {
   MS_DLL_EXPORT int msRemoveOutputFormat(mapObj *map, const char *imagetype);
   MS_DLL_EXPORT int msAppendOutputFormat(mapObj *map, outputFormatObj *format);
   MS_DLL_EXPORT outputFormatObj *msSelectOutputFormat( mapObj *map, const char *imagetype );
-  MS_DLL_EXPORT void msApplyOutputFormat( outputFormatObj **target, outputFormatObj *format, int transparent, int interlaced, int imagequality );
+  MS_DLL_EXPORT void msApplyOutputFormat( outputFormatObj **target, outputFormatObj *format, int transparent);
   MS_DLL_EXPORT const char *msGetOutputFormatOption( outputFormatObj *format, const char *optionkey, const char *defaultresult );
   MS_DLL_EXPORT outputFormatObj *msCreateDefaultOutputFormat( mapObj *map, const char *driver, const char *name, const char *mimetype );
   MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );

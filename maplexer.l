@@ -285,7 +285,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>image                                 { MS_LEXER_RETURN_TOKEN(IMAGE); }
 <INITIAL,URL_VARIABLE,URL_STRING>imagecolor    { MS_LEXER_RETURN_TOKEN(IMAGECOLOR); }
 <INITIAL,URL_VARIABLE>imagetype                { MS_LEXER_RETURN_TOKEN(IMAGETYPE); }
-<INITIAL>imagequality                          { MS_LEXER_RETURN_TOKEN(IMAGEQUALITY); }
 <INITIAL>imagemode                             { MS_LEXER_RETURN_TOKEN(IMAGEMODE); }
 <INITIAL>imagepath                             { MS_LEXER_RETURN_TOKEN(IMAGEPATH); }
 <INITIAL>temppath                              { MS_LEXER_RETURN_TOKEN(TEMPPATH); }
@@ -293,7 +292,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL>index                                 { MS_LEXER_RETURN_TOKEN(INDEX); }
 <INITIAL,URL_STRING>initialgap                 { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
-<INITIAL>interlace                             { MS_LEXER_RETURN_TOKEN(INTERLACE); }
 <INITIAL,URL_STRING>intervals                  { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
 <INITIAL>join                                  { MS_LEXER_RETURN_TOKEN(JOIN); }
 <INITIAL,URL_STRING>keyimage                   { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
@@ -402,7 +400,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>to                                    { MS_LEXER_RETURN_TOKEN(TO); }
 <INITIAL,URL_STRING>tolerance                  { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
 <INITIAL,URL_STRING>toleranceunits             { MS_LEXER_RETURN_TOKEN(TOLERANCEUNITS); }
-<INITIAL>transparency                          { MS_LEXER_RETURN_TOKEN(TRANSPARENCY); }
 <INITIAL,URL_VARIABLE>transparent              { MS_LEXER_RETURN_TOKEN(TRANSPARENT); }
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }

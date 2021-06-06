@@ -4695,8 +4695,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* create a temporary outputformat (we likely will need to tweak parts) */
   format = msCloneOutputFormat(msSelectOutputFormat(map, params->format));
-  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE,
-                      MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE);
 
   /* set format specific parameters */
   if (msWCSSetFormatParams20(format, params->format_options) != MS_SUCCESS) {

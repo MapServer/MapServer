@@ -28,8 +28,8 @@ END
 LEGEND 
   POSITION LR
   STATUS EMBED
-postlabelcache true
-TRANSPARENT ON
+  postlabelcache true
+  TRANSPARENT ON
   label
     type truetype
     color 0 0 0

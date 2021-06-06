@@ -1617,7 +1617,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   }
 
   /* ensure we have an image format representing the options for the legend. */
-  msApplyOutputFormat(&format, mapserv->map->outputformat, mapserv->map->legend.transparent, mapserv->map->legend.interlace, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, mapserv->map->outputformat, mapserv->map->legend.transparent);
 
   /* initialize the legend image */
   if( ! MS_RENDERER_PLUGIN(format) ) {
@@ -1635,7 +1635,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   img->map = mapserv->map;
 
   /* drop this reference to output format */
-  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE);
 
   if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0, MS_TRUE,
       ((mapserv->hittest)?(&mapserv->hittest->layerhits[layerindex].classhits[classindex]):(NULL))) != MS_SUCCESS) {
