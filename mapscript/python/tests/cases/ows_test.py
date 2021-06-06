@@ -111,7 +111,7 @@ class OWSRequestTestCase(MapTestCase):
         qs = ""  # additional parameters can be passed via the querystring
         request.loadParamsFromPost(post_data, qs)
         mapscript.msIO_installStdoutToBuffer()
-        status = map.OWSDispatch(request)
+        status = self.map.OWSDispatch(request)
         assert status == mapscript.MS_SUCCESS, status
 
         mapscript.msIO_stripStdoutBufferContentHeaders()
