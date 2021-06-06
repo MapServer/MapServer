@@ -2366,7 +2366,6 @@ int initStyle(styleObj *style)
   int i;
   MS_REFCNT_INIT(style);
   MS_INIT_COLOR(style->color, -1,-1,-1,255); /* must explictly set colors */
-  MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1,255);
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1,255);
   /* New Color Range fields*/
   MS_INIT_COLOR(style->mincolor, -1,-1,-1,255);
@@ -2457,9 +2456,6 @@ int loadStyle(styleObj *style)
             style->antialiased = MS_FALSE;
         }
         break;
-      case(BACKGROUNDCOLOR):
-        if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
-        break;
       case(COLOR):
         if(loadColor(&(style->color), &(style->bindings[MS_STYLE_BINDING_COLOR])) != MS_SUCCESS) return(MS_FAILURE);
         if(style->bindings[MS_STYLE_BINDING_COLOR].item) style->numbindings++;
@@ -2476,7 +2472,6 @@ int loadStyle(styleObj *style)
 
           style->color.alpha = alpha;
           style->outlinecolor.alpha = alpha;
-          style->backgroundcolor.alpha = alpha;
 
           style->mincolor.alpha = alpha;
           style->maxcolor.alpha = alpha;
@@ -2743,8 +2738,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_ANGLE].item)
     writeAttributeBinding(stream, indent, "ANGLE", &(style->bindings[MS_STYLE_BINDING_ANGLE]));
   else writeNumberOrKeyword(stream, indent, "ANGLE", 0, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
-
-  writeColor(stream, indent, "BACKGROUNDCOLOR", NULL, &(style->backgroundcolor));
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
     writeAttributeBinding(stream, indent, "COLOR", &(style->bindings[MS_STYLE_BINDING_COLOR]));
