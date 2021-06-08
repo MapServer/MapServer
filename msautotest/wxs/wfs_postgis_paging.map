@@ -1,0 +1,62 @@
+#
+# Test WFS paging with PostGIS
+#
+# REQUIRES: SUPPORTS=WFS INPUT=POSTGIS
+#
+# RUN_PARMS: wfs_postgis_issue_6181.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=test_6181&BBOX=0.75,0.75,9,9&COUNT=1" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_postgis_issue_6181_startindex_1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=test_6181&BBOX=0.75,0.75,9,9&COUNT=1&STARTINDEX=1" > [RESULT_DEVERSION]
+
+MAP
+
+NAME WFS_POSTGIS_PAGING
+STATUS ON
+SIZE 400 300
+EXTENT 6 30 21 50
+UNITS METERS
+IMAGECOLOR 255 255 255
+
+#
+# Start of web interface definition
+#
+
+WEB
+
+ IMAGEPATH "tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:27700"
+    "wfs_enable_request"   "*" 
+  END
+END
+
+PROJECTION
+    "init=epsg:27700"
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME test_6181
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from test_wfs_paging order by id) as foo using srid=27700 using unique id"
+  METADATA
+    "wfs_title"         "test_6181"
+    "wfs_description"   "test_6181"
+    "gml_include_items" "all"
+    "wfs_featureid"     "id"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+END # Layer
+
+
+END # Map File
