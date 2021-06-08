@@ -1617,7 +1617,7 @@ int msQueryByFeatures(mapObj *map)
 
     } /* next selection shape */
 
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    if(lp->resultcache == NULL || lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
 
   /* was anything found? */
