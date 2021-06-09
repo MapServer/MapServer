@@ -87,6 +87,43 @@
 #define RESULTSET_TYPE 0
 #endif
 
+/* These are the OIDs for some builtin types, as returned by PQftype(). */
+/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
+
+#ifndef BOOLOID
+#define BOOLOID                 16
+#define BYTEAOID                17
+#define CHAROID                 18
+#define NAMEOID                 19
+#define INT8OID                 20
+#define INT2OID                 21
+#define INT2VECTOROID           22
+#define INT4OID                 23
+#define REGPROCOID              24
+#define TEXTOID                 25
+#define OIDOID                  26
+#define TIDOID                  27
+#define XIDOID                  28
+#define CIDOID                  29
+#define OIDVECTOROID            30
+#define FLOAT4OID               700
+#define FLOAT8OID               701
+#define INT4ARRAYOID            1007
+#define TEXTARRAYOID            1009
+#define BPCHARARRAYOID          1014
+#define VARCHARARRAYOID         1015
+#define FLOAT4ARRAYOID          1021
+#define FLOAT8ARRAYOID          1022
+#define BPCHAROID   1042
+#define VARCHAROID    1043
+#define DATEOID     1082
+#define TIMEOID     1083
+#define TIMETZOID     1266
+#define TIMESTAMPOID          1114
+#define TIMESTAMPTZOID          1184
+#define NUMERICOID              1700
+#endif
+
 #ifdef USE_POSTGIS
 
 static int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);
@@ -2105,7 +2142,12 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape)
         shape->values[t] = (char*) msSmallMalloc(size + 1);
         memcpy(shape->values[t], val, size);
         shape->values[t][size] = '\0'; /* null terminate it */
-        msStringTrimBlanks(shape->values[t]);
+
+        // From https://www.postgresql.org/docs/9.0/datatype-character.html
+        // fields of type Char are blank padded, but this blank is semantically
+        // insignificant, so let's trim it
+        if( PQftype(layerinfo->pgresult, t) == CHAROID )
+            msStringTrimBlanks(shape->values[t]);
       }
       if( layer->debug > 4 ) {
         msDebug("msPostGISReadShape: PQgetlength = %d\n", size);
@@ -2815,43 +2857,6 @@ static int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *r
  * "gml_[item]_{type,width,precision}" set of metadata items for
  * defining fields.
  **********************************************************************/
-
-/* These are the OIDs for some builtin types, as returned by PQftype(). */
-/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
-
-#ifndef BOOLOID
-#define BOOLOID                 16
-#define BYTEAOID                17
-#define CHAROID                 18
-#define NAMEOID                 19
-#define INT8OID                 20
-#define INT2OID                 21
-#define INT2VECTOROID           22
-#define INT4OID                 23
-#define REGPROCOID              24
-#define TEXTOID                 25
-#define OIDOID                  26
-#define TIDOID                  27
-#define XIDOID                  28
-#define CIDOID                  29
-#define OIDVECTOROID            30
-#define FLOAT4OID               700
-#define FLOAT8OID               701
-#define INT4ARRAYOID            1007
-#define TEXTARRAYOID            1009
-#define BPCHARARRAYOID          1014
-#define VARCHARARRAYOID         1015
-#define FLOAT4ARRAYOID          1021
-#define FLOAT8ARRAYOID          1022
-#define BPCHAROID   1042
-#define VARCHAROID    1043
-#define DATEOID     1082
-#define TIMEOID     1083
-#define TIMETZOID     1266
-#define TIMESTAMPOID          1114
-#define TIMESTAMPTZOID          1184
-#define NUMERICOID              1700
-#endif
 
 #ifdef USE_POSTGIS
 static void

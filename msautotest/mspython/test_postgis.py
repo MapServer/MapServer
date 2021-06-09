@@ -374,3 +374,38 @@ def test_postgis_queryByFilter_bad_expression():
     except mapscript.MapServerError:
         pass
 
+
+###############################################################################
+#
+
+
+def test_postgis_trim_char_fields():
+
+    map = mapscript.mapObj()
+    layer = mapscript.layerObj(map)
+    layer.updateFromString("""
+        LAYER
+            CONNECTIONTYPE postgis
+            CONNECTION "dbname=msautotest user=postgres"
+            DATA "the_geom from (select * from text_datatypes order by id) as foo using srid=27700 using unique id"
+            NAME mylayer
+            TYPE POINT
+            TEMPLATE "junk.tmpl"
+        END
+        """)
+
+    layer.open()
+    rect = mapscript.rectObj()
+    rect.minx = -1000
+    rect.maxx = 1000
+    rect.miny = -1000
+    rect.maxy = 1000
+
+    layer.queryByRect(map, rect)
+    result = layer.getResult( 0 )
+    assert result is not None
+    s = layer.getShape( result )
+    assert s is not None
+    assert [s.getValue(i) for i in filter(lambda i: layer.getItem(i) == 'mychar5', range(layer.numitems))] == ['abc']
+    assert [s.getValue(i) for i in filter(lambda i: layer.getItem(i) == 'myvarchar5', range(layer.numitems))] == ['def  ']
+    assert [s.getValue(i) for i in filter(lambda i: layer.getItem(i) == 'mytext', range(layer.numitems))] == ['ghi ']
