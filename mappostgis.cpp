@@ -1782,10 +1782,25 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
       return std::string();
     }
 
-    strRect = '"';
-    strRect += layerinfo->geomcolumn;
-    strRect += "\" && ";
-    strRect += strBox;
+    if( strSRID.find("find_srid(") == std::string::npos )
+    {
+        // If the SRID is known, we can safely use ST_Intersects()
+        // otherwise if find_srid() would return 0, ST_Intersects() would not
+        // work at all, which breaks the msautotest/query/query_postgis.map
+        // tests, releated to bdry_counpy2 layer that has no SRID
+        strRect = "ST_Intersects(\"";
+        strRect += layerinfo->geomcolumn;
+        strRect += "\", ";
+        strRect += strBox;
+        strRect += ')';
+    }
+    else
+    {
+        strRect = '"';
+        strRect += layerinfo->geomcolumn;
+        strRect += "\" && ";
+        strRect += strBox;
+    }
     free(strBox);
 
     /* Combine with other rectangle  expressed in another SRS */
@@ -1798,7 +1813,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
         return std::string();
       }
 
-      std::string strRectOtherSRID = "NOT ST_Disjoint(ST_Transform(";
+      std::string strRectOtherSRID = "ST_Intersects(ST_Transform(";
       strRectOtherSRID += layerinfo->geomcolumn;
       strRectOtherSRID += ',';
       strRectOtherSRID += std::to_string(otherSRID);
@@ -1829,7 +1844,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
         return std::string();
       }
 
-      std::string strRectOtherSRID = "NOT ST_Disjoint(";
+      std::string strRectOtherSRID = "ST_Intersects(";
       strRectOtherSRID += layerinfo->geomcolumn;
       strRectOtherSRID += ',';
       strRectOtherSRID += strBox;

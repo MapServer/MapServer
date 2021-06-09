@@ -129,3 +129,11 @@ CREATE TABLE multipolygon3d (ID SERIAL);
 SELECT AddGeometryColumn('public', 'multipolygon3d', 'the_geom', 27700, 'MULTIPOLYGON', 3);
 INSERT INTO multipolygon3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;MULTIPOLYGON(((0 0 1,10 0 2,10 10 3,0 10 4,0 0 1),(1 1 2,1 9 3,9 9 4,9 1 5,1 1 2)),((10 10 0,10 20 1,20 20 2,20 10 3,10 10 0)))'));
 "
+
+psql -U postgres -d msautotest -c "
+CREATE TABLE test_wfs_paging (ID SERIAL);
+SELECT AddGeometryColumn('public', 'test_wfs_paging', 'the_geom', 27700, 'LINESTRING', 2);
+INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING (1 0,0 1)'));
+INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING(0 0,10 10)'));
+INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING(5 2,5 8)'));
+"
