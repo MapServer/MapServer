@@ -137,3 +137,9 @@ INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRI
 INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING(0 0,10 10)'));
 INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING(5 2,5 8)'));
 "
+
+psql -U postgres -d msautotest -c "
+CREATE TABLE text_datatypes (id SERIAL, mychar5 CHAR(5), myvarchar5 VARCHAR(5), mytext TEXT);
+SELECT AddGeometryColumn('public', 'text_datatypes', 'the_geom', 27700, 'POINT', 2);
+INSERT INTO text_datatypes (the_geom, mychar5, myvarchar5, mytext) VALUES (GeomFromEWKT('SRID=27700;POINT(1 2)'), 'abc  ', 'def  ', 'ghi ');
+"
