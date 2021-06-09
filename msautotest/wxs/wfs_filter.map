@@ -129,6 +129,10 @@
 #
 # Verify INTERSECTS Results:  Canso, Port Hawkesbury
 # RUN_PARMS: wfs_filter_intersects.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.63,45.04 -60.78,45.04 -60.78,46.08 -61.63,46.08</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersects></Filter>" > [RESULT]
+
+# Intersects with an empty multipolygon. Check that we don't crash at least. See https://github.com/MapServer/MapServer/issues/6176
+# RUN_PARMS: wfs_filter_intersects_empty_multipolygon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:MultiPolygon/></Intersects></Filter>" > [RESULT]
+
 #
 # RUN_PARMS: wfs_filter_200_intersects.xml [MAPSERV] [POST]<?xml version="1.0"?><GetFeature service="WFS" version="2.0.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/fes/2.0 http://schemas.opengis.net/filter/2.0/filterAll.xsd http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"><Query typeNames="popplace"><fes:Filter><fes:Intersects><fes:ValueReference>Geometry</fes:ValueReference><gml:Polygon gml:id="bla" srsName="CRS:84"><gml:exterior><gml:LinearRing><gml:posList>-61.63 45.04 -60.78 45.04 -60.78 46.08 -61.63 46.08</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></fes:Intersects></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
 
