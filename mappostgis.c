@@ -2055,7 +2055,6 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
     char *strBox = 0;
     char *strSRID = 0;
     size_t strBoxLength = 0;
-    static const char *strRectTemplate = "\"%s\" && %s";
 
     /* We see to set the SRID on the box, but to what SRID? */
     strSRID = msPostGISBuildSQLSRID(layer);
@@ -2066,27 +2065,42 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
     }
 
     strBox = msPostGISBuildSQLBox(layer, rect, strSRID);
-    msFree(strSRID);
     if ( strBox ) {
       strBoxLength = strlen(strBox);
     } else {
       msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLWhere()");
       free( strLimit );
       free( strOffset );
+      msFree(strSRID);
       return NULL;
     }
 
-    strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
-    sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
+    if( strstr(strSRID, "find_srid(") == NULL )
+    {
+        // If the SRID is known, we can safely use ST_Intersects()
+        // otherwise if find_srid() would return 0, ST_Intersects() would not
+        // work at all, which breaks the msautotest/query/query_postgis.map
+        // tests, releated to bdry_counpy2 layer that has no SRID
+        static const char *strRectTemplate = "ST_Intersects(\"%s\", %s)";
+        strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
+        sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
+    }
+    else
+    {
+        static const char *strRectTemplate = "\"%s\" && %s";
+        strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
+        sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
+    }
     strRectLength = strlen(strRect);
     free(strBox);
+    msFree(strSRID);
 
     /* Combine with other rectangle  expressed in another SRS */
     /* (generally equivalent to the above in current code paths) */
     if( rectInOtherSRID != NULL && otherSRID > 0 )
     {
       char* strRectOtherSRID;
-      static const char *strRectOtherSRIDTemplate = "NOT ST_Disjoint(ST_Transform(%s,%d),%s)";
+      static const char *strRectOtherSRIDTemplate = "ST_Intersects(ST_Transform(%s,%d),%s)";
       char szSRID[32];
       char* strTmp = NULL;
 
@@ -2121,7 +2135,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
     {
       char* strSRID;
       char* strRectOtherSRID;
-      static const char *strRectOtherSRIDTemplate = "NOT ST_Disjoint(%s,%s)";
+      static const char *strRectOtherSRIDTemplate = "ST_Intersects(%s,%s)";
       char* strTmp = NULL;
 
       strSRID = msPostGISBuildSQLSRID(layer);
