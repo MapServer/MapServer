@@ -774,7 +774,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   int limit;
   rectObj bbox;
 
-  int numMatched = 0;
+  int numberMatched = 0;
 
   // find the right layer
   for(i=0; i<map->numlayers; i++) {
@@ -860,7 +860,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       return MS_SUCCESS;
     }
 
-    numMatched = layer->resultcache->numresults;
+    numberMatched = layer->resultcache->numresults;
 
     map->query.only_cache_result_count = MS_FALSE;
     // map->query.startindex = start;
@@ -876,8 +876,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   if(!featureId) {
     response = {
       { "type", "FeatureCollection" },
-      { "numMatched", numMatched },
-      { "numReturned", layer->resultcache->numresults },
+      { "numberMatched", numberMatched },
+      { "numberReturned", layer->resultcache->numresults },
       { "features", json::array() }
     };
   }
