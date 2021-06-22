@@ -53,7 +53,6 @@
 */
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
 
-MS_DLL_EXPORT int msCGIWriteLog(mapservObj *mapserv, int show_error);
 MS_DLL_EXPORT void msCGIWriteError(mapservObj *mapserv);
 MS_DLL_EXPORT mapObj *msCGILoadMap(mapservObj *mapserv);
 int msCGISetMode(mapservObj *mapserv);

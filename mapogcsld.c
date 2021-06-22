@@ -149,8 +149,12 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj 
           initLayer(psTmpLayer, map);
           msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
           /* open the source layer */
-          if ( !psTmpLayer->vtable)
-            msInitializeVirtualTable(psTmpLayer);
+          if ( !psTmpLayer->vtable) {
+            if( msInitializeVirtualTable(psTmpLayer) != MS_SUCCESS ) {
+                MS_REFCNT_DECR(psTmpLayer);
+                continue;
+            }
+          }
 
           /*make the name unique*/
           snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),
@@ -1391,7 +1395,6 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             int alpha = MS_NINT(psStyle->opacity*2.55);
             psStyle->color.alpha = alpha;
             psStyle->outlinecolor.alpha = alpha;
-            psStyle->backgroundcolor.alpha = alpha;
             psStyle->mincolor.alpha = alpha;
             psStyle->maxcolor.alpha = alpha;
           }

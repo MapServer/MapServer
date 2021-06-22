@@ -2348,16 +2348,32 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 msFree(points);
                 filter = msStringConcatenate(filter, "))");
             }
-            else if( psInfo->dialect && EQUAL(psInfo->dialect, "Spatialite") &&
-                     psInfo->pszMainTableName != NULL && !psInfo->bHasSpatialIndex )
+            else if( psInfo->dialect &&
+                     (EQUAL(psInfo->dialect, "Spatialite") ||
+                      EQUAL(psInfo->dialect, "GPKG")) &&
+                     psInfo->pszMainTableName != NULL )
             {
+                const bool isGPKG = EQUAL(psInfo->dialect, "GPKG");
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 const char *col = OGR_L_GetGeometryColumn(psInfo->hLayer); // which geom field??
-                filter = msStringConcatenate(filter, " MbrIntersects(\"");
+                filter = msStringConcatenate(filter, " Intersects(");
+                if( isGPKG )
+                {
+                    // Casting GeoPackage geometries to spatialie ones is done
+                    // automatically normally, since GDAL enables the
+                    // "amphibious" mode, but without it
+                    // explicilty specified, spatialite 4.3.0a does an
+                    // out-of-bounds access.
+                    filter = msStringConcatenate(filter, "GeomFromGPB(");
+                }
+                filter = msStringConcatenate(filter, "\"");
                 char* escaped = msLayerEscapePropertyName(layer, col);
                 filter = msStringConcatenate(filter, escaped);
                 msFree(escaped);
-                filter = msStringConcatenate(filter, "\", BuildMbr(");
+                filter = msStringConcatenate(filter, "\"");
+                if( isGPKG )
+                    filter = msStringConcatenate(filter, ")");
+                filter = msStringConcatenate(filter, ", BuildMbr(");
                 char *points = (char *)msSmallMalloc(30*2*5);
                 snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
                 filter = msStringConcatenate(filter, points);
@@ -4503,6 +4519,7 @@ static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
                                       OGRStyleToolH hBrushStyle, int* pbIsBrush, int* pbPriority);
 static int msOGRUpdateStyleParseSymbol(mapObj *map, styleObj *s,
                                        OGRStyleToolH hSymbolStyle, int* pbPriority);
+static int msOGRAddBgColorStyleParseBrush(styleObj* s, OGRStyleToolH hSymbolStyle);
 
 static int msOGRUpdateStyleCheckPenBrushOnly(OGRStyleMgrH hStyleMgr)
 {
@@ -4621,9 +4638,9 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         if (bIsBrush || layer->type == MS_LAYER_POLYGON)
             // This is a multipart symbology, so pen defn goes in the
             // overlaysymbol params
-          nIndex = 1;
+            nIndex = c->numstyles + 1;
         else
-          nIndex = 0;
+            nIndex = c->numstyles;
       }
       else
         nIndex = c->numstyles;
@@ -4638,8 +4655,34 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       msOGRUpdateStyleParsePen(map, layer, s, hStylePart, bIsBrush, &nPriority);
 
     } else if (eStylePartType == OGRSTCBrush) {
+
       styleObj* s;
-      int nIndex = ( bIsPenBrushOnly ) ? 0 : c->numstyles;
+      int nIndex = 0;
+
+      GBool bBgColorIsNull = MS_TRUE;
+      OGR_ST_GetParamStr(hStylePart, OGRSTBrushBColor, &bBgColorIsNull);
+
+      if (!bBgColorIsNull) {
+
+       if (msMaybeAllocateClassStyle(c, nIndex)) {
+            OGR_ST_Destroy(hStylePart);
+            msFree(pasSortStruct);
+            return(MS_FAILURE);
+        }
+
+        // add a backgroundcolor as a separate style
+        s = c->styles[nIndex];
+        msOGRAddBgColorStyleParseBrush(s, hStylePart);
+      }
+
+
+      nIndex = ( bIsPenBrushOnly ) ? nIndex : c->numstyles;
+
+      if (!bBgColorIsNull) {
+          // if we have a bgcolor style we need to increase the index
+          nIndex += 1;
+      }
+
       /* We need 1 style */
       if (msMaybeAllocateClassStyle(c, nIndex)) {
         OGR_ST_Destroy(hStylePart);
@@ -5002,6 +5045,21 @@ static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
       return MS_SUCCESS;
 }
 
+static int msOGRAddBgColorStyleParseBrush(styleObj* s, OGRStyleToolH hBrushStyle)
+{
+    GBool bIsNull;
+    int r = 0, g = 0, b = 0, t = 0;
+    const char* pszColor = OGR_ST_GetParamStr(hBrushStyle,
+        OGRSTBrushBColor, &bIsNull);
+
+    if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle,
+        pszColor,
+        &r, &g, &b, &t)) {
+        MS_INIT_COLOR(s->color, r, g, b, t);
+    }
+    return MS_SUCCESS;
+}
+
 static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
                                       OGRStyleToolH hBrushStyle, int* pbIsBrush,
                                       int* pbPriority)
@@ -5030,14 +5088,6 @@ static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
 
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
-        }
-
-        pszColor = OGR_ST_GetParamStr(hBrushStyle,
-                                      OGRSTBrushBColor, &bIsNull);
-        if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle,
-                                                pszColor,
-                                                &r, &g, &b, &t)) {
-          MS_INIT_COLOR(s->backgroundcolor, r, g, b, t);
         }
 
         // Symbol name mapping:

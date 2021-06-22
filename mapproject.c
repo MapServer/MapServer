@@ -1228,12 +1228,14 @@ static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
 
     p.x = invgt0 + -extremeLongEasting * (1 - EPS) * invgt1;
     p.y = invgt3 + -extremeLongEasting * (1 - EPS) * invgt4;
+    /* coverity[swapped_arguments] */
     msProjectPoint(out, in, &p);
     pointObj first = p;
     msAddPointToLine(&newLine, &p );
 
     p.x = invgt0 + extremeLongEasting * (1 - EPS) * invgt1;
     p.y = invgt3 + extremeLongEasting * (1 - EPS) * invgt4;
+    /* coverity[swapped_arguments] */
     msProjectPoint(out, in, &p);
     msAddPointToLine(&newLine, &p );
 
@@ -2031,6 +2033,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
       inp = &in_over;
+      /* coverity[dead_error_begin] */
       if( reprojector ) {
           msProjectDestroyReprojector(reprojector);
           reprojector = NULL;

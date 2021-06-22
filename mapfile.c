@@ -2366,7 +2366,6 @@ int initStyle(styleObj *style)
   int i;
   MS_REFCNT_INIT(style);
   MS_INIT_COLOR(style->color, -1,-1,-1,255); /* must explictly set colors */
-  MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1,255);
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1,255);
   /* New Color Range fields*/
   MS_INIT_COLOR(style->mincolor, -1,-1,-1,255);
@@ -2398,7 +2397,6 @@ int initStyle(styleObj *style)
   style->patternlength = 0; /* solid line */
   style->gap = 0;
   style->initialgap = -1;
-  style->position = MS_CC;
   style->linecap = MS_CJC_DEFAULT_CAPS;
   style->linejoin = MS_CJC_DEFAULT_JOINS;
   style->linejoinmaxsize = MS_CJC_DEFAULT_JOIN_MAXSIZE;
@@ -2458,9 +2456,6 @@ int loadStyle(styleObj *style)
             style->antialiased = MS_FALSE;
         }
         break;
-      case(BACKGROUNDCOLOR):
-        if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
-        break;
       case(COLOR):
         if(loadColor(&(style->color), &(style->bindings[MS_STYLE_BINDING_COLOR])) != MS_SUCCESS) return(MS_FAILURE);
         if(style->bindings[MS_STYLE_BINDING_COLOR].item) style->numbindings++;
@@ -2477,7 +2472,6 @@ int loadStyle(styleObj *style)
 
           style->color.alpha = alpha;
           style->outlinecolor.alpha = alpha;
-          style->backgroundcolor.alpha = alpha;
 
           style->mincolor.alpha = alpha;
           style->maxcolor.alpha = alpha;
@@ -2600,12 +2594,6 @@ int loadStyle(styleObj *style)
         }
         break;
       }
-      case(POSITION):
-        /* if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1)  */
-        /* return(-1); */
-        if((style->position = getSymbol(9, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1)
-          return(-1);
-        break;
       case(OUTLINEWIDTH):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
@@ -2751,8 +2739,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     writeAttributeBinding(stream, indent, "ANGLE", &(style->bindings[MS_STYLE_BINDING_ANGLE]));
   else writeNumberOrKeyword(stream, indent, "ANGLE", 0, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
 
-  writeColor(stream, indent, "BACKGROUNDCOLOR", NULL, &(style->backgroundcolor));
-
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
     writeAttributeBinding(stream, indent, "COLOR", &(style->bindings[MS_STYLE_BINDING_COLOR]));
   else writeColor(stream, indent, "COLOR", NULL, &(style->color));
@@ -2830,13 +2816,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     msIO_fprintf(stream,"\n");
     writeBlockEnd(stream,indent,"PATTERN");
     indent--;
-  }
-
-  if(style->position != MS_CC) {
-    writeKeyword(stream, indent, "POSITION", style->position, 9,
-                 MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL",
-                 MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC",
-                 MS_LR, "LR");
   }
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SIZE].item)
@@ -3179,7 +3158,6 @@ labelObj *msGrowClassLabels( classObj *class )
 
 int loadClass(classObj *class, layerObj *layer)
 {
-  int state;
   mapObj *map=NULL;
 
   class->layer = (layerObj *) layer;
@@ -3310,90 +3288,6 @@ int loadClass(classObj *class, layerObj *layer)
             return(-1);
           }
         }
-        break;
-
-        /*
-        ** for backwards compatability, these are shortcuts for style 0
-        */
-      case(BACKGROUNDCOLOR):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if(loadColor(&(class->styles[0]->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
-        break;
-      case(COLOR):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if(loadColor(&(class->styles[0]->color), NULL) != MS_SUCCESS) return(-1);
-        class->numstyles = 1; /* must *always* set a color or outlinecolor */
-        break;
-      case(MAXSIZE):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if(getDouble(&(class->styles[0]->maxsize)) == -1) return(-1);
-        break;
-      case(MINSIZE):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if(getDouble(&(class->styles[0]->minsize)) == -1) return(-1);
-        break;
-      case(OUTLINECOLOR):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if(loadColor(&(class->styles[0]->outlinecolor), NULL) != MS_SUCCESS) return(-1);
-        class->numstyles = 1; /* must *always* set a color, symbol or outlinecolor */
-        break;
-      case(SIZE):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if(getDouble(&(class->styles[0]->size)) == -1) return(-1);
-        break;
-      case(SYMBOL):
-        if (msMaybeAllocateClassStyle(class, 0)) return MS_FAILURE;
-        if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
-        if(state == MS_NUMBER)
-          class->styles[0]->symbol = (int) msyynumber;
-        else {
-          if (class->styles[0]->symbolname != NULL)
-            msFree(class->styles[0]->symbolname);
-          class->styles[0]->symbolname = msStrdup(msyystring_buffer);
-          class->numstyles = 1;
-        }
-        break;
-
-        /*
-        ** for backwards compatability, these are shortcuts for style 1
-        */
-      case(OVERLAYBACKGROUNDCOLOR):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if(loadColor(&(class->styles[1]->backgroundcolor), NULL) != MS_SUCCESS) return(-1);
-        break;
-      case(OVERLAYCOLOR):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if(loadColor(&(class->styles[1]->color), NULL) != MS_SUCCESS) return(-1);
-        class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
-        break;
-      case(OVERLAYMAXSIZE):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if(getDouble(&(class->styles[1]->maxsize)) == -1) return(-1);
-        break;
-      case(OVERLAYMINSIZE):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if(getDouble(&(class->styles[1]->minsize)) == -1) return(-1);
-        break;
-      case(OVERLAYOUTLINECOLOR):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if(loadColor(&(class->styles[1]->outlinecolor), NULL) != MS_SUCCESS) return(-1);
-        class->numstyles = 2; /* must *always* set a color, symbol or outlinecolor */
-        break;
-      case(OVERLAYSIZE):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if(getDouble(&(class->styles[1]->size)) == -1) return(-1);
-        break;
-      case(OVERLAYSYMBOL):
-        if (msMaybeAllocateClassStyle(class, 1)) return MS_FAILURE;
-        if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
-        if(state == MS_NUMBER)
-          class->styles[1]->symbol = (int) msyynumber;
-        else  {
-          if (class->styles[1]->symbolname != NULL)
-            msFree(class->styles[1]->symbolname);
-          class->styles[1]->symbolname = msStrdup(msyystring_buffer);
-        }
-        class->numstyles = 2;
         break;
 
       case(VALIDATION):
@@ -4377,23 +4271,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(CONNECTIONOPTIONS):
         if(loadHashTable(&(layer->connectionoptions)) != MS_SUCCESS) return(-1);
         break;
-
-      case(OPACITY):
-      case(TRANSPARENCY): /* keyword supported for mapfile backwards compatability */
-      {
-        int opacity;
-        if (getInteger(&opacity) == -1) return(-1);
-        if(opacity != 100) {
-          if(layer->compositer) {
-            msSetError(MS_PARSEERR, "Cannot use OPACITY and COMPOSITER simultaneously at the LAYER level (line %d)", "loadLayer()", msyylineno );
-            return -1;
-          }
-          layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
-          initLayerCompositer(layer->compositer);
-          layer->compositer->opacity = opacity;
-        }
-      }
-        break;
       case(MS_PLUGIN): {
         int rv;
         if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
@@ -5016,7 +4893,7 @@ static int loadOutputFormat(mapObj *map)
           goto load_output_error;
         }
 
-        format = msCreateDefaultOutputFormat( map, driver, name );
+        format = msCreateDefaultOutputFormat( map, driver, name, NULL );
         if( format == NULL ) {
           msSetError(MS_MISCERR,
                      "OUTPUTFORMAT (%s) clause references driver (%s), but this driver isn't configured.",
@@ -5043,7 +4920,7 @@ static int loadOutputFormat(mapObj *map)
         if( imagemode != MS_NOOVERRIDE ) {
           if(format->renderer != MS_RENDER_WITH_AGG || imagemode != MS_IMAGEMODE_PC256) {
             /* don't force to PC256 with agg, this can happen when using mapfile defined GD
-             * ouputformats that are now falling back to agg/png8
+             * outputformats that are now falling back to agg/png8
              */
             format->imagemode = imagemode;
           }
@@ -5210,7 +5087,6 @@ void initLegend(legendObj *legend)
   legend->keyspacingy = 5;
   legend->status = MS_OFF;
   legend->transparent = MS_NOOVERRIDE;
-  legend->interlace = MS_NOOVERRIDE;
   legend->position = MS_LL;
   legend->postlabelcache = MS_FALSE; /* draw with labels */
   legend->template = NULL;
@@ -5239,9 +5115,6 @@ int loadLegend(legendObj *legend, mapObj *map)
         break;
       case(IMAGECOLOR):
         if(loadColor(&(legend->imagecolor), NULL) != MS_SUCCESS) return(-1);
-        break;
-      case(INTERLACE):
-        if((legend->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
         break;
       case(KEYSIZE):
         if(getInteger(&(legend->keysizex)) == -1) return(-1);
@@ -5319,7 +5192,6 @@ static void writeLegend(FILE *stream, int indent, legendObj *legend)
   writeBlockBegin(stream, indent, "LEGEND");
   MS_INIT_COLOR(c,255,255,255,255);
   writeColor(stream, indent, "IMAGECOLOR", &c, &(legend->imagecolor));
-  writeKeyword(stream, indent, "INTERLACE", legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeDimension(stream, indent, "KEYSIZE", legend->keysizex, legend->keysizey, NULL, NULL);
   writeDimension(stream, indent, "KEYSPACING", legend->keyspacingx, legend->keyspacingy, NULL, NULL);
   writeLabel(stream, indent, &(legend->label));
@@ -5375,7 +5247,6 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
   scalebar->transparent = MS_NOOVERRIDE; /* no transparency */
-  scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; /* draw with labels */
   scalebar->align = MS_ALIGN_CENTER;
   scalebar->offsetx = 0;
@@ -5408,9 +5279,6 @@ int loadScalebar(scalebarObj *scalebar)
         break;
       case(IMAGECOLOR):
         if(loadColor(&(scalebar->imagecolor), NULL) != MS_SUCCESS) return(-1);
-        break;
-      case(INTERLACE):
-        if((scalebar->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
         break;
       case(INTERVALS):
         if(getInteger(&(scalebar->intervals)) == -1) return(-1);
@@ -5498,7 +5366,6 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
   MS_INIT_COLOR(c,0,0,0,255);
   writeColor(stream, indent, "COLOR", &c, &(scalebar->color));
   writeColor(stream, indent, "IMAGECOLOR", NULL, &(scalebar->imagecolor));
-  writeKeyword(stream, indent, "INTERLACE", scalebar->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeNumber(stream, indent, "INTERVALS", -1, scalebar->intervals);
   writeLabel(stream, indent, &(scalebar->label));
   writeColor(stream, indent, "OUTLINECOLOR", NULL, &(scalebar->outlinecolor));
@@ -5652,13 +5519,11 @@ char* msWriteQueryMapToString(queryMapObj *querymap)
 */
 void initWeb(webObj *web)
 {
-  web->extent.minx = web->extent.miny = web->extent.maxx = web->extent.maxy = -1.0;
   web->template = NULL;
   web->header = web->footer = NULL;
   web->error =  web->empty = NULL;
   web->mintemplate = web->maxtemplate = NULL;
   web->minscaledenom = web->maxscaledenom = -1;
-  web->log = NULL;
   web->imagepath = msStrdup("");
   web->temppath = NULL;
   web->imageurl = msStrdup("");
@@ -5681,7 +5546,6 @@ void freeWeb(webObj *web)
   msFree(web->empty);
   msFree(web->maxtemplate);
   msFree(web->mintemplate);
-  msFree(web->log);
   msFree(web->imagepath);
   msFree(web->temppath);
   msFree(web->imageurl);
@@ -5699,14 +5563,12 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   writeString(stream, indent, "BROWSEFORMAT", "text/html", web->browseformat);
   writeString(stream, indent, "EMPTY", NULL, web->empty);
   writeString(stream, indent, "ERROR", NULL, web->error);
-  writeExtent(stream, indent, "EXTENT", web->extent);
   writeString(stream, indent, "FOOTER", NULL, web->footer);
   writeString(stream, indent, "HEADER", NULL, web->header);
   writeString(stream, indent, "IMAGEPATH", "", web->imagepath);
   writeString(stream, indent, "TEMPPATH", NULL, web->temppath);
   writeString(stream, indent, "IMAGEURL", "", web->imageurl);
   writeString(stream, indent, "LEGENDFORMAT", "text/html", web->legendformat);
-  writeString(stream, indent, "LOG", NULL, web->log);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, web->maxscaledenom);
   writeString(stream, indent, "MAXTEMPLATE", NULL, web->maxtemplate);
   writeHashTable(stream, indent, "METADATA", &(web->metadata));
@@ -5767,16 +5629,6 @@ int loadWeb(webObj *web, mapObj *map)
       case(ERROR):
         if(getString(&web->error) == MS_FAILURE) return(-1);
         break;
-      case(EXTENT):
-        if(getDouble(&(web->extent.minx)) == -1) return(-1);
-        if(getDouble(&(web->extent.miny)) == -1) return(-1);
-        if(getDouble(&(web->extent.maxx)) == -1) return(-1);
-        if(getDouble(&(web->extent.maxy)) == -1) return(-1);
-        if (!MS_VALID_EXTENT(web->extent)) {
-          msSetError(MS_MISCERR, "Given web extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "loadWeb()");
-          return(-1);
-        }
-        break;
       case(FOOTER):
         if(getString(&web->footer) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         if(msyysource == MS_URL_TOKENS) {
@@ -5813,10 +5665,6 @@ int loadWeb(webObj *web, mapObj *map)
         web->legendformat = NULL; /* there is a default */
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
         break;
-      case(LOG):
-        if(getString(&web->log) == MS_FAILURE) return(-1);
-        break;
-      case(MAXSCALE):
       case(MAXSCALEDENOM):
         if(getDouble(&web->maxscaledenom) == -1) return(-1);
         break;
@@ -5826,7 +5674,6 @@ int loadWeb(webObj *web, mapObj *map)
       case(METADATA):
         if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
         break;
-      case(MINSCALE):
       case(MINSCALEDENOM):
         if(getDouble(&web->minscaledenom) == -1) return(-1);
         break;
@@ -5942,10 +5789,6 @@ int initMap(mapObj *map)
   map->imagetype = NULL;
 
   map->palette.numcolors = 0;
-
-  map->transparent = MS_NOOVERRIDE;
-  map->interlace = MS_NOOVERRIDE;
-  map->imagequality = MS_NOOVERRIDE;
 
   for(i=0; i<MS_MAX_LABEL_PRIORITY; i++) {
     map->labelcache.slots[i].labels = NULL; /* cache is initialize at draw time */
@@ -6157,7 +6000,6 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   MS_INIT_COLOR(c,255,255,255,255);
   writeColor(stream, indent, "IMAGECOLOR", &c, &(map->imagecolor));
   writeString(stream, indent, "IMAGETYPE", NULL, map->imagetype);
-  writeKeyword(stream, indent, "INTERLACE", map->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeNumber(stream, indent, "MAXSIZE", MS_MAXIMAGESIZE_DEFAULT, map->maxsize);
   writeString(stream, indent, "NAME", NULL, map->name);
   writeNumber(stream, indent, "RESOLUTION", 72.0, map->resolution);
@@ -6166,7 +6008,6 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   writeKeyword(stream, indent, "STATUS", map->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeString(stream, indent, "SYMBOLSET", NULL, map->symbolset.filename);
   writeString(stream, indent, "TEMPLATEPATTERN", NULL, map->templatepattern); /* depricated */
-  writeKeyword(stream, indent, "TRANSPARENT", map->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeKeyword(stream, indent, "UNITS", map->units, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeLineFeed(stream);
 
@@ -6348,15 +6189,9 @@ static int loadMapInternal(mapObj *map)
       case(IMAGECOLOR):
         if(loadColor(&(map->imagecolor), NULL) != MS_SUCCESS) return MS_FAILURE;
         break;
-      case(IMAGEQUALITY):
-        if(getInteger(&(map->imagequality)) == -1) return MS_FAILURE;
-        break;
       case(IMAGETYPE):
         msFree(map->imagetype);
         map->imagetype = getToken();
-        break;
-      case(INTERLACE):
-        if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(LATLON):
         msFreeProjectionExceptContext(&map->latlon);
@@ -6434,9 +6269,6 @@ static int loadMapInternal(mapObj *map)
         break;
       case(SYMBOLSET):
         if(getString(&map->symbolset.filename) == MS_FAILURE) return MS_FAILURE;
-        break;
-      case(TRANSPARENT):
-        if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(UNITS):
         if((int)(map->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD)) == -1) return MS_FAILURE;
@@ -6798,6 +6630,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyystring = string;
           msyylex();
 
+          /* coverity[identical_branches] */
           if(getDouble(&(map->resolution)) == -1) break;
           break;
         case(DEFRESOLUTION):
@@ -6826,14 +6659,6 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
             break;
           }
           msMapComputeGeotransform( map );
-          break;
-        case(TRANSPARENT):
-          msyystate = MS_TOKENIZE_URL_STRING;
-          msyystring = string;
-          msyylex();
-
-          if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
-          msPostMapParseOutputFormatSetup( map );
           break;
         case(UNITS):
           msyystate = MS_TOKENIZE_URL_STRING;
@@ -7267,7 +7092,6 @@ void initResultCache(resultCacheObj *resultcache)
     resultcache->cachesize = 0;
     resultcache->bounds.minx = resultcache->bounds.miny = resultcache->bounds.maxx = resultcache->bounds.maxy = -1;
     resultcache->previousBounds = resultcache->bounds;
-    resultcache->usegetshape = MS_FALSE;
   }
 }
 

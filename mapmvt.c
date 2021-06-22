@@ -524,9 +524,9 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
 
       feature_cleanup:
       msFreeShape(&shape);
-      if(retcode != MS_SUCCESS) goto layer_cleanup;
+      if(status != MS_SUCCESS) goto layer_cleanup;
     } /* next shape */
-    layer_cleanup:
+layer_cleanup:
     msLayerClose(layer);
     msGMLFreeItems(item_list);
     UT_HASH_ITER(hh, value_lookup_cache.cache, cur_value_lookup, tmp_value_lookup) {
@@ -544,8 +544,8 @@ int msMVTWriteTile( mapObj *map, int sendheaders ) {
   if( sendheaders ) {
     msIO_fprintf( stdout,
 		  "Content-Length: %d\r\n"
-		  "Content-Type: application/x-protobuf\r\n\r\n",
-                  len);
+		  "Content-Type: %s\r\n\r\n",
+                  len, MS_IMAGE_MIME_TYPE(map->outputformat));
   }
   msIO_fwrite(buf,len,1,stdout);
   msFree(buf);

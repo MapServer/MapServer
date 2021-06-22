@@ -14,16 +14,18 @@ MAP
     FEATURE
       POINTS
         10 35 
-	60 5 
-	140 35 
-	190 5
+        60 5 
+        140 35 
+        190 5
       END
     END
 
     CLASS
-      SYMBOL 'circle'
-      SIZE 5
-      COLOR 255 0 0
+      STYLE
+        SYMBOL 'circle'
+        SIZE 5
+        COLOR 255 0 0
+      END
     END
   END
 
@@ -36,19 +38,23 @@ MAP
     FEATURE
       POINTS
         10 70
-	60 40 
-	140 70 
-	190 40
+        60 40 
+        140 70 
+        190 40
       END
     END
 
     CLASS
-      SYMBOL 'circle'
-      SIZE 5
-      COLOR 255 0 0
-      OVERLAYSYMBOL 'circle'
-      OVERLAYSIZE 3
-      OVERLAYCOLOR 255 255 0
+      STYLE
+        SYMBOL 'circle'
+        SIZE 5
+        COLOR 255 0 0
+      END
+      STYLE
+        SYMBOL 'circle'
+        SIZE 3
+        COLOR 255 255 0
+      END
     END
   END
 
@@ -61,19 +67,23 @@ MAP
     FEATURE
       POINTS
         10 110
-	60 75 
-	140 110 
-	190 75
+        60 75 
+        140 110 
+        190 75
       END
     END
 
     CLASS
-      SYMBOL 'circle'
-      SIZE 5
-      COLOR 255 0 0
-      OVERLAYSYMBOL 'dash-long'
-      OVERLAYSIZE 3
-      OVERLAYCOLOR 255 255 0
+      STYLE
+        SYMBOL 'circle'
+        SIZE 5
+        COLOR 255 0 0
+      END
+      STYLE
+        SYMBOL 'dash-long'
+        SIZE 3
+        COLOR 255 255 0
+       END
     END
   END
 
@@ -86,16 +96,18 @@ MAP
     FEATURE
       POINTS
         10 150
-	60 120 
-	140 150 
-	190 120
+        60 120 
+        140 150 
+        190 120
       END
     END
 
     CLASS
-      SYMBOL 'dash-short'
-      SIZE 3
-      COLOR 255 0 0
+      STYLE
+        SYMBOL 'dash-short'
+        SIZE 3
+        COLOR 255 0 0
+      END
     END
   END
 
@@ -108,18 +120,22 @@ MAP
     FEATURE
       POINTS
         10 185
-	60 155
-	140 185 
-	190 155
+        60 155
+        140 185 
+        190 155
       END
     END
 
     CLASS
-      SYMBOL 'dash-short'
-      SIZE 3
-      COLOR 255 0 0
-      OVERLAYSYMBOL 0
-      OVERLAYCOLOR 255 255 255
+      STYLE
+        SYMBOL 'dash-short'
+        SIZE 3
+        COLOR 255 0 0
+      END
+      STYLE
+        SYMBOL 0
+        COLOR 255 255 255
+      END
     END
   END
 
@@ -133,18 +149,22 @@ MAP
     FEATURE
       POINTS
         10 220
-	60 190
-	140 220 
-	190 190
+        60 190
+        140 220 
+        190 190
       END
     END
 
     CLASS
-      SYMBOL 'tracks'
-      SIZE 3
-      COLOR 0 0 0
-      OVERLAYSYMBOL 0
-      OVERLAYCOLOR 0 0 0
+      STYLE
+        SYMBOL 'tracks'
+        SIZE 3
+        COLOR 0 0 0
+      END
+      STYLE
+        SYMBOL 0
+        COLOR 0 0 0
+      END
     END
   END
 END

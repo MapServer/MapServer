@@ -32,7 +32,7 @@
 
     /**
     A :class:`layerObj` is associated with :class:`mapObj`. An instance of 
-    :class:`layerObj` can exist outside of a :class:`mapObj`. 
+    :class:`layerObj` can exist outside of a :class:`mapObj`
     */
     layerObj(mapObj *map=NULL) 
     {
@@ -141,7 +141,7 @@
     }
     
     %newobject convertToString;
-    /// Output the :ref:`layerObj` object as a Mapfile string. Provides the inverse option for :func:`layerObj.updateFromString`.
+    /// Output the :class:`layerObj` object as a Mapfile string. Provides the inverse option for :func:`layerObj.updateFromString`.
     char* convertToString()
     {
         return msWriteLayerToString(self);
@@ -174,7 +174,7 @@
     return c;
     }
 
-    /// Opens the underlying layer. This is required before operations like :func:`layerObj.getFeature`
+    /// Opens the underlying layer. This is required before operations like :func:`layerObj.getResult`
     /// will work, but is not required before a draw or query call.
     int open() 
     {
@@ -441,7 +441,7 @@
     /**
     Query layer using a rectangle specified in georeferenced map coordinates (i.e. not pixels).
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
-    Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
+    Note that the layer's FILTER/FILTERITEM are ignored by this function. The :data:`MS_MULTIPLE` mode is set by default.
     Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
     */
     int queryByRect(mapObj *map, rectObj rect) 
@@ -627,89 +627,7 @@
 
         return msLayerSetExtent(self, minx, miny, maxx, maxy);
     }
-    
-    /* 
-    The following metadata methods are no longer needed since we have
-    promoted the metadata member of layerObj to a first-class mapscript
-    object.  See hashtable.i.  Not yet scheduled for deprecation but 
-    perhaps in the next major release?  --SG
-    */
 
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    char *getMetaData(char *name) 
-    {
-        char *value = NULL;
-        if (!name) {
-            msSetError(MS_HASHERR, "NULL key", "getMetaData");
-        }
-     
-        value = (char *) msLookupHashTable(&(self->metadata), name);
-    /*
-    Umberto, 05/17/2006
-    Exceptions should be reserved for situations when a serious error occurred
-    and normal program flow must be interrupted.
-    In this case returning null should be more that enough.
-    */
-#ifndef SWIGJAVA
-        if (!value) {
-            msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
-            return NULL;
-        }
-#endif
-        return value;
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    int setMetaData(char *name, char *value) 
-    {
-        if (msInsertHashTable(&(self->metadata), name, value) == NULL)
-        return MS_FAILURE;
-        return MS_SUCCESS;
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    int removeMetaData(char *name) 
-    {
-        return(msRemoveHashTable(&(self->metadata), name));
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    char *getFirstMetaDataKey() 
-    {
-        return (char *) msFirstKeyFromHashTable(&(self->metadata));
-    }
-
-    /**
-    .. note::
-
-        Function is deprecated and will be removed in a future version. 
-        Replaced by direct metadata access, see :class:`hashTableObj`
-    */
-    char *getNextMetaDataKey(char *lastkey) 
-    {
-        return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
-    }
-  
     %newobject getWMSFeatureInfoURL;
     /**
     Return a WMS GetFeatureInfo URL (works only for WMS layers) *clickX*, *clickY*
@@ -808,12 +726,6 @@
        msLayerSetProcessingKey( self, key, value );
     }
  
-    /// Deprecated
-    void setProcessing(const char *directive ) 
-    {
-        msLayerAddProcessing( self, directive );
-    }
-
     /// Adds a new processing directive line to a layer, similar to the PROCESSING directive 
     /// in a map file. Processing directives supported are specific to the layer type and 
     /// underlying renderer.

@@ -41,23 +41,6 @@ except ImportError:
     pass
 
 
-class SaveToStringTestCase(MapTestCase):
-    def testSaveToString(self):
-        """test that an image can be saved as a string"""
-        msimg = self.map.draw()
-        assert msimg.thisown == 1
-        data = msimg.saveToString()
-        filename = 'testSaveToString.png'
-        fh = open(filename, 'wb')
-        fh.write(data)
-        fh.close()
-        if have_image:
-            pyimg = Image.open(filename)
-            assert pyimg.format == 'PNG'
-            assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'RGB'
-
-
 class ImageObjTestCase(unittest.TestCase):
 
     def testConstructor(self):

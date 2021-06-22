@@ -306,7 +306,7 @@ namespace mapserver
         coord_type     m_start_x;
         coord_type     m_start_y;
         unsigned       m_status;
-        int            m_scan_y;
+        int            m_scan_y = 0;
     };
 
 

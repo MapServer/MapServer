@@ -1351,7 +1351,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         shape->line[i].numpoints = nPoints - psSHP->panParts[i];
       else
         shape->line[i].numpoints = psSHP->panParts[i+1] - psSHP->panParts[i];
-      if (shape->line[i].numpoints <= 0) {
+      if (shape->line[i].numpoints <= 0 || shape->line[i].numpoints > nPoints) {
         msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].numpoints=%d", "msSHPReadShape()",
                    hEntity, i, shape->line[i].numpoints);
         while(--i >= 0)

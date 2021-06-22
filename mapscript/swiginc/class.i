@@ -161,38 +161,6 @@
     return msGetExpressionString(&(self->text));
   }
 
-  /// \**To be removed in 8.0** -  use the metadata property
-  char *getMetaData(char *name) {
-    char *value = NULL;
-    if (!name) {
-      msSetError(MS_HASHERR, "NULL key", "getMetaData");
-    }
-     
-    value = (char *) msLookupHashTable(&(self->metadata), name);
-    if (!value) {
-      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
-      return NULL;
-    }
-    return value;
-  }
-
-  /// \**To be removed** -  use the metadata property
-  int setMetaData(char *name, char *value) {
-    if (msInsertHashTable(&(self->metadata), name, value) == NULL)
-        return MS_FAILURE;
-    return MS_SUCCESS;
-  }
-
-  /// \**To be removed** -  use the metadata property
-  char *getFirstMetaDataKey() {
-    return (char *) msFirstKeyFromHashTable(&(self->metadata));
-  }
-
-  /// \**To be removed** -  use the metadata property
-  char *getNextMetaDataKey(char *lastkey) {
-    return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
-  }
-
   /// Draw the legend icon onto *image* at *dstx*, *dsty*.  Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {    
     if(layer->sizeunits != MS_PIXELS) {

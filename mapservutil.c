@@ -45,54 +45,6 @@ static char *modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGE
                                 "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
                                };
 
-int msCGIWriteLog(mapservObj *mapserv, int show_error)
-{
-  FILE *stream;
-  int i;
-  time_t t;
-  char szPath[MS_MAXPATHLEN];
-
-  if(!mapserv) return(MS_SUCCESS);
-  if(!mapserv->map) return(MS_SUCCESS);
-  if(!mapserv->map->web.log) return(MS_SUCCESS);
-
-  if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath,
-                                 mapserv->map->web.log),"a")) == NULL) {
-    msSetError(MS_IOERR, "%s", "msCGIWriteLog()", mapserv->map->web.log);
-    return(MS_FAILURE);
-  }
-
-  t = time(NULL);
-  fprintf(stream,"%s,",msStringChop(ctime(&t)));
-  fprintf(stream,"%d,",(int)getpid());
-
-  if(getenv("REMOTE_ADDR") != NULL)
-    fprintf(stream,"%s,",getenv("REMOTE_ADDR"));
-  else
-    fprintf(stream,"NULL,");
-
-  fprintf(stream,"%s,",mapserv->map->name);
-  fprintf(stream,"%d,",mapserv->Mode);
-
-  fprintf(stream,"%f %f %f %f,", mapserv->map->extent.minx, mapserv->map->extent.miny, mapserv->map->extent.maxx, mapserv->map->extent.maxy);
-
-  fprintf(stream,"%f %f,", mapserv->mappnt.x, mapserv->mappnt.y);
-
-  for(i=0; i<mapserv->NumLayers; i++)
-    fprintf(stream, "%s ", mapserv->Layers[i]);
-  fprintf(stream,",");
-
-  if(show_error == MS_TRUE)
-    msWriteError(stream);
-  else
-    fprintf(stream, "normal execution");
-
-  fprintf(stream,"\n");
-
-  fclose(stream);
-  return(MS_SUCCESS);
-}
-
 void msCGIWriteError(mapservObj *mapserv)
 {
   errorObj *ms_error = msGetErrorObj();
@@ -101,8 +53,6 @@ void msCGIWriteError(mapservObj *mapserv)
     /* either we have no error, or it was already reported by other means */
     return;
   }
-
-  msCGIWriteLog(mapserv,MS_TRUE);
 
   if(!mapserv || !mapserv->map) {
     msIO_setHeader("Content-Type","text/html");
@@ -1597,7 +1547,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     case TILE:
       msTileSetExtent(mapserv);
 
-      if(!strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/x-protobuf")) {
+      if(!strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/vnd.mapbox-vector-tile") || !strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/x-protobuf")) {
         if(msMVTWriteTile(mapserv->map, mapserv->sendheaders) != MS_SUCCESS) return MS_FAILURE;
         return MS_SUCCESS;
       }
@@ -1734,7 +1684,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   }
 
   /* ensure we have an image format representing the options for the legend. */
-  msApplyOutputFormat(&format, mapserv->map->outputformat, mapserv->map->legend.transparent, mapserv->map->legend.interlace, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, mapserv->map->outputformat, mapserv->map->legend.transparent);
 
   /* initialize the legend image */
   if( ! MS_RENDERER_PLUGIN(format) ) {
@@ -1752,7 +1702,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   img->map = mapserv->map;
 
   /* drop this reference to output format */
-  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE);
 
   if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0, MS_TRUE,
       ((mapserv->hittest)?(&mapserv->hittest->layerhits[layerindex].classhits[classindex]):(NULL))) != MS_SUCCESS) {
@@ -1982,7 +1932,6 @@ end_request:
               (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
-    msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
   }
 

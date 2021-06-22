@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
+      /* coverity[tainted_string] */
       putenv( argv[iArg] );
     } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
       /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
@@ -310,7 +311,6 @@ end_request:
               (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
-    msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */

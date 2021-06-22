@@ -99,13 +99,14 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
   /* -------------------------------------------------------------------- */
   /*      Loop over classes till we find a match.                         */
   /* -------------------------------------------------------------------- */
-  for(i= (firstClassToTry < 0 ) ? 0 : -1; i<layer->numclasses; i++) {
+  if( firstClassToTry >= layer->numclasses )
+      firstClassToTry = -1;
+  for(i=0; i<layer->numclasses; i++) {
 
-    int idx = i;
-    if( i < 0 )
-        idx = firstClassToTry;
-    else if( i == firstClassToTry )
-        continue;
+    const int idx = firstClassToTry < 0 ? i :
+                    i == 0 ? firstClassToTry :
+                    i <= firstClassToTry ? i - 1:
+                    i;
 
     /* check for correct classgroup, if set */
     if ( layer->class[idx]->group && layer->classgroup &&

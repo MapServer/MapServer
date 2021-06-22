@@ -10,6 +10,9 @@ import inspect
 
 
 def add_dll_path(pth):
+    """
+    Allow Python to access the directory containing the MapServer DLL (for Python on Windows only)
+    """
     if (3, 8) <= sys.version_info:
         os.add_dll_directory(pth)
     else:

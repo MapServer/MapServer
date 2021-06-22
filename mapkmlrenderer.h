@@ -41,73 +41,73 @@
 class KmlRenderer
 {
 private:
-  const char *pszLayerDescMetadata; /*if the kml_description is set*/
-  char **papszLayerIncludeItems;
-  int nIncludeItems;
-  char **papszLayerExcludeItems;
-  int nExcludeItems;
-  const char *pszLayerNameAttributeMetadata;
+  const char *pszLayerDescMetadata = nullptr; /*if the kml_description is set*/
+  char **papszLayerIncludeItems = nullptr;
+  int nIncludeItems = 0;
+  char **papszLayerExcludeItems = nullptr;
+  int nExcludeItems = 0;
+  const char *pszLayerNameAttributeMetadata = nullptr;
 
 protected:
 
   // map properties
-  int       Width, Height;
-  rectObj     MapExtent;
-  double      MapCellsize;
-  colorObj    BgColor;
-  char      MapPath[MS_MAXPATHLEN];
+  int       Width = 0, Height = 0;
+  rectObj     MapExtent = {0,0,0,0};
+  double      MapCellsize = 0;
+  colorObj    BgColor = {0,0,0,0};
+  char      MapPath[MS_MAXPATHLEN] = {0};
 
   // xml nodes pointers
-  xmlDocPtr XmlDoc;
-  xmlNodePtr  DocNode;
-  xmlNodePtr  LayerNode;
-  xmlNodePtr  GroundOverlayNode;
+  xmlDocPtr XmlDoc = nullptr;
+  xmlNodePtr  DocNode = nullptr;
+  xmlNodePtr  LayerNode = nullptr;
+  xmlNodePtr  GroundOverlayNode = nullptr;
 
-  xmlNodePtr  PlacemarkNode;
-  xmlNodePtr  GeomNode;
-  xmlNodePtr  DescriptionNode;
+  xmlNodePtr  PlacemarkNode = nullptr;
+  xmlNodePtr  GeomNode = nullptr;
+  xmlNodePtr  DescriptionNode = nullptr;
 
-  int         CurrentShapeIndex;
-  int         CurrentDrawnShapeIndex;
-  char            *CurrentShapeName;
-  char    **Items;
-  int     NumItems;
-  int     DumpAttributes;
+  int         CurrentShapeIndex = 0;
+  int         CurrentDrawnShapeIndex = 0;
+  char            *CurrentShapeName = nullptr;
+  char    **Items = nullptr;
+  int     NumItems = 0;
+  int     DumpAttributes = 0;
 
   // placemark symbology
-  hashTableObj  *StyleHashTable;
+  hashTableObj  *StyleHashTable = nullptr;
 
-  colorObj                LabelColor;
-  strokeStyleObj          *LineStyle;
-  int                     numLineStyle;
-  colorObj    PolygonColor;
+  colorObj                LabelColor = {0,0,0,0};
+  strokeStyleObj          *LineStyle = nullptr;
+  int                     numLineStyle = 0;
+  colorObj    PolygonColor = {0,0,0,0};
 
-  char      SymbolName[128];
-  char      SymbolUrl[128];
+  char      SymbolName[128] = {0};
+  char      SymbolUrl[128] = {0};
 
   enum      { NumSymbologyFlag = 4};
-  char      SymbologyFlag[NumSymbologyFlag];
+  char      SymbologyFlag[NumSymbologyFlag] = {0,0,0,0};
 
   enum      symbFlagsEnum { Label, Line, Polygon, Symbol };
 
-  int       FirstLayer;
+  int       FirstLayer = 0;
 
-  mapObj                  *map;
-  layerObj                *currentLayer;
+  mapObj                  *map = nullptr;
+  layerObj                *currentLayer = nullptr;
 
-  int       AltitudeMode;
-  int       Tessellate;
-  int       Extrude;
+  int       AltitudeMode = 0;
+  int       Tessellate = 0;
+  int       Extrude = 0;
 
   enum altitudeModeEnum { undefined, clampToGround, relativeToGround, absolute };
   /**True if elevation is taken from a feature attribute*/
-  bool mElevationFromAttribute;
+  bool mElevationFromAttribute = false;
   /**Attribute index of elevation (or -1 if elevation is not attribute driven*/
-  int mElevationAttributeIndex;
-  double mCurrentElevationValue;
+  int mElevationAttributeIndex = 0;
+  double mCurrentElevationValue = 0;
 
 
-  outputFormatObj *aggFormat;
+  outputFormatObj *aggFormat = nullptr;
 
 protected:
 

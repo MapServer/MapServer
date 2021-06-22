@@ -392,8 +392,8 @@ namespace mapserver
         font_cache_pool     m_fonts;
         font_engine_type&   m_engine;
         int                 m_change_stamp;
-        double              m_dx;
-        double              m_dy;
+        double              m_dx = 0;
+        double              m_dy = 0;
         const glyph_cache*  m_prev_glyph;
         const glyph_cache*  m_last_glyph;
         path_adaptor_type   m_path_adaptor;

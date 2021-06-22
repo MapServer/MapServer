@@ -214,7 +214,7 @@ msXmpWrite( mapObj *map, const char *filename )
 
   /* Check all the keys for "xmp_*_*" pattern */
   key = msFirstKeyFromHashTable(&hash_metadata);
-  do {
+  for( ; key != NULL; key = msNextKeyFromHashTable(&hash_metadata, key) ) {
     /* Our regex has two match slots */
     regmatch_t matches[3];
 
@@ -259,7 +259,7 @@ msXmpWrite( mapObj *map, const char *filename )
       msFree(ns_name);
       msFree(ns_tag);
     }
-  } while( (key = msNextKeyFromHashTable(&hash_metadata, key)) );
+  }
 
   /* Clean up regex */
   regfree(&xmp_regex);

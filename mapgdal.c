@@ -393,14 +393,12 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   /* -------------------------------------------------------------------- */
   /*      Possibly assign a nodata value.                                 */
   /* -------------------------------------------------------------------- */
-  if( msGetOutputFormatOption(format,"NULLVALUE",NULL) != NULL ) {
-    int iBand;
-    const char *nullvalue = msGetOutputFormatOption(format,
-                            "NULLVALUE",NULL);
-
-    for( iBand = 0; iBand < nBands; iBand++ ) {
+  const char *nullvalue = msGetOutputFormatOption(format,"NULLVALUE",NULL);
+  if( nullvalue != NULL ) {
+    const double dfNullValue = atof(nullvalue);
+    for( int iBand = 0; iBand < nBands; iBand++ ) {
       GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, iBand+1 );
-      GDALSetRasterNoDataValue( hBand, atof(nullvalue) );
+      GDALSetRasterNoDataValue( hBand, dfNullValue );
     }
   }
 

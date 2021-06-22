@@ -77,9 +77,9 @@ namespace mapserver
         double             m_shorten;
         double             m_curr_dash_start;
         unsigned           m_curr_dash;
-        double             m_curr_rest;
-        const vertex_dist* m_v1;
-        const vertex_dist* m_v2;
+        double             m_curr_rest = 0;
+        const vertex_dist* m_v1 = nullptr;
+        const vertex_dist* m_v2 = nullptr;
 
         vertex_storage m_src_vertices;
         unsigned       m_closed;

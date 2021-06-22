@@ -258,8 +258,8 @@ FONTSET ./etc/fonts.txt
 # Start of web interface definition
 #
 WEB
-  MINSCALE 2000000
-  MAXSCALE 50000000
+  MINSCALEDENOM 2000000
+  MAXSCALEDENOM 50000000
 
   IMAGEPATH "/tmp/ms_tmp/" 
   IMAGEURL "/ms_tmp/"
@@ -309,9 +309,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern1 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -336,9 +338,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern2 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -363,9 +367,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern3 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -389,9 +395,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern4 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -415,9 +423,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern5 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -442,9 +452,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern6 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -469,9 +481,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern7 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -496,9 +510,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern8 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -522,9 +538,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern9 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -550,9 +568,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern10 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -578,9 +598,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern11 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -605,9 +627,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern12 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -632,9 +656,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern13 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -658,9 +684,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern14 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -683,9 +711,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern15 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END
   END
 
 END

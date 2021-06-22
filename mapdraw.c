@@ -76,25 +76,21 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     rendererVTableObj *renderer = map->outputformat->vtable;
     colorObj *bg = &map->imagecolor;
     map->imagecolor.alpha=255;
-    if(map->transparent == MS_TRUE) {
-      /* don't set the image color */
-      bg = NULL;
-    }
 
-  image = renderer->createImage(map->width, map->height, map->outputformat,bg);
-  if (image == NULL)
-    return(NULL);
-  image->format = map->outputformat;
-  image->format->refcount++;
-  image->width = map->width;
-  image->height = map->height;
-
-  image->resolution = map->resolution;
-  image->resolutionfactor = map->resolution/map->defresolution;
-  if (map->web.imagepath)
-    image->imagepath = msStrdup(map->web.imagepath);
-  if (map->web.imageurl)
-    image->imageurl = msStrdup(map->web.imageurl);
+    image = renderer->createImage(map->width, map->height, map->outputformat,bg);
+    if (image == NULL)
+      return(NULL);
+    image->format = map->outputformat;
+    image->format->refcount++;
+    image->width = map->width;
+    image->height = map->height;
+    
+    image->resolution = map->resolution;
+    image->resolutionfactor = map->resolution/map->defresolution;
+    if (map->web.imagepath)
+      image->imagepath = msStrdup(map->web.imagepath);
+    if (map->web.imageurl)
+      image->imageurl = msStrdup(map->web.imageurl);
 
   } else if( MS_RENDERER_IMAGEMAP(map->outputformat) ) {
     image = msImageCreateIM(map->width, map->height, map->outputformat,
@@ -413,8 +409,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
       if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
-        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
+        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format)) {
+          assert(pasOWSReqInfo);
           status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests,  map, lp, image);
+        }
         else {
           msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
           status = MS_FAILURE;
@@ -550,7 +548,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
       if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
+      {
+        assert(pasOWSReqInfo);
         status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
+      }
 
 #else
       status = MS_FAILURE;

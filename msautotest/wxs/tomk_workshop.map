@@ -554,7 +554,9 @@ MAP
   # how will this data look?
   CLASS
    NAME "Rivers"
-   COLOR 0 0 255
+   STYLE
+       COLOR 0 0 255
+   END
    # if you want to use a canned graphic for the
    # legend do it like this.
    # this is what will show up when a user does either

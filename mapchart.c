@@ -49,7 +49,7 @@
 */
 int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj *center)
 {
-  int middle,numpoints,idx,offset;
+  int middle,numpoints;
   double invcellsize = 1.0/map->cellsize; /*speed up MAP2IMAGE_X/Y_IC_DBL*/
   switch(shape->type) {
     case MS_SHAPE_POINT:
@@ -67,8 +67,8 @@ int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj
       */
       middle=shape->line[0].numpoints/2; /*start with middle segment of line*/
       numpoints=shape->line[0].numpoints;
-      for(offset=1; offset<=middle; offset++) {
-        idx=middle+offset;
+      if( 1 <= middle ) {
+        int idx=middle+1;
         if(idx<numpoints) {
           center->x=(shape->line[0].point[idx-1].x+shape->line[0].point[idx].x)/2.;
           center->y=(shape->line[0].point[idx-1].y+shape->line[0].point[idx].y)/2.;
@@ -78,19 +78,17 @@ int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj
           if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
             return MS_SUCCESS;
 
-          break;
+          return MS_FAILURE;
         }
-        idx=middle-offset;
-        if(idx>=0) {
-          center->x=(shape->line[0].point[idx].x+shape->line[0].point[idx+1].x)/2;
-          center->y=(shape->line[0].point[idx].y+shape->line[0].point[idx+1].y)/2;
-          center->x=MS_MAP2IMAGE_X_IC_DBL(center->x, map->extent.minx, invcellsize);
-          center->y=MS_MAP2IMAGE_Y_IC_DBL(center->y, map->extent.maxy, invcellsize);
+        idx=middle-1;
+        center->x=(shape->line[0].point[idx].x+shape->line[0].point[idx+1].x)/2;
+        center->y=(shape->line[0].point[idx].y+shape->line[0].point[idx+1].y)/2;
+        center->x=MS_MAP2IMAGE_X_IC_DBL(center->x, map->extent.minx, invcellsize);
+        center->y=MS_MAP2IMAGE_Y_IC_DBL(center->y, map->extent.maxy, invcellsize);
 
-          if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
-            return MS_SUCCESS;
-          break;
-        }
+        if(MS_CHART_FITS(center->x,center->y,width,height,map->width,map->height))
+          return MS_SUCCESS;
+        return MS_FAILURE;
       }
       return MS_FAILURE;
       break;
@@ -596,7 +594,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   int chartType=MS_CHART_TYPE_PIE;
   int status = MS_FAILURE;
 
-  if (image && map && layer) {
+  if (image && map) {
     if( !(MS_RENDERER_PLUGIN(image->format) )) {
       msSetError(MS_MISCERR, "chart drawing currently only supports GD and AGG renderers", "msDrawChartLayer()");
       return MS_FAILURE;

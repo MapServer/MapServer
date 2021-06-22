@@ -1386,7 +1386,8 @@ int msClusterLayerClose(layerObj *layer)
 
 #ifndef USE_CLUSTER_EXTERNAL
   /* switch back to the source layer vtable */
-  msInitializeVirtualTable(layer);
+  if( msInitializeVirtualTable(layer) != MS_SUCCESS )
+      return MS_FAILURE;
 #endif
 
   return MS_SUCCESS;

@@ -35,7 +35,7 @@
   }
   
   %newobject convertToString;
-  /// Output the :ref:`legendObj` object as a Mapfile string. Provides the inverse option for :func:`legendObj.updateFromString`.
+  /// Output the :class:`legendObj` object as a Mapfile string. Provides the inverse option for :func:`legendObj.updateFromString`.
   char* convertToString()
   {
     return msWriteLegendToString(self);

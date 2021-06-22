@@ -75,9 +75,9 @@ namespace mapserver
         Generator     m_generator;
         Markers       m_markers;
         status        m_status;
-        unsigned      m_last_cmd;
-        double        m_start_x;
-        double        m_start_y;
+        unsigned      m_last_cmd = 0;
+        double        m_start_x = 0;
+        double        m_start_y = 0;
     };
 
 

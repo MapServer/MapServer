@@ -87,8 +87,10 @@ LAYER
 
   CLASS
     NAME "Province"
-    COLOR 200 255 0
-    OUTLINECOLOR 120 120 120
+    STYLE
+        COLOR 200 255 0
+        OUTLINECOLOR 120 120 120
+    END
   END
 END # Layer
 
