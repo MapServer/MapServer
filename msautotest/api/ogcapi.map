@@ -1,6 +1,10 @@
 # RUN_PARMS: ogcapi_root.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT]
 # RUN_PARMS: ogcapi_root.html.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" QUERY_STRING= > [RESULT]
 # RUN_PARMS: ogcapi_root.json [ENV HTTP_ACCEPT=application/json] [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1" > [RESULT_DEMIME]
 
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
