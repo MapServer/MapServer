@@ -364,14 +364,14 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
       geometry["coordinates"] = json::array();
 
       for(int k=0; k<shape->numlines; k++) {
-	if(outerList[k] == MS_TRUE) { // outer ring: generate polygon and add to coordinates
+        if(outerList[k] == MS_TRUE) { // outer ring: generate polygon and add to coordinates
           int *innerList = msGetInnerList(shape, k, outerList);
           if(innerList == NULL) {
             msFree(outerList);
             throw std::runtime_error("Unable to allocate list of inner rings.");
-	  }
+          }
 
-	  json polygon = json::array();
+          json polygon = json::array();
           for(int i=0; i<shape->numlines; i++) {
             if(i == k || outerList[i] == MS_TRUE) { // add outer ring (k) and any inner rings
               json part = json::array();
@@ -510,11 +510,11 @@ static json getCollection(mapObj *map, layerObj *layer, int format)
     { "description", description?description:"" },
     { "title", title?title:"" },
     { "extent", {
-	{ "spatial", {
-	    { "bbox", {{ bbox.minx, bbox.miny, bbox.maxx, bbox.maxy }}},
-	    { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
-	  }
-	}
+        { "spatial", {
+            { "bbox", {{ bbox.minx, bbox.miny, bbox.maxx, bbox.maxy }}},
+            { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
+          }
+        }
       }
     },
     { "links", {
@@ -661,10 +661,10 @@ static void outputResponse(mapObj *map, cgiRequestObj *request, int format, cons
     if(tags) {
       std::vector<std::string> names = msStringSplit(tags, ',');
       for(std::string name : names) {
-	const char *value = msOWSLookupMetadata(&(map->web.metadata), "A", ("tag_" + name).c_str());
-	if(value) {
-          j["template"]["tags"].update({{ name, value }}); // add object
-	}
+        const char *value = msOWSLookupMetadata(&(map->web.metadata), "A", ("tag_" + name).c_str());
+        if(value) {
+              j["template"]["tags"].update({{ name, value }}); // add object
+        }
       }
     }
 
@@ -695,15 +695,15 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request, int format
     { "description", description?description:"" },
     { "links", {
         {
-	  { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
-	  { "type", OGCAPI_MIMETYPE_JSON },
-	  { "title", "This document as JSON" },
-	  { "href", api_root + "?f=json" }
+          { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "This document as JSON" },
+          { "href", api_root + "?f=json" }
         },{
-	  { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
-	  { "type", OGCAPI_MIMETYPE_HTML },
-	  { "title", "This document as HTML" },
-	  { "href", api_root + "?f=html" }
+          { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "This document as HTML" },
+          { "href", api_root + "?f=html" }
         },{
           { "rel", "data" },
           { "type", OGCAPI_MIMETYPE_JSON },
@@ -822,7 +822,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid feature id.");
       return MS_SUCCESS;
     }
-    
+
     map->query.type = MS_QUERY_BY_FILTER;
     map->query.mode = MS_QUERY_SINGLE;
     map->query.layer = i;
@@ -910,37 +910,37 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
       reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
       if(reprojector == NULL) {
-	msGMLFreeItems(items);
-	msGMLFreeConstants(constants);
+        msGMLFreeItems(items);
+        msGMLFreeConstants(constants);
         outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
-	return MS_SUCCESS;
+        return MS_SUCCESS;
       }
     }
 
     for(i=0; i<layer->resultcache->numresults; i++) {
       int status = msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
       if(status != MS_SUCCESS) {
-	msGMLFreeItems(items);
+        msGMLFreeItems(items);
         msGMLFreeConstants(constants);
         msProjectDestroyReprojector(reprojector);
-	outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
+        outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
         return MS_SUCCESS;
       }
 
       if(reprojector) {
-	status = msProjectShapeEx(reprojector, &shape);
-	if(status != MS_SUCCESS) {
+        status = msProjectShapeEx(reprojector, &shape);
+        if(status != MS_SUCCESS) {
           msGMLFreeItems(items);
-	  msGMLFreeConstants(constants);
-	  msProjectDestroyReprojector(reprojector);
+          msGMLFreeConstants(constants);
+          msProjectDestroyReprojector(reprojector);
           msFreeShape(&shape);
-	  outputError(OGCAPI_SERVER_ERROR, "Error reprojecting feature.");
-	  return MS_SUCCESS;
-	}
+          outputError(OGCAPI_SERVER_ERROR, "Error reprojecting feature.");
+          return MS_SUCCESS;
+        }
       }
 
       try {
-	json feature = getFeature(layer, &shape, items, constants, geometry_precision);
+        json feature = getFeature(layer, &shape, items, constants, geometry_precision);
         if(featureId) {
           response = feature;
         } else {
@@ -951,8 +951,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         msGMLFreeConstants(constants);
         msProjectDestroyReprojector(reprojector);
         msFreeShape(&shape);
-	outputError(OGCAPI_SERVER_ERROR, "Error getting feature. " + std::string(e.what()));
-	return MS_SUCCESS;
+        outputError(OGCAPI_SERVER_ERROR, "Error getting feature. " + std::string(e.what()));
+        return MS_SUCCESS;
       }
 
       msFreeShape(&shape); // next

@@ -358,7 +358,7 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
       mapserv->request->api_path = (char **) msSmallMalloc(sizeof(char *)*n);
       if(mapserv->request->api_path == NULL) {
         msFreeCharArray(tmp_api_path, tmp_api_path_length);
-	return MS_FALSE;
+        return MS_FALSE;
       }
 
       mapserv->request->api_path_length = 0;
@@ -366,9 +366,9 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
         if(strlen(tmp_api_path[i]) > 0) {
           mapserv->request->api_path[mapserv->request->api_path_length] = msStrdup(tmp_api_path[i]);
           mapserv->request->api_path_length++;
-	}
+        }
       }
-      
+
       msFreeCharArray(tmp_api_path, tmp_api_path_length);
       return MS_TRUE;
     } else {
