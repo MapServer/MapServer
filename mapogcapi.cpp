@@ -848,20 +848,22 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       return MS_SUCCESS;
     }
 
-    if(!layer->resultcache || !(layer->resultcache->numresults > 0)) {
+    if(!layer->resultcache) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
 
     numberMatched = layer->resultcache->numresults;
 
-    map->query.only_cache_result_count = MS_FALSE;
-    // map->query.startindex = start;
-    map->query.maxfeatures = limit;
+    if( numberMatched > 0 ) {
+        map->query.only_cache_result_count = MS_FALSE;
+        // map->query.startindex = start;
+        map->query.maxfeatures = limit;
 
-    if(msExecuteQuery(map) != MS_SUCCESS) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
-      return MS_SUCCESS;
+        if(msExecuteQuery(map) != MS_SUCCESS) {
+          outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+          return MS_SUCCESS;
+        }
     }
   }
 
@@ -875,8 +877,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     };
   }
 
-  // features (items) - if found
-  if(layer->resultcache && layer->resultcache->numresults > 0) {
+  // features (items)
+  {
     shapeObj shape;
     msInitShape(&shape);
 
