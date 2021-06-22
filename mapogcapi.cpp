@@ -177,20 +177,15 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxx = map->extent.maxx;
     bbox->maxy = map->extent.maxy;
   } else {
-    int ntokens = 0;
-    char **tokens = NULL;
-    double values[4];
-
-    tokens = msStringSplit(p, ',', &ntokens);
-    if(tokens == NULL || ntokens != 4) {
-      msFreeCharArray(tokens, ntokens);
+    const auto tokens = msStringSplit(p, ',');
+    if(tokens.size() != 4) {
       return MS_FAILURE;
     }
 
+    double values[4];
     for(int i=0; i<4; i++) {
-      status = msStringToDouble(tokens[i], &values[i]);
+      status = msStringToDouble(tokens[i].c_str(), &values[i]);
       if(status != MS_SUCCESS) {
-        msFreeCharArray(tokens, ntokens);
         return MS_FAILURE;
       }
     }
@@ -201,8 +196,6 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxy = values[3];
 
     // TODO: validate bbox is well-formed and lat/lon
-
-    msFreeCharArray(tokens, ntokens); // done with tokens
 
     // at the moment we are assuming the bbox is given in lat/lon
     status = msProjectRect(&map->latlon, &map->projection, bbox);
