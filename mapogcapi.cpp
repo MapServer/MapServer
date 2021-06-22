@@ -523,8 +523,8 @@ static json getCollection(mapObj *map, layerObj *layer, int format)
           { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
         },{
           { "rel", "items" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "Items for this collection as JSON" },
+          { "type", OGCAPI_MIMETYPE_GEOJSON },
+          { "title", "Items for this collection as GeoJSON" },
           { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" }
         },{
           { "rel", "items" },
@@ -800,6 +800,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     return MS_SUCCESS;
   }
 
+  int offset = 0;
   if(featureId) {
     const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
     if(featureIdItem == NULL) {
@@ -857,8 +858,21 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
     if( numberMatched > 0 ) {
         map->query.only_cache_result_count = MS_FALSE;
-        // map->query.startindex = start;
         map->query.maxfeatures = limit;
+
+        const char* offsetStr = getRequestParameter(request, "offset");
+        if( offsetStr )
+        {
+            if( msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS )
+            {
+              outputError(OGCAPI_PARAM_ERROR, "Bad value fo offset");
+              return MS_SUCCESS;
+            }
+
+            // msExecuteQuery() use a 1-based offst convention, whereas the API
+            // uses a 0-based offset convention.
+            map->query.startindex = 1 + offset;
+        }
 
         if(msExecuteQuery(map) != MS_SUCCESS) {
           outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
@@ -869,12 +883,48 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   // build response object
   if(!featureId) {
+
+    std::string api_root = getApiRootUrl(map);
+    const char *id = layer->name;
+    char *id_encoded = msEncodeUrl(id); // free after use
+
+    std::string extra_kvp = "&limit=" + std::to_string(limit);
+    extra_kvp += "&offset=" + std::to_string(offset);
+
     response = {
       { "type", "FeatureCollection" },
       { "numberMatched", numberMatched },
       { "numberReturned", layer->resultcache->numresults },
-      { "features", json::array() }
+      { "features", json::array() },
+      { "links", {
+          {
+              { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+              { "type", OGCAPI_MIMETYPE_GEOJSON },
+              { "title", "Items for this collection as GeoJSON" },
+              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" + extra_kvp }
+          },{
+              { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+              { "type", OGCAPI_MIMETYPE_HTML },
+              { "title", "Items for this collection as HTML" },
+              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" + extra_kvp }
+          }
+      }}
     };
+
+    if( offset + layer->resultcache->numresults < numberMatched )
+    {
+        response["links"].push_back({
+            { "rel", "next" },
+            { "type", format==OGCAPI_FORMAT_JSON? OGCAPI_MIMETYPE_GEOJSON : OGCAPI_MIMETYPE_HTML },
+            { "title", "next page" },
+            { "href", api_root + "/collections/" + std::string(id_encoded) +
+                      "/items?f=" + (format==OGCAPI_FORMAT_JSON? "json" : "html") +
+                      "&limit=" + std::to_string(limit) +
+                      "&offset=" + std::to_string(offset + limit) }
+        });
+    }
+
+    msFree(id_encoded); // done
   }
 
   // features (items)
