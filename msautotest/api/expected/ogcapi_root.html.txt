@@ -4,6 +4,7 @@ Content-Type: text/html
 <html lang="en">
   <head>
     <title>OGC API Test</title>
+    <meta charset="UTF-8">
   </head>
   <body>
 
