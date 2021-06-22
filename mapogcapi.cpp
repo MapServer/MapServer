@@ -1067,7 +1067,20 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
 
   int format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
-  if(p && (strcmp(p, "json") == 0 || strcmp(p, OGCAPI_MIMETYPE_JSON) == 0)) {
+
+  // if f= query parameter is not specified, use HTTP Accept header if available
+  if( p == nullptr )
+  {
+      const char* accept = getenv("HTTP_ACCEPT");
+      if( accept )
+      {
+          p = accept;
+      }
+  }
+
+  if(p && (strcmp(p, "json") == 0 ||
+           strstr(p, OGCAPI_MIMETYPE_JSON) != nullptr ||
+           strstr(p, OGCAPI_MIMETYPE_GEOJSON) != nullptr)) {
     format = OGCAPI_FORMAT_JSON;
   } else if(p && (strcmp(p, "html") == 0 || strcmp(p, OGCAPI_MIMETYPE_HTML) == 0)) {
     format = OGCAPI_FORMAT_HTML;
@@ -1075,7 +1088,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
     outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
     return MS_SUCCESS; // avoid any downstream MapServer processing
   } else {
-    format = OGCAPI_FORMAT_HTML; // default for now, need to derive from http headers (possible w/CGI?)
+    format = OGCAPI_FORMAT_HTML; // default for now
   }
 
   if(request->api_path_length == 2) {
