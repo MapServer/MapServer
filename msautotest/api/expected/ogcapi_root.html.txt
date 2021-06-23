@@ -1,0 +1,54 @@
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>OGC API Test</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+
+
+<h1>OGC API Test</h1>
+<p>
+  This is a test OGC API server description set via oga_description.
+</p>
+
+<h2>Links</h2>
+<ul>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi?f=json">This document as JSON</a></li>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi?f=html">This document as HTML</a></li>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/conformance?f=json">OCG API conformance classes implemented by this server (JSON)</a></li>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/conformance?f=html">OCG API conformance classes implemented by this server</a></li>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections?f=json">Information about feature collections available from this server (JSON)</a></li>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections?f=html">Information about feature collections available from this server</a></li>
+
+  <li> <a href="https://mapserver.org">MapServer project website</a></li>
+
+  <li> <a href="https://ogcapi.ogc.org">OCG API website</a></li>
+
+</ul>
+
+    
+  
+<h2>Template Data</h2>
+<p>
+  API Root: http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi<br>    
+  Path: ["ogcapi.map","ogcapi"]<br>
+  Params: {}<br>
+  Title: OGC API Test<br>
+  Tags: {"debug":"true","sample":"sample tag"}<br>
+</p>
+  
+
+
+  </body>
+</html>
+
+

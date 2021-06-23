@@ -177,20 +177,15 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxx = map->extent.maxx;
     bbox->maxy = map->extent.maxy;
   } else {
-    int ntokens = 0;
-    char **tokens = NULL;
-    double values[4];
-
-    tokens = msStringSplit(p, ',', &ntokens);
-    if(tokens == NULL || ntokens != 4) {
-      msFreeCharArray(tokens, ntokens);
+    const auto tokens = msStringSplit(p, ',');
+    if(tokens.size() != 4) {
       return MS_FAILURE;
     }
 
+    double values[4];
     for(int i=0; i<4; i++) {
-      status = msStringToDouble(tokens[i], &values[i]);
+      status = msStringToDouble(tokens[i].c_str(), &values[i]);
       if(status != MS_SUCCESS) {
-        msFreeCharArray(tokens, ntokens);
         return MS_FAILURE;
       }
     }
@@ -201,8 +196,6 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxy = values[3];
 
     // TODO: validate bbox is well-formed and lat/lon
-
-    msFreeCharArray(tokens, ntokens); // done with tokens
 
     // at the moment we are assuming the bbox is given in lat/lon
     status = msProjectRect(&map->latlon, &map->projection, bbox);
@@ -364,14 +357,14 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
       geometry["coordinates"] = json::array();
 
       for(int k=0; k<shape->numlines; k++) {
-	if(outerList[k] == MS_TRUE) { // outer ring: generate polygon and add to coordinates
+        if(outerList[k] == MS_TRUE) { // outer ring: generate polygon and add to coordinates
           int *innerList = msGetInnerList(shape, k, outerList);
           if(innerList == NULL) {
             msFree(outerList);
             throw std::runtime_error("Unable to allocate list of inner rings.");
-	  }
+          }
 
-	  json polygon = json::array();
+          json polygon = json::array();
           for(int i=0; i<shape->numlines; i++) {
             if(i == k || outerList[i] == MS_TRUE) { // add outer ring (k) and any inner rings
               json part = json::array();
@@ -510,11 +503,11 @@ static json getCollection(mapObj *map, layerObj *layer, int format)
     { "description", description?description:"" },
     { "title", title?title:"" },
     { "extent", {
-	{ "spatial", {
-	    { "bbox", {{ bbox.minx, bbox.miny, bbox.maxx, bbox.maxy }}},
-	    { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
-	  }
-	}
+        { "spatial", {
+            { "bbox", {{ bbox.minx, bbox.miny, bbox.maxx, bbox.maxy }}},
+            { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
+          }
+        }
       }
     },
     { "links", {
@@ -530,8 +523,8 @@ static json getCollection(mapObj *map, layerObj *layer, int format)
           { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
         },{
           { "rel", "items" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "Items for this collection as JSON" },
+          { "type", OGCAPI_MIMETYPE_GEOJSON },
+          { "title", "Items for this collection as GeoJSON" },
           { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" }
         },{
           { "rel", "items" },
@@ -661,10 +654,10 @@ static void outputResponse(mapObj *map, cgiRequestObj *request, int format, cons
     if(tags) {
       std::vector<std::string> names = msStringSplit(tags, ',');
       for(std::string name : names) {
-	const char *value = msOWSLookupMetadata(&(map->web.metadata), "A", ("tag_" + name).c_str());
-	if(value) {
-          j["template"]["tags"].update({{ name, value }}); // add object
-	}
+        const char *value = msOWSLookupMetadata(&(map->web.metadata), "A", ("tag_" + name).c_str());
+        if(value) {
+              j["template"]["tags"].update({{ name, value }}); // add object
+        }
       }
     }
 
@@ -695,15 +688,15 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request, int format
     { "description", description?description:"" },
     { "links", {
         {
-	  { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
-	  { "type", OGCAPI_MIMETYPE_JSON },
-	  { "title", "This document as JSON" },
-	  { "href", api_root + "?f=json" }
+          { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "This document as JSON" },
+          { "href", api_root + "?f=json" }
         },{
-	  { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
-	  { "type", OGCAPI_MIMETYPE_HTML },
-	  { "title", "This document as HTML" },
-	  { "href", api_root + "?f=html" }
+          { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "This document as HTML" },
+          { "href", api_root + "?f=html" }
         },{
           { "rel", "data" },
           { "type", OGCAPI_MIMETYPE_JSON },
@@ -774,7 +767,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   int limit;
   rectObj bbox;
 
-  int numMatched = 0;
+  int numberMatched = 0;
 
   // find the right layer
   for(i=0; i<map->numlayers; i++) {
@@ -807,6 +800,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     return MS_SUCCESS;
   }
 
+  int offset = 0;
   if(featureId) {
     const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
     if(featureIdItem == NULL) {
@@ -822,7 +816,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid feature id.");
       return MS_SUCCESS;
     }
-    
+
     map->query.type = MS_QUERY_BY_FILTER;
     map->query.mode = MS_QUERY_SINGLE;
     map->query.layer = i;
@@ -855,35 +849,86 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       return MS_SUCCESS;
     }
 
-    if(!layer->resultcache || !(layer->resultcache->numresults > 0)) {
+    if(!layer->resultcache) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
 
-    numMatched = layer->resultcache->numresults;
+    numberMatched = layer->resultcache->numresults;
 
-    map->query.only_cache_result_count = MS_FALSE;
-    // map->query.startindex = start;
-    map->query.maxfeatures = limit;
+    if( numberMatched > 0 ) {
+        map->query.only_cache_result_count = MS_FALSE;
+        map->query.maxfeatures = limit;
 
-    if(msExecuteQuery(map) != MS_SUCCESS) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
-      return MS_SUCCESS;
+        const char* offsetStr = getRequestParameter(request, "offset");
+        if( offsetStr )
+        {
+            if( msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS )
+            {
+              outputError(OGCAPI_PARAM_ERROR, "Bad value fo offset");
+              return MS_SUCCESS;
+            }
+
+            // msExecuteQuery() use a 1-based offst convention, whereas the API
+            // uses a 0-based offset convention.
+            map->query.startindex = 1 + offset;
+        }
+
+        if(msExecuteQuery(map) != MS_SUCCESS) {
+          outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+          return MS_SUCCESS;
+        }
     }
   }
 
   // build response object
   if(!featureId) {
+
+    std::string api_root = getApiRootUrl(map);
+    const char *id = layer->name;
+    char *id_encoded = msEncodeUrl(id); // free after use
+
+    std::string extra_kvp = "&limit=" + std::to_string(limit);
+    extra_kvp += "&offset=" + std::to_string(offset);
+
     response = {
       { "type", "FeatureCollection" },
-      { "numMatched", numMatched },
-      { "numReturned", layer->resultcache->numresults },
-      { "features", json::array() }
+      { "numberMatched", numberMatched },
+      { "numberReturned", layer->resultcache->numresults },
+      { "features", json::array() },
+      { "links", {
+          {
+              { "rel", format==OGCAPI_FORMAT_JSON?"self":"alternate" },
+              { "type", OGCAPI_MIMETYPE_GEOJSON },
+              { "title", "Items for this collection as GeoJSON" },
+              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" + extra_kvp }
+          },{
+              { "rel", format==OGCAPI_FORMAT_HTML?"self":"alternate" },
+              { "type", OGCAPI_MIMETYPE_HTML },
+              { "title", "Items for this collection as HTML" },
+              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" + extra_kvp }
+          }
+      }}
     };
+
+    if( offset + layer->resultcache->numresults < numberMatched )
+    {
+        response["links"].push_back({
+            { "rel", "next" },
+            { "type", format==OGCAPI_FORMAT_JSON? OGCAPI_MIMETYPE_GEOJSON : OGCAPI_MIMETYPE_HTML },
+            { "title", "next page" },
+            { "href", api_root + "/collections/" + std::string(id_encoded) +
+                      "/items?f=" + (format==OGCAPI_FORMAT_JSON? "json" : "html") +
+                      "&limit=" + std::to_string(limit) +
+                      "&offset=" + std::to_string(offset + limit) }
+        });
+    }
+
+    msFree(id_encoded); // done
   }
 
-  // features (items) - if found
-  if(layer->resultcache && layer->resultcache->numresults > 0) {
+  // features (items)
+  {
     shapeObj shape;
     msInitShape(&shape);
 
@@ -910,37 +955,37 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
       reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
       if(reprojector == NULL) {
-	msGMLFreeItems(items);
-	msGMLFreeConstants(constants);
+        msGMLFreeItems(items);
+        msGMLFreeConstants(constants);
         outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
-	return MS_SUCCESS;
+        return MS_SUCCESS;
       }
     }
 
     for(i=0; i<layer->resultcache->numresults; i++) {
       int status = msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
       if(status != MS_SUCCESS) {
-	msGMLFreeItems(items);
+        msGMLFreeItems(items);
         msGMLFreeConstants(constants);
         msProjectDestroyReprojector(reprojector);
-	outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
+        outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
         return MS_SUCCESS;
       }
 
       if(reprojector) {
-	status = msProjectShapeEx(reprojector, &shape);
-	if(status != MS_SUCCESS) {
+        status = msProjectShapeEx(reprojector, &shape);
+        if(status != MS_SUCCESS) {
           msGMLFreeItems(items);
-	  msGMLFreeConstants(constants);
-	  msProjectDestroyReprojector(reprojector);
+          msGMLFreeConstants(constants);
+          msProjectDestroyReprojector(reprojector);
           msFreeShape(&shape);
-	  outputError(OGCAPI_SERVER_ERROR, "Error reprojecting feature.");
-	  return MS_SUCCESS;
-	}
+          outputError(OGCAPI_SERVER_ERROR, "Error reprojecting feature.");
+          return MS_SUCCESS;
+        }
       }
 
       try {
-	json feature = getFeature(layer, &shape, items, constants, geometry_precision);
+        json feature = getFeature(layer, &shape, items, constants, geometry_precision);
         if(featureId) {
           response = feature;
         } else {
@@ -951,8 +996,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         msGMLFreeConstants(constants);
         msProjectDestroyReprojector(reprojector);
         msFreeShape(&shape);
-	outputError(OGCAPI_SERVER_ERROR, "Error getting feature. " + std::string(e.what()));
-	return MS_SUCCESS;
+        outputError(OGCAPI_SERVER_ERROR, "Error getting feature. " + std::string(e.what()));
+        return MS_SUCCESS;
       }
 
       msFreeShape(&shape); // next
@@ -1067,7 +1112,20 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
 
   int format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
-  if(p && (strcmp(p, "json") == 0 || strcmp(p, OGCAPI_MIMETYPE_JSON) == 0)) {
+
+  // if f= query parameter is not specified, use HTTP Accept header if available
+  if( p == nullptr )
+  {
+      const char* accept = getenv("HTTP_ACCEPT");
+      if( accept )
+      {
+          p = accept;
+      }
+  }
+
+  if(p && (strcmp(p, "json") == 0 ||
+           strstr(p, OGCAPI_MIMETYPE_JSON) != nullptr ||
+           strstr(p, OGCAPI_MIMETYPE_GEOJSON) != nullptr)) {
     format = OGCAPI_FORMAT_JSON;
   } else if(p && (strcmp(p, "html") == 0 || strcmp(p, OGCAPI_MIMETYPE_HTML) == 0)) {
     format = OGCAPI_FORMAT_HTML;
@@ -1075,7 +1133,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
     outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
     return MS_SUCCESS; // avoid any downstream MapServer processing
   } else {
-    format = OGCAPI_FORMAT_HTML; // default for now, need to derive from http headers (possible w/CGI?)
+    format = OGCAPI_FORMAT_HTML; // default for now
   }
 
   if(request->api_path_length == 2) {
