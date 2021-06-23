@@ -1357,7 +1357,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   int i, status;
   char annotate=MS_TRUE, cache=MS_FALSE;
-  int drawmode = MS_DRAWMODE_FEATURES|MS_DRAWMODE_QUERY;
+  int drawmode = MS_DRAWMODE_FEATURES;
   shapeObj shape;
   int maxnumstyles=1;
 
@@ -1406,6 +1406,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
+
+    drawmode |= MS_DRAWMODE_QUERY;
+
     if (layer->numclasses > 0) {
       colorbuffer = (colorObj*)msSmallMalloc(layer->numclasses*sizeof(colorObj));
       mindistancebuffer = (int*)msSmallMalloc(layer->numclasses*sizeof(int));
