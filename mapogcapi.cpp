@@ -879,6 +879,25 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       return MS_SUCCESS;
     }
   } else { // bbox query
+
+    for(int j=0; j<request->NumParams; j++) {
+      const char* paramName = request->ParamNames[j];
+      if (strcmp(paramName, "f") == 0 ||
+          strcmp(paramName, "bbox") == 0 ||
+          strcmp(paramName, "datetime") == 0 ||
+          strcmp(paramName, "limit") == 0 ||
+          strcmp(paramName, "offset") == 0)
+      {
+          // ok
+      }
+      else
+      {
+          outputError(OGCAPI_PARAM_ERROR,
+              (std::string("Unknown query parameter: ") + paramName).c_str());
+          return MS_SUCCESS;
+      }
+    }
+
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = i;
@@ -925,7 +944,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   // build response object
   if(!featureId) {
-
     std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
@@ -1060,10 +1078,42 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     };
   }
 
-  // links
-
   if(featureId)
+  {
+    std::string api_root = getApiRootUrl(map);
+    const char *id = layer->name;
+    char *id_encoded = msEncodeUrl(id); // free after use
+
+    response["links"] = {
+      {
+          { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_GEOJSON },
+          { "title", "This document as GeoJSON" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) +
+              "/items/" + featureId + "?f=json" }
+      },{
+          { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "This document as HTML" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) +
+              "/items/" + featureId + "?f=html" }
+      },{
+          { "rel", "collection" },
+          { "type", OGCAPI_MIMETYPE_JSON },
+          { "title", "This collection as JSON" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=json" }
+      },{
+          { "rel", "collection" },
+          { "type", OGCAPI_MIMETYPE_HTML },
+          { "title", "This collection as HTML" },
+          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
+      }
+    };
+
+    msFree(id_encoded);
+
     outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM, response);
+  }
   else
     outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS, response);
   return MS_SUCCESS;
