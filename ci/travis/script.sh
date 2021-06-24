@@ -1,13 +1,13 @@
 #!/bin/sh
 set -eu
 
-if [ "$BUILD_NAME" = "PHP_7.3_WITH_ASAN" ]; then
-    export CC="ccache clang"
-    export CXX="ccache clang++"
-else
+#if [ "$BUILD_NAME" = "PHP_7.3_WITH_ASAN" ]; then
+#    export CC="ccache clang"
+#    export CXX="ccache clang++"
+#else
     export CC="ccache gcc"
     export CXX="ccache g++"
-fi
+#fi
 
 curl http://download.osgeo.org/proj/proj-6.1.1.tar.gz > proj-6.1.1.tar.gz
 tar xzf proj-6.1.1.tar.gz
