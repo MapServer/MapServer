@@ -1436,7 +1436,10 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
       const char* accept = getenv("HTTP_ACCEPT");
       if( accept )
       {
-          p = accept;
+          if( strcmp(accept, "*/*") == 0 )
+              p = OGCAPI_MIMETYPE_JSON;
+          else
+              p = accept;
       }
   }
 
