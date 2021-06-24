@@ -30,12 +30,8 @@ cd msautotest
 python -m pyflakes .
 ./create_postgis_test_data.sh
 
-if [ $PYTHON_VERSION = "2.7" ]; then
-    python -m SimpleHTTPServer &> /dev/null &
-else
-    # py3
-    python -m http.server &> /dev/null &
-fi
+# py3
+python -m http.server &> /dev/null &
 
 cd ..
 touch maplexer.l
