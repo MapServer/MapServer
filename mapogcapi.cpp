@@ -1127,10 +1127,13 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
            strstr(p, OGCAPI_MIMETYPE_JSON) != nullptr ||
            strstr(p, OGCAPI_MIMETYPE_GEOJSON) != nullptr)) {
     format = OGCAPI_FORMAT_JSON;
-  } else if(p && (strcmp(p, "html") == 0 || strcmp(p, OGCAPI_MIMETYPE_HTML) == 0)) {
+  } else if(p && (strcmp(p, "html") == 0 ||
+                  strstr(p, OGCAPI_MIMETYPE_HTML) != nullptr)) {
     format = OGCAPI_FORMAT_HTML;
   } else if(p) {
-    outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    std::string errorMsg("Unsupported format requested: ");
+    errorMsg += p;
+    outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
     return MS_SUCCESS; // avoid any downstream MapServer processing
   } else {
     format = OGCAPI_FORMAT_HTML; // default for now
