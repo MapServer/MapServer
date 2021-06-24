@@ -9,6 +9,7 @@
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_bbox_empty_result.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=2,49,3,50" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/35" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id_not_found.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/12345678" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_api.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/api" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
@@ -22,10 +23,16 @@ MAP
       "oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
       "oga_title"          "OGC API Test" ## REQUIRED (or just recommended?)
       "oga_description"	   "This is a test OGC API server description set via oga_description."
+      "oga_contactperson"  "Contact person"
+      "oga_contacturl"     "http://example.com/contact"
+      "oga_contactelectronicmailaddress" "email@example.com"
+      "oga_termsofservice" "Terms of Service"
+      "oga_keywords"       "keyword1,keyword2"
       "oga_html_tags"      "debug,sample"
       "oga_tag_debug"	   "true"
       "oga_tag_sample"	   "sample tag"
       "oga_onlineresource" "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
+      "oga_server_description" "Server description"
       "oga_links"	   "link1,link2"
       "oga_link1_href"     "https://mapserver.org"
       "oga_link1_title"	   "MapServer project website"
