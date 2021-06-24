@@ -726,7 +726,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request, OGCAPIForm
           { "title", "This document as HTML" },
           { "href", api_root + "?f=html" }
         },{
-          { "rel", "data" },
+          { "rel", "conformance" },
           { "type", OGCAPI_MIMETYPE_JSON },
           { "title", "OCG API conformance classes implemented by this server (JSON)" },
           { "href", api_root + "/conformance?f=json" }
@@ -741,7 +741,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request, OGCAPIForm
           { "title", "Information about feature collections available from this server (JSON)" },
           { "href", api_root + "/collections?f=json" }
         },{
-          { "rel", "collections" },
+          { "rel", "data" },
           { "type", OGCAPI_MIMETYPE_HTML },
           { "title", "Information about feature collections available from this server" },
           { "href", api_root + "/collections?f=html" }
