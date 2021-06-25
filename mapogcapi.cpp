@@ -65,7 +65,6 @@ enum class OGCAPIFormat
 #define OGCAPI_MIMETYPE_OPENAPI_V3 "application/vnd.oai.openapi+json;version=3.0"
 #define OGCAPI_MIMETYPE_HTML "text/html"
 
-// TODO: it would make sense to offer an option to override this default limit. 10 is really small for JSON output
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
 #define OGCAPI_MAX_LIMIT 10000
 
@@ -140,6 +139,22 @@ static int getMaxLimit(mapObj *map, layerObj *layer)
   return max_limit;
 }
 
+static int getDefaultLimit(mapObj *map, layerObj *layer)
+{
+  int default_limit = OGCAPI_DEFAULT_LIMIT;
+
+  // check metadata, layer then map
+  const char* value = msOWSLookupMetadata(&(layer->metadata), "A", "default_limit");
+  if(value == NULL) value = msOWSLookupMetadata(&(map->web.metadata), "A", "default_limit");
+
+  if(value != NULL) {
+    int status = msStringToInt(value, &default_limit, 10);
+    if(status != MS_SUCCESS) default_limit = OGCAPI_DEFAULT_LIMIT; // conversion failed
+  }
+
+  return default_limit;
+}
+
 /*
 ** Returns the limit as an int - between 1 and getMaxLimit(). We always return a valid value...
 */
@@ -153,14 +168,14 @@ static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *l
 
   p = getRequestParameter(request, "limit");
   if(!p || (p && strlen(p) == 0)) { // missing or empty
-    *limit = MS_MIN(OGCAPI_DEFAULT_LIMIT, max_limit); // max could be smaller than the default
+    *limit = MS_MIN(getDefaultLimit(map, layer), max_limit); // max could be smaller than the default
   } else {
     status = msStringToInt(p, limit, 10);
     if(status != MS_SUCCESS)
       return MS_FAILURE;
 
     if(*limit <= 0) {
-      *limit = MS_MIN(OGCAPI_DEFAULT_LIMIT, max_limit); // max could be smaller than the default
+      *limit = MS_MIN(getDefaultLimit(map, layer), max_limit); // max could be smaller than the default
     } else {
       *limit = MS_MIN(*limit, max_limit);
     }
@@ -1347,7 +1362,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
       if(max_limit_str == nullptr)
           max_limit_str = msOWSLookupMetadata(&(map->web.metadata), "A", "max_limit");
       const int max_limit = max_limit_str ? atoi(max_limit_str) : OGCAPI_MAX_LIMIT;
-      const int default_limit = OGCAPI_DEFAULT_LIMIT;
+      const int default_limit = getDefaultLimit(map, layer);
 
       json items_get = {
           { "summary", std::string("Get ") + getCollectionTitle(layer) + " items" },

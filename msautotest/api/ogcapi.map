@@ -42,6 +42,7 @@ MAP
       "oga_link2_title"    "OCG API website"
       "oga_enable_request" "OGCAPI" ## REQUIRED
       "oga_max_limit"      "15"
+      "oga_default_limit"  "9"
       "oga_geometry_precision" "4"
     END
   END
