@@ -281,9 +281,6 @@ template<class PathStorage>
                               const mapserver::trans_affine& mtx,
                               PathStorage& path)
     {
-        FT_Vector   v_last;
-        FT_Vector   v_control;
-        FT_Vector   v_start;
         double x1, y1, x2, y2, x3, y3;
 
         FT_Vector*  point;
@@ -303,10 +300,9 @@ template<class PathStorage>
             last  = outline.contours[n];
             limit = outline.points + last;
 
-            v_start = outline.points[first];
-            v_last  = outline.points[last];
+            FT_Vector v_start = outline.points[first];
 
-            v_control = v_start;
+            FT_Vector v_control = v_start;
 
             point = outline.points + first;
             tags  = outline.tags  + first;
@@ -318,6 +314,8 @@ template<class PathStorage>
             // check first point to determine origin
             if( tag == FT_CURVE_TAG_CONIC)
             {
+                const FT_Vector v_last  = outline.points[last];
+
                 // first point is conic control.  Yes, this happens.
                 if(FT_CURVE_TAG(outline.tags[last]) == FT_CURVE_TAG_ON)
                 {
@@ -332,8 +330,6 @@ template<class PathStorage>
                     // for closure
                     v_start.x = (v_start.x + v_last.x) / 2;
                     v_start.y = (v_start.y + v_last.y) / 2;
-
-                    v_last = v_start;
                 }
                 point--;
                 tags--;

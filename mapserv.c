@@ -43,6 +43,8 @@
 #include "mapio.h"
 #include "maptime.h"
 
+#include "cpl_conv.h"
+
 #ifndef WIN32
 #include <signal.h>
 #endif
@@ -162,6 +164,16 @@ int main(int argc, char *argv[])
   if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&execstarttime, NULL);
 
+  /* push high-value ENV vars into the CPL global config - primarily for IIS/FastCGI */
+  const char* const apszEnvVars[] = { 
+    "CURL_CA_BUNDLE", "MS_MAPFILE", "MS_MAP_NO_PATH", "MS_MAP_PATTERN", "MS_MAP_ENV_PATTERN",
+    "MS_MAP_BAD_PATTERN", "MS_MAP_ENV_BAD_PATTERN",
+     NULL /* guard */ };
+  for( int i = 0; apszEnvVars[i] != NULL; ++i ) {
+    const char* value = getenv(apszEnvVars[i]);
+    if(value) CPLSetConfigOption(apszEnvVars[i], value);
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Process arguments.  In normal use as a cgi-bin there are no     */
   /*      commandline switches, but we provide a few for test/debug       */
@@ -183,6 +195,7 @@ int main(int argc, char *argv[])
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
+      /* coverity[tainted_string] */
       putenv( argv[iArg] );
     } else if (strcmp(argv[iArg], "--h") == 0 || strcmp(argv[iArg], "--help") == 0) {
       printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
@@ -293,7 +306,6 @@ end_request:
               (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
-    msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */

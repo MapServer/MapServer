@@ -26,6 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 /* For now this code is enabled only when WMS/WFS client is enabled.
  * This should be changed to a test on the presence of libcurl which
  * is really what the real dependency is.
@@ -39,7 +41,7 @@
 #include "mapthread.h"
 #include "mapows.h"
 
-
+#include "cpl_conv.h"
 
 #include <time.h>
 #ifndef _WIN32
@@ -54,6 +56,9 @@
  * See http://curl.haxx.se/libcurl/c/ for the lib source code and docs.
  */
 #include <curl/curl.h>
+
+
+#define unchecked_curl_easy_setopt(handle,opt,param) IGNORE_RET_VAL(curl_easy_setopt(handle,opt,param))
 
 /**********************************************************************
  *                          msHTTPInit()
@@ -471,7 +476,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
    * If set then the value is the full path to the ca-bundle.crt file
    * e.g. CURL_CA_BUNDLE=/usr/local/share/curl/curl-ca-bundle.crt
    */
-  pszCurlCABundle = getenv("CURL_CA_BUNDLE");
+  pszCurlCABundle = CPLGetConfigOption("CURL_CA_BUNDLE", NULL);
 
   if (debug) {
     msDebug("HTTP: Starting to prepare HTTP requests.\n");
@@ -536,9 +541,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     pasReqInfo[i].curl_handle = http_handle;
 
     /* set URL, note that curl keeps only a ref to our string buffer */
-    curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
 
-    curl_easy_setopt(http_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP|CURLPROTO_HTTPS );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP|CURLPROTO_HTTPS );
 
     /* Set User-Agent (auto-generate if not set by caller */
     if (pasReqInfo[i].pszUserAgent == NULL) {
@@ -558,32 +563,32 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       }
     }
     if (pasReqInfo[i].pszUserAgent) {
-      curl_easy_setopt(http_handle,
+      unchecked_curl_easy_setopt(http_handle,
                        CURLOPT_USERAGENT, pasReqInfo[i].pszUserAgent );
     }
 
     /* Enable following redirections.  Requires libcurl 7.10.1 at least */
-    curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
-    curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
 
     /* Set timeout.*/
-    curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, nTimeout );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, nTimeout );
 
     /* Pass CURL_CA_BUNDLE if set */
     if (pszCurlCABundle)
-      curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCurlCABundle );
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCurlCABundle );
 
     /* Set proxying settings */
     if (pasReqInfo[i].pszProxyAddress != NULL
         && strlen(pasReqInfo[i].pszProxyAddress) > 0) {
       long    nProxyType     = CURLPROXY_HTTP;
 
-      curl_easy_setopt(http_handle, CURLOPT_PROXY,
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXY,
                        pasReqInfo[i].pszProxyAddress);
 
       if (pasReqInfo[i].nProxyPort > 0
           && pasReqInfo[i].nProxyPort < 65535) {
-        curl_easy_setopt(http_handle, CURLOPT_PROXYPORT,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYPORT,
                          pasReqInfo[i].nProxyPort);
       }
 
@@ -595,7 +600,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
           nProxyType = CURLPROXY_SOCKS5;
           break;
       }
-      curl_easy_setopt(http_handle, CURLOPT_PROXYTYPE, nProxyType);
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYTYPE, nProxyType);
 
       /* If there is proxy authentication information, set it */
       if (pasReqInfo[i].pszProxyUsername != NULL
@@ -607,7 +612,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         long    nProxyAuthType = CURLAUTH_BASIC;
         /* CURLOPT_PROXYAUTH available only in Curl 7.10.7 and up */
         nProxyAuthType = msGetCURLAuthType(pasReqInfo[i].eProxyAuthType);
-        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, nProxyAuthType);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, nProxyAuthType);
 #else
         /* We log an error but don't abort processing */
         msSetError(MS_HTTPERR, "CURLOPT_PROXYAUTH not supported. Requires Curl 7.10.7 and up. *_proxy_auth_type setting ignored.",
@@ -617,7 +622,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         snprintf(szUsernamePasswd, 127, "%s:%s",
                  pasReqInfo[i].pszProxyUsername,
                  pasReqInfo[i].pszProxyPassword);
-        curl_easy_setopt(http_handle, CURLOPT_PROXYUSERPWD,
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYUSERPWD,
                          szUsernamePasswd);
       }
     }
@@ -633,11 +638,11 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       snprintf(szUsernamePasswd, 127, "%s:%s",
                pasReqInfo[i].pszHttpUsername,
                pasReqInfo[i].pszHttpPassword);
-      curl_easy_setopt(http_handle, CURLOPT_USERPWD,
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_USERPWD,
                        szUsernamePasswd);
 
       nHttpAuthType = msGetCURLAuthType(pasReqInfo[i].eHttpAuthType);
-      curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, nHttpAuthType);
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, nHttpAuthType);
     }
 
     /* NOSIGNAL should be set to true for timeout to work in multithread
@@ -645,7 +650,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
      * (this force avoiding the use of sgnal handlers)
      */
 #ifdef CURLOPT_NOSIGNAL
-    curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
 #endif
 
     /* If we are writing file to disk, open the file now. */
@@ -659,8 +664,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       pasReqInfo[i].fp = fp;
     }
 
-    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &(pasReqInfo[i]));
-    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, msHTTPWriteFct);
+    /* coverity[bad_sizeof] */
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &(pasReqInfo[i]));
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, msHTTPWriteFct);
 
     /* Provide a buffer where libcurl can write human readable error msgs
      */
@@ -669,7 +675,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                                 sizeof(char));
     pasReqInfo[i].pszErrBuf[0] = '\0';
 
-    curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER,
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER,
                      pasReqInfo[i].pszErrBuf);
 
     if(pasReqInfo[i].pszPostRequest != NULL ) {
@@ -680,14 +686,14 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                "Content-Type: %s", pasReqInfo[i].pszPostContentType);
       headers = curl_slist_append(headers, szBuf);
 
-      curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
-      curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS,
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS,
                        pasReqInfo[i].pszPostRequest);
       if( debug )
       {
           msDebug("HTTP: POST = %s", pasReqInfo[i].pszPostRequest);
       }
-      curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
       /* curl_slist_free_all(headers); */ /* free the header list */
     }
 
@@ -704,7 +710,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       }
 
       /* Set the Curl option to send Cookie */
-      curl_easy_setopt(http_handle, CURLOPT_COOKIE,
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_COOKIE,
                        pasReqInfo[i].pszHTTPCookieData);
     }
 
@@ -909,7 +915,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     }
 
     /* Cleanup this handle */
-    curl_easy_setopt(http_handle, CURLOPT_URL, "" );
+    unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, "" );
     curl_multi_remove_handle(multi_handle, http_handle);
     curl_easy_cleanup(http_handle);
     psReq->curl_handle = NULL;

@@ -16,7 +16,7 @@ import mapscript
 def main(map_file):
 
     map = mapscript.mapObj(map_file)
-    map.setMetaData("ows_onlineresource", "http://dummy.org/")
+    map.web.metadata.set("ows_onlineresource", "http://dummy.org/")
     ows_req = mapscript.OWSRequest()
 
     ows_req.type = mapscript.MS_GET_REQUEST

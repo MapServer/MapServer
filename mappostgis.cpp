@@ -87,6 +87,43 @@
 #define RESULTSET_TYPE 0
 #endif
 
+/* These are the OIDs for some builtin types, as returned by PQftype(). */
+/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
+
+#ifndef BOOLOID
+#define BOOLOID                 16
+#define BYTEAOID                17
+#define CHAROID                 18
+#define NAMEOID                 19
+#define INT8OID                 20
+#define INT2OID                 21
+#define INT2VECTOROID           22
+#define INT4OID                 23
+#define REGPROCOID              24
+#define TEXTOID                 25
+#define OIDOID                  26
+#define TIDOID                  27
+#define XIDOID                  28
+#define CIDOID                  29
+#define OIDVECTOROID            30
+#define FLOAT4OID               700
+#define FLOAT8OID               701
+#define INT4ARRAYOID            1007
+#define TEXTARRAYOID            1009
+#define BPCHARARRAYOID          1014
+#define VARCHARARRAYOID         1015
+#define FLOAT4ARRAYOID          1021
+#define FLOAT8ARRAYOID          1022
+#define BPCHAROID   1042
+#define VARCHAROID    1043
+#define DATEOID     1082
+#define TIMEOID     1083
+#define TIMETZOID     1266
+#define TIMESTAMPOID          1114
+#define TIMESTAMPTZOID          1184
+#define NUMERICOID              1700
+#endif
+
 #ifdef USE_POSTGIS
 
 static int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);
@@ -315,6 +352,8 @@ wkbReadLine(wkbObj *w, lineObj *line, int nZMFlag)
 {
   pointObj p;
   const int npoints = wkbReadInt(w);
+  if( npoints > (int)((w->size - (w->ptr - w->wkb)) / 16) )
+    return;
 
   line->numpoints = npoints;
   line->point =(pointObj*) msSmallMalloc(npoints * sizeof(pointObj));
@@ -347,6 +386,8 @@ wkbSkipGeometry(wkbObj *w)
     }
     case WKB_POLYGON: {
       const int nrings = wkbReadInt(w);
+      if( nrings > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+        return;
       for ( int i = 0; i < nrings; i++ ) {
         const int npoints = wkbReadInt(w);
         w->ptr += npoints * nCoordDim * sizeof(double);
@@ -362,6 +403,8 @@ wkbSkipGeometry(wkbObj *w)
     case WKB_MULTICURVE:
     case WKB_MULTISURFACE: {
       const int ngeoms = wkbReadInt(w);
+      if( ngeoms > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+        return;
       for ( int i = 0; i < ngeoms; i++ ) {
         wkbSkipGeometry(w);
       }
@@ -424,6 +467,8 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
 
   /* How many rings? */
   const int nrings = wkbReadInt(w);
+  if( nrings > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /* Add each ring to the shape */
   lineObj line;
@@ -448,9 +493,11 @@ wkbConvCurvePolygonToShape(wkbObj *w, shapeObj *shape)
   /*endian = */wkbReadChar(w);
   int nZMFlag;
   const int type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
-  const int ncomponents = wkbReadInt(w);
-
   if( type != WKB_CURVEPOLYGON ) return MS_FAILURE;
+
+  const int ncomponents = wkbReadInt(w);
+  if( ncomponents > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /* Lower the allowed dimensionality so we can
   *  catch the linear ring components */
@@ -524,6 +571,8 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
 
   /* How many components in the compound curve? */
   const int ncomponents = wkbReadInt(w);
+  if( ncomponents > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /* We'll load each component onto a line in a shape */
   for( int i = 0; i < ncomponents; i++ )
@@ -583,6 +632,8 @@ wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
   int nZMFlag;
   /*type = */wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
   const int ncomponents = wkbReadInt(w);
+  if( ncomponents > (int)((w->size - (w->ptr - w->wkb)) / 4) )
+    return MS_FAILURE;
 
   /*
   * If we can draw any portion of the collection, we will,
@@ -1768,10 +1819,25 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
       return std::string();
     }
 
-    strRect = '"';
-    strRect += layerinfo->geomcolumn;
-    strRect += "\" && ";
-    strRect += strBox;
+    if( strSRID.find("find_srid(") == std::string::npos )
+    {
+        // If the SRID is known, we can safely use ST_Intersects()
+        // otherwise if find_srid() would return 0, ST_Intersects() would not
+        // work at all, which breaks the msautotest/query/query_postgis.map
+        // tests, releated to bdry_counpy2 layer that has no SRID
+        strRect = "ST_Intersects(\"";
+        strRect += layerinfo->geomcolumn;
+        strRect += "\", ";
+        strRect += strBox;
+        strRect += ')';
+    }
+    else
+    {
+        strRect = '"';
+        strRect += layerinfo->geomcolumn;
+        strRect += "\" && ";
+        strRect += strBox;
+    }
     free(strBox);
 
     /* Combine with other rectangle  expressed in another SRS */
@@ -1784,7 +1850,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
         return std::string();
       }
 
-      std::string strRectOtherSRID = "NOT ST_Disjoint(ST_Transform(";
+      std::string strRectOtherSRID = "ST_Intersects(ST_Transform(";
       strRectOtherSRID += layerinfo->geomcolumn;
       strRectOtherSRID += ',';
       strRectOtherSRID += std::to_string(otherSRID);
@@ -1815,7 +1881,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
         return std::string();
       }
 
-      std::string strRectOtherSRID = "NOT ST_Disjoint(";
+      std::string strRectOtherSRID = "ST_Intersects(";
       strRectOtherSRID += layerinfo->geomcolumn;
       strRectOtherSRID += ',';
       strRectOtherSRID += strBox;
@@ -1982,19 +2048,21 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape)
 #if TRANSFER_ENCODING == 64
   result = msPostGISBase64Decode(wkb, wkbstr, wkbstrlen - 1);
   w.size = (wkbstrlen - 1)/2;
+  if( ! result ) {
+    if(wkb!=wkbstatic) free(wkb);
+    return MS_FAILURE;
+  }
 #elif TRANSFER_ENCODING == 256
-  result = 1;
   memcpy(wkb, wkbstr, wkbstrlen);
   w.size = wkbstrlen;
 #else
   result = msPostGISHexDecode(wkb, wkbstr, wkbstrlen);
   w.size = (wkbstrlen - 1)/2;
-#endif
-
   if( ! result ) {
     if(wkb!=wkbstatic) free(wkb);
     return MS_FAILURE;
   }
+#endif
 
   /* Initialize our wkbObj */
   w.wkb = (char*)wkb;
@@ -2074,7 +2142,12 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape)
         shape->values[t] = (char*) msSmallMalloc(size + 1);
         memcpy(shape->values[t], val, size);
         shape->values[t][size] = '\0'; /* null terminate it */
-        msStringTrimBlanks(shape->values[t]);
+
+        // From https://www.postgresql.org/docs/9.0/datatype-character.html
+        // fields of type Char are blank padded, but this blank is semantically
+        // insignificant, so let's trim it
+        if( PQftype(layerinfo->pgresult, t) == CHAROID )
+            msStringTrimBlanks(shape->values[t]);
       }
       if( layer->debug > 4 ) {
         msDebug("msPostGISReadShape: PQgetlength = %d\n", size);
@@ -2784,43 +2857,6 @@ static int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *r
  * "gml_[item]_{type,width,precision}" set of metadata items for
  * defining fields.
  **********************************************************************/
-
-/* These are the OIDs for some builtin types, as returned by PQftype(). */
-/* They were copied from pg_type.h in src/include/catalog/pg_type.h */
-
-#ifndef BOOLOID
-#define BOOLOID                 16
-#define BYTEAOID                17
-#define CHAROID                 18
-#define NAMEOID                 19
-#define INT8OID                 20
-#define INT2OID                 21
-#define INT2VECTOROID           22
-#define INT4OID                 23
-#define REGPROCOID              24
-#define TEXTOID                 25
-#define OIDOID                  26
-#define TIDOID                  27
-#define XIDOID                  28
-#define CIDOID                  29
-#define OIDVECTOROID            30
-#define FLOAT4OID               700
-#define FLOAT8OID               701
-#define INT4ARRAYOID            1007
-#define TEXTARRAYOID            1009
-#define BPCHARARRAYOID          1014
-#define VARCHARARRAYOID         1015
-#define FLOAT4ARRAYOID          1021
-#define FLOAT8ARRAYOID          1022
-#define BPCHAROID   1042
-#define VARCHAROID    1043
-#define DATEOID     1082
-#define TIMEOID     1083
-#define TIMETZOID     1266
-#define TIMESTAMPOID          1114
-#define TIMESTAMPTZOID          1184
-#define NUMERICOID              1700
-#endif
 
 #ifdef USE_POSTGIS
 static void

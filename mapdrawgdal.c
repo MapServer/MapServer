@@ -630,8 +630,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             for(s=0; s<layer->class[c]->numstyles; s++) {
               if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
                  && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor)) {
-                if( layer->class[c]->numstyles == 1 || (sEntry.c1 >= layer->class[c]->styles[s]->minvalue
-                                               && sEntry.c1 <= layer->class[c]->styles[s]->maxvalue )) {
+                if( sEntry.c1 >= layer->class[c]->styles[s]->minvalue
+                     && sEntry.c1 <= layer->class[c]->styles[s]->maxvalue ) {
                   msValueToRange(layer->class[c]->styles[s], sEntry.c1, iRangeColorspace);
                   if(MS_VALID_COLOR(layer->class[c]->styles[s]->color)) {
                     rb_cmap[0][j] = layer->class[c]->styles[s]->color.red;
@@ -2183,21 +2183,33 @@ msDrawRasterLayerGDAL_16BitClassification(
     lastC = c;
     if( c != -1 ) {
       int s;
+      int styleindex = 0;
 
       /* change colour based on colour range? */
-      for(s=0; s<layer->class[c]->numstyles; s++) {
-        if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
-            && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor) )
-          msValueToRange(layer->class[c]->styles[s],dfOriginalValue, MS_COLORSPACE_RGB);
+      if( MS_VALID_COLOR(layer->class[c]->styles[0]->mincolor) )
+      {
+        styleindex = -1;
+        for(s=0; s<layer->class[c]->numstyles; s++) {
+          if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
+              && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor)
+              && dfOriginalValue + 0.5 / dfScaleRatio >= layer->class[c]->styles[s]->minvalue
+              && dfOriginalValue - 0.5 / dfScaleRatio <= layer->class[c]->styles[s]->maxvalue ) {
+            msValueToRange(layer->class[c]->styles[s],dfOriginalValue, MS_COLORSPACE_RGB);
+            styleindex = s;
+            break;
+          }
+        }
       }
-      if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) ) {
-        /* leave it transparent */
-      } else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-        /* use class color */
-        rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
-        rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
-        rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
-        rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
+      if( styleindex >= 0 ) {
+        if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[styleindex]->color) ) {
+          /* leave it transparent */
+        } else if( MS_VALID_COLOR(layer->class[c]->styles[styleindex]->color)) {
+          /* use class color */
+          rb_cmap[0][i] = layer->class[c]->styles[styleindex]->color.red;
+          rb_cmap[1][i] = layer->class[c]->styles[styleindex]->color.green;
+          rb_cmap[2][i] = layer->class[c]->styles[styleindex]->color.blue;
+          rb_cmap[3][i] = (255*layer->class[c]->styles[styleindex]->opacity / 100);
+        }
       }
     }
   }

@@ -487,7 +487,7 @@ std::string FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, 
 
     /* filter geometry */
     char* pszWktText = msGEOSShapeToWKT(psTmpShape);
-    expr += pszWktText;
+    expr += pszWktText ? pszWktText : "Cannot translate shape to WKT";
     expr += "')";
     msGEOSFreeWKT(pszWktText);
 

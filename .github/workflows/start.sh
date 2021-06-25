@@ -85,14 +85,44 @@ cat msautotest/wxs/wfs_simple.map | sed "s/\.\/data\/epsg2/\/tmp\/data\/epsg2/" 
 cp -r $WORK_DIR/msautotest/wxs/data /tmp
 cp -r $WORK_DIR/msautotest/wxs/etc /tmp
 
-# CGI
+echo "Running CGI query"
 curl -s "http://localhost/cgi-bin/mapserv.cgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
 cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
 
-# Fast CGI
+echo "Running FastCGI query"
 curl -s "http://localhost/cgi-bin/mapserv.fcgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
 cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
 
-# Again
+echo "Running FastCGI query again"
 curl -s "http://localhost/cgi-bin/mapserv.fcgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
 cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
+
+cd msautotest/wxs
+
+export PATH=/tmp/install-mapserver/bin:$PATH
+
+echo "Check that MS_MAP_NO_PATH works"
+MS_MAP_NO_PATH=1 MYMAPFILE=wfs_simple.map mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+echo "Check that MS_MAP_NO_PATH cannot be abused with client-controlled env variables"
+MS_MAP_NO_PATH=1 CONTENT_TYPE=wfs_simple.map mapserv QUERY_STRING="MAP=CONTENT_TYPE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+echo "Check that MS_MAP_PATTERN works (accepting valid MAP)"
+MS_MAP_PATTERN="^wfs_simple\.map$" mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+echo "Check that MS_MAP_PATTERN works (rejecting invalid MAP)"
+MS_MAP_PATTERN=mypatternmapserv mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+echo "Check that MS_MAPFILE works alone"
+MS_MAPFILE=wfs_simple.map mapserv QUERY_STRING="SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+echo "Check that a MAP query parameter isn't accepted when MS_MAPFILE and MS_MAP_NO_PATH are specified"
+MS_MAP_NO_PATH=1 MS_MAPFILE=wfs_simple.map mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+echo "Done !"

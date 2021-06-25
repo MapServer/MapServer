@@ -994,6 +994,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   int bbox_width = 0, bbox_height = 0;
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
+  int ret = MS_FAILURE;
 
   if (lp->connectiontype != MS_WMS)
     return MS_FAILURE;
@@ -1005,34 +1006,38 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * compute BBOX in that projection.
    * ------------------------------------------------------------------ */
 
-
-  if (nRequestType == WMS_GETMAP &&
-      ( msBuildWMSLayerURL(map, lp, WMS_GETMAP,
+  switch( nRequestType )
+  {
+      case WMS_GETMAP:
+          ret = msBuildWMSLayerURL(map, lp, WMS_GETMAP,
                            0, 0, 0, NULL, &bbox, &bbox_width, &bbox_height,
-                           &sThisWMSParams) != MS_SUCCESS) ) {
-    /* an error was already reported. */
-    msFreeWmsParamsObj(&sThisWMSParams);
-    return MS_FAILURE;
-  }
+                           &sThisWMSParams);
+          break;
 
-  else if (nRequestType == WMS_GETFEATUREINFO &&
-           msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
+      case WMS_GETFEATUREINFO:
+          ret = msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
                               nClickX, nClickY, nFeatureCount, pszInfoFormat,
                               NULL, NULL, NULL,
-                              &sThisWMSParams) != MS_SUCCESS ) {
-    /* an error was already reported. */
-    msFreeWmsParamsObj(&sThisWMSParams);
-    return MS_FAILURE;
-  } else if (nRequestType == WMS_GETLEGENDGRAPHIC &&
-             msBuildWMSLayerURL(map, lp, WMS_GETLEGENDGRAPHIC,
+                              &sThisWMSParams);
+          break;
+
+      case WMS_GETLEGENDGRAPHIC:
+          ret = msBuildWMSLayerURL(map, lp, WMS_GETLEGENDGRAPHIC,
                                 0, 0, 0, NULL,
                                 NULL, NULL, NULL,
-                                &sThisWMSParams) != MS_SUCCESS ) {
+                                &sThisWMSParams);
+          break;
+
+      default:
+          assert(FALSE);
+          break;
+  }
+
+  if( ret != MS_SUCCESS) {
     /* an error was already reported. */
     msFreeWmsParamsObj(&sThisWMSParams);
     return MS_FAILURE;
   }
-
 
   /* ------------------------------------------------------------------
    * Check if the request is empty, perhaps due to reprojection problems

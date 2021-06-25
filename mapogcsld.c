@@ -149,8 +149,12 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers, layerObj 
           initLayer(psTmpLayer, map);
           msCopyLayer(psTmpLayer, GET_LAYER(map,nIndex));
           /* open the source layer */
-          if ( !psTmpLayer->vtable)
-            msInitializeVirtualTable(psTmpLayer);
+          if ( !psTmpLayer->vtable) {
+            if( msInitializeVirtualTable(psTmpLayer) != MS_SUCCESS ) {
+                MS_REFCNT_DECR(psTmpLayer);
+                continue;
+            }
+          }
 
           /*make the name unique*/
           snprintf(tmpId, sizeof(tmpId), "%lx_%x_%d",(long)time(NULL),(int)getpid(),
@@ -1391,7 +1395,6 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             int alpha = MS_NINT(psStyle->opacity*2.55);
             psStyle->color.alpha = alpha;
             psStyle->outlinecolor.alpha = alpha;
-            psStyle->backgroundcolor.alpha = alpha;
             psStyle->mincolor.alpha = alpha;
             psStyle->maxcolor.alpha = alpha;
           }
@@ -1486,6 +1489,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
         status = MS_SUCCESS;
       }
       else if (strcasecmp(psRoot->pszValue,"Function") == 0
+          && psRoot->psChild
           && CPLGetXMLValue(psRoot,"name",NULL)
           && psRoot->psChild->psNext)
       {
@@ -5020,8 +5024,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
           } else
             pszAttributeName[iValue++] = pszExpression[i];
         }
-        pszAttributeName[iValue] = '\0';
       }
+      pszAttributeName[iValue] = '\0';
     }
     msFreeCharArray(aszValues, nTokens);
   } else if (bOneCharCompare == 0) {
@@ -5048,8 +5052,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         } else
           pszAttributeName[iValue++] = pszExpression[i];
       }
-      pszAttributeName[iValue] = '\0';
     }
+    pszAttributeName[iValue] = '\0';
   }
 
   /* -------------------------------------------------------------------- */

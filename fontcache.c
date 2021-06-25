@@ -287,8 +287,14 @@ glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned
       FT_Set_Pixel_Sizes(face->face,0,MS_NINT(size * 96/72.0));
     }
     error = FT_Load_Glyph(face->face,key.codepoint,FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
+    if (error) {
+      msDebug("Unable to load glyph %u for font \"%s\". Using ? as fallback.\n", key.codepoint, face->font);
+      // If we can't find a glyph then try to fallback to a question mark.
+      unsigned int fallbackCodepoint = msGetGlyphIndex(face, 0x3F);
+      error = FT_Load_Glyph(face->face,fallbackCodepoint,FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
+    }
     if(error) {
-      msSetError(MS_MISCERR, "unable to load glyph %ud for font \"%s\"", "msGetGlyphByIndex()",key.codepoint, face->font);
+      msSetError(MS_MISCERR, "unable to load glyph %u for font \"%s\"", "msGetGlyphByIndex()",key.codepoint, face->font);
       free(gc);
 #ifdef USE_THREAD
       if (use_global_ft_cache)
@@ -335,8 +341,14 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph) {
     pen.x = pen.y = 0;
     FT_Set_Transform(face->face, &matrix, &pen);
     error = FT_Load_Glyph(face->face,glyph->key.codepoint,FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP/*|FT_LOAD_IGNORE_TRANSFORM*/|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
+    if (error) {
+      msDebug("Unable to load glyph %u for font \"%s\". Using ? as fallback.\n", glyph->key.codepoint, face->font);
+      // If we can't find a glyph then try to fallback to a question mark.
+      unsigned int fallbackCodepoint = msGetGlyphIndex(face, 0x3F);
+      error = FT_Load_Glyph(face->face,fallbackCodepoint,FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP/*|FT_LOAD_IGNORE_TRANSFORM*/|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
+    }
     if(error) {
-      msSetError(MS_MISCERR, "unable to load glyph %ud for font \"%s\"", "msGetGlyphByIndex()",glyph->key.codepoint, face->font);
+      msSetError(MS_MISCERR, "unable to load glyph %u for font \"%s\"", "msGetGlyphOutline()",glyph->key.codepoint, face->font);
 #ifdef USE_THREAD
       if (use_global_ft_cache)
         msReleaseLock(TLOCK_TTF);

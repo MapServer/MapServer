@@ -1018,7 +1018,7 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   gmlGeometryObj *geometry=NULL;
 
   if(!stream || !tab) return;
-  if(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
+  if(geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
 
   if(geometryList->numgeometries == 1) {
     geometry = &(geometryList->geometries[0]);
@@ -1360,8 +1360,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
       if ( lp == NULL ) {
         msSetError(MS_WFSERR, "Invalid typename (%s). A layer might be disabled for \
 this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
-        if( layers )
-            msFreeCharArray(layers, numlayers);
+        msFreeCharArray(layers, numlayers);
         msFree(mimetype);
         return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
       }
@@ -2127,7 +2126,7 @@ static int msWFSRunFilter(mapObj* map,
     if( FLTCheckFeatureIdFilters(psNode, map, lp->index) == MS_FAILURE)
     {
         FLTFreeFilterEncodingNode( psNode );
-        return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, paramsObj->pszVersion);
+        return msWFSException(map, "resourceid", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
     /* FIXME?: could probably apply to WFS 1.1 too */
@@ -2350,10 +2349,6 @@ static int msWFSRetrieveFeatures(mapObj* map,
     nFilters = 0;
     if (strlen(pszFilter) > 0 && pszFilter[0] == '(') {
       paszFilter = FLTSplitFilters(pszFilter, &nFilters);
-
-      if ( paszFilter && nFilters > 0 && numlayers != nFilters ) {
-        msFreeCharArray(paszFilter, nFilters);
-      }
     } else if (numlayers == 1) {
       nFilters=1;
       paszFilter = (char **)msSmallMalloc(sizeof(char *)*nFilters);
@@ -2364,6 +2359,7 @@ static int msWFSRetrieveFeatures(mapObj* map,
       msSetError(MS_WFSERR, "Wrong number of filter elements, one filter must be specified for each feature type listed in the %s parameter.",
                  "msWFSGetFeature()",
                  (nWFSVersion >= OWS_2_0_0 ) ? "TYPENAMES": "TYPENAME" );
+      msFreeCharArray(paszFilter, nFilters);
       return msWFSException(map, "filter", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
@@ -5247,10 +5243,12 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
           }
           /* these are unsupported requests. Just set the  */
           /* request value and return; */
-          else if (msWFSGetIndexUnsupportedOperation(psOperation->pszValue) >= 0) {
+          else {
             int idx = msWFSGetIndexUnsupportedOperation(psOperation->pszValue);
-            wfsparams->pszRequest = msStrdup(wfsUnsupportedOperations[idx]);
-            break;
+            if( idx >= 0 ) {
+              wfsparams->pszRequest = msStrdup(wfsUnsupportedOperations[idx]);
+              break;
+            }
           }
         }
       }

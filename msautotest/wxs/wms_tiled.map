@@ -68,10 +68,12 @@ LAYER
     "init=./data/epsg2:42304"
   END
   CLASS
-    SYMBOL 2
-    SIZE 40
     NAME "Cities"
-    COLOR 0 0 0
+    STYLE
+      SYMBOL 2
+      SIZE 40
+      COLOR 0 0 0
+    END
   END
 END # Layer
 

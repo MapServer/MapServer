@@ -144,13 +144,18 @@ int loadParams(cgiRequestObj *request,
     int data_len;
     request->type = MS_POST_REQUEST;
 
-    s = getenv2("CONTENT_TYPE", thread_context);
-    if (s != NULL)
-      request->contenttype = msStrdup(s);
-    /* we've to set default Content-Type which is
-     * application/octet-stream according to
-     * W3 RFC 2626 section 7.2.1 */
-    else request->contenttype = msStrdup("application/octet-stream");
+    if (request->contenttype == NULL){
+        s = getenv2("CONTENT_TYPE", thread_context);
+        if (s != NULL){
+          request->contenttype = msStrdup(s);
+        }
+        else {
+            /* we've to set default Content-Type which is
+             * application/octet-stream according to
+             * W3 RFC 2626 section 7.2.1 */
+            request->contenttype = msStrdup("application/octet-stream");
+        }
+    }
 
     if (raw_post_data) {
       post_data = msStrdup(raw_post_data);

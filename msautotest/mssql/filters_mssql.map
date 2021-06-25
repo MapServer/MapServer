@@ -100,6 +100,6 @@ MAP
     TYPE LINE
     DATA '../query/data/bdry_counpy2.shp'
     STATUS DEFAULT
-    CLASS COLOR 231 231 231 END
+    CLASS STYLE COLOR 231 231 231 END END
   END
 END

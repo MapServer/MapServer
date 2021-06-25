@@ -33,7 +33,9 @@ LAYER
   TYPE raster
   STATUS ON
   DATA data/grid.gif
-  TRANSPARENCY 33
+  COMPOSITE
+    OPACITY 33
+  END
 END
 
 END # of map file

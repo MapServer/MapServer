@@ -142,10 +142,9 @@ class MapSymbolSetTestCase(MapTestCase):
         # s.size = 24
         msimg = self.map.draw()
         assert msimg.thisown == 1
-        data = msimg.saveToString()
         filename = 'testDrawNewSymbol.png'
         fh = open(filename, 'wb')
-        fh.write(data)
+        msimg.write(fh)
         fh.close()
 
 

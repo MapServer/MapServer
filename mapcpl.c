@@ -195,6 +195,8 @@ void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     return NULL;
   }
 
+  /* We accept leakage of pLibrary */
+  /* coverity[leaked_storage] */
   return( pSymbol );
 }
 

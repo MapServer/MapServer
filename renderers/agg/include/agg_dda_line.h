@@ -89,7 +89,7 @@ namespace mapserver
         enum save_size_e { save_size = 2 };
 
         //--------------------------------------------------------------------
-        dda2_line_interpolator() {}
+        dda2_line_interpolator() = default;
 
         //-------------------------------------------- Forward-adjusted line
         dda2_line_interpolator(int y1, int y2, int count) :
@@ -200,11 +200,11 @@ namespace mapserver
         int y() const { return m_y; }
 
     private:
-        int m_cnt;
-        int m_lft;
-        int m_rem;
-        int m_mod;
-        int m_y;
+        int m_cnt = 0;
+        int m_lft = 0;
+        int m_rem = 0;
+        int m_mod = 0;
+        int m_y = 0;
     };
 
 

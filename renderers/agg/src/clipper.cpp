@@ -39,6 +39,7 @@
 *******************************************************************************/
 
 #include "../include/clipper.hpp"
+#include <cassert>
 #include <cmath>
 #include <vector>
 #include <algorithm>
@@ -842,7 +843,7 @@ bool ClipperBase::AddPolygon( const Polygon &pg, PolyType polyType)
     if (j == len-1 || j < 2) break;
     len = j +1;
   }
-  if (len < 3) return false;
+  // if (len < 3) return false;
 
   //create a new edge array ...
   TEdge *edges = new TEdge [len];
@@ -919,6 +920,7 @@ TEdge* ClipperBase::AddBoundsToLML(TEdge *e)
       //    but break on horizontal minima if approaching from their left.
       //    This ensures 'local minima' are always on the left of horizontals.
       if (e->next->ytop < e->ytop && e->next->xbot > e->prev->xbot) break;
+      // coverity[copy_paste_error]
       if (e->xtop != e->prev->xbot) SwapX(*e);
       e->nextInLML = e->prev;
     }
@@ -2256,6 +2258,7 @@ void Clipper::ProcessHorizontal(TEdge *horzEdge)
       //ok, so far it looks like we're still in range of the horizontal edge
       if ( e->xcurr == horzEdge->xtop && !eMaxPair )
       {
+        assert(horzEdge->nextInLML);
         if (SlopesEqual(*e, *horzEdge->nextInLML, m_UseFullRange))
         {
           //if output polygons share an edge, they'll need joining later ...
@@ -2317,9 +2320,12 @@ void Clipper::ProcessHorizontal(TEdge *horzEdge)
   }
   else
   {
+    assert(eMaxPair);
     if ( horzEdge->outIdx >= 0 )
+    {
       IntersectEdges( horzEdge, eMaxPair,
-      IntPoint(horzEdge->xtop, horzEdge->ycurr), ipBoth);
+          IntPoint(horzEdge->xtop, horzEdge->ycurr), ipBoth);
+    }
     if (eMaxPair->outIdx >= 0) throw clipperException("ProcessHorizontal error");
     DeleteFromAEL(eMaxPair);
     DeleteFromAEL(horzEdge);
@@ -3064,12 +3070,12 @@ class PolyOffsetBuilder
 {
 private:
   Polygons m_p;
-  Polygon* m_curr_poly;
+  Polygon* m_curr_poly = nullptr;
   std::vector<DoublePoint> normals;
-  double m_delta, m_RMin, m_R;
-  size_t m_i, m_j, m_k;
+  double m_delta = 0, m_RMin = 0, m_R = 0;
+  size_t m_i = 0, m_j = 0, m_k = 0;
   static const int buffLength = 128;
-  JoinType m_jointype;
+  JoinType m_jointype = jtSquare;
  
 public:
 

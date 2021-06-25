@@ -30,6 +30,8 @@
 #include "mapserver.h"
 #include "mapows.h"
 
+#include "limits.h"
+
 /* This object is used by the various mapQueryXXXXX() functions. It stores
  * the total amount of shapes and their RAM footprint, when they are cached
  * in the resultCacheObj* of layers. This is the total number accross all queried
@@ -290,7 +292,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
 {
   int i, j, k, n=0;
 
-  if(1 != fread(&n, sizeof(int), 1, stream)) {
+  if(1 != fread(&n, sizeof(int), 1, stream) || n > INT_MAX - 1) {
     msSetError(MS_MISCERR,"failed to read query count from query file stream", "loadQueryResults()");
     return MS_FAILURE;
   }
@@ -444,8 +446,10 @@ static int loadQueryParams(mapObj *map, FILE *stream)
           map->query.shape->type = shapetype;
 
           if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
+          if( numlines > INT_MAX - 1 ) goto parse_error;
           for(i=0; i<numlines; i++) {
-            if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0) goto parse_error;
+            if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0 ||
+                numpoints > INT_MAX / (int)sizeof(pointObj)) goto parse_error;
 
             line.numpoints = numpoints;
             line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
@@ -1620,7 +1624,7 @@ int msQueryByFeatures(mapObj *map)
 
     } /* next selection shape */
 
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    if(lp->resultcache == NULL || lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
 
   /* was anything found? */
