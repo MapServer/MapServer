@@ -79,7 +79,7 @@ enum class OGCAPIFormat
 /*
 ** Returns a JSON object using and a description.
 */
-static void outputError(int code, std::string description)
+static void outputError(int code, const std::string& description)
 {
   if(code < 0 || code >= OGCAPI_NUM_ERROR_CODES) code = 0;
 
@@ -187,7 +187,7 @@ static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *l
 /*
 ** Returns the bbox in SRS of the map.
 */
-static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox) 
+static bool getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
 {
   int status;
   const char *p;
@@ -201,14 +201,14 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
   } else {
     const auto tokens = msStringSplit(p, ',');
     if(tokens.size() != 4) {
-      return MS_FAILURE;
+      return false;
     }
 
     double values[4];
     for(int i=0; i<4; i++) {
       status = msStringToDouble(tokens[i].c_str(), &values[i]);
       if(status != MS_SUCCESS) {
-        return MS_FAILURE;
+        return false;
       }
     }
 
@@ -221,10 +221,10 @@ static int getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
 
     // at the moment we are assuming the bbox is given in lat/lon
     status = msProjectRect(&map->latlon, &map->projection, bbox);
-    if(status != MS_SUCCESS) return MS_FAILURE;
+    if(status != MS_SUCCESS) return false;
   }
 
-  return MS_SUCCESS;
+  return true;
 }
 
 /*
@@ -278,7 +278,7 @@ static std::string getApiRootUrl(mapObj *map)
     return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
 }
 
-static json getFeatureConstant(gmlConstantObj *constant)
+static json getFeatureConstant(const gmlConstantObj *constant)
 {
   json j; // empty (null)
 
@@ -291,7 +291,7 @@ static json getFeatureConstant(gmlConstantObj *constant)
   return j;
 }
 
-static json getFeatureItem(gmlItemObj *item, char *value)
+static json getFeatureItem(const gmlItemObj *item, const char *value)
 {
   json j; // empty (null)
   const char *key;
@@ -479,7 +479,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
   return feature;
 }
 
-static json getLink(hashTableObj *metadata, std::string name)
+static json getLink(hashTableObj *metadata, const std::string& name)
 {
   json link;
 
@@ -610,14 +610,14 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 ** Output stuff...
 */
 
-static void outputJson(json j, const char *mimetype)
+static void outputJson(const json& j, const char *mimetype)
 {
   msIO_setHeader("Content-Type", "%s", mimetype);
   msIO_sendHeaders();
   msIO_printf("%s\n", j.dump().c_str());
 }
 
-static void outputTemplate(const char *directory, const char *filename, json j, const char *mimetype)
+static void outputTemplate(const char *directory, const char *filename, const json& j, const char *mimetype)
 {
   std::string _directory(directory);
   std::string _filename(filename);
@@ -653,7 +653,7 @@ static void outputTemplate(const char *directory, const char *filename, json j, 
 /*
 ** Generic response outputr.
 */
-static void outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format, const char *filename, json response)
+static void outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format, const char *filename, const json& response)
 {
   const char *path = NULL;
   char fullpath[MS_MAXPATHLEN];
@@ -852,7 +852,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     return MS_SUCCESS;
   }
 
-  if(getBbox(map, request, &bbox) != MS_SUCCESS) {
+  if(!getBbox(map, request, &bbox)) {
     outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
     return MS_SUCCESS;
   }
