@@ -34,6 +34,7 @@ MAP
       "oga_tag_debug"	   "true"
       "oga_tag_sample"	   "sample tag"
       "oga_onlineresource" "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
+      #"oga_onlineresource" "http://192.168.0.17/ogcapi/MY_MAP/ogcapi"
       "oga_server_description" "Server description"
       "oga_links"	   "link1,link2"
       "oga_link1_href"     "https://mapserver.org"
