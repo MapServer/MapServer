@@ -29,6 +29,7 @@
 #include "mapogcapi.h"
 #include "mapows.h"
 #include "mapgml.h"
+#include "maptime.h"
 
 #include "third-party/include_nlohmann_json.hpp"
 #include "third-party/include_pantor_inja.hpp"
@@ -306,6 +307,62 @@ static json getFeatureItem(const gmlItemObj *item, const char *value)
 
   // initialize
   j = { { key, value } };
+
+  if( item->type && (EQUAL(item->type, "Date") ||
+                     EQUAL(item->type, "DateTime") ||
+                     EQUAL(item->type, "Time")) ) {
+      struct tm tm;
+      if( msParseTime(value, &tm) == MS_TRUE ) {
+          char tmpValue[64];
+          if( EQUAL(item->type, "Date") )
+              snprintf(tmpValue, sizeof(tmpValue),
+                       "%04d-%02d-%02d",
+                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+          else if( EQUAL(item->type, "Time") )
+              snprintf(tmpValue, sizeof(tmpValue),
+                       "%02d:%02d:%02dZ",
+                       tm.tm_hour, tm.tm_min, tm.tm_sec);
+          else
+              snprintf(tmpValue, sizeof(tmpValue),
+                       "%04d-%02d-%02dT%02d:%02d:%02dZ",
+                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                       tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+          j = { { key, tmpValue } };
+      }
+  }
+  else if( item->type && (EQUAL(item->type, "Integer") ||
+                          EQUAL(item->type, "Long")) )
+  {
+      try
+      {
+          j = { { key, std::stoll(value) } };
+      }
+      catch( const std::exception& )
+      {
+      }
+  }
+  else if( item->type && EQUAL(item->type, "Real"))
+  {
+      try
+      {
+          j = { { key, std::stod(value) } };
+      }
+      catch( const std::exception& )
+      {
+      }
+  }
+  else if( item->type && EQUAL(item->type, "Boolean"))
+  {
+      if( EQUAL(value,"0") || EQUAL(value,"false") )
+      {
+          j = { { key, false } };
+      }
+      else
+      {
+          j = { { key, true } };
+      }
+  }
 
   return j;
 }

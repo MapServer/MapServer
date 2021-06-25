@@ -61,11 +61,15 @@ MAP
       "oga_link1_href" "https://gisdata.mn.gov/dataset/bdry-counties-in-minnesota"
       "oga_link1_title" "Layer in Minnesota Geocommons"
 
-      "gml_include_items" "CTY_NAME,AREA,PERIMETER,CTY_ABBR" # also works with oga prefix
+      "gml_include_items" "CTY_NAME,AREA,PERIMETER,CTY_ABBR,CTYONLY_,LASTMOD" # also works with oga prefix
       "gml_AREA_alias" "Area"
+      "gml_AREA_type" "Real"
       "gml_perimeter_alias" "Perimiter"
+      "gml_perimeter_type" "Real"
       "gml_CTY_NAME_alias" "Name"
       "gml_CTY_ABBR_alias" "Code"
+      "gml_CTYONLY__type" "Integer"
+      "gml_LASTMOD_type" "DateTime"
       "oga_featureid" "coun"
     END
     VALIDATION
