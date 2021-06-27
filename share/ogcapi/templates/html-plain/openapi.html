@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Swagger UI - pygeoapi CITE instance</title>
+    <title>Swagger UI - {{ template.title }}</title>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.47.1/swagger-ui.css" >
     <style>
       html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
@@ -19,7 +19,7 @@
     window.onload = function() {
       // Begin Swagger UI call region
       ui = SwaggerUIBundle({
-        url: 'https://demo.pygeoapi.io/cite/openapi',
+        url: '{{ template.api_root }}/api?f=json',
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [

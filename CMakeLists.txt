@@ -1036,3 +1036,34 @@ if(BUILD_DYNAMIC)
            DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
    )
 endif(BUILD_DYNAMIC)
+
+if(UNIX)
+  include(GNUInstallDirs)
+  set(DEFAULT_DATA_SUBDIR ${CMAKE_INSTALL_DATAROOTDIR}/mapserver)
+else()
+  set(DEFAULT_DATA_SUBDIR share/mapserver)
+endif()
+
+# Locations are changeable by user to customize layout of MapServer installation
+# (default values are platform-specific)
+set(MAPSERVER_DATA_SUBDIR ${DEFAULT_DATA_SUBDIR} CACHE STRING
+  "Subdirectory where data will be installed")
+
+# Mark *DIR variables as advanced and dedicated to use by power-users only.
+mark_as_advanced(
+  MAPSERVER_DATA_SUBDIR
+)
+
+install(
+  FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection-item.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection-items.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collections.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/conformance.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/debug.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/footer.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/header.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/landing.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/openapi.html
+  DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-plain/
+)

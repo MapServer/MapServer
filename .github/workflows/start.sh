@@ -41,6 +41,12 @@ cd "$WORK_DIR"
 ci/travis/before_install.sh
 ci/travis/script.sh
 
+# Validate openapi document
+pip install jsonschema
+wget https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json -O openapi_schema.json
+echo "Run jsonschema -i msautotest/api/expected/ogcapi_api.json openapi_schema.json"
+jsonschema -i msautotest/api/expected/ogcapi_api.json openapi_schema.json
+
 #####################################
 # Test MapServer as CGI and FastCGI #
 #####################################

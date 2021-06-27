@@ -4,11 +4,14 @@
 # RUN_PARMS: ogcapi_collections.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1_offset_2.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1&offset=2" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_bbox_empty_result.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=2,49,3,50" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/35" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id_not_found.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/12345678" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_api.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/api" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: conformance.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/conformance" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
@@ -22,10 +25,17 @@ MAP
       "oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
       "oga_title"          "OGC API Test" ## REQUIRED (or just recommended?)
       "oga_description"	   "This is a test OGC API server description set via oga_description."
+      "oga_contactperson"  "Contact person"
+      "oga_contacturl"     "http://example.com/contact"
+      "oga_contactelectronicmailaddress" "email@example.com"
+      "oga_termsofservice" "Terms of Service"
+      "oga_keywords"       "keyword1,keyword2"
       "oga_html_tags"      "debug,sample"
       "oga_tag_debug"	   "true"
       "oga_tag_sample"	   "sample tag"
       "oga_onlineresource" "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
+      #"oga_onlineresource" "http://192.168.0.17/ogcapi/MY_MAP/ogcapi"
+      "oga_server_description" "Server description"
       "oga_links"	   "link1,link2"
       "oga_link1_href"     "https://mapserver.org"
       "oga_link1_title"	   "MapServer project website"
@@ -33,6 +43,7 @@ MAP
       "oga_link2_title"    "OCG API website"
       "oga_enable_request" "OGCAPI" ## REQUIRED
       "oga_max_limit"      "15"
+      "oga_default_limit"  "9"
       "oga_geometry_precision" "4"
     END
   END
@@ -51,11 +62,15 @@ MAP
       "oga_link1_href" "https://gisdata.mn.gov/dataset/bdry-counties-in-minnesota"
       "oga_link1_title" "Layer in Minnesota Geocommons"
 
-      "gml_include_items" "CTY_NAME,AREA,PERIMETER,CTY_ABBR" # also works with oga prefix
+      "gml_include_items" "CTY_NAME,AREA,PERIMETER,CTY_ABBR,CTYONLY_,LASTMOD" # also works with oga prefix
       "gml_AREA_alias" "Area"
+      "gml_AREA_type" "Real"
       "gml_perimeter_alias" "Perimiter"
+      "gml_perimeter_type" "Real"
       "gml_CTY_NAME_alias" "Name"
       "gml_CTY_ABBR_alias" "Code"
+      "gml_CTYONLY__type" "Integer"
+      "gml_LASTMOD_type" "DateTime"
       "oga_featureid" "coun"
     END
     VALIDATION

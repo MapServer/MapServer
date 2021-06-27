@@ -29,6 +29,10 @@ Content-Type: text/html
 
   <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections?f=html">Information about feature collections available from this server</a></li>
 
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/api?f=json">OpenAPI document</a></li>
+
+  <li> <a href="http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/api?f=html">API documentation</a></li>
+
   <li> <a href="https://mapserver.org">MapServer project website</a></li>
 
   <li> <a href="https://ogcapi.ogc.org">OCG API website</a></li>
