@@ -69,6 +69,8 @@ enum class OGCAPIFormat
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
 #define OGCAPI_MAX_LIMIT 10000
 
+#define OGCAPI_DEFAULT_GEOMETRY_PRECISION 6
+
 #ifdef USE_OGCAPI_SVR
 
 #define OGCAPI_SERVER_ERROR 0 // error codes
@@ -367,6 +369,10 @@ static json getFeatureItem(const gmlItemObj *item, const char *value)
   return j;
 }
 
+static double round_down(double value, int decimal_places) {
+  const double multiplier = std::pow(10.0, decimal_places);
+  return std::floor(value * multiplier) / multiplier;
+}
 // https://stackoverflow.com/questions/25925290/c-round-a-double-up-to-2-decimal-places
 static double round_up(double value, int decimal_places) {
   const double multiplier = std::pow(10.0, decimal_places);
@@ -567,6 +573,17 @@ static const char* getCollectionTitle(layerObj* layer)
   return msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
 }
 
+static int getGeometryPrecision(mapObj *map, layerObj *layer)
+{
+    int geometry_precision = OGCAPI_DEFAULT_GEOMETRY_PRECISION;
+    if(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision")) {
+      geometry_precision = atoi(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision"));
+    } else if(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision")) {
+      geometry_precision = atoi(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision"));
+    }
+    return geometry_precision;
+}
+
 static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 {
   json collection; // empty (null)
@@ -594,6 +611,8 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   const char *id = layer->name;
   char *id_encoded = msEncodeUrl(id); // free after use
 
+  const int geometry_precision = getGeometryPrecision(map, layer);
+
   // build collection object
   collection = {
     { "id", id },
@@ -601,7 +620,10 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
     { "title", title?title:"" },
     { "extent", {
         { "spatial", {
-            { "bbox", {{ bbox.minx, bbox.miny, bbox.maxx, bbox.maxy }}},
+            { "bbox", {{ round_down(bbox.minx, geometry_precision),
+                         round_down(bbox.miny, geometry_precision),
+                         round_up(bbox.maxx, geometry_precision),
+                         round_up(bbox.maxy, geometry_precision) }}},
             { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
           }
         }
@@ -1075,12 +1097,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       return MS_SUCCESS;
     }
 
-    int geometry_precision = 6; // default
-    if(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision")) {
-      geometry_precision = atoi(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision"));
-    } else if(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision")) {
-      geometry_precision = atoi(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision"));
-    }
+    const int geometry_precision = getGeometryPrecision(map, layer);
 
     // reprojection (layer projection to EPSG:4326)
     reprojectionObj *reprojector = NULL;
