@@ -15,14 +15,12 @@
   <div class="col-sm">
 
     <p>{{ response.description }}</p>
-    {% if existsIn(response, "keywords") %}
-      {% if length(response.keywords) > 0 %}
+    {% if existsIn(response, "keywords") and length(response.keywords) > 0 %}
       <div id="keywords"><p>
         {% for keyword in response.keywords %}
           <span class="badge badge-secondary">{{ keyword }}</span>
         {% endfor %}
       </p></div>
-      {% endif %}
     {% endif %}
 
     <h2>Links</h2>

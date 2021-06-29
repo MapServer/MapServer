@@ -3,15 +3,13 @@
 <h1>{{ template.title }} - Collection: {{ response.title }}</h1>
 
 <p>{{ response.description }}</p>
-{% if existsIn(response, "keywords") %}
-  {% if length(response.keywords) > 0 %}
+{% if existsIn(response, "keywords") and length(response.keywords) > 0 %}
 <h2>Keywords</h2>
 <ul>
     {% for keyword in response.keywords %}
   <li> {{ keyword }}</li>
     {% endfor %}
 </ul>
-  {% endif %}
 {% endif %}
 
 <h2>Links</h2>
