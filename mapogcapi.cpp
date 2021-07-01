@@ -220,7 +220,8 @@ static bool getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxx = values[2];
     bbox->maxy = values[3];
 
-    // TODO: validate bbox is well-formed and lat/lon
+    // validate bbox is well-formed
+    if(MS_VALID_EXTENT(*bbox) != MS_TRUE) return false;
 
     // at the moment we are assuming the bbox is given in lat/lon
     status = msProjectRect(&map->latlon, &map->projection, bbox);
