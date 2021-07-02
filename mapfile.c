@@ -6854,7 +6854,9 @@ void msApplyDefaultSubstitutions(mapObj *map)
   applyHashTableDefaultSubstitutions(&map->web.metadata, &(map->web.validation));
 }
 
-char *_get_param_value(const char *key, char **names, char **values, int npairs) {
+char *_get_param_value(const char *key, char **names, char **values, int npairs) 
+{
+  if(npairs <= 0) return NULL; // bail, no point searching
 
   if(getenv(key)) { /* envirronment override */
     return getenv(key);

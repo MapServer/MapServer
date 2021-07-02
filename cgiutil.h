@@ -70,6 +70,12 @@ typedef struct {
   char *contenttype; ///< The content type of the request
   char *postrequest; ///< Any POST data request
   char *httpcookiedata; ///< Any cookie data associated with the request
+
+#ifndef SWIG
+  const char *path_info;
+  int api_path_length;
+  char **api_path;
+#endif
 } cgiRequestObj;
 
 

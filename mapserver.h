@@ -359,9 +359,9 @@ extern "C" {
 #  define MS_NINT(x)      MS_NINT_GENERIC(x)
 #endif
 
-
   /* #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE) */
-#define MS_VALID_EXTENT(rect)  (((rect.minx < rect.maxx && rect.miny < rect.maxy))?MS_TRUE:MS_FALSE)
+#define MS_VALID_EXTENT(rect)  ((((rect).minx < (rect).maxx && (rect).miny < (rect).maxy))?MS_TRUE:MS_FALSE)
+#define MS_VALID_SEARCH_EXTENT(rect)  ((((rect).minx <= (rect).maxx && (rect).miny <= (rect).maxy))?MS_TRUE:MS_FALSE)
 
 #define MS_INIT_COLOR(color,r,g,b,a) { (color).red = r; (color).green = g; (color).blue = b; (color).alpha=a; }
 #define MS_VALID_COLOR(color) (((color).red==-1 || (color).green==-1 || (color).blue==-1)?MS_FALSE:MS_TRUE)
@@ -2334,6 +2334,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT const char* msStringBufferGetString(msStringBuffer* sb);
   MS_DLL_EXPORT char* msStringBufferReleaseStringAndFree(msStringBuffer* sb);
   MS_DLL_EXPORT int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString);
+
+  MS_DLL_EXPORT int msStringToInt(const char *str, int *value, int base);
+  MS_DLL_EXPORT int msStringToDouble(const char *str, double *value);
 
 #ifdef __cplusplus
 }

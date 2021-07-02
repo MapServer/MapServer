@@ -65,8 +65,7 @@ int msCGIDispatchLegendRequest(mapservObj *mapserv);
 int msCGIDispatchLegendIconRequest(mapservObj *mapserv);
 MS_DLL_EXPORT int msCGIDispatchRequest(mapservObj *mapserv);
 
-
-
-
+MS_DLL_EXPORT int msCGIIsAPIRequest(mapservObj *mapserv);
+MS_DLL_EXPORT int msCGIDispatchAPIRequest(mapservObj *mapserv);
 
 #endif /* MAPSERV_H */

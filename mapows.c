@@ -845,6 +845,11 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
           buf[1] = 'w';
           buf[2] = 's';
           break;
+        case 'A':         /* oga_... (OGC Geospatial API) */
+	  buf[0] = 'o';
+	  buf[1] = 'g';
+	  buf[2] = 'a';
+	  break;
         case 'M':         /* wms_... */
           buf[0] = 'w';
           buf[1] = 'm';
