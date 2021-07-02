@@ -2273,8 +2273,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         bool bSpatialiteOrGPKGAddOrderByFID = false;
 
         if( psInfo->dialect && psInfo->pszMainTableName != NULL && 
-            ( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
-              || EQUAL(psInfo->dialect, "GPKG") ) &&
+            (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex) &&
             bIsValidRect )
         {
             select = msStringConcatenate(select, " JOIN ");
@@ -2307,26 +2306,14 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             }
             else
                 select = msStringConcatenate(select, "ROWID");
-            if( EQUAL(psInfo->dialect, "Spatialite") )
-                select = msStringConcatenate(select, " = ms_spat_idx.pkid AND ");
-            else
-                select = msStringConcatenate(select, " = ms_spat_idx.id AND ");
+
+            select = msStringConcatenate(select, " = ms_spat_idx.pkid AND ");
 
             char szCond[256];
-            if( EQUAL(psInfo->dialect, "Spatialite") )
-            {
-                snprintf(szCond, sizeof(szCond),
-                        "ms_spat_idx.xmin <= %.15g AND ms_spat_idx.xmax >= %.15g AND "
-                        "ms_spat_idx.ymin <= %.15g AND ms_spat_idx.ymax >= %.15g",
-                        rect.maxx, rect.minx, rect.maxy, rect.miny);
-            }
-            else
-            {
-                snprintf(szCond, sizeof(szCond),
-                        "ms_spat_idx.minx <= %.15g AND ms_spat_idx.maxx >= %.15g AND "
-                        "ms_spat_idx.miny <= %.15g AND ms_spat_idx.maxy >= %.15g",
-                        rect.maxx, rect.minx, rect.maxy, rect.miny);
-            }
+            snprintf(szCond, sizeof(szCond),
+                    "ms_spat_idx.xmin <= %.15g AND ms_spat_idx.xmax >= %.15g AND "
+                    "ms_spat_idx.ymin <= %.15g AND ms_spat_idx.ymax >= %.15g",
+                    rect.maxx, rect.minx, rect.maxy, rect.miny);
             select = msStringConcatenate(select, szCond);
 
             bSpatialiteOrGPKGAddOrderByFID = true;
@@ -2374,6 +2361,45 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                      psInfo->pszMainTableName != NULL )
             {
                 const bool isGPKG = EQUAL(psInfo->dialect, "GPKG");
+                if( isGPKG )
+                {
+                    char* pszEscapedMainTableName = msLayerEscapePropertyName(
+                                                    layer, psInfo->pszMainTableName);
+                    filter = msStringConcatenate(filter, "\"");
+                    filter = msStringConcatenate(filter, pszEscapedMainTableName);
+                    filter = msStringConcatenate(filter, "\".");
+                    msFree(pszEscapedMainTableName);            
+                    filter = msStringConcatenate(filter, "ROWID");
+                    
+                    filter = msStringConcatenate(filter, " IN ");
+                    filter = msStringConcatenate(filter, "(");        
+                    filter = msStringConcatenate(filter, "SELECT ms_spat_idx.id FROM ");
+
+                    char szSpatialIndexName[256];
+                    snprintf( szSpatialIndexName, sizeof(szSpatialIndexName),
+                                "%s_%s_%s",
+                                EQUAL(psInfo->dialect, "Spatialite") ? "idx" : "rtree",
+                                psInfo->pszSpatialFilterTableName,
+                                psInfo->pszSpatialFilterGeometryColumn );        
+                    char* pszEscapedSpatialIndexName = msLayerEscapePropertyName(
+                                                    layer, szSpatialIndexName);
+                    filter = msStringConcatenate(filter, "\"");
+                    filter = msStringConcatenate(filter, pszEscapedSpatialIndexName);
+                    msFree(pszEscapedSpatialIndexName);
+                    filter = msStringConcatenate(filter, "\" ms_spat_idx WHERE ");
+        
+                    char szCond[256];
+                    snprintf(szCond, sizeof(szCond),
+                            "ms_spat_idx.minx <= %.15g AND ms_spat_idx.maxx >= %.15g AND "
+                            "ms_spat_idx.miny <= %.15g AND ms_spat_idx.maxy >= %.15g",
+                            rect.maxx, rect.minx, rect.maxy, rect.miny);
+                    filter = msStringConcatenate(filter, szCond);
+        
+                    filter = msStringConcatenate(filter, ")");
+
+                    bSpatialiteOrGPKGAddOrderByFID = true;
+                }
+              
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 const char *col = OGR_L_GetGeometryColumn(psInfo->hLayer); // which geom field??
                 filter = msStringConcatenate(filter, " Intersects(");
