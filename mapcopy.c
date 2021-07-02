@@ -430,7 +430,6 @@ int msCopyLabel(labelObj *dst, const labelObj *src)
 int msCopyWeb(webObj *dst, const webObj *src, mapObj *map)
 {
 
-  MS_COPYSTRING(dst->log, src->log);
   MS_COPYSTRING(dst->imagepath, src->imagepath);
   MS_COPYSTRING(dst->imageurl, src->imageurl);
   dst->map = map;
@@ -443,8 +442,6 @@ int msCopyWeb(webObj *dst, const webObj *src, mapObj *map)
   MS_COPYSTRING(dst->footer, src->footer);
   MS_COPYSTRING(dst->empty, src->empty);
   MS_COPYSTRING(dst->error, src->error);
-
-  MS_COPYRECT(&(dst->extent), &(src->extent));
 
   MS_COPYSTELEM(minscaledenom);
   MS_COPYSTELEM(maxscaledenom);
@@ -486,7 +483,6 @@ int msCopyStyle(styleObj *dst, const styleObj *src)
 
   MS_COPYCOLOR(&(dst->color), &(src->color));
   MS_COPYCOLOR(&(dst->outlinecolor),&(src->outlinecolor));
-  MS_COPYCOLOR(&(dst->backgroundcolor), &(src->backgroundcolor));
 
   MS_COPYCOLOR(&(dst->mincolor), &(src->mincolor));
   MS_COPYCOLOR(&(dst->maxcolor), &(src->maxcolor));
@@ -876,7 +872,6 @@ int msCopyScalebar(scalebarObj *dst, const scalebarObj *src)
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(position);
   MS_COPYSTELEM(transparent);
-  MS_COPYSTELEM(interlace);
   MS_COPYSTELEM(postlabelcache);
   MS_COPYSTELEM(align);
 
@@ -914,7 +909,6 @@ int msCopyLegend(legendObj *dst, const legendObj *src, mapObj *map)
   MS_COPYSTELEM(width);
   MS_COPYSTELEM(position);
   MS_COPYSTELEM(transparent);
-  MS_COPYSTELEM(interlace);
   MS_COPYSTELEM(postlabelcache);
 
 #ifndef __cplusplus
@@ -1214,10 +1208,6 @@ int msCopyMap(mapObj *dst, const mapObj *src)
   }
 
   /* msCopyLabelCache(&(dst->labelcache), &(src->labelcache)); */
-  MS_COPYSTELEM(transparent);
-  MS_COPYSTELEM(interlace);
-  MS_COPYSTELEM(imagequality);
-
   MS_COPYRECT(&(dst->extent), &(src->extent));
 
   MS_COPYSTELEM(cellsize);
@@ -1254,8 +1244,7 @@ int msCopyMap(mapObj *dst, const mapObj *src)
   /* set the active output format */
   MS_COPYSTRING(dst->imagetype, src->imagetype);
   format = msSelectOutputFormat( dst, dst->imagetype );
-  msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE,
-                      MS_NOOVERRIDE, MS_NOOVERRIDE );
+  msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE);
 
   return_value = msCopyProjection(&(dst->projection),&(src->projection));
   if (return_value != MS_SUCCESS) {

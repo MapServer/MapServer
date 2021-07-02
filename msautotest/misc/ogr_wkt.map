@@ -9,8 +9,6 @@ MAP
 
   IMAGETYPE png
 
-  TRANSPARENT OFF
-
   SIZE 400 300 
   EXTENT 0 0 4000 3000
   UNITS meters
@@ -38,7 +36,7 @@ MAP
       WKT "MULTIPOLYGON(((50 50, 350 50, 350 250, 50 250, 50 50)),((250 150, 550 150, 550 350, 250 350, 250 150)))"
     END
     CLASS
-      COLOR 0 255 0
+      STYLE COLOR 0 255 0 END
     END # CLASS
   END
 
@@ -53,9 +51,11 @@ MAP
       WKT "MULTIPOINT(2000 2000, 2000 1900)"
     END
     CLASS
-      COLOR 0 0 255
-      SYMBOL 'cross'
-      SIZE 5
+      STYLE
+        COLOR 0 0 255
+        SYMBOL 'cross'
+        SIZE 5
+      END
     END # CLASS
   END
 
@@ -70,7 +70,7 @@ MAP
       WKT "MULTILINESTRING((600 1500, 1600 2500),(700 1500,1700 2500))"
     END
     CLASS
-      COLOR 255 0 0
+      STYLE COLOR 255 0 0 END
     END # CLASS
   END
 END

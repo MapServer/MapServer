@@ -91,7 +91,7 @@ namespace mapserver
         double                     m_shorten;
         unsigned                   m_closed;
         status_e                   m_status;
-        status_e                   m_prev_status;
+        status_e                   m_prev_status = initial;
         unsigned                   m_src_vertex;
         unsigned                   m_out_vertex;
     };

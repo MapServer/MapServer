@@ -16,6 +16,7 @@
 #ifndef AGG_PATH_STORAGE_INCLUDED
 #define AGG_PATH_STORAGE_INCLUDED
 
+#include <cassert>
 #include <string.h>
 #include <math.h>
 #include "agg_math.h"
@@ -312,6 +313,7 @@ namespace mapserver
                        m_coord_blocks, 
                        m_max_blocks * sizeof(T*));
 
+                assert(m_cmd_blocks);
                 memcpy(new_cmds, 
                        m_cmd_blocks, 
                        m_max_blocks * sizeof(unsigned char*));
@@ -322,10 +324,12 @@ namespace mapserver
             m_cmd_blocks   = new_cmds;
             m_max_blocks  += block_pool;
         }
+        assert(m_coord_blocks);
         m_coord_blocks[nb] = 
             pod_allocator<T>::allocate(block_size * 2 + 
                    block_size / (sizeof(T) / sizeof(unsigned char)));
 
+        assert(m_cmd_blocks);
         m_cmd_blocks[nb]  = 
             (unsigned char*)(m_coord_blocks[nb] + block_size * 2);
 
@@ -341,6 +345,8 @@ namespace mapserver
         {
             allocate_block(nb);
         }
+        assert(m_coord_blocks);
+        assert(m_cmd_blocks);
         *xy_ptr = m_coord_blocks[nb] + ((m_total_vertices & block_mask) << 1);
         return m_cmd_blocks[nb] + (m_total_vertices & block_mask);
     }

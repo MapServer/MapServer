@@ -1,0 +1,39 @@
+{% include "header.html" %}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html">{{ response.collection.title }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">items</li>
+    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=json{% if existsIn(template.params, "bboxx") %}&bbox={{ template.params.bbox }}{% endif %}">JSON</a></li>
+  </ol>
+</nav>
+
+<h1>{{ template.title }} - Collection Items: {{ response.collection.title }}</h1>
+
+<p>
+  <b>Number of matching items:</b> {{ response.numberMatched }}<br/>
+  <b>Number of returned items:</b> {{ response.numberReturned }}<br/>
+</p>
+
+<table class="table">
+  <thead>
+    <th>ID</th>
+{% for key, value in response.features.0.properties %}
+    <th>{{ key }}</th>
+{% endfor %} 
+  </thead>
+  <tbody>    
+{% for feature in response.features %}
+    <tr>
+      <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html">{{ feature.id }}</a></td>
+  {% for key, value in feature.properties %}
+      <td>{{ value }}</td>
+  {% endfor %}
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+
+{% include "footer.html" %}

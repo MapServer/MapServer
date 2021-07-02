@@ -333,7 +333,6 @@ mapserver_handler (request_rec *r)
 
 end_request:
   if(mapserv) {
-    msCGIWriteLog(mapserv,MS_FALSE);
     mapserv->request->ParamNames  = NULL;
     mapserv->request->ParamValues = NULL;
     mapserv->request->postrequest = NULL;

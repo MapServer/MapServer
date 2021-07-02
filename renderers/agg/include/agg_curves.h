@@ -35,13 +35,11 @@ namespace mapserver
     class curve3_inc
     {
     public:
-        curve3_inc() :
-          m_num_steps(0), m_step(0), m_scale(1.0) { }
+        curve3_inc() = default;
 
         curve3_inc(double x1, double y1, 
                    double x2, double y2, 
-                   double x3, double y3) :
-            m_num_steps(0), m_step(0), m_scale(1.0) 
+                   double x3, double y3)
         { 
             init(x1, y1, x2, y2, x3, y3);
         }
@@ -67,23 +65,23 @@ namespace mapserver
         unsigned vertex(double* x, double* y);
 
     private:
-        int      m_num_steps;
-        int      m_step;
-        double   m_scale;
-        double   m_start_x; 
-        double   m_start_y;
-        double   m_end_x; 
-        double   m_end_y;
-        double   m_fx; 
-        double   m_fy;
-        double   m_dfx; 
-        double   m_dfy;
-        double   m_ddfx; 
-        double   m_ddfy;
-        double   m_saved_fx; 
-        double   m_saved_fy;
-        double   m_saved_dfx; 
-        double   m_saved_dfy;
+        int      m_num_steps = 0;
+        int      m_step = 0;
+        double   m_scale = 1;
+        double   m_start_x = 0; 
+        double   m_start_y = 0;
+        double   m_end_x = 0; 
+        double   m_end_y = 0;
+        double   m_fx = 0; 
+        double   m_fy = 0;
+        double   m_dfx = 0; 
+        double   m_dfy = 0;
+        double   m_ddfx = 0; 
+        double   m_ddfy = 0;
+        double   m_saved_fx = 0; 
+        double   m_saved_fy = 0;
+        double   m_saved_dfx = 0; 
+        double   m_saved_dfy = 0;
     };
 
 
@@ -94,18 +92,11 @@ namespace mapserver
     class curve3_div
     {
     public:
-        curve3_div() : 
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_count(0)
-        {}
+        curve3_div() = default;
 
         curve3_div(double x1, double y1, 
                    double x2, double y2, 
-                   double x3, double y3) :
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_count(0)
+                   double x3, double y3)
         { 
             init(x1, y1, x2, y2, x3, y3);
         }
@@ -150,10 +141,10 @@ namespace mapserver
                               double x3, double y3,
                               unsigned level);
 
-        double               m_approximation_scale;
-        double               m_distance_tolerance_square;
-        double               m_angle_tolerance;
-        unsigned             m_count;
+        double               m_approximation_scale = 1.0;
+        double               m_distance_tolerance_square = 0;
+        double               m_angle_tolerance = 0;
+        unsigned             m_count = 0;
         pod_bvector<point_d> m_points;
     };
 
@@ -194,20 +185,17 @@ namespace mapserver
     class curve4_inc
     {
     public:
-        curve4_inc() :
-            m_num_steps(0), m_step(0), m_scale(1.0) { }
+        curve4_inc() = default;
 
         curve4_inc(double x1, double y1, 
                    double x2, double y2, 
                    double x3, double y3,
-                   double x4, double y4) :
-            m_num_steps(0), m_step(0), m_scale(1.0) 
+                   double x4, double y4)
         { 
             init(x1, y1, x2, y2, x3, y3, x4, y4);
         }
 
-        curve4_inc(const curve4_points& cp) :
-            m_num_steps(0), m_step(0), m_scale(1.0) 
+        curve4_inc(const curve4_points& cp)
         { 
             init(cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7]);
         }
@@ -239,27 +227,27 @@ namespace mapserver
         unsigned vertex(double* x, double* y);
 
     private:
-        int      m_num_steps;
-        int      m_step;
-        double   m_scale;
-        double   m_start_x; 
-        double   m_start_y;
-        double   m_end_x; 
-        double   m_end_y;
-        double   m_fx; 
-        double   m_fy;
-        double   m_dfx; 
-        double   m_dfy;
-        double   m_ddfx; 
-        double   m_ddfy;
-        double   m_dddfx; 
-        double   m_dddfy;
-        double   m_saved_fx; 
-        double   m_saved_fy;
-        double   m_saved_dfx; 
-        double   m_saved_dfy;
-        double   m_saved_ddfx; 
-        double   m_saved_ddfy;
+        int      m_num_steps = 0;
+        int      m_step = 0;
+        double   m_scale = 1.0;
+        double   m_start_x = 0.0; 
+        double   m_start_y = 0.0;
+        double   m_end_x = 0.0; 
+        double   m_end_y = 0.0;
+        double   m_fx = 0.0; 
+        double   m_fy = 0.0;
+        double   m_dfx = 0.0; 
+        double   m_dfy = 0.0;
+        double   m_ddfx = 0.0; 
+        double   m_ddfy = 0.0;
+        double   m_dddfx = 0.0; 
+        double   m_dddfy = 0.0;
+        double   m_saved_fx = 0.0; 
+        double   m_saved_fy = 0.0;
+        double   m_saved_dfx = 0.0; 
+        double   m_saved_dfy = 0.0;
+        double   m_saved_ddfx = 0.0; 
+        double   m_saved_ddfy = 0.0;
     };
 
 
@@ -374,29 +362,17 @@ namespace mapserver
     class curve4_div
     {
     public:
-        curve4_div() : 
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_cusp_limit(0.0),
-            m_count(0)
-        {}
+        curve4_div() = default;
 
         curve4_div(double x1, double y1, 
                    double x2, double y2, 
                    double x3, double y3,
-                   double x4, double y4) :
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_cusp_limit(0.0),
-            m_count(0)
+                   double x4, double y4)
         { 
             init(x1, y1, x2, y2, x3, y3, x4, y4);
         }
 
-        curve4_div(const curve4_points& cp) :
-            m_approximation_scale(1.0),
-            m_angle_tolerance(0.0),
-            m_count(0)
+        curve4_div(const curve4_points& cp)
         { 
             init(cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7]);
         }
@@ -461,11 +437,11 @@ namespace mapserver
                               double x4, double y4,
                               unsigned level);
 
-        double               m_approximation_scale;
-        double               m_distance_tolerance_square;
-        double               m_angle_tolerance;
-        double               m_cusp_limit;
-        unsigned             m_count;
+        double               m_approximation_scale = 1.0;
+        double               m_distance_tolerance_square = 0.0;
+        double               m_angle_tolerance = 0.0;
+        double               m_cusp_limit = 0.0;
+        unsigned             m_count = 0;
         pod_bvector<point_d> m_points;
     };
 

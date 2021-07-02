@@ -134,7 +134,7 @@ namespace mapserver
         const scanline_bin operator = (const scanline_bin&);
 
         int             m_last_x;
-        int             m_y;
+        int             m_y = 0;
         pod_array<span> m_spans;
         span*           m_cur_span;
     };

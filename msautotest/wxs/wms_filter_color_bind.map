@@ -1,0 +1,106 @@
+#
+# Test WMS vendor-specific FILTER with attribute color binding
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+# RUN_PARMS: wms_filter_color_bind.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&LAYERS=test001&WIDTH=500&HEIGHT=500&CRS=EPSG:4326&BBOX=0,-1.5,1,0&STYLES=&FILTER=(%3CFilter%20xmlns=%22http://www.opengis.net/ogc%22%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Esymbol%3C/PropertyName%3E%3CLiteral%3Ecircle%3C/Literal%3E%3C/PropertyIsEqualTo%3E%3C/Filter%3E)" > [RESULT_DEMIME]
+
+MAP
+  NAME WMS_FILTER_COLOR_BIND
+  STATUS ON
+  SIZE 500 500
+  EXTENT -1.5 0 -0.5 1
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  SHAPEPATH ../misc/data
+  SYMBOLSET etc/symbols.sym
+  FONTSET ../misc/fonts.lst
+
+  WEB
+
+     IMAGEPATH "/tmp/ms_tmp/"
+     IMAGEURL "/ms_tmp/"
+
+      METADATA
+        "wms_title"            "Test simple wms"
+        "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+        "wms_srs"              "EPSG:4326"
+        "ows_schemas_location" "http://ogc.dmsolutions.ca"
+        "ows_enable_request"   "*"
+      END
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  IMAGETYPE PNG
+
+  SYMBOL
+    NAME 'triangle'
+    TYPE VECTOR
+    POINTS
+      0 4
+      2 0
+      4 4
+      0 4
+    END
+    FILLED TRUE
+  END
+
+  SYMBOL
+    NAME 'square'
+    TYPE VECTOR
+    POINTS 0 0 1 0 1 1 0 1 0 0 END
+    FILLED TRUE
+  END
+
+  SYMBOL
+    NAME 'circle'
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+  END
+
+  LAYER
+    METADATA
+    "wms_title"         "test001"
+    "wms_description"   "test001"
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+
+    NAME 'test001'
+    TYPE POINT
+    DATA 'attrbind'
+    STATUS OFF
+    LABELITEM 'text'
+    CLASS
+      STYLE # a shadow
+        COLOR 151 151 151
+        SYMBOL [symbol]
+        OFFSET 2 2
+        SIZE [size]
+      END
+      STYLE
+        COLOR [color]
+        SYMBOL [symbol]
+        SIZE [size]
+      END
+      LABEL
+        STYLE
+          GEOMTRANSFORM "labelpoly"
+          COLOR [color]
+        END
+        TYPE TRUETYPE
+        FONT 'default'
+        COLOR [lcolor]
+        SIZE [lsize]
+        POSITION UR
+      END
+   END
+  END
+END
+ 

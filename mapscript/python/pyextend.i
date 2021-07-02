@@ -345,8 +345,8 @@ def fromstring(data, mappath=None):
 %extend imageObj {
 
     /**
-    Write image data to an open file handle. Intended to replace
-    saveToString.  See ``python/pyextend.i`` for the Python specific
+    Write image data to an open file handle. Replaces
+    the removed saveToString function.  See ``python/pyextend.i`` for the Python specific
     version of this method.
     */
     int write( PyObject *file=Py_None )
@@ -394,26 +394,6 @@ def fromstring(data, mappath=None):
 
         return retval;
     }
-
-    /**
-    \**Deprecated** - replaced by the :func:`imageObj.write` method
-    */
-    PyObject *saveToString() {
-        int size=0;
-        unsigned char *imgbytes;
-        PyObject *imgstring; 
-
-        imgbytes = msSaveImageBuffer(self, &size, self->format);
-        if (size == 0)
-        {
-            msSetError(MS_IMGERR, "failed to get image buffer", "saveToString()");
-            return NULL;
-        }
-        imgstring = PyBytes_FromStringAndSize((const char*) imgbytes, size);
-        free(imgbytes);
-        return imgstring;
-    }
-
 }
 
 

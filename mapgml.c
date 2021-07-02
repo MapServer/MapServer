@@ -1730,6 +1730,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
            msGMLFreeItems(itemList);
            msGMLFreeGeometries(geometryList);
            msFree(layerName);
+           msFree(srs);
            return MS_FAILURE;
         }
       }
@@ -1752,6 +1753,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
                 msGMLFreeGeometries(geometryList);
                 msFree(layerName);
                 msProjectDestroyReprojector(reprojector);
+                msFree(srs);
                 return(status);
             }
         }

@@ -237,7 +237,7 @@ namespace mapserver
         typedef typename pixfmt_type::value_type value_type;
         enum pix_width_e { pix_width = pixfmt_type::pix_width };
 
-        image_accessor_wrap() {}
+        image_accessor_wrap() = default;
         explicit image_accessor_wrap(const pixfmt_type& pixf) : 
             m_pixf(&pixf), 
             m_wrap_x(pixf.width()), 
@@ -269,11 +269,11 @@ namespace mapserver
         }
 
     private:
-        const pixfmt_type* m_pixf;
-        const int8u*       m_row_ptr;
-        int                m_x;
-        WrapX              m_wrap_x;
-        WrapY              m_wrap_y;
+        const pixfmt_type* m_pixf = nullptr;
+        const int8u*       m_row_ptr = nullptr;
+        int                m_x = 0;
+        WrapX              m_wrap_x = 0;
+        WrapY              m_wrap_y = 0;
     };
 
 

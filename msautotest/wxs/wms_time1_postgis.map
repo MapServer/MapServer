@@ -65,8 +65,8 @@ FONTSET ./etc/fonts.txt
 # Start of web interface definition
 #
 WEB
-  MINSCALE 2000000
-  MAXSCALE 50000000
+  MINSCALEDENOM 2000000
+  MAXSCALEDENOM 50000000
 
   IMAGEPATH "/tmp/ms_tmp/" 
   IMAGEURL "/ms_tmp/"
@@ -120,9 +120,11 @@ LAYER
   INCLUDE "postgis.include"
   DATA "the_geom from (select * from pattern4 order by gid) as foo using unique gid using srid=4326"
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END

@@ -21,7 +21,6 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
-
 set (MapServer_VERSION_MAJOR 7)
 set (MapServer_VERSION_MINOR 7)
 set (MapServer_VERSION_REVISION 0)
@@ -143,8 +142,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 #options suported by the cmake builder
 option(WITH_PROTOBUFC "Choose if protocol buffers support should be built in (required for vector tiles)" ON)
 option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
-option(WITH_SOS "Enable SOS Server support (requires libxml2 support)" OFF)
-option(WITH_WMS "Enable WMS Server support" ON)
+option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
+option(WITH_WMS "Enable WMS Server support (requires PROJ support)" ON)
 option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for right-to-left languages) (requires HARFBUZZ)" ON)
 option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
@@ -158,8 +157,9 @@ option(WITH_POSTGIS "Choose if Postgis input support should be built in" ON)
 option(WITH_CLIENT_WMS "Enable Client WMS Layer support (requires CURL)" OFF)
 option(WITH_CLIENT_WFS "Enable Client WMS Layer support (requires CURL)" OFF)
 option(WITH_CURL "Enable Curl HTTP support (required for wms/wfs client, and remote SLD)" OFF)
-option(WITH_WFS "Enable WFS Server support" ON)
-option(WITH_WCS "Enable WCS Server support" ON)
+option(WITH_WFS "Enable WFS Server support (requires PROJ and OGR support)" ON)
+option(WITH_WCS "Enable WCS Server support (requires PROJ and GDAL support)" ON)
+option(WITH_OGCAPI "Enable OGCAPI Server support (requires PROJ and OGR support)" ON)
 option(WITH_LIBXML2 "Choose if libxml2 support should be built in (used for sos, wcs 1.1,2.0 and wfs 1.1)" ON)
 option(WITH_THREAD_SAFETY "Choose if a thread-safe version of libmapserver should be built (only recommended for some mapscripts)" OFF)
 option(WITH_GIF "Enable GIF support (for PIXMAP loading)" ON)
@@ -272,7 +272,7 @@ endif(WIN32)
 
 set(mapserver_SOURCES fontcache.c 
 cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.cpp classobject.c
-mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
+mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c mapogcapi.cpp
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
 maphttp.c mapparser.c mapstring.cpp mapxmp.c mapcairo.c mapimageio.c
 mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
@@ -295,7 +295,7 @@ set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
 mapaxisorder.h mapcopy.h mapentities.h maperror.h mapfile.h mapgml.h maphash.h
 maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
-mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h
+mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h mapogcapi.h
 mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
 mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h)
@@ -689,6 +689,10 @@ if(WITH_WCS)
   set(USE_WCS_SVR 1)
 endif(WITH_WCS)
 
+if(WITH_OGCAPI)
+  set(USE_OGCAPI_SVR 1)
+endif(WITH_OGCAPI)
+
 if(WITH_LIBXML2)
   find_package(LibXml2)
   if(LIBXML2_FOUND)
@@ -933,6 +937,7 @@ status_optional_feature("WMS SERVER" "${USE_WMS_SVR}")
 status_optional_feature("WFS SERVER" "${USE_WFS_SVR}")
 status_optional_feature("WCS SERVER" "${USE_WCS_SVR}")
 status_optional_feature("SOS SERVER" "${USE_SOS_SVR}")
+status_optional_feature("OGCAPI SERVER" "${USE_OGCAPI_SVR}")
 status_optional_feature("WMS CLIENT" "${USE_WMS_LYR}")
 status_optional_feature("WFS CLIENT" "${USE_WFS_LYR}")
 status_optional_feature("ICONV" "${USE_ICONV}")
@@ -1031,3 +1036,34 @@ if(BUILD_DYNAMIC)
            DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
    )
 endif(BUILD_DYNAMIC)
+
+if(UNIX)
+  include(GNUInstallDirs)
+  set(DEFAULT_DATA_SUBDIR ${CMAKE_INSTALL_DATAROOTDIR}/mapserver)
+else()
+  set(DEFAULT_DATA_SUBDIR share/mapserver)
+endif()
+
+# Locations are changeable by user to customize layout of MapServer installation
+# (default values are platform-specific)
+set(MAPSERVER_DATA_SUBDIR ${DEFAULT_DATA_SUBDIR} CACHE STRING
+  "Subdirectory where data will be installed")
+
+# Mark *DIR variables as advanced and dedicated to use by power-users only.
+mark_as_advanced(
+  MAPSERVER_DATA_SUBDIR
+)
+
+install(
+  FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection-item.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection-items.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collections.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/conformance.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/debug.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/footer.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/header.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/landing.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/openapi.html
+  DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-plain/
+)

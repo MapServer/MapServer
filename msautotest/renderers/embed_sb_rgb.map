@@ -12,8 +12,6 @@ EXTENT -180 -90 180 90
 SIZE 160 40
 IMAGECOLOR 0 0 0 
 fontset "../misc/fonts.lst"
-									
-TRANSPARENT OFF
 
 IMAGETYPE png
 

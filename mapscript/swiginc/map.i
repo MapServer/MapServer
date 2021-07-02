@@ -244,8 +244,7 @@
         {  
             msFree( self->imagetype );
             self->imagetype = msStrdup(imagetype);
-            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
-                                 MS_NOOVERRIDE, MS_NOOVERRIDE );
+            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE);
         }
     }
 
@@ -265,8 +264,7 @@
         {   
             msFree( self->imagetype );
             self->imagetype = msStrdup(imagetype);
-            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
-                                 MS_NOOVERRIDE, MS_NOOVERRIDE );
+            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE);
         }
     }
 
@@ -288,8 +286,7 @@
 
     /// Sets map outputformat.
     void setOutputFormat( outputFormatObj *format ) {
-        msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
-                             MS_NOOVERRIDE, MS_NOOVERRIDE );
+        msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE);
     }
 
     %newobject draw;
@@ -481,43 +478,6 @@
       return msGMLWriteQuery(self, filename, ns);
     }
 
-    /// Deprecated
-    char *getMetaData(char *name) {
-      char *value = NULL;
-      if (!name) {
-        msSetError(MS_HASHERR, "NULL key", "getMetaData");
-      }
-       
-      value = (char *) msLookupHashTable(&(self->web.metadata), name);
-      if (!value) {
-        msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
-        return NULL;
-      }
-      return value;
-    }
-
-    /// Deprecated
-    int setMetaData(char *name, char *value) {
-      if (msInsertHashTable(&(self->web.metadata), name, value) == NULL)
-          return MS_FAILURE;
-      return MS_SUCCESS;
-    }
-
-    /// Deprecated
-    int removeMetaData(char *name) {
-      return(msRemoveHashTable(&(self->web.metadata), name));
-    }
-
-    /// Deprecated
-    char *getFirstMetaDataKey() {
-      return (char *) msFirstKeyFromHashTable(&(self->web.metadata));
-    }
-
-    /// Deprecated
-    char *getNextMetaDataKey(char *lastkey) {
-      return (char *) msNextKeyFromHashTable(&(self->web.metadata), lastkey);
-    }
-
     /// Load symbols defined in filename into map symbolset. The existing symbolset is cleared. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int setSymbolSet(char *szFileName) {
@@ -680,7 +640,7 @@
     Return the output format corresponding to driver name imagetype or to format name 
     imagetype. This works exactly the same as the IMAGETYPE directive in a mapfile, is 
     case insensitive and allows an output format to be found either by driver 
-    (like 'GD/PNG') or name (like 'PNG24').
+    (like 'AGG/PNG') or name (like 'png').
     */
     outputFormatObj *getOutputFormatByName(char *name) {
         return msSelectOutputFormat(self, name); 

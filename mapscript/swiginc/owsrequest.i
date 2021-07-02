@@ -31,6 +31,10 @@
 
 
 %{
+/**
+The following functions are used to simulate the CGI environment for a request
+and return default values when a environment key is passed in
+*/
 static char *msGetEnvURL( const char *key, void *thread_context )
 {
     if( strcmp(key,"REQUEST_METHOD") == 0 )
@@ -38,6 +42,17 @@ static char *msGetEnvURL( const char *key, void *thread_context )
 
     if( strcmp(key,"QUERY_STRING") == 0 )
         return (char *) thread_context;
+
+    return NULL;
+}
+
+static char *msPostEnvURL(const char *key, void *thread_context)
+{
+    if (strcmp(key, "REQUEST_METHOD") == 0)
+        return "POST";
+
+    if (strcmp(key, "QUERY_STRING") == 0)
+        return (char *)thread_context;
 
     return NULL;
 }
@@ -87,7 +102,6 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         return self->NumParams;
     }
 
-
     /**
     Initializes the OWSRequest object from the provided URL which is 
     treated like a ``QUERY_STRING``. 
@@ -96,6 +110,18 @@ static char *msGetEnvURL( const char *key, void *thread_context )
     int loadParamsFromURL( const char *url )
     {
         self->NumParams = loadParams( self, msGetEnvURL, NULL, 0, (void*)url );
+        return self->NumParams;
+    }
+
+    /**
+    Initializes the OWSRequest object with POST data, along with a the provided URL which is
+    treated like a ``QUERY_STRING``.
+    Note that ``REQUEST_METHOD=POST`` and the caller is responsible for setting the correct
+    content type e.g. ``req.contenttype = "application/xml"``
+    */
+    int loadParamsFromPost( char *postData, const char *url)
+    {
+        self->NumParams = loadParams( self, msPostEnvURL, msStrdup(postData), (ms_uint32) strlen(postData), (void*)url);
         return self->NumParams;
     }
 

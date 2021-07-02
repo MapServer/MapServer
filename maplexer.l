@@ -285,7 +285,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>image                                 { MS_LEXER_RETURN_TOKEN(IMAGE); }
 <INITIAL,URL_VARIABLE,URL_STRING>imagecolor    { MS_LEXER_RETURN_TOKEN(IMAGECOLOR); }
 <INITIAL,URL_VARIABLE>imagetype                { MS_LEXER_RETURN_TOKEN(IMAGETYPE); }
-<INITIAL>imagequality                          { MS_LEXER_RETURN_TOKEN(IMAGEQUALITY); }
 <INITIAL>imagemode                             { MS_LEXER_RETURN_TOKEN(IMAGEMODE); }
 <INITIAL>imagepath                             { MS_LEXER_RETURN_TOKEN(IMAGEPATH); }
 <INITIAL>temppath                              { MS_LEXER_RETURN_TOKEN(TEMPPATH); }
@@ -293,7 +292,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL>index                                 { MS_LEXER_RETURN_TOKEN(INDEX); }
 <INITIAL,URL_STRING>initialgap                 { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
-<INITIAL>interlace                             { MS_LEXER_RETURN_TOKEN(INTERLACE); }
 <INITIAL,URL_STRING>intervals                  { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
 <INITIAL>join                                  { MS_LEXER_RETURN_TOKEN(JOIN); }
 <INITIAL,URL_STRING>keyimage                   { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
@@ -316,7 +314,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>linecap                               { MS_LEXER_RETURN_TOKEN(LINECAP); }
 <INITIAL>linejoin                              { MS_LEXER_RETURN_TOKEN(LINEJOIN); }
 <INITIAL>linejoinmaxsize                       { MS_LEXER_RETURN_TOKEN(LINEJOINMAXSIZE); }
-<INITIAL>log                                   { MS_LEXER_RETURN_TOKEN(LOG); }
 <INITIAL,URL_VARIABLE>map                      { MS_LEXER_RETURN_TOKEN(MAP); }
 <INITIAL>marker                                { MS_LEXER_RETURN_TOKEN(MARKER); }
 <INITIAL>markersize                            { MS_LEXER_RETURN_TOKEN(MARKERSIZE); }
@@ -359,13 +356,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>outlinecolor               { MS_LEXER_RETURN_TOKEN(OUTLINECOLOR); }
 <INITIAL,URL_STRING>outlinewidth               { MS_LEXER_RETURN_TOKEN(OUTLINEWIDTH); }
 <INITIAL>outputformat                          { MS_LEXER_RETURN_TOKEN(OUTPUTFORMAT); }
-<INITIAL,URL_STRING>overlaybackgroundcolor     { MS_LEXER_RETURN_TOKEN(OVERLAYBACKGROUNDCOLOR); }
-<INITIAL,URL_STRING>overlaycolor               { MS_LEXER_RETURN_TOKEN(OVERLAYCOLOR); }
-<INITIAL>overlaymaxsize                        { MS_LEXER_RETURN_TOKEN(OVERLAYMAXSIZE); }
-<INITIAL>overlayminsize                        { MS_LEXER_RETURN_TOKEN(OVERLAYMINSIZE); }
-<INITIAL,URL_STRING>overlayoutlinecolor        { MS_LEXER_RETURN_TOKEN(OVERLAYOUTLINECOLOR); }
-<INITIAL,URL_STRING>overlaysize                { MS_LEXER_RETURN_TOKEN(OVERLAYSIZE); }
-<INITIAL,URL_STRING>overlaysymbol              { MS_LEXER_RETURN_TOKEN(OVERLAYSYMBOL); }
 <INITIAL>partials                              { MS_LEXER_RETURN_TOKEN(PARTIALS); }
 <INITIAL,URL_STRING>pattern                    { MS_LEXER_RETURN_TOKEN(PATTERN); }
 <INITIAL,URL_STRING>points                     { MS_LEXER_RETURN_TOKEN(POINTS); }
@@ -410,7 +400,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>to                                    { MS_LEXER_RETURN_TOKEN(TO); }
 <INITIAL,URL_STRING>tolerance                  { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
 <INITIAL,URL_STRING>toleranceunits             { MS_LEXER_RETURN_TOKEN(TOLERANCEUNITS); }
-<INITIAL>transparency                          { MS_LEXER_RETURN_TOKEN(TRANSPARENCY); }
 <INITIAL,URL_VARIABLE>transparent              { MS_LEXER_RETURN_TOKEN(TRANSPARENT); }
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }

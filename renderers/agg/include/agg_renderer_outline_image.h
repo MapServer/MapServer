@@ -782,7 +782,7 @@ namespace mapserver
         dda2_line_interpolator m_li;
         distance_interpolator4 m_di; 
         renderer_type&         m_ren;
-        int m_plen;
+        int m_plen = 0;
         int m_x;
         int m_y;
         int m_old_x;

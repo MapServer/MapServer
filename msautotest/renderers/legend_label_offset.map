@@ -118,8 +118,10 @@ LAYER
   STATUS default
   CLASS 
     NAME "line text+shape"
-    COLOR 255 0 0 
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 255 0 0 
+        OUTLINECOLOR 0 0 0
+    END
     LABEL
       type truetype
       size 9
@@ -129,8 +131,10 @@ LAYER
   END
   CLASS 
     NAME "line labelpnt+shape"
-    COLOR 0 255 0
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 0 255 0
+        OUTLINECOLOR 0 0 0
+    END
     LABEL
       type truetype
       size 9
@@ -188,8 +192,10 @@ LAYER
   STATUS default
   CLASS 
     NAME "poly text+shape"
-    COLOR 255 0 0 
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 255 0 0 
+        OUTLINECOLOR 0 0 0
+    END
     LABEL
       type truetype
       size 9
@@ -199,8 +205,10 @@ LAYER
   END
   CLASS 
     NAME "poly labelpnt+shape"
-    COLOR 0 255 0
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 0 255 0
+        OUTLINECOLOR 0 0 0
+    END
     LABEL
       type truetype
       size 9

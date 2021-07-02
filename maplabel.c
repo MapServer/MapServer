@@ -31,6 +31,7 @@
 ** maplabel.c: Routines to enable text drawing, BITMAP or TRUETYPE.
 */
 
+#include <assert.h>
 #include <float.h>
 
 #include "mapserver.h"
@@ -144,11 +145,11 @@ void msCopyTextSymbol(textSymbolObj *dst, textSymbolObj *src) {
   *dst = *src;
   MS_REFCNT_INCR(src->label);
   dst->annotext = msStrdup(src->annotext);
-  if(dst->textpath) {
+  if(src->textpath) {
     dst->textpath = msSmallMalloc(sizeof(textPathObj));
     msCopyTextPath(dst->textpath,src->textpath);
   }
-  if(dst->style_bounds) {
+  if(src->style_bounds) {
     int i;
     dst->style_bounds = msSmallCalloc(src->label->numstyles, sizeof(label_bounds*));
     for(i=0; i<src->label->numstyles; i++) {
@@ -529,6 +530,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     if(classPtr->styles != NULL) {
       if(msGetMarkerSize(map, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
         return(MS_FAILURE);
+      assert(point);
       cacheslot->markers[cacheslot->nummarkers].bounds.minx = (point->x - .5 * w);
       cacheslot->markers[cacheslot->nummarkers].bounds.miny = (point->y - .5 * h);
       cacheslot->markers[cacheslot->nummarkers].bounds.maxx = cacheslot->markers[cacheslot->nummarkers].bounds.minx + (w-1);

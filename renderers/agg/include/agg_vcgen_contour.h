@@ -83,7 +83,7 @@ namespace mapserver
         coord_storage              m_out_vertices;
         status_e                   m_status;
         unsigned                   m_src_vertex;
-        unsigned                   m_out_vertex;
+        unsigned                   m_out_vertex = 0;
         unsigned                   m_closed;
         unsigned                   m_orientation;
         bool                       m_auto_detect;

@@ -21,8 +21,8 @@ public class DrawMap {
     //map.getImagecolor().setRGB(153, 153, 204);
     //styleObj st = map.getLayer(1).getClass(0).getStyle(0);
     //st.getColor().setHex("#000000");
-    if( map.getLayer(1).getMetaData("hidden") != null ) {
-    	System.out.println("Layer 1 is hidden? "+map.getLayer(1).getMetaData("hidden"));
+    if( map.getLayer(1).getMetadata().get("hidden") != null ) {
+    	System.out.println("Layer 1 is hidden? "+map.getLayer(1).getMetadata().get("hidden"));
     }
     int i=0;
     //for (i=0; i<100; i++) {

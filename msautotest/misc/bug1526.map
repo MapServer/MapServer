@@ -26,8 +26,10 @@ MAP
       "+proj=latlong +datum=WGS84"
     END
     CLASS
-      OUTLINECOLOR 255 0 0 
-      COLOR 0 255 0 
+      STYLE
+        OUTLINECOLOR 255 0 0 
+        COLOR 0 255 0 
+      END
     END
   END
 END

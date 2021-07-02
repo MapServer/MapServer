@@ -7,14 +7,12 @@ on:
 
 jobs:
   backport:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     name: Backport
     steps:
       - name: Backport Bot
+        id: backport
         if: github.event.pull_request.merged && ( ( github.event.action == 'closed' && contains( join( github.event.pull_request.labels.*.name ), 'backport') ) || contains( github.event.label.name, 'backport' ) )
-        uses: Gaurav0/backport@v1.0.26
+        uses: m-kuhn/backport@v1.2.2
         with:
-          bot_username: MapServer-backport-bot
-          bot_token: ${{ secrets.BOT_TOKEN }}
-          bot_token_key: ${{ secrets.BOT_TOKEN_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

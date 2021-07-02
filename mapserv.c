@@ -195,6 +195,10 @@ int main(int argc, char *argv[])
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
+      /* coverity[tainted_string] */
+      putenv( argv[iArg] );
+    } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
+      /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
       putenv( argv[iArg] );
     } else if (strcmp(argv[iArg], "--h") == 0 || strcmp(argv[iArg], "--help") == 0) {
       printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
@@ -207,6 +211,7 @@ int main(int argc, char *argv[])
       printf("  -v                      Display version and exit.\n");
       printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
       printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
+      printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
 #ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
       printf("  -tmpbase dirname        Define a forced temporary directory.\n");
       printf("  -t mapfilename          Display the tokens of the mapfile after parsing.\n");
@@ -266,7 +271,7 @@ int main(int argc, char *argv[])
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
     mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
-    if( mapserv->request->NumParams == -1 ) {
+    if(msCGIIsAPIRequest(mapserv) == MS_FALSE && mapserv->request->NumParams == -1) { /* no QUERY_STRING or PATH_INFO */
       msCGIWriteError(mapserv);
       goto end_request;
     }
@@ -289,14 +294,15 @@ int main(int argc, char *argv[])
     }
 #endif
 
-
-
-
-    if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+    if(mapserv->request->api_path != NULL) {
+      if(msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
+	msCGIWriteError(mapserv);
+	goto end_request;
+      }
+    } else if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
       msCGIWriteError(mapserv);
       goto end_request;
     }
-
 
 end_request:
     if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
@@ -305,7 +311,6 @@ end_request:
               (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
-    msCGIWriteLog(mapserv,MS_FALSE);
     msFreeMapServObj(mapserv);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */

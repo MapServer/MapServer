@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{{ template.title }}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <style>
+      html { position: relative; min-height: 100%; }
+      body { padding-top: 5rem; margin-bottom: 40px; }
+      #page { padding: 1.5rem 1.5rem; }
+      .navbar { border-bottom: 8px solid #3333A4; }
+      .navbar-brand { font-size: 2rem; color: #3333A4 !important; text-shadow: 2px 2px 4px #ccc; }
+      .json-link { font-weight: normal; }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light fixed-top bg-light">
+      <a class="navbar-brand" href="/"><b>MapServer OGC API</b></a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbar">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="{{ template.api_root }}?f=html" id="links" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Links</a>
+            <div class="dropdown-menu" aria-labelledby="account">
+              <a class="dropdown-item" href="{{ template.api_root }}?f=html">Home</a>
+              <a class="dropdown-item" href="{{ template.api_root }}/conformance?f=html">Conformance</a>
+              <a class="dropdown-item" href="{{ template.api_root }}/collections?f=html">Collections</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main role="main" class="container-fluid">
+      <div id="page">
