@@ -2319,6 +2319,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                       || EQUAL(psInfo->dialect, "GPKG") ) &&
                     bIsValidRect )
                 {
+                    if (filter) filter = msStringConcatenate(filter, " AND ");
                     char* pszEscapedMainTableName = msLayerEscapePropertyName(
                                                     layer, psInfo->pszMainTableName);
                     filter = msStringConcatenate(filter, "\"");
