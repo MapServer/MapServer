@@ -1661,7 +1661,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
 
   if(numtokens == 2) { /* check the class index */
     classindex = atoi(tokens[1]);
-    if(classindex >= GET_LAYER(mapserv->map, layerindex)->numclasses) {
+    if(classindex < 0 || classindex >= GET_LAYER(mapserv->map, layerindex)->numclasses) {
       msSetError(MS_WEBERR, "Icon class=%d not found in layer=%s.", "mapserv()", classindex, GET_LAYER(mapserv->map, layerindex)->name);
       status = MS_FAILURE;
       goto li_cleanup;
