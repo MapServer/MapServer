@@ -2313,10 +2313,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                       EQUAL(psInfo->dialect, "GPKG")) &&
                      psInfo->pszMainTableName != NULL )
             {
-                if( psInfo->dialect && psInfo->pszMainTableName != NULL && 
-                    ( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
-                      || EQUAL(psInfo->dialect, "GPKG") ) &&
-                    bIsValidRect )
+                if( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
+                      || EQUAL(psInfo->dialect, "GPKG") )
                 {
                     if (filter) filter = msStringConcatenate(filter, " AND ");
                     char* pszEscapedMainTableName = msLayerEscapePropertyName(
