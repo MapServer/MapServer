@@ -2293,7 +2293,6 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                       EQUAL(psInfo->dialect, "GPKG")) &&
                      psInfo->pszMainTableName != NULL )
             {
-
                 if( psInfo->dialect && psInfo->pszMainTableName != NULL && 
                     ( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
                       || EQUAL(psInfo->dialect, "GPKG") ) &&
@@ -2304,27 +2303,37 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                                                     layer, psInfo->pszMainTableName);
                     filter = msStringConcatenate(filter, "\"");
                     filter = msStringConcatenate(filter, pszEscapedMainTableName);
+                    msFree(pszEscapedMainTableName);
                     filter = msStringConcatenate(filter, "\".");
-                    msFree(pszEscapedMainTableName);            
-                    filter = msStringConcatenate(filter, "ROWID");
+                    if( psInfo->pszRowId )
+                    {
+                        char* pszEscapedRowId = msLayerEscapePropertyName(
+                                                            layer, psInfo->pszRowId);
+                        filter = msStringConcatenate(filter, "\"");
+                        filter = msStringConcatenate(filter, pszEscapedRowId);
+                        filter = msStringConcatenate(filter, "\"");
+                        msFree(pszEscapedRowId);
+                    }
+                    else
+                        filter = msStringConcatenate(filter, "ROWID");
                     
                     filter = msStringConcatenate(filter, " IN ");
-                    filter = msStringConcatenate(filter, "(");        
+                    filter = msStringConcatenate(filter, "(");
                     filter = msStringConcatenate(filter, "SELECT ");
 
                     if( EQUAL(psInfo->dialect, "Spatialite") )
                         filter = msStringConcatenate(filter, "ms_spat_idx.pkid");
                     else
-                        filter = msStringConcatenate(filter, "ms_spat_idx.id");          
+                        filter = msStringConcatenate(filter, "ms_spat_idx.id");
 
-                    filter = msStringConcatenate(filter, " FROM ");              
+                    filter = msStringConcatenate(filter, " FROM ");
 
                     char szSpatialIndexName[256];
                     snprintf( szSpatialIndexName, sizeof(szSpatialIndexName),
                                 "%s_%s_%s",
                                 EQUAL(psInfo->dialect, "Spatialite") ? "idx" : "rtree",
                                 psInfo->pszSpatialFilterTableName,
-                                psInfo->pszSpatialFilterGeometryColumn );        
+                                psInfo->pszSpatialFilterGeometryColumn );
                     char* pszEscapedSpatialIndexName = msLayerEscapePropertyName(
                                                     layer, szSpatialIndexName);
 
@@ -2333,7 +2342,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                     msFree(pszEscapedSpatialIndexName);
                     
                     filter = msStringConcatenate(filter, "\" ms_spat_idx WHERE ");
-        
+
                     char szCond[256];
                     if( EQUAL(psInfo->dialect, "Spatialite") )
                     {
