@@ -190,7 +190,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   */
 
   /* Scalefactor will be infinity when SIZEUNITS is set in LAYER */
-  if(lp->scalefactor == INFINITY) {
+  if(lp->sizeunits != MS_PIXELS) {
     lp->scalefactor = 1.0; 
   }
 
