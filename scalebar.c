@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  map = msLoadMap(argv[1], NULL);
+  map = msLoadMap(argv[1], NULL, NULL);
   if(!map) {
     msWriteError(stderr);
     exit(1);

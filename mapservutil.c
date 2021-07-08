@@ -210,10 +210,8 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
   }
 
   /* ok to try to load now */
-  map = msLoadMap(ms_mapfile, NULL);
+  map = msLoadMap(ms_mapfile, NULL, config);
   if(!map) return NULL;
-
-  map->config = config; // create a read-only reference
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
     /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */

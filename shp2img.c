@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     for(i=1; i<argc; i++) { /* Step though the user arguments, 1st to find map file */
 
       if(strcmp(argv[i],"-m") == 0) {
-        map = msLoadMap(argv[i+1], NULL);
+        map = msLoadMap(argv[i+1], NULL, NULL);
         if(!map) {
           msWriteError(stderr);
           msCleanup();

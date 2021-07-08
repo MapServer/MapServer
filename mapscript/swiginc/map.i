@@ -31,10 +31,10 @@
 {
 
     /// Create a new instance of :class:`mapObj`. Note that the *filename* is optional.
-    mapObj(char *filename="") 
+    mapObj(char *filename="", configObj *config=NULL) 
     {
         if (filename && strlen(filename))
-            return msLoadMap(filename, NULL);
+            return msLoadMap(filename, NULL, config);
         else { /* create an empty map, no layers etc... */
             return msNewMapObj();
         }      

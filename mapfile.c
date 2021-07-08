@@ -6371,7 +6371,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 /*
 ** Sets up file-based mapfile loading and calls loadMapInternal to do the work.
 */
-mapObj *msLoadMap(const char *filename, const char *new_mappath)
+mapObj *msLoadMap(const char *filename, const char *new_mappath, const configObj *config)
 {
   mapObj *map;
   struct mstimeval starttime={0}, endtime={0};
@@ -6406,6 +6406,8 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
     msFreeMap(map);
     return(NULL);
   }
+
+  map->config = config; // create a read-only reference
 
   msAcquireLock( TLOCK_PARSER );  /* Steve: might need to move this lock a bit higher; Umberto: done */
 
