@@ -57,14 +57,18 @@ LAYER
     END
   CLASS
     NAME "selected"
-    COLOR 0 0 255
-    OUTLINECOLOR 255 0 0
+    STYLE
+        COLOR 0 0 255
+        OUTLINECOLOR 255 0 0
+    END
     EXPRESSION "val1"
   END
   CLASS
     NAME "normal"
-    COLOR 0 255 0
-    OUTLINECOLOR 255 0 0
+    STYLE
+        COLOR 0 255 0
+        OUTLINECOLOR 255 0 0
+    END
   END
 END
 

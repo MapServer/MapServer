@@ -37,7 +37,7 @@
   }
 
   %newobject convertToString;
-  /// Saves the object to a string. Provides the inverse option for updateFromString.
+  /// Saves the object to a string. Provides the inverse option for :func:`queryMapObj.updateFromString`.
   char* convertToString()
   {
     return msWriteQueryMapToString(self);

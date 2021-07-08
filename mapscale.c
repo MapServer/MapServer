@@ -216,10 +216,7 @@ imageObj *msDrawScalebar(mapObj *map)
   sy = (2*VMARGIN) + MS_NINT(VSPACING*fontHeight) + fontHeight + map->scalebar.height - VSLOP;
 
   /*Ensure we have an image format representing the options for the scalebar.*/
-  msApplyOutputFormat( &format, map->outputformat,
-                       map->scalebar.transparent,
-                       map->scalebar.interlace,
-                       MS_NOOVERRIDE );
+  msApplyOutputFormat( &format, map->outputformat, map->scalebar.transparent);
 
   if(map->scalebar.transparent == MS_OFF) {
     if(!MS_VALID_COLOR(map->scalebar.imagecolor))
@@ -236,8 +233,7 @@ imageObj *msDrawScalebar(mapObj *map)
   image->map = map;
 
   /* drop this reference to output format */
-  msApplyOutputFormat( &format, NULL,
-                       MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE);
 
   switch(map->scalebar.align) {
     case(MS_ALIGN_LEFT):

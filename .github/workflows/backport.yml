@@ -1,20 +1,18 @@
 name: Backport
 on:
-  pull_request:
+  pull_request_target:
     types:
       - closed
       - labeled
 
 jobs:
   backport:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     name: Backport
     steps:
       - name: Backport Bot
+        id: backport
         if: github.event.pull_request.merged && ( ( github.event.action == 'closed' && contains( join( github.event.pull_request.labels.*.name ), 'backport') ) || contains( github.event.label.name, 'backport' ) )
-        uses: Gaurav0/backport@v1.0.26
+        uses: m-kuhn/backport@v1.2.2
         with:
-          bot_username: MapServer-backport-bot
-          bot_token: 0cba09450792aa8130ae6ef3de09915654afc8cb
-          bot_token_key: 665c2358a46ddf0589de5e24a316cdcc64820b2e
           github_token: ${{ secrets.GITHUB_TOKEN }}

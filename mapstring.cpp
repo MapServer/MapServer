@@ -349,6 +349,34 @@ int strcasecmp(const char *s1, const char *s2)
 }
 #endif
 
+/*
+** msStringToInt() and msStringToDouble() are helper functions to convert strings to numbers. They
+** return MS_FAILURE if the input string is NULL or if the entire string did not convert successfully.
+*/
+int msStringToInt(const char *str, int *value, int base)
+{
+  char *parse_check = NULL;
+
+  if(!str) return MS_FAILURE;
+
+  *value = (int)strtol(str, &parse_check, base);
+  if(*parse_check != '\0') return MS_FAILURE;
+
+  return MS_SUCCESS;
+}
+
+int msStringToDouble(const char *str, double *value)
+{
+  char *parse_check = NULL;
+
+  if(!str) return MS_FAILURE;
+
+  *value = strtod(str, &parse_check);
+  if(*parse_check != '\0') return MS_FAILURE;
+
+  return MS_SUCCESS;
+}
+
 char *msLongToString(long value)
 {
   size_t bufferSize = 256;
@@ -2376,12 +2404,17 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
     bufleft = bufsize;
 
+    bool failedIconv = false;
     while (len > 0) {
       const size_t iconv_status = msIconv(cd, (char**)&inp, &len, &outp, &bufleft);
       if(iconv_status == static_cast<size_t>(-1)) {
-        msFree(out);
-        continue; /* silently ignore failed conversions */
+        failedIconv = true;
+        break;
       }
+    }
+    if( failedIconv ) {
+      msFree(out);
+      continue; /* silently ignore failed conversions */
     }
     out[bufsize - bufleft] = '\0';
     msFree(shape->values[i]);

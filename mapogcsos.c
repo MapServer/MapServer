@@ -284,7 +284,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
     pszValue = msOWSLookupMetadata(&(lp->metadata), "S",
                                    "observedproperty_name");
     if (pszValue)
-      psNode = xmlNewTextChild(psCompNode, psNsGml,
+      (void) xmlNewTextChild(psCompNode, psNsGml,
                            BAD_CAST "name", BAD_CAST pszValue);
 
     /* add components */
@@ -2932,15 +2932,21 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     if (psXPathTmp)
       sosparams->pszRequest = msStrdup("GetCapabilities");
 
+    xmlXPathFreeObject(psXPathTmp);
+
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeSensor");
 
     if (psXPathTmp)
       sosparams->pszRequest = msStrdup("DescribeSensor");
 
+    xmlXPathFreeObject(psXPathTmp);
+
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation");
 
     if (psXPathTmp)
       sosparams->pszRequest = msStrdup("GetObservation");
+
+    xmlXPathFreeObject(psXPathTmp);
 
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:DescribeObservationType");
 

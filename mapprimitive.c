@@ -333,7 +333,7 @@ int msAddPointToLine(lineObj *line, pointObj *point )
   return MS_SUCCESS;
 }
 
-int msAddLine(shapeObj *p, lineObj *new_line)
+int msAddLine(shapeObj *p, const lineObj *new_line)
 {
   lineObj lineCopy;
 
@@ -341,7 +341,8 @@ int msAddLine(shapeObj *p, lineObj *new_line)
   lineCopy.point = (pointObj *) malloc(new_line->numpoints*sizeof(pointObj));
   MS_CHECK_ALLOC(lineCopy.point, new_line->numpoints*sizeof(pointObj), MS_FAILURE);
 
-  memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
+  if( new_line->point )
+      memcpy( lineCopy.point, new_line->point, sizeof(pointObj) * new_line->numpoints );
 
   // cppcheck-suppress memleak
   return msAddLineDirectly( p, &lineCopy );
@@ -2172,21 +2173,19 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
                   max_dec_retry_offset = max_inc_retry_offset = first_label_position;
                 } else if(l==0) {
                   if(direction>0) {
-                    max_dec_retry_offset = MS_MIN(first_label_position, max_retry_offset);
-                    max_inc_retry_offset = max_retry_offset;
-                  } else {
-                    max_dec_retry_offset = max_retry_offset;
                     max_inc_retry_offset = MS_MIN(first_label_position, max_retry_offset);
-                    //max_inc_retry_offset = MS_MIN(ll->total_length-cur_label_position-text_length, max_retry_offset);
+                    max_dec_retry_offset = max_retry_offset;
+                  } else {
+                    max_inc_retry_offset = max_retry_offset;
+                    max_dec_retry_offset = MS_MIN(first_label_position, max_retry_offset);
                   }
                 } else if(l == label_repeat-1) {
                   if(direction>0) {
-                    max_inc_retry_offset = MS_MIN(first_label_position, max_retry_offset);
-                    max_dec_retry_offset = max_retry_offset;
-                  } else {
-                    max_inc_retry_offset = max_retry_offset;
                     max_dec_retry_offset = MS_MIN(first_label_position, max_retry_offset);
-                    //max_inc_retry_offset = MS_MIN(ll->total_length-cur_label_position-text_length, max_retry_offset);
+                    max_inc_retry_offset = max_retry_offset;
+                  } else {
+                    max_dec_retry_offset = max_retry_offset;
+                    max_inc_retry_offset = MS_MIN(first_label_position, max_retry_offset);
                   }
                 } else {
                   max_dec_retry_offset = max_inc_retry_offset = max_retry_offset;
@@ -2196,7 +2195,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
                 if(retry_offset == 0.0) {
                   first_retry_idx = k-1;
                 }
-                retry_offset = compute_retry_offset(ts, first_retry_idx, retry_offset, max_inc_retry_offset, max_dec_retry_offset);
+                retry_offset = compute_retry_offset(ts, first_retry_idx, retry_offset, max_dec_retry_offset, max_inc_retry_offset);
                 if(retry_offset == 0.0) { /* no offsetted position to try */
                   freeTextPath(tp);
                   free(tp);

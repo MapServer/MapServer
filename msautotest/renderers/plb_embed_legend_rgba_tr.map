@@ -15,13 +15,21 @@ shapepath "../misc/data"
 IMAGETYPE png
 fontset "../misc/fonts.lst"
 
-transparent on
+OUTPUTFORMAT
+  DRIVER AGG/PNG
+  TRANSPARENT ON
+END
+
+OUTPUTFORMAT
+  DRIVER CAIRO/PNG
+  TRANSPARENT ON
+END
 
 LEGEND 
   POSITION LR
   STATUS EMBED
-postlabelcache true
-TRANSPARENT ON
+  postlabelcache true
+  TRANSPARENT ON
   label
     type truetype
     color 0 0 0
@@ -39,20 +47,26 @@ LAYER
   CLASS 
     NAME "Big"
     EXPRESSION ([AREA] >= 500000)
-    COLOR 255 0 0 
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 255 0 0 
+        OUTLINECOLOR 0 0 0
+    END
   END
   CLASS 
     NAME "Medium"
     EXPRESSION ([AREA] >= 100000 and [AREA] < 500000)
-    COLOR 0 255 0
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 0 255 0
+        OUTLINECOLOR 0 0 0
+    END
   END
   CLASS 
     NAME "Small"
     EXPRESSION ([AREA] < 100000)
-    COLOR 0 0 255
-    OUTLINECOLOR 0 0 0
+    STYLE
+        COLOR 0 0 255
+        OUTLINECOLOR 0 0 0
+    END
   END
 END
 

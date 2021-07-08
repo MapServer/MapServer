@@ -30,17 +30,17 @@ LAYER
   CLASS 
     NAME "Text"
     EXPRESSION ([pixel] == 0)
-    COLOR -255 -255 -255
+    STYLE  COLOR -255 -255 -255  END
   END
   CLASS 
     NAME "TextBackground"
     EXPRESSION ([pixel] == 2)
-    COLOR 0 255 0
+    STYLE  COLOR 0 255 0  END
   END
   CLASS 
     NAME "Grid"
     EXPRESSION ([red] == 96 and [green] == 32 and [blue] == 32)
-    COLOR 255 0 0
+    STYLE  COLOR 255 0 0  END
   END
 END
 

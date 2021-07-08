@@ -34,6 +34,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include <limits.h>
 #include <assert.h>
 #include "mapserver.h"
@@ -990,20 +992,24 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* pszCallingFunction)
 {
 
-  int nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
+  int nEntitySize = msSHXReadSize(psSHP, hEntity);
+  if( nEntitySize > INT_MAX - 8 ) {
+      msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
+                 pszCallingFunction, nEntitySize, hEntity);
+      return(MS_FAILURE);
+  }
+  nEntitySize += 8;
   /* -------------------------------------------------------------------- */
   /*      Ensure our record buffer is large enough.                       */
   /* -------------------------------------------------------------------- */
   if( nEntitySize > psSHP->nBufSize ) {
-    psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
-    if (psSHP->pabyRec == NULL) {
-      /* Reallocate previous successfull size for following features */
-      psSHP->pabyRec = msSmallMalloc(psSHP->nBufSize);
-
+    uchar* pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
+    if (pabyRec == NULL) {
       msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                  pszCallingFunction, nEntitySize, hEntity);
       return(MS_FAILURE);
     }
+    psSHP->pabyRec = pabyRec;
     psSHP->nBufSize = nEntitySize;
   }
   if (psSHP->pabyRec == NULL) {
@@ -1345,7 +1351,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         shape->line[i].numpoints = nPoints - psSHP->panParts[i];
       else
         shape->line[i].numpoints = psSHP->panParts[i+1] - psSHP->panParts[i];
-      if (shape->line[i].numpoints <= 0) {
+      if (shape->line[i].numpoints <= 0 || shape->line[i].numpoints > nPoints) {
         msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].numpoints=%d", "msSHPReadShape()",
                    hEntity, i, shape->line[i].numpoints);
         while(--i >= 0)
@@ -1689,11 +1695,18 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
 
   /* load some information about this shapefile */
   msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+
+  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
+    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
+               "msShapefileOpen()", shpfile->numshapes);
+    msSHPClose(shpfile->hSHP);
+    return -1;
+  }
+
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
 
   bufferSize = strlen(filename)+5;
   dbfFilename = (char *)msSmallMalloc(bufferSize);
-  dbfFilename[0] = '\0';
   strcpy(dbfFilename, filename);
 
   /* clean off any extention the filename might have */
@@ -1712,6 +1725,7 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", dbfFilename);
     free(dbfFilename);
+    msSHPClose(shpfile->hSHP);
     return(-1);
   }
   free(dbfFilename);
@@ -1897,7 +1911,7 @@ static const char* msTiledSHPLoadEntry(layerObj *layer, int i, char* tilename, s
     {
         int idx = msDBFGetItemIndex(tSHP->tileshpfile->hDBF, layer->tilesrs);
         const char* pszWKT = msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, idx);
-        msOGCWKT2ProjectionObj(pszWKT, &(tSHP->sTileProj), layer->debug );
+        IGNORE_RET_VAL(msOGCWKT2ProjectionObj(pszWKT, &(tSHP->sTileProj), layer->debug ));
     }
 
     if(!layer->data) /* assume whole filename is in attribute field */

@@ -2175,8 +2175,8 @@ static void msWCSCommon20_CreateRangeType(wcs20coverageMetadataObjPtr cm, char *
       int found = MS_FALSE, j;
       for(j = 0; j < num; ++j) {
         int repr = 0;
-        msStringParseInteger(arr[j], &repr);
-        if(static_cast<unsigned>(repr) == i + 1) {
+        if(msStringParseInteger(arr[j], &repr) == MS_SUCCESS &&
+           static_cast<unsigned>(repr) == i + 1) {
           found = MS_TRUE;
           break;
         }
@@ -4695,8 +4695,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* create a temporary outputformat (we likely will need to tweak parts) */
   format = msCloneOutputFormat(msSelectOutputFormat(map, params->format));
-  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE,
-                      MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE);
 
   /* set format specific parameters */
   if (msWCSSetFormatParams20(format, params->format_options) != MS_SUCCESS) {
@@ -4767,14 +4766,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   /* create the image object  */
-  if (!map->outputformat) {
-    msWCSClearCoverageMetadata20(&cm);
-    msFree(bandlist);
-    msSetError(MS_WCSERR, "The map outputformat is missing!",
-               "msWCSGetCoverage20()");
-    msDrawRasterLayerLowCloseDataset(layer, hDS);
-    return msWCSException(map, NULL, NULL, params->version);
-  } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
+  if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,
                           map->web.imagepath, map->web.imageurl, map->resolution,
                           map->defresolution, &map->imagecolor);

@@ -82,7 +82,7 @@ MAP
         INITIALGAP 15
         ANGLE 180
         COLOR 255 0 0
-        SYMBOL barb_warm
+        SYMBOL "barb_warm"
         GAP -45
         SIZE 8
       END
@@ -94,7 +94,7 @@ MAP
       END
       STYLE
         COLOR 0 0 255
-        SYMBOL barb_cold
+        SYMBOL "barb_cold"
         SIZE 12
         INITIALGAP 45
         GAP -45

@@ -121,6 +121,9 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
 #endif
 #ifdef USE_PBF
   {"mvt","MVT","application/vnd.mapbox-vector-tile"},
+  // The following format is added to keep backward compatibility
+  // for the application/x-protobuf media type
+  {"mvtxprotobuf","MVT","application/x-protobuf"},
 #endif
   {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
@@ -152,8 +155,7 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
     return MS_FAILURE;
   }
 
-  msApplyOutputFormat( &(map->outputformat), format,
-                       map->transparent, map->interlace, map->imagequality );
+  msApplyOutputFormat( &(map->outputformat), format, MS_NOOVERRIDE);
 
   return MS_SUCCESS;
 }
@@ -164,13 +166,14 @@ int msPostMapParseOutputFormatSetup( mapObj *map )
 
 outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     const char *driver,
-    const char *name )
+    const char *name,
+    const char *mimetype )
 
 {
 
   outputFormatObj *format = NULL;
   if( strncasecmp(driver,"GD/",3) == 0 ) {
-    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
+    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name, mimetype );
   }
 
   if( strcasecmp(driver,"UTFGRID") == 0 ) {
@@ -183,7 +186,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   }
 
   else if( strcasecmp(driver,"AGG/PNG") == 0 ) {
-    if(!name) name="png24";
+    if(!name) name="png";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/png");
     format->imagemode = MS_IMAGEMODE_RGB;
@@ -214,7 +217,12 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"MVT") == 0 ) {
     if(!name) name="mvt";
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("application/x-protobuf");
+    if (mimetype) {
+      format->mimetype = msStrdup(mimetype);
+    } else {
+      format->mimetype = msStrdup("application/vnd.mapbox-vector-tile");
+    }
+
     format->imagemode = MS_IMAGEMODE_FEATURE;
     format->extension = msStrdup("pbf");
     format->renderer = MS_RENDER_WITH_MVT;
@@ -410,7 +418,7 @@ void msApplyDefaultOutputFormats( mapObj *map )
   defEntry = defaultoutputformats;
   while(defEntry->name) {
     if( msSelectOutputFormat( map, defEntry->name ) == NULL )
-      msCreateDefaultOutputFormat( map, defEntry->driver, defEntry->name );
+      msCreateDefaultOutputFormat( map, defEntry->driver, defEntry->name, defEntry->mimetype );
     defEntry++;
   }
   if( map->imagetype != NULL )
@@ -609,7 +617,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
     struct defaultOutputFormatEntry *formatEntry = defaultoutputformats;
     while(formatEntry->name) {
       if(!strcasecmp(imagetype,formatEntry->name) || !strcasecmp(imagetype,formatEntry->mimetype)) {
-        format = msCreateDefaultOutputFormat( map, formatEntry->driver, formatEntry->name );
+        format = msCreateDefaultOutputFormat( map, formatEntry->driver, formatEntry->name, formatEntry->mimetype );
         break;
       }
       formatEntry++;
@@ -635,13 +643,10 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
 
 void msApplyOutputFormat( outputFormatObj **target,
                           outputFormatObj *format,
-                          int transparent,
-                          int interlaced,
-                          int imagequality )
+                          int transparent)
 
 {
   int       change_needed = MS_FALSE;
-  int       old_imagequality, old_interlaced;
   outputFormatObj *formatToFree = NULL;
 
   assert( target != NULL );
@@ -665,40 +670,17 @@ void msApplyOutputFormat( outputFormatObj **target,
   /*      and return.                                                     */
   /* -------------------------------------------------------------------- */
   if( transparent != MS_NOOVERRIDE && !format->transparent != !transparent )
-    change_needed = MS_TRUE;
-
-  old_imagequality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
-  if( imagequality != MS_NOOVERRIDE && old_imagequality != imagequality )
-    change_needed = MS_TRUE;
-
-  old_interlaced =
-    strcasecmp(msGetOutputFormatOption( format, "INTERLACE", "ON"),
-               "OFF") != 0;
-  if( interlaced != MS_NOOVERRIDE && !interlaced != !old_interlaced )
-    change_needed = MS_TRUE;
+      change_needed = MS_TRUE;
 
   if( change_needed ) {
-    char new_value[128];
 
     if( format->refcount > 0 )
       format = msCloneOutputFormat( format );
 
     if( transparent != MS_NOOVERRIDE ) {
-      format->transparent = transparent;
-      if( format->imagemode == MS_IMAGEMODE_RGB )
-        format->imagemode = MS_IMAGEMODE_RGBA;
-    }
-
-    if( imagequality != MS_NOOVERRIDE && imagequality != old_imagequality ) {
-      snprintf( new_value, sizeof(new_value), "%d", imagequality );
-      msSetOutputFormatOption( format, "QUALITY", new_value );
-    }
-
-    if( interlaced != MS_NOOVERRIDE && !interlaced != !old_interlaced ) {
-      if( interlaced )
-        msSetOutputFormatOption( format, "INTERLACE", "ON" );
-      else
-        msSetOutputFormatOption( format, "INTERLACE", "OFF" );
+        format->transparent = transparent;
+        if( format->imagemode == MS_IMAGEMODE_RGB )
+            format->imagemode = MS_IMAGEMODE_RGBA;
     }
   }
 
@@ -1206,9 +1188,7 @@ void msOutputFormatResolveFromImage( mapObj *map, imageObj* img )
 
     msApplyOutputFormat( &(map->outputformat),
                          new_format,
-                         has_non_opaque_pixels,
-                         MS_NOOVERRIDE,
-                         MS_NOOVERRIDE );
+                         has_non_opaque_pixels);
 
     msFreeOutputFormat( format );
     img->format = map->outputformat;

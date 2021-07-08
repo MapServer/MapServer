@@ -811,7 +811,6 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
 int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
                           char *filename, int unique_layer_names)
 {
-  char *pszProj=NULL;
   char *pszValue;
   const char *pszHash;
   char *pszName=NULL;
@@ -970,7 +969,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   pszHash = msLookupHashTable(&(layer->metadata), "wms_srs");
   if(((pszHash == NULL) || (strcasecmp(pszHash, "") == 0)) &&
       map->projection.numargs != 0) {
-    pszProj = map->projection.args[map->projection.numargs-1];
+    char* pszProj = map->projection.args[map->projection.numargs-1];
 
     if(pszProj != NULL) {
       if(strncasecmp(pszProj, "AUTO:", 5) == 0) {
@@ -987,6 +986,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
                   pszProj);
         }
       }
+      msFree(pszProj);
     }
   }
 

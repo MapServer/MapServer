@@ -1,0 +1,29 @@
+{% include "header.html" %}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html">{{ response.collection.title }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=html">items</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ response.id }}
+    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ response.id }}?f=json">JSON</a></li>
+  </ol>
+</nav>
+
+<h1>{{ template.title }} - Collection Item: {{ response.collection.title }}</h1>
+
+<p><strong>ID:</strong> {{ response.id }}</p>
+
+<div id="map">map goes here...</div>
+
+<p>
+  <strong>Properties:</strong>
+  <ul>
+{% for key, value in response.properties %}
+    <li><strong>{{ key }}:</strong> {{ value }}</li>
+{% endfor %}
+  </ul>
+</p>
+
+{% include "footer.html" %}

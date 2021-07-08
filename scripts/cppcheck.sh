@@ -38,6 +38,7 @@ ret_code=0
 
 grep -v "unmatchedSuppression" ${LOG_FILE} \
     | grep -v "/renderers/agg" \
+    | grep -v "/third-party" \
     | grep -v "/build" \
     | grep -v "yacc.c" \
     | grep -v "maplexer.c" \

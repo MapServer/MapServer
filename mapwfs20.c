@@ -776,14 +776,14 @@ static char** msWFSGetStoredQueries(mapObj *map, int* pn)
     if(i == n)
     {
         tokens = (char**) realloc(tokens, (n+1) * sizeof(char*));
-        memmove(tokens + 1, tokens, n * sizeof(char**));
+        memmove(tokens + 1, tokens, n * sizeof(char*));
         tokens[0] = msStrdup(URN_GET_FEATURE_BY_ID);
         n ++;
     }
   }
   else
   {
-      tokens = (char**) malloc(sizeof(char**));
+      tokens = (char**) malloc(sizeof(char*));
       tokens[0] = msStrdup(URN_GET_FEATURE_BY_ID);
       n = 1;
   }

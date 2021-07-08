@@ -33,15 +33,14 @@ namespace mapserver
     // the distance between the last and the first points
     struct line_aa_vertex
     {
-        int x;
-        int y;
-        int len;
+        int x = 0;
+        int y = 0;
+        int len = 0;
 
-        line_aa_vertex() {}
+        line_aa_vertex() = default;
         line_aa_vertex(int x_, int y_) :
             x(x_),
-            y(y_),
-            len(0)
+            y(y_)
         {
         }
 

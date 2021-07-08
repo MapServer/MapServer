@@ -1,0 +1,36 @@
+{% include "header.html" %}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Collections</li>
+    <li class="ml-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections?f=json">JSON</a></li>
+  </ol>
+</nav>
+
+<h1>{{ template.title }} - Collections</h1>
+
+<div class="table-responsive">
+  <table class="table" style="width:100%;">
+    <thead class="thead-light">
+      <tr>
+        <th>#</th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+{% for collection in response.collections %}
+      <tr>
+        <td>{{ loop.index1 }}</td>
+        <td><a href="{{ template.api_root }}/collections/{{ collection.id }}?f=html">{{ collection.title }}</a></td>
+        <td>{{ collection.itemType }}</td>
+        <td>{{ collection.description }}</td>
+      </tr>
+{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include "footer.html" %}

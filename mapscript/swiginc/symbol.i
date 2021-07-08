@@ -106,7 +106,7 @@
         }
         else 
         {
-            format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "aggpng");
+            format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "aggpng", NULL);
             if (format)
                 msInitializeRendererVTable(format);
         }

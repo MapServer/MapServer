@@ -445,7 +445,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     if(MS_UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
 
     /* deref and possibly free temporary transparent output format.  */
-    msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+    msApplyOutputFormat( &transFormat, NULL, MS_NOOVERRIDE);
 
   }
 
@@ -469,13 +469,13 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   }
 
   /* ensure we have an image format representing the options for the legend */
-  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent);
 
   image = msImageCreate(width,height,format,map->web.imagepath, map->web.imageurl,
                         map->resolution, map->defresolution, &(map->legend.imagecolor));
 
   /* drop this reference to output format */
-  msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE);
 
   if(image == NULL) {
     msSetError(MS_IMGERR, "Unable to initialize image.","msCreateLegendIcon()");
@@ -721,7 +721,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
 
 
   /* ensure we have an image format representing the options for the legend. */
-  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent);
 
   /* initialize the legend image */
   image = msImageCreate(size_x, size_y, format, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->legend.imagecolor);
@@ -734,7 +734,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
   /* image = renderer->createImage(size_x,size_y,format,&(map->legend.imagecolor)); */
 
   /* drop this reference to output format */
-  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
+  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE);
 
   pnt.y = VMARGIN;
   pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
@@ -764,7 +764,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
       ret = msDrawTextSymbol(map,image,textPnt,&cur->ts);
       if(MS_UNLIKELY(ret == MS_FAILURE))
         goto cleanup;
-      freeTextSymbol(&cur->ts);
+      /* Coverity Scan is confused by label refcount, and wrongly believe we */
+      /* might free &map->legend.label, so make it clear we won't */
+      freeTextSymbolEx(&cur->ts, MS_FALSE);
+      MS_REFCNT_DECR(cur->ts.label);
     }
     
     pnt.y += map->legend.keyspacingy; /* bump y for next label */
@@ -777,7 +780,10 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
 
 cleanup:
   while(cur) {
-    freeTextSymbol(&cur->ts);
+    /* Coverity Scan is confused by label refcount, and wrongly believe we */
+    /* might free &map->legend.label, so make it clear we won't */
+    freeTextSymbolEx(&cur->ts, MS_FALSE);
+    MS_REFCNT_DECR(cur->ts.label);
     head = cur;
     cur = cur->pred;
     free(head);

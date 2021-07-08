@@ -38,8 +38,8 @@ namespace mapserver
             coord_scale  = 1 << coord_shift
         };
 
-        T x,y;
-        vertex_integer() {}
+        T x = 0,y = 0;
+        vertex_integer() = default;
         vertex_integer(T x_, T y_, unsigned flag) :
             x(((x_ << 1) & ~1) | (flag &  1)),
             y(((y_ << 1) & ~1) | (flag >> 1)) {}

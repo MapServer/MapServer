@@ -76,25 +76,21 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     rendererVTableObj *renderer = map->outputformat->vtable;
     colorObj *bg = &map->imagecolor;
     map->imagecolor.alpha=255;
-    if(map->transparent == MS_TRUE) {
-      /* don't set the image color */
-      bg = NULL;
-    }
 
-  image = renderer->createImage(map->width, map->height, map->outputformat,bg);
-  if (image == NULL)
-    return(NULL);
-  image->format = map->outputformat;
-  image->format->refcount++;
-  image->width = map->width;
-  image->height = map->height;
-
-  image->resolution = map->resolution;
-  image->resolutionfactor = map->resolution/map->defresolution;
-  if (map->web.imagepath)
-    image->imagepath = msStrdup(map->web.imagepath);
-  if (map->web.imageurl)
-    image->imageurl = msStrdup(map->web.imageurl);
+    image = renderer->createImage(map->width, map->height, map->outputformat,bg);
+    if (image == NULL)
+      return(NULL);
+    image->format = map->outputformat;
+    image->format->refcount++;
+    image->width = map->width;
+    image->height = map->height;
+    
+    image->resolution = map->resolution;
+    image->resolutionfactor = map->resolution/map->defresolution;
+    if (map->web.imagepath)
+      image->imagepath = msStrdup(map->web.imagepath);
+    if (map->web.imageurl)
+      image->imageurl = msStrdup(map->web.imageurl);
 
   } else if( MS_RENDERER_IMAGEMAP(map->outputformat) ) {
     image = msImageCreateIM(map->width, map->height, map->outputformat,
@@ -413,8 +409,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
       if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
-        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
+        if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format)) {
+          assert(pasOWSReqInfo);
           status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests,  map, lp, image);
+        }
         else {
           msSetError(MS_WMSCONNERR, "Output format '%s' doesn't support WMS layers.", "msDrawMap()", image->format->name);
           status = MS_FAILURE;
@@ -550,7 +548,10 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     if(lp->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
       if(MS_RENDERER_PLUGIN(image->format) || MS_RENDERER_RAWDATA(image->format))
+      {
+        assert(pasOWSReqInfo);
         status = msDrawWMSLayerLow(map->layerorder[i], pasOWSReqInfo, numOWSRequests, map, lp, image);
+      }
 
 #else
       status = MS_FAILURE;
@@ -1356,7 +1357,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   int i, status;
   char annotate=MS_TRUE, cache=MS_FALSE;
-  int drawmode = MS_DRAWMODE_FEATURES|MS_DRAWMODE_QUERY;
+  int drawmode = MS_DRAWMODE_FEATURES;
   shapeObj shape;
   int maxnumstyles=1;
 
@@ -1405,13 +1406,16 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
+
+    drawmode |= MS_DRAWMODE_QUERY;
+
     if (layer->numclasses > 0) {
       colorbuffer = (colorObj*)msSmallMalloc(layer->numclasses*sizeof(colorObj));
       mindistancebuffer = (int*)msSmallMalloc(layer->numclasses*sizeof(int));
     }
 
     for(i=0; i<layer->numclasses; i++) {
-      if(layer->type == MS_LAYER_POLYGON) { /* alter BOTTOM style since that's almost always the fill */
+      if(layer->type == MS_LAYER_POLYGON && layer->class[i]->numstyles > 0) { /* alter BOTTOM style since that's almost always the fill */
         if (layer->class[i]->styles == NULL) {
           msSetError(MS_MISCERR, "Don't know how to draw class %s of layer %s without a style definition.", "msDrawQueryLayer()", layer->class[i]->name, layer->name);
           msFree(colorbuffer);
@@ -1570,7 +1574,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* if MS_HILITE, restore color and mindistance values */
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
-      if(layer->type == MS_LAYER_POLYGON) {
+      if(layer->type == MS_LAYER_POLYGON && layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[0]->color))
           layer->class[i]->styles[0]->color = colorbuffer[i];
         else if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor))

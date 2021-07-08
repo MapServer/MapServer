@@ -55,8 +55,8 @@ FONTSET ./etc/fonts.txt
 # Start of web interface definition
 #
 WEB
-  MINSCALE 2000000
-  MAXSCALE 50000000
+  MINSCALEDENOM 2000000
+  MAXSCALEDENOM 50000000
 
   IMAGEPATH "/tmp/ms_tmp/" 
   IMAGEURL "/ms_tmp/"
@@ -106,9 +106,11 @@ LAYER
   STATUS ON
   DATA pattern12
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END
@@ -131,9 +133,11 @@ LAYER
   STATUS ON
   DATA pattern13
   CLASS
-   SYMBOL 2
-    SIZE 8
-    COLOR 255 0 0        
+    STYLE
+      SYMBOL 2
+      SIZE 8
+      COLOR 255 0 0
+    END  
   END
 
 END

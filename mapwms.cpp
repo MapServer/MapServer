@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#define NEED_IGNORE_RET_VAL
+
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -42,6 +44,7 @@
 #include "maptime.h"
 #include "mapproject.h"
 
+#include <cassert>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -362,6 +365,8 @@ int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     const int curfilter = ows_request->layerwmsfilterindex[lp->index];
 
     /* Skip empty filters */
+    assert(paszFilters);
+    assert(curfilter >= 0 && curfilter < numfilters);
     if (paszFilters[curfilter][0] == '\0') {
       continue;
     }
@@ -1257,7 +1262,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
         map_edge_buffer = atoi(value);
     }
-    if (map_edge_buffer > 0) {
+    if (map_edge_buffer > 0 && map->width > 0 && map->height >  0) {
       /* adjust bbox and width and height to the buffer */
       const double buffer_x = map_edge_buffer * (map->extent.maxx - map->extent.minx) / (double)map->width;
       const double buffer_y = map_edge_buffer * (map->extent.maxy - map->extent.miny) / (double)map->height;
@@ -1362,8 +1367,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   */
 
   if( format != NULL )
-    msApplyOutputFormat( &(map->outputformat), format, transparent,
-                         MS_NOOVERRIDE, MS_NOOVERRIDE );
+    msApplyOutputFormat( &(map->outputformat), format, transparent);
 
   /* Validate all layers given.
   ** If an invalid layer is sent, return an exception.
@@ -3063,8 +3067,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msGetOutputFormatMimeListImg(map,mime_list,sizeof(mime_list)/sizeof(char*));
 
       if (nVersion >= OWS_1_1_1) {
+        const auto isGetLegendGraphicEnabled =
+            msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE);
         if (nVersion == OWS_1_3_0) {
-          if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE))
+          if (isGetLegendGraphicEnabled)
             msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
                                  mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                                  mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -3075,7 +3081,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_FALSE))
             msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
         } else {
-          if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE))
+          if (isGetLegendGraphicEnabled)
             msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
                                  mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                                  mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -3757,13 +3763,13 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
 
       else
-        msDrawLayer(map, GET_LAYER(map, i), img);
+        IGNORE_RET_VAL(msDrawLayer(map, GET_LAYER(map, i), img));
     }
 
   } else {
 
     /* intercept requests for Mapbox vector tiles */
-    if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/x-protobuf")) {
+    if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/vnd.mapbox-vector-tile") || !strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/x-protobuf")) {
       int status=0;
       if((status = msMVTWriteTile(map, MS_TRUE)) != MS_SUCCESS) return MS_FAILURE;
       return MS_SUCCESS;
@@ -4635,8 +4641,7 @@ this request. Check wms/ows_enable_request settings.",
       return msWMSException(map, nVersion, "InvalidFormat", wms_exception_format);
     }
   }
-  msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
-      MS_NOOVERRIDE, MS_NOOVERRIDE );
+  msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE);
   
   if ( psRule == NULL || nLayers > 1) {
     if ( psScale != NULL ) {
