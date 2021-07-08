@@ -1362,6 +1362,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   int i,j,k;
   layerObj *lp=NULL;
   shapeObj shape;
+  FILE *stream_to_free = NULL;
   FILE *stream=stdout; /* defaults to stdout */
   char szPath[MS_MAXPATHLEN];
   char *value;
@@ -1377,11 +1378,12 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   msInitShape(&shape);
 
   if(filename && strlen(filename) > 0) { /* deal with the filename if present */
-    stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
-    if(!stream) {
+    stream_to_free = fopen(msBuildPath(szPath, map->mappath, filename), "w");
+    if(!stream_to_free) {
       msSetError(MS_IOERR, "(%s)", "msGMLWriteQuery()", filename);
       return(MS_FAILURE);
     }
+    stream = stream_to_free;
   }
 
   msIO_fprintf(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
@@ -1444,6 +1446,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       geometryList = msGMLGetGeometries(lp, namespaces, MS_FALSE);
       if (itemList == NULL || constantList == NULL || groupList == NULL || geometryList == NULL) {
         msSetError(MS_MISCERR, "Unable to populate item and group metadata structures", "msGMLWriteQuery()");
+        if(stream_to_free != NULL) fclose(stream_to_free);
         return MS_FAILURE;
       }
 
@@ -1455,6 +1458,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
           msGMLFreeItems(itemList);
           msGMLFreeGeometries(geometryList);
           msFree(pszOutputSRS);
+          if(stream_to_free != NULL) fclose(stream_to_free);
           return MS_FAILURE;
         }
       }
@@ -1468,6 +1472,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
           msGMLFreeGeometries(geometryList);
           msProjectDestroyReprojector(reprojector);
           msFree(pszOutputSRS);
+          if(stream_to_free != NULL) fclose(stream_to_free);
           return MS_FAILURE;
         }
 
@@ -1549,7 +1554,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   /* end this document */
   msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname", OWS_NOERR, "</%s>\n", "msGMLOutput");
 
-  if(filename && strlen(filename) > 0) fclose(stream);
+  if(stream_to_free != NULL) fclose(stream_to_free);
   msFree(pszMapSRS);
 
   return(MS_SUCCESS);
