@@ -1030,6 +1030,67 @@ msPostGISRetrieveVersion(PGconn *pgconn)
 }
 
 /*
+** Get the PostgreSQL server version number from the database as integer.
+** 12.7.1 ==> 120701
+*/
+static int
+msPostGISRetrievePostgreSQLVersion(PGconn *pgconn)
+{
+  static const char* sql = "SELECT version()";
+  if ( ! pgconn ) {
+    msSetError(MS_QUERYERR, "No open connection.", "msPostGISRetrievePostgreSQLVersion()");
+    return MS_FAILURE;
+  }
+
+  PGresult* pgresult = PQexecParams(pgconn, sql,0, nullptr, nullptr, nullptr, nullptr, 0);
+
+  if ( !pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
+    msDebug("Error executing SQL: (%s) in msPostGISRetrievePostgreSQLVersion()", sql);
+    msSetError(MS_QUERYERR, "Error executing SQL. check server logs.", "msPostGISRetrievePostgreSQLVersion()");
+    return MS_FAILURE;
+  }
+
+  if (PQgetisnull(pgresult, 0, 0)) {
+    PQclear(pgresult);
+    msSetError(MS_QUERYERR,"Null result returned.","msPostGISRetrievePostgreSQLVersion()");
+    return MS_FAILURE;
+  }
+
+  std::string strVersion = PQgetvalue(pgresult, 0, 0);
+  PQclear(pgresult);
+
+  // Skip leading "PostgreSQL " (or other vendorized name)
+  auto nPos = strVersion.find(' ');
+  if( nPos == std::string::npos )
+      return 0;
+
+  char* ptr = &strVersion[nPos + 1];
+  char *strParts[3] = { nullptr, nullptr, nullptr };
+  int j = 0;
+  strParts[j++] = ptr;
+  while( *ptr != '\0' && j < 3 ) {
+    if ( *ptr == '.' ) {
+      *ptr = '\0';
+      strParts[j++] = ptr + 1;
+    }
+    if ( *ptr == ' ' ) {
+      *ptr = '\0';
+      break;
+    }
+    ptr++;
+  }
+
+  int version = 0;
+  int factor = 10000;
+  for( int i = 0; i < j; i++ ) {
+    version += factor * atoi(strParts[i]);
+    factor = factor / 100;
+  }
+
+  return version;
+}
+
+/*
 ** msPostGISRetrievePK()
 **
 ** Find out that the primary key is for this layer.
@@ -1322,9 +1383,17 @@ static int msPostGISParseData(layerObj *layer)
       return MS_FAILURE;
     }
     if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
-      /* No user specified unique id so we will use the PostgreSQL oid */
-      /* TODO: Deprecate this, oids are deprecated in PostgreSQL */
-      layerinfo->uid = "oid";
+      if( layerinfo->pgconn && msPostGISRetrievePostgreSQLVersion(layerinfo->pgconn) < 120000 ) {
+        /* For PostgreSQL < 12: No user specified unique id so we will use the PostgreSQL oid */
+        layerinfo->uid = "oid";
+      } else {
+        msSetError(MS_QUERYERR,
+                   "Error parsing PostGIS DATA variable. "
+                   "No primary key was found. "
+                   "You must specify 'using unique'.",
+                   "msPostGISParseData()");
+        return MS_FAILURE;
+      }
     }
   }
 
