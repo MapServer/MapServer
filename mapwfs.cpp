@@ -1501,9 +1501,8 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
           else
             layer_namespace_prefix = user_namespace_prefix;
 
-          /* value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layername"); */
           encoded_name = msEncodeHTMLEntities( lp->name );
-          value = msOWSLookupMetadata(&(lp->metadata), "OFG", "layer_type");
+          value = msOWSLookupMetadata(&(lp->metadata), "F", "layer_type");
           if(value) {
             encoded_type = msEncodeHTMLEntities(value);
           } else {
