@@ -33,7 +33,7 @@ class ConfigConstructorTestCase(unittest.TestCase):
 
     def testConfigConstructorFilenameArg(self):
         """ConfigConstructorTestCase.testConfigConstructorFilenameArg: map constructor with filename argument"""
-        test_config = mapscript.mapObj(TESTCONFIGFILE)
+        test_config = mapscript.configObj(TESTCONFIGFILE)
         assert test_config.__class__.__name__ == "configObj"
         assert test_config.thisown == 1
 
