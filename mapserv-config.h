@@ -9,13 +9,11 @@ extern "C" {
 
 enum MS_CONFIG_SECTIONS { MS_CONFIG_SECTION=3000, MS_CONFIG_SECTION_ENV, MS_CONFIG_SECTION_MAPS, MS_CONFIG_SECTION_PLUGINS };
 
-#ifndef SWIG
 typedef struct {
   hashTableObj env;
   hashTableObj maps;
   hashTableObj plugins;
 } configObj;
-#endif /*SWIG*/
 
 MS_DLL_EXPORT configObj *msLoadConfig(char* ms_config_file);
 MS_DLL_EXPORT void msFreeConfig(configObj *config);

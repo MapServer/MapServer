@@ -260,9 +260,11 @@ typedef struct {
 %include "../../mapsymbol.h"
 %include "../../maphash.h"
 %include "../../maperror.h"
+%include "../../mapserv-config.h"
 
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
+%apply Pointer NONNULL { configObj *config };
 
 /* 
 =============================================================================
@@ -270,7 +272,6 @@ typedef struct {
 =============================================================================
 */
 
-%include "../swiginc/config.i"
 %include "../swiginc/error.i"
 %include "../swiginc/map.i"
 %include "../swiginc/mapzoom.i"
@@ -303,6 +304,7 @@ typedef struct {
 %include "../swiginc/legend.i"
 %include "../swiginc/referencemap.i"
 %include "../swiginc/querymap.i"
+%include "../swiginc/config.i"
 
 /* 
 =============================================================================
