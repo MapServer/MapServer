@@ -26,7 +26,7 @@
 
 import unittest
 import mapscript
-from .testing import MapTestCase, TESTCONFIGFILE
+from .testing import TESTCONFIGFILE
 
 
 class ConfigConstructorTestCase(unittest.TestCase):
