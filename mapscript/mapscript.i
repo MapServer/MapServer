@@ -269,7 +269,8 @@ typedef struct {
  Class extension methods are now included from separate interface files  
 =============================================================================
 */
-   
+
+%include "../swiginc/config.i"
 %include "../swiginc/error.i"
 %include "../swiginc/map.i"
 %include "../swiginc/mapzoom.i"

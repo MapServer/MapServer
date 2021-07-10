@@ -1869,7 +1869,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     goto end_request;
   }
 
-  config = msLoadConfig();
+  config = msLoadConfig(NULL);
   if(config == NULL) {
     msCGIWriteError(mapserv);
     goto end_request;
