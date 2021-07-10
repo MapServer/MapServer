@@ -38,7 +38,7 @@ import mapscript
 
 # define the path to mapserver test data
 TESTS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
+TESTMAPFILE = os.path.join(TESTS_PATH, 'mapserver-sample.conf')
 TESTCONFIGFILE = os.path.join(TESTS_PATH, 'test.map')
 XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
 HOME_IMAGE = os.path.join(TESTS_PATH, 'home.png')
