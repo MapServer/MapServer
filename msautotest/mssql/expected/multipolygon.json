@@ -2,6 +2,7 @@
 "type": "FeatureCollection",
 "numberMatched": 1,
 "name": "multipolygon",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
 "features": [
 { "type": "Feature", "properties": { "fid": 1 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 30.0, 20.0 ], [ 45.0, 40.0 ], [ 10.0, 40.0 ], [ 30.0, 20.0 ] ] ], [ [ [ 15.0, 5.0 ], [ 40.0, 10.0 ], [ 10.0, 20.0 ], [ 5.0, 10.0 ], [ 15.0, 5.0 ] ] ] ] } }
 ]
