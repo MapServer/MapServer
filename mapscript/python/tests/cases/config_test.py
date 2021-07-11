@@ -38,5 +38,26 @@ class ConfigConstructorTestCase(unittest.TestCase):
         assert test_config.thisown == 1
 
 
+class ConfigHashTableTests(MapTestCase):
+
+    def testGetEnv(self):
+
+        test_config = mapscript.configObj(TESTCONFIGFILE)
+        assert test_config.env.__class__.__name__ == "hashTableObj"
+        assert test_config.env.numitems == 1
+
+    def testGetMaps(self):
+
+        test_config = mapscript.configObj(TESTCONFIGFILE)
+        assert test_config.maps.__class__.__name__ == "hashTableObj"
+        assert test_config.maps.numitems == 0
+
+    def testGetMaps(self):
+
+        test_config = mapscript.configObj(TESTCONFIGFILE)
+        assert test_config.plugins.__class__.__name__ == "hashTableObj"
+        assert test_config.plugins.numitems == 0
+
+
 if __name__ == '__main__':
     unittest.main()
