@@ -2088,9 +2088,20 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
         // otherwise if find_srid() would return 0, ST_Intersects() would not
         // work at all, which breaks the msautotest/query/query_postgis.map
         // tests, releated to bdry_counpy2 layer that has no SRID
-        static const char *strRectTemplate = "ST_Intersects(\"%s\", %s)";
-        strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
-        sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
+        if( layerinfo->version >= 20500 )
+        {
+            static const char *strRectTemplate = "ST_Intersects(\"%s\", %s)";
+            strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
+            sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
+        }
+        else
+        {
+            // ST_Intersects() before PostGIS 2.5 doesn't support collections
+            // See https://github.com/MapServer/MapServer/pull/6355#issuecomment-877355007
+            static const char *strRectTemplate = "(\"%s\" && %s) AND ST_Distance(\"%s\", %s) = 0";
+            strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + 2 * (strBoxLength + strlen(layerinfo->geomcolumn)) +1 );
+            sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox, layerinfo->geomcolumn, strBox);
+        }
     }
     else
     {
