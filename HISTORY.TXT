@@ -10,15 +10,37 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
-http://mapserver.org/development/changelog/
+https://mapserver.org/development/changelog/
+
+7.6.4 release (2021-07-12)
+--------------------------
+
+- improved performance of GPKG and SpatiaLite queries (#6361)
+
+- WFS: fix paging with GPKG/Spatialite datasources and non-point geometries (#6325)
+
+- PostGIS: use ST_Intersects instead of && for bounding box (#6348)
+
+see detailed changelog for other fixes
+
+7.6.3 release (2021-04-30)
+--------------------------
+
+- fix security flaw for processing the MAP parameter (#6313)
+
+- fix code defects through Coverity Scan warnings (#6307)
+
+- add support for PROJ 8 (#6249)
+
+see detailed changelog for other fixes
 
 7.6.2 release (2020-12-07)
--------------------------
+--------------------------
 
 - No major changes, see detailed changelog for bug fixes
 
 7.6.1 release (2020-07-31)
--------------------------
+--------------------------
 
 - No major changes, see detailed changelog for bug fixes
 

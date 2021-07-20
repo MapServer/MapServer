@@ -2,7 +2,7 @@ branches:
   except:
     - /(cherry-pick-)?backport-\d+-to-/
 
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
@@ -18,7 +18,7 @@ environment:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
 
   # VS 2017
-  VS_VERSION: Visual Studio 15 2017
+  VS_VERSION: Visual Studio 16 2019
   matrix:
   - platform: x86
     Python_ROOT_DIR: c:/python27
@@ -32,9 +32,6 @@ environment:
   - platform: x64
     Python_ROOT_DIR: c:/python38-x64
 
-services:
-  - mssql2017
-
 matrix:
   fast_finish: true
 
@@ -42,6 +39,7 @@ shallow_clone: false
 clone_depth: 5
 
 init:
+  - net start MSSQL$SQL2019
   - ps: |
         if ($env:APPVEYOR_REPO_TAG -ne $TRUE) {
             if ("c:/python27-x64","c:/python36-x64" -contains $env:Python_ROOT_DIR -eq $TRUE) {
@@ -53,12 +51,14 @@ init:
 build_script:
   - ps: Write-Host "Build tags - $env:APPVEYOR_REPO_TAG $env:APPVEYOR_REPO_TAG_NAME"
   - set "BUILD_FOLDER=%APPVEYOR_BUILD_FOLDER:\=/%"
-  - if "%platform%" == "x64" SET VS_FULL=%VS_VERSION% Win64
+  - if "%platform%" == "x64" SET VS_FULL=%VS_VERSION%
+  - if "%platform%" == "x64" SET VS_ARCH=x64
   - if "%platform%" == "x86" SET VS_FULL=%VS_VERSION%
-  - if "%platform%" == "x86" SET SDK=release-1911
-  - if "%platform%" == "x64" SET SDK=release-1911-x64
-  - if "%platform%" == "x64" call "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
-  - if "%platform%" == "x86" call "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+  - if "%platform%" == "x86" SET VS_ARCH=Win32 
+  - if "%platform%" == "x86" SET SDK=release-1928
+  - if "%platform%" == "x64" SET SDK=release-1928-x64
+  - if "%platform%" == "x64" call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars64.bat"
+  - if "%platform%" == "x86" call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars32.bat"
   - echo "%VS_FULL%"
   - if not exist %SWIG_VER%.zip appveyor DownloadFile https://sourceforge.net/projects/swig/files/swigwin/%SWIG_VER%/%SWIG_VER%.zip
   - set SDK_ZIP=%SDK%-dev.zip
@@ -75,18 +75,18 @@ build_script:
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
   - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/%SWIG_VER%/swig.exe
-  - set REGEX_DIR=%BUILD_FOLDER%/sdk/regex-0.12
+  - set REGEX_DIR=%BUILD_FOLDER%/sdk/support/regex-0.12
   - cd %BUILD_FOLDER%
   - mkdir build
   - cd build
+  - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%  
   - set "PROJECT_BINARY_DIR=%BUILD_FOLDER%/build"
-  - cmake -G "%VS_FULL%" .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DFREETYPE_INCLUDE_DIR_freetype2=%SDK_INC%/freetype -DFREETYPE_INCLUDE_DIR_ft2build=%SDK_INC%/freetype -DFREETYPE_LIBRARY=%SDK_LIB%/freetype.lib -DZLIB_INCLUDE_DIR=%SDK_INC% -DZLIB_LIBRARY=%SDK_LIB%/zlib.lib -DPNG_PNG_INCLUDE_DIR=%SDK_INC% -DPNG_LIBRARY=%SDK_LIB%/libpng.lib -DPNG_LIBRARIES=%SDK_LIB%/libpng.lib -DJPEG_INCLUDE_DIR=%SDK_INC% -DJPEG_LIBRARY=%SDK_LIB%/libjpeg.lib -DPROJ_INCLUDE_DIR=%SDK_INC% -DPROJ_LIBRARY=%SDK_LIB%/proj_i.lib -DFRIBIDI_INCLUDE_DIR=%SDK_INC% -DFRIBIDI_LIBRARY=%SDK_LIB%/fribidi.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DHARFBUZZ_LIBRARY=%SDK_LIB%/harfbuzz.lib -DICONV_INCLUDE_DIR=%SDK_INC% -DICONV_LIBRARY=%SDK_LIB%/iconv.lib -DICONV_DLL=%SDK_BIN%/iconv.dll -DCAIRO_INCLUDE_DIR=%SDK_INC% -DCAIRO_LIBRARY=%SDK_LIB%/cairo.lib -DFCGI_INCLUDE_DIR=%SDK_INC% -DFCGI_LIBRARY=%SDK_LIB%/libfcgi.lib -DGEOS_INCLUDE_DIR=%SDK_INC% -DGEOS_LIBRARY=%SDK_LIB%/geos_c.lib -DPOSTGRESQL_INCLUDE_DIR=%SDK_INC% -DPOSTGRESQL_LIBRARY=%SDK_LIB%/libpqdll.lib -DGDAL_INCLUDE_DIR=%SDK_INC% -DGDAL_LIBRARY=%SDK_LIB%/gdal_i.lib -DLIBXML2_INCLUDE_DIR=%SDK_INC%/libxml -DLIBXML2_LIBRARIES=%SDK_LIB%/libxml2.lib -DGIF_INCLUDE_DIR=%SDK_INC% -DGIF_LIBRARY=%SDK_LIB%/giflib.lib -DWITH_CURL=1 -DCURL_INCLUDE_DIR=%SDK_INC% -DCURL_LIBRARY=%SDK_LIB%/libcurl_imp.lib -DMS_EXTERNAL_LIBS=wsock32.lib -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1 -DSVG_INCLUDE_DIR=%SDK_INC% -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_INCLUDE_DIR=%SDK_INC% -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DWITH_SVGCAIRO=1 -DREGEX_DIR=%REGEX_DIR% -DWITH_KML=1 -DWITH_THREAD_SAFETY=1 -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DWITH_PYTHON=1 -DWITH_CSHARP=1 -DWITH_MSSQL2008=1 -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/include/protobuf-c -DWITH_PROTOBUFC=1 -DCMAKE_C_FLAGS="/WX" -DCMAKE_CXX_FLAGS="/WX"
+  - cmake -G "%VS_FULL%" -A %VS_ARCH% .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DPNG_LIBRARY=%SDK_LIB%/libpng16_static.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DICONV_DLL=%SDK_BIN%/iconv.dll -DFRIBIDI_INCLUDE_DIR=%SDK_INC%/fribidi -DMS_EXTERNAL_LIBS=%SDK_LIB%/harfbuzz.lib;%SDK_LIB%/uriparser.lib -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DREGEX_DIR=%REGEX_DIR% -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/protobuf-c -DWITH_CURL=1 -DWITH_KML=1 -DWITH_SVGCAIRO=1 -DWITH_THREAD_SAFETY=1 -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1-DWITH_CSHARP=1 -DWITH_PROTOBUFC=1 -DWITH_POSTGIS=0 -DWITH_PERL=0 -DWITH_MSSQL2008=1 -DWITH_PYTHON=1 -DWITH_PHPNG=0 -DWITH_HARFBUZZ=1
   - cmake --build . --config Release
   - cd %BUILD_FOLDER%/build
-  - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%
   # set the MapScript custom environment variable for py 3.8
   - set MAPSERVER_DLL_PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%
-  - set PROJ_LIB=%SDK_BIN%/proj/SHARE
+  - set PROJ_LIB=%SDK_BIN%/proj7/SHARE
   # check the mapserver exe can run
   - mapserv -v
   - cmake --build . --target pythonmapscript-wheel --config Release
@@ -94,13 +94,13 @@ build_script:
 before_test:
   - set PATH=%PATH%;%SDK_BIN%/gdal/apps
   - cd %BUILD_FOLDER%/msautotest
-  - set PROJ_LIB=%SDK_BIN%/proj6/share
+  #- set PROJ_LIB=%SDK_BIN%/proj7/share
   - "./mssql/create_mssql_db.bat"
   - "%Python_ROOT_DIR%/python -m pip install -U -r requirements.txt"
   - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file://%BUILD_FOLDER%/build/mapscript/python/Release/dist mapscript"
 
 test_script:
-  - set PROJ_LIB=%SDK_BIN%/proj/SHARE
+  - set PROJ_LIB=%SDK_BIN%/proj7/SHARE
   - cd %BUILD_FOLDER%/msautotest/mssql
   - "%Python_ROOT_DIR%/python run_test.py"
   - cd %BUILD_FOLDER%/msautotest/mspython
@@ -111,7 +111,7 @@ after_test:
   - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
-# on_finish:
+#on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
 
 artifacts:

@@ -1,6 +1,4 @@
-  CONNECTIONTYPE PLUGIN
-  PLUGIN "C:\projects\mapserver\build\Release\msplugin_mssql2008.dll"
-  CONNECTION "SERVER=(local)\SQL2017;DATABASE=msautotest;uid=sa;pwd=Password12!;"
+  INCLUDE 'include/mssql_connection.map'
   DATA "ogr_geometry from (select * from bdry_counpy2) as foo USING UNIQUE ogr_fid USING SRID=26915"
   STATUS OFF
   TYPE POLYGON

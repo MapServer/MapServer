@@ -123,7 +123,7 @@ install(
     endif()
 
     execute_process(
-      COMMAND ${Python_EXECUTABLE} setup.py install \${Python_ROOT} \${Python_PREFIX}
+      COMMAND ${Python_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_PREFIX}
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "

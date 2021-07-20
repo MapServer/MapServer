@@ -160,6 +160,11 @@ def demime_file( filename ):
     if version_info >= (3,0,0):
         data = str(data, 'iso-8859-1')
 
+    # remove any double CR which will crash the following code
+    extension = os.path.splitext(filename)[1]
+    if extension in (".xml", ".json"):
+        data = data.replace("\r\r", "\r")
+
     offset = -1
     for i in range(len(data)-1):
         if data[i] == '\r' and data[i+1] == '\n' and data[i+2] == '\r' and data[i+3] == '\n':

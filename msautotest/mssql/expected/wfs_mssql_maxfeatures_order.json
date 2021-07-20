@@ -2,6 +2,7 @@
 "type": "FeatureCollection",
 "numberMatched": 6994,
 "name": "cities_with_order",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
 "features": [
 { "type": "Feature", "properties": { "ogr_fid": 6994, "name": "Heroica Nogales", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12351166.251028399914503, 3674840.854894261341542 ] } },
 { "type": "Feature", "properties": { "ogr_fid": 6993, "name": "Puerto Peñasco", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ -12639224.034942869096994, 3673296.088174171745777 ] } },
