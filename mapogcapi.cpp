@@ -242,7 +242,7 @@ static const char *getTemplateDirectory(mapObj *map, const char *key, const char
 
   if((directory = msOWSLookupMetadata(&(map->web.metadata), "A", key)) != NULL) 
     return directory;
-  else if((directory = getenv(envvar)) != NULL)
+  else if((directory = CPLGetConfigOption(envvar, NULL)) != NULL)
     return directory;
   else
     return NULL;
