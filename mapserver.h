@@ -1085,7 +1085,7 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
 
     double minscaledenom; ///< See :ref:`MINSCALEDENOM <mapfile-style-minscaledenom>`
     double maxscaledenom; ///< See :ref:`MAXSCALEDENOM <mapfile-style-maxscaledenom>`
-    int sizeunits; ///< Supersedes class's :ref:`SIZEUNITS <mapfile-class-sizeunits>` to allow fine-grained sizing for improved SLD (RFC 124)
+    int sizeunits; ///< Supersedes class's :ref:`SIZEUNITS <mapfile-layer-sizeunits>` to allow fine-grained sizing for improved SLD (RFC 124)
   };
 
 #define MS_STYLE_SINGLE_SIDED_OFFSET -99
@@ -1476,7 +1476,7 @@ The :ref:`REFERENCE <reference>` object
     char *image; ///< Filename of reference map image - see :ref:`IMAGE <mapfile-reference-image>`
     int status; ///< :data:`MS_ON` or :data:`MS_OFF` - see :ref:`STATUS <mapfile-reference-status>`
     int marker; ///< Index of a symbol in the map symbol set to use for marker - see :ref:`MARKER <mapfile-reference-marker>`
-    char *markername; ///< Name of a symbol - see :ref:`MARKERNAME <mapfile-reference-markername>`
+    char *markername; ///< Name of a symbol - see :ref:`MARKER <mapfile-reference-marker>`
     int markersize; ///< Size of marker - see :ref:`MARKERSIZE <mapfile-reference-markersize>`
     int minboxsize; ///< In pixels - see :ref:`MINBOXSIZE <mapfile-reference-minboxsize>`
     int maxboxsize; ///< In pixels - see :ref:`MAXBOXSIZE <mapfile-reference-maxboxsize>`
@@ -1807,7 +1807,7 @@ The :ref:`REFERENCE <reference>` object
     double mingeowidth; ///< min map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
     double maxgeowidth; ///< max map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
 
-    int sizeunits; ///< applies to all classes - see :ref:`SIZEUNITES <mapfile-layer-sizeunits>`
+    int sizeunits; ///< applies to all classes - see :ref:`SIZEUNITS <mapfile-layer-sizeunits>`
 
     int maxfeatures; ///< Maximum number of layer features that will be drawn - see :ref:`MAXFEATURES <mapfile-layer-maxfeatures>`
     int startindex; ///< Feature start index - used for paging

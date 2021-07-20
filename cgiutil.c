@@ -89,6 +89,7 @@ int readPostBody( cgiRequestObj *request, char **data )
   data_max = DATA_ALLOC_SIZE;
   data_len = 0;
   *data = (char *) msSmallMalloc(data_max+1);
+  (*data)[data_max] = '\0';
 
   while( (chunk_size = msIO_fread( *data + data_len, 1, data_max-data_len, stdin )) > 0 ) {
     data_len += chunk_size;

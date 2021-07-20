@@ -188,6 +188,12 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   /*
   ** now draw the appropriate color/symbol/size combination
   */
+
+  /* Scalefactor will be infinity when SIZEUNITS is set in LAYER */
+  if(lp->sizeunits != MS_PIXELS) {
+    lp->scalefactor = 1.0; 
+  }
+
   switch(type) {
     case MS_LAYER_POINT:
       marker.x = dstX + MS_NINT(width / 2.0);
