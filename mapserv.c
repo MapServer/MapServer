@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
   mapservObj  *mapserv = NULL;
   configObj *config = NULL;
 
-  config = msLoadConfig(); // is the right spot to do this?
+  config = msLoadConfig(NULL); // is the right spot to do this?
   if(config == NULL) {
     msCGIWriteError(mapserv);
     exit(0);

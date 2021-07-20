@@ -78,13 +78,15 @@ static int loadConfig(configObj *config)
   }
 }
 
-configObj *msLoadConfig()
+configObj *msLoadConfig(char* ms_config_file)
 {
   configObj *config = NULL;
-  static char *ms_config_file = NULL;
 
-  // get config filename from environment
-  ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
+  if (ms_config_file == NULL) {
+    // get config filename from environment
+    ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
+  }
+
   if(ms_config_file == NULL) {
     msSetError(MS_MISCERR, "No config file set.", "msLoadConfig()");
     return NULL;

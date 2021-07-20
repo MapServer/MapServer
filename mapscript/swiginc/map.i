@@ -40,11 +40,21 @@
         }      
     }
 
-#ifdef SWIGCSHARP      
-    mapObj(char *mapText, int isMapText /*used as signature only to differentiate this constructor from default constructor*/ ) 
-    {
-        return msLoadMapFromString(mapText, NULL);
-    }
+#ifdef SWIGCSHARP
+
+  mapObj(char *filename) 
+  {
+        if (filename && strlen(filename))
+            return msLoadMap(filename, NULL, NULL);
+        else { /* create an empty map, no layers etc... */
+            return msNewMapObj();
+        } 
+  }
+
+  mapObj(char *mapText, int isMapText /*used as signature only to differentiate this constructor from default constructor*/ ) 
+  {
+      return msLoadMapFromString(mapText, NULL);
+  }
 #endif 
     
     ~mapObj() 
