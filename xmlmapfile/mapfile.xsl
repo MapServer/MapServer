@@ -809,7 +809,6 @@
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:antialias'"/>
     </xsl:call-template>
-    </xsl:apply-templates>
     <xsl:apply-templates select="ms:color">
       <xsl:with-param name="indent" select="$indent"/>
     </xsl:apply-templates>
