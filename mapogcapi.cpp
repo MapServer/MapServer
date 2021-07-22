@@ -31,6 +31,8 @@
 #include "mapgml.h"
 #include "maptime.h"
 
+#include "cpl_conv.h"
+
 #include "third-party/include_nlohmann_json.hpp"
 #include "third-party/include_pantor_inja.hpp"
 
