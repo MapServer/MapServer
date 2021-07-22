@@ -1,0 +1,46 @@
+# send build notifications to the #mapserver IRC channel
+# homepage: https://github.com/marketplace/actions/notify-irc
+
+name: "IRC Push Notification"
+description: "Send a notification message to the #mapserver IRC channel"
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  irc_notify:
+    runs-on: ubuntu-latest
+    #if: github.repository == 'MapServer/MapServer'
+    steps:
+      - name: irc push
+        uses: rectalogic/notify-irc@v1
+        if: github.event_name == 'push'
+        with:
+          channel: "#mapserver"
+          server: "irc.libera.chat"
+          nickname: mapserver-github-notifier
+          message: |
+            ${{ github.actor }} pushed ${{ github.event.ref }} ${{ github.event.compare }}
+            ${{ join(github.event.commits.*.message) }}
+      - name: irc pull request
+        uses: rectalogic/notify-irc@v1
+        if: github.event_name == 'pull_request'
+        with:
+          channel: "#mapserver"
+          server: "irc.libera.chat"
+          nickname: mapserver-github-notifier
+          message: |
+            ${{ github.actor }} opened PR ${{ github.event.pull_request.html_url }}
+      - name: irc tag created
+        uses: rectalogic/notify-irc@v1
+        if: github.event_name == 'create' && github.event.ref_type == 'tag'
+        with:
+          channel: "#mapserver"
+          server: "irc.libera.chat"
+          nickname: mapserver-github-notifier
+          message: |
+            ${{ github.actor }} tagged ${{ github.repository }} ${{ github.event.ref }}
