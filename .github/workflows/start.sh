@@ -69,6 +69,8 @@ cat <<EOF >/etc/apache2/sites-available/001-mapserver.conf
  ErrorLog \${APACHE_LOG_DIR}/mapserv-error.log
  CustomLog \${APACHE_LOG_DIR}/mapserv-access.log combined
 
+ SetEnv MAPSERVER_CONFIG_FILE \${WORK_DIR}/msautotest/etc/mapserver.conf
+
  ScriptAlias /cgi-bin/ "/tmp/install-mapserver/bin/"
  <Directory "/tmp/install-mapserver/bin">
         AddHandler fcgid-script .fcgi
