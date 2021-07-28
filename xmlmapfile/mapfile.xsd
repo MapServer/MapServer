@@ -489,6 +489,7 @@
 		<xs:attribute name="name" type="xs:string"/>
 		<xs:attribute name="status" type="ms:stateEnum" default="ON"/>
 	</xs:complexType>
+	
 	<!-- SYMBOL Definition -->
 	<xs:complexType name="Symbol">
 		<xs:sequence>
@@ -611,10 +612,18 @@
 			<xs:element name="region" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
+	<!--COMPOSITE Definition-->
+	<xs:complexType name="CompoSite">
+		<xs:sequence>
+			<xs:element name="compop" type="xs:string" minOccurs="0"/>
+			<xs:element name="opacity" type="xs:integer" default="100" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
 	<!-- LAYER Definition -->
 	<xs:complexType name="Layer">
 		<xs:sequence>
 			<xs:element name="Class" type="ms:Class" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="CompoSite" type="ms:CompoSite" minOccurs="0"/>
 			<xs:element name="classGroup" type="xs:string" minOccurs="0"/>
 			<xs:element name="classItem" type="xs:string" minOccurs="0"/>
 			<xs:element name="Cluster" type="ms:Cluster" minOccurs="0"/>
