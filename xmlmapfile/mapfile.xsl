@@ -895,6 +895,22 @@
     </xsl:call-template>
   </xsl:template>
   
+  <xsl:template match="ms:CompoSite">
+    <xsl:param name="indent"/>
+	<xsl:call-template name="print">
+      <xsl:with-param name="text" select="'COMPOSITE'"/>
+      <xsl:with-param name="indent" select="$indent - 1"/>
+    </xsl:call-template>
+	<xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:Opacity'"/>
+    </xsl:call-template>
+	<xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:Compop'"/>
+    </xsl:call-template>
+  <xsl:template>
+  
   <xsl:template match="ms:Class">
     <xsl:param name="indent"/>
     <xsl:call-template name="print">
@@ -1211,6 +1227,9 @@
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
     <xsl:apply-templates select="ms:Class">
+      <xsl:with-param name="indent" select="$indent + 1"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="ms:CompoSite">
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>
     <xsl:call-template name="print">
