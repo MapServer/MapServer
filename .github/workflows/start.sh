@@ -70,6 +70,7 @@ cat <<EOF >/etc/apache2/sites-available/001-mapserver.conf
  CustomLog \${APACHE_LOG_DIR}/mapserv-access.log combined
 
  SetEnv MAPSERVER_CONFIG_FILE ${WORK_DIR}/msautotest/etc/mapserv.conf
+ FcgidInitialEnv MAPSERVER_CONFIG_FILE ${WORK_DIR}/msautotest/etc/mapserv.conf
 
  ScriptAlias /cgi-bin/ "/tmp/install-mapserver/bin/"
  <Directory "/tmp/install-mapserver/bin">
