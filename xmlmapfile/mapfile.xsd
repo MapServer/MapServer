@@ -285,7 +285,6 @@
 			<xs:element name="force" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
 			<xs:element name="maxLength" type="xs:integer" default="0" minOccurs="0"/>
 			<xs:element name="maxOverlapAngle" type="xs:float" minOccurs="0"/>
-			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:integer" default="256" minOccurs="0"/>
 			<xs:element name="minDistance" type="xs:integer" minOccurs="0"/>
 			<xs:element name="minFeatureSize" minOccurs="0">
@@ -299,7 +298,6 @@
 					</xs:union>
 				</xs:simpleType>
 			</xs:element>
-			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minSize" type="xs:integer" default="4" minOccurs="0"/>
 			<xs:element name="offset" type="ms:sizeType" minOccurs="0"/>
 			<xs:choice minOccurs="0">
