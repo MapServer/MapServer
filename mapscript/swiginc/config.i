@@ -31,9 +31,13 @@
 {
 
     /// Create a new instance of :class:`configObj`
-    configObj(char *filename="")
+    configObj(char *filename=NULL)
     {
         return msLoadConfig(filename);
     }
 
+    ~configObj()
+    {
+        msFreeConfig(self);
+    }
 }
