@@ -64,9 +64,15 @@
 		<xs:attribute name="x" type="xs:nonNegativeInteger"/>
 		<xs:attribute name="y" type="xs:nonNegativeInteger"/>
 	</xs:complexType>
-	<xs:complexType name="rangeType">
+	<xs:complexType name="dataRangeType">
 		<xs:attribute name="min" type="xs:double"/>
 		<xs:attribute name="max" type="xs:double"/>
+	</xs:complexType>
+	<xs:complexType name="colorRangeType">
+		<xs:all>
+			<xs:element name="startColor" type="ms:rgbColorType"/>
+			<xs:element name="endColor" type="ms:rgbColorType"/>
+		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="pointType">
 		<xs:attribute name="x" type="xs:float"/>
@@ -390,8 +396,8 @@
 			</xs:element>
 			<xs:element name="antialias" type="ms:booleanEnum" minOccurs="0"/>
 			<xs:element name="backgroundColor" type="ms:rgbColorType" minOccurs="0"/>
-			<xs:element name="colorRange" type="ms:rgbColorType" minOccurs="0"/>
-			<xs:element name="dataRange" type="ms:rangeType" minOccurs="0"/>
+			<xs:element name="colorRange" type="ms:colorRangeType" minOccurs="0"/>
+			<xs:element name="dataRange" type="ms:dataRangeType" minOccurs="0"/>
 			<xs:choice minOccurs="0">
 				<xs:element name="color" type="ms:rgbColorType"/>
 				<xs:element name="colorAttribute" type="ms:attributeType"/>
