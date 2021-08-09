@@ -71,6 +71,7 @@
 	<xs:complexType name="colorRangeType">
 		<xs:attribute name="rgbColorStart" type="xs:string" use="required"/>
 		<xs:attribute name="rgbColorEnd" type="xs:string" use="required"/>
+		<xs:attribute name="rangeItem" type="xs:string" use="required"/>
 	</xs:complexType>
 	<xs:complexType name="pointType">
 		<xs:attribute name="x" type="xs:float"/>
