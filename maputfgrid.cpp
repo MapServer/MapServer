@@ -688,8 +688,9 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
 }
 
 static
-int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj * /*c*/, colorObj * /*oc*/, int /*ow*/, int isMarker) {
+int utfgridRenderGlyphs(imageObj *img, const textSymbolObj *ts, colorObj * /*c*/, colorObj * /*oc*/, int /*ow*/, int isMarker) {
 
+  const textPathObj *tp = ts->textpath;
   const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
   /* If it's not a marker then it's a label or other thing and we dont
