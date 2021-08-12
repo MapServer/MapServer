@@ -124,8 +124,8 @@ EOF
 MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
-echo "Check that MS_MAP_NO_PATH cannot be abused with client-controlled env variables"
-MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=CONTENT_TYPE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+echo "Check that MS_MAP_NO_PATH works (rejecting a value not defined in the MAPS section)"
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=FOO&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_PATTERN works (accepting valid MAP)"
