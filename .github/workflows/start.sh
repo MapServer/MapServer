@@ -111,27 +111,66 @@ cd msautotest/wxs
 export PATH=/tmp/install-mapserver/bin:$PATH
 
 echo "Check that MS_MAP_NO_PATH works"
-MS_MAP_NO_PATH=1 MYMAPFILE=wfs_simple.map mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAP_NO_PATH" "1"
+  END
+  MAPS
+    "MYMAPFILE" "wfs_simple.map"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_NO_PATH cannot be abused with client-controlled env variables"
-MS_MAP_NO_PATH=1 CONTENT_TYPE=wfs_simple.map mapserv QUERY_STRING="MAP=CONTENT_TYPE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=CONTENT_TYPE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_PATTERN works (accepting valid MAP)"
-MS_MAP_PATTERN="^wfs_simple\.map$" mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAP_PATTERN" "^wfs_simple\.map$"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_PATTERN works (rejecting invalid MAP)"
-MS_MAP_PATTERN=mypatternmapserv mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAP_PATTERN" "mypatternmapserv"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAPFILE works alone"
-MS_MAPFILE=wfs_simple.map mapserv QUERY_STRING="SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAPFILE" "wfs_simple.map"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that a MAP query parameter isn't accepted when MS_MAPFILE and MS_MAP_NO_PATH are specified"
-MS_MAP_NO_PATH=1 MS_MAPFILE=wfs_simple.map mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAPFILE" "wfs_simple.map"
+    "MS_MAP_NO_PATH" "1"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Done !"
