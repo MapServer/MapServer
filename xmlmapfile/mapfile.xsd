@@ -64,6 +64,15 @@
 		<xs:attribute name="x" type="xs:nonNegativeInteger"/>
 		<xs:attribute name="y" type="xs:nonNegativeInteger"/>
 	</xs:complexType>
+	<xs:complexType name="dataRangeType">
+		<xs:attribute name="min" type="xs:double"/>
+		<xs:attribute name="max" type="xs:double"/>
+	</xs:complexType>
+	<xs:complexType name="colorRangeType">
+		<xs:attribute name="rgbColorStart" type="xs:string" use="required"/>
+		<xs:attribute name="rgbColorEnd" type="xs:string" use="required"/>
+		<xs:attribute name="rangeItem" type="xs:string" use="required"/>
+	</xs:complexType>
 	<xs:complexType name="pointType">
 		<xs:attribute name="x" type="xs:float"/>
 		<xs:attribute name="y" type="xs:float"/>
@@ -285,7 +294,6 @@
 			<xs:element name="force" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
 			<xs:element name="maxLength" type="xs:integer" default="0" minOccurs="0"/>
 			<xs:element name="maxOverlapAngle" type="xs:float" minOccurs="0"/>
-			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:integer" default="256" minOccurs="0"/>
 			<xs:element name="minDistance" type="xs:integer" minOccurs="0"/>
 			<xs:element name="minFeatureSize" minOccurs="0">
@@ -299,7 +307,6 @@
 					</xs:union>
 				</xs:simpleType>
 			</xs:element>
-			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="minSize" type="xs:integer" default="4" minOccurs="0"/>
 			<xs:element name="offset" type="ms:sizeType" minOccurs="0"/>
 			<xs:choice minOccurs="0">
@@ -388,6 +395,8 @@
 			</xs:element>
 			<xs:element name="antialias" type="ms:booleanEnum" minOccurs="0"/>
 			<xs:element name="backgroundColor" type="ms:rgbColorType" minOccurs="0"/>
+			<xs:element name="colorRange" type="ms:colorRangeType" minOccurs="0"/>
+			<xs:element name="dataRange" type="ms:dataRangeType" minOccurs="0"/>
 			<xs:choice minOccurs="0">
 				<xs:element name="color" type="ms:rgbColorType"/>
 				<xs:element name="colorAttribute" type="ms:attributeType"/>
@@ -489,6 +498,7 @@
 		<xs:attribute name="name" type="xs:string"/>
 		<xs:attribute name="status" type="ms:stateEnum" default="ON"/>
 	</xs:complexType>
+	
 	<!-- SYMBOL Definition -->
 	<xs:complexType name="Symbol">
 		<xs:sequence>
@@ -611,10 +621,18 @@
 			<xs:element name="region" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
+	<!--COMPOSITE Definition-->
+	<xs:complexType name="CompoSite">
+		<xs:sequence>
+			<xs:element name="compop" type="xs:string" minOccurs="0"/>
+			<xs:element name="opacity" type="xs:integer" default="100" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
 	<!-- LAYER Definition -->
 	<xs:complexType name="Layer">
 		<xs:sequence>
 			<xs:element name="Class" type="ms:Class" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="CompoSite" type="ms:CompoSite" minOccurs="0"/>
 			<xs:element name="classGroup" type="xs:string" minOccurs="0"/>
 			<xs:element name="classItem" type="xs:string" minOccurs="0"/>
 			<xs:element name="Cluster" type="ms:Cluster" minOccurs="0"/>
