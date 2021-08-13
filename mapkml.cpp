@@ -86,10 +86,10 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msRenderGlyphsKml(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
+  int msRenderGlyphsKml(imageObj *img, const textSymbolObj *ts, colorObj *c, colorObj *oc, int ow, int /*isMarker*/)
   {
     KmlRenderer* renderer = getKmlRenderer(img);
-    renderer->renderGlyphs(img, labelpnt, text, angle, clr, olcolor, olwidth);
+    renderer->renderGlyphs(img, ts, c, oc, ow);
     return MS_SUCCESS;
   }
 
@@ -225,7 +225,7 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
   renderer->createImage=&msCreateImageKml;
   renderer->saveImage=&msSaveImageKml;
   renderer->renderPolygon=&msRenderPolygonKml;
-  renderer->renderText=&msRenderGlyphsKml;
+  renderer->renderGlyphs=&msRenderGlyphsKml;
   renderer->renderEllipseSymbol = &msRenderEllipseSymbolKml;
   renderer->renderVectorSymbol = &msRenderVectorSymbolKml;
   renderer->renderPixmapSymbol = &msRenderPixmapSymbolKml;
