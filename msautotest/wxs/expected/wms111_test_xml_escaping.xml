@@ -126,14 +126,14 @@
     </KeywordList>
     <SRS>EPSG:4326</SRS>
     <SRS>EPSG:4269</SRS>
-    <LatLonBoundingBox minx="-67.5725" miny="42" maxx="-58.9275" maxy="48.5" />
+    <LatLonBoundingBox minx="-67.57250" miny="42.00000" maxx="-58.92750" maxy="48.50000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-67.5725" miny="42" maxx="-58.9275" maxy="48.5" />
+                minx="-67.57250" miny="42.00000" maxx="-58.92750" maxy="48.50000" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>province</Name>
         <Title>title&amp;title</Title>
         <Abstract>abstract&amp;abstract</Abstract>
-        <LatLonBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <LatLonBoundingBox minx="-66.72432" miny="41.77050" maxx="-57.72168" maxy="48.47731" />
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows_test_xml_escaping?myparam=something&amp;request=GetMetadata&amp;layer=province"/>

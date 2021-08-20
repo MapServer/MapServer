@@ -119,17 +119,17 @@
     <SRS>EPSG:3045</SRS>
     <SRS>EPSG:3046</SRS>
     <SRS>EPSG:3047</SRS>
-    <LatLonBoundingBox minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+    <LatLonBoundingBox minx="12.61006" miny="53.41773" maxx="12.75926" maxy="53.44036" />
     <BoundingBox SRS="EPSG:25833"
                 minx="341250" miny="5.9214e+06" maxx="351100" maxy="5.9236e+06" />
     <BoundingBox SRS="EPSG:4326"
-                minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+                minx="12.61006" miny="53.41773" maxx="12.75926" maxy="53.44036" />
     <BoundingBox SRS="EPSG:4269"
-                minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+                minx="12.61006" miny="53.41773" maxx="12.75926" maxy="53.44036" />
     <BoundingBox SRS="EPSG:3035"
                 minx="4.49443e+06" miny="3.37089e+06" maxx="4.50441e+06" maxy="3.37376e+06" />
     <BoundingBox SRS="EPSG:4258"
-                minx="12.6101" miny="53.4177" maxx="12.7593" maxy="53.4404" />
+                minx="12.61006" miny="53.41773" maxx="12.75926" maxy="53.44036" />
     <BoundingBox SRS="EPSG:3038"
                 minx="3.05465e+06" miny="6.67974e+06" maxx="3.06469e+06" maxy="6.68786e+06" />
     <BoundingBox SRS="EPSG:3039"
@@ -174,17 +174,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <LatLonBoundingBox minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -225,17 +225,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <LatLonBoundingBox minx="12.61078" miny="53.41825" maxx="12.75837" maxy="53.44004" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341297" miny="5.92146e+06" maxx="351043" maxy="5.92357e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61078" miny="53.41825" maxx="12.75837" maxy="53.44004" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61078" miny="53.41825" maxx="12.75837" maxy="53.44004" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49448e+06" miny="3.37094e+06" maxx="4.50435e+06" maxy="3.37373e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61078" miny="53.41825" maxx="12.75837" maxy="53.44004" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05471e+06" miny="6.67982e+06" maxx="3.06461e+06" maxy="6.6878e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -278,17 +278,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+        <LatLonBoundingBox minx="12.61085" miny="53.41843" maxx="12.75833" maxy="53.43995" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341301" miny="5.92148e+06" maxx="351041" maxy="5.92356e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+                    minx="12.61085" miny="53.41843" maxx="12.75833" maxy="53.43995" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+                    minx="12.61085" miny="53.41843" maxx="12.75833" maxy="53.43995" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49449e+06" miny="3.37096e+06" maxx="4.50435e+06" maxy="3.37372e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6109" miny="53.4184" maxx="12.7583" maxy="53.44" />
+                    minx="12.61085" miny="53.41843" maxx="12.75833" maxy="53.43995" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05472e+06" miny="6.67984e+06" maxx="3.06459e+06" maxy="6.68779e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -333,17 +333,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+        <LatLonBoundingBox minx="12.61096" miny="53.41843" maxx="12.75845" maxy="53.43793" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341301" miny="5.92148e+06" maxx="351049" maxy="5.92333e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+                    minx="12.61096" miny="53.41843" maxx="12.75845" maxy="53.43793" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+                    minx="12.61096" miny="53.41843" maxx="12.75845" maxy="53.43793" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.4945e+06" miny="3.37096e+06" maxx="4.50436e+06" maxy="3.37349e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.611" miny="53.4184" maxx="12.7585" maxy="53.4379" />
+                    minx="12.61096" miny="53.41843" maxx="12.75845" maxy="53.43793" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05486e+06" miny="6.67984e+06" maxx="3.0646e+06" maxy="6.68759e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -387,17 +387,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <LatLonBoundingBox minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -430,17 +430,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+        <LatLonBoundingBox minx="12.63167" miny="53.41884" maxx="12.75833" maxy="53.43572" />
         <BoundingBox SRS="EPSG:25833"
                     minx="342669" miny="5.92148e+06" maxx="351041" maxy="5.92308e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+                    minx="12.63167" miny="53.41884" maxx="12.75833" maxy="53.43572" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+                    minx="12.63167" miny="53.41884" maxx="12.75833" maxy="53.43572" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49588e+06" miny="3.37106e+06" maxx="4.50435e+06" maxy="3.37325e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6317" miny="53.4188" maxx="12.7583" maxy="53.4357" />
+                    minx="12.63167" miny="53.41884" maxx="12.75833" maxy="53.43572" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05622e+06" miny="6.6807e+06" maxx="3.06459e+06" maxy="6.68737e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -483,17 +483,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+        <LatLonBoundingBox minx="12.63152" miny="53.41875" maxx="12.75835" maxy="53.43581" />
         <BoundingBox SRS="EPSG:25833"
                     minx="342660" miny="5.92147e+06" maxx="351042" maxy="5.92309e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+                    minx="12.63152" miny="53.41875" maxx="12.75835" maxy="53.43581" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+                    minx="12.63152" miny="53.41875" maxx="12.75835" maxy="53.43581" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49587e+06" miny="3.37105e+06" maxx="4.50435e+06" maxy="3.37326e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6315" miny="53.4188" maxx="12.7584" maxy="53.4358" />
+                    minx="12.63152" miny="53.41875" maxx="12.75835" maxy="53.43581" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.0562e+06" miny="6.68068e+06" maxx="3.0646e+06" maxy="6.68738e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -536,17 +536,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+        <LatLonBoundingBox minx="12.66951" miny="53.42987" maxx="12.67604" maxy="53.43204" />
         <BoundingBox SRS="EPSG:25833"
                     minx="345178" miny="5.92262e+06" maxx="345604" maxy="5.92285e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+                    minx="12.66951" miny="53.42987" maxx="12.67604" maxy="53.43204" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+                    minx="12.66951" miny="53.42987" maxx="12.67604" maxy="53.43204" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.4984e+06" miny="3.37238e+06" maxx="4.49884e+06" maxy="3.37263e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6695" miny="53.4299" maxx="12.676" maxy="53.432" />
+                    minx="12.66951" miny="53.42987" maxx="12.67604" maxy="53.43204" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05857e+06" miny="6.68328e+06" maxx="3.05909e+06" maxy="6.68375e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -589,17 +589,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+        <LatLonBoundingBox minx="12.63137" miny="53.41866" maxx="12.75837" maxy="53.43590" />
         <BoundingBox SRS="EPSG:25833"
                     minx="342650" miny="5.92146e+06" maxx="351043" maxy="5.9231e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+                    minx="12.63137" miny="53.41866" maxx="12.75837" maxy="53.43590" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+                    minx="12.63137" miny="53.41866" maxx="12.75837" maxy="53.43590" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49586e+06" miny="3.37104e+06" maxx="4.50435e+06" maxy="3.37327e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6314" miny="53.4187" maxx="12.7584" maxy="53.4359" />
+                    minx="12.63137" miny="53.41866" maxx="12.75837" maxy="53.43590" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05619e+06" miny="6.68067e+06" maxx="3.06461e+06" maxy="6.68739e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -643,17 +643,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+        <LatLonBoundingBox minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6108" miny="53.4183" maxx="12.7584" maxy="53.44" />
+                    minx="12.61080" miny="53.41830" maxx="12.75840" maxy="53.44000" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -686,17 +686,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+        <LatLonBoundingBox minx="12.61085" miny="53.42802" maxx="12.71866" maxy="53.43921" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341301" miny="5.92254e+06" maxx="348436" maxy="5.92356e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+                    minx="12.61085" miny="53.42802" maxx="12.71866" maxy="53.43921" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+                    minx="12.61085" miny="53.42802" maxx="12.71866" maxy="53.43921" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49449e+06" miny="3.37203e+06" maxx="4.50167e+06" maxy="3.37354e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6109" miny="53.428" maxx="12.7187" maxy="53.4392" />
+                    minx="12.61085" miny="53.42802" maxx="12.71866" maxy="53.43921" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05472e+06" miny="6.68078e+06" maxx="3.06163e+06" maxy="6.68615e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -739,17 +739,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+        <LatLonBoundingBox minx="12.68255" miny="53.43040" maxx="12.69354" maxy="53.43399" />
         <BoundingBox SRS="EPSG:25833"
                     minx="346051" miny="5.92265e+06" maxx="346769" maxy="5.92303e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+                    minx="12.68255" miny="53.43040" maxx="12.69354" maxy="53.43399" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+                    minx="12.68255" miny="53.43040" maxx="12.69354" maxy="53.43399" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49926e+06" miny="3.37247e+06" maxx="4.5e+06" maxy="3.37289e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6826" miny="53.4304" maxx="12.6935" maxy="53.434" />
+                    minx="12.68255" miny="53.43040" maxx="12.69354" maxy="53.43399" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05923e+06" miny="6.68386e+06" maxx="3.0601e+06" maxy="6.68464e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -792,17 +792,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+        <LatLonBoundingBox minx="12.68370" miny="53.43101" maxx="12.69243" maxy="53.43304" />
         <BoundingBox SRS="EPSG:25833"
                     minx="346124" miny="5.92272e+06" maxx="346697" maxy="5.92292e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+                    minx="12.68370" miny="53.43101" maxx="12.69243" maxy="53.43304" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+                    minx="12.68370" miny="53.43101" maxx="12.69243" maxy="53.43304" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49934e+06" miny="3.37254e+06" maxx="4.49993e+06" maxy="3.37278e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6837" miny="53.431" maxx="12.6924" maxy="53.433" />
+                    minx="12.68370" miny="53.43101" maxx="12.69243" maxy="53.43304" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05936e+06" miny="6.68396e+06" maxx="3.05999e+06" maxy="6.6845e+06" />
         <BoundingBox SRS="EPSG:3039"
@@ -845,17 +845,17 @@
             <Keyword>no-keyword here</Keyword>
         </KeywordList>
         <SRS>EPSG:25833</SRS>
-        <LatLonBoundingBox minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+        <LatLonBoundingBox minx="12.61078" miny="53.42793" maxx="12.71866" maxy="53.43930" />
         <BoundingBox SRS="EPSG:25833"
                     minx="341297" miny="5.92253e+06" maxx="348436" maxy="5.92357e+06" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+                    minx="12.61078" miny="53.42793" maxx="12.71866" maxy="53.43930" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+                    minx="12.61078" miny="53.42793" maxx="12.71866" maxy="53.43930" />
         <BoundingBox SRS="EPSG:3035"
                     minx="4.49448e+06" miny="3.37202e+06" maxx="4.50168e+06" maxy="3.37355e+06" />
         <BoundingBox SRS="EPSG:4258"
-                    minx="12.6108" miny="53.4279" maxx="12.7187" maxy="53.4393" />
+                    minx="12.61078" miny="53.42793" maxx="12.71866" maxy="53.43930" />
         <BoundingBox SRS="EPSG:3038"
                     minx="3.05471e+06" miny="6.68076e+06" maxx="3.06164e+06" maxy="6.68616e+06" />
         <BoundingBox SRS="EPSG:3039"

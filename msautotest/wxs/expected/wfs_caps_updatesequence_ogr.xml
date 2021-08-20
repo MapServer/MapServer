@@ -79,7 +79,7 @@ Content-Type: text/xml; charset=UTF-8
         <Name>province</Name>
         <Title>province</Title>
         <SRS>EPSG:4326</SRS>
-        <LatLongBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <LatLongBoundingBox minx="-66.72432" miny="41.77050" maxx="-57.72168" maxy="48.47731" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=province</MetadataURL>
     </FeatureType>
 </FeatureTypeList>

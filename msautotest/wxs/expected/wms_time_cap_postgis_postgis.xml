@@ -73,18 +73,18 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <Title>Test WMS time support</Title>
     <Abstract>WMS_TIME_EXTENTS_RESOLUTION_NO_DEFAULT</Abstract>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-131" miny="5" maxx="-68" maxy="68" />
+    <LatLonBoundingBox minx="-131.00000" miny="5.00000" maxx="-68.00000" maxy="68.00000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-131" miny="5" maxx="-68" maxy="68" />
+                minx="-131.00000" miny="5.00000" maxx="-68.00000" maxy="68.00000" />
     <ScaleHint min="997.80569685927" max="24945.142421481" />
 <!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>pattern4</Name>
         <Title>pattern4</Title>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-131.02" miny="33.65" maxx="-119.85" maxy="48.39" />
+        <LatLonBoundingBox minx="-131.02000" miny="33.65000" maxx="-119.84999" maxy="48.38999" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="-131.02" miny="33.65" maxx="-119.85" maxy="48.39" />
+                    minx="-131.02000" miny="33.65000" maxx="-119.84999" maxy="48.38999" />
         <Dimension name="time" units="ISO8601"/>
         <Extent name="time" nearestValue="0">2004-01-01/2004-02-01</Extent>
         <MetadataURL type="TC211">

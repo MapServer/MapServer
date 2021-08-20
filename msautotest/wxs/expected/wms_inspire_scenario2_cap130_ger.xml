@@ -123,15 +123,15 @@
     <CRS>EPSG:4269</CRS>
     <CRS>EPSG:3035</CRS>
     <EX_GeographicBoundingBox>
-        <westBoundLongitude>-66.6333</westBoundLongitude>
-        <eastBoundLongitude>-59.2921</eastBoundLongitude>
-        <southBoundLatitude>42.3821</southBoundLatitude>
-        <northBoundLatitude>48.2955</northBoundLatitude>
+        <westBoundLongitude>-66.63330</westBoundLongitude>
+        <eastBoundLongitude>-59.29210</eastBoundLongitude>
+        <southBoundLatitude>42.38210</southBoundLatitude>
+        <northBoundLatitude>48.29550</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:4326"
-                minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                minx="42.38210" miny="-66.63330" maxx="48.29550" maxy="-59.29210" />
     <BoundingBox CRS="EPSG:4269"
-                minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                minx="42.38210" miny="-66.63330" maxx="48.29550" maxy="-59.29210" />
     <BoundingBox CRS="EPSG:3035"
                 minx="4.65936e+06" miny="-755944" maxx="5.56257e+06" maxy="47805.6" />
     <Style>
@@ -151,15 +151,15 @@
             <Keyword>myroadlinklayerkeyword2</Keyword>
         </KeywordList>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.6333</westBoundLongitude>
-            <eastBoundLongitude>-59.2921</eastBoundLongitude>
-            <southBoundLatitude>42.3821</southBoundLatitude>
-            <northBoundLatitude>48.2955</northBoundLatitude>
+            <westBoundLongitude>-66.63331</westBoundLongitude>
+            <eastBoundLongitude>-59.29211</eastBoundLongitude>
+            <southBoundLatitude>42.38205</southBoundLatitude>
+            <northBoundLatitude>48.29551</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                    minx="42.38205" miny="-66.63331" maxx="48.29551" maxy="-59.29211" />
         <BoundingBox CRS="EPSG:4269"
-                    minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                    minx="42.38205" miny="-66.63331" maxx="48.29551" maxy="-59.29211" />
         <BoundingBox CRS="EPSG:3035"
                     minx="4.90936e+06" miny="-622089" maxx="5.34642e+06" maxy="-91098.1" />
         <MetadataURL type="TC211">
@@ -196,15 +196,15 @@
             <Keyword>myrailwaylinklayerkeyword2</Keyword>
         </KeywordList>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.6333</westBoundLongitude>
-            <eastBoundLongitude>-59.2921</eastBoundLongitude>
-            <southBoundLatitude>42.3821</southBoundLatitude>
-            <northBoundLatitude>48.2955</northBoundLatitude>
+            <westBoundLongitude>-66.63331</westBoundLongitude>
+            <eastBoundLongitude>-59.29211</eastBoundLongitude>
+            <southBoundLatitude>42.38205</southBoundLatitude>
+            <northBoundLatitude>48.29551</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                    minx="42.38205" miny="-66.63331" maxx="48.29551" maxy="-59.29211" />
         <BoundingBox CRS="EPSG:4269"
-                    minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                    minx="42.38205" miny="-66.63331" maxx="48.29551" maxy="-59.29211" />
         <BoundingBox CRS="EPSG:3035"
                     minx="4.90936e+06" miny="-622089" maxx="5.34642e+06" maxy="-91098.1" />
         <MetadataURL type="TC211">
@@ -229,15 +229,15 @@
             <Keyword>myairlinklayerkeyword2</Keyword>
         </KeywordList>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.6333</westBoundLongitude>
-            <eastBoundLongitude>-59.2921</eastBoundLongitude>
-            <southBoundLatitude>42.3821</southBoundLatitude>
-            <northBoundLatitude>48.2955</northBoundLatitude>
+            <westBoundLongitude>-66.63331</westBoundLongitude>
+            <eastBoundLongitude>-59.29211</eastBoundLongitude>
+            <southBoundLatitude>42.38205</southBoundLatitude>
+            <northBoundLatitude>48.29551</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                    minx="42.38205" miny="-66.63331" maxx="48.29551" maxy="-59.29211" />
         <BoundingBox CRS="EPSG:4269"
-                    minx="42.3821" miny="-66.6333" maxx="48.2955" maxy="-59.2921" />
+                    minx="42.38205" miny="-66.63331" maxx="48.29551" maxy="-59.29211" />
         <BoundingBox CRS="EPSG:3035"
                     minx="4.90936e+06" miny="-622089" maxx="5.34642e+06" maxy="-91098.1" />
         <MetadataURL type="TC211">

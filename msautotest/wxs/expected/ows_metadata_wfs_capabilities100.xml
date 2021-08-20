@@ -81,7 +81,7 @@ Content-Type: text/xml; charset=UTF-8
         <Title>road</Title>
         <Abstract>Roads of I.P.E.</Abstract>
         <SRS>EPSG:4326</SRS>
-        <LatLongBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <LatLongBoundingBox minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/md</MetadataURL>
     </FeatureType>
     <FeatureType>
@@ -89,7 +89,7 @@ Content-Type: text/xml; charset=UTF-8
         <Title>province</Title>
         <Abstract>province</Abstract>
         <SRS>EPSG:4326</SRS>
-        <LatLongBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <LatLongBoundingBox minx="-66.72432" miny="41.77050" maxx="-57.72168" maxy="48.47731" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/ows?request=GetMetadata&amp;layer=province</MetadataURL>
     </FeatureType>
 </FeatureTypeList>

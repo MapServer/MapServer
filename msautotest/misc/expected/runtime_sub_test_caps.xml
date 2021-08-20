@@ -40,9 +40,9 @@ Content-Type: text/xml; charset=UTF-8
     <CRS>EPSG:3857</CRS>
     <EX_GeographicBoundingBox>
         <westBoundLongitude>1.12289</westBoundLongitude>
-        <eastBoundLongitude>7.08771</eastBoundLongitude>
-        <southBoundLatitude>39.4407</southBoundLatitude>
-        <northBoundLatitude>44.152</northBoundLatitude>
+        <eastBoundLongitude>7.08770</eastBoundLongitude>
+        <southBoundLatitude>39.44072</southBoundLatitude>
+        <northBoundLatitude>44.15203</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:3857"
                 minx="125000" miny="4.785e+06" maxx="789000" maxy="5.489e+06" />
@@ -81,10 +81,10 @@ Content-Type: text/xml; charset=UTF-8
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer5</Title>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>1.10894</westBoundLongitude>
-            <eastBoundLongitude>7.19753</eastBoundLongitude>
-            <southBoundLatitude>39.2727</southBoundLatitude>
-            <northBoundLatitude>44.1415</northBoundLatitude>
+            <westBoundLongitude>1.10893</westBoundLongitude>
+            <eastBoundLongitude>7.19752</eastBoundLongitude>
+            <southBoundLatitude>39.27271</southBoundLatitude>
+            <northBoundLatitude>44.14150</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:3857"
                     minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
@@ -98,10 +98,10 @@ Content-Type: text/xml; charset=UTF-8
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer5b</Title>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>1.10894</westBoundLongitude>
-            <eastBoundLongitude>7.19753</eastBoundLongitude>
-            <southBoundLatitude>39.2727</southBoundLatitude>
-            <northBoundLatitude>44.1415</northBoundLatitude>
+            <westBoundLongitude>1.10893</westBoundLongitude>
+            <eastBoundLongitude>7.19752</eastBoundLongitude>
+            <southBoundLatitude>39.27271</southBoundLatitude>
+            <northBoundLatitude>44.14150</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:3857"
                     minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
@@ -115,10 +115,10 @@ Content-Type: text/xml; charset=UTF-8
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer6</Title>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>1.10894</westBoundLongitude>
-            <eastBoundLongitude>7.19753</eastBoundLongitude>
-            <southBoundLatitude>39.2727</southBoundLatitude>
-            <northBoundLatitude>44.1415</northBoundLatitude>
+            <westBoundLongitude>1.10893</westBoundLongitude>
+            <eastBoundLongitude>7.19752</eastBoundLongitude>
+            <southBoundLatitude>39.27271</southBoundLatitude>
+            <northBoundLatitude>44.14150</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:3857"
                     minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
@@ -132,10 +132,10 @@ Content-Type: text/xml; charset=UTF-8
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer7</Title>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>1.10894</westBoundLongitude>
-            <eastBoundLongitude>7.19753</eastBoundLongitude>
-            <southBoundLatitude>39.2727</southBoundLatitude>
-            <northBoundLatitude>44.1415</northBoundLatitude>
+            <westBoundLongitude>1.10893</westBoundLongitude>
+            <eastBoundLongitude>7.19752</eastBoundLongitude>
+            <southBoundLatitude>39.27271</southBoundLatitude>
+            <northBoundLatitude>44.14150</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:3857"
                     minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />
@@ -149,10 +149,10 @@ Content-Type: text/xml; charset=UTF-8
 <!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
         <Title>layer8</Title>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>1.10894</westBoundLongitude>
-            <eastBoundLongitude>7.19753</eastBoundLongitude>
-            <southBoundLatitude>39.2727</southBoundLatitude>
-            <northBoundLatitude>44.1415</northBoundLatitude>
+            <westBoundLongitude>1.10893</westBoundLongitude>
+            <eastBoundLongitude>7.19752</eastBoundLongitude>
+            <southBoundLatitude>39.27271</southBoundLatitude>
+            <northBoundLatitude>44.14150</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:3857"
                     minx="123446" miny="4.76081e+06" maxx="801225" maxy="5.48737e+06" />

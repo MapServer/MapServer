@@ -123,22 +123,22 @@
     <CRS>EPSG:4326</CRS>
     <CRS>EPSG:4269</CRS>
     <EX_GeographicBoundingBox>
-        <westBoundLongitude>-67.5725</westBoundLongitude>
-        <eastBoundLongitude>-58.9275</eastBoundLongitude>
-        <southBoundLatitude>42</southBoundLatitude>
-        <northBoundLatitude>48.5</northBoundLatitude>
+        <westBoundLongitude>-67.57250</westBoundLongitude>
+        <eastBoundLongitude>-58.92750</eastBoundLongitude>
+        <southBoundLatitude>42.00000</southBoundLatitude>
+        <northBoundLatitude>48.50000</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:4326"
-                minx="42" miny="-67.5725" maxx="48.5" maxy="-58.9275" />
+                minx="42.00000" miny="-67.57250" maxx="48.50000" maxy="-58.92750" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>province</Name>
         <Title>title&amp;title</Title>
         <Abstract>abstract&amp;abstract</Abstract>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.7243</westBoundLongitude>
-            <eastBoundLongitude>-57.7217</eastBoundLongitude>
-            <southBoundLatitude>41.7705</southBoundLatitude>
-            <northBoundLatitude>48.4773</northBoundLatitude>
+            <westBoundLongitude>-66.72432</westBoundLongitude>
+            <eastBoundLongitude>-57.72168</eastBoundLongitude>
+            <southBoundLatitude>41.77050</southBoundLatitude>
+            <northBoundLatitude>48.47731</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <MetadataURL type="TC211">
           <Format>text/xml</Format>

@@ -88,42 +88,42 @@ Content-Type: text/xml; charset=UTF-8
         <Name>road</Name>
         <Title>road</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <LatLongBoundingBox minx="2258982.00000" miny="-70747.91406" maxx="2615354.50000" maxy="495480.93750" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>popplace</Name>
         <Title>popplace</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2.2794e+06" miny="-55344.5" maxx="2.60038e+06" maxy="461587" />
+        <LatLongBoundingBox minx="2279399.00000" miny="-55344.50390" maxx="2600377.00000" maxy="461586.81250" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=popplace</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>road_with_addfiles</Name>
         <Title>road_with_addfiles</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <LatLongBoundingBox minx="2258982.00000" miny="-70747.91406" maxx="2615354.50000" maxy="495480.93750" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road_with_addfiles</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>road2_with_addfiles</Name>
         <Title>road2_with_addfiles</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+        <LatLongBoundingBox minx="2258982.00000" miny="-70747.91406" maxx="2615354.50000" maxy="495480.93750" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road2_with_addfiles</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>multi</Name>
         <Title>multi</Title>
         <SRS>EPSG:27700</SRS>
-        <LatLongBoundingBox minx="0" miny="0" maxx="100" maxy="100" />
+        <LatLongBoundingBox minx="0.00000" miny="0.00000" maxx="100.00000" maxy="100.00000" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=multi</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>withnullvalues</Name>
         <Title>withnullvalues</Title>
         <SRS>EPSG:27700</SRS>
-        <LatLongBoundingBox minx="10" miny="30" maxx="10" maxy="30" />
+        <LatLongBoundingBox minx="10.00000" miny="30.00000" maxx="10.00000" maxy="30.00000" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=withnullvalues</MetadataURL>
     </FeatureType>
 </FeatureTypeList>

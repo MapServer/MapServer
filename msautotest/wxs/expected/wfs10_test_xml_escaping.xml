@@ -75,7 +75,7 @@
         <Title>title&amp;title</Title>
         <Abstract>abstract&amp;abstract</Abstract>
         <SRS>EPSG:4326</SRS>
-        <LatLongBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <LatLongBoundingBox minx="-66.72432" miny="41.77050" maxx="-57.72168" maxy="48.47731" />
         <MetadataURL type="FGDC" format="text/xml">http://path/to/metadata_url</MetadataURL>
     </FeatureType>
 </FeatureTypeList>

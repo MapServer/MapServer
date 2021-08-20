@@ -126,11 +126,11 @@
     <SRS>EPSG:4326</SRS>
     <SRS>EPSG:4269</SRS>
     <SRS>EPSG:3035</SRS>
-    <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+    <LatLonBoundingBox minx="-66.63330" miny="42.38210" maxx="-59.29210" maxy="48.29550" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                minx="-66.63330" miny="42.38210" maxx="-59.29210" maxy="48.29550" />
     <BoundingBox SRS="EPSG:4269"
-                minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                minx="-66.63330" miny="42.38210" maxx="-59.29210" maxy="48.29550" />
     <BoundingBox SRS="EPSG:3035"
                 minx="-755944" miny="4.65936e+06" maxx="47805.6" maxy="5.56257e+06" />
     <Style>
@@ -149,11 +149,11 @@
             <Keyword>myroadlinklayerkeyword1</Keyword>
             <Keyword>myroadlinklayerkeyword2</Keyword>
         </KeywordList>
-        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <LatLonBoundingBox minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                    minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                    minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:3035"
                     minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
         <MetadataURL type="TC211">
@@ -189,11 +189,11 @@
             <Keyword>myrailwaylinklayerkeyword1</Keyword>
             <Keyword>myrailwaylinklayerkeyword2</Keyword>
         </KeywordList>
-        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <LatLonBoundingBox minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                    minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                    minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:3035"
                     minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
         <MetadataURL type="TC211">
@@ -217,11 +217,11 @@
             <Keyword>myairlinklayerkeyword1</Keyword>
             <Keyword>myairlinklayerkeyword2</Keyword>
         </KeywordList>
-        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <LatLonBoundingBox minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                    minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:4269"
-                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+                    minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
         <BoundingBox SRS="EPSG:3035"
                     minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
         <MetadataURL type="TC211">
