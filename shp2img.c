@@ -49,13 +49,39 @@ int main(int argc, char *argv[])
   int iterations = 1;
   int draws = 0;
 
+  /* ---- check the number of arguments, return syntax if not correct ---- */
+  if( argc < 3 ) {
+    fprintf(stdout, "\nPurpose: convert a mapfile to an image\n\n");
+    fprintf(stdout,
+            "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
+            "               [-l \"layer1 [layers2...]\"] [-i format]\n"
+            "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n] [-d layername datavalue]\n");
+    fprintf(stdout,"  -m mapfile: Map file to operate on - required\n" );
+    fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format\n" );
+    fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
+    fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
+    fprintf(stdout,"  -s sizex sizey: output image size\n");
+    fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space separated if more than one listed\n" );
+    fprintf(stdout,"  -all_debug n: Set debug level for map and all layers\n" );
+    fprintf(stdout,"  -map_debug n: Set map debug level\n" );
+    fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level\n" );
+    fprintf(stdout,"  -c n: draw map n number of times\n" );
+    fprintf(stdout,"  -p n: pause for n seconds after reading the map\n" );
+    fprintf(stdout,"  -d layername datavalue: change DATA value for layer\n" );
+    exit(0);
+  }
+
+  if ( msSetup() != MS_SUCCESS ) {
+    msWriteError(stderr);
+    exit(1);
+  }
+
   for(i=1; i<argc; i++) {
     if (strcmp(argv[i],"-c") == 0) { /* user specified number of draws */
       iterations = atoi(argv[i+1]);
-      if( iterations < 0 || iterations > INT_MAX - 1 )
-      {
-          printf("Invalid number of iterations");
-          return 1;
+      if( iterations < 0 || iterations > INT_MAX - 1 ) {
+        printf("Invalid number of iterations");
+        return 1;
       }
       printf("We will draw %d times...\n", iterations);
       continue;
@@ -72,7 +98,6 @@ int main(int argc, char *argv[])
 
       continue;
     }
-
   }
 
   for(draws=0; draws<iterations; draws++) {
@@ -85,37 +110,6 @@ int main(int argc, char *argv[])
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
       exit(0);
-    }
-
-    /* ---- check the number of arguments, return syntax if not correct ---- */
-    if( argc < 3 ) {
-      fprintf(stdout, "\nPurpose: convert a mapfile to an image\n\n");
-      fprintf(stdout,
-              "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
-              "               [-l \"layer1 [layers2...]\"] [-i format]\n"
-              "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n] [-d layername datavalue]\n");
-
-
-      fprintf(stdout,"  -m mapfile: Map file to operate on - required\n" );
-      fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format\n" );
-      fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
-      fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
-      fprintf(stdout,"  -s sizex sizey: output image size\n");
-      fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space separated if more than one listed\n" );
-      fprintf(stdout,"  -all_debug n: Set debug level for map and all layers\n" );
-      fprintf(stdout,"  -map_debug n: Set map debug level\n" );
-      fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level\n" );
-      fprintf(stdout,"  -c n: draw map n number of times\n" );
-      fprintf(stdout,"  -p n: pause for n seconds after reading the map\n" );
-      fprintf(stdout,"  -d layername datavalue: change DATA value for layer\n" );
-
-
-      exit(0);
-    }
-
-    if ( msSetup() != MS_SUCCESS ) {
-      msWriteError(stderr);
-      exit(1);
     }
 
     /* Use PROJ_LIB env vars if set */
@@ -320,8 +314,7 @@ int main(int argc, char *argv[])
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
 
-    msCleanup();
-
   } /*   for(draws=0; draws<iterations; draws++) { */
+  msCleanup();
   return(0);
 } /* ---- END Main Routine ---- */
