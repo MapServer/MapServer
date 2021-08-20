@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
+#include "cpl_conv.h"
 #include "ogr_srs_api.h"
 
 static char *ms_proj_lib = NULL;
