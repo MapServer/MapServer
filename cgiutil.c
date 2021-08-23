@@ -36,6 +36,8 @@
 #include "mapserver.h"
 #include "cgiutil.h"
 
+#include "cpl_conv.h"
+
 #define LF 10
 #define CR 13
 
@@ -142,7 +144,7 @@ int loadParams(cgiRequestObj *request,
 
   debuglevel = (int)msGetGlobalDebugLevel();
 
-  if(strcmp(getenv2("REQUEST_METHOD", thread_context),"POST") == 0) { /* we've got a post from a form */
+  if(strcmp(getenv2("REQUEST_METHOD", thread_context),"POST") == 0 && CPLGetConfigOption("MS_NO_POST", NULL) == NULL) { /* we've got a post from a form */
     char *post_data;
     int data_len;
     request->type = MS_POST_REQUEST;
