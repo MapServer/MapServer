@@ -49,6 +49,12 @@ int main(int argc, char *argv[])
   int iterations = 1;
   int draws = 0;
 
+  /* ---- output version info and exit --- */
+  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+    printf("%s\n", msGetVersion());
+    exit(0);
+  }
+  
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
     fprintf(stdout, "\nPurpose: convert a mapfile to an image\n\n");
@@ -106,11 +112,6 @@ int main(int argc, char *argv[])
 
     if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
       msGettimeofday(&requeststarttime, NULL);
-
-    if(argc > 1 && strcmp(argv[1], "-v") == 0) {
-      printf("%s\n", msGetVersion());
-      exit(0);
-    }
 
     /* Use PROJ_LIB env vars if set */
     msProjLibInitFromEnv();
