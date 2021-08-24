@@ -223,8 +223,8 @@ Content-Type: text/xml; charset=UTF-8
         <Format>text/xml; subtype=gml/2.1.2</Format>
       </OutputFormats>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-66.7243290850981 41.7705076307844</ows:LowerCorner>
-        <ows:UpperCorner>-57.7216802315741 48.4773138484945</ows:UpperCorner>
+        <ows:LowerCorner>-66.724329 41.770508</ows:LowerCorner>
+        <ows:UpperCorner>-57.721680 48.477314</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <MetadataURL xlink:href="http://example.com/testXML" about="about XML"/>
       <MetadataURL xlink:href="http://example.com/testHTML" about="about HTML"/>

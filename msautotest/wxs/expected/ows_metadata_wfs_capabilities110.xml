@@ -104,8 +104,8 @@ Content-Type: text/xml; charset=UTF-8
         <Format>text/xml; subtype=gml/3.1.1</Format>
       </OutputFormats>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-66.6333177709696 42.3820537883952</ows:LowerCorner>
-        <ows:UpperCorner>-59.2921138391801 48.2955119386804</ows:UpperCorner>
+        <ows:LowerCorner>-66.633318 42.382054</ows:LowerCorner>
+        <ows:UpperCorner>-59.292114 48.295512</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <MetadataURL format="text/xml" type="TC211">http://localhost/md</MetadataURL>
     </FeatureType>
@@ -118,8 +118,8 @@ Content-Type: text/xml; charset=UTF-8
         <Format>text/xml; subtype=gml/3.1.1</Format>
       </OutputFormats>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-66.7243290850981 41.7705076307844</ows:LowerCorner>
-        <ows:UpperCorner>-57.7216802315741 48.4773138484945</ows:UpperCorner>
+        <ows:LowerCorner>-66.724329 41.770508</ows:LowerCorner>
+        <ows:UpperCorner>-57.721680 48.477314</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <MetadataURL format="text/xml" type="TC211">http://localhost/ows?request=GetMetadata&amp;layer=province</MetadataURL>
     </FeatureType>
