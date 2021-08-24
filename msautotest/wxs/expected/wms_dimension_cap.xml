@@ -82,16 +82,16 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <Title>wms_dimesion</Title>
     <Abstract>wms_dimesion</Abstract>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+    <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
     <BoundingBox SRS="EPSG:4326"
-                minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+                minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>lakes_elev</Name>
         <Title>Lakes</Title>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+        <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+                    minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
         <Dimension name="elevation" units="meters"/>
         <Extent name="elevation" default="500" nearestValue="0">500, 490, 480</Extent>
         <Dimension name="text_dimension" units="my_units"/>
@@ -113,9 +113,9 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Name>lakes_elev_range</Name>
         <Title>Lakes</Title>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+        <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+                    minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
         <Dimension name="elevation" units="meters"/>
         <Extent name="elevation" nearestValue="0">490/800</Extent>
         <MetadataURL type="TC211">
@@ -135,9 +135,9 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Name>lakes_elev_multi_range</Name>
         <Title>Lakes</Title>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+        <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="0.00017" miny="-0.00213" maxx="0.00342" maxy="0.00031" />
+                    minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
         <Dimension name="elevation" units="meters"/>
         <Extent name="elevation" nearestValue="0">480/500,800/900</Extent>
         <MetadataURL type="TC211">

@@ -80,14 +80,14 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <Title>title</Title>
     <Abstract>TEST</Abstract>
     <SRS>EPSG:26711 EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-117.64205" miny="33.84825" maxx="-117.57679" maxy="33.90268" />
+    <LatLonBoundingBox minx="-117.642054" miny="33.848256" maxx="-117.576795" maxy="33.902689" />
     <BoundingBox SRS="EPSG:26711"
                 minx="440720" miny="3.74532e+06" maxx="446720" maxy="3.75132e+06" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>grey</Name>
         <Title>grey</Title>
         <SRS>EPSG:26711</SRS>
-        <LatLonBoundingBox minx="-117.64116" miny="33.84795" maxx="-117.57602" maxy="33.90267" />
+        <LatLonBoundingBox minx="-117.641169" miny="33.847955" maxx="-117.576023" maxy="33.902673" />
         <BoundingBox SRS="EPSG:26711"
                     minx="440682" miny="3.74525e+06" maxx="446743" maxy="3.75136e+06" />
         <MetadataURL type="TC211">

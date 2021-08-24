@@ -101,25 +101,25 @@ Content-Type: text/xml; charset=UTF-8
     <Abstract>wms_dimesion</Abstract>
     <CRS>EPSG:4326</CRS>
     <EX_GeographicBoundingBox>
-        <westBoundLongitude>0.00017</westBoundLongitude>
-        <eastBoundLongitude>0.00342</eastBoundLongitude>
-        <southBoundLatitude>-0.00213</southBoundLatitude>
-        <northBoundLatitude>0.00031</northBoundLatitude>
+        <westBoundLongitude>0.000178</westBoundLongitude>
+        <eastBoundLongitude>0.003420</eastBoundLongitude>
+        <southBoundLatitude>-0.002134</southBoundLatitude>
+        <northBoundLatitude>0.000314</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:4326"
-                minx="-0.00213" miny="0.00017" maxx="0.00031" maxy="0.00342" />
+                minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>lakes_elev</Name>
         <Title>Lakes</Title>
         <CRS>EPSG:4326</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>0.00017</westBoundLongitude>
-            <eastBoundLongitude>0.00342</eastBoundLongitude>
-            <southBoundLatitude>-0.00213</southBoundLatitude>
-            <northBoundLatitude>0.00031</northBoundLatitude>
+            <westBoundLongitude>0.000178</westBoundLongitude>
+            <eastBoundLongitude>0.003420</eastBoundLongitude>
+            <southBoundLatitude>-0.002134</southBoundLatitude>
+            <northBoundLatitude>0.000314</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="-0.00213" miny="0.00017" maxx="0.00031" maxy="0.00342" />
+                    minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
         <Dimension name="elevation" units="meters" default="500" multipleValues="1" nearestValue="0">500, 490, 480</Dimension>
         <Dimension name="text_dimension" units="my_units"  multipleValues="1"  nearestValue="0">first, second, third</Dimension>
         <MetadataURL type="TC211">
@@ -140,13 +140,13 @@ Content-Type: text/xml; charset=UTF-8
         <Title>Lakes</Title>
         <CRS>EPSG:4326</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>0.00017</westBoundLongitude>
-            <eastBoundLongitude>0.00342</eastBoundLongitude>
-            <southBoundLatitude>-0.00213</southBoundLatitude>
-            <northBoundLatitude>0.00031</northBoundLatitude>
+            <westBoundLongitude>0.000178</westBoundLongitude>
+            <eastBoundLongitude>0.003420</eastBoundLongitude>
+            <southBoundLatitude>-0.002134</southBoundLatitude>
+            <northBoundLatitude>0.000314</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="-0.00213" miny="0.00017" maxx="0.00031" maxy="0.00342" />
+                    minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
         <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">490/800</Dimension>
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
@@ -166,13 +166,13 @@ Content-Type: text/xml; charset=UTF-8
         <Title>Lakes</Title>
         <CRS>EPSG:4326</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>0.00017</westBoundLongitude>
-            <eastBoundLongitude>0.00342</eastBoundLongitude>
-            <southBoundLatitude>-0.00213</southBoundLatitude>
-            <northBoundLatitude>0.00031</northBoundLatitude>
+            <westBoundLongitude>0.000178</westBoundLongitude>
+            <eastBoundLongitude>0.003420</eastBoundLongitude>
+            <southBoundLatitude>-0.002134</southBoundLatitude>
+            <northBoundLatitude>0.000314</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="-0.00213" miny="0.00017" maxx="0.00031" maxy="0.00342" />
+                    minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
         <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">480/500,800/900</Dimension>
         <MetadataURL type="TC211">
           <Format>text/xml</Format>

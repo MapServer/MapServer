@@ -135,15 +135,15 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Keyword>metadata</Keyword>
     </KeywordList>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-180.00000" miny="-90.00000" maxx="180.00000" maxy="90.00000" />
+    <LatLonBoundingBox minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-180.00000" miny="-90.00000" maxx="180.00000" maxy="90.00000" />
+                minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <Layer queryable="1" opaque="0" cascaded="0">
         <Name>road</Name>
         <Title>road</Title>
         <Abstract>Roads of I.P.E.</Abstract>
         <SRS>EPSG:43204</SRS>
-        <LatLonBoundingBox minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
+        <LatLonBoundingBox minx="-66.633318" miny="42.382054" maxx="-59.292114" maxy="48.295512" />
         <BoundingBox SRS="EPSG:43204"
                     minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
         <MetadataURL type="TC211">
@@ -163,7 +163,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Name>province</Name>
         <Title>province</Title>
         <Abstract>province</Abstract>
-        <LatLonBoundingBox minx="-66.72432" miny="41.77050" maxx="-57.72168" maxy="48.47731" />
+        <LatLonBoundingBox minx="-66.724329" miny="41.770508" maxx="-57.721680" maxy="48.477314" />
     <Attribution>
         <Title>MapServer</Title>
     </Attribution>
@@ -185,7 +185,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Title>Toronto</Title>
         <Abstract>Toronto</Abstract>
         <SRS>EPSG:32611</SRS>
-        <LatLonBoundingBox minx="-117.54590" miny="44.66561" maxx="-117.38727" maxy="44.76708" />
+        <LatLonBoundingBox minx="-117.545904" miny="44.665615" maxx="-117.387277" maxy="44.767083" />
         <BoundingBox SRS="EPSG:32611"
                     minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />
         <MetadataURL type="TC211">

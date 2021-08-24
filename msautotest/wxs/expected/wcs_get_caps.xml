@@ -89,8 +89,8 @@
   <metadataLink metadataType="TC211" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;request=GetMetadata&amp;layer=land_shallow_topo_2048"/>    <name>land_shallow_topo_2048</name>
 <!-- WARNING: Mandatory metadata '..._label' was missing in this context. -->
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-      <gml:pos>-180.351562 -89.648437</gml:pos>
-      <gml:pos>179.648437 90.351562</gml:pos>
+      <gml:pos>-180.3515625 -89.6484375</gml:pos>
+      <gml:pos>179.6484375 90.3515625</gml:pos>
     </lonLatEnvelope>
   <keywords>
     <keyword>NASA</keyword>
@@ -104,8 +104,8 @@
     <name>toronto</name>
     <label>Landsat 5 TM - Toronto</label>
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-      <gml:pos>-81.545267534394 42.713551218133</gml:pos>
-      <gml:pos>-78.38742526718 44.767291525854</gml:pos>
+      <gml:pos>-81.5452675343946 42.7135512181332</gml:pos>
+      <gml:pos>-78.387425267181 44.7672915258547</gml:pos>
     </lonLatEnvelope>
   <keywords>
     <keyword>landsat</keyword>

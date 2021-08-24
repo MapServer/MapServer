@@ -11,23 +11,23 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    next="http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=province&amp;OUTPUTFORMAT=text%2Fxml%3B%20subtype%3D%22gml%2F3.2.1%22&amp;COUNT=1&amp;STARTINDEX=1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>47.76789 -61.51051</gml:lowerCorner>
-      		<gml:upperCorner>47.79644 -61.45764</gml:upperCorner>
+      		<gml:lowerCorner>47.767892 -61.510511</gml:lowerCorner>
+      		<gml:upperCorner>47.796447 -61.457648</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:province gml:id="province.977">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>47.76789 -61.51051</gml:lowerCorner>
-        		<gml:upperCorner>47.79644 -61.45764</gml:upperCorner>
+        		<gml:lowerCorner>47.767892 -61.510511</gml:lowerCorner>
+        		<gml:upperCorner>47.796447 -61.457648</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Polygon gml:id="province.977.1" srsName="urn:ogc:def:crs:EPSG::4326">
             <gml:exterior>
               <gml:LinearRing>
-                <gml:posList srsDimension="2">47.77424 -61.51051 47.78860 -61.50894 47.79644 -61.49272 47.78743 -61.45764 47.76789 -61.45998 47.76961 -61.48350 47.77424 -61.51051 </gml:posList>
+                <gml:posList srsDimension="2">47.774240 -61.510511 47.788606 -61.508947 47.796447 -61.492725 47.787438 -61.457648 47.767892 -61.459987 47.769615 -61.483502 47.774240 -61.510511 </gml:posList>
               </gml:LinearRing>
             </gml:exterior>
           </gml:Polygon>

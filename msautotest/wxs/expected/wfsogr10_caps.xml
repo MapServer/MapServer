@@ -88,42 +88,42 @@ Content-Type: text/xml; charset=UTF-8
         <Name>road</Name>
         <Title>road</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2258982.00000" miny="-70747.91406" maxx="2615354.50000" maxy="495480.93750" />
+        <LatLongBoundingBox minx="2258982.000000" miny="-70747.914062" maxx="2615354.500000" maxy="495480.937500" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>popplace</Name>
         <Title>popplace</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2279399.00000" miny="-55344.50390" maxx="2600377.00000" maxy="461586.81250" />
+        <LatLongBoundingBox minx="2279399.000000" miny="-55344.503906" maxx="2600377.000000" maxy="461586.812500" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=popplace</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>road_with_addfiles</Name>
         <Title>road_with_addfiles</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2258982.00000" miny="-70747.91406" maxx="2615354.50000" maxy="495480.93750" />
+        <LatLongBoundingBox minx="2258982.000000" miny="-70747.914062" maxx="2615354.500000" maxy="495480.937500" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road_with_addfiles</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>road2_with_addfiles</Name>
         <Title>road2_with_addfiles</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLongBoundingBox minx="2258982.00000" miny="-70747.91406" maxx="2615354.50000" maxy="495480.93750" />
+        <LatLongBoundingBox minx="2258982.000000" miny="-70747.914062" maxx="2615354.500000" maxy="495480.937500" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=road2_with_addfiles</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>multi</Name>
         <Title>multi</Title>
         <SRS>EPSG:27700</SRS>
-        <LatLongBoundingBox minx="0.00000" miny="0.00000" maxx="100.00000" maxy="100.00000" />
+        <LatLongBoundingBox minx="0.000000" miny="0.000000" maxx="100.000000" maxy="100.000000" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=multi</MetadataURL>
     </FeatureType>
     <FeatureType>
         <Name>withnullvalues</Name>
         <Title>withnullvalues</Title>
         <SRS>EPSG:27700</SRS>
-        <LatLongBoundingBox minx="10.00000" miny="30.00000" maxx="10.00000" maxy="30.00000" />
+        <LatLongBoundingBox minx="10.000000" miny="30.000000" maxx="10.000000" maxy="30.000000" />
         <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_simple?request=GetMetadata&amp;layer=withnullvalues</MetadataURL>
     </FeatureType>
 </FeatureTypeList>

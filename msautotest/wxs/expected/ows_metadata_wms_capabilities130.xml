@@ -132,23 +132,23 @@ Content-Type: text/xml; charset=UTF-8
     </KeywordList>
     <CRS>EPSG:4326</CRS>
     <EX_GeographicBoundingBox>
-        <westBoundLongitude>-180.00000</westBoundLongitude>
-        <eastBoundLongitude>180.00000</eastBoundLongitude>
-        <southBoundLatitude>-90.00000</southBoundLatitude>
-        <northBoundLatitude>90.00000</northBoundLatitude>
+        <westBoundLongitude>-180.000000</westBoundLongitude>
+        <eastBoundLongitude>180.000000</eastBoundLongitude>
+        <southBoundLatitude>-90.000000</southBoundLatitude>
+        <northBoundLatitude>90.000000</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:4326"
-                minx="-90.00000" miny="-180.00000" maxx="90.00000" maxy="180.00000" />
+                minx="-90.000000" miny="-180.000000" maxx="90.000000" maxy="180.000000" />
     <Layer queryable="1" opaque="0" cascaded="0">
         <Name>road</Name>
         <Title>road</Title>
         <Abstract>Roads of I.P.E.</Abstract>
         <CRS>EPSG:43204</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.63331</westBoundLongitude>
-            <eastBoundLongitude>-59.29211</eastBoundLongitude>
-            <southBoundLatitude>42.38205</southBoundLatitude>
-            <northBoundLatitude>48.29551</northBoundLatitude>
+            <westBoundLongitude>-66.633318</westBoundLongitude>
+            <eastBoundLongitude>-59.292114</eastBoundLongitude>
+            <southBoundLatitude>42.382054</southBoundLatitude>
+            <northBoundLatitude>48.295512</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:43204"
                     minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
@@ -170,10 +170,10 @@ Content-Type: text/xml; charset=UTF-8
         <Title>province</Title>
         <Abstract>province</Abstract>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.72432</westBoundLongitude>
-            <eastBoundLongitude>-57.72168</eastBoundLongitude>
-            <southBoundLatitude>41.77050</southBoundLatitude>
-            <northBoundLatitude>48.47731</northBoundLatitude>
+            <westBoundLongitude>-66.724329</westBoundLongitude>
+            <eastBoundLongitude>-57.721680</eastBoundLongitude>
+            <southBoundLatitude>41.770508</southBoundLatitude>
+            <northBoundLatitude>48.477314</northBoundLatitude>
         </EX_GeographicBoundingBox>
     <Attribution>
         <Title>MapServer</Title>
@@ -197,10 +197,10 @@ Content-Type: text/xml; charset=UTF-8
         <Abstract>Toronto</Abstract>
         <CRS>EPSG:32611</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-117.54590</westBoundLongitude>
-            <eastBoundLongitude>-117.38727</eastBoundLongitude>
-            <southBoundLatitude>44.66561</southBoundLatitude>
-            <northBoundLatitude>44.76708</northBoundLatitude>
+            <westBoundLongitude>-117.545904</westBoundLongitude>
+            <eastBoundLongitude>-117.387277</eastBoundLongitude>
+            <southBoundLatitude>44.665615</southBoundLatitude>
+            <northBoundLatitude>44.767083</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:32611"
                     minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />

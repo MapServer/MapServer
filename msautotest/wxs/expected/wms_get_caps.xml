@@ -124,9 +124,9 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Keyword>workshop</Keyword>
     </KeywordList>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-180.00000" miny="-90.00000" maxx="180.00000" maxy="90.00000" />
+    <LatLonBoundingBox minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-180.00000" miny="-90.00000" maxx="180.00000" maxy="90.00000" />
+                minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <Attribution>
         <Title>Data from Environment Canada</Title>
         <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ec.gc.ca/"/>
@@ -158,10 +158,10 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
             <Keyword>EROS</Keyword>
         </KeywordList>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-180.00000" miny="-90.00000" maxx="180.00000" maxy="90.00000" />
+        <LatLonBoundingBox minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="-180.00000" miny="-90.00000" maxx="180.00000" maxy="90.00000"
-                    resx="0.1757812" resy="0.1757812" />
+                    minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000"
+                    resx="0.17578125" resy="0.17578125" />
         <AuthorityURL name="nasa">
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://visibleearth.nasa.gov/view_set.php?categoryID=2355"/>
         </AuthorityURL>
@@ -197,9 +197,9 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
             <Keyword>world</Keyword>
         </KeywordList>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-164.62455" miny="-36.90435" maxx="161.06582" maxy="72.23418" />
+        <LatLonBoundingBox minx="-164.624557" miny="-36.904354" maxx="161.065826" maxy="72.234184" />
         <BoundingBox SRS="EPSG:4326"
-                    minx="-164.62455" miny="-36.90435" maxx="161.06582" maxy="72.23418" />
+                    minx="-164.624557" miny="-36.904354" maxx="161.065826" maxy="72.234184" />
         <MetadataURL type="FGDC">
           <Format>text/html</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/ms_ogc_workshop/index.html"/>
@@ -229,7 +229,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         </KeywordList>
         <SRS>EPSG:26917</SRS>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-81.54526" miny="42.71355" maxx="-78.38742" maxy="44.76729" />
+        <LatLonBoundingBox minx="-81.545268" miny="42.713551" maxx="-78.387425" maxy="44.767292" />
         <BoundingBox SRS="EPSG:26917"
                     minx="456850" miny="4.7321e+06" maxx="706850" maxy="4.9571e+06"
                     resx="100" resy="100" />

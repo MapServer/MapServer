@@ -73,13 +73,13 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <SRS>EPSG:42101</SRS>
     <SRS>EPSG:4269</SRS>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-67.57250" miny="42.00000" maxx="-58.92750" maxy="48.50000" />
+    <LatLonBoundingBox minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-67.57250" miny="42.00000" maxx="-58.92750" maxy="48.50000" />
+                minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>province</Name>
         <Title>province</Title>
-        <LatLonBoundingBox minx="-66.72432" miny="41.77050" maxx="-57.72168" maxy="48.47731" />
+        <LatLonBoundingBox minx="-66.724329" miny="41.770508" maxx="-57.721680" maxy="48.477314" />
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=province"/>
@@ -96,7 +96,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>popplace</Name>
         <Title>popplace</Title>
-        <LatLonBoundingBox minx="-66.32861" miny="42.56312" maxx="-59.68821" maxy="47.94125" />
+        <LatLonBoundingBox minx="-66.328617" miny="42.563125" maxx="-59.688212" maxy="47.941251" />
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=popplace"/>
@@ -113,7 +113,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>road</Name>
         <Title>road</Title>
-        <LatLonBoundingBox minx="-66.63331" miny="42.38205" maxx="-59.29211" maxy="48.29551" />
+        <LatLonBoundingBox minx="-66.633318" miny="42.382054" maxx="-59.292114" maxy="48.295512" />
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=road"/>

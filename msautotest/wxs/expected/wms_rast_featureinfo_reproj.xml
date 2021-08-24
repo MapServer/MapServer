@@ -11,7 +11,7 @@ Content-Type: application/vnd.ogc.gml; charset=UTF-8
 		<road_feature>
 			<gml:boundedBy>
 				<gml:Box srsName="EPSG:4326">
-					<gml:coordinates>-117.44501,44.71061 -117.44501,44.71061</gml:coordinates>
+					<gml:coordinates>-117.445014,44.710610 -117.445014,44.710610</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
 			<x>-117.44501</x>
