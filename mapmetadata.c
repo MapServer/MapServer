@@ -213,7 +213,7 @@ xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, const char *name, double va
 
   xmlNodePtr psNode = NULL;
 
-  sprintf(buffer, "%f", value);
+  snprintf(buffer, sizeof(buffer), "%.6f", value);
 
   if( *ppsNsGco == NULL )
     *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");

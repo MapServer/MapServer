@@ -234,8 +234,8 @@ Content-Type: text/xml; charset=UTF-8
         <gml:srsName>EPSG:4326</gml:srsName>
         <gml:boundedBy>
           <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-            <gml:lowerCorner>-141.00000 42.00000</gml:lowerCorner>
-            <gml:upperCorner>-52.00000 84.00000</gml:upperCorner>
+            <gml:lowerCorner>-141.000000 42.000000</gml:lowerCorner>
+            <gml:upperCorner>-52.000000 84.000000</gml:upperCorner>
           </gml:Envelope>
         </gml:boundedBy>
         <sos:intendedApplication>for SOS demos</sos:intendedApplication>

@@ -589,8 +589,8 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
   snprintf( dim_string, sizeof(dim_string), "%d", dimensions );
   xmlNewProp(psRootNode, BAD_CAST "dimensions", BAD_CAST dim_string);
 
-  snprintf(LowerCorner, sizeof(LowerCorner), "%.15g %.15g", minx, miny);
-  snprintf(UpperCorner, sizeof(UpperCorner), "%.15g %.15g", maxx, maxy);
+  snprintf(LowerCorner, sizeof(LowerCorner), "%.6f %.6f", minx, miny);
+  snprintf(UpperCorner, sizeof(UpperCorner), "%.6f %.6f", maxx, maxy);
 
   /* add child elements */
   xmlNewChild(psRootNode, psNsOws,BAD_CAST "LowerCorner",BAD_CAST LowerCorner);

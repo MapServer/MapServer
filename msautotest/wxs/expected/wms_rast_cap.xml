@@ -124,14 +124,14 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <SRS>EPSG:42101</SRS>
     <SRS>EPSG:4269</SRS>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-117.546" miny="44.6654" maxx="-117.387" maxy="44.7671" />
+    <LatLonBoundingBox minx="-117.545904" miny="44.665361" maxx="-117.387172" maxy="44.767083" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-117.546" miny="44.6654" maxx="-117.387" maxy="44.7671" />
+                minx="-117.545904" miny="44.665361" maxx="-117.387172" maxy="44.767083" />
     <Layer queryable="1" opaque="0" cascaded="0">
         <Name>road</Name>
         <Title>road</Title>
         <SRS>EPSG:32611</SRS>
-        <LatLonBoundingBox minx="-117.546" miny="44.6656" maxx="-117.387" maxy="44.7671" />
+        <LatLonBoundingBox minx="-117.545904" miny="44.665615" maxx="-117.387277" maxy="44.767083" />
         <BoundingBox SRS="EPSG:32611"
                     minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />
         <MetadataURL type="TC211">
@@ -145,7 +145,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Title>grey</Title>
         <SRS>EPSG:32611</SRS>
         <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-121.489" miny="0" maxx="-121.485" maxy="0.0027058" />
+        <LatLonBoundingBox minx="-121.488744" miny="0.000000" maxx="-121.485160" maxy="0.002706" />
         <BoundingBox SRS="EPSG:32611"
                     minx="0" miny="0" maxx="400" maxy="300" />
         <MetadataURL type="TC211">

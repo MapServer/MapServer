@@ -11,21 +11,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    next="http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=time&amp;MAXFEATURES=1&amp;STARTINDEX=1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>37.98000 -130.00000</gml:lowerCorner>
-      		<gml:upperCorner>37.98000 -130.00000</gml:upperCorner>
+      		<gml:lowerCorner>37.980000 -130.000000</gml:lowerCorner>
+      		<gml:upperCorner>37.980000 -130.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:time gml:id="time.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>37.98000 -130.00000</gml:lowerCorner>
-        		<gml:upperCorner>37.98000 -130.00000</gml:upperCorner>
+        		<gml:lowerCorner>37.980000 -130.000000</gml:lowerCorner>
+        		<gml:upperCorner>37.980000 -130.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>37.98000 -130.00000</gml:pos>
+            <gml:pos>37.980000 -130.000000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:time gml:id="time.1.time"><gml:timePosition>12:34:56Z</gml:timePosition></ms:time>

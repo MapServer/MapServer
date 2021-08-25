@@ -65,8 +65,8 @@ Content-Type: text/xml; charset=UTF-8
   <metadataLink metadataType="TC211" xlink:type="simple" xlink:href="http://localhost/path/to/?request=GetMetadata&amp;layer=grey_26711"/>    <name>grey_26711</name>
     <label>grey_26711</label>
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-      <gml:pos>-117.64116862079 33.848239887019</gml:pos>
-      <gml:pos>-117.5759124632 33.902673374967</gml:pos>
+      <gml:pos>-117.641168620797 33.8482398870197</gml:pos>
+      <gml:pos>-117.57591246321 33.9026733749676</gml:pos>
     </lonLatEnvelope>
   </CoverageOfferingBrief>
 </ContentMetadata>

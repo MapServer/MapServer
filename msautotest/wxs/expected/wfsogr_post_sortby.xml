@@ -10,21 +10,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="unknown" numberReturned="3">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-      		<gml:lowerCorner>2281604.25000 135734.70312</gml:lowerCorner>
-      		<gml:upperCorner>2402416.50000 461586.81250</gml:upperCorner>
+      		<gml:lowerCorner>2281604.250000 135734.703125</gml:lowerCorner>
+      		<gml:upperCorner>2402416.500000 461586.812500</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:popplace gml:id="popplace.BACMK">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-        		<gml:lowerCorner>2281604.25000 340848.93750</gml:lowerCorner>
-        		<gml:upperCorner>2281604.25000 340848.93750</gml:upperCorner>
+        		<gml:lowerCorner>2281604.250000 340848.937500</gml:lowerCorner>
+        		<gml:upperCorner>2281604.250000 340848.937500</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="popplace.BACMK.1" srsName="urn:ogc:def:crs:EPSG::3978">
-            <gml:pos>2281604.25000 340848.93750</gml:pos>
+            <gml:pos>2281604.250000 340848.937500</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:UNIQUE_KEY>BACMK</ms:UNIQUE_KEY>
@@ -37,13 +37,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:popplace gml:id="popplace.EGIIG">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-        		<gml:lowerCorner>2402416.50000 461586.81250</gml:lowerCorner>
-        		<gml:upperCorner>2402416.50000 461586.81250</gml:upperCorner>
+        		<gml:lowerCorner>2402416.500000 461586.812500</gml:lowerCorner>
+        		<gml:upperCorner>2402416.500000 461586.812500</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="popplace.EGIIG.1" srsName="urn:ogc:def:crs:EPSG::3978">
-            <gml:pos>2402416.50000 461586.81250</gml:pos>
+            <gml:pos>2402416.500000 461586.812500</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:UNIQUE_KEY>EGIIG</ms:UNIQUE_KEY>
@@ -56,13 +56,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:popplace gml:id="popplace.CBPAK">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-        		<gml:lowerCorner>2377598.00000 135734.70312</gml:lowerCorner>
-        		<gml:upperCorner>2377598.00000 135734.70312</gml:upperCorner>
+        		<gml:lowerCorner>2377598.000000 135734.703125</gml:lowerCorner>
+        		<gml:upperCorner>2377598.000000 135734.703125</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="popplace.CBPAK.1" srsName="urn:ogc:def:crs:EPSG::3978">
-            <gml:pos>2377598.00000 135734.70312</gml:pos>
+            <gml:pos>2377598.000000 135734.703125</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:UNIQUE_KEY>CBPAK</ms:UNIQUE_KEY>

@@ -10,29 +10,29 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="6" numberReturned="6">
   <wfs:boundedBy>
   	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-  		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-  		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+  		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+  		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
   	</gml:Envelope>
   </wfs:boundedBy>
   <wfs:member>
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-      		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-      		<gml:upperCorner>222638.98158 6274861.39400</gml:upperCorner>
+      		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+      		<gml:upperCorner>222638.981587 6274861.394007</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:point gml:id="point.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-        		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-        		<gml:upperCorner>222638.98158 6274861.39400</gml:upperCorner>
+        		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+        		<gml:upperCorner>222638.981587 6274861.394007</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="point.1.1" srsName="urn:ogc:def:crs:EPSG::3857">
-            <gml:pos>222638.98158 6274861.39400</gml:pos>
+            <gml:pos>222638.981587 6274861.394007</gml:pos>
           </gml:Point>
         </ms:msGeometry>
       </ms:point>
@@ -43,28 +43,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-      		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-      		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+      		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+      		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipoint gml:id="multipoint.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-        		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-        		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+        		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+        		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:MultiPoint gml:id="multipoint.1.1" srsName="urn:ogc:def:crs:EPSG::3857">
             <gml:pointMember>
               <gml:Point gml:id="multipoint.1.2">
-                <gml:pos>222638.98158 6274861.39400</gml:pos>
+                <gml:pos>222638.981587 6274861.394007</gml:pos>
               </gml:Point>
             </gml:pointMember>
             <gml:pointMember>
               <gml:Point gml:id="multipoint.1.3">
-                <gml:pos>333958.47238 6446275.84101</gml:pos>
+                <gml:pos>333958.472380 6446275.841017</gml:pos>
               </gml:Point>
             </gml:pointMember>
           </gml:MultiPoint>
@@ -77,21 +77,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-      		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-      		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+      		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+      		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:linestring gml:id="linestring.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-        		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-        		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+        		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+        		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:LineString gml:id="linestring.1.1" srsName="urn:ogc:def:crs:EPSG::3857">
-            <gml:posList srsDimension="2">222638.98158 6274861.39400 333958.47238 6446275.84101 </gml:posList>
+            <gml:posList srsDimension="2">222638.981587 6274861.394007 333958.472380 6446275.841017 </gml:posList>
           </gml:LineString>
         </ms:msGeometry>
       </ms:linestring>
@@ -102,28 +102,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-      		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-      		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+      		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+      		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multilinestring gml:id="multilinestring.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-        		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-        		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+        		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+        		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:MultiCurve gml:id="multilinestring.1.1" srsName="urn:ogc:def:crs:EPSG::3857">
             <gml:curveMember>
               <gml:LineString gml:id="multilinestring.1.2">
-                <gml:posList srsDimension="2">222638.98158 6274861.39400 333958.47238 6446275.84101 </gml:posList>
+                <gml:posList srsDimension="2">222638.981587 6274861.394007 333958.472380 6446275.841017 </gml:posList>
               </gml:LineString>
             </gml:curveMember>
             <gml:curveMember>
               <gml:LineString gml:id="multilinestring.1.3">
-                <gml:posList srsDimension="2">222638.98158 6446275.84101 333958.47238 6274861.39400 </gml:posList>
+                <gml:posList srsDimension="2">222638.981587 6446275.841017 333958.472380 6274861.394007 </gml:posList>
               </gml:LineString>
             </gml:curveMember>
           </gml:MultiCurve>
@@ -136,28 +136,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-      		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-      		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+      		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+      		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:polygon gml:id="polygon.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-        		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-        		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+        		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+        		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Polygon gml:id="polygon.1.1" srsName="urn:ogc:def:crs:EPSG::3857">
             <gml:exterior>
               <gml:LinearRing>
-                <gml:posList srsDimension="2">222638.98158 6274861.39400 222638.98158 6446275.84101 333958.47238 6446275.84101 333958.47238 6274861.39400 222638.98158 6274861.39400 </gml:posList>
+                <gml:posList srsDimension="2">222638.981587 6274861.394007 222638.981587 6446275.841017 333958.472380 6446275.841017 333958.472380 6274861.394007 222638.981587 6274861.394007 </gml:posList>
               </gml:LinearRing>
             </gml:exterior>
             <gml:interior>
               <gml:LinearRing>
-                <gml:posList srsDimension="2">233770.93066 6291846.36706 322826.52330 6291846.36706 322826.52330 6428975.57987 233770.93066 6428975.57987 233770.93066 6291846.36706 </gml:posList>
+                <gml:posList srsDimension="2">233770.930666 6291846.367064 322826.523300 6291846.367064 322826.523300 6428975.579878 233770.930666 6428975.579878 233770.930666 6291846.367064 </gml:posList>
               </gml:LinearRing>
             </gml:interior>
           </gml:Polygon>
@@ -170,16 +170,16 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-      		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-      		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+      		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+      		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipolygon gml:id="multipolygon.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3857">
-        		<gml:lowerCorner>222638.98158 6274861.39400</gml:lowerCorner>
-        		<gml:upperCorner>333958.47238 6446275.84101</gml:upperCorner>
+        		<gml:lowerCorner>222638.981587 6274861.394007</gml:lowerCorner>
+        		<gml:upperCorner>333958.472380 6446275.841017</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
@@ -188,12 +188,12 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
               <gml:Polygon gml:id="multipolygon.1.2">
                 <gml:exterior>
                   <gml:LinearRing>
-                    <gml:posList srsDimension="2">222638.98158 6274861.39400 222638.98158 6446275.84101 333958.47238 6446275.84101 333958.47238 6274861.39400 222638.98158 6274861.39400 </gml:posList>
+                    <gml:posList srsDimension="2">222638.981587 6274861.394007 222638.981587 6446275.841017 333958.472380 6446275.841017 333958.472380 6274861.394007 222638.981587 6274861.394007 </gml:posList>
                   </gml:LinearRing>
                 </gml:exterior>
                 <gml:interior>
                   <gml:LinearRing>
-                    <gml:posList srsDimension="2">233770.93066 6291846.36706 322826.52330 6291846.36706 322826.52330 6428975.57987 233770.93066 6428975.57987 233770.93066 6291846.36706 </gml:posList>
+                    <gml:posList srsDimension="2">233770.930666 6291846.367064 322826.523300 6291846.367064 322826.523300 6428975.579878 233770.930666 6428975.579878 233770.930666 6291846.367064 </gml:posList>
                   </gml:LinearRing>
                 </gml:interior>
               </gml:Polygon>
@@ -202,7 +202,7 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
               <gml:Polygon gml:id="multipolygon.1.3">
                 <gml:exterior>
                   <gml:LinearRing>
-                    <gml:posList srsDimension="2">244902.87974 6308865.59708 244902.87974 6411711.13897 311694.57422 6411711.13897 311694.57422 6308865.59708 244902.87974 6308865.59708 </gml:posList>
+                    <gml:posList srsDimension="2">244902.879745 6308865.597080 244902.879745 6411711.138972 311694.574221 6411711.138972 311694.574221 6308865.597080 244902.879745 6308865.597080 </gml:posList>
                   </gml:LinearRing>
                 </gml:exterior>
               </gml:Polygon>

@@ -400,38 +400,6 @@ def fixexponent_file( filename ):
     return
 
 ###############################################################################
-# Do windows number of decimal truncation.
-
-def truncate_one_decimal( filename ):
-    import re
-    
-    data = open(filename,'rb').read()
-
-    from sys import version_info
-    if version_info >= (3,0,0):
-        data = str(data, 'iso-8859-1')
-
-    numbers_found = re.compile('[0-9]+\.[0-9]{6,24}', re.M)
-
-    start = 0
-    new_data = ''
-    for number in numbers_found.finditer(data):
-        end = number.end() - 1
-        new_data = new_data + data[start:end] 
-        start = number.end()
-
-    if new_data != '':
-        new_data = new_data + data[start:] 
-
-
-    if new_data != '' and new_data != data:
-        if version_info >= (3,0,0):
-            open(filename,'wb').write(bytes(new_data, 'iso-8859-1'))
-        else:
-            open(filename,'wb').write(new_data)
-
-    return
-###############################################################################
 # Replace CR+LF by CR
 
 def crlf( filename ):
@@ -649,7 +617,6 @@ def _run(map, out_file, command, extra_args):
         deversion_file( 'result/'+out_file )
         degdalversion_file( 'result/'+out_file )
         fixexponent_file( 'result/'+out_file )
-        truncate_one_decimal( 'result/'+out_file )
         detimestamp_file( 'result/'+out_file )
     if extractserviceversion:
         extract_service_version_file( 'result/'+out_file )
