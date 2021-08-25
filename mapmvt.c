@@ -319,7 +319,7 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
 
   if(layer->type == MS_LAYER_POINT) {
     int idx=0, lastx=0, lasty=0;
-    mvt_feature->geometry[idx++] = COMMAND(MOVETO, mvt_feature->n_geometry-1);
+    mvt_feature->geometry[idx++] = COMMAND(MOVETO, (mvt_feature->n_geometry-1) / 2);
     for(i=0;i<shape->numlines;i++) {
       for(j=0;j<shape->line[i].numpoints;j++) {
         mvt_feature->geometry[idx++] = PARAMETER(MS_NINT(shape->line[i].point[j].x)-lastx);
