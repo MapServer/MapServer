@@ -18,10 +18,10 @@ typedef struct {
   hashTableObj plugins; ///< Key-value pairs of plugin names and paths
 } configObj;
 
-MS_DLL_EXPORT configObj *msLoadConfig(char* ms_config_file);
+MS_DLL_EXPORT configObj *msLoadConfig(const char* ms_config_file);
 MS_DLL_EXPORT void msFreeConfig(configObj *config);
-MS_DLL_EXPORT const char *msConfigGetEnv(configObj *config, const char *key);
-MS_DLL_EXPORT const char *msConfigGetMap(configObj *config, const char *key);
+MS_DLL_EXPORT const char *msConfigGetEnv(const configObj *config, const char *key);
+MS_DLL_EXPORT const char *msConfigGetMap(const configObj *config, const char *key);
 
 #ifdef __cplusplus
 } /* extern C */
