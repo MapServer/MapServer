@@ -110,6 +110,10 @@ cd msautotest/wxs
 
 export PATH=/tmp/install-mapserver/bin:$PATH
 
+# Demonstrate that mapserv will error out if cannot find config file
+mapserv 2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo yes
+mapserv QUERY_STRING="MAP=wfs_simple.map&REQUEST=GetCapabilities" 2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo yes
+
 echo "Check that MS_MAP_NO_PATH works"
 cat <<EOF >/tmp/mapserver.conf
 CONFIG
@@ -121,7 +125,10 @@ CONFIG
   END
 END
 EOF
-MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+# Also demonstrate that mapserv can find config file in ${CMAKE_INSTALL_FULL_SYSCONFDIR}/etc/mapserver.conf by default
+ln -s /tmp/mapserver.conf /tmp/install-mapserver/etc
+mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+rm /tmp/install-mapserver/etc/mapserver.conf
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_NO_PATH works (rejecting a value not defined in the MAPS section)"
