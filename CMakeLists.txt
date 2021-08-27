@@ -1043,16 +1043,22 @@ if(UNIX)
 else()
   set(DEFAULT_DATA_SUBDIR share/mapserver)
 endif()
+set(DEFAULT_CONFIG_FILE ${CMAKE_INSTALL_FULL_SYSCONFDIR}/mapserver.conf)
 
 # Locations are changeable by user to customize layout of MapServer installation
 # (default values are platform-specific)
 set(MAPSERVER_DATA_SUBDIR ${DEFAULT_DATA_SUBDIR} CACHE STRING
   "Subdirectory where data will be installed")
 
+set(MAPSERVER_CONFIG_FILE "${DEFAULT_CONFIG_FILE}" CACHE STRING
+  "Full file name for default configuration file (mapserver.conf)")
+
 # Mark *DIR variables as advanced and dedicated to use by power-users only.
 mark_as_advanced(
   MAPSERVER_DATA_SUBDIR
+  MAPSERVER_CONFIG_FILE
 )
+add_definitions(-DMAPSERVER_CONFIG_FILE="${MAPSERVER_CONFIG_FILE}")
 
 install(
   FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection.html
@@ -1066,4 +1072,9 @@ install(
         ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/landing.html
         ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/openapi.html
   DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-plain/
+)
+
+install(
+  FILES ${PROJECT_SOURCE_DIR}/etc/mapserver-sample.conf
+  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/
 )

@@ -78,13 +78,18 @@ static int loadConfig(configObj *config)
   }
 }
 
-configObj *msLoadConfig(char* ms_config_file)
+configObj *msLoadConfig(const char* ms_config_file)
 {
   configObj *config = NULL;
 
   if (ms_config_file == NULL) {
     // get config filename from environment
     ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
+  }
+
+  if(ms_config_file == NULL && MAPSERVER_CONFIG_FILE[0] != '\0') {
+    // Fallback to hardcoded file name
+    ms_config_file = MAPSERVER_CONFIG_FILE;
   }
 
   if(ms_config_file == NULL) {
@@ -141,13 +146,13 @@ configObj *msLoadConfig(char* ms_config_file)
   return config;  
 }
 
-const char *msConfigGetEnv(configObj *config, const char *key) 
+const char *msConfigGetEnv(const configObj *config, const char *key) 
 {
   if(config == NULL) return NULL;
   return msLookupHashTable(&config->env, key);
 }
 
-const char *msConfigGetMap(configObj *config, const char *key)
+const char *msConfigGetMap(const configObj *config, const char *key)
 {
   if(config ==NULL) return NULL;
   return msLookupHashTable(&config->maps, key);
