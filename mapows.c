@@ -2205,10 +2205,10 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
   msOWSProjectToWGS84(srcproj, &ext);
 
   msIO_fprintf(stream, "%s<%s>\n", tabspace, pszTag);
-  msIO_fprintf(stream, "%s    <westBoundLongitude>%g</westBoundLongitude>\n", tabspace, ext.minx);
-  msIO_fprintf(stream, "%s    <eastBoundLongitude>%g</eastBoundLongitude>\n", tabspace, ext.maxx);
-  msIO_fprintf(stream, "%s    <southBoundLatitude>%g</southBoundLatitude>\n", tabspace, ext.miny);
-  msIO_fprintf(stream, "%s    <northBoundLatitude>%g</northBoundLatitude>\n", tabspace, ext.maxy);
+  msIO_fprintf(stream, "%s    <westBoundLongitude>%.6f</westBoundLongitude>\n", tabspace, ext.minx);
+  msIO_fprintf(stream, "%s    <eastBoundLongitude>%.6f</eastBoundLongitude>\n", tabspace, ext.maxx);
+  msIO_fprintf(stream, "%s    <southBoundLatitude>%.6f</southBoundLatitude>\n", tabspace, ext.miny);
+  msIO_fprintf(stream, "%s    <northBoundLatitude>%.6f</northBoundLatitude>\n", tabspace, ext.maxy);
   msIO_fprintf(stream, "%s</%s>\n", tabspace, pszTag);
 
   /* msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n",
@@ -2241,7 +2241,7 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
     }
   }
 
-  msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n",
+  msIO_fprintf(stream, "%s<%s minx=\"%.6f\" miny=\"%.6f\" maxx=\"%.6f\" maxy=\"%.6f\" />\n",
                tabspace, pszTag, ext.minx, ext.miny, ext.maxx, ext.maxy);
 }
 
@@ -2310,23 +2310,27 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
           msAxisNormalizePoints( &proj, 1, &(ext.maxx), &(ext.maxy) );
         }
       }
-      msFreeProjection( &proj );
 
       encoded = msEncodeHTMLEntities(value);
-      if (wms_version >= OWS_1_3_0)
-        msIO_fprintf(stream, "%s<BoundingBox CRS=\"%s\"\n"
-                     "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
-                     tabspace, encoded,
+      if (msProjIsGeographicCRS(&proj) )
+        msIO_fprintf(stream, "%s<BoundingBox %s=\"%s\"\n"
+                     "%s            minx=\"%.6f\" miny=\"%.6f\" maxx=\"%.6f\" maxy=\"%.6f\"",
+                     tabspace,
+                     (wms_version >= OWS_1_3_0) ? "CRS" : "SRS",
+                     encoded,
                      tabspace, ext.minx, ext.miny,
                      ext.maxx, ext.maxy);
       else
-        msIO_fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
+        msIO_fprintf(stream, "%s<BoundingBox %s=\"%s\"\n"
                      "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
-                     tabspace, encoded,
+                     tabspace,
+                     (wms_version >= OWS_1_3_0) ? "CRS" : "SRS",
+                     encoded,
                      tabspace, ext.minx, ext.miny,
                      ext.maxx, ext.maxy);
 
       msFree(encoded);
+      msFreeProjection( &proj );
 
       if( (resx = msOWSLookupMetadata2( layer_meta, map_meta, "MFO", "resx" )) != NULL &&
           (resy = msOWSLookupMetadata2( layer_meta, map_meta, "MFO", "resy" )) != NULL ) {

@@ -11,19 +11,19 @@ Content-Type: text/xml; charset=UTF-8
                        http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=XMLSCHEMA">
       <gml:boundedBy>
       	<gml:Box srsName="EPSG:4326">
-      		<gml:coordinates>-65.81602,44.61104 -62.27243,46.37327</gml:coordinates>
+      		<gml:coordinates>-65.816024,44.611049 -62.272430,46.373272</gml:coordinates>
       	</gml:Box>
       </gml:boundedBy>
     <gml:featureMember>
       <ms:popplace>
         <gml:boundedBy>
         	<gml:Box srsName="EPSG:4326">
-        		<gml:coordinates>-62.27243,46.37327 -62.27243,46.37327</gml:coordinates>
+        		<gml:coordinates>-62.272430,46.373272 -62.272430,46.373272</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="EPSG:4326">
-          <gml:coordinates>-62.27243,46.37327</gml:coordinates>
+          <gml:coordinates>-62.272430,46.373272</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:AREA>0.000</ms:AREA>
@@ -49,12 +49,12 @@ Content-Type: text/xml; charset=UTF-8
       <ms:popplace>
         <gml:boundedBy>
         	<gml:Box srsName="EPSG:4326">
-        		<gml:coordinates>-65.81602,44.61104 -65.81602,44.61104</gml:coordinates>
+        		<gml:coordinates>-65.816024,44.611049 -65.816024,44.611049</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="EPSG:4326">
-          <gml:coordinates>-65.81602,44.61104</gml:coordinates>
+          <gml:coordinates>-65.816024,44.611049</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:AREA>0.000</ms:AREA>

@@ -133,7 +133,6 @@ protected:
 
   void renderLineVector(imageObj *img, shapeObj *p, strokeStyleObj *style);
   void renderPolygonVector(imageObj *img, shapeObj *p, colorObj *color);
-  void renderGlyphsVector(imageObj *img, double x, double y, labelStyleObj *style, char *text);
 
   const char* lookupPlacemarkStyle();
   void flushPlacemark();
@@ -160,7 +159,7 @@ public:
   void renderLine(imageObj *img, shapeObj *p, strokeStyleObj *style);
   void renderPolygon(imageObj *img, shapeObj *p, colorObj *color);
 
-  void renderGlyphs(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth);
+  void renderGlyphs(imageObj *img, const textSymbolObj *ts, colorObj *c, colorObj *oc, int ow);
 
   // Symbols
   void renderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);

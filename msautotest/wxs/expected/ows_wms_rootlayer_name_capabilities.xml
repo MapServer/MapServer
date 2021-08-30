@@ -69,13 +69,13 @@ Content-Type: text/xml; charset=UTF-8
     <Abstract>WMS_TEST</Abstract>
     <CRS>EPSG:4326</CRS>
     <EX_GeographicBoundingBox>
-        <westBoundLongitude>-1</westBoundLongitude>
-        <eastBoundLongitude>-1</eastBoundLongitude>
-        <southBoundLatitude>-1</southBoundLatitude>
-        <northBoundLatitude>-1</northBoundLatitude>
+        <westBoundLongitude>-1.000000</westBoundLongitude>
+        <eastBoundLongitude>-1.000000</eastBoundLongitude>
+        <southBoundLatitude>-1.000000</southBoundLatitude>
+        <northBoundLatitude>-1.000000</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:4326"
-                minx="-1" miny="-1" maxx="-1" maxy="-1" />
+                minx="-1.000000" miny="-1.000000" maxx="-1.000000" maxy="-1.000000" />
     <Layer queryable="1">
       <Name>roadgroup</Name>
       <Title>roadgroup</Title>
@@ -84,10 +84,10 @@ Content-Type: text/xml; charset=UTF-8
         <Title>road</Title>
         <CRS>EPSG:43204</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.6333</westBoundLongitude>
-            <eastBoundLongitude>-59.2921</eastBoundLongitude>
-            <southBoundLatitude>42.3821</southBoundLatitude>
-            <northBoundLatitude>48.2955</northBoundLatitude>
+            <westBoundLongitude>-66.633318</westBoundLongitude>
+            <eastBoundLongitude>-59.292114</eastBoundLongitude>
+            <southBoundLatitude>42.382054</southBoundLatitude>
+            <northBoundLatitude>48.295512</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:43204"
                     minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />

@@ -10,21 +10,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="unknown" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>34.70999 -120.97000</gml:lowerCorner>
-      		<gml:upperCorner>34.70999 -120.97000</gml:upperCorner>
+      		<gml:lowerCorner>34.709999 -120.970001</gml:lowerCorner>
+      		<gml:upperCorner>34.709999 -120.970001</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:datetime gml:id="datetime.19">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.70999 -120.97000</gml:lowerCorner>
-        		<gml:upperCorner>34.70999 -120.97000</gml:upperCorner>
+        		<gml:lowerCorner>34.709999 -120.970001</gml:lowerCorner>
+        		<gml:upperCorner>34.709999 -120.970001</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="datetime.19.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.70999 -120.97000</gml:pos>
+            <gml:pos>34.709999 -120.970001</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:datetime gml:id="datetime.19.datetime"><gml:timePosition>2004-01-04T00:00:00Z</gml:timePosition></ms:datetime>

@@ -11,19 +11,19 @@ Content-Type: text/xml; charset=UTF-8
                        http://mapserver.gis.umn.edu/mapserver http://foo?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=encoded&amp;OUTPUTFORMAT=XMLSCHEMA">
       <gml:boundedBy>
       	<gml:Box srsName="EPSG:4326">
-      		<gml:coordinates>-0.95118,0.39958 -0.95118,0.39958</gml:coordinates>
+      		<gml:coordinates>-0.951189,0.399582 -0.951189,0.399582</gml:coordinates>
       	</gml:Box>
       </gml:boundedBy>
     <gml:featureMember>
       <ms:encoded>
         <gml:boundedBy>
         	<gml:Box srsName="EPSG:4326">
-        		<gml:coordinates>-0.95118,0.39958 -0.95118,0.39958</gml:coordinates>
+        		<gml:coordinates>-0.951189,0.399582 -0.951189,0.399582</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="EPSG:4326">
-          <gml:coordinates>-0.95118,0.39958</gml:coordinates>
+          <gml:coordinates>-0.951189,0.399582</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
       </ms:encoded>

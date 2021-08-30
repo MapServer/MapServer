@@ -11,7 +11,7 @@ Content-Type: application/vnd.ogc.gml; charset=UTF-8
 		<road2_feature>
 			<gml:boundedBy>
 				<gml:Box srsName="EPSG:4326">
-					<gml:coordinates>-64.61702,44.55887 -64.37038,45.03870</gml:coordinates>
+					<gml:coordinates>-64.617027,44.558875 -64.370387,45.038703</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
 			<FNODE_>903</FNODE_>
@@ -28,7 +28,7 @@ Content-Type: application/vnd.ogc.gml; charset=UTF-8
 		<road2_feature>
 			<gml:boundedBy>
 				<gml:Box srsName="EPSG:4326">
-					<gml:coordinates>-65.12722,44.39911 -64.55216,44.93469</gml:coordinates>
+					<gml:coordinates>-65.127228,44.399110 -64.552161,44.934696</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
 			<FNODE_>950</FNODE_>
@@ -45,7 +45,7 @@ Content-Type: application/vnd.ogc.gml; charset=UTF-8
 		<road2_feature>
 			<gml:boundedBy>
 				<gml:Box srsName="EPSG:4326">
-					<gml:coordinates>-64.57786,44.69501 -63.70018,45.04540</gml:coordinates>
+					<gml:coordinates>-64.577864,44.695012 -63.700184,45.045403</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
 			<FNODE_>903</FNODE_>
@@ -62,7 +62,7 @@ Content-Type: application/vnd.ogc.gml; charset=UTF-8
 		<road2_feature>
 			<gml:boundedBy>
 				<gml:Box srsName="EPSG:4326">
-					<gml:coordinates>-63.71454,44.64282 -63.70018,44.69501</gml:coordinates>
+					<gml:coordinates>-63.714548,44.642829 -63.700184,44.695012</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
 			<FNODE_>908</FNODE_>
@@ -79,7 +79,7 @@ Content-Type: application/vnd.ogc.gml; charset=UTF-8
 		<road2_feature>
 			<gml:boundedBy>
 				<gml:Box srsName="EPSG:4326">
-					<gml:coordinates>-64.37038,44.55887 -63.71454,44.67929</gml:coordinates>
+					<gml:coordinates>-64.370387,44.558875 -63.714548,44.679291</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
 			<FNODE_>914</FNODE_>

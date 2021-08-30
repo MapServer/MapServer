@@ -10,8 +10,8 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="2" numberReturned="2">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>46.12332 -60.28066</gml:lowerCorner>
-      		<gml:upperCorner>46.27689 -60.21496</gml:upperCorner>
+      		<gml:lowerCorner>46.123322 -60.280661</gml:lowerCorner>
+      		<gml:upperCorner>46.276898 -60.214963</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
 <!-- WARNING: No featureid defined for typename 'popplace'. Output will not validate. -->
@@ -19,13 +19,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:popplace>
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>46.27689 -60.28066</gml:lowerCorner>
-        		<gml:upperCorner>46.27689 -60.28066</gml:upperCorner>
+        		<gml:lowerCorner>46.276898 -60.280661</gml:lowerCorner>
+        		<gml:upperCorner>46.276898 -60.280661</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>46.27689 -60.28066</gml:pos>
+            <gml:pos>46.276898 -60.280661</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:AREA>0.000</ms:AREA>
@@ -51,13 +51,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:popplace>
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>46.12332 -60.21496</gml:lowerCorner>
-        		<gml:upperCorner>46.12332 -60.21496</gml:upperCorner>
+        		<gml:lowerCorner>46.123322 -60.214963</gml:lowerCorner>
+        		<gml:upperCorner>46.123322 -60.214963</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>46.12332 -60.21496</gml:pos>
+            <gml:pos>46.123322 -60.214963</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:AREA>0.000</ms:AREA>

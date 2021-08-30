@@ -10,29 +10,29 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="6" numberReturned="6">
   <wfs:boundedBy>
   	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-  		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-  		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+  		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+  		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
   	</gml:Envelope>
   </wfs:boundedBy>
   <wfs:member>
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>49.00000 2.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>49.000000 2.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:point gml:id="point.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>49.00000 2.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>49.000000 2.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="point.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>49.00000 2.00000</gml:pos>
+            <gml:pos>49.000000 2.000000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
       </ms:point>
@@ -43,28 +43,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipoint gml:id="multipoint.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:MultiPoint gml:id="multipoint.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
             <gml:pointMember>
               <gml:Point gml:id="multipoint.1.2">
-                <gml:pos>49.00000 2.00000</gml:pos>
+                <gml:pos>49.000000 2.000000</gml:pos>
               </gml:Point>
             </gml:pointMember>
             <gml:pointMember>
               <gml:Point gml:id="multipoint.1.3">
-                <gml:pos>50.00000 3.00000</gml:pos>
+                <gml:pos>50.000000 3.000000</gml:pos>
               </gml:Point>
             </gml:pointMember>
           </gml:MultiPoint>
@@ -77,21 +77,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:linestring gml:id="linestring.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:LineString gml:id="linestring.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:posList srsDimension="2">49.00000 2.00000 50.00000 3.00000 </gml:posList>
+            <gml:posList srsDimension="2">49.000000 2.000000 50.000000 3.000000 </gml:posList>
           </gml:LineString>
         </ms:msGeometry>
       </ms:linestring>
@@ -102,28 +102,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multilinestring gml:id="multilinestring.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:MultiCurve gml:id="multilinestring.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
             <gml:curveMember>
               <gml:LineString gml:id="multilinestring.1.2">
-                <gml:posList srsDimension="2">49.00000 2.00000 50.00000 3.00000 </gml:posList>
+                <gml:posList srsDimension="2">49.000000 2.000000 50.000000 3.000000 </gml:posList>
               </gml:LineString>
             </gml:curveMember>
             <gml:curveMember>
               <gml:LineString gml:id="multilinestring.1.3">
-                <gml:posList srsDimension="2">50.00000 2.00000 49.00000 3.00000 </gml:posList>
+                <gml:posList srsDimension="2">50.000000 2.000000 49.000000 3.000000 </gml:posList>
               </gml:LineString>
             </gml:curveMember>
           </gml:MultiCurve>
@@ -136,28 +136,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:polygon gml:id="polygon.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Polygon gml:id="polygon.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
             <gml:exterior>
               <gml:LinearRing>
-                <gml:posList srsDimension="2">49.00000 2.00000 50.00000 2.00000 50.00000 3.00000 49.00000 3.00000 49.00000 2.00000 </gml:posList>
+                <gml:posList srsDimension="2">49.000000 2.000000 50.000000 2.000000 50.000000 3.000000 49.000000 3.000000 49.000000 2.000000 </gml:posList>
               </gml:LinearRing>
             </gml:exterior>
             <gml:interior>
               <gml:LinearRing>
-                <gml:posList srsDimension="2">49.10000 2.10000 49.10000 2.90000 49.90000 2.90000 49.90000 2.10000 49.10000 2.10000 </gml:posList>
+                <gml:posList srsDimension="2">49.100000 2.100000 49.100000 2.900000 49.900000 2.900000 49.900000 2.100000 49.100000 2.100000 </gml:posList>
               </gml:LinearRing>
             </gml:interior>
           </gml:Polygon>
@@ -170,16 +170,16 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipolygon gml:id="multipolygon.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
@@ -188,12 +188,12 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
               <gml:Polygon gml:id="multipolygon.1.2">
                 <gml:exterior>
                   <gml:LinearRing>
-                    <gml:posList srsDimension="2">49.00000 2.00000 50.00000 2.00000 50.00000 3.00000 49.00000 3.00000 49.00000 2.00000 </gml:posList>
+                    <gml:posList srsDimension="2">49.000000 2.000000 50.000000 2.000000 50.000000 3.000000 49.000000 3.000000 49.000000 2.000000 </gml:posList>
                   </gml:LinearRing>
                 </gml:exterior>
                 <gml:interior>
                   <gml:LinearRing>
-                    <gml:posList srsDimension="2">49.10000 2.10000 49.10000 2.90000 49.90000 2.90000 49.90000 2.10000 49.10000 2.10000 </gml:posList>
+                    <gml:posList srsDimension="2">49.100000 2.100000 49.100000 2.900000 49.900000 2.900000 49.900000 2.100000 49.100000 2.100000 </gml:posList>
                   </gml:LinearRing>
                 </gml:interior>
               </gml:Polygon>
@@ -202,7 +202,7 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
               <gml:Polygon gml:id="multipolygon.1.3">
                 <gml:exterior>
                   <gml:LinearRing>
-                    <gml:posList srsDimension="2">49.20000 2.20000 49.80000 2.20000 49.80000 2.80000 49.20000 2.80000 49.20000 2.20000 </gml:posList>
+                    <gml:posList srsDimension="2">49.200000 2.200000 49.800000 2.200000 49.800000 2.800000 49.200000 2.800000 49.200000 2.200000 </gml:posList>
                   </gml:LinearRing>
                 </gml:exterior>
               </gml:Polygon>

@@ -10,21 +10,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="unknown" numberReturned="3">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-      		<gml:lowerCorner>2431943.75000 118985.38281</gml:lowerCorner>
-      		<gml:upperCorner>2587598.00000 404010.53125</gml:upperCorner>
+      		<gml:lowerCorner>2431943.750000 118985.382812</gml:lowerCorner>
+      		<gml:upperCorner>2587598.000000 404010.531250</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:popplace gml:id="popplace.CAPHL">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-        		<gml:lowerCorner>2431943.75000 118985.38281</gml:lowerCorner>
-        		<gml:upperCorner>2431943.75000 118985.38281</gml:upperCorner>
+        		<gml:lowerCorner>2431943.750000 118985.382812</gml:lowerCorner>
+        		<gml:upperCorner>2431943.750000 118985.382812</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="popplace.CAPHL.1" srsName="urn:ogc:def:crs:EPSG::3978">
-            <gml:pos>2431943.75000 118985.38281</gml:pos>
+            <gml:pos>2431943.750000 118985.382812</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:UNIQUE_KEY>CAPHL</ms:UNIQUE_KEY>
@@ -37,13 +37,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:popplace gml:id="popplace.CAIYJ">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-        		<gml:lowerCorner>2437026.00000 130358.35156</gml:lowerCorner>
-        		<gml:upperCorner>2437026.00000 130358.35156</gml:upperCorner>
+        		<gml:lowerCorner>2437026.000000 130358.351562</gml:lowerCorner>
+        		<gml:upperCorner>2437026.000000 130358.351562</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="popplace.CAIYJ.1" srsName="urn:ogc:def:crs:EPSG::3978">
-            <gml:pos>2437026.00000 130358.35156</gml:pos>
+            <gml:pos>2437026.000000 130358.351562</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:UNIQUE_KEY>CAIYJ</ms:UNIQUE_KEY>
@@ -56,13 +56,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:popplace gml:id="popplace.CBLGX">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978">
-        		<gml:lowerCorner>2587598.00000 404010.53125</gml:lowerCorner>
-        		<gml:upperCorner>2587598.00000 404010.53125</gml:upperCorner>
+        		<gml:lowerCorner>2587598.000000 404010.531250</gml:lowerCorner>
+        		<gml:upperCorner>2587598.000000 404010.531250</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="popplace.CBLGX.1" srsName="urn:ogc:def:crs:EPSG::3978">
-            <gml:pos>2587598.00000 404010.53125</gml:pos>
+            <gml:pos>2587598.000000 404010.531250</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:UNIQUE_KEY>CBLGX</ms:UNIQUE_KEY>

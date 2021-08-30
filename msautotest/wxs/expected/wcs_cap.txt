@@ -91,8 +91,8 @@ Content-Type: text/xml; charset=UTF-8
     <name>grey</name>
     <label>Test label</label>
     <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-      <gml:pos>-121.4887438893 0</gml:pos>
-      <gml:pos>-121.4851602768 0.0027058261133494</gml:pos>
+      <gml:pos>-121.48874388937 0</gml:pos>
+      <gml:pos>-121.48516027686 0.00270582611334944</gml:pos>
     </lonLatEnvelope>
   <keywords>
     <keyword>test</keyword>

@@ -92,13 +92,13 @@ Content-Type: text/xml; charset=UTF-8
     <Abstract>WMS_TIME_EXTENTS_RESOLUTION_NO_DEFAULT</Abstract>
     <CRS>EPSG:4326</CRS>
     <EX_GeographicBoundingBox>
-        <westBoundLongitude>-131</westBoundLongitude>
-        <eastBoundLongitude>-68</eastBoundLongitude>
-        <southBoundLatitude>5</southBoundLatitude>
-        <northBoundLatitude>68</northBoundLatitude>
+        <westBoundLongitude>-131.000000</westBoundLongitude>
+        <eastBoundLongitude>-68.000000</eastBoundLongitude>
+        <southBoundLatitude>5.000000</southBoundLatitude>
+        <northBoundLatitude>68.000000</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <BoundingBox CRS="EPSG:4326"
-                minx="5" miny="-131" maxx="68" maxy="-68" />
+                minx="5.000000" miny="-131.000000" maxx="68.000000" maxy="-68.000000" />
     <MinScaleDenominator>2e+06</MinScaleDenominator>
     <MaxScaleDenominator>5e+07</MaxScaleDenominator>
 <!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->
@@ -107,13 +107,13 @@ Content-Type: text/xml; charset=UTF-8
         <Title>pattern4</Title>
         <CRS>EPSG:4326</CRS>
         <EX_GeographicBoundingBox>
-            <westBoundLongitude>-131.02</westBoundLongitude>
-            <eastBoundLongitude>-119.85</eastBoundLongitude>
-            <southBoundLatitude>33.65</southBoundLatitude>
-            <northBoundLatitude>48.39</northBoundLatitude>
+            <westBoundLongitude>-131.020004</westBoundLongitude>
+            <eastBoundLongitude>-119.849998</eastBoundLongitude>
+            <southBoundLatitude>33.650002</southBoundLatitude>
+            <northBoundLatitude>48.389999</northBoundLatitude>
         </EX_GeographicBoundingBox>
         <BoundingBox CRS="EPSG:4326"
-                    minx="33.65" miny="-131.02" maxx="48.39" maxy="-119.85" />
+                    minx="33.650002" miny="-131.020004" maxx="48.389999" maxy="-119.849998" />
         <Dimension name="time" units="ISO8601" nearestValue="0">2004-01-01/2004-02-01</Dimension>
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
