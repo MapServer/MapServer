@@ -769,8 +769,11 @@ static void outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat for
       j["template"]["path"].push_back(request->api_path[i]);
 
     // parameters (optional)
-    for( int i=0; i<request->NumParams; i++)
-      j["template"]["params"].update({{ request->ParamNames[i], request->ParamValues[i] }});
+    for( int i=0; i<request->NumParams; i++) {
+      if(request->ParamValues[i] && strlen(request->ParamValues[i]) > 0) { // skip empty params
+        j["template"]["params"].update({{ request->ParamNames[i], request->ParamValues[i] }});
+      }
+    }
 
     // add custom tags (optional)
     const char *tags = msOWSLookupMetadata(&(map->web.metadata), "A", "html_tags");
