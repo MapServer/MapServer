@@ -1021,7 +1021,12 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         {
             if( msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS )
             {
-              outputError(OGCAPI_PARAM_ERROR, "Bad value fo offset");
+              outputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
+              return MS_SUCCESS;
+            }
+
+            if(offset < 0 || offset >= numberMatched) {
+              outputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
               return MS_SUCCESS;
             }
 
