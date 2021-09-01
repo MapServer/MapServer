@@ -1339,7 +1339,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
           server["description"] = value;
       }
   }
-  response["servers"] = { server };
+  response["servers"].push_back(server);
 
   const std::string oapif_yaml_url = "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml";
 
