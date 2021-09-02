@@ -1087,6 +1087,19 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         });
     }
 
+    if( offset > 0 ) 
+    {
+        response["links"].push_back({
+	    { "rel", "prev" },
+            { "type", format==OGCAPIFormat::JSON? OGCAPI_MIMETYPE_GEOJSON : OGCAPI_MIMETYPE_HTML },
+	    { "title", "previous page" },
+	    { "href", api_root + "/collections/" + std::string(id_encoded) +
+	              "/items?f=" + (format==OGCAPIFormat::JSON? "json" : "html") +
+		      "&limit=" + std::to_string(limit) +
+		      "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) }
+	});
+    }
+
     msFree(id_encoded); // done
   }
 
