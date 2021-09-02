@@ -186,12 +186,16 @@ or higher on Windows) you will see the following message:
     ImportError: DLL load failed: The specified module could not be found.
 
 If MapServer has been built with a dependency also used by Python, and the versions don't match you may see the error below. 
-This is a particular problem on Windows with ``sqlite3.dll`` as it is used by both Python and MapServer. Copying the ``sqlite3.dll``
-from the MapServer binaries folder alongside ``_mapscript.pyd`` in `Lib/site-packages/mapscript` can resolve this. 
 
 .. code-block:: python
 
     ImportError: DLL load failed: The specified procedure could not be found.
+
+This is a particular problem on Windows with ``sqlite3.dll`` as it is used by both Python and MapServer. Copying the ``sqlite3.dll``
+from the MapServer binaries folder alongside ``_mapscript.pyd`` in `Lib/site-packages/mapscript` can resolve this.
+
+Another common cause is if the Python environment contains multiple versions of the GEOS binary. For example ``geos_c.dll`` is included
+as part of the Shapely Python library, as well as a MapServer installation.
 
 If you are using 32 bit Python on Windows and attempt to use a 64 bit version of MapScript the following import error will occur:
 
