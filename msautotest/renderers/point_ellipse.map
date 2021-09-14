@@ -1,13 +1,13 @@
-# RUN_PARMS: point_ellipse.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: point_ellipse.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: point_ellipse.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: point_ellipse.json [SHP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
-# RUN_PARMS: point_ellipse.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: point_ellipse.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point_ellipse.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point_ellipse.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point_ellipse.json [MAP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
+# RUN_PARMS: point_ellipse.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 
-# RUN_PARMS: gd_fallback.png         [SHP2IMG] -m [MAPFILE] -i gdpng -o [RESULT]
-# RUN_PARMS: gd_fallback_gif.png     [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
-# RUN_PARMS: gd_fallback_pc256.png   [SHP2IMG] -m [MAPFILE] -i gdpc256 -o [RESULT]
-# RUN_PARMS: gd_fallback_jpeg.png    [SHP2IMG] -m [MAPFILE] -i gdjpg -o [RESULT]
+# RUN_PARMS: gd_fallback.png         [MAP2IMG] -m [MAPFILE] -i gdpng -o [RESULT]
+# RUN_PARMS: gd_fallback_gif.png     [MAP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: gd_fallback_pc256.png   [MAP2IMG] -m [MAPFILE] -i gdpc256 -o [RESULT]
+# RUN_PARMS: gd_fallback_jpeg.png    [MAP2IMG] -m [MAPFILE] -i gdjpg -o [RESULT]
 #
 # REQUIRES: OUTPUT=PNG
 #

@@ -1,5 +1,5 @@
-# RUN_PARMS: embed_sb_rgb_tr.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: embed_sb_rgb_tr.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: embed_sb_rgb_tr.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: embed_sb_rgb_tr.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Test embedded scalebar ... with transparency to RGB output file. 

@@ -1,7 +1,7 @@
-# RUN_PARMS: poly_geomtransform_anchor.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: poly_geomtransform_anchor.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: poly_geomtransform_anchor.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: poly_geomtransform_anchor.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # entity-encoded text rendering test.

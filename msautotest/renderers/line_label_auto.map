@@ -1,8 +1,8 @@
-# RUN_PARMS: line_label_auto.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: line_label_auto.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: line_label_auto.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: line_label_auto.json [SHP2IMG] -m [MAPFILE] -i json -o [RESULT]
-# RUN_PARMS: line_label_auto.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: line_label_auto.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_label_auto.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_label_auto.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_label_auto.json [MAP2IMG] -m [MAPFILE] -i json -o [RESULT]
+# RUN_PARMS: line_label_auto.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 map
 

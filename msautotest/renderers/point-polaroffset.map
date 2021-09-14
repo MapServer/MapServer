@@ -1,7 +1,7 @@
-# RUN_PARMS: point-polaroffset.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: point-polaroffset.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: point-polaroffset.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: point-polaroffset.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: point-polaroffset.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point-polaroffset.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point-polaroffset.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point-polaroffset.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 MAP
   SIZE 150 100

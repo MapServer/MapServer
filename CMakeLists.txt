@@ -356,8 +356,8 @@ endif(BUILD_STATIC)
 
 add_executable(mapserv mapserv.c)
 target_link_libraries(mapserv ${MAPSERVER_LIBMAPSERVER})
-add_executable(shp2img shp2img.c)
-target_link_libraries(shp2img ${MAPSERVER_LIBMAPSERVER})
+add_executable(map2img map2img.c)
+target_link_libraries(map2img ${MAPSERVER_LIBMAPSERVER})
 add_executable(shptree shptree.c)
 target_link_libraries(shptree ${MAPSERVER_LIBMAPSERVER})
 add_executable(shptreevis shptreevis.c)
@@ -980,7 +980,7 @@ if(USE_MSSQL2008)
 endif(USE_MSSQL2008)
 
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv
+INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst map2img mapserv
         RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
 )
 
