@@ -1405,6 +1405,7 @@ makeTimeFilter(layerObj *lp,
   char **atimes, **tokens = NULL;
   int numtimes,i, ntmp = 0;
   char *pszBuffer = NULL;
+  char *pszExpressionString = NULL;
   int bOnlyExistingFilter = 0;
 
   if (!lp || !timestring || !timefield)
@@ -1425,12 +1426,17 @@ makeTimeFilter(layerObj *lp,
 
     /* if the filter is set and it's a sting type, concatenate it with
        the time. If not just free it */
-     if (lp->filter.string && lp->filter.type == MS_STRING) {
-      pszBuffer = msStringConcatenate(pszBuffer, "((");
-      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+    if (lp->filter.string && lp->filter.type == MS_STRING) {
+     pszBuffer = msStringConcatenate(pszBuffer, "((");
+     pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+     pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+    } else if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
+     pszExpressionString = msGetExpressionString(&(lp->filter));
+     pszBuffer = msStringConcatenate(pszBuffer, "(");
+     pszBuffer = msStringConcatenate(pszBuffer, pszExpressionString);
+     pszBuffer = msStringConcatenate(pszBuffer, " and ");
     } else {
-      msFreeExpression(&lp->filter);
+     msFreeExpression(&lp->filter);
     }
 
     pszBuffer = msStringConcatenate(pszBuffer, "(");
@@ -1461,15 +1467,17 @@ makeTimeFilter(layerObj *lp,
     pszBuffer = msStringConcatenate(pszBuffer, ")");
 
     /* if there was a filter, It was concatenate with an And ans should be closed*/
-    if(lp->filter.string && lp->filter.type == MS_STRING) {
+    if (lp->filter.string &&
+       (lp->filter.type == MS_STRING || lp->filter.type == MS_EXPRESSION))
       pszBuffer = msStringConcatenate(pszBuffer, ")");
-    }
+
 
     msLoadExpressionString(&lp->filter, pszBuffer);
 
     if (pszBuffer)
       msFree(pszBuffer);
-
+    if (pszExpressionString)
+      msFree(pszExpressionString);
     return MS_TRUE;
   }
 
@@ -1486,6 +1494,12 @@ makeTimeFilter(layerObj *lp,
     /*this flag is used to indicate that the buffer contains only the
       existing filter. It is set to 0 when time filter parts are
       added to the buffer */
+    bOnlyExistingFilter = 1;
+  } else if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
+    pszExpressionString = msGetExpressionString(&(lp->filter));
+    pszBuffer = msStringConcatenate(pszBuffer, "(");
+    pszBuffer = msStringConcatenate(pszBuffer, pszExpressionString);
+    pszBuffer = msStringConcatenate(pszBuffer, " and ");
     bOnlyExistingFilter = 1;
   } else
     msFreeExpression(&lp->filter);
@@ -1596,7 +1610,10 @@ makeTimeFilter(layerObj *lp,
   } else {
     msFreeCharArray(tokens, ntmp);
     msFreeCharArray(atimes, numtimes);
-    msFree(pszBuffer);
+    if (pszBuffer)
+      msFree(pszBuffer);
+    if (pszExpressionString)
+      msFree(pszExpressionString);
     return MS_FALSE;
   }
 
@@ -1604,7 +1621,7 @@ makeTimeFilter(layerObj *lp,
 
   /* load the string to the filter */
   if (pszBuffer && strlen(pszBuffer) > 0) {
-    if(lp->filter.string && lp->filter.type == MS_STRING)
+    if(lp->filter.string && (lp->filter.type == MS_STRING || lp->filter.type == MS_EXPRESSION ))
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     /*
     if(lp->filteritem)
@@ -1615,7 +1632,10 @@ makeTimeFilter(layerObj *lp,
     msLoadExpressionString(&lp->filter, pszBuffer);
 
   }
-  msFree(pszBuffer);
+  if (pszBuffer)
+    msFree(pszBuffer);
+  if (pszExpressionString)
+    msFree(pszExpressionString);
   return MS_TRUE;
 }
 
