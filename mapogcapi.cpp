@@ -573,7 +573,7 @@ static const char* getCollectionDescription(layerObj* layer)
 static const char* getCollectionTitle(layerObj* layer)
 {
     const char* title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
-    if(!title) title = "";
+    if(!title) title = layer->name; // revert to layer name if no title found
     return title;
 }
 
@@ -1189,7 +1189,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   // extend the response a bit for templating (HERE)
   if(format == OGCAPIFormat::HTML) {
-    const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    const char *title = getCollectionTitle(layer);
     const char *id = layer->name;
     response["collection"] = {
       { "id", id },
