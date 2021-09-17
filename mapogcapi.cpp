@@ -518,7 +518,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
     try {
       json item = getFeatureItem(&(items->items[i]), shape->values[i]);
       if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error) {
       throw std::runtime_error("Error fetching item.");
     }
   }
@@ -527,7 +527,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
     try {
       json constant = getFeatureConstant(&(constants->constants[i]));
       if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error) {
       throw std::runtime_error("Error fetching constant.");  
     }
   }
@@ -536,7 +536,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
   try {
     json geometry = getFeatureGeometry(shape, geometry_precision);
     if(!geometry.is_null()) feature["geometry"] = geometry;
-  } catch (const std::runtime_error &e) {
+  } catch (const std::runtime_error) {
     throw std::runtime_error("Error fetching geometry.");
   }
 
