@@ -3422,12 +3422,13 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
                                           pSpatialFilterNode);
   }
 
-  if( (expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
+  if( (((expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
       expr->m_nToken == MS_TOKEN_COMPARISON_OVERLAPS ||
       expr->m_nToken == MS_TOKEN_COMPARISON_CROSSES ||
       expr->m_nToken == MS_TOKEN_COMPARISON_WITHIN ||
       expr->m_nToken == MS_TOKEN_COMPARISON_CONTAINS) &&
-      expr->m_aoChildren.size() == 2 &&
+      expr->m_aoChildren.size() == 2) ||
+      (expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN && expr->m_aoChildren.size() == 3)) &&
       expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_SHAPE )
   {
         if( info->rect_is_defined )
@@ -3442,7 +3443,11 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
         OGRErr e = OGR_G_CreateFromWkt(&wkt, NULL, &hSpatialFilter);
         if (e == OGRERR_NONE) {
             OGREnvelope env;
-            OGR_G_GetEnvelope(hSpatialFilter, &env);
+            if( expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN ) {
+                OGR_G_GetEnvelope(OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30), &env);
+            } else {
+                OGR_G_GetEnvelope(hSpatialFilter, &env);
+            }
             info->rect.minx = env.MinX;
             info->rect.miny = env.MinY;
             info->rect.maxx = env.MaxX;
