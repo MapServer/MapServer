@@ -72,7 +72,7 @@ build_script:
   - 7z x "%SDK_ZIP%" > nul
   - mkdir %SWIG_VER%
   - cd %SWIG_VER%
-  - 7z e %BUILD_FOLDER%/%SWIG_VER%.zip -y > nul
+  - 7z e %BUILD_FOLDER%/%SWIG_VER%.zip -y -r swig.exe > nul
   - set SDK_PREFIX=%BUILD_FOLDER%/sdk/%SDK%
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
@@ -113,8 +113,8 @@ after_test:
   - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
 
 artifacts:
   - path: mapserver.zip
