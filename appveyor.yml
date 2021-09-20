@@ -7,7 +7,7 @@ image: Visual Studio 2019
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
   - '%APPVEYOR_BUILD_FOLDER%\swigwin-3.0.12.zip'
-  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.0.1.zip'
+  #- '%APPVEYOR_BUILD_FOLDER%\swigwin-4.0.1.zip'
   - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.0.2.mapserver.zip'
 
 environment:
@@ -67,10 +67,12 @@ build_script:
   - set SDK_ZIP=%SDK%-dev.zip
   - set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
   - mkdir sdk
-  - 7z x %SWIG_VER%.zip -osdk > nul
   - cd sdk
   - appveyor DownloadFile "%SDK_URL%"
-  - 7z x "%SDK_ZIP%"
+  - 7z x "%SDK_ZIP%" > nul
+  - mkdir %SWIG_VER%
+  - cd %SWIG_VER%
+  - 7z e %BUILD_FOLDER%/%SWIG_VER%.zip > nul
   - set SDK_PREFIX=%BUILD_FOLDER%/sdk/%SDK%
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
@@ -111,8 +113,8 @@ after_test:
   - 7z a mapserver.zip ./build/* > nul
 
 # Uncomment to enable debugging on the server
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
 
 artifacts:
   - path: mapserver.zip
