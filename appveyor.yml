@@ -70,7 +70,7 @@ build_script:
   - 7z x %SWIG_VER%.zip -osdk > nul
   - cd sdk
   - appveyor DownloadFile "%SDK_URL%"
-  - 7z x "%SDK_ZIP%" > nul
+  - 7z x "%SDK_ZIP%"
   - set SDK_PREFIX=%BUILD_FOLDER%/sdk/%SDK%
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
