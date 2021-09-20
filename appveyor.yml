@@ -79,6 +79,7 @@ build_script:
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
   - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/%SWIG_VER%/swig.exe
+  - set SWIG_DIR==%BUILD_FOLDER%/sdk/%SWIG_VER%
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/support/regex-0.12
   - echo %SWIG_EXECUTABLE%
   - cd %BUILD_FOLDER%
