@@ -73,12 +73,14 @@ build_script:
   - mkdir %SWIG_VER%
   - cd %SWIG_VER%
   - 7z e %BUILD_FOLDER%/%SWIG_VER%.zip -y -r swig.exe > nul
+  - dir
   - set SDK_PREFIX=%BUILD_FOLDER%/sdk/%SDK%
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
   - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/%SWIG_VER%/swig.exe
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/support/regex-0.12
+  - echo %SWIG_EXECUTABLE%
   - cd %BUILD_FOLDER%
   - mkdir build
   - cd build
