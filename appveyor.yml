@@ -72,7 +72,7 @@ build_script:
   - 7z x "%SDK_ZIP%" > nul
   - mkdir %SWIG_VER%
   - cd %SWIG_VER%
-  - 7z e %BUILD_FOLDER%/%SWIG_VER%.zip > nul
+  - 7z e %BUILD_FOLDER%/%SWIG_VER%.zip -y > nul
   - set SDK_PREFIX=%BUILD_FOLDER%/sdk/%SDK%
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
