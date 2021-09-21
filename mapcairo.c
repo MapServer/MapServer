@@ -56,6 +56,7 @@
 #endif
 
 #include <cpl_string.h>
+#include "cpl_conv.h"
 #include <gdal.h>
 
 #include "fontcache.h"
@@ -479,7 +480,7 @@ imageObj* createImageCairo(int width, int height, outputFormatObj *format,colorO
                      width,height);
 #if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1,15,10)
       {
-          const char* msPDFCreationDate = getenv("MS_PDF_CREATION_DATE");
+          const char *msPDFCreationDate = CPLGetConfigOption("MS_PDF_CREATION_DATE", NULL);
           if( msPDFCreationDate )
           {
               cairo_pdf_surface_set_metadata (r->surface,
