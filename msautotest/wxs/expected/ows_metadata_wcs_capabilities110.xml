@@ -142,8 +142,8 @@ Content-Type: text/xml; charset=UTF-8
       <ows:Title>Toronto</ows:Title>
       <ows:Abstract>Toronto</ows:Abstract>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-117.54590357301 44.665615181929</ows:LowerCorner>
-        <ows:UpperCorner>-117.38727661816 44.767083018819</ows:UpperCorner>
+        <ows:LowerCorner>-117.545904 44.665615</ows:LowerCorner>
+        <ows:UpperCorner>-117.387277 44.767083</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <SupportedCRS>urn:ogc:def:crs:EPSG::32611</SupportedCRS>
       <SupportedFormat>image/tiff</SupportedFormat>

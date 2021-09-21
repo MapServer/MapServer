@@ -366,7 +366,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
    */
   if (pszSLDBody) {
     if (strcasecmp(pszSLDBody, "AUTO") == 0) {
-      if (pszVersion && strncmp(pszVersion, "1.3.0", 5) == 0)
+      if (strncmp(pszVersion, "1.3.0", 5) == 0)
         pszSLDGenerated = msSLDGenerateSLD(map, lp->index, "1.1.0");
       else
         pszSLDGenerated = msSLDGenerateSLD(map, lp->index, NULL);

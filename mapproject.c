@@ -2606,7 +2606,7 @@ int msProjIsGeographicCRS(projectionObj* proj)
     }
     return FALSE;
 #else
-    return pj_is_latlong(proj->proj);
+    return proj->proj != NULL && pj_is_latlong(proj->proj);
 #endif
 }
 

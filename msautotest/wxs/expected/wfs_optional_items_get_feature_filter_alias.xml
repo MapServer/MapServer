@@ -10,8 +10,8 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="2" numberReturned="2">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>45.94981 -64.46414</gml:lowerCorner>
-      		<gml:upperCorner>47.04029 -62.02064</gml:upperCorner>
+      		<gml:lowerCorner>45.949816 -64.464145</gml:lowerCorner>
+      		<gml:upperCorner>47.040290 -62.020645</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>

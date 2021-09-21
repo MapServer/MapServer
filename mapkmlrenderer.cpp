@@ -666,9 +666,10 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
   xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
 
-void KmlRenderer::renderGlyphs(imageObj *, pointObj *labelpnt, char *text, double /*angle*/, colorObj *clr, colorObj * /*olcolor*/, int /*olwidth*/)
+void KmlRenderer::renderGlyphs(imageObj *, const textSymbolObj *ts, colorObj *clr, colorObj * /*oc*/, int /*ow*/)
 {
-  xmlNodePtr node;
+  if( ts->annotext == NULL || ts->textpath->numglyphs == 0 )
+    return;
 
   if (PlacemarkNode == NULL)
     PlacemarkNode = createPlacemarkNode(LayerNode, NULL);
@@ -680,12 +681,12 @@ void KmlRenderer::renderGlyphs(imageObj *, pointObj *labelpnt, char *text, doubl
   SymbologyFlag[Label] = 1;
 
   /*there is alaws a default name (layer.shapeid). Replace it*/
-  for (node = PlacemarkNode->children; node; node = node->next) {
+  for (xmlNodePtr node = PlacemarkNode->children; node; node = node->next) {
     if (node->type != XML_ELEMENT_NODE)
       continue;
 
     if (strcmp((char *)node->name, "name") == 0) {
-      xmlNodeSetContent(node,  BAD_CAST text);
+      xmlNodeSetContent(node,  BAD_CAST ts->annotext);
       break;
     }
   }
@@ -696,8 +697,8 @@ void KmlRenderer::renderGlyphs(imageObj *, pointObj *labelpnt, char *text, doubl
   addAddRenderingSpecifications(geomNode);
 
   pointObj pt;
-  pt.x = labelpnt->x;
-  pt.y = labelpnt->y;
+  pt.x = ts->textpath->glyphs[0].pnt.x;
+  pt.y = ts->textpath->glyphs[0].pnt.y;
   addCoordsNode(geomNode, &pt, 1);
 }
 

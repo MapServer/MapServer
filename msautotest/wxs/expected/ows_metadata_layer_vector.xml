@@ -130,16 +130,16 @@ Content-type: text/xml
           <gmd:geographicElement>
             <gmd:EX_GeographicBoundingBox>
               <gmd:westBoundLongitude>
-                <gco:Decimal>-66.72432</gco:Decimal>
+                <gco:Decimal>-66.724329</gco:Decimal>
               </gmd:westBoundLongitude>
               <gmd:eastBoundLongitude>
-                <gco:Decimal>-57.72168</gco:Decimal>
+                <gco:Decimal>-57.721680</gco:Decimal>
               </gmd:eastBoundLongitude>
               <gmd:southBoundLatitude>
-                <gco:Decimal>41.77050</gco:Decimal>
+                <gco:Decimal>41.770508</gco:Decimal>
               </gmd:southBoundLatitude>
               <gmd:northBoundLatitude>
-                <gco:Decimal>48.47731</gco:Decimal>
+                <gco:Decimal>48.477314</gco:Decimal>
               </gmd:northBoundLatitude>
             </gmd:EX_GeographicBoundingBox>
           </gmd:geographicElement>
@@ -220,7 +220,7 @@ Content-type: text/xml
           <gmd:onLine>
             <gmd:CI_OnlineResource>
               <gmd:linkage>
-                <gmd:URL>http://localhost/ows?service=WMS&amp;version=1.3.0&amp;request=GetMap&amp;width=500&amp;height=300&amp;styles=&amp;layers=province&amp;format=image/png&amp;crs=&amp;bbox=-76361.77343,2253355.75000,515489.03125,2747648.50000</gmd:URL>
+                <gmd:URL>http://localhost/ows?service=WMS&amp;version=1.3.0&amp;request=GetMap&amp;width=500&amp;height=300&amp;styles=&amp;layers=province&amp;format=image/png&amp;crs=&amp;bbox=-76361.773438,2253355.750000,515489.031250,2747648.500000</gmd:URL>
               </gmd:linkage>
               <gmd:protocol>
                 <gco:CharacterString>WWW:DOWNLOAD-1.0-http-get-map</gco:CharacterString>
@@ -236,7 +236,7 @@ Content-type: text/xml
           <gmd:onLine>
             <gmd:CI_OnlineResource>
               <gmd:linkage>
-                <gmd:URL>http://localhost/ows?service=WMS&amp;version=1.3.0&amp;request=GetMap&amp;width=500&amp;height=300&amp;styles=&amp;layers=province&amp;format=image/jpeg&amp;crs=&amp;bbox=-76361.77343,2253355.75000,515489.03125,2747648.50000</gmd:URL>
+                <gmd:URL>http://localhost/ows?service=WMS&amp;version=1.3.0&amp;request=GetMap&amp;width=500&amp;height=300&amp;styles=&amp;layers=province&amp;format=image/jpeg&amp;crs=&amp;bbox=-76361.773438,2253355.750000,515489.031250,2747648.500000</gmd:URL>
               </gmd:linkage>
               <gmd:protocol>
                 <gco:CharacterString>WWW:DOWNLOAD-1.0-http-get-map</gco:CharacterString>

@@ -3213,8 +3213,8 @@ extern "C" {
     int WARN_UNUSED (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
     int WARN_UNUSED (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
 
-    int WARN_UNUSED (*renderGlyphs)(imageObj *img, textPathObj *tp, colorObj *clr, colorObj *olcolor, int olwidth, int isMarker);
-    int WARN_UNUSED (*renderText)(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth);
+    /* only ts->textpath is guaranteed to be populated. Other fields might be 0/NULL */
+    int WARN_UNUSED (*renderGlyphs)(imageObj *img, const textSymbolObj *ts, colorObj *clr, colorObj *olcolor, int olwidth, int isMarker);
 
     int WARN_UNUSED (*renderVectorSymbol)(imageObj *img, double x, double y,
                               symbolObj *symbol, symbolStyleObj *style);

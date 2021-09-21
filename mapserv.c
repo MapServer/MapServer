@@ -53,35 +53,21 @@
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
 /************************************************************************/
+
+static int finish_process = 0;
+
 #ifndef WIN32
-void msCleanupOnSignal( int nInData )
+static void msCleanupOnSignal( int nInData )
 {
-  /* For some reason, the fastcgi message code does not seem to work */
-  /* from within the signal handler on Unix.  So we force output through */
-  /* normal stdio functions. */
-  msIO_installHandlers( NULL, NULL, NULL );
-#ifndef NDEBUG
-  msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
-#endif
-  msCleanup();
-  exit(0);
+  (void)nInData;
+  finish_process = 1;
 }
 #endif
 
 #ifdef WIN32
-void msCleanupOnExit( void )
+static void msCleanupOnExit( void )
 {
-  /* note that stderr and stdout seem to be non-functional in the */
-  /* fastcgi/win32 case.  If you really want to check functioning do */
-  /* some sort of hack logging like below ... otherwise just trust it! */
-
-#ifdef notdef
-  FILE *fp_out = fopen( "D:\\temp\\mapserv.log", "w" );
-
-  fprintf( fp_out, "In msCleanupOnExit\n" );
-  fclose( fp_out );
-#endif
-  msCleanup();
+  finish_process = 1;
 }
 #endif
 
@@ -229,7 +215,7 @@ int main(int argc, char *argv[])
 
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
-  while( FCGI_Accept() >= 0 ) {
+  while( !finish_process && FCGI_Accept() >= 0 ) {
 #endif /* def USE_FASTCGI */
 
     /* -------------------------------------------------------------------- */

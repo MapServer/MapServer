@@ -10,7 +10,7 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    timeStamp="" numberMatched="41" numberReturned="41">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-      		<gml:coordinates>637137.64000,4865176.12000 710195.30000,4905916.47000</gml:coordinates>
+      		<gml:coordinates>637137.640000,4865176.120000 710195.300000,4905916.470000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
 <!-- WARNING: FeatureId item 'ID' not found in typename 'towns'. -->
@@ -18,12 +18,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>679352.61000,4874600.65000 679352.61000,4874600.65000</gml:coordinates>
+        		<gml:coordinates>679352.610000,4874600.650000 679352.610000,4874600.650000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>679352.61000,4874600.65000</gml:coordinates>
+          <gml:coordinates>679352.610000,4874600.650000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Barberino di Mugello</ms:name>
@@ -37,12 +37,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>691242.09000,4869675.97000 691242.09000,4869675.97000</gml:coordinates>
+        		<gml:coordinates>691242.090000,4869675.970000 691242.090000,4869675.970000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>691242.09000,4869675.97000</gml:coordinates>
+          <gml:coordinates>691242.090000,4869675.970000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Borgo San Lorenzo</ms:name>
@@ -56,12 +56,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>706612.32000,4905916.47000 706612.32000,4905916.47000</gml:coordinates>
+        		<gml:coordinates>706612.320000,4905916.470000 706612.320000,4905916.470000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>706612.32000,4905916.47000</gml:coordinates>
+          <gml:coordinates>706612.320000,4905916.470000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Borgo Tossignano</ms:name>
@@ -75,12 +75,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>666989.57000,4892926.89000 666989.57000,4892926.89000</gml:coordinates>
+        		<gml:coordinates>666989.570000,4892926.890000 666989.570000,4892926.890000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>666989.57000,4892926.89000</gml:coordinates>
+          <gml:coordinates>666989.570000,4892926.890000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Camugnano</ms:name>
@@ -94,12 +94,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>666678.76000,4876424.90000 666678.76000,4876424.90000</gml:coordinates>
+        		<gml:coordinates>666678.760000,4876424.900000 666678.760000,4876424.900000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>666678.76000,4876424.90000</gml:coordinates>
+          <gml:coordinates>666678.760000,4876424.900000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Cantagallo</ms:name>
@@ -113,12 +113,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>709517.65000,4900008.46000 709517.65000,4900008.46000</gml:coordinates>
+        		<gml:coordinates>709517.650000,4900008.460000 709517.650000,4900008.460000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>709517.65000,4900008.46000</gml:coordinates>
+          <gml:coordinates>709517.650000,4900008.460000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Casola Valsenio</ms:name>
@@ -132,12 +132,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>659557.04000,4904456.57000 659557.04000,4904456.57000</gml:coordinates>
+        		<gml:coordinates>659557.040000,4904456.570000 659557.040000,4904456.570000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>659557.04000,4904456.57000</gml:coordinates>
+          <gml:coordinates>659557.040000,4904456.570000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Castel d&#39;Aiano</ms:name>
@@ -151,12 +151,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>700027.21000,4898730.81000 700027.21000,4898730.81000</gml:coordinates>
+        		<gml:coordinates>700027.210000,4898730.810000 700027.210000,4898730.810000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>700027.21000,4898730.81000</gml:coordinates>
+          <gml:coordinates>700027.210000,4898730.810000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Castel del Rio</ms:name>
@@ -170,12 +170,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>662773.00000,4891987.41000 662773.00000,4891987.41000</gml:coordinates>
+        		<gml:coordinates>662773.000000,4891987.410000 662773.000000,4891987.410000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>662773.00000,4891987.41000</gml:coordinates>
+          <gml:coordinates>662773.000000,4891987.410000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Castel di Casio</ms:name>
@@ -189,12 +189,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>673068.12000,4889949.75000 673068.12000,4889949.75000</gml:coordinates>
+        		<gml:coordinates>673068.120000,4889949.750000 673068.120000,4889949.750000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>673068.12000,4889949.75000</gml:coordinates>
+          <gml:coordinates>673068.120000,4889949.750000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Castiglione dei Pepoli</ms:name>
@@ -208,12 +208,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>640503.54000,4884416.92000 640503.54000,4884416.92000</gml:coordinates>
+        		<gml:coordinates>640503.540000,4884416.920000 640503.540000,4884416.920000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>640503.54000,4884416.92000</gml:coordinates>
+          <gml:coordinates>640503.540000,4884416.920000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Cutigliano</ms:name>
@@ -227,12 +227,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>690357.25000,4888070.83000 690357.25000,4888070.83000</gml:coordinates>
+        		<gml:coordinates>690357.250000,4888070.830000 690357.250000,4888070.830000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>690357.25000,4888070.83000</gml:coordinates>
+          <gml:coordinates>690357.250000,4888070.830000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Firenzuola</ms:name>
@@ -246,12 +246,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>704327.74000,4903948.54000 704327.74000,4903948.54000</gml:coordinates>
+        		<gml:coordinates>704327.740000,4903948.540000 704327.740000,4903948.540000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>704327.74000,4903948.54000</gml:coordinates>
+          <gml:coordinates>704327.740000,4903948.540000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Fontanelice</ms:name>
@@ -265,12 +265,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>654456.48000,4895565.29000 654456.48000,4895565.29000</gml:coordinates>
+        		<gml:coordinates>654456.480000,4895565.290000 654456.480000,4895565.290000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>654456.48000,4895565.29000</gml:coordinates>
+          <gml:coordinates>654456.480000,4895565.290000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Gaggio Montano</ms:name>
@@ -284,12 +284,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>656907.12000,4886687.84000 656907.12000,4886687.84000</gml:coordinates>
+        		<gml:coordinates>656907.120000,4886687.840000 656907.120000,4886687.840000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>656907.12000,4886687.84000</gml:coordinates>
+          <gml:coordinates>656907.120000,4886687.840000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Granaglione</ms:name>
@@ -303,12 +303,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>672130.72000,4902785.47000 672130.72000,4902785.47000</gml:coordinates>
+        		<gml:coordinates>672130.720000,4902785.470000 672130.720000,4902785.470000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>672130.72000,4902785.47000</gml:coordinates>
+          <gml:coordinates>672130.720000,4902785.470000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Grizzana Morandi</ms:name>
@@ -322,12 +322,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>651437.84000,4891594.12000 651437.84000,4891594.12000</gml:coordinates>
+        		<gml:coordinates>651437.840000,4891594.120000 651437.840000,4891594.120000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>651437.84000,4891594.12000</gml:coordinates>
+          <gml:coordinates>651437.840000,4891594.120000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Lizzano in Belvedere</ms:name>
@@ -341,12 +341,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>685837.45000,4904282.99000 685837.45000,4904282.99000</gml:coordinates>
+        		<gml:coordinates>685837.450000,4904282.990000 685837.450000,4904282.990000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>685837.45000,4904282.99000</gml:coordinates>
+          <gml:coordinates>685837.450000,4904282.990000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Loiano</ms:name>
@@ -360,12 +360,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>642083.40000,4866048.77000 642083.40000,4866048.77000</gml:coordinates>
+        		<gml:coordinates>642083.400000,4866048.770000 642083.400000,4866048.770000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>642083.40000,4866048.77000</gml:coordinates>
+          <gml:coordinates>642083.400000,4866048.770000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Marliana</ms:name>
@@ -379,12 +379,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>709203.27000,4883473.95000 709203.27000,4883473.95000</gml:coordinates>
+        		<gml:coordinates>709203.270000,4883473.950000 709203.270000,4883473.950000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>709203.27000,4883473.95000</gml:coordinates>
+          <gml:coordinates>709203.270000,4883473.950000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Marradi</ms:name>
@@ -398,12 +398,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>685896.74000,4899660.12000 685896.74000,4899660.12000</gml:coordinates>
+        		<gml:coordinates>685896.740000,4899660.120000 685896.740000,4899660.120000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>685896.74000,4899660.12000</gml:coordinates>
+          <gml:coordinates>685896.740000,4899660.120000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Monghidoro</ms:name>
@@ -417,12 +417,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>661896.57000,4866692.43000 661896.57000,4866692.43000</gml:coordinates>
+        		<gml:coordinates>661896.570000,4866692.430000 661896.570000,4866692.430000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>661896.57000,4866692.43000</gml:coordinates>
+          <gml:coordinates>661896.570000,4866692.430000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Montale</ms:name>
@@ -436,12 +436,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>637137.64000,4900625.56000 637137.64000,4900625.56000</gml:coordinates>
+        		<gml:coordinates>637137.640000,4900625.560000 637137.640000,4900625.560000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>637137.64000,4900625.56000</gml:coordinates>
+          <gml:coordinates>637137.640000,4900625.560000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Montecreto</ms:name>
@@ -455,12 +455,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>663058.32000,4865176.12000 663058.32000,4865176.12000</gml:coordinates>
+        		<gml:coordinates>663058.320000,4865176.120000 663058.320000,4865176.120000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>663058.32000,4865176.12000</gml:coordinates>
+          <gml:coordinates>663058.320000,4865176.120000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Montemurlo</ms:name>
@@ -474,12 +474,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>655146.14000,4903917.01000 655146.14000,4903917.01000</gml:coordinates>
+        		<gml:coordinates>655146.140000,4903917.010000 655146.140000,4903917.010000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>655146.14000,4903917.01000</gml:coordinates>
+          <gml:coordinates>655146.140000,4903917.010000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Montese</ms:name>
@@ -493,12 +493,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>680854.53000,4905388.46000 680854.53000,4905388.46000</gml:coordinates>
+        		<gml:coordinates>680854.530000,4905388.460000 680854.530000,4905388.460000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>680854.53000,4905388.46000</gml:coordinates>
+          <gml:coordinates>680854.530000,4905388.460000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Monzuno</ms:name>
@@ -512,12 +512,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>703892.44000,4887624.73000 703892.44000,4887624.73000</gml:coordinates>
+        		<gml:coordinates>703892.440000,4887624.730000 703892.440000,4887624.730000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>703892.44000,4887624.73000</gml:coordinates>
+          <gml:coordinates>703892.440000,4887624.730000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Palazzuolo sul Senio</ms:name>
@@ -531,12 +531,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>653901.53000,4866278.05000 653901.53000,4866278.05000</gml:coordinates>
+        		<gml:coordinates>653901.530000,4866278.050000 653901.530000,4866278.050000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>653901.53000,4866278.05000</gml:coordinates>
+          <gml:coordinates>653901.530000,4866278.050000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Pistoia</ms:name>
@@ -550,12 +550,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>641450.94000,4876458.53000 641450.94000,4876458.53000</gml:coordinates>
+        		<gml:coordinates>641450.940000,4876458.530000 641450.940000,4876458.530000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>641450.94000,4876458.53000</gml:coordinates>
+          <gml:coordinates>641450.940000,4876458.530000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Piteglio</ms:name>
@@ -569,12 +569,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>657705.77000,4891441.56000 657705.77000,4891441.56000</gml:coordinates>
+        		<gml:coordinates>657705.770000,4891441.560000 657705.770000,4891441.560000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>657705.77000,4891441.56000</gml:coordinates>
+          <gml:coordinates>657705.770000,4891441.560000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Porretta Terme</ms:name>
@@ -588,12 +588,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>660036.84000,4885407.41000 660036.84000,4885407.41000</gml:coordinates>
+        		<gml:coordinates>660036.840000,4885407.410000 660036.840000,4885407.410000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>660036.84000,4885407.41000</gml:coordinates>
+          <gml:coordinates>660036.840000,4885407.410000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Sambuca Pistoiese</ms:name>
@@ -607,12 +607,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>678374.68000,4898206.12000 678374.68000,4898206.12000</gml:coordinates>
+        		<gml:coordinates>678374.680000,4898206.120000 678374.680000,4898206.120000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>678374.68000,4898206.12000</gml:coordinates>
+          <gml:coordinates>678374.680000,4898206.120000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>San Benedetto Val di Sambro</ms:name>
@@ -626,12 +626,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>710195.30000,4866937.69000 710195.30000,4866937.69000</gml:coordinates>
+        		<gml:coordinates>710195.300000,4866937.690000 710195.300000,4866937.690000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>710195.30000,4866937.69000</gml:coordinates>
+          <gml:coordinates>710195.300000,4866937.690000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>San Godenzo</ms:name>
@@ -645,12 +645,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>643529.07000,4879703.82000 643529.07000,4879703.82000</gml:coordinates>
+        		<gml:coordinates>643529.070000,4879703.820000 643529.070000,4879703.820000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>643529.07000,4879703.82000</gml:coordinates>
+          <gml:coordinates>643529.070000,4879703.820000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>San Marcello Pistoiese</ms:name>
@@ -664,12 +664,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>686481.16000,4870207.09000 686481.16000,4870207.09000</gml:coordinates>
+        		<gml:coordinates>686481.160000,4870207.090000 686481.160000,4870207.090000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>686481.16000,4870207.09000</gml:coordinates>
+          <gml:coordinates>686481.160000,4870207.090000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>San Piero a Sieve</ms:name>
@@ -683,12 +683,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>688742.95000,4873672.85000 688742.95000,4873672.85000</gml:coordinates>
+        		<gml:coordinates>688742.950000,4873672.850000 688742.950000,4873672.850000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>688742.95000,4873672.85000</gml:coordinates>
+          <gml:coordinates>688742.950000,4873672.850000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Scarperia</ms:name>
@@ -702,12 +702,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>641470.51000,4898995.21000 641470.51000,4898995.21000</gml:coordinates>
+        		<gml:coordinates>641470.510000,4898995.210000 641470.510000,4898995.210000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>641470.51000,4898995.21000</gml:coordinates>
+          <gml:coordinates>641470.510000,4898995.210000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Sestola</ms:name>
@@ -721,12 +721,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>670374.33000,4868394.46000 670374.33000,4868394.46000</gml:coordinates>
+        		<gml:coordinates>670374.330000,4868394.460000 670374.330000,4868394.460000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>670374.33000,4868394.46000</gml:coordinates>
+          <gml:coordinates>670374.330000,4868394.460000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Vaiano</ms:name>
@@ -740,12 +740,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>668148.55000,4905427.52000 668148.55000,4905427.52000</gml:coordinates>
+        		<gml:coordinates>668148.550000,4905427.520000 668148.550000,4905427.520000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>668148.55000,4905427.52000</gml:coordinates>
+          <gml:coordinates>668148.550000,4905427.520000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Vergato</ms:name>
@@ -759,12 +759,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>672279.27000,4879402.97000 672279.27000,4879402.97000</gml:coordinates>
+        		<gml:coordinates>672279.270000,4879402.970000 672279.270000,4879402.970000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>672279.27000,4879402.97000</gml:coordinates>
+          <gml:coordinates>672279.270000,4879402.970000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Vernio</ms:name>
@@ -778,12 +778,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:coordinates>697335.81000,4867309.06000 697335.81000,4867309.06000</gml:coordinates>
+        		<gml:coordinates>697335.810000,4867309.060000 697335.810000,4867309.060000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::32632">
-          <gml:coordinates>697335.81000,4867309.06000</gml:coordinates>
+          <gml:coordinates>697335.810000,4867309.060000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
         <ms:name>Vicchio</ms:name>

@@ -11,21 +11,21 @@ Content-Type: text/xml; subtype=gml/3.1.1; charset=UTF-8
    next="http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=point,multipoint&amp;OUTPUTFORMAT=text%2Fxml%3B%20subtype%3Dgml%2F3.1.1&amp;COUNT=1&amp;STARTINDEX=1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>49.00000 2.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>49.000000 2.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:point gml:id="point.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>49.00000 2.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>49.000000 2.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>49.00000 2.00000</gml:pos>
+            <gml:pos>49.000000 2.000000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
       </ms:point>

@@ -408,7 +408,8 @@ int renderTileCairo(imageObj *img, imageObj *tile, double x, double y)
   return MS_SUCCESS;
 }
 
-int renderGlyphs2Cairo(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
+int renderGlyphs2Cairo(imageObj *img, const textSymbolObj *ts, colorObj *c, colorObj *oc, int ow, int isMarker) {
+  const textPathObj *tp = ts->textpath;
   cairo_renderer *r = CAIRO_RENDERER(img);
   cairoCacheData *cache = MS_IMAGE_RENDERER_CACHE(img);
   cairoFaceCache *cairo_face = NULL;

@@ -83,7 +83,7 @@ Content-Type: text/xml; charset=UTF-8
           world
         </Keywords>
         <SRS>EPSG:4326</SRS>
-        <LatLongBoundingBox minx="-164.625" miny="-36.9044" maxx="161.066" maxy="72.2342" />
+        <LatLongBoundingBox minx="-164.624557" miny="-36.904354" maxx="161.065826" maxy="72.234184" />
         <MetadataURL type="FGDC" format="TXT">http://localhost/ms_ogc_workshop/index.html</MetadataURL>
     </FeatureType>
 </FeatureTypeList>
