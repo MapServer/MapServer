@@ -161,8 +161,12 @@ int main(int argc, char *argv[])
     }
   }
 
-  config = msLoadConfig(NULL); // is the right spot to do this?
+  config = msLoadConfig(NULL); // first thing
   if(config == NULL) {
+#ifdef USE_FASTCGI
+    msIO_installFastCGIRedirect(); // FastCGI setup for error handling here
+    FCGI_Accept();
+#endif
     msCGIWriteError(mapserv);
     exit(0);
   }
@@ -172,6 +176,10 @@ int main(int argc, char *argv[])
   /*      well as using MS_ERRORFILE and MS_DEBUGLEVEL env vars if set.   */
   /* -------------------------------------------------------------------- */
   if( msSetup() != MS_SUCCESS ) {
+#ifdef USE_FASTCGI
+    msIO_installFastCGIRedirect(); // FastCGI setup for error handling here
+    FCGI_Accept();
+#endif
     msCGIWriteError(mapserv);
     msCleanup();
     msFreeConfig(config);
@@ -198,6 +206,7 @@ int main(int argc, char *argv[])
     } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
       /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
+      /* coverity[tainted_string] */
       putenv( argv[iArg] );
     }
   }
