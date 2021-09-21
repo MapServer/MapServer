@@ -152,6 +152,29 @@ int main(int argc, char *argv[])
   mapservObj  *mapserv = NULL;
   configObj *config = NULL;
 
+  /* 
+  ** Process -v and -h command line arguments  first end exit. We want to avoid any error messages 
+  ** associated with msLoadConfig() or msSetup().
+  */
+  for( iArg = 1; iArg < argc; iArg++ ) {
+    if( strcmp(argv[iArg],"-v") == 0 ) {
+      printf("%s\n", msGetVersion());
+      fflush(stdout);
+      exit(0);
+    } else if (strcmp(argv[iArg], "-h") == 0 || strcmp(argv[iArg], "--help") == 0) {
+      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
+      printf("\n");
+      printf("Options :\n");
+      printf("  -h, --help              Display this help message.\n");
+      printf("  -v                      Display version and exit.\n");
+      printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
+      printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
+      printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
+      fflush(stdout);
+      exit(0);
+    }
+  }
+
   config = msLoadConfig(NULL); // is the right spot to do this?
   if(config == NULL) {
     msCGIWriteError(mapserv);
@@ -173,21 +196,12 @@ int main(int argc, char *argv[])
     msGettimeofday(&execstarttime, NULL);
 
   /* -------------------------------------------------------------------- */
-  /*      Process arguments.  In normal use as a cgi-bin there are no     */
+  /*      Process arguments. In normal use as a cgi-bin there are no      */
   /*      commandline switches, but we provide a few for test/debug       */
-  /*      purposes, and to query the version info.                        */
+  /*      purposes.                                                       */
   /* -------------------------------------------------------------------- */
   for( iArg = 1; iArg < argc; iArg++ ) {
-    /* Keep only "-v", "-nh" and "QUERY_STRING=..." enabled by default.
-     * The others will require an explicit -DMS_ENABLE_CGI_CL_DEBUG_ARGS
-     * at compile time. Do *NOT* enable them since they can cause security
-     * problems : https://github.com/mapserver/mapserver/issues/3485
-     */
-    if( strcmp(argv[iArg],"-v") == 0 ) {
-      printf("%s\n", msGetVersion());
-      fflush(stdout);
-      exit(0);
-    } else if(strcmp(argv[iArg], "-nh") == 0) {
+    if(strcmp(argv[iArg], "-nh") == 0) {
       sendheaders = MS_FALSE;
       msIO_setHeaderEnabled( MS_FALSE );
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
@@ -197,52 +211,8 @@ int main(int argc, char *argv[])
       putenv( argv[iArg] );
     } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
       /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
+      putenv( "REQUEST_METHOD=GET" );
       putenv( argv[iArg] );
-    } else if (strcmp(argv[iArg], "--h") == 0 || strcmp(argv[iArg], "--help") == 0) {
-      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
-#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
-      printf("               [-tmpbase dirname] [-t mapfilename] [MS_ERRORFILE=value] [MS_DEBUGLEVEL=value]\n");
-#endif
-      printf("\n");
-      printf("Options :\n");
-      printf("  -h, --help              Display this help message.\n");
-      printf("  -v                      Display version and exit.\n");
-      printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
-      printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
-      printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
-#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
-      printf("  -tmpbase dirname        Define a forced temporary directory.\n");
-      printf("  -t mapfilename          Display the tokens of the mapfile after parsing.\n");
-      printf("  MS_ERRORFILE=filename   Set error file.\n");
-      printf("  MS_DEBUGLEVEL=value     Set debug level.\n");
-#endif
-      exit(0);
-    }
-#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
-    else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
-      msForceTmpFileBase( argv[++iArg] );
-    } else if( iArg < argc-1 && strcmp(argv[iArg], "-t") == 0) {
-      char **tokens;
-      int numtokens=0;
-
-      if((tokens=msTokenizeMap(argv[iArg+1], &numtokens)) != NULL) {
-        int i;
-        for(i=0; i<numtokens; i++)
-          printf("%s\n", tokens[i]);
-        msFreeCharArray(tokens, numtokens);
-      } else {
-        msCGIWriteError(mapserv);
-      }
-
-      exit(0);
-    } else if( strncmp(argv[iArg], "MS_ERRORFILE=", 13) == 0 ) {
-      msSetErrorFile( argv[iArg] + 13, NULL );
-    } else if( strncmp(argv[iArg], "MS_DEBUGLEVEL=", 14) == 0) {
-      msSetGlobalDebugLevel( atoi(argv[iArg] + 14) );
-    }
-#endif /* MS_ENABLE_CGI_CL_DEBUG_ARGS */
-    else {
-      /* we don't produce a usage message as some web servers pass junk arguments */
     }
   }
 
