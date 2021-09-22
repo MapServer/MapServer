@@ -596,6 +596,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   if(!map || !layer) return collection;
 
   if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) return collection;
+  if(!msIsLayerQueryable(layer)) return collection;
 
   // initialize some things
   std::string api_root = getApiRootUrl(map);
@@ -620,8 +621,8 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   // build collection object
   collection = {
     { "id", id },
-    { "description", description?description:"" },
-    { "title", title?title:"" },
+    { "description", description },
+    { "title", title },
     { "extent", {
         { "spatial", {
             { "bbox", {{ round_down(bbox.minx, geometry_precision),
