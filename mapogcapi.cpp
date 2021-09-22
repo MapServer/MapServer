@@ -566,12 +566,15 @@ static const char* getCollectionDescription(layerObj* layer)
 {
   const char *description = msOWSLookupMetadata(&(layer->metadata), "A", "description");
   if(!description) description = msOWSLookupMetadata(&(layer->metadata), "OF", "abstract"); // fallback on abstract
+  if(!description) description = "";
   return description;
 }
 
 static const char* getCollectionTitle(layerObj* layer)
 {
-  return msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    const char* title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    if(!title) title = layer->name; // revert to layer name if no title found
+    return title;
 }
 
 static int getGeometryPrecision(mapObj *map, layerObj *layer)
@@ -724,6 +727,11 @@ static void outputTemplate(const char *directory, const char *filename, const js
   } catch(const inja::RenderError &e) {
     outputError(OGCAPI_CONFIG_ERROR, "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").");
     return;
+  }
+    catch (const inja::InjaError& e) {
+        outputError(OGCAPI_CONFIG_ERROR, "InjaError error. " + std::string(e.what()) + " (" + std::string(filename) + ")."
+            + " (" + std::string(directory) + ").");
+        return;
   } catch(...) {
     outputError(OGCAPI_SERVER_ERROR, "General template handling error.");
     return;
@@ -1181,7 +1189,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   // extend the response a bit for templating (HERE)
   if(format == OGCAPIFormat::HTML) {
-    const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    const char *title = getCollectionTitle(layer);
     const char *id = layer->name;
     response["collection"] = {
       { "id", id },
