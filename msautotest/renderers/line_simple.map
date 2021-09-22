@@ -1,9 +1,9 @@
-# RUN_PARMS: line_simple.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: line_simple.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: line_simple.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: line_simple.json [SHP2IMG] -m [MAPFILE] -i json -o [RESULT]
-# RUN_PARMS: line_simple.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
-# RUN_PARMS: line_simple.cairo.jpg [SHP2IMG] -m [MAPFILE] -i cairojpeg -o [RESULT]
+# RUN_PARMS: line_simple.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_simple.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_simple.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_simple.json [MAP2IMG] -m [MAPFILE] -i json -o [RESULT]
+# RUN_PARMS: line_simple.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: line_simple.cairo.jpg [MAP2IMG] -m [MAPFILE] -i cairojpeg -o [RESULT]
 #
 map
 

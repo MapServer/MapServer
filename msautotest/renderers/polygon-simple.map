@@ -1,8 +1,8 @@
-# RUN_PARMS: polygon-simple.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: polygon-simple.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: polygon-simple.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: polygon-simple.json [SHP2IMG] -m [MAPFILE] -i json -o [RESULT]
-# RUN_PARMS: polygon-simple.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: polygon-simple.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: polygon-simple.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: polygon-simple.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: polygon-simple.json [MAP2IMG] -m [MAPFILE] -i json -o [RESULT]
+# RUN_PARMS: polygon-simple.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # entity-encoded text rendering test.

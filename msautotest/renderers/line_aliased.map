@@ -1,4 +1,4 @@
-# RUN_PARMS: line_aliased.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_aliased.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
 #
 map
 

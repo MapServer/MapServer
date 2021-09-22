@@ -33,7 +33,7 @@ Please create a .zip file that contains:
  - small .map file
  - data
  - commands.txt (containing commands to reproduce your problem such as 
-   shp2img, mapserv, etc.
+   map2img, mapserv, etc.
 
 ## Operating system
 

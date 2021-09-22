@@ -1,7 +1,7 @@
-# RUN_PARMS: chartlayer_vbar.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: chartlayer_vbar.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: chartlayer_vbar.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: chartlayer_vbar.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Start of map file

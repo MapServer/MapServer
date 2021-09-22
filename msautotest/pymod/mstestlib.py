@@ -42,7 +42,7 @@ except:
     pass
 
 have_pdiff = None
-shp2img = 'shp2img'
+map2img = 'map2img'
 keep_pass = False
 quiet = False
 validate_xml = True
@@ -140,11 +140,11 @@ def read_test_directives( mapfile_name ):
                 runparms_list.append( (items[0], items[1]) )
             elif len(items) == 1:
                 runparms_list.append( (items[0],
-                                       '[SHP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
+                                       '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
                                      
     if len(runparms_list) == 0:
         runparms_list.append( (mapfile_name[:-4] + '.png',
-                               '[SHP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
+                               '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
 
     return (runparms_list, require_list)
             
@@ -459,7 +459,7 @@ def get_pytests(dirname):
 
     ###########################################################################
     # Get version info.
-    version_info = os.popen( shp2img + ' -v' ).read()
+    version_info = os.popen( map2img + ' -v' ).read()
     #print('version = %s' % version_info)
 
     gdal_version = get_gdal_version()
@@ -535,7 +535,7 @@ def _run(map, out_file, command, extra_args):
     command = command.replace('[RESULT_DEMIME_DEVERSION]', 'result/'+out_file )
     command = command.replace('[EXTRACT_SERVICE_VERSION]', 'result/'+out_file )
     command = command.replace('[MAPFILE]', os.path.basename(map) )
-    command = command.replace('[SHP2IMG]', shp2img )
+    command = command.replace('[MAP2IMG]', map2img )
     if renderer is not None:
         command = command.replace('[RENDERER]', '-i '+renderer )
     else:

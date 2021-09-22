@@ -1,7 +1,7 @@
-# RUN_PARMS: labelcacheoff.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labelcacheoff.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: labelcacheoff.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: labelcacheoff.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: labelcacheoff.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labelcacheoff.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labelcacheoff.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labelcacheoff.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 
 
 MAP

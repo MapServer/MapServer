@@ -1,6 +1,6 @@
-# RUN_PARMS: utfgrid_truetype_symbol_labelcache.json [SHP2IMG] -m [MAPFILE] -l symbol-labelcache -i json -o [RESULT]
-# RUN_PARMS: utfgrid_truetype_symbol_nolabelcache.json [SHP2IMG] -m [MAPFILE] -l symbol-nolabelcache -i json -o [RESULT]
-# RUN_PARMS: utfgrid_truetype_symbol_rotation.json [SHP2IMG] -m [MAPFILE] -l symbol-rotation -i json -o [RESULT]
+# RUN_PARMS: utfgrid_truetype_symbol_labelcache.json [MAP2IMG] -m [MAPFILE] -l symbol-labelcache -i json -o [RESULT]
+# RUN_PARMS: utfgrid_truetype_symbol_nolabelcache.json [MAP2IMG] -m [MAPFILE] -l symbol-nolabelcache -i json -o [RESULT]
+# RUN_PARMS: utfgrid_truetype_symbol_rotation.json [MAP2IMG] -m [MAPFILE] -l symbol-rotation -i json -o [RESULT]
 #
 #
 MAP

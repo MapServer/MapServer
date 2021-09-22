@@ -3,9 +3,9 @@
 #
 # REQUIRES: INPUT=SHAPEFILE OUTPUT=PNG SUPPORTS=AGG
 #
-# RUN_PARMS: style_opacity_test001.png [SHP2IMG] -m [MAPFILE] -l style_opacity_test001 -o [RESULT]
-# RUN_PARMS: style_opacity_test002.png [SHP2IMG] -m [MAPFILE] -l style_opacity_test002 -o [RESULT]
-# RUN_PARMS: style_opacity_test003.png [SHP2IMG] -m [MAPFILE] -l style_opacity_test003 -o [RESULT]
+# RUN_PARMS: style_opacity_test001.png [MAP2IMG] -m [MAPFILE] -l style_opacity_test001 -o [RESULT]
+# RUN_PARMS: style_opacity_test002.png [MAP2IMG] -m [MAPFILE] -l style_opacity_test002 -o [RESULT]
+# RUN_PARMS: style_opacity_test003.png [MAP2IMG] -m [MAPFILE] -l style_opacity_test003 -o [RESULT]
 #
 MAP
   NAME 'style_opacity'

@@ -1,5 +1,5 @@
-# RUN_PARMS: force_palette.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: force_palette.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: force_palette.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: force_palette.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 
 #

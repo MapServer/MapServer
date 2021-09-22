@@ -1,7 +1,7 @@
-# RUN_PARMS: multilabel.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: multilabel.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: multilabel.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: multilabel.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: multilabel.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: multilabel.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: multilabel.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: multilabel.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Test multiple labels/symbols per feature

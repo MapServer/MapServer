@@ -3,13 +3,13 @@
 #
 # REQUIRES: INPUT=SHAPEFILE OUTPUT=PNG
 #
-# RUN_PARMS: text_test001.png [SHP2IMG] -m [MAPFILE] -l text_test001 -o [RESULT]
-# RUN_PARMS: text_test002.png [SHP2IMG] -m [MAPFILE] -l text_test002 -o [RESULT]
-# RUN_PARMS: text_test003.png [SHP2IMG] -m [MAPFILE] -l text_test003 -o [RESULT]
-# RUN_PARMS: text_test004.png [SHP2IMG] -m [MAPFILE] -l text_test004 -o [RESULT]
-# RUN_PARMS: text_test005.png [SHP2IMG] -m [MAPFILE] -l text_test005 -o [RESULT]
-# RUN_PARMS: text_test006.png [SHP2IMG] -m [MAPFILE] -l text_test006 -o [RESULT]
-# RUN_PARMS: text_test007.png [SHP2IMG] -m [MAPFILE] -l text_test007 -o [RESULT]
+# RUN_PARMS: text_test001.png [MAP2IMG] -m [MAPFILE] -l text_test001 -o [RESULT]
+# RUN_PARMS: text_test002.png [MAP2IMG] -m [MAPFILE] -l text_test002 -o [RESULT]
+# RUN_PARMS: text_test003.png [MAP2IMG] -m [MAPFILE] -l text_test003 -o [RESULT]
+# RUN_PARMS: text_test004.png [MAP2IMG] -m [MAPFILE] -l text_test004 -o [RESULT]
+# RUN_PARMS: text_test005.png [MAP2IMG] -m [MAPFILE] -l text_test005 -o [RESULT]
+# RUN_PARMS: text_test006.png [MAP2IMG] -m [MAPFILE] -l text_test006 -o [RESULT]
+# RUN_PARMS: text_test007.png [MAP2IMG] -m [MAPFILE] -l text_test007 -o [RESULT]
 #
 MAP
   NAME 'text'

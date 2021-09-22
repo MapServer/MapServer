@@ -1,7 +1,7 @@
-# RUN_PARMS: wld_upsidedown.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: wld_upsidedown.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: wld_upsidedown.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: wld_upsidedown.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: wld_upsidedown.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: wld_upsidedown.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: wld_upsidedown.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: wld_upsidedown.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Tests support for upside-down images (like bug 1904).

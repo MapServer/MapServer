@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     if( argc < 3 ) {
       fprintf(stdout, "\nPurpose: convert a mapfile to an image\n\n");
       fprintf(stdout,
-              "Syntax: shp2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
+              "Syntax: map2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
               "               [-l \"layer1 [layers2...]\"] [-i format]\n"
               "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n] [-d layername datavalue]\n");
 
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
 
     if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) {
       msGettimeofday(&requestendtime, NULL);
-      msDebug("shp2img total time: %.3fs\n",
+      msDebug("map2img total time: %.3fs\n",
               (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }

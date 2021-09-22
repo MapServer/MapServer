@@ -1,7 +1,7 @@
-# RUN_PARMS: label_noclip.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: label_noclip.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: label_noclip.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: label_noclip.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: label_noclip.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_noclip.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: label_noclip.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: label_noclip.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 map
 

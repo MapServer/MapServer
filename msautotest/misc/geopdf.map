@@ -1,5 +1,5 @@
-# RUN_PARMS: geopdf-iso.pdf [SHP2IMG] -m [MAPFILE] -i geopdfiso -o [RESULT]
-# RUN_PARMS: geopdf-ogc.pdf [SHP2IMG] -m [MAPFILE] -i geopdfogc -o [RESULT]
+# RUN_PARMS: geopdf-iso.pdf [MAP2IMG] -m [MAPFILE] -i geopdfiso -o [RESULT]
+# RUN_PARMS: geopdf-ogc.pdf [MAP2IMG] -m [MAPFILE] -i geopdfogc -o [RESULT]
 
 MAP
   IMAGECOLOR 255 255 255

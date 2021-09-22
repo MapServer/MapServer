@@ -3,16 +3,16 @@
 #
 # REQUIRES: INPUT=SHAPEFILE OUTPUT=PNG SUPPORTS=GEOS
 #
-# RUN_PARMS: filters_test001.png [SHP2IMG] -m [MAPFILE] -l filters_test001 -o [RESULT]
-# RUN_PARMS: filters_test002.png [SHP2IMG] -m [MAPFILE] -l filters_test002 -o [RESULT]
-# RUN_PARMS: filters_test003.png [SHP2IMG] -m [MAPFILE] -l filters_test003 -o [RESULT]
-# RUN_PARMS: filters_test004.png [SHP2IMG] -m [MAPFILE] -l filters_test004 -o [RESULT]
-# RUN_PARMS: filters_test005.png [SHP2IMG] -m [MAPFILE] -l filters_test005 -o [RESULT]
-# RUN_PARMS: filters_test006.png [SHP2IMG] -m [MAPFILE] -l filters_test006 -o [RESULT]
-# RUN_PARMS: filters_test007.png [SHP2IMG] -m [MAPFILE] -l filters_test007 -o [RESULT]
-# RUN_PARMS: filters_test008.png [SHP2IMG] -m [MAPFILE] -l filters_test008 -o [RESULT]
-# RUN_PARMS: filters_test009.png [SHP2IMG] -m [MAPFILE] -l filters_test009 -o [RESULT]
-# RUN_PARMS: filters_test010.png [SHP2IMG] -m [MAPFILE] -l filters_test010 -o [RESULT]
+# RUN_PARMS: filters_test001.png [MAP2IMG] -m [MAPFILE] -l filters_test001 -o [RESULT]
+# RUN_PARMS: filters_test002.png [MAP2IMG] -m [MAPFILE] -l filters_test002 -o [RESULT]
+# RUN_PARMS: filters_test003.png [MAP2IMG] -m [MAPFILE] -l filters_test003 -o [RESULT]
+# RUN_PARMS: filters_test004.png [MAP2IMG] -m [MAPFILE] -l filters_test004 -o [RESULT]
+# RUN_PARMS: filters_test005.png [MAP2IMG] -m [MAPFILE] -l filters_test005 -o [RESULT]
+# RUN_PARMS: filters_test006.png [MAP2IMG] -m [MAPFILE] -l filters_test006 -o [RESULT]
+# RUN_PARMS: filters_test007.png [MAP2IMG] -m [MAPFILE] -l filters_test007 -o [RESULT]
+# RUN_PARMS: filters_test008.png [MAP2IMG] -m [MAPFILE] -l filters_test008 -o [RESULT]
+# RUN_PARMS: filters_test009.png [MAP2IMG] -m [MAPFILE] -l filters_test009 -o [RESULT]
+# RUN_PARMS: filters_test010.png [MAP2IMG] -m [MAPFILE] -l filters_test010 -o [RESULT]
 #
 MAP
   NAME 'filters'

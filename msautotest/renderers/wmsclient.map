@@ -1,7 +1,7 @@
-# RUN_PARMS: wmsclient.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: wmsclient.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: wmsclient.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: wmsclient.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: wmsclient.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: wmsclient.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: wmsclient.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: wmsclient.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Simple test of WMS client support.

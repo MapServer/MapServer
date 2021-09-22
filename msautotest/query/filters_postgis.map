@@ -3,15 +3,15 @@
 #
 # REQUIRES: INPUT=POSTGIS OUTPUT=PNG
 #
-# RUN_PARMS: filters_postgis_test001.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test001 -o [RESULT]
-# RUN_PARMS: filters_postgis_test002.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test002 -o [RESULT]
-# RUN_PARMS: filters_postgis_test003.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test003 -o [RESULT]
-# RUN_PARMS: filters_postgis_test004.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test004 -o [RESULT]
-# RUN_PARMS: filters_postgis_test005.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test005 -o [RESULT]
-# RUN_PARMS: filters_postgis_test006.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test006 -o [RESULT]
-# RUN_PARMS: filters_postgis_test007.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test007 -o [RESULT]
-# RUN_PARMS: filters_postgis_test008.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test008 -o [RESULT]
-# RUN_PARMS: filters_postgis_test009.png [SHP2IMG] -m [MAPFILE] -l filters_postgis_test009 -o [RESULT]
+# RUN_PARMS: filters_postgis_test001.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test001 -o [RESULT]
+# RUN_PARMS: filters_postgis_test002.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test002 -o [RESULT]
+# RUN_PARMS: filters_postgis_test003.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test003 -o [RESULT]
+# RUN_PARMS: filters_postgis_test004.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test004 -o [RESULT]
+# RUN_PARMS: filters_postgis_test005.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test005 -o [RESULT]
+# RUN_PARMS: filters_postgis_test006.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test006 -o [RESULT]
+# RUN_PARMS: filters_postgis_test007.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test007 -o [RESULT]
+# RUN_PARMS: filters_postgis_test008.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test008 -o [RESULT]
+# RUN_PARMS: filters_postgis_test009.png [MAP2IMG] -m [MAPFILE] -l filters_postgis_test009 -o [RESULT]
 #
 MAP
   NAME 'filters_postgis'

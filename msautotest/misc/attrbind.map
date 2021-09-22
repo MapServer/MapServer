@@ -3,7 +3,7 @@
 #
 # REQUIRES: INPUT=SHAPE OUTPUT=PNG
 #
-# RUN_PARMS: attrbind_test001.png [SHP2IMG] -m [MAPFILE] -l test001 -o [RESULT]
+# RUN_PARMS: attrbind_test001.png [MAP2IMG] -m [MAPFILE] -l test001 -o [RESULT]
 MAP
   NAME 'attrbind'
   EXTENT -1.5 0.1 -0.6 1.0

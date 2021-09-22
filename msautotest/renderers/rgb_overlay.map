@@ -1,7 +1,7 @@
-# RUN_PARMS: rgb_overlay.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: rgb_overlay.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: rgb_overlay.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: rgb_overlay.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: rgb_overlay.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: rgb_overlay.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: rgb_overlay.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: rgb_overlay.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Tests overlaying an RGB image with a transparent value on a greyscale image

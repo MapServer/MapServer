@@ -1,5 +1,5 @@
-# RUN_PARMS: mask.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: mask.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: mask.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: mask.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # entity-encoded text rendering test.

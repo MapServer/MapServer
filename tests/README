@@ -5,7 +5,7 @@ This is a self-contained lightweight dataset that is used as a test fixture
 for MapServer unit tests.  It might also be used for regression testing or
 by users that want to verify their build by executing::
 
-    $ ./shp2img -m tests/test.map -o test.png
+    $ ./map2img -m tests/test.map -o test.png
 
 Currently (Oct/2004) only the Python mapscript unit tests and the Java 
 mapscript "make test" target use these data.

@@ -1,13 +1,13 @@
 # Test Runtime Substitutions
 #
-# RUN_PARMS: scaletoken_data_200k.png [SHP2IMG] -l layer1 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
-# RUN_PARMS: scaletoken_data_29m.png [SHP2IMG] -l layer1  -m [MAPFILE] -o [RESULT] -e 425000 4685000 489000 5189000
-# RUN_PARMS: scaletoken_data_40m.png [SHP2IMG] -l layer1 -m [MAPFILE] -o [RESULT]
-# RUN_PARMS: scaletoken_filter_192k.png [SHP2IMG] -l layer2 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
-# RUN_PARMS: scaletoken_filter_424k.png [SHP2IMG] -l layer2  -m [MAPFILE] -o [RESULT] -e 476315 4762880 483645 4765610
-# RUN_PARMS: scaletoken_filter_655k.png [SHP2IMG] -l layer2 -m [MAPFILE] -o [RESULT] -e 474315 4762880 485645 4765610 
-# RUN_PARMS: scaletoken_filteritem_192k.png [SHP2IMG] -l layer3 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
-# RUN_PARMS: scaletoken_filteritem_424k.png [SHP2IMG] -l layer3  -m [MAPFILE] -o [RESULT] -e 476315 4762880 483645 4765610
+# RUN_PARMS: scaletoken_data_200k.png [MAP2IMG] -l layer1 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
+# RUN_PARMS: scaletoken_data_29m.png [MAP2IMG] -l layer1  -m [MAPFILE] -o [RESULT] -e 425000 4685000 489000 5189000
+# RUN_PARMS: scaletoken_data_40m.png [MAP2IMG] -l layer1 -m [MAPFILE] -o [RESULT]
+# RUN_PARMS: scaletoken_filter_192k.png [MAP2IMG] -l layer2 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
+# RUN_PARMS: scaletoken_filter_424k.png [MAP2IMG] -l layer2  -m [MAPFILE] -o [RESULT] -e 476315 4762880 483645 4765610
+# RUN_PARMS: scaletoken_filter_655k.png [MAP2IMG] -l layer2 -m [MAPFILE] -o [RESULT] -e 474315 4762880 485645 4765610 
+# RUN_PARMS: scaletoken_filteritem_192k.png [MAP2IMG] -l layer3 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
+# RUN_PARMS: scaletoken_filteritem_424k.png [MAP2IMG] -l layer3  -m [MAPFILE] -o [RESULT] -e 476315 4762880 483645 4765610
 #
 MAP
   NAME 'scaletoken'

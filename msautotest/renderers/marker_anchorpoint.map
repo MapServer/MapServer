@@ -1,7 +1,7 @@
-# RUN_PARMS: marker_anchorpoint.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: marker_anchorpoint.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: marker_anchorpoint.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: marker_anchorpoint.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # entity-encoded text rendering test.

@@ -1,8 +1,8 @@
-# RUN_PARMS: point_pixmap.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: point_pixmap.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: point_pixmap.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: point_pixmap.json [SHP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
-# RUN_PARMS: point_pixmap.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: point_pixmap.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point_pixmap.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point_pixmap.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point_pixmap.json [MAP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
+# RUN_PARMS: point_pixmap.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # entity-encoded text rendering test.

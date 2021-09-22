@@ -1,6 +1,6 @@
 # Test support for handling datasource encoding
 
-# RUN_PARMS: encodings.png [SHP2IMG] -m [MAPFILE] -o [RESULT]  
+# RUN_PARMS: encodings.png [MAP2IMG] -m [MAPFILE] -o [RESULT]  
 # RUN_PARMS: encodings.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=getFeature&TYPENAME=encoded&Filter=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>éà toto</Literal></PropertyIsEqualTo></Filter>" > [RESULT_DEVERSION]
 
 map

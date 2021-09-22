@@ -1,7 +1,7 @@
-# RUN_PARMS: chartlayer_pie_expressions.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: chartlayer_pie_expressions.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: chartlayer_pie_expressions.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: chartlayer_pie_expressions.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Test on chart creation
