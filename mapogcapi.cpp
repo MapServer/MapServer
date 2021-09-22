@@ -106,6 +106,16 @@ static void outputError(int code, const std::string& description)
   msIO_printf("%s\n", j.dump().c_str());
 }
 
+static int includeLayer(mapObj *map, layerObj *layer) {
+  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || 
+     !msWFSIsLayerSupported(layer) || 
+     !msIsLayerQueryable(layer)) {
+    return MS_FALSE;
+  } else {
+    return MS_TRUE;
+  }
+}
+
 /*
 ** Get stuff...
 */
@@ -595,8 +605,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 
   if(!map || !layer) return collection;
 
-  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) return collection;
-  if(!msIsLayerQueryable(layer)) return collection;
+  if(!includeLayer(map, layer)) return collection;
 
   // initialize some things
   std::string api_root = getApiRootUrl(map);
@@ -931,7 +940,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   layer = map->layers[i]; // for convenience
   layer->status = MS_ON; // force on (do we need to save and reset?)
 
-  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) {
+  if(!includeLayer(map, layer)) {
     outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
@@ -1437,9 +1446,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
 
   for(int i=0; i<map->numlayers; i++) {
       layerObj* layer = map->layers[i];
-      if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) ||
-         !msWFSIsLayerSupported(layer))
-      {
+      if(!includeLayer(map, layer)) {
           continue;
       }
 
