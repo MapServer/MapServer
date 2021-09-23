@@ -576,7 +576,7 @@ static const char* getCollectionDescription(layerObj* layer)
 {
   const char *description = msOWSLookupMetadata(&(layer->metadata), "A", "description");
   if(!description) description = msOWSLookupMetadata(&(layer->metadata), "OF", "abstract"); // fallback on abstract
-  if(!description) description = "";
+  if(!description) description = "<!-- Warning: unable to set the collection description. -->"; // finally a warning...
   return description;
 }
 
