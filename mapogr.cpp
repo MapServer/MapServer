@@ -2383,9 +2383,14 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 filter = msStringConcatenate(filter, "\"");
                 if( isGPKG )
                     filter = msStringConcatenate(filter, ")");
-                filter = msStringConcatenate(filter, ", BuildMbr(");
                 char *points = (char *)msSmallMalloc(30*2*5);
-                snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                if( rect.minx == rect.maxx && rect.miny == rect.maxy ) {
+                  filter = msStringConcatenate(filter, ",  ST_GeomFromText(");
+                  snprintf(points, 30*4, "'POINT(%lf %lf)'", rect.minx, rect.miny);
+                } else {
+                  filter = msStringConcatenate(filter, ", BuildMbr(");
+                  snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                }
                 filter = msStringConcatenate(filter, points);
                 msFree(points);
                 filter = msStringConcatenate(filter, "))");
