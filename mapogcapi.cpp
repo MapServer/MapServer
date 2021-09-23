@@ -613,8 +613,10 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   if(msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
     if (layer->projection.numargs > 0)
       msOWSProjectToWGS84(&layer->projection, &bbox);
-    else
+    else if (map->projection.numargs > 0)
       msOWSProjectToWGS84(&map->projection, &bbox);
+    else
+      throw std::runtime_error("Unable to transform bounding box, no projection defined.");
   } else {
     throw std::runtime_error("Unable to get collection bounding box."); // might be too harsh since extent is optional
   }
@@ -1139,16 +1141,31 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
     const int geometry_precision = getGeometryPrecision(map, layer);
 
-    // reprojection (layer projection to EPSG:4326)
+    // reprojection to EPSG:4326 (if necessary)
     reprojectionObj *reprojector = NULL;
-    if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
-      reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
-      if(reprojector == NULL) {
-        msGMLFreeItems(items);
-        msGMLFreeConstants(constants);
-        outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
-        return MS_SUCCESS;
+    if(layer->projection.numargs > 0) { 
+      if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
+        reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
+        if(reprojector == NULL) {
+          msGMLFreeItems(items);
+          msGMLFreeConstants(constants);
+          outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+          return MS_SUCCESS;
+        }
       }
+    } else if(map->projection.numargs > 0) {
+      if(msProjectionsDiffer(&(map->projection), &(map->latlon))) {
+        reprojector = msProjectCreateReprojector(&(map->projection), &(map->latlon));
+        if(reprojector == NULL) {
+	  msGMLFreeItems(items);
+          msGMLFreeConstants(constants);
+	  outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+          return MS_SUCCESS;
+        }
+      }
+    } else {
+      outputError(OGCAPI_CONFIG_ERROR, "Unable to transform geometries, no projection defined.");
+      return MS_SUCCESS;
     }
 
     for(i=0; i<layer->resultcache->numresults; i++) {
