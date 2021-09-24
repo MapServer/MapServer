@@ -157,3 +157,9 @@ const char *msConfigGetMap(const configObj *config, const char *key)
   if(config ==NULL) return NULL;
   return msLookupHashTable(&config->maps, key);
 }
+
+const char *msConfigGetPlugin(const configObj *config, const char *key)
+{
+  if(config ==NULL) return NULL;
+  return msLookupHashTable(&config->plugins, key);
+}

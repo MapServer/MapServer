@@ -188,7 +188,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
     if(ms_mapfile) {
       ms_mapfile_tainted = MS_FALSE;
     } else {
-      /* by now we know the request isn't for something in an environment variable */
+      /* by now we know the map parameter isn't referencing something in the configuration */
       if(ms_map_no_path != NULL) {
         msSetError(MS_WEBERR, "CGI variable \"map\" not found in configuration and this server is not configured for full paths.", "msCGILoadMap()");
         return NULL;
