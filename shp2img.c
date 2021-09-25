@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
 
   mapObj         *map=NULL;
   imageObj         *image = NULL;
+  configObj* config = NULL;
 
   char **layers=NULL;
   int num_layers=0;
@@ -123,10 +124,12 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
+    config = msLoadConfig(NULL);
+
     for(i=1; i<argc; i++) { /* Step though the user arguments, 1st to find map file */
 
       if(strcmp(argv[i],"-m") == 0) {
-        map = msLoadMap(argv[i+1], NULL, NULL);
+        map = msLoadMap(argv[i+1], NULL, config);
         if(!map) {
           msWriteError(stderr);
           msCleanup();
@@ -298,6 +301,7 @@ int main(int argc, char *argv[])
 
       msFreeMap(map);
       msCleanup();
+      msFreeConfig(config);
       exit(1);
     }
 
@@ -317,5 +321,6 @@ int main(int argc, char *argv[])
 
   } /*   for(draws=0; draws<iterations; draws++) { */
   msCleanup();
+  msFreeConfig(config);
   return(0);
 } /* ---- END Main Routine ---- */

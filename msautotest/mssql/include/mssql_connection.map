@@ -1,4 +1,4 @@
   CONNECTIONTYPE PLUGIN
-  PLUGIN "C:\projects\mapserver\build\Release\msplugin_mssql2008.dll"
+  PLUGIN "mssql"
   CONNECTION "SERVER=(local)\SQL2019;DATABASE=msautotest;uid=sa;pwd=Password12!;"
   STATUS OFF

@@ -4281,11 +4281,12 @@ int loadLayer(layerObj *layer, mapObj *map)
 
 	  if(getString(&value) == MS_FAILURE) return(-1);
           plugin_library = msConfigGetPlugin(map->config, value);
-          free(value);
           if(!plugin_library) {
-            msSetError(MS_MISCERR, "Plugin value not found in config file." , "loadLayer()");
+            msSetError(MS_MISCERR, "Plugin value \"%s\" not found in config file." , "loadLayer()", value);
+            free(value);
             return(-1);
           }
+          free(value);
           layer->plugin_library_original = strdup(plugin_library);
 	} else {
           if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
