@@ -148,18 +148,18 @@ configObj *msLoadConfig(const char* ms_config_file)
 
 const char *msConfigGetEnv(const configObj *config, const char *key) 
 {
-  if(config == NULL) return NULL;
+  if(config == NULL || key == NULL) return NULL;
   return msLookupHashTable(&config->env, key);
 }
 
 const char *msConfigGetMap(const configObj *config, const char *key)
 {
-  if(config ==NULL) return NULL;
+  if(config == NULL || key == NULL) return NULL;
   return msLookupHashTable(&config->maps, key);
 }
 
 const char *msConfigGetPlugin(const configObj *config, const char *key)
 {
-  if(config ==NULL) return NULL;
+  if(config == NULL || key == NULL) return NULL;
   return msLookupHashTable(&config->plugins, key);
 }
