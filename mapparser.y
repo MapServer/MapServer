@@ -682,16 +682,6 @@ shape_exp: SHAPE
     s->scratch = MS_TRUE;
     $$ = s;
   }
-  | SKELETONIZE '(' shape_exp ',' math_exp ')' {
-    shapeObj *s;
-    s = msGEOSSkeletonize($3, $5);
-    if(!s) {
-      yyerror(p, "Executing skeletonize failed.");
-      return(-1);
-    }
-    s->scratch = MS_TRUE;
-    $$ = s;
-  }
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
     shapeObj *s;
     s = msGEOSDifference($3, $5);
