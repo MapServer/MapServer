@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 #include "mapserver.h"
+#include "mapgraph.h"
 
 #ifdef USE_GEOS
 
@@ -1187,57 +1188,6 @@ shapeObj *msGEOSVoronoiDiagram(shapeObj *shape, double tolerance, int onlyEdges)
 
 #define COMPARE_POINTS(a,b) (((a).x!=(b).x || (a).y!=(b).y)?MS_FALSE:MS_TRUE)
 
-static shapeObj *prune(shapeObj *shape1)
-{
-  int i, j;
-  shapeObj *shape2, *shape3;
-  char *start, *end; // counters
-
-  // fprintf(stderr, "    (before) shape1 numlines: %d\n", shape1->numlines);
-  start = (char *) calloc(shape1->numlines, sizeof(char));
-  end = (char *) calloc(shape1->numlines, sizeof(char));
-
-  for(i=0; i<shape1->numlines; i++) {
-    start[i]++;
-    end[i]++;
-
-    for(j=i+1; j<shape1->numlines; j++) {
-      if(COMPARE_POINTS(shape1->line[i].point[0], shape1->line[j].point[0])) {
-        start[i]++;
-        start[j]++;
-      } else if(COMPARE_POINTS(shape1->line[i].point[0], shape1->line[j].point[shape1->line[j].numpoints-1])) {
-        start[i]++;
-	end[j]++;
-      }
-      if(COMPARE_POINTS(shape1->line[i].point[shape1->line[i].numpoints-1], shape1->line[j].point[0])) { 
-        end[i]++;
-        start[j]++;
-      } else if(COMPARE_POINTS(shape1->line[i].point[shape1->line[i].numpoints-1], shape1->line[j].point[shape1->line[j].numpoints-1])) {
-	end[i]++;
-	end[j]++;
-      }
-    }
-  }
-
-  shape2 = (shapeObj *) malloc(sizeof(shapeObj));
-  MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
-  msInitShape(shape2);
-  shape2->type = MS_SHAPE_LINE;
-
-  for(i=0; i<shape1->numlines; i++) {
-    if(start[i] > 1 && end[i] > 1) msAddLine(shape2, &shape1->line[i]);
-  }
-  // fprintf(stderr, "    (after) shape2 numlines: %d\n", shape2->numlines);
-
-  shape3 = msGEOSLineMerge(shape2);
-
-  msFreeShape(shape2);
-  msFree(start);
-  msFree(end);
-
-  return shape3;
-}
-
 static int keepEdge(lineObj *segment, shapeObj *polygon)
 {
   int i,j;
@@ -1253,51 +1203,125 @@ static int keepEdge(lineObj *segment, shapeObj *polygon)
   return(MS_TRUE);
 }
 
+// returns the index of the node, we use z to store a count of points at the same coordinate
+static int buildNodes(multipointObj *nodes, pointObj *point) 
+{
+  int i;
+
+  for(i=0; i<nodes->numpoints; i++) {
+    if(COMPARE_POINTS(nodes->point[i], *point)) { // found it
+      nodes->point[i].z++;
+      return i;
+    }
+  }
+
+  // not found, add it
+  nodes->point[i].x = point->x;
+  nodes->point[i].y = point->y;
+  nodes->point[i].z = 1;
+  nodes->numpoints++;
+
+  return i;
+}
+
 shapeObj *msGEOSSkeletonize(shapeObj *shape, int depth)
 {
 #if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5 
-  int i, d;
+  int i, j;
   shapeObj *shape2, *shape3;
- 
-  int numlines;
+
+  graphObj *graph;
+  multipointObj nodes;
+  int src, dest;
+
+  int *path=NULL, *tmp_path=NULL; // array of node indexes
+  int path_size, tmp_path_size;
+  double path_dist, tmp_path_dist, max_path_dist=-1;
 
   if(!shape) return NULL;
   if(shape->type != MS_SHAPE_POLYGON) return NULL;
 
   shape2 = msGEOSVoronoiDiagram(shape, 0.0, MS_TRUE);
-  if(!shape2) {
+  if(!shape2) return NULL;
+
+  // process the edges and build a graph representation
+  nodes.point = (pointObj *) malloc(shape2->numlines*sizeof(pointObj)*2);
+  nodes.numpoints = 0;
+  if(!nodes.point) {
+    msFreeShape(shape2);
     return NULL;
   }
 
-  // process the edges
-  shape3 = (shapeObj *) malloc(sizeof(shapeObj));
-  MS_CHECK_ALLOC(shape3, sizeof(shapeObj), NULL);
-  msInitShape(shape3);
-  shape3->type = MS_SHAPE_LINE;
+  graph = msCreateGraph(shape2->numlines*2);
+  if(!graph) {
+    msFreeShape(shape2);
+    msFree(nodes.point);
+    return NULL;
+  }
 
   for(i=0; i<shape2->numlines; i++) {
-    if(keepEdge(&shape2->line[i], shape) == MS_TRUE) msAddLine(shape3, &shape2->line[i]);
+    if(keepEdge(&shape2->line[i], shape) == MS_TRUE) {
+      src = buildNodes(&nodes, &shape2->line[i].point[0]);
+      dest = buildNodes(&nodes, &shape2->line[i].point[1]);
+      msGraphAddEdge(graph, src, dest, msDistancePointToPoint(&shape2->line[i].point[0], &shape2->line[i].point[1]));
+    }
   }
-  msFreeShape(shape2);
+  msFreeShape(shape2); // done with voronoi geometry
 
-  shape2 = msGEOSLineMerge(shape3);
-  msFreeShape(shape3);
+  // step through edge nodes (z=1)
+  for(i=0; i<nodes.numpoints; i++) {
+    if(nodes.point[i].z != 1) continue; // skip
 
-  d = 0;
-  numlines = shape2->numlines;
-  while(shape2->numlines > 2 && (depth == -1 || d < depth)) { // two disconnected lines or there'd be just one, so no need to go any further
-    shape3 = prune(shape2);
-    if(shape3 == NULL) break; // to much de-dangling, revert
-
-    msFreeShape(shape2);
-    shape2 = shape3; // re-point
-    shape3 = NULL;
-
-    if(shape2->numlines == numlines) break; // no improvement, bail
-    numlines = shape2->numlines;
-    d++;
+    if(!path) { // first, keep this path
+      path = msGraphGetLongestShortestPath(graph, i, &path_size, &path_dist);
+      max_path_dist = path_dist;
+    } else {
+      if(i == path[path_size-1]) continue; // skip, graph is bi-directional so it can't be any longer 
+      tmp_path = msGraphGetLongestShortestPath(graph, i, &tmp_path_size, &tmp_path_dist);
+      if(tmp_path_dist > max_path_dist) { // longer, keep this path
+        free(path);
+        path = tmp_path;
+        path_size = tmp_path_size;
+        path_dist = tmp_path_dist;
+        max_path_dist = tmp_path_dist;
+      } else { // skip path
+        free(tmp_path);
+      }
+    }
   }
 
+  msFreeGraph(graph); // done with graph
+
+  // transform the path into a shape
+  if(path) {
+    lineObj line;
+    line.point = (pointObj *) malloc(path_size*sizeof(pointObj));
+    if(!line.point) {
+      // clean up path and nodes
+      return NULL;
+    }
+    line.numpoints = path_size;
+
+    shape2 = (shapeObj *) malloc(sizeof(shapeObj));
+    if(!shape2) {
+      // clean up path, nodes and line.point
+      return NULL;
+    }
+    msInitShape(shape2);
+    shape2->type = MS_SHAPE_LINE;
+    
+    for(i=0; i<path_size; i++) {
+      line.point[i].x = nodes.point[path[i]].x;
+      line.point[i].y = nodes.point[path[i]].y;
+    }
+    msAddLineDirectly(shape2, &line);
+  } else {
+    free(nodes.point);
+    return NULL;
+  }
+
+  free(path);
+  free(nodes.point);
   return shape2;
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available or GEOS version is not 3.5 or higher.", "msGEOSSkeletonize()");
