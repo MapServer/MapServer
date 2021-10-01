@@ -2327,26 +2327,23 @@ int msIsDegenerateShape(shapeObj *shape)
   return( non_degenerate_parts == 0 );
 }
 
-shapeObj *msRings2Shape(shapeObj *shape, double outerMinSize, double innerMinSize) {
+shapeObj *msRings2Shape(shapeObj *shape, int outer) {
   shapeObj *shape2;
   int i, *outerList;
 
   if(!shape) return NULL;
   if(shape->type != MS_SHAPE_POLYGON) return NULL;
-  if(outerMinSize == 0.0 && innerMinSize == 0.0) return NULL; // no rings
-  if(outerMinSize < 0.0 && innerMinSize < 0.0) return NULL; // all rings, could do a msCopyShape() but why?
 
   shape2 = (shapeObj *) malloc(sizeof(shapeObj));
   MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
   msInitShape(shape2);
   shape2->type = shape->type;
 
-  // HERE!!!
   outerList = msGetOuterList(shape);
   for(i=0; i<shape->numlines; i++) {
     if(outerList[i] == outer) { // else inner
       msAddLine(shape2, &(shape->line[i]));
-    }c
+    }
   }
 
   return shape2;
