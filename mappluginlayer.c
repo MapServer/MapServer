@@ -186,6 +186,10 @@ msPluginLayerInitializeVirtualTable(layerObj *layer)
 {
   VTFactoryItemObj *pVTFI;
 
+  if (!layer->plugin_library){
+      return MS_FAILURE;
+  }
+
   msAcquireLock(TLOCK_LAYER_VTABLE);
 
   pVTFI = lookupVTFItem(&gVirtualTableFactory, layer->plugin_library);
