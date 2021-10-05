@@ -1019,7 +1019,7 @@ static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* ps
 {
 
   int nEntitySize = msSHXReadSize(psSHP, hEntity);
-  if( nEntitySize > INT_MAX - 8 ) {
+  if( nEntitySize < 0 || nEntitySize > INT_MAX - 8 ) {
       msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                  pszCallingFunction, nEntitySize, hEntity);
       return(MS_FAILURE);
