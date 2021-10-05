@@ -3006,6 +3006,7 @@ void FLTDoAxisSwappingIfNecessary(mapObj *map,
     }
 }
 
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
 static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
                                    const char *pszOldName,
@@ -3028,6 +3029,7 @@ static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
   }
 }
 
+#endif
 
 static int FLTIsGMLDefaultProperty(const char* pszName)
 {
@@ -3038,6 +3040,8 @@ static int FLTIsGMLDefaultProperty(const char* pszName)
             strcmp(pszName, "gml:boundedBy") == 0 ||
             strcmp(pszName, "@gml:id") == 0);
 }
+
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
 static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
 {
@@ -3116,6 +3120,8 @@ static void FLTRemoveGroupName(FilterEncodingNode *psFilterNode,
   }
 
 }
+
+#endif
 
 /************************************************************************/
 /*                    FLTPreParseFilterForAliasAndGroup                 */
