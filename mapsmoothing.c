@@ -142,7 +142,7 @@ static int processShapePathDistance(shapeObj *shape, int force)
 
     while ((res = nextLineWindow(&lw)) != MS_DONE) {
       double ratio = 0;
-      pointObj point = {0,0,0,0}; // initialize
+      pointObj point = {0}; // initialize
 
       if (lw.lineIsRing && lw.pos==lw.line->numpoints-1) {
         point = newShape->line[i].point[0];
@@ -261,7 +261,7 @@ shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing)
       
       while ((res = nextLineWindow(&lw)) != MS_DONE) {
         double sum_x=0, sum_y=0, sum = 0;
-        pointObj point = {0,0,0,0}; // initialize
+        pointObj point = {0}; // initialize
         int k = 0;
 
         if (res == MS_FALSE) { /* invalid window */
