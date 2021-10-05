@@ -1001,6 +1001,15 @@ static uchar *msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char*
   /* -------------------------------------------------------------------- */
   /*      Ensure our record buffer is large enough.                       */
   /* -------------------------------------------------------------------- */
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+  /* when running with libFuzzer, allocate a new buffer for every
+     call, to allow AddressSanitizer to detect memory errors */
+  free(psSHP->pabyRec);
+  psSHP->pabyRec = NULL;
+  psSHP->nBufSize = 0;
+#endif
+
   if( nEntitySize > psSHP->nBufSize ) {
     uchar* pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
     if (pabyRec == NULL) {
@@ -1304,6 +1313,15 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*      Copy out the part array from the record.                        */
     /* -------------------------------------------------------------------- */
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* when running with libFuzzer, allocate a new buffer for every
+       call, to allow AddressSanitizer to detect memory errors */
+    free(psSHP->panParts);
+    psSHP->panParts = NULL;
+    psSHP->nPartMax = 0;
+#endif
+
     if( psSHP->nPartMax < nParts ) {
       psSHP->panParts = (int *) SfRealloc(psSHP->panParts, nParts * sizeof(int) );
       if (psSHP->panParts == NULL) {
