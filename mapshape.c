@@ -1741,7 +1741,10 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
     return -1;
   }
 
-  msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
+  if( msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds)) != MS_SUCCESS ) {
+    msSHPClose(shpfile->hSHP);
+    return -1;
+  }
 
   bufferSize = strlen(filename)+5;
   dbfFilename = (char *)msSmallMalloc(bufferSize);
@@ -1870,8 +1873,10 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
       }
 
       for(i=0; i<shpfile->numshapes; i++) {
-        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) == MS_SUCCESS)
-          if(msRectOverlap(&shaperect, &rect) == MS_TRUE) msSetBit(shpfile->status, i, 1);
+        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) != MS_SUCCESS)
+          return(MS_FAILURE);
+
+        if(msRectOverlap(&shaperect, &rect) == MS_TRUE) msSetBit(shpfile->status, i, 1);
       }
     }
   }
