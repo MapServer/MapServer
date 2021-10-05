@@ -1372,11 +1372,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
     k = 0; /* overall point counter */
     for( i = 0; i < nParts; i++) {
-      if( i == nParts-1)
-        shape->line[i].numpoints = nPoints - psSHP->panParts[i];
-      else
-        shape->line[i].numpoints = psSHP->panParts[i+1] - psSHP->panParts[i];
-      if (shape->line[i].numpoints <= 0) {
+      const ms_int32 end = i == nParts - 1
+        ? nPoints
+        : psSHP->panParts[i+1];
+      shape->line[i].numpoints = end - psSHP->panParts[i];
+      if (psSHP->panParts[i] < 0 || end < 0 || end > nPoints ||
+          psSHP->panParts[i] >= end) {
         msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].numpoints=%d", "msSHPReadShape()",
                    hEntity, i, shape->line[i].numpoints);
         while(--i >= 0)
