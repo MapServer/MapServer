@@ -291,7 +291,7 @@ mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c
 idw.c interpolation.c
-mapcompositingfilter.c mapmvt.c mapiconv.c mapgraph.c)
+mapcompositingfilter.c mapmvt.c mapiconv.c mapgraph.cpp)
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h

@@ -1,6 +1,6 @@
-#line 2 "/vagrant/maplexer.c"
+#line 2 "maplexer.c"
 
-#line 4 "/vagrant/maplexer.c"
+#line 4 "maplexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -2505,9 +2505,9 @@ int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 
-#line 2509 "/vagrant/maplexer.c"
+#line 2509 "maplexer.c"
 
-#line 2511 "/vagrant/maplexer.c"
+#line 2511 "maplexer.c"
 
 #define INITIAL 0
 #define URL_VARIABLE 1
@@ -2799,7 +2799,7 @@ YY_DECL
          break;
        }
 
-#line 2803 "/vagrant/maplexer.c"
+#line 2803 "maplexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -4797,7 +4797,7 @@ YY_RULE_SETUP
 #line 754 "maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4801 "/vagrant/maplexer.c"
+#line 4801 "maplexer.c"
 case YY_STATE_EOF(URL_VARIABLE):
 case YY_STATE_EOF(URL_STRING):
 case YY_STATE_EOF(EXPRESSION_STRING):
