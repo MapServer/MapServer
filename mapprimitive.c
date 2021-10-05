@@ -2338,3 +2338,73 @@ int msIsDegenerateShape(shapeObj *shape)
   return( non_degenerate_parts == 0 );
 }
 
+shapeObj *msRings2Shape(shapeObj *shape, int outer) {
+  shapeObj *shape2;
+  int i, *outerList;
+
+  if(!shape) return NULL;
+  if(shape->type != MS_SHAPE_POLYGON) return NULL;
+
+  shape2 = (shapeObj *) malloc(sizeof(shapeObj));
+  MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
+  msInitShape(shape2);
+  shape2->type = shape->type;
+
+  outerList = msGetOuterList(shape);
+  for(i=0; i<shape->numlines; i++) {
+    if(outerList[i] == outer) { // else inner
+      msAddLine(shape2, &(shape->line[i]));
+    }
+  }
+
+  return shape2;
+}
+
+shapeObj *msDensify(shapeObj *shape, double tolerance) {
+  int i, j, k, l; // counters                                                                                                                                                
+  int n;
+  shapeObj *shape2;
+  lineObj line;
+  double distance, length, c;
+
+  if(!shape) return NULL;
+  if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE) return NULL;
+
+  shape2 = (shapeObj *) malloc(sizeof(shapeObj));
+  MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
+  msInitShape(shape2);
+  shape2->type = shape->type; // POLGYON or LINE
+
+  for(i=0; i<shape->numlines; i++) {
+
+    line.numpoints = shape->line[i].numpoints;
+    line.point = (pointObj *) malloc(sizeof(pointObj)*line.numpoints); // best case we don't have to add any points
+    MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, NULL);
+
+    for(j=0, l=0; j<shape->line[i].numpoints-1; j++, l++) {
+      line.point[l] = shape->line[i].point[j];
+
+      distance = msDistancePointToPoint(&(shape->line[i].point[j]), &(shape->line[i].point[j+1]));
+      if(distance > tolerance) {
+        n = (int) floor(distance/tolerance); // number of new points, n+1 is the number of new segments
+        length = distance/(n+1); // segment length
+
+        line.numpoints += n;
+        line.point = (pointObj *) realloc(line.point, sizeof(pointObj)*line.numpoints);
+        MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, NULL);
+
+        for(k=0; k<n; k++) {
+          c = (k+1)*length/distance;
+          l++;
+          line.point[l].x = shape->line[i].point[j].x + c*(shape->line[i].point[j+1].x - shape->line[i].point[j].x);
+          line.point[l].y = shape->line[i].point[j].y + c*(shape->line[i].point[j+1].y - shape->line[i].point[j].y);
+        }
+      }
+    }
+    line.point[l] = shape->line[i].point[j];
+
+    msAddLineDirectly(shape2, &line);
+  }
+
+  return shape2;
+}

@@ -1,13 +1,14 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* Skeleton interface for Bison's Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +16,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,67 +33,62 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_MAPPARSER_H_INCLUDED
-# define YY_YY_MAPPARSER_H_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-
-/* Token type.  */
+/* Tokens.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-  enum yytokentype
-  {
-    BOOLEAN = 258,
-    NUMBER = 259,
-    STRING = 260,
-    TIME = 261,
-    SHAPE = 262,
-    OR = 263,
-    AND = 264,
-    NOT = 265,
-    RE = 266,
-    EQ = 267,
-    NE = 268,
-    LT = 269,
-    GT = 270,
-    LE = 271,
-    GE = 272,
-    IN = 273,
-    IEQ = 274,
-    IRE = 275,
-    INTERSECTS = 276,
-    DISJOINT = 277,
-    TOUCHES = 278,
-    OVERLAPS = 279,
-    CROSSES = 280,
-    WITHIN = 281,
-    CONTAINS = 282,
-    EQUALS = 283,
-    BEYOND = 284,
-    DWITHIN = 285,
-    AREA = 286,
-    LENGTH = 287,
-    COMMIFY = 288,
-    ROUND = 289,
-    UPPER = 290,
-    LOWER = 291,
-    INITCAP = 292,
-    FIRSTCAP = 293,
-    TOSTRING = 294,
-    YYBUFFER = 295,
-    DIFFERENCE = 296,
-    SIMPLIFY = 297,
-    SIMPLIFYPT = 298,
-    GENERALIZE = 299,
-    SMOOTHSIA = 300,
-    JAVASCRIPT = 301,
-    NEG = 302
-  };
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     BOOLEAN = 258,
+     NUMBER = 259,
+     STRING = 260,
+     TIME = 261,
+     SHAPE = 262,
+     OR = 263,
+     AND = 264,
+     NOT = 265,
+     IRE = 266,
+     IEQ = 267,
+     IN = 268,
+     GE = 269,
+     LE = 270,
+     GT = 271,
+     LT = 272,
+     NE = 273,
+     EQ = 274,
+     RE = 275,
+     DWITHIN = 276,
+     BEYOND = 277,
+     EQUALS = 278,
+     CONTAINS = 279,
+     WITHIN = 280,
+     CROSSES = 281,
+     OVERLAPS = 282,
+     TOUCHES = 283,
+     DISJOINT = 284,
+     INTERSECTS = 285,
+     ROUND = 286,
+     COMMIFY = 287,
+     LENGTH = 288,
+     AREA = 289,
+     FIRSTCAP = 290,
+     INITCAP = 291,
+     LOWER = 292,
+     UPPER = 293,
+     TOSTRING = 294,
+     JAVASCRIPT = 295,
+     CENTERLINE = 296,
+     SMOOTHSIA = 297,
+     GENERALIZE = 298,
+     SIMPLIFYPT = 299,
+     SIMPLIFY = 300,
+     DENSIFY = 301,
+     DIFFERENCE = 302,
+     OUTER = 303,
+     INNER = 304,
+     YYBUFFER = 305,
+     NEG = 306
+   };
 #endif
 /* Tokens.  */
 #define BOOLEAN 258
@@ -101,67 +99,68 @@ extern int yydebug;
 #define OR 263
 #define AND 264
 #define NOT 265
-#define RE 266
-#define EQ 267
-#define NE 268
-#define LT 269
-#define GT 270
-#define LE 271
-#define GE 272
-#define IN 273
-#define IEQ 274
-#define IRE 275
-#define INTERSECTS 276
-#define DISJOINT 277
-#define TOUCHES 278
-#define OVERLAPS 279
-#define CROSSES 280
-#define WITHIN 281
-#define CONTAINS 282
-#define EQUALS 283
-#define BEYOND 284
-#define DWITHIN 285
-#define AREA 286
-#define LENGTH 287
-#define COMMIFY 288
-#define ROUND 289
-#define UPPER 290
-#define LOWER 291
-#define INITCAP 292
-#define FIRSTCAP 293
+#define IRE 266
+#define IEQ 267
+#define IN 268
+#define GE 269
+#define LE 270
+#define GT 271
+#define LT 272
+#define NE 273
+#define EQ 274
+#define RE 275
+#define DWITHIN 276
+#define BEYOND 277
+#define EQUALS 278
+#define CONTAINS 279
+#define WITHIN 280
+#define CROSSES 281
+#define OVERLAPS 282
+#define TOUCHES 283
+#define DISJOINT 284
+#define INTERSECTS 285
+#define ROUND 286
+#define COMMIFY 287
+#define LENGTH 288
+#define AREA 289
+#define FIRSTCAP 290
+#define INITCAP 291
+#define LOWER 292
+#define UPPER 293
 #define TOSTRING 294
-#define YYBUFFER 295
-#define DIFFERENCE 296
-#define SIMPLIFY 297
-#define SIMPLIFYPT 298
-#define GENERALIZE 299
-#define SMOOTHSIA 300
-#define JAVASCRIPT 301
-#define NEG 302
+#define JAVASCRIPT 295
+#define CENTERLINE 296
+#define SMOOTHSIA 297
+#define GENERALIZE 298
+#define SIMPLIFYPT 299
+#define SIMPLIFY 300
+#define DENSIFY 301
+#define DIFFERENCE 302
+#define OUTER 303
+#define INNER 304
+#define YYBUFFER 305
+#define NEG 306
 
-/* Value type.  */
+
+
+
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
-union YYSTYPE
+typedef union YYSTYPE
+#line 30 "mapparser.y"
 {
-#line 30 "mapparser.y" /* yacc.c:1909  */
-
   double dblval;
   int intval;  
   char *strval;  
   struct tm tmval;
   shapeObj *shpval;
-
-#line 156 "mapparser.h" /* yacc.c:1909  */
-};
-
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1529 of yacc.c.  */
+#line 159 "/Users/sdlime/mapserver/sdlime/mapserver/mapparser.h"
+	YYSTYPE;
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 
 
-int yyparse (parseObj *p);
-
-#endif /* !YY_YY_MAPPARSER_H_INCLUDED  */

@@ -49,7 +49,7 @@ int yyerror(parseObj *, const char *);
 %left AREA LENGTH COMMIFY ROUND
 %left UPPER LOWER INITCAP FIRSTCAP
 %left TOSTRING
-%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA JAVASCRIPT
+%left YYBUFFER INNER OUTER DIFFERENCE DENSIFY SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA CENTERLINE JAVASCRIPT
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -652,11 +652,51 @@ shape_exp: SHAPE
     s->scratch = MS_TRUE;
     $$ = s;
   }
+  | INNER '(' shape_exp ')' {
+    shapeObj *s;
+    s = msRings2Shape($3, MS_FALSE);
+    if(!s) {
+      yyerror(p, "Executing inner failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | OUTER '(' shape_exp ')' {
+    shapeObj *s;
+    s = msRings2Shape($3, MS_TRUE);
+    if(!s) {
+      yyerror(p, "Executing outer failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | CENTERLINE '(' shape_exp ')' {
+    shapeObj *s;
+    s = msGEOSCenterline($3);
+    if(!s) {
+      yyerror(p, "Executing centerline failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
     shapeObj *s;
     s = msGEOSDifference($3, $5);
     if(!s) {
       yyerror(p, "Executing difference failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | DENSIFY '(' shape_exp ',' math_exp ')' {
+    shapeObj *s;
+    s = msDensify($3, $5);
+    if(!s) {
+      yyerror(p, "Executing densify failed.");
       return(-1);
     }
     s->scratch = MS_TRUE;
@@ -938,6 +978,10 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
   case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
   case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;
+  case MS_TOKEN_FUNCTION_CENTERLINE: token = CENTERLINE; break;
+  case MS_TOKEN_FUNCTION_DENSIFY: token = DENSIFY; break;
+  case MS_TOKEN_FUNCTION_INNER: token = INNER; break;
+  case MS_TOKEN_FUNCTION_OUTER: token = OUTER; break;
   case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;
 
   default:
