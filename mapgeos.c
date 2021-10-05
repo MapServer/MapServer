@@ -1206,8 +1206,8 @@ static int buildNodes(multipointObj *nodes, pointObj *point)
 shapeObj *msGEOSCenterline(shapeObj *shape)
 {
 #if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5
-  int i, j;
-  shapeObj *shape2, *shape3;
+  int i;
+  shapeObj *shape2;
 
   graphObj *graph;
   multipointObj nodes;
