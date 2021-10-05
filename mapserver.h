@@ -148,7 +148,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 /* EQUAL and EQUALN are defined in cpl_port.h, so add them in here if ogr was not included */
 
 #ifndef EQUAL
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(_WIN32) || defined(WIN32CE)
 #  define EQUAL(a,b)              (stricmp(a,b)==0)
 #else
 #  define EQUAL(a,b)              (strcasecmp(a,b)==0)
@@ -156,7 +156,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #endif
 
 #ifndef EQUALN
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(_WIN32) || defined(WIN32CE)
 #  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
 #else
 #  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
