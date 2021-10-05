@@ -1275,14 +1275,17 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
     lineObj line;
     line.point = (pointObj *) malloc(path_size*sizeof(pointObj));
     if(!line.point) {
-      // TODO: clean up path and nodes
+      free(path);
+      free(nodes.point);
       return NULL;
     }
     line.numpoints = path_size;
 
     shape2 = (shapeObj *) malloc(sizeof(shapeObj));
     if(!shape2) {
-      // TODO: clean up path, nodes and line.point
+      free(path);
+      free(nodes.point);
+      free(line.point);
       return NULL;
     }
     msInitShape(shape2);
