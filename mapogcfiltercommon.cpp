@@ -579,17 +579,15 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   char *pszExpression = NULL;
-  int nTokens = 0, i=0, bString=0;
-  char **tokens = NULL;
-  const char *pszAttribute=NULL;
 
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) || defined(USE_SOS_SVR)
   if (psFilterNode->pszValue) {
-    pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
+    const char *pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
     if (pszAttribute) {
-      tokens = msStringSplit(psFilterNode->pszValue,',', &nTokens);
+      int nTokens = 0;
+      char **tokens = msStringSplit(psFilterNode->pszValue,',', &nTokens);
       if (tokens && nTokens > 0) {
-        for (i=0; i<nTokens; i++) {
+        for (int i=0; i<nTokens; i++) {
           char *pszTmp = NULL;
           int bufferSize = 0;
           const char* pszId = tokens[i];
@@ -597,6 +595,7 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
           if( pszDot )
             pszId = pszDot + 1;
 
+          int bString=0;
           if (i == 0) {
             if(FLTIsNumeric(pszId) == MS_FALSE)
               bString = 1;
