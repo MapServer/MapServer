@@ -518,7 +518,6 @@ static std::string FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterN
   std::string expr;
 
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) || defined(USE_SOS_SVR)
-  bool bString= false;
   if (psFilterNode->pszValue) {
     const char* pszAttribute = msOWSLookupMetadata(&(lp->metadata), "OFG", "featureid");
     if (pszAttribute) {
@@ -530,6 +529,7 @@ static std::string FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterN
           if( pszDot )
             pszId = pszDot + 1;
 
+          bool bString = false;
           if (i == 0) {
             if(FLTIsNumeric(pszId) == MS_FALSE)
               bString = true;
