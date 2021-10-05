@@ -2367,8 +2367,6 @@ shapeObj *msRings2Shape(shapeObj *shape, int outer) {
     }
   }
 
-  fprintf(stderr, "before: %d parts\nafter: %d parts\n", shape->numlines, shape2->numlines);
-
   free(outerList); // clean up
   return shape2;
 }

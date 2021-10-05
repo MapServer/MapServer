@@ -1218,10 +1218,16 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   double path_dist, tmp_path_dist, max_path_dist=-1;
 
   if(!shape) return NULL;
-  if(shape->type != MS_SHAPE_POLYGON) return NULL;
+  if(shape->type != MS_SHAPE_POLYGON) {
+    msSetError(MS_GEOSERR, "Centerlines can only be computed for polygon shapes.", "msGEOSCenterline()");
+    return NULL;
+  }
 
   shape2 = msGEOSVoronoiDiagram(shape, 0.0, MS_TRUE);
-  if(!shape2) return NULL;
+  if(!shape2) {
+    msSetError(MS_GEOSERR, "Voronoi diagram generation failed.", "msGEOSCenterline()");
+    return NULL;
+  }
 
   // process the edges and build a graph representation
   nodes.point = (pointObj *) malloc(shape2->numlines*sizeof(pointObj)*2);
