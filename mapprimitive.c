@@ -2340,7 +2340,7 @@ int msIsDegenerateShape(shapeObj *shape)
 
 shapeObj *msRings2Shape(shapeObj *shape, int outer) {
   shapeObj *shape2;
-  int i, *outerList;
+  int i, rv, *outerList=NULL;
 
   if(!shape) return NULL;
   if(shape->type != MS_SHAPE_POLYGON) return NULL;
@@ -2351,12 +2351,25 @@ shapeObj *msRings2Shape(shapeObj *shape, int outer) {
   shape2->type = shape->type;
 
   outerList = msGetOuterList(shape);
+  if(!outerList) {
+    msFreeShape(shape2);
+    return NULL;
+  }
+
   for(i=0; i<shape->numlines; i++) {
     if(outerList[i] == outer) { // else inner
-      msAddLine(shape2, &(shape->line[i]));
+      rv = msAddLine(shape2, &(shape->line[i]));
+      if(rv != MS_SUCCESS) {
+        msFreeShape(shape2);
+        free(outerList);
+        return NULL;
+      }
     }
   }
 
+  fprintf(stderr, "before: %d parts\nafter: %d parts\n", shape->numlines, shape2->numlines);
+
+  free(outerList); // clean up
   return shape2;
 }
 
