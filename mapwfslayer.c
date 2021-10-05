@@ -654,9 +654,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
                            pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS) {
-    if (psParams) {
-      msWFSFreeParamsObj(psParams);
-    }
+    msWFSFreeParamsObj(psParams);
     return MS_FAILURE;
   }
   
@@ -685,9 +683,8 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   (*numRequests)++;
 
-  if (psParams) {
-    msWFSFreeParamsObj(psParams);
-  }
+  msWFSFreeParamsObj(psParams);
+
   return nStatus;
 
 #else
@@ -759,7 +756,7 @@ int msWFSLayerOpen(layerObj *lp,
     /* If no explicit filename requested then we'll try to reuse the */
     /* previously opened layer... this will happen in a msDrawMap() call. */
     if (pszGMLFilename == NULL ||
-        (psInfo->pszGMLFilename && pszGMLFilename &&
+        (psInfo->pszGMLFilename &&
          strcmp(psInfo->pszGMLFilename, pszGMLFilename) == 0) ) {
       if (lp->layerinfo == NULL) {
         if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) == MS_FAILURE) /* no access to context (draw vs. query) here, although I doubt it matters... */
