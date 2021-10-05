@@ -363,11 +363,20 @@ int *msGraphGetLongestShortestPath(graphObj *graph, int src, int *path_size, dou
 
   // get longest shortest distance from src to another node (our dest)
   *path_dist = -1;
+  dest = -1;
   for(i=0; i<graph->numnodes; i++) {
     if(output->dist[i] != HUGE_VAL && *path_dist < output->dist[i]) {
       *path_dist = output->dist[i];
       dest = i;
     }
+  }
+
+  if(dest == -1) { // unable to determine destination node
+    free(path);
+    free(output->dist);
+    free(output->prev);
+    free(output);
+    return nullptr;
   }
 
   // construct the path from src to dest
