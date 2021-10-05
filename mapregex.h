@@ -36,7 +36,7 @@ extern "C" {
 
   /* We want these to match the POSIX standard, so we need these*/
   /* === regex2.h === */
-#ifdef WIN32
+#ifdef _WIN32
 #define MS_API_EXPORT(type)  __declspec(dllexport) type __stdcall
 #elif defined(__GNUC__) && __GNUC__ >= 4
 #define MS_API_EXPORT(type)  __attribute__ ((visibility("default"))) type
