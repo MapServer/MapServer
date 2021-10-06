@@ -107,6 +107,8 @@ int main(int argc, char *argv[])
     }
   }
 
+  config = msLoadConfig(NULL);
+
   for(draws=0; draws<iterations; draws++) {
 
     struct mstimeval requeststarttime, requestendtime;
@@ -121,10 +123,11 @@ int main(int argc, char *argv[])
     if ( msDebugInitFromEnv() != MS_SUCCESS ) {
       msWriteError(stderr);
       msCleanup();
+      msFreeConfig(config);
       exit(1);
     }
 
-    config = msLoadConfig(NULL);
+
 
     for(i=1; i<argc; i++) { /* Step though the user arguments, 1st to find map file */
 
