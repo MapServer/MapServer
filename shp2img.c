@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
         if(!map) {
           msWriteError(stderr);
           msCleanup();
+          msFreeConfig(config);
           exit(1);
         }
         msApplyDefaultSubstitutions(map);
@@ -142,6 +143,7 @@ int main(int argc, char *argv[])
     if(!map) {
       fprintf(stderr, "Mapfile (-m) option not specified.\n");
       msCleanup();
+      msFreeConfig(config);
       exit(1);
     }
 
@@ -241,6 +243,7 @@ int main(int argc, char *argv[])
           fprintf( stderr,
                    "Argument -e needs 4 space separated numbers as argument.\n" );
           msCleanup();
+          msFreeConfig(config);
           exit(1);
         }
         map->extent.minx = atof(argv[i+1]);
@@ -269,6 +272,7 @@ int main(int argc, char *argv[])
           if (layer_found==0) {
             fprintf(stderr, "Layer (-l) \"%s\" not found\n", layers[j]);
             msCleanup();
+            msFreeConfig(config);
             exit(1);
           }
         }
