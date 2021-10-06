@@ -1,0 +1,9 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+msDrawMap(): Image handling error. Failed to draw layer named &#39;centerline2&#39;.
+msGeomTransformShape(): Expression parser error. Failed to process shape expression: centerline([shape])
+yyparse(): Expression parser error. Executing centerline failed.
+msGEOSCenterline(): GEOS library error. Centerline generation failed, try densifying the shapes.
+</BODY></HTML>
