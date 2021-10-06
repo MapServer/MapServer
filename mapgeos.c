@@ -1207,7 +1207,7 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
 {
 #if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5
   int i;
-  shapeObj *shape2;
+  shapeObj *shape2=NULL;
 
   graphObj *graph;
   multipointObj nodes;
@@ -1253,6 +1253,13 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   }
   msFreeShape(shape2); // done with voronoi geometry 
 
+  if(nodes.numpoints == 0) {
+    msSetError(MS_GEOSERR, "Centerline generation failed, try densifying the shapes.", "msGEOSCenterline()");
+    msFreeGraph(graph);
+    free(nodes.point);
+    return NULL;
+  }
+
   // step through edge nodes (z=1)
   for(i=0; i<nodes.numpoints; i++) {
     if(nodes.point[i].z != 1) continue; // skip
@@ -1277,7 +1284,11 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   msFreeGraph(graph); // done with graph
 
   // transform the path into a shape
-  if(path) {
+  if(!path) {
+    msSetError(MS_GEOSERR, "Centerline generation failed.", "msGEOSCenterline()");
+    free(nodes.point);
+    return NULL;
+  } else {
     lineObj line;
     line.point = (pointObj *) malloc(path_size*sizeof(pointObj));
     if(!line.point) {
@@ -1302,13 +1313,11 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
       line.point[i].y = nodes.point[path[i]].y;
     }
     msAddLineDirectly(shape2, &line);
-  } else {
-    free(nodes.point);
-    return NULL;
   }
 
-  free(path);
+  free(path); // clean up
   free(nodes.point);
+
   return shape2;
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available or GEOS version is not 3.5 or higher.", "msGEOSCenterline()");
