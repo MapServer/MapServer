@@ -54,6 +54,11 @@
 
 static int      bBigEndian;
 
+/* SHX reading */
+static int msSHXLoadAll( SHPHandle psSHP );
+static int msSHXReadOffset( SHPHandle psSHP, int hEntity );
+static int msSHXReadSize( SHPHandle psSHP, int hEntity );
+
 /************************************************************************/
 /*                              SwapWord()                              */
 /*                                                                      */
@@ -1085,7 +1090,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 ** successive accesses during the reading cycle (first bounds are read,
 ** then entire shapes). Each time we read a page, we mark it as read.
 */
-int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
+static int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 {
   int i;
 
@@ -1142,7 +1147,7 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
   return(MS_SUCCESS);
 }
 
-int msSHXLoadAll( SHPHandle psSHP )
+static int msSHXLoadAll( SHPHandle psSHP )
 {
 
   int i;
@@ -1175,7 +1180,7 @@ int msSHXLoadAll( SHPHandle psSHP )
 
 }
 
-int msSHXReadOffset( SHPHandle psSHP, int hEntity )
+static int msSHXReadOffset( SHPHandle psSHP, int hEntity )
 {
 
   int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
@@ -1192,7 +1197,7 @@ int msSHXReadOffset( SHPHandle psSHP, int hEntity )
 
 }
 
-int msSHXReadSize( SHPHandle psSHP, int hEntity )
+static int msSHXReadSize( SHPHandle psSHP, int hEntity )
 {
 
   int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
