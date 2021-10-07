@@ -1205,6 +1205,21 @@ static int msSHXReadSize( SHPHandle psSHP, int hEntity )
 
 }
 
+static void ReadRect(rectObj *r, const uchar *src)
+{
+    memcpy( &r->minx, src, 8 );
+    memcpy( &r->miny, src + 8, 8 );
+    memcpy( &r->maxx, src + 16, 8 );
+    memcpy( &r->maxy, src + 24, 8 );
+
+    if( bBigEndian ) {
+      SwapWord( 8, &r->minx);
+      SwapWord( 8, &r->miny);
+      SwapWord( 8, &r->maxx);
+      SwapWord( 8, &r->maxy);
+    }
+}
+
 /*
 ** msSHPReadShape() - Reads the vertices for one shape from a shape file.
 */
@@ -1264,17 +1279,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     /* copy the bounding box */
-    memcpy( &shape->bounds.minx, pabyRec + 8 + 4, 8 );
-    memcpy( &shape->bounds.miny, pabyRec + 8 + 12, 8 );
-    memcpy( &shape->bounds.maxx, pabyRec + 8 + 20, 8 );
-    memcpy( &shape->bounds.maxy, pabyRec + 8 + 28, 8 );
-
-    if( bBigEndian ) {
-      SwapWord( 8, &shape->bounds.minx);
-      SwapWord( 8, &shape->bounds.miny);
-      SwapWord( 8, &shape->bounds.maxx);
-      SwapWord( 8, &shape->bounds.maxy);
-    }
+    ReadRect(&shape->bounds, pabyRec + 8 + 4);
 
     memcpy( &nPoints, pabyRec + 40 + 8, 4 );
     memcpy( &nParts, pabyRec + 36 + 8, 4 );
@@ -1430,17 +1435,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     /* copy the bounding box */
-    memcpy( &shape->bounds.minx, pabyRec + 8 + 4, 8 );
-    memcpy( &shape->bounds.miny, pabyRec + 8 + 12, 8 );
-    memcpy( &shape->bounds.maxx, pabyRec + 8 + 20, 8 );
-    memcpy( &shape->bounds.maxy, pabyRec + 8 + 28, 8 );
-
-    if( bBigEndian ) {
-      SwapWord( 8, &shape->bounds.minx);
-      SwapWord( 8, &shape->bounds.miny);
-      SwapWord( 8, &shape->bounds.maxx);
-      SwapWord( 8, &shape->bounds.maxy);
-    }
+    ReadRect(&shape->bounds, pabyRec + 8 + 4);
 
     memcpy( &nPoints, pabyRec + 44, 4 );
     if( bBigEndian ) nPoints = SWAP_FOUR_BYTES(nPoints);
