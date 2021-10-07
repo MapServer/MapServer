@@ -45,7 +45,7 @@
 
 #include "cpl_conv.h"
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <signal.h>
 #endif
 
@@ -53,7 +53,7 @@
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
 /************************************************************************/
-#ifndef WIN32
+#ifndef _WIN32
 void msCleanupOnSignal( int nInData )
 {
   /* For some reason, the fastcgi message code does not seem to work */
@@ -68,7 +68,7 @@ void msCleanupOnSignal( int nInData )
 }
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 void msCleanupOnExit( void )
 {
   /* note that stderr and stdout seem to be non-functional in the */
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
   /* -------------------------------------------------------------------- */
   /*      Setup cleanup magic, mainly for FastCGI case.                   */
   /* -------------------------------------------------------------------- */
-#ifndef WIN32
+#ifndef _WIN32
   signal( SIGUSR1, msCleanupOnSignal );
   signal( SIGTERM, msCleanupOnSignal );
 #endif
