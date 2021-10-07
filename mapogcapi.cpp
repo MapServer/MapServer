@@ -106,6 +106,16 @@ static void outputError(int code, const std::string& description)
   msIO_printf("%s\n", j.dump().c_str());
 }
 
+static int includeLayer(mapObj *map, layerObj *layer) {
+  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || 
+     !msWFSIsLayerSupported(layer) || 
+     !msIsLayerQueryable(layer)) {
+    return MS_FALSE;
+  } else {
+    return MS_TRUE;
+  }
+}
+
 /*
 ** Get stuff...
 */
@@ -518,7 +528,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
     try {
       json item = getFeatureItem(&(items->items[i]), shape->values[i]);
       if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error) {
       throw std::runtime_error("Error fetching item.");
     }
   }
@@ -527,7 +537,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
     try {
       json constant = getFeatureConstant(&(constants->constants[i]));
       if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error) {
       throw std::runtime_error("Error fetching constant.");  
     }
   }
@@ -536,7 +546,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
   try {
     json geometry = getFeatureGeometry(shape, geometry_precision);
     if(!geometry.is_null()) feature["geometry"] = geometry;
-  } catch (const std::runtime_error &e) {
+  } catch (const std::runtime_error) {
     throw std::runtime_error("Error fetching geometry.");
   }
 
@@ -566,12 +576,15 @@ static const char* getCollectionDescription(layerObj* layer)
 {
   const char *description = msOWSLookupMetadata(&(layer->metadata), "A", "description");
   if(!description) description = msOWSLookupMetadata(&(layer->metadata), "OF", "abstract"); // fallback on abstract
+  if(!description) description = "<!-- Warning: unable to set the collection description. -->"; // finally a warning...
   return description;
 }
 
 static const char* getCollectionTitle(layerObj* layer)
 {
-  return msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    const char* title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    if(!title) title = layer->name; // revert to layer name if no title found
+    return title;
 }
 
 static int getGeometryPrecision(mapObj *map, layerObj *layer)
@@ -592,7 +605,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 
   if(!map || !layer) return collection;
 
-  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) return collection;
+  if(!includeLayer(map, layer)) return collection;
 
   // initialize some things
   std::string api_root = getApiRootUrl(map);
@@ -600,8 +613,10 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   if(msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
     if (layer->projection.numargs > 0)
       msOWSProjectToWGS84(&layer->projection, &bbox);
-    else
+    else if (map->projection.numargs > 0)
       msOWSProjectToWGS84(&map->projection, &bbox);
+    else
+      throw std::runtime_error("Unable to transform bounding box, no projection defined.");
   } else {
     throw std::runtime_error("Unable to get collection bounding box."); // might be too harsh since extent is optional
   }
@@ -617,8 +632,8 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   // build collection object
   collection = {
     { "id", id },
-    { "description", description?description:"" },
-    { "title", title?title:"" },
+    { "description", description },
+    { "title", title },
     { "extent", {
         { "spatial", {
             { "bbox", {{ round_down(bbox.minx, geometry_precision),
@@ -724,6 +739,11 @@ static void outputTemplate(const char *directory, const char *filename, const js
   } catch(const inja::RenderError &e) {
     outputError(OGCAPI_CONFIG_ERROR, "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").");
     return;
+  }
+    catch (const inja::InjaError& e) {
+        outputError(OGCAPI_CONFIG_ERROR, "InjaError error. " + std::string(e.what()) + " (" + std::string(filename) + ")."
+            + " (" + std::string(directory) + ").");
+        return;
   } catch(...) {
     outputError(OGCAPI_SERVER_ERROR, "General template handling error.");
     return;
@@ -769,8 +789,11 @@ static void outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat for
       j["template"]["path"].push_back(request->api_path[i]);
 
     // parameters (optional)
-    for( int i=0; i<request->NumParams; i++)
-      j["template"]["params"].update({{ request->ParamNames[i], request->ParamValues[i] }});
+    for( int i=0; i<request->NumParams; i++) {
+      if(request->ParamValues[i] && strlen(request->ParamValues[i]) > 0) { // skip empty params
+        j["template"]["params"].update({{ request->ParamNames[i], request->ParamValues[i] }});
+      }
+    }
 
     // add custom tags (optional)
     const char *tags = msOWSLookupMetadata(&(map->web.metadata), "A", "html_tags");
@@ -919,7 +942,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   layer = map->layers[i]; // for convenience
   layer->status = MS_ON; // force on (do we need to save and reset?)
 
-  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || !msWFSIsLayerSupported(layer)) {
+  if(!includeLayer(map, layer)) {
     outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
@@ -1021,7 +1044,12 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         {
             if( msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS )
             {
-              outputError(OGCAPI_PARAM_ERROR, "Bad value fo offset");
+              outputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
+              return MS_SUCCESS;
+            }
+
+            if(offset < 0 || offset >= numberMatched) {
+              outputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
               return MS_SUCCESS;
             }
 
@@ -1079,6 +1107,19 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         });
     }
 
+    if( offset > 0 ) 
+    {
+        response["links"].push_back({
+	    { "rel", "prev" },
+            { "type", format==OGCAPIFormat::JSON? OGCAPI_MIMETYPE_GEOJSON : OGCAPI_MIMETYPE_HTML },
+	    { "title", "previous page" },
+	    { "href", api_root + "/collections/" + std::string(id_encoded) +
+	              "/items?f=" + (format==OGCAPIFormat::JSON? "json" : "html") +
+		      "&limit=" + std::to_string(limit) +
+		      "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) }
+	});
+    }
+
     msFree(id_encoded); // done
   }
 
@@ -1100,16 +1141,31 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
     const int geometry_precision = getGeometryPrecision(map, layer);
 
-    // reprojection (layer projection to EPSG:4326)
+    // reprojection to EPSG:4326 (if necessary)
     reprojectionObj *reprojector = NULL;
-    if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
-      reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
-      if(reprojector == NULL) {
-        msGMLFreeItems(items);
-        msGMLFreeConstants(constants);
-        outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
-        return MS_SUCCESS;
+    if(layer->projection.numargs > 0) { 
+      if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
+        reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
+        if(reprojector == NULL) {
+          msGMLFreeItems(items);
+          msGMLFreeConstants(constants);
+          outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+          return MS_SUCCESS;
+        }
       }
+    } else if(map->projection.numargs > 0) {
+      if(msProjectionsDiffer(&(map->projection), &(map->latlon))) {
+        reprojector = msProjectCreateReprojector(&(map->projection), &(map->latlon));
+        if(reprojector == NULL) {
+	  msGMLFreeItems(items);
+          msGMLFreeConstants(constants);
+	  outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+          return MS_SUCCESS;
+        }
+      }
+    } else {
+      outputError(OGCAPI_CONFIG_ERROR, "Unable to transform geometries, no projection defined.");
+      return MS_SUCCESS;
     }
 
     for(i=0; i<layer->resultcache->numresults; i++) {
@@ -1160,7 +1216,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
   // extend the response a bit for templating (HERE)
   if(format == OGCAPIFormat::HTML) {
-    const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+    const char *title = getCollectionTitle(layer);
     const char *id = layer->name;
     response["collection"] = {
       { "id", id },
@@ -1339,7 +1395,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
           server["description"] = value;
       }
   }
-  response["servers"] = { server };
+  response["servers"].push_back(server);
 
   const std::string oapif_yaml_url = "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml";
 
@@ -1407,9 +1463,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
 
   for(int i=0; i<map->numlayers; i++) {
       layerObj* layer = map->layers[i];
-      if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) ||
-         !msWFSIsLayerSupported(layer))
-      {
+      if(!includeLayer(map, layer)) {
           continue;
       }
 

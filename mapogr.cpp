@@ -2383,9 +2383,14 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 filter = msStringConcatenate(filter, "\"");
                 if( isGPKG )
                     filter = msStringConcatenate(filter, ")");
-                filter = msStringConcatenate(filter, ", BuildMbr(");
                 char *points = (char *)msSmallMalloc(30*2*5);
-                snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                if( rect.minx == rect.maxx && rect.miny == rect.maxy ) {
+                  filter = msStringConcatenate(filter, ",  ST_GeomFromText(");
+                  snprintf(points, 30*4, "'POINT(%lf %lf)'", rect.minx, rect.miny);
+                } else {
+                  filter = msStringConcatenate(filter, ", BuildMbr(");
+                  snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                }
                 filter = msStringConcatenate(filter, points);
                 msFree(points);
                 filter = msStringConcatenate(filter, "))");
@@ -3422,12 +3427,13 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
                                           pSpatialFilterNode);
   }
 
-  if( (expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
+  if( (((expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
       expr->m_nToken == MS_TOKEN_COMPARISON_OVERLAPS ||
       expr->m_nToken == MS_TOKEN_COMPARISON_CROSSES ||
       expr->m_nToken == MS_TOKEN_COMPARISON_WITHIN ||
       expr->m_nToken == MS_TOKEN_COMPARISON_CONTAINS) &&
-      expr->m_aoChildren.size() == 2 &&
+      expr->m_aoChildren.size() == 2) ||
+      (expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN && expr->m_aoChildren.size() == 3)) &&
       expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_SHAPE )
   {
         if( info->rect_is_defined )
@@ -3442,7 +3448,11 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
         OGRErr e = OGR_G_CreateFromWkt(&wkt, NULL, &hSpatialFilter);
         if (e == OGRERR_NONE) {
             OGREnvelope env;
-            OGR_G_GetEnvelope(hSpatialFilter, &env);
+            if( expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN ) {
+                OGR_G_GetEnvelope(OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30), &env);
+            } else {
+                OGR_G_GetEnvelope(hSpatialFilter, &env);
+            }
             info->rect.minx = env.MinX;
             info->rect.miny = env.MinY;
             info->rect.maxx = env.MaxX;

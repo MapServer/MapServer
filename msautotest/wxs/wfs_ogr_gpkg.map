@@ -11,6 +11,9 @@
 #
 # RUN_PARMS: wfs_ogr_gpkg_issue_6325.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=test_6325&BBOX=0.75,0.75,9,9&COUNT=1" > [RESULT_DEVERSION]
 #
+# Filter using intersect with point
+# RUN_PARMS: wfs_ogr_gpkg_filter_intersects_point.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_6325&FILTER=<Filter><Intersects><PropertyName>msGeometry</PropertyName><gml:Point srsName=%22EPSG:4326%22><gml:coordinates>1.000000,0.000000</gml:coordinates></gml:Point></Intersects></Filter>" > [RESULT]
+#
 
 MAP
 
@@ -95,6 +98,7 @@ LAYER
     "wfs_featureid"     "id"
     "gml_include_items" "all"
     "gml_types"         "auto"
+    "wfs_use_default_extent_for_getfeature" "no"
   END
   TYPE LINE
   STATUS ON
