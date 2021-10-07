@@ -1,7 +1,7 @@
 #
-# Tests shp2img binary to ensure size option is respected. 
+# Tests map2img binary to ensure size option is respected. 
 #
-# RUN_PARMS: shp2img-size.png [SHP2IMG] -s 640 480 -m [MAPFILE] -o [RESULT]  
+# RUN_PARMS: map2img-size.png [MAP2IMG] -s 640 480 -m [MAPFILE] -o [RESULT]  
 
 MAP
        NAME HELLO

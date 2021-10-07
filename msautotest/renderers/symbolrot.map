@@ -1,4 +1,4 @@
-# RUN_PARMS: symbolrot.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: symbolrot.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
 
 #
 # Test support for rotating symbols with their map.

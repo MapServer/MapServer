@@ -1,6 +1,6 @@
 
-# RUN_PARMS: label_align_attribute.png [SHP2IMG] -e -0.0 -0.0 1.0 1.0 -s 1000 1000 -l align_attribute -m [MAPFILE] -o [RESULT]
-# RUN_PARMS: label_offset_attribute.png [SHP2IMG] -e -0.0 -0.0 1.0 1.0 -s 1000 1000 -l offset_attribute -m [MAPFILE] -o [RESULT]
+# RUN_PARMS: label_align_attribute.png [MAP2IMG] -e -0.0 -0.0 1.0 1.0 -s 1000 1000 -l align_attribute -m [MAPFILE] -o [RESULT]
+# RUN_PARMS: label_offset_attribute.png [MAP2IMG] -e -0.0 -0.0 1.0 1.0 -s 1000 1000 -l offset_attribute -m [MAPFILE] -o [RESULT]
 
 map
 

@@ -1,5 +1,5 @@
-# RUN_PARMS: force_pc256_rgba.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: force_pc256_rgba.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: force_pc256_rgba.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: force_pc256_rgba.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 
 #

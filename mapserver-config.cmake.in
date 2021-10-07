@@ -15,4 +15,4 @@ endif()
 
 # These are IMPORTED targets created by mapserverTargets.cmake
 set(MAPSERVER_LIBRARIES mapserver)
-set(MAPSERVER_EXECUTABLES sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv)
+set(MAPSERVER_EXECUTABLES sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst map2img mapserv)

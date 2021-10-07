@@ -1,6 +1,6 @@
-#RUN_PARMS: class8_range.png [SHP2IMG] -m [MAPFILE] -i png8_t -o [RESULT] -l grid1
-#RUN_PARMS: double_range_rgb.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT] -l grid2
-#RUN_PARMS: double_range_hsl.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT] -l grid3
+#RUN_PARMS: class8_range.png [MAP2IMG] -m [MAPFILE] -i png8_t -o [RESULT] -l grid1
+#RUN_PARMS: double_range_rgb.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l grid2
+#RUN_PARMS: double_range_hsl.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l grid3
 #
 # Simple test of classification methods on a floating point input. 
 #
