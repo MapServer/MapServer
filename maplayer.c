@@ -1405,7 +1405,6 @@ makeTimeFilter(layerObj *lp,
   char **atimes, **tokens = NULL;
   int numtimes,i, ntmp = 0;
   char *pszBuffer = NULL;
-  char *pszExpressionString = NULL;
   int bOnlyExistingFilter = 0;
 
   if (!lp || !timestring || !timefield)
@@ -1431,10 +1430,11 @@ makeTimeFilter(layerObj *lp,
      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
     } else if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
-     pszExpressionString = msGetExpressionString(&(lp->filter));
+     char* pszExpressionString = msGetExpressionString(&(lp->filter));
      pszBuffer = msStringConcatenate(pszBuffer, "(");
      pszBuffer = msStringConcatenate(pszBuffer, pszExpressionString);
      pszBuffer = msStringConcatenate(pszBuffer, " and ");
+     msFree(pszExpressionString);
     } else {
      msFreeExpression(&lp->filter);
     }
@@ -1476,8 +1476,6 @@ makeTimeFilter(layerObj *lp,
 
     if (pszBuffer)
       msFree(pszBuffer);
-    if (pszExpressionString)
-      msFree(pszExpressionString);
     return MS_TRUE;
   }
 
@@ -1496,10 +1494,11 @@ makeTimeFilter(layerObj *lp,
       added to the buffer */
     bOnlyExistingFilter = 1;
   } else if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
-    pszExpressionString = msGetExpressionString(&(lp->filter));
+    char* pszExpressionString = msGetExpressionString(&(lp->filter));
     pszBuffer = msStringConcatenate(pszBuffer, "(");
     pszBuffer = msStringConcatenate(pszBuffer, pszExpressionString);
     pszBuffer = msStringConcatenate(pszBuffer, " and ");
+    msFree(pszExpressionString);
     bOnlyExistingFilter = 1;
   } else
     msFreeExpression(&lp->filter);
@@ -1610,10 +1609,7 @@ makeTimeFilter(layerObj *lp,
   } else {
     msFreeCharArray(tokens, ntmp);
     msFreeCharArray(atimes, numtimes);
-    if (pszBuffer)
-      msFree(pszBuffer);
-    if (pszExpressionString)
-      msFree(pszExpressionString);
+    msFree(pszBuffer);
     return MS_FALSE;
   }
 
@@ -1632,10 +1628,7 @@ makeTimeFilter(layerObj *lp,
     msLoadExpressionString(&lp->filter, pszBuffer);
 
   }
-  if (pszBuffer)
-    msFree(pszBuffer);
-  if (pszExpressionString)
-    msFree(pszExpressionString);
+  msFree(pszBuffer);
   return MS_TRUE;
 }
 
