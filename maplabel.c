@@ -906,7 +906,7 @@ int msGetTextSymbolSize(mapObj *map, textSymbolObj *ts, rectObj *r) {
 
 pointObj get_metrics(pointObj *p, int position, textPathObj *tp, int ox, int oy, double rotation, int buffer, label_bounds *bounds)
 {
-  pointObj q = {0,0,0,0}; // initialize
+  pointObj q = {0}; // initialize
   double x1=0, y1=0, x2=0, y2=0;
   double sin_a,cos_a;
   double w, h, x, y;

@@ -45,7 +45,7 @@
 
 #include "cpl_conv.h"
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <signal.h>
 #endif
 
@@ -56,7 +56,7 @@
 
 static int finish_process = 0;
 
-#ifndef WIN32
+#ifndef _WIN32
 static void msCleanupOnSignal( int nInData )
 {
   (void)nInData;
@@ -64,7 +64,7 @@ static void msCleanupOnSignal( int nInData )
 }
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 static void msCleanupOnExit( void )
 {
   finish_process = 1;
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
   /* -------------------------------------------------------------------- */
   /*      Setup cleanup magic, mainly for FastCGI case.                   */
   /* -------------------------------------------------------------------- */
-#ifndef WIN32
+#ifndef _WIN32
   signal( SIGUSR1, msCleanupOnSignal );
   signal( SIGTERM, msCleanupOnSignal );
 #endif

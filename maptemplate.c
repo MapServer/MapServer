@@ -1707,8 +1707,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     }
 
     if(labelposvalid == MS_TRUE) {
-      pointObj p1 = {0,0,0,0}; // initialize
-      pointObj p2 = {0,0,0,0};
+      pointObj p1 = {0}; // initialize
+      pointObj p2 = {0};
       int label_offset_x, label_offset_y;
       labelObj *label=NULL;
       label_bounds lbounds;
