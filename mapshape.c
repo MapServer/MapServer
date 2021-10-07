@@ -1045,7 +1045,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 
   nEntitySize = msSHXReadSize( psSHP, hEntity) + 8;
 
-  if( msSHXReadSize( psSHP, hEntity) == 4 ) {
+  if( nEntitySize == 12 ) {
     msSetError(MS_SHPERR, "NULL feature encountered.", "msSHPReadPoint()");
     return(MS_FAILURE);
   } else if ( nEntitySize < 28 ) {
@@ -1230,12 +1230,13 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return;
 
-  if( msSHXReadSize(psSHP, hEntity) == 4 ) {
+  nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
+
+  if( nEntitySize == 12 ) {
     shape->type = MS_SHAPE_NULL;
     return;
   }
 
-  nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
   if (msSHPReadAllocateBuffer(psSHP, hEntity, "msSHPReadShape()") == MS_FAILURE) {
     shape->type = MS_SHAPE_NULL;
     return;
