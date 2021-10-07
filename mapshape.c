@@ -1012,10 +1012,6 @@ static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* ps
     psSHP->pabyRec = pabyRec;
     psSHP->nBufSize = nEntitySize;
   }
-  if (psSHP->pabyRec == NULL) {
-    msSetError(MS_MEMERR, "Out of memory", pszCallingFunction);
-    return(MS_FAILURE);
-  }
   return MS_SUCCESS;
 }
 
