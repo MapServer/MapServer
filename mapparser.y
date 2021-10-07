@@ -645,6 +645,10 @@ shape_exp: SHAPE
   | YYBUFFER '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGEOSBuffer($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing buffer failed.");
       return(-1);
@@ -655,6 +659,10 @@ shape_exp: SHAPE
   | INNER '(' shape_exp ')' {
     shapeObj *s;
     s = msRings2Shape($3, MS_FALSE);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing inner failed.");
       return(-1);
@@ -665,6 +673,10 @@ shape_exp: SHAPE
   | OUTER '(' shape_exp ')' {
     shapeObj *s;
     s = msRings2Shape($3, MS_TRUE);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing outer failed.");
       return(-1);
@@ -675,6 +687,10 @@ shape_exp: SHAPE
   | CENTERLINE '(' shape_exp ')' {
     shapeObj *s;
     s = msGEOSCenterline($3);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing centerline failed.");
       return(-1);
@@ -685,6 +701,10 @@ shape_exp: SHAPE
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
     shapeObj *s;
     s = msGEOSDifference($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing difference failed.");
       return(-1);
@@ -695,6 +715,10 @@ shape_exp: SHAPE
   | DENSIFY '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msDensify($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing densify failed.");
       return(-1);
@@ -705,6 +729,10 @@ shape_exp: SHAPE
   | SIMPLIFY '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGEOSSimplify($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing simplify failed.");
       return(-1);
@@ -715,6 +743,10 @@ shape_exp: SHAPE
   | SIMPLIFYPT '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing simplifypt failed.");
       return(-1);
@@ -725,6 +757,10 @@ shape_exp: SHAPE
   | GENERALIZE '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGeneralize($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing generalize failed.");
       return(-1);
@@ -735,6 +771,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, 3, 1, NULL);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -745,6 +785,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, 1, NULL);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -755,6 +799,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, $7, NULL);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -765,6 +813,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ',' string_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, $7, $9);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     free($9);
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
@@ -777,6 +829,10 @@ shape_exp: SHAPE
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
     s = msV8TransformShape($3, $5);
+    if($3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     free($5);
     if(!s) {
       yyerror(p, "Executing javascript failed.");

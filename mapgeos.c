@@ -1234,12 +1234,14 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   nodes.numpoints = 0;
   if(!nodes.point) {
     msFreeShape(shape2);
+    free(shape2);
     return NULL;
   }
 
   graph = msCreateGraph(shape2->numlines*2);
   if(!graph) {
     msFreeShape(shape2);
+    free(shape2);
     msFree(nodes.point);
     return NULL;
   }
@@ -1251,10 +1253,12 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
       msGraphAddEdge(graph, src, dest, msDistancePointToPoint(&shape2->line[i].point[0], &shape2->line[i].point[1]));
     }
   }
-  msFreeShape(shape2); // done with voronoi geometry 
+  msFreeShape(shape2); // done with voronoi geometry, shape2 is still allocated though, just empty
+  shape2->type = MS_SHAPE_LINE; // will fill with centerline
 
   if(nodes.numpoints == 0) {
     msSetError(MS_GEOSERR, "Centerline generation failed, try densifying the shapes.", "msGEOSCenterline()");
+    free(shape2);
     msFreeGraph(graph);
     free(nodes.point);
     return NULL;
@@ -1286,27 +1290,19 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   // transform the path into a shape
   if(!path) {
     msSetError(MS_GEOSERR, "Centerline generation failed.", "msGEOSCenterline()");
+    free(shape2);
     free(nodes.point);
     return NULL;
   } else {
     lineObj line;
     line.point = (pointObj *) malloc(path_size*sizeof(pointObj));
     if(!line.point) {
+      free(shape2);
       free(path);
       free(nodes.point);
       return NULL;
     }
     line.numpoints = path_size;
-
-    shape2 = (shapeObj *) malloc(sizeof(shapeObj));
-    if(!shape2) {
-      free(path);
-      free(nodes.point);
-      free(line.point);
-      return NULL;
-    }
-    msInitShape(shape2);
-    shape2->type = MS_SHAPE_LINE;
 
     for(i=0; i<path_size; i++) {
       line.point[i].x = nodes.point[path[i]].x;

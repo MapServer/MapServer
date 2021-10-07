@@ -555,10 +555,10 @@ static const yytype_uint16 yyrline[] =
      356,   377,   397,   403,   411,   417,   428,   439,   450,   461,
      472,   483,   494,   505,   516,   527,   538,   549,   560,   571,
      582,   593,   603,   615,   616,   617,   618,   619,   620,   621,
-     628,   629,   630,   631,   639,   640,   643,   644,   645,   655,
-     665,   675,   685,   695,   705,   715,   725,   735,   745,   755,
-     765,   776,   794,   795,   796,   800,   805,   809,   813,   817,
-     821,   827,   828
+     628,   629,   630,   631,   639,   640,   643,   644,   645,   659,
+     673,   687,   701,   715,   729,   743,   757,   771,   785,   799,
+     813,   828,   850,   851,   852,   856,   861,   865,   869,   873,
+     877,   883,   884
 };
 #endif
 
@@ -2493,6 +2493,10 @@ yyreduce:
     {
     shapeObj *s;
     s = msGEOSBuffer((yyvsp[-3].shpval), (yyvsp[-1].dblval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing buffer failed.");
       return(-1);
@@ -2500,14 +2504,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2504 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2508 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 655 "mapparser.y" /* yacc.c:1646  */
+#line 659 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msRings2Shape((yyvsp[-1].shpval), MS_FALSE);
+    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing inner failed.");
       return(-1);
@@ -2515,14 +2523,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2519 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2527 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 665 "mapparser.y" /* yacc.c:1646  */
+#line 673 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msRings2Shape((yyvsp[-1].shpval), MS_TRUE);
+    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing outer failed.");
       return(-1);
@@ -2530,14 +2542,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2534 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2546 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 675 "mapparser.y" /* yacc.c:1646  */
+#line 687 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSCenterline((yyvsp[-1].shpval));
+    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing centerline failed.");
       return(-1);
@@ -2545,14 +2561,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2549 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2565 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 685 "mapparser.y" /* yacc.c:1646  */
+#line 701 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSDifference((yyvsp[-3].shpval), (yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing difference failed.");
       return(-1);
@@ -2560,14 +2580,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2564 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2584 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 695 "mapparser.y" /* yacc.c:1646  */
+#line 715 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msDensify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing densify failed.");
       return(-1);
@@ -2575,14 +2599,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2579 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2603 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 705 "mapparser.y" /* yacc.c:1646  */
+#line 729 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing simplify failed.");
       return(-1);
@@ -2590,14 +2618,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2594 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2622 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 715 "mapparser.y" /* yacc.c:1646  */
+#line 743 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing simplifypt failed.");
       return(-1);
@@ -2605,14 +2637,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2609 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2641 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 725 "mapparser.y" /* yacc.c:1646  */
+#line 757 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGeneralize((yyvsp[-3].shpval), (yyvsp[-1].dblval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing generalize failed.");
       return(-1);
@@ -2620,14 +2656,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2624 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2660 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 735 "mapparser.y" /* yacc.c:1646  */
+#line 771 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-1].shpval), 3, 1, NULL);
+    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -2635,14 +2675,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2639 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2679 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 745 "mapparser.y" /* yacc.c:1646  */
+#line 785 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-3].shpval), (yyvsp[-1].dblval), 1, NULL);
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -2650,14 +2694,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2654 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2698 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 755 "mapparser.y" /* yacc.c:1646  */
+#line 799 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-5].shpval), (yyvsp[-3].dblval), (yyvsp[-1].dblval), NULL);
+    if((yyvsp[-5].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-5].shpval));
+      free((yyvsp[-5].shpval));
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -2665,14 +2713,18 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2669 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2717 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 765 "mapparser.y" /* yacc.c:1646  */
+#line 813 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-7].shpval), (yyvsp[-5].dblval), (yyvsp[-3].dblval), (yyvsp[-1].strval));
+    if((yyvsp[-7].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-7].shpval));
+      free((yyvsp[-7].shpval));
+    }
     free((yyvsp[-1].strval));
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
@@ -2681,15 +2733,19 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2685 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2737 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 776 "mapparser.y" /* yacc.c:1646  */
+#line 828 "mapparser.y" /* yacc.c:1646  */
     {
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
     s = msV8TransformShape((yyvsp[-3].shpval), (yyvsp[-1].strval));
+    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     free((yyvsp[-1].strval));
     if(!s) {
       yyerror(p, "Executing javascript failed.");
@@ -2702,87 +2758,87 @@ yyreduce:
     return(-1);
 #endif
   }
-#line 2706 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2762 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 795 "mapparser.y" /* yacc.c:1646  */
+#line 851 "mapparser.y" /* yacc.c:1646  */
     { (yyval.strval) = (yyvsp[-1].strval); }
-#line 2712 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2768 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 796 "mapparser.y" /* yacc.c:1646  */
+#line 852 "mapparser.y" /* yacc.c:1646  */
     { 
     (yyval.strval) = (char *)malloc(strlen((yyvsp[-2].strval)) + strlen((yyvsp[0].strval)) + 1);
     sprintf((yyval.strval), "%s%s", (yyvsp[-2].strval), (yyvsp[0].strval)); free((yyvsp[-2].strval)); free((yyvsp[0].strval)); 
   }
-#line 2721 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2777 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 800 "mapparser.y" /* yacc.c:1646  */
+#line 856 "mapparser.y" /* yacc.c:1646  */
     {
     (yyval.strval) = (char *) malloc(strlen((yyvsp[-1].strval)) + 64); /* Plenty big? Should use snprintf below... */
     sprintf((yyval.strval), (yyvsp[-1].strval), (yyvsp[-3].dblval));
     free((yyvsp[-1].strval));
   }
-#line 2731 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2787 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 805 "mapparser.y" /* yacc.c:1646  */
+#line 861 "mapparser.y" /* yacc.c:1646  */
     {  
     (yyvsp[-1].strval) = msCommifyString((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2740 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2796 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 809 "mapparser.y" /* yacc.c:1646  */
+#line 865 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToUpper((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2749 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2805 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 813 "mapparser.y" /* yacc.c:1646  */
+#line 869 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToLower((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2758 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2814 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 817 "mapparser.y" /* yacc.c:1646  */
+#line 873 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringInitCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2767 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2823 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 821 "mapparser.y" /* yacc.c:1646  */
+#line 877 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringFirstCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2776 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2832 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 828 "mapparser.y" /* yacc.c:1646  */
+#line 884 "mapparser.y" /* yacc.c:1646  */
     { (yyval.tmval) = (yyvsp[-1].tmval); }
-#line 2782 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2838 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
 
-#line 2786 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2842 "/vagrant/mapparser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3010,7 +3066,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 831 "mapparser.y" /* yacc.c:1906  */
+#line 887 "mapparser.y" /* yacc.c:1906  */
 
 
 /*

@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "mapgraph.h"
 
-graphObj *msCreateGraph(int numnodes)
+graphObj *msCreateGraph(signed int numnodes)
 {
   int i;
   graphObj *graph=nullptr;
@@ -160,7 +160,7 @@ static void freeMinHeap(minHeapObj *minHeap)
   free(minHeap);
 }
 
-static minHeapObj *createMinHeap(int capacity)
+static minHeapObj *createMinHeap(signed int capacity)
 {
   minHeapObj *minHeap = (minHeapObj *) malloc(sizeof(minHeapObj));
   if(!minHeap) return nullptr;
@@ -290,16 +290,15 @@ static dijkstraOutputObj *dijkstra(graphObj *graph, int src)
     return nullptr;
   }
 
-  // initialize 
+  // initialize
   for (int i=0; i<n; i++) {
     output->dist[i] = HUGE_VAL;
     output->prev[i] = -1;
-    minHeap->nodes[i] = newMinHeapNode(i, output->dist[i]);
+    minHeap->nodes[i] = newMinHeapNode(i, output->dist[i]); // allocate a min heap node for each graph node
     minHeap->pos[i] = i;
   }
  
   // make dist value of src vertex as 0 so that it is extracted first
-  minHeap->nodes[src] = newMinHeapNode(src, output->dist[src]);
   minHeap->pos[src] = src;
   output->dist[src] = 0;
   decreaseKey(minHeap, src, output->dist[src]);
@@ -314,7 +313,8 @@ static dijkstraOutputObj *dijkstra(graphObj *graph, int src)
     // extract the vertex with minimum distance value and store the node index
     minHeapNodeObj *minHeapNode = extractMin(minHeap);
     int u = minHeapNode->idx;
- 
+    free(minHeapNode); // done with this node
+
     // traverse through all adjacent nodes of u and update their distance values
     graphNodeObj *node = graph->head[u];
     while (node != nullptr) {
@@ -325,7 +325,7 @@ static dijkstraOutputObj *dijkstra(graphObj *graph, int src)
       if (isInMinHeap(minHeap, v) && output->dist[u] != HUGE_VAL && node->weight + output->dist[u] < output->dist[v]) {
         output->dist[v] = output->dist[u] + node->weight;
         output->prev[v] = u;
-        decreaseKey(minHeap, v, output->dist[v]); 
+        decreaseKey(minHeap, v, output->dist[v]);
       }
       node = node->next;
     }
