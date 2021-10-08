@@ -29,10 +29,10 @@
 
 #include "mapserver.h"
 #include "mapgraph.h"
+#include <algorithm> // for std::swap
 
 graphObj *msCreateGraph(signed int numnodes)
 {
-  int i;
   graphObj *graph=nullptr;
 
   if(numnodes <= 0) return nullptr;
@@ -40,15 +40,12 @@ graphObj *msCreateGraph(signed int numnodes)
   graph = (graphObj *) malloc(sizeof(graphObj));
   if(!graph) return nullptr;
 
-  graph->head = (graphNodeObj **) malloc(numnodes * sizeof(graphNodeObj));
+  graph->head = (graphNodeObj **) calloc(numnodes, sizeof(graphNodeObj));
   if(!graph->head) {
     free(graph);
     return nullptr;
   }
   graph->numnodes = numnodes;
-
-  for(i=0; i<numnodes; i++)
-    graph->head[i] = nullptr;
 
   return graph;
 }
@@ -101,12 +98,11 @@ int msGraphAddEdge(graphObj *graph, int src, int dest, double weight)
 void msPrintGraph(graphObj *graph)
 {
   int i;
-  graphNodeObj *node=nullptr;
 
   if(!graph) return;
 
   for(i=0; i<graph->numnodes; i++) {
-    node = graph->head[i];
+    graphNodeObj *node = graph->head[i];
     if(node != nullptr) {
       do {
         msDebug("%d -> %d (%.6f)\t", i, node->dest, node->weight);
@@ -181,19 +177,11 @@ static minHeapObj *createMinHeap(signed int capacity)
   return minHeap;
 }
 
-static void swapMinHeapNode(minHeapNodeObj **a, minHeapNodeObj **b)
-{
-  minHeapNodeObj *t = *a;
-  *a = *b;
-  *b = t;
-}
-
 static void minHeapify(minHeapObj *minHeap, int idx)
 {
-  int smallest, left, right;
-  smallest = idx;
-  left = 2*idx + 1;
-  right = 2*idx + 2;
+  int smallest = idx;
+  const int left = 2*idx + 1;
+  const int right = 2*idx + 2;
  
   if (left < minHeap->size && minHeap->nodes[left]->dist < minHeap->nodes[smallest]->dist)
     smallest = left;
@@ -208,12 +196,12 @@ static void minHeapify(minHeapObj *minHeap, int idx)
     minHeap->pos[smallestNode->idx] = idx; // swap positions
     minHeap->pos[idxNode->idx] = smallest;
  
-    swapMinHeapNode(&minHeap->nodes[smallest], &minHeap->nodes[idx]); // swap nodes
+    std::swap(minHeap->nodes[smallest], minHeap->nodes[idx]); // swap nodes
     minHeapify(minHeap, smallest);
   }
 }
 
-static int isEmpty(minHeapObj *minHeap)
+static bool isEmpty(const minHeapObj *minHeap)
 {
   return minHeap->size == 0;
 }
@@ -260,10 +248,9 @@ static void decreaseKey(minHeapObj *minHeap, int idx, int dist)
   }
 }
 
-static int isInMinHeap(minHeapObj *minHeap, int idx)
+static bool isInMinHeap(const minHeapObj *minHeap, int idx)
 {
-  if (minHeap->pos[idx] < minHeap->size) return MS_TRUE;
-  return MS_FALSE;
+  return minHeap->pos[idx] < minHeap->size;
 }
 
 typedef struct {
@@ -336,23 +323,11 @@ static dijkstraOutputObj *dijkstra(graphObj *graph, int src)
   return output;
 }
 
-static void reverse(int *arr, int n)
-{
-  for(int i=0, j=n-1; i<j; i++, j--) {
-    int tmp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = tmp;
-  }
-}
-
 int *msGraphGetLongestShortestPath(graphObj *graph, int src, int *path_size, double *path_dist)
 {
-  int *path=nullptr;
-  int i, j, dest;
-
   if(!graph || src < 0 || src > graph->numnodes) return nullptr;
 
-  path = (int *) malloc((graph->numnodes)*sizeof(int)); // worst case is path traverses all nodes
+  int* path = (int *) malloc((graph->numnodes)*sizeof(int)); // worst case is path traverses all nodes
   if(!path) return nullptr;
 
   dijkstraOutputObj *output = dijkstra(graph, src);
@@ -363,8 +338,8 @@ int *msGraphGetLongestShortestPath(graphObj *graph, int src, int *path_size, dou
 
   // get longest shortest distance from src to another node (our dest)
   *path_dist = -1;
-  dest = -1;
-  for(i=0; i<graph->numnodes; i++) {
+  int dest = -1;
+  for(int i=0; i<graph->numnodes; i++) {
     if(output->dist[i] != HUGE_VAL && *path_dist < output->dist[i]) {
       *path_dist = output->dist[i];
       dest = i;
@@ -380,8 +355,9 @@ int *msGraphGetLongestShortestPath(graphObj *graph, int src, int *path_size, dou
   }
 
   // construct the path from src to dest
-  for(i=dest,j=0; i!=-1; i=output->prev[i],j++) path[j] = i;
-  reverse(path, j);
+  int j = 0;
+  for(int i=dest; i!=-1; i=output->prev[i],j++) path[j] = i;
+  std::reverse(path, path + j);
   *path_size = j;
 
   // clean up dijkstra output

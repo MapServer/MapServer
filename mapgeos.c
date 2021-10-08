@@ -1146,7 +1146,7 @@ shapeObj *msGEOSLineMerge(shapeObj *shape)
 
 shapeObj *msGEOSVoronoiDiagram(shapeObj *shape, double tolerance, int onlyEdges)
 {
-#if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5
+#if defined(USE_GEOS) && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 5))
   GEOSGeom g1, g2;
   GEOSContextHandle_t handle = msGetGeosContextHandle();
 
@@ -1169,6 +1169,7 @@ static int keepEdge(lineObj *segment, shapeObj *polygon)
 {
   int i,j;
 
+  if(segment->numpoints<2) return MS_FALSE;
   if(msIntersectPointPolygon(&segment->point[0], polygon) != MS_TRUE) return MS_FALSE;
   if(msIntersectPointPolygon(&segment->point[1], polygon) != MS_TRUE) return MS_FALSE;
 
@@ -1180,7 +1181,7 @@ static int keepEdge(lineObj *segment, shapeObj *polygon)
   return(MS_TRUE);
 }
 
-#define COMPARE_POINTS(a,b) (((a).x!=(b).x || (a).y!=(b).y)?MS_FALSE:MS_TRUE)
+#define ARE_SAME_POINTS(a,b) (((a).x!=(b).x || (a).y!=(b).y)?MS_FALSE:MS_TRUE)
 
 // returns the index of the node, we use z to store a count of points at the same coordinate
 static int buildNodes(multipointObj *nodes, pointObj *point)
@@ -1188,7 +1189,7 @@ static int buildNodes(multipointObj *nodes, pointObj *point)
   int i;
 
   for(i=0; i<nodes->numpoints; i++) {
-    if(COMPARE_POINTS(nodes->point[i], *point)) { // found it
+    if(ARE_SAME_POINTS(nodes->point[i], *point)) { // found it
       nodes->point[i].z++;
       return i;
     }
@@ -1205,7 +1206,7 @@ static int buildNodes(multipointObj *nodes, pointObj *point)
 
 shapeObj *msGEOSCenterline(shapeObj *shape)
 {
-#if defined(USE_GEOS) && GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR >= 5
+#if defined(USE_GEOS) && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 5))
   int i;
   shapeObj *shape2=NULL;
 
