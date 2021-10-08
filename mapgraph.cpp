@@ -241,7 +241,7 @@ static void decreaseKey(minHeapObj *minHeap, int idx, int dist)
     // swap this node with its parent
     minHeap->pos[minHeap->nodes[i]->idx] = (i-1)/2;
     minHeap->pos[minHeap->nodes[(i-1)/2]->idx] = i;
-    swapMinHeapNode(&minHeap->nodes[i], &minHeap->nodes[(i - 1) / 2]);
+    std::swap(minHeap->nodes[i], minHeap->nodes[(i - 1) / 2]);
  
     // move to parent index
     i = (i - 1) / 2;

@@ -2353,6 +2353,7 @@ shapeObj *msRings2Shape(shapeObj *shape, int outer) {
   outerList = msGetOuterList(shape);
   if(!outerList) {
     msFreeShape(shape2);
+    free(shape2);
     return NULL;
   }
 
@@ -2361,6 +2362,7 @@ shapeObj *msRings2Shape(shapeObj *shape, int outer) {
       rv = msAddLine(shape2, &(shape->line[i]));
       if(rv != MS_SUCCESS) {
         msFreeShape(shape2);
+        free(shape2);
         free(outerList);
         return NULL;
       }
