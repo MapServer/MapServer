@@ -39,7 +39,7 @@
 #endif
 #include <stdarg.h>
 
-static char *ms_errorCodes[MS_NUMERRORCODES] = { "",
+static char *const ms_errorCodes[MS_NUMERRORCODES] = { "",
   "Unable to access file.",
   "Memory allocation error.",
   "Incorrect data type.",
