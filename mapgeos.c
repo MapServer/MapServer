@@ -1210,13 +1210,12 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   int i;
   shapeObj *shape2=NULL;
 
-  graphObj *graph;
   multipointObj nodes;
-  int src, dest;
+  graphObj *graph;
 
-  int *path=NULL, *tmp_path=NULL; // array of node indexes
-  int path_size, tmp_path_size;
-  double path_dist, tmp_path_dist, max_path_dist=-1;
+  int *path=NULL; // array of node indexes
+  int path_size=0;
+  double path_dist=-1, max_path_dist=-1;
 
   if(!shape) return NULL;
   if(shape->type != MS_SHAPE_POLYGON) {
@@ -1243,14 +1242,14 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
   if(!graph) {
     msFreeShape(shape2);
     free(shape2);
-    msFree(nodes.point);
+    free(nodes.point);
     return NULL;
   }
 
   for(i=0; i<shape2->numlines; i++) {
     if(keepEdge(&shape2->line[i], shape) == MS_TRUE) {
-      src = buildNodes(&nodes, &shape2->line[i].point[0]);
-      dest = buildNodes(&nodes, &shape2->line[i].point[1]);
+      int src = buildNodes(&nodes, &shape2->line[i].point[0]);
+      int dest = buildNodes(&nodes, &shape2->line[i].point[1]);
       msGraphAddEdge(graph, src, dest, msDistancePointToPoint(&shape2->line[i].point[0], &shape2->line[i].point[1]));
     }
   }
@@ -1273,6 +1272,10 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
       path = msGraphGetLongestShortestPath(graph, i, &path_size, &path_dist);
       max_path_dist = path_dist;
     } else {
+      int *tmp_path=NULL;
+      int tmp_path_size=0;
+      double tmp_path_dist=-1;
+
       if(i == path[path_size-1]) continue; // skip, graph is bi-directional so it can't be any longer
       tmp_path = msGraphGetLongestShortestPath(graph, i, &tmp_path_size, &tmp_path_dist);
       if(tmp_path_dist > max_path_dist) {
@@ -1282,7 +1285,7 @@ shapeObj *msGEOSCenterline(shapeObj *shape)
         path_dist = tmp_path_dist;
         max_path_dist = tmp_path_dist;
       } else { // skip path
-        free(tmp_path);
+        msFree(tmp_path);
       }
     }
   }
