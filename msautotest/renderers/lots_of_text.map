@@ -1,5 +1,5 @@
-# RUN_PARMS: lots_of_text.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: lots_of_text.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: lots_of_text.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: lots_of_text.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 map
 

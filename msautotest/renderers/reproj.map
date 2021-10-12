@@ -1,7 +1,7 @@
-# RUN_PARMS: reproj.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: reproj.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: reproj.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: reproj.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: reproj.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: reproj.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: reproj.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: reproj.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Test supports for image reprojection.

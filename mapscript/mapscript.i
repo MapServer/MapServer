@@ -66,7 +66,7 @@
 #include "../../mapprimitive.h"
 #include "../../mapshape.h"
 
-#if defined(WIN32) && defined(SWIGCSHARP)
+#if defined(_WIN32) && defined(SWIGCSHARP)
 /* <windows.h> is needed for GetExceptionCode() for unhandled exception */
 #include <windows.h>
 #endif

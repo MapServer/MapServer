@@ -53,7 +53,7 @@
 #include <string>
 #include <vector>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <process.h>
 #endif
 

@@ -1,4 +1,4 @@
-# RUN_PARMS: oracle.png [SHP2IMG] -s 640 480 -m oracle.map -l oracle -o result/oracle.png
+# RUN_PARMS: oracle.png [MAP2IMG] -s 640 480 -m oracle.map -l oracle -o result/oracle.png
 # REQUIRES: INPUT=ORACLESPATIAL
 MAP
   NAME "OGC:WMS"

@@ -95,7 +95,7 @@ typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
 typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
 
-static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
+static const color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
 
 #define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
 

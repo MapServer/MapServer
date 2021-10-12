@@ -46,8 +46,8 @@
 static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 static inline void IGUR_voidp(void* ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 
-static char *olUrl = "//www.mapserver.org/lib/OpenLayers-ms60.js";
-static char *olTemplate = \
+static const char *const olUrl = "//www.mapserver.org/lib/OpenLayers-ms60.js";
+static const char *const olTemplate = \
                           "<html>\n"
                           "<head>\n"
                           "<meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\">\n"
@@ -68,13 +68,13 @@ static char *olTemplate = \
                           "</body>\n"
                           "</html>";
 
-static char *olLayerMapServerTag = \
+static const char *const olLayerMapServerTag = \
                                    "var mslayer = new OpenLayers.Layer.MapServer( \"MapServer Layer\",\n"
                                    "                                              \"[mapserv_onlineresource]\",\n"
                                    "                                              {layers: '[layers]'},\n"
                                    "                                              {singleTile: \"true\", ratio:1} )";
 
-static char *olLayerWMSTag = \
+static const char *const olLayerWMSTag = \
                              "var mslayer = new OpenLayers.Layer.WMS('MapServer Simple Viewer\',\n"
                              "                                   '[mapserv_onlineresource]',\n"
                              "                                   {layers: '[LAYERS]',\n"
@@ -82,7 +82,7 @@ static char *olLayerWMSTag = \
                              "                                   width: [mapwidth], height: [mapheight], version: '[VERSION]', format:'[openlayers_format]'},"
                              "                                   {singleTile: \"true\", ratio:1, projection: '[openlayers_projection]'});\n";
 
-static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mode);
+static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream, int mode);
 
 static int isValidTemplate(FILE *stream, const char *filename)
 {
@@ -1707,8 +1707,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     }
 
     if(labelposvalid == MS_TRUE) {
-      pointObj p1 = {0,0,0,0}; // initialize
-      pointObj p2 = {0,0,0,0};
+      pointObj p1 = {0}; // initialize
+      pointObj p2 = {0};
       int label_offset_x, label_offset_y;
       labelObj *label=NULL;
       label_bounds lbounds;
@@ -3646,7 +3646,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
 ** Process a single line in the template. A few tags (e.g. [resultset]...[/resultset]) can be multi-line so
 ** we pass the filehandle to look ahead if necessary.
 */
-static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mode)
+static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream, int mode)
 {
   int i, j;
 #define PROCESSLINE_BUFLEN 5120
@@ -4472,7 +4472,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
   int i;
   char *buffer = NULL, *layer = NULL;
   const char *tmpUrl = NULL;
-  char *openlayersUrl = olUrl;
+  const char *openlayersUrl = olUrl;
   char *projection = NULL;
   char *format = NULL;
 

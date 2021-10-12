@@ -78,7 +78,7 @@ typedef struct {
   char *wkb; /* Pointer to front of WKB */
   char *ptr; /* Pointer to current write point */
   size_t size; /* Size of allocated space */
-  int *typemap; /* Look-up array to valid OGC types */
+  const int *typemap; /* Look-up array to valid OGC types */
 } wkbObj;
 
 /*
@@ -108,7 +108,7 @@ typedef enum {
 ** Map the WKB type numbers returned by PostGIS < 2.0 to the
 ** valid OGC numbers
 */
-static int wkb_postgis15[WKB_TYPE_COUNT] = {
+static const int wkb_postgis15[WKB_TYPE_COUNT] = {
   0,
   WKB_POINT,
   WKB_LINESTRING,
@@ -129,7 +129,7 @@ static int wkb_postgis15[WKB_TYPE_COUNT] = {
 ** Map the WKB type numbers returned by PostGIS >= 2.0 to the
 ** valid OGC numbers
 */
-static int wkb_postgis20[WKB_TYPE_COUNT] = {
+static const int wkb_postgis20[WKB_TYPE_COUNT] = {
   0,
   WKB_POINT,
   WKB_LINESTRING,

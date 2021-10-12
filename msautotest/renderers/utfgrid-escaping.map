@@ -1,4 +1,4 @@
-# RUN_PARMS: utfgrid-escaping.json [SHP2IMG] -m [MAPFILE] -i json -o [RESULT]
+# RUN_PARMS: utfgrid-escaping.json [MAP2IMG] -m [MAPFILE] -i json -o [RESULT]
 #
 # Test JSon escaping of item and data values.
 #

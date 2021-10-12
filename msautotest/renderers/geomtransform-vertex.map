@@ -1,14 +1,14 @@
 #
 # tests vertex geomtransform with auto angle
 #   
-# RUN_PARMS: geomtransform-vertex.png [SHP2IMG] -m [MAPFILE] -i png -l "centroid vertex1" -o [RESULT]
-# RUN_PARMS: geomtransform-vertex.pdf [SHP2IMG] -m [MAPFILE] -i pdf -l "centroid vertex1" -o [RESULT]
-# RUN_PARMS: geomtransform-vertex.svg [SHP2IMG] -m [MAPFILE] -i svg -l "centroid vertex1" -o [RESULT]
-# RUN_PARMS: geomtransform-vertex.cairo.png [SHP2IMG] -m [MAPFILE] -l "centroid vertex1" -i cairopng -o [RESULT]
-# RUN_PARMS: geomtransform-vertex-layer.png [SHP2IMG] -m [MAPFILE] -i png -l vertex2 -o [RESULT]
-# RUN_PARMS: geomtransform-vertex-layer.pdf [SHP2IMG] -m [MAPFILE] -i pdf -l vertex2 -o [RESULT]
-# RUN_PARMS: geomtransform-vertex-layer.svg [SHP2IMG] -m [MAPFILE] -i svg -l vertex2 -o [RESULT]
-# RUN_PARMS: geomtransform-vertex-layer.cairo.png [SHP2IMG] -m [MAPFILE] -l vertex2 -i cairopng -o [RESULT]
+# RUN_PARMS: geomtransform-vertex.png [MAP2IMG] -m [MAPFILE] -i png -l "centroid vertex1" -o [RESULT]
+# RUN_PARMS: geomtransform-vertex.pdf [MAP2IMG] -m [MAPFILE] -i pdf -l "centroid vertex1" -o [RESULT]
+# RUN_PARMS: geomtransform-vertex.svg [MAP2IMG] -m [MAPFILE] -i svg -l "centroid vertex1" -o [RESULT]
+# RUN_PARMS: geomtransform-vertex.cairo.png [MAP2IMG] -m [MAPFILE] -l "centroid vertex1" -i cairopng -o [RESULT]
+# RUN_PARMS: geomtransform-vertex-layer.png [MAP2IMG] -m [MAPFILE] -i png -l vertex2 -o [RESULT]
+# RUN_PARMS: geomtransform-vertex-layer.pdf [MAP2IMG] -m [MAPFILE] -i pdf -l vertex2 -o [RESULT]
+# RUN_PARMS: geomtransform-vertex-layer.svg [MAP2IMG] -m [MAPFILE] -i svg -l vertex2 -o [RESULT]
+# RUN_PARMS: geomtransform-vertex-layer.cairo.png [MAP2IMG] -m [MAPFILE] -l vertex2 -i cairopng -o [RESULT]
 #
 
 

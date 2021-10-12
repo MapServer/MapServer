@@ -1,4 +1,4 @@
-# RUN_PARMS: polyline_no_clip.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: polyline_no_clip.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
 
 MAP
   DEBUG 5

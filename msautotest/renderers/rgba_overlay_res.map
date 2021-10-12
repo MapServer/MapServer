@@ -1,7 +1,7 @@
-# RUN_PARMS: rgba_overlay_res.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: rgba_overlay_res.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: rgba_overlay_res.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: rgba_overlay_res.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Tests overlaying an RGBA image with on a greyscale image

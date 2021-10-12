@@ -1,7 +1,7 @@
-# RUN_PARMS: text_shaping_1.png [SHP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: text_shaping_1.cairo.png [SHP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i cairopng -o [RESULT]
-# RUN_PARMS: text_shaping_1.pdf [SHP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: text_shaping_1.svg [SHP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: text_shaping_1.png [MAP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: text_shaping_1.cairo.png [MAP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: text_shaping_1.pdf [MAP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: text_shaping_1.svg [MAP2IMG] -e -7788846 2090453 -7782864 2095850 -l l1 -m [MAPFILE] -i svg -o [RESULT]
 map
 
 imagetype png
