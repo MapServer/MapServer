@@ -552,13 +552,13 @@ static const yytype_uint16 yyrline[] =
      126,   134,   143,   151,   160,   168,   177,   185,   194,   195,
      196,   216,   236,   242,   248,   254,   260,   266,   272,   280,
      288,   296,   304,   312,   320,   326,   332,   338,   344,   350,
-     356,   377,   397,   403,   411,   417,   428,   439,   450,   461,
-     472,   483,   494,   505,   516,   527,   538,   549,   560,   571,
-     582,   593,   603,   615,   616,   617,   618,   619,   620,   621,
-     628,   629,   630,   631,   639,   640,   643,   644,   645,   659,
-     673,   687,   701,   715,   729,   743,   757,   771,   785,   799,
-     813,   828,   850,   851,   852,   856,   861,   865,   869,   873,
-     877,   883,   884
+     356,   377,   397,   403,   411,   417,   434,   451,   468,   485,
+     502,   519,   536,   553,   570,   587,   604,   621,   638,   655,
+     672,   689,   705,   723,   724,   725,   726,   727,   728,   729,
+     736,   737,   738,   739,   750,   751,   754,   755,   756,   770,
+     784,   798,   812,   826,   840,   854,   868,   882,   896,   910,
+     924,   939,   961,   962,   963,   967,   972,   976,   980,   984,
+     988,   994,   995
 };
 #endif
 
@@ -2116,170 +2116,170 @@ yyreduce:
     {
     int rval;
     rval = msGEOSEquals((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Equals (EQ or ==) operator failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2128 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2134 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 428 "mapparser.y" /* yacc.c:1646  */
+#line 434 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSEquals((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Equals function failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2144 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2156 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 439 "mapparser.y" /* yacc.c:1646  */
+#line 451 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSIntersects((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Intersects function failed.");
       return(-1);
     } else
     (yyval.intval) = rval;
   }
-#line 2160 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2178 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 450 "mapparser.y" /* yacc.c:1646  */
+#line 468 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSIntersects((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval)); 
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Intersects operator failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2176 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2200 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 461 "mapparser.y" /* yacc.c:1646  */
+#line 485 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSDisjoint((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Disjoint function failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2192 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2222 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 472 "mapparser.y" /* yacc.c:1646  */
+#line 502 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSDisjoint((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Disjoint operator failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2208 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2244 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 483 "mapparser.y" /* yacc.c:1646  */
+#line 519 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSTouches((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Touches function failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2224 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2266 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 494 "mapparser.y" /* yacc.c:1646  */
+#line 536 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSTouches((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Touches operator failed.");
-      return(-1);
-    } else
-      (yyval.intval) = rval;
-  }
-#line 2240 "/vagrant/mapparser.c" /* yacc.c:1646  */
-    break;
-
-  case 53:
-#line 505 "mapparser.y" /* yacc.c:1646  */
-    {
-    int rval;
-    rval = msGEOSOverlaps((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
-    if(rval == -1) {
-      yyerror(p, "Overlaps function failed.");
-      return(-1);
-    } else
-      (yyval.intval) = rval;
-  }
-#line 2256 "/vagrant/mapparser.c" /* yacc.c:1646  */
-    break;
-
-  case 54:
-#line 516 "mapparser.y" /* yacc.c:1646  */
-    {
-    int rval;
-     rval = msGEOSOverlaps((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
-    if(rval == -1) {
-      yyerror(p, "Overlaps operator failed.");
-      return(-1);
-    } else
-      (yyval.intval) = rval;
-  }
-#line 2272 "/vagrant/mapparser.c" /* yacc.c:1646  */
-    break;
-
-  case 55:
-#line 527 "mapparser.y" /* yacc.c:1646  */
-    {
-    int rval;
-    rval = msGEOSCrosses((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
-    if(rval == -1) {
-      yyerror(p, "Crosses function failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
@@ -2287,148 +2287,256 @@ yyreduce:
 #line 2288 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
+  case 53:
+#line 553 "mapparser.y" /* yacc.c:1646  */
+    {
+    int rval;
+    rval = msGEOSOverlaps((yyvsp[-3].shpval), (yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
+    if(rval == -1) {
+      yyerror(p, "Overlaps function failed.");
+      return(-1);
+    } else
+      (yyval.intval) = rval;
+  }
+#line 2310 "/vagrant/mapparser.c" /* yacc.c:1646  */
+    break;
+
+  case 54:
+#line 570 "mapparser.y" /* yacc.c:1646  */
+    {
+    int rval;
+     rval = msGEOSOverlaps((yyvsp[-2].shpval), (yyvsp[0].shpval));
+     if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+       msFreeShape((yyvsp[-2].shpval));
+       free((yyvsp[-2].shpval));
+     }
+     if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+       msFreeShape((yyvsp[0].shpval));
+       free((yyvsp[0].shpval));
+     }
+    if(rval == -1) {
+      yyerror(p, "Overlaps operator failed.");
+      return(-1);
+    } else
+      (yyval.intval) = rval;
+  }
+#line 2332 "/vagrant/mapparser.c" /* yacc.c:1646  */
+    break;
+
+  case 55:
+#line 587 "mapparser.y" /* yacc.c:1646  */
+    {
+    int rval;
+    rval = msGEOSCrosses((yyvsp[-3].shpval), (yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
+    if(rval == -1) {
+      yyerror(p, "Crosses function failed.");
+      return(-1);
+    } else
+      (yyval.intval) = rval;
+  }
+#line 2354 "/vagrant/mapparser.c" /* yacc.c:1646  */
+    break;
+
   case 56:
-#line 538 "mapparser.y" /* yacc.c:1646  */
+#line 604 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSCrosses((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Crosses operator failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2304 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2376 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 549 "mapparser.y" /* yacc.c:1646  */
+#line 621 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSWithin((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Within function failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2320 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2398 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 560 "mapparser.y" /* yacc.c:1646  */
+#line 638 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSWithin((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Within operator failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2336 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2420 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 571 "mapparser.y" /* yacc.c:1646  */
+#line 655 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSContains((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Contains function failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2352 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2442 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 582 "mapparser.y" /* yacc.c:1646  */
+#line 672 "mapparser.y" /* yacc.c:1646  */
     {
     int rval;
     rval = msGEOSContains((yyvsp[-2].shpval), (yyvsp[0].shpval));
-    if((yyvsp[-2].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-2].shpval));
-    if((yyvsp[0].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[0].shpval));
+    if((yyvsp[-2].shpval) && (yyvsp[-2].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-2].shpval));
+      free((yyvsp[-2].shpval));
+    }
+    if((yyvsp[0].shpval) && (yyvsp[0].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[0].shpval));
+      free((yyvsp[0].shpval));
+    }
     if(rval == -1) {
       yyerror(p, "Contains operator failed.");
       return(-1);
     } else
       (yyval.intval) = rval;
   }
-#line 2368 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2464 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 593 "mapparser.y" /* yacc.c:1646  */
+#line 689 "mapparser.y" /* yacc.c:1646  */
     {
     double d;
-    d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));    
-    if((yyvsp[-5].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-5].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
+    d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));
+    if((yyvsp[-5].shpval) && (yyvsp[-5].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-5].shpval));
+      free((yyvsp[-5].shpval));
+    }
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(d <= (yyvsp[-1].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2383 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2485 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 603 "mapparser.y" /* yacc.c:1646  */
+#line 705 "mapparser.y" /* yacc.c:1646  */
     {
     double d;
     d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));
-    if((yyvsp[-5].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-5].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-3].shpval));
+    if((yyvsp[-5].shpval) && (yyvsp[-5].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-5].shpval));
+      free((yyvsp[-5].shpval));
+    }
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-3].shpval));
+      free((yyvsp[-3].shpval));
+    }
     if(d > (yyvsp[-1].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2398 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2506 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 616 "mapparser.y" /* yacc.c:1646  */
+#line 724 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-1].dblval); }
-#line 2404 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2512 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 617 "mapparser.y" /* yacc.c:1646  */
+#line 725 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-2].dblval) + (yyvsp[0].dblval); }
-#line 2410 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2518 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 618 "mapparser.y" /* yacc.c:1646  */
+#line 726 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-2].dblval) - (yyvsp[0].dblval); }
-#line 2416 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2524 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 619 "mapparser.y" /* yacc.c:1646  */
+#line 727 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[-2].dblval) * (yyvsp[0].dblval); }
-#line 2422 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2530 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 620 "mapparser.y" /* yacc.c:1646  */
+#line 728 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (int)(yyvsp[-2].dblval) % (int)(yyvsp[0].dblval); }
-#line 2428 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2536 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 621 "mapparser.y" /* yacc.c:1646  */
+#line 729 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[0].dblval) == 0.0) {
       yyerror(p, "Division by zero.");
@@ -2436,64 +2544,67 @@ yyreduce:
     } else
       (yyval.dblval) = (yyvsp[-2].dblval) / (yyvsp[0].dblval); 
   }
-#line 2440 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2548 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 628 "mapparser.y" /* yacc.c:1646  */
+#line 736 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (yyvsp[0].dblval); }
-#line 2446 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2554 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 629 "mapparser.y" /* yacc.c:1646  */
+#line 737 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = pow((yyvsp[-2].dblval), (yyvsp[0].dblval)); }
-#line 2452 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2560 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 630 "mapparser.y" /* yacc.c:1646  */
+#line 738 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = strlen((yyvsp[-1].strval)); }
-#line 2458 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2566 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 631 "mapparser.y" /* yacc.c:1646  */
+#line 739 "mapparser.y" /* yacc.c:1646  */
     {
     if((yyvsp[-1].shpval)->type != MS_SHAPE_POLYGON) {
       yyerror(p, "Area can only be computed for polygon shapes.");
       return(-1);
     }
     (yyval.dblval) = msGetPolygonArea((yyvsp[-1].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) msFreeShape((yyvsp[-1].shpval));
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
+      msFreeShape((yyvsp[-1].shpval));
+      free((yyvsp[-1].shpval));
+    }
   }
-#line 2471 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2582 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 639 "mapparser.y" /* yacc.c:1646  */
+#line 750 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (MS_NINT((yyvsp[-3].dblval)/(yyvsp[-1].dblval)))*(yyvsp[-1].dblval); }
-#line 2477 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2588 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 640 "mapparser.y" /* yacc.c:1646  */
+#line 751 "mapparser.y" /* yacc.c:1646  */
     { (yyval.dblval) = (MS_NINT((yyvsp[-1].dblval))); }
-#line 2483 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2594 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 644 "mapparser.y" /* yacc.c:1646  */
+#line 755 "mapparser.y" /* yacc.c:1646  */
     { (yyval.shpval) = (yyvsp[-1].shpval); }
-#line 2489 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2600 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 645 "mapparser.y" /* yacc.c:1646  */
+#line 756 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSBuffer((yyvsp[-3].shpval), (yyvsp[-1].dblval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2504,15 +2615,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2508 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2619 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 659 "mapparser.y" /* yacc.c:1646  */
+#line 770 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msRings2Shape((yyvsp[-1].shpval), MS_FALSE);
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-1].shpval));
       free((yyvsp[-1].shpval));
     }
@@ -2523,15 +2634,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2527 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2638 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 673 "mapparser.y" /* yacc.c:1646  */
+#line 784 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msRings2Shape((yyvsp[-1].shpval), MS_TRUE);
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-1].shpval));
       free((yyvsp[-1].shpval));
     }
@@ -2542,15 +2653,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2546 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2657 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 687 "mapparser.y" /* yacc.c:1646  */
+#line 798 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSCenterline((yyvsp[-1].shpval));
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-1].shpval));
       free((yyvsp[-1].shpval));
     }
@@ -2561,15 +2672,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2565 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2676 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 701 "mapparser.y" /* yacc.c:1646  */
+#line 812 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSDifference((yyvsp[-3].shpval), (yyvsp[-1].shpval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2580,15 +2691,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2584 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2695 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 715 "mapparser.y" /* yacc.c:1646  */
+#line 826 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msDensify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2599,15 +2710,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2603 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2714 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 729 "mapparser.y" /* yacc.c:1646  */
+#line 840 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2618,15 +2729,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2622 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2733 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 743 "mapparser.y" /* yacc.c:1646  */
+#line 854 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2637,15 +2748,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2641 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2752 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 757 "mapparser.y" /* yacc.c:1646  */
+#line 868 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msGeneralize((yyvsp[-3].shpval), (yyvsp[-1].dblval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2656,15 +2767,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2660 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2771 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 771 "mapparser.y" /* yacc.c:1646  */
+#line 882 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-1].shpval), 3, 1, NULL);
-    if((yyvsp[-1].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-1].shpval) && (yyvsp[-1].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-1].shpval));
       free((yyvsp[-1].shpval));
     }
@@ -2675,15 +2786,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2679 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2790 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 785 "mapparser.y" /* yacc.c:1646  */
+#line 896 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-3].shpval), (yyvsp[-1].dblval), 1, NULL);
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2694,15 +2805,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2698 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2809 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 799 "mapparser.y" /* yacc.c:1646  */
+#line 910 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-5].shpval), (yyvsp[-3].dblval), (yyvsp[-1].dblval), NULL);
-    if((yyvsp[-5].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-5].shpval) && (yyvsp[-5].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-5].shpval));
       free((yyvsp[-5].shpval));
     }
@@ -2713,15 +2824,15 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2717 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2828 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 813 "mapparser.y" /* yacc.c:1646  */
+#line 924 "mapparser.y" /* yacc.c:1646  */
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-7].shpval), (yyvsp[-5].dblval), (yyvsp[-3].dblval), (yyvsp[-1].strval));
-    if((yyvsp[-7].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-7].shpval) && (yyvsp[-7].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-7].shpval));
       free((yyvsp[-7].shpval));
     }
@@ -2733,16 +2844,16 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2737 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2848 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 828 "mapparser.y" /* yacc.c:1646  */
+#line 939 "mapparser.y" /* yacc.c:1646  */
     {
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
     s = msV8TransformShape((yyvsp[-3].shpval), (yyvsp[-1].strval));
-    if((yyvsp[-3].shpval)->scratch == MS_TRUE) {
+    if((yyvsp[-3].shpval) && (yyvsp[-3].shpval)->scratch == MS_TRUE) {
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
@@ -2758,87 +2869,87 @@ yyreduce:
     return(-1);
 #endif
   }
-#line 2762 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2873 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 851 "mapparser.y" /* yacc.c:1646  */
+#line 962 "mapparser.y" /* yacc.c:1646  */
     { (yyval.strval) = (yyvsp[-1].strval); }
-#line 2768 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2879 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 852 "mapparser.y" /* yacc.c:1646  */
+#line 963 "mapparser.y" /* yacc.c:1646  */
     { 
     (yyval.strval) = (char *)malloc(strlen((yyvsp[-2].strval)) + strlen((yyvsp[0].strval)) + 1);
     sprintf((yyval.strval), "%s%s", (yyvsp[-2].strval), (yyvsp[0].strval)); free((yyvsp[-2].strval)); free((yyvsp[0].strval)); 
   }
-#line 2777 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2888 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 856 "mapparser.y" /* yacc.c:1646  */
+#line 967 "mapparser.y" /* yacc.c:1646  */
     {
     (yyval.strval) = (char *) malloc(strlen((yyvsp[-1].strval)) + 64); /* Plenty big? Should use snprintf below... */
     sprintf((yyval.strval), (yyvsp[-1].strval), (yyvsp[-3].dblval));
     free((yyvsp[-1].strval));
   }
-#line 2787 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2898 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 861 "mapparser.y" /* yacc.c:1646  */
+#line 972 "mapparser.y" /* yacc.c:1646  */
     {  
     (yyvsp[-1].strval) = msCommifyString((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2796 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2907 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 865 "mapparser.y" /* yacc.c:1646  */
+#line 976 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToUpper((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2805 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2916 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 869 "mapparser.y" /* yacc.c:1646  */
+#line 980 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToLower((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2814 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2925 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 873 "mapparser.y" /* yacc.c:1646  */
+#line 984 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringInitCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2823 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2934 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 877 "mapparser.y" /* yacc.c:1646  */
+#line 988 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringFirstCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2832 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2943 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 884 "mapparser.y" /* yacc.c:1646  */
+#line 995 "mapparser.y" /* yacc.c:1646  */
     { (yyval.tmval) = (yyvsp[-1].tmval); }
-#line 2838 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2949 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
 
-#line 2842 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2953 "/vagrant/mapparser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3066,7 +3177,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 887 "mapparser.y" /* yacc.c:1906  */
+#line 998 "mapparser.y" /* yacc.c:1906  */
 
 
 /*
