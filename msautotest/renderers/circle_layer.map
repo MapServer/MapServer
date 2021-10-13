@@ -1,7 +1,7 @@
-# RUN_PARMS: circle_layer.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: circle_layer.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: circle_layer.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: circle_layer.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: circle_layer.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: circle_layer.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: circle_layer.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: circle_layer.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # REQUIRES: OUTPUT=PNG

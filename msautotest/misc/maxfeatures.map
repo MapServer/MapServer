@@ -1,5 +1,5 @@
-# RUN_PARMS: maxfeatures.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: maxfeatures-of.png [SHP2IMG] -m [MAPFILE] -i pngmf -o [RESULT]
+# RUN_PARMS: maxfeatures.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: maxfeatures-of.png [MAP2IMG] -m [MAPFILE] -i pngmf -o [RESULT]
 
 MAP
   IMAGECOLOR 255 255 255

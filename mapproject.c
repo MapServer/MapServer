@@ -1218,7 +1218,7 @@ static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
         return MS_FALSE;
     }
 
-    pointObj p = {0,0,0,0}; // initialize
+    pointObj p = {0}; // initialize
     double invgt0 = out->gt.need_geotransform ? out->gt.invgeotransform[0] : 0.0;
     double invgt1 = out->gt.need_geotransform ? out->gt.invgeotransform[1] : 1.0;
     double invgt3 = out->gt.need_geotransform ? out->gt.invgeotransform[3] : 0.0;

@@ -40,7 +40,7 @@
 #include <time.h>
 #include "mapserver.h"
 
-static const char *abb_weekdays[] = {
+static const char *const abb_weekdays[] = {
   "Sun",
   "Mon",
   "Tue",
@@ -51,7 +51,7 @@ static const char *abb_weekdays[] = {
   NULL
 };
 
-static const char *full_weekdays[] = {
+static const char *const full_weekdays[] = {
   "Sunday",
   "Monday",
   "Tuesday",
@@ -62,7 +62,7 @@ static const char *full_weekdays[] = {
   NULL
 };
 
-static const char *abb_month[] = {
+static const char *const abb_month[] = {
   "Jan",
   "Feb",
   "Mar",
@@ -78,7 +78,7 @@ static const char *abb_month[] = {
   NULL
 };
 
-static const char *full_month[] = {
+static const char *const full_month[] = {
   "January",
   "February",
   "Mars",
@@ -94,7 +94,7 @@ static const char *full_month[] = {
   NULL,
 };
 
-static const char *ampm[] = {
+static const char *const ampm[] = {
   "am",
   "pm",
   NULL
@@ -103,7 +103,7 @@ static const char *ampm[] = {
 /*
  * tm_year is relative this year
  */
-const int tm_year_base = 1900;
+static const int tm_year_base = 1900;
 
 /*
  * Return TRUE iff `year' was a leap year.
@@ -117,7 +117,7 @@ is_leap_year (int year)
 
 /* Needed for strptime. */
 static int
-match_string (const char **buf, const char **strs)
+match_string (const char **buf, const char *const*strs)
 {
   int i = 0;
 

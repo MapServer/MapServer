@@ -1,7 +1,7 @@
-# RUN_PARMS: polygon-vector.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: polygon-vector.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: polygon-vector.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: polygon-vector.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: polygon-vector.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: polygon-vector.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: polygon-vector.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: polygon-vector.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # entity-encoded text rendering test.

@@ -8,5 +8,5 @@ if [ "$BUILD_NAME" != "PHP_7.2_WITH_ASAN" ]; then
     sh -c 'if test "$TRAVIS_SECURE_ENV_VARS" = "true" -a "$TRAVIS_BRANCH" = "master"; then echo "run coverage"; ./run_code_coverage_upload.sh; fi'
     ln -s ../../../mapparser.y build/CMakeFiles/mapserver.dir/
     ln -s ../../../maplexer.l build/CMakeFiles/mapserver.dir/
-    coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude shp2img.c --exclude legend.c --exclude scalebar.c --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c --exclude sym2img.c --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
+    coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude map2img.c --exclude legend.c --exclude scalebar.c --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c --exclude sym2img.c --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
 fi

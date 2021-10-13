@@ -30,10 +30,6 @@
 #ifndef MAPOWSCOMMON_H
 #define MAPOWSCOMMON_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef USE_LIBXML2
 
 #include<libxml/parser.h>
@@ -154,6 +150,10 @@ extern "C" {
 #define MS_OWS_ERROR_NOT_FOUND                  "NotFound"
 
 #define MS_WFS_ERROR_OPERATION_PROCESSING_FAILED "OperationProcessingFailed"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef USE_LIBXML2
 

@@ -1,7 +1,7 @@
-# RUN_PARMS: labels.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labels.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: labels.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: labels.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: labels.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labels.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labels.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labels.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 map
 

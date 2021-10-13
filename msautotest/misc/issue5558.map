@@ -1,9 +1,9 @@
 #
 # Tests bugfix for https://github.com/mapserver/mapserver/issues/5558
-# "Missing LABEL TEXT attribute bind causes crash in shp2img"
+# "Missing LABEL TEXT attribute bind causes crash in map2img"
 #
-# RUN_PARMS: issue5581-1.png [SHP2IMG] -m [MAPFILE] -o [RESULT]
-# RUN_PARMS: issue5581-2.png [SHP2IMG] -c 2 -m [MAPFILE] -o [RESULT]
+# RUN_PARMS: issue5581-1.png [MAP2IMG] -m [MAPFILE] -o [RESULT]
+# RUN_PARMS: issue5581-2.png [MAP2IMG] -c 2 -m [MAPFILE] -o [RESULT]
 
 MAP
     EXTENT 0 0 100 100

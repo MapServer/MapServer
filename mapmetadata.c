@@ -31,6 +31,8 @@
 #include "mapowscommon.h"
 #include "maplibxml2.h"
 
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+
 #ifdef USE_LIBXML2
 
 static
@@ -931,3 +933,4 @@ void msMetadataSetGetMetadataURL(layerObj *lp, const char *url)
   msFree(pszMetadataURL);
 }
 
+#endif

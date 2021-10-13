@@ -1,5 +1,5 @@
-# RUN_PARMS: plb_embed_legend_rgba_tr.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: plb_embed_legend_rgba_tr.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: plb_embed_legend_rgba_tr.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: plb_embed_legend_rgba_tr.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
 # Simple test of embedded legend support.

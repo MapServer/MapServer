@@ -49,7 +49,7 @@ typedef mapserver::renderer_base<pixfmt_utf32> renderer_base;
 typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 typedef mapserver::renderer_scanline_bin_solid<renderer_base> renderer_scanline;
 
-static utfpix32 UTF_WATER = utfpix32(32);
+static const utfpix32 UTF_WATER = utfpix32(32);
 
 #define utfitem(c) utfpix32(c)
 

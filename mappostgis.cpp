@@ -737,7 +737,7 @@ arcSegmentSide(const pointObj &p1, const pointObj &p2, const pointObj &q)
 static int
 arcCircleCenter(const pointObj& p1, const pointObj& p2, const pointObj& p3, pointObj *center, double *radius)
 {
-  pointObj c = {0,0,0,0}; // initialize
+  pointObj c{}; // initialize
   double r;
 
   /* Circle is closed, so p2 must be opposite p1 & p3. */

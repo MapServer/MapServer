@@ -209,12 +209,6 @@ extern "C" {
   MS_DLL_EXPORT int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point );
   MS_DLL_EXPORT int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
   MS_DLL_EXPORT int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
-  /* SHX reading */
-  MS_DLL_EXPORT int msSHXLoadAll( SHPHandle psSHP );
-  MS_DLL_EXPORT int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage );
-  MS_DLL_EXPORT int msSHXReadOffset( SHPHandle psSHP, int hEntity );
-  MS_DLL_EXPORT int msSHXReadSize( SHPHandle psSHP, int hEntity );
-
 
   /* tiledShapefileObj function prototypes are in mapserver.h */
 
