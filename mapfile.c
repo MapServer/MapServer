@@ -5233,6 +5233,8 @@ char* msWriteLegendToString(legendObj *legend)
 */
 void initScalebar(scalebarObj *scalebar)
 {
+  if(!scalebar) return;
+
   MS_INIT_COLOR(scalebar->imagecolor, -1,-1,-1,255);
   scalebar->width = 200;
   scalebar->height = 3;
@@ -5251,17 +5253,32 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->align = MS_ALIGN_CENTER;
   scalebar->offsetx = 0;
   scalebar->offsety = 0;
+  scalebar->urlupdate = NULL;
 }
 
 void freeScalebar(scalebarObj *scalebar)
 {
+  if(!scalebar) return;
+
   freeLabel(&(scalebar->label));
+  msFree(scalebar->urlupdate);
 }
 
 int loadScalebar(scalebarObj *scalebar)
 {
+  if(!scalebar) return(-1);
+
   for(;;) {
-    switch(msyylex()) {
+    int token = msyylex();
+
+    if(msyysource == MS_URL_TOKENS && strlen(msyystring_buffer) > 0) { // make sure this attribute can be updated via URL
+      if(msCaseEvalRegex(scalebar->urlupdate, msyystring_buffer) == MS_FALSE) {
+        msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScalebar()", msyystring_buffer, msyylineno);
+        return(-1);
+      }
+    }
+
+    switch(token) {
       case(ALIGN):
         if((scalebar->align = getSymbol(3, MS_ALIGN_LEFT,MS_ALIGN_CENTER,MS_ALIGN_RIGHT)) == -1) return(-1);
         break;
@@ -5319,6 +5336,9 @@ int loadScalebar(scalebarObj *scalebar)
         if(getInteger(&(scalebar->offsetx)) == -1) return(-1);
         if(getInteger(&(scalebar->offsety)) == -1) return(-1);
         break;
+      case(URLUPDATE):
+        if(getString(&(scalebar->urlupdate)) == MS_FAILURE) return(-1);
+        break;
       default:
         if(strlen(msyystring_buffer) > 0) {
           msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScalebar()", msyystring_buffer, msyylineno);
@@ -5333,6 +5353,7 @@ int loadScalebar(scalebarObj *scalebar)
 int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_string)
 {
   if(!scalebar || !string) return MS_FAILURE;
+  if(url_string && !scalebar->urlupdate) return MS_SUCCESS; // skip update silently
 
   msAcquireLock( TLOCK_PARSER );
 
@@ -5359,6 +5380,8 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
 {
   colorObj c;
 
+  if(!stream || !scalebar) return;
+
   indent++;
   writeBlockBegin(stream, indent, "SCALEBAR");
   writeKeyword(stream, indent, "ALIGN", scalebar->align, 2, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_RIGHT, "RIGHT");
@@ -5376,6 +5399,7 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
   writeNumber(stream, indent, "STYLE", 0, scalebar->style);
   writeKeyword(stream, indent, "TRANSPARENT", scalebar->transparent, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeKeyword(stream, indent, "UNITS", scalebar->units, 6, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES");
+  writeString(stream, indent, "URLUPDATE", NULL, scalebar->urlupdate);
   writeBlockEnd(stream, indent, "SCALEBAR");
   writeLineFeed(stream);
 }

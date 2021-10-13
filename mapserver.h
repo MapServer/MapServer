@@ -1491,25 +1491,26 @@ The :ref:`REFERENCE <reference>` object
   */
   typedef struct {
 
-     int transparent; ///< Allows transparency for an embedded scalebar - see :ref:`TRANSPARENT <mapfile-scalebar-transparent>`
-     colorObj imagecolor; ///< Background color of scalebar - see :ref:`IMAGECOLOR <mapfile-scalebar-imagecolor>`
-      int height; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
-      int width; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
-      int style; ///< 0 or 1 - see :ref:`STYLE <mapfile-scalebar-style>`
-      int intervals; ///< Number of intervals - see :ref:`INTERVALS <mapfile-scalebar-intervals>`
-      labelObj label; ///< Scalebar label - see :ref:`LABEL <mapfile-scalebar-label>`
-      colorObj color; ///< Scalebar foreground color - see :ref:`COLOR <mapfile-scalebar-color>`
-      colorObj backgroundcolor; ///< Scalebar background color - see :ref:`BACKGROUNDCOLOR <mapfile-scalebar-backgroundcolor>`
-      colorObj outlinecolor; ///< Foreground outline color - see :ref:`OUTLINECOLOR <mapfile-scalebar-outlinecolor>`
-      int units; ///< See :ref:`UNITS <mapfile-scalebar-units>`
-      int status; ///< ON, OFF or EMBED - see :ref:`STATUS <mapfile-scalebar-status>` - :data:`MS_ON`, :data:`MS_OFF`, or :data:`MS_EMBED`.
-      int position; ///< For embeded scalebars - see :ref:`POSITION <mapfile-scalebar-position>` - 
-                    ///< :data:`MS_UL`, :data:`MS_UC`, :data:`MS_UR`, :data:`MS_LL`, :data:`MS_LC`, or :data:`MS_LR`
+    int transparent; ///< Allows transparency for an embedded scalebar - see :ref:`TRANSPARENT <mapfile-scalebar-transparent>`
+    colorObj imagecolor; ///< Background color of scalebar - see :ref:`IMAGECOLOR <mapfile-scalebar-imagecolor>`
+    int height; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
+    int width; ///< Height in pixels - see :ref:`SIZE <mapfile-scalebar-size>`
+    int style; ///< 0 or 1 - see :ref:`STYLE <mapfile-scalebar-style>`
+    int intervals; ///< Number of intervals - see :ref:`INTERVALS <mapfile-scalebar-intervals>`
+    labelObj label; ///< Scalebar label - see :ref:`LABEL <mapfile-scalebar-label>`
+    colorObj color; ///< Scalebar foreground color - see :ref:`COLOR <mapfile-scalebar-color>`
+    colorObj backgroundcolor; ///< Scalebar background color - see :ref:`BACKGROUNDCOLOR <mapfile-scalebar-backgroundcolor>`
+    colorObj outlinecolor; ///< Foreground outline color - see :ref:`OUTLINECOLOR <mapfile-scalebar-outlinecolor>`
+    int units; ///< See :ref:`UNITS <mapfile-scalebar-units>`
+    int status; ///< ON, OFF or EMBED - see :ref:`STATUS <mapfile-scalebar-status>` - :data:`MS_ON`, :data:`MS_OFF`, or :data:`MS_EMBED`.
+    int position; ///< For embeded scalebars - see :ref:`POSITION <mapfile-scalebar-position>` -
+                  ///< :data:`MS_UL`, :data:`MS_UC`, :data:`MS_UR`, :data:`MS_LL`, :data:`MS_LC`, or :data:`MS_LR`
 
-      int postlabelcache; ///< See :ref:`POSTLABELCACHE <mapfile-scalebar-postlabelcache>` - :data:`MS_TRUE` or :data:`MS_FALSE`
-      int align; ///< See :ref:`ALIGN <mapfile-scalebar-align>`
-      int offsetx; ///< See :ref:`OFFSET <mapfile-scalebar-offset>`
-      int offsety; ///< See :ref:`OFFSET <mapfile-scalebar-offset>`
+    int postlabelcache; ///< See :ref:`POSTLABELCACHE <mapfile-scalebar-postlabelcache>` - :data:`MS_TRUE` or :data:`MS_FALSE`
+    int align; ///< See :ref:`ALIGN <mapfile-scalebar-align>`
+    int offsetx; ///< See :ref:`OFFSET <mapfile-scalebar-offset>`
+    int offsety; ///< See :ref:`OFFSET <mapfile-scalebar-offset>`
+    char *urlupdate; ///< Url updatable properies
   } scalebarObj;
 
   /************************************************************************/
