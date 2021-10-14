@@ -1,0 +1,214 @@
+#
+# Tests the centerline, inner and outer GEOMTRANSFORM functions.
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG
+#
+# RUN_PARMS: centerline1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline1" > [RESULT_DEMIME]
+# RUN_PARMS: centerline2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline2" > [RESULT_DEMIME]
+# RUN_PARMS: centerline3_exception.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline3" > [RESULT_DEVERSION]
+# RUN_PARMS: centerline4_exception.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline4" > [RESULT_DEVERSION]
+#
+MAP
+  NAME "centerline"
+  STATUS ON
+  # EXTENT -125.549477 -69.508628 101.670954 15.840339
+  # EXTENT -131.343925 -41.285156 170.097978 115.727752
+  EXTENT -135.620276 -69.508628 173.802333 104.769497
+  SIZE 400 300
+  FONTSET "fonts.lst"
+  IMAGETYPE png24
+
+  SHAPEPATH "../renderers/data"
+
+  # CONFIG MS_ERRORFILE "stderr"
+
+  SYMBOL NAME 'vertex' TYPE ELLIPSE POINTS 1 1 END FILLED TRUE END
+
+  LAYER
+    NAME 'base'
+    TYPE POLYGON
+    STATUS DEFAULT
+    DATA 'world_testpoly'
+    CLASS
+      STYLE
+        COLOR 181 181 181
+        OUTLINECOLOR 51 51 51
+      END
+    END
+  END
+
+  LAYER
+    NAME 'outer'
+    TYPE LINE
+    STATUS DEFAULT
+    DATA 'world_testpoly'
+    GEOMTRANSFORM (outer([shape]))
+    CLASS
+      STYLE
+        COLOR 0 0 0
+        WIDTH 2
+      END
+    END
+  END
+
+  LAYER
+    NAME 'inner'
+    TYPE LINE
+    STATUS DEFAULT
+    DATA 'world_testpoly'
+    GEOMTRANSFORM (inner([shape]))
+    CLASS
+      STYLE
+        COLOR 255 0 0
+        WIDTH 2
+      END
+    END
+  END
+
+  LAYER
+    NAME 'centerline1'
+    TYPE LINE
+    STATUS OFF
+    DATA 'world_testpoly'
+    GEOMTRANSFORM (centerline(densify([shape], 5)))
+    CLASS
+      LABEL
+        TEXT 'sample label'
+        TYPE TRUETYPE
+        FONT 'lucida'
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+        SIZE 8
+        MAXOVERLAPANGLE 50
+        ANGLE FOLLOW
+      END
+      STYLE
+        COLOR 0 0 0
+        WIDTH 1
+        PATTERN 5 5 END
+      END
+      STYLE
+        GEOMTRANSFORM VERTICES
+        SYMBOL 'vertex'
+        COLOR 0 0 255
+        SIZE 3
+      END
+      STYLE
+        GEOMTRANSFORM START
+        SYMBOL 'vertex'
+        COLOR 255 0 0
+        SIZE 5
+      END
+      STYLE
+        GEOMTRANSFORM "END"
+        SYMBOL 'vertex'
+        COLOR 0 255 0
+        SIZE 5
+      END
+    END
+  END
+
+  LAYER
+    NAME 'centerline2'
+    TYPE LINE
+    STATUS OFF
+    DATA 'world_testpoly'
+    GEOMTRANSFORM (smoothsia(centerline(densify([shape], 5))))
+    CLASS
+      LABEL
+        TEXT 'sample label'
+        TYPE TRUETYPE
+        FONT 'lucida'
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+        SIZE 8
+        MAXOVERLAPANGLE 50
+        ANGLE FOLLOW
+      END
+      STYLE
+        COLOR 0 0 0
+        WIDTH 1
+        PATTERN 5 5 END
+      END
+      STYLE
+        GEOMTRANSFORM VERTICES
+        SYMBOL 'vertex'
+        COLOR 0 0 255
+        SIZE 3
+      END
+      STYLE
+        GEOMTRANSFORM START
+        SYMBOL 'vertex'
+        COLOR 255 0 0
+        SIZE 5
+      END
+      STYLE
+        GEOMTRANSFORM "END"
+        SYMBOL 'vertex'
+        COLOR 0 255 0
+        SIZE 5
+      END
+    END
+  END
+
+  # should error, shapes are too simple and need to be densified
+  LAYER
+    NAME 'centerline3'
+    TYPE LINE
+    STATUS OFF
+    DATA 'world_testpoly'
+    GEOMTRANSFORM (centerline([shape]))
+    CLASS
+      LABEL
+        TEXT 'sample label'
+        TYPE TRUETYPE
+        FONT 'lucida'
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+        SIZE 8
+        MAXOVERLAPANGLE 50
+        ANGLE FOLLOW
+      END
+      STYLE
+        COLOR 0 0 0
+        WIDTH 1
+        PATTERN 5 5 END
+      END
+      STYLE
+        GEOMTRANSFORM VERTICES
+        SYMBOL 'vertex'
+        COLOR 0 0 255
+        SIZE 3
+      END
+      STYLE
+        GEOMTRANSFORM START
+        SYMBOL 'vertex'
+        COLOR 255 0 0
+        SIZE 5
+      END
+      STYLE
+        GEOMTRANSFORM "END"
+        SYMBOL 'vertex'
+        COLOR 0 255 0
+        SIZE 5
+      END
+    END
+  END
+
+  # should error, centerline() requires polygon input
+  LAYER
+    NAME 'centerline4'
+    TYPE LINE
+    STATUS OFF
+    DATA 'world_testlines'
+    GEOMTRANSFORM (centerline([shape]))
+    CLASS
+      STYLE
+        COLOR 0 0 0
+        WIDTH 2
+        PATTERN 5 5 END
+      END
+    END
+  END
+
+END

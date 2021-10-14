@@ -197,6 +197,7 @@ shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing)
 
   newShape = (shapeObj *) msSmallMalloc(sizeof (shapeObj));
   msInitShape(newShape);
+  newShape->type = shape->type; // preserve the type
 
   if (ss < 3)
     ss = 3;
@@ -305,6 +306,6 @@ shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing)
   
   free(p);
   free(coeff);
-  
+
   return newShape;
 }
