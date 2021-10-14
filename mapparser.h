@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_MAPPARSER_H_INCLUDED
-# define YY_YY_MAPPARSER_H_INCLUDED
+#ifndef YY_YY_VAGRANT_MAPPARSER_H_INCLUDED
+# define YY_YY_VAGRANT_MAPPARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -83,13 +83,17 @@ extern int yydebug;
     FIRSTCAP = 293,
     TOSTRING = 294,
     YYBUFFER = 295,
-    DIFFERENCE = 296,
-    SIMPLIFY = 297,
-    SIMPLIFYPT = 298,
-    GENERALIZE = 299,
-    SMOOTHSIA = 300,
-    JAVASCRIPT = 301,
-    NEG = 302
+    INNER = 296,
+    OUTER = 297,
+    DIFFERENCE = 298,
+    DENSIFY = 299,
+    SIMPLIFY = 300,
+    SIMPLIFYPT = 301,
+    GENERALIZE = 302,
+    SMOOTHSIA = 303,
+    CENTERLINE = 304,
+    JAVASCRIPT = 305,
+    NEG = 306
   };
 #endif
 /* Tokens.  */
@@ -131,13 +135,17 @@ extern int yydebug;
 #define FIRSTCAP 293
 #define TOSTRING 294
 #define YYBUFFER 295
-#define DIFFERENCE 296
-#define SIMPLIFY 297
-#define SIMPLIFYPT 298
-#define GENERALIZE 299
-#define SMOOTHSIA 300
-#define JAVASCRIPT 301
-#define NEG 302
+#define INNER 296
+#define OUTER 297
+#define DIFFERENCE 298
+#define DENSIFY 299
+#define SIMPLIFY 300
+#define SIMPLIFYPT 301
+#define GENERALIZE 302
+#define SMOOTHSIA 303
+#define CENTERLINE 304
+#define JAVASCRIPT 305
+#define NEG 306
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -152,7 +160,7 @@ union YYSTYPE
   struct tm tmval;
   shapeObj *shpval;
 
-#line 156 "mapparser.h" /* yacc.c:1909  */
+#line 164 "/vagrant/mapparser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -164,4 +172,4 @@ typedef union YYSTYPE YYSTYPE;
 
 int yyparse (parseObj *p);
 
-#endif /* !YY_YY_MAPPARSER_H_INCLUDED  */
+#endif /* !YY_YY_VAGRANT_MAPPARSER_H_INCLUDED  */
