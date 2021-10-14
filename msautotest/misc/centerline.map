@@ -4,6 +4,7 @@
 # REQUIRES: INPUT=SHAPE OUTPUT=PNG
 #
 # RUN_PARMS: centerline1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline1" > [RESULT_DEMIME]
+# RUN_PARMS: centerline2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline2" > [RESULT_DEMIME]
 # RUN_PARMS: centerline3_exception.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline3" > [RESULT_DEVERSION]
 # RUN_PARMS: centerline4_exception.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=centerline4" > [RESULT_DEVERSION]
 #
