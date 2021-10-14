@@ -49,7 +49,7 @@ int yyerror(parseObj *, const char *);
 %left AREA LENGTH COMMIFY ROUND
 %left UPPER LOWER INITCAP FIRSTCAP
 %left TOSTRING
-%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA JAVASCRIPT
+%left YYBUFFER INNER OUTER DIFFERENCE DENSIFY SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA CENTERLINE JAVASCRIPT
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -417,8 +417,14 @@ logical_exp: BOOLEAN
   | shape_exp EQ shape_exp {
     int rval;
     rval = msGEOSEquals($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Equals (EQ or ==) operator failed.");
       return(-1);
@@ -428,8 +434,14 @@ logical_exp: BOOLEAN
   | EQUALS '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSEquals($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Equals function failed.");
       return(-1);
@@ -439,8 +451,14 @@ logical_exp: BOOLEAN
   | INTERSECTS '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSIntersects($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Intersects function failed.");
       return(-1);
@@ -450,8 +468,14 @@ logical_exp: BOOLEAN
   | shape_exp INTERSECTS shape_exp {
     int rval;
     rval = msGEOSIntersects($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3); 
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Intersects operator failed.");
       return(-1);
@@ -461,8 +485,14 @@ logical_exp: BOOLEAN
   | DISJOINT '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSDisjoint($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Disjoint function failed.");
       return(-1);
@@ -472,8 +502,14 @@ logical_exp: BOOLEAN
   | shape_exp DISJOINT shape_exp {
     int rval;
     rval = msGEOSDisjoint($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Disjoint operator failed.");
       return(-1);
@@ -483,8 +519,14 @@ logical_exp: BOOLEAN
   | TOUCHES '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSTouches($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Touches function failed.");
       return(-1);
@@ -494,8 +536,14 @@ logical_exp: BOOLEAN
   | shape_exp TOUCHES shape_exp {
     int rval;
     rval = msGEOSTouches($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Touches operator failed.");
       return(-1);
@@ -505,8 +553,14 @@ logical_exp: BOOLEAN
   | OVERLAPS '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSOverlaps($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Overlaps function failed.");
       return(-1);
@@ -516,8 +570,14 @@ logical_exp: BOOLEAN
   | shape_exp OVERLAPS shape_exp {
     int rval;
      rval = msGEOSOverlaps($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+     if($1 && $1->scratch == MS_TRUE) {
+       msFreeShape($1);
+       free($1);
+     }
+     if($3 && $3->scratch == MS_TRUE) {
+       msFreeShape($3);
+       free($3);
+     }
     if(rval == -1) {
       yyerror(p, "Overlaps operator failed.");
       return(-1);
@@ -527,8 +587,14 @@ logical_exp: BOOLEAN
   | CROSSES '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSCrosses($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Crosses function failed.");
       return(-1);
@@ -538,8 +604,14 @@ logical_exp: BOOLEAN
   | shape_exp CROSSES shape_exp {
     int rval;
     rval = msGEOSCrosses($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Crosses operator failed.");
       return(-1);
@@ -549,8 +621,14 @@ logical_exp: BOOLEAN
   | WITHIN '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSWithin($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Within function failed.");
       return(-1);
@@ -560,8 +638,14 @@ logical_exp: BOOLEAN
   | shape_exp WITHIN shape_exp {
     int rval;
     rval = msGEOSWithin($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Within operator failed.");
       return(-1);
@@ -571,8 +655,14 @@ logical_exp: BOOLEAN
   | CONTAINS '(' shape_exp ',' shape_exp ')' {
     int rval;
     rval = msGEOSContains($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(rval == -1) {
       yyerror(p, "Contains function failed.");
       return(-1);
@@ -582,8 +672,14 @@ logical_exp: BOOLEAN
   | shape_exp CONTAINS shape_exp {
     int rval;
     rval = msGEOSContains($1, $3);
-    if($1->scratch == MS_TRUE) msFreeShape($1);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($1 && $1->scratch == MS_TRUE) {
+      msFreeShape($1);
+      free($1);
+    }
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(rval == -1) {
       yyerror(p, "Contains operator failed.");
       return(-1);
@@ -592,9 +688,15 @@ logical_exp: BOOLEAN
   }
   | DWITHIN '(' shape_exp ',' shape_exp ',' math_exp ')' {
     double d;
-    d = msGEOSDistance($3, $5);    
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    d = msGEOSDistance($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(d <= $7)
       $$ = MS_TRUE;
     else
@@ -603,8 +705,14 @@ logical_exp: BOOLEAN
   | BEYOND '(' shape_exp ',' shape_exp ',' math_exp ')' {
     double d;
     d = msGEOSDistance($3, $5);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
-    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if($5 && $5->scratch == MS_TRUE) {
+      msFreeShape($5);
+      free($5);
+    }
     if(d > $7)
       $$ = MS_TRUE;
     else
@@ -634,7 +742,10 @@ math_exp: NUMBER
       return(-1);
     }
     $$ = msGetPolygonArea($3);
-    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
   }
   | ROUND '(' math_exp ',' math_exp ')' { $$ = (MS_NINT($3/$5))*$5; }
   | ROUND '(' math_exp ')' { $$ = (MS_NINT($3)); }
@@ -645,8 +756,54 @@ shape_exp: SHAPE
   | YYBUFFER '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGEOSBuffer($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing buffer failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | INNER '(' shape_exp ')' {
+    shapeObj *s;
+    s = msRings2Shape($3, MS_FALSE);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if(!s) {
+      yyerror(p, "Executing inner failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | OUTER '(' shape_exp ')' {
+    shapeObj *s;
+    s = msRings2Shape($3, MS_TRUE);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if(!s) {
+      yyerror(p, "Executing outer failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | CENTERLINE '(' shape_exp ')' {
+    shapeObj *s;
+    s = msGEOSCenterline($3);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if(!s) {
+      yyerror(p, "Executing centerline failed.");
       return(-1);
     }
     s->scratch = MS_TRUE;
@@ -655,8 +812,26 @@ shape_exp: SHAPE
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
     shapeObj *s;
     s = msGEOSDifference($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing difference failed.");
+      return(-1);
+    }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
+  | DENSIFY '(' shape_exp ',' math_exp ')' {
+    shapeObj *s;
+    s = msDensify($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
+    if(!s) {
+      yyerror(p, "Executing densify failed.");
       return(-1);
     }
     s->scratch = MS_TRUE;
@@ -665,6 +840,10 @@ shape_exp: SHAPE
   | SIMPLIFY '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGEOSSimplify($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing simplify failed.");
       return(-1);
@@ -675,6 +854,10 @@ shape_exp: SHAPE
   | SIMPLIFYPT '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing simplifypt failed.");
       return(-1);
@@ -685,6 +868,10 @@ shape_exp: SHAPE
   | GENERALIZE '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msGeneralize($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing generalize failed.");
       return(-1);
@@ -695,6 +882,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, 3, 1, NULL);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -705,6 +896,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, 1, NULL);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -715,6 +910,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, $7, NULL);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -725,6 +924,10 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ',' string_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, $7, $9);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     free($9);
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
@@ -737,6 +940,10 @@ shape_exp: SHAPE
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
     s = msV8TransformShape($3, $5);
+    if($3 && $3->scratch == MS_TRUE) {
+      msFreeShape($3);
+      free($3);
+    }
     free($5);
     if(!s) {
       yyerror(p, "Executing javascript failed.");
@@ -938,6 +1145,10 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
   case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
   case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;
+  case MS_TOKEN_FUNCTION_CENTERLINE: token = CENTERLINE; break;
+  case MS_TOKEN_FUNCTION_DENSIFY: token = DENSIFY; break;
+  case MS_TOKEN_FUNCTION_INNER: token = INNER; break;
+  case MS_TOKEN_FUNCTION_OUTER: token = OUTER; break;
   case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;
 
   default:
