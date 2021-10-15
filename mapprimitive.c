@@ -516,10 +516,10 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
   double x1, x2, y1, y2;
   shapeObj tmp;
 
-  memset( &tmp, 0, sizeof(shapeObj) );
-
-  if(shape->numlines == 0) /* nothing to clip */
+  if(!shape || shape->numlines == 0) /* nothing to clip */
     return;
+
+  memset( &tmp, 0, sizeof(shapeObj) );
 
   /*
   ** Don't do any clip processing of shapes completely within the
@@ -598,10 +598,10 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
   shapeObj tmp;
   lineObj line= {0,NULL};
 
-  msInitShape(&tmp);
-
-  if(shape->numlines == 0) /* nothing to clip */
+  if(!shape || shape->numlines == 0) /* nothing to clip */
     return;
+
+  msInitShape(&tmp);
 
   /*
   ** Don't do any clip processing of shapes completely within the
@@ -1254,6 +1254,8 @@ double msGetPolygonArea(shapeObj *p)
 {
   int i;
   double area=0;
+
+  if(!p) return 0;
 
   for(i=0; i<p->numlines; i++) {
     if(msIsOuterRing(p, i))
