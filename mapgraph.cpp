@@ -40,7 +40,7 @@ graphObj *msCreateGraph(signed int numnodes)
   graph = (graphObj *) malloc(sizeof(graphObj));
   if(!graph) return nullptr;
 
-  graph->head = (graphNodeObj **) calloc(numnodes, sizeof(graphNodeObj));
+  graph->head = (graphNodeObj **) calloc(numnodes, sizeof(graphNodeObj*));
   if(!graph->head) {
     free(graph);
     return nullptr;
