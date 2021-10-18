@@ -238,7 +238,9 @@ int msIsOuterRing(shapeObj *shape, int r)
   int i, status=MS_TRUE;
   int result1, result2;
 
-  if(shape->numlines == 1) return(MS_TRUE);
+  if(!shape) return MS_FALSE ;
+  if(shape->numlines == 1) return MS_TRUE;
+  if(r < 0 || r >= shape->numlines) return MS_FALSE; /* bad ring index */
 
   for(i=0; i<shape->numlines; i++) {
     if(i == r) continue;
@@ -271,13 +273,15 @@ int *msGetOuterList(shapeObj *shape)
   int i;
   int *list;
 
+  if(!shape) return NULL;
+
   list = (int *)malloc(sizeof(int)*shape->numlines);
   MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
 
   for(i=0; i<shape->numlines; i++)
     list[i] = msIsOuterRing(shape, i);
 
-  return(list);
+  return list;
 }
 
 /*
@@ -287,6 +291,9 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
 {
   int i;
   int *list;
+
+  if(!shape || !outerlist) return NULL;
+  if(r < 0 || r >= shape->numlines) return NULL; /* bad ring index */
 
   list = (int *)malloc(sizeof(int)*shape->numlines);
   MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
@@ -509,10 +516,10 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
   double x1, x2, y1, y2;
   shapeObj tmp;
 
-  memset( &tmp, 0, sizeof(shapeObj) );
-
-  if(shape->numlines == 0) /* nothing to clip */
+  if(!shape || shape->numlines == 0) /* nothing to clip */
     return;
+
+  memset( &tmp, 0, sizeof(shapeObj) );
 
   /*
   ** Don't do any clip processing of shapes completely within the
@@ -591,10 +598,10 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
   shapeObj tmp;
   lineObj line= {0,NULL};
 
-  msInitShape(&tmp);
-
-  if(shape->numlines == 0) /* nothing to clip */
+  if(!shape || shape->numlines == 0) /* nothing to clip */
     return;
+
+  msInitShape(&tmp);
 
   /*
   ** Don't do any clip processing of shapes completely within the
@@ -1247,6 +1254,8 @@ double msGetPolygonArea(shapeObj *p)
 {
   int i;
   double area=0;
+
+  if(!p) return 0;
 
   for(i=0; i<p->numlines; i++) {
     if(msIsOuterRing(p, i))
@@ -2345,6 +2354,8 @@ shapeObj *msRings2Shape(shapeObj *shape, int outer) {
   if(!shape) return NULL;
   if(shape->type != MS_SHAPE_POLYGON) return NULL;
 
+  outer = (outer)?1:0; // set explicitly to 1 or 0
+
   shape2 = (shapeObj *) malloc(sizeof(shapeObj));
   MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
   msInitShape(shape2);
@@ -2382,6 +2393,7 @@ shapeObj *msDensify(shapeObj *shape, double tolerance) {
 
   if(!shape) return NULL;
   if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE) return NULL;
+  if(tolerance <= 0) return NULL; // must be positive
 
   shape2 = (shapeObj *) malloc(sizeof(shapeObj));
   MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
