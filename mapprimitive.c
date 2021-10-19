@@ -238,7 +238,9 @@ int msIsOuterRing(shapeObj *shape, int r)
   int i, status=MS_TRUE;
   int result1, result2;
 
-  if(shape->numlines == 1) return(MS_TRUE);
+  if(!shape) return MS_FALSE ;
+  if(shape->numlines == 1) return MS_TRUE;
+  if(r < 0 || r >= shape->numlines) return MS_FALSE; /* bad ring index */
 
   for(i=0; i<shape->numlines; i++) {
     if(i == r) continue;
@@ -271,13 +273,15 @@ int *msGetOuterList(shapeObj *shape)
   int i;
   int *list;
 
+  if(!shape) return NULL;
+
   list = (int *)malloc(sizeof(int)*shape->numlines);
   MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
 
   for(i=0; i<shape->numlines; i++)
     list[i] = msIsOuterRing(shape, i);
 
-  return(list);
+  return list;
 }
 
 /*
@@ -287,6 +291,9 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
 {
   int i;
   int *list;
+
+  if(!shape || !outerlist) return NULL;
+  if(r < 0 || r >= shape->numlines) return NULL; /* bad ring index */
 
   list = (int *)malloc(sizeof(int)*shape->numlines);
   MS_CHECK_ALLOC(list, sizeof(int)*shape->numlines, NULL);
@@ -509,10 +516,10 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
   double x1, x2, y1, y2;
   shapeObj tmp;
 
-  memset( &tmp, 0, sizeof(shapeObj) );
-
-  if(shape->numlines == 0) /* nothing to clip */
+  if(!shape || shape->numlines == 0) /* nothing to clip */
     return;
+
+  memset( &tmp, 0, sizeof(shapeObj) );
 
   /*
   ** Don't do any clip processing of shapes completely within the
@@ -591,10 +598,10 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
   shapeObj tmp;
   lineObj line= {0,NULL};
 
-  msInitShape(&tmp);
-
-  if(shape->numlines == 0) /* nothing to clip */
+  if(!shape || shape->numlines == 0) /* nothing to clip */
     return;
+
+  msInitShape(&tmp);
 
   /*
   ** Don't do any clip processing of shapes completely within the
@@ -1247,6 +1254,8 @@ double msGetPolygonArea(shapeObj *p)
 {
   int i;
   double area=0;
+
+  if(!p) return 0;
 
   for(i=0; i<p->numlines; i++) {
     if(msIsOuterRing(p, i))
@@ -2338,3 +2347,89 @@ int msIsDegenerateShape(shapeObj *shape)
   return( non_degenerate_parts == 0 );
 }
 
+shapeObj *msRings2Shape(shapeObj *shape, int outer) {
+  shapeObj *shape2;
+  int i, rv, *outerList=NULL;
+
+  if(!shape) return NULL;
+  if(shape->type != MS_SHAPE_POLYGON) return NULL;
+
+  outer = (outer)?1:0; // set explicitly to 1 or 0
+
+  shape2 = (shapeObj *) malloc(sizeof(shapeObj));
+  MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
+  msInitShape(shape2);
+  shape2->type = shape->type;
+
+  outerList = msGetOuterList(shape);
+  if(!outerList) {
+    msFreeShape(shape2);
+    free(shape2);
+    return NULL;
+  }
+
+  for(i=0; i<shape->numlines; i++) {
+    if(outerList[i] == outer) { // else inner
+      rv = msAddLine(shape2, &(shape->line[i]));
+      if(rv != MS_SUCCESS) {
+        msFreeShape(shape2);
+        free(shape2);
+        free(outerList);
+        return NULL;
+      }
+    }
+  }
+
+  free(outerList); // clean up
+  return shape2;
+}
+
+shapeObj *msDensify(shapeObj *shape, double tolerance) {
+  int i, j, k, l; // counters                                                                                                                                                
+  int n;
+  shapeObj *shape2;
+  lineObj line;
+  double distance, length, c;
+
+  if(!shape) return NULL;
+  if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE) return NULL;
+  if(tolerance <= 0) return NULL; // must be positive
+
+  shape2 = (shapeObj *) malloc(sizeof(shapeObj));
+  MS_CHECK_ALLOC(shape2, sizeof(shapeObj), NULL);
+  msInitShape(shape2);
+  shape2->type = shape->type; // POLGYON or LINE
+
+  for(i=0; i<shape->numlines; i++) {
+
+    line.numpoints = shape->line[i].numpoints;
+    line.point = (pointObj *) malloc(sizeof(pointObj)*line.numpoints); // best case we don't have to add any points
+    MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, NULL);
+
+    for(j=0, l=0; j<shape->line[i].numpoints-1; j++, l++) {
+      line.point[l] = shape->line[i].point[j];
+
+      distance = msDistancePointToPoint(&(shape->line[i].point[j]), &(shape->line[i].point[j+1]));
+      if(distance > tolerance) {
+        n = (int) floor(distance/tolerance); // number of new points, n+1 is the number of new segments
+        length = distance/(n+1); // segment length
+
+        line.numpoints += n;
+        line.point = (pointObj *) realloc(line.point, sizeof(pointObj)*line.numpoints);
+        MS_CHECK_ALLOC(line.point, sizeof(pointObj)*line.numpoints, NULL);
+
+        for(k=0; k<n; k++) {
+          c = (k+1)*length/distance;
+          l++;
+          line.point[l].x = shape->line[i].point[j].x + c*(shape->line[i].point[j+1].x - shape->line[i].point[j].x);
+          line.point[l].y = shape->line[i].point[j].y + c*(shape->line[i].point[j+1].y - shape->line[i].point[j].y);
+        }
+      }
+    }
+    line.point[l] = shape->line[i].point[j];
+
+    msAddLineDirectly(shape2, &line);
+  }
+
+  return shape2;
+}
