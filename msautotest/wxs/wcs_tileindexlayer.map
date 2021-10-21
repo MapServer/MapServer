@@ -1,0 +1,114 @@
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS SUPPORTS=PROJ
+#
+# RUN_PARMS: wcs_get_capabilities_indexlayers.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: wcs_describe_coverage_indexlayers_a.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=DescribeCoverage&COVERAGE=a" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: wcs_get_coverage_indexlayers_a.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=8&HEIGHT=8&FORMAT=image/tiff&BBOX=110.0,-18,118.0,-10.0&COVERAGE=a&CRS=EPSG:4326" > [RESULT_DEMIME]
+#
+# RUN_PARMS: wcs_get_coverage_indexlayers_a_20200101.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=8&HEIGHT=8&FORMAT=image/tiff&BBOX=110.0,-18,118.0,-10.0&COVERAGE=a&CRS=EPSG:4326&TIME=2020-01-01" > [RESULT_DEMIME]
+#
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 8 8
+EXTENT 110 -18 118 -10
+IMAGECOLOR 0 0 0
+
+PROJECTION
+    "+init=epsg:4326"
+END
+
+OUTPUTFORMAT
+  NAME GEOTIFF_F32
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE FLOAT32
+  EXTENSION "tif"
+END
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wcs_onlineresource"   "http://localhost/path/to/?"
+    "wcs_srs"              "EPSG:4326"
+    "wcs_label"            "title"
+    "ows_enable_request"   "*"
+  END
+END
+
+SHAPEPATH "data/raster_timeseries/"
+
+LAYER
+  NAME "a_index"
+  PROJECTION
+    "init=epsg:4326"
+  END
+  TYPE TILEINDEX
+  STATUS OFF
+  DATA "index.shp"
+  # This filter should be APPENDED to, by WCS or WMS time queries
+  FILTER ( "[layer]" eq "a" )
+END
+
+LAYER
+  NAME a
+  TYPE raster
+  STATUS ON
+  TILEINDEX a_index
+  TILEITEM "location"
+  PROJECTION
+    "+init=epsg:4326"
+  END
+  METADATA
+   "wcs_enable_request"   "*"
+   "wcs_label"       "wcs_layer_a"
+   "wcs_rangeset_name"   "Range 1"  ### required to support DescribeCoverage request
+   "wcs_rangeset_label"  "My Label" ### required to support DescribeCoverage request
+   "wcs_extent"      "110 -18 118 -10"
+   "wcs_rangeset_nullvalue" "-1.0"
+   "wcs_timeposition" "2020-01-01,2020-01-02"
+   "wcs_nilvalues" "-1.0"
+   "wcs_timeitem" "date"
+   "wcs_size"        "8 8"
+   "wcs_resolution"  "1 1"
+   "wcs_srs"         "EPSG:4326"
+  END
+END
+
+LAYER
+  NAME b
+  TYPE raster
+  STATUS ON
+  TILEINDEX b_index
+  TILEITEM "location"
+  PROJECTION
+    "+init=epsg:4326"
+  END
+  METADATA
+   "wcs_enable_request"   "*"
+   "wcs_label"       "wcs_layer_b"
+   "wcs_rangeset_name"   "Range 1"  ### required to support DescribeCoverage request
+   "wcs_rangeset_label"  "My Label" ### required to support DescribeCoverage request
+   "wcs_extent"      "110 -18 118 -10"
+   "wcs_rangeset_nullvalue" "-1.0"
+   "wcs_timeposition" "2020-01-01,2020-01-02"
+   "wcs_nilvalues" "-1.0"
+   "wcs_timeitem" "date"
+   "wcs_size"        "8 8"
+   "wcs_resolution"  "1 1"
+   "wcs_srs"         "EPSG:4326"
+  END
+END
+
+END # of map file
