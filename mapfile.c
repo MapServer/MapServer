@@ -5353,7 +5353,10 @@ int loadScalebar(scalebarObj *scalebar)
 int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_string)
 {
   if(!scalebar || !string) return MS_FAILURE;
-  if(url_string && !scalebar->urlupdate) return MS_SUCCESS; // skip update silently
+  if(url_string && !scalebar->urlupdate) {
+    msDebug("URL update for scalebar skipped, urlupdate property not set.\n");
+    return MS_SUCCESS; // skip update silently
+  }
 
   msAcquireLock( TLOCK_PARSER );
 
