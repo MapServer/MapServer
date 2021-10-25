@@ -40,6 +40,7 @@
 #include "mapows.h"
 
 #include "gdal.h"
+#include "cpl_conv.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
@@ -1560,6 +1561,7 @@ char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
   char szPath[MS_MAXPATHLEN];
   const char *fullPath;
   const char *tmpBase;
+  const char *ms_temppath;
 #ifdef _WIN32
   DWORD dwRetVal = 0;
   TCHAR lpTempPathBuffer[MAX_PATH];
@@ -1569,8 +1571,8 @@ char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
     tmpBase = ForcedTmpBase;
   else if (tmppath != NULL)
     tmpBase = tmppath;
-  else if (getenv("MS_TEMPPATH"))
-    tmpBase = getenv("MS_TEMPPATH");
+  else if ((ms_temppath = CPLGetConfigOption("MS_TEMPPATH", NULL)) != NULL)
+    tmpBase = ms_temppath;
   else if (map && map->web.temppath)
     tmpBase = map->web.temppath;
   else { /* default paths */
@@ -1993,7 +1995,7 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
 int msSetup()
 {
 #ifdef _WIN32
-  char* maxfiles = getenv("MS_MAX_OPEN_FILES");
+  const char *maxfiles = CPLGetConfigOption("MS_MAX_OPEN_FILES", NULL);
   if (maxfiles) {
     int res = _getmaxstdio();
     if (res < 2048) {

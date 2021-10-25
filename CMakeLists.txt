@@ -291,7 +291,7 @@ mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c
 idw.c interpolation.c
-mapcompositingfilter.c mapmvt.c mapiconv.c mapgraph.cpp)
+mapcompositingfilter.c mapmvt.c mapiconv.c mapgraph.cpp mapserv-config.cpp)
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
@@ -300,7 +300,7 @@ maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
 mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h mapogcapi.h
 mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
-mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h mapgraph.h)
+mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h mapgraph.h mapserv-config.h)
 
 if(WIN32)
 	configure_file(
@@ -1049,16 +1049,22 @@ if(UNIX)
 else()
   set(DEFAULT_DATA_SUBDIR share/mapserver)
 endif()
+set(DEFAULT_CONFIG_FILE ${CMAKE_INSTALL_FULL_SYSCONFDIR}/mapserver.conf)
 
 # Locations are changeable by user to customize layout of MapServer installation
 # (default values are platform-specific)
 set(MAPSERVER_DATA_SUBDIR ${DEFAULT_DATA_SUBDIR} CACHE STRING
   "Subdirectory where data will be installed")
 
+set(MAPSERVER_CONFIG_FILE "${DEFAULT_CONFIG_FILE}" CACHE STRING
+  "Full file name for default configuration file (mapserver.conf)")
+
 # Mark *DIR variables as advanced and dedicated to use by power-users only.
 mark_as_advanced(
   MAPSERVER_DATA_SUBDIR
+  MAPSERVER_CONFIG_FILE
 )
+add_definitions(-DMAPSERVER_CONFIG_FILE="${MAPSERVER_CONFIG_FILE}")
 
 install(
   FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection.html
@@ -1072,4 +1078,9 @@ install(
         ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/landing.html
         ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/openapi.html
   DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-plain/
+)
+
+install(
+  FILES ${PROJECT_SOURCE_DIR}/etc/mapserver-sample.conf
+  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/
 )

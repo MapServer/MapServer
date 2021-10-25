@@ -48,7 +48,7 @@
 mapObj *mapObj_new(char *filename, char *new_path)
 {
   if(filename && strlen(filename))
-    return msLoadMap(filename, new_path);
+    return msLoadMap(filename, new_path, NULL);
   else { /* create an empty map, no layers etc... */
     return msNewMapObj();
   }

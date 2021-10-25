@@ -69,6 +69,9 @@ cat <<EOF >/etc/apache2/sites-available/001-mapserver.conf
  ErrorLog \${APACHE_LOG_DIR}/mapserv-error.log
  CustomLog \${APACHE_LOG_DIR}/mapserv-access.log combined
 
+ SetEnv MAPSERVER_CONFIG_FILE ${WORK_DIR}/msautotest/etc/mapserv.conf
+ FcgidInitialEnv MAPSERVER_CONFIG_FILE ${WORK_DIR}/msautotest/etc/mapserv.conf
+
  ScriptAlias /cgi-bin/ "/tmp/install-mapserver/bin/"
  <Directory "/tmp/install-mapserver/bin">
         AddHandler fcgid-script .fcgi
@@ -107,28 +110,74 @@ cd msautotest/wxs
 
 export PATH=/tmp/install-mapserver/bin:$PATH
 
+# Demonstrate that mapserv will error out if cannot find config file
+mapserv 2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo yes
+mapserv QUERY_STRING="MAP=wfs_simple.map&REQUEST=GetCapabilities" 2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo yes
+
 echo "Check that MS_MAP_NO_PATH works"
-MS_MAP_NO_PATH=1 MYMAPFILE=wfs_simple.map mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAP_NO_PATH" "1"
+  END
+  MAPS
+    "MYMAPFILE" "wfs_simple.map"
+  END
+END
+EOF
+# Also demonstrate that mapserv can find config file in ${CMAKE_INSTALL_FULL_SYSCONFDIR}/etc/mapserver.conf by default
+ln -s /tmp/mapserver.conf /tmp/install-mapserver/etc
+mapserv QUERY_STRING="MAP=MYMAPFILE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+rm /tmp/install-mapserver/etc/mapserver.conf
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
-echo "Check that MS_MAP_NO_PATH cannot be abused with client-controlled env variables"
-MS_MAP_NO_PATH=1 CONTENT_TYPE=wfs_simple.map mapserv QUERY_STRING="MAP=CONTENT_TYPE&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+echo "Check that MS_MAP_NO_PATH works (rejecting a value not defined in the MAPS section)"
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=FOO&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_PATTERN works (accepting valid MAP)"
-MS_MAP_PATTERN="^wfs_simple\.map$" mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAP_PATTERN" "^wfs_simple\.map$"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAP_PATTERN works (rejecting invalid MAP)"
-MS_MAP_PATTERN=mypatternmapserv mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAP_PATTERN" "mypatternmapserv"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that MS_MAPFILE works alone"
-MS_MAPFILE=wfs_simple.map mapserv QUERY_STRING="SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAPFILE" "wfs_simple.map"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Check that a MAP query parameter isn't accepted when MS_MAPFILE and MS_MAP_NO_PATH are specified"
-MS_MAP_NO_PATH=1 MS_MAPFILE=wfs_simple.map mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
+cat <<EOF >/tmp/mapserver.conf
+CONFIG
+  ENV
+    "MS_MAPFILE" "wfs_simple.map"
+    "MS_MAP_NO_PATH" "1"
+  END
+END
+EOF
+MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
 echo "Done !"

@@ -90,6 +90,7 @@ char path[MS_MAXPATHLEN];
 %s INCLUDE
 %s MSSTRING
 %s MULTILINE_COMMENT
+%s CONFIG_FILE
 
 %%
        if (msyystring_buffer == NULL)
@@ -131,7 +132,7 @@ char path[MS_MAXPATHLEN];
          msyy_scan_string(msyystring);
          msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
-         msyyreturncomments=0; 
+         msyyreturncomments=0;
          (void) yyunput; /* just to avoid warning about it being unrefed */
          break;
        case(MS_TOKENIZE_URL_STRING):
@@ -153,6 +154,15 @@ char path[MS_MAXPATHLEN];
          msyystate=MS_TOKENIZE_DEFAULT;
          msyyreturncomments=0;
          break;
+       case(MS_TOKENIZE_CONFIG):
+         BEGIN(CONFIG_FILE);
+         msyystring_begin_state = CONFIG_FILE;
+         msyysource=MS_FILE_TOKENS;
+         msyystate=MS_TOKENIZE_DEFAULT;
+         msyystring=NULL;
+         msyyreturncomments=0;
+         return(0);
+         break;
        case(99):
          BEGIN(INITIAL); /* may not need this one */
          msyystring_begin_state = INITIAL;
@@ -166,9 +176,9 @@ char path[MS_MAXPATHLEN];
          break;
        }
 
-<INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE>[ \t\r]+             ;
+<INITIAL,URL_STRING,EXPRESSION_STRING,INCLUDE,CONFIG_FILE>[ \t\r]+             ;
 
-<INITIAL>(\/\/|#).*                            { if (msyyreturncomments) return(MS_COMMENT); }
+<INITIAL,CONFIG_FILE>(\/\/|#).*             { if (msyyreturncomments) return(MS_COMMENT); }
 
 <INITIAL>\/\*                                  { BEGIN(MULTILINE_COMMENT); }
 <MULTILINE_COMMENT>\*\/                        { BEGIN(INITIAL); }
@@ -177,6 +187,11 @@ char path[MS_MAXPATHLEN];
 <MULTILINE_COMMENT>\n                          { msyylineno++; }
 
 <URL_VARIABLE>_|\.                             ;
+
+<CONFIG_FILE>config                            { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION); }
+<CONFIG_FILE>env                               { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_ENV); }
+<CONFIG_FILE>maps                              { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_MAPS); }
+<CONFIG_FILE>plugins                           { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_PLUGINS) }
 
 <EXPRESSION_STRING>or|\|\|                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_OR); }
 <EXPRESSION_STRING>and|&&                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_AND); }
@@ -264,7 +279,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>driver                                { MS_LEXER_RETURN_TOKEN(DRIVER); }
 <INITIAL>empty                                 { MS_LEXER_RETURN_TOKEN(EMPTY); }
 <INITIAL>encoding                              { MS_LEXER_RETURN_TOKEN(ENCODING); }
-<INITIAL,URL_STRING>end                        { MS_LEXER_RETURN_TOKEN(END); }
+<INITIAL,URL_STRING,CONFIG_FILE>end           { MS_LEXER_RETURN_TOKEN(END); }
 <INITIAL>error                                 { MS_LEXER_RETURN_TOKEN(ERROR); }
 <INITIAL,URL_STRING>expression                 { MS_LEXER_RETURN_TOKEN(EXPRESSION); }
 <INITIAL,URL_VARIABLE,URL_STRING>extent        { MS_LEXER_RETURN_TOKEN(EXTENT); }
@@ -301,7 +316,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>keyimage                   { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
 <INITIAL,URL_STRING>keysize                    { MS_LEXER_RETURN_TOKEN(KEYSIZE); }
 <INITIAL>keyspacing                            { MS_LEXER_RETURN_TOKEN(KEYSPACING); }
-<INITIAL,URL_VARIABLE>label                      { MS_LEXER_RETURN_TOKEN(LABEL); }
+<INITIAL,URL_VARIABLE>label                    { MS_LEXER_RETURN_TOKEN(LABEL); }
 <INITIAL>labelcache                            { MS_LEXER_RETURN_TOKEN(LABELCACHE); }
 <INITIAL>labelformat                           { MS_LEXER_RETURN_TOKEN(LABELFORMAT); }
 <INITIAL,URL_STRING>labelitem                  { MS_LEXER_RETURN_TOKEN(LABELITEM); }
@@ -626,7 +641,7 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_LIST);
                                                }
 
-<INITIAL,URL_STRING>\'|\"                     {
+<INITIAL,URL_STRING,CONFIG_FILE>\'|\"         {
                                                  msyystring_return_state = MS_STRING;
                                                  msyystring_begin = msyytext[0]; 
                                                  msyystring_size = 0;
@@ -719,16 +734,16 @@ char path[MS_MAXPATHLEN];
                                                  BEGIN(MSSTRING);
                                               }
 
-<INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   { 
+<INITIAL,URL_STRING,CONFIG_FILE>[a-z/\.][a-z0-9/\._\-\=]*   { 
                                                     MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                             msyystring_buffer_size, msyystring_buffer_ptr);
                                                     strcpy(msyystring_buffer, msyytext); 
                                                     return(MS_STRING); 
                                                 }
 
-<INITIAL>\n                                     { msyylineno++; }
+<INITIAL,CONFIG_FILE>\n                        { msyylineno++; }
 
-<INITIAL><<EOF>>                                {
+<INITIAL,CONFIG_FILE><<EOF>>                   {
                                                   if( --include_stack_ptr < 0 )
                                                     return(EOF); /* end of main file */
                                                   else {
@@ -743,7 +758,7 @@ char path[MS_MAXPATHLEN];
   return(0); 
 }
 
-<INITIAL,URL_VARIABLE,URL_STRING>.              { 
+<INITIAL,URL_VARIABLE,URL_STRING,CONFIG_FILE>. { 
                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
                                                   strcpy(msyystring_buffer, msyytext); 

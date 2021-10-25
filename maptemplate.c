@@ -35,6 +35,8 @@
 #include "maptile.h"
 #include "mapows.h"
 
+#include "cpl_conv.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -3050,8 +3052,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
     if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
   if(i == mapserv->request->NumParams) {
-    if( getenv("MS_MAPFILE"))
-      pszMapFname = msStringConcatenate(pszMapFname, getenv("MS_MAPFILE"));
+    const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
+    if(ms_mapfile)
+      pszMapFname = msStringConcatenate(pszMapFname, ms_mapfile);
   } else {
     if(getenv(mapserv->request->ParamValues[i])) /* an environment references the actual file to use */
       pszMapFname = msStringConcatenate(pszMapFname, getenv(mapserv->request->ParamValues[i]));
@@ -4498,10 +4501,10 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
 
   /* check if the environment variable or config MS_OPENLAYERS_JS_URL is set */
   tmpUrl = msGetConfigOption(mapserv->map, "MS_OPENLAYERS_JS_URL");
-  if (tmpUrl)
-    openlayersUrl = (char*)tmpUrl;
-  else if (getenv("MS_OPENLAYERS_JS_URL"))
-    openlayersUrl = getenv("MS_OPENLAYERS_JS_URL");
+  if(tmpUrl == NULL) tmpUrl = CPLGetConfigOption("MS_OPENLAYERS_JS_URL", NULL);
+  
+  if(tmpUrl)
+    openlayersUrl = (char *)tmpUrl;
 
   if (mapserv->Mode == BROWSE) {
     msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",

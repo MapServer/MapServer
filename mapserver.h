@@ -118,7 +118,7 @@ typedef struct face_element face_element;
 
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
-typedef ms_uint32 *     ms_bitarray;
+typedef ms_uint32 *ms_bitarray;
 typedef const ms_uint32 *ms_const_bitarray;
 
 #include "maperror.h"
@@ -131,7 +131,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include <assert.h>
 #include "mapproject.h"
 #include "cgiutil.h"
-
+#include "mapserv-config.h"
 
 #include <sys/types.h> /* regular expression support */
 
@@ -1957,6 +1957,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
       queryMapObj querymap; ///< See :ref:`QUERYMAP <mapfile-map-querymap>`
       webObj web; ///< See :ref:`WEB <mapfile-map-web>`
 
+      const configObj *config;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -2114,6 +2115,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int initLayerCompositer(LayerCompositer *compositer);
   MS_DLL_EXPORT void initLeader(labelLeaderObj *leader);
   MS_DLL_EXPORT void freeGrid( graticuleObj *pGraticule);
+  int loadHashTable(hashTableObj *ptable); // used by other file loading code
 
   MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
   MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
@@ -2177,7 +2179,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4);
   MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
-  MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath);
+  MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath, const configObj *config);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
   MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
   MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);

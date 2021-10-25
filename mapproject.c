@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
+#include "cpl_conv.h"
 #include "ogr_srs_api.h"
 
 static char *ms_proj_lib = NULL;
@@ -2341,7 +2342,7 @@ void msProjLibInitFromEnv()
 {
   const char *val;
 
-  if( (val=getenv( "PROJ_LIB" )) != NULL ) {
+  if( (val=CPLGetConfigOption( "PROJ_LIB", NULL )) != NULL ) {
     msSetPROJ_LIB(val, NULL);
   }
 }
