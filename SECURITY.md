@@ -31,23 +31,23 @@ Note: _MapServer 7.0.0 was released on 2015-07-24._
 
 ## Version Numbering: Explained
 
-x
-: Major release series number.
-: Major releases indicate substantial changes to the software and 
+**x**
+- Major release series number.
+- Major releases indicate substantial changes to the software and 
   backwards compatibility is not guaranteed across series. Current 
   release series is 7.
 
-y
-: Minor release series number.
-: Minor releases indicate smaller, functional additions or improvements 
+**y**
+- Minor release series number.
+- Minor releases indicate smaller, functional additions or improvements 
   to the software and should be generally backwards compatible within a 
   major release series. Users should be able to confidently upgrade 
   from one minor release to another within the same release series, so 
   from 7.4.x to 7.6.x.
 
-z
-: Point release series number.
-: Point releases indicate maintenance releases - usually a combination of 
+**z**
+- Point release series number.
+- Point releases indicate maintenance releases - usually a combination of 
   bug and security fixes and perhaps small feature additions. Backwards 
   compatibility should be preserved and users should be able to confidently 
   upgrade between point releases within the same release series, 
