@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <stdbool.h>
+
 #include "mapserver.h"
 #include "maptime.h"
 
@@ -83,6 +85,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  bool some_debug_requested = FALSE;
   for(i=1; i<argc; i++) {
     if (strcmp(argv[i],"-c") == 0) { /* user specified number of draws */
       iterations = atoi(argv[i+1]);
@@ -97,14 +100,25 @@ int main(int argc, char *argv[])
     if(i < argc-1 && strcmp(argv[i], "-all_debug") == 0) { /* global debug */
       int debug_level = atoi(argv[++i]);
 
-      msSetGlobalDebugLevel(debug_level);
+      some_debug_requested = TRUE;
 
-      /* Send output to stderr by default */
-      if (msGetErrorFile() == NULL)
-        msSetErrorFile("stderr", NULL);
+      msSetGlobalDebugLevel(debug_level);
 
       continue;
     }
+
+    if(i < argc-1 && (strcmp(argv[i], "-map_debug") == 0 ||
+                      strcmp(argv[i], "-layer_debug") == 0)) {
+
+      some_debug_requested = TRUE;
+      continue;
+    }
+  }
+
+  if( some_debug_requested ) {
+    /* Send output to stderr by default */
+    if (msGetErrorFile() == NULL)
+      msSetErrorFile("stderr", NULL);
   }
 
   config = msLoadConfig(NULL);
@@ -214,10 +228,6 @@ int main(int argc, char *argv[])
 
       if(i < argc-1 && strcmp(argv[i], "-map_debug") == 0) { /* debug */
         map->debug = atoi(argv[++i]);
-
-        /* Send output to stderr by default */
-        if (msGetErrorFile() == NULL)
-          msSetErrorFile("stderr", NULL);
       }
 
       if(i < argc-1 && strcmp(argv[i], "-layer_debug") == 0) { /* debug */
@@ -235,10 +245,6 @@ int main(int argc, char *argv[])
           fprintf( stderr,
                    " Did not find layer '%s' from -layer_debug switch.\n",
                    layer_name );
-
-        /* Send output to stderr by default */
-        if (msGetErrorFile() == NULL)
-          msSetErrorFile("stderr", NULL);
       }
 
       if(strcmp(argv[i],"-e") == 0) { /* change extent */
