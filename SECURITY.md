@@ -31,6 +31,8 @@ Note: _MapServer 7.0.0 was released on 2015-07-24._
 
 ## Version Numbering: Explained
 
+version x.y.z means:
+
 **x**
 - Major release series number.
 - Major releases indicate substantial changes to the software and 
