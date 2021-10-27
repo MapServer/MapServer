@@ -98,10 +98,6 @@ echo "Running CGI query"
 curl -s "http://localhost/cgi-bin/mapserv.cgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
 cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
 
-echo "Demonstrate that mapserv reject -conf passed through QUERY_STRING env variable"
-curl -s "http://localhost/cgi-bin/mapserv.cgi?-conf+bar" > /tmp/res.txt
-cat /tmp/res.txt | grep "conf switch cannot be used" >/dev/null || (cat /tmp/res.txt && /bin/false)
-
 echo "Running FastCGI query"
 curl -s "http://localhost/cgi-bin/mapserv.fcgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
 cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
