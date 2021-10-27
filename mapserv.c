@@ -142,26 +142,49 @@ int main(int argc, char *argv[])
   ** Process -v and -h command line arguments  first end exit. We want to avoid any error messages 
   ** associated with msLoadConfig() or msSetup().
   */
+  const char* config_filename = NULL;
   for( iArg = 1; iArg < argc; iArg++ ) {
     if( strcmp(argv[iArg],"-v") == 0 ) {
       printf("%s\n", msGetVersion());
       fflush(stdout);
       exit(0);
     } else if (strcmp(argv[iArg], "-h") == 0 || strcmp(argv[iArg], "--help") == 0) {
-      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
+      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value] [PATH_INFO=value]\n");
+      printf("                [-conf filename]\n");
       printf("\n");
+      /* WARNING:
+       * Do not add any switch that can take an arbitrary value, without checking
+       * that the QUERY_STRING environment variable is *not* set, because in a
+       * CGI context, command line arguments can be generated from the content
+       * of the QUERY_STRING, and thus cause a security problem.
+       * For ex, "http://example.com/mapserv.cgi?-conf+bar
+       * would result in "mapserv.cgi -conf bar" being invoked.
+       * See https://github.com/MapServer/MapServer/pull/6429#issuecomment-952533589
+       * and https://datatracker.ietf.org/doc/html/rfc3875#section-4.4
+       */
       printf("Options :\n");
       printf("  -h, --help              Display this help message.\n");
       printf("  -v                      Display version and exit.\n");
       printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
+      printf("  -conf filename          Filename of the MapServer configuration file.\n");
       printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
       printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
       fflush(stdout);
       exit(0);
+    } else if( iArg < argc-1 && strcmp(argv[iArg], "-conf") == 0) {
+      if( getenv("QUERY_STRING") != NULL ) {
+        /* Implement above WARNING security check. */
+        msSetError(MS_QUERYERR, "-conf switch cannot be used when QUERY_STRING environment "
+                "variable is set. Use QUERY_STRING= as a command line argument.", "main()");
+        msCGIWriteError(mapserv);
+        exit(0);
+      }
+      config_filename = argv[iArg+1];
+      ++iArg;
     }
   }
 
-  config = msLoadConfig(NULL); // first thing
+  config = msLoadConfig(config_filename); // first thing
   if(config == NULL) {
 #ifdef USE_FASTCGI
     msIO_installFastCGIRedirect(); // FastCGI setup for error handling here
