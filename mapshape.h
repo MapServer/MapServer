@@ -194,12 +194,15 @@ extern "C" {
   } msTiledSHPLayerInfo;
 
   /* shapefileObj function prototypes  */
+  MS_DLL_EXPORT int msShapefileOpenHandle(shapefileObj *shpfile, const char *filename, SHPHandle hSHP, DBFHandle hDBF);
+  MS_DLL_EXPORT int msShapefileOpenVirtualFile(shapefileObj *shpfile, const char *filename, VSILFILE * fpSHP, VSILFILE * fpSHX, VSILFILE * fpDBF, int log_failures);
   MS_DLL_EXPORT int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filename, int log_failures);
   MS_DLL_EXPORT int msShapefileCreate(shapefileObj *shpfile, char *filename, int type);
   MS_DLL_EXPORT void msShapefileClose(shapefileObj *shpfile);
   MS_DLL_EXPORT int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);
 
   /* SHP/SHX function prototypes */
+  MS_DLL_EXPORT SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX );
   MS_DLL_EXPORT SHPHandle msSHPOpen( const char * pszShapeFile, const char * pszAccess );
   MS_DLL_EXPORT SHPHandle msSHPCreate( const char * pszShapeFile, int nShapeType );
   MS_DLL_EXPORT void msSHPClose( SHPHandle hSHP );
@@ -213,6 +216,7 @@ extern "C" {
   /* tiledShapefileObj function prototypes are in mapserver.h */
 
   /* XBase function prototypes */
+  MS_DLL_EXPORT DBFHandle msDBFOpenVirtualFile( VSILFILE * fp );
   MS_DLL_EXPORT DBFHandle msDBFOpen( const char * pszDBFFile, const char * pszAccess );
   MS_DLL_EXPORT void msDBFClose( DBFHandle hDBF );
   MS_DLL_EXPORT DBFHandle msDBFCreate( const char * pszDBFFile );

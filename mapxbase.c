@@ -123,59 +123,18 @@ static void flushRecord( DBFHandle psDBF )
   }
 }
 
-/************************************************************************/
-/*                              msDBFOpen()                             */
-/*                                                                      */
-/*      Open a .dbf file.                                               */
-/************************************************************************/
-DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
-
+DBFHandle msDBFOpenVirtualFile( VSILFILE * fp )
 {
   DBFHandle   psDBF;
   uchar   *pabyBuf;
   int     nFields, nRecords, nHeadLen, nRecLen, iField;
-  char          *pszDBFFilename;
-
-  /* -------------------------------------------------------------------- */
-  /*      We only allow the access strings "rb" and "r+".                 */
-  /* -------------------------------------------------------------------- */
-  if( strcmp(pszAccess,"r") != 0 && strcmp(pszAccess,"r+") != 0
-      && strcmp(pszAccess,"rb") != 0 && strcmp(pszAccess,"r+b") != 0 )
-    return( NULL );
-
-  /* -------------------------------------------------------------------- */
-  /*  Ensure the extension is converted to dbf or DBF if it is      */
-  /*  currently .shp or .shx.               */
-  /* -------------------------------------------------------------------- */
-  pszDBFFilename = (char *) msSmallMalloc(strlen(pszFilename)+1);
-  strcpy( pszDBFFilename, pszFilename );
-
-  if( strcmp(pszFilename+strlen(pszFilename)-4,".shp") == 0
-      || strcmp(pszFilename+strlen(pszFilename)-4,".shx") == 0 ) {
-    strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".dbf");
-  } else if( strcmp(pszFilename+strlen(pszFilename)-4,".SHP") == 0
-             || strcmp(pszFilename+strlen(pszFilename)-4,".SHX") == 0 ) {
-    strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".DBF");
-  }
 
   /* -------------------------------------------------------------------- */
   /*      Open the file.                                                  */
   /* -------------------------------------------------------------------- */
   psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
   MS_CHECK_ALLOC(psDBF, sizeof(DBFInfo), NULL);
-  psDBF->fp = VSIFOpenL( pszDBFFilename, pszAccess );
-  if( psDBF->fp == NULL )
-  {
-    if( strcmp(pszDBFFilename+strlen(pszDBFFilename)-4,".dbf") == 0 ) {
-      strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".DBF");
-      psDBF->fp = VSIFOpenL( pszDBFFilename, pszAccess );
-    }
-  }
-  if( psDBF->fp == NULL ) {
-    msFree(pszDBFFilename);
-    msFree(psDBF);
-    return( NULL );
-  }
+  psDBF->fp = fp;
 
   psDBF->bNoHeader = MS_FALSE;
   psDBF->nCurrentRecord = -1;
@@ -183,8 +142,6 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
 
   psDBF->pszStringField = NULL;
   psDBF->nStringFieldLen = 0;
-
-  free( pszDBFFilename );
 
   /* -------------------------------------------------------------------- */
   /*  Read Table Header info                                              */
@@ -258,6 +215,55 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   }
 
   return( psDBF );
+}
+
+/************************************************************************/
+/*                              msDBFOpen()                             */
+/*                                                                      */
+/*      Open a .dbf file.                                               */
+/************************************************************************/
+DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
+
+{
+  /* -------------------------------------------------------------------- */
+  /*      We only allow the access strings "rb" and "r+".                 */
+  /* -------------------------------------------------------------------- */
+  if( strcmp(pszAccess,"r") != 0 && strcmp(pszAccess,"r+") != 0
+      && strcmp(pszAccess,"rb") != 0 && strcmp(pszAccess,"r+b") != 0 )
+    return( NULL );
+
+  /* -------------------------------------------------------------------- */
+  /*  Ensure the extension is converted to dbf or DBF if it is      */
+  /*  currently .shp or .shx.               */
+  /* -------------------------------------------------------------------- */
+  char *pszDBFFilename = (char *) msSmallMalloc(strlen(pszFilename)+1);
+  strcpy( pszDBFFilename, pszFilename );
+
+  if( strcmp(pszFilename+strlen(pszFilename)-4,".shp") == 0
+      || strcmp(pszFilename+strlen(pszFilename)-4,".shx") == 0 ) {
+    strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".dbf");
+  } else if( strcmp(pszFilename+strlen(pszFilename)-4,".SHP") == 0
+             || strcmp(pszFilename+strlen(pszFilename)-4,".SHX") == 0 ) {
+    strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".DBF");
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      Open the file.                                                  */
+  /* -------------------------------------------------------------------- */
+  VSILFILE *fp = VSIFOpenL( pszDBFFilename, pszAccess );
+  if( fp == NULL )
+  {
+    if( strcmp(pszDBFFilename+strlen(pszDBFFilename)-4,".dbf") == 0 ) {
+      strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".DBF");
+      fp = VSIFOpenL( pszDBFFilename, pszAccess );
+    }
+  }
+  msFree(pszDBFFilename);
+  if( fp == NULL ) {
+    return( NULL );
+  }
+
+  return msDBFOpenVirtualFile(fp);
 }
 
 /************************************************************************/
