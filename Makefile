@@ -59,7 +59,7 @@ php-testcase:
 	test -f "$(PHP_MAPSCRIPT)" && (export PHP_MAPSCRIPT_SO="../../$(PHP_MAPSCRIPT)" && cd msautotest/php && ./run_test.sh)
 
 phpng-build:
-    cd build && cmake --build . --target install
+	cd build && cmake --build . --target install
 
 java-testcase:
 	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../$(JAVA_MAPSCRIPT_PATH)" && cd mapscript/java && ./run_test.sh)
