@@ -135,6 +135,7 @@ configObj *msLoadConfig(const char* ms_config_file)
   msAcquireLock(TLOCK_PARSER);
 
   if((msyyin = fopen(ms_config_file, "r")) == NULL) {    
+    msDebug("Cannot open configuration file %s.\n", ms_config_file);
     msSetError(MS_IOERR, "See mapserver.org/config_file.html for more information.", "msLoadConfig()");
     msReleaseLock(TLOCK_PARSER);
     msFree(config);
