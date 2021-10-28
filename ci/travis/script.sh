@@ -10,9 +10,8 @@ set -eu
 #fi
 
 #upgrade to recent SWIG
-wget https://prdownloads.sourceforge.net/swig/swig-4.0.2.tar.gz
-tar -xzvf swig-4.0.2.tar.gz
-cd swig-4.0.2
+git clone https://github.com/swig/swig.git swig-git-master
+cd swig-git-master
 ./autogen.sh
 ./configure --prefix=/usr
 make
