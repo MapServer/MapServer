@@ -32,11 +32,13 @@ if [ "$BUILD_NAME" = "PHP_7.2_WITH_ASAN" ]; then
 elif [ "$BUILD_NAME" = "PHP_7.3_WITH_PROJ7" ]; then
     make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     make mspython-wheel
+    make phpng-build
     make -j4 test
 else
     # Force use of PROJ 4 API
     sudo rm /usr/include/proj.h
     make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H" CMAKE_CXX_FLAGS="-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     make mspython-wheel
+    make phpng-build
     make -j4 test
 fi
