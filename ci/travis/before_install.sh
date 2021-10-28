@@ -16,6 +16,17 @@ sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mo
 sudo apt-get install -y --allow-unauthenticated libperl-dev
 sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
 
+#install recent SWIG from source
+wget https://prdownloads.sourceforge.net/swig/swig-4.0.2.tar.gz
+tar -xzvf swig-4.0.2.tar.gz
+cd swig-4.0.2
+./autogen.sh
+./configure
+make
+sudo make install
+sudo ldconfig
+cd ../
+
 # list installed and available Python versions
 # pyenv versions
 # echo $(pyenv root)
