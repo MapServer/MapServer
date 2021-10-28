@@ -5,7 +5,7 @@ set -eu
 if ls /etc/apt/sources.list.d/pgdg* 2>/dev/null >/dev/null; then sudo mv /etc/apt/sources.list.d/pgdg* /tmp; fi
 dpkg -l | grep postgresql || /bin/true
 dpkg -l | grep postgis || /bin/true
-sudo apt-get remove --purge postgresql* libpq-dev libpq5 swig || /bin/true
+sudo apt-get remove --purge postgresql* libpq-dev libpq5 || /bin/true
 
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
