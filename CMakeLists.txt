@@ -184,6 +184,9 @@ option(WITH_GENERIC_NINT "generic rounding" OFF)
 # the following requires a customized SWIG build - see https://github.com/swig/swig/pull/1951
 option(WITH_MAPSCRIPT_PROPERTYANNOTATIONS "Add annotations to Python mapscript class properties" OFF)
 
+option(FUZZER "Build fuzzers using libFuzzer" OFF)
+mark_as_advanced(FUZZER)
+
 #TODO: USE_OGL? , USE_SDE, USE_CLUSTER_EXTERNAL USE_CLUSTER_PLUGIN, USE_MSSQL2008, USE_MSSQL2008_PLUGIN
 # SIGNORE_MISSING_DATA, CGI_CL_DEBUG_ARGS, EXTRA DEBUG FLAGS?,
 # PERLV_ld_DETECT?
@@ -192,6 +195,15 @@ option(WITH_MAPSCRIPT_PROPERTYANNOTATIONS "Add annotations to Python mapscript c
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror=format-security")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror=format-security")
+endif()
+
+if(FUZZER)
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        message(FATAL_ERROR "Need clang for libFuzzer support")
+    endif()
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=fuzzer,address -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer,address -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION")
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
@@ -843,6 +855,10 @@ if(WITH_CSHARP)
    add_subdirectory("mapscript/csharp")
    set(USE_CSHARP_MAPSCRIPT 1)
 endif(WITH_CSHARP)
+
+if(FUZZER)
+  add_subdirectory("fuzzers")
+endif(FUZZER)
 
 if(UNIX)
 ms_link_libraries( ${CMAKE_DL_LIBS} m )

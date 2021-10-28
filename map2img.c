@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <stdbool.h>
+
 #include "mapserver.h"
 #include "maptime.h"
 
@@ -62,7 +64,8 @@ int main(int argc, char *argv[])
     fprintf(stdout,
             "Syntax: map2img -m mapfile [-o image] [-e minx miny maxx maxy] [-s sizex sizey]\n"
             "               [-l \"layer1 [layers2...]\"] [-i format]\n"
-            "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n] [-d layername datavalue]\n");
+            "               [-all_debug n] [-map_debug n] [-layer_debug n] [-p n] [-c n] [-d layername datavalue]\n"
+            "               [-conf filename]\n");
     fprintf(stdout,"  -m mapfile: Map file to operate on - required\n" );
     fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format\n" );
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
@@ -75,6 +78,7 @@ int main(int argc, char *argv[])
     fprintf(stdout,"  -c n: draw map n number of times\n" );
     fprintf(stdout,"  -p n: pause for n seconds after reading the map\n" );
     fprintf(stdout,"  -d layername datavalue: change DATA value for layer\n" );
+    fprintf(stdout,"  -conf filename: filename of the MapServer configuration file.\n" );
     exit(0);
   }
 
@@ -83,6 +87,8 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  bool some_debug_requested = FALSE;
+  const char* config_filename = NULL;
   for(i=1; i<argc; i++) {
     if (strcmp(argv[i],"-c") == 0) { /* user specified number of draws */
       iterations = atoi(argv[i+1]);
@@ -97,17 +103,34 @@ int main(int argc, char *argv[])
     if(i < argc-1 && strcmp(argv[i], "-all_debug") == 0) { /* global debug */
       int debug_level = atoi(argv[++i]);
 
+      some_debug_requested = TRUE;
+
       msSetGlobalDebugLevel(debug_level);
 
-      /* Send output to stderr by default */
-      if (msGetErrorFile() == NULL)
-        msSetErrorFile("stderr", NULL);
+      continue;
+    }
 
+    if(i < argc-1 && (strcmp(argv[i], "-map_debug") == 0 ||
+                      strcmp(argv[i], "-layer_debug") == 0)) {
+
+      some_debug_requested = TRUE;
+      continue;
+    }
+
+    if(i < argc-1 && strcmp(argv[i], "-conf") == 0) {
+      config_filename = argv[i+1];
+      ++i;
       continue;
     }
   }
 
-  config = msLoadConfig(NULL);
+  if( some_debug_requested ) {
+    /* Send output to stderr by default */
+    if (msGetErrorFile() == NULL)
+      msSetErrorFile("stderr", NULL);
+  }
+
+  config = msLoadConfig(config_filename);
 
   for(draws=0; draws<iterations; draws++) {
 
@@ -214,10 +237,6 @@ int main(int argc, char *argv[])
 
       if(i < argc-1 && strcmp(argv[i], "-map_debug") == 0) { /* debug */
         map->debug = atoi(argv[++i]);
-
-        /* Send output to stderr by default */
-        if (msGetErrorFile() == NULL)
-          msSetErrorFile("stderr", NULL);
       }
 
       if(i < argc-1 && strcmp(argv[i], "-layer_debug") == 0) { /* debug */
@@ -235,10 +254,6 @@ int main(int argc, char *argv[])
           fprintf( stderr,
                    " Did not find layer '%s' from -layer_debug switch.\n",
                    layer_name );
-
-        /* Send output to stderr by default */
-        if (msGetErrorFile() == NULL)
-          msSetErrorFile("stderr", NULL);
       }
 
       if(strcmp(argv[i],"-e") == 0) { /* change extent */

@@ -32,6 +32,7 @@
 #endif
 
 #include "mapserver-config.h"
+#include <stdbool.h>
 #include <stdlib.h>
 
 #ifdef USE_FASTCGI
@@ -131,7 +132,6 @@ static int msIO_installFastCGIRedirect()
 /************************************************************************/
 int main(int argc, char *argv[])
 {
-  int iArg;
   int sendheaders = MS_TRUE;
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
@@ -142,26 +142,46 @@ int main(int argc, char *argv[])
   ** Process -v and -h command line arguments  first end exit. We want to avoid any error messages 
   ** associated with msLoadConfig() or msSetup().
   */
-  for( iArg = 1; iArg < argc; iArg++ ) {
-    if( strcmp(argv[iArg],"-v") == 0 ) {
-      printf("%s\n", msGetVersion());
-      fflush(stdout);
-      exit(0);
-    } else if (strcmp(argv[iArg], "-h") == 0 || strcmp(argv[iArg], "--help") == 0) {
-      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
-      printf("\n");
-      printf("Options :\n");
-      printf("  -h, --help              Display this help message.\n");
-      printf("  -v                      Display version and exit.\n");
-      printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
-      printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
-      printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
-      fflush(stdout);
-      exit(0);
+  const char* config_filename = NULL;
+  const bool use_command_line_options = getenv("QUERY_STRING") == NULL;
+  if (use_command_line_options) {
+    /* WARNING:
+     * Do not parse command line arguments (especially those that could have
+     * dangerous consequences if controlled through a web request), without checking
+     * that the QUERY_STRING environment variable is *not* set, because in a
+     * CGI context, command line arguments can be generated from the content
+     * of the QUERY_STRING, and thus cause a security problem.
+     * For ex, "http://example.com/mapserv.cgi?-conf+bar
+     * would result in "mapserv.cgi -conf bar" being invoked.
+     * See https://github.com/MapServer/MapServer/pull/6429#issuecomment-952533589
+     * and https://datatracker.ietf.org/doc/html/rfc3875#section-4.4
+    */
+    for( int iArg = 1; iArg < argc; iArg++ ) {
+      if( strcmp(argv[iArg],"-v") == 0 ) {
+        printf("%s\n", msGetVersion());
+        fflush(stdout);
+        exit(0);
+      } else if (strcmp(argv[iArg], "-h") == 0 || strcmp(argv[iArg], "--help") == 0) {
+        printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value] [PATH_INFO=value]\n");
+        printf("                [-conf filename]\n");
+        printf("\n");
+        printf("Options :\n");
+        printf("  -h, --help              Display this help message.\n");
+        printf("  -v                      Display version and exit.\n");
+        printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
+        printf("  -conf filename          Filename of the MapServer configuration file.\n");
+        printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
+        printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
+        fflush(stdout);
+        exit(0);
+      } else if( iArg < argc-1 && strcmp(argv[iArg], "-conf") == 0) {
+        config_filename = argv[iArg+1];
+        ++iArg;
+      }
     }
   }
 
-  config = msLoadConfig(NULL); // first thing
+  config = msLoadConfig(config_filename); // first thing
   if(config == NULL) {
 #ifdef USE_FASTCGI
     msIO_installFastCGIRedirect(); // FastCGI setup for error handling here
@@ -194,20 +214,22 @@ int main(int argc, char *argv[])
   /*      commandline switches, but we provide a few for test/debug       */
   /*      purposes.                                                       */
   /* -------------------------------------------------------------------- */
-  for( iArg = 1; iArg < argc; iArg++ ) {
-    if(strcmp(argv[iArg], "-nh") == 0) {
-      sendheaders = MS_FALSE;
-      msIO_setHeaderEnabled( MS_FALSE );
-    } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
-      /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
-      putenv( "REQUEST_METHOD=GET" );
-      /* coverity[tainted_string] */
-      putenv( argv[iArg] );
-    } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
-      /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
-      putenv( "REQUEST_METHOD=GET" );
-      /* coverity[tainted_string] */
-      putenv( argv[iArg] );
+  if(use_command_line_options) {
+    for( int iArg = 1; iArg < argc; iArg++ ) {
+      if(strcmp(argv[iArg], "-nh") == 0) {
+        sendheaders = MS_FALSE;
+        msIO_setHeaderEnabled( MS_FALSE );
+      } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
+        /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
+        putenv( "REQUEST_METHOD=GET" );
+        /* coverity[tainted_string] */
+        putenv( argv[iArg] );
+      } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
+        /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
+        putenv( "REQUEST_METHOD=GET" );
+        /* coverity[tainted_string] */
+        putenv( argv[iArg] );
+      }
     }
   }
 
