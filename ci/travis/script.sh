@@ -9,6 +9,19 @@ set -eu
     export CXX="ccache g++"
 #fi
 
+#upgrade to recent SWIG
+wget https://prdownloads.sourceforge.net/swig/swig-4.0.2.tar.gz
+tar -xzvf swig-4.0.2.tar.gz
+cd swig-4.0.2
+./autogen.sh
+./configure
+make
+sudo make install
+sudo ldconfig
+#check SWIG version
+swig -version
+cd ../
+
 if [ "$BUILD_NAME" = "PHP_7.2_WITH_ASAN" ]; then
     # Force use of PROJ 4 API
     sudo rm /usr/include/proj.h
