@@ -200,35 +200,12 @@ static void writeHeader( SHPHandle psSHP )
   free( panSHX );
 }
 
-/************************************************************************/
-/*                              msSHPOpen()                             */
-/*                                                                      */
-/*      Open the .shp and .shx files based on the basename of the       */
-/*      files or either file name.                                      */
-/************************************************************************/
-SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
+SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
 {
-  char *pszFullname, *pszBasename;
-  SHPHandle psSHP;
-
-  uchar *pabyBuf;
-  int i;
-  double dValue;
-
-  /* -------------------------------------------------------------------- */
-  /*      Ensure the access string is one of the legal ones.  We          */
-  /*      ensure the result string indicates binary to avoid common       */
-  /*      problems on Windows.                                            */
-  /* -------------------------------------------------------------------- */
-  if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0 || strcmp(pszAccess,"r+") == 0 )
-    pszAccess = "r+b";
-  else
-    pszAccess = "rb";
-
   /* -------------------------------------------------------------------- */
   /*  Initialize the info structure.              */
   /* -------------------------------------------------------------------- */
-  psSHP = (SHPHandle) msSmallMalloc(sizeof(SHPInfo));
+  SHPHandle psSHP = (SHPHandle) msSmallMalloc(sizeof(SHPInfo));
 
   psSHP->bUpdated = MS_FALSE;
 
@@ -236,58 +213,13 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   psSHP->panParts = NULL;
   psSHP->nBufSize = psSHP->nPartMax = 0;
 
-  /* -------------------------------------------------------------------- */
-  /*  Compute the base (layer) name.  If there is any extension     */
-  /*  on the passed in filename we will strip it off.         */
-  /* -------------------------------------------------------------------- */
-  pszBasename = (char *) msSmallMalloc(strlen(pszLayer)+5);
-  strcpy( pszBasename, pszLayer );
-  for( i = strlen(pszBasename)-1;
-       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' && pszBasename[i] != '\\';
-       i-- ) {}
-
-  if( pszBasename[i] == '.' )
-    pszBasename[i] = '\0';
-
-  /* -------------------------------------------------------------------- */
-  /*  Open the .shp and .shx files.  Note that files pulled from      */
-  /*  a PC to Unix with upper case filenames won't work!        */
-  /* -------------------------------------------------------------------- */
-  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-  sprintf( pszFullname, "%s.shp", pszBasename );
-  psSHP->fpSHP = VSIFOpenL(pszFullname, pszAccess );
-  if( psSHP->fpSHP == NULL ) {
-    sprintf( pszFullname, "%s.SHP", pszBasename );
-    psSHP->fpSHP = VSIFOpenL(pszFullname, pszAccess );
-  }
-  if( psSHP->fpSHP == NULL ) {
-    msFree(pszBasename);
-    msFree(pszFullname);
-    msFree(psSHP);
-    return( NULL );
-  }
-
-  sprintf( pszFullname, "%s.shx", pszBasename );
-  psSHP->fpSHX = VSIFOpenL(pszFullname, pszAccess );
-  if( psSHP->fpSHX == NULL ) {
-    sprintf( pszFullname, "%s.SHX", pszBasename );
-    psSHP->fpSHX = VSIFOpenL(pszFullname, pszAccess );
-  }
-  if( psSHP->fpSHX == NULL ) {
-    VSIFCloseL(psSHP->fpSHP);
-    msFree(pszBasename);
-    msFree(pszFullname);
-    msFree(psSHP);
-    return( NULL );
-  }
-
-  free( pszFullname );
-  free( pszBasename );
+  psSHP->fpSHP = fpSHP;
+  psSHP->fpSHX = fpSHX;
 
   /* -------------------------------------------------------------------- */
   /*   Read the file size from the SHP file.            */
   /* -------------------------------------------------------------------- */
-  pabyBuf = (uchar *) msSmallMalloc(100);
+  uchar *pabyBuf = (uchar *) msSmallMalloc(100);
   if(1 != VSIFReadL( pabyBuf, 100, 1, psSHP->fpSHP )) {
     VSIFCloseL( psSHP->fpSHP );
     VSIFCloseL( psSHP->fpSHX );
@@ -340,6 +272,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   psSHP->nShapeType = pabyBuf[32];
 
   if( bBigEndian ) SwapWord( 8, pabyBuf+36 );
+  double dValue;
   memcpy( &dValue, pabyBuf+36, 8 );
   psSHP->adBoundsMin[0] = dValue;
 
@@ -403,6 +336,77 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
 
 
   return( psSHP );
+}
+
+/************************************************************************/
+/*                              msSHPOpen()                             */
+/*                                                                      */
+/*      Open the .shp and .shx files based on the basename of the       */
+/*      files or either file name.                                      */
+/************************************************************************/
+SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
+{
+  char *pszFullname, *pszBasename;
+
+  int i;
+
+  /* -------------------------------------------------------------------- */
+  /*      Ensure the access string is one of the legal ones.  We          */
+  /*      ensure the result string indicates binary to avoid common       */
+  /*      problems on Windows.                                            */
+  /* -------------------------------------------------------------------- */
+  if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0 || strcmp(pszAccess,"r+") == 0 )
+    pszAccess = "r+b";
+  else
+    pszAccess = "rb";
+
+  /* -------------------------------------------------------------------- */
+  /*  Compute the base (layer) name.  If there is any extension     */
+  /*  on the passed in filename we will strip it off.         */
+  /* -------------------------------------------------------------------- */
+  pszBasename = (char *) msSmallMalloc(strlen(pszLayer)+5);
+  strcpy( pszBasename, pszLayer );
+  for( i = strlen(pszBasename)-1;
+       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' && pszBasename[i] != '\\';
+       i-- ) {}
+
+  if( pszBasename[i] == '.' )
+    pszBasename[i] = '\0';
+
+  /* -------------------------------------------------------------------- */
+  /*  Open the .shp and .shx files.  Note that files pulled from      */
+  /*  a PC to Unix with upper case filenames won't work!        */
+  /* -------------------------------------------------------------------- */
+  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
+  sprintf( pszFullname, "%s.shp", pszBasename );
+  VSILFILE *fpSHP = VSIFOpenL(pszFullname, pszAccess );
+  if( fpSHP == NULL ) {
+    sprintf( pszFullname, "%s.SHP", pszBasename );
+    fpSHP = VSIFOpenL(pszFullname, pszAccess );
+  }
+  if( fpSHP == NULL ) {
+    msFree(pszBasename);
+    msFree(pszFullname);
+    return( NULL );
+  }
+
+  sprintf( pszFullname, "%s.shx", pszBasename );
+  VSILFILE *fpSHX = VSIFOpenL(pszFullname, pszAccess );
+  if( fpSHX == NULL ) {
+    sprintf( pszFullname, "%s.SHX", pszBasename );
+    fpSHX = VSIFOpenL(pszFullname, pszAccess );
+  }
+  if( fpSHX == NULL ) {
+    VSIFCloseL(fpSHP);
+    msFree(pszBasename);
+    msFree(pszFullname);
+    return( NULL );
+  }
+
+  free( pszFullname );
+  free( pszBasename );
+
+  return msSHPOpenVirtualFile(fpSHP, fpSHX);
 }
 
 /************************************************************************/
@@ -997,6 +1001,15 @@ static uchar *msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char*
   /* -------------------------------------------------------------------- */
   /*      Ensure our record buffer is large enough.                       */
   /* -------------------------------------------------------------------- */
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+  /* when running with libFuzzer, allocate a new buffer for every
+     call, to allow AddressSanitizer to detect memory errors */
+  free(psSHP->pabyRec);
+  psSHP->pabyRec = NULL;
+  psSHP->nBufSize = 0;
+#endif
+
   if( nEntitySize > psSHP->nBufSize ) {
     uchar* pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
     if (pabyRec == NULL) {
@@ -1300,6 +1313,15 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*      Copy out the part array from the record.                        */
     /* -------------------------------------------------------------------- */
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* when running with libFuzzer, allocate a new buffer for every
+       call, to allow AddressSanitizer to detect memory errors */
+    free(psSHP->panParts);
+    psSHP->panParts = NULL;
+    psSHP->nPartMax = 0;
+#endif
+
     if( psSHP->nPartMax < nParts ) {
       psSHP->panParts = (int *) SfRealloc(psSHP->panParts, nParts * sizeof(int) );
       if (psSHP->panParts == NULL) {
@@ -1658,6 +1680,68 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return MS_SUCCESS;
 }
 
+int msShapefileOpenHandle(shapefileObj *shpfile, const char *filename, SHPHandle hSHP, DBFHandle hDBF)
+{
+  assert(filename != NULL);
+  assert(hSHP != NULL);
+  assert(hDBF != NULL);
+
+  /* initialize a few things */
+  shpfile->status = NULL;
+  shpfile->lastshape = -1;
+  shpfile->isopen = MS_FALSE;
+
+  shpfile->hSHP = hSHP;
+
+  strlcpy(shpfile->source, filename, sizeof(shpfile->source));
+
+  /* load some information about this shapefile */
+  msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+
+  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
+    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
+               "msShapefileOpen()", shpfile->numshapes);
+    msDBFClose(hDBF);
+    msSHPClose(hSHP);
+    return -1;
+  }
+
+  msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
+
+  shpfile->hDBF = hDBF;
+
+  shpfile->isopen = MS_TRUE;
+  return(0); /* all o.k. */
+}
+
+int msShapefileOpenVirtualFile(shapefileObj *shpfile, const char *filename, VSILFILE * fpSHP, VSILFILE * fpSHX, VSILFILE * fpDBF, int log_failures)
+{
+  assert(filename != NULL);
+  assert(fpSHP != NULL);
+  assert(fpSHX != NULL);
+  assert(fpDBF != NULL);
+
+  /* open the shapefile file (appending ok) and get basic info */
+  SHPHandle hSHP = msSHPOpenVirtualFile(fpSHP, fpSHX);
+  if(!hSHP) {
+    if( log_failures )
+      msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", filename);
+    VSIFCloseL( fpDBF );
+    return(-1);
+  }
+
+  DBFHandle hDBF = msDBFOpenVirtualFile(fpDBF);
+
+  if(!hDBF) {
+    if( log_failures )
+      msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", filename);
+    msSHPClose(hSHP);
+    return(-1);
+  }
+
+  return msShapefileOpenHandle(shpfile, filename, hSHP, hDBF);
+}
+
 int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filename, int log_failures)
 {
   int i;
@@ -1670,38 +1754,17 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
     return(-1);
   }
 
-  /* initialize a few things */
-  shpfile->status = NULL;
-  shpfile->lastshape = -1;
-  shpfile->isopen = MS_FALSE;
-
   /* open the shapefile file (appending ok) and get basic info */
+  SHPHandle hSHP;
   if(!mode)
-    shpfile->hSHP = msSHPOpen( filename, "rb");
+    hSHP = msSHPOpen( filename, "rb");
   else
-    shpfile->hSHP = msSHPOpen( filename, mode);
+    hSHP = msSHPOpen( filename, mode);
 
-  if(!shpfile->hSHP) {
+  if(!hSHP) {
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", filename);
     return(-1);
-  }
-
-  strlcpy(shpfile->source, filename, sizeof(shpfile->source));
-
-  /* load some information about this shapefile */
-  msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
-
-  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
-    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
-               "msShapefileOpen()", shpfile->numshapes);
-    msSHPClose(shpfile->hSHP);
-    return -1;
-  }
-
-  if( msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds)) != MS_SUCCESS ) {
-    msSHPClose(shpfile->hSHP);
-    return -1;
   }
 
   bufferSize = strlen(filename)+5;
@@ -1718,19 +1781,18 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
 
   strlcat(dbfFilename, ".dbf", bufferSize);
 
-  shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
+  DBFHandle hDBF = msDBFOpen(dbfFilename, "rb");
 
-  if(!shpfile->hDBF) {
+  if(!hDBF) {
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", dbfFilename);
     free(dbfFilename);
-    msSHPClose(shpfile->hSHP);
+    msSHPClose(hSHP);
     return(-1);
   }
   free(dbfFilename);
 
-  shpfile->isopen = MS_TRUE;
-  return(0); /* all o.k. */
+  return msShapefileOpenHandle(shpfile, filename, hSHP, hDBF);
 }
 
 /* Creates a new shapefile */
