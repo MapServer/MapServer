@@ -331,7 +331,9 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   if (strncmp(pszVersion, "0.0.14", 6) != 0 &&
       strncmp(pszVersion, "1.0.0", 5) != 0 &&
       strncmp(pszVersion, "1.1", 3) != 0) {
-    msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).", "msBuildWFSLayerGetURL()");
+    msSetError(MS_WFSCONNERR,
+	       "MapServer supports only WFS 1.1.0, 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).",
+	       "msBuildWFSLayerGetURL()");
     return NULL;
   }
 
