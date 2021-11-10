@@ -1,5 +1,5 @@
 set SQLPASSWORD=Password12!
-set SERVER=(local)\SQL2017
+set SERVER=(local)\SQL2019
 
 sqlcmd -S "%SERVER%" -Q "USE [master]; CREATE DATABASE msautotest;"
 

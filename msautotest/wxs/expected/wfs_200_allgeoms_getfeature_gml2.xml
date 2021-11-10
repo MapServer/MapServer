@@ -10,26 +10,26 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    timeStamp="" numberMatched="6" numberReturned="6">
   <wfs:boundedBy>
   	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-  		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+  		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
   	</gml:Box>
   </wfs:boundedBy>
   <wfs:member>
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:coordinates>49.00000,2.00000 49.00000,2.00000</gml:coordinates>
+      		<gml:coordinates>49.000000,2.000000 49.000000,2.000000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
     <wfs:member>
       <ms:point fid="point.1">
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:coordinates>49.00000,2.00000 49.00000,2.00000</gml:coordinates>
+        		<gml:coordinates>49.000000,2.000000 49.000000,2.000000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Point srsName="urn:ogc:def:crs:EPSG::4326">
-          <gml:coordinates>49.00000,2.00000</gml:coordinates>
+          <gml:coordinates>49.000000,2.000000</gml:coordinates>
         </gml:Point>
         </ms:msGeometry>
       </ms:point>
@@ -40,26 +40,26 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipoint fid="multipoint.1">
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:MultiPoint srsName="urn:ogc:def:crs:EPSG::4326">
           <gml:pointMember>
             <gml:Point>
-              <gml:coordinates>49.00000,2.00000</gml:coordinates>
+              <gml:coordinates>49.000000,2.000000</gml:coordinates>
             </gml:Point>
           </gml:pointMember>
           <gml:pointMember>
             <gml:Point>
-              <gml:coordinates>50.00000,3.00000</gml:coordinates>
+              <gml:coordinates>50.000000,3.000000</gml:coordinates>
             </gml:Point>
           </gml:pointMember>
         </gml:MultiPoint>
@@ -72,19 +72,19 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
     <wfs:member>
       <ms:linestring fid="linestring.1">
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:LineString srsName="urn:ogc:def:crs:EPSG::4326">
-          <gml:coordinates>49.00000,2.00000 50.00000,3.00000 </gml:coordinates>
+          <gml:coordinates>49.000000,2.000000 50.000000,3.000000 </gml:coordinates>
         </gml:LineString>
         </ms:msGeometry>
       </ms:linestring>
@@ -95,26 +95,26 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multilinestring fid="multilinestring.1">
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:MultiLineString srsName="urn:ogc:def:crs:EPSG::4326">
           <gml:lineStringMember>
             <gml:LineString>
-              <gml:coordinates>49.00000,2.00000 50.00000,3.00000 </gml:coordinates>
+              <gml:coordinates>49.000000,2.000000 50.000000,3.000000 </gml:coordinates>
             </gml:LineString>
           </gml:lineStringMember>
           <gml:lineStringMember>
             <gml:LineString>
-              <gml:coordinates>50.00000,2.00000 49.00000,3.00000 </gml:coordinates>
+              <gml:coordinates>50.000000,2.000000 49.000000,3.000000 </gml:coordinates>
             </gml:LineString>
           </gml:lineStringMember>
         </gml:MultiLineString>
@@ -127,26 +127,26 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
     <wfs:member>
       <ms:polygon fid="polygon.1">
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
         <gml:Polygon srsName="urn:ogc:def:crs:EPSG::4326">
           <gml:outerBoundaryIs>
             <gml:LinearRing>
-              <gml:coordinates>49.00000,2.00000 50.00000,2.00000 50.00000,3.00000 49.00000,3.00000 49.00000,2.00000 </gml:coordinates>
+              <gml:coordinates>49.000000,2.000000 50.000000,2.000000 50.000000,3.000000 49.000000,3.000000 49.000000,2.000000 </gml:coordinates>
             </gml:LinearRing>
           </gml:outerBoundaryIs>
           <gml:innerBoundaryIs>
             <gml:LinearRing>
-              <gml:coordinates>49.10000,2.10000 49.10000,2.90000 49.90000,2.90000 49.90000,2.10000 49.10000,2.10000 </gml:coordinates>
+              <gml:coordinates>49.100000,2.100000 49.100000,2.900000 49.900000,2.900000 49.900000,2.100000 49.100000,2.100000 </gml:coordinates>
             </gml:LinearRing>
           </gml:innerBoundaryIs>
         </gml:Polygon>
@@ -159,14 +159,14 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
       	</gml:Box>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipolygon fid="multipolygon.1">
         <gml:boundedBy>
         	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        		<gml:coordinates>49.000000,2.000000 50.000000,3.000000</gml:coordinates>
         	</gml:Box>
         </gml:boundedBy>
         <ms:msGeometry>
@@ -175,12 +175,12 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
           <gml:Polygon>
             <gml:outerBoundaryIs>
               <gml:LinearRing>
-                <gml:coordinates>49.00000,2.00000 50.00000,2.00000 50.00000,3.00000 49.00000,3.00000 49.00000,2.00000 </gml:coordinates>
+                <gml:coordinates>49.000000,2.000000 50.000000,2.000000 50.000000,3.000000 49.000000,3.000000 49.000000,2.000000 </gml:coordinates>
               </gml:LinearRing>
             </gml:outerBoundaryIs>
             <gml:innerBoundaryIs>
               <gml:LinearRing>
-                <gml:coordinates>49.10000,2.10000 49.10000,2.90000 49.90000,2.90000 49.90000,2.10000 49.10000,2.10000 </gml:coordinates>
+                <gml:coordinates>49.100000,2.100000 49.100000,2.900000 49.900000,2.900000 49.900000,2.100000 49.100000,2.100000 </gml:coordinates>
               </gml:LinearRing>
             </gml:innerBoundaryIs>
           </gml:Polygon>
@@ -189,7 +189,7 @@ Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
           <gml:Polygon>
             <gml:outerBoundaryIs>
               <gml:LinearRing>
-                <gml:coordinates>49.20000,2.20000 49.80000,2.20000 49.80000,2.80000 49.20000,2.80000 49.20000,2.20000 </gml:coordinates>
+                <gml:coordinates>49.200000,2.200000 49.800000,2.200000 49.800000,2.800000 49.200000,2.800000 49.200000,2.200000 </gml:coordinates>
               </gml:LinearRing>
             </gml:outerBoundaryIs>
           </gml:Polygon>

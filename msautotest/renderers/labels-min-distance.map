@@ -1,7 +1,7 @@
-# RUN_PARMS: labels-min-distance.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labels-min-distance.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: labels-min-distance.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: labels-min-distance.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: labels-min-distance.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labels-min-distance.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labels-min-distance.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labels-min-distance.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 map
 

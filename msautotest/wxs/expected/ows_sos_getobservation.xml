@@ -6,8 +6,8 @@ Content-Type: text/xml; charset=UTF-8
   <gml:name xmlns:gml="http://www.opengis.net/gml">Water</gml:name>
   <gml:boundedBy>
     <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-      <gml:lowerCorner>-141.00000 42.00000</gml:lowerCorner>
-      <gml:upperCorner>-52.00000 84.00000</gml:upperCorner>
+      <gml:lowerCorner>-141.000000 42.000000</gml:lowerCorner>
+      <gml:upperCorner>-52.000000 84.000000</gml:upperCorner>
     </gml:Envelope>
   </gml:boundedBy>
   <om:member>
@@ -33,13 +33,13 @@ Content-Type: text/xml; charset=UTF-8
           <ms:obs>
             <gml:boundedBy>
               <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:lowerCorner>-75.00000 45.00000</gml:lowerCorner>
-                <gml:upperCorner>-75.00000 45.00000</gml:upperCorner>
+                <gml:lowerCorner>-75.000000 45.000000</gml:lowerCorner>
+                <gml:upperCorner>-75.000000 45.000000</gml:upperCorner>
               </gml:Envelope>
             </gml:boundedBy>
             <ms:msGeometry>
               <gml:Point srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:pos>-75.00000 45.00000</gml:pos>
+                <gml:pos>-75.000000 45.000000</gml:pos>
               </gml:Point>
             </ms:msGeometry>
             <ms:Value>89.9</ms:Value>
@@ -71,13 +71,13 @@ Content-Type: text/xml; charset=UTF-8
           <ms:obs>
             <gml:boundedBy>
               <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:lowerCorner>-75.00000 45.00000</gml:lowerCorner>
-                <gml:upperCorner>-75.00000 45.00000</gml:upperCorner>
+                <gml:lowerCorner>-75.000000 45.000000</gml:lowerCorner>
+                <gml:upperCorner>-75.000000 45.000000</gml:upperCorner>
               </gml:Envelope>
             </gml:boundedBy>
             <ms:msGeometry>
               <gml:Point srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:pos>-75.00000 45.00000</gml:pos>
+                <gml:pos>-75.000000 45.000000</gml:pos>
               </gml:Point>
             </ms:msGeometry>
             <ms:Value>93.9</ms:Value>
@@ -109,13 +109,13 @@ Content-Type: text/xml; charset=UTF-8
           <ms:obs>
             <gml:boundedBy>
               <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:lowerCorner>-79.00000 43.00000</gml:lowerCorner>
-                <gml:upperCorner>-79.00000 43.00000</gml:upperCorner>
+                <gml:lowerCorner>-79.000000 43.000000</gml:lowerCorner>
+                <gml:upperCorner>-79.000000 43.000000</gml:upperCorner>
               </gml:Envelope>
             </gml:boundedBy>
             <ms:msGeometry>
               <gml:Point srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:pos>-79.00000 43.00000</gml:pos>
+                <gml:pos>-79.000000 43.000000</gml:pos>
               </gml:Point>
             </ms:msGeometry>
             <ms:Value>103.5</ms:Value>
@@ -147,13 +147,13 @@ Content-Type: text/xml; charset=UTF-8
           <ms:obs>
             <gml:boundedBy>
               <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:lowerCorner>-79.00000 43.00000</gml:lowerCorner>
-                <gml:upperCorner>-79.00000 43.00000</gml:upperCorner>
+                <gml:lowerCorner>-79.000000 43.000000</gml:lowerCorner>
+                <gml:upperCorner>-79.000000 43.000000</gml:upperCorner>
               </gml:Envelope>
             </gml:boundedBy>
             <ms:msGeometry>
               <gml:Point srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:pos>-79.00000 43.00000</gml:pos>
+                <gml:pos>-79.000000 43.000000</gml:pos>
               </gml:Point>
             </ms:msGeometry>
             <ms:Value>93.5</ms:Value>
@@ -185,13 +185,13 @@ Content-Type: text/xml; charset=UTF-8
           <ms:obs>
             <gml:boundedBy>
               <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:lowerCorner>-122.00000 49.00000</gml:lowerCorner>
-                <gml:upperCorner>-122.00000 49.00000</gml:upperCorner>
+                <gml:lowerCorner>-122.000000 49.000000</gml:lowerCorner>
+                <gml:upperCorner>-122.000000 49.000000</gml:upperCorner>
               </gml:Envelope>
             </gml:boundedBy>
             <ms:msGeometry>
               <gml:Point srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
-                <gml:pos>-122.00000 49.00000</gml:pos>
+                <gml:pos>-122.000000 49.000000</gml:pos>
               </gml:Point>
             </ms:msGeometry>
             <ms:Value>99.9</ms:Value>

@@ -41,6 +41,8 @@
 #include "mapthread.h"
 #include "maptime.h"
 
+#include "cpl_conv.h"
+
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
 extern int msyylex_destroy(void);
@@ -4273,10 +4275,22 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(MS_PLUGIN): {
         int rv;
-        if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
-        rv = msBuildPluginLibraryPath(&layer->plugin_library,
-                                      layer->plugin_library_original,
-                                      map);
+        if(map->config) { // value *must* represent a config key
+          char *value = NULL;
+          const char *plugin_library = NULL;
+
+          if(getString(&value) == MS_FAILURE) return(-1);
+          plugin_library = msConfigGetPlugin(map->config, value);
+          msFree(value);
+          if(!plugin_library) {
+            msSetError(MS_MISCERR, "Plugin value not found in config file. See mapserver.org/config_file.html for more information." , "loadLayer()");
+            return(-1);
+          }
+          layer->plugin_library_original = strdup(plugin_library);
+        } else {
+          if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
+        }
+        rv = msBuildPluginLibraryPath(&layer->plugin_library, layer->plugin_library_original, map);
         if (rv == MS_FAILURE) return(-1);
       }
       break;
@@ -5842,6 +5856,8 @@ int initMap(mapObj *map)
   map->v8context = NULL;
 #endif
 
+  map->config = NULL;
+
   return(0);
 }
 
@@ -6367,7 +6383,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 /*
 ** Sets up file-based mapfile loading and calls loadMapInternal to do the work.
 */
-mapObj *msLoadMap(const char *filename, const char *new_mappath)
+mapObj *msLoadMap(const char *filename, const char *new_mappath, const configObj *config)
 {
   mapObj *map;
   struct mstimeval starttime={0}, endtime={0};
@@ -6386,16 +6402,10 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
     return(NULL);
   }
 
-  if(getenv("MS_MAPFILE_PATTERN")) { /* user override */
-    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
-  } else { /* check the default */
-    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_DEFAULT_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
+  const char *ms_mapfile_pattern = CPLGetConfigOption("MS_MAPFILE_PATTERN", MS_DEFAULT_MAPFILE_PATTERN);
+  if(msEvalRegex(ms_mapfile_pattern, filename) != MS_TRUE) {
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMap()");
+    return(NULL);
   }
 
   /*
@@ -6409,11 +6419,14 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
     return(NULL);
   }
 
+  map->config = config; // create a read-only reference
+
   msAcquireLock( TLOCK_PARSER );  /* Steve: might need to move this lock a bit higher; Umberto: done */
 
 #ifdef USE_XMLMAPFILE
   /* If the mapfile is an xml mapfile, transform it */
-  if ((getenv("MS_XMLMAPFILE_XSLT")) &&
+  const char *ms_xmlmapfile_xslt = CPLGetConfigOption("MS_XMLMAPFILE_XSLT", NULL);
+  if (ms_xmlmapfile_xslt &&
       (msEvalRegex(MS_DEFAULT_XMLMAPFILE_PATTERN, filename) == MS_TRUE)) {
 
     msyyin = tmpfile();
@@ -6422,7 +6435,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
       msReleaseLock( TLOCK_PARSER );
     }
 
-    if (msTransformXmlMapfile(getenv("MS_XMLMAPFILE_XSLT"), filename, msyyin) != MS_SUCCESS) {
+    if (msTransformXmlMapfile(ms_xmlmapfile_xslt, filename, msyyin) != MS_SUCCESS) {
       fclose(msyyin);
       return NULL;
     }
@@ -6854,7 +6867,9 @@ void msApplyDefaultSubstitutions(mapObj *map)
   applyHashTableDefaultSubstitutions(&map->web.metadata, &(map->web.validation));
 }
 
-char *_get_param_value(const char *key, char **names, char **values, int npairs) {
+char *_get_param_value(const char *key, char **names, char **values, int npairs) 
+{
+  if(npairs <= 0) return NULL; // bail, no point searching
 
   if(getenv(key)) { /* envirronment override */
     return getenv(key);
@@ -6961,16 +6976,10 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
   /*
   ** Check map filename to make sure it's legal
   */
-  if(getenv("MS_MAPFILE_PATTERN")) { /* user override */
-    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
-  } else { /* check the default */
-    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) {
-      msSetError(MS_REGEXERR, "MS_DEFAULT_MAPFILE_PATTERN validation failed." , "msLoadMap()");
-      return(NULL);
-    }
+  const char *ms_mapfile_pattern = CPLGetConfigOption("MS_MAPFILE_PATTERN", MS_DEFAULT_MAPFILE_PATTERN);
+  if(msEvalRegex(ms_mapfile_pattern, filename) != MS_TRUE) {
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMap()");
+    return(NULL);
   }
 
   if((msyyin = fopen(filename,"r")) == NULL) {

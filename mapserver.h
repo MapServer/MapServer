@@ -118,7 +118,7 @@ typedef struct face_element face_element;
 
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
-typedef ms_uint32 *     ms_bitarray;
+typedef ms_uint32 *ms_bitarray;
 typedef const ms_uint32 *ms_const_bitarray;
 
 #include "maperror.h"
@@ -131,7 +131,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include <assert.h>
 #include "mapproject.h"
 #include "cgiutil.h"
-
+#include "mapserv-config.h"
 
 #include <sys/types.h> /* regular expression support */
 
@@ -148,7 +148,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 /* EQUAL and EQUALN are defined in cpl_port.h, so add them in here if ogr was not included */
 
 #ifndef EQUAL
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(_WIN32) || defined(WIN32CE)
 #  define EQUAL(a,b)              (stricmp(a,b)==0)
 #else
 #  define EQUAL(a,b)              (strcasecmp(a,b)==0)
@@ -156,7 +156,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #endif
 
 #ifndef EQUALN
-#if defined(WIN32) || defined(WIN32CE)
+#if defined(_WIN32) || defined(WIN32CE)
 #  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
 #else
 #  define EQUALN(a,b,n)           (strncasecmp(a,b,n)==0)
@@ -359,9 +359,9 @@ extern "C" {
 #  define MS_NINT(x)      MS_NINT_GENERIC(x)
 #endif
 
-
   /* #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE) */
-#define MS_VALID_EXTENT(rect)  (((rect.minx < rect.maxx && rect.miny < rect.maxy))?MS_TRUE:MS_FALSE)
+#define MS_VALID_EXTENT(rect)  ((((rect).minx < (rect).maxx && (rect).miny < (rect).maxy))?MS_TRUE:MS_FALSE)
+#define MS_VALID_SEARCH_EXTENT(rect)  ((((rect).minx <= (rect).maxx && (rect).miny <= (rect).maxy))?MS_TRUE:MS_FALSE)
 
 #define MS_INIT_COLOR(color,r,g,b,a) { (color).red = r; (color).green = g; (color).blue = b; (color).alpha=a; }
 #define MS_VALID_COLOR(color) (((color).red==-1 || (color).green==-1 || (color).blue==-1)?MS_FALSE:MS_TRUE)
@@ -719,10 +719,11 @@ extern "C" {
   };
   enum MS_TOKEN_FUNCTION_ENUM {
     MS_TOKEN_FUNCTION_LENGTH=350, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT,
-    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA, MS_TOKEN_FUNCTION_JAVASCRIPT,
-    MS_TOKEN_FUNCTION_UPPER, MS_TOKEN_FUNCTION_LOWER, MS_TOKEN_FUNCTION_INITCAP, MS_TOKEN_FUNCTION_FIRSTCAP
+    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA, 
+    MS_TOKEN_FUNCTION_CENTERLINE, MS_TOKEN_FUNCTION_DENSIFY, MS_TOKEN_FUNCTION_OUTER, MS_TOKEN_FUNCTION_INNER,
+    MS_TOKEN_FUNCTION_JAVASCRIPT, MS_TOKEN_FUNCTION_UPPER, MS_TOKEN_FUNCTION_LOWER, MS_TOKEN_FUNCTION_INITCAP, MS_TOKEN_FUNCTION_FIRSTCAP
   };
-  enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=370, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
+  enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=380, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
   enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE, MS_PARSE_TYPE_SLD };
 
 #ifndef SWIG
@@ -1085,7 +1086,7 @@ The :ref:`STYLE <style>` object. An instance of styleObj is associated with one 
 
     double minscaledenom; ///< See :ref:`MINSCALEDENOM <mapfile-style-minscaledenom>`
     double maxscaledenom; ///< See :ref:`MAXSCALEDENOM <mapfile-style-maxscaledenom>`
-    int sizeunits; ///< Supersedes class's :ref:`SIZEUNITS <mapfile-class-sizeunits>` to allow fine-grained sizing for improved SLD (RFC 124)
+    int sizeunits; ///< Supersedes class's :ref:`SIZEUNITS <mapfile-layer-sizeunits>` to allow fine-grained sizing for improved SLD (RFC 124)
   };
 
 #define MS_STYLE_SINGLE_SIDED_OFFSET -99
@@ -1476,7 +1477,7 @@ The :ref:`REFERENCE <reference>` object
     char *image; ///< Filename of reference map image - see :ref:`IMAGE <mapfile-reference-image>`
     int status; ///< :data:`MS_ON` or :data:`MS_OFF` - see :ref:`STATUS <mapfile-reference-status>`
     int marker; ///< Index of a symbol in the map symbol set to use for marker - see :ref:`MARKER <mapfile-reference-marker>`
-    char *markername; ///< Name of a symbol - see :ref:`MARKERNAME <mapfile-reference-markername>`
+    char *markername; ///< Name of a symbol - see :ref:`MARKER <mapfile-reference-marker>`
     int markersize; ///< Size of marker - see :ref:`MARKERSIZE <mapfile-reference-markersize>`
     int minboxsize; ///< In pixels - see :ref:`MINBOXSIZE <mapfile-reference-minboxsize>`
     int maxboxsize; ///< In pixels - see :ref:`MAXBOXSIZE <mapfile-reference-maxboxsize>`
@@ -1807,7 +1808,7 @@ The :ref:`REFERENCE <reference>` object
     double mingeowidth; ///< min map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
     double maxgeowidth; ///< max map width (in map units) at which the layer should be drawn - see :ref:`MAXGEOWIDTH <mapfile-layer-maxgeowidth>`
 
-    int sizeunits; ///< applies to all classes - see :ref:`SIZEUNITES <mapfile-layer-sizeunits>`
+    int sizeunits; ///< applies to all classes - see :ref:`SIZEUNITS <mapfile-layer-sizeunits>`
 
     int maxfeatures; ///< Maximum number of layer features that will be drawn - see :ref:`MAXFEATURES <mapfile-layer-maxfeatures>`
     int startindex; ///< Feature start index - used for paging
@@ -1956,6 +1957,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
       queryMapObj querymap; ///< See :ref:`QUERYMAP <mapfile-map-querymap>`
       webObj web; ///< See :ref:`WEB <mapfile-map-web>`
 
+      const configObj *config;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -2113,6 +2115,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int initLayerCompositer(LayerCompositer *compositer);
   MS_DLL_EXPORT void initLeader(labelLeaderObj *leader);
   MS_DLL_EXPORT void freeGrid( graticuleObj *pGraticule);
+  int loadHashTable(hashTableObj *ptable); // used by other file loading code
 
   MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
   MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
@@ -2176,7 +2179,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4);
   MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
-  MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath);
+  MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath, const configObj *config);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
   MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
   MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
@@ -2335,6 +2338,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msStringBufferReleaseStringAndFree(msStringBuffer* sb);
   MS_DLL_EXPORT int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString);
 
+  MS_DLL_EXPORT int msStringToInt(const char *str, int *value, int base);
+  MS_DLL_EXPORT int msStringToDouble(const char *str, double *value);
+
 #ifdef __cplusplus
 }
   std::string msStdStringEscape( const char * pszString );
@@ -2448,6 +2454,9 @@ extern "C" {
   MS_DLL_EXPORT void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double cellsize, double grid_resolution);
   MS_DLL_EXPORT void msTransformShapeToPixelRound(shapeObj *shape, rectObj extent, double cellsize);
   MS_DLL_EXPORT void msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize);
+
+  MS_DLL_EXPORT shapeObj *msDensify(shapeObj *shape, double tolerance);
+  MS_DLL_EXPORT shapeObj *msRings2Shape(shapeObj *shape, int outer);
 
 #ifndef SWIG
 
@@ -2956,6 +2965,8 @@ extern "C" {
   MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
+  MS_DLL_EXPORT shapeObj *msGEOSVoronoiDiagram(shapeObj *shape, double tolerance, int onlyEdges);
+  MS_DLL_EXPORT shapeObj *msGEOSCenterline(shapeObj *shape);
 
   MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2);
@@ -3208,8 +3219,8 @@ extern "C" {
     int WARN_UNUSED (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
     int WARN_UNUSED (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
 
-    int WARN_UNUSED (*renderGlyphs)(imageObj *img, textPathObj *tp, colorObj *clr, colorObj *olcolor, int olwidth, int isMarker);
-    int WARN_UNUSED (*renderText)(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth);
+    /* only ts->textpath is guaranteed to be populated. Other fields might be 0/NULL */
+    int WARN_UNUSED (*renderGlyphs)(imageObj *img, const textSymbolObj *ts, colorObj *clr, colorObj *olcolor, int olwidth, int isMarker);
 
     int WARN_UNUSED (*renderVectorSymbol)(imageObj *img, double x, double y,
                               symbolObj *symbol, symbolStyleObj *style);

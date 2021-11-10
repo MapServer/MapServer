@@ -42,7 +42,7 @@ except:
     pass
 
 have_pdiff = None
-shp2img = 'shp2img'
+map2img = 'map2img'
 keep_pass = False
 quiet = False
 validate_xml = True
@@ -140,11 +140,11 @@ def read_test_directives( mapfile_name ):
                 runparms_list.append( (items[0], items[1]) )
             elif len(items) == 1:
                 runparms_list.append( (items[0],
-                                       '[SHP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
+                                       '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
                                      
     if len(runparms_list) == 0:
         runparms_list.append( (mapfile_name[:-4] + '.png',
-                               '[SHP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
+                               '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]') )
 
     return (runparms_list, require_list)
             
@@ -159,6 +159,11 @@ def demime_file( filename ):
     from sys import version_info
     if version_info >= (3,0,0):
         data = str(data, 'iso-8859-1')
+
+    # remove any double CR which will crash the following code
+    extension = os.path.splitext(filename)[1]
+    if extension in (".xml", ".json"):
+        data = data.replace("\r\r", "\r")
 
     offset = -1
     for i in range(len(data)-1):
@@ -395,38 +400,6 @@ def fixexponent_file( filename ):
     return
 
 ###############################################################################
-# Do windows number of decimal truncation.
-
-def truncate_one_decimal( filename ):
-    import re
-    
-    data = open(filename,'rb').read()
-
-    from sys import version_info
-    if version_info >= (3,0,0):
-        data = str(data, 'iso-8859-1')
-
-    numbers_found = re.compile('[0-9]+\.[0-9]{6,24}', re.M)
-
-    start = 0
-    new_data = ''
-    for number in numbers_found.finditer(data):
-        end = number.end() - 1
-        new_data = new_data + data[start:end] 
-        start = number.end()
-
-    if new_data != '':
-        new_data = new_data + data[start:] 
-
-
-    if new_data != '' and new_data != data:
-        if version_info >= (3,0,0):
-            open(filename,'wb').write(bytes(new_data, 'iso-8859-1'))
-        else:
-            open(filename,'wb').write(new_data)
-
-    return
-###############################################################################
 # Replace CR+LF by CR
 
 def crlf( filename ):
@@ -486,7 +459,7 @@ def get_pytests(dirname):
 
     ###########################################################################
     # Get version info.
-    version_info = os.popen( shp2img + ' -v' ).read()
+    version_info = os.popen( map2img + ' -v' ).read()
     #print('version = %s' % version_info)
 
     gdal_version = get_gdal_version()
@@ -562,7 +535,7 @@ def _run(map, out_file, command, extra_args):
     command = command.replace('[RESULT_DEMIME_DEVERSION]', 'result/'+out_file )
     command = command.replace('[EXTRACT_SERVICE_VERSION]', 'result/'+out_file )
     command = command.replace('[MAPFILE]', os.path.basename(map) )
-    command = command.replace('[SHP2IMG]', shp2img )
+    command = command.replace('[MAP2IMG]', map2img )
     if renderer is not None:
         command = command.replace('[RENDERER]', '-i '+renderer )
     else:
@@ -644,7 +617,6 @@ def _run(map, out_file, command, extra_args):
         deversion_file( 'result/'+out_file )
         degdalversion_file( 'result/'+out_file )
         fixexponent_file( 'result/'+out_file )
-        truncate_one_decimal( 'result/'+out_file )
         detimestamp_file( 'result/'+out_file )
     if extractserviceversion:
         extract_service_version_file( 'result/'+out_file )

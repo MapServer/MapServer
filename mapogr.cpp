@@ -2253,66 +2253,6 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
         bool bSpatialiteOrGPKGAddOrderByFID = false;
 
-        if( psInfo->dialect && psInfo->pszMainTableName != NULL && 
-            ( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
-              || EQUAL(psInfo->dialect, "GPKG") ) &&
-            bIsValidRect )
-        {
-            select = msStringConcatenate(select, " JOIN ");
-
-            char szSpatialIndexName[256];
-            snprintf( szSpatialIndexName, sizeof(szSpatialIndexName),
-                        "%s_%s_%s",
-                        EQUAL(psInfo->dialect, "Spatialite") ? "idx" : "rtree",
-                        psInfo->pszSpatialFilterTableName,
-                        psInfo->pszSpatialFilterGeometryColumn );
-            char* pszEscapedSpatialIndexName = msLayerEscapePropertyName(
-                                            layer, szSpatialIndexName);
-            select = msStringConcatenate(select, "\"");
-            select = msStringConcatenate(select, pszEscapedSpatialIndexName);
-            msFree(pszEscapedSpatialIndexName);
-            select = msStringConcatenate(select, "\" ms_spat_idx ON \"");
-            char* pszEscapedMainTableName = msLayerEscapePropertyName(
-                                            layer, psInfo->pszMainTableName);
-            select = msStringConcatenate(select, pszEscapedMainTableName);
-            msFree(pszEscapedMainTableName);
-            select = msStringConcatenate(select, "\".");
-            if( psInfo->pszRowId )
-            {
-                char* pszEscapedRowId = msLayerEscapePropertyName(
-                                                    layer, psInfo->pszRowId);
-                select = msStringConcatenate(select, "\"");
-                select = msStringConcatenate(select, pszEscapedRowId);
-                select = msStringConcatenate(select, "\"");
-                msFree(pszEscapedRowId);
-            }
-            else
-                select = msStringConcatenate(select, "ROWID");
-            if( EQUAL(psInfo->dialect, "Spatialite") )
-                select = msStringConcatenate(select, " = ms_spat_idx.pkid AND ");
-            else
-                select = msStringConcatenate(select, " = ms_spat_idx.id AND ");
-
-            char szCond[256];
-            if( EQUAL(psInfo->dialect, "Spatialite") )
-            {
-                snprintf(szCond, sizeof(szCond),
-                        "ms_spat_idx.xmin <= %.15g AND ms_spat_idx.xmax >= %.15g AND "
-                        "ms_spat_idx.ymin <= %.15g AND ms_spat_idx.ymax >= %.15g",
-                        rect.maxx, rect.minx, rect.maxy, rect.miny);
-            }
-            else
-            {
-                snprintf(szCond, sizeof(szCond),
-                        "ms_spat_idx.minx <= %.15g AND ms_spat_idx.maxx >= %.15g AND "
-                        "ms_spat_idx.miny <= %.15g AND ms_spat_idx.maxy >= %.15g",
-                        rect.maxx, rect.minx, rect.maxy, rect.miny);
-            }
-            select = msStringConcatenate(select, szCond);
-
-            bSpatialiteOrGPKGAddOrderByFID = true;
-        }
-
         const char *sql = layer->filter.native_string;
         if (psInfo->dialect && sql && *sql != '\0' &&
             (EQUAL(psInfo->dialect, "Spatialite") ||
@@ -2353,6 +2293,76 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                       EQUAL(psInfo->dialect, "GPKG")) &&
                      psInfo->pszMainTableName != NULL )
             {
+                if( (EQUAL(psInfo->dialect, "Spatialite") && psInfo->bHasSpatialIndex)
+                      || EQUAL(psInfo->dialect, "GPKG") )
+                {
+                    if (filter) filter = msStringConcatenate(filter, " AND ");
+                    char* pszEscapedMainTableName = msLayerEscapePropertyName(
+                                                    layer, psInfo->pszMainTableName);
+                    filter = msStringConcatenate(filter, "\"");
+                    filter = msStringConcatenate(filter, pszEscapedMainTableName);
+                    msFree(pszEscapedMainTableName);
+                    filter = msStringConcatenate(filter, "\".");
+                    if( psInfo->pszRowId )
+                    {
+                        char* pszEscapedRowId = msLayerEscapePropertyName(
+                                                            layer, psInfo->pszRowId);
+                        filter = msStringConcatenate(filter, "\"");
+                        filter = msStringConcatenate(filter, pszEscapedRowId);
+                        filter = msStringConcatenate(filter, "\"");
+                        msFree(pszEscapedRowId);
+                    }
+                    else
+                        filter = msStringConcatenate(filter, "ROWID");
+                    
+                    filter = msStringConcatenate(filter, " IN ");
+                    filter = msStringConcatenate(filter, "(");
+                    filter = msStringConcatenate(filter, "SELECT ");
+
+                    if( EQUAL(psInfo->dialect, "Spatialite") )
+                        filter = msStringConcatenate(filter, "ms_spat_idx.pkid");
+                    else
+                        filter = msStringConcatenate(filter, "ms_spat_idx.id");
+
+                    filter = msStringConcatenate(filter, " FROM ");
+
+                    char szSpatialIndexName[256];
+                    snprintf( szSpatialIndexName, sizeof(szSpatialIndexName),
+                                "%s_%s_%s",
+                                EQUAL(psInfo->dialect, "Spatialite") ? "idx" : "rtree",
+                                psInfo->pszSpatialFilterTableName,
+                                psInfo->pszSpatialFilterGeometryColumn );
+                    char* pszEscapedSpatialIndexName = msLayerEscapePropertyName(
+                                                    layer, szSpatialIndexName);
+
+                    filter = msStringConcatenate(filter, "\"");
+                    filter = msStringConcatenate(filter, pszEscapedSpatialIndexName);
+                    msFree(pszEscapedSpatialIndexName);
+                    
+                    filter = msStringConcatenate(filter, "\" ms_spat_idx WHERE ");
+
+                    char szCond[256];
+                    if( EQUAL(psInfo->dialect, "Spatialite") )
+                    {
+                        snprintf(szCond, sizeof(szCond),
+                                "ms_spat_idx.xmin <= %.15g AND ms_spat_idx.xmax >= %.15g AND "
+                                "ms_spat_idx.ymin <= %.15g AND ms_spat_idx.ymax >= %.15g",
+                                rect.maxx, rect.minx, rect.maxy, rect.miny);
+                    }
+                    else
+                    {
+                        snprintf(szCond, sizeof(szCond),
+                                "ms_spat_idx.minx <= %.15g AND ms_spat_idx.maxx >= %.15g AND "
+                                "ms_spat_idx.miny <= %.15g AND ms_spat_idx.maxy >= %.15g",
+                                rect.maxx, rect.minx, rect.maxy, rect.miny);
+                    }
+                    filter = msStringConcatenate(filter, szCond);
+        
+                    filter = msStringConcatenate(filter, ")");
+
+                    bSpatialiteOrGPKGAddOrderByFID = true;
+                }
+
                 const bool isGPKG = EQUAL(psInfo->dialect, "GPKG");
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 const char *col = OGR_L_GetGeometryColumn(psInfo->hLayer); // which geom field??
@@ -2373,9 +2383,14 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 filter = msStringConcatenate(filter, "\"");
                 if( isGPKG )
                     filter = msStringConcatenate(filter, ")");
-                filter = msStringConcatenate(filter, ", BuildMbr(");
                 char *points = (char *)msSmallMalloc(30*2*5);
-                snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                if( rect.minx == rect.maxx && rect.miny == rect.maxy ) {
+                  filter = msStringConcatenate(filter, ",  ST_GeomFromText(");
+                  snprintf(points, 30*4, "'POINT(%lf %lf)'", rect.minx, rect.miny);
+                } else {
+                  filter = msStringConcatenate(filter, ", BuildMbr(");
+                  snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                }
                 filter = msStringConcatenate(filter, points);
                 msFree(points);
                 filter = msStringConcatenate(filter, "))");
@@ -3412,12 +3427,13 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
                                           pSpatialFilterNode);
   }
 
-  if( (expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
+  if( (((expr->m_nToken == MS_TOKEN_COMPARISON_INTERSECTS ||
       expr->m_nToken == MS_TOKEN_COMPARISON_OVERLAPS ||
       expr->m_nToken == MS_TOKEN_COMPARISON_CROSSES ||
       expr->m_nToken == MS_TOKEN_COMPARISON_WITHIN ||
       expr->m_nToken == MS_TOKEN_COMPARISON_CONTAINS) &&
-      expr->m_aoChildren.size() == 2 &&
+      expr->m_aoChildren.size() == 2) ||
+      (expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN && expr->m_aoChildren.size() == 3)) &&
       expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_SHAPE )
   {
         if( info->rect_is_defined )
@@ -3432,7 +3448,11 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
         OGRErr e = OGR_G_CreateFromWkt(&wkt, NULL, &hSpatialFilter);
         if (e == OGRERR_NONE) {
             OGREnvelope env;
-            OGR_G_GetEnvelope(hSpatialFilter, &env);
+            if( expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN ) {
+                OGR_G_GetEnvelope(OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30), &env);
+            } else {
+                OGR_G_GetEnvelope(hSpatialFilter, &env);
+            }
             info->rect.minx = env.MinX;
             info->rect.miny = env.MinY;
             info->rect.maxx = env.MaxX;

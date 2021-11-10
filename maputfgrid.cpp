@@ -49,7 +49,7 @@ typedef mapserver::renderer_base<pixfmt_utf32> renderer_base;
 typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 typedef mapserver::renderer_scanline_bin_solid<renderer_base> renderer_scanline;
 
-static utfpix32 UTF_WATER = utfpix32(32);
+static const utfpix32 UTF_WATER = utfpix32(32);
 
 #define utfitem(c) utfpix32(c)
 
@@ -688,8 +688,9 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
 }
 
 static
-int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj * /*c*/, colorObj * /*oc*/, int /*ow*/, int isMarker) {
+int utfgridRenderGlyphs(imageObj *img, const textSymbolObj *ts, colorObj * /*c*/, colorObj * /*oc*/, int /*ow*/, int isMarker) {
 
+  const textPathObj *tp = ts->textpath;
   const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
   /* If it's not a marker then it's a label or other thing and we dont

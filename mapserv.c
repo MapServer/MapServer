@@ -32,6 +32,7 @@
 #endif
 
 #include "mapserver-config.h"
+#include <stdbool.h>
 #include <stdlib.h>
 
 #ifdef USE_FASTCGI
@@ -45,7 +46,7 @@
 
 #include "cpl_conv.h"
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <signal.h>
 #endif
 
@@ -53,35 +54,21 @@
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
 /************************************************************************/
-#ifndef WIN32
-void msCleanupOnSignal( int nInData )
+
+static int finish_process = 0;
+
+#ifndef _WIN32
+static void msCleanupOnSignal( int nInData )
 {
-  /* For some reason, the fastcgi message code does not seem to work */
-  /* from within the signal handler on Unix.  So we force output through */
-  /* normal stdio functions. */
-  msIO_installHandlers( NULL, NULL, NULL );
-#ifndef NDEBUG
-  msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
-#endif
-  msCleanup();
-  exit(0);
+  (void)nInData;
+  finish_process = 1;
 }
 #endif
 
-#ifdef WIN32
-void msCleanupOnExit( void )
+#ifdef _WIN32
+static void msCleanupOnExit( void )
 {
-  /* note that stderr and stdout seem to be non-functional in the */
-  /* fastcgi/win32 case.  If you really want to check functioning do */
-  /* some sort of hack logging like below ... otherwise just trust it! */
-
-#ifdef notdef
-  FILE *fp_out = fopen( "D:\\temp\\mapserv.log", "w" );
-
-  fprintf( fp_out, "In msCleanupOnExit\n" );
-  fclose( fp_out );
-#endif
-  msCleanup();
+  finish_process = 1;
 }
 #endif
 
@@ -145,109 +132,111 @@ static int msIO_installFastCGIRedirect()
 /************************************************************************/
 int main(int argc, char *argv[])
 {
-  int iArg;
   int sendheaders = MS_TRUE;
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
-  mapservObj* mapserv = NULL;
+  mapservObj  *mapserv = NULL;
+  configObj *config = NULL;
+
+  /* 
+  ** Process -v and -h command line arguments  first end exit. We want to avoid any error messages 
+  ** associated with msLoadConfig() or msSetup().
+  */
+  const char* config_filename = NULL;
+  const bool use_command_line_options = getenv("QUERY_STRING") == NULL;
+  if (use_command_line_options) {
+    /* WARNING:
+     * Do not parse command line arguments (especially those that could have
+     * dangerous consequences if controlled through a web request), without checking
+     * that the QUERY_STRING environment variable is *not* set, because in a
+     * CGI context, command line arguments can be generated from the content
+     * of the QUERY_STRING, and thus cause a security problem.
+     * For ex, "http://example.com/mapserv.cgi?-conf+bar
+     * would result in "mapserv.cgi -conf bar" being invoked.
+     * See https://github.com/MapServer/MapServer/pull/6429#issuecomment-952533589
+     * and https://datatracker.ietf.org/doc/html/rfc3875#section-4.4
+    */
+    for( int iArg = 1; iArg < argc; iArg++ ) {
+      if( strcmp(argv[iArg],"-v") == 0 ) {
+        printf("%s\n", msGetVersion());
+        fflush(stdout);
+        exit(0);
+      } else if (strcmp(argv[iArg], "-h") == 0 || strcmp(argv[iArg], "--help") == 0) {
+        printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value] [PATH_INFO=value]\n");
+        printf("                [-conf filename]\n");
+        printf("\n");
+        printf("Options :\n");
+        printf("  -h, --help              Display this help message.\n");
+        printf("  -v                      Display version and exit.\n");
+        printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
+        printf("  -conf filename          Filename of the MapServer configuration file.\n");
+        printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
+        printf("  PATH_INFO=value         Set the PATH_INFO for an API request.\n");
+        fflush(stdout);
+        exit(0);
+      } else if( iArg < argc-1 && strcmp(argv[iArg], "-conf") == 0) {
+        config_filename = argv[iArg+1];
+        ++iArg;
+      }
+    }
+  }
+
+  config = msLoadConfig(config_filename); // first thing
+  if(config == NULL) {
+#ifdef USE_FASTCGI
+    msIO_installFastCGIRedirect(); // FastCGI setup for error handling here
+    FCGI_Accept();
+#endif
+    msCGIWriteError(mapserv);
+    exit(0);
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Initialize mapserver.  This sets up threads, GD and GEOS as     */
   /*      well as using MS_ERRORFILE and MS_DEBUGLEVEL env vars if set.   */
   /* -------------------------------------------------------------------- */
   if( msSetup() != MS_SUCCESS ) {
+#ifdef USE_FASTCGI
+    msIO_installFastCGIRedirect(); // FastCGI setup for error handling here
+    FCGI_Accept();
+#endif
     msCGIWriteError(mapserv);
     msCleanup();
+    msFreeConfig(config);
     exit(0);
   }
 
   if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&execstarttime, NULL);
 
-  /* push high-value ENV vars into the CPL global config - primarily for IIS/FastCGI */
-  const char* const apszEnvVars[] = { 
-    "CURL_CA_BUNDLE", "MS_MAPFILE", "MS_MAP_NO_PATH", "MS_MAP_PATTERN", "MS_MAP_ENV_PATTERN",
-    "MS_MAP_BAD_PATTERN", "MS_MAP_ENV_BAD_PATTERN",
-     NULL /* guard */ };
-  for( int i = 0; apszEnvVars[i] != NULL; ++i ) {
-    const char* value = getenv(apszEnvVars[i]);
-    if(value) CPLSetConfigOption(apszEnvVars[i], value);
-  }
-
   /* -------------------------------------------------------------------- */
-  /*      Process arguments.  In normal use as a cgi-bin there are no     */
+  /*      Process arguments. In normal use as a cgi-bin there are no      */
   /*      commandline switches, but we provide a few for test/debug       */
-  /*      purposes, and to query the version info.                        */
+  /*      purposes.                                                       */
   /* -------------------------------------------------------------------- */
-  for( iArg = 1; iArg < argc; iArg++ ) {
-    /* Keep only "-v", "-nh" and "QUERY_STRING=..." enabled by default.
-     * The others will require an explicit -DMS_ENABLE_CGI_CL_DEBUG_ARGS
-     * at compile time. Do *NOT* enable them since they can cause security
-     * problems : https://github.com/mapserver/mapserver/issues/3485
-     */
-    if( strcmp(argv[iArg],"-v") == 0 ) {
-      printf("%s\n", msGetVersion());
-      fflush(stdout);
-      exit(0);
-    } else if(strcmp(argv[iArg], "-nh") == 0) {
-      sendheaders = MS_FALSE;
-      msIO_setHeaderEnabled( MS_FALSE );
-    } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
-      /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
-      putenv( "REQUEST_METHOD=GET" );
-      /* coverity[tainted_string] */
-      putenv( argv[iArg] );
-    } else if (strcmp(argv[iArg], "--h") == 0 || strcmp(argv[iArg], "--help") == 0) {
-      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
-#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
-      printf("               [-tmpbase dirname] [-t mapfilename] [MS_ERRORFILE=value] [MS_DEBUGLEVEL=value]\n");
-#endif
-      printf("\n");
-      printf("Options :\n");
-      printf("  -h, --help              Display this help message.\n");
-      printf("  -v                      Display version and exit.\n");
-      printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
-      printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
-#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
-      printf("  -tmpbase dirname        Define a forced temporary directory.\n");
-      printf("  -t mapfilename          Display the tokens of the mapfile after parsing.\n");
-      printf("  MS_ERRORFILE=filename   Set error file.\n");
-      printf("  MS_DEBUGLEVEL=value     Set debug level.\n");
-#endif
-      exit(0);
-    }
-#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
-    else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
-      msForceTmpFileBase( argv[++iArg] );
-    } else if( iArg < argc-1 && strcmp(argv[iArg], "-t") == 0) {
-      char **tokens;
-      int numtokens=0;
-
-      if((tokens=msTokenizeMap(argv[iArg+1], &numtokens)) != NULL) {
-        int i;
-        for(i=0; i<numtokens; i++)
-          printf("%s\n", tokens[i]);
-        msFreeCharArray(tokens, numtokens);
-      } else {
-        msCGIWriteError(mapserv);
+  if(use_command_line_options) {
+    for( int iArg = 1; iArg < argc; iArg++ ) {
+      if(strcmp(argv[iArg], "-nh") == 0) {
+        sendheaders = MS_FALSE;
+        msIO_setHeaderEnabled( MS_FALSE );
+      } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
+        /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
+        putenv( "REQUEST_METHOD=GET" );
+        /* coverity[tainted_string] */
+        putenv( argv[iArg] );
+      } else if( strncmp(argv[iArg], "PATH_INFO=", 10) == 0 ) {
+        /* Debugging hook for APIs... pass "PATH_INFO=..." on the command-line */
+        putenv( "REQUEST_METHOD=GET" );
+        /* coverity[tainted_string] */
+        putenv( argv[iArg] );
       }
-
-      exit(0);
-    } else if( strncmp(argv[iArg], "MS_ERRORFILE=", 13) == 0 ) {
-      msSetErrorFile( argv[iArg] + 13, NULL );
-    } else if( strncmp(argv[iArg], "MS_DEBUGLEVEL=", 14) == 0) {
-      msSetGlobalDebugLevel( atoi(argv[iArg] + 14) );
-    }
-#endif /* MS_ENABLE_CGI_CL_DEBUG_ARGS */
-    else {
-      /* we don't produce a usage message as some web servers pass junk arguments */
     }
   }
 
   /* -------------------------------------------------------------------- */
   /*      Setup cleanup magic, mainly for FastCGI case.                   */
   /* -------------------------------------------------------------------- */
-#ifndef WIN32
+#ifndef _WIN32
   signal( SIGUSR1, msCleanupOnSignal );
   signal( SIGTERM, msCleanupOnSignal );
 #endif
@@ -257,7 +246,7 @@ int main(int argc, char *argv[])
 
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
-  while( FCGI_Accept() >= 0 ) {
+  while( !finish_process && FCGI_Accept() >= 0 ) {
 #endif /* def USE_FASTCGI */
 
     /* -------------------------------------------------------------------- */
@@ -267,12 +256,12 @@ int main(int argc, char *argv[])
     mapserv->sendheaders = sendheaders; /* override the default if necessary (via command line -nh switch) */
 
     mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
-    if( mapserv->request->NumParams == -1 ) {
+    if(msCGIIsAPIRequest(mapserv) == MS_FALSE && mapserv->request->NumParams == -1) { /* no QUERY_STRING or PATH_INFO */
       msCGIWriteError(mapserv);
       goto end_request;
     }
 
-    mapserv->map = msCGILoadMap(mapserv);
+    mapserv->map = msCGILoadMap(mapserv, config);
     if(!mapserv->map) {
       msCGIWriteError(mapserv);
       goto end_request;
@@ -290,14 +279,15 @@ int main(int argc, char *argv[])
     }
 #endif
 
-
-
-
-    if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+    if(mapserv->request->api_path != NULL) {
+      if(msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
+	msCGIWriteError(mapserv);
+	goto end_request;
+      }
+    } else if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
       msCGIWriteError(mapserv);
       goto end_request;
     }
-
 
 end_request:
     if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
@@ -322,6 +312,7 @@ end_request:
             (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
   }
   msCleanup();
+  msFreeConfig(config);
 
 #ifdef _WIN32
   /* flush pending writes to stdout */

@@ -31,6 +31,8 @@
 #include "mapowscommon.h"
 #include "maplibxml2.h"
 
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+
 #ifdef USE_LIBXML2
 
 static
@@ -213,7 +215,7 @@ xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, const char *name, double va
 
   xmlNodePtr psNode = NULL;
 
-  sprintf(buffer, "%f", value);
+  snprintf(buffer, sizeof(buffer), "%.6f", value);
 
   if( *ppsNsGco == NULL )
     *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
@@ -931,3 +933,4 @@ void msMetadataSetGetMetadataURL(layerObj *lp, const char *url)
   msFree(pszMetadataURL);
 }
 
+#endif

@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
+#include "cpl_conv.h"
 #include "ogr_srs_api.h"
 
 static char *ms_proj_lib = NULL;
@@ -1217,7 +1218,7 @@ static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
         return MS_FALSE;
     }
 
-    pointObj p = {0,0,0,0}; // initialize
+    pointObj p = {0}; // initialize
     double invgt0 = out->gt.need_geotransform ? out->gt.invgeotransform[0] : 0.0;
     double invgt1 = out->gt.need_geotransform ? out->gt.invgeotransform[1] : 1.0;
     double invgt3 = out->gt.need_geotransform ? out->gt.invgeotransform[3] : 0.0;
@@ -2341,7 +2342,7 @@ void msProjLibInitFromEnv()
 {
   const char *val;
 
-  if( (val=getenv( "PROJ_LIB" )) != NULL ) {
+  if( (val=CPLGetConfigOption( "PROJ_LIB", NULL )) != NULL ) {
     msSetPROJ_LIB(val, NULL);
   }
 }
@@ -2605,7 +2606,7 @@ int msProjIsGeographicCRS(projectionObj* proj)
     }
     return FALSE;
 #else
-    return pj_is_latlong(proj->proj);
+    return proj->proj != NULL && pj_is_latlong(proj->proj);
 #endif
 }
 

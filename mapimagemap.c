@@ -632,17 +632,19 @@ int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, la
 int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
 
 {
+  FILE *stream_to_free = NULL;
   FILE *stream;
   char workbuffer[5000];
 
   DEBUG_IF printf("msSaveImageIM\n<BR>");
 
   if(filename != NULL && strlen(filename) > 0) {
-    stream = fopen(filename, "wb");
-    if(!stream) {
+    stream_to_free = fopen(filename, "wb");
+    if(!stream_to_free) {
       msSetError(MS_IOERR, "(%s)", "msSaveImage()", filename);
       return(MS_FAILURE);
     }
+    stream = stream_to_free;
   } else { /* use stdout */
 
 #ifdef _WIN32
@@ -696,10 +698,11 @@ int msSaveImageIM(imageObj* img, const char *filename, outputFormatObj *format )
   } else {
     msSetError(MS_MISCERR, "Unknown output image type driver: %s.",
                "msSaveImage()", format->driver );
+    if(stream_to_free != NULL) fclose(stream_to_free);
     return(MS_FAILURE);
   }
 
-  if(filename != NULL && strlen(filename) > 0) fclose(stream);
+  if(stream_to_free != NULL) fclose(stream_to_free);
   return(MS_SUCCESS);
 }
 

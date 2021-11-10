@@ -1,7 +1,7 @@
-# RUN_PARMS: line_short_gap.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: line_short_gap.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: line_short_gap.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: line_short_gap.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: line_short_gap.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_short_gap.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_short_gap.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_short_gap.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 MAP
   SIZE 100 100

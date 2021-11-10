@@ -2,6 +2,7 @@
 "type": "FeatureCollection",
 "numberMatched": 6994,
 "name": "cities",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
 "features": [
 { "type": "Feature", "properties": { "ogr_fid": 1, "name": "崇州市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11540741.500531593337655, 3584222.176282715518028 ] } },
 { "type": "Feature", "properties": { "ogr_fid": 2, "name": "江油市", "name_ar": "", "name_hi": "" }, "geometry": { "type": "Point", "coordinates": [ 11658983.416123732924461, 3734167.308027575723827 ] } }

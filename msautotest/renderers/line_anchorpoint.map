@@ -1,5 +1,5 @@
-# RUN_PARMS: line_anchorpoint.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: line_anchorpoint.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: line_anchorpoint.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_anchorpoint.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 
 MAP
   IMAGECOLOR 255 255 255

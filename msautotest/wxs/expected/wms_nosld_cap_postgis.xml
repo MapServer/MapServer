@@ -73,14 +73,14 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <SRS>EPSG:42101</SRS>
     <SRS>EPSG:4269</SRS>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-67.5725" miny="42" maxx="-58.9275" maxy="48.5" />
+    <LatLonBoundingBox minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-67.5725" miny="42" maxx="-58.9275" maxy="48.5" />
+                minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>province</Name>
         <Title>province</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLonBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <LatLonBoundingBox minx="-66.724329" miny="41.770508" maxx="-57.721680" maxy="48.477314" />
         <BoundingBox SRS="EPSG:3978"
                     minx="2.25336e+06" miny="-76361.8" maxx="2.74765e+06" maxy="515489" />
         <MetadataURL type="TC211">
@@ -100,7 +100,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Name>popplace</Name>
         <Title>popplace</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLonBoundingBox minx="-66.3286" miny="42.5631" maxx="-59.6882" maxy="47.9413" />
+        <LatLonBoundingBox minx="-66.328617" miny="42.563125" maxx="-59.688212" maxy="47.941251" />
         <BoundingBox SRS="EPSG:3978"
                     minx="2.2794e+06" miny="-55344.5" maxx="2.60038e+06" maxy="461587" />
         <MetadataURL type="TC211">
@@ -120,7 +120,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         <Name>road</Name>
         <Title>road</Title>
         <SRS>EPSG:3978</SRS>
-        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <LatLonBoundingBox minx="-66.633318" miny="42.382054" maxx="-59.292114" maxy="48.295512" />
         <BoundingBox SRS="EPSG:3978"
                     minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
         <MetadataURL type="TC211">

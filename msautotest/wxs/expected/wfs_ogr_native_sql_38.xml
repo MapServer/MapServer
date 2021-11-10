@@ -10,8 +10,8 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="unknown" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::32632">
-      		<gml:lowerCorner>656907.12000 4886687.84000</gml:lowerCorner>
-      		<gml:upperCorner>656907.12000 4886687.84000</gml:upperCorner>
+      		<gml:lowerCorner>656907.120000 4886687.840000</gml:lowerCorner>
+      		<gml:upperCorner>656907.120000 4886687.840000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
 <!-- WARNING: FeatureId item 'ID' not found in typename 'towns'. -->
@@ -19,13 +19,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:towns>
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::32632">
-        		<gml:lowerCorner>656907.12000 4886687.84000</gml:lowerCorner>
-        		<gml:upperCorner>656907.12000 4886687.84000</gml:upperCorner>
+        		<gml:lowerCorner>656907.120000 4886687.840000</gml:lowerCorner>
+        		<gml:upperCorner>656907.120000 4886687.840000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::32632">
-            <gml:pos>656907.12000 4886687.84000</gml:pos>
+            <gml:pos>656907.120000 4886687.840000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:name>Granaglione</ms:name>

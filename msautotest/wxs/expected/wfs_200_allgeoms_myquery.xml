@@ -10,29 +10,29 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="2" numberReturned="2">
   <wfs:boundedBy>
   	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-  		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-  		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+  		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+  		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
   	</gml:Envelope>
   </wfs:boundedBy>
   <wfs:member>
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>49.00000 2.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>49.000000 2.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:point gml:id="point.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>49.00000 2.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>49.000000 2.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="point.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>49.00000 2.00000</gml:pos>
+            <gml:pos>49.000000 2.000000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
       </ms:point>
@@ -43,28 +43,28 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-      		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+      		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+      		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:multipoint gml:id="multipoint.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>49.00000 2.00000</gml:lowerCorner>
-        		<gml:upperCorner>50.00000 3.00000</gml:upperCorner>
+        		<gml:lowerCorner>49.000000 2.000000</gml:lowerCorner>
+        		<gml:upperCorner>50.000000 3.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:MultiPoint gml:id="multipoint.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
             <gml:pointMember>
               <gml:Point gml:id="multipoint.1.2">
-                <gml:pos>49.00000 2.00000</gml:pos>
+                <gml:pos>49.000000 2.000000</gml:pos>
               </gml:Point>
             </gml:pointMember>
             <gml:pointMember>
               <gml:Point gml:id="multipoint.1.3">
-                <gml:pos>50.00000 3.00000</gml:pos>
+                <gml:pos>50.000000 3.000000</gml:pos>
               </gml:Point>
             </gml:pointMember>
           </gml:MultiPoint>

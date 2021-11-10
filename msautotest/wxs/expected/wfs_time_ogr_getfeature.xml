@@ -10,21 +10,21 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
    timeStamp="" numberMatched="25" numberReturned="25">
       <wfs:boundedBy>
       	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-      		<gml:lowerCorner>33.65000 -131.02000</gml:lowerCorner>
-      		<gml:upperCorner>48.38999 -119.84999</gml:upperCorner>
+      		<gml:lowerCorner>33.650002 -131.020004</gml:lowerCorner>
+      		<gml:upperCorner>48.389999 -119.849998</gml:upperCorner>
       	</gml:Envelope>
       </wfs:boundedBy>
     <wfs:member>
       <ms:time gml:id="time.1">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>37.98000 -130.00000</gml:lowerCorner>
-        		<gml:upperCorner>37.98000 -130.00000</gml:upperCorner>
+        		<gml:lowerCorner>37.980000 -130.000000</gml:lowerCorner>
+        		<gml:upperCorner>37.980000 -130.000000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>37.98000 -130.00000</gml:pos>
+            <gml:pos>37.980000 -130.000000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.1.TIME"><gml:timePosition>2004-01-01</gml:timePosition></ms:TIME>
@@ -34,13 +34,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.2">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>42.52000 -130.32000</gml:lowerCorner>
-        		<gml:upperCorner>42.52000 -130.32000</gml:upperCorner>
+        		<gml:lowerCorner>42.520000 -130.320007</gml:lowerCorner>
+        		<gml:upperCorner>42.520000 -130.320007</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.2.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>42.52000 -130.32000</gml:pos>
+            <gml:pos>42.520000 -130.320007</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.2.TIME"><gml:timePosition>2004-01-01</gml:timePosition></ms:TIME>
@@ -50,13 +50,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.3">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>46.04999 -131.02000</gml:lowerCorner>
-        		<gml:upperCorner>46.04999 -131.02000</gml:upperCorner>
+        		<gml:lowerCorner>46.049999 -131.020004</gml:lowerCorner>
+        		<gml:upperCorner>46.049999 -131.020004</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.3.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>46.04999 -131.02000</gml:pos>
+            <gml:pos>46.049999 -131.020004</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.3.TIME"><gml:timePosition>2004-01-01</gml:timePosition></ms:TIME>
@@ -66,13 +66,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.4">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>44.61999 -124.52999</gml:lowerCorner>
-        		<gml:upperCorner>44.61999 -124.52999</gml:upperCorner>
+        		<gml:lowerCorner>44.619999 -124.529999</gml:lowerCorner>
+        		<gml:upperCorner>44.619999 -124.529999</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.4.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>44.61999 -124.52999</gml:pos>
+            <gml:pos>44.619999 -124.529999</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.4.TIME"><gml:timePosition>2004-01-01</gml:timePosition></ms:TIME>
@@ -82,13 +82,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.5">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>37.75000 -122.82000</gml:lowerCorner>
-        		<gml:upperCorner>37.75000 -122.82000</gml:upperCorner>
+        		<gml:lowerCorner>37.750000 -122.820000</gml:lowerCorner>
+        		<gml:upperCorner>37.750000 -122.820000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.5.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>37.75000 -122.82000</gml:pos>
+            <gml:pos>37.750000 -122.820000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.5.TIME"><gml:timePosition>2004-01-01</gml:timePosition></ms:TIME>
@@ -98,13 +98,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.6">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>37.36000 -122.87999</gml:lowerCorner>
-        		<gml:upperCorner>37.36000 -122.87999</gml:upperCorner>
+        		<gml:lowerCorner>37.360001 -122.879997</gml:lowerCorner>
+        		<gml:upperCorner>37.360001 -122.879997</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.6.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>37.36000 -122.87999</gml:pos>
+            <gml:pos>37.360001 -122.879997</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.6.TIME"><gml:timePosition>2004-01-01</gml:timePosition></ms:TIME>
@@ -114,13 +114,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.7">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>36.75000 -122.41999</gml:lowerCorner>
-        		<gml:upperCorner>36.75000 -122.41999</gml:upperCorner>
+        		<gml:lowerCorner>36.750000 -122.419998</gml:lowerCorner>
+        		<gml:upperCorner>36.750000 -122.419998</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.7.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>36.75000 -122.41999</gml:pos>
+            <gml:pos>36.750000 -122.419998</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.7.TIME"><gml:timePosition>2004-01-02</gml:timePosition></ms:TIME>
@@ -130,13 +130,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.8">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>48.38999 -124.73999</gml:lowerCorner>
-        		<gml:upperCorner>48.38999 -124.73999</gml:upperCorner>
+        		<gml:lowerCorner>48.389999 -124.739998</gml:lowerCorner>
+        		<gml:upperCorner>48.389999 -124.739998</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.8.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>48.38999 -124.73999</gml:pos>
+            <gml:pos>48.389999 -124.739998</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.8.TIME"><gml:timePosition>2004-01-02</gml:timePosition></ms:TIME>
@@ -146,13 +146,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.9">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>42.75000 -124.84999</gml:lowerCorner>
-        		<gml:upperCorner>42.75000 -124.84999</gml:upperCorner>
+        		<gml:lowerCorner>42.750000 -124.849998</gml:lowerCorner>
+        		<gml:upperCorner>42.750000 -124.849998</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.9.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>42.75000 -124.84999</gml:pos>
+            <gml:pos>42.750000 -124.849998</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.9.TIME"><gml:timePosition>2004-01-02</gml:timePosition></ms:TIME>
@@ -162,13 +162,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.10">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>44.61000 -124.07000</gml:lowerCorner>
-        		<gml:upperCorner>44.61000 -124.07000</gml:upperCorner>
+        		<gml:lowerCorner>44.610001 -124.070000</gml:lowerCorner>
+        		<gml:upperCorner>44.610001 -124.070000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.10.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>44.61000 -124.07000</gml:pos>
+            <gml:pos>44.610001 -124.070000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.10.TIME"><gml:timePosition>2004-01-02</gml:timePosition></ms:TIME>
@@ -178,13 +178,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.11">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>48.32000 -122.83999</gml:lowerCorner>
-        		<gml:upperCorner>48.32000 -122.83999</gml:upperCorner>
+        		<gml:lowerCorner>48.320000 -122.839996</gml:lowerCorner>
+        		<gml:upperCorner>48.320000 -122.839996</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.11.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>48.32000 -122.83999</gml:pos>
+            <gml:pos>48.320000 -122.839996</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.11.TIME"><gml:timePosition>2004-01-02</gml:timePosition></ms:TIME>
@@ -194,13 +194,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.12">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>38.95999 -123.73999</gml:lowerCorner>
-        		<gml:upperCorner>38.95999 -123.73999</gml:upperCorner>
+        		<gml:lowerCorner>38.959999 -123.739998</gml:lowerCorner>
+        		<gml:upperCorner>38.959999 -123.739998</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.12.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>38.95999 -123.73999</gml:pos>
+            <gml:pos>38.959999 -123.739998</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.12.TIME"><gml:timePosition>2004-01-02</gml:timePosition></ms:TIME>
@@ -210,13 +210,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.13">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>39.22000 -123.97000</gml:lowerCorner>
-        		<gml:upperCorner>39.22000 -123.97000</gml:upperCorner>
+        		<gml:lowerCorner>39.220001 -123.970001</gml:lowerCorner>
+        		<gml:upperCorner>39.220001 -123.970001</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.13.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>39.22000 -123.97000</gml:pos>
+            <gml:pos>39.220001 -123.970001</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.13.TIME"><gml:timePosition>2004-01-03</gml:timePosition></ms:TIME>
@@ -226,13 +226,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.14">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>38.23000 -123.33000</gml:lowerCorner>
-        		<gml:upperCorner>38.23000 -123.33000</gml:upperCorner>
+        		<gml:lowerCorner>38.230000 -123.330002</gml:lowerCorner>
+        		<gml:upperCorner>38.230000 -123.330002</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.14.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>38.23000 -123.33000</gml:pos>
+            <gml:pos>38.230000 -123.330002</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.14.TIME"><gml:timePosition>2004-01-03</gml:timePosition></ms:TIME>
@@ -242,13 +242,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.15">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>41.84999 -124.37999</gml:lowerCorner>
-        		<gml:upperCorner>41.84999 -124.37999</gml:upperCorner>
+        		<gml:lowerCorner>41.849998 -124.379997</gml:lowerCorner>
+        		<gml:upperCorner>41.849998 -124.379997</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.15.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>41.84999 -124.37999</gml:pos>
+            <gml:pos>41.849998 -124.379997</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.15.TIME"><gml:timePosition>2004-01-03</gml:timePosition></ms:TIME>
@@ -258,13 +258,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.16">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>40.72000 -124.51999</gml:lowerCorner>
-        		<gml:upperCorner>40.72000 -124.51999</gml:upperCorner>
+        		<gml:lowerCorner>40.720001 -124.519997</gml:lowerCorner>
+        		<gml:upperCorner>40.720001 -124.519997</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.16.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>40.72000 -124.51999</gml:pos>
+            <gml:pos>40.720001 -124.519997</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.16.TIME"><gml:timePosition>2004-01-03</gml:timePosition></ms:TIME>
@@ -274,13 +274,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.17">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>46.11999 -124.51000</gml:lowerCorner>
-        		<gml:upperCorner>46.11999 -124.51000</gml:upperCorner>
+        		<gml:lowerCorner>46.119999 -124.510002</gml:lowerCorner>
+        		<gml:upperCorner>46.119999 -124.510002</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.17.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>46.11999 -124.51000</gml:pos>
+            <gml:pos>46.119999 -124.510002</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.17.TIME"><gml:timePosition>2004-01-03</gml:timePosition></ms:TIME>
@@ -290,13 +290,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.18">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>47.34000 -124.75000</gml:lowerCorner>
-        		<gml:upperCorner>47.34000 -124.75000</gml:upperCorner>
+        		<gml:lowerCorner>47.340000 -124.750000</gml:lowerCorner>
+        		<gml:upperCorner>47.340000 -124.750000</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.18.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>47.34000 -124.75000</gml:pos>
+            <gml:pos>47.340000 -124.750000</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.18.TIME"><gml:timePosition>2004-01-03</gml:timePosition></ms:TIME>
@@ -306,13 +306,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.19">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.70999 -120.97000</gml:lowerCorner>
-        		<gml:upperCorner>34.70999 -120.97000</gml:upperCorner>
+        		<gml:lowerCorner>34.709999 -120.970001</gml:lowerCorner>
+        		<gml:upperCorner>34.709999 -120.970001</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.19.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.70999 -120.97000</gml:pos>
+            <gml:pos>34.709999 -120.970001</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.19.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>
@@ -322,13 +322,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.20">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.88000 -120.87000</gml:lowerCorner>
-        		<gml:upperCorner>34.88000 -120.87000</gml:upperCorner>
+        		<gml:lowerCorner>34.880001 -120.870003</gml:lowerCorner>
+        		<gml:upperCorner>34.880001 -120.870003</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.20.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.88000 -120.87000</gml:pos>
+            <gml:pos>34.880001 -120.870003</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.20.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>
@@ -338,13 +338,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.21">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.58000 -120.65000</gml:lowerCorner>
-        		<gml:upperCorner>34.58000 -120.65000</gml:upperCorner>
+        		<gml:lowerCorner>34.580002 -120.650002</gml:lowerCorner>
+        		<gml:upperCorner>34.580002 -120.650002</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.21.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.58000 -120.65000</gml:pos>
+            <gml:pos>34.580002 -120.650002</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.21.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>
@@ -354,13 +354,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.22">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.27000 -120.44999</gml:lowerCorner>
-        		<gml:upperCorner>34.27000 -120.44999</gml:upperCorner>
+        		<gml:lowerCorner>34.270000 -120.449997</gml:lowerCorner>
+        		<gml:upperCorner>34.270000 -120.449997</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.22.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.27000 -120.44999</gml:pos>
+            <gml:pos>34.270000 -120.449997</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.22.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>
@@ -370,13 +370,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.23">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.25000 -120.66000</gml:lowerCorner>
-        		<gml:upperCorner>34.25000 -120.66000</gml:upperCorner>
+        		<gml:lowerCorner>34.250000 -120.660004</gml:lowerCorner>
+        		<gml:upperCorner>34.250000 -120.660004</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.23.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.25000 -120.66000</gml:pos>
+            <gml:pos>34.250000 -120.660004</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.23.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>
@@ -386,13 +386,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.24">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>34.24000 -119.84999</gml:lowerCorner>
-        		<gml:upperCorner>34.24000 -119.84999</gml:upperCorner>
+        		<gml:lowerCorner>34.240002 -119.849998</gml:lowerCorner>
+        		<gml:upperCorner>34.240002 -119.849998</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.24.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>34.24000 -119.84999</gml:pos>
+            <gml:pos>34.240002 -119.849998</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.24.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>
@@ -402,13 +402,13 @@ Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
       <ms:time gml:id="time.25">
         <gml:boundedBy>
         	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
-        		<gml:lowerCorner>33.65000 -120.19999</gml:lowerCorner>
-        		<gml:upperCorner>33.65000 -120.19999</gml:upperCorner>
+        		<gml:lowerCorner>33.650002 -120.199997</gml:lowerCorner>
+        		<gml:upperCorner>33.650002 -120.199997</gml:upperCorner>
         	</gml:Envelope>
         </gml:boundedBy>
         <ms:msGeometry>
           <gml:Point gml:id="time.25.1" srsName="urn:ogc:def:crs:EPSG::4326">
-            <gml:pos>33.65000 -120.19999</gml:pos>
+            <gml:pos>33.650002 -120.199997</gml:pos>
           </gml:Point>
         </ms:msGeometry>
         <ms:TIME gml:id="time.25.TIME"><gml:timePosition>2004-01-04</gml:timePosition></ms:TIME>

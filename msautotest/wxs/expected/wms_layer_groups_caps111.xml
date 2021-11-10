@@ -102,9 +102,9 @@
     <Title>TESTGROUP</Title>
     <Abstract>TESTGROUP</Abstract>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="0" miny="0" maxx="100" maxy="150" />
+    <LatLonBoundingBox minx="0.000000" miny="0.000000" maxx="100.000000" maxy="150.000000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="0" miny="0" maxx="100" maxy="150" />
+                minx="0.000000" miny="0.000000" maxx="100.000000" maxy="150.000000" />
     <Layer>
       <Name>g1</Name>
       <Title>g1</Title>

@@ -146,8 +146,8 @@ Acquisition: 1999-10-11 18:47</ows:Abstract>
       <ows:Metadata xlink:type="simple" xlink:href="http://example.com/testXML" about="TC211" xlink:role="text/xml"/>
       <ows:Metadata xlink:type="simple" xlink:href="http://example.com/testHTML" about="TC211" xlink:role="text/html"/>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-121.48874388937 0</ows:LowerCorner>
-        <ows:UpperCorner>-121.48516027686 0.00270582611334944</ows:UpperCorner>
+        <ows:LowerCorner>-121.488744 0.000000</ows:LowerCorner>
+        <ows:UpperCorner>-121.485160 0.002706</ows:UpperCorner>
       </ows:WGS84BoundingBox>
       <SupportedCRS>urn:ogc:def:crs:EPSG::32611</SupportedCRS>
       <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>

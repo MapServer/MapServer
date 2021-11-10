@@ -8,14 +8,21 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
+set(SwigFile ${PROJECT_SOURCE_DIR}/mapscript/mapscript.i)
+
 if (${Python_VERSION_MAJOR} GREATER_EQUAL 3)
-    set_property(SOURCE ../mapscript.i PROPERTY SWIG_FLAGS "-py3")
+    set_property(SOURCE ${SwigFile} APPEND  PROPERTY SWIG_FLAGS "-py3")
+    if(WITH_MAPSCRIPT_PROPERTYANNOTATIONS)
+        # if the custom PROPERTYANNOTATIONS flag is set we can add annotations to object properties
+        # see https://github.com/swig/swig/pull/1951
+        set_property(SOURCE ${SwigFile} APPEND  PROPERTY SWIG_FLAGS "-propertyannotations")
+    endif()
 endif ()
 
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
-    swig_add_library(pythonmapscript TYPE MODULE LANGUAGE python SOURCES ../mapscript.i)
+    swig_add_library(pythonmapscript TYPE MODULE LANGUAGE python SOURCES ${SwigFile})
 else ()
-    swig_add_module(pythonmapscript python ../mapscript.i)
+    swig_add_module(pythonmapscript python ${SwigFile})
 endif ()
 
 swig_link_libraries(pythonmapscript ${Python_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
@@ -123,7 +130,7 @@ install(
     endif()
 
     execute_process(
-      COMMAND ${Python_EXECUTABLE} setup.py install \${Python_ROOT} \${Python_PREFIX}
+      COMMAND ${Python_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_PREFIX}
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "

@@ -95,7 +95,7 @@ typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
 typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
 typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
 
-static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
+static const color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
 
 #define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
 
@@ -527,8 +527,9 @@ int agg2RenderPolygonTiled(imageObj *img, shapeObj *p, imageObj * tile)
   return MS_SUCCESS;
 }
 
-int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int /*isMarker*/) {
+int agg2RenderGlyphsPath(imageObj *img, const textSymbolObj *ts, colorObj *c, colorObj *oc, int ow, int /*isMarker*/) {
     
+  const textPathObj *tp = ts->textpath;
   mapserver::path_storage glyphs;
   mapserver::trans_affine trans;
   AGG2Renderer *r = AGG_RENDERER(img);

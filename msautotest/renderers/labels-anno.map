@@ -1,7 +1,7 @@
-# RUN_PARMS: labels-anno.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labels-anno.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: labels-anno.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
-# RUN_PARMS: labels-anno.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: labels-anno.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labels-anno.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labels-anno.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labels-anno.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 map
 

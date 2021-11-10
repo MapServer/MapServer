@@ -1,6 +1,6 @@
 # RUN_PARMS: font-fail-key.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=l1" > [RESULT_DEVERSION]
 # RUN_PARMS: font-fail-file.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=l2" > [RESULT_DEVERSION]
-# RUN_PARMS: font-fail-missing-glyph.png [SHP2IMG] -m [MAPFILE] -l missing_glyph -i png -o [RESULT]
+# RUN_PARMS: font-fail-missing-glyph.png [MAP2IMG] -m [MAPFILE] -l missing_glyph -i png -o [RESULT]
 
 MAP
 

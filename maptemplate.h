@@ -138,6 +138,7 @@ typedef struct {
   int NLR; /* number of results in a layer */
 
   map_hittest *hittest;
+
 } mapservObj;
 
 

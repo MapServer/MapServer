@@ -56,6 +56,7 @@
 #endif
 
 #include <cpl_string.h>
+#include "cpl_conv.h"
 #include <gdal.h>
 
 #include "fontcache.h"
@@ -407,7 +408,8 @@ int renderTileCairo(imageObj *img, imageObj *tile, double x, double y)
   return MS_SUCCESS;
 }
 
-int renderGlyphs2Cairo(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow, int isMarker) {
+int renderGlyphs2Cairo(imageObj *img, const textSymbolObj *ts, colorObj *c, colorObj *oc, int ow, int isMarker) {
+  const textPathObj *tp = ts->textpath;
   cairo_renderer *r = CAIRO_RENDERER(img);
   cairoCacheData *cache = MS_IMAGE_RENDERER_CACHE(img);
   cairoFaceCache *cairo_face = NULL;
@@ -478,7 +480,7 @@ imageObj* createImageCairo(int width, int height, outputFormatObj *format,colorO
                      width,height);
 #if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1,15,10)
       {
-          const char* msPDFCreationDate = getenv("MS_PDF_CREATION_DATE");
+          const char *msPDFCreationDate = CPLGetConfigOption("MS_PDF_CREATION_DATE", NULL);
           if( msPDFCreationDate )
           {
               cairo_pdf_surface_set_metadata (r->surface,

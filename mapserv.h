@@ -54,7 +54,7 @@
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
 
 MS_DLL_EXPORT void msCGIWriteError(mapservObj *mapserv);
-MS_DLL_EXPORT mapObj *msCGILoadMap(mapservObj *mapserv);
+MS_DLL_EXPORT mapObj *msCGILoadMap(mapservObj *mapserv, configObj *context);
 int msCGISetMode(mapservObj *mapserv);
 int msCGILoadForm(mapservObj *mapserv);
 int msCGIDispatchBrowseRequest(mapservObj *mapserv);
@@ -65,8 +65,7 @@ int msCGIDispatchLegendRequest(mapservObj *mapserv);
 int msCGIDispatchLegendIconRequest(mapservObj *mapserv);
 MS_DLL_EXPORT int msCGIDispatchRequest(mapservObj *mapserv);
 
-
-
-
+MS_DLL_EXPORT int msCGIIsAPIRequest(mapservObj *mapserv);
+MS_DLL_EXPORT int msCGIDispatchAPIRequest(mapservObj *mapserv);
 
 #endif /* MAPSERV_H */

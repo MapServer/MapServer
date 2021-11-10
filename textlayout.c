@@ -732,7 +732,6 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 
 
   for(i=0;i<nruns;i++) {
-    unsigned int glyph_count;
     if(!runs[i].face) continue;
     peny = (1 - tgret->numlines + runs[i].line_number) * tgret->line_height;
     if(peny != oldpeny) {
@@ -782,6 +781,8 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       hb_buffer_set_direction(buf, (runs[i].rtl%2) ? HB_DIRECTION_RTL :HB_DIRECTION_LTR);
       hb_buffer_add_utf32(buf,glyphs.unicodes + runs[i].offset, runs[i].length, 0, runs[i].length);
       hb_shape(font,buf,hbfeatures,2);
+
+      unsigned int glyph_count;
       glyph_info = hb_buffer_get_glyph_infos(buf, &glyph_count);
       glyph_pos = hb_buffer_get_glyph_positions(buf, &glyph_count);
       alloc_glyphs += glyph_count;

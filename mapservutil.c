@@ -27,19 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"
 #include "mapows.h"
+#include "mapogcapi.h"
+
+#include "cpl_conv.h"
+
+#include "mapserver-config.h"
 
 #include "cpl_conv.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
-static int numModes = 23;
-static char *modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
+static const int numModes = 23;
+static char *const modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
                                 "QUERY","NQUERY","ITEMQUERY","ITEMNQUERY",
                                 "FEATUREQUERY","FEATURENQUERY","ITEMFEATUREQUERY","ITEMFEATURENQUERY",
                                 "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
@@ -144,55 +148,52 @@ static void setClassGroup(layerObj *layer, char *classgroup)
 ** Extract Map File name from params and load it.
 ** Returns map object or NULL on error.
 */
-mapObj *msCGILoadMap(mapservObj *mapserv)
+mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 {
   int i, j;
   mapObj *map = NULL;
 
   const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
-  const char *ms_map_env_bad_pattern_default = "^(AUTH_.*|CERT_.*|CONTENT_(LENGTH|TYPE)|DOCUMENT_(ROOT|URI)|GATEWAY_INTERFACE|HTTP.*|QUERY_STRING|PATH_(INFO|TRANSLATED)|REMOTE_.*|REQUEST_(METHOD|URI)|SCRIPT_(FILENAME|NAME)|SERVER_.*)";
 
   int ms_mapfile_tainted = MS_TRUE;
   const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
 
   const char *ms_map_no_path = CPLGetConfigOption("MS_MAP_NO_PATH", NULL);
   const char *ms_map_pattern = CPLGetConfigOption("MS_MAP_PATTERN", NULL);
-  const char *ms_map_env_pattern = CPLGetConfigOption("MS_MAP_ENV_PATTERN", NULL);
 
   const char *ms_map_bad_pattern = CPLGetConfigOption("MS_MAP_BAD_PATTERN", NULL);
   if(ms_map_bad_pattern == NULL) ms_map_bad_pattern = ms_map_bad_pattern_default;
 
-  const char *ms_map_env_bad_pattern = CPLGetConfigOption("MS_MAP_ENV_BAD_PATTERN", NULL);
-  if(ms_map_env_bad_pattern == NULL) ms_map_env_bad_pattern = ms_map_env_bad_pattern_default;
+  const char *map_value = NULL;
 
-  for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
-    if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
+  if(mapserv->request->api_path != NULL) {
+    map_value = mapserv->request->api_path[0]; /* mapfile is *always* in the first position (/{mapfile}/{signature}) of an API call */
+  } else {
+    for(i=0; i<mapserv->request->NumParams; i++) { /* find the map parameter */
+      if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
+        map_value = mapserv->request->ParamValues[i];
+        break;
+      }
+    }
+  }
 
-  if(i == mapserv->request->NumParams) {
+  if(map_value == NULL) {
     if(ms_mapfile == NULL) {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
       return NULL;
     }
     ms_mapfile_tainted = MS_FALSE;
   } else {
-    if(getenv(mapserv->request->ParamValues[i])) { /* an environment variable references the actual file to use */
-      /* validate env variable name */
-      if(msIsValidRegex(ms_map_env_bad_pattern) == MS_FALSE || msCaseEvalRegex(ms_map_env_bad_pattern, mapserv->request->ParamValues[i]) == MS_TRUE) {
-        msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
-        return NULL;
-      }
-      if(ms_map_env_pattern != NULL && msEvalRegex(ms_map_env_pattern, mapserv->request->ParamValues[i]) != MS_TRUE) {
-        msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
-        return NULL;
-      }
-      ms_mapfile = getenv(mapserv->request->ParamValues[i]);
+    ms_mapfile = msConfigGetMap(config, map_value); /* does NOT check the environment, only the config */
+    if(ms_mapfile) {
+      ms_mapfile_tainted = MS_FALSE;
     } else {
-      /* by now we know the request isn't for something in an environment variable */
+      /* by now we know the map parameter isn't referencing something in the configuration */
       if(ms_map_no_path != NULL) {
-        msSetError(MS_WEBERR, "CGI variable \"map\" not found in environment and this server is not configured for full paths.", "msCGILoadMap()");
+        msSetError(MS_WEBERR, "CGI variable \"map\" not found in configuration and this server is not configured for full paths.", "msCGILoadMap()");
         return NULL;
       }
-      ms_mapfile = mapserv->request->ParamValues[i];
+      ms_mapfile = map_value;
     }
   }
 
@@ -209,7 +210,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   }
 
   /* ok to try to load now */
-  map = msLoadMap(ms_mapfile, NULL);
+  map = msLoadMap(ms_mapfile, NULL, config);
   if(!map) return NULL;
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
@@ -288,7 +289,7 @@ int msCGISetMode(mapservObj *mapserv)
   int i, j;
 
 
-  mode = getenv("MS_MODE");
+  mode = CPLGetConfigOption("MS_MODE", NULL);
   for( i=0; i<mapserv->request->NumParams; i++ ) {
     if(strcasecmp(mapserv->request->ParamNames[i], "mode") == 0) {
       mode = mapserv->request->ParamValues[i];
@@ -325,8 +326,65 @@ int msCGISetMode(mapservObj *mapserv)
   return MS_SUCCESS;
 }
 
+/*
+** API-related funtions.
+*/
+int msCGIIsAPIRequest(mapservObj *mapserv) 
+{
+  char **tmp_api_path=NULL;
+  int i, n, tmp_api_path_length=0;
 
+  mapserv->request->path_info = getenv("PATH_INFO");
+  if(mapserv->request->path_info != NULL && strlen(mapserv->request->path_info) > 0) {
+    tmp_api_path = msStringSplit(mapserv->request->path_info, '/', &tmp_api_path_length); // ignores consecutive delimeters
+    if(tmp_api_path_length >= 3) { // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
 
+      // capture only non-zero length components
+      n = 0;
+      for(i=0; i<tmp_api_path_length; i++) {
+        if(strlen(tmp_api_path[i]) > 0)
+          n++;
+      }
+
+      mapserv->request->api_path = (char **) msSmallMalloc(sizeof(char *)*n);
+      if(mapserv->request->api_path == NULL) {
+        msFreeCharArray(tmp_api_path, tmp_api_path_length);
+        return MS_FALSE;
+      }
+
+      mapserv->request->api_path_length = 0;
+      for(i=0; i<tmp_api_path_length; i++) {
+        if(strlen(tmp_api_path[i]) > 0) {
+          mapserv->request->api_path[mapserv->request->api_path_length] = msStrdup(tmp_api_path[i]);
+          mapserv->request->api_path_length++;
+        }
+      }
+
+      msFreeCharArray(tmp_api_path, tmp_api_path_length);
+      return MS_TRUE;
+    } else {
+      msFreeCharArray(tmp_api_path, tmp_api_path_length);      
+    }
+  }
+
+  return MS_FALSE;
+}
+
+int msCGIDispatchAPIRequest(mapservObj *mapserv) 
+{
+  // should be a more elegant way to do this (perhaps similar to how drivers are handled)
+  if(strcmp("ogcapi", mapserv->request->api_path[1]) == 0) {
+#ifdef USE_OGCAPI_SVR
+    return msOGCAPIDispatchRequest(mapserv->map, mapserv->request);
+#else
+    msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msCGIDispatchAPIRequest()");
+#endif
+  } else {
+    msSetError(MS_WEBERR, "Invalid API signature.", "msCGIDispatchAPIRequest()");
+  }
+
+  return MS_FAILURE;
+}
 
 /*
 ** Process CGI parameters.
@@ -1594,7 +1652,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
 
   if(numtokens == 2) { /* check the class index */
     classindex = atoi(tokens[1]);
-    if(classindex >= GET_LAYER(mapserv->map, layerindex)->numclasses) {
+    if(classindex < 0 || classindex >= GET_LAYER(mapserv->map, layerindex)->numclasses) {
       msSetError(MS_WEBERR, "Icon class=%d not found in layer=%s.", "mapserv()", classindex, GET_LAYER(mapserv->map, layerindex)->name);
       status = MS_FAILURE;
       goto li_cleanup;
@@ -1782,11 +1840,13 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   int x,m=0;
   struct mstimeval execstarttime = {0}, execendtime = {0};
   struct mstimeval requeststarttime = {0}, requestendtime = {0};
-  mapservObj* mapserv = NULL;
+  mapservObj *mapserv = NULL;
   char *queryString = NULL;
   int maxParams = MS_DEFAULT_CGI_PARAMS;
   msIOContext *ctx;
   msIOBuffer  *buf;
+
+  configObj *config = NULL;
 
   msIO_installStdoutToBuffer();
 
@@ -1806,6 +1866,12 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("No query information to decode. QUERY_STRING not set.\n");
+    goto end_request;
+  }
+
+  config = msLoadConfig(NULL);
+  if(config == NULL) {
+    msCGIWriteError(mapserv);
     goto end_request;
   }
   
@@ -1841,7 +1907,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
     goto end_request;
   }
 
-  mapserv->map = msCGILoadMap(mapserv);
+  mapserv->map = msCGILoadMap(mapserv, config);
   if(!mapserv->map) {
     msCGIWriteError(mapserv);
     goto end_request;
@@ -1849,7 +1915,6 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
 
   if( mapserv->map->debug >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&requeststarttime, NULL);
-
 
   if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
     msCGIWriteError(mapserv);
@@ -1866,6 +1931,7 @@ end_request:
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
     msFreeMapServObj(mapserv);
+    msFreeConfig(config);
   }
 
   /* normal case, processing is complete */

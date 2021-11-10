@@ -331,7 +331,9 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   if (strncmp(pszVersion, "0.0.14", 6) != 0 &&
       strncmp(pszVersion, "1.0.0", 5) != 0 &&
       strncmp(pszVersion, "1.1", 3) != 0) {
-    msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).", "msBuildWFSLayerGetURL()");
+    msSetError(MS_WFSCONNERR,
+	       "MapServer supports only WFS 1.1.0, 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).",
+	       "msBuildWFSLayerGetURL()");
     return NULL;
   }
 
@@ -654,9 +656,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
                            pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS) {
-    if (psParams) {
-      msWFSFreeParamsObj(psParams);
-    }
+    msWFSFreeParamsObj(psParams);
     return MS_FAILURE;
   }
   
@@ -685,9 +685,8 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   (*numRequests)++;
 
-  if (psParams) {
-    msWFSFreeParamsObj(psParams);
-  }
+  msWFSFreeParamsObj(psParams);
+
   return nStatus;
 
 #else
@@ -759,7 +758,7 @@ int msWFSLayerOpen(layerObj *lp,
     /* If no explicit filename requested then we'll try to reuse the */
     /* previously opened layer... this will happen in a msDrawMap() call. */
     if (pszGMLFilename == NULL ||
-        (psInfo->pszGMLFilename && pszGMLFilename &&
+        (psInfo->pszGMLFilename &&
          strcmp(psInfo->pszGMLFilename, pszGMLFilename) == 0) ) {
       if (lp->layerinfo == NULL) {
         if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) == MS_FAILURE) /* no access to context (draw vs. query) here, although I doubt it matters... */

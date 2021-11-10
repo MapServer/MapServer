@@ -52,7 +52,22 @@
 
 #define ByteCopy( a, b, c )     memcpy( b, a, c )
 
-static int      bBigEndian;
+#ifdef __BYTE_ORDER__
+/* GCC/clang predefined macro */
+#define bBigEndian (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#elif defined(_MSC_VER)
+/* MSVC doesn't support the C99 trick below, but all Microsoft
+   platforms are little-endian */
+#define bBigEndian false
+#else
+/* generic check */
+#define bBigEndian (((union{int in;char out;}){1}).out)
+#endif
+
+/* SHX reading */
+static int msSHXLoadAll( SHPHandle psSHP );
+static int msSHXReadOffset( SHPHandle psSHP, int hEntity );
+static int msSHXReadSize( SHPHandle psSHP, int hEntity );
 
 /************************************************************************/
 /*                              SwapWord()                              */
@@ -185,45 +200,12 @@ static void writeHeader( SHPHandle psSHP )
   free( panSHX );
 }
 
-/************************************************************************/
-/*                              msSHPOpen()                             */
-/*                                                                      */
-/*      Open the .shp and .shx files based on the basename of the       */
-/*      files or either file name.                                      */
-/************************************************************************/
-SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
+SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
 {
-  char *pszFullname, *pszBasename;
-  SHPHandle psSHP;
-
-  uchar *pabyBuf;
-  int i;
-  double dValue;
-
-  /* -------------------------------------------------------------------- */
-  /*      Ensure the access string is one of the legal ones.  We          */
-  /*      ensure the result string indicates binary to avoid common       */
-  /*      problems on Windows.                                            */
-  /* -------------------------------------------------------------------- */
-  if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0 || strcmp(pszAccess,"r+") == 0 )
-    pszAccess = "r+b";
-  else
-    pszAccess = "rb";
-
-  /* -------------------------------------------------------------------- */
-  /*  Establish the byte order on this machine.         */
-  /* -------------------------------------------------------------------- */
-  i = 1;
-  /* cppcheck-suppress knownConditionTrueFalse */
-  if( *((uchar *) &i) == 1 )
-    bBigEndian = MS_FALSE;
-  else
-    bBigEndian = MS_TRUE;
-
   /* -------------------------------------------------------------------- */
   /*  Initialize the info structure.              */
   /* -------------------------------------------------------------------- */
-  psSHP = (SHPHandle) msSmallMalloc(sizeof(SHPInfo));
+  SHPHandle psSHP = (SHPHandle) msSmallMalloc(sizeof(SHPInfo));
 
   psSHP->bUpdated = MS_FALSE;
 
@@ -231,58 +213,13 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   psSHP->panParts = NULL;
   psSHP->nBufSize = psSHP->nPartMax = 0;
 
-  /* -------------------------------------------------------------------- */
-  /*  Compute the base (layer) name.  If there is any extension     */
-  /*  on the passed in filename we will strip it off.         */
-  /* -------------------------------------------------------------------- */
-  pszBasename = (char *) msSmallMalloc(strlen(pszLayer)+5);
-  strcpy( pszBasename, pszLayer );
-  for( i = strlen(pszBasename)-1;
-       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' && pszBasename[i] != '\\';
-       i-- ) {}
-
-  if( pszBasename[i] == '.' )
-    pszBasename[i] = '\0';
-
-  /* -------------------------------------------------------------------- */
-  /*  Open the .shp and .shx files.  Note that files pulled from      */
-  /*  a PC to Unix with upper case filenames won't work!        */
-  /* -------------------------------------------------------------------- */
-  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-  sprintf( pszFullname, "%s.shp", pszBasename );
-  psSHP->fpSHP = VSIFOpenL(pszFullname, pszAccess );
-  if( psSHP->fpSHP == NULL ) {
-    sprintf( pszFullname, "%s.SHP", pszBasename );
-    psSHP->fpSHP = VSIFOpenL(pszFullname, pszAccess );
-  }
-  if( psSHP->fpSHP == NULL ) {
-    msFree(pszBasename);
-    msFree(pszFullname);
-    msFree(psSHP);
-    return( NULL );
-  }
-
-  sprintf( pszFullname, "%s.shx", pszBasename );
-  psSHP->fpSHX = VSIFOpenL(pszFullname, pszAccess );
-  if( psSHP->fpSHX == NULL ) {
-    sprintf( pszFullname, "%s.SHX", pszBasename );
-    psSHP->fpSHX = VSIFOpenL(pszFullname, pszAccess );
-  }
-  if( psSHP->fpSHX == NULL ) {
-    VSIFCloseL(psSHP->fpSHP);
-    msFree(pszBasename);
-    msFree(pszFullname);
-    msFree(psSHP);
-    return( NULL );
-  }
-
-  free( pszFullname );
-  free( pszBasename );
+  psSHP->fpSHP = fpSHP;
+  psSHP->fpSHX = fpSHX;
 
   /* -------------------------------------------------------------------- */
   /*   Read the file size from the SHP file.            */
   /* -------------------------------------------------------------------- */
-  pabyBuf = (uchar *) msSmallMalloc(100);
+  uchar *pabyBuf = (uchar *) msSmallMalloc(100);
   if(1 != VSIFReadL( pabyBuf, 100, 1, psSHP->fpSHP )) {
     VSIFCloseL( psSHP->fpSHP );
     VSIFCloseL( psSHP->fpSHX );
@@ -335,6 +272,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   psSHP->nShapeType = pabyBuf[32];
 
   if( bBigEndian ) SwapWord( 8, pabyBuf+36 );
+  double dValue;
   memcpy( &dValue, pabyBuf+36, 8 );
   psSHP->adBoundsMin[0] = dValue;
 
@@ -401,6 +339,77 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
 }
 
 /************************************************************************/
+/*                              msSHPOpen()                             */
+/*                                                                      */
+/*      Open the .shp and .shx files based on the basename of the       */
+/*      files or either file name.                                      */
+/************************************************************************/
+SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
+{
+  char *pszFullname, *pszBasename;
+
+  int i;
+
+  /* -------------------------------------------------------------------- */
+  /*      Ensure the access string is one of the legal ones.  We          */
+  /*      ensure the result string indicates binary to avoid common       */
+  /*      problems on Windows.                                            */
+  /* -------------------------------------------------------------------- */
+  if( strcmp(pszAccess,"rb+") == 0 || strcmp(pszAccess,"r+b") == 0 || strcmp(pszAccess,"r+") == 0 )
+    pszAccess = "r+b";
+  else
+    pszAccess = "rb";
+
+  /* -------------------------------------------------------------------- */
+  /*  Compute the base (layer) name.  If there is any extension     */
+  /*  on the passed in filename we will strip it off.         */
+  /* -------------------------------------------------------------------- */
+  pszBasename = (char *) msSmallMalloc(strlen(pszLayer)+5);
+  strcpy( pszBasename, pszLayer );
+  for( i = strlen(pszBasename)-1;
+       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' && pszBasename[i] != '\\';
+       i-- ) {}
+
+  if( pszBasename[i] == '.' )
+    pszBasename[i] = '\0';
+
+  /* -------------------------------------------------------------------- */
+  /*  Open the .shp and .shx files.  Note that files pulled from      */
+  /*  a PC to Unix with upper case filenames won't work!        */
+  /* -------------------------------------------------------------------- */
+  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
+  sprintf( pszFullname, "%s.shp", pszBasename );
+  VSILFILE *fpSHP = VSIFOpenL(pszFullname, pszAccess );
+  if( fpSHP == NULL ) {
+    sprintf( pszFullname, "%s.SHP", pszBasename );
+    fpSHP = VSIFOpenL(pszFullname, pszAccess );
+  }
+  if( fpSHP == NULL ) {
+    msFree(pszBasename);
+    msFree(pszFullname);
+    return( NULL );
+  }
+
+  sprintf( pszFullname, "%s.shx", pszBasename );
+  VSILFILE *fpSHX = VSIFOpenL(pszFullname, pszAccess );
+  if( fpSHX == NULL ) {
+    sprintf( pszFullname, "%s.SHX", pszBasename );
+    fpSHX = VSIFOpenL(pszFullname, pszAccess );
+  }
+  if( fpSHX == NULL ) {
+    VSIFCloseL(fpSHP);
+    msFree(pszBasename);
+    msFree(pszFullname);
+    return( NULL );
+  }
+
+  free( pszFullname );
+  free( pszBasename );
+
+  return msSHPOpenVirtualFile(fpSHP, fpSHX);
+}
+
+/************************************************************************/
 /*                              msSHPClose()                            */
 /*                        */
 /*  Close the .shp and .shx files.          */
@@ -458,16 +467,6 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   uchar abyHeader[100];
   ms_int32 i32;
   double dValue;
-
-  /* -------------------------------------------------------------------- */
-  /*      Establish the byte order on this system.                        */
-  /* -------------------------------------------------------------------- */
-  i = 1;
-  /* cppcheck-suppress knownConditionTrueFalse */
-  if( *((uchar *) &i) == 1 )
-    bBigEndian = MS_FALSE;
-  else
-    bBigEndian = MS_TRUE;
 
   /* -------------------------------------------------------------------- */
   /*  Compute the base (layer) name.  If there is any extension       */
@@ -989,34 +988,39 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 /*
  ** msSHPReadAllocateBuffer() - Ensure our record buffer is large enough.
  */
-static int msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* pszCallingFunction)
+static uchar *msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char* pszCallingFunction)
 {
 
   int nEntitySize = msSHXReadSize(psSHP, hEntity);
-  if( nEntitySize > INT_MAX - 8 ) {
+  if( nEntitySize < 0 || nEntitySize > INT_MAX - 8 ) {
       msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                  pszCallingFunction, nEntitySize, hEntity);
-      return(MS_FAILURE);
+      return NULL;
   }
   nEntitySize += 8;
   /* -------------------------------------------------------------------- */
   /*      Ensure our record buffer is large enough.                       */
   /* -------------------------------------------------------------------- */
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+  /* when running with libFuzzer, allocate a new buffer for every
+     call, to allow AddressSanitizer to detect memory errors */
+  free(psSHP->pabyRec);
+  psSHP->pabyRec = NULL;
+  psSHP->nBufSize = 0;
+#endif
+
   if( nEntitySize > psSHP->nBufSize ) {
     uchar* pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,nEntitySize);
     if (pabyRec == NULL) {
       msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                  pszCallingFunction, nEntitySize, hEntity);
-      return(MS_FAILURE);
+      return NULL;
     }
     psSHP->pabyRec = pabyRec;
     psSHP->nBufSize = nEntitySize;
   }
-  if (psSHP->pabyRec == NULL) {
-    msSetError(MS_MEMERR, "Out of memory", pszCallingFunction);
-    return(MS_FAILURE);
-  }
-  return MS_SUCCESS;
+  return psSHP->pabyRec;
 }
 
 /*
@@ -1044,7 +1048,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 
   nEntitySize = msSHXReadSize( psSHP, hEntity) + 8;
 
-  if( msSHXReadSize( psSHP, hEntity) == 4 ) {
+  if( nEntitySize == 12 ) {
     msSetError(MS_SHPERR, "NULL feature encountered.", "msSHPReadPoint()");
     return(MS_FAILURE);
   } else if ( nEntitySize < 28 ) {
@@ -1053,7 +1057,8 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
     return(MS_FAILURE);
   }
 
-  if (msSHPReadAllocateBuffer(psSHP, hEntity, "msSHPReadPoint()") == MS_FAILURE) {
+  uchar *pabyRec = msSHPReadAllocateBuffer(psSHP, hEntity, "msSHPReadPoint()");
+  if (pabyRec == NULL) {
     return MS_FAILURE;
   }
 
@@ -1064,14 +1069,14 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
     msSetError(MS_IOERR, "failed to seek offset", "msSHPReadPoint()");
     return(MS_FAILURE);
   }
-  if( 1 != VSIFReadL( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
+  if( 1 != VSIFReadL( pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
     msSetError(MS_IOERR, "failed to fread record", "msSHPReadPoint()");
     return(MS_FAILURE);
   }
 
 
-  memcpy( &(point->x), psSHP->pabyRec + 12, 8 );
-  memcpy( &(point->y), psSHP->pabyRec + 20, 8 );
+  memcpy( &(point->x), pabyRec + 12, 8 );
+  memcpy( &(point->y), pabyRec + 20, 8 );
 
   if( bBigEndian ) {
     SwapWord( 8, &(point->x));
@@ -1089,7 +1094,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 ** successive accesses during the reading cycle (first bounds are read,
 ** then entire shapes). Each time we read a page, we mark it as read.
 */
-int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
+static int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 {
   int i;
 
@@ -1146,7 +1151,7 @@ int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
   return(MS_SUCCESS);
 }
 
-int msSHXLoadAll( SHPHandle psSHP )
+static int msSHXLoadAll( SHPHandle psSHP )
 {
 
   int i;
@@ -1179,7 +1184,7 @@ int msSHXLoadAll( SHPHandle psSHP )
 
 }
 
-int msSHXReadOffset( SHPHandle psSHP, int hEntity )
+static int msSHXReadOffset( SHPHandle psSHP, int hEntity )
 {
 
   int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
@@ -1196,7 +1201,7 @@ int msSHXReadOffset( SHPHandle psSHP, int hEntity )
 
 }
 
-int msSHXReadSize( SHPHandle psSHP, int hEntity )
+static int msSHXReadSize( SHPHandle psSHP, int hEntity )
 {
 
   int shxBufferPage = hEntity / SHX_BUFFER_PAGE;
@@ -1211,6 +1216,21 @@ int msSHXReadSize( SHPHandle psSHP, int hEntity )
 
   return psSHP->panRecSize[hEntity];
 
+}
+
+static void ReadRect(rectObj *r, const uchar *src)
+{
+    memcpy( &r->minx, src, 8 );
+    memcpy( &r->miny, src + 8, 8 );
+    memcpy( &r->maxx, src + 16, 8 );
+    memcpy( &r->maxy, src + 24, 8 );
+
+    if( bBigEndian ) {
+      SwapWord( 8, &r->minx);
+      SwapWord( 8, &r->miny);
+      SwapWord( 8, &r->maxx);
+      SwapWord( 8, &r->maxy);
+    }
 }
 
 /*
@@ -1229,13 +1249,15 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return;
 
-  if( msSHXReadSize(psSHP, hEntity) == 4 ) {
+  nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
+
+  if( nEntitySize == 12 ) {
     shape->type = MS_SHAPE_NULL;
     return;
   }
 
-  nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
-  if (msSHPReadAllocateBuffer(psSHP, hEntity, "msSHPReadShape()") == MS_FAILURE) {
+  uchar *pabyRec = msSHPReadAllocateBuffer(psSHP, hEntity, "msSHPReadShape()");
+  if (pabyRec == NULL) {
     shape->type = MS_SHAPE_NULL;
     return;
   }
@@ -1248,7 +1270,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     shape->type = MS_SHAPE_NULL;
     return;
   }
-  if( 1 != VSIFReadL( psSHP->pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
+  if( 1 != VSIFReadL( pabyRec, nEntitySize, 1, psSHP->fpSHP )) {
     msSetError(MS_IOERR, "failed to fread record", "msSHPReadPoint()");
     shape->type = MS_SHAPE_NULL;
     return;
@@ -1270,20 +1292,10 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     /* copy the bounding box */
-    memcpy( &shape->bounds.minx, psSHP->pabyRec + 8 + 4, 8 );
-    memcpy( &shape->bounds.miny, psSHP->pabyRec + 8 + 12, 8 );
-    memcpy( &shape->bounds.maxx, psSHP->pabyRec + 8 + 20, 8 );
-    memcpy( &shape->bounds.maxy, psSHP->pabyRec + 8 + 28, 8 );
+    ReadRect(&shape->bounds, pabyRec + 8 + 4);
 
-    if( bBigEndian ) {
-      SwapWord( 8, &shape->bounds.minx);
-      SwapWord( 8, &shape->bounds.miny);
-      SwapWord( 8, &shape->bounds.maxx);
-      SwapWord( 8, &shape->bounds.maxy);
-    }
-
-    memcpy( &nPoints, psSHP->pabyRec + 40 + 8, 4 );
-    memcpy( &nParts, psSHP->pabyRec + 36 + 8, 4 );
+    memcpy( &nPoints, pabyRec + 40 + 8, 4 );
+    memcpy( &nParts, pabyRec + 36 + 8, 4 );
 
     if( bBigEndian ) {
       nPoints = SWAP_FOUR_BYTES(nPoints);
@@ -1301,6 +1313,15 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*      Copy out the part array from the record.                        */
     /* -------------------------------------------------------------------- */
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* when running with libFuzzer, allocate a new buffer for every
+       call, to allow AddressSanitizer to detect memory errors */
+    free(psSHP->panParts);
+    psSHP->panParts = NULL;
+    psSHP->nPartMax = 0;
+#endif
+
     if( psSHP->nPartMax < nParts ) {
       psSHP->panParts = (int *) SfRealloc(psSHP->panParts, nParts * sizeof(int) );
       if (psSHP->panParts == NULL) {
@@ -1330,7 +1351,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       return;
     }
 
-    memcpy( psSHP->panParts, psSHP->pabyRec + 44 + 8, 4 * nParts );
+    memcpy( psSHP->panParts, pabyRec + 44 + 8, 4 * nParts );
     if( bBigEndian ) {
       for( i = 0; i < nParts; i++ ) {
         *(psSHP->panParts+i) = SWAP_FOUR_BYTES(*(psSHP->panParts+i));
@@ -1347,11 +1368,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
     k = 0; /* overall point counter */
     for( i = 0; i < nParts; i++) {
-      if( i == nParts-1)
-        shape->line[i].numpoints = nPoints - psSHP->panParts[i];
-      else
-        shape->line[i].numpoints = psSHP->panParts[i+1] - psSHP->panParts[i];
-      if (shape->line[i].numpoints <= 0 || shape->line[i].numpoints > nPoints) {
+      const ms_int32 end = i == nParts - 1
+        ? nPoints
+        : psSHP->panParts[i+1];
+      shape->line[i].numpoints = end - psSHP->panParts[i];
+      if (psSHP->panParts[i] < 0 || end < 0 || end > nPoints ||
+          psSHP->panParts[i] >= end) {
         msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].numpoints=%d", "msSHPReadShape()",
                    hEntity, i, shape->line[i].numpoints);
         while(--i >= 0)
@@ -1367,6 +1389,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         while(--i >= 0)
           free(shape->line[i].point);
         free(shape->line);
+        shape->line = NULL;
         shape->numlines = 0;
         shape->type = MS_SHAPE_NULL;
         msSetError(MS_MEMERR, "Out of memory", "msSHPReadShape()");
@@ -1375,8 +1398,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
       /* nOffset = 44 + 8 + 4*nParts; */
       for( j = 0; j < shape->line[i].numpoints; j++ ) {
-        memcpy(&(shape->line[i].point[j].x), psSHP->pabyRec + 44 + 4*nParts + 8 + k * 16, 8 );
-        memcpy(&(shape->line[i].point[j].y), psSHP->pabyRec + 44 + 4*nParts + 8 + k * 16 + 8, 8 );
+        memcpy(&(shape->line[i].point[j].x), pabyRec + 44 + 4*nParts + 8 + k * 16, 8 );
+        memcpy(&(shape->line[i].point[j].y), pabyRec + 44 + 4*nParts + 8 + k * 16 + 8, 8 );
 
         if( bBigEndian ) {
           SwapWord( 8, &(shape->line[i].point[j].x) );
@@ -1390,7 +1413,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         if (psSHP->nShapeType == SHP_POLYGONZ || psSHP->nShapeType == SHP_ARCZ) {
           const int nOffset = 44 + 8 + (4*nParts) + (16*nPoints) ;
           if( nEntitySize >= nOffset + 16 + 8*nPoints ) {
-            memcpy(&(shape->line[i].point[j].z), psSHP->pabyRec + nOffset + 16 + k*8, 8 );
+            memcpy(&(shape->line[i].point[j].z), pabyRec + nOffset + 16 + k*8, 8 );
             if( bBigEndian ) SwapWord( 8, &(shape->line[i].point[j].z) );
           }
         }
@@ -1402,7 +1425,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         if (psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM) {
           const int nOffset = 44 + 8 + (4*nParts) + (16*nPoints) ;
           if( nEntitySize >= nOffset + 16 + 8*nPoints ) {
-            memcpy(&(shape->line[i].point[j].m), psSHP->pabyRec + nOffset + 16 + k*8, 8 );
+            memcpy(&(shape->line[i].point[j].m), pabyRec + nOffset + 16 + k*8, 8 );
             if( bBigEndian ) SwapWord( 8, &(shape->line[i].point[j].m) );
           }
         }
@@ -1434,19 +1457,9 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     /* copy the bounding box */
-    memcpy( &shape->bounds.minx, psSHP->pabyRec + 8 + 4, 8 );
-    memcpy( &shape->bounds.miny, psSHP->pabyRec + 8 + 12, 8 );
-    memcpy( &shape->bounds.maxx, psSHP->pabyRec + 8 + 20, 8 );
-    memcpy( &shape->bounds.maxy, psSHP->pabyRec + 8 + 28, 8 );
+    ReadRect(&shape->bounds, pabyRec + 8 + 4);
 
-    if( bBigEndian ) {
-      SwapWord( 8, &shape->bounds.minx);
-      SwapWord( 8, &shape->bounds.miny);
-      SwapWord( 8, &shape->bounds.maxx);
-      SwapWord( 8, &shape->bounds.maxy);
-    }
-
-    memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
+    memcpy( &nPoints, pabyRec + 44, 4 );
     if( bBigEndian ) nPoints = SWAP_FOUR_BYTES(nPoints);
 
     /* -------------------------------------------------------------------- */
@@ -1460,6 +1473,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
     if (nPoints < 0 || nPoints > 50 * 1000 * 1000) {
       free(shape->line);
+      shape->line = NULL;
+      shape->numlines = 0;
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, nPoints=%d.",
                  "msSHPReadShape()", hEntity, nPoints);
@@ -1471,6 +1486,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       nRequiredSize += 16 + nPoints * 8;
     if (nRequiredSize > nEntitySize) {
       free(shape->line);
+      shape->line = NULL;
+      shape->numlines = 0;
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_SHPERR, "Corrupted .shp file : shape %d : nPoints = %d, nEntitySize = %d",
                  "msSHPReadShape()", hEntity, nPoints, nEntitySize);
@@ -1482,6 +1499,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     shape->line[0].point = (pointObj *) malloc( nPoints * sizeof(pointObj) );
     if (shape->line[0].point == NULL) {
       free(shape->line);
+      shape->line = NULL;
       shape->numlines = 0;
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_MEMERR, "Out of memory", "msSHPReadShape()");
@@ -1489,8 +1507,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     for( i = 0; i < nPoints; i++ ) {
-      memcpy(&(shape->line[0].point[i].x), psSHP->pabyRec + 48 + 16 * i, 8 );
-      memcpy(&(shape->line[0].point[i].y), psSHP->pabyRec + 48 + 16 * i + 8, 8 );
+      memcpy(&(shape->line[0].point[i].x), pabyRec + 48 + 16 * i, 8 );
+      memcpy(&(shape->line[0].point[i].y), pabyRec + 48 + 16 * i + 8, 8 );
 
       if( bBigEndian ) {
         SwapWord( 8, &(shape->line[0].point[i].x) );
@@ -1503,7 +1521,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       shape->line[0].point[i].z = 0; /* initialize */
       if (psSHP->nShapeType == SHP_MULTIPOINTZ) {
         const int nOffset = 48 + 16*nPoints;
-        memcpy(&(shape->line[0].point[i].z), psSHP->pabyRec + nOffset + 16 + i*8, 8 );
+        memcpy(&(shape->line[0].point[i].z), pabyRec + nOffset + 16 + i*8, 8 );
         if( bBigEndian ) SwapWord( 8, &(shape->line[0].point[i].z));
       }
 
@@ -1513,7 +1531,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       shape->line[0].point[i].m = 0; /* initialize */
       if (psSHP->nShapeType == SHP_MULTIPOINTM) {
         const int nOffset = 48 + 16*nPoints;
-        memcpy(&(shape->line[0].point[i].m), psSHP->pabyRec + nOffset + 16 + i*8, 8 );
+        memcpy(&(shape->line[0].point[i].m), pabyRec + nOffset + 16 + i*8, 8 );
         if( bBigEndian ) SwapWord( 8, &(shape->line[0].point[i].m));
       }
     }
@@ -1544,8 +1562,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     shape->line[0].numpoints = 1;
     shape->line[0].point = (pointObj *) msSmallMalloc(sizeof(pointObj));
 
-    memcpy( &(shape->line[0].point[0].x), psSHP->pabyRec + 12, 8 );
-    memcpy( &(shape->line[0].point[0].y), psSHP->pabyRec + 20, 8 );
+    memcpy( &(shape->line[0].point[0].x), pabyRec + 12, 8 );
+    memcpy( &(shape->line[0].point[0].y), pabyRec + 20, 8 );
 
     if( bBigEndian ) {
       SwapWord( 8, &(shape->line[0].point[0].x));
@@ -1559,7 +1577,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     if (psSHP->nShapeType == SHP_POINTZ) {
       const int nOffset = 20 + 8;
       if( nEntitySize >= nOffset + 8 ) {
-        memcpy(&(shape->line[0].point[0].z), psSHP->pabyRec + nOffset, 8 );
+        memcpy(&(shape->line[0].point[0].z), pabyRec + nOffset, 8 );
         if( bBigEndian ) SwapWord( 8, &(shape->line[0].point[0].z));
       }
     }
@@ -1571,7 +1589,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     if (psSHP->nShapeType == SHP_POINTM) {
       const int nOffset = 20 + 8;
       if( nEntitySize >= nOffset + 8 ) {
-        memcpy(&(shape->line[0].point[0].m), psSHP->pabyRec + nOffset, 8 );
+        memcpy(&(shape->line[0].point[0].m), pabyRec + nOffset, 8 );
         if( bBigEndian ) SwapWord( 8, &(shape->line[0].point[0].m));
       }
     }
@@ -1662,6 +1680,68 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return MS_SUCCESS;
 }
 
+int msShapefileOpenHandle(shapefileObj *shpfile, const char *filename, SHPHandle hSHP, DBFHandle hDBF)
+{
+  assert(filename != NULL);
+  assert(hSHP != NULL);
+  assert(hDBF != NULL);
+
+  /* initialize a few things */
+  shpfile->status = NULL;
+  shpfile->lastshape = -1;
+  shpfile->isopen = MS_FALSE;
+
+  shpfile->hSHP = hSHP;
+
+  strlcpy(shpfile->source, filename, sizeof(shpfile->source));
+
+  /* load some information about this shapefile */
+  msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+
+  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
+    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
+               "msShapefileOpen()", shpfile->numshapes);
+    msDBFClose(hDBF);
+    msSHPClose(hSHP);
+    return -1;
+  }
+
+  msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
+
+  shpfile->hDBF = hDBF;
+
+  shpfile->isopen = MS_TRUE;
+  return(0); /* all o.k. */
+}
+
+int msShapefileOpenVirtualFile(shapefileObj *shpfile, const char *filename, VSILFILE * fpSHP, VSILFILE * fpSHX, VSILFILE * fpDBF, int log_failures)
+{
+  assert(filename != NULL);
+  assert(fpSHP != NULL);
+  assert(fpSHX != NULL);
+  assert(fpDBF != NULL);
+
+  /* open the shapefile file (appending ok) and get basic info */
+  SHPHandle hSHP = msSHPOpenVirtualFile(fpSHP, fpSHX);
+  if(!hSHP) {
+    if( log_failures )
+      msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", filename);
+    VSIFCloseL( fpDBF );
+    return(-1);
+  }
+
+  DBFHandle hDBF = msDBFOpenVirtualFile(fpDBF);
+
+  if(!hDBF) {
+    if( log_failures )
+      msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", filename);
+    msSHPClose(hSHP);
+    return(-1);
+  }
+
+  return msShapefileOpenHandle(shpfile, filename, hSHP, hDBF);
+}
+
 int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filename, int log_failures)
 {
   int i;
@@ -1674,36 +1754,18 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
     return(-1);
   }
 
-  /* initialize a few things */
-  shpfile->status = NULL;
-  shpfile->lastshape = -1;
-  shpfile->isopen = MS_FALSE;
-
   /* open the shapefile file (appending ok) and get basic info */
+  SHPHandle hSHP;
   if(!mode)
-    shpfile->hSHP = msSHPOpen( filename, "rb");
+    hSHP = msSHPOpen( filename, "rb");
   else
-    shpfile->hSHP = msSHPOpen( filename, mode);
+    hSHP = msSHPOpen( filename, mode);
 
-  if(!shpfile->hSHP) {
+  if(!hSHP) {
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", filename);
     return(-1);
   }
-
-  strlcpy(shpfile->source, filename, sizeof(shpfile->source));
-
-  /* load some information about this shapefile */
-  msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
-
-  if( shpfile->numshapes < 0 || shpfile->numshapes > 256000000 ) {
-    msSetError(MS_SHPERR, "Corrupted .shp file : numshapes = %d.",
-               "msShapefileOpen()", shpfile->numshapes);
-    msSHPClose(shpfile->hSHP);
-    return -1;
-  }
-
-  msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
 
   bufferSize = strlen(filename)+5;
   dbfFilename = (char *)msSmallMalloc(bufferSize);
@@ -1719,19 +1781,18 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
 
   strlcat(dbfFilename, ".dbf", bufferSize);
 
-  shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
+  DBFHandle hDBF = msDBFOpen(dbfFilename, "rb");
 
-  if(!shpfile->hDBF) {
+  if(!hDBF) {
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", dbfFilename);
     free(dbfFilename);
-    msSHPClose(shpfile->hSHP);
+    msSHPClose(hSHP);
     return(-1);
   }
   free(dbfFilename);
 
-  shpfile->isopen = MS_TRUE;
-  return(0); /* all o.k. */
+  return msShapefileOpenHandle(shpfile, filename, hSHP, hDBF);
 }
 
 /* Creates a new shapefile */
@@ -1830,8 +1891,10 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
       }
 
       for(i=0; i<shpfile->numshapes; i++) {
-        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) == MS_SUCCESS)
-          if(msRectOverlap(&shaperect, &rect) == MS_TRUE) msSetBit(shpfile->status, i, 1);
+        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) != MS_SUCCESS)
+          return(MS_FAILURE);
+
+        if(msRectOverlap(&shaperect, &rect) == MS_TRUE) msSetBit(shpfile->status, i, 1);
       }
     }
   }

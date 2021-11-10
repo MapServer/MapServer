@@ -737,7 +737,7 @@ arcSegmentSide(const pointObj &p1, const pointObj &p2, const pointObj &q)
 static int
 arcCircleCenter(const pointObj& p1, const pointObj& p2, const pointObj& p3, pointObj *center, double *radius)
 {
-  pointObj c = {0,0,0,0}; // initialize
+  pointObj c{}; // initialize
   double r;
 
   /* Circle is closed, so p2 must be opposite p1 & p3. */
@@ -1007,6 +1007,67 @@ msPostGISRetrieveVersion(PGconn *pgconn)
   char *strParts[3] = { nullptr, nullptr, nullptr };
   int j = 0;
   strParts[j++] = &strVersion[0];
+  while( *ptr != '\0' && j < 3 ) {
+    if ( *ptr == '.' ) {
+      *ptr = '\0';
+      strParts[j++] = ptr + 1;
+    }
+    if ( *ptr == ' ' ) {
+      *ptr = '\0';
+      break;
+    }
+    ptr++;
+  }
+
+  int version = 0;
+  int factor = 10000;
+  for( int i = 0; i < j; i++ ) {
+    version += factor * atoi(strParts[i]);
+    factor = factor / 100;
+  }
+
+  return version;
+}
+
+/*
+** Get the PostgreSQL server version number from the database as integer.
+** 12.7.1 ==> 120701
+*/
+static int
+msPostGISRetrievePostgreSQLVersion(PGconn *pgconn)
+{
+  static const char* sql = "SELECT version()";
+  if ( ! pgconn ) {
+    msSetError(MS_QUERYERR, "No open connection.", "msPostGISRetrievePostgreSQLVersion()");
+    return MS_FAILURE;
+  }
+
+  PGresult* pgresult = PQexecParams(pgconn, sql,0, nullptr, nullptr, nullptr, nullptr, 0);
+
+  if ( !pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
+    msDebug("Error executing SQL: (%s) in msPostGISRetrievePostgreSQLVersion()", sql);
+    msSetError(MS_QUERYERR, "Error executing SQL. check server logs.", "msPostGISRetrievePostgreSQLVersion()");
+    return MS_FAILURE;
+  }
+
+  if (PQgetisnull(pgresult, 0, 0)) {
+    PQclear(pgresult);
+    msSetError(MS_QUERYERR,"Null result returned.","msPostGISRetrievePostgreSQLVersion()");
+    return MS_FAILURE;
+  }
+
+  std::string strVersion = PQgetvalue(pgresult, 0, 0);
+  PQclear(pgresult);
+
+  // Skip leading "PostgreSQL " (or other vendorized name)
+  auto nPos = strVersion.find(' ');
+  if( nPos == std::string::npos )
+      return 0;
+
+  char* ptr = &strVersion[nPos + 1];
+  char *strParts[3] = { nullptr, nullptr, nullptr };
+  int j = 0;
+  strParts[j++] = ptr;
   while( *ptr != '\0' && j < 3 ) {
     if ( *ptr == '.' ) {
       *ptr = '\0';
@@ -1322,9 +1383,17 @@ static int msPostGISParseData(layerObj *layer)
       return MS_FAILURE;
     }
     if ( msPostGISRetrievePK(layer) != MS_SUCCESS ) {
-      /* No user specified unique id so we will use the PostgreSQL oid */
-      /* TODO: Deprecate this, oids are deprecated in PostgreSQL */
-      layerinfo->uid = "oid";
+      if( layerinfo->pgconn && msPostGISRetrievePostgreSQLVersion(layerinfo->pgconn) < 120000 ) {
+        /* For PostgreSQL < 12: No user specified unique id so we will use the PostgreSQL oid */
+        layerinfo->uid = "oid";
+      } else {
+        msSetError(MS_QUERYERR,
+                   "Error parsing PostGIS DATA variable. "
+                   "No primary key was found. "
+                   "You must specify 'using unique'.",
+                   "msPostGISParseData()");
+        return MS_FAILURE;
+      }
     }
   }
 
@@ -1509,32 +1578,40 @@ static char *msPostGISBuildSQLBox(layerObj *layer, const rectObj *rect, const ch
     msDebug("msPostGISBuildSQLBox called.\n");
   }
 
+  const bool bIsPoint = rect->minx == rect->maxx && rect->miny == rect->maxy;
+
   if ( strSRID ) {
     static const char *strBoxTemplate = "ST_GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)";
+    static const char *strBoxTemplatePoint = "ST_GeomFromText('POINT(%.15g %.15g)',%s)";
     /* 10 doubles + 1 integer + template characters */
     sz = 10 * 22 + strlen(strSRID) + strlen(strBoxTemplate);
     strBox = (char*)msSmallMalloc(sz+1); /* add space for terminating NULL */
-    if ( sz <= static_cast<size_t>(snprintf(strBox, sz, strBoxTemplate,
+    if ( (bIsPoint && sz <= static_cast<size_t>(snprintf(strBox, sz, strBoxTemplatePoint,
+                        rect->minx, rect->miny, strSRID))) ||
+         (!bIsPoint && sz <= static_cast<size_t>(snprintf(strBox, sz, strBoxTemplate,
                         rect->minx, rect->miny,
                         rect->minx, rect->maxy,
                         rect->maxx, rect->maxy,
                         rect->maxx, rect->miny,
                         rect->minx, rect->miny,
-                        strSRID))) {
+                        strSRID))) ) {
       msSetError(MS_MISCERR,"Bounding box digits truncated.","msPostGISBuildSQLBox");
       return nullptr;
     }
   } else {
     static const char *strBoxTemplate = "ST_GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))')";
+    static const char *strBoxTemplatePoint = "ST_GeomFromText('POINT(%.15g %.15g)')";
     /* 10 doubles + template characters */
     sz = 10 * 22 + strlen(strBoxTemplate);
     strBox = (char*)msSmallMalloc(sz+1); /* add space for terminating NULL */
-    if ( sz <= static_cast<size_t>(snprintf(strBox, sz, strBoxTemplate,
+    if ( (bIsPoint && sz <= static_cast<size_t>(snprintf(strBox, sz, strBoxTemplatePoint,
+                        rect->minx, rect->miny))) ||
+         (!bIsPoint && sz <= static_cast<size_t>(snprintf(strBox, sz, strBoxTemplate,
                         rect->minx, rect->miny,
                         rect->minx, rect->maxy,
                         rect->maxx, rect->maxy,
                         rect->maxx, rect->miny,
-                        rect->minx, rect->miny)) ) {
+                        rect->minx, rect->miny))) ) {
       msSetError(MS_MISCERR,"Bounding box digits truncated.","msPostGISBuildSQLBox");
       return nullptr;
     }
@@ -1825,11 +1902,28 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
         // otherwise if find_srid() would return 0, ST_Intersects() would not
         // work at all, which breaks the msautotest/query/query_postgis.map
         // tests, releated to bdry_counpy2 layer that has no SRID
-        strRect = "ST_Intersects(\"";
-        strRect += layerinfo->geomcolumn;
-        strRect += "\", ";
-        strRect += strBox;
-        strRect += ')';
+        if( layerinfo->version >= 20500 )
+        {
+            strRect = "ST_Intersects(\"";
+            strRect += layerinfo->geomcolumn;
+            strRect += "\", ";
+            strRect += strBox;
+            strRect += ')';
+        }
+        else
+        {
+            // ST_Intersects() before PostGIS 2.5 doesn't support collections
+            // See https://github.com/MapServer/MapServer/pull/6355#issuecomment-877355007
+            strRect = "(\"";
+            strRect += layerinfo->geomcolumn;
+            strRect += "\" && ";
+            strRect += strBox;
+            strRect += ") AND ST_Distance(\"";
+            strRect += layerinfo->geomcolumn;
+            strRect += "\", ";
+            strRect += strBox;
+            strRect += ") = 0";
+        }
     }
     else
     {
