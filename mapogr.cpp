@@ -576,10 +576,38 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   int *itemindexes = (int*)layer->iteminfo;
 
+  int nYear;
+  int nMonth;
+  int nDay;
+  int nHour;
+  int nMinute;
+  int nSecond;
+  int nTZFlag;
+
   for(i=0; i<layer->numitems; i++) {
     if (itemindexes[i] >= 0) {
       // Extract regular attributes
-      values[i] = msStrdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
+      OGRFieldDefnH hFieldDefnRef = OGR_F_GetFieldDefnRef(hFeature, itemindexes[i]);
+      switch(OGR_Fld_GetType(hFieldDefnRef)) {
+      case OFTTime:
+      case OFTDate:
+      case OFTDateTime:
+          OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+          switch(nTZFlag) {
+          case 0:
+          case 1:
+            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond));
+            break;
+          case 100:
+            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear, nMonth, nDay, nHour, nMinute, nSecond));
+            break;
+          default:
+            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%+02d:00", nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag));
+          }
+          break;
+      default:
+        values[i] = msStrdup(OGR_F_GetFieldAsString(hFeature, itemindexes[i]));
+      }
     } else if (itemindexes[i] == MSOGR_FID_INDEX ) {
       values[i] = msStrdup(CPLSPrintf(CPL_FRMT_GIB,
                                       (GIntBig) OGR_F_GetFID(hFeature)));
