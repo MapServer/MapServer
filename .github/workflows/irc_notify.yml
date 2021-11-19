@@ -2,7 +2,6 @@
 # homepage: https://github.com/marketplace/actions/notify-irc
 
 name: "IRC Push Notification"
-description: "Send a notification message to the #mapserver IRC channel"
 on: 
   push:
     branches:
