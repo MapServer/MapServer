@@ -1,0 +1,37 @@
+# Test assembling two rasters and bilinear resampling
+MAP
+
+    NAME TEST
+    PROJECTION
+        "init=epsg:4326"
+    END
+
+    EXTENT -3.515625 -35.15625 3.515625 35.15625 
+    SIZE 32 320
+    IMAGETYPE png
+
+    LAYER
+        NAME "east-bilinear"
+        TYPE RASTER
+        STATUS default
+
+        PROJECTION
+            "init=epsg:4326"
+        END
+        PROCESSING "RESAMPLE=BILINEAR"
+        DATA "data/east.tif"
+    END
+
+    LAYER
+        NAME "west-bilinear"
+        TYPE RASTER
+        STATUS default
+
+        PROJECTION
+            "init=epsg:4326"
+        END
+        PROCESSING "RESAMPLE=BILINEAR"
+        DATA "data/west.tif"
+    END
+
+END
