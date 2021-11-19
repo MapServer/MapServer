@@ -342,6 +342,13 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
         continue;
       }
 
+      /* If we are right off the source, skip this pixel */
+      nSrcX = (int) floor(x[nDstX]);
+      nSrcY = (int) floor(y[nDstX]);
+      if( nSrcX < 0 || (!bWrapAtLeftRight && nSrcX >= nSrcXSize)
+          || nSrcY  < 0 || nSrcY >= nSrcYSize )
+        continue;
+
       /*
       ** Offset to treat TL pixel corners as pixel location instead
       ** of the center.
@@ -357,11 +364,6 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
       dfRatioX2 = x[nDstX] - nSrcX;
       dfRatioY2 = y[nDstX] - nSrcY;
-
-      /* If we are right off the source, skip this pixel */
-      if( nSrcX2 < 0 || (!bWrapAtLeftRight && nSrcX >= nSrcXSize)
-          || nSrcY2 < 0 || nSrcY >= nSrcYSize )
-        continue;
 
       /* Trim in stuff one pixel off the edge */
       nSrcX = MS_MAX(nSrcX,0);
