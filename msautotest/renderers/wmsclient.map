@@ -27,7 +27,7 @@ LAYER
   TYPE RASTER
   STATUS DEFAULT
   #CONNECTION "http://mstest.tiles.osgeo.org/wms/vmap0?"
-  CONNECTION "https://demo.mapserver.org/cgi-bin/mapserv?map=/mapserver/apps/msautotest/world/world.map&"
+  CONNECTION "https://demo.mapserver.org/cgi-bin/msautotest?"
   CONNECTIONTYPE WMS
   METADATA
     "wms_srs"             "EPSG:4326"

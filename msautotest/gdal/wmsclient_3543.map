@@ -22,7 +22,7 @@ END
 
 LAYER
   NAME "X"
-  CONNECTION "https://demo.mapserver.org/cgi-bin/mapserv?map=/mapserver/apps/msautotest/world/world.map&"
+  CONNECTION "https://demo.mapserver.org/cgi-bin/msautotest?"
   CONNECTIONTYPE WMS
   TYPE RASTER
   STATUS DEFAULT
