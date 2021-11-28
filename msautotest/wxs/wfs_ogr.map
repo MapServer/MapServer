@@ -26,8 +26,8 @@
 # Generate dump to CSV in ZIP (test #4933)
 # RUN_PARMS: wfsogr10_csvzip.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRCSVZIP" > [RESULT_DEVERSION]
 #
-# Generate dump to SHAPEZIP
-# RUN_PARMS: wfsogr10_shapezip.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIP" > [RESULT]
+# Generate dump to SHAPEZIP, with HTTP headers
+# RUN_PARMS: wfsogr10_shapezip.zip.with_headers [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIP" > [RESULT]
 #
 # Generate dump streamed directly to OGR GML from memory.
 # RUN_PARMS: wfsogr10_ogrgml.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRGML" > [RESULT]
