@@ -3449,7 +3449,9 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
         if (e == OGRERR_NONE) {
             OGREnvelope env;
             if( expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN ) {
-                OGR_G_GetEnvelope(OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30), &env);
+                OGRGeometryH hBuffer = OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30);
+                OGR_G_GetEnvelope(hBuffer ? hBuffer : hSpatialFilter, &env);
+                OGR_G_DestroyGeometry(hBuffer);
             } else {
                 OGR_G_GetEnvelope(hSpatialFilter, &env);
             }
