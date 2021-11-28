@@ -2658,6 +2658,8 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 #else
   proj_str = pj_get_def( psProj->proj, 0 );
 #endif
+  if( proj_str == NULL )
+    return -1;
 
   /* -------------------------------------------------------------------- */
   /*      Handle case of named units.                                     */
