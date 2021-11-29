@@ -674,7 +674,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
   /* Projection */
   pszValue = (char*)CPLGetXMLValue(psGeneral,
                                    "BoundingBox.SRS", NULL);
-  if(pszValue != NULL) {
+  if(pszValue != NULL && !EQUAL(pszValue, "(null)")) {
     if(strncasecmp(pszValue, "AUTO:", 5) == 0) {
       pszProj = msStrdup(pszValue);
     } else {
