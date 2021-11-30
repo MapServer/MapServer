@@ -576,6 +576,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   int *itemindexes = (int*)layer->iteminfo;
 
+  //TODO  Properly handle datetime fields #6434
   for(i=0; i<layer->numitems; i++) {
     if (itemindexes[i] >= 0) {
       // Extract regular attributes
