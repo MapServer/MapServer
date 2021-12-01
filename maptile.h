@@ -45,7 +45,8 @@ MS_DLL_EXPORT imageObj* msTileDraw(mapservObj *msObj);
 
 typedef struct {
   int metatile_level; /* In zoom levels above tile request: best bet is 0, 1 or 2 */
-  int tile_size; /* In pixels */
+  int tile_width; /* In pixels */
+  int tile_height; /* In pixels */
   int map_edge_buffer; /* In pixels */
 } tileParams;
 
