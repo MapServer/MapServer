@@ -856,6 +856,37 @@ int msCGILoadForm(mapservObj *mapserv)
       continue;
     }
 
+    if(strcasecmp(mapserv->request->ParamNames[i],"tilesize") == 0) { /* size of existing image (pixels) */
+      tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
+
+      if(!tokens) {
+        msSetError(MS_MEMERR, NULL, "msCGILoadForm()");
+        return MS_FAILURE;
+      }
+
+      if(n != 2) {
+        msSetError(MS_WEBERR, "Not enough arguments for tilesize.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
+        return MS_FAILURE;
+      }
+
+      GET_NUMERIC_NO_ERROR(tokens[0],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
+      mapserv->TileWidth = (int)tmpval;
+      GET_NUMERIC_NO_ERROR(tokens[1],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
+      mapserv->TileHeight = (int)tmpval;
+
+      msFreeCharArray(tokens, 2);
+
+      if(mapserv->TileWidth > mapserv->map->maxsize || mapserv->TileHeight > mapserv->map->maxsize || mapserv->TileWidth <= 0 || mapserv->TileHeight <= 0) {
+        msSetError(MS_WEBERR, "Tile size out of range.", "msCGILoadForm()");
+        return MS_FAILURE;
+      }
+
+      continue;
+    }
+
     if(strcasecmp(mapserv->request->ParamNames[i],"mapsize") == 0) { /* size of new map (pixels) */
       tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
