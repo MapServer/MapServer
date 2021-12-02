@@ -80,13 +80,21 @@ static int msTileGetGMapCoords(const char *coordstring, int *x, int *y, int *zoo
 /************************************************************************
  *                            msTileSetParams                           *
  ************************************************************************/
-static void msTileGetParams(mapObj *map, tileParams *params)
+static void msTileGetParams(const mapservObj *msObj, tileParams *params)
 {
 
   const char *value = NULL;
-  hashTableObj *meta = &(map->web.metadata);
+  const mapObj* map = msObj->map;
+  const hashTableObj *meta = &(map->web.metadata);
 
-  params->tile_size = SPHEREMERC_IMAGE_SIZE;
+  if( msObj->TileWidth < 0 )
+      params->tile_width = SPHEREMERC_IMAGE_SIZE;
+  else
+      params->tile_width = msObj->TileWidth;
+  if( msObj->TileHeight < 0 )
+      params->tile_height = SPHEREMERC_IMAGE_SIZE;
+  else
+      params->tile_height = msObj->TileHeight;
 
   /* Check for tile buffer, set to buffer==0 as default */
   if((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
@@ -141,7 +149,7 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
   /*
   ** Load the metatiling information from the map file.
   */
-  msTileGetParams(msObj->map, &params);
+  msTileGetParams(msObj, &params);
 
   /*
   ** Initialize values for the metatile clip area.
@@ -174,8 +182,8 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
     if(msObj->map->debug)
       msDebug("msTileExtractSubTile(): gmaps image coords (x: %d, y: %d)\n",x,y);
 
-    mini = mini + x * params.tile_size;
-    minj = minj + y * params.tile_size;
+    mini = mini + x * params.tile_width;
+    minj = minj + y * params.tile_height;
 
   } else if( msObj->TileMode == TILE_VE ) {
     int tsize;
@@ -202,18 +210,18 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
     return(NULL); /* Huh? Should have a mode. */
   }
 
-  imgOut = msImageCreate(params.tile_size, params.tile_size, msObj->map->outputformat, NULL, NULL, msObj->map->resolution, msObj->map->defresolution, NULL);
+  imgOut = msImageCreate(params.tile_width, params.tile_height, msObj->map->outputformat, NULL, NULL, msObj->map->resolution, msObj->map->defresolution, NULL);
 
   if( imgOut == NULL ) {
     return NULL;
   }
 
   if(msObj->map->debug)
-    msDebug("msTileExtractSubTile(): extracting (%d x %d) tile, top corner (%d, %d)\n",params.tile_size,params.tile_size,mini,minj);
+    msDebug("msTileExtractSubTile(): extracting (%d x %d) tile, top corner (%d, %d)\n",params.tile_width, params.tile_height,mini,minj);
 
 
 
-  if(MS_UNLIKELY(MS_FAILURE == renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_size, params.tile_size))) {
+  if(MS_UNLIKELY(MS_FAILURE == renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_width, params.tile_height))) {
     msFreeImage(imgOut);
     return NULL;
   }
@@ -238,7 +246,7 @@ int msTileSetup(mapservObj* msObj)
   /*
   ** Load the metatiling information from the map file.
   */
-  msTileGetParams(msObj->map, &params);
+  msTileGetParams(msObj, &params);
 
   /*
   ** Ensure all the LAYERs have a projection.
@@ -333,7 +341,7 @@ int msTileSetExtent(mapservObj* msObj)
   tileParams params;
 
   /* Read the tile-mode map file parameters */
-  msTileGetParams(msObj->map, &params);
+  msTileGetParams(msObj, &params);
 
   if( msObj->TileMode == TILE_GMAP ) {
     int x, y, zoom;
@@ -415,10 +423,8 @@ int msTileSetExtent(mapservObj* msObj)
   /*
   ** Set the output tile size.
   */
-  msObj->ImgCols = SPHEREMERC_IMAGE_SIZE << params.metatile_level;
-  msObj->ImgRows = SPHEREMERC_IMAGE_SIZE << params.metatile_level;
-  map->width = SPHEREMERC_IMAGE_SIZE << params.metatile_level;
-  map->height = SPHEREMERC_IMAGE_SIZE << params.metatile_level;
+  map->width = params.tile_width << params.metatile_level;
+  map->height = params.tile_height << params.metatile_level;
 
   if(map->debug)
     msDebug("msTileSetExtent(): base image size (%d x %d)\n",map->width,map->height);
@@ -440,8 +446,6 @@ int msTileSetExtent(mapservObj* msObj)
   */
   map->width += 2 * params.map_edge_buffer;
   map->height += 2 * params.map_edge_buffer;
-  msObj->ImgCols += 2 * params.map_edge_buffer;
-  msObj->ImgRows += 2 * params.map_edge_buffer;
 
   if(map->debug)
     msDebug("msTileSetExtent(): buffered image size (%d x %d)\n",map->width,map->height);
@@ -509,7 +513,7 @@ imageObj* msTileDraw(mapservObj *msObj)
 {
   imageObj *img;
   tileParams params;
-  msTileGetParams(msObj->map, &params);
+  msTileGetParams(msObj, &params);
   img = msDrawMap(msObj->map, MS_FALSE);
   if( img == NULL )
     return NULL;
