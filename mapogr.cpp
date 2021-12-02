@@ -577,10 +577,59 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
   int *itemindexes = (int*)layer->iteminfo;
 
   //TODO  Properly handle datetime fields #6434
+  int  nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+  char locBuf[8];
   for(i=0; i<layer->numitems; i++) {
     if (itemindexes[i] >= 0) {
       // Extract regular attributes
-      values[i] = msStrdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
+      //  values[i] = msStrdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
+      OGRFieldDefnH hFieldDefnRef = OGR_F_GetFieldDefnRef(hFeature, itemindexes[i]);
+      switch(OGR_Fld_GetType(hFieldDefnRef)) {
+
+          case OFTDate:
+          case OFTTime:
+          case OFTDateTime:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              switch(nTZFlag) {
+                  case 0:
+                  case 1:
+                      values[i] = msStrdup( "" );
+                      break;
+                  case 100:
+                      values[i] = msStrdup( "Z" );
+                      break;
+                  default:
+                      const int TZOffset = std::abs(nTZFlag - 100) * 15;
+                      const int TZHour = TZOffset / 60;
+                      const int TZMinute = TZOffset % 60;
+
+                      snprintf( locBuf, 7, "%c%02d:%02d",
+                               (nTZFlag > 100) ? '+' : '-', TZHour, TZMinute);
+                      values[i] = msStrdup( locBuf );
+
+                      break;
+              }
+              break;
+
+          case OFTString:
+          case OFTStringList:
+          case OFTWideString:
+          case OFTWideStringList:
+              values[i] = msStrdup(OGR_F_GetFieldAsString(hFeature, itemindexes[i]));
+              break;
+
+          case OFTInteger:
+          case OFTIntegerList:
+          case OFTReal:
+          case OFTRealList:
+          case OFTBinary:
+          case OFTInteger64:
+          case OFTInteger64List:
+          default:
+              values[i] = msStrdup(OGR_F_GetFieldAsString(hFeature, itemindexes[i]));
+              break;
+      }
+
     } else if (itemindexes[i] == MSOGR_FID_INDEX ) {
       values[i] = msStrdup(CPLSPrintf(CPL_FRMT_GIB,
                                       (GIntBig) OGR_F_GetFID(hFeature)));
