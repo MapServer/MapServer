@@ -128,9 +128,9 @@ def test_reprojection_lines_from_polar_stereographic_to_webmercator():
     shape.add( line )
 
     polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=270 +datum=WGS84")
-    longlat_proj = mapscript.projectionObj("init=epsg:3857")
+    webmercator = mapscript.projectionObj("init=epsg:3857")
 
-    assert shape.project(polar_proj, longlat_proj) == 0
+    assert shape.project(polar_proj, webmercator) == 0
 
     part1 = shape.get(0)
     assert part1
