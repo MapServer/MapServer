@@ -111,21 +111,21 @@ LAYER
 END # Layer
 
 LAYER
-    NAME "test_6446"
-    CONNECTIONTYPE OGR
-    CONNECTION "./data/test_6446.gpkg"
-    METADATA
-      "ows_title"         "test_6446"
-      "wfs_featureid"     "id"
-      "gml_include_items" "all"
-      "gml_types"         "auto"
-      "wfs_use_default_extent_for_getfeature" "no"
-    END
-    TYPE POINT
-    STATUS ON
-    PROJECTION
-      "init=epsg:4326"
-    END
-  END # Layer
+  NAME "test_6446"
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/test_6446.gpkg"
+  METADATA
+    "ows_title"         "test_6446"
+    "wfs_featureid"     "id"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_use_default_extent_for_getfeature" "no"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+END # Layer
 
 END # Map File
