@@ -594,15 +594,20 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
       case OFTDateTime:
           OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
           switch(nTZFlag) {
-          case 0:
-          case 1:
+          case 0: // Unknown time zone
+          case 1: // Local time zone (not specified)
             values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond));
             break;
-          case 100:
+          case 100: // GMT
             values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear, nMonth, nDay, nHour, nMinute, nSecond));
             break;
-          default:
-            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%+02d:00", nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag));
+          default: // Offset (in quarter-hour units) from GMT
+            const int TZOffset = std::abs(nTZFlag - 100) * 15;
+            const int TZHour = TZOffset / 60;
+            const int TZMinute = TZOffset % 60;
+            const char TZSign = (nTZFlag > 100) ? '+' : '-';
+            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, 
+              nSecond, TZSign, TZHour, TZMinute));
           }
           break;
       default:
