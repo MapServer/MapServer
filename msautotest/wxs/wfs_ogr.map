@@ -44,8 +44,11 @@
 # Test fetching from two layers with a filter.
 # RUN_PARMS: wfsogr10_twolayer.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace,road&OUTPUTFORMAT=MultiMIDMIF&FILTER=(<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>)(<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>)" > [RESULT]
 #
-# Test writing features with null numeric fields (#4633)
-# RUN_PARMS: wfsogr10_nullnumeric.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=withnullvalues&OUTPUTFORMAT=CSV" > [RESULT]
+# Test writing features with null numeric fields (#4633) and datetime (#6434)
+# RUN_PARMS: wfsogr10_nullnumeric.csv [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=withnullvalues&OUTPUTFORMAT=CSV" > [RESULT_DEMIME]
+#
+# Test writing features with null numeric fields (#4633) and datetime (#6434)
+# RUN_PARMS: wfsogr10_datetime.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=withnullvalues" > [RESULT_DEMIME]
 
 # WFS 1.1
 #

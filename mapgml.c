@@ -1021,10 +1021,26 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item,
                        tm.tm_hour, tm.tm_min, tm.tm_sec,
                        pszEndTag);
           else
-              snprintf(encoded_value, 256, "%s%04d-%02d-%02dT%02d:%02d:%02dZ%s",
-                       pszStartTag,
-                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-                       tm.tm_hour, tm.tm_min, tm.tm_sec, pszEndTag);
+          {
+              // Detected date time already formatted as YYYY-MM-DDTHH:mm:SS+ab:cd
+              // because msParseTime() can't handle time zones.
+              if( strlen(value) == 4+1+2+1+2+1+2+1+2+1+2+1+2+1+2 &&
+                  value[4] == '-' && value[7] == '-' && value[10] == 'T' &&
+                  value[13] == ':' && value[16] == ':' &&
+                  (value[19] == '+' || value[19] == '-') &&
+                  value[22] == ':' )
+              {
+                  snprintf(encoded_value, 256, "%s%s%s",
+                           pszStartTag, value, pszEndTag);
+              }
+              else
+              {
+                  snprintf(encoded_value, 256, "%s%04d-%02d-%02dT%02d:%02d:%02dZ%s",
+                           pszStartTag,
+                           tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                           tm.tm_hour, tm.tm_min, tm.tm_sec, pszEndTag);
+              }
+          }
       }
   }
 
