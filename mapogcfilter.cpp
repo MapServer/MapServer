@@ -3246,7 +3246,7 @@ int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
 
         /* Horrible HACK to compensate for the lack of null testing in MapServer */
         if( (lp->connectiontype == MS_POSTGIS ||
-             (lp->connectiontype == MS_OGR && msOGRIsSpatialite(lp))) &&
+             (lp->connectiontype == MS_OGR && msOGRSupportsIsNull(lp))) &&
             strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 )
         {
             msFree(psFilterNode->pszValue);
