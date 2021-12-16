@@ -587,31 +587,61 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
   for(i=0; i<layer->numitems; i++) {
     if (itemindexes[i] >= 0) {
       // Extract regular attributes
-      OGRFieldDefnH hFieldDefnRef = OGR_F_GetFieldDefnRef(hFeature, itemindexes[i]);
-      switch(OGR_Fld_GetType(hFieldDefnRef)) {
-      case OFTTime:
-      case OFTDate:
-      case OFTDateTime:
-          OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
-          switch(nTZFlag) {
-          case 0: // Unknown time zone
-          case 1: // Local time zone (not specified)
-            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond));
-            break;
-          case 100: // GMT
-            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear, nMonth, nDay, nHour, nMinute, nSecond));
-            break;
-          default: // Offset (in quarter-hour units) from GMT
-            const int TZOffset = std::abs(nTZFlag - 100) * 15;
-            const int TZHour = TZOffset / 60;
-            const int TZMinute = TZOffset % 60;
-            const char TZSign = (nTZFlag > 100) ? '+' : '-';
-            values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, 
-              nSecond, TZSign, TZHour, TZMinute));
+      const char* pszValue = OGR_F_GetFieldAsString(hFeature, itemindexes[i]);
+      if( pszValue[0] == 0 )
+      {
+          values[i] = msStrdup("");
+      }
+      else
+      {
+          OGRFieldDefnH hFieldDefnRef = OGR_F_GetFieldDefnRef(hFeature, itemindexes[i]);
+          switch(OGR_Fld_GetType(hFieldDefnRef)) {
+          case OFTTime:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              switch(nTZFlag) {
+              case 0: // Unknown time zone
+              case 1: // Local time zone (not specified)
+                values[i] = msStrdup(CPLSPrintf("%02d:%02d:%02d", nHour, nMinute, nSecond));
+                break;
+              case 100: // GMT
+                values[i] = msStrdup(CPLSPrintf("%02d:%02d:%02dZ", nHour, nMinute, nSecond));
+                break;
+              default: // Offset (in quarter-hour units) from GMT
+                const int TZOffset = std::abs(nTZFlag - 100) * 15;
+                const int TZHour = TZOffset / 60;
+                const int TZMinute = TZOffset % 60;
+                const char TZSign = (nTZFlag > 100) ? '+' : '-';
+                values[i] = msStrdup(CPLSPrintf("%02d:%02d:%02d%c%02d:%02d", nHour, nMinute,
+                  nSecond, TZSign, TZHour, TZMinute));
+              }
+              break;
+          case OFTDate:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02d", nYear, nMonth, nDay));
+              break;
+          case OFTDateTime:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              switch(nTZFlag) {
+              case 0: // Unknown time zone
+              case 1: // Local time zone (not specified)
+                values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                break;
+              case 100: // GMT
+                values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                break;
+              default: // Offset (in quarter-hour units) from GMT
+                const int TZOffset = std::abs(nTZFlag - 100) * 15;
+                const int TZHour = TZOffset / 60;
+                const int TZMinute = TZOffset % 60;
+                const char TZSign = (nTZFlag > 100) ? '+' : '-';
+                values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, 
+                  nSecond, TZSign, TZHour, TZMinute));
+              }
+              break;
+          default:
+              values[i] = msStrdup(pszValue);
+              break;
           }
-          break;
-      default:
-        values[i] = msStrdup(OGR_F_GetFieldAsString(hFeature, itemindexes[i]));
       }
     } else if (itemindexes[i] == MSOGR_FID_INDEX ) {
       values[i] = msStrdup(CPLSPrintf(CPL_FRMT_GIB,
