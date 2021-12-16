@@ -4109,7 +4109,7 @@ static int msOGRLayerIsOpen(layerObj *layer)
   return MS_FALSE;
 }
 
-int msOGRIsSpatialite(layerObj* layer)
+int msOGRSupportsIsNull(layerObj* layer)
 {
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   if (psInfo && psInfo->dialect &&
