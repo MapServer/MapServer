@@ -3276,7 +3276,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset);
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 #endif
 
-int msOGRIsSpatialite(layerObj* layer);
+int msOGRSupportsIsNull(layerObj* layer);
 
 #ifdef NEED_IGNORE_RET_VAL
 static inline void IGNORE_RET_VAL(int x) { (void)x; }
