@@ -559,6 +559,12 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     {
         obj->no_op = MS_TRUE;
     }
+    else if( (in == NULL || in->proj == NULL) &&
+             (out == NULL || out->proj == NULL) )
+    {
+        msProjectDestroyReprojector(obj);
+        return NULL;
+    }
     return obj;
 }
 
@@ -1963,41 +1969,85 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   double dfLonWrap = 0.0;
   reprojectionObj* reprojector = NULL;
 
-  /* Detect projecting from north polar stereographic to longlat */
+  /* Detect projecting from polar stereographic to longlat */
   if( in && !in->gt.need_geotransform &&
       out && !out->gt.need_geotransform &&
       !msProjIsGeographicCRS(in) && msProjIsGeographicCRS(out) )
   {
-      pointObj p;
-      p.x = 0.0;
-      p.y = 0.0;
       reprojector = msProjectCreateReprojector(in, out);
-      if( reprojector &&
-          msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
-          fabs(p.y - 90) < 1e-8 )
+      for( int sign = 1; sign >= -1; sign -= 2 )
       {
-        /* Is the pole in the rectangle ? */
-        if( 0 >= rect->minx && 0 >= rect->miny &&
-            0 <= rect->maxx && 0 <= rect->maxy )
-        {
-            if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
+          pointObj p;
+          p.x = 0.0;
+          p.y = 0.0;
+          if( reprojector &&
+              msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
+              fabs(p.y - sign * 90) < 1e-8 )
+          {
+            /* Is the pole in the rectangle ? */
+            if( 0 >= rect->minx && 0 >= rect->miny &&
+                0 <= rect->maxx && 0 <= rect->maxy )
             {
-                rect->minx = -180.0;
-                rect->maxx = 180.0;
-                rect->maxy = 90.0;
-                msProjectDestroyReprojector(reprojector);
-                return MS_SUCCESS;
+                if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
+                {
+                    rect->minx = -180.0;
+                    rect->maxx = 180.0;
+                    rect->maxy = sign * 90.0;
+                    msProjectDestroyReprojector(reprojector);
+                    return MS_SUCCESS;
+                }
             }
-        }
-        /* Are we sure the dateline is not enclosed ? */
-        else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
-        {
-            ret = msProjectRectAsPolygon(reprojector, rect );
-            msProjectDestroyReprojector(reprojector);
-            return ret;
-        }
+            /* Are we sure the dateline is not enclosed ? */
+            else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
+            {
+                ret = msProjectRectAsPolygon(reprojector, rect );
+                msProjectDestroyReprojector(reprojector);
+                return ret;
+            }
+          }
       }
   }
+
+  /* Detect projecting from polar stereographic to another projected system */
+  else if( in && !in->gt.need_geotransform &&
+      out && !out->gt.need_geotransform &&
+      !msProjIsGeographicCRS(in) && !msProjIsGeographicCRS(out) )
+  {
+      reprojectionObj* reprojectorToLongLat = msProjectCreateReprojector(in, NULL);
+      for( int sign = 1; sign >= -1; sign -= 2 )
+      {
+          pointObj p;
+          p.x = 0.0;
+          p.y = 0.0;
+          if( reprojectorToLongLat &&
+              msProjectPointEx(reprojectorToLongLat, &p) == MS_SUCCESS &&
+              fabs(p.y - 90) < 1e-8 )
+          {
+            reprojector = msProjectCreateReprojector(in, out);
+            /* Is the pole in the rectangle ? */
+            if( 0 >= rect->minx && 0 >= rect->miny &&
+                0 <= rect->maxx && 0 <= rect->maxy )
+            {
+                if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
+                {
+                    msProjectDestroyReprojector(reprojector);
+                    msProjectDestroyReprojector(reprojectorToLongLat);
+                    return MS_SUCCESS;
+                }
+            }
+            /* Are we sure the dateline is not enclosed ? */
+            else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
+            {
+                ret = msProjectRectAsPolygon(reprojector, rect );
+                msProjectDestroyReprojector(reprojector);
+                msProjectDestroyReprojector(reprojectorToLongLat);
+                return ret;
+            }
+          }
+      }
+      msProjectDestroyReprojector(reprojectorToLongLat);
+  }
+
 
   if(in && msProjectHasLonWrap(in, &dfLonWrap) && dfLonWrap == 180.0) {
     inp = in;

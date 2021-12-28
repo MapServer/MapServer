@@ -145,3 +145,17 @@ def test_reprojection_lines_from_polar_stereographic_to_webmercator():
     assert point12.x == pytest.approx(-20037508.34, abs=1e-2)
     assert point21.x == pytest.approx(20037508.34, abs=1e-2)
     assert point22.x == pytest.approx(19926188.85, abs=1e-2)
+
+###############################################################################
+# Test reprojection of rectangle from Polar Stereographic containing north
+# pole to webmercator
+
+def test_reprojection_rect_from_polar_stereographic_to_webmercator():
+
+    rect = mapscript.rectObj(-4551441, -7324318, 4798559, 915682)
+    polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=549 +R=6371229")
+    webmercator = mapscript.projectionObj("init=epsg:3857")
+
+    assert rect.project(polar_proj, webmercator) == 0
+    assert abs(rect.minx - -20e6) < 1e-1 * 20e6
+    assert abs(rect.maxx - 20e6) < 1e-1 * 20e6
