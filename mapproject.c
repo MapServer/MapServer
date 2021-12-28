@@ -559,6 +559,12 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     {
         obj->no_op = MS_TRUE;
     }
+    else if( (in == NULL || in->proj == NULL) &&
+             (out == NULL || out->proj == NULL) )
+    {
+        msProjectDestroyReprojector(obj);
+        return NULL;
+    }
     return obj;
 }
 
