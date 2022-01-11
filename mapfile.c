@@ -250,13 +250,24 @@ int getString(char **s)
 /*
 ** Load a floating point number from the map file. (see lexer.l)
 */
-int getDouble(double *d)
+int getDouble(double *d, int num_check_type, double value1, double value2)
 {
+  double old_value = *d; // save
+
   if(msyylex() == MS_NUMBER) {
     *d = msyynumber;
-    return(0); /* success */
+    if(num_check_type == MS_NUM_CHECK_NONE) {
+      return(0); /* success */
+    } else if(num_check_type == MS_NUM_CHECK_RANGE && *d >= value1 && *d <= value2) {
+      return(0); /* success */
+    } else if(num_check_type == MS_NUM_CHECK_GT && *d > value1) {
+      return(0); /* success */
+    } else if(num_check_type == MS_NUM_CHECK_GTE && *d >= value1) {
+      return(0); /* success */
+    }
   }
 
+  *d = old_value; // restore previous value in case the error isn't being trapped
   msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getDouble()", msyystring_buffer, msyylineno);
   return(-1);
 }
@@ -264,13 +275,24 @@ int getDouble(double *d)
 /*
 ** Load a integer from the map file. (see lexer.l)
 */
-int getInteger(int *i)
+int getInteger(int *i, int num_check_type, int value1, int value2)
 {
+  int old_value = *i; // save
+
   if(msyylex() == MS_NUMBER) {
     *i = (int)msyynumber;
-    return(0); /* success */
+    if(num_check_type == MS_NUM_CHECK_NONE) {
+      return(0); /* success */
+    } else if(num_check_type == MS_NUM_CHECK_RANGE && *i >= value1 && *i <= value2) {
+      return(0); /* success */
+    } else if(num_check_type == MS_NUM_CHECK_GT && *i > value1) {
+      return(0); /* success */
+    } else if(num_check_type == MS_NUM_CHECK_GTE && *i >= value1) {
+      return(0); /* success */
+    }
   }
 
+  *i = old_value; // restore previous value in case the error isn't being trapped
   msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getInteger()", msyystring_buffer, msyylineno);
   return(-1);
 }
@@ -424,9 +446,13 @@ int loadColor(colorObj *color, attributeBindingObj *binding)
 
   color->alpha=255;
   if(symbol == MS_NUMBER) {
-    color->red = (int) msyynumber;
-    if(getInteger(&(color->green)) == -1) return MS_FAILURE;
-    if(getInteger(&(color->blue)) == -1) return MS_FAILURE;
+    if(msyynumber >= -255 && msyynumber <= 255) {
+      color->red = (int) msyynumber;
+    } else {
+      return MS_FAILURE;
+    }
+    if(getInteger(&(color->green), MS_NUM_CHECK_RANGE, -255, 255) == -1) return MS_FAILURE;
+    if(getInteger(&(color->blue), MS_NUM_CHECK_RANGE, -255, 255) == -1) return MS_FAILURE;
   } else if(symbol == MS_STRING) {
     int len = strlen(msyystring_buffer);
     if(msyystring_buffer[0] == '#' && (len == 7 || len == 9)) { /* got a hex color w/optional alpha */
@@ -463,7 +489,7 @@ int loadColorWithAlpha(colorObj *color)
 {
   char hex[2];
 
-  if(getInteger(&(color->red)) == -1) {
+  if(getInteger(&(color->red), MS_NUM_CHECK_RANGE, -255, 255) == -1) {
     if(msyystring_buffer[0] == '#' && strlen(msyystring_buffer) == 7) { /* got a hex color */
       hex[0] = msyystring_buffer[1];
       hex[1] = msyystring_buffer[2];
@@ -494,9 +520,9 @@ int loadColorWithAlpha(colorObj *color)
     }
     return(MS_FAILURE);
   }
-  if(getInteger(&(color->green)) == -1) return(MS_FAILURE);
-  if(getInteger(&(color->blue)) == -1) return(MS_FAILURE);
-  if(getInteger(&(color->alpha)) == -1) return(MS_FAILURE);
+  if(getInteger(&(color->green), MS_NUM_CHECK_RANGE, -255, 255) == -1) return(MS_FAILURE);
+  if(getInteger(&(color->blue), MS_NUM_CHECK_RANGE, -255, 255) == -1) return(MS_FAILURE);
+  if(getInteger(&(color->alpha), MS_NUM_CHECK_RANGE, 0, 255) == -1) return(MS_FAILURE);
 
   return(MS_SUCCESS);
 }
@@ -913,7 +939,7 @@ static int loadFeaturePoints(lineObj *points)
         }
 
         points->point[points->numpoints].x = atof(msyystring_buffer);
-        if(getDouble(&(points->point[points->numpoints].y)) == -1) return(MS_FAILURE);
+        if(getDouble(&(points->point[points->numpoints].y), MS_NUM_CHECK_NONE, -1, -1) == -1) return(MS_FAILURE);
 
         points->numpoints++;
         break;
@@ -1092,27 +1118,27 @@ static int loadGrid( layerObj *pLayer )
         }
         break;
       case( MINARCS ):
-        if(getDouble(&(pLayer->grid->minarcs)) == -1)
+        if(getDouble(&(pLayer->grid->minarcs), MS_NUM_CHECK_GT, 0, -1) == -1)
           return(-1);
         break;
       case( MAXARCS ):
-        if(getDouble(&(pLayer->grid->maxarcs)) == -1)
+        if(getDouble(&(pLayer->grid->maxarcs), MS_NUM_CHECK_GT, 0, -1) == -1)
           return(-1);
         break;
       case( MININTERVAL ):
-        if(getDouble(&(pLayer->grid->minincrement)) == -1)
+        if(getDouble(&(pLayer->grid->minincrement), MS_NUM_CHECK_GT, 0, -1) == -1)
           return(-1);
         break;
       case( MAXINTERVAL ):
-        if(getDouble(&(pLayer->grid->maxincrement)) == -1)
+        if(getDouble(&(pLayer->grid->maxincrement), MS_NUM_CHECK_GT, 0, -1) == -1)
           return(-1);
         break;
       case( MINSUBDIVIDE ):
-        if(getDouble(&(pLayer->grid->minsubdivides)) == -1)
+        if(getDouble(&(pLayer->grid->minsubdivides), MS_NUM_CHECK_GT, 0, -1) == -1)
           return(-1);
         break;
       case( MAXSUBDIVIDE ):
-        if(getDouble(&(pLayer->grid->maxsubdivides)) == -1)
+        if(getDouble(&(pLayer->grid->maxsubdivides), MS_NUM_CHECK_GT, 0, -1) == -1)
           return(-1);
         break;
       default:
@@ -1519,10 +1545,10 @@ static int loadLeader(labelLeaderObj *leader)
         msSetError(MS_EOFERR, NULL, "loadLeader()");
         return(-1);
       case GRIDSTEP:
-        if(getInteger(&(leader->gridstep)) == -1) return(-1);
+        if(getInteger(&(leader->gridstep), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case MAXDISTANCE:
-        if(getInteger(&(leader->maxdistance)) == -1) return(-1);
+        if(getInteger(&(leader->maxdistance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case STYLE:
         if(msGrowLeaderStyles(leader) == NULL)
@@ -1579,7 +1605,7 @@ static int loadLabel(labelObj *label)
         msyylex();
         break;
       case(BUFFER):
-        if(getInteger(&(label->buffer)) == -1) return(-1);
+        if(getInteger(&(label->buffer), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
         break;
       case(COLOR):
         if(loadColor(&(label->color), &(label->bindings[MS_LABEL_BINDING_COLOR])) != MS_SUCCESS) return(-1);
@@ -1640,25 +1666,25 @@ static int loadLabel(labelObj *label)
         msSetError(MS_MISCERR, "LABEL LEADER not implemented. LEADER goes at the CLASS level." , "loadLabel()");
         return(-1);
       case(MAXSIZE):
-        if(getInteger(&(label->maxsize)) == -1) return(-1);
+        if(getInteger(&(label->maxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MAXSCALEDENOM):
-        if(getDouble(&(label->maxscaledenom)) == -1) return(-1);
+        if(getDouble(&(label->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MAXLENGTH):
-        if(getInteger(&(label->maxlength)) == -1) return(-1);
+        if(getInteger(&(label->maxlength), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MINLENGTH):
-        if(getInteger(&(label->minlength)) == -1) return(-1);
+        if(getInteger(&(label->minlength), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MINDISTANCE):
-        if(getInteger(&(label->mindistance)) == -1) return(-1);
+        if(getInteger(&(label->mindistance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(REPEATDISTANCE):
-        if(getInteger(&(label->repeatdistance)) == -1) return(-1);
+        if(getInteger(&(label->repeatdistance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MAXOVERLAPANGLE):
-        if(getDouble(&(label->maxoverlapangle)) == -1) return(-1);
+        if(getDouble(&(label->maxoverlapangle), MS_NUM_CHECK_RANGE, 0, 360) == -1) return(-1);
         break;
       case(MINFEATURESIZE):
         if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1)  return(-1);
@@ -1668,10 +1694,10 @@ static int loadLabel(labelObj *label)
           label->autominfeaturesize = MS_TRUE;
         break;
       case(MINSCALEDENOM):
-        if(getDouble(&(label->minscaledenom)) == -1) return(-1);
+        if(getDouble(&(label->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MINSIZE):
-        if(getInteger(&(label->minsize)) == -1) return(-1);
+        if(getInteger(&(label->minsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(OFFSET):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
@@ -1699,7 +1725,7 @@ static int loadLabel(labelObj *label)
         if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item) label->numbindings++;
         break;
       case(OUTLINEWIDTH):
-        if(getInteger(&(label->outlinewidth)) == -1) return(-1);
+        if(getInteger(&(label->outlinewidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(PARTIALS):
         if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
@@ -1733,10 +1759,9 @@ static int loadLabel(labelObj *label)
         if(loadColor(&(label->shadowcolor), NULL) != MS_SUCCESS) return(-1);
         break;
       case(SHADOWSIZE):
-        /* if(getInteger(&(label->shadowsizex)) == -1) return(-1); */
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
-          label->shadowsizex = (int) msyynumber;
+          label->shadowsizex = (int) msyynumber; // TODO > 0
         } else {
           if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item);
@@ -1744,10 +1769,9 @@ static int loadLabel(labelObj *label)
           label->numbindings++;
         }
 
-        /* if(getInteger(&(label->shadowsizey)) == -1) return(-1); */
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
-          label->shadowsizey = (int) msyynumber;
+          label->shadowsizey = (int) msyynumber; // TODO > 0
         } else {
           if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item);
@@ -1770,7 +1794,7 @@ static int loadLabel(labelObj *label)
           return(-1);
 
         if(symbol == MS_NUMBER) {
-          label->size = (double) msyynumber;
+          label->size = (double) msyynumber; // TODO > 0.0
         } else if(symbol == MS_BINDING) {
           label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
@@ -2263,10 +2287,10 @@ int loadCluster(clusterObj *cluster)
       case(CLUSTER):
         break; /* for string loads */
       case(MAXDISTANCE):
-        if(getDouble(&(cluster->maxdistance)) == -1) return(-1);
+        if(getDouble(&(cluster->maxdistance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(BUFFER):
-        if(getDouble(&(cluster->buffer)) == -1) return(-1);
+        if(getDouble(&(cluster->buffer), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(REGION):
         if(getString(&cluster->region) == MS_FAILURE) return(-1);
@@ -2429,19 +2453,20 @@ int loadStyle(styleObj *style)
         break;
       case(DATARANGE):
         /*These are both in one line now*/
-        if(getDouble(&(style->minvalue)) == -1) return(-1);
-        if(getDouble(&(style->maxvalue)) == -1) return(-1);
+        if(getDouble(&(style->minvalue), MS_NUM_CHECK_NONE, -1, -1) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->maxvalue), MS_NUM_CHECK_NONE, -1, -1) == -1) return(MS_FAILURE);
         break;
       case(RANGEITEM):
-        if(getString(&style->rangeitem) == MS_FAILURE) return(-1);
+        if(getString(&style->rangeitem) == MS_FAILURE) return(MS_FAILURE);
         break;
         /* End Range fields*/
       case(ANGLE):
         if((symbol = getSymbol(3, MS_NUMBER,MS_BINDING,MS_AUTO)) == -1) return(MS_FAILURE);
 
-        if(symbol == MS_NUMBER)
+        if(symbol == MS_NUMBER) {
+          if(msyynumber < -360 || msyynumber > 360) return(MS_FAILURE);
           style->angle = (double) msyynumber;
-        else if(symbol==MS_BINDING) {
+        } else if(symbol==MS_BINDING) {
           if (style->bindings[MS_STYLE_BINDING_ANGLE].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_ANGLE].item);
           style->bindings[MS_STYLE_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
@@ -2451,7 +2476,7 @@ int loadStyle(styleObj *style)
         }
         break;
       case(ANTIALIAS):
-        if ((symbol = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+        if ((symbol = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(MS_FAILURE);
         if (symbol == MS_FALSE) {
             style->antialiased = MS_FALSE;
         }
@@ -2481,20 +2506,19 @@ int loadStyle(styleObj *style)
       }
       break;
       case(GAP):
-        if((getDouble(&style->gap)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->gap), MS_NUM_CHECK_NONE, -1, -1) == -1) return(MS_FAILURE);
         break;
       case(INITIALGAP):
-        if((getDouble(&style->initialgap)) == -1) return(MS_FAILURE);
-        if(style->initialgap < 0) {
+        if(getDouble(&(style->initialgap), MS_NUM_CHECK_GTE, 0, -1) == -1) { // zero is ok
           msSetError(MS_MISCERR, "INITIALGAP requires a positive values", "loadStyle()");
           return(MS_FAILURE);
         }
         break;
       case(MAXSCALEDENOM):
-        if(getDouble(&(style->maxscaledenom)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(MS_FAILURE);
         break;
       case(MINSCALEDENOM):
-        if(getDouble(&(style->minscaledenom)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(MS_FAILURE);
         break;
       case(GEOMTRANSFORM): {
         int s;
@@ -2516,24 +2540,24 @@ int loadStyle(styleObj *style)
         if((style->linejoin = getSymbol(4,MS_CJC_NONE, MS_CJC_ROUND, MS_CJC_MITER, MS_CJC_BEVEL)) == -1) return(MS_FAILURE);
         break;
       case(LINEJOINMAXSIZE):
-        if((getDouble(&style->linejoinmaxsize)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->linejoinmaxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MAXSIZE):
-        if(getDouble(&(style->maxsize)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->maxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MINSIZE):
-        if(getDouble(&(style->minsize)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->minsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MAXWIDTH):
-        if(getDouble(&(style->maxwidth)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->maxwidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MINWIDTH):
-        if(getDouble(&(style->minwidth)) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->minwidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(OFFSET):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER)
-          style->offsetx = (double) msyynumber;
+          style->offsetx = (double) msyynumber; // any double ok
         else {
           if (style->bindings[MS_STYLE_BINDING_OFFSET_X].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_OFFSET_X].item);
@@ -2543,7 +2567,7 @@ int loadStyle(styleObj *style)
 
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER)
-          style->offsety = (double) msyynumber;
+          style->offsety = (double) msyynumber; // any double ok
         else {
           if (style->bindings[MS_STYLE_BINDING_OFFSET_Y].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_OFFSET_Y].item);
@@ -2580,14 +2604,14 @@ int loadStyle(styleObj *style)
             case(MS_NUMBER): /* read the pattern values */
               if(style->patternlength == MS_MAXPATTERNLENGTH) {
                 msSetError(MS_SYMERR, "Pattern too long.", "loadStyle()");
-                return(-1);
+                return(MS_FAILURE);
               }
-              style->pattern[style->patternlength] = atof(msyystring_buffer);
+              style->pattern[style->patternlength] = atof(msyystring_buffer); // good enough?
               style->patternlength++;
               break;
             default:
               msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyystring_buffer, msyylineno);
-              return(-1);
+              return(MS_FAILURE);
           }
           if(done == MS_TRUE)
             break;
@@ -2599,7 +2623,7 @@ int loadStyle(styleObj *style)
         if(symbol == MS_NUMBER) {
           style->outlinewidth = (double) msyynumber;
           if(style->outlinewidth < 0) {
-            msSetError(MS_MISCERR, "Invalid OUTLINEWIDTH, must be greater than 0" , "loadStyle()");
+            msSetError(MS_MISCERR, "Invalid OUTLINEWIDTH, must be greater than 0", "loadStyle()");
             return(MS_FAILURE);
           }
         } else {
@@ -2611,9 +2635,13 @@ int loadStyle(styleObj *style)
         break;
       case(SIZE):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
-        if(symbol == MS_NUMBER)
+        if(symbol == MS_NUMBER) {
+          if(msyynumber <= 0) {
+            msSetError(MS_MISCERR, "Invalid SIZE, must be greater than 0", "loadStyle()");
+            return(MS_FAILURE);
+          }
           style->size = (double) msyynumber;
-        else {
+        } else {
           if (style->bindings[MS_STYLE_BINDING_SIZE].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_SIZE].item);
           style->bindings[MS_STYLE_BINDING_SIZE].item = msStrdup(msyystring_buffer);
@@ -2625,6 +2653,10 @@ int loadStyle(styleObj *style)
       case(SYMBOL):
         if((symbol = getSymbol(3, MS_NUMBER,MS_STRING,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
+          if(msyynumber < 0) {
+            msSetError(MS_MISCERR, "Invalid SYMBOL id, must be greater than or equal to 0", "loadStyle()");
+            return(MS_FAILURE);
+          }
           if (style->symbolname != NULL) {
             msFree(style->symbolname);
             style->symbolname = NULL;
@@ -2643,9 +2675,13 @@ int loadStyle(styleObj *style)
         break;
       case(WIDTH):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
-        if(symbol == MS_NUMBER)
+        if(symbol == MS_NUMBER) {
+	  if(msyynumber <= 0) {
+            msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than 0", "loadStyle()");
+            return(MS_FAILURE);
+          }
           style->width = (double) msyynumber;
-        else {
+        } else {
           if (style->bindings[MS_STYLE_BINDING_WIDTH].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_WIDTH].item);
           style->bindings[MS_STYLE_BINDING_WIDTH].item = msStrdup(msyystring_buffer);
@@ -2654,9 +2690,9 @@ int loadStyle(styleObj *style)
         break;
       case(POLAROFFSET):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
-        if(symbol == MS_NUMBER)
-          style->polaroffsetpixel = (double) msyynumber;
-        else {
+        if(symbol == MS_NUMBER) {
+          style->polaroffsetpixel = (double) msyynumber; // ok?
+        } else {
           if (style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item);
           style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item = msStrdup(msyystring_buffer);
@@ -2664,9 +2700,9 @@ int loadStyle(styleObj *style)
         }
 
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
-        if(symbol == MS_NUMBER)
-          style->polaroffsetangle = (double) msyynumber;
-        else {
+        if(symbol == MS_NUMBER) {
+          style->polaroffsetangle = (double) msyynumber; // ok?
+        } else {
           if (style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item);
           style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item = msStrdup(msyystring_buffer);
@@ -3228,17 +3264,17 @@ int loadClass(classObj *class, layerObj *layer)
         break;
       case(MAXSCALE):
       case(MAXSCALEDENOM):
-        if(getDouble(&(class->maxscaledenom)) == -1) return(-1);
+        if(getDouble(&(class->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(METADATA):
         if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
         break;
       case(MINSCALE):
       case(MINSCALEDENOM):
-        if(getDouble(&(class->minscaledenom)) == -1) return(-1);
+        if(getDouble(&(class->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MINFEATURESIZE):
-        if(getInteger(&(class->minfeaturesize)) == -1) return(-1);
+        if(getInteger(&(class->minfeaturesize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(NAME):
         if(getString(&class->name) == MS_FAILURE) return(-1);
@@ -3946,20 +3982,12 @@ int loadLayerCompositer(LayerCompositer *compositer) {
       case END:
         return MS_SUCCESS;
       case OPACITY:
-        if (getInteger(&(compositer->opacity)) == -1) {
+        if (getInteger(&(compositer->opacity), MS_NUM_CHECK_RANGE, 0, 100) == -1) {
           if (compositer->filter) {
             msFree(compositer->filter->filter);
             msFree(compositer->filter);
             compositer->filter=NULL;
-            }
-          return MS_FAILURE;
           }
-        if(compositer->opacity<0 || compositer->opacity>100) {
-          if (compositer->filter) {
-            msFree(compositer->filter->filter);
-            msFree(compositer->filter);
-            compositer->filter=NULL;
-            }
           msSetError(MS_PARSEERR,"OPACITY must be between 0 and 100 (line %d)","loadLayerCompositer()",msyylineno);
           return MS_FAILURE;
         }
@@ -4081,10 +4109,10 @@ int loadLayer(layerObj *layer, mapObj *map)
         return(0);
         break;
       case(EXTENT): {
-        if(getDouble(&(layer->extent.minx)) == -1) return(-1);
-        if(getDouble(&(layer->extent.miny)) == -1) return(-1);
-        if(getDouble(&(layer->extent.maxx)) == -1) return(-1);
-        if(getDouble(&(layer->extent.maxy)) == -1) return(-1);
+        if(getDouble(&(layer->extent.minx), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
+        if(getDouble(&(layer->extent.miny), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
+        if(getDouble(&(layer->extent.maxx), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
+        if(getDouble(&(layer->extent.maxy), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
         if (!MS_VALID_EXTENT(layer->extent)) {
           msSetError(MS_MISCERR, "Given layer extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "loadLayer()");
           return(-1);
@@ -4208,11 +4236,11 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(LABELMAXSCALE):
       case(LABELMAXSCALEDENOM):
-        if(getDouble(&(layer->labelmaxscaledenom)) == -1) return(-1);
+        if(getDouble(&(layer->labelmaxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(LABELMINSCALE):
       case(LABELMINSCALEDENOM):
-        if(getDouble(&(layer->labelminscaledenom)) == -1) return(-1);
+        if(getDouble(&(layer->labelminscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(LABELREQUIRES):
         if(getString(&layer->labelrequires) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -4239,27 +4267,27 @@ int loadLayer(layerObj *layer, mapObj *map)
         }
         break;
       case(MAXFEATURES):
-        if(getInteger(&(layer->maxfeatures)) == -1) return(-1);
+        if(getInteger(&(layer->maxfeatures), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MAXSCALE):
       case(MAXSCALEDENOM):
-        if(getDouble(&(layer->maxscaledenom)) == -1) return(-1);
+        if(getDouble(&(layer->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MAXGEOWIDTH):
-        if(getDouble(&(layer->maxgeowidth)) == -1) return(-1);
+        if(getDouble(&(layer->maxgeowidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(METADATA):
         if(loadHashTable(&(layer->metadata)) != MS_SUCCESS) return(-1);
         break;
       case(MINSCALE):
       case(MINSCALEDENOM):
-        if(getDouble(&(layer->minscaledenom)) == -1) return(-1);
+        if(getDouble(&(layer->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MINGEOWIDTH):
-        if(getDouble(&(layer->mingeowidth)) == -1) return(-1);
+        if(getDouble(&(layer->mingeowidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MINFEATURESIZE):
-        if(getInteger(&(layer->minfeaturesize)) == -1) return(-1);
+        if(getInteger(&(layer->minfeaturesize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(NAME):
         if(getString(&layer->name) == MS_FAILURE) return(-1);
@@ -4345,7 +4373,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(SYMBOLSCALE):
       case(SYMBOLSCALEDENOM):
-        if(getDouble(&(layer->symbolscaledenom)) == -1) return(-1);
+        if(getDouble(&(layer->symbolscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(TEMPLATE):
         if(getString(&layer->template) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -4392,7 +4420,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         }
         break;
       case(TOLERANCE):
-        if(getDouble(&(layer->tolerance)) == -1) return(-1);
+        if(getDouble(&(layer->tolerance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(TOLERANCEUNITS):
         if((layer->toleranceunits = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS)) == -1) return(-1);
@@ -4416,7 +4444,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(loadExpression(&(layer->utfdata)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
         break;
       case(UTFITEM):
-        if(getString(&layer->utfitem) == MS_FAILURE) return(-1); /* loadExpression() cleans up previously allocated expression */
+        if(getString(&layer->utfitem) == MS_FAILURE) return(-1);
         break;
       case(VALIDATION):
         if(loadHashTable(&(layer->validation)) != MS_SUCCESS) return(-1);
@@ -4734,10 +4762,10 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
         if(loadColor(&(ref->color), NULL) != MS_SUCCESS) return(-1);
         break;
       case(EXTENT):
-        if(getDouble(&(ref->extent.minx)) == -1) return(-1);
-        if(getDouble(&(ref->extent.miny)) == -1) return(-1);
-        if(getDouble(&(ref->extent.maxx)) == -1) return(-1);
-        if(getDouble(&(ref->extent.maxy)) == -1) return(-1);
+        if(getDouble(&(ref->extent.minx), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
+        if(getDouble(&(ref->extent.miny), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
+        if(getDouble(&(ref->extent.maxx), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
+        if(getDouble(&(ref->extent.maxy), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1);
         if (!MS_VALID_EXTENT(ref->extent)) {
           msSetError(MS_MISCERR, "Given reference extent is invalid. Check that it " \
                      "is in the form: minx, miny, maxx, maxy", "loadReferenceMap()");
@@ -4751,8 +4779,8 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
         if(loadColor(&(ref->outlinecolor), NULL) != MS_SUCCESS) return(-1);
         break;
       case(SIZE):
-        if(getInteger(&(ref->width)) == -1) return(-1);
-        if(getInteger(&(ref->height)) == -1) return(-1);
+        if(getInteger(&(ref->width), MS_NUM_CHECK_RANGE, 5, ref->map->maxsize) == -1) return(-1); // is 5 reasonable?
+        if(getInteger(&(ref->height), MS_NUM_CHECK_RANGE, 5, ref->map->maxsize) == -1) return(-1);
         break;
       case(STATUS):
         if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -4760,22 +4788,23 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       case(MARKER):
         if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
 
-        if(state == MS_NUMBER)
+        if(state == MS_NUMBER) {
+          if(msyynumber < 0) return(-1);
           ref->marker = (int) msyynumber;
-        else {
+        } else {
           if (ref->markername != NULL)
             msFree(ref->markername);
           ref->markername = msStrdup(msyystring_buffer);
         }
         break;
       case(MARKERSIZE):
-        if(getInteger(&(ref->markersize)) == -1) return(-1);
+        if(getInteger(&(ref->markersize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MINBOXSIZE):
-        if(getInteger(&(ref->minboxsize)) == -1) return(-1);
+        if(getInteger(&(ref->minboxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MAXBOXSIZE):
-        if(getInteger(&(ref->maxboxsize)) == -1) return(-1);
+        if(getInteger(&(ref->maxboxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(REFERENCE):
         break; /* for string loads */
@@ -5117,12 +5146,12 @@ int loadLegend(legendObj *legend, mapObj *map)
         if(loadColor(&(legend->imagecolor), NULL) != MS_SUCCESS) return(-1);
         break;
       case(KEYSIZE):
-        if(getInteger(&(legend->keysizex)) == -1) return(-1);
-        if(getInteger(&(legend->keysizey)) == -1) return(-1);
+        if(getInteger(&(legend->keysizex), MS_NUM_CHECK_RANGE, MS_LEGEND_KEYSIZE_MIN, MS_LEGEND_KEYSIZE_MAX) == -1) return(-1);
+        if(getInteger(&(legend->keysizey), MS_NUM_CHECK_RANGE, MS_LEGEND_KEYSIZE_MIN, MS_LEGEND_KEYSIZE_MAX) == -1) return(-1);
         break;
       case(KEYSPACING):
-        if(getInteger(&(legend->keyspacingx)) == -1) return(-1);
-        if(getInteger(&(legend->keyspacingy)) == -1) return(-1);
+        if(getInteger(&(legend->keyspacingx), MS_NUM_CHECK_RANGE, MS_LEGEND_KEYSPACING_MIN, MS_LEGEND_KEYSPACING_MAX) == -1) return(-1);
+        if(getInteger(&(legend->keyspacingy), MS_NUM_CHECK_RANGE, MS_LEGEND_KEYSPACING_MIN, MS_LEGEND_KEYSPACING_MAX) == -1) return(-1);
         break;
       case(LABEL):
         if(loadLabel(&(legend->label)) == -1) return(-1);
@@ -5281,7 +5310,7 @@ int loadScalebar(scalebarObj *scalebar)
         if(loadColor(&(scalebar->imagecolor), NULL) != MS_SUCCESS) return(-1);
         break;
       case(INTERVALS):
-        if(getInteger(&(scalebar->intervals)) == -1) return(-1);
+        if(getInteger(&(scalebar->intervals), MS_NUM_CHECK_RANGE, MS_SCALEBAR_INTERVALS_MIN, MS_SCALEBAR_INTERVALS_MAX) == -1) return(-1);
         break;
       case(LABEL):
         if(loadLabel(&(scalebar->label)) == -1) return(-1);
@@ -5300,14 +5329,14 @@ int loadScalebar(scalebarObj *scalebar)
       case(SCALEBAR):
         break; /* for string loads */
       case(SIZE):
-        if(getInteger(&(scalebar->width)) == -1) return(-1);
-        if(getInteger(&(scalebar->height)) == -1) return(-1);
+        if(getInteger(&(scalebar->width), MS_NUM_CHECK_RANGE, MS_SCALEBAR_WIDTH_MIN, MS_SCALEBAR_WIDTH_MAX) == -1) return(-1);
+        if(getInteger(&(scalebar->height), MS_NUM_CHECK_RANGE, MS_SCALEBAR_HEIGHT_MIN, MS_SCALEBAR_HEIGHT_MAX) == -1) return(-1);
         break;
       case(STATUS):
         if((scalebar->status = getSymbol(3, MS_ON,MS_OFF,MS_EMBED)) == -1) return(-1);
         break;
       case(STYLE):
-        if(getInteger(&(scalebar->style)) == -1) return(-1);
+        if(getInteger(&(scalebar->style), MS_NUM_CHECK_RANGE, 0, 1) == -1) return(-1); // only 2 styles: 0 and 1
         break;
       case(TRANSPARENT):
         if((scalebar->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -5316,8 +5345,8 @@ int loadScalebar(scalebarObj *scalebar)
         if((scalebar->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES)) == -1) return(-1);
         break;
       case(OFFSET):
-        if(getInteger(&(scalebar->offsetx)) == -1) return(-1);
-        if(getInteger(&(scalebar->offsety)) == -1) return(-1);
+        if(getInteger(&(scalebar->offsetx), MS_NUM_CHECK_RANGE, MS_SCALEBAR_OFFSET_MIN, MS_SCALEBAR_OFFSET_MAX) == -1) return(-1);
+        if(getInteger(&(scalebar->offsety), MS_NUM_CHECK_RANGE, MS_SCALEBAR_OFFSET_MIN, MS_SCALEBAR_OFFSET_MAX) == -1) return(-1);
         break;
       default:
         if(strlen(msyystring_buffer) > 0) {
@@ -5414,8 +5443,10 @@ void initQueryMap(queryMapObj *querymap)
   MS_INIT_COLOR(querymap->color, 255,255,0,255); /* yellow */
 }
 
-int loadQueryMap(queryMapObj *querymap)
+int loadQueryMap(queryMapObj *querymap, mapObj *map)
 {
+  querymap->map = (mapObj *)map;
+
   for(;;) {
     switch(msyylex()) {
       case(QUERYMAP):
@@ -5430,8 +5461,8 @@ int loadQueryMap(queryMapObj *querymap)
         return(0);
         break;
       case(SIZE):
-        if(getInteger(&(querymap->width)) == -1) return(-1);
-        if(getInteger(&(querymap->height)) == -1) return(-1);
+        if(getInteger(&(querymap->width), MS_NUM_CHECK_RANGE, 1, querymap->map->maxsize) == -1) return(-1);
+        if(getInteger(&(querymap->height), MS_NUM_CHECK_RANGE, 1, querymap->map->maxsize) == -1) return(-1);
         break;
       case(STATUS):
         if((querymap->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -5466,7 +5497,7 @@ int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_stri
 
   msyylineno = 1; /* start at line 1 */
 
-  if(loadQueryMap(querymap) == -1) {
+  if(loadQueryMap(querymap, querymap->map) == -1) {
     msReleaseLock( TLOCK_PARSER );
     return MS_FAILURE; /* parse error */;
   }
@@ -5666,7 +5697,7 @@ int loadWeb(webObj *web, mapObj *map)
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
         break;
       case(MAXSCALEDENOM):
-        if(getDouble(&web->maxscaledenom) == -1) return(-1);
+        if(getDouble(&web->maxscaledenom, MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MAXTEMPLATE):
         if(getString(&web->maxtemplate) == MS_FAILURE) return(-1);
@@ -5675,7 +5706,7 @@ int loadWeb(webObj *web, mapObj *map)
         if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
         break;
       case(MINSCALEDENOM):
-        if(getDouble(&web->minscaledenom) == -1) return(-1);
+        if(getDouble(&web->minscaledenom, MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
         break;
       case(MINTEMPLATE):
         if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
@@ -6163,10 +6194,10 @@ static int loadMapInternal(mapObj *map)
         msSetError(MS_EOFERR, NULL, "msLoadMap()");
         return MS_FAILURE;
       case(EXTENT): {
-        if(getDouble(&(map->extent.minx)) == -1) return MS_FAILURE;
-        if(getDouble(&(map->extent.miny)) == -1) return MS_FAILURE;
-        if(getDouble(&(map->extent.maxx)) == -1) return MS_FAILURE;
-        if(getDouble(&(map->extent.maxy)) == -1) return MS_FAILURE;
+        if(getDouble(&(map->extent.minx), MS_NUM_CHECK_NONE, -1, -1) == -1) return MS_FAILURE;
+        if(getDouble(&(map->extent.miny), MS_NUM_CHECK_NONE, -1, -1) == -1) return MS_FAILURE;
+        if(getDouble(&(map->extent.maxx), MS_NUM_CHECK_NONE, -1, -1) == -1) return MS_FAILURE;
+        if(getDouble(&(map->extent.maxy), MS_NUM_CHECK_NONE, -1, -1) == -1) return MS_FAILURE;
         if (!MS_VALID_EXTENT(map->extent)) {
           msSetError(MS_MISCERR, "Given map extent is invalid. Check that it " \
                      "is in the form: minx, miny, maxx, maxy", "loadMapInternal()");
@@ -6176,7 +6207,7 @@ static int loadMapInternal(mapObj *map)
       break;
       case(ANGLE): {
         double rotation_angle;
-        if(getDouble(&(rotation_angle)) == -1) return MS_FAILURE;
+        if(getDouble(&(rotation_angle), MS_NUM_CHECK_RANGE, -360, 360) == -1) return MS_FAILURE;
         msMapSetRotation( map, rotation_angle );
       }
       break;
@@ -6217,7 +6248,7 @@ static int loadMapInternal(mapObj *map)
         foundMapToken = MS_TRUE;
         break;
       case(MAXSIZE):
-        if(getInteger(&(map->maxsize)) == -1) return MS_FAILURE;
+        if(getInteger(&(map->maxsize), MS_NUM_CHECK_GTE, 1, -1) == -1) return MS_FAILURE;
         break;
       case(NAME):
         free(map->name);
@@ -6228,24 +6259,20 @@ static int loadMapInternal(mapObj *map)
         if(loadProjection(&map->projection) == -1) return MS_FAILURE;
         break;
       case(QUERYMAP):
-        if(loadQueryMap(&(map->querymap)) == -1) return MS_FAILURE;
+        if(loadQueryMap(&(map->querymap), map) == -1) return MS_FAILURE;
         break;
       case(REFERENCE):
         if(loadReferenceMap(&(map->reference), map) == -1) return MS_FAILURE;
         break;
       case(RESOLUTION):
-        if(getDouble(&(map->resolution)) == -1) return MS_FAILURE;
+        if(getDouble(&(map->resolution), MS_NUM_CHECK_RANGE, MS_RESOLUTION_MIN, MS_RESOLUTION_MAX) == -1) return MS_FAILURE;
         break;
       case(DEFRESOLUTION):
-        if(getDouble(&(map->defresolution)) == -1) return MS_FAILURE;
-        if (map->defresolution <= 0) {
-            msSetError(MS_MISCERR, "DEFRESOLUTION must be greater than 0", "loadMapInternal()");
-            return MS_FAILURE;
-        }
+        if(getDouble(&(map->defresolution), MS_NUM_CHECK_RANGE, MS_RESOLUTION_MIN, MS_RESOLUTION_MAX) == -1) return MS_FAILURE;
         break;
       case(SCALE):
       case(SCALEDENOM):
-        if(getDouble(&(map->scaledenom)) == -1) return MS_FAILURE;
+        if(getDouble(&(map->scaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return MS_FAILURE;
         break;
       case(SCALEBAR):
         if(loadScalebar(&(map->scalebar)) == -1) return MS_FAILURE;
@@ -6254,8 +6281,8 @@ static int loadMapInternal(mapObj *map)
         if(getString(&map->shapepath) == MS_FAILURE) return MS_FAILURE;
         break;
       case(SIZE):
-        if(getInteger(&(map->width)) == -1) return MS_FAILURE;
-        if(getInteger(&(map->height)) == -1) return MS_FAILURE;
+        if(getInteger(&(map->width), MS_NUM_CHECK_RANGE, 1, map->maxsize) == -1) return MS_FAILURE;
+        if(getInteger(&(map->height), MS_NUM_CHECK_RANGE, 1, map->maxsize) == -1) return MS_FAILURE;
         break;
       case(STATUS):
         if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
@@ -6512,10 +6539,10 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyystring = string;
           msyylex();
 
-          if(getDouble(&(map->extent.minx)) == -1) break;
-          if(getDouble(&(map->extent.miny)) == -1) break;
-          if(getDouble(&(map->extent.maxx)) == -1) break;
-          if(getDouble(&(map->extent.maxy)) == -1) break;
+          if(getDouble(&(map->extent.minx), MS_NUM_CHECK_NONE, -1, -1) == -1) break;
+          if(getDouble(&(map->extent.miny), MS_NUM_CHECK_NONE, -1, -1) == -1) break;
+          if(getDouble(&(map->extent.maxx), MS_NUM_CHECK_NONE, -1, -1) == -1) break;
+          if(getDouble(&(map->extent.maxy), MS_NUM_CHECK_NONE, -1, -1) == -1) break;
           if (!MS_VALID_EXTENT(map->extent)) {
             msSetError(MS_MISCERR, "Given map extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "msLoadMapParameterFromUrl()");
             break;
@@ -6528,7 +6555,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyystring = string;
           msyylex();
 
-          if(getDouble(&(rotation_angle)) == -1) break;
+          if(getDouble(&(rotation_angle), MS_NUM_CHECK_RANGE, -360, 360) == -1) break;
           msMapSetRotation( map, rotation_angle );
         }
         break;
@@ -6586,7 +6613,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
             switch(msyylex()) {
               case STYLE:
-                if(getInteger(&k) == -1) return MS_FAILURE;
+                if(getInteger(&k, MS_NUM_CHECK_NONE, -1, -1) == -1) return MS_FAILURE;
                 if(k>=GET_LAYER(map, i)->class[j]->numstyles || k<0) {
                   msSetError(MS_MISCERR, "Style to be modified not valid.", "msUpdateMapFromURL()");
                   return MS_FAILURE;
@@ -6594,7 +6621,7 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
                 if(msUpdateStyleFromString((GET_LAYER(map, i))->class[j]->styles[k], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
                 break;
               case LABEL:
-                if(getInteger(&k) == -1) return MS_FAILURE;
+                if(getInteger(&k, MS_NUM_CHECK_NONE, -1, -1) == -1) return MS_FAILURE;
                 if(k>=GET_LAYER(map, i)->class[j]->numlabels || k<0) {
                   msSetError(MS_MISCERR, "Label to be modified not valid.", "msUpdateMapFromURL()");
                   return MS_FAILURE;
@@ -6631,18 +6658,14 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyylex();
 
           /* coverity[identical_branches] */
-          if(getDouble(&(map->resolution)) == -1) break;
+          if(getDouble(&(map->resolution), MS_NUM_CHECK_RANGE, MS_RESOLUTION_MIN, MS_RESOLUTION_MAX) == -1) break;
           break;
         case(DEFRESOLUTION):
           msyystate = MS_TOKENIZE_URL_STRING;
           msyystring = string;
           msyylex();
 
-          if(getDouble(&(map->defresolution)) == -1) break;
-          if (map->defresolution <= 0) {
-              msSetError(MS_MISCERR, "DEFRESOLUTION must be greater than 0", "msUpdateMapFromURL()");
-              break;
-          }
+          if(getDouble(&(map->defresolution), MS_NUM_CHECK_RANGE, MS_RESOLUTION_MIN, MS_RESOLUTION_MAX) == -1) break;
           break;
         case(SCALEBAR):
           return msUpdateScalebarFromString(&(map->scalebar), string, MS_TRUE);
@@ -6651,13 +6674,15 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           msyystring = string;
           msyylex();
 
-          if(getInteger(&(map->width)) == -1) break;
-          if(getInteger(&(map->height)) == -1) break;
-
-          if(map->width > map->maxsize || map->height > map->maxsize || map->width < 0 || map->height < 0) {
+          if(getInteger(&(map->width), MS_NUM_CHECK_RANGE, 1, map->maxsize) == -1) {
             msSetError(MS_WEBERR, "Image size out of range.", "msUpdateMapFromURL()");
             break;
           }
+          if(getInteger(&(map->height), MS_NUM_CHECK_RANGE, 1, map->maxsize) == -1) {
+            msSetError(MS_WEBERR, "Image size out of range.", "msUpdateMapFromURL()");
+            break;
+          }
+
           msMapComputeGeotransform( map );
           break;
         case(UNITS):
