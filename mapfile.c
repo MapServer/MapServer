@@ -252,22 +252,25 @@ int getString(char **s)
 */
 int getDouble(double *d, int num_check_type, double value1, double value2)
 {
-  double old_value = *d; // save
-
   if(msyylex() == MS_NUMBER) {
-    *d = msyynumber;
+    int ok = MS_FALSE;
+
     if(num_check_type == MS_NUM_CHECK_NONE) {
-      return(0); /* success */
-    } else if(num_check_type == MS_NUM_CHECK_RANGE && *d >= value1 && *d <= value2) {
-      return(0); /* success */
-    } else if(num_check_type == MS_NUM_CHECK_GT && *d > value1) {
-      return(0); /* success */
-    } else if(num_check_type == MS_NUM_CHECK_GTE && *d >= value1) {
-      return(0); /* success */
+      ok = MS_TRUE;
+    } else if(num_check_type == MS_NUM_CHECK_RANGE && msyynumber >= value1 && msyynumber <= value2) {
+      ok = MS_TRUE;
+    } else if(num_check_type == MS_NUM_CHECK_GT && msyynumber > value1) {
+      ok = MS_TRUE;
+    } else if(num_check_type == MS_NUM_CHECK_GTE && msyynumber >= value1) {
+      ok = MS_TRUE;
+    }
+
+    if(ok) {
+      *d = msyynumber;
+      return(0);
     }
   }
 
-  *d = old_value; // restore previous value in case the error isn't being trapped
   msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getDouble()", msyystring_buffer, msyylineno);
   return(-1);
 }
@@ -277,22 +280,25 @@ int getDouble(double *d, int num_check_type, double value1, double value2)
 */
 int getInteger(int *i, int num_check_type, int value1, int value2)
 {
-  int old_value = *i; // save
-
   if(msyylex() == MS_NUMBER) {
-    *i = (int)msyynumber;
+    int ok = MS_FALSE;
+
     if(num_check_type == MS_NUM_CHECK_NONE) {
-      return(0); /* success */
-    } else if(num_check_type == MS_NUM_CHECK_RANGE && *i >= value1 && *i <= value2) {
-      return(0); /* success */
-    } else if(num_check_type == MS_NUM_CHECK_GT && *i > value1) {
-      return(0); /* success */
-    } else if(num_check_type == MS_NUM_CHECK_GTE && *i >= value1) {
-      return(0); /* success */
+      ok = MS_TRUE;
+    } else if(num_check_type == MS_NUM_CHECK_RANGE && (int)msyynumber >= value1 && (int)msyynumber <= value2) {
+      ok = MS_TRUE;
+    } else if(num_check_type == MS_NUM_CHECK_GT && (int)msyynumber > value1) {
+      ok = MS_TRUE;
+    } else if(num_check_type == MS_NUM_CHECK_GTE && (int)msyynumber >= value1) {
+      ok = MS_TRUE;
+    }
+
+    if(ok) {
+      *i = (int)msyynumber;
+      return(0);
     }
   }
 
-  *i = old_value; // restore previous value in case the error isn't being trapped
   msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getInteger()", msyystring_buffer, msyylineno);
   return(-1);
 }
