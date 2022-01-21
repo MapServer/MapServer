@@ -97,10 +97,7 @@ def compare_result( filename, this_path = '.' ):
     # Check image checksums with GDAL if it is available.
     
     try:
-        try:
-            from osgeo import gdal
-        except:
-            import gdal
+        from osgeo import gdal
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         exp_ds = gdal.Open( expected_file )
@@ -117,7 +114,30 @@ def compare_result( filename, this_path = '.' ):
                 match = 0
 
         if match == 1:
+
+            # Special case for netCDF: we need to eliminate NC_GLOBAL#history
+            # since it contains the current timedate
+            if exp_ds.GetDriver().GetDescription() == 'netCDF':
+                if exp_ds.GetGeoTransform() != res_ds.GetGeoTransform():
+                    return 'nomatch'
+                if exp_ds.GetProjectionRef() != res_ds.GetProjectionRef():
+                    return 'nomatch'
+                exp_md = exp_ds.GetMetadata()
+                if "NC_GLOBAL#history" in exp_md:
+                    del exp_md['NC_GLOBAL#history']
+                got_md = res_ds.GetMetadata()
+                if 'NC_GLOBAL#history' in got_md:
+                    del got_md['NC_GLOBAL#history']
+                if exp_md != got_md:
+                    return 'nomatch'
+                for band_num in range(1,exp_ds.RasterCount+1):
+                    if res_ds.GetRasterBand(band_num).GetMetadata() != \
+                       exp_ds.GetRasterBand(band_num).GetMetadata():
+                        return 'nomatch'
+                return 'match'
+
             return 'files_differ_image_match'
+
     except:
         pass
 
