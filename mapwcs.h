@@ -113,6 +113,9 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
                                                 outputFormatObj* format,
                                                 const char* bandlist,
                                                 void* hDSIn);
+void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
+                                        outputFormatObj* format,
+                                        const char* bandlist);
 
 /* -------------------------------------------------------------------- */
 /*      Some WCS 1.1 specific functions from mapwcs11.c                 */

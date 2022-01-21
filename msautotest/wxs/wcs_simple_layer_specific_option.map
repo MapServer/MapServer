@@ -101,6 +101,10 @@ Acquisition: 1999-10-11 18:47"
    # Will not do anything useful as only the GRIB driver of GDAL 2.3.0 has BAND specific creation option, but at least exercices the code
    "wcs_outputformat_GEOTIFF_creationoption_BAND_1_foo" "bar"
    "wcs_outputformat_GEOTIFF_creationoption_BAND_10_foo" "bar"
+
+   "wcs_outputformat_GEOTIFF_mdi_default_FOO" "BAR"
+   "wcs_outputformat_GEOTIFF_mdi_BAND_1_default_BAR" "BAR_BAND_1"
+   "wcs_outputformat_GEOTIFF_mdi_BAND_10_default_BAZ" "BAZ_BAND_10"
   END
 END
 

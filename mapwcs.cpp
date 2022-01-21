@@ -1741,6 +1741,92 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
 }
 
 /************************************************************************/
+/*                  msWCSApplyLayerMetadataItemOptions()                */
+/************************************************************************/
+
+void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
+                                        outputFormatObj* format,
+                                        const char* bandlist)
+
+{
+    if( !STARTS_WITH(format->driver, "GDAL/") )
+        return;
+
+    const char* pszKey;
+    char szKeyBeginning[256];
+    size_t nKeyBeginningLength;
+    int nBands = 0;
+    char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+
+    snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+             "wcs_outputformat_%s_mdi_", format->name);
+    nKeyBeginningLength = strlen(szKeyBeginning);
+
+    // Transform wcs_outputformat_{formatname}_mdi_{key} to mdi_{key}
+    // and Transform wcs_outputformat_{formatname}_mdi_BAND_X_{key} to mdi_BAND_Y_{key}
+    // MDI stands for MetaDataItem
+
+    pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+    for( ; pszKey != NULL;
+           pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+    {
+        if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+        {
+            const char* pszValue = msLookupHashTable( &(lp->metadata), pszKey);
+            const char* pszGDALKey = pszKey + nKeyBeginningLength;
+
+            if( EQUALN(pszGDALKey, "BAND_", strlen("BAND_")) )
+            {
+                /* Remap BAND specific creation option to the real output
+                 * band number, given the band subset of the request */
+                int nKeyOriBandNumber = atoi(pszGDALKey + strlen("BAND_"));
+                int nTargetBandNumber = -1;
+                int i;
+                for(i = 0; i < nBands; i++ )
+                {
+                    if( nKeyOriBandNumber == atoi(papszBandNumbers[i]) )
+                    {
+                        nTargetBandNumber = i + 1;
+                        break;
+                    }
+                }
+                if( nTargetBandNumber > 0 )
+                {
+                    char szModKey[256];
+                    const char* pszAfterBand =
+                        strchr(pszGDALKey + strlen("BAND_"), '_');
+                    if( pszAfterBand != NULL )
+                    {
+                        snprintf(szModKey, sizeof(szModKey),
+                                 "mdi_BAND_%d%s",
+                                 nTargetBandNumber,
+                                 pszAfterBand);
+                        if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                            msDebug("Setting GDAL %s=%s metadata item option\n",
+                                    szModKey, pszValue);
+                        }
+                        msSetOutputFormatOption(format, szModKey, pszValue);
+                    }
+                }
+            }
+            else
+            {
+                char szModKey[256];
+                snprintf(szModKey, sizeof(szModKey),
+                         "mdi_%s", pszGDALKey);
+                if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                    msDebug("Setting GDAL %s=%s metadata item option\n",
+                            szModKey, pszValue);
+                }
+                msSetOutputFormatOption(format, szModKey, pszValue);
+            }
+        }
+    }
+
+    msFreeCharArray( papszBandNumbers, nBands );
+}
+
+/************************************************************************/
 /*                          msWCSGetCoverage()                          */
 /************************************************************************/
 
@@ -2144,6 +2230,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
 
   msWCSApplyLayerCreationOptions(lp, map->outputformat, bandlist);
+  msWCSApplyLayerMetadataItemOptions(lp, map->outputformat, bandlist);
 
   if( lp->tileindex == NULL && lp->data != NULL &&
       strlen(lp->data) > 0 &&
