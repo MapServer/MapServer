@@ -1,0 +1,111 @@
+#
+# Test WCS with netCDF input and output
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
+
+# RUN_PARMS: wcs_netcdf_input_output_wcs10_get_coverage.nc [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=precipitation&CRS=EPSG:4326&BBOX=-80,-20,-79.5,-19.5&RESX=0.25&RESY=0.25&FORMAT=netCDF" > [RESULT_DEMIME]
+
+# RUN_PARMS: wcs_netcdf_input_output_wcs20_get_coverage.nc [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=2.0.1&COVERAGEID=precipitation&FORMAT=application/x-netcdf&SUBSET=long(-80,-79.5)&SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/4326" > [RESULT_DEMIME]
+
+MAP
+
+NAME TEST
+SIZE 400 300
+EXTENT -180 -90 180 90
+MAXSIZE 5000
+
+IMAGETYPE PNG
+SHAPEPATH "data"
+
+OUTPUTFORMAT
+  NAME netCDF
+  DRIVER "GDAL/netCDF"
+  MIMETYPE "application/x-netCDF"
+  IMAGEMODE Float32
+  EXTENSION "nc"
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+WEB
+  METADATA
+   # OWS stuff for server
+   "ows_updatesequence"   "2007-10-30T14:23:38Z"
+   "ows_title"            "First Test Service"
+   "ows_fees"             "NONE"
+   "ows_accessconstraints" "NONE"
+   "ows_abstract"         "Test Abstract"
+   "ows_keywordlist"      "keyword,list"
+   "ows_service_onlineresource" "http://198.202.74.215/cgi-bin/wcs_demo"
+   "ows_contactorganization" "OSGeo"
+   "ows_contactperson"    "Frank Warmerdam"
+   "ows_contactposition"  "Software Developer"
+   "ows_contactvoicetelephone" "(613) 754-2041"
+   "ows_contactfacsimiletelephone" "(613) 754-2041x343"
+   "ows_address" "3594 Foymount Rd"
+   "ows_city" "Eganville"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "K0J 1T0"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "warmerdam@pobox.com"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_enable_request" "*"
+   "ows_srs"	"EPSG:4326"
+
+   # OGC:WCS
+   "wcs_label"    "Test Label"
+   "wcs_description" "Test description"
+   "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
+   "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+   "wcs_formats" "netCDF"
+  END
+END
+
+LAYER
+  NAME precipitation
+  TYPE raster
+  STATUS ON
+  DATA "trmm-2x2.nc"
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+  METADATA
+   "ows_extent" "-80 -20 -79.5 -19.5"
+   "wcs_label" "Test label"
+   "ows_srs"	"EPSG:4326"
+   "wcs_resolution" "0.25 0.25"
+   "wcs_bandcount" "1"
+   "wcs_imagemode" "Float32"
+   "wcs_formats" "netCDF"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "abstract"
+
+   # WCS 2.0 stuff
+   "wcs_native_format" "application/x-netcdf"
+   "wcs_band_names" "precipitation"
+   "precipitation_band_interpretation" "interp"
+   "precipitation_band_uom" "uom"
+   "precipitation_band_definition"       "precipitation"
+   "precipitation_band_description"      "precipitation"
+   "precipitation_interval" "-100 100"
+   "precipitation_significant_figures" "1"
+
+   # WCS 1.x stuff
+   "wcs_nativeformat" "netCDF"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "precipitation"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "precipitation"
+
+   "wcs_rangeset_nullvalue" "-9999.9004"
+  END
+END
+
+END

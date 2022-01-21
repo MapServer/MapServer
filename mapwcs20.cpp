@@ -4758,7 +4758,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                                     map, layer, layer->data, szPath, &decrypted_path);
           msFree(decrypted_path);
           if( hDS )
+          {
             msWCSApplyDatasetMetadataAsCreationOptions(layer, map->outputformat, bandlist, hDS);
+            msWCSApplySourceDatasetMetadata(layer, map->outputformat, bandlist, hDS);
+          }
       }
       else
       {
