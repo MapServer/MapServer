@@ -1741,6 +1741,190 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
 }
 
 /************************************************************************/
+/*                  msWCSApplyLayerMetadataItemOptions()                */
+/************************************************************************/
+
+void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
+                                        outputFormatObj* format,
+                                        const char* bandlist)
+
+{
+    if( !STARTS_WITH(format->driver, "GDAL/") )
+        return;
+
+    const char* pszKey;
+    char szKeyBeginning[256];
+    size_t nKeyBeginningLength;
+    int nBands = 0;
+    char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+
+    snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+             "wcs_outputformat_%s_mdi_", format->name);
+    nKeyBeginningLength = strlen(szKeyBeginning);
+
+    // Transform wcs_outputformat_{formatname}_mdi_{key} to mdi_{key}
+    // and Transform wcs_outputformat_{formatname}_mdi_BAND_X_{key} to mdi_BAND_Y_{key}
+    // MDI stands for MetaDataItem
+
+    pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+    for( ; pszKey != NULL;
+           pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+    {
+        if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+        {
+            const char* pszValue = msLookupHashTable( &(lp->metadata), pszKey);
+            const char* pszGDALKey = pszKey + nKeyBeginningLength;
+
+            if( EQUALN(pszGDALKey, "BAND_", strlen("BAND_")) )
+            {
+                /* Remap BAND specific creation option to the real output
+                 * band number, given the band subset of the request */
+                int nKeyOriBandNumber = atoi(pszGDALKey + strlen("BAND_"));
+                int nTargetBandNumber = -1;
+                int i;
+                for(i = 0; i < nBands; i++ )
+                {
+                    if( nKeyOriBandNumber == atoi(papszBandNumbers[i]) )
+                    {
+                        nTargetBandNumber = i + 1;
+                        break;
+                    }
+                }
+                if( nTargetBandNumber > 0 )
+                {
+                    char szModKey[256];
+                    const char* pszAfterBand =
+                        strchr(pszGDALKey + strlen("BAND_"), '_');
+                    if( pszAfterBand != NULL )
+                    {
+                        snprintf(szModKey, sizeof(szModKey),
+                                 "mdi_BAND_%d%s",
+                                 nTargetBandNumber,
+                                 pszAfterBand);
+                        if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                            msDebug("Setting GDAL %s=%s metadata item option\n",
+                                    szModKey, pszValue);
+                        }
+                        msSetOutputFormatOption(format, szModKey, pszValue);
+                    }
+                }
+            }
+            else
+            {
+                char szModKey[256];
+                snprintf(szModKey, sizeof(szModKey),
+                         "mdi_%s", pszGDALKey);
+                if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                    msDebug("Setting GDAL %s=%s metadata item option\n",
+                            szModKey, pszValue);
+                }
+                msSetOutputFormatOption(format, szModKey, pszValue);
+            }
+        }
+    }
+
+    msFreeCharArray( papszBandNumbers, nBands );
+}
+
+/************************************************************************/
+/*               msWCSApplySourceDatasetMetadata()                      */
+/************************************************************************/
+
+void msWCSApplySourceDatasetMetadata(layerObj* lp,
+                                     outputFormatObj* format,
+                                     const char* bandlist,
+                                     void* hDSIn)
+{
+    /* Automatic forwarding of input dataset metadata if it is netCDF and the */
+    /* output is netCDF as well, and wcs_outputformat_netCDF_mdi* are */
+    /* not defined. */
+    GDALDatasetH hDS = (GDALDatasetH)hDSIn;
+    if( hDS && GDALGetDatasetDriver(hDS) &&
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hDS)), "netCDF") &&
+        EQUAL(format->driver, "GDAL/netCDF") )
+    {
+        const char* pszKey;
+        char szKeyBeginning[256];
+        size_t nKeyBeginningLength;
+        int bWCSMetadataFound = MS_FALSE;
+
+        snprintf(szKeyBeginning, sizeof(szKeyBeginning),
+                "wcs_outputformat_%s_mdi_", format->name);
+        nKeyBeginningLength = strlen(szKeyBeginning);
+
+        for( pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
+             pszKey != NULL;
+             pszKey = msNextKeyFromHashTable( &(lp->metadata), pszKey) )
+        {
+            if( strncmp(pszKey, szKeyBeginning, nKeyBeginningLength) == 0 )
+            {
+                bWCSMetadataFound = MS_TRUE;
+                break;
+            }
+        }
+        if( !bWCSMetadataFound )
+        {
+            {
+                char** papszMD = GDALGetMetadata(hDS, NULL);
+                if( papszMD )
+                {
+                    for( char** papszIter = papszMD; *papszIter; ++papszIter )
+                    {
+                        if( STARTS_WITH(*papszIter, "NC_GLOBAL#") )
+                        {
+                            char* pszKey = nullptr;
+                            const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+                            if( pszKey && pszValue )
+                            {
+                                char szKey[256];
+                                snprintf(szKey, sizeof(szKey),
+                                    "mdi_default_%s", pszKey);
+                                msSetOutputFormatOption(format, szKey, pszValue);
+                            }
+                            CPLFree(pszKey);
+                        }
+                    }
+                }
+            }
+
+            int nBands = 0;
+            char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+            int i;
+            for(i = 0; i < nBands; i++ )
+            {
+                int nSrcBand = atoi(papszBandNumbers[i]);
+                int nDstBand = i + 1;
+                GDALRasterBandH hBand = GDALGetRasterBand(hDS, nSrcBand);
+                if( hBand )
+                {
+                    char** papszMD = GDALGetMetadata(hBand, NULL);
+                    if( papszMD )
+                    {
+                        for( char** papszIter = papszMD; *papszIter; ++papszIter )
+                        {
+                            char* pszKey = nullptr;
+                            const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+                            if( pszKey && pszValue &&
+                                !EQUAL(pszKey, "grid_name") &&
+                                !EQUAL(pszKey, "grid_mapping") )
+                            {
+                                char szKey[256];
+                                snprintf(szKey, sizeof(szKey),
+                                    "mdi_BAND_%d_default_%s",
+                                    nDstBand, pszKey);
+                                msSetOutputFormatOption(format, szKey, pszValue);
+                            }
+                            CPLFree(pszKey);
+                        }
+                    }
+                }
+            }
+            msFreeCharArray( papszBandNumbers, nBands );
+        }
+    }
+}
+
+/************************************************************************/
 /*                          msWCSGetCoverage()                          */
 /************************************************************************/
 
@@ -2144,6 +2328,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
 
   msWCSApplyLayerCreationOptions(lp, map->outputformat, bandlist);
+  msWCSApplyLayerMetadataItemOptions(lp, map->outputformat, bandlist);
 
   if( lp->tileindex == NULL && lp->data != NULL &&
       strlen(lp->data) > 0 &&
@@ -2157,7 +2342,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
                                     map, lp, lp->data, szPath, &decrypted_path);
           msFree(decrypted_path);
           if( hDS )
+          {
             msWCSApplyDatasetMetadataAsCreationOptions(lp, map->outputformat, bandlist, hDS);
+            msWCSApplySourceDatasetMetadata(lp, map->outputformat, bandlist, hDS);
+          }
       }
       else
       {

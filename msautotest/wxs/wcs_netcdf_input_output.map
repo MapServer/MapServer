@@ -1,34 +1,32 @@
 #
-# Test WCS.
+# Test WCS with netCDF input and output
 #
 # REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
-#
-# GetCoverage 2.0 image/tiff full and format optional
-# RUN_PARMS: wcs_simple_layer_specif_option.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey" > [RESULT_DEMIME]
-#
+
+# RUN_PARMS: wcs_netcdf_input_output_wcs10_get_coverage.nc [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=1.0.0&COVERAGE=precipitation&CRS=EPSG:4326&BBOX=-80,-20,-79.5,-19.5&RESX=0.25&RESY=0.25&FORMAT=netCDF" > [RESULT_DEMIME][IGNORE_COMPARISON_RESULT_ON_TRAVIS]
+
+# RUN_PARMS: wcs_netcdf_input_output_wcs20_get_coverage.nc [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCoverage&VERSION=2.0.1&COVERAGEID=precipitation&FORMAT=application/x-netcdf&SUBSET=long(-80,-79.5)&SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/4326" > [RESULT_DEMIME][IGNORE_COMPARISON_RESULT_ON_TRAVIS]
 
 MAP
 
 NAME TEST
 SIZE 400 300
-EXTENT 0 0 400 300
+EXTENT -180 -90 180 90
 MAXSIZE 5000
-
-#CONFIG  "MS_ERRORFILE" "stderr"
 
 IMAGETYPE PNG
 SHAPEPATH "data"
 
 OUTPUTFORMAT
-  NAME GEOTIFF
-  DRIVER "GDAL/GTiff"
-  MIMETYPE "image/tiff"
-  IMAGEMODE BYTE
-  EXTENSION "tif"
+  NAME netCDF
+  DRIVER "GDAL/netCDF"
+  MIMETYPE "application/x-netCDF"
+  IMAGEMODE Float32
+  EXTENSION "nc"
 END
 
 PROJECTION
-  "init=epsg:32611"
+  "init=epsg:4326"
 END
 
 WEB
@@ -56,55 +54,57 @@ WEB
    "ows_contactinstructions" "during hours of service"
    "ows_role" "staff"
    "ows_enable_request" "*"
-   "ows_srs"	"EPSG:32611 EPSG:4326"
+   "ows_srs"	"EPSG:4326"
 
    # OGC:WCS
    "wcs_label"    "Test Label"
    "wcs_description" "Test description"
    "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
    "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+   "wcs_formats" "netCDF"
   END
 END
 
 LAYER
-  NAME grey
+  NAME precipitation
   TYPE raster
   STATUS ON
-  DATA "grey.tif"
+  DATA "trmm-2x2.nc"
 
   PROJECTION
-    "init=epsg:32611"
+    "init=epsg:4326"
   END
   METADATA
-   "ows_extent" "0 0 400 300"
+   "ows_extent" "-80 -20 -79.5 -19.5"
    "wcs_label" "Test label"
-   "ows_srs"	"EPSG:32611 EPSG:4326"
-   "wcs_resolution" "10 10"
+   "ows_srs"	"EPSG:4326"
+   "wcs_resolution" "0.25 0.25"
    "wcs_bandcount" "1"
-   "wcs_formats" "GEOTIFF"
-   "wcs_nativeformat" "GeoTIFF"
-   "wcs_native_format" "image/tiff"
+   "wcs_imagemode" "Float32"
+   "wcs_formats" "netCDF"
    "wcs_description" "Test description"
    "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
    "wcs_keywordlist" "test,mapserver"
-   "wcs_abstract" "Category: Image
-Product: IKONOS-2 PAN/MSI
-Acquisition: 1999-10-11 18:47"
+   "wcs_abstract" "abstract"
+
+   # WCS 2.0 stuff
+   "wcs_native_format" "application/x-netcdf"
+   "wcs_band_names" "precipitation"
+   "precipitation_band_interpretation" "interp"
+   "precipitation_band_uom" "uom"
+   "precipitation_band_definition"       "precipitation"
+   "precipitation_band_description"      "precipitation"
+   "precipitation_interval" "-100 100"
+   "precipitation_significant_figures" "1"
+
+   # WCS 1.x stuff
+   "wcs_nativeformat" "netCDF"
    "wcs_rangeset_axes" "bands"
-   "wcs_rangeset_name" "Landsat 5 TM Bands"
+   "wcs_rangeset_name" "precipitation"
    "wcs_rangeset_label" "Bands"
-   "wcs_rangeset_description" "Bands for Landsat 5 TM"
-   "wcs_rangeset_nullvalue" "-99"
-   "wcs_imagemode" "BYTE"
+   "wcs_rangeset_description" "precipitation"
 
-   "wcs_outputformat_GEOTIFF_creationoption_COMPRESS" "LZW"
-   # Will not do anything useful as only the GRIB driver of GDAL 2.3.0 has BAND specific creation option, but at least exercices the code
-   "wcs_outputformat_GEOTIFF_creationoption_BAND_1_foo" "bar"
-   "wcs_outputformat_GEOTIFF_creationoption_BAND_10_foo" "bar"
-
-   "wcs_outputformat_GEOTIFF_mdi_default_FOO" "BAR"
-   "wcs_outputformat_GEOTIFF_mdi_BAND_1_default_BAR" "BAR_BAND_1"
-   "wcs_outputformat_GEOTIFF_mdi_BAND_10_default_BAZ" "BAZ_BAND_10"
+   "wcs_rangeset_nullvalue" "-9999.9004"
   END
 END
 
