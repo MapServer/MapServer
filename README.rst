@@ -1,7 +1,7 @@
 MapServer
 =========
 
-| |Build Status| |Appveyor Build Status| |Coveralls Status|
+| |Build Status| |Appveyor Build Status| |Coveralls Status| |DOI|
 
 -------
 Summary
@@ -99,3 +99,7 @@ License
 
 .. |Coveralls Status| image:: https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main
    :target: https://coveralls.io/github/MapServer/MapServer?branch=main
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5842012.svg
+   :target: https://doi.org/10.5281/zenodo.5842012
+   :alt: Digital Object Identifier (DOI) for MapServer
