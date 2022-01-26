@@ -1173,7 +1173,6 @@ The :ref:`LABEL <label>` object
 
     char wrap; ///< See :ref:`WRAP <mapfile-label-wrap>`
     int maxlength; ///< See :ref:`MAXLENGTH <mapfile-label-maxlength>`
-    int minlength; ///< This is a valid Mapfile keyword but is currently unused
     double space_size_10; ///< Cached size of a single space character used for label text alignment of rfc40
 
     /**
