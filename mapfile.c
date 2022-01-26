@@ -247,25 +247,28 @@ int getString(char **s)
   return(MS_FAILURE);
 }
 
+int msCheckNumber(double number, int num_check_type, double value1, double value2)
+{
+  if(num_check_type == MS_NUM_CHECK_NONE) {
+    return MS_SUCCESS;
+  } else if(num_check_type == MS_NUM_CHECK_RANGE && number >= value1 && number <= value2) {
+    return MS_SUCCESS;
+  } else if(num_check_type == MS_NUM_CHECK_GT && number > value1) {
+    return MS_SUCCESS;
+  } else if(num_check_type == MS_NUM_CHECK_GTE && number >= value1) {
+    return MS_SUCCESS;
+  }
+
+  return MS_FAILURE;
+}
+
 /*
 ** Load a floating point number from the map file. (see lexer.l)
 */
 int getDouble(double *d, int num_check_type, double value1, double value2)
 {
   if(msyylex() == MS_NUMBER) {
-    int ok = MS_FALSE;
-
-    if(num_check_type == MS_NUM_CHECK_NONE) {
-      ok = MS_TRUE;
-    } else if(num_check_type == MS_NUM_CHECK_RANGE && msyynumber >= value1 && msyynumber <= value2) {
-      ok = MS_TRUE;
-    } else if(num_check_type == MS_NUM_CHECK_GT && msyynumber > value1) {
-      ok = MS_TRUE;
-    } else if(num_check_type == MS_NUM_CHECK_GTE && msyynumber >= value1) {
-      ok = MS_TRUE;
-    }
-
-    if(ok) {
+    if(msCheckNumber(msyynumber, num_check_type, value1, value2) == MS_SUCCESS) {
       *d = msyynumber;
       return(0);
     }
@@ -281,19 +284,7 @@ int getDouble(double *d, int num_check_type, double value1, double value2)
 int getInteger(int *i, int num_check_type, int value1, int value2)
 {
   if(msyylex() == MS_NUMBER) {
-    int ok = MS_FALSE;
-
-    if(num_check_type == MS_NUM_CHECK_NONE) {
-      ok = MS_TRUE;
-    } else if(num_check_type == MS_NUM_CHECK_RANGE && (int)msyynumber >= value1 && (int)msyynumber <= value2) {
-      ok = MS_TRUE;
-    } else if(num_check_type == MS_NUM_CHECK_GT && (int)msyynumber > value1) {
-      ok = MS_TRUE;
-    } else if(num_check_type == MS_NUM_CHECK_GTE && (int)msyynumber >= value1) {
-      ok = MS_TRUE;
-    }
-
-    if(ok) {
+    if(msCheckNumber(msyynumber, num_check_type, value1, value2) == MS_SUCCESS) {
       *i = (int)msyynumber;
       return(0);
     }
@@ -444,6 +435,11 @@ int loadColor(colorObj *color, attributeBindingObj *binding)
   int symbol;
   char hex[2];
 
+  /*
+  ** Note that negative color values can be used to suppress or change behavior. For example, referenceObj uses 
+  ** a negative color component to suppress rectangle fills.
+  */
+
   if(binding) {
     if((symbol = getSymbol(3, MS_NUMBER, MS_BINDING, MS_STRING)) == -1) return MS_FAILURE;
   } else {
@@ -494,6 +490,12 @@ int loadColor(colorObj *color, attributeBindingObj *binding)
 int loadColorWithAlpha(colorObj *color)
 {
   char hex[2];
+
+
+  /*
+  ** Note that negative color values can be used to suppress or change behavior. For example, referenceObj uses 
+  ** a negative color component to suppress rectangle fills.
+  */
 
   if(getInteger(&(color->red), MS_NUM_CHECK_RANGE, -255, 255) == -1) {
     if(msyystring_buffer[0] == '#' && strlen(msyystring_buffer) == 7) { /* got a hex color */
@@ -1749,8 +1751,9 @@ static int loadLabel(labelObj *label)
       case(PRIORITY):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
-          label->priority = (int) msyynumber;
-          if(label->priority < 1 || label->priority > MS_MAX_LABEL_PRIORITY) {
+         if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 1, MS_MAX_LABEL_PRIORITY) == MS_SUCCESS) {            
+            label->priority = (int) msyynumber;
+          } else {
             msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , "loadLabel()", MS_MAX_LABEL_PRIORITY);
             return(-1);
           }
@@ -1767,7 +1770,7 @@ static int loadLabel(labelObj *label)
       case(SHADOWSIZE):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
-          label->shadowsizex = (int) msyynumber; // TODO > 0
+          label->shadowsizex = (int) msyynumber; // x offset, any int ok
         } else {
           if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item);
@@ -1777,7 +1780,7 @@ static int loadLabel(labelObj *label)
 
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
-          label->shadowsizey = (int) msyynumber; // TODO > 0
+          label->shadowsizey = (int) msyynumber; // y offset, any int ok
         } else {
           if (label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item);
@@ -1800,7 +1803,11 @@ static int loadLabel(labelObj *label)
           return(-1);
 
         if(symbol == MS_NUMBER) {
-          label->size = (double) msyynumber; // TODO > 0.0
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_GT, 0, -1) == MS_SUCCESS) {
+            label->size = (double) msyynumber;
+          } else {
+            return(-1);
+          }
         } else if(symbol == MS_BINDING) {
           label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
