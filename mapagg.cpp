@@ -812,20 +812,21 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
                "AGG2 driver only supports RGB or RGBA pixel models.", "agg2CreateImage()");
     return image;
   }
-  image = (imageObj *) calloc(1, sizeof (imageObj));
-  MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
-  AGG2Renderer *r = new AGG2Renderer();
+  if (width > 0 && height > 0) {
+    image = (imageObj *) calloc(1, sizeof (imageObj));
+    MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
+    AGG2Renderer *r = new AGG2Renderer();
   
-  /* Compute size on 64bit and check that it is compatible of the platform size_t */
-  AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
-  size_t bufSize = (size_t)bufSize64;
-  if( (AGG_INT64U)bufSize != bufSize64 ) {
-    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
-               __FILE__, __LINE__, bufSize64);
-    free(image);
-    delete r;
-    return NULL;
-  }
+    /* Compute size on 64bit and check that it is compatible of the platform size_t */
+    AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
+    size_t bufSize = (size_t)bufSize64;
+    if( (AGG_INT64U)bufSize != bufSize64 ) {
+      msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
+                 __FILE__, __LINE__, bufSize64);
+      free(image);
+      delete r;
+      return NULL;
+    }
 
   r->buffer = (band_type*)malloc(bufSize);
   if (r->buffer == NULL) {
@@ -852,12 +853,16 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   else
     r->m_renderer_base.clear(AGG_NO_COLOR);
 
-  if (!bg || format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
-    r->use_alpha = true;
+    if (!bg || format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
+      r->use_alpha = true;
+    } else {
+      r->use_alpha = false;
+    }
+    image->img.plugin = (void*) r;
   } else {
-    r->use_alpha = false;
+    msSetError(MS_RENDERERERR, "Cannot create AGG2 image of size %dx%d.",
+               "agg2CreateImage()", width, height);
   }
-  image->img.plugin = (void*) r;
 
   return image;
 }

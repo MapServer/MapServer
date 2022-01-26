@@ -483,6 +483,8 @@ extern "C" {
 
 #endif
 
+  enum MS_NUM_CHECK_TYPES { MS_NUM_CHECK_NONE=0, MS_NUM_CHECK_RANGE, MS_NUM_CHECK_GT, MS_NUM_CHECK_GTE };
+
   /* General enumerated types - needed by scripts */
   enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
   enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS, MS_PERCENTAGES, MS_NAUTICALMILES};
@@ -898,10 +900,18 @@ extern "C" {
   /*      used to visualize query results                                 */
   /************************************************************************/
   typedef struct {
-    int height, width;
-    int status;
-    int style; /* HILITE, SELECTED or NORMAL */
-    colorObj color;
+#ifdef SWIG
+    %immutable;
+#endif /* SWIG */
+    struct mapObj *map; ///< Reference to parent :class:`mapObj`                                                                                                                 
+#ifdef SWIG
+    %mutable;
+#endif /* SWIG */
+    int height; ///< See :ref:`SIZE <mapfile-querymap-size>`
+    int width; ///< See :ref:`SIZE <mapfile-querymap-size>`
+    int status; ///< See :ref:`STATUS <mapfile-querymap-status>`
+    int style; ///< ``HILITE``, ``SELECTED`` or ``NORMAL`` - see :ref:`STYLE <mapfile-querymap-style>`
+    colorObj color; ///< See :ref:`COLOR <mapfile-querymap-color>`
   } queryMapObj;
 
   /************************************************************************/
@@ -1411,6 +1421,21 @@ typedef struct labelObj labelObj;
   /************************************************************************/
   /*                             scalebarObj                              */
   /************************************************************************/
+
+  #define MS_SCALEBAR_INTERVALS_MIN 1
+  #define MS_SCALEBAR_INTERVALS_MAX 100
+
+  #define MS_SCALEBAR_WIDTH_MIN 5
+  #define MS_SCALEBAR_WIDTH_MAX 1000
+  #define MS_SCALEBAR_HEIGHT_MIN 2
+  #define MS_SCALEBAR_HEIGHT_MAX 100
+
+  #define MS_SCALEBAR_OFFSET_MIN -50
+  #define MS_SCALEBAR_OFFSET_MAX 50
+  
+  /**
+  The :ref:`SCALEBAR <scalebar>` object
+  */
   typedef struct {
     colorObj imagecolor;
     int height, width;
@@ -1437,6 +1462,14 @@ typedef struct labelObj labelObj;
   /*                              legendObj                               */
   /************************************************************************/
 
+  #define MS_LEGEND_KEYSIZE_MIN 5
+  #define MS_LEGEND_KEYSIZE_MAX 200
+  #define MS_LEGEND_KEYSPACING_MIN 0
+  #define MS_LEGEND_KEYSPACING_MAX 50
+
+  /**
+  The :ref:`LEGEND <legend>` object
+  */
   typedef struct {
     colorObj imagecolor;
 #ifdef SWIG
@@ -1856,7 +1889,12 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /*      application.                                                    */
   /************************************************************************/
 
-  /* MAP OBJECT -  */
+  #define MS_RESOLUTION_MAX 1000 /* applies to resolution and defresolution */
+  #define MS_RESOLUTION_MIN 10
+
+  /**
+  The :ref:`MAP <map>` object
+  */
   struct mapObj { /* structure for a map */
     char *name; /* small identifier for naming etc. */
     int status; /* is map creation on or off */
@@ -2029,8 +2067,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   ** a few other places (like mapscript)... found in mapfile.c
   */
   int getString(char **s);
-  int getDouble(double *d);
-  int getInteger(int *i);
+  int getDouble(double *d, int num_check_type, double value1, double value2); // getDouble(double *d);
+  int getInteger(int *i, int num_check_type, int value1, int value2); // getInteger(int *i);
   int getSymbol(int n, ...);
   int getCharacter(char *c);
 

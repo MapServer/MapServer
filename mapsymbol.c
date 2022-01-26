@@ -162,13 +162,16 @@ int loadSymbol(symbolObj *s, char *symbolpath)
   for(;;) {
     switch(msyylex()) {
       case(ANCHORPOINT):
-        if(getDouble(&(s->anchorpoint_x)) == -1) return MS_FAILURE;
-        if(getDouble(&(s->anchorpoint_y)) == -1) return MS_FAILURE;
-        if(s->anchorpoint_x<0 || s->anchorpoint_x>1 || s->anchorpoint_y<0 || s->anchorpoint_y>1) {
+	if(getDouble(&(s->anchorpoint_x), MS_NUM_CHECK_RANGE, 0, 1) == -1) {
+	  msSetError(MS_SYMERR, "ANCHORPOINT must be between 0 and 1", "loadSymbol()");
+          return -1;
+        }
+        if(getDouble(&(s->anchorpoint_y), MS_NUM_CHECK_RANGE, 0, 1) == -1) {        
           msSetError(MS_SYMERR, "ANCHORPOINT must be between 0 and 1", "loadSymbol()");
           return(-1);
-        }
+	}
         break;
+
       case(ANTIALIAS): /*ignore*/
         msyylex();
         break;
@@ -248,7 +251,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
               break;
             case(MS_NUMBER):
               s->points[s->numpoints].x = atof(msyystring_buffer); /* grab the x */
-              if(getDouble(&(s->points[s->numpoints].y)) == -1) return(-1); /* grab the y */
+              if(getDouble(&(s->points[s->numpoints].y), MS_NUM_CHECK_NONE, -1, -1) == -1) return(-1); /* grab the y */
               if(s->points[s->numpoints].x!=-99) {
                 s->sizex = MS_MAX(s->sizex, s->points[s->numpoints].x);
                 s->sizey = MS_MAX(s->sizey, s->points[s->numpoints].y);
@@ -266,7 +269,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
         break;
       case(TRANSPARENT):
         s->transparent = MS_TRUE;
-        if(getInteger(&(s->transparentcolor)) == -1) return(-1);
+        if(getInteger(&(s->transparentcolor), MS_NUM_CHECK_RANGE, 0, 255) == -1) return(-1);
         break;
       case(TYPE):
         if((s->type = getSymbol(8,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_HATCH,MS_SYMBOL_SVG)) == -1)
