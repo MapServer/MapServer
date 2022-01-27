@@ -2007,13 +2007,94 @@ void msWCSApplySourceDatasetMetadata(layerObj* lp,
         }
         if( !bWCSMetadataFound )
         {
+            int nBands = 0;
+            char** papszBandNumbers = msStringSplit(bandlist, ',', &nBands);
+
+            std::string osExtraDimName;
+            // Special processing if the input dataset is a 3D one
+            {
+                // Check if extra dimensions are declared on the source dataset,
+                // and if so, if there's just a single one.
+                const char* pszDimExtraWithCurl = GDALGetMetadataItem(hDS, "NETCDF_DIM_EXTRA", nullptr);
+                if( pszDimExtraWithCurl &&
+                    strchr(pszDimExtraWithCurl, ',') == nullptr &&
+                    pszDimExtraWithCurl[0] == '{' &&
+                    pszDimExtraWithCurl[strlen(pszDimExtraWithCurl)-1] == '}')
+                {
+                    osExtraDimName.append(
+                        pszDimExtraWithCurl + 1, strlen(pszDimExtraWithCurl) - 2);
+
+                    // Declare the extra dimension name
+                    msSetOutputFormatOption(format,
+                                            "mdi_default_NETCDF_DIM_EXTRA",
+                                            pszDimExtraWithCurl);
+
+                    // Declare the extra dimension definition: size + data type
+                    const char* pszDimExtraDef = GDALGetMetadataItem(hDS,
+                         ("NETCDF_DIM_" + osExtraDimName + "_DEF").c_str(), nullptr);
+                    if( pszDimExtraDef && pszDimExtraDef[0] == '{' &&
+                        pszDimExtraDef[strlen(pszDimExtraDef)-1] == '}' )
+                    {
+                        const auto tokens = msStringSplit(
+                            std::string(pszDimExtraDef + 1, strlen(pszDimExtraDef) -2).c_str(), ',');
+                        if( tokens.size() == 2 )
+                        {
+                            const auto varType = tokens[1];
+                            msSetOutputFormatOption(format,
+                                ("mdi_default_NETCDF_DIM_" + osExtraDimName + "_DEF").c_str(),
+                                (std::string("{") + CPLSPrintf("%d", nBands) + ',' + varType + '}').c_str());
+                        }
+                    }
+
+                    // Declare the extra dimension values
+                    const char* pszDimExtraValues = GDALGetMetadataItem(hDS,
+                         ("NETCDF_DIM_" + osExtraDimName + "_VALUES").c_str(), nullptr);
+                    if( pszDimExtraValues && pszDimExtraValues[0] == '{' &&
+                        pszDimExtraValues[strlen(pszDimExtraValues)-1] == '}' )
+                    {
+                        const auto tokens = msStringSplit(
+                            std::string(pszDimExtraValues + 1, strlen(pszDimExtraValues) -2).c_str(), ',');
+                        if( static_cast<int>(tokens.size()) == GDALGetRasterCount(hDS) )
+                        {
+                            std::string osValue = "{";
+                            for(int i = 0; i < nBands; i++ )
+                            {
+                                int nSrcBand = atoi(papszBandNumbers[i]);
+                                assert( nSrcBand >= 1 && nSrcBand <= static_cast<int>(tokens.size()) );
+                                if( i > 0 )
+                                    osValue += ',';
+                                osValue += tokens[nSrcBand - 1];
+                            }
+                            osValue += '}';
+
+                            msSetOutputFormatOption(format,
+                                ("mdi_default_NETCDF_DIM_" + osExtraDimName + "_VALUES").c_str(),
+                                osValue.c_str());
+                        }
+                    }
+                    else if ( pszDimExtraValues )
+                    {
+                        // If there's a single value
+                        msSetOutputFormatOption(format,
+                                ("mdi_default_NETCDF_DIM_" + osExtraDimName + "_VALUES").c_str(),
+                                pszDimExtraValues);
+                    }
+
+                }
+            }
+
             {
                 char** papszMD = GDALGetMetadata(hDS, NULL);
                 if( papszMD )
                 {
                     for( char** papszIter = papszMD; *papszIter; ++papszIter )
                     {
-                        if( STARTS_WITH(*papszIter, "NC_GLOBAL#") )
+                        // Copy netCDF global attributes, as well as the ones
+                        // of the extra dimension for 3D netCDF files
+                        if( STARTS_WITH(*papszIter, "NC_GLOBAL#") ||
+                            (!osExtraDimName.empty() &&
+                             STARTS_WITH(*papszIter, osExtraDimName.c_str()) &&
+                             (*papszIter)[osExtraDimName.size()] == '#') )
                         {
                             char* pszKey = nullptr;
                             const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
@@ -2030,10 +2111,7 @@ void msWCSApplySourceDatasetMetadata(layerObj* lp,
                 }
             }
 
-            int nBands = 0;
-            char** papszBandNumbers = msStringSplit(bandlist, ',', &nBands);
-            int i;
-            for(i = 0; i < nBands; i++ )
+            for(int i = 0; i < nBands; i++ )
             {
                 int nSrcBand = atoi(papszBandNumbers[i]);
                 int nDstBand = i + 1;
