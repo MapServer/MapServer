@@ -1464,7 +1464,6 @@ void initLabel(labelObj *label)
   label->partials = MS_FALSE;
   label->wrap = '\0';
   label->maxlength = 0;
-  label->minlength = 0;
   label->space_size_10=0.0;
 
   label->encoding = NULL;
@@ -1683,9 +1682,6 @@ static int loadLabel(labelObj *label)
         break;
       case(MAXLENGTH):
         if(getInteger(&(label->maxlength), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
-        break;
-      case(MINLENGTH):
-        if(getInteger(&(label->minlength), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MINDISTANCE):
         if(getInteger(&(label->mindistance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
@@ -1946,7 +1942,6 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, label->maxscaledenom);
   writeNumber(stream, indent, "MINDISTANCE", -1, label->mindistance);
   writeNumberOrKeyword(stream, indent, "MINFEATURESIZE", -1, label->minfeaturesize, 1, label->autominfeaturesize, MS_TRUE, "AUTO");
-  writeNumber(stream, indent, "MINLENGTH", 0, label->minlength);
   writeNumber(stream, indent, "MINSCALEDENOM", -1, label->minscaledenom);
   writeDimension(stream, indent, "OFFSET",  label->offsetx, label->offsety, NULL, NULL);
 

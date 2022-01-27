@@ -362,7 +362,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>minscale                              { MS_LEXER_RETURN_TOKEN(MINSCALE); }
 <INITIAL>minscaledenom                         { MS_LEXER_RETURN_TOKEN(MINSCALEDENOM); }
 <INITIAL>mingeowidth                           { MS_LEXER_RETURN_TOKEN(MINGEOWIDTH); }
-<INITIAL>minlength                             { MS_LEXER_RETURN_TOKEN(MINLENGTH); }
 <INITIAL>minsize                               { MS_LEXER_RETURN_TOKEN(MINSIZE); }
 <INITIAL>minsubdivide                          { MS_LEXER_RETURN_TOKEN(MINSUBDIVIDE); }
 <INITIAL>mintemplate                           { MS_LEXER_RETURN_TOKEN(MINTEMPLATE); }

@@ -159,16 +159,15 @@ PHP_METHOD(labelObj, __get)
                                                   else IF_GET_LONG("outlinewidth", php_label->label->outlinewidth)
                                                     else IF_GET_LONG("align", php_label->label->align)
                                                       else IF_GET_LONG("maxlength", php_label->label->maxlength)
-                                                        else IF_GET_LONG("minlength", php_label->label->minlength)
-                                                          else IF_GET_LONG("maxoverlapangle", php_label->label->maxoverlapangle)
-                                                            else IF_GET_LONG("priority", php_label->label->priority)
-                                                              else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color)
-                                                                else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, php_label->label->leader)
-                                                                  else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor)
-                                                                    else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor)
-                                                                      else {
-                                                                        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-                                                                      }
+                                                        else IF_GET_LONG("maxoverlapangle", php_label->label->maxoverlapangle)
+                                                          else IF_GET_LONG("priority", php_label->label->priority)
+                                                            else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color)
+                                                              else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, php_label->label->leader)
+                                                                else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor)
+                                                                  else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor)
+                                                                    else {
+                                                                      mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                                    }
 }
 
 PHP_METHOD(labelObj, __set)
@@ -212,21 +211,20 @@ PHP_METHOD(labelObj, __set)
                                             else IF_SET_LONG("outlinewidth", php_label->label->outlinewidth, value)
                                               else IF_SET_LONG("align", php_label->label->align, value)
                                                 else IF_SET_LONG("maxlength", php_label->label->maxlength, value)
-                                                  else IF_SET_LONG("minlength", php_label->label->minlength, value)
-                                                    else IF_SET_LONG("maxoverlapangle", php_label->label->maxoverlapangle, value)
-                                                      else IF_SET_LONG("priority", php_label->label->priority, value)
-                                                        else IF_SET_DOUBLE("maxscaledenom", php_label->label->maxscaledenom, value)
-                                                          else IF_SET_DOUBLE("minscaledenom", php_label->label->minscaledenom, value)
-                                                            else if ( (STRING_EQUAL("color", property)) ||
-                                                                      (STRING_EQUAL("outlinecolor", property)) ||
-                                                                      (STRING_EQUAL("leader", property)) ||
-                                                                      (STRING_EQUAL("shadowcolor", property)) ) {
-                                                              mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
-                                                            } else if (STRING_EQUAL("numstyles", property)) {
-                                                              mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
-                                                            } else {
-                                                              mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
-                                                            }
+                                                  else IF_SET_LONG("maxoverlapangle", php_label->label->maxoverlapangle, value)
+                                                    else IF_SET_LONG("priority", php_label->label->priority, value)
+                                                      else IF_SET_DOUBLE("maxscaledenom", php_label->label->maxscaledenom, value)
+                                                        else IF_SET_DOUBLE("minscaledenom", php_label->label->minscaledenom, value)
+                                                          else if ( (STRING_EQUAL("color", property)) ||
+                                                                    (STRING_EQUAL("outlinecolor", property)) ||
+                                                                    (STRING_EQUAL("leader", property)) ||
+                                                                    (STRING_EQUAL("shadowcolor", property)) ) {
+                                                            mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
+                                                          } else if (STRING_EQUAL("numstyles", property)) {
+                                                            mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
+                                                          } else {
+                                                            mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+                                                          }
 
 }
 

@@ -259,7 +259,6 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 
 /* rfc40 label wrapping */
 #define MAXLENGTH 1210
-#define MINLENGTH 1211
 
 /* rfc44 URL configuration support */
 #define VALIDATION 1212
