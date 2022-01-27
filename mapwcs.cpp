@@ -33,6 +33,7 @@
 #include "mapows.h"
 #include <assert.h>
 
+#include <map>
 #include <string>
 
 #if defined(USE_WCS_SVR)
@@ -1752,6 +1753,7 @@ void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
     if( !STARTS_WITH(format->driver, "GDAL/") )
         return;
 
+    const bool bIsNetCDFOutput = EQUAL(format->driver, "GDAL/netCDF");
     const char* pszKey;
     char szKeyBeginning[256];
     size_t nKeyBeginningLength;
@@ -1765,6 +1767,11 @@ void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
     // Transform wcs_outputformat_{formatname}_mdi_{key} to mdi_{key}
     // and Transform wcs_outputformat_{formatname}_mdi_BAND_X_{key} to mdi_BAND_Y_{key}
     // MDI stands for MetaDataItem
+
+    // For netCDF 3D output
+    std::map<int, std::string> oMapExtraDimValues;
+    std::string osExtraDimName;
+    bool bExtraDimValid = false;
 
     pszKey = msFirstKeyFromHashTable( &(lp->metadata) );
     for( ; pszKey != NULL;
@@ -1797,15 +1804,47 @@ void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
                         strchr(pszGDALKey + strlen("BAND_"), '_');
                     if( pszAfterBand != NULL )
                     {
-                        snprintf(szModKey, sizeof(szModKey),
-                                 "mdi_BAND_%d%s",
-                                 nTargetBandNumber,
-                                 pszAfterBand);
-                        if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
-                            msDebug("Setting GDAL %s=%s metadata item option\n",
-                                    szModKey, pszValue);
+                        // Special case to generate 3D netCDF files
+                        if( bIsNetCDFOutput &&
+                            strncmp(pszAfterBand, "_default_NETCDF_DIM_",
+                                    strlen("_default_NETCDF_DIM_")) == 0 )
+                        {
+                            const char* pszDimName = pszAfterBand +
+                                                strlen("_default_NETCDF_DIM_");
+                            if( osExtraDimName.empty() )
+                            {
+                                bExtraDimValid = true;
+                                osExtraDimName = pszDimName;
+                                oMapExtraDimValues[nTargetBandNumber] = pszValue;
+                            }
+                            else if( bExtraDimValid )
+                            {
+                                if( osExtraDimName != pszDimName )
+                                {
+                                    msDebug("One band has several %sdefault_NETCDF_DIM_ metadata items, "
+                                            "or different bands have a different value. "
+                                            "Only a single extra dimension is supported.",
+                                            szKeyBeginning);
+                                    bExtraDimValid = false;
+                                }
+                                else
+                                {
+                                    oMapExtraDimValues[nTargetBandNumber] = pszValue;
+                                }
+                            }
                         }
-                        msSetOutputFormatOption(format, szModKey, pszValue);
+                        else
+                        {
+                            snprintf(szModKey, sizeof(szModKey),
+                                     "mdi_BAND_%d%s",
+                                     nTargetBandNumber,
+                                     pszAfterBand);
+                            if( lp->debug >= MS_DEBUGLEVEL_VVV ) {
+                                msDebug("Setting GDAL %s=%s metadata item option\n",
+                                        szModKey, pszValue);
+                            }
+                            msSetOutputFormatOption(format, szModKey, pszValue);
+                        }
                     }
                 }
             }
@@ -1820,6 +1859,110 @@ void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
                 }
                 msSetOutputFormatOption(format, szModKey, pszValue);
             }
+        }
+    }
+
+    // netCDF 3D output
+    // Tested in msautotest/wxs/wcs_netcdf_3d_output.map
+    std::string osExtraDimDataType;
+    if( bExtraDimValid && static_cast<int>(oMapExtraDimValues.size()) != nBands )
+    {
+        msDebug("One of the band lack a NETCDF_DIM_%s metadata item.",
+                osExtraDimName.c_str());
+        bExtraDimValid = false;
+    }
+    if( bExtraDimValid )
+    {
+        for( const auto& keyValue: oMapExtraDimValues )
+        {
+            const auto& osVal = keyValue.second;
+            const CPLValueType eType = CPLGetValueType(osVal.c_str());
+            if( eType == CPL_VALUE_STRING )
+            {
+                osExtraDimDataType = "string";
+                break;
+            }
+            else if( eType == CPL_VALUE_INTEGER )
+            {
+                if( osExtraDimDataType.empty() || osExtraDimDataType == "integer" )
+                {
+                    osExtraDimDataType = "integer";
+                    const GIntBig nVal = CPLAtoGIntBig(osVal.c_str());
+                    if( nVal > INT_MAX || nVal < INT_MIN )
+                    {
+                        osExtraDimDataType = "integer64";
+                    }
+                }
+            }
+            else
+            {
+                osExtraDimDataType = "double";
+            }
+        }
+        if( osExtraDimDataType == "string" )
+        {
+            msDebug("One of the value for the NETCDF_DIM_%s metadata is a string. "
+                    "This is not supported", osExtraDimName.c_str());
+            bExtraDimValid = false;
+        }
+    }
+    if( bExtraDimValid )
+    {
+        // Cf https://gdal.org/drivers/raster/netcdf.html#creation-of-multidimensional-files-with-createcopy-2d-raster-api
+
+        // Define the name of the extra dimensions
+        {
+            std::string osValue;
+            osValue = '{';
+            osValue += osExtraDimName;
+            osValue += '}';
+
+            msSetOutputFormatOption(format, "mdi_default_NETCDF_DIM_EXTRA", osValue.c_str());
+        }
+
+        // Define the size (in number of samples) and type of the extra dimension
+        {
+            std::string osKey;
+            osKey = "mdi_default_NETCDF_DIM_";
+            osKey += osExtraDimName;
+            osKey += "_DEF";
+
+            std::string osValue;
+            osValue = '{';
+            osValue += CPLSPrintf("%d", nBands);
+            osValue += ',';
+            if( osExtraDimDataType == "integer" )
+                osValue += '4';
+            else if ( osExtraDimDataType == "integer64" )
+                osValue += "10";
+            else /* if ( osExtraDimDataType == "double" ) */
+                osValue += '6';
+            osValue += '}';
+
+            msSetOutputFormatOption(format, osKey.c_str(), osValue.c_str());
+        }
+
+        // Define the values along the extra dimension
+        {
+            std::string osKey;
+            osKey = "mdi_default_NETCDF_DIM_";
+            osKey += osExtraDimName;
+            osKey += "_VALUES";
+            std::string osValue;
+            osValue = '{';
+            bool bFirstVal = true;
+            for( const auto& keyValue: oMapExtraDimValues )
+            {
+                const auto& osVal = keyValue.second;
+                if( !bFirstVal )
+                    osValue += ',';
+                else
+                    bFirstVal = false;
+                osValue += osVal;
+            }
+            osValue += '}';
+
+            msSetOutputFormatOption(format, osKey.c_str(), osValue.c_str());
         }
     }
 
