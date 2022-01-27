@@ -1599,7 +1599,7 @@ void msWCSApplyLayerCreationOptions(layerObj* lp,
     char szKeyBeginning[256];
     size_t nKeyBeginningLength;
     int nBands = 0;
-    char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+    char** papszBandNumbers = msStringSplit(bandlist, ',', &nBands);
 
     snprintf(szKeyBeginning, sizeof(szKeyBeginning),
              "wcs_outputformat_%s_creationoption_", format->name);
@@ -1701,7 +1701,7 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj* lp,
         if( !bWCSMetadataFound )
         {
             int nBands = 0;
-            char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+            char** papszBandNumbers = msStringSplit(bandlist, ',', &nBands);
             int i;
             for(i = 0; i < nBands; i++ )
             {
@@ -1756,7 +1756,7 @@ void msWCSApplyLayerMetadataItemOptions(layerObj* lp,
     char szKeyBeginning[256];
     size_t nKeyBeginningLength;
     int nBands = 0;
-    char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+    char** papszBandNumbers = msStringSplit(bandlist, ',', &nBands);
 
     snprintf(szKeyBeginning, sizeof(szKeyBeginning),
              "wcs_outputformat_%s_mdi_", format->name);
@@ -1888,7 +1888,7 @@ void msWCSApplySourceDatasetMetadata(layerObj* lp,
             }
 
             int nBands = 0;
-            char** papszBandNumbers = msStringSplit(bandlist, ' ', &nBands);
+            char** papszBandNumbers = msStringSplit(bandlist, ',', &nBands);
             int i;
             for(i = 0; i < nBands; i++ )
             {
