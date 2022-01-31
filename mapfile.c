@@ -1587,9 +1587,13 @@ static int loadLabel(labelObj *label)
         if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1)
           return(-1);
 
-        if(symbol == MS_NUMBER)
-          label->angle = msyynumber;
-        else if(symbol == MS_BINDING) {
+        if(symbol == MS_NUMBER) {
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, -360.0, 360.0) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid ANGLE, must be between -360 and 360 (line %d)", "loadLabel()", msyylineno);
+            return(MS_FAILURE);
+          }
+          label->angle = (double) msyynumber;
+        } else if(symbol == MS_BINDING) {
           if (label->bindings[MS_LABEL_BINDING_ANGLE].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
           label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
@@ -1693,10 +1697,14 @@ static int loadLabel(labelObj *label)
         if(getDouble(&(label->maxoverlapangle), MS_NUM_CHECK_RANGE, 0, 360) == -1) return(-1);
         break;
       case(MINFEATURESIZE):
-        if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1)  return(-1);
-        if(symbol == MS_NUMBER)
+        if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) return(-1);
+        if(symbol == MS_NUMBER) {
+	  if(msCheckNumber(msyynumber, MS_NUM_CHECK_GT, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid MINFEATURESIZE, must be greater than 0 (line %d)", "loadLabel()", msyylineno);
+            return(MS_FAILURE);
+          }
           label->minfeaturesize = (int)msyynumber;
-        else
+        } else
           label->autominfeaturesize = MS_TRUE;
         break;
       case(MINSCALEDENOM):
@@ -1708,7 +1716,7 @@ static int loadLabel(labelObj *label)
       case(OFFSET):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER)
-          label->offsetx = (int) msyynumber;
+          label->offsetx = (int) msyynumber; // any integer ok
         else {
           if (label->bindings[MS_LABEL_BINDING_OFFSET_X].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_OFFSET_X].item);
@@ -1718,7 +1726,7 @@ static int loadLabel(labelObj *label)
 
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER)
-          label->offsety = (int) msyynumber;
+          label->offsety = (int) msyynumber; // any integer ok
         else {
           if (label->bindings[MS_LABEL_BINDING_OFFSET_Y].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_OFFSET_Y].item);
@@ -1749,12 +1757,11 @@ static int loadLabel(labelObj *label)
       case(PRIORITY):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
-         if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 1, MS_MAX_LABEL_PRIORITY) == MS_SUCCESS) {            
-            label->priority = (int) msyynumber;
-          } else {
-            msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d." , "loadLabel()", MS_MAX_LABEL_PRIORITY);
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 1, MS_MAX_LABEL_PRIORITY) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d (line %d)" , "loadLabel()", MS_MAX_LABEL_PRIORITY, msyylineno);
             return(-1);
           }
+          label->priority = (int) msyynumber;
         } else {
           if (label->bindings[MS_LABEL_BINDING_PRIORITY].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_PRIORITY].item);
@@ -1801,11 +1808,11 @@ static int loadLabel(labelObj *label)
           return(-1);
 
         if(symbol == MS_NUMBER) {
-          if(msCheckNumber(msyynumber, MS_NUM_CHECK_GT, 0, -1) == MS_SUCCESS) {
-            label->size = (double) msyynumber;
-          } else {
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_GT, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid SIZE, must be greater than 0 (line %d)" , "loadLabel()", msyylineno);
             return(-1);
           }
+          label->size = (double) msyynumber;
         } else if(symbol == MS_BINDING) {
           label->bindings[MS_LABEL_BINDING_SIZE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
@@ -2474,7 +2481,10 @@ int loadStyle(styleObj *style)
         if((symbol = getSymbol(3, MS_NUMBER,MS_BINDING,MS_AUTO)) == -1) return(MS_FAILURE);
 
         if(symbol == MS_NUMBER) {
-          if(msyynumber < -360 || msyynumber > 360) return(MS_FAILURE);
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 0.0, 360.0) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid ANGLE, must be between 0 and 360 (line %d)", "loadStyle()", msyylineno);
+            return(MS_FAILURE);
+          }
           style->angle = (double) msyynumber;
         } else if(symbol==MS_BINDING) {
           if (style->bindings[MS_STYLE_BINDING_ANGLE].item != NULL)
@@ -2556,13 +2566,13 @@ int loadStyle(styleObj *style)
         if(getDouble(&(style->maxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MINSIZE):
-        if(getDouble(&(style->minsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->minsize), MS_NUM_CHECK_GTE, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MAXWIDTH):
         if(getDouble(&(style->maxwidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MINWIDTH):
-        if(getDouble(&(style->minwidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->minwidth), MS_NUM_CHECK_GTE, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(OFFSET):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
@@ -2631,11 +2641,11 @@ int loadStyle(styleObj *style)
       case(OUTLINEWIDTH):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
-          style->outlinewidth = (double) msyynumber;
-          if(style->outlinewidth < 0) {
-            msSetError(MS_MISCERR, "Invalid OUTLINEWIDTH, must be greater than 0", "loadStyle()");
+	  if(msCheckNumber(msyynumber, MS_NUM_CHECK_GTE, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid OUTLINEWIDTH, must be greater then or equal to 0 (line %d)", "loadStyle()", msyylineno);
             return(MS_FAILURE);
           }
+          style->outlinewidth = (double) msyynumber;
         } else {
           if (style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item);
@@ -2646,8 +2656,8 @@ int loadStyle(styleObj *style)
       case(SIZE):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
-          if(msyynumber <= 0) {
-            msSetError(MS_MISCERR, "Invalid SIZE, must be greater than 0", "loadStyle()");
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_GT, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid SIZE, must be greater than 0 (line %d)", "loadStyle()", msyylineno);
             return(MS_FAILURE);
           }
           style->size = (double) msyynumber;
@@ -2663,11 +2673,11 @@ int loadStyle(styleObj *style)
       case(SYMBOL):
         if((symbol = getSymbol(3, MS_NUMBER,MS_STRING,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
-          if(msyynumber < 0) {
-            msSetError(MS_MISCERR, "Invalid SYMBOL id, must be greater than or equal to 0", "loadStyle()");
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_GTE, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid SYMBOL id, must be greater than or equal to 0 (line %d)", "loadStyle()", msyylineno);
             return(MS_FAILURE);
           }
-          if (style->symbolname != NULL) {
+          if(style->symbolname != NULL) {
             msFree(style->symbolname);
             style->symbolname = NULL;
           }
@@ -2686,8 +2696,8 @@ int loadStyle(styleObj *style)
       case(WIDTH):
         if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
-	  if(msyynumber <= 0) {
-            msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than 0", "loadStyle()");
+	  if(msCheckNumber(msyynumber, MS_NUM_CHECK_GTE, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid WIDTH, must be greater than or equal to 0 (line %d)", "loadStyle()", msyylineno);
             return(MS_FAILURE);
           }
           style->width = (double) msyynumber;
@@ -3215,7 +3225,13 @@ int loadClass(classObj *class, layerObj *layer)
         break; /* for string loads */
       case(DEBUG):
         if((class->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
-        if(class->debug == MS_NUMBER) class->debug = (int) msyynumber;
+        if(class->debug == MS_NUMBER) {
+	  if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 0, 5) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid DEBUG level, must be between 0 and 5 (line %d)", "loadClass()", msyylineno);
+            return(-1);
+          }
+          class->debug = (int) msyynumber;
+        }
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadClass()");
@@ -4101,7 +4117,13 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(DEBUG):
         if((layer->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return(-1);
-        if(layer->debug == MS_NUMBER) layer->debug = (int) msyynumber;
+	if(layer->debug == MS_NUMBER) {
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 0, 5) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid DEBUG level, must be between 0 and 5 (line %d)", "loadLayer()", msyylineno);
+            return(-1);
+          }
+          layer->debug = (int) msyynumber;
+        }
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadLayer()");
@@ -4442,7 +4464,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         }
         break;
       case(TOLERANCE):
-        if(getDouble(&(layer->tolerance), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
+        if(getDouble(&(layer->tolerance), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(TOLERANCEUNITS):
         if((layer->toleranceunits = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS)) == -1) return(-1);
@@ -4811,7 +4833,10 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
         if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
 
         if(state == MS_NUMBER) {
-          if(msyynumber < 0) return(-1);
+	  if(msCheckNumber(msyynumber, MS_NUM_CHECK_GTE, 0, -1) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid MARKER, must be greater than 0 (line %d)", "loadReferenceMap()", msyylineno);
+            return(-1);
+          }
           ref->marker = (int) msyynumber;
         } else {
           if (ref->markername != NULL)
@@ -5483,8 +5508,17 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
         return(0);
         break;
       case(SIZE):
-        if(getInteger(&(querymap->width), MS_NUM_CHECK_RANGE, 1, querymap->map->maxsize) == -1) return(-1);
-        if(getInteger(&(querymap->height), MS_NUM_CHECK_RANGE, 1, querymap->map->maxsize) == -1) return(-1);
+        /*
+	** we do -1 (and avoid 0) here to maintain backwards compatability as older versions write "SIZE -1 -1" when saving a mapfile
+        */
+        if(getInteger(&(querymap->width), MS_NUM_CHECK_RANGE, -1, querymap->map->maxsize) == -1 || querymap->width == 0) {
+          msSetError(MS_MISCERR, "Invalid SIZE value (line %d)", "loadQueryMap()", msyylineno);
+          return(-1);
+        }
+        if(getInteger(&(querymap->height), MS_NUM_CHECK_RANGE, -1, querymap->map->maxsize) == -1 || querymap->height == 0) {
+          msSetError(MS_MISCERR, "Invalid SIZE value (line %d)", "loadQueryMap()", msyylineno);
+          return(-1);
+        }
         break;
       case(STATUS):
         if((querymap->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
@@ -5537,7 +5571,8 @@ static void writeQueryMap(FILE *stream, int indent, queryMapObj *querymap)
   writeBlockBegin(stream, indent, "QUERYMAP");
   MS_INIT_COLOR(c,255,255,0,255);
   writeColor(stream, indent, "COLOR",  &c, &(querymap->color));
-  writeDimension(stream, indent, "SIZE", querymap->width, querymap->height, NULL, NULL);
+  if(querymap->width != -1 && querymap->height != -1) // don't write SIZE if not explicitly set
+    writeDimension(stream, indent, "SIZE", querymap->width, querymap->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", querymap->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeKeyword(stream, indent, "STYLE", querymap->style, 3, MS_NORMAL, "NORMAL", MS_HILITE, "HILITE", MS_SELECTED, "SELECTED");
   writeBlockEnd(stream, indent, "QUERYMAP");
@@ -6187,7 +6222,13 @@ static int loadMapInternal(mapObj *map)
         break;
       case(DEBUG):
         if((map->debug = getSymbol(3, MS_ON,MS_OFF, MS_NUMBER)) == -1) return MS_FAILURE;
-        if(map->debug == MS_NUMBER) map->debug = (int) msyynumber;
+        if(map->debug == MS_NUMBER) {
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 0, 5) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid DEBUG level, must be between 0 and 5 (line %d)", "msLoadMap()", msyylineno);
+            return(-1);
+          }
+          map->debug = (int) msyynumber;
+        }
         break;
       case(END):
         if(msyyin) {
@@ -6272,7 +6313,7 @@ static int loadMapInternal(mapObj *map)
         foundMapToken = MS_TRUE;
         break;
       case(MAXSIZE):
-        if(getInteger(&(map->maxsize), MS_NUM_CHECK_GTE, 1, -1) == -1) return MS_FAILURE;
+        if(getInteger(&(map->maxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return MS_FAILURE;
         break;
       case(NAME):
         free(map->name);
