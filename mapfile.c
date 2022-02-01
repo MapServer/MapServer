@@ -2481,8 +2481,8 @@ int loadStyle(styleObj *style)
         if((symbol = getSymbol(3, MS_NUMBER,MS_BINDING,MS_AUTO)) == -1) return(MS_FAILURE);
 
         if(symbol == MS_NUMBER) {
-          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 0.0, 360.0) == MS_FAILURE) {
-            msSetError(MS_MISCERR, "Invalid ANGLE, must be between 0 and 360 (line %d)", "loadStyle()", msyylineno);
+          if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, -360.0, 360.0) == MS_FAILURE) {
+            msSetError(MS_MISCERR, "Invalid ANGLE, must be between -360 and 360 (line %d)", "loadStyle()", msyylineno);
             return(MS_FAILURE);
           }
           style->angle = (double) msyynumber;
