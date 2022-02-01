@@ -1,0 +1,151 @@
+# RUN_PARMS: symbolrot.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+
+#
+# Test support for rotating symbols counter-clockwise with their map.
+# This should produce the same image as when the ANGLE values are clockwise
+#
+# REQUIRES: OUTPUT=PNG SUPPORTS=PROJ
+#
+MAP
+    NAME "test"
+
+    EXTENT 520000 140000 540000 160000
+    UNITS METERS
+
+    IMAGECOLOR 255 255 255
+    STATUS ON
+    SIZE 500 500
+
+    ANGLE -315
+
+    SYMBOL
+        NAME "v-line"
+        TYPE vector
+        FILLED false
+        POINTS
+            0  0
+            5  10
+            10 0
+        END # POINTS
+    END # SYMBOL
+
+    IMAGETYPE png
+
+    PROJECTION
+        "init=epsg:21781"
+    END
+
+  LAYER
+    NAME         line_layer
+    STATUS       DEFAULT
+    TYPE         LINE
+    PROJECTION
+        "init=epsg:21781"
+    END
+
+    FEATURE
+      WKT "LINESTRING(530000 100000, 530000 200000)"
+    END
+
+    CLASS
+      STYLE
+        WIDTH 1
+        COLOR 0 0 0 
+        PATTERN 10 3 10 3 END
+      END
+    END
+  END
+
+  LAYER
+    NAME         pt_exactly_same_value_as_map_rotation_red
+    STATUS       DEFAULT
+    TYPE         POINT
+    PROJECTION
+        "init=epsg:21781"
+    END
+
+    FEATURE
+      WKT "POINT(530000 151000)"
+    END
+
+    CLASS
+      STYLE
+        SYMBOL "v-line"
+        WIDTH 5
+        COLOR        0 0 255
+        OUTLINECOLOR 32 32 32
+        ANGLE -315
+      END
+    END
+  END
+
+  LAYER
+    NAME         pt_almost_zero_rotation_yellow
+    STATUS       DEFAULT
+    TYPE         POINT
+    PROJECTION
+        "init=epsg:21781"
+    END
+
+    FEATURE
+      WKT "POINT(530000 148000)"
+    END
+
+    CLASS
+      STYLE
+        SYMBOL "v-line"
+        WIDTH 5
+        COLOR        255 255 0
+        OUTLINECOLOR 32 32 32
+        ANGLE -359.9999
+      END
+    END
+  END
+
+  LAYER
+    NAME         pt_other_value_as_map_rotation_green
+    STATUS       DEFAULT
+    TYPE         POINT
+    PROJECTION
+        "init=epsg:21781"
+    END
+
+    FEATURE
+      WKT "POINT(530000 149500)"
+    END
+
+    CLASS
+      STYLE
+        SYMBOL "v-line"
+        WIDTH 5
+        COLOR        0 255 0
+        OUTLINECOLOR 32 32 32
+        ANGLE -337.5
+      END
+    END
+  END
+
+  LAYER
+    NAME         pt_does_not_follow_map_rotation_blue
+    STATUS       DEFAULT
+    TYPE         POINT
+    PROJECTION
+        "init=epsg:21781"
+    END
+
+    FEATURE
+      WKT "POINT(530000 145000)"
+    END
+
+    CLASS
+      STYLE
+        SYMBOL "v-line"
+        WIDTH 5
+        COLOR        255 0 0
+        OUTLINECOLOR 32 32 32
+      END
+    END
+  END
+
+END
+
