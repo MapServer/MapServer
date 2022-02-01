@@ -1669,20 +1669,20 @@ static int loadLabel(labelObj *label)
             label->force = MS_LABEL_FORCE_GROUP;
             break;
           default:
-            msSetError(MS_MISCERR, "Invalid FORCE, must be ON,OFF,or GROUP" , "loadLabel()");
+            msSetError(MS_MISCERR, "Invalid FORCE, must be ON,OFF,or GROUP (line %d)" , "loadLabel()", msyylineno);
             return(-1);
         }
         break;
       case(LABEL):
         break; /* for string loads */
       case(LEADER):
-        msSetError(MS_MISCERR, "LABEL LEADER not implemented. LEADER goes at the CLASS level." , "loadLabel()");
+        msSetError(MS_MISCERR, "LABEL LEADER not implemented. LEADER goes at the CLASS level (line %d)" , "loadLabel()", msyylineno);
         return(-1);
       case(MAXSIZE):
         if(getInteger(&(label->maxsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
         break;
       case(MAXSCALEDENOM):
-        if(getDouble(&(label->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(label->maxscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MAXLENGTH):
         if(getInteger(&(label->maxlength), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
@@ -1708,7 +1708,7 @@ static int loadLabel(labelObj *label)
           label->autominfeaturesize = MS_TRUE;
         break;
       case(MINSCALEDENOM):
-        if(getDouble(&(label->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(label->minscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MINSIZE):
         if(getInteger(&(label->minsize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
@@ -2530,15 +2530,15 @@ int loadStyle(styleObj *style)
         break;
       case(INITIALGAP):
         if(getDouble(&(style->initialgap), MS_NUM_CHECK_GTE, 0, -1) == -1) { // zero is ok
-          msSetError(MS_MISCERR, "INITIALGAP requires a positive values", "loadStyle()");
+          msSetError(MS_MISCERR, "INITIALGAP requires a positive values (line %d)", "loadStyle()", msyylineno);
           return(MS_FAILURE);
         }
         break;
       case(MAXSCALEDENOM):
-        if(getDouble(&(style->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->maxscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(MINSCALEDENOM):
-        if(getDouble(&(style->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(MS_FAILURE);
+        if(getDouble(&(style->minscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(MS_FAILURE);
         break;
       case(GEOMTRANSFORM): {
         int s;
@@ -2616,7 +2616,7 @@ int loadStyle(styleObj *style)
           switch(msyylex()) {
             case(END):
               if(style->patternlength < 2) {
-                msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "loadStyle()");
+                msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required (line %d)", "loadStyle()", msyylineno);
                 return(MS_FAILURE);
               }
               done = MS_TRUE;
@@ -3290,14 +3290,14 @@ int loadClass(classObj *class, layerObj *layer)
         break;
       case(MAXSCALE):
       case(MAXSCALEDENOM):
-        if(getDouble(&(class->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(class->maxscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(METADATA):
         if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
         break;
       case(MINSCALE):
       case(MINSCALEDENOM):
-        if(getDouble(&(class->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(class->minscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MINFEATURESIZE):
         if(getInteger(&(class->minfeaturesize), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
@@ -4268,11 +4268,11 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(LABELMAXSCALE):
       case(LABELMAXSCALEDENOM):
-        if(getDouble(&(layer->labelmaxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(layer->labelmaxscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(LABELMINSCALE):
       case(LABELMINSCALEDENOM):
-        if(getDouble(&(layer->labelminscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(layer->labelminscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(LABELREQUIRES):
         if(getString(&layer->labelrequires) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -4303,7 +4303,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(MAXSCALE):
       case(MAXSCALEDENOM):
-        if(getDouble(&(layer->maxscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(layer->maxscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MAXGEOWIDTH):
         if(getDouble(&(layer->maxgeowidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
@@ -4313,7 +4313,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(MINSCALE):
       case(MINSCALEDENOM):
-        if(getDouble(&(layer->minscaledenom), MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&(layer->minscaledenom), MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MINGEOWIDTH):
         if(getDouble(&(layer->mingeowidth), MS_NUM_CHECK_GT, 0, -1) == -1) return(-1);
@@ -5754,7 +5754,7 @@ int loadWeb(webObj *web, mapObj *map)
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
         break;
       case(MAXSCALEDENOM):
-        if(getDouble(&web->maxscaledenom, MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&web->maxscaledenom, MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MAXTEMPLATE):
         if(getString(&web->maxtemplate) == MS_FAILURE) return(-1);
@@ -5763,7 +5763,7 @@ int loadWeb(webObj *web, mapObj *map)
         if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
         break;
       case(MINSCALEDENOM):
-        if(getDouble(&web->minscaledenom, MS_NUM_CHECK_GTE, 1, -1) == -1) return(-1);
+        if(getDouble(&web->minscaledenom, MS_NUM_CHECK_GTE, 0, -1) == -1) return(-1);
         break;
       case(MINTEMPLATE):
         if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
