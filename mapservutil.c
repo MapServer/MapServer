@@ -1498,8 +1498,8 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
     if((status = msExecuteQuery(mapserv->map)) != MS_SUCCESS) return MS_FAILURE;
   }
 
-  if(mapserv->map->querymap.width != -1) mapserv->map->width = mapserv->map->querymap.width; /* make sure we use the right size */
-  if(mapserv->map->querymap.height != -1) mapserv->map->height = mapserv->map->querymap.height;
+  if(mapserv->map->querymap.width > 0 && mapserv->map->querymap.width <= mapserv->map->maxsize) mapserv->map->width = mapserv->map->querymap.width; /* make sure we use the right size */
+  if(mapserv->map->querymap.height > 0 && mapserv->map->querymap.height <= mapserv->map->maxsize) mapserv->map->height = mapserv->map->querymap.height;
 
   if(mapserv->UseShapes)
     if(MS_SUCCESS != setExtentFromShapes(mapserv))
