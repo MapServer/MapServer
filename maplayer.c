@@ -1214,7 +1214,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
       return(MS_FAILURE);
     }
 
-    msUpdateStyleFromString(c->styles[0], stylestring, MS_FALSE);
+    msUpdateStyleFromString(c->styles[0], stylestring);
     if(c->styles[0]->symbolname) {
       if((c->styles[0]->symbol =  msGetSymbolIndex(&(map->symbolset), c->styles[0]->symbolname, MS_TRUE)) == -1) {
         msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class of layer %s.", "msLayerGetFeatureStyle()", 
@@ -1229,7 +1229,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
       resetClassStyle(c);
       c->layer = layer;
     }
-    msUpdateClassFromString(c, stylestring, MS_FALSE);
+    msUpdateClassFromString(c, stylestring);
   } else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
              strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0) {
     msOGRUpdateStyleFromString(map, layer, c, stylestring);

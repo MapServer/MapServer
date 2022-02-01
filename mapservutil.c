@@ -225,15 +225,6 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
        */
       if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
 
-      /* check to see if there are any additions to the mapfile */
-      if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) {
-        if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) {
-          msFreeMap(map);
-          return NULL;
-        }
-        continue;
-      }
-
       if(strncasecmp(mapserv->request->ParamNames[i],"classgroup",10) == 0) { /* #4207 */
         for(j=0; j<map->numlayers; j++) {
           setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);

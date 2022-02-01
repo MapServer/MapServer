@@ -80,7 +80,7 @@
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
-        return msUpdateStyleFromString(self, snippet, MS_FALSE);
+        return msUpdateStyleFromString(self, snippet);
     }
 
     %newobject convertToString;

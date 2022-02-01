@@ -81,7 +81,7 @@
     /// Update a class from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
-        return msUpdateClassFromString(self, snippet, MS_FALSE);
+        return msUpdateClassFromString(self, snippet);
     }
 
     %newobject convertToString;

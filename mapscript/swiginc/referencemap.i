@@ -32,7 +32,7 @@
   /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
-    return msUpdateReferenceMapFromString(self, snippet, MS_FALSE);
+    return msUpdateReferenceMapFromString(self, snippet);
   }
 
   %newobject convertToString;

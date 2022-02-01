@@ -59,7 +59,7 @@
   /// Update a :class:`labelObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
-    return msUpdateLabelFromString(self, snippet,MS_FALSE);
+    return msUpdateLabelFromString(self, snippet);
   }
 
   %newobject convertToString;
