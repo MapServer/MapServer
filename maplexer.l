@@ -249,7 +249,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>connection                            { MS_LEXER_RETURN_TOKEN(CONNECTION); }
 <INITIAL>connectiontype                        { MS_LEXER_RETURN_TOKEN(CONNECTIONTYPE); }
 <INITIAL>data                                  { MS_LEXER_RETURN_TOKEN(DATA); }
-<INITIAL>datapattern                           { MS_LEXER_RETURN_TOKEN(DATAPATTERN); }
 <INITIAL>debug                                 { MS_LEXER_RETURN_TOKEN(DEBUG); }
 <INITIAL>driver                                { MS_LEXER_RETURN_TOKEN(DRIVER); }
 <INITIAL>empty                                 { MS_LEXER_RETURN_TOKEN(EMPTY); }
@@ -384,7 +383,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>symbolset                             { MS_LEXER_RETURN_TOKEN(SYMBOLSET); }
 <INITIAL>table                                 { MS_LEXER_RETURN_TOKEN(TABLE); }
 <INITIAL>template                              { MS_LEXER_RETURN_TOKEN(TEMPLATE); }
-<INITIAL>templatepattern                       { MS_LEXER_RETURN_TOKEN(TEMPLATEPATTERN); }
 <INITIAL>text                                  { MS_LEXER_RETURN_TOKEN(TEXT); }
 <INITIAL>tileindex                             { MS_LEXER_RETURN_TOKEN(TILEINDEX); }
 <INITIAL>tileitem                              { MS_LEXER_RETURN_TOKEN(TILEITEM); }

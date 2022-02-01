@@ -193,10 +193,6 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS};
 #define MINSUBDIVIDE  1147
 #define LABELFORMAT  1148
 
-#define DATAPATTERN 1150
-#define FILEPATTERN 1151
-#define TEMPLATEPATTERN 1152
-
 #define PROCESSING  1153
 
 /* The DEBUG macro is also used to request debugging output.  Redefine
