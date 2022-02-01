@@ -282,8 +282,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&mapstarttime, NULL);
 
   if(querymap) { /* use queryMapObj image dimensions */
-    if(map->querymap.width != -1) map->width = map->querymap.width;
-    if(map->querymap.height != -1) map->height = map->querymap.height;
+    if(map->querymap.width > 0 && map->querymap.width <= map->maxsize) map->width = map->querymap.width;
+    if(map->querymap.height > 0 && map->querymap.height <= map->maxsize) map->height = map->querymap.height;
   }
 
   msApplyMapConfigOptions(map);
