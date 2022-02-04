@@ -49,6 +49,8 @@ static char *const modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND"
                                 "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
                                };
 
+static int commonLoadForm(mapservObj *mapserv, mapObj *map);
+
 void msCGIWriteError(mapservObj *mapserv)
 {
   errorObj *ms_error = msGetErrorObj();
@@ -211,27 +213,17 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 
   /* ok to try to load now */
   map = msLoadMap(ms_mapfile, NULL, config);
-  if(!map) return NULL;
+  if(!map) return NULL;  
+
+  /* handle common parameters */
+  if(commonLoadForm(mapserv, map) != MS_SUCCESS) {
+    msFreeMap(map);
+    return NULL;
+  }
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
-    /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
+    /* check for any %variable% substitutions, we do this here so WMS/WFS  */
     /* services can take advantage of these "vendor specific" extensions */
-    for(i=0; i<mapserv->request->NumParams; i++) {
-      /*
-       ** a few CGI variables should be skipped altogether
-       **
-       ** qstring: there is separate per layer validation for attribute queries and the substitution checks
-       **          below conflict with that so we avoid it here
-       */
-      if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
-
-      if(strncasecmp(mapserv->request->ParamNames[i],"classgroup",10) == 0) { /* #4207 */
-        for(j=0; j<map->numlayers; j++) {
-          setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);
-        }
-        continue;
-      }
-    }
 
     msApplySubstitutions(map, mapserv->request->ParamNames, mapserv->request->ParamValues, mapserv->request->NumParams);
     msApplyDefaultSubstitutions(map);
@@ -375,6 +367,43 @@ int msCGIDispatchAPIRequest(mapservObj *mapserv)
   }
 
   return MS_FAILURE;
+}
+
+/*
+** Process common parameters that can apply to CGI and WxS calls - there are just a few and affect the mapObj directly.
+*/
+static int commonLoadForm(mapservObj *mapserv, mapObj *map)
+{
+  double tmpval;
+
+  if(!mapserv || !map) return MS_FAILURE;
+
+  for(int i=0; i<mapserv->request->NumParams; i++) {
+    if(strlen(mapserv->request->ParamValues[i]) == 0) continue;
+
+    if(strncasecmp(mapserv->request->ParamNames[i],"classgroup",10) == 0) { /* #4207 */
+      for(int j=0; j<map->numlayers; j++) {
+	setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);
+      }
+      continue;
+    }
+
+    // map.resolution and map_resolution are for backwards compatibility and are deprecated
+    if(strcasecmp(mapserv->request->ParamNames[i], "resolution") == 0 ||
+       strcasecmp(mapserv->request->ParamNames[i], "map.resolution") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_resolution") == 0) {
+      GET_NUMERIC(mapserv->request->ParamValues[i], tmpval);
+      if(tmpval < MS_RESOLUTION_MIN || tmpval > MS_RESOLUTION_MAX) {
+        msSetError(MS_WEBERR, "Resolution value out of range.", "commonLoadForm()");
+        return MS_FAILURE;
+      }
+      map->resolution = (int)tmpval;
+      continue;
+    }
+
+    // KEYSIZE    
+  }
+
+  return MS_SUCCESS;
 }
 
 /*
