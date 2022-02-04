@@ -152,7 +152,7 @@ static void setClassGroup(layerObj *layer, char *classgroup)
 */
 mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 {
-  int i, j;
+  int i;
   mapObj *map = NULL;
 
   const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
@@ -375,22 +375,22 @@ int msCGIDispatchAPIRequest(mapservObj *mapserv)
 static int commonLoadForm(mapservObj *mapserv, mapObj *map)
 {
   double tmpval;
+  char *strtoderr;
 
   if(!mapserv || !map) return MS_FAILURE;
 
   for(int i=0; i<mapserv->request->NumParams; i++) {
     if(strlen(mapserv->request->ParamValues[i]) == 0) continue;
 
-    if(strncasecmp(mapserv->request->ParamNames[i],"classgroup",10) == 0) { /* #4207 */
+    if(strncasecmp(mapserv->request->ParamNames[i], "classgroup", 10) == 0) { /* #4207 */
       for(int j=0; j<map->numlayers; j++) {
 	setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);
       }
       continue;
     }
 
-    // map.resolution and map_resolution are for backwards compatibility and are deprecated
-    if(strcasecmp(mapserv->request->ParamNames[i], "resolution") == 0 ||
-       strcasecmp(mapserv->request->ParamNames[i], "map.resolution") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_resolution") == 0) {
+    // either map.resolution and map_resolution or will work - we don't use plain RESOLUTION because of a potential conflict with the WCS parameter
+    if(strcasecmp(mapserv->request->ParamNames[i], "map.resolution") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_resolution") == 0) {
       GET_NUMERIC(mapserv->request->ParamValues[i], tmpval);
       if(tmpval < MS_RESOLUTION_MIN || tmpval > MS_RESOLUTION_MAX) {
         msSetError(MS_WEBERR, "Resolution value out of range.", "commonLoadForm()");
@@ -400,7 +400,37 @@ static int commonLoadForm(mapservObj *mapserv, mapObj *map)
       continue;
     }
 
-    // KEYSIZE    
+    if(strcasecmp(mapserv->request->ParamNames[i],"keysize") == 0) { // legend keysize, used with legend-related outputs
+      int n=0;
+      char **tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
+
+      if(!tokens) {
+        msSetError(MS_MEMERR, NULL, "commonLoadForm()");
+        return MS_FAILURE;
+      }
+
+      if(n != 2) {
+        msSetError(MS_WEBERR, "Not enough arguments for keysize.", "commonLoadForm()");
+        msFreeCharArray(tokens,n);
+        return MS_FAILURE;
+      }
+
+      GET_NUMERIC_NO_ERROR(tokens[0],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
+      map->legend.keysizex = (int)tmpval;
+      GET_NUMERIC_NO_ERROR(tokens[1],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
+      map->legend.keysizey = (int)tmpval;
+
+      msFreeCharArray(tokens, 2);
+
+      if(map->legend.keysizex < MS_LEGEND_KEYSIZE_MIN || map->legend.keysizex > MS_LEGEND_KEYSIZE_MAX || map->legend.keysizey < MS_LEGEND_KEYSIZE_MIN || map->legend.keysizey > MS_LEGEND_KEYSIZE_MAX) {
+        msSetError(MS_WEBERR, "Legend keysize out of range.", "commonLoadForm()");
+        return MS_FAILURE;
+      }
+
+      continue;
+    }
   }
 
   return MS_SUCCESS;
@@ -874,6 +904,26 @@ int msCGILoadForm(mapservObj *mapserv)
       }
 
       continue;
+    }
+
+    // map.imagetype and map_imagetype are for backwards compatibility and may be removed in the future
+    if(strcasecmp(mapserv->request->ParamNames[i], "imagetype") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map.imagetype") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_imagetype") == 0) {
+
+      const char *imagetype_validation_pattern = msLookupHashTable(&(mapserv->map->web.validation), "imagetype");
+      if(imagetype_validation_pattern != NULL && msEvalRegex(imagetype_validation_pattern, mapserv->request->ParamValues[i]) != MS_TRUE) { /* optional check */
+	msSetError(MS_WEBERR, "Imagetype value fails to validate.", "msCGILoadMap()");
+	return MS_FAILURE;
+      }
+
+      outputFormatObj *format = msSelectOutputFormat(mapserv->map, mapserv->request->ParamValues[i]);
+      if(format == NULL) {
+	msSetError(MS_WEBERR, "Invalid imagetype value.\n", "msCGILoadForm()");
+        return MS_FAILURE;
+      } else {
+	msFree((char *) mapserv->map->imagetype);
+	mapserv->map->imagetype = msStrdup(mapserv->request->ParamValues[i]);
+	msApplyOutputFormat(&(mapserv->map->outputformat), format, MS_NOOVERRIDE);
+      }
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"tilesize") == 0) { /* size of existing image (pixels) */
