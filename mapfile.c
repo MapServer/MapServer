@@ -416,22 +416,6 @@ int msGetLayerIndex(mapObj *map, const char *name)
   return(-1);
 }
 
-static
-int msGetClassIndex(layerObj *layer, const char *name)
-{
-  int i;
-
-  if(!name) return(-1);
-
-  for(i=0; i<layer->numclasses; i++) {
-    if(!layer->class[i]->name) /* skip it */
-      continue;
-    if(strcmp(name, layer->class[i]->name) == 0)
-      return(i);
-  }
-  return(-1);
-}
-
 int loadColor(colorObj *color, attributeBindingObj *binding)
 {
   int symbol;
@@ -3197,10 +3181,9 @@ labelObj *msGrowClassLabels( classObj *class )
 
 int loadClass(classObj *class, layerObj *layer)
 {
-  mapObj *map=NULL;
+  if(!class || !layer) return(-1);
 
   class->layer = (layerObj *) layer;
-  if(layer && layer->map) map = layer->map;
 
   for(;;) {
     switch(msyylex()) {
