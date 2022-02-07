@@ -100,6 +100,7 @@ char path[MS_MAXPATHLEN];
        msyystring_buffer[0] = '\0';
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
+         (void) yyunput; /* just to avoid warning about it being unrefed */ 
          break;
        case(MS_TOKENIZE_FILE):
          BEGIN(INITIAL);

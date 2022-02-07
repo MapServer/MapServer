@@ -389,7 +389,45 @@ static int commonLoadForm(mapservObj *mapserv, mapObj *map)
       continue;
     }
 
-    // either map.resolution and map_resolution or will work - we don't use plain RESOLUTION because of a potential conflict with the WCS parameter
+    /*
+    ** For backwards compatibility. Might want to consider a vendor parameter for WFS specifically and then deprecate this.
+    */
+    if(strcasecmp(mapserv->request->ParamNames[i], "map.extent") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_extent") == 0) {      
+      int n=0;
+      char **tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
+
+      if(!tokens) {
+	msSetError(MS_MEMERR, NULL, "commonLoadForm()");
+	return MS_FAILURE;
+      }
+
+      if(n != 4) {
+	msSetError(MS_WEBERR, "Not enough arguments for mapext.", "commonLoadForm()");
+	msFreeCharArray(tokens,n);
+	return MS_FAILURE;
+      }
+
+      GET_NUMERIC_NO_ERROR(tokens[0], map->extent.minx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[1], map->extent.miny);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[2], map->extent.maxx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[3], map->extent.maxy);
+      FREE_TOKENS_ON_ERROR(4);
+
+      msFreeCharArray(tokens, 4);
+
+      if (!MS_VALID_EXTENT(map->extent)) {
+	msSetError(MS_WEBERR, "Supplied extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "commonLoadForm()");
+	return(MS_FAILURE);
+      }
+    }
+
+    /* 
+    ** For backwards compatibility - we don't use plain RESOLUTION here because of a potential conflict WCS. Might want
+    ** to consider a vendor parameter for WMS specifically and then deprecate these.
+    */
     if(strcasecmp(mapserv->request->ParamNames[i], "map.resolution") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_resolution") == 0) {
       GET_NUMERIC(mapserv->request->ParamValues[i], tmpval);
       if(tmpval < MS_RESOLUTION_MIN || tmpval > MS_RESOLUTION_MAX) {
@@ -903,6 +941,16 @@ int msCGILoadForm(mapservObj *mapserv)
         return MS_FAILURE;
       }
 
+      continue;
+    }
+
+    if(strcasecmp(mapserv->request->ParamNames[i], "resolution") == 0) {
+      GET_NUMERIC(mapserv->request->ParamValues[i], tmpval);
+      if(tmpval < MS_RESOLUTION_MIN || tmpval > MS_RESOLUTION_MAX) {
+        msSetError(MS_WEBERR, "Resolution value out of range.", "msCGILoadForm()");
+        return MS_FAILURE;
+      }
+      mapserv->map->resolution = (int)tmpval;
       continue;
     }
 

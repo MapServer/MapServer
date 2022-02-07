@@ -2472,6 +2472,7 @@ YY_DECL
        msyystring_buffer[0] = '\0';
        switch(msyystate) {
        case(MS_TOKENIZE_DEFAULT):
+         (void) yyunput; /* just to avoid warning about it being unrefed */ 
          break;
        case(MS_TOKENIZE_FILE):
          BEGIN(INITIAL);
@@ -2525,7 +2526,7 @@ YY_DECL
          break;
        }
 
-#line 2529 "/vagrant/maplexer.c"
+#line 2530 "/vagrant/maplexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2580,1594 +2581,1594 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 157 "maplexer.l"
+#line 158 "maplexer.l"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 159 "maplexer.l"
+#line 160 "maplexer.l"
 { if (msyyreturncomments) return(MS_COMMENT); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 161 "maplexer.l"
+#line 162 "maplexer.l"
 { BEGIN(MULTILINE_COMMENT); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 162 "maplexer.l"
+#line 163 "maplexer.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 163 "maplexer.l"
+#line 164 "maplexer.l"
 ;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 164 "maplexer.l"
+#line 165 "maplexer.l"
 ;
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 165 "maplexer.l"
+#line 166 "maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 167 "maplexer.l"
+#line 168 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 168 "maplexer.l"
+#line 169 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_ENV); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 169 "maplexer.l"
+#line 170 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_MAPS); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 170 "maplexer.l"
+#line 171 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CONFIG_SECTION_PLUGINS) }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 172 "maplexer.l"
+#line 173 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_OR); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 173 "maplexer.l"
+#line 174 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_AND); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 174 "maplexer.l"
+#line 175 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_NOT); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 175 "maplexer.l"
+#line 176 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_EQ); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 176 "maplexer.l"
+#line 177 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_NE); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 177 "maplexer.l"
+#line 178 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_GT); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 178 "maplexer.l"
+#line 179 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_LT); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 179 "maplexer.l"
+#line 180 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_GE); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 180 "maplexer.l"
+#line 181 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_LE); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 181 "maplexer.l"
+#line 182 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_RE); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 183 "maplexer.l"
+#line 184 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_IEQ); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 184 "maplexer.l"
+#line 185 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_IRE); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 186 "maplexer.l"
+#line 187 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_IN); /* was IN */ }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 188 "maplexer.l"
+#line 189 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_AREA); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 189 "maplexer.l"
+#line 190 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LENGTH); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 190 "maplexer.l"
+#line 191 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_TOSTRING); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 191 "maplexer.l"
+#line 192 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_COMMIFY); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 192 "maplexer.l"
+#line 193 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_ROUND); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 193 "maplexer.l"
+#line 194 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_UPPER); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 194 "maplexer.l"
+#line 195 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LOWER); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 195 "maplexer.l"
+#line 196 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_INITCAP); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 196 "maplexer.l"
+#line 197 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FIRSTCAP); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 198 "maplexer.l"
+#line 199 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_BUFFER); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 199 "maplexer.l"
+#line 200 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DIFFERENCE); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 200 "maplexer.l"
+#line 201 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFY); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 201 "maplexer.l"
+#line 202 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFYPT); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 202 "maplexer.l"
+#line 203 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_GENERALIZE); }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 203 "maplexer.l"
+#line 204 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SMOOTHSIA); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 204 "maplexer.l"
+#line 205 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_CENTERLINE); }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 205 "maplexer.l"
+#line 206 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DENSIFY); }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 206 "maplexer.l"
+#line 207 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_OUTER); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 207 "maplexer.l"
+#line 208 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_INNER); } 
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 208 "maplexer.l"
+#line 209 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_JAVASCRIPT); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 210 "maplexer.l"
+#line 211 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_INTERSECTS); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 211 "maplexer.l"
+#line 212 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DISJOINT); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 212 "maplexer.l"
+#line 213 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_TOUCHES); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 213 "maplexer.l"
+#line 214 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_OVERLAPS); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 214 "maplexer.l"
+#line 215 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_CROSSES); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 215 "maplexer.l"
+#line 216 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_WITHIN); }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 216 "maplexer.l"
+#line 217 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_CONTAINS); }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 217 "maplexer.l"
+#line 218 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_EQUALS); }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 218 "maplexer.l"
+#line 219 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_BEYOND); }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 219 "maplexer.l"
+#line 220 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DWITHIN); }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 221 "maplexer.l"
+#line 222 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FROMTEXT); }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 223 "maplexer.l"
+#line 224 "maplexer.l"
 { msyynumber=MS_TRUE; return(MS_TOKEN_LITERAL_BOOLEAN); }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 224 "maplexer.l"
+#line 225 "maplexer.l"
 { msyynumber=MS_FALSE; return(MS_TOKEN_LITERAL_BOOLEAN); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 226 "maplexer.l"
+#line 227 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COLORRANGE); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 227 "maplexer.l"
+#line 228 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DATARANGE); }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 228 "maplexer.l"
+#line 229 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(RANGEITEM); }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 230 "maplexer.l"
+#line 231 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ALIGN); }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 231 "maplexer.l"
+#line 232 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ANCHORPOINT); }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 232 "maplexer.l"
+#line 233 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ANGLE); }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 233 "maplexer.l"
+#line 234 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ANTIALIAS); }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 234 "maplexer.l"
+#line 235 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BACKGROUNDCOLOR); }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 235 "maplexer.l"
+#line 236 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BANDSITEM); }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 236 "maplexer.l"
+#line 237 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BINDVALS); }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 237 "maplexer.l"
+#line 238 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BOM); }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 238 "maplexer.l"
+#line 239 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BROWSEFORMAT); }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 239 "maplexer.l"
+#line 240 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BUFFER); }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 240 "maplexer.l"
+#line 241 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CHARACTER); }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 241 "maplexer.l"
+#line 242 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLASS); }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 242 "maplexer.l"
+#line 243 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLASSITEM); }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 243 "maplexer.l"
+#line 244 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLASSGROUP); }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 244 "maplexer.l"
+#line 245 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLUSTER); }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 245 "maplexer.l"
+#line 246 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COLOR); }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 246 "maplexer.l"
+#line 247 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COMPFILTER); }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 247 "maplexer.l"
+#line 248 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COMPOSITE); }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 248 "maplexer.l"
+#line 249 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COMPOP); }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 249 "maplexer.l"
+#line 250 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONFIG); }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 250 "maplexer.l"
+#line 251 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONNECTION); }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 251 "maplexer.l"
+#line 252 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONNECTIONTYPE); }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 252 "maplexer.l"
+#line 253 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DATA); }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 253 "maplexer.l"
+#line 254 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DEBUG); }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 254 "maplexer.l"
+#line 255 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DRIVER); }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 255 "maplexer.l"
+#line 256 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EMPTY); }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 256 "maplexer.l"
+#line 257 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ENCODING); }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 257 "maplexer.l"
+#line 258 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(END); }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 258 "maplexer.l"
+#line 259 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ERROR); }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 259 "maplexer.l"
+#line 260 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EXPRESSION); }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 260 "maplexer.l"
+#line 261 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EXTENT); }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 261 "maplexer.l"
+#line 262 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EXTENSION); }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 262 "maplexer.l"
+#line 263 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FEATURE); }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 263 "maplexer.l"
+#line 264 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FILLED); }
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 264 "maplexer.l"
+#line 265 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FILTER); }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 265 "maplexer.l"
+#line 266 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FILTERITEM); }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 266 "maplexer.l"
+#line 267 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FOOTER); }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 267 "maplexer.l"
+#line 268 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FONT); }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 268 "maplexer.l"
+#line 269 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FONTSET); }
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 269 "maplexer.l"
+#line 270 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FORCE); }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 270 "maplexer.l"
+#line 271 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FORMATOPTION); }
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 271 "maplexer.l"
+#line 272 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FROM); }
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 272 "maplexer.l"
+#line 273 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GAP); }
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 273 "maplexer.l"
+#line 274 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GEOMTRANSFORM); }
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 274 "maplexer.l"
+#line 275 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GRID); }
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 275 "maplexer.l"
+#line 276 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GRIDSTEP); }
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 276 "maplexer.l"
+#line 277 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GRATICULE); }
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 277 "maplexer.l"
+#line 278 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GROUP); }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 278 "maplexer.l"
+#line 279 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(HEADER); }
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 279 "maplexer.l"
+#line 280 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGE); }
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 280 "maplexer.l"
+#line 281 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGECOLOR); }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 281 "maplexer.l"
+#line 282 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGETYPE); }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 282 "maplexer.l"
+#line 283 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEMODE); }
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 283 "maplexer.l"
+#line 284 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEPATH); }
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 284 "maplexer.l"
+#line 285 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEMPPATH); }
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 285 "maplexer.l"
+#line 286 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEURL); }
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 286 "maplexer.l"
+#line 287 "maplexer.l"
 { BEGIN(INCLUDE); }
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 287 "maplexer.l"
+#line 288 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INDEX); }
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 288 "maplexer.l"
+#line 289 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 289 "maplexer.l"
+#line 290 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 290 "maplexer.l"
+#line 291 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(JOIN); }
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 291 "maplexer.l"
+#line 292 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 292 "maplexer.l"
+#line 293 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(KEYSIZE); }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 293 "maplexer.l"
+#line 294 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(KEYSPACING); }
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 294 "maplexer.l"
+#line 295 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABEL); }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 295 "maplexer.l"
+#line 296 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELCACHE); }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 296 "maplexer.l"
+#line 297 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELFORMAT); }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 297 "maplexer.l"
+#line 298 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELITEM); }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 298 "maplexer.l"
+#line 299 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMAXSCALE); }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 299 "maplexer.l"
+#line 300 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMAXSCALEDENOM); }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 300 "maplexer.l"
+#line 301 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMINSCALE); }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 301 "maplexer.l"
+#line 302 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMINSCALEDENOM); }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 302 "maplexer.l"
+#line 303 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELREQUIRES); }
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 303 "maplexer.l"
+#line 304 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LATLON); }
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 304 "maplexer.l"
+#line 305 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LAYER); }
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 305 "maplexer.l"
+#line 306 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LEADER); }
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 306 "maplexer.l"
+#line 307 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LEGEND); }
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 307 "maplexer.l"
+#line 308 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LEGENDFORMAT); }
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 308 "maplexer.l"
+#line 309 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LINECAP); }
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 309 "maplexer.l"
+#line 310 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LINEJOIN); }
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 310 "maplexer.l"
+#line 311 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LINEJOINMAXSIZE); }
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 311 "maplexer.l"
+#line 312 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAP); }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 312 "maplexer.l"
+#line 313 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MARKER); }
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 313 "maplexer.l"
+#line 314 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MARKERSIZE); }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 314 "maplexer.l"
+#line 315 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MASK); }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 315 "maplexer.l"
+#line 316 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXARCS); }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 316 "maplexer.l"
+#line 317 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXBOXSIZE); }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 317 "maplexer.l"
+#line 318 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXDISTANCE); }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 318 "maplexer.l"
+#line 319 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXFEATURES); }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 319 "maplexer.l"
+#line 320 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXINTERVAL); }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 320 "maplexer.l"
+#line 321 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSCALE); }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 321 "maplexer.l"
+#line 322 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSCALEDENOM); }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 322 "maplexer.l"
+#line 323 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXGEOWIDTH); }
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 323 "maplexer.l"
+#line 324 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXLENGTH); }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 324 "maplexer.l"
+#line 325 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSIZE); }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 325 "maplexer.l"
+#line 326 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSUBDIVIDE); }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 326 "maplexer.l"
+#line 327 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXTEMPLATE); }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 327 "maplexer.l"
+#line 328 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXWIDTH); }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 328 "maplexer.l"
+#line 329 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(METADATA); }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 329 "maplexer.l"
+#line 330 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MIMETYPE); }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 330 "maplexer.l"
+#line 331 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINARCS); }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 331 "maplexer.l"
+#line 332 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINBOXSIZE); }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 332 "maplexer.l"
+#line 333 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINDISTANCE); }
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 333 "maplexer.l"
+#line 334 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REPEATDISTANCE); }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 334 "maplexer.l"
+#line 335 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXOVERLAPANGLE); } 
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 335 "maplexer.l"
+#line 336 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINFEATURESIZE); }
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 336 "maplexer.l"
+#line 337 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MININTERVAL); }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 337 "maplexer.l"
+#line 338 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSCALE); }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 338 "maplexer.l"
+#line 339 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSCALEDENOM); }
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 339 "maplexer.l"
+#line 340 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINGEOWIDTH); }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 340 "maplexer.l"
+#line 341 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSIZE); }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 341 "maplexer.l"
+#line 342 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSUBDIVIDE); }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 342 "maplexer.l"
+#line 343 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINTEMPLATE); }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 343 "maplexer.l"
+#line 344 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINWIDTH); }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 344 "maplexer.l"
+#line 345 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(NAME); }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 345 "maplexer.l"
+#line 346 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OFFSET); }
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 346 "maplexer.l"
+#line 347 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OFFSITE); }
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 347 "maplexer.l"
+#line 348 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OPACITY); }
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 348 "maplexer.l"
+#line 349 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONNECTIONOPTIONS); }
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 349 "maplexer.l"
+#line 350 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OUTLINECOLOR); }
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 350 "maplexer.l"
+#line 351 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OUTLINEWIDTH); }
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 351 "maplexer.l"
+#line 352 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OUTPUTFORMAT); }
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 352 "maplexer.l"
+#line 353 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PARTIALS); }
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-#line 353 "maplexer.l"
+#line 354 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PATTERN); }
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 354 "maplexer.l"
+#line 355 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POINTS); }
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 355 "maplexer.l"
+#line 356 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ITEMS); }
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 356 "maplexer.l"
+#line 357 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POSITION); }
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 357 "maplexer.l"
+#line 358 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POSTLABELCACHE); }
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 358 "maplexer.l"
+#line 359 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PRIORITY); }
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-#line 359 "maplexer.l"
+#line 360 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PROCESSING); }
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 360 "maplexer.l"
+#line 361 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PROJECTION); }
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 361 "maplexer.l"
+#line 362 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(QUERYFORMAT); }
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 362 "maplexer.l"
+#line 363 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(QUERYMAP); }
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 363 "maplexer.l"
+#line 364 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REFERENCE); }
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 364 "maplexer.l"
+#line 365 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REGION); }
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 365 "maplexer.l"
+#line 366 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(RELATIVETO); }
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 366 "maplexer.l"
+#line 367 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REQUIRES); }
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 367 "maplexer.l"
+#line 368 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(RESOLUTION); }
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 368 "maplexer.l"
+#line 369 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DEFRESOLUTION); }
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 369 "maplexer.l"
+#line 370 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALE); }
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 370 "maplexer.l"
+#line 371 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALEDENOM); }
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 371 "maplexer.l"
+#line 372 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALEBAR); }
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 372 "maplexer.l"
+#line 373 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALETOKEN); }
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 373 "maplexer.l"
+#line 374 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SHADOWCOLOR); }
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 374 "maplexer.l"
+#line 375 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SHADOWSIZE); }
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 375 "maplexer.l"
+#line 376 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SHAPEPATH); }
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 376 "maplexer.l"
+#line 377 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SIZE); }
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 377 "maplexer.l"
+#line 378 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SIZEUNITS); }
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 378 "maplexer.l"
+#line 379 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(STATUS); }
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 379 "maplexer.l"
+#line 380 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(STYLE); }
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 380 "maplexer.l"
+#line 381 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(STYLEITEM); }
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 381 "maplexer.l"
+#line 382 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOL); }
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 382 "maplexer.l"
+#line 383 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOLSCALE); }
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 383 "maplexer.l"
+#line 384 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOLSCALEDENOM); }
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 384 "maplexer.l"
+#line 385 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOLSET); }
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 385 "maplexer.l"
+#line 386 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TABLE); }
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 386 "maplexer.l"
+#line 387 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEMPLATE); }
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 387 "maplexer.l"
+#line 388 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEXT); }
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-#line 388 "maplexer.l"
+#line 389 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TILEINDEX); }
 	YY_BREAK
 case 220:
 YY_RULE_SETUP
-#line 389 "maplexer.l"
+#line 390 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TILEITEM); }
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 390 "maplexer.l"
+#line 391 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TILESRS); }
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 391 "maplexer.l"
+#line 392 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TITLE); }
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 392 "maplexer.l"
+#line 393 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TO); }
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 393 "maplexer.l"
+#line 394 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
 	YY_BREAK
 case 225:
 YY_RULE_SETUP
-#line 394 "maplexer.l"
+#line 395 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TOLERANCEUNITS); }
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 395 "maplexer.l"
+#line 396 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TRANSPARENT); }
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-#line 396 "maplexer.l"
+#line 397 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 	YY_BREAK
 case 228:
 YY_RULE_SETUP
-#line 397 "maplexer.l"
+#line 398 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TYPE); }
 	YY_BREAK
 case 229:
 YY_RULE_SETUP
-#line 398 "maplexer.l"
+#line 399 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(UNITS); }
 	YY_BREAK
 case 230:
 YY_RULE_SETUP
-#line 399 "maplexer.l"
+#line 400 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(UTFDATA); }
 	YY_BREAK
 case 231:
 YY_RULE_SETUP
-#line 400 "maplexer.l"
+#line 401 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(UTFITEM); }
 	YY_BREAK
 case 232:
 YY_RULE_SETUP
-#line 401 "maplexer.l"
+#line 402 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(VALIDATION); }
 	YY_BREAK
 case 233:
 YY_RULE_SETUP
-#line 402 "maplexer.l"
+#line 403 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(VALUES); }
 	YY_BREAK
 case 234:
 YY_RULE_SETUP
-#line 403 "maplexer.l"
+#line 404 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WEB); }
 	YY_BREAK
 case 235:
 YY_RULE_SETUP
-#line 404 "maplexer.l"
+#line 405 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WIDTH); }
 	YY_BREAK
 case 236:
 YY_RULE_SETUP
-#line 405 "maplexer.l"
+#line 406 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WKT); }
 	YY_BREAK
 case 237:
 YY_RULE_SETUP
-#line 406 "maplexer.l"
+#line 407 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WRAP); }
 	YY_BREAK
 case 238:
 YY_RULE_SETUP
-#line 408 "maplexer.l"
+#line 409 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_ANNOTATION); }
 	YY_BREAK
 case 239:
 YY_RULE_SETUP
-#line 409 "maplexer.l"
+#line 410 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_AUTO); }
 	YY_BREAK
 case 240:
 YY_RULE_SETUP
-#line 410 "maplexer.l"
+#line 411 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_AUTO2); }
 	YY_BREAK
 case 241:
 YY_RULE_SETUP
-#line 411 "maplexer.l"
+#line 412 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_BEVEL); }
 	YY_BREAK
 case 242:
 YY_RULE_SETUP
-#line 412 "maplexer.l"
+#line 413 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_BITMAP); }
 	YY_BREAK
 case 243:
 YY_RULE_SETUP
-#line 413 "maplexer.l"
+#line 414 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_BUTT); }
 	YY_BREAK
 case 244:
 YY_RULE_SETUP
-#line 414 "maplexer.l"
+#line 415 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CC); }
 	YY_BREAK
 case 245:
 YY_RULE_SETUP
-#line 415 "maplexer.l"
+#line 416 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_CENTER); }
 	YY_BREAK
 case 246:
 YY_RULE_SETUP
-#line 416 "maplexer.l"
+#line 417 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_CHART); }
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 417 "maplexer.l"
+#line 418 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_CIRCLE); }
 	YY_BREAK
 case 248:
 YY_RULE_SETUP
-#line 418 "maplexer.l"
+#line 419 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CL); }
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
-#line 419 "maplexer.l"
+#line 420 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CR); }
 	YY_BREAK
 case 250:
 YY_RULE_SETUP
-#line 420 "maplexer.l"
+#line 421 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DB_CSV); }
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
-#line 421 "maplexer.l"
+#line 422 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DB_POSTGRES); }
 	YY_BREAK
 case 252:
 YY_RULE_SETUP
-#line 422 "maplexer.l"
+#line 423 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DB_MYSQL); }
 	YY_BREAK
 case 253:
 YY_RULE_SETUP
-#line 423 "maplexer.l"
+#line 424 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DEFAULT); }
 	YY_BREAK
 case 254:
 YY_RULE_SETUP
-#line 424 "maplexer.l"
+#line 425 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DD); }
 	YY_BREAK
 case 255:
 YY_RULE_SETUP
-#line 425 "maplexer.l"
+#line 426 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_ELLIPSE); }
 	YY_BREAK
 case 256:
 YY_RULE_SETUP
-#line 426 "maplexer.l"
+#line 427 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_EMBED); }
 	YY_BREAK
 case 257:
 YY_RULE_SETUP
-#line 427 "maplexer.l"
+#line 428 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_FALSE); }
 	YY_BREAK
 case 258:
 YY_RULE_SETUP
-#line 428 "maplexer.l"
+#line 429 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_FEET); }
 	YY_BREAK
 case 259:
 YY_RULE_SETUP
-#line 429 "maplexer.l"
+#line 430 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_FOLLOW); }
 	YY_BREAK
 case 260:
 YY_RULE_SETUP
-#line 430 "maplexer.l"
+#line 431 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_GIANT); }
 	YY_BREAK
 case 261:
 YY_RULE_SETUP
-#line 431 "maplexer.l"
+#line 432 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_HATCH); }
 	YY_BREAK
 case 262:
 YY_RULE_SETUP
-#line 432 "maplexer.l"
+#line 433 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_KERNELDENSITY); }
 	YY_BREAK
 case 263:
 YY_RULE_SETUP
-#line 433 "maplexer.l"
+#line 434 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_IDW); }
 	YY_BREAK
 case 264:
 YY_RULE_SETUP
-#line 434 "maplexer.l"
+#line 435 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_HILITE); }
 	YY_BREAK
 case 265:
 YY_RULE_SETUP
-#line 435 "maplexer.l"
+#line 436 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_INCHES); }
 	YY_BREAK
 case 266:
 YY_RULE_SETUP
-#line 436 "maplexer.l"
+#line 437 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_KILOMETERS); }
 	YY_BREAK
 case 267:
 YY_RULE_SETUP
-#line 437 "maplexer.l"
+#line 438 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LARGE); }
 	YY_BREAK
 case 268:
 YY_RULE_SETUP
-#line 438 "maplexer.l"
+#line 439 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LC); }
 	YY_BREAK
 case 269:
 YY_RULE_SETUP
-#line 439 "maplexer.l"
+#line 440 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_LEFT); }
 	YY_BREAK
 case 270:
 YY_RULE_SETUP
-#line 440 "maplexer.l"
+#line 441 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_LINE); }
 	YY_BREAK
 case 271:
 YY_RULE_SETUP
-#line 441 "maplexer.l"
+#line 442 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LL); }
 	YY_BREAK
 case 272:
 YY_RULE_SETUP
-#line 442 "maplexer.l"
+#line 443 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LR); }
 	YY_BREAK
 case 273:
 YY_RULE_SETUP
-#line 443 "maplexer.l"
+#line 444 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_MEDIUM); }
 	YY_BREAK
 case 274:
 YY_RULE_SETUP
-#line 444 "maplexer.l"
+#line 445 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_METERS); }
 	YY_BREAK
 case 275:
 YY_RULE_SETUP
-#line 445 "maplexer.l"
+#line 446 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_NAUTICALMILES); }
 	YY_BREAK
 case 276:
 YY_RULE_SETUP
-#line 446 "maplexer.l"
+#line 447 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_MILES); }
 	YY_BREAK
 case 277:
 YY_RULE_SETUP
-#line 447 "maplexer.l"
+#line 448 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_MITER); }
 	YY_BREAK
 case 278:
 YY_RULE_SETUP
-#line 448 "maplexer.l"
+#line 449 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_MULTIPLE); }
 	YY_BREAK
 case 279:
 YY_RULE_SETUP
-#line 449 "maplexer.l"
+#line 450 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_NONE); }
 	YY_BREAK
 case 280:
 YY_RULE_SETUP
-#line 450 "maplexer.l"
+#line 451 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_NORMAL); }
 	YY_BREAK
 case 281:
 YY_RULE_SETUP
-#line 451 "maplexer.l"
+#line 452 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_OFF); }
 	YY_BREAK
 case 282:
 YY_RULE_SETUP
-#line 452 "maplexer.l"
+#line 453 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_OGR); }
 	YY_BREAK
 case 283:
 YY_RULE_SETUP
-#line 453 "maplexer.l"
+#line 454 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ON); }
 	YY_BREAK
 case 284:
 YY_RULE_SETUP
-#line 454 "maplexer.l"
+#line 455 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_JOIN_ONE_TO_ONE); }
 	YY_BREAK
 case 285:
 YY_RULE_SETUP
-#line 455 "maplexer.l"
+#line 456 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_JOIN_ONE_TO_MANY); }
 	YY_BREAK
 case 286:
 YY_RULE_SETUP
-#line 456 "maplexer.l"
+#line 457 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ORACLESPATIAL); }
 	YY_BREAK
 case 287:
 YY_RULE_SETUP
-#line 457 "maplexer.l"
+#line 458 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_PERCENTAGES); }
 	YY_BREAK
 case 288:
 YY_RULE_SETUP
-#line 458 "maplexer.l"
+#line 459 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_PIXMAP); }
 	YY_BREAK
 case 289:
 YY_RULE_SETUP
-#line 459 "maplexer.l"
+#line 460 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_PIXELS); }
 	YY_BREAK
 case 290:
 YY_RULE_SETUP
-#line 460 "maplexer.l"
+#line 461 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_POINT); }
 	YY_BREAK
 case 291:
 YY_RULE_SETUP
-#line 461 "maplexer.l"
+#line 462 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_POLYGON); }
 	YY_BREAK
 case 292:
 YY_RULE_SETUP
-#line 462 "maplexer.l"
+#line 463 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_POSTGIS); }
 	YY_BREAK
 case 293:
 YY_RULE_SETUP
-#line 463 "maplexer.l"
+#line 464 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_PLUGIN); }
 	YY_BREAK
 case 294:
 YY_RULE_SETUP
-#line 464 "maplexer.l"
+#line 465 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_QUERY); }
 	YY_BREAK
 case 295:
 YY_RULE_SETUP
-#line 465 "maplexer.l"
+#line 466 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_RASTER); }
 	YY_BREAK
 case 296:
 YY_RULE_SETUP
-#line 466 "maplexer.l"
+#line 467 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_RIGHT); }
 	YY_BREAK
 case 297:
 YY_RULE_SETUP
-#line 467 "maplexer.l"
+#line 468 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_ROUND); }
 	YY_BREAK
 case 298:
 YY_RULE_SETUP
-#line 468 "maplexer.l"
+#line 469 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SELECTED); }
 	YY_BREAK
 case 299:
 YY_RULE_SETUP
-#line 469 "maplexer.l"
+#line 470 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SIMPLE); }
 	YY_BREAK
 case 300:
 YY_RULE_SETUP
-#line 470 "maplexer.l"
+#line 471 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SINGLE); }
 	YY_BREAK
 case 301:
 YY_RULE_SETUP
-#line 471 "maplexer.l"
+#line 472 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SMALL); }
 	YY_BREAK
 case 302:
 YY_RULE_SETUP
-#line 472 "maplexer.l"
+#line 473 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_SQUARE); }
 	YY_BREAK
 case 303:
 YY_RULE_SETUP
-#line 473 "maplexer.l"
+#line 474 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SVG); }
 	YY_BREAK
 case 304:
 YY_RULE_SETUP
-#line 474 "maplexer.l"
+#line 475 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POLAROFFSET); }
 	YY_BREAK
 case 305:
 YY_RULE_SETUP
-#line 475 "maplexer.l"
+#line 476 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TINY); }
 	YY_BREAK
 case 306:
 YY_RULE_SETUP
-#line 476 "maplexer.l"
+#line 477 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_TRIANGLE); }
 	YY_BREAK
 case 307:
 YY_RULE_SETUP
-#line 477 "maplexer.l"
+#line 478 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TRUE); }
 	YY_BREAK
 case 308:
 YY_RULE_SETUP
-#line 478 "maplexer.l"
+#line 479 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TRUETYPE); }
 	YY_BREAK
 case 309:
 YY_RULE_SETUP
-#line 479 "maplexer.l"
+#line 480 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UC); }
 	YY_BREAK
 case 310:
 YY_RULE_SETUP
-#line 480 "maplexer.l"
+#line 481 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UL); }
 	YY_BREAK
 case 311:
 YY_RULE_SETUP
-#line 481 "maplexer.l"
+#line 482 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UR); }
 	YY_BREAK
 case 312:
 YY_RULE_SETUP
-#line 482 "maplexer.l"
+#line 483 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UNION); }
 	YY_BREAK
 case 313:
 YY_RULE_SETUP
-#line 483 "maplexer.l"
+#line 484 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UVRASTER); }
 	YY_BREAK
 case 314:
 YY_RULE_SETUP
-#line 484 "maplexer.l"
+#line 485 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CONTOUR); }
 	YY_BREAK
 case 315:
 YY_RULE_SETUP
-#line 485 "maplexer.l"
+#line 486 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_VECTOR); }
 	YY_BREAK
 case 316:
 YY_RULE_SETUP
-#line 486 "maplexer.l"
+#line 487 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 	YY_BREAK
 case 317:
 YY_RULE_SETUP
-#line 487 "maplexer.l"
+#line 488 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_WMS); }
 	YY_BREAK
 case 318:
 /* rule 318 can match eol */
 YY_RULE_SETUP
-#line 489 "maplexer.l"
+#line 490 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4179,7 +4180,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 319:
 YY_RULE_SETUP
-#line 498 "maplexer.l"
+#line 499 "maplexer.l"
 { 
   /* attribute binding - shape (fixed value) */
   return(MS_TOKEN_BINDING_SHAPE);
@@ -4187,7 +4188,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 320:
 YY_RULE_SETUP
-#line 502 "maplexer.l"
+#line 503 "maplexer.l"
 { 
   /* attribute binding - map cellsize */
   return(MS_TOKEN_BINDING_MAP_CELLSIZE);
@@ -4195,7 +4196,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 321:
 YY_RULE_SETUP
-#line 506 "maplexer.l"
+#line 507 "maplexer.l"
 { 
   /* attribute binding - data cellsize */
   return(MS_TOKEN_BINDING_DATA_CELLSIZE);
@@ -4204,7 +4205,7 @@ YY_RULE_SETUP
 case 322:
 /* rule 322 can match eol */
 YY_RULE_SETUP
-#line 510 "maplexer.l"
+#line 511 "maplexer.l"
 {
   /* attribute binding - numeric (no quotes) */
   msyytext++;
@@ -4218,7 +4219,7 @@ YY_RULE_SETUP
 case 323:
 /* rule 323 can match eol */
 YY_RULE_SETUP
-#line 519 "maplexer.l"
+#line 520 "maplexer.l"
 {
   /* attribute binding - string (single or double quotes) */
   msyytext+=2;
@@ -4232,7 +4233,7 @@ YY_RULE_SETUP
 case 324:
 /* rule 324 can match eol */
 YY_RULE_SETUP
-#line 528 "maplexer.l"
+#line 529 "maplexer.l"
 {
   /* attribute binding - time */
   msyytext+=2;
@@ -4245,7 +4246,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 325:
 YY_RULE_SETUP
-#line 538 "maplexer.l"
+#line 539 "maplexer.l"
 {
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                           msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4256,7 +4257,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 326:
 YY_RULE_SETUP
-#line 546 "maplexer.l"
+#line 547 "maplexer.l"
 {
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                           msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4268,7 +4269,7 @@ YY_RULE_SETUP
 case 327:
 /* rule 327 can match eol */
 YY_RULE_SETUP
-#line 554 "maplexer.l"
+#line 555 "maplexer.l"
 {
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
@@ -4281,7 +4282,7 @@ YY_RULE_SETUP
 case 328:
 /* rule 328 can match eol */
 YY_RULE_SETUP
-#line 563 "maplexer.l"
+#line 564 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
@@ -4294,7 +4295,7 @@ YY_RULE_SETUP
 case 329:
 /* rule 329 can match eol */
 YY_RULE_SETUP
-#line 572 "maplexer.l"
+#line 573 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4306,7 +4307,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 330:
 YY_RULE_SETUP
-#line 581 "maplexer.l"
+#line 582 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4318,7 +4319,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 331:
 YY_RULE_SETUP
-#line 590 "maplexer.l"
+#line 591 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4330,7 +4331,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 332:
 YY_RULE_SETUP
-#line 599 "maplexer.l"
+#line 600 "maplexer.l"
 {
                                                  msyystring_return_state = MS_STRING;
                                                  msyystring_begin = msyytext[0]; 
@@ -4341,7 +4342,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 333:
 YY_RULE_SETUP
-#line 607 "maplexer.l"
+#line 608 "maplexer.l"
 {
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4374,7 +4375,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 334:
 YY_RULE_SETUP
-#line 637 "maplexer.l"
+#line 638 "maplexer.l"
 { 
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4389,7 +4390,7 @@ YY_RULE_SETUP
 case 335:
 /* rule 335 can match eol */
 YY_RULE_SETUP
-#line 648 "maplexer.l"
+#line 649 "maplexer.l"
 {
                                                  char *yptr = msyytext;
                                                  while ( *yptr ) { 
@@ -4403,7 +4404,7 @@ YY_RULE_SETUP
 case 336:
 /* rule 336 can match eol */
 YY_RULE_SETUP
-#line 658 "maplexer.l"
+#line 659 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4432,7 +4433,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 337:
 YY_RULE_SETUP
-#line 684 "maplexer.l"
+#line 685 "maplexer.l"
 {
                                                  msyystring_return_state = MS_TOKEN_LITERAL_STRING;
                                                  msyystring_begin = msyytext[0]; 
@@ -4443,7 +4444,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 338:
 YY_RULE_SETUP
-#line 692 "maplexer.l"
+#line 693 "maplexer.l"
 { 
                                                     MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                             msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4454,12 +4455,12 @@ YY_RULE_SETUP
 case 339:
 /* rule 339 can match eol */
 YY_RULE_SETUP
-#line 699 "maplexer.l"
+#line 700 "maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(CONFIG_FILE):
-#line 701 "maplexer.l"
+#line 702 "maplexer.l"
 {
                                                   if( --include_stack_ptr < 0 )
                                                     return(EOF); /* end of main file */
@@ -4474,14 +4475,14 @@ case YY_STATE_EOF(CONFIG_FILE):
 case 340:
 /* rule 340 can match eol */
 YY_RULE_SETUP
-#line 712 "maplexer.l"
+#line 713 "maplexer.l"
 {
   return(0); 
 }
 	YY_BREAK
 case 341:
 YY_RULE_SETUP
-#line 716 "maplexer.l"
+#line 717 "maplexer.l"
 { 
                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4491,15 +4492,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 342:
 YY_RULE_SETUP
-#line 722 "maplexer.l"
+#line 723 "maplexer.l"
 { return(msyytext[0]); }
 	YY_BREAK
 case 343:
 YY_RULE_SETUP
-#line 723 "maplexer.l"
+#line 724 "maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4503 "/vagrant/maplexer.c"
+#line 4504 "/vagrant/maplexer.c"
 case YY_STATE_EOF(EXPRESSION_STRING):
 case YY_STATE_EOF(INCLUDE):
 case YY_STATE_EOF(MSSTRING):
@@ -5508,7 +5509,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 723 "maplexer.l"
+#line 724 "maplexer.l"
 
 
 /*
