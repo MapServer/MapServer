@@ -6315,6 +6315,7 @@ static void layerSubstituteString(layerObj *layer, const char *from, const char 
   if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
   if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
   if(layer->filter.string) layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
+  if(layer->mask) layer->mask = msCaseReplaceSubstring(layer->mask, from, to); // new for 8.0
 
   /* The bindvalues are most useful when able to substitute values from the URL */
   hashTableSubstituteString(&layer->bindvals, from, to);
@@ -6330,6 +6331,7 @@ static void mapSubstituteString(mapObj *map, const char *from, const char *to) {
   for(l=0;l<map->numlayers; l++) {
     layerSubstituteString(GET_LAYER(map,l), from, to);
   }
+
   /* output formats (#3751) */
   for(l=0; l<map->numoutputformats; l++) {
     int o;
@@ -6378,7 +6380,6 @@ static void applyClassDefaultSubstitutions(classObj *class, hashTableObj *table)
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
-
       classSubstituteString(class, tag, msLookupHashTable(table, default_key));
       free(tag);
     }
@@ -6411,20 +6412,20 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
 
 static void applyHashTableDefaultSubstitutions(hashTableObj *hashTab, hashTableObj *table)
 {
-	const char *default_key = msFirstKeyFromHashTable(table);
-	while (default_key) {
-		if (!strncasecmp(default_key, "default_", 8)) {
-			size_t buffer_size = (strlen(default_key) - 5);
-			const char *to = msLookupHashTable(table, default_key);
-			char *tag = (char *)msSmallMalloc(buffer_size);
-			snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+  const char *default_key = msFirstKeyFromHashTable(table);
+  while (default_key) {
+    if (!strncasecmp(default_key, "default_", 8)) {
+      size_t buffer_size = (strlen(default_key) - 5);
+      const char *to = msLookupHashTable(table, default_key);
+      char *tag = (char *)msSmallMalloc(buffer_size);
+      snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
-			hashTableSubstituteString(hashTab, tag, to);
-			free(tag);
-		}
-		default_key = msNextKeyFromHashTable(table, default_key);
-	}
-	return;
+      hashTableSubstituteString(hashTab, tag, to);
+      free(tag);
+    }
+    default_key = msNextKeyFromHashTable(table, default_key);
+  }
+  return;
 }
 
 /*
