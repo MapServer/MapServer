@@ -137,7 +137,7 @@
     /// Update a :class:`layerObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
     int updateFromString(char *snippet)
     {
-        return msUpdateLayerFromString(self, snippet, MS_FALSE);
+        return msUpdateLayerFromString(self, snippet);
     }
     
     %newobject convertToString;

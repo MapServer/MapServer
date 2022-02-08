@@ -49,6 +49,8 @@ static char *const modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND"
                                 "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
                                };
 
+static int commonLoadForm(mapservObj *mapserv, mapObj *map);
+
 void msCGIWriteError(mapservObj *mapserv)
 {
   errorObj *ms_error = msGetErrorObj();
@@ -150,7 +152,7 @@ static void setClassGroup(layerObj *layer, char *classgroup)
 */
 mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 {
-  int i, j;
+  int i;
   mapObj *map = NULL;
 
   const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
@@ -211,36 +213,17 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 
   /* ok to try to load now */
   map = msLoadMap(ms_mapfile, NULL, config);
-  if(!map) return NULL;
+  if(!map) return NULL;  
+
+  /* handle common parameters */
+  if(commonLoadForm(mapserv, map) != MS_SUCCESS) {
+    msFreeMap(map);
+    return NULL;
+  }
 
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
-    /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
+    /* check for any %variable% substitutions, we do this here so WMS/WFS  */
     /* services can take advantage of these "vendor specific" extensions */
-    for(i=0; i<mapserv->request->NumParams; i++) {
-      /*
-       ** a few CGI variables should be skipped altogether
-       **
-       ** qstring: there is separate per layer validation for attribute queries and the substitution checks
-       **          below conflict with that so we avoid it here
-       */
-      if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
-
-      /* check to see if there are any additions to the mapfile */
-      if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) {
-        if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) {
-          msFreeMap(map);
-          return NULL;
-        }
-        continue;
-      }
-
-      if(strncasecmp(mapserv->request->ParamNames[i],"classgroup",10) == 0) { /* #4207 */
-        for(j=0; j<map->numlayers; j++) {
-          setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);
-        }
-        continue;
-      }
-    }
 
     msApplySubstitutions(map, mapserv->request->ParamNames, mapserv->request->ParamValues, mapserv->request->NumParams);
     msApplyDefaultSubstitutions(map);
@@ -384,6 +367,111 @@ int msCGIDispatchAPIRequest(mapservObj *mapserv)
   }
 
   return MS_FAILURE;
+}
+
+/*
+** Process common parameters that can apply to CGI and WxS calls - there are just a few and affect the mapObj directly.
+*/
+static int commonLoadForm(mapservObj *mapserv, mapObj *map)
+{
+  double tmpval;
+  char *strtoderr;
+
+  if(!mapserv || !map) return MS_FAILURE;
+
+  for(int i=0; i<mapserv->request->NumParams; i++) {
+    if(strlen(mapserv->request->ParamValues[i]) == 0) continue;
+
+    if(strncasecmp(mapserv->request->ParamNames[i], "classgroup", 10) == 0) { /* #4207 */
+      for(int j=0; j<map->numlayers; j++) {
+	setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);
+      }
+      continue;
+    }
+
+    /*
+    ** For backwards compatibility. Might want to consider a vendor parameter for WFS specifically and then deprecate this.
+    */
+    if(strcasecmp(mapserv->request->ParamNames[i], "map.extent") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_extent") == 0) {      
+      int n=0;
+      char **tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
+
+      if(!tokens) {
+	msSetError(MS_MEMERR, NULL, "commonLoadForm()");
+	return MS_FAILURE;
+      }
+
+      if(n != 4) {
+	msSetError(MS_WEBERR, "Not enough arguments for mapext.", "commonLoadForm()");
+	msFreeCharArray(tokens,n);
+	return MS_FAILURE;
+      }
+
+      GET_NUMERIC_NO_ERROR(tokens[0], map->extent.minx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[1], map->extent.miny);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[2], map->extent.maxx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[3], map->extent.maxy);
+      FREE_TOKENS_ON_ERROR(4);
+
+      msFreeCharArray(tokens, 4);
+
+      if (!MS_VALID_EXTENT(map->extent)) {
+	msSetError(MS_WEBERR, "Supplied extent is invalid. Check that it is in the form: minx, miny, maxx, maxy", "commonLoadForm()");
+	return(MS_FAILURE);
+      }
+    }
+
+    /* 
+    ** For backwards compatibility - we don't use plain RESOLUTION here because of a potential conflict WCS. Might want
+    ** to consider a vendor parameter for WMS specifically and then deprecate these.
+    */
+    if(strcasecmp(mapserv->request->ParamNames[i], "map.resolution") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_resolution") == 0) {
+      GET_NUMERIC(mapserv->request->ParamValues[i], tmpval);
+      if(tmpval < MS_RESOLUTION_MIN || tmpval > MS_RESOLUTION_MAX) {
+        msSetError(MS_WEBERR, "Resolution value out of range.", "commonLoadForm()");
+        return MS_FAILURE;
+      }
+      map->resolution = (int)tmpval;
+      continue;
+    }
+
+    if(strcasecmp(mapserv->request->ParamNames[i],"keysize") == 0) { // legend keysize, used with legend-related outputs
+      int n=0;
+      char **tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
+
+      if(!tokens) {
+        msSetError(MS_MEMERR, NULL, "commonLoadForm()");
+        return MS_FAILURE;
+      }
+
+      if(n != 2) {
+        msSetError(MS_WEBERR, "Not enough arguments for keysize.", "commonLoadForm()");
+        msFreeCharArray(tokens,n);
+        return MS_FAILURE;
+      }
+
+      GET_NUMERIC_NO_ERROR(tokens[0],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
+      map->legend.keysizex = (int)tmpval;
+      GET_NUMERIC_NO_ERROR(tokens[1],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
+      map->legend.keysizey = (int)tmpval;
+
+      msFreeCharArray(tokens, 2);
+
+      if(map->legend.keysizex < MS_LEGEND_KEYSIZE_MIN || map->legend.keysizex > MS_LEGEND_KEYSIZE_MAX || map->legend.keysizey < MS_LEGEND_KEYSIZE_MIN || map->legend.keysizey > MS_LEGEND_KEYSIZE_MAX) {
+        msSetError(MS_WEBERR, "Legend keysize out of range.", "commonLoadForm()");
+        return MS_FAILURE;
+      }
+
+      continue;
+    }
+  }
+
+  return MS_SUCCESS;
 }
 
 /*
@@ -854,6 +942,36 @@ int msCGILoadForm(mapservObj *mapserv)
       }
 
       continue;
+    }
+
+    if(strcasecmp(mapserv->request->ParamNames[i], "resolution") == 0) {
+      GET_NUMERIC(mapserv->request->ParamValues[i], tmpval);
+      if(tmpval < MS_RESOLUTION_MIN || tmpval > MS_RESOLUTION_MAX) {
+        msSetError(MS_WEBERR, "Resolution value out of range.", "msCGILoadForm()");
+        return MS_FAILURE;
+      }
+      mapserv->map->resolution = (int)tmpval;
+      continue;
+    }
+
+    // map.imagetype and map_imagetype are for backwards compatibility and may be removed in the future
+    if(strcasecmp(mapserv->request->ParamNames[i], "imagetype") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map.imagetype") == 0 || strcasecmp(mapserv->request->ParamNames[i], "map_imagetype") == 0) {
+
+      const char *imagetype_validation_pattern = msLookupHashTable(&(mapserv->map->web.validation), "imagetype");
+      if(imagetype_validation_pattern != NULL && msEvalRegex(imagetype_validation_pattern, mapserv->request->ParamValues[i]) != MS_TRUE) { /* optional check */
+	msSetError(MS_WEBERR, "Imagetype value fails to validate.", "msCGILoadMap()");
+	return MS_FAILURE;
+      }
+
+      outputFormatObj *format = msSelectOutputFormat(mapserv->map, mapserv->request->ParamValues[i]);
+      if(format == NULL) {
+	msSetError(MS_WEBERR, "Invalid imagetype value.\n", "msCGILoadForm()");
+        return MS_FAILURE;
+      } else {
+	msFree((char *) mapserv->map->imagetype);
+	mapserv->map->imagetype = msStrdup(mapserv->request->ParamValues[i]);
+	msApplyOutputFormat(&(mapserv->map->outputformat), format, MS_NOOVERRIDE);
+      }
     }
 
     if(strcasecmp(mapserv->request->ParamNames[i],"tilesize") == 0) { /* size of existing image (pixels) */
