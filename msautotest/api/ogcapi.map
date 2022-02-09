@@ -12,11 +12,11 @@
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id_not_found.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/12345678" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_api.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/api" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: conformance.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/conformance" "QUERY_STRING=f=json" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_bad_mapfile.txt [MAPSERV] "PATH_INFO=/_[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
+# RUN_PARMS: ogcapi_invalid_mapfile.txt [MAPSERV] "PATH_INFO=/invalid.map/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 # RUN_PARMS: ogcapi_missing_api_signature1.txt [MAPSERV] "PATH_INFO=/[MAPFILE]" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 # RUN_PARMS: ogcapi_missing_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
-# RUN_PARMS: ogcapi_bad_api_signature1.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/bad" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
-# RUN_PARMS: ogcapi_bad_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/bad/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
+# RUN_PARMS: ogcapi_invalid_api_signature1.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/invalid" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
+# RUN_PARMS: ogcapi_invalid_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/invalid/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000

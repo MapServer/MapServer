@@ -2,5 +2,5 @@ Content-Type: text/html
 
 <HTML>
 <HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
-msLoadMap(): Unable to access file. (_ogcapi.map)
+msLoadMap(): Unable to access file. (invalid.map)
 </BODY></HTML>
