@@ -857,7 +857,7 @@ static void writeJoin(FILE *stream, int indent, joinObj *join)
   writeString(stream, indent, "TABLE", NULL, join->table);
   writeString(stream, indent, "TEMPLATE", NULL, join->template);
   writeString(stream, indent, "TO", NULL, join->to);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTRESQL", MS_DB_MYSQL, "MYSQL");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", join->connectiontype, 3, MS_DB_CSV, "CSV", MS_DB_POSTGRES, "POSTGRESQL", MS_DB_MYSQL, "MYSQL");
   writeKeyword(stream, indent, "TYPE", join->type, 1, MS_JOIN_ONE_TO_MANY, "ONE-TO-MANY");
   writeBlockEnd(stream, indent, "JOIN");
 }
