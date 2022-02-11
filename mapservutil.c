@@ -329,6 +329,11 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
           n++;
       }
 
+      if(n < 2) { // not enough non-zero length components for a legitimate API request
+        msFreeCharArray(tmp_api_path, tmp_api_path_length);
+        return MS_FALSE;
+      }
+
       mapserv->request->api_path = (char **) msSmallMalloc(sizeof(char *)*n);
       if(mapserv->request->api_path == NULL) {
         msFreeCharArray(tmp_api_path, tmp_api_path_length);

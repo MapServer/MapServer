@@ -6221,10 +6221,13 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath, const configObj
     if (msyyin == NULL) {
       msSetError(MS_IOERR, "tmpfile() failed to create temporary file", "msLoadMap()");
       msReleaseLock( TLOCK_PARSER );
+      msFreeMap(map);
+      return NULL;
     }
 
     if (msTransformXmlMapfile(ms_xmlmapfile_xslt, filename, msyyin) != MS_SUCCESS) {
       fclose(msyyin);
+      msFreeMap(map);
       return NULL;
     }
     fseek ( msyyin , 0 , SEEK_SET );
@@ -6233,6 +6236,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath, const configObj
     if((msyyin = fopen(filename,"r")) == NULL) {
       msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
       msReleaseLock( TLOCK_PARSER );
+      msFreeMap(map);
       return NULL;
     }
 #ifdef USE_XMLMAPFILE
@@ -6249,8 +6253,9 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath, const configObj
   /* of the mapfile as the default path */
   if(NULL == getcwd(szCWDPath, MS_MAXPATHLEN)) {
     msSetError(MS_MISCERR, "getcwd() returned a too long path", "msLoadMap()");
-    msFreeMap(map);
     msReleaseLock( TLOCK_PARSER );
+    msFreeMap(map);
+    return NULL;
   }
 
   if (new_mappath)

@@ -1000,21 +1000,24 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     }
   } else { // bbox query
 
-    for(int j=0; j<request->NumParams; j++) {
-      const char* paramName = request->ParamNames[j];
-      if (strcmp(paramName, "f") == 0 ||
-          strcmp(paramName, "bbox") == 0 ||
-          strcmp(paramName, "datetime") == 0 ||
-          strcmp(paramName, "limit") == 0 ||
-          strcmp(paramName, "offset") == 0)
-      {
+    const char *compliance_mode = msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
+    if(compliance_mode != NULL && strcasecmp(compliance_mode, "true") == 0) {
+      for(int j=0; j<request->NumParams; j++) {
+        const char* paramName = request->ParamNames[j];
+        if (strcmp(paramName, "f") == 0 ||
+            strcmp(paramName, "bbox") == 0 ||
+            strcmp(paramName, "datetime") == 0 ||
+            strcmp(paramName, "limit") == 0 ||
+            strcmp(paramName, "offset") == 0)
+        {
           // ok
-      }
-      else
-      {
+        }
+        else
+        {
           outputError(OGCAPI_PARAM_ERROR,
               (std::string("Unknown query parameter: ") + paramName).c_str());
           return MS_SUCCESS;
+        }
       }
     }
 
