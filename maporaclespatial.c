@@ -3477,7 +3477,12 @@ void msOracleSpatialEnablePaging(layerObj *layer, int value)
     msDebug("msOracleSpatialLayerEnablePaging was called.\n");
 
   if(!msOracleSpatialLayerIsOpen(layer))
-    msOracleSpatialLayerOpen(layer);
+  {
+    if(msOracleSpatialLayerOpen(layer) != MS_SUCCESS)
+    {
+      return;
+    }
+  }
 
   assert( layer->layerinfo != NULL);
   layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;

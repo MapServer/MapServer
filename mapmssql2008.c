@@ -3027,7 +3027,12 @@ void msMSSQL2008EnablePaging(layerObj *layer, int value)
     msMSSQL2008LayerInfo *layerinfo = NULL;
 
     if (!msMSSQL2008LayerIsOpen(layer))
-        msMSSQL2008LayerOpen(layer);
+    {
+      if(msMSSQL2008LayerOpen(layer) != MS_SUCCESS)
+      {
+        return;
+      }
+    }
 
     assert(layer->layerinfo != NULL);
     layerinfo = (msMSSQL2008LayerInfo *)layer->layerinfo;
