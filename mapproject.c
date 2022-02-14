@@ -112,6 +112,28 @@ static int msProjectHasLonWrapOrOver(projectionObj *in) {
     return MS_FALSE;
 }
 
+static char* getStringFromArgv(int argc, char** args)
+{
+    int i;
+    int len = 0;
+    for( i = 0; i < argc; i++ )
+    {
+        len += strlen(args[i]) + 1;
+    }
+    char* str = msSmallMalloc(len + 1);
+    len = 0;
+    for( i = 0; i < argc; i++ )
+    {
+        size_t arglen = strlen(args[i]);
+        memcpy(str + len, args[i], arglen);
+        len += arglen;
+        str[len] = ' ';
+        len ++;
+    }
+    str[len] = 0;
+    return str;
+}
+
 /************************************************************************/
 /*                         createNormalizedPJ()                         */
 /************************************************************************/
@@ -142,6 +164,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     PJ* pj_normalized;
     if( !in_str || !out_str )
         return NULL;
+    char* in_str_for_cache = getStringFromArgv(in->numargs, in->args);
+    char* out_str_for_cache = getStringFromArgv(out->numargs, out->args);
 
     if( in->proj_ctx->proj_ctx == out->proj_ctx->proj_ctx )
     {
@@ -149,8 +173,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
         pjCacheEntry* pj_cache = in->proj_ctx->pj_cache;
         for( i = 0; i < in->proj_ctx->pj_cache_size; i++ )
         {
-            if (strcmp(pj_cache[i].inStr, in_str) == 0 &&
-                strcmp(pj_cache[i].outStr, out_str) == 0 )
+            if (strcmp(pj_cache[i].inStr, in_str_for_cache) == 0 &&
+                strcmp(pj_cache[i].outStr, out_str_for_cache) == 0 )
             {
                 PJ* ret = pj_cache[i].pj;
                 if( i != 0 )
@@ -165,6 +189,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
                 fprintf(stderr, "cache hit!\n");
 #endif
                 *pbFreePJ = FALSE;
+                msFree(in_str_for_cache);
+                msFree(out_str_for_cache);
                 return ret;
             }
         }
@@ -225,14 +251,26 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     else
 #endif
     {
+#if PROJ_VERSION_MAJOR > 6 || (PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR >= 2)
+        pj_raw = proj_create_crs_to_crs_from_pj(in->proj_ctx->proj_ctx, in->proj, out->proj, NULL, NULL);
+#else
         pj_raw = proj_create_crs_to_crs(in->proj_ctx->proj_ctx, in_str, out_str, NULL);
+#endif
         if( !pj_raw )
+        {
+            msFree(in_str_for_cache);
+            msFree(out_str_for_cache);
             return NULL;
+        }
         pj_normalized = proj_normalize_for_visualization(in->proj_ctx->proj_ctx, pj_raw);
         proj_destroy(pj_raw);
     }
     if( !pj_normalized )
+    {
+        msFree(in_str_for_cache);
+        msFree(out_str_for_cache);
         return NULL;
+    }
 
     if( in->proj_ctx->proj_ctx == out->proj_ctx->proj_ctx )
     {
@@ -255,8 +293,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
             memmove(&pj_cache[1], &pj_cache[0],
                     (PJ_CACHE_ENTRY_SIZE - 1) * sizeof(pjCacheEntry));
         }
-        pj_cache[i].inStr = msStrdup(in_str);
-        pj_cache[i].outStr = msStrdup(out_str);
+        pj_cache[i].inStr = msStrdup(in_str_for_cache);
+        pj_cache[i].outStr = msStrdup(out_str_for_cache);
         pj_cache[i].pj = pj_normalized;
         *pbFreePJ = FALSE;
     }
@@ -264,6 +302,9 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     {
         *pbFreePJ = TRUE;
     }
+
+    msFree(in_str_for_cache);
+    msFree(out_str_for_cache);
 
     return pj_normalized;
 }
@@ -865,6 +906,11 @@ int msProcessProjection(projectionObj *p)
 #endif
 
       args[p->numargs] = (char*) "type=crs";
+#if 0
+      for( int i = 0; i <  p->numargs + 1; i++ )
+          fprintf(stderr, "%s ", args[i]);
+      fprintf(stderr, "\n");
+#endif
       if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, p->numargs + 1, args)) ) {
           int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
           if(p->numargs>1) {
