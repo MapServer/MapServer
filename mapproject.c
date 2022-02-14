@@ -2113,7 +2113,26 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
    *  parameter in order to disable dateline wrapping.
    */ 
   else {
-    if(out) {
+    int apply_over = MS_TRUE;
+#if PROJ_VERSION_MAJOR >= 6 && PROJ_VERSION_MAJOR < 9
+    // Workaround PROJ [6,9[ bug (fixed per https://github.com/OSGeo/PROJ/pull/3055)
+    // that prevents datum shifts from being applied when +over is added to +init=epsg:XXXX
+    // This is far from being bullet proof but it should work for most common use cases
+    if(in && in->proj)
+    {
+        if( in->numargs == 1 && EQUAL(in->args[0], "init=epsg:4326") &&
+            rect->minx >= -180 && rect->maxx <= 180 )
+        {
+            apply_over = MS_FALSE;
+        }
+        else if( in->numargs == 1 && EQUAL(in->args[0], "init=epsg:3857") &&
+                 rect->minx >= -20037508.3427892 && rect->maxx <= 20037508.3427892 )
+        {
+            apply_over = MS_FALSE;
+        }
+    }
+#endif
+    if(out && apply_over) {
       bFreeOutOver = MS_TRUE;
       msInitProjection(&out_over);
       msCopyProjectionExtended(&out_over,out,&over,1);
@@ -2125,7 +2144,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     } else {
       outp = out;
     }
-    if(in) {
+    if(in && apply_over) {
       bFreeInOver = MS_TRUE;
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
