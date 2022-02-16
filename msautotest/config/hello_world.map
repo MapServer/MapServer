@@ -1,0 +1,34 @@
+# RUN_PARMS: hello_world.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: missing_conf.txt [MAPSERV] -conf missing.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: empty1_conf.txt [MAPSERV] -conf empty1.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: empty2_conf.txt [MAPSERV] -conf empty2.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: invalid1_conf.txt [MAPSERV] -conf invalid1.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: invalid2_conf.txt [MAPSERV] -conf invalid2.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: ms_map_no_path1_conf.txt [MAPSERV] -conf ms_map_no_path1.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: ms_map_no_path2_conf_success.png [MAPSERV] -conf ms_map_no_path2.conf QUERY_STRING="map=HELLO_WORLD&mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: ms_map_no_path2_conf_failure1.txt [MAPSERV] -conf ms_map_no_path2.conf QUERY_STRING="map=invalid&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: ms_map_no_path2_conf_failure2.txt [MAPSERV] -conf ms_map_no_path2.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: ms_map_pattern_conf.txt [MAPSERV] -conf ms_map_pattern.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+# RUN_PARMS: ms_map_pattern_conf_bad_regex.txt [MAPSERV] -conf ms_map_pattern_bad_regex.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
+
+MAP
+  NAME 'hello_world'
+  EXTENT 1 1 100 100
+  SIZE 300 300
+
+  LAYER
+    NAME 'hello_world'
+    STATUS DEFAULT
+    TYPE POINT
+    FEATURE
+      POINTS 50 50 END
+    END
+    CLASS
+      TEXT 'Hello World!'
+      LABEL
+        SIZE MEDIUM
+	COLOR 0 0 0
+      END
+    END
+  END
+END
