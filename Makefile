@@ -32,7 +32,7 @@ api-testcase:
 	cd msautotest/api && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
 
 config-testcase:
-        cd msautotest/config  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
+	cd msautotest/config  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
 
 wxs-testcase:
 	cd msautotest/wxs && chmod 777 tmp && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
