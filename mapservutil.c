@@ -205,7 +205,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
       msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
       return NULL;
     }
-    if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
+    if(ms_map_pattern == NULL || msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
       msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
       return NULL;
     }
