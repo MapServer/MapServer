@@ -201,11 +201,15 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 
   /* validate ms_mapfile if tainted */
   if(ms_mapfile_tainted == MS_TRUE) {
+    if(ms_map_pattern == NULL) { // can't go any further, bail
+      msSetError(MS_WEBERR, "Required configuration value MS_MAP_PATTERN not set.", "msCGILoadMap()");
+      return NULL;
+    }
     if(msIsValidRegex(ms_map_bad_pattern) == MS_FALSE || msEvalRegex(ms_map_bad_pattern, ms_mapfile) == MS_TRUE) {
       msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
       return NULL;
     }
-    if(ms_map_pattern == NULL || msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
+    if(msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
       msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
       return NULL;
     }
