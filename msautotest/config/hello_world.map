@@ -13,6 +13,7 @@
 # RUN_PARMS: ms_map_pattern_conf_bad_regex.txt [MAPSERV] -conf ms_map_pattern_bad_regex.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
 # RUN_PARMS: ms_no_post_conf_success.png [MAPSERV] -conf ms_no_post.conf QUERY_STRING="map=HELLO_WORLD&mode=map" > [RESULT_DEMIME]
 # RUN_PARMS: ms_no_post_conf_failure.txt [MAPSERV] -conf ms_no_post.conf [POST]map=HELLO_WORLD&mode=map[/POST] > [RESULT_DEVERSION]
+# RUN_PARMS: ms_no_version_conf.txt [MAPSERV] -conf ms_no_version.conf QUERY_STRING="map=TRIGGER_ERROR&mode=map" > [RESULT]
 
 MAP
   NAME 'hello_world'

@@ -60,12 +60,14 @@ void msCGIWriteError(mapservObj *mapserv)
     return;
   }
 
+  const char *version = msGetVersion();
+
   if(!mapserv || !mapserv->map) {
     msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-    msIO_printf("<!-- %s -->\n", msGetVersion());
+    if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
     msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</BODY></HTML>");
@@ -79,7 +81,7 @@ void msCGIWriteError(mapservObj *mapserv)
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-      msIO_printf("<!-- %s -->\n", msGetVersion());
+      if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
       msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
       msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");
@@ -92,7 +94,7 @@ void msCGIWriteError(mapservObj *mapserv)
         msIO_sendHeaders();
         msIO_printf("<HTML>\n");
         msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-        msIO_printf("<!-- %s -->\n", msGetVersion());
+        if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
         msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
         msWriteErrorXML(stdout);
         msIO_printf("</BODY></HTML>");
@@ -102,7 +104,7 @@ void msCGIWriteError(mapservObj *mapserv)
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-      msIO_printf("<!-- %s -->\n", msGetVersion());
+      if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
       msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
       msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");

@@ -39,6 +39,8 @@
 #endif
 #include <stdarg.h>
 
+#include "cpl_conv.h"
+
 static char *const ms_errorCodes[MS_NUMERRORCODES] = { "",
   "Unable to access file.",
   "Memory allocation error.",
@@ -514,6 +516,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 char *msGetVersion()
 {
   static char version[1024];
+
+  if(CPLGetConfigOption("MS_NO_VERSION", NULL) != NULL) return ""; // supressing version information
 
   sprintf(version, "MapServer version %s", MS_VERSION);
 
