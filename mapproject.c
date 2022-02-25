@@ -900,6 +900,17 @@ int msProcessProjection(projectionObj *p)
   }
 
 #if PROJ_VERSION_MAJOR >= 6
+  if( p->numargs == 1 && strncmp(p->args[0], "init=", 5) != 0 )
+  {
+      /* Deal e.g. with EPSG:XXXX or ESRI:XXXX */
+      if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, p->numargs, p->args)) ) {
+          int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
+          msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                     "msProcessProjection()", proj_errno_string(l_pj_errno), p->args[0]) ;
+          return(-1);
+      }
+  }
+  else
   {
       char** args = (char**)msSmallMalloc(sizeof(char*) * (p->numargs+1));
       memcpy(args, p->args, sizeof(char*) * p->numargs);
