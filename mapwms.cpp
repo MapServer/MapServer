@@ -2888,7 +2888,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
 
   /* Report MapServer Version Information */
-  msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
+  const char *version = msGetVersion();
+  if(version[0] != '\0') msIO_printf("\n<!-- %s -->\n\n", version);
 
   /* WMS definition */
   msIO_printf("<Service>\n");

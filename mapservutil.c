@@ -60,12 +60,14 @@ void msCGIWriteError(mapservObj *mapserv)
     return;
   }
 
+  const char *version = msGetVersion();
+
   if(!mapserv || !mapserv->map) {
     msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-    msIO_printf("<!-- %s -->\n", msGetVersion());
+    if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
     msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</BODY></HTML>");
@@ -79,7 +81,7 @@ void msCGIWriteError(mapservObj *mapserv)
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-      msIO_printf("<!-- %s -->\n", msGetVersion());
+      if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
       msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
       msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");
@@ -92,7 +94,7 @@ void msCGIWriteError(mapservObj *mapserv)
         msIO_sendHeaders();
         msIO_printf("<HTML>\n");
         msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-        msIO_printf("<!-- %s -->\n", msGetVersion());
+        if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
         msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
         msWriteErrorXML(stdout);
         msIO_printf("</BODY></HTML>");
@@ -102,7 +104,7 @@ void msCGIWriteError(mapservObj *mapserv)
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-      msIO_printf("<!-- %s -->\n", msGetVersion());
+      if(version[0] != '\0') msIO_printf("<!-- %s -->\n", version);
       msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
       msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");
@@ -201,11 +203,15 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config)
 
   /* validate ms_mapfile if tainted */
   if(ms_mapfile_tainted == MS_TRUE) {
+    if(ms_map_pattern == NULL) { // can't go any further, bail
+      msSetError(MS_WEBERR, "Required configuration value MS_MAP_PATTERN not set.", "msCGILoadMap()");
+      return NULL;
+    }
     if(msIsValidRegex(ms_map_bad_pattern) == MS_FALSE || msEvalRegex(ms_map_bad_pattern, ms_mapfile) == MS_TRUE) {
       msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
       return NULL;
     }
-    if(ms_map_pattern != NULL && msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
+    if(msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
       msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.", "msCGILoadMap()");
       return NULL;
     }

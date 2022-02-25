@@ -31,6 +31,9 @@ warning:
 api-testcase:
 	cd msautotest/api && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
 
+config-testcase:
+	cd msautotest/config  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
+
 wxs-testcase:
 	cd msautotest/wxs && chmod 777 tmp && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && (./run_test.py $(AUTOTEST_OPTS) || /bin/true)
 
@@ -76,14 +79,14 @@ perl-testcase:
 
 
 test:  cmakebuild
-	@$(MAKE) $(MFLAGS)	api-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase mspython-testcase
+	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase mspython-testcase
 	@./print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
 	@$(MAKE) $(MFLAGS)	csharp-testcase
 	@$(MAKE) $(MFLAGS)	perl-testcase
 
 asan_compatible_tests:  cmakebuild
-	@$(MAKE) $(MFLAGS)	api-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase
+	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase
 	@./print-test-results.sh
 
 lexer: maplexer.c

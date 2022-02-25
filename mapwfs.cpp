@@ -821,7 +821,8 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
               msOWSGetSchemasLocation(map), wmtver);
 
   /* Report MapServer Version Information */
-  msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
+  const char *version = msGetVersion();
+  if(version[0] != '\0') msIO_printf("\n<!-- %s -->\n\n", version);
 
   /*
   ** SERVICE definition
