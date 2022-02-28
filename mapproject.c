@@ -366,7 +366,7 @@ static void msProjErrorLogger(void * user_data,
     {
         msDebug( "PROJ: Error: %s\n", message );
     }
-    else if( level == PJ_LOG_DEBUG)
+    else if( level == PJ_LOG_DEBUG )
     {
         msDebug( "PROJ: Debug: %s\n", message );
     }
