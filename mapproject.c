@@ -363,11 +363,11 @@ static void msProjErrorLogger(void * user_data,
                              int level, const char * message)
 {
     (void)user_data;
-    if( level == PJ_LOG_ERROR )
+    if( level == PJ_LOG_ERROR && msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_VV)
     {
         msDebug( "PROJ: Error: %s\n", message );
     }
-    else if( level == PJ_LOG_DEBUG )
+    else if( level == PJ_LOG_DEBUG)
     {
         msDebug( "PROJ: Debug: %s\n", message );
     }
