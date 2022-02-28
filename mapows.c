@@ -2642,7 +2642,10 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   
   msOWSGetEPSGProj( proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle );
 
-  if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 ) {
+  if( oldStyle == NULL ||
+      strncmp(oldStyle,"CRS:",4) == 0 ||
+      strncmp(oldStyle,"AUTO:",5) == 0 ||
+      strncmp(oldStyle,"AUTO2:",6) == 0 ) {
     msFree(oldStyle);
     return NULL;
   }
@@ -2653,9 +2656,12 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   msFree(oldStyle);
   for(i=0; tokens != NULL && i<numtokens; i++) {
     char urn[100];
+    char* colon = strchr(tokens[i], ':');
 
-    if( strncmp(tokens[i],"EPSG:",5) == 0 )
-      snprintf( urn, sizeof(urn), "urn:ogc:def:crs:EPSG::%s", tokens[i]+5 );
+    if( colon != NULL && strchr(colon + 1, ':') == NULL ) {
+      *colon = 0;
+      snprintf( urn, sizeof(urn), "urn:ogc:def:crs:%s::%s", tokens[i], colon + 1 );
+    }
     else if( strcasecmp(tokens[i],"imageCRS") == 0 )
       snprintf( urn, sizeof(urn), "urn:ogc:def:crs:OGC::imageCRS" );
     else if( strncmp(tokens[i],"urn:ogc:def:crs:",16) == 0 ) {

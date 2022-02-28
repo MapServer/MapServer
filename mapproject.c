@@ -900,6 +900,17 @@ int msProcessProjection(projectionObj *p)
   }
 
 #if PROJ_VERSION_MAJOR >= 6
+  if( p->numargs == 1 && strncmp(p->args[0], "init=", 5) != 0 )
+  {
+      /* Deal e.g. with EPSG:XXXX or ESRI:XXXX */
+      if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, p->numargs, p->args)) ) {
+          int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
+          msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                     "msProcessProjection()", proj_errno_string(l_pj_errno), p->args[0]) ;
+          return(-1);
+      }
+  }
+  else
   {
       char** args = (char**)msSmallMalloc(sizeof(char*) * (p->numargs+1));
       memcpy(args, p->args, sizeof(char*) * p->numargs);
@@ -2132,7 +2143,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
         }
     }
 #endif
-    if(out && apply_over) {
+    if(out && apply_over && out->numargs > 0 &&
+        (strncmp(out->args[0], "init=", 5) == 0 || strncmp(out->args[0], "proj=", 5) == 0)) {
       bFreeOutOver = MS_TRUE;
       msInitProjection(&out_over);
       msCopyProjectionExtended(&out_over,out,&over,1);
@@ -2144,7 +2156,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     } else {
       outp = out;
     }
-    if(in && apply_over) {
+    if(in && apply_over && in->numargs > 0 &&
+        (strncmp(in->args[0], "init=", 5) == 0 || strncmp(in->args[0], "proj=", 5) == 0)) {
       bFreeInOver = MS_TRUE;
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
