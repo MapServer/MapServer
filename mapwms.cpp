@@ -1028,8 +1028,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     } else if ((strcasecmp(names[i], "SRS") == 0 && nVersion < OWS_1_3_0) ||
                (strcasecmp(names[i], "CRS") == 0 && nVersion >= OWS_1_3_0)) {
       srsfound = true;
+      char* colon = strchr(values[i], ':');
+      bool srsOk = false;
       /* SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0" */
       if (strncasecmp(values[i], "EPSG:", 5) == 0) {
+        srsOk = true;
         /* SRS=EPSG:xxxx */
 
         /* don't need to copy init=xxx since the srsbuffer is only
@@ -1061,20 +1064,30 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           map->units = iUnits;
         */
       } else if (strncasecmp(values[i], "AUTO:", 5) == 0 && nVersion < OWS_1_3_0) {
-        srsbuffer = values[i];
-        /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
-        /*
-        if (msLoadProjectionString(&(map->projection), values[i]) != 0)
-          return msWMSException(map, nVersion, NULL);
+        if( nVersion < OWS_1_3_0 ) {
+            srsOk = true;
+            srsbuffer = values[i];
+            /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
+            /*
+            if (msLoadProjectionString(&(map->projection), values[i]) != 0)
+              return msWMSException(map, nVersion, NULL);
 
-        iUnits = GetMapserverUnitUsingProj(&(map->projection));
-        if (iUnits != -1)
-          map->units = iUnits;
-        */
-      } else if (nVersion >= OWS_1_3_0 && (strncasecmp(values[i], "AUTO2:", 6) == 0 ||
-                                           strncasecmp(values[i], "CRS:", 4) == 0)) {
+            iUnits = GetMapserverUnitUsingProj(&(map->projection));
+            if (iUnits != -1)
+              map->units = iUnits;
+            */
+        }
+      } else if (strncasecmp(values[i], "AUTO2:", 6) == 0 ||
+                 strncasecmp(values[i], "CRS:", 4) == 0) {
+        if( nVersion >= OWS_1_3_0 ) {
+            srsOk = true;
+            srsbuffer = values[i];
+        }
+      } else if( colon != NULL && strchr(colon + 1, ':') == NULL ) {
+        srsOk = true;
         srsbuffer = values[i];
-      } else {
+      }
+      if (!srsOk) {
         if (nVersion >= OWS_1_3_0) {
           msSetError(MS_WMSERR,
                      "Unsupported CRS namespace (only EPSG, AUTO2, CRS currently supported).",
@@ -2888,7 +2901,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
 
   /* Report MapServer Version Information */
-  msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
+  const char *version = msGetVersion();
+  if(version[0] != '\0') msIO_printf("\n<!-- %s -->\n\n", version);
 
   /* WMS definition */
   msIO_printf("<Service>\n");

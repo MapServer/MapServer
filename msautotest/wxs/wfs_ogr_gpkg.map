@@ -14,6 +14,9 @@
 # Filter using intersect with point
 # RUN_PARMS: wfs_ogr_gpkg_filter_intersects_point.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_6325&FILTER=<Filter><Intersects><PropertyName>msGeometry</PropertyName><gml:Point srsName=%22EPSG:4326%22><gml:coordinates>1.000000,0.000000</gml:coordinates></gml:Point></Intersects></Filter>" > [RESULT]
 #
+# PropertyIsNull
+# RUN_PARMS: wfs_ogr_gpkg_propertyisnull.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_6446&FILTER=<Filter><PropertyIsNull><PropertyName>fieldisnull</PropertyName></PropertyIsNull></Filter>" > [RESULT]
+#
 
 MAP
 
@@ -101,6 +104,24 @@ LAYER
     "wfs_use_default_extent_for_getfeature" "no"
   END
   TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+END # Layer
+
+LAYER
+  NAME "test_6446"
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/test_6446.gpkg"
+  METADATA
+    "ows_title"         "test_6446"
+    "wfs_featureid"     "id"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_use_default_extent_for_getfeature" "no"
+  END
+  TYPE POINT
   STATUS ON
   PROJECTION
     "init=epsg:4326"

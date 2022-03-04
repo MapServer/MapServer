@@ -16,6 +16,9 @@ sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mo
 sudo apt-get install -y --allow-unauthenticated libperl-dev
 sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
 
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+
 # list installed and available Python versions
 # pyenv versions
 # echo $(pyenv root)

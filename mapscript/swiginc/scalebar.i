@@ -32,7 +32,7 @@
   /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
-    return msUpdateScalebarFromString(self, snippet, MS_FALSE);
+    return msUpdateScalebarFromString(self, snippet);
   }
   
   %newobject convertToString;

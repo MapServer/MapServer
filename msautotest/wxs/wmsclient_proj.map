@@ -1,0 +1,41 @@
+#RUN_PARMS: wmsclient_proj.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=pop&BBOX=-20026376,-20048966,-200,-200&WIDTH=200&HEIGHT=200&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A3857" > [RESULT_DEMIME]
+
+#
+# Test requeseting a WMS layer in another projection than defined on the layers PROJECTION directive.  
+#
+
+MAP
+    NAME TEST
+    STATUS ON
+    SIZE 360 145
+    EXTENT -180 -60 180 85
+    IMAGECOLOR 255 255 0
+
+    IMAGETYPE png
+    PROJECTION
+        "init=epsg:4326"
+    END # PROJECTION
+
+    LAYER
+        NAME "pop"
+        TYPE RASTER
+        STATUS DEFAULT
+        CONNECTION "https://demo.mapserver.org/cgi-bin/msautotest?"
+        CONNECTIONTYPE WMS
+        EXTENT -180 -60 180 85
+        METADATA
+            "wms_srs"             "EPSG:4326 EPSG:3857"
+            "wms_name"            "world_merc"
+            "wms_server_version"  "1.1.1"
+            "wms_format"          "image/png"
+            "wms_enable_request" "*"
+        END
+
+        PROJECTION
+            "init=epsg:4326"
+        END # PROJECTION
+
+    END
+
+END # of map file
+

@@ -113,6 +113,28 @@ static int msProjectHasLonWrapOrOver(projectionObj *in) {
     return MS_FALSE;
 }
 
+static char* getStringFromArgv(int argc, char** args)
+{
+    int i;
+    int len = 0;
+    for( i = 0; i < argc; i++ )
+    {
+        len += strlen(args[i]) + 1;
+    }
+    char* str = msSmallMalloc(len + 1);
+    len = 0;
+    for( i = 0; i < argc; i++ )
+    {
+        size_t arglen = strlen(args[i]);
+        memcpy(str + len, args[i], arglen);
+        len += arglen;
+        str[len] = ' ';
+        len ++;
+    }
+    str[len] = 0;
+    return str;
+}
+
 /************************************************************************/
 /*                         createNormalizedPJ()                         */
 /************************************************************************/
@@ -143,6 +165,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     PJ* pj_normalized;
     if( !in_str || !out_str )
         return NULL;
+    char* in_str_for_cache = getStringFromArgv(in->numargs, in->args);
+    char* out_str_for_cache = getStringFromArgv(out->numargs, out->args);
 
     if( in->proj_ctx->proj_ctx == out->proj_ctx->proj_ctx )
     {
@@ -150,8 +174,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
         pjCacheEntry* pj_cache = in->proj_ctx->pj_cache;
         for( i = 0; i < in->proj_ctx->pj_cache_size; i++ )
         {
-            if (strcmp(pj_cache[i].inStr, in_str) == 0 &&
-                strcmp(pj_cache[i].outStr, out_str) == 0 )
+            if (strcmp(pj_cache[i].inStr, in_str_for_cache) == 0 &&
+                strcmp(pj_cache[i].outStr, out_str_for_cache) == 0 )
             {
                 PJ* ret = pj_cache[i].pj;
                 if( i != 0 )
@@ -166,6 +190,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
                 fprintf(stderr, "cache hit!\n");
 #endif
                 *pbFreePJ = FALSE;
+                msFree(in_str_for_cache);
+                msFree(out_str_for_cache);
                 return ret;
             }
         }
@@ -226,14 +252,26 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     else
 #endif
     {
+#if PROJ_VERSION_MAJOR > 6 || (PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR >= 2)
+        pj_raw = proj_create_crs_to_crs_from_pj(in->proj_ctx->proj_ctx, in->proj, out->proj, NULL, NULL);
+#else
         pj_raw = proj_create_crs_to_crs(in->proj_ctx->proj_ctx, in_str, out_str, NULL);
+#endif
         if( !pj_raw )
+        {
+            msFree(in_str_for_cache);
+            msFree(out_str_for_cache);
             return NULL;
+        }
         pj_normalized = proj_normalize_for_visualization(in->proj_ctx->proj_ctx, pj_raw);
         proj_destroy(pj_raw);
     }
     if( !pj_normalized )
+    {
+        msFree(in_str_for_cache);
+        msFree(out_str_for_cache);
         return NULL;
+    }
 
     if( in->proj_ctx->proj_ctx == out->proj_ctx->proj_ctx )
     {
@@ -256,8 +294,8 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
             memmove(&pj_cache[1], &pj_cache[0],
                     (PJ_CACHE_ENTRY_SIZE - 1) * sizeof(pjCacheEntry));
         }
-        pj_cache[i].inStr = msStrdup(in_str);
-        pj_cache[i].outStr = msStrdup(out_str);
+        pj_cache[i].inStr = msStrdup(in_str_for_cache);
+        pj_cache[i].outStr = msStrdup(out_str_for_cache);
         pj_cache[i].pj = pj_normalized;
         *pbFreePJ = FALSE;
     }
@@ -265,6 +303,9 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     {
         *pbFreePJ = TRUE;
     }
+
+    msFree(in_str_for_cache);
+    msFree(out_str_for_cache);
 
     return pj_normalized;
 }
@@ -322,7 +363,11 @@ static void msProjErrorLogger(void * user_data,
                              int level, const char * message)
 {
     (void)user_data;
+#if PROJ_VERSION_MAJOR >= 6    
+    if( level == PJ_LOG_ERROR && msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_VV )
+#else
     if( level == PJ_LOG_ERROR )
+#endif
     {
         msDebug( "PROJ: Error: %s\n", message );
     }
@@ -558,6 +603,12 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     else if( out == NULL && in != NULL && msProjIsGeographicCRS(in) )
     {
         obj->no_op = MS_TRUE;
+    }
+    else if( (in == NULL || in->proj == NULL) &&
+             (out == NULL || out->proj == NULL) )
+    {
+        msProjectDestroyReprojector(obj);
+        return NULL;
     }
     return obj;
 }
@@ -853,6 +904,17 @@ int msProcessProjection(projectionObj *p)
   }
 
 #if PROJ_VERSION_MAJOR >= 6
+  if( p->numargs == 1 && strncmp(p->args[0], "init=", 5) != 0 )
+  {
+      /* Deal e.g. with EPSG:XXXX or ESRI:XXXX */
+      if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, p->numargs, p->args)) ) {
+          int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
+          msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                     "msProcessProjection()", proj_errno_string(l_pj_errno), p->args[0]) ;
+          return(-1);
+      }
+  }
+  else
   {
       char** args = (char**)msSmallMalloc(sizeof(char*) * (p->numargs+1));
       memcpy(args, p->args, sizeof(char*) * p->numargs);
@@ -872,6 +934,11 @@ int msProcessProjection(projectionObj *p)
 #endif
 
       args[p->numargs] = (char*) "type=crs";
+#if 0
+      for( int i = 0; i <  p->numargs + 1; i++ )
+          fprintf(stderr, "%s ", args[i]);
+      fprintf(stderr, "\n");
+#endif
       if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, p->numargs + 1, args)) ) {
           int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
           if(p->numargs>1) {
@@ -1963,41 +2030,85 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   double dfLonWrap = 0.0;
   reprojectionObj* reprojector = NULL;
 
-  /* Detect projecting from north polar stereographic to longlat */
+  /* Detect projecting from polar stereographic to longlat */
   if( in && !in->gt.need_geotransform &&
       out && !out->gt.need_geotransform &&
       !msProjIsGeographicCRS(in) && msProjIsGeographicCRS(out) )
   {
-      pointObj p;
-      p.x = 0.0;
-      p.y = 0.0;
       reprojector = msProjectCreateReprojector(in, out);
-      if( reprojector &&
-          msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
-          fabs(p.y - 90) < 1e-8 )
+      for( int sign = 1; sign >= -1; sign -= 2 )
       {
-        /* Is the pole in the rectangle ? */
-        if( 0 >= rect->minx && 0 >= rect->miny &&
-            0 <= rect->maxx && 0 <= rect->maxy )
-        {
-            if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
+          pointObj p;
+          p.x = 0.0;
+          p.y = 0.0;
+          if( reprojector &&
+              msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
+              fabs(p.y - sign * 90) < 1e-8 )
+          {
+            /* Is the pole in the rectangle ? */
+            if( 0 >= rect->minx && 0 >= rect->miny &&
+                0 <= rect->maxx && 0 <= rect->maxy )
             {
-                rect->minx = -180.0;
-                rect->maxx = 180.0;
-                rect->maxy = 90.0;
-                msProjectDestroyReprojector(reprojector);
-                return MS_SUCCESS;
+                if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
+                {
+                    rect->minx = -180.0;
+                    rect->maxx = 180.0;
+                    rect->maxy = sign * 90.0;
+                    msProjectDestroyReprojector(reprojector);
+                    return MS_SUCCESS;
+                }
             }
-        }
-        /* Are we sure the dateline is not enclosed ? */
-        else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
-        {
-            ret = msProjectRectAsPolygon(reprojector, rect );
-            msProjectDestroyReprojector(reprojector);
-            return ret;
-        }
+            /* Are we sure the dateline is not enclosed ? */
+            else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
+            {
+                ret = msProjectRectAsPolygon(reprojector, rect );
+                msProjectDestroyReprojector(reprojector);
+                return ret;
+            }
+          }
       }
   }
+
+  /* Detect projecting from polar stereographic to another projected system */
+  else if( in && !in->gt.need_geotransform &&
+      out && !out->gt.need_geotransform &&
+      !msProjIsGeographicCRS(in) && !msProjIsGeographicCRS(out) )
+  {
+      reprojectionObj* reprojectorToLongLat = msProjectCreateReprojector(in, NULL);
+      for( int sign = 1; sign >= -1; sign -= 2 )
+      {
+          pointObj p;
+          p.x = 0.0;
+          p.y = 0.0;
+          if( reprojectorToLongLat &&
+              msProjectPointEx(reprojectorToLongLat, &p) == MS_SUCCESS &&
+              fabs(p.y - 90) < 1e-8 )
+          {
+            reprojector = msProjectCreateReprojector(in, out);
+            /* Is the pole in the rectangle ? */
+            if( 0 >= rect->minx && 0 >= rect->miny &&
+                0 <= rect->maxx && 0 <= rect->maxy )
+            {
+                if( msProjectRectAsPolygon(reprojector, rect ) == MS_SUCCESS )
+                {
+                    msProjectDestroyReprojector(reprojector);
+                    msProjectDestroyReprojector(reprojectorToLongLat);
+                    return MS_SUCCESS;
+                }
+            }
+            /* Are we sure the dateline is not enclosed ? */
+            else if( rect->maxy < 0 || rect->maxx < 0 || rect->minx > 0 )
+            {
+                ret = msProjectRectAsPolygon(reprojector, rect );
+                msProjectDestroyReprojector(reprojector);
+                msProjectDestroyReprojector(reprojectorToLongLat);
+                return ret;
+            }
+          }
+      }
+      msProjectDestroyReprojector(reprojectorToLongLat);
+  }
+
 
   if(in && msProjectHasLonWrap(in, &dfLonWrap) && dfLonWrap == 180.0) {
     inp = in;
@@ -2017,7 +2128,27 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
    *  parameter in order to disable dateline wrapping.
    */ 
   else {
-    if(out) {
+    int apply_over = MS_TRUE;
+#if PROJ_VERSION_MAJOR >= 6 && PROJ_VERSION_MAJOR < 9
+    // Workaround PROJ [6,9[ bug (fixed per https://github.com/OSGeo/PROJ/pull/3055)
+    // that prevents datum shifts from being applied when +over is added to +init=epsg:XXXX
+    // This is far from being bullet proof but it should work for most common use cases
+    if(in && in->proj)
+    {
+        if( in->numargs == 1 && EQUAL(in->args[0], "init=epsg:4326") &&
+            rect->minx >= -180 && rect->maxx <= 180 )
+        {
+            apply_over = MS_FALSE;
+        }
+        else if( in->numargs == 1 && EQUAL(in->args[0], "init=epsg:3857") &&
+                 rect->minx >= -20037508.3427892 && rect->maxx <= 20037508.3427892 )
+        {
+            apply_over = MS_FALSE;
+        }
+    }
+#endif
+    if(out && apply_over && out->numargs > 0 &&
+        (strncmp(out->args[0], "init=", 5) == 0 || strncmp(out->args[0], "proj=", 5) == 0)) {
       bFreeOutOver = MS_TRUE;
       msInitProjection(&out_over);
       msCopyProjectionExtended(&out_over,out,&over,1);
@@ -2029,7 +2160,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     } else {
       outp = out;
     }
-    if(in) {
+    if(in && apply_over && in->numargs > 0 &&
+        (strncmp(in->args[0], "init=", 5) == 0 || strncmp(in->args[0], "proj=", 5) == 0)) {
       bFreeInOver = MS_TRUE;
       msInitProjection(&in_over);
       msCopyProjectionExtended(&in_over,in,&over,1);
@@ -2658,6 +2790,8 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 #else
   proj_str = pj_get_def( psProj->proj, 0 );
 #endif
+  if( proj_str == NULL )
+    return -1;
 
   /* -------------------------------------------------------------------- */
   /*      Handle case of named units.                                     */

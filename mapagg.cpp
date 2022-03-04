@@ -781,56 +781,61 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
                "AGG2 driver only supports RGB or RGBA pixel models.", "agg2CreateImage()");
     return image;
   }
-  image = (imageObj *) calloc(1, sizeof (imageObj));
-  MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
-  AGG2Renderer *r = new AGG2Renderer();
+  if (width > 0 && height > 0) {
+    image = (imageObj *) calloc(1, sizeof (imageObj));
+    MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
+    AGG2Renderer *r = new AGG2Renderer();
   
-  /* Compute size on 64bit and check that it is compatible of the platform size_t */
-  AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
-  size_t bufSize = (size_t)bufSize64;
-  if( (AGG_INT64U)bufSize != bufSize64 ) {
-    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
-               __FILE__, __LINE__, bufSize64);
-    free(image);
-    delete r;
-    return NULL;
-  }
+    /* Compute size on 64bit and check that it is compatible of the platform size_t */
+    AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
+    size_t bufSize = (size_t)bufSize64;
+    if( (AGG_INT64U)bufSize != bufSize64 ) {
+      msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
+                 __FILE__, __LINE__, bufSize64);
+      free(image);
+      delete r;
+      return NULL;
+    }
 
-  try
-  {
+    try
+    {
       r->buffer.resize(bufSize / sizeof(band_type));
-  }
-  catch( const std::bad_alloc& ) {
-    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
-               __FILE__, __LINE__, bufSize64);
-    free(image);
-    delete r;
-    return NULL;
-  }
-  r->m_rendering_buffer.attach(r->buffer.data(), width, height, width * 4);
-  r->m_pixel_format.attach(r->m_rendering_buffer);
-  r->m_compop_pixel_format.attach(r->m_rendering_buffer);
-  r->m_renderer_base.attach(r->m_pixel_format);
-  r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
-  r->m_renderer_scanline.attach(r->m_renderer_base);
-  r->m_renderer_scanline_aliased.attach(r->m_renderer_base);
-  r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
-  if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
-    r->default_gamma = 0.75;
-  }
-  r->gamma_function.set(0,r->default_gamma);
-  r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
-  if( bg && !format->transparent )
-    r->m_renderer_base.clear(aggColor(bg));
-  else
-    r->m_renderer_base.clear(AGG_NO_COLOR);
+    }
+    catch( const std::bad_alloc& ) {
+      msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
+                 __FILE__, __LINE__, bufSize64);
+      free(image);
+      delete r;
+      return NULL;
+    }
+    r->m_rendering_buffer.attach(r->buffer.data(), width, height, width * 4);
+    r->m_pixel_format.attach(r->m_rendering_buffer);
+    r->m_compop_pixel_format.attach(r->m_rendering_buffer);
+    r->m_renderer_base.attach(r->m_pixel_format);
+    r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
+    r->m_renderer_scanline.attach(r->m_renderer_base);
+    r->m_renderer_scanline_aliased.attach(r->m_renderer_base);
+    r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
+    if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
+      r->default_gamma = 0.75;
+    }
+    r->gamma_function.set(0,r->default_gamma);
+    r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
+    if( bg && !format->transparent )
+      r->m_renderer_base.clear(aggColor(bg));
+    else
+      r->m_renderer_base.clear(AGG_NO_COLOR);
 
-  if (!bg || format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
-    r->use_alpha = true;
+    if (!bg || format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
+      r->use_alpha = true;
+    } else {
+      r->use_alpha = false;
+    }
+    image->img.plugin = (void*) r;
   } else {
-    r->use_alpha = false;
+    msSetError(MS_RENDERERERR, "Cannot create cairo image of size %dx%d.",
+               "msImageCreateCairo()", width, height);
   }
-  image->img.plugin = (void*) r;
 
   return image;
 }

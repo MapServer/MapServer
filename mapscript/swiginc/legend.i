@@ -31,7 +31,7 @@
   /// Update a :class:`legendObj` from a string snippet. Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
-    return msUpdateLegendFromString(self, snippet, MS_FALSE);
+    return msUpdateLegendFromString(self, snippet);
   }
   
   %newobject convertToString;

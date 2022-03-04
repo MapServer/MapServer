@@ -140,7 +140,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   GDALDriverH  hMemDriver, hOutputDriver;
   int          nBands = 1;
   int          iLine;
-  char        **papszOptions = NULL;
   outputFormatObj *format = image->format;
   rasterBufferObj rb;
   GDALDataType eDataType = GDT_Byte;
@@ -415,24 +414,70 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   }
 
   /* -------------------------------------------------------------------- */
+  /*      Separate creation options from metadata items.                  */
+  /* -------------------------------------------------------------------- */
+  std::vector<char*> apszCreationOptions;
+  for( int i = 0; i < format->numformatoptions; i++ )
+  {
+    char* option = format->formatoptions[i];
+
+    // MDI stands for MetaDataItem
+    if( STARTS_WITH(option, "mdi_") )
+    {
+      const char* option_without_band = option + strlen("mdi_");
+      GDALMajorObjectH hObject = (GDALMajorObjectH)hMemDS;
+      if( STARTS_WITH(option_without_band, "BAND_") )
+      {
+        int nBandNumber = atoi(option_without_band + strlen("BAND_"));
+        if( nBandNumber > 0 && nBandNumber <= nBands )
+        {
+          const char* pszAfterBand = strchr(option_without_band + strlen("BAND_"), '_');
+          if( pszAfterBand != NULL )
+          {
+              hObject = (GDALMajorObjectH)GDALGetRasterBand(hMemDS, nBandNumber);
+              option_without_band = pszAfterBand + 1;
+          }
+        }
+        else {
+          msDebug("Invalid band number %d in metadata item option %s", nBandNumber, option);
+        }
+      }
+      if( hObject ) {
+        std::string osDomain(option_without_band);
+        size_t nUnderscorePos = osDomain.find('_');
+        if( nUnderscorePos != std::string::npos ) {
+          std::string osKeyValue = osDomain.substr(nUnderscorePos + 1);
+          osDomain.resize(nUnderscorePos);
+          if( osDomain == "default" )
+              osDomain.clear();
+          size_t nEqualPos = osKeyValue.find('=');
+          if( nEqualPos != std::string::npos )
+          {
+              GDALSetMetadataItem(hObject,
+                                  osKeyValue.substr(0, nEqualPos).c_str(),
+                                  osKeyValue.substr(nEqualPos + 1).c_str(),
+                                  osDomain.c_str());
+          }
+        }
+        else {
+          msDebug("Invalid format in metadata item option %s", option);
+        }
+      }
+    }
+    else
+    {
+      apszCreationOptions.emplace_back(option);
+    }
+  }
+  apszCreationOptions.emplace_back(nullptr);
+
+  /* -------------------------------------------------------------------- */
   /*      Create a disk image in the selected output format from the      */
   /*      memory image.                                                   */
   /* -------------------------------------------------------------------- */
-  papszOptions = (char**)calloc(sizeof(char *),(format->numformatoptions+1));
-  if (papszOptions == NULL) {
-    msReleaseLock( TLOCK_GDAL );
-    msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()",
-                (unsigned int)(sizeof(char *)*(format->numformatoptions+1)));
-    return MS_FAILURE;
-  }
-
-  memcpy( papszOptions, format->formatoptions,
-          sizeof(char *) * format->numformatoptions );
-
   hOutputDS = GDALCreateCopy( hOutputDriver, filename, hMemDS, FALSE,
-                              papszOptions, NULL, NULL );
+                              &apszCreationOptions[0], NULL, NULL );
 
-  free( papszOptions );
 
   if( hOutputDS == NULL ) {
     GDALClose( hMemDS );

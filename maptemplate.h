@@ -95,6 +95,8 @@ typedef struct {
 
   int TileMode; /* can be GMAP, VE */
   char *TileCoords; /* for GMAP: 0 0 1; for VE: 013021023 */
+  int TileWidth;
+  int TileHeight;
 
   char Id[IDSIZE]; /* big enough for time + pid */
 

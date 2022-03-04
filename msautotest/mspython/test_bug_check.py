@@ -128,9 +128,9 @@ def test_reprojection_lines_from_polar_stereographic_to_webmercator():
     shape.add( line )
 
     polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=270 +datum=WGS84")
-    longlat_proj = mapscript.projectionObj("init=epsg:3857")
+    webmercator = mapscript.projectionObj("init=epsg:3857")
 
-    assert shape.project(polar_proj, longlat_proj) == 0
+    assert shape.project(polar_proj, webmercator) == 0
 
     part1 = shape.get(0)
     assert part1
@@ -145,3 +145,38 @@ def test_reprojection_lines_from_polar_stereographic_to_webmercator():
     assert point12.x == pytest.approx(-20037508.34, abs=1e-2)
     assert point21.x == pytest.approx(20037508.34, abs=1e-2)
     assert point22.x == pytest.approx(19926188.85, abs=1e-2)
+
+###############################################################################
+# Test reprojection of rectangle from Polar Stereographic containing north
+# pole to webmercator
+
+def test_reprojection_rect_from_polar_stereographic_to_webmercator():
+
+    rect = mapscript.rectObj(-4551441, -7324318, 4798559, 915682)
+    polar_proj = mapscript.projectionObj("+proj=stere +lat_0=90 +lat_ts=60 +lon_0=549 +R=6371229")
+    webmercator = mapscript.projectionObj("init=epsg:3857")
+
+    assert rect.project(polar_proj, webmercator) == 0
+    assert abs(rect.minx - -20e6) < 1e-1 * 20e6
+    assert abs(rect.maxx - 20e6) < 1e-1 * 20e6
+
+###############################################################################
+# Test reprojection of rectangle involving a datum shift (#6478)
+
+def test_reprojection_rect_and_datum_shift():
+
+    webmercator = mapscript.projectionObj("init=epsg:3857")
+    epsg_28992 = mapscript.projectionObj("init=epsg:28992") # "Amersfoort / RD New"
+
+    point = mapscript.pointObj(545287, 6867556)
+    point.project(webmercator, epsg_28992)
+    if point.x == pytest.approx(121685, abs=2):
+        # Builds of PROJ >= 6 and < 8 with -DACCEPT_USE_OF_DEPRECATED_PROJ_API_H
+        # use pj_transform() but it doesn't work well with datum shift
+        # This is a non-nominal configuration used in some CI confs when use a
+        # PROJ 7 build to test PROJ.4 API and PROJ 6 API.
+        pytest.skip('This test cannot run with PROJ [6,8[ in builds with ACCEPT_USE_OF_DEPRECATED_PROJ_API_H')
+
+    rect = mapscript.rectObj(545287, 6867556, 545689, 6868025)
+    assert rect.project(webmercator, epsg_28992) == 0
+    assert rect.minx == pytest.approx(121711, abs=2)

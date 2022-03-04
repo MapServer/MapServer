@@ -1,0 +1,7 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+msCGILoadForm(): Web application error. Invalid imagetype value.
+
+</BODY></HTML>

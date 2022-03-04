@@ -33,7 +33,7 @@
   /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
   int updateFromString(char *snippet)
   {
-    return msUpdateQueryMapFromString(self, snippet, MS_FALSE);
+    return msUpdateQueryMapFromString(self, snippet);
   }
 
   %newobject convertToString;

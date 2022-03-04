@@ -1,7 +1,7 @@
 MapServer
 =========
 
-| |Build Status| |Appveyor Build Status| |Coveralls Status|
+| |Build Status| |Appveyor Build Status| |Coveralls Status| |DOI|
 
 -------
 Summary
@@ -69,7 +69,7 @@ License
 
 ::
 
-  Copyright (c) 2008-2021 Open Source Geospatial Foundation.
+  Copyright (c) 2008-2022 Open Source Geospatial Foundation.
   Copyright (c) 1996-2008 Regents of the University of Minnesota.
 
   Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -99,3 +99,7 @@ License
 
 .. |Coveralls Status| image:: https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main
    :target: https://coveralls.io/github/MapServer/MapServer?branch=main
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5842012.svg
+   :target: https://doi.org/10.5281/zenodo.5842012
+   :alt: Digital Object Identifier (DOI) for MapServer

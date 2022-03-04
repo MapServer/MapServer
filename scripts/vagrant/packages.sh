@@ -19,17 +19,19 @@ sudo apt-get update
 
 # install packages we need
 apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
-    libpq-dev python-all-dev libproj-dev libxml2-dev postgis php-dev \
+    libpq-dev python3-dev python3-pip libproj-dev libxml2-dev postgis php-dev \
     postgresql-server-dev-10 postgresql-10-postgis-3 postgresql-10-postgis-3-scripts vim bison flex swig \
     librsvg2-dev libpng-dev libjpeg-dev libgif-dev \
     libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev \
     libgdal-dev libfribidi-dev libexempi-dev \
     libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler libharfbuzz-dev gdal-bin \
     curl sqlite3 libperl-dev
+    
+# default to using python3
+ln -s /usr/bin/python3 /usr/bin/python
+ln -s /usr/bin/pip3 /usr/bin/pip
 
-curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-python get-pip.py
-pip install -U -r /vagrant/msautotest/requirements.txt
+python -m pip install -U -r /vagrant/msautotest/requirements.txt
 
 mkdir -p /vagrant/install-vagrant-proj/include_proj4_api_only
 cp /usr/include/proj_api.h /vagrant/install-vagrant-proj/include_proj4_api_only

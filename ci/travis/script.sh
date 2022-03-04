@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+
 #if [ "$BUILD_NAME" = "PHP_7.2_WITH_ASAN" ]; then
 #    export CC="ccache clang"
 #    export CXX="ccache clang++"

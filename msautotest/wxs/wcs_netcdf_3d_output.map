@@ -1,0 +1,110 @@
+#
+# Test WCS.
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
+
+# RUN_PARMS: wcs_netcdf_3d_output.nc [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi&FORMAT=application/x-netCDF&RANGESUBSET=1,5,9" > [RESULT_DEMIME][IGNORE_COMPARISON_RESULT_ON_TRAVIS]
+
+MAP
+
+NAME TEST
+SIZE 105 61
+EXTENT 14.4702712 47.8188382 18.0111282 49.8911432
+
+#CONFIG  "MS_ERRORFILE" "stderr"
+
+OUTPUTFORMAT
+  NAME netCDF
+  DRIVER "GDAL/netCDF"
+  MIMETYPE "application/x-netCDF"
+  IMAGEMODE Float32
+  EXTENSION "nc"
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+WEB
+  METADATA
+   # OWS stuff for server
+   "ows_updatesequence"   "2007-10-30T14:23:38Z"
+   "ows_title"            "First Test Service"
+   "ows_fees"             "NONE"
+   "ows_accessconstraints" "NONE"
+   "ows_abstract"         "Test Abstract"
+   "ows_keywordlist"      "keyword,list"
+   "ows_service_onlineresource" "http://198.202.74.215/cgi-bin/wcs_demo"
+   "ows_contactorganization" "OSGeo"
+   "ows_contactperson"    "Frank Warmerdam"
+   "ows_contactposition"  "Software Developer"
+   "ows_contactvoicetelephone" "(613) 754-2041"
+   "ows_contactfacsimiletelephone" "(613) 754-2041x343"
+   "ows_address" "3594 Foymount Rd"
+   "ows_city" "Eganville"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "K0J 1T0"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "warmerdam@pobox.com"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_enable_request" "*"
+
+   # OGC:WCS
+   "wcs_label"    "Test Label"
+   "wcs_description" "Test description"
+   "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
+   "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+  END #METADATA
+END #WEB
+
+LAYER
+  NAME multi
+  TYPE raster
+  STATUS ON
+
+  DATA data/multiband.tif
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+  METADATA
+   "ows_extent" "14.4702712 47.8188382 18.0111282 49.8911432"
+   "wcs_size" "105 61"
+
+   "wcs_label" "Test label"
+   "wcs_formats" "netCDF"
+   "wcs_native_format" "image/tiff"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "abstract"
+   "wcs_imagemode" "BYTE"
+
+   "wcs_bandcount" "9"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "name"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "description"
+   "wcs_rangeset_nullvalue" "0"
+
+   # Metadata items to apply to the "time" extra dimension.
+   "wcs_outputformat_netCDF_mdi_default_time#calendar" "standard"
+   "wcs_outputformat_netCDF_mdi_default_time#standard_name" "time"
+   "wcs_outputformat_netCDF_mdi_default_time#units" "hours since 1900-01-01 00:00:00"
+
+   # Values of each band along the "time" extra dimension.
+   "wcs_outputformat_netCDF_mdi_BAND_1_default_NETCDF_DIM_time" "10"
+   "wcs_outputformat_netCDF_mdi_BAND_2_default_NETCDF_DIM_time" "20"
+   "wcs_outputformat_netCDF_mdi_BAND_3_default_NETCDF_DIM_time" "30"
+   "wcs_outputformat_netCDF_mdi_BAND_4_default_NETCDF_DIM_time" "40"
+   "wcs_outputformat_netCDF_mdi_BAND_5_default_NETCDF_DIM_time" "50"
+   "wcs_outputformat_netCDF_mdi_BAND_6_default_NETCDF_DIM_time" "60"
+   "wcs_outputformat_netCDF_mdi_BAND_7_default_NETCDF_DIM_time" "70"
+   "wcs_outputformat_netCDF_mdi_BAND_8_default_NETCDF_DIM_time" "80"
+   "wcs_outputformat_netCDF_mdi_BAND_9_default_NETCDF_DIM_time" "90"
+  END
+END
+
+END

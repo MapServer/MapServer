@@ -1,0 +1,6 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+msLoadConfig(): Premature End-of-File. 
+</BODY></HTML>

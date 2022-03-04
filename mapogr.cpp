@@ -576,10 +576,73 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   int *itemindexes = (int*)layer->iteminfo;
 
+  int nYear;
+  int nMonth;
+  int nDay;
+  int nHour;
+  int nMinute;
+  int nSecond;
+  int nTZFlag;
+
   for(i=0; i<layer->numitems; i++) {
     if (itemindexes[i] >= 0) {
       // Extract regular attributes
-      values[i] = msStrdup(OGR_F_GetFieldAsString( hFeature, itemindexes[i]));
+      const char* pszValue = OGR_F_GetFieldAsString(hFeature, itemindexes[i]);
+      if( pszValue[0] == 0 )
+      {
+          values[i] = msStrdup("");
+      }
+      else
+      {
+          OGRFieldDefnH hFieldDefnRef = OGR_F_GetFieldDefnRef(hFeature, itemindexes[i]);
+          switch(OGR_Fld_GetType(hFieldDefnRef)) {
+          case OFTTime:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              switch(nTZFlag) {
+              case 0: // Unknown time zone
+              case 1: // Local time zone (not specified)
+                values[i] = msStrdup(CPLSPrintf("%02d:%02d:%02d", nHour, nMinute, nSecond));
+                break;
+              case 100: // GMT
+                values[i] = msStrdup(CPLSPrintf("%02d:%02d:%02dZ", nHour, nMinute, nSecond));
+                break;
+              default: // Offset (in quarter-hour units) from GMT
+                const int TZOffset = std::abs(nTZFlag - 100) * 15;
+                const int TZHour = TZOffset / 60;
+                const int TZMinute = TZOffset % 60;
+                const char TZSign = (nTZFlag > 100) ? '+' : '-';
+                values[i] = msStrdup(CPLSPrintf("%02d:%02d:%02d%c%02d:%02d", nHour, nMinute,
+                  nSecond, TZSign, TZHour, TZMinute));
+              }
+              break;
+          case OFTDate:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02d", nYear, nMonth, nDay));
+              break;
+          case OFTDateTime:
+              OGR_F_GetFieldAsDateTime(hFeature, itemindexes[i], &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
+              switch(nTZFlag) {
+              case 0: // Unknown time zone
+              case 1: // Local time zone (not specified)
+                values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                break;
+              case 100: // GMT
+                values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear, nMonth, nDay, nHour, nMinute, nSecond));
+                break;
+              default: // Offset (in quarter-hour units) from GMT
+                const int TZOffset = std::abs(nTZFlag - 100) * 15;
+                const int TZHour = TZOffset / 60;
+                const int TZMinute = TZOffset % 60;
+                const char TZSign = (nTZFlag > 100) ? '+' : '-';
+                values[i] = msStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d", nYear, nMonth, nDay, nHour, nMinute, 
+                  nSecond, TZSign, TZHour, TZMinute));
+              }
+              break;
+          default:
+              values[i] = msStrdup(pszValue);
+              break;
+          }
+      }
     } else if (itemindexes[i] == MSOGR_FID_INDEX ) {
       values[i] = msStrdup(CPLSPrintf(CPL_FRMT_GIB,
                                       (GIntBig) OGR_F_GetFID(hFeature)));
@@ -3449,7 +3512,9 @@ static int  msOGRExtractTopSpatialFilter( msOGRFileInfo *info,
         if (e == OGRERR_NONE) {
             OGREnvelope env;
             if( expr->m_nToken == MS_TOKEN_COMPARISON_DWITHIN ) {
-                OGR_G_GetEnvelope(OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30), &env);
+                OGRGeometryH hBuffer = OGR_G_Buffer(hSpatialFilter, expr->m_aoChildren[2]->m_dfVal, 30);
+                OGR_G_GetEnvelope(hBuffer ? hBuffer : hSpatialFilter, &env);
+                OGR_G_DestroyGeometry(hBuffer);
             } else {
                 OGR_G_GetEnvelope(hSpatialFilter, &env);
             }
@@ -4107,11 +4172,11 @@ static int msOGRLayerIsOpen(layerObj *layer)
   return MS_FALSE;
 }
 
-int msOGRIsSpatialite(layerObj* layer)
+int msOGRSupportsIsNull(layerObj* layer)
 {
   msOGRFileInfo *psInfo =(msOGRFileInfo*)layer->layerinfo;
   if (psInfo && psInfo->dialect &&
-      EQUAL(psInfo->dialect, "Spatialite") )
+      (EQUAL(psInfo->dialect, "Spatialite") || EQUAL(psInfo->dialect, "GPKG")))
   {
     // reasons to not produce native string: not simple layer, or an explicit deny
     const char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
@@ -5371,7 +5436,12 @@ static void msOGREnablePaging(layerObj *layer, int value)
   }
 
   if(!msOGRLayerIsOpen(layer))
-    msOGRLayerOpenVT(layer);
+  {
+    if(msOGRLayerOpenVT(layer) != MS_SUCCESS)
+    {
+      return;
+    }
+  }
 
   assert( layer->layerinfo != NULL);
 
@@ -5388,7 +5458,12 @@ static int msOGRGetPaging(layerObj *layer)
   }
 
   if(!msOGRLayerIsOpen(layer))
-    msOGRLayerOpenVT(layer);
+  {
+    if(msOGRLayerOpenVT(layer) != MS_SUCCESS)
+    {
+      return FALSE;
+    }
+  }
 
   assert( layer->layerinfo != NULL);
 

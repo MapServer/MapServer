@@ -2,7 +2,7 @@
 # RUN_PARMS: legend.cairo.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=cairopng" > [RESULT_DEMIME]
 # RUN_PARMS: legend.svg [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=svg" > [RESULT_DEMIME]
 # RUN_PARMS: legend.pdf [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=pdf" > [RESULT_DEMIME]
-
+# RUN_PARMS: legend_bad_imagetype.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=bogus+image+type" > [RESULT_DEVERSION]
 #
 #
 # legend support.

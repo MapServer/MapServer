@@ -17,11 +17,19 @@ esac
 
 TOPDIR="$SCRIPT_DIR/.."
 
+CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
+CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 2.7 || /bin/true)
+if test "$CPPCHECK_VERSION_GT_2_7" = 1; then
+    POSIX="--library=gnu"
+else
+    POSIX="--std=posix"
+fi
+
 echo "" > ${LOG_FILE}
 for dirname in ${TOPDIR}/.; do
     echo "Running cppcheck on $dirname ... (can be long)"
     if ! cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
-        --enable=all --inconclusive --std=c99 --std=c++11 --std=posix \
+        --enable=all --inconclusive --std=c99 --std=c++11 ${POSIX} \
         "-I${TOPDIR}" \
         -DUSE_CURL -DUSE_CAIRO -DUSE_RSVG -DUSE_ICONV -DUSE_FRIBIDI -DUSE_HARFBUZZ -DUSE_EXEMPI -DUSE_GEOS -DUSE_LIBXML2 -DUSE_THREAD -DUSE_FASTCGI -DUSE_WFS_LYR -DUSE_WMS_LYR \
         -DGEOS_VERSION_MAJOR=3 -DGEOS_VERSION_MINOR=8 \

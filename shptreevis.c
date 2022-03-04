@@ -47,7 +47,7 @@
 char* AddFileSuffix ( const char * Filename, const char * Suffix )
 {
   char  *pszFullname, *pszBasename;
-  int i;
+  size_t i;
 
   /* -------------------------------------------------------------------- */
   /*  Compute the base (layer) name.  If there is any extension     */
