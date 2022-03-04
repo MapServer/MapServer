@@ -15,6 +15,8 @@ eval "$(pyenv init -)"
 #upgrade to recent SWIG
 git clone https://github.com/swig/swig.git swig-git-master
 cd swig-git-master
+wget https://github.com/PhilipHazel/pcre2/archive/refs/tags/pcre2-10.39.tar.gz
+./Tools/pcre-build.sh
 ./autogen.sh
 ./configure --prefix=/usr
 make
