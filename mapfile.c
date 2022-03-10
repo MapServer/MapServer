@@ -5891,7 +5891,7 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-static void writeConfig(FILE *stream, int indent, configObj *config)
+static void writeConfig(FILE *stream, int indent, const configObj *config)
 {
   writeBlockBegin(stream, indent, "CONFIG");
   writeHashTable(stream, indent, "ENV", &(config->env));
