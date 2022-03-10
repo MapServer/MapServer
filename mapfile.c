@@ -5899,7 +5899,7 @@ static void writeConfig(FILE *stream, int indent, configObj *config)
   writeBlockEnd(stream, indent, "CONFIG");
 }
 
-int msSaveConfig(configObj *config, char *filename)
+int msSaveConfig(const configObj *config, const char *filename)
 {
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
