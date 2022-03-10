@@ -5916,7 +5916,7 @@ int msSaveConfig(const configObj *config, const char *filename)
 
   stream = fopen(filename, "w");
   if(!stream) {
-    msSetError(MS_IOERR, "(%s)", "msSaveConfigMap()", filename);
+    msSetError(MS_IOERR, "(%s)", "msSaveConfig()", filename);
     return(-1);
   }
 
