@@ -5914,7 +5914,7 @@ int msSaveConfig(configObj *config, char *filename)
     return(-1);
   }
 
-  stream = fopen(msBuildPath(szPath,"/", filename), "w");
+  stream = fopen(filename, "w");
   if(!stream) {
     msSetError(MS_IOERR, "(%s)", "msSaveConfigMap()", filename);
     return(-1);
