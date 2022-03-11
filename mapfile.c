@@ -5902,7 +5902,6 @@ static void writeConfig(FILE *stream, int indent, const configObj *config)
 int msSaveConfig(const configObj *config, const char *filename)
 {
   FILE *stream;
-  char szPath[MS_MAXPATHLEN];
 
   if(!config) {
     msSetError(MS_MISCERR, "Config is undefined.", "msSaveConfigMap()");
