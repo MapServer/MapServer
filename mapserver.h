@@ -2209,7 +2209,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath, const configObj *config);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
   MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
-  MS_DLL_EXPORT int msSaveConfig(const configObj *map, const char *filename);
+  MS_DLL_EXPORT int msSaveConfig(configObj *map, const char *filename);
   MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
   MS_DLL_EXPORT int msUpdateScalebarFromString(scalebarObj *scalebar, char *string);
   MS_DLL_EXPORT int msUpdateQueryMapFromString(queryMapObj *querymap, char *string);
