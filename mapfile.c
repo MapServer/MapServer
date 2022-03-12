@@ -5891,6 +5891,40 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
+static void writeConfig(FILE *stream, int indent, configObj *config)
+{
+  writeBlockBegin(stream, indent, "CONFIG");
+  writeHashTable(stream, indent, "ENV", &(config->env));
+  writeHashTable(stream, indent, "MAPS", &(config->maps));
+  writeBlockEnd(stream, indent, "CONFIG");
+}
+
+int msSaveConfig(configObj *config, const char *filename)
+{
+  FILE *stream;
+
+  if(!config) {
+    msSetError(MS_MISCERR, "Config is undefined.", "msSaveConfigMap()");
+    return(-1);
+  }
+
+  if(!filename) {
+    msSetError(MS_MISCERR, "Filename is undefined.", "msSaveConfigMap()");
+    return(-1);
+  }
+
+  stream = fopen(filename, "w");
+  if(!stream) {
+    msSetError(MS_IOERR, "(%s)", "msSaveConfig()", filename);
+    return(-1);
+  }
+
+  writeConfig(stream,0,config);
+  fclose(stream);
+
+  return(0);
+}
+
 static int loadMapInternal(mapObj *map)
 {
   int foundMapToken=MS_FALSE;
