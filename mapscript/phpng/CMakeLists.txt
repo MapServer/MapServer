@@ -84,6 +84,8 @@ set_target_properties(${SWIG_MODULE_mapscript_REAL_NAME} PROPERTIES PREFIX "")
 
 if(NOT WIN32)
   install(TARGETS php_mapscriptng DESTINATION ${PHP_EXTENSION_DIR})
-  # install the required file containing MapServer constants and functions
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.php DESTINATION ${PHP_EXTENSION_DIR} COMPONENT dev)
+  # check if we must install the required file containing MapServer constants and functions
+  if(${SWIG_VERSION} LESS_EQUAL 4.0.2)
+     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.php DESTINATION ${PHP_EXTENSION_DIR} COMPONENT dev)
+  endif()
 endif()
