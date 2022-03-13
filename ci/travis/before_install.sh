@@ -37,8 +37,8 @@ pip install -r msautotest/requirements.txt
 export CC="ccache gcc"
 export CXX="ccache g++"
 
-sudo sed -i  's/md5/trust/' /etc/postgresql/12/main/pg_hba.conf
-sudo sed -i  's/peer/trust/' /etc/postgresql/12/main/pg_hba.conf
+sudo sed -i  's/md5/trust/' /var/lib/postgresql/12/main/pg_hba.conf
+sudo sed -i  's/peer/trust/' /var/lib/postgresql/12/main/pg_hba.conf
 sudo service postgresql restart 12
 
 cd msautotest
