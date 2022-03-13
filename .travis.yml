@@ -11,18 +11,18 @@ matrix:
     - php: 7.4
       env:
         - BUILD_NAME=PHP_7.4_WITH_ASAN
-        - PYTHON_VERSION=3.6.12
+        - PYTHON_VERSION=3.7
         - CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module (https://travis-ci.com/github/MapServer/MapServer/jobs/482212623)
 
     - php: 8.0
       env:
         - BUILD_NAME=PHP_8.0_WITH_PROJ7
-        - PYTHON_VERSION=3.7
+        - PYTHON_VERSION=3.8
 
     - php: 8.1
       env:
         - BUILD_NAME=PHP_8.1
-        - PYTHON_VERSION=3.8
+        - PYTHON_VERSION=3.9
 
 cache:
     apt: true

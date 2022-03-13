@@ -20,8 +20,8 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 
 # list installed and available Python versions
-pyenv versions
-echo $(pyenv root)
+# pyenv versions
+# echo $(pyenv root)
 
 # set the global Python version
 pyenv global $PYTHON_VERSION
