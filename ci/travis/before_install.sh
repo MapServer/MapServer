@@ -9,7 +9,7 @@ sudo apt-get remove --purge postgresql* libpq-dev libpq5 || /bin/true
 
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
-sudo apt-get install -y --allow-unauthenticated protobuf-c-compiler libprotobuf-c-dev bison flex libfribidi-dev cmake librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin ccache curl postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts g++ ca-certificates
+sudo apt-get install -y --allow-unauthenticated protobuf-c-compiler libprotobuf-c-dev bison flex libfribidi-dev cmake librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev gdal proj libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev ccache curl postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts g++ ca-certificates
 # following are already installed on Travis CI
 #sudo apt-get install --allow-unauthenticated php-dev python-dev python3-dev
 sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs

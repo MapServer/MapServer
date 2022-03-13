@@ -16,7 +16,7 @@ matrix:
 
     - php: 8.0
       env:
-        - BUILD_NAME=PHP_8.0_WITH_PROJ7
+        - BUILD_NAME=PHP_8.0_WITH_PROJ8
         - PYTHON_VERSION=3.8
 
     - php: 8.1
