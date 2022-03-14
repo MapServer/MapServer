@@ -19,9 +19,10 @@ sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 
-# list installed and available Python versions
+# list installed and available Python/PHP versions
 # pyenv versions
 # echo $(pyenv root)
+phpenv versions
 
 # set the global Python version
 pyenv global $PYTHON_VERSION
