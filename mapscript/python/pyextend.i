@@ -13,6 +13,10 @@
  *
  *****************************************************************************/
 
+// required for Python 3.10+ - see https://bugs.python.org/issue40943
+%begin %{
+#define PY_SSIZE_T_CLEAN
+%}
 
 /* fromstring: Factory for mapfile objects */
 
@@ -378,7 +382,7 @@ def fromstring(data, mappath=None):
 
 %#if PY_MAJOR_VERSION >= 3
             // https://docs.python.org/3/c-api/arg.html
-            noerr = PyObject_CallMethod(file, "write", "y#", imgbuffer, imgsize);
+            noerr = PyObject_CallMethod(file, "write", "y#", imgbuffer, (Py_ssize_t)imgsize);
 %#else
             // https://docs.python.org/2/c-api/arg.html
             noerr = PyObject_CallMethod(file, "write", "s#", imgbuffer, imgsize);
