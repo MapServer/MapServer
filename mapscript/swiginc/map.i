@@ -559,7 +559,7 @@
       order = new_intarray(self->numlayers);
       for (i=0; i<self->numlayers; i++) {
           // see http://www.swig.org/Doc4.0/SWIGDocumentation.html#Library_carrays for %array_class interface
-          order.setitem(i, self->layerorder[i]);
+          order[i] = self->layerorder[i];
       }
       return order;
     }
