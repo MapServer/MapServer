@@ -10,13 +10,13 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
 set(SwigFile ${PROJECT_SOURCE_DIR}/mapscript/mapscript.i)
 
-if (${Python_VERSION_MAJOR} GREATER_EQUAL 3)
-    set_property(SOURCE ${SwigFile} APPEND  PROPERTY SWIG_FLAGS "-py3")
-    if(WITH_MAPSCRIPT_PROPERTYANNOTATIONS)
-        # if the custom PROPERTYANNOTATIONS flag is set we can add annotations to object properties
-        # see https://github.com/swig/swig/pull/1951
-        set_property(SOURCE ${SwigFile} APPEND  PROPERTY SWIG_FLAGS "-propertyannotations")
-    endif()
+# add annotations to py file output - requires >= SWIG 4.1
+if (WITH_PYMAPSCRIPT_ANNOTATIONS AND ${Python_VERSION_MAJOR} GREATER_EQUAL 3)
+  if (${Python_VERSION_MINOR} GREATER_EQUAL 6)
+     set_property(SOURCE ${SwigFile} APPEND PROPERTY SWIG_FLAGS -features python:annotations=c)
+  else ()
+     set_property(SOURCE ${SwigFile} APPEND PROPERTY SWIG_FLAGS -features python:annotations=c,python:annotations:novar)
+  endif ()
 endif ()
 
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
