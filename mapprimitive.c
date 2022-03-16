@@ -1562,7 +1562,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
 void msPolylineComputeLineSegments(shapeObj *shape, struct polyline_lengths *pll)
 {
   int i, j;
-  double max_line_length=0, max_segment_length=0, segment_length;
+  double max_line_length=-1, max_segment_length=-1, segment_length;
 
   pll->ll = msSmallMalloc(shape->numlines * sizeof(struct line_lengths));
   pll->total_length = 0;
@@ -1571,7 +1571,7 @@ void msPolylineComputeLineSegments(shapeObj *shape, struct polyline_lengths *pll
 
   for(i=0; i<shape->numlines; i++) {
     struct line_lengths *ll = &pll->ll[i];
-    double max_subline_segment_length = 0;
+    double max_subline_segment_length = -1;
     
     if(shape->line[i].numpoints > 1) {
       ll->segment_lengths = (double*) msSmallMalloc(sizeof(double) * (shape->line[i].numpoints - 1));
