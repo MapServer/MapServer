@@ -31,7 +31,7 @@
 # HARFBUZZ_INCLUDE_DIR - containg the HarfBuzz headers
 # HARFBUZZ_LIBRARY - containg the HarfBuzz library
 
-include(FindPkgConfig)
+find_package(PkgConfig)
 
 pkg_check_modules(PC_HARFBUZZ harfbuzz>=0.9.18)
 
