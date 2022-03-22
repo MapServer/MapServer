@@ -11,7 +11,7 @@ FIND_PATH(PROJ_INCLUDE_DIR NAMES proj.h proj_api.h)
 FIND_LIBRARY(PROJ_LIBRARY NAMES proj proj_i)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PROJ DEFAULT_MSG PROJ_LIBRARY PROJ_INCLUDE_DIR)
+find_package_handle_standard_args(Proj DEFAULT_MSG PROJ_LIBRARY PROJ_INCLUDE_DIR)
 mark_as_advanced(PROJ_LIBRARY PROJ_INCLUDE_DIR)
 
 
