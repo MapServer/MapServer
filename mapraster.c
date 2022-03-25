@@ -617,7 +617,7 @@ void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
 
   msGDALInitialize();
 
-  if(layer->debug == MS_TRUE)
+  if(layer->debug)
     msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
 
   if( strncmp(filename, "<VRTDataset", strlen("<VRTDataset")) == 0 )
@@ -629,7 +629,7 @@ void* msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
     msDrawRasterBuildRasterPath(map, layer, filename, szPath);
     pszPath = szPath;
   }
-  if(layer->debug == MS_TRUE)
+  if(layer->debug)
     msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, pszPath);
 
     /*
@@ -705,26 +705,26 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void* hDS)
 int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer)
 {
   if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY || layer->connectiontype==MS_IDW)) {
-    if(layer->debug == MS_TRUE)
+    if(layer->debug)
       msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
     return(0);
   }
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) {
-    if(layer->debug == MS_TRUE)
+    if(layer->debug)
       msDebug( "msDrawRasterLayerLow(%s): not status ON or DEFAULT, doing nothing.", layer->name );
     return(0);
   }
 
   if(map->scaledenom > 0) {
     if((layer->maxscaledenom > 0) && (map->scaledenom > layer->maxscaledenom)) {
-      if(layer->debug == MS_TRUE)
+      if(layer->debug)
         msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g > MAXSCALEDENOM=%g\n",
                  layer->name, map->scaledenom, layer->maxscaledenom );
       return(0);
     }
     if((layer->minscaledenom > 0) && (map->scaledenom <= layer->minscaledenom)) {
-      if(layer->debug == MS_TRUE)
+      if(layer->debug)
         msDebug( "msDrawRasterLayerLow(%s): skipping, map scale %.2g < MINSCALEDENOM=%g\n",
                  layer->name, map->scaledenom, layer->minscaledenom );
       return(0);
@@ -733,13 +733,13 @@ int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer)
 
   if(layer->maxscaledenom <= 0 && layer->minscaledenom <= 0) {
     if((layer->maxgeowidth > 0) && ((map->extent.maxx - map->extent.minx) > layer->maxgeowidth)) {
-      if(layer->debug == MS_TRUE)
+      if(layer->debug)
         msDebug( "msDrawRasterLayerLow(%s): skipping, map width %.2g > MAXSCALEDENOM=%g\n", layer->name,
                  (map->extent.maxx - map->extent.minx), layer->maxgeowidth );
       return(0);
     }
     if((layer->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < layer->mingeowidth)) {
-      if(layer->debug == MS_TRUE)
+      if(layer->debug)
         msDebug( "msDrawRasterLayerLow(%s): skipping, map width %.2g < MINSCALEDENOM=%g\n", layer->name,
                  (map->extent.maxx - map->extent.minx), layer->mingeowidth );
       return(0);
