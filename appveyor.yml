@@ -6,13 +6,12 @@ image: Visual Studio 2019
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
-  - '%APPVEYOR_BUILD_FOLDER%\swigwin-3.0.12.zip'
-  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.0.2.zip'
+  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.1.0.zip'
 
 environment:
 
   global:
-    SWIG_VER: swigwin-4.0.2
+    SWIG_VER: swigwin-4.1.0
     TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
@@ -22,7 +21,6 @@ environment:
   matrix:
   - platform: x86
     Python_ROOT_DIR: c:/python27
-    SWIG_VER: swigwin-3.0.12
   - platform: x64
     Python_ROOT_DIR: c:/python27-x64
   - platform: x64
@@ -61,18 +59,15 @@ build_script:
   - if "%platform%" == "x64" call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars64.bat"
   - if "%platform%" == "x86" call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars32.bat"
   - echo "%VS_FULL%"
-  - if not exist %SWIG_VER%.zip appveyor DownloadFile https://sourceforge.net/projects/swig/files/swigwin/%SWIG_VER%/%SWIG_VER%.zip
+  - if not exist %SWIG_VER%.zip appveyor DownloadFile https://github.com/geographika/python-mapscript/raw/main/%SWIG_VER%.zip
   - set SDK_ZIP=%SDK%-dev.zip
   - set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
   - mkdir sdk
   - 7z x %SWIG_VER%.zip -osdk > nul
-  # add custom swig.exe
-  - appveyor DownloadFile http://download.osgeo.org/mapserver/docs/swigwin-4.0.2.mapserver.zip
   - cd sdk
   - appveyor DownloadFile "%SDK_URL%"
   - 7z x "%SDK_ZIP%" > nul
   - cd %BUILD_FOLDER%/sdk/%SWIG_VER%/
-  - if "%platform%" == "x64" 7z e %BUILD_FOLDER%/swigwin-4.0.2.mapserver.zip -y -r swig.exe > nul
   - set SDK_PREFIX=%BUILD_FOLDER%/sdk/%SDK%
   - set SDK_INC=%BUILD_FOLDER%/sdk/%SDK%/include
   - set SDK_LIB=%BUILD_FOLDER%/sdk/%SDK%/lib
@@ -84,7 +79,7 @@ build_script:
   - cd build
   - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%  
   - set "PROJECT_BINARY_DIR=%BUILD_FOLDER%/build"
-  - cmake -G "%VS_FULL%" -A %VS_ARCH% .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DPNG_LIBRARY=%SDK_LIB%/libpng16_static.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DICONV_DLL=%SDK_BIN%/iconv.dll -DFRIBIDI_INCLUDE_DIR=%SDK_INC%/fribidi -DMS_EXTERNAL_LIBS=%SDK_LIB%/harfbuzz.lib;%SDK_LIB%/uriparser.lib -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DREGEX_DIR=%REGEX_DIR% -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/protobuf-c -DWITH_CURL=1 -DWITH_KML=1 -DWITH_SVGCAIRO=1 -DWITH_THREAD_SAFETY=1 -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1-DWITH_CSHARP=1 -DWITH_PROTOBUFC=1 -DWITH_POSTGIS=0 -DWITH_PERL=0 -DWITH_MSSQL2008=1 -DWITH_PYTHON=1 -DWITH_PHPNG=0 -DWITH_HARFBUZZ=1 -DMAPSCRIPT_PROPERTYANNOTATIONS=1 -DPROJ_INCLUDE_DIR=%SDK_INC%/proj7
+  - cmake -G "%VS_FULL%" -A %VS_ARCH% .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DPNG_LIBRARY=%SDK_LIB%/libpng16_static.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DICONV_DLL=%SDK_BIN%/iconv.dll -DFRIBIDI_INCLUDE_DIR=%SDK_INC%/fribidi -DMS_EXTERNAL_LIBS=%SDK_LIB%/harfbuzz.lib;%SDK_LIB%/uriparser.lib -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DREGEX_DIR=%REGEX_DIR% -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/protobuf-c -DWITH_CURL=1 -DWITH_KML=1 -DWITH_SVGCAIRO=1 -DWITH_THREAD_SAFETY=1 -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1-DWITH_CSHARP=1 -DWITH_PROTOBUFC=1 -DWITH_POSTGIS=0 -DWITH_PERL=0 -DWITH_MSSQL2008=1 -DWITH_PYTHON=1 -DWITH_PHPNG=0 -DWITH_HARFBUZZ=1 -DWITH_PYMAPSCRIPT_ANNOTATIONS=1 -DPROJ_INCLUDE_DIR=%SDK_INC%/proj7
   - cmake --build . --config Release
   - cd %BUILD_FOLDER%/build
   # set the MapScript custom environment variable for py 3.8
