@@ -38,7 +38,7 @@
 #  License text for the above reference.)
 
 # find the perl executable
-include(FindPerl)
+find_package(Perl)
 
 if (PERL_EXECUTABLE)
 
