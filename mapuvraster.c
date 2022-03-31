@@ -717,7 +717,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
             width, height, map_tmp->cellsize);
 
-  if (layer->debug == 5)
+  if (layer->debug == MS_DEBUGLEVEL_VVV)
     msDebug("msUVRASTERLayerWhichShapes(): extent: %g %g %g %g\n",
             map_tmp->extent.minx, map_tmp->extent.miny,
             map_tmp->extent.maxx, map_tmp->extent.maxy);
@@ -726,7 +726,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
      geotransform, used by the resampling*/
    msMapSetSize(map_tmp, width, height);
 
-  if (layer->debug == 5)
+  if (layer->debug == MS_DEBUGLEVEL_VVV)
     msDebug("msUVRASTERLayerWhichShapes(): geotransform: %g %g %g %g %g %g\n",
             map_tmp->gt.geotransform[0], map_tmp->gt.geotransform[1],
             map_tmp->gt.geotransform[2], map_tmp->gt.geotransform[3],
@@ -864,7 +864,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
                        uvlinfo->extent.minx, uvlinfo->extent.maxx, MS_FALSE);
   point.y = Pix2Georef(y, 0, uvlinfo->height-1,
                        uvlinfo->extent.miny, uvlinfo->extent.maxy, MS_TRUE);
-  if (layer->debug == 5)
+  if (layer->debug == MS_DEBUGLEVEL_VVV)
     msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
             shapeindex, point.x, point.y);
 
