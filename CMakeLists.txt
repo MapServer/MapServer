@@ -2,6 +2,9 @@ cmake_minimum_required (VERSION 3.0)
 
 project (MapServer)
 
+if (${CMAKE_VERSION} GREATER "3.11")
+    cmake_policy(SET CMP0075 OLD) # related to dlfcn.h
+endif()
 if (${CMAKE_VERSION} GREATER "3.13")
     cmake_policy(SET CMP0078 OLD) # related to UseSWIG
 endif()
