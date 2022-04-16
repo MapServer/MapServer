@@ -57,6 +57,11 @@ endif(MapServer_IS_DEV_VERSION)
 MATH(EXPR MapServer_VERSION_NUM "${MapServer_VERSION_MAJOR}*10000+${MapServer_VERSION_MINOR}*100+${MapServer_VERSION_REVISION}")
 
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+foreach(_version IN ITEMS 3.20)
+    if(CMAKE_VERSION VERSION_LESS "${_version}")
+        list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake/${_version}")
+    endif()
+endforeach()
 
 if (APPLE)
   set(CMAKE_FIND_FRAMEWORK "LAST")
@@ -598,6 +603,12 @@ endif (WITH_GEOS)
 
 if(WITH_POSTGIS)
   find_package(PostgreSQL)
+
+  # map new module variables to uppercase variables
+  set (POSTGRESQL_FOUND ${PostgreSQL_FOUND})
+  set (POSTGRESQL_LIBRARY ${PostgreSQL_LIBRARIES})
+  set (POSTGRESQL_INCLUDE_DIR ${PostgreSQL_INCLUDE_DIRS})
+
   if(POSTGRESQL_FOUND)
     #uppercase our variables
     if ( NOT DEFINED POSTGRESQL_LIBRARY )
