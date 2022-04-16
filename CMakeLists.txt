@@ -3,10 +3,10 @@ cmake_minimum_required (VERSION 3.0)
 project (MapServer)
 
 if (${CMAKE_VERSION} GREATER "3.13")
-	cmake_policy(SET CMP0078 NEW) # related to UseSWIG
+    cmake_policy(SET CMP0078 NEW) # related to UseSWIG
 endif()
 if (${CMAKE_VERSION} GREATER "3.14")
-	cmake_policy(SET CMP0086 NEW) # related to UseSWIG
+    cmake_policy(SET CMP0086 NEW) # related to UseSWIG
 endif()
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
