@@ -1,13 +1,6 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.0...3.23)
 
 project (MapServer)
-
-if (${CMAKE_VERSION} GREATER "3.13")
-    cmake_policy(SET CMP0078 OLD) # related to UseSWIG
-endif()
-if (${CMAKE_VERSION} GREATER "3.14")
-    cmake_policy(SET CMP0086 OLD) # related to UseSWIG
-endif()
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
       message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:
