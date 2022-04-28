@@ -1,0 +1,70 @@
+#
+# Test FlatGeobuf native access (RFC 137)
+#
+# REQUIRES: INPUT=FLATGEOBUF
+#
+#RUN_PARMS: flatgeobuf-continent.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-continent
+#RUN_PARMS: flatgeobuf-classes.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-classes
+
+MAP
+  NAME "fgb-test"
+  STATUS ON
+  SIZE 400 300
+  EXTENT -17.625043 -34.819166 51.133870 37.349994
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  IMAGETYPE png
+
+  /* Africa Continent */
+  LAYER
+    NAME "africa-continent"
+    TYPE POLYGON
+    STATUS ON
+    CONNECTIONTYPE flatgeobuf
+    DATA "data/africa.fgb"
+    CLASS
+      NAME "Africa Continent"
+      STYLE
+        COLOR 50 50 50
+        OUTLINECOLOR 120 120 120
+      END #style   
+    END #class   
+  END # layer
+  
+  /* Africa classes */
+  LAYER
+    NAME "africa-classes"
+    TYPE POLYGON
+    STATUS ON
+    CONNECTIONTYPE flatgeobuf
+    DATA "data/africa.fgb"
+    CLASSITEM "name_en"   
+    CLASS
+      NAME "Tanzania"
+      EXPRESSION "Tanzania"
+      STYLE
+        COLOR 100 223 69
+        OUTLINECOLOR 120 120 120
+      END #style   
+    END #class
+    CLASS
+      NAME "Kenya"
+      EXPRESSION "Kenya"
+      STYLE
+        COLOR 120 220 123
+        OUTLINECOLOR 120 120 120
+      END #style   
+    END #class    
+    TEMPLATE "ttt.html"
+    CLASS
+      NAME "Zambia"
+      EXPRESSION "Zambia"
+      STYLE
+        COLOR 37 234 224
+        OUTLINECOLOR 120 120 120
+      END #style   
+    END #class    
+    TEMPLATE "ttt.html"    
+  END # layer  
+
+END # map

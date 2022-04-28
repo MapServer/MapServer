@@ -273,6 +273,14 @@ set(v8_SOURCES
 )
 include_directories(mapscript/v8/)
 
+# point to FlatGeobuf files
+set(flatgeobuf_SOURCES
+flatgeobuf/flatgeobuf_c.cpp
+flatgeobuf/geometryreader.cpp
+flatgeobuf/packedrtree.cpp
+)
+include_directories(flatgeobuf/include)
+
 #add_definitions(-DHASH_DEBUG=1)
 if(WIN32)
   set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
@@ -306,8 +314,8 @@ mapresample.c mapwfs.cpp mapgdal.cpp mapogcsos.c mapscale.c mapwfs11.cpp mapwfs2
 mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c
-idw.c interpolation.c
-mapcompositingfilter.c mapmvt.c mapiconv.c mapgraph.cpp mapserv-config.cpp)
+idw.c interpolation.c mapflatgeobuf.c mapcompositingfilter.c mapmvt.c mapiconv.c
+mapgraph.cpp mapserv-config.cpp)
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
@@ -316,7 +324,8 @@ maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
 mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h mapogcapi.h
 mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
 mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
-mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h mapgraph.h mapserv-config.h)
+mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h
+mapflatgeobuf.h mapgraph.h mapserv-config.h)
 
 if(WIN32)
 	configure_file(
@@ -350,7 +359,7 @@ endif (WITH_PROTOBUFC)
 
 
 if(BUILD_DYNAMIC)
-  add_library(mapserver SHARED ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  add_library(mapserver SHARED ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES} ${flatgeobuf_SOURCES})
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
@@ -358,7 +367,7 @@ if(BUILD_DYNAMIC)
 endif(BUILD_DYNAMIC)
 
 if(BUILD_STATIC)
-  add_library(mapserver_static STATIC ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  add_library(mapserver_static STATIC ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES} ${flatgeobuf_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
@@ -848,7 +857,6 @@ if(WITH_APACHE_MODULE)
    set(USE_APACHE_MODULE 1)
 endif(WITH_APACHE_MODULE)
 
-
 if(WITH_PERL)
    add_subdirectory("mapscript/perl")
    set(USE_PERL_MAPSCRIPT 1)
@@ -878,7 +886,7 @@ ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
+    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib )
     if (MSVC)
         #4701 : Potentially uninitialized local variable 'name' used (https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4701)
         set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/EHsc /wd4267 /wd4244 /wd4018 /w14701")

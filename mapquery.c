@@ -619,9 +619,9 @@ int msQueryByIndex(mapObj *map)
    * Usually, the row number will be used as resultindex. But when working with
    * databases and querying a single result, the row number is typically 0 and
    * thus useless as the index in the result cache. See #4926 #4076. Only shape
-   * files are considered to have consistent row numbers.
+   * files and flatgeobuf are considered to have consistent row numbers.
    */
-  if ( !(lp->connectiontype == MS_SHAPEFILE || lp->connectiontype == MS_TILED_SHAPEFILE) ) {
+  if ( !(lp->connectiontype == MS_SHAPEFILE || lp->connectiontype == MS_TILED_SHAPEFILE || lp->connectiontype == MS_FLATGEOBUF) ) {
     shape.resultindex = -1;
   }
 
