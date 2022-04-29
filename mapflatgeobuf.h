@@ -40,68 +40,6 @@
 extern "C" {
 #endif
 
-#ifndef SWIG
-  typedef unsigned char uchar;
-
-  typedef struct {
-    VSILFILE  *fpFGB;
-
-    int   nRecords;
-    int   nMaxRecords;
-
-    int   *panRecOffset;
-    int   *panRecSize;
-    ms_bitarray panRecLoaded;
-    int   panRecAllLoaded;
-
-    double  adBoundsMin[4];
-    double  adBoundsMax[4];
-
-    int   bUpdated;
-
-    int   nBufSize; /* these used static vars in shape readers, moved to be thread-safe */
-    uchar   *pabyRec;
-    int   nPartMax;
-    int   *panParts;
-
-  } FGBInfo;
-  typedef FGBInfo * FGBHandle;
-#endif
-
-  /************************************************************************/
-  /*                          flatgeobufObj                                */
-  /************************************************************************/
-
-/**
- * An object representing a FlatGeobuf. There is no write access to this object
- * using MapScript.
- */
-  typedef struct {
-#ifdef SWIG
-    %immutable;
-#endif
-
-    int numshapes; ///< Number of shapes
-    rectObj bounds; ///< Extent of shapes
-
-#ifndef SWIG
-    char source[MS_PATH_LENGTH]; /* full path to this file data */
-    int lastshape;
-    ms_bitarray status;
-    int isopen;
-    FGBHandle hFGB; /* FlatGeobuf file pointer */
-#endif
-
-  } flatgeobufObj;
-
-#ifndef SWIG
-  MS_DLL_EXPORT int msFlatGeobufOpenHandle(flatgeobufObj *fgbfile, const char *filename, FGBHandle hFGB);
-  MS_DLL_EXPORT int msFlatGeobufOpenVirtualFile(flatgeobufObj *fgbfile, const char *filename, VSILFILE * fpFGB, int log_failures);
-  MS_DLL_EXPORT int msFlatGeobufOpen(flatgeobufObj *fgbfile, const char *filename, int log_failures);
-  MS_DLL_EXPORT void msFlatGeobufClose(flatgeobufObj *fgbfile);
-  MS_DLL_EXPORT int msFlatGeobufWhichShapes(flatgeobufObj *fgbfile, rectObj rect, int debug);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

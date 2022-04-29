@@ -877,11 +877,11 @@ endif(FUZZER)
 add_subdirectory("flatgeobuf")
 
 if(UNIX)
-ms_link_libraries( ${CMAKE_DL_LIBS} m )
+ms_link_libraries( ${CMAKE_DL_LIBS} m flatgeobuf)
 endif(UNIX)
 
 if (WIN32)
-    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib)
+    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib flatgeobuf)
     if (MSVC)
         #4701 : Potentially uninitialized local variable 'name' used (https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4701)
         set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/EHsc /wd4267 /wd4244 /wd4018 /w14701")

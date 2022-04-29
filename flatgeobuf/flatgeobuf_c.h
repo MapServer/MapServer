@@ -1,13 +1,13 @@
 #ifndef FLATGEOBUF_C_H
 #define FLATGEOBUF_C_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "../../mapserver.h"
 #include "../../maperror.h"
 #include "../../mapprimitive.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern uint8_t flatgeobuf_magicbytes[];
 extern uint8_t FLATGEOBUF_MAGICBYTES_SIZE;
@@ -54,8 +54,20 @@ typedef struct flatgeobuf_item
 	uint64_t offset;
 } flatgeobuf_item;
 
+typedef struct flatgeobuf_search_item {
+    uint64_t offset;
+    uint64_t index;
+} flatgeobuf_search_item;
+
 typedef struct flatgeobuf_ctx
 {
+	VSILFILE *file;
+	uint64_t feature_offset;
+	uint64_t offset;
+	uint8_t *buf;
+	uint32_t buf_size;
+	bool done;
+
     // header contents
 	const char *name;
 	uint64_t features_count;
@@ -71,36 +83,43 @@ typedef struct flatgeobuf_ctx
 	bool has_tm;
 	uint16_t index_node_size;
 	int32_t srid;
-	flatgeobuf_column **columns;
-	uint16_t columns_size;
+	flatgeobuf_column *columns;
+	uint16_t columns_len;
 
-    // encode/decode buffers
-	uint8_t *buf;
-	uint64_t offset;
-    uint64_t size;
+	// mapserver structs
+	rectObj bounds;
 
-    LWGEOM *lwgeom;
-	uint8_t lwgeom_type;
+	// index search result
+	flatgeobuf_search_item *search_result;
+	uint32_t search_result_len;
+	uint32_t search_index;
+
+	// shape parts buffers
+	// NOTE: not used at this time, need to introduce optional free in mapdraw
+	lineObj *line;
+	uint32_t line_len;
+	pointObj *point;
+	uint32_t point_len;
+
+	int ms_type;
     uint8_t *properties;
 	uint32_t properties_len;
     uint32_t properties_size;
-
-    // encode input
-    const char *geom_name;
-	uint32_t geom_index;
-
-	// encode spatial index bookkeeping
-	bool create_index;
-	flatgeobuf_item **items;
-	uint64_t items_len;
 } flatgeobuf_ctx;
 
-int flatgeobuf_encode_header(flatgeobuf_ctx *ctx);
-int flatgeobuf_encode_feature(flatgeobuf_ctx *ctx);
-void flatgeobuf_create_index(flatgeobuf_ctx *ctx);
+flatgeobuf_ctx *flatgeobuf_init_ctx();
+void flatgeobuf_free_ctx(flatgeobuf_ctx *ctx);
 
+void flatgeobuf_ensure_buf(flatgeobuf_ctx *ctx, uint32_t size);
+void flatgeobuf_ensure_line(flatgeobuf_ctx *ctx, uint32_t len);
+void flatgeobuf_ensure_point(flatgeobuf_ctx *ctx, uint32_t len);
+
+int flatgeobuf_check_magicbytes(flatgeobuf_ctx *ctx);
 int flatgeobuf_decode_header(flatgeobuf_ctx *ctx);
-int flatgeobuf_decode_feature(flatgeobuf_ctx *ctx);
+int flatgeobuf_decode_feature(flatgeobuf_ctx *ctx, shapeObj *shape);
+
+int flatgeobuf_index_search(flatgeobuf_ctx *ctx, rectObj *rect);
+int flatgeobuf_index_skip(flatgeobuf_ctx *ctx);
 
 #ifdef __cplusplus
 }

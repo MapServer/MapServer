@@ -5,12 +5,14 @@
 #include "../../maperror.h"
 #include "../../mapprimitive.h"
 
+#include "flatgeobuf_c.h"
 #include "feature_generated.h"
 
 namespace FlatGeobuf {
 
 class GeometryReader {
     private:
+        flatgeobuf_ctx *m_ctx;
         const FlatGeobuf::Geometry *m_geometry;
         FlatGeobuf::GeometryType m_geometry_type;
         bool m_has_z;
@@ -19,26 +21,27 @@ class GeometryReader {
         uint32_t m_length = 0;
         uint32_t m_offset = 0;
 
-        shapeObj *readPoint();
-        shapeObj *readMultiPoint();
-        shapeObj *readLineString();
-        shapeObj *readMultiLineString();
-        shapeObj *readPolygon();
-        shapeObj *readMultiPolygon();
-        shapeObj *readGeometryCollection();
+        void readPoint(shapeObj *);
+        void readMultiPoint(shapeObj *);
+        void readLineString(shapeObj *);
+        void readMultiLineString(shapeObj *);
+        void readPolygon(shapeObj *);
+        void readMultiPolygon(shapeObj *);
+        void readGeometryCollection(shapeObj *);
+
+        void readLineObj(lineObj *line);
 
     public:
         GeometryReader(
-            const FlatGeobuf::Geometry *geometry,
-            FlatGeobuf::GeometryType geometry_type,
-            bool has_z,
-            bool has_m) :
+            flatgeobuf_ctx *ctx,
+            const FlatGeobuf::Geometry *geometry) :
+            m_ctx (ctx),
             m_geometry (geometry),
-            m_geometry_type (geometry_type),
-            m_has_z (has_z),
-            m_has_m (has_m)
+            m_geometry_type ((FlatGeobuf::GeometryType) ctx->geometry_type),
+            m_has_z (ctx->has_z),
+            m_has_m (ctx->has_m)
             { }
-        shapeObj *read();
+        void read(shapeObj *);
 };
 
 }

@@ -607,6 +607,7 @@ char *msGetVersion()
   strcat(version, " INPUT=OGR");
   strcat(version, " INPUT=GDAL");
   strcat(version, " INPUT=SHAPEFILE");
+  strcat(version, " INPUT=FLATGEOBUF");
   return(version);
 }
 

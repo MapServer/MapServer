@@ -34,140 +34,14 @@
 #include "mapserver.h"
 #include "mapows.h"
 
+#include "flatgeobuf/flatgeobuf_c.h"
+
 #include <cpl_conv.h>
 #include <ogr_srs_api.h>
 
-FGBHandle msFGBOpenVirtualFile( VSILFILE * fpFGB)
-{
-}
-
-/************************************************************************/
-/*                              msFGBOpen()                             */
-/*                                                                      */
-/*      Open the FlatGeobuf file.                                       */
-/************************************************************************/
-FGBHandle msFGBOpen(const char * pszLayer)
-{
-  VSILFILE *fpFGB = VSIFOpenL(pszLayer, "rb");
-  return msFGBOpenVirtualFile(fpFGB);
-}
-
-void msFGBClose(FGBHandle psFGB)
-{
-  VSIFCloseL( psFGB->fpFGB );
-  free( psFGB );
-}
-
-int msFGBReadBounds( FGBHandle psFGB, int hEntity, rectObj *padBounds)
-{
-  // TODO: get rect
-
-  return MS_SUCCESS;
-}
-
-int msFlatGeobufOpenHandle(flatgeobufObj *fgbfile, const char *filename, FGBHandle hFGB)
-{
-  assert(filename != NULL);
-  assert(hFGB != NULL);
-
-  /* initialize a few things */
-  fgbfile->status = NULL;
-  fgbfile->lastshape = -1;
-  fgbfile->isopen = MS_FALSE;
-
-  fgbfile->hFGB = hFGB;
-
-  strlcpy(fgbfile->source, filename, sizeof(fgbfile->source));
-
-  if( fgbfile->numshapes < 0 || fgbfile->numshapes > 256000000 ) {
-    msSetError(MS_FGBERR, "Corrupted FlatGeobuf : numshapes = %d.",
-               "msFlatGeobufOpen()", fgbfile->numshapes);
-    msFGBClose(hFGB);
-    return -1;
-  }
-
-  msFGBReadBounds( fgbfile->hFGB, -1, &(fgbfile->bounds));
-
-  fgbfile->isopen = MS_TRUE;
-  return(0); /* all o.k. */
-}
-
-int msFlatGeobufOpenVirtualFile(flatgeobufObj *fgbfile, const char *filename, VSILFILE * fpFGB, int log_failures)
-{
-  assert(filename != NULL);
-  assert(fpFGB != NULL);
-
-  /* open the file and get basic info */
-  FGBHandle hFGB = msFGBOpenVirtualFile(fpFGB);
-  if(!hFGB) {
-    if( log_failures )
-      msSetError(MS_IOERR, "(%s)", "msFlatGeobufOpenVirtualFile()", filename);
-    return(-1);
-  }
-
-  return msFlatGeobufOpenHandle(fgbfile, filename, hFGB);
-}
-
-int msFlatGeobufOpen(flatgeobufObj *fgbfile, const char *filename, int log_failures)
-{
-  int i;
-  char *dbfFilename;
-  size_t bufferSize = 0;
-
-  if(!filename) {
-    if( log_failures )
-      msSetError(MS_IOERR, "No (NULL) filename provided.", "msFlatGeobufOpen()");
-    return(-1);
-  }
-
-  /* open the file and get basic info */
-  FGBHandle hFGB = msFGBOpen(filename);
-
-  if(!hFGB) {
-    if( log_failures )
-      msSetError(MS_IOERR, "(%s)", "msFlatGeobufOpen()", filename);
-    return(-1);
-  }
-
-  return msFlatGeobufOpenHandle(fgbfile, filename, hFGB);
-}
-
-void msFlatGeobufClose(flatgeobufObj *fgbfile)
-{
-  if (fgbfile && fgbfile->isopen == MS_TRUE) { /* Silently return if called with NULL fgbfile by freeLayer() */
-    if(fgbfile->hFGB) msFGBClose(fgbfile->hFGB);
-    free(fgbfile->status);
-    fgbfile->isopen = MS_FALSE;
-  }
-}
-
 /* status array lives in the fgbfile, can return MS_SUCCESS/MS_FAILURE/MS_DONE */
-int msFlatGeobufWhichShapes(flatgeobufObj *fgbfile, rectObj rect, int debug)
+int msFlatGeobufWhichShapes(flatgeobuf_ctx *ctx, rectObj rect, int debug)
 {
-  int i;
-  rectObj shaperect;
-  char *filename;
-
-  free(fgbfile->status);
-  fgbfile->status = NULL;
-
-  /* rect and source rect DON'T overlap... */
-  if(msRectOverlap(&fgbfile->bounds, &rect) != MS_TRUE)
-    return(MS_DONE);
-
-  if(msRectContained(&fgbfile->bounds, &rect) == MS_TRUE) {
-    fgbfile->status = msAllocBitArray(fgbfile->numshapes);
-    if(!fgbfile->status) {
-      msSetError(MS_MEMERR, NULL, "msFlatGeobufWhichShapes()");
-      return(MS_FAILURE);
-    }
-    msSetAllBits(fgbfile->status, fgbfile->numshapes, 1);
-  } else {
-    // TODO: index search?
-  }
-
-  fgbfile->lastshape = -1;
-
   return(MS_SUCCESS); /* success */
 }
 
@@ -214,7 +88,7 @@ static void msFGBPassThroughFieldDefinitions(layerObj *layer)
 
 void msFlatGeobufLayerFreeItemInfo(layerObj *layer)
 {
-  if(layer->iteminfo) {
+  if (layer->iteminfo) {
     free(layer->iteminfo);
     layer->iteminfo = NULL;
   }
@@ -222,8 +96,7 @@ void msFlatGeobufLayerFreeItemInfo(layerObj *layer)
 
 int msFlatGeobufLayerInitItemInfo(layerObj *layer)
 {
-  flatgeobufObj *fgbfile = layer->layerinfo;
-  if( ! fgbfile) {
+  if(!layer->layerinfo) {
     msSetError(MS_FGBERR, "FlatGeobuf layer has not been opened.", "msFlatGeobufLayerInitItemInfo()");
     return MS_FAILURE;
   }
@@ -242,28 +115,41 @@ int msFlatGeobufLayerInitItemInfo(layerObj *layer)
 int msFlatGeobufLayerOpen(layerObj *layer)
 {
   char szPath[MS_MAXPATHLEN];
-  flatgeobufObj *fgbfile;
+  int ret;
 
-  if(layer->layerinfo) return MS_SUCCESS; /* layer already open */
+  if(layer->layerinfo)
+    return MS_SUCCESS;
 
-  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+  if (msCheckParentPointer(layer->map,"map") == MS_FAILURE)
     return MS_FAILURE;
 
-  /* allocate space for a flatgeobufObj using layer->layerinfo  */
-  fgbfile = (flatgeobufObj *) malloc(sizeof(flatgeobufObj));
-  MS_CHECK_ALLOC(fgbfile, sizeof(flatgeobufObj), MS_FAILURE);
+  flatgeobuf_ctx *ctx = flatgeobuf_init_ctx();
+  layer->layerinfo = ctx;
 
-  layer->layerinfo = fgbfile;
-
-  if(msFlatGeobufOpen(fgbfile, msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data), MS_TRUE) == -1) {
-    if(msFlatGeobufOpen(fgbfile, msBuildPath(szPath, layer->map->mappath, layer->data), MS_TRUE) == -1) {
-      layer->layerinfo = NULL;
-      free(fgbfile);
-      return MS_FAILURE;
-    }
+  ctx->file = VSIFOpenL(msBuildPath(szPath, layer->map->mappath, layer->data), "rb");
+  if (!ctx->file) {
+    layer->layerinfo = NULL;
+    free(ctx);
+    return MS_FAILURE;
   }
 
-  if (layer->projection.numargs > 0 &&
+  ret = flatgeobuf_check_magicbytes(ctx);
+  if (ret == -1) {
+    layer->layerinfo = NULL;
+    flatgeobuf_free_ctx(ctx);
+    free(ctx);
+    return MS_FAILURE;
+  }
+
+  ret = flatgeobuf_decode_header(ctx);
+  if (ret == -1) {
+    layer->layerinfo = NULL;
+    flatgeobuf_free_ctx(ctx);
+    free(ctx);
+    return MS_FAILURE;
+  }
+
+  /*if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto"))
   {
     const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
@@ -304,7 +190,7 @@ int msFlatGeobufLayerOpen(layerObj *layer)
             msDebug( "Unable to get SRS from FlatGeobuf '%s' for layer '%s'.\n", szPath, layer->name );
         }
     }
-  }
+  }*/
 
   return MS_SUCCESS;
 }
@@ -319,80 +205,91 @@ int msFlatGeobufLayerIsOpen(layerObj *layer)
 
 int msFlatGeobufLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
-  (void)isQuery;
-  int status;
-  flatgeobufObj *fgbfile;
-
-  fgbfile = layer->layerinfo;
-
-  if(!fgbfile) {
-    msSetError(MS_FGBERR, "FlatGeobuf layer has not been opened.", "msFlatGeobufLayerWhichShapes()");
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  if (!ctx)
     return MS_FAILURE;
-  }
 
-  status = msFlatGeobufWhichShapes(fgbfile, rect, layer->debug);
-  if(status != MS_SUCCESS) {
-    return status;
-  }
+  if (!ctx->has_extent || !ctx->index_node_size)
+    return MS_SUCCESS;
+
+  if(msRectOverlap(&ctx->bounds, &rect) != MS_TRUE)
+    return MS_DONE;
+
+  if (msRectContained(&ctx->bounds, &rect) == MS_FALSE && ctx->index_node_size > 0)
+    flatgeobuf_index_search(ctx, &rect);
+  else
+    flatgeobuf_index_skip(ctx);
 
   return MS_SUCCESS;
 }
 
 int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
 {
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  if (!ctx)
+    return MS_FAILURE;
+
+  if (ctx->search_result) {
+    if (ctx->search_index >= ctx->search_result_len - 1)
+      return MS_DONE;
+    flatgeobuf_search_item item = ctx->search_result[ctx->search_index];
+    if (VSIFSeekL(ctx->file, ctx->feature_offset + item.offset, SEEK_SET) == -1) {
+        msSetError(MS_FGBERR, "Unable to seek in file", "msFlatGeobufLayerNextShape");
+        return MS_FAILURE;
+    }
+    ctx->offset = ctx->feature_offset + item.offset;
+    ctx->search_index++;
+  }
+
+  int ret = flatgeobuf_decode_feature(ctx, shape);
+  if (ret == -1)
+    return MS_FAILURE;
+  if (ctx->done)
+    return MS_DONE;
+
   return MS_SUCCESS;
 }
 
 int msFlatGeobufLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  if (!ctx)
+    return MS_FAILURE;
+  long i = record->shapeindex;
+  // TODO: use index to find feature, else iterate to it
   return MS_SUCCESS;
 }
 
 int msFlatGeobufLayerClose(layerObj *layer)
 {
-  flatgeobufObj *fgbfile;
-  fgbfile = layer->layerinfo;
-  if(!fgbfile) return MS_SUCCESS; /* nothing to do */
-
-  msFlatGeobufClose(fgbfile);
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  if (!ctx)
+    return MS_SUCCESS;
+  VSIFCloseL(ctx->file);
+  flatgeobuf_free_ctx(ctx);
   free(layer->layerinfo);
   layer->layerinfo = NULL;
-
   return MS_SUCCESS;
 }
 
 int msFlatGeobufLayerGetItems(layerObj *layer)
 {
-  flatgeobufObj *fgbfile;
-  const char *value;
-
-  fgbfile = layer->layerinfo;
-
-  if(!fgbfile) {
-    msSetError(MS_FGBERR, "FlatGeobuf layer has not been opened.", "msFlatGeobufLayerGetItems()");
-    return MS_FAILURE;
-  }
-
-  // TODO: populate
-  //layer->numitems = msFGBGetFieldCount(fgbfile->hFGB);
-  //layer->items = msFGBGetItems(fgbfile->hFGB);
-  layer->numitems = 0;
-  if(layer->numitems == 0) return MS_SUCCESS; /* No items is a valid case (#3147) */
-  if(!layer->items) return MS_FAILURE;
-
-  /* -------------------------------------------------------------------- */
-  /*      consider populating the field definitions in metadata.          */
-  /* -------------------------------------------------------------------- */
-  if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
-      && strcasecmp(value,"auto") == 0 )
-    msFGBPassThroughFieldDefinitions(layer);
-
+  // TODO: properties decode
   return msLayerInitItemInfo(layer);
 }
 
 int msFlatGeobufLayerGetExtent(layerObj *layer, rectObj *extent)
 {
-  *extent = ((flatgeobufObj*)layer->layerinfo)->bounds;
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  extent->minx = ctx->xmin;
+  extent->miny = ctx->ymin;
+  extent->maxx = ctx->xmax;
+  extent->maxy = ctx->ymax;
   return MS_SUCCESS;
 }
 

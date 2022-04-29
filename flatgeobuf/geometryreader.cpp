@@ -3,13 +3,9 @@
 using namespace flatbuffers;
 using namespace FlatGeobuf;
 
-shapeObj *GeometryReader::readPoint()
+void GeometryReader::readPoint(shapeObj *shape)
 {
-    if (m_geometry->xy() == nullptr || m_geometry->xy()->size() == 0)
-        return NULL;
-
-    shapeObj *s = (shapeObj *) malloc(sizeof(shapeObj));
-    lineObj *l = (lineObj *) malloc(sizeof(shapeObj));
+    lineObj *l = (lineObj *) malloc(sizeof(lineObj));
     pointObj *p = (pointObj *) malloc(sizeof(pointObj));
 
 	const auto xy = m_geometry->xy()->data();
@@ -22,132 +18,93 @@ shapeObj *GeometryReader::readPoint()
 
     l[0].numpoints = 1;
     l[0].point = p;
-    s->line = l;
-
-    return s;
+    shape->numlines = 1;
+    shape->line = l;
+    shape->type = MS_SHAPE_POINT;
 }
 
-/*POINTARRAY *GeometryReader::readPA()
+void GeometryReader::readLineObj(lineObj *line)
 {
-    POINTARRAY *pa;
-	POINT4D pt;
-	uint32_t npoints;
-
     const double *xy = m_geometry->xy()->data();
     const double *z = m_has_z ? m_geometry->z()->data() : nullptr;
     const double *m = m_has_m ? m_geometry->m()->data() : nullptr;
 
-	pa = ptarray_construct_empty(m_has_z, m_has_m, m_length);
+    line->point = (pointObj *) malloc(m_length * sizeof(pointObj));
+    line->numpoints = m_length;
 
     for (uint32_t i = m_offset; i < m_offset + m_length; i++) {
-        double xv = xy[i * 2 + 0];
-        double yv = xy[i * 2 + 1];
-        double zv = 0;
-        double mv = 0;
+        pointObj *point = &line->point[i];
+        memcpy(point, &xy[i * 2], 2 * sizeof(double));
         if (m_has_z)
-            zv = z[i];
+            point->z = z[i];
         if (m_has_m)
-            mv = m[i];
-        pt = (POINT4D) { xv, yv, zv, mv };
-        ptarray_append_point(pa, &pt, LW_TRUE);
+            point->m = m[i];
     }
-
-	return pa;
-}*/
-
-shapeObj *GeometryReader::readMultiPoint()
-{
-    return NULL;
 }
 
-shapeObj *GeometryReader::readLineString()
+void GeometryReader::readMultiPoint(shapeObj *shape)
 {
-    return NULL;
+    readLineString(shape);
+    shape->type = MS_SHAPE_POINT;
 }
 
-shapeObj *GeometryReader::readMultiLineString()
+void GeometryReader::readLineString(shapeObj *shape)
 {
-    return NULL;
-    /*auto ends = m_geometry->ends();
-
-    uint32_t ngeoms = 1;
-    if (ends != nullptr && ends->size() > 1)
-		ngeoms = ends->size();
-
-    auto *lwmline = lwmline_construct_empty(0, m_has_z, m_has_m);
-    if (ngeoms > 1) {
-        for (uint32_t i = 0; i < ngeoms; i++) {
-			const auto e = ends->Get(i);
-			m_length = e - m_offset;
-			POINTARRAY *pa = readPA();
-			lwmline_add_lwline(lwmline, lwline_construct(0, NULL, pa));
-			m_offset = e;
-		}
-    } else {
-        POINTARRAY *pa = readPA();
-		lwmline_add_lwline(lwmline, lwline_construct(0, NULL, pa));
-    }
-
-    return lwmline;*/
+    lineObj *line = (lineObj *) malloc(sizeof(lineObj));
+    readLineObj(line);
+    shape->numlines = 1;
+    shape->line = line;
+    shape->type = MS_SHAPE_LINE;
 }
 
-shapeObj *GeometryReader::readPolygon()
+void GeometryReader::readMultiLineString(shapeObj *shape)
 {
-    return NULL;
-    /*const auto ends = m_geometry->ends();
+    readPolygon(shape);
+    shape->type = MS_SHAPE_LINE;
+}
+
+void GeometryReader::readPolygon(shapeObj *shape)
+{
+    const auto ends = m_geometry->ends();
 
     uint32_t nrings = 1;
     if (ends != nullptr && ends->size() > 1)
         nrings = ends->size();
 
-    auto **ppa = (POINTARRAY **) lwalloc(sizeof(POINTARRAY *) * nrings);
+    lineObj *line = (lineObj *) malloc(nrings * sizeof(lineObj));
     if (nrings > 1) {
         for (uint32_t i = 0; i < nrings; i++) {
             const auto e = ends->Get(i);
             m_length = e - m_offset;
-            ppa[i] = readPA();
+            readLineObj(&line[i]);
             m_offset = e;
         }
     } else {
-        ppa[0] = readPA();
+        readLineObj(line);
     }
-
-    return lwpoly_construct(0, NULL, nrings, ppa);*/
+    shape->numlines = nrings;
+    shape->line = line;
+    shape->type = MS_SHAPE_POLYGON;
 }
 
-shapeObj *GeometryReader::readMultiPolygon()
+void GeometryReader::readMultiPolygon(shapeObj *shape)
 {
-    return NULL;
-    /*
-    auto parts = m_geometry->parts();
-    auto *mp = lwmpoly_construct_empty(0, m_has_z, m_has_m);
-    for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), GeometryType::Polygon, m_has_z, m_has_m };
-        const auto p = (LWPOLY *) reader.read();
-        lwmpoly_add_lwpoly(mp, p);
-    }
-    return mp;*/
+    // TODO
+    return;
 }
 
-/*LWCOLLECTION *GeometryReader::readGeometryCollection()
+void GeometryReader::readGeometryCollection(shapeObj *shape)
 {
-    auto parts = m_geometry->parts();
-    auto *gc = lwcollection_construct_empty(COLLECTIONTYPE, 0, m_has_z, m_has_m);
-    for (uoffset_t i = 0; i < parts->size(); i++) {
-        auto part = parts->Get(i);
-        GeometryReader reader { part, part->type(), m_has_z, m_has_m };
-        const auto g = reader.read();
-        lwcollection_add_lwgeom(gc, g);
-    }
-    return gc;
-}*/
+    // TODO
+    return;
+}
 
-shapeObj *GeometryReader::read()
+void GeometryReader::read(shapeObj *shape)
 {
     // nested types
     switch (m_geometry_type) {
-        //case GeometryType::GeometryCollection: return (shapeObj *) readGeometryCollection();
-        case GeometryType::MultiPolygon: return (shapeObj *) readMultiPolygon();
+        case GeometryType::GeometryCollection: return readGeometryCollection(shape);
+        case GeometryType::MultiPolygon: return readMultiPolygon(shape);
         /*case GeometryType::CompoundCurve: return readCompoundCurve();
         case GeometryType::CurvePolygon: return readCurvePolygon();
         case GeometryType::MultiCurve: return readMultiCurve();
@@ -162,18 +119,16 @@ shapeObj *GeometryReader::read()
     m_length = xySize / 2;
 
     switch (m_geometry_type) {
-        case GeometryType::Point: return (shapeObj *) readPoint();
-        case GeometryType::MultiPoint: return (shapeObj *) readMultiPoint();
-        case GeometryType::LineString: return (shapeObj *) readLineString();
-        case GeometryType::MultiLineString: return (shapeObj *) readMultiLineString();
-        case GeometryType::Polygon: return (shapeObj *) readPolygon();
+        case GeometryType::Point: return readPoint(shape);
+        case GeometryType::MultiPoint: return readMultiPoint(shape);
+        case GeometryType::LineString: return readLineString(shape);
+        case GeometryType::MultiLineString: return readMultiLineString(shape);
+        case GeometryType::Polygon: return readPolygon(shape);
         /*
         case GeometryType::CircularString: return readSimpleCurve<OGRCircularString>(true);
         case GeometryType::Triangle: return readTriangle();
         case GeometryType::TIN: return readTIN();
         */
-        default:
-            msSetError(MS_FGBERR, "Unknown type %d", "GeometryReader::read", (int) m_geometry_type);
+        default: break;
     }
-    return nullptr;
 }
