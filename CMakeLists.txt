@@ -849,7 +849,6 @@ if(WITH_APACHE_MODULE)
    set(USE_APACHE_MODULE 1)
 endif(WITH_APACHE_MODULE)
 
-
 if(WITH_PERL)
    add_subdirectory("mapscript/perl")
    set(USE_PERL_MAPSCRIPT 1)
@@ -873,6 +872,9 @@ endif(WITH_CSHARP)
 if(FUZZER)
   add_subdirectory("fuzzers")
 endif(FUZZER)
+
+# point to FlatGeobuf files
+add_subdirectory("flatgeobuf")
 
 if(UNIX)
 ms_link_libraries( ${CMAKE_DL_LIBS} m )
