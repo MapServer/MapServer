@@ -124,6 +124,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include "maperror.h"
 #include "mapprimitive.h"
 #include "mapshape.h"
+#include "mapflatgeobuf.h"
 #include "mapsymbol.h"
 #include "maptree.h" /* quadtree spatial index */
 #include "maphash.h"
