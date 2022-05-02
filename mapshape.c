@@ -1891,8 +1891,12 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
       }
 
       for(i=0; i<shpfile->numshapes; i++) {
-        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) != MS_SUCCESS)
+        if(msSHPReadBounds(shpfile->hSHP, i, &shaperect) != MS_SUCCESS) {
+          if (msSHXReadSize(shpfile->hSHP, i) == 4) { /* handle NULL shape */
+              continue;
+          }
           return(MS_FAILURE);
+        }
 
         if(msRectOverlap(&shaperect, &rect) == MS_TRUE) msSetBit(shpfile->status, i, 1);
       }
