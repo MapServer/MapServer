@@ -39,13 +39,7 @@
 #include <cpl_conv.h>
 #include <ogr_srs_api.h>
 
-/* status array lives in the fgbfile, can return MS_SUCCESS/MS_FAILURE/MS_DONE */
-int msFlatGeobufWhichShapes(flatgeobuf_ctx *ctx, rectObj rect, int debug)
-{
-  return(MS_SUCCESS); /* success */
-}
-
-static void msFGBPassThroughFieldDefinitions(layerObj *layer)
+/*static void msFGBPassThroughFieldDefinitions(layerObj *layer)
 {
   int numitems, i;
 
@@ -62,7 +56,7 @@ static void msFGBPassThroughFieldDefinitions(layerObj *layer)
     gml_width[0] = '\0';
     gml_precision[0] = '\0';
 
-    /*switch( eType ) {
+    switch( eType ) {
       case FTInteger:
         gml_type = "Integer";
         sprintf( gml_width, "%d", nWidth );
@@ -79,12 +73,12 @@ static void msFGBPassThroughFieldDefinitions(layerObj *layer)
         gml_type = "Character";
         sprintf( gml_width, "%d", nWidth );
         break;
-    }*/
+    }
 
     //msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
 
   }
-}
+}*/
 
 void msFlatGeobufLayerFreeItemInfo(layerObj *layer)
 {
@@ -258,7 +252,7 @@ int msFlatGeobufLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *recor
   ctx = layer->layerinfo;
   if (!ctx)
     return MS_FAILURE;
-  long i = record->shapeindex;
+  //long i = record->shapeindex;
   // TODO: use index to find feature, else iterate to it
   return MS_SUCCESS;
 }

@@ -87,7 +87,7 @@ void GeometryReader::readPolygon(shapeObj *shape)
     shape->type = MS_SHAPE_POLYGON;
 }
 
-void GeometryReader::readMultiPolygon(shapeObj *shape)
+/*void GeometryReader::readMultiPolygon(shapeObj *shape)
 {
     // TODO
     return;
@@ -97,14 +97,14 @@ void GeometryReader::readGeometryCollection(shapeObj *shape)
 {
     // TODO
     return;
-}
+}*/
 
 void GeometryReader::read(shapeObj *shape)
 {
     // nested types
     switch (m_geometry_type) {
-        case GeometryType::GeometryCollection: return readGeometryCollection(shape);
-        case GeometryType::MultiPolygon: return readMultiPolygon(shape);
+        //case GeometryType::GeometryCollection: return readGeometryCollection(shape);
+        //case GeometryType::MultiPolygon: return readMultiPolygon(shape);
         /*case GeometryType::CompoundCurve: return readCompoundCurve();
         case GeometryType::CurvePolygon: return readCurvePolygon();
         case GeometryType::MultiCurve: return readMultiCurve();

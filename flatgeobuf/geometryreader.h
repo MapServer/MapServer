@@ -26,8 +26,8 @@ class GeometryReader {
         void readLineString(shapeObj *);
         void readMultiLineString(shapeObj *);
         void readPolygon(shapeObj *);
-        void readMultiPolygon(shapeObj *);
-        void readGeometryCollection(shapeObj *);
+        //void readMultiPolygon(shapeObj *);
+        //void readGeometryCollection(shapeObj *);
 
         void readLineObj(lineObj *line);
 

@@ -13,11 +13,6 @@ uint8_t flatgeobuf_magicbytes[] = { 0x66, 0x67, 0x62, 0x03, 0x66, 0x67, 0x62, 0x
 uint8_t FLATGEOBUF_MAGICBYTES_SIZE = sizeof(flatgeobuf_magicbytes);
 uint32_t INIT_BUFFER_SIZE = 1024 * 4;
 
-struct FeatureItem : FlatGeobuf::Item {
-    uoffset_t size;
-    uint64_t offset;
-};
-
 ctx *flatgeobuf_init_ctx()
 {
     ctx *c = (ctx *) malloc(sizeof(ctx));
