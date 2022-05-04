@@ -103,7 +103,7 @@ add_custom_command(
 )
 
 add_custom_command(
-    TARGET _pythonmapscript
+    OUTPUT mapscriptcopyfiles.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript/__init__.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py
@@ -114,6 +114,13 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/tests" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests/data
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
     COMMENT "Copying files required to build Mapscript"
+    DEPENDS _pythonmapscript
+)
+
+# handle CMake CMP0040 policy error
+add_custom_target(
+    _pythonmapscript
+    DEPENDS mapscriptcopyfiles.stamp
 )
 
 install(  
