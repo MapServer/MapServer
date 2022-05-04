@@ -4,6 +4,7 @@
 #include "../../mapserver.h"
 #include "../../maperror.h"
 #include "../../mapprimitive.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
