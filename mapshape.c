@@ -2787,6 +2787,11 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
     return MS_FAILURE;
   }
 
+  if (!shpfile->status) {
+    /* probably whichShapes didn't overlap */
+    return MS_DONE;
+  }
+
   i = msGetNextBit(shpfile->status, shpfile->lastshape + 1, shpfile->numshapes);
   shpfile->lastshape = i;
   if(i == -1) return(MS_DONE); /* nothing else to read */
