@@ -3,7 +3,7 @@
 #include "feature_generated.h"
 #include "geometryreader.h"
 #include "packedrtree.h"
-#include <stdexcept>"
+#include <stdexcept>
 
 using namespace flatbuffers;
 using namespace FlatGeobuf;
