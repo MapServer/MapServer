@@ -273,6 +273,14 @@ set(v8_SOURCES
 )
 include_directories(mapscript/v8/)
 
+# point to FlatGeobuf files
+set(flatgeobuf_SOURCES
+flatgeobuf/flatgeobuf_c.cpp
+flatgeobuf/geometryreader.cpp
+flatgeobuf/packedrtree.cpp
+)
+include_directories(flatgeobuf/include)
+
 #add_definitions(-DHASH_DEBUG=1)
 if(WIN32)
   set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
@@ -351,7 +359,7 @@ endif (WITH_PROTOBUFC)
 
 
 if(BUILD_DYNAMIC)
-  add_library(mapserver SHARED ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  add_library(mapserver SHARED ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES} ${flatgeobuf_SOURCES})
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
@@ -359,7 +367,7 @@ if(BUILD_DYNAMIC)
 endif(BUILD_DYNAMIC)
 
 if(BUILD_STATIC)
-  add_library(mapserver_static STATIC ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
+  add_library(mapserver_static STATIC ${vectortile_SOURCES} ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES} ${flatgeobuf_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
@@ -873,15 +881,12 @@ if(FUZZER)
   add_subdirectory("fuzzers")
 endif(FUZZER)
 
-# point to FlatGeobuf files
-add_subdirectory("flatgeobuf")
-
 if(UNIX)
-ms_link_libraries( ${CMAKE_DL_LIBS} m flatgeobuf)
+ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
 
 if (WIN32)
-    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib flatgeobuf)
+    ms_link_libraries( ${MS_EXTERNAL_LIBS} ws2_32.lib )
     if (MSVC)
         #4701 : Potentially uninitialized local variable 'name' used (https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4701)
         set_target_properties(mapserver PROPERTIES COMPILE_FLAGS "/EHsc /wd4267 /wd4244 /wd4018 /w14701")
