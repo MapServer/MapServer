@@ -199,6 +199,7 @@ int msFlatGeobufLayerIsOpen(layerObj *layer)
 
 int msFlatGeobufLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  (void)isQuery;
   flatgeobuf_ctx *ctx;
   ctx = layer->layerinfo;
   if (!ctx)
@@ -248,6 +249,8 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
 
 int msFlatGeobufLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  (void)shape;
+  (void)record;
   flatgeobuf_ctx *ctx;
   ctx = layer->layerinfo;
   if (!ctx)
