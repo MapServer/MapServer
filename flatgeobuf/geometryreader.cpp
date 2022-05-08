@@ -33,7 +33,7 @@ void GeometryReader::readLineObj(lineObj *line)
     line->numpoints = m_length;
 
     for (uint32_t i = m_offset; i < m_offset + m_length; i++) {
-        pointObj *point = &line->point[i];
+        pointObj *point = &line->point[i - m_offset];
         memcpy(point, &xy[i * 2], 2 * sizeof(double));
         if (m_has_z)
             point->z = z[i];
