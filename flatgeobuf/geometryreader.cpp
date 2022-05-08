@@ -87,13 +87,26 @@ void GeometryReader::readPolygon(shapeObj *shape)
     shape->type = MS_SHAPE_POLYGON;
 }
 
-/*void GeometryReader::readMultiPolygon(shapeObj *shape)
+void GeometryReader::readMultiPolygon(shapeObj *shape)
 {
-    // TODO
-    return;
+    const auto parts = m_geometry->parts();
+    auto line = (lineObj *) malloc(1 * sizeof(lineObj));
+    auto numlines = 0;
+    for (size_t i = 0; i < parts->size(); i++) {
+        GeometryReader reader(m_ctx, parts->Get(i), GeometryType::Polygon);
+        reader.read(shape);
+        line = (lineObj *) realloc(line, (numlines + shape->numlines) * sizeof(lineObj));
+        for (int j = 0; j < shape->numlines; j++) {
+            line[numlines + j] = shape->line[j];
+        }
+        numlines += shape->numlines;
+        free(shape->line);
+    }
+    shape->line = line;
+    shape->numlines = numlines;
 }
 
-void GeometryReader::readGeometryCollection(shapeObj *shape)
+/*void GeometryReader::readGeometryCollection(shapeObj *shape)
 {
     // TODO
     return;
@@ -104,7 +117,7 @@ void GeometryReader::read(shapeObj *shape)
     // nested types
     switch (m_geometry_type) {
         //case GeometryType::GeometryCollection: return readGeometryCollection(shape);
-        //case GeometryType::MultiPolygon: return readMultiPolygon(shape);
+        case GeometryType::MultiPolygon: return readMultiPolygon(shape);
         /*case GeometryType::CompoundCurve: return readCompoundCurve();
         case GeometryType::CurvePolygon: return readCurvePolygon();
         case GeometryType::MultiCurve: return readMultiCurve();
