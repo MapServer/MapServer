@@ -8,9 +8,8 @@ void GeometryReader::readPoint(shapeObj *shape)
     lineObj *l = (lineObj *) malloc(sizeof(lineObj));
     pointObj *p = (pointObj *) malloc(sizeof(pointObj));
 
-	const auto xy = m_geometry->xy()->data();
-	p->x = xy[m_offset + 0];
-	p->y = xy[m_offset + 1];
+	p->x = m_xy[m_offset + 0];
+	p->y = m_xy[m_offset + 1];
     if (m_has_z)
         p->z = m_geometry->z()->data()[m_offset];
     if (m_has_m)
@@ -25,7 +24,6 @@ void GeometryReader::readPoint(shapeObj *shape)
 
 void GeometryReader::readLineObj(lineObj *line)
 {
-    const double *xy = m_geometry->xy()->data();
     const double *z = m_has_z ? m_geometry->z()->data() : nullptr;
     const double *m = m_has_m ? m_geometry->m()->data() : nullptr;
 
@@ -34,7 +32,7 @@ void GeometryReader::readLineObj(lineObj *line)
 
     for (uint32_t i = m_offset; i < m_offset + m_length; i++) {
         pointObj *point = &line->point[i - m_offset];
-        memcpy(point, &xy[i * 2], 2 * sizeof(double));
+        memcpy(point, &m_xy[i * 2], 2 * sizeof(double));
         if (m_has_z)
             point->z = z[i];
         if (m_has_m)
@@ -129,6 +127,7 @@ void GeometryReader::read(shapeObj *shape)
     // if not nested must have geometry data
     const auto pXy = m_geometry->xy();
     const auto xySize = pXy->size();
+    m_xy = pXy->data();
     m_length = xySize / 2;
 
     switch (m_geometry_type) {
