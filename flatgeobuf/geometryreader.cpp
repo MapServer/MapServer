@@ -88,12 +88,18 @@ void GeometryReader::readPolygon(shapeObj *shape)
 void GeometryReader::readMultiPolygon(shapeObj *shape)
 {
     const auto parts = m_geometry->parts();
-    auto line = (lineObj *) malloc(1 * sizeof(lineObj));
+    lineObj *line = (lineObj *) nullptr;
     auto numlines = 0;
     for (size_t i = 0; i < parts->size(); i++) {
         GeometryReader reader(m_ctx, parts->Get(i), GeometryType::Polygon);
         reader.read(shape);
+        lineObj *tmp = line;
         line = (lineObj *) realloc(line, (numlines + shape->numlines) * sizeof(lineObj));
+        if (!line) {
+            free(tmp);
+            free(shape->line);
+            break;
+        }
         for (int j = 0; j < shape->numlines; j++)
             line[numlines + j] = shape->line[j];
         numlines += shape->numlines;
