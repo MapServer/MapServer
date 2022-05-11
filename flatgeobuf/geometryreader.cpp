@@ -94,9 +94,8 @@ void GeometryReader::readMultiPolygon(shapeObj *shape)
         GeometryReader reader(m_ctx, parts->Get(i), GeometryType::Polygon);
         reader.read(shape);
         line = (lineObj *) realloc(line, (numlines + shape->numlines) * sizeof(lineObj));
-        for (int j = 0; j < shape->numlines; j++) {
+        for (int j = 0; j < shape->numlines; j++)
             line[numlines + j] = shape->line[j];
-        }
         numlines += shape->numlines;
         free(shape->line);
     }
