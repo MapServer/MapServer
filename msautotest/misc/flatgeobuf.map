@@ -21,6 +21,7 @@ MAP
     NAME "africa-continent"
     TYPE POLYGON
     STATUS ON
+    CONNECTIONTYPE flatgeobuf
     DATA "africa.fgb"
     CLASS
       NAME "Africa Continent"
