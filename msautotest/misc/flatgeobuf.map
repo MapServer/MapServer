@@ -13,7 +13,7 @@ MAP
   EXTENT -17.625043 -34.819166 51.133870 37.349994
   UNITS DD
   IMAGECOLOR 255 255 255
-  SHAPEPATH "./data"
+  #SHAPEPATH "./data"
   IMAGETYPE png
 
   /* Africa Continent */
@@ -22,7 +22,7 @@ MAP
     TYPE POLYGON
     STATUS ON
     CONNECTIONTYPE flatgeobuf
-    DATA "africa.fgb"
+    DATA "data/africa.fgb"
     CLASS
       NAME "Africa Continent"
       STYLE
@@ -37,7 +37,8 @@ MAP
     NAME "africa-classes"
     TYPE POLYGON
     STATUS ON
-    DATA "africa.fgb"
+    CONNECTIONTYPE flatgeobuf
+    DATA "data/africa.fgb"
     CLASSITEM "name_en"   
     CLASS
       NAME "Tanzania"
