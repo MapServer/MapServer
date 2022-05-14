@@ -71,7 +71,7 @@ void flatgeobuf_ensure_buf(ctx *ctx, uint32_t size)
     }
 }
 
-int flatgeobuf_decode_feature(ctx *ctx, shapeObj *shape)
+int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
 {
     uint32_t featureSize;
     if (VSIFReadL(&featureSize, sizeof(featureSize), 1, ctx->file) != 1) {
@@ -95,31 +95,37 @@ int flatgeobuf_decode_feature(ctx *ctx, shapeObj *shape)
     if (geometry)
         GeometryReader(ctx, geometry).read(shape);
     else
-        flatgeobuf_decode_feature(ctx, shape); // skip to next if null geometry
+        flatgeobuf_decode_feature(ctx, layer, shape); // skip to next if null geometry
     auto properties = feature->properties();
     if (properties && properties->size() != 0) {
         ctx->properties = (uint8_t *) properties->data();
-        ctx->properties_len = properties->size();
-        flatgeobuf_decode_properties(ctx, shape);
+        ctx->properties_size = properties->size();
+        flatgeobuf_decode_properties(ctx, layer, shape);
     } else {
-        ctx->properties_len = 0;
+        ctx->properties_size = 0;
     }
 
     return 0;
 }
 
-int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
+int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 {
-    uint16_t i;
+    uint16_t i, j;
     flatgeobuf_column column;
 	uint8_t type;
 	uint32_t offset = 0;
 	uint8_t *data = ctx->properties;
-	uint32_t size = ctx->properties_len;
-    uint16_t numvalues = ctx->columns_len;
-    char ** values = (char **) malloc(sizeof(char *) * numvalues);
+	uint32_t size = ctx->properties_size;
+    uint16_t numvalues = layer->numitems;
+    char **values;
 
-    memset(values, 0, sizeof(char *) * numvalues);
+    if (numvalues == 0)
+        return 0;
+
+    int *indexinfos = (int *) layer->iteminfo;
+    values = (char **) malloc(sizeof(char *) * numvalues);
+
+    //memset(values, 0, sizeof(char *) * numvalues);
 
     shape->numvalues = numvalues;
     shape->values = values;
@@ -135,6 +141,13 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
             msSetError(MS_FGBERR, "Column index out of range", "flatgeobuf_decode_properties");
             return -1;
         }
+        bool found = false;
+        for (j = 0; j < numvalues; j++) {
+            if (indexinfos[j] == i) {
+                found = true;
+                break;
+            }
+        }
 		column = ctx->columns[i];
 		type = column.type;
 		switch (type) {
@@ -145,7 +158,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(uint8_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+            if (found)
+			    values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(uint8_t);
 			break;
 		}
@@ -156,7 +170,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(int8_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(int8_t);
 			break;
 		}
@@ -167,7 +182,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(uint8_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(uint8_t);
 			break;
 		}
@@ -178,7 +194,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(int16_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(int16_t);
 			break;
 		}
@@ -200,7 +217,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(int32_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+            if (found)
+			    values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(int32_t);
 			break;
 		}
@@ -211,7 +229,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(uint32_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(uint32_t);
 			break;
 		}
@@ -222,7 +241,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(int64_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(int64_t);
 			break;
 		}
@@ -233,7 +253,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(uint64_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(uint64_t);
 			break;
 		}
@@ -244,7 +265,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(float));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(float);
 			break;
 		}
@@ -255,7 +277,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
                 return -1;
             }
 			memcpy(&value, data + offset, sizeof(double));
-			values[i] = msStrdup(std::to_string(value).c_str());
+			if (found)
+                values[j] = msStrdup(std::to_string(value).c_str());
 			offset += sizeof(double);
 			break;
 		}
@@ -268,8 +291,8 @@ int flatgeobuf_decode_properties(ctx *ctx, shapeObj *shape)
             }
 			memcpy(&len, data + offset, sizeof(uint32_t));
 			offset += sizeof(len);
-            auto str = (char *) data + offset;
-			values[i] = msStrdup(str);
+			if (found)
+                values[j] = msStrdup((char *) data + offset);
 			offset += len;
 			break;
 		}
