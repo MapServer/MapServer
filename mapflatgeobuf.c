@@ -39,46 +39,53 @@
 #include <cpl_conv.h>
 #include <ogr_srs_api.h>
 
-/*static void msFGBPassThroughFieldDefinitions(layerObj *layer)
+static void msFGBPassThroughFieldDefinitions(layerObj *layer, flatgeobuf_ctx *ctx)
 {
-  int numitems, i;
-
-  numitems = 0;
-
-  for(i=0; i<numitems; i++) {
+  for (int i = 0; i < ctx->columns_len; i++) {
     char item[16];
-    int  nWidth=0, nPrecision=0;
+    //int  nWidth=0, nPrecision=0;
     char gml_width[32], gml_precision[32];
     const char *gml_type = NULL;
 
-    //eType = msDBFGetFieldInfo( hDBF, i, item, &nWidth, &nPrecision );
+    flatgeobuf_column column = ctx->columns[i];
 
     gml_width[0] = '\0';
     gml_precision[0] = '\0';
 
-    switch( eType ) {
-      case FTInteger:
+    switch( column.type ) {
+      case flatgeobuf_column_type_byte:
+      case flatgeobuf_column_type_ubyte:
+      case flatgeobuf_column_type_bool:
+      case flatgeobuf_column_type_short:
+      case flatgeobuf_column_type_ushort:
+      case flatgeobuf_column_type_int:
+      case flatgeobuf_column_type_uint:
         gml_type = "Integer";
-        sprintf( gml_width, "%d", nWidth );
+        //sprintf( gml_width, "%d", nWidth );
         break;
-
-      case FTDouble:
+      case flatgeobuf_column_type_long:
+      case flatgeobuf_column_type_ulong:
+        gml_type = "Long";
+        //sprintf( gml_width, "%d", nWidth );
+        break;
+      case flatgeobuf_column_type_float:
+      case flatgeobuf_column_type_double:
         gml_type = "Real";
-        sprintf( gml_width, "%d", nWidth );
-        sprintf( gml_precision, "%d", nPrecision );
+        //sprintf( gml_width, "%d", nWidth );
+        //sprintf( gml_precision, "%d", nPrecision );
         break;
-
-      case FTString:
+      case flatgeobuf_column_type_string:
+      case flatgeobuf_column_type_json:
+      case flatgeobuf_column_type_datetime:
       default:
         gml_type = "Character";
-        sprintf( gml_width, "%d", nWidth );
+        //sprintf( gml_width, "%d", nWidth );
         break;
     }
 
-    //msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
-
+    msUpdateGMLFieldMetadata(layer, item, gml_type, gml_width, gml_precision, 0);
   }
-}*/
+}
 
 void msFlatGeobufLayerFreeItemInfo(layerObj *layer)
 {
@@ -95,13 +102,18 @@ int msFlatGeobufLayerInitItemInfo(layerObj *layer)
     return MS_FAILURE;
   }
 
-  /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
   msFlatGeobufLayerFreeItemInfo(layer);
-  // TODO: figure out what this is...
-  //layer->iteminfo = ;
-  if( ! layer->iteminfo) {
+
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  if (!ctx)
     return MS_FAILURE;
-  }
+
+  int *indexinfos = (int *) malloc(sizeof(int) * ctx->columns_len);
+  for (int i = 0; i < ctx->columns_len; i++)
+    indexinfos[i] = i;
+
+  layer->iteminfo = indexinfos;
 
   return MS_SUCCESS;
 }
@@ -275,7 +287,22 @@ int msFlatGeobufLayerClose(layerObj *layer)
 
 int msFlatGeobufLayerGetItems(layerObj *layer)
 {
-  // TODO: properties decode
+  const char *value;
+  flatgeobuf_ctx *ctx;
+  ctx = layer->layerinfo;
+  if (!ctx)
+    return MS_FAILURE;
+  layer->numitems = ctx->columns_len;
+
+  char **items = (char **) malloc(sizeof(char *) * ctx->columns_len);
+  for (int i = 0; i < ctx->columns_len; i++)
+    items[i] = msStrdup(ctx->columns[i].name);
+  layer->items = items;
+
+  if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+      && strcasecmp(value,"auto") == 0 )
+    msFGBPassThroughFieldDefinitions(layer, ctx);
+
   return msLayerInitItemInfo(layer);
 }
 

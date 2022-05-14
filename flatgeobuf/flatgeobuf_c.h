@@ -119,6 +119,7 @@ void flatgeobuf_ensure_point(flatgeobuf_ctx *ctx, uint32_t len);
 int flatgeobuf_check_magicbytes(flatgeobuf_ctx *ctx);
 int flatgeobuf_decode_header(flatgeobuf_ctx *ctx);
 int flatgeobuf_decode_feature(flatgeobuf_ctx *ctx, shapeObj *shape);
+int flatgeobuf_decode_properties(flatgeobuf_ctx *ctx, shapeObj *shape);
 
 int flatgeobuf_index_search(flatgeobuf_ctx *ctx, rectObj *rect);
 int flatgeobuf_index_skip(flatgeobuf_ctx *ctx);
