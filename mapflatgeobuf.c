@@ -109,15 +109,10 @@ int msFlatGeobufLayerInitItemInfo(layerObj *layer)
   if (!ctx)
     return MS_FAILURE;
 
-  int *indexinfos = (int *) malloc(sizeof(int) * layer->numitems);
-  for (int i = 0; i < layer->numitems; i++) {
-    for (int j = 0; j < ctx->columns_len; j++) {
-      if (strcasecmp(layer->items[i], ctx->columns[j].name) == 0) {
-        indexinfos[i] = j;
-      }
-    }
-  }
-  layer->iteminfo = indexinfos;
+  for (int i = 0; i < layer->numitems; i++)
+    for (int j = 0; j < ctx->columns_len; j++)
+      if (strcasecmp(layer->items[i], ctx->columns[j].name) == 0)
+        ctx->columns[j].itemindex = i;
 
   return MS_SUCCESS;
 }
@@ -139,7 +134,7 @@ int msFlatGeobufLayerOpen(layerObj *layer)
   ctx->file = VSIFOpenL(msBuildPath(szPath, layer->map->mappath, layer->data), "rb");
   if (!ctx->file) {
     layer->layerinfo = NULL;
-    free(ctx);
+    flatgeobuf_free_ctx(ctx);
     return MS_FAILURE;
   }
 
@@ -147,7 +142,6 @@ int msFlatGeobufLayerOpen(layerObj *layer)
   if (ret == -1) {
     layer->layerinfo = NULL;
     flatgeobuf_free_ctx(ctx);
-    free(ctx);
     return MS_FAILURE;
   }
 
@@ -155,7 +149,6 @@ int msFlatGeobufLayerOpen(layerObj *layer)
   if (ret == -1) {
     layer->layerinfo = NULL;
     flatgeobuf_free_ctx(ctx);
-    free(ctx);
     return MS_FAILURE;
   }
 
@@ -284,7 +277,6 @@ int msFlatGeobufLayerClose(layerObj *layer)
     return MS_SUCCESS;
   VSIFCloseL(ctx->file);
   flatgeobuf_free_ctx(ctx);
-  free(layer->layerinfo);
   layer->layerinfo = NULL;
   return MS_SUCCESS;
 }

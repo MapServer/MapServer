@@ -44,6 +44,7 @@ typedef struct flatgeobuf_column
 	bool unique;
 	bool primary_key;
 	const char * metadata;
+	int32_t itemindex;
 } flatgeobuf_column;
 
 typedef struct flatgeobuf_item

@@ -43,6 +43,7 @@ void flatgeobuf_free_ctx(ctx *ctx)
         free(ctx->search_result);
     if (ctx->buf)
         free(ctx->buf);
+    free(ctx);
 }
 
 void flatgeobuf_ensure_line(ctx *ctx, uint32_t len)
@@ -124,19 +125,20 @@ int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
 
 int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 {
-    uint16_t i, j;
+    uint16_t i;
+    int32_t ii;
     flatgeobuf_column column;
 	uint8_t type;
 	uint32_t offset = 0;
 	uint8_t *data = ctx->properties;
 	uint32_t size = ctx->properties_size;
     uint16_t numvalues = layer->numitems;
+    bool found;
     char **values;
 
     if (numvalues == 0)
         return 0;
 
-    int *indexinfos = (int *) layer->iteminfo;
     values = (char **) malloc(sizeof(char *) * numvalues);
 
     //memset(values, 0, sizeof(char *) * numvalues);
@@ -155,48 +157,43 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
             msSetError(MS_FGBERR, "Column index out of range", "flatgeobuf_decode_properties");
             return -1;
         }
-        bool found = false;
-        for (j = 0; j < numvalues; j++) {
-            if (indexinfos[j] == i) {
-                found = true;
-                break;
-            }
-        }
 		column = ctx->columns[i];
+        ii = column.itemindex;
+        found = ii != -1;
 		type = column.type;
 		switch (type) {
 		case flatgeobuf_column_type_bool:
-            parse_value<uint8_t>(data + offset, values, j, offset, found);
+            parse_value<uint8_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_byte:
-            parse_value<int8_t>(data + offset, values, j, offset, found);
+            parse_value<int8_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_ubyte:
-            parse_value<uint8_t>(data + offset, values, j, offset, found);
+            parse_value<uint8_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_short:
-			parse_value<int16_t>(data + offset, values, j, offset, found);
+			parse_value<int16_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_ushort:
-            parse_value<uint16_t>(data + offset, values, j, offset, found);
+            parse_value<uint16_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_int:
-            parse_value<int32_t>(data + offset, values, j, offset, found);
+            parse_value<int32_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_uint:
-			parse_value<uint32_t>(data + offset, values, j, offset, found);
+			parse_value<uint32_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_long:
-			parse_value<int64_t>(data + offset, values, j, offset, found);
+			parse_value<int64_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_ulong:
-			parse_value<uint64_t>(data + offset, values, j, offset, found);
+			parse_value<uint64_t>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_float:
-            parse_value<float>(data + offset, values, j, offset, found);
+            parse_value<float>(data + offset, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_double:
-			parse_value<double>(data + offset, values, j, offset, found);
+			parse_value<double>(data + offset, values, ii, offset, found);
 			break;
         case flatgeobuf_column_type_datetime:
 		case flatgeobuf_column_type_string: {
@@ -211,7 +208,7 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
                 char *str = (char *) malloc(len + 1);
                 memcpy(str, data + offset, len);
                 str[len] = '\0';
-                values[j] = str;
+                values[ii] = str;
             }
 			offset += len;
 			break;
@@ -300,6 +297,7 @@ int flatgeobuf_decode_header(ctx *ctx)
             auto column = columns->Get(i);
             ctx->columns[i].name = column->name()->c_str();
             ctx->columns[i].type = (uint8_t) column->type();
+            ctx->columns[i].itemindex = -1;
         }
     }
 
