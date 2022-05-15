@@ -109,10 +109,14 @@ int msFlatGeobufLayerInitItemInfo(layerObj *layer)
   if (!ctx)
     return MS_FAILURE;
 
-  int *indexinfos = (int *) malloc(sizeof(int) * ctx->columns_len);
-  for (int i = 0; i < ctx->columns_len; i++)
-    indexinfos[i] = i;
-
+  int *indexinfos = (int *) malloc(sizeof(int) * layer->numitems);
+  for (int i = 0; i < layer->numitems; i++) {
+    for (int j = 0; j < ctx->columns_len; j++) {
+      if (strcasecmp(layer->items[i], ctx->columns[j].name) == 0) {
+        indexinfos[i] = j;
+      }
+    }
+  }
   layer->iteminfo = indexinfos;
 
   return MS_SUCCESS;
@@ -250,7 +254,7 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
     ctx->search_index++;
   }
 
-  int ret = flatgeobuf_decode_feature(ctx, shape);
+  int ret = flatgeobuf_decode_feature(ctx, layer, shape);
   if (ret == -1)
     return MS_FAILURE;
   if (ctx->done)
