@@ -37,11 +37,12 @@ ctx *flatgeobuf_init_ctx()
 
 void flatgeobuf_free_ctx(ctx *ctx)
 {
-    if (ctx->columns) {
+    if (ctx->columns)
         free(ctx->columns);
-    }
     if (ctx->search_result)
         free(ctx->search_result);
+    if (ctx->buf)
+        free(ctx->buf);
 }
 
 void flatgeobuf_ensure_line(ctx *ctx, uint32_t len)
