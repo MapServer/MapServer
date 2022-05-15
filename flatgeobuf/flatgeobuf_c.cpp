@@ -14,6 +14,19 @@ uint8_t flatgeobuf_magicbytes[] = { 0x66, 0x67, 0x62, 0x03, 0x66, 0x67, 0x62, 0x
 uint8_t FLATGEOBUF_MAGICBYTES_SIZE = sizeof(flatgeobuf_magicbytes);
 uint32_t INIT_BUFFER_SIZE = 1024 * 4;
 
+template <typename T>
+char *to_string(uint8_t *data) {
+    using std::to_string;
+    return msStrdup(to_string(*((T*)data)).c_str());
+}
+
+template <typename T>
+void parse_value(uint8_t *data, char **values, uint16_t i, uint32_t &offset, bool found) {
+    if (found)
+        values[i] = to_string<int8_t>(data + offset);
+    offset += sizeof(T);
+}
+
 ctx *flatgeobuf_init_ctx()
 {
     ctx *c = (ctx *) malloc(sizeof(ctx));
@@ -151,137 +164,39 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 		column = ctx->columns[i];
 		type = column.type;
 		switch (type) {
-		case flatgeobuf_column_type_bool: {
-			uint8_t value;
-			if (offset + sizeof(uint8_t) > size) {
-                msSetError(MS_FGBERR, "Invalid size for bool value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(uint8_t));
-            if (found)
-			    values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(uint8_t);
+		case flatgeobuf_column_type_bool:
+            parse_value<uint8_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_byte: {
-			int8_t value;
-			if (offset + sizeof(int8_t) > size){
-                msSetError(MS_FGBERR, "Invalid size for byte value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(int8_t));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(int8_t);
+		case flatgeobuf_column_type_byte:
+            parse_value<int8_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_ubyte: {
-			uint8_t value;
-			if (offset + sizeof(uint8_t) > size){
-                msSetError(MS_FGBERR, "Invalid size for ubyte value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(uint8_t));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(uint8_t);
+		case flatgeobuf_column_type_ubyte:
+            parse_value<uint8_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_short: {
-			int16_t value;
-			if (offset + sizeof(int16_t) > size){
-                msSetError(MS_FGBERR, "Invalid size for short value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(int16_t));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(int16_t);
+		case flatgeobuf_column_type_short:
+			parse_value<int16_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_ushort: {
-			uint16_t value;
-			if (offset + sizeof(uint16_t) > size){
-                msSetError(MS_FGBERR, "Invalid size for ushort value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(uint16_t));
-			values[i] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(uint16_t);
+		case flatgeobuf_column_type_ushort:
+            parse_value<uint16_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_int: {
-			int32_t value;
-			if (offset + sizeof(int32_t) > size){
-                msSetError(MS_FGBERR, "Invalid size for int value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(int32_t));
-            if (found)
-			    values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(int32_t);
+		case flatgeobuf_column_type_int:
+            parse_value<int32_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_uint: {
-			uint32_t value;
-			if (offset + sizeof(uint32_t) > size){
-                msSetError(MS_FGBERR, "Invalid size for uint value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(uint32_t));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(uint32_t);
+		case flatgeobuf_column_type_uint:
+			parse_value<uint32_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_long: {
-			int64_t value;
-			if (offset + sizeof(int64_t) > size) {
-                msSetError(MS_FGBERR, "Invalid size for long value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(int64_t));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(int64_t);
+		case flatgeobuf_column_type_long:
+			parse_value<int64_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_ulong: {
-			uint64_t value;
-			if (offset + sizeof(uint64_t) > size) {
-                msSetError(MS_FGBERR, "Invalid size for ulong value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(uint64_t));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(uint64_t);
+		case flatgeobuf_column_type_ulong:
+			parse_value<uint64_t>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_float: {
-			float value;
-			if (offset + sizeof(float) > size) {
-                msSetError(MS_FGBERR, "Invalid size for float value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(float));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(float);
+		case flatgeobuf_column_type_float:
+            parse_value<float>(data + offset, values, j, offset, found);
 			break;
-		}
-		case flatgeobuf_column_type_double: {
-			double value;
-			if (offset + sizeof(double) > size) {
-                msSetError(MS_FGBERR, "Invalid size for double value", "flatgeobuf_decode_properties");
-                return -1;
-            }
-			memcpy(&value, data + offset, sizeof(double));
-			if (found)
-                values[j] = msStrdup(std::to_string(value).c_str());
-			offset += sizeof(double);
+		case flatgeobuf_column_type_double:
+			parse_value<double>(data + offset, values, j, offset, found);
 			break;
-		}
         case flatgeobuf_column_type_datetime:
 		case flatgeobuf_column_type_string: {
 			uint32_t len;
@@ -291,8 +206,12 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
             }
 			memcpy(&len, data + offset, sizeof(uint32_t));
 			offset += sizeof(len);
-			if (found)
-                values[j] = msStrdup((char *) data + offset);
+			if (found) {
+                char *str = (char *) malloc(len + 1);
+                memcpy(str, data + offset, len);
+                str[len] = '\0';
+                values[j] = str;
+            }
 			offset += len;
 			break;
 		}
