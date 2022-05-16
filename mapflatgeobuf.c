@@ -132,6 +132,8 @@ int msFlatGeobufLayerOpen(layerObj *layer)
   layer->layerinfo = ctx;
 
   ctx->file = VSIFOpenL(msBuildPath(szPath, layer->map->mappath, layer->data), "rb");
+  if (!ctx->file)
+    ctx->file = VSIFOpenL(msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data), "rb");
   if (!ctx->file) {
     layer->layerinfo = NULL;
     flatgeobuf_free_ctx(ctx);
