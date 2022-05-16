@@ -152,48 +152,23 @@ int msFlatGeobufLayerOpen(layerObj *layer)
     return MS_FAILURE;
   }
 
-  /*if (layer->projection.numargs > 0 &&
+  if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto"))
   {
-    const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference( NULL );
+    if (ctx->srid)
+      if (!(OSRImportFromEPSG(hSRS, ctx->srid) != OGRERR_NONE))
+        return -1;
+    char *pszWKT = NULL;
     int bOK = MS_FALSE;
-    VSILFILE* fp = VSIFOpenL(pszPRJFilename, "rb");
-    if( fp != NULL )
-    {
-        char szPRJ[2048];
-        OGRSpatialReferenceH hSRS;
-        int nRead;
-
-        nRead = (int)VSIFReadL(szPRJ, 1, sizeof(szPRJ) - 1, fp);
-        szPRJ[nRead] = '\0';
-        hSRS = OSRNewSpatialReference(szPRJ);
-        if( hSRS != NULL )
-        {
-            if( OSRMorphFromESRI( hSRS ) == OGRERR_NONE )
-            {
-                char* pszWKT = NULL;
-                if( OSRExportToWkt( hSRS, &pszWKT ) == OGRERR_NONE )
-                {
-                    if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
-                                               layer->debug ) == MS_SUCCESS )
-                    {
-                        bOK = MS_TRUE;
-                    }
-                }
-                CPLFree(pszWKT);
-            }
-            OSRDestroySpatialReference(hSRS);
-        }
-      VSIFCloseL(fp);
-    }
-
+    if (msOGCWKT2ProjectionObj(pszWKT, &(layer->projection), layer->debug) == MS_SUCCESS)
+      bOK = MS_TRUE;
+    CPLFree(pszWKT);
+    OSRDestroySpatialReference(hSRS);
     if( bOK != MS_TRUE )
-    {
-        if( layer->debug || layer->map->debug ) {
-            msDebug( "Unable to get SRS from FlatGeobuf '%s' for layer '%s'.\n", szPath, layer->name );
-        }
-    }
-  }*/
+      if( layer->debug || layer->map->debug )
+        msDebug( "Unable to get SRS from FlatGeobuf '%s' for layer '%s'.\n", szPath, layer->name );
+  }
 
   return MS_SUCCESS;
 }
@@ -264,8 +239,16 @@ int msFlatGeobufLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *recor
   ctx = layer->layerinfo;
   if (!ctx)
     return MS_FAILURE;
-  //long i = record->shapeindex;
-  // TODO: use index to find feature, else iterate to it
+  long i = record->shapeindex;
+  uint64_t offset;
+  flatgeobuf_read_feature_offset(ctx, i, &offset);
+  if (VSIFSeekL(ctx->file, ctx->feature_offset + offset, SEEK_SET) == -1) {
+      msSetError(MS_FGBERR, "Unable to seek in file", "msFlatGeobufLayerGetShape");
+      return MS_FAILURE;
+  }
+  int ret = flatgeobuf_decode_feature(ctx, layer, shape);
+  if (ret == -1)
+    return MS_FAILURE;
   return MS_SUCCESS;
 }
 

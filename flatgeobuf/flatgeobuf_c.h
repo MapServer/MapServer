@@ -65,6 +65,7 @@ typedef struct flatgeobuf_search_item {
 typedef struct flatgeobuf_ctx
 {
 	VSILFILE *file;
+	uint64_t index_offset;
 	uint64_t feature_offset;
 	uint64_t offset;
 	uint8_t *buf;
@@ -123,6 +124,7 @@ int flatgeobuf_decode_properties(flatgeobuf_ctx *ctx, layerObj *layer, shapeObj 
 
 int flatgeobuf_index_search(flatgeobuf_ctx *ctx, rectObj *rect);
 int flatgeobuf_index_skip(flatgeobuf_ctx *ctx);
+int flatgeobuf_read_feature_offset(flatgeobuf_ctx *ctx, uint64_t index, uint64_t *featureOffset);
 
 #ifdef __cplusplus
 }

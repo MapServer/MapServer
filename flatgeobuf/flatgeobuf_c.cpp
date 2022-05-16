@@ -301,6 +301,7 @@ int flatgeobuf_decode_header(ctx *ctx)
         }
     }
 
+    ctx->index_offset = ctx->offset;
     ctx->feature_offset = ctx->offset;
     if ( ctx->index_node_size > 0)
         ctx->feature_offset += PackedRTree::size(ctx->features_count, ctx->index_node_size);
@@ -339,4 +340,28 @@ int flatgeobuf_index_skip(ctx *ctx)
         return -1;
     }
     return 0;
+}
+
+int flatgeobuf_read_feature_offset(ctx *ctx, uint64_t index, uint64_t *featureOffset)
+{
+    try
+    {
+        const auto treeSize = PackedRTree::size(ctx->features_count, ctx->index_node_size);
+        const auto levelBounds = PackedRTree::generateLevelBounds(ctx->features_count, ctx->index_node_size);
+        const auto bottomLevelOffset = ctx->index_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+        const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
+        const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
+        if (VSIFSeekL(ctx->file, featureOffsetOffset, SEEK_SET) == -1) {
+            msSetError(MS_FGBERR, "Failed to seek feature offset", "flatgeobuf_read_feature_offset");
+            return -1;
+        }
+        if (VSIFReadL(featureOffset, sizeof(uint64_t), 1, ctx->file) != 1) {
+            msSetError(MS_FGBERR, "Failed to read feature offset", "flatgeobuf_read_feature_offset");
+            return -1;
+        }
+        return 0;
+    } catch (const std::exception& e) {
+        msSetError(MS_FGBERR, "Failed to calculate tree size", "flatgeobuf_read_feature_offset");
+        return -1;
+    }
 }
