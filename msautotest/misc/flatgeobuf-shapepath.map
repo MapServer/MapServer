@@ -1,10 +1,10 @@
 #
-# Test FlatGeobuf native access (RFC 137)
+# Test FlatGeobuf native access (RFC 137), but using SHAPEPATH
 #
 # REQUIRES: INPUT=FLATGEOBUF
 #
-#RUN_PARMS: flatgeobuf-continent.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-continent
-#RUN_PARMS: flatgeobuf-classes.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-classes
+#RUN_PARMS: flatgeobuf-shapepath-continent.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-continent
+#RUN_PARMS: flatgeobuf-shapepath-classes.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-classes
 
 MAP
   NAME "fgb-test"
@@ -13,6 +13,7 @@ MAP
   EXTENT -17.625043 -34.819166 51.133870 37.349994
   UNITS DD
   IMAGECOLOR 255 255 255
+  SHAPEPATH "./data"
   IMAGETYPE png
 
   /* Africa Continent */
@@ -21,7 +22,7 @@ MAP
     TYPE POLYGON
     STATUS ON
     CONNECTIONTYPE flatgeobuf
-    DATA "data/africa.fgb"
+    DATA "africa.fgb"
     CLASS
       NAME "Africa Continent"
       STYLE
@@ -37,7 +38,7 @@ MAP
     TYPE POLYGON
     STATUS ON
     CONNECTIONTYPE flatgeobuf
-    DATA "data/africa.fgb"
+    DATA "africa.fgb"
     CLASSITEM "name_en"   
     CLASS
       NAME "Tanzania"
