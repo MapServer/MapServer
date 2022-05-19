@@ -1,13 +1,6 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.0...3.23)
 
 project (MapServer)
-
-if (${CMAKE_VERSION} GREATER "3.13")
-    cmake_policy(SET CMP0078 OLD) # related to UseSWIG
-endif()
-if (${CMAKE_VERSION} GREATER "3.14")
-    cmake_policy(SET CMP0086 OLD) # related to UseSWIG
-endif()
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
       message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:
@@ -442,7 +435,7 @@ if(USE_PBF)
 endif()
 
 if(WITH_PIXMAN)
-  find_package(Pixman)
+  find_package(PIXMAN)
   if(PIXMAN_FOUND)
     include_directories(${PIXMAN_INCLUDE_DIR})
     ms_link_libraries(${PIXMAN_LIBRARY})
@@ -541,7 +534,7 @@ if(WITH_ORACLESPATIAL OR WITH_ORACLE_PLUGIN)
   if(NOT DEFINED ENV{ORACLE_HOME})
     MESSAGE( SEND_ERROR "ORACLE_HOME environment variable not set, needed for detection")
   endif()
-  find_package(Oracle)
+  find_package(ORACLE)
   if(ORACLE_FOUND)
     include_directories(${ORACLE_INCLUDE_DIR})
     list(APPEND ALL_INCLUDE_DIRS ${ORACLE_INCLUDE_DIR})
@@ -801,14 +794,14 @@ endif(WITH_GIF)
 
 if(WITH_EXEMPI)
   find_package(Exempi)
-  if(LIBEXEMPI_FOUND)
+  if(EXEMPI_FOUND)
     include_directories(${LIBEXEMPI_INCLUDE_DIR})
     ms_link_libraries( ${LIBEXEMPI_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${LIBEXEMPI_INCLUDE_DIR})
     set(USE_EXEMPI 1)
-  else(LIBEXEMPI_FOUND)
+  else(EXEMPI_FOUND)
     report_optional_not_found(EXEMPI)
-  endif(LIBEXEMPI_FOUND)
+  endif(EXEMPI_FOUND)
 endif(WITH_EXEMPI)
 
 if(WITH_PYTHON)

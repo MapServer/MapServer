@@ -103,7 +103,7 @@ add_custom_command(
 )
 
 add_custom_command(
-    TARGET _pythonmapscript
+    TARGET ${SWIG_MODULE_pythonmapscript_REAL_NAME}
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript/__init__.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py
