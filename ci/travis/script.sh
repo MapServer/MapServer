@@ -26,7 +26,8 @@ cd ../
 #check SWIG version
 swig -version
 
-# check CMake version installed
+#make sure to use recent CMake
+export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:$PATH
 cmake --version
 
 if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
