@@ -5,11 +5,15 @@ set -eu
 if ls /etc/apt/sources.list.d/pgdg* 2>/dev/null >/dev/null; then sudo mv /etc/apt/sources.list.d/pgdg* /tmp; fi
 dpkg -l | grep postgresql || /bin/true
 dpkg -l | grep postgis || /bin/true
-sudo apt-get remove --purge postgresql* libpq-dev libpq5 || /bin/true
+sudo apt-get remove --purge postgresql* libpq-dev libpq5 cmake || /bin/true
+
+# install latest CMake
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
-sudo apt-get install -y --allow-unauthenticated protobuf-c-compiler libprotobuf-c-dev bison flex libfribidi-dev cmake librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin proj-bin ccache curl postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts g++ ca-certificates
+sudo apt-get install -y --allow-unauthenticated protobuf-c-compiler libprotobuf-c-dev bison flex libfribidi-dev librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin proj-bin ccache curl postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts g++ ca-certificates
 # following are already installed on Travis CI
 #sudo apt-get install --allow-unauthenticated php-dev python-dev python3-dev
 sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs
