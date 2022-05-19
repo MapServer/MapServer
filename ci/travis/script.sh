@@ -26,6 +26,9 @@ cd ../
 #check SWIG version
 swig -version
 
+# check CMake version installed
+cmake --version
+
 if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
     make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-g -fsanitize=address -DNDEBUG" CMAKE_CXX_FLAGS="-g -fsanitize=address -DNDEBUG" EXTRA_CMAKEFLAGS="-DCMAKE_BUILD_TYPE=None -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"
