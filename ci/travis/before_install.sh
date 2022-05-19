@@ -13,7 +13,7 @@ mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
 wget --no-check-certificate https://cmake.org/files/v3.23/cmake-3.23.1-linux-x86_64.tar.gz
 tar -xvf cmake-3.23.1-linux-x86_64.tar.gz > /dev/null
 mv cmake-3.23.1-linux-x86_64 cmake-install
-PATH=${DEPS_DIR}/cmake-install:${DEPS_DIR}/cmake-install/bin:$PATH
+export PATH=${DEPS_DIR}/cmake-install:${DEPS_DIR}/cmake-install/bin:$PATH
 cd ${TRAVIS_BUILD_DIR}
 
 # check CMake version installed
