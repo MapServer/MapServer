@@ -30,10 +30,10 @@ swig -version
 export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:$PATH
 cmake --version
 
-#check for python-config
-which python
-which python-config
-python-config --cflag
+# check we are using the correct versions
+pyenv which pip
+pyenv which python
+pyenv which python-config
 
 if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
