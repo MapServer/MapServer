@@ -26,8 +26,9 @@ cd ../
 #check SWIG version
 swig -version
 
-#make sure to use recent CMake
-export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:$PATH
+#make sure to use recent CMake, and the pyenv Python instance
+export PYTHONPREFIX="$(dirname $(realpath $(pyenv which python)))/.."
+export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:${PYTHONPREFIX}/bin:${PATH}
 cmake --version
 
 # check we are using the correct versions
