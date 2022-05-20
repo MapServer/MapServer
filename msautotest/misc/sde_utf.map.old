@@ -1,0 +1,69 @@
+#
+# Test of OGR SQL JOIN support via MapServer.  
+#
+# A joined field is used for the EXPRESSION used to classify the returned 
+# polygons.
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG INPUT=SDE
+#
+MAP
+
+FONTSET "/home/hobu/mapserver/tests/fonts.txt"
+SYMBOL
+  NAME "circle"
+  TYPE ellipse
+  FILLED true
+  POINTS
+    1 1
+  END
+END
+
+
+STATUS ON
+EXTENT -169.000000 -89.000000 177.000000 87.000000
+
+SIZE 800 800
+
+IMAGETYPE png
+
+DEBUG ON
+
+LAYER
+  NAME shppoly
+  TYPE POINT
+  CONNECTIONTYPE SDE
+  CONNECTION "smoke.hobu.net,5151,sde,sde,osgeo"
+  DATA "SDE.UTF,SHAPE,SDE.DEFAULT"
+  STATUS default
+  DEBUG 3
+  LABELITEM "COLB"
+  #LABELITEM "aCOLA"
+  CLASS
+    NAME "selected"
+    STYLE
+       COLOR 0 0 255
+       SYMBOL 'circle'
+       SIZE  8
+    END
+      LABEL
+
+        ANTIALIAS TRUE
+        FONT "Vera"
+
+        SIZE 12
+        TYPE TRUETYPE
+   
+        COLOR 0 0 0
+        FORCE FALSE
+        MINDISTANCE 200
+        MINFEATURESIZE -1
+
+        PARTIALS TRUE
+        POSITION AUTO
+      END
+   # EXPRESSION "val1"
+  END
+
+END
+
+END

@@ -1,0 +1,70 @@
+#
+# Test of OGR SQL JOIN support via MapServer.  
+#
+# A joined field is used for the EXPRESSION used to classify the returned 
+# polygons.
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG INPUT=SDE
+#
+MAP
+
+FONTSET "/home/hobu/mapserver/tests/fonts.txt"
+SYMBOL
+  NAME "circle"
+  TYPE ellipse
+  FILLED true
+  POINTS
+    1 1
+  END
+END
+
+
+STATUS ON
+EXTENT  1712843.567492  647232.344265 1740646.171659 663501.938015
+
+SIZE 800 800
+
+IMAGETYPE png
+
+DEBUG ON
+
+LAYER
+
+   NAME 'ROADNAMES' 
+   METADATA
+       "wms_title" "roadnames"
+   END
+
+   CONNECTIONTYPE SDE 
+   CONNECTION 'smoke.hobu.net,port:5151,sde,sde,osgeo' 
+   DATA 'SDE.CENTERLINES,SHAPE,SDE.DEFAULT' 
+   PROCESSING "CLOSE_CONNECTION=DEFER" 
+   PROJECTION
+      "init=epsg:2274"
+   END 
+   TYPE ANNOTATION 
+   STATUS ON 
+   LABELITEM 'STREET_NAME' 
+   CLASS
+      STYLE
+          COLOR 212 207 199
+      END 
+      LABEL
+          ANGLE FOLLOW 
+          MINDISTANCE 800 
+          FONT "Vera"
+#          ENCODING UTF-16
+          TYPE TRUETYPE 
+          SIZE 6 
+          BUFFER 15 
+          COLOR 0 0 0 
+          BACKGROUNDCOLOR -1 -1 -1 
+          OUTLINECOLOR 255 255 255 
+          #FORCE TRUE
+      END
+   END
+
+END
+
+
+END
