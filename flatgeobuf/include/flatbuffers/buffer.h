@@ -19,6 +19,7 @@
 
 #include "flatbuffers/base.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Wrapper for uoffset_t to allow safe template specialization.
@@ -138,5 +139,6 @@ template<typename T> const T *GetSizePrefixedRoot(const void *buf) {
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_BUFFER_H_

@@ -33,6 +33,7 @@
 
 #include <string>
 
+namespace mapserver {
 namespace flatbuffers {
 
 // @locale-independent functions for ASCII characters set.
@@ -712,5 +713,6 @@ std::string ConvertCase(const std::string &input, Case output_case,
                     Case input_case = Case::kSnake);
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_UTIL_H_

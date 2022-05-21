@@ -33,6 +33,7 @@
 #include "flatbuffers/vector_downward.h"
 #include "flatbuffers/verifier.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 /// @brief This can compute the start of a FlatBuffer from a root pointer, i.e.
@@ -264,6 +265,7 @@ inline const char *flatbuffers_version_string() {
     }
 /// @endcond
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 // clang-format on
 

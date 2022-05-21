@@ -5,8 +5,8 @@
 #include "packedrtree.h"
 #include <stdexcept>
 
-using namespace flatbuffers;
-using namespace FlatGeobuf;
+using namespace mapserver::flatbuffers;
+using namespace mapserver::FlatGeobuf;
 
 typedef flatgeobuf_ctx ctx;
 

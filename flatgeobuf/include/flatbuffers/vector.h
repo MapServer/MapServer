@@ -21,6 +21,7 @@
 #include "flatbuffers/buffer.h"
 #include "flatbuffers/stl_emulation.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 struct String;
@@ -367,5 +368,6 @@ template<typename T> static inline size_t VectorLength(const Vector<T> *v) {
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_VERIFIER_H_

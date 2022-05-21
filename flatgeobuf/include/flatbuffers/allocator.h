@@ -19,6 +19,7 @@
 
 #include "flatbuffers/base.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Allocator interface. This is flatbuffers-specific and meant only for
@@ -64,5 +65,6 @@ class Allocator {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_ALLOCATOR_H_

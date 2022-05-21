@@ -21,6 +21,7 @@
 #include "flatbuffers/default_allocator.h"
 #include "flatbuffers/detached_buffer.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // This is a minimal replication of std::vector<uint8_t> functionality,
@@ -267,5 +268,6 @@ class vector_downward {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_VECTOR_DOWNWARD_H_

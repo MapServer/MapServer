@@ -20,6 +20,7 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/verifier.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Convenient way to bundle a buffer and its length, to pass it around
@@ -49,5 +50,6 @@ template<typename T> struct BufferRef : BufferRefBase {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_BUFFER_REF_H_

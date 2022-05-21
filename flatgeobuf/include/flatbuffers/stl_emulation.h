@@ -60,6 +60,7 @@
 #endif // defined(FLATBUFFERS_USE_STD_SPAN)
 
 // This header provides backwards compatibility for older versions of the STL.
+namespace mapserver {
 namespace flatbuffers {
 
 #if defined(FLATBUFFERS_TEMPLATES_ALIASES)
@@ -509,5 +510,6 @@ flatbuffers::span<const U, dynamic_extent> make_span(const U *first, std::size_t
 #endif // !defined(FLATBUFFERS_SPAN_MINIMAL)
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_STL_EMULATION_H_

@@ -20,6 +20,7 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/verifier.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // "tables" use an offset table (possibly shared) that allows fields to be
@@ -164,5 +165,6 @@ inline flatbuffers::Optional<bool> Table::GetOptional<uint8_t, bool>(
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_TABLE_H_

@@ -37,6 +37,7 @@
 #  define FLATBUFFERS_MAX_PARSING_DEPTH 64
 #endif
 
+namespace mapserver {
 namespace flatbuffers {
 
 // The order of these matters for Is*() functions below.
@@ -1228,5 +1229,6 @@ extern bool GenerateTSGRPC(const Parser &parser, const std::string &path,
 extern bool GenerateRustModuleRootFile(const Parser &parser,
                                        const std::string &path);
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_IDL_H_

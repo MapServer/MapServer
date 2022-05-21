@@ -36,6 +36,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+namespace mapserver {
 namespace FlatGeobuf {
 
 struct NodeItem {
@@ -107,6 +108,6 @@ public:
     void streamWrite(const std::function<void(uint8_t *, size_t)> &writeData);
 };
 
-}
+} }
 
 #endif

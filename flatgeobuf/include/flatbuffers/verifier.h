@@ -20,6 +20,7 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/vector.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Helper class to verify the integrity of a FlatBuffer
@@ -278,5 +279,6 @@ class Verifier FLATBUFFERS_FINAL_CLASS {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_VERIFIER_H_
