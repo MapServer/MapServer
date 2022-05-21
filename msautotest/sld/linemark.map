@@ -6,16 +6,16 @@
 #
 # --- Reference output rendered with MapFile only
 #
-# RUN_PARMS: map_linemark.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=720&HEIGHT=300&LAYERS=bg,danube&STYLES=" > [RESULT_DEMIME]
+# RUN_PARMS: map_linemark.png MAPSERVER_CONFIG_FILE=../etc/mapserv.conf [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=720&HEIGHT=300&LAYERS=bg,danube&STYLES=" > [RESULT_DEMIME]
 #
 #
 # --- Reference output rendered with SLD body
 #
-# RUN_PARMS: sld_linemark.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=720&HEIGHT=300&LAYERS=bg,danube&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>danube</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke%22>#0000FF</SvgParameter></Stroke></LineSymbolizer><LineSymbolizer><Stroke><GraphicStroke><Graphic><Size>10</Size><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter><SvgParameter name=%22stroke-width%22>2</SvgParameter></Stroke></Mark></Graphic><Gap>80</Gap><InitialGap>40</InitialGap></GraphicStroke></Stroke></LineSymbolizer><LineSymbolizer><Stroke><GraphicStroke><Graphic><Size>30</Size><ExternalGraphic><OnlineResource xlink:type=%22simple%22 xlink:href=%22http://localhost:8000/sld/data/ship.svg%22 /><Format>image/svg%2Bxml</Format></ExternalGraphic></Graphic><Gap>80</Gap><InitialGap>0</InitialGap></GraphicStroke></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: sld_linemark.png MAPSERVER_CONFIG_FILE=../etc/mapserv.conf [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=720&HEIGHT=300&LAYERS=bg,danube&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>danube</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>5</SvgParameter><SvgParameter name=%22stroke%22>#0000FF</SvgParameter></Stroke></LineSymbolizer><LineSymbolizer><Stroke><GraphicStroke><Graphic><Size>10</Size><Mark><WellKnownName>circle</WellKnownName><Stroke><SvgParameter name=%22stroke%22>#FFFF00</SvgParameter><SvgParameter name=%22stroke-width%22>2</SvgParameter></Stroke></Mark></Graphic><Gap>80</Gap><InitialGap>40</InitialGap></GraphicStroke></Stroke></LineSymbolizer><LineSymbolizer><Stroke><GraphicStroke><Graphic><Size>30</Size><ExternalGraphic><OnlineResource xlink:type=%22simple%22 xlink:href=%22/data/ship.svg%22 /><Format>image/svg%2Bxml</Format></ExternalGraphic></Graphic><Gap>80</Gap><InitialGap>0</InitialGap></GraphicStroke></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
 # --- Reference output rendered with SLD URL
 #
-# RUN_PARMS: sld_url_linemark.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=720&HEIGHT=300&LAYERS=bg,danube&SLD=http://localhost:8000/sld/data/danube.sld" > [RESULT_DEMIME]
+# RUN_PARMS: sld_url_linemark.png MAPSERVER_CONFIG_FILE=../etc/mapserv.conf [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=720&HEIGHT=300&LAYERS=bg,danube&SLD=http://localhost:8000/data/danube.sld" > [RESULT_DEMIME]
 #
 
 
