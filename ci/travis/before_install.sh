@@ -43,6 +43,7 @@ pyenv global $PYTHON_VERSION
 pyenv which pip
 pyenv which python
 
+pip install --upgrade pip
 pip install cryptography==3.4.6 # avoid requiring rust compiler for the cryptography dependency
 pip install cpp-coveralls pyflakes lxml
 pip install -r msautotest/requirements.txt
