@@ -38,7 +38,7 @@ eval "$(pyenv init -)"
 # list installed and available Python/PHP versions
 # pyenv versions
 # echo $(pyenv root)
-phpenv versions
+# phpenv versions
 
 # set the global Python version
 pyenv global $PYTHON_VERSION
