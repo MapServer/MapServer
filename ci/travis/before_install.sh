@@ -7,7 +7,8 @@ dpkg -l | grep postgresql || /bin/true
 dpkg -l | grep postgis || /bin/true
 sudo apt-get remove --purge postgresql* libpq-dev libpq5 cmake || /bin/true
 
-if [ "${TRAVIS}" = true ]; then
+#install recent cmake if Travis
+if [ -n "${TRAVIS}" ]; then
     # install recent CMake
     DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
     mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
