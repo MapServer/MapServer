@@ -9,6 +9,7 @@ sudo apt-get remove --purge postgresql* libpq-dev libpq5 cmake || /bin/true
 
 if [[ -z "${TRAVIS}" ]]; then
     #not travis
+    export BUILDENV="nottravis"
 else
     # install recent CMake
     DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
