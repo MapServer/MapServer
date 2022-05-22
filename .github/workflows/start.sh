@@ -37,7 +37,6 @@ wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | 
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 
 cd "$WORK_DIR"
-export TRAVIS_WORK_DIR=$WORK_DIR
 
 ci/travis/before_install.sh
 ci/travis/script.sh
