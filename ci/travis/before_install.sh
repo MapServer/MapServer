@@ -19,10 +19,9 @@ else
     mv cmake-3.23.1-linux-x86_64 cmake-install
     export PATH=${DEPS_DIR}/cmake-install:${DEPS_DIR}/cmake-install/bin:${PATH}
     cd ${TRAVIS_BUILD_DIR}
+    # check CMake version installed
+    cmake --version
 fi
-
-# check CMake version installed
-cmake --version
 
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
