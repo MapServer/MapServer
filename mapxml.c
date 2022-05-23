@@ -43,7 +43,7 @@ int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *
 {
   xsltStylesheetPtr cur = NULL;
   int status = MS_FAILURE;
-  xmlDocPtr doc, res;
+  xmlDocPtr doc = NULL, res = NULL;
 
   exsltRegisterAll();
   xsltRegisterTestModule();

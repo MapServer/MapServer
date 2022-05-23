@@ -4945,10 +4945,10 @@ static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
           msReplaceChar(pszFontNameEscaped, ' ', '-');
       }
 
-      const char *pszName = CPLSPrintf("%s%s%s", pszFontNameEscaped, pszBold, pszItalic);
       bool bFont = true;
 
       if (pszFontNameEscaped != NULL && !bIsNull && pszFontNameEscaped[0] != '\0') {
+        const char *pszName = CPLSPrintf("%s%s%s", pszFontNameEscaped, pszBold, pszItalic);
         if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL) {
           c->labels[0]->font = msStrdup(pszName);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
