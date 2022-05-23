@@ -36,12 +36,12 @@ if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
     make -j4 asan_compatible_tests
 elif [ "$BUILD_NAME" = "PHP_7.4_WITH_PROJ8" ]; then
     #runs through GitHub action
-    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra -Wno-stringop-overflow -Wno-format-overflow"
+    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     make mspython-wheel
     make phpng-build    
     make -j4 test
 else
-    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra -Wno-stringop-overflow -Wno-format-overflow"
+    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     make mspython-wheel
     make phpng-build    
     make -j4 test
