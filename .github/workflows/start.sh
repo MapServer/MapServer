@@ -32,10 +32,6 @@ ln -s /usr/bin/python3 /usr/bin/python
 export CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module
 pip install --upgrade pip
 
-# Install recent cmake
-wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-
 cd "$WORK_DIR"
 
 ci/travis/before_install.sh
