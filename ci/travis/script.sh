@@ -26,7 +26,7 @@ cmake --version
 # check we are using the correct versions
 pyenv which pip
 pyenv which python
-pyenv which python-config
+#pyenv which python-config
 
 if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
