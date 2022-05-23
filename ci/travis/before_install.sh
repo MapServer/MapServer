@@ -9,7 +9,7 @@ sudo apt-get remove --purge postgresql* libpq-dev libpq5 cmake || /bin/true
 
 #install recent cmake if Travis
 if [ -z ${TRAVIS+x} ]; then
-    BUILD_ENV="nottravis"
+    export MSBUILD_ENV="NOT_TRAVIS"
 else
     # install recent CMake
     DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
@@ -19,6 +19,7 @@ else
     mv cmake-3.23.1-linux-x86_64 cmake-install
     export PATH=${DEPS_DIR}/cmake-install:${DEPS_DIR}/cmake-install/bin:${PATH}
     cd ${TRAVIS_BUILD_DIR}
+    export MSBUILD_ENV="TRAVIS"
     # check CMake version installed
     cmake --version
 fi
@@ -31,6 +32,20 @@ sudo apt-get install -y --allow-unauthenticated protobuf-c-compiler libprotobuf-
 sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs
 sudo apt-get install -y --allow-unauthenticated libperl-dev
 sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
+
+#upgrade to recent SWIG
+git clone https://github.com/swig/swig.git swig-git-master
+cd swig-git-master
+wget https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
+./Tools/pcre-build.sh
+./autogen.sh
+./configure --prefix=/usr
+make
+sudo make install
+sudo ldconfig
+cd ../
+#check SWIG version
+swig -version
 
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"

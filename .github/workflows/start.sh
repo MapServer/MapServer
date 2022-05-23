@@ -4,7 +4,7 @@ set -e
 
 apt-get update -y
 
-export BUILD_NAME=PHP_7.3_WITH_PROJ7
+export BUILD_NAME=PHP_7.4_WITH_PROJ8
 #export PYTHON_VERSION=3.6
 export PYTHON_VERSION=system
 

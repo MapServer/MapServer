@@ -12,23 +12,13 @@ eval "$(pyenv init -)"
     export CXX="ccache g++"
 #fi
 
-#upgrade to recent SWIG
-git clone https://github.com/swig/swig.git swig-git-master
-cd swig-git-master
-wget https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
-./Tools/pcre-build.sh
-./autogen.sh
-./configure --prefix=/usr
-make
-sudo make install
-sudo ldconfig
-cd ../
-#check SWIG version
-swig -version
-
 #make sure to use recent CMake, and the pyenv Python instance
 export PYTHONPREFIX="$(dirname $(realpath $(pyenv which python)))/.."
-export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:${PYTHONPREFIX}/bin:${PATH}
+if [ "$MSBUILD_ENV" = "TRAVIS" ]; then
+    export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:${PYTHONPREFIX}/bin:${PATH}
+else
+    export PATH=${PYTHONPREFIX}/bin:${PATH}  
+fi
 cmake --version
 
 # check we are using the correct versions
