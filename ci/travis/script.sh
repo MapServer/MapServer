@@ -14,10 +14,12 @@ eval "$(pyenv init -)"
 
 #make sure to use recent CMake, and the pyenv Python instance
 export PYTHONPREFIX="$(dirname $(realpath $(pyenv which python)))/.."
-if [ "$MSBUILD_ENV" = "TRAVIS" ]; then
-    export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:${PYTHONPREFIX}/bin:${PATH}
+if [ -z ${TRAVIS+x} ]; then
+    #not travis
+    export PATH=${PYTHONPREFIX}/bin:${PATH}
 else
-    export PATH=${PYTHONPREFIX}/bin:${PATH}  
+    #travis
+    export PATH=${TRAVIS_BUILD_DIR}/deps/cmake-install:${TRAVIS_BUILD_DIR}/deps/cmake-install/bin:${PYTHONPREFIX}/bin:${PATH}  
 fi
 cmake --version
 
