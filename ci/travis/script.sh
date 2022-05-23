@@ -34,6 +34,11 @@ if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
     export AUTOTEST_OPTS="--strict --run_under_asan"
     # Only run tests that only involve mapserv/map2img binaries. mspython, etc would require LD_PREOLOAD'ing the asan shared object
     make -j4 asan_compatible_tests
+elif [ "$BUILD_NAME" = "PHP_7.4_WITH_PROJ8" ]; then
+    #runs through GitHub action (without PHP)
+    make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
+    make mspython-wheel
+    make -j4 test
 else
     make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     make mspython-wheel
