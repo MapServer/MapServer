@@ -1,5 +1,5 @@
 AUTOTEST_OPTS?=--strict_mode
-PHP_MAPSCRIPT=build/mapscript/phpng/php_mapscript.so
+PHP_MAPSCRIPT?=build/mapscript/phpng/php_mapscriptng.so
 PYTHON_MAPSCRIPT_PATH=build/mapscript/python
 JAVA_MAPSCRIPT_PATH=build/mapscript/java
 CSHARP_MAPSCRIPT_PATH=build/mapscript/csharp
