@@ -21,7 +21,7 @@ if [ -z ${TRAVIS+x} ]; then
     sudo apt-get install -y --allow-unauthenticated cmake php-xdebug
     export MSBUILD_ENV="NOT_TRAVIS"
 else
-    # install recent CMake
+    # install recent CMake on Travis
     DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
     mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
     wget --no-check-certificate https://cmake.org/files/v3.23/cmake-3.23.1-linux-x86_64.tar.gz
