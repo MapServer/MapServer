@@ -9,9 +9,9 @@ if  test -z "$phpunit" ; then
 fi
 
 if test -z $PHP_MAPSCRIPT_SO; then
-   phpunit .
+   phpunit --debug .
    exit $?
 else
-   php -d "extension=$PHP_MAPSCRIPT_SO" $phpunit .
+   php -d "extension=$PHP_MAPSCRIPT_SO" $phpunit --debug .
    exit $?
 fi
