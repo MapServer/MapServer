@@ -27,7 +27,9 @@ cmake --version
 pyenv which pip
 pyenv which python
 #pyenv which python-config
+# check for phpunit & xdebug
 phpunit --version
+php -v
 
 if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
