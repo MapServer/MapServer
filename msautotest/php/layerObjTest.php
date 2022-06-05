@@ -1,6 +1,6 @@
 <?php
 
-class LayerObjTest extends \PHPUnit\Framework\TestCase
+class layerObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $layer;
     protected $map;

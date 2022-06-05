@@ -1,6 +1,6 @@
 <?php
 
-class StyleObjTest extends \PHPUnit\Framework\TestCase
+class styleObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $style;
 

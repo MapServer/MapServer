@@ -1,6 +1,6 @@
 <?php
 
-class PointObjTest extends \PHPUnit\Framework\TestCase
+class pointObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $point;
 

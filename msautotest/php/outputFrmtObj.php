@@ -1,6 +1,6 @@
 <?php
 
-class OutputFormatObjTest extends PHPUnit_Framework_TestCase
+class outputFormatObjTest extends PHPUnit_Framework_TestCase
 {
     protected $outputFrmt;
 

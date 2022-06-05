@@ -1,6 +1,6 @@
 <?php
 
-class LabelObjTest extends \PHPUnit\Framework\TestCase
+class labelObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $label;
 

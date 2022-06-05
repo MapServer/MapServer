@@ -1,6 +1,6 @@
 <?php
 
-class LineObjTest extends \PHPUnit\Framework\TestCase
+class lineObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $line;
 

@@ -1,6 +1,6 @@
 <?php
 
-class OWSRequestObjTest extends \PHPUnit\Framework\TestCase
+class owsRequestObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $owsRequest;
 

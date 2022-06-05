@@ -1,6 +1,6 @@
 <?php
 
-class SymbolObjTest extends \PHPUnit\Framework\TestCase
+class symbolObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $symbol;
 

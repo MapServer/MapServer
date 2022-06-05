@@ -1,6 +1,6 @@
 <?php
 
-class MapObjTest extends \PHPUnit\Framework\TestCase
+class mapObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $map;
     protected $map_file = 'maps/ogr_query.map';

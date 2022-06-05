@@ -1,6 +1,6 @@
 <?php
 
-class HashTableObjTest extends \PHPUnit\Framework\TestCase
+class hashtableObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $hash;
 

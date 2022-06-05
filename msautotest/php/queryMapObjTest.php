@@ -1,6 +1,6 @@
 <?php
 
-class QueryMapObjTest extends \PHPUnit\Framework\TestCase
+class queryMapObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $queryMap;
     protected $map_file = 'maps/helloworld-gif.map';

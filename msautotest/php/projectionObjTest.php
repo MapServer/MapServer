@@ -1,6 +1,6 @@
 <?php
 
-class ProjectionObjTest extends \PHPUnit\Framework\TestCase
+class projectionObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $projection;
 

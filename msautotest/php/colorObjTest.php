@@ -1,6 +1,6 @@
 <?php
 
-class ColorObjTest extends \PHPUnit\Framework\TestCase
+class colorObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $color;
 	protected $original = "#00ff00";

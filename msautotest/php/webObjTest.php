@@ -1,6 +1,6 @@
 <?php
 
-class WebObjTest extends \PHPUnit\Framework\TestCase
+class webObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $web;
 

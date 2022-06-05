@@ -1,6 +1,6 @@
 <?php
 
-class ErrorObjTest extends \PHPUnit\Framework\TestCase
+class errorObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $error;
 

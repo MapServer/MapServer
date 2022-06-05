@@ -1,6 +1,6 @@
 <?php
 
-class ShapeFileObjTest extends \PHPUnit\Framework\TestCase
+class shapeFileObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $shapeFile;
 
