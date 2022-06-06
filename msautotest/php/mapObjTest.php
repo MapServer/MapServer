@@ -47,7 +47,7 @@ class mapObjTest extends \PHPUnit\Framework\TestCase
     public function testSaveQueryAsGML()
     {
         $this->map->queryByRect($this->map->extent);
-        $this->map->saveQueryAsGML("/tmp/gml.gml");
+        $this->map->saveQueryAsGML("gml.gml");
     }
 
     /**
@@ -66,7 +66,7 @@ class mapObjTest extends \PHPUnit\Framework\TestCase
 
     public function testClone()
     {
-        $this->assertInstanceOf('mapObj', $newMap = clone $this->map);
+        $this->assertInstanceOf('mapObj', $newMap = $this->map->cloneMap());
     }
 
     public function test__getNumlayers()

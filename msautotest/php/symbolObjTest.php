@@ -7,7 +7,7 @@ class symbolObjTest extends \PHPUnit\Framework\TestCase
     public function setUp(): void
     {
         $map = new mapObj('maps/labels.map');
-        $this->symbol = $map->getSymbolObjectById($map->getSymbolByName("plant"));
+        $this->symbol = $map->symbolset->getSymbolByName("plant");
     }
 
     public function testSetGetImage()

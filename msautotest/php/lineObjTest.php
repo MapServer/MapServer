@@ -44,10 +44,11 @@ class lineObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(3, $this->line->numpoints);
     }
 
-    public function testClone()
-    {
-        $newline = clone $this->line;
-    }
+    # line->clone() method not available in PHPNG
+    #public function testClone()
+    #{
+        #$newline = clone $this->line;
+    #}
 
 }
 

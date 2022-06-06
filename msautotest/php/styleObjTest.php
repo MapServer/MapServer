@@ -28,7 +28,7 @@ class styleObjTest extends \PHPUnit\Framework\TestCase
 
     public function testsClone()
     {
-        $newStyle = clone $this->style;
+        $newStyle = $this->style->cloneStyle();
     }
 
 }

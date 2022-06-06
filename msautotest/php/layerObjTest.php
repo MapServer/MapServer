@@ -15,29 +15,29 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals(0, $this->layer->setFilter("('[CTY_NAME]' = 'Itasca')"));
         $this->assertEquals("('[CTY_NAME]' = 'Itasca')", $this->layer->getFilterString());
-        $this->layer->queryByRect($this->map->extent);
+        $this->layer->queryByRect($this->map, $this->map->extent);
         $this->assertEquals(1,$this->layer->getNumResults());
         $this->assertEquals(0, $this->layer->setFilter("('[CTY_ABBR]' = 'BECK')"));
-        $this->layer->queryByRect($this->map->extent);
+        $this->layer->queryByRect($this->map, $this->map->extent);
         $this->assertEquals(1,$this->layer->getNumResults());
         $this->assertEquals(0, $this->layer->setFilter("('[WRONG]' = 'wrong')"));
-        @$this->layer->queryByRect($this->map->extent);
+        @$this->layer->queryByRect($this->map, $this->map->extent);
         $this->assertEquals(0,$this->layer->getNumResults());
     }
 
     public function testqueryByFilter()
     {
-        $this->assertEquals(0, $this->layer->queryByFilter("'[CTY_NAME]' = 'Itasca'"));
+        $this->assertEquals(0, $this->layer->queryByFilter($this->map, "'[CTY_NAME]' = 'Itasca'"));
         $this->assertEquals(1, $this->layer->getNumResults());
-        # Test fails on ubuntu 20.04
-        #$this->assertEquals(1, @$this->layer->queryByFilter("'[CTY_NAME]' = 'Inocity'"));
+        $this->assertEquals(0, $this->layer->queryByFilter($this->map, "'[CTY_NAME]' = 'Inocity'"));
+        $this->assertEquals(0, $this->layer->getNumResults());
     }
 
     public function testqueryByIndex()
     {
-        $this->layer->queryByIndex(-1, 0, MS_FALSE);
+        $this->layer->queryByIndex($this->map, -1, 0, MS_FALSE);
         $this->assertEquals(1, $this->layer->getNumResults());
-        $this->layer->queryByIndex(-1, 0, MS_TRUE);
+        $this->layer->queryByIndex($this->map, -1, 0, MS_TRUE);
         $this->assertEquals(2, $this->layer->getNumResults());
     }
 
@@ -48,9 +48,10 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
 
     public function testsetProcessingKey()
     {
-        $this->layer->setProcessing("LABEL_NO_CLIP=True");
+        # setProcessing() is not available in PHPNG
+        #$this->layer->setProcessing("LABEL_NO_CLIP=True");
         $this->layer->setProcessingKey("LABEL_NO_CLIP", "False");
-        $this->assertContains('LABEL_NO_CLIP=False', $this->layer->getProcessing());
+        $this->assertEquals("False", $this->layer->getProcessingKey("LABEL_NO_CLIP"));
     }
 
     /**
@@ -130,7 +131,7 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
 
     public function testClone()
     {
-        $this->assertInstanceOf('layerObj', $newLayer = clone $this->layer);
+        $this->assertInstanceOf('layerObj', $newLayer = $this->layer->cloneLayer());
     }
 
 }

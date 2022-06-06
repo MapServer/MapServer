@@ -1,12 +1,12 @@
 <?php
 
-class owsRequestObjTest extends \PHPUnit\Framework\TestCase
+class owsRequestTest extends \PHPUnit\Framework\TestCase
 {
     protected $owsRequest;
 
     public function setUp(): void
     {
-        $this->owsRequest = new OWSRequestObj();
+        $this->owsRequest = new OWSRequest();
     }
 
     /**

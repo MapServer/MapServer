@@ -16,10 +16,11 @@ class projectionObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, $this->projection->setWKTProjection('WrongStringisWrong'));
     }
 
-    public function testClone()
-    {
-        $this->assertInstanceOf('projectionObj', $newProj = clone $this->projection);
-    }
+    # projection->clone() method not available in PHPNG
+    #public function testClone()
+    #{
+        #$this->assertInstanceOf('projectionObj', $newProj = clone $this->projection);
+    #}
 }
 
 ?>

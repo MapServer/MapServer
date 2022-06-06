@@ -24,10 +24,11 @@ class labelObjTest extends \PHPUnit\Framework\TestCase
 
     }
 
-    public function testClone()
-    {
-        $this->assertInstanceOf('labelObj', $newLabel = clone $this->label);
-    }
+    # label->clone() method not available in MapServer 8-dev
+    #public function testClone()
+    #{
+        #$this->assertInstanceOf('labelObj', $newLabel = $this->label->clone());
+    #}
 
 }
 

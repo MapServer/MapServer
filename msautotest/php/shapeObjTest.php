@@ -14,8 +14,8 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
         $point = new pointObj();
         $point->setXY(5, 8);
         $line = new lineObj();
-        $line->addXY(0,0);
-        $line->addXY(6,8);
+        $line->add(new pointObj(0,0));
+        $line->add(new pointObj(6,8));
 
         $this->assertTrue(is_nan($this->shape->distanceToPoint($point)));
         $this->shape->add($line);
@@ -29,12 +29,12 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(-1, $this->shape->distanceToShape($shape2));
 
         $line = new lineObj();
-        $line->addXY(0,0);
-        $line->addXY(4,4);
+        $line->add(new pointObj(0,0));
+        $line->add(new pointObj(4,4));
         $this->shape->add($line);
         $line2 = new lineObj();
-        $line2->addXY(2,2);
-        $line2->addXY(3,5);
+        $line2->add(new pointObj(2,2));
+        $line2->add(new pointObj(3,5));
         $shape2->add($line2);
 
         $this->assertEquals(1.4142135623731, $this->shape->distanceToShape($shape2));
