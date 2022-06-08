@@ -21,6 +21,8 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
         $this->layer->queryByRect($this->map, $this->map->extent);
         $this->assertEquals(1,$this->layer->getNumResults());
         $this->assertEquals(0, $this->layer->setFilter("('[WRONG]' = 'wrong')"));
+        //handle expected exception error
+        $this->expectException(Exception::class);        
         @$this->layer->queryByRect($this->map, $this->map->extent);
         $this->assertEquals(0,$this->layer->getNumResults());
     }
