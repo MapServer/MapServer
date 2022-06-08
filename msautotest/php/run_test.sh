@@ -12,6 +12,6 @@ if test -z $PHP_MAPSCRIPT_SO; then
    phpunit --dont-report-useless-tests --debug .
    exit $?
 else
-   php -d "extension=$PHP_MAPSCRIPT_SO" $phpunit --debug .
+   php -d "extension=$PHP_MAPSCRIPT_SO" $phpunit --dont-report-useless-tests --debug .
    exit $?
 fi
