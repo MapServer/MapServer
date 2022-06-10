@@ -16,9 +16,10 @@ sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mo
 sudo apt-get install -y --allow-unauthenticated libperl-dev
 sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
 
-#install recent cmake, xdebug on GH build action
+#install recent cmake on GH build action
 if [ -z ${TRAVIS+x} ]; then
-    sudo apt-get install -y --allow-unauthenticated cmake php-xdebug
+    sudo apt-get install -y --allow-unauthenticated cmake
+    #sudo apt-get install -y --allow-unauthenticated php-xdebug
     export MSBUILD_ENV="NOT_TRAVIS"
 else
     # install recent CMake on Travis
