@@ -24,6 +24,12 @@ class hashtableObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals(1, $this->hash->numitems);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($hash, $map_file, $map, $this->hash);
+    }
+    
 }
 
 ?>

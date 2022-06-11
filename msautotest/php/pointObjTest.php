@@ -20,6 +20,12 @@ class pointObjTest extends \PHPUnit\Framework\TestCase
         $startLine->setXY(10, 15);
         $this->assertEquals(0, $this->point->distanceToSegment($startLine, $endLine));
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($point, $this->point, $this->point->setXY, $startLine, $endLine);
+    }    
+    
 }
 
 ?>

@@ -49,6 +49,11 @@ class lineObjTest extends \PHPUnit\Framework\TestCase
     #{
         #$newline = clone $this->line;
     #}
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($line, $this->line, $start, $middle, $end, $point);
+    }      
 
 }
 

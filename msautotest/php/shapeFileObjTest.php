@@ -43,6 +43,12 @@ class shapeFileObjTest extends \PHPUnit\Framework\TestCase
         #$this->assertEquals(5, $this->shapeFile->lastshape);
 
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($shapeFile, $map, $this->shapeFile, $this->shapeFile->isopen, $this->shapeFile->lastshape, $this->shapeFile->getShape);
+    }    
+    
 }
 
 ?>

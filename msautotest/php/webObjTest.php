@@ -23,6 +23,12 @@ class webObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->web->validation = 'this is an object, I swear';
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($web, $map, $this->web, $this->web->validation);
+    }    
+    
 }
 
 ?>

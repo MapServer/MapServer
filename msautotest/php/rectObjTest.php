@@ -13,6 +13,12 @@ class rectObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals('5.0', $this->rect->getCenter()->x + $this->rect->getCenter()->y);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($rect, $this->rect, $this->rect->getCenter);
+    }    
+    
 }
 
 ?>

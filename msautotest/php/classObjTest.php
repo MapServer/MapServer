@@ -30,6 +30,12 @@ class classObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertInstanceOf('labelLeaderObj', $this->class->leader);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($this->class, $map_file, $map, $layer, $classtmp, $style);
+    }
+    
 }
 
 ?>

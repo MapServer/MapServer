@@ -23,6 +23,12 @@ class projectionObjTest extends \PHPUnit\Framework\TestCase
     #{
         #$this->assertInstanceOf('projectionObj', $newProj = clone $this->projection);
     #}
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($projection, $this->projection, $this->projection->setWKTProjection);
+    }    
+    
 }
 
 ?>

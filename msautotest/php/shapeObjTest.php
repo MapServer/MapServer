@@ -53,6 +53,11 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals(-1, $this->shape->resultindex);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($shape, $this->shape, $point, $line, $line2, $shape2);
+    }    
 
 }
 

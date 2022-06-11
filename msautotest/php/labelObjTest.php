@@ -29,6 +29,11 @@ class labelObjTest extends \PHPUnit\Framework\TestCase
     #{
         #$this->assertInstanceOf('labelObj', $newLabel = $this->label->clone());
     #}
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($label, $map_file, $map, $this->label);
+    }
 
 }
 

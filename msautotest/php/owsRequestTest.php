@@ -50,5 +50,11 @@ class owsRequestTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals('', $this->owsRequest->httpcookiedata);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($owsRequest, $this->owsRequest, $this->owsRequest->postrequest, $this->owsRequest->httpcookiedata);
+    }
+    
 }
 ?>

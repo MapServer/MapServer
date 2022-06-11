@@ -82,6 +82,11 @@ class mapObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->map->numlayers = 2;
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($map, $map_file, $this->map_file, $this->map->numoutputformats, $this->map->numlayers, $this->map->imagetype, $this->map->queryByRect, $this->map->saveQueryAsGML);
+    }     
 
 }
 
