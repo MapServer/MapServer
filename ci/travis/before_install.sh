@@ -53,7 +53,7 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 
 # list installed and available Python/PHP versions
-# pyenv versions
+pyenv versions
 # echo $(pyenv root)
 # phpenv versions
 
