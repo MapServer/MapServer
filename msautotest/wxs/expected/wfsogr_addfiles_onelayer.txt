@@ -7,20 +7,17 @@ Content-Transfer-Encoding: binary
 
 <?xml version="1.0" encoding="utf-8" ?>
 <ogr:FeatureCollection
+     gml:id="aFeatureCollection"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://ogr.maptools.org/ result.xsd"
      xmlns:ogr="http://ogr.maptools.org/"
-     xmlns:gml="http://www.opengis.net/gml">
-  <gml:boundedBy>
-    <gml:Box>
-      <gml:coord><gml:X>2576803.5</gml:X><gml:Y>399102.1875</gml:Y></gml:coord>
-      <gml:coord><gml:X>2589745.5</gml:X><gml:Y>402556.25</gml:Y></gml:coord>
-    </gml:Box>
-  </gml:boundedBy>
-                                                                                                                              
-  <gml:featureMember>
-    <ogr:road_with_addfiles fid="road_with_addfiles.0">
-      <ogr:geometryProperty><gml:LineString srsName="EPSG:3978"><gml:coordinates>2589745.5,402556.25 2588416.5,401601.0625 2587278.5,400455.71875 2585757.5,399880.53125 2582523.25,399110.65625 2581190.5,399107.1875 2579286.75,399102.1875 2577761.5,399669.40625 2576803.5,401189.875</gml:coordinates></gml:LineString></ogr:geometryProperty>
+     xmlns:gml="http://www.opengis.net/gml/3.2">
+  <gml:boundedBy><gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978"><gml:lowerCorner>2576803.5 399102.1875</gml:lowerCorner><gml:upperCorner>2589745.5 402556.25</gml:upperCorner></gml:Envelope></gml:boundedBy>
+                                                                                                                                            
+  <ogr:featureMember>
+    <ogr:road_with_addfiles gml:id="road_with_addfiles.0">
+      <gml:boundedBy><gml:Envelope srsName="urn:ogc:def:crs:EPSG::3978"><gml:lowerCorner>2576803.5 399102.1875</gml:lowerCorner><gml:upperCorner>2589745.5 402556.25</gml:upperCorner></gml:Envelope></gml:boundedBy>
+      <ogr:geometryProperty><gml:LineString srsName="urn:ogc:def:crs:EPSG::3978" gml:id="road_with_addfiles.geom.0"><gml:posList>2589745.5 402556.25 2588416.5 401601.0625 2587278.5 400455.71875 2585757.5 399880.53125 2582523.25 399110.65625 2581190.5 399107.1875 2579286.75 399102.1875 2577761.5 399669.40625 2576803.5 401189.875</gml:posList></gml:LineString></ogr:geometryProperty>
       <ogr:FNODE_>613</ogr:FNODE_>
       <ogr:TNODE_>1511</ogr:TNODE_>
       <ogr:LPOLY_>0</ogr:LPOLY_>
@@ -31,7 +28,7 @@ Content-Transfer-Encoding: binary
       <ogr:NAME_E></ogr:NAME_E>
       <ogr:NAME_F></ogr:NAME_F>
     </ogr:road_with_addfiles>
-  </gml:featureMember>
+  </ogr:featureMember>
 </ogr:FeatureCollection>
 
 --xxOGRBoundaryxx
@@ -40,23 +37,47 @@ Content-Type: application/binary
 Content-Transfer-Encoding: binary
 
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" elementFormDefault="qualified" version="1.0">
-<xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd"/>
-<xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+<xs:schema 
+    targetNamespace="http://ogr.maptools.org/"
+    xmlns:ogr="http://ogr.maptools.org/"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0"
+    elementFormDefault="qualified"
+    version="1.0">
+<xs:annotation>
+  <xs:appinfo source="http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd">
+    <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>
+  </xs:appinfo>
+</xs:annotation>
+<xs:import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+<xs:import namespace="http://www.opengis.net/gmlsf/2.0" schemaLocation="http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd"/>
+<xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractFeature"/>
 <xs:complexType name="FeatureCollectionType">
   <xs:complexContent>
-    <xs:extension base="gml:AbstractFeatureCollectionType">
-      <xs:attribute name="lockId" type="xs:string" use="optional"/>
-      <xs:attribute name="scope" type="xs:string" use="optional"/>
+    <xs:extension base="gml:AbstractFeatureType">
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="featureMember">
+          <xs:complexType>
+            <xs:complexContent>
+              <xs:extension base="gml:AbstractFeatureMemberType">
+                <xs:sequence>
+                  <xs:element ref="gml:AbstractFeature"/>
+                </xs:sequence>
+              </xs:extension>
+            </xs:complexContent>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
     </xs:extension>
   </xs:complexContent>
 </xs:complexType>
-<xs:element name="road_with_addfiles" type="ogr:road_with_addfiles_Type" substitutionGroup="gml:_Feature"/>
+<xs:element name="road_with_addfiles" type="ogr:road_with_addfiles_Type" substitutionGroup="gml:AbstractFeature"/>
 <xs:complexType name="road_with_addfiles_Type">
   <xs:complexContent>
     <xs:extension base="gml:AbstractFeatureType">
       <xs:sequence>
-        <xs:element name="geometryProperty" type="gml:LineStringPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>
+        <xs:element name="geometryProperty" type="gml:CurvePropertyType" nillable="true" minOccurs="0" maxOccurs="1"/> <!-- restricted to LineString --><!-- srsName="urn:ogc:def:crs:EPSG::3978" -->
         <xs:element name="FNODE_" nillable="true" minOccurs="0" maxOccurs="1">
           <xs:simpleType>
             <xs:restriction base="xs:integer">

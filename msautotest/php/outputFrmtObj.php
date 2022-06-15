@@ -1,6 +1,6 @@
 <?php
 
-class OutputFormatObjTest extends PHPUnit_Framework_TestCase
+class outputFormatObjTest extends PHPUnit_Framework_TestCase
 {
     protected $outputFrmt;
 
@@ -45,6 +45,12 @@ class OutputFormatObjTest extends PHPUnit_Framework_TestCase
         $this->outputFrmt->setOption('OUTPUT_TYPE', 'RASTER');
         $this->assertEquals('OUTPUT_TYPE=RASTER', $this->outputFrmt->getOptionByIndex(0));
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($outputFrmt, $this->outputFrmt, $this->outputFrmt->bands, $this->outputFrmt->numformatoptions, $this->outputFrmt->setOption);
+    }    
+    
 }
 
 ?>

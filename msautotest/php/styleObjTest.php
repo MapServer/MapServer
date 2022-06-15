@@ -1,6 +1,6 @@
 <?php
 
-class StyleObjTest extends \PHPUnit\Framework\TestCase
+class styleObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $style;
 
@@ -28,8 +28,13 @@ class StyleObjTest extends \PHPUnit\Framework\TestCase
 
     public function testsClone()
     {
-        $newStyle = clone $this->style;
+        $newStyle = $this->style->cloneStyle();
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($style, $map_file, $map, $this->style, $this->style->initialgap, $this->style->maxscaledenom, $this->style->minscaledenom);
+    }    
 
 }
 

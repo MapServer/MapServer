@@ -63,6 +63,54 @@ def strip_headers( filename ):
 
     return None
 
+###################################################################
+# Check image checksums with GDAL
+
+def check_with_gdal(result_file, expected_file):
+
+    from osgeo import gdal
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    exp_ds = gdal.Open( expected_file )
+    gdal.PopErrorHandler()
+    if exp_ds == None:
+        return 'nomatch'
+
+    res_ds = gdal.Open( result_file )
+
+    match = 1
+    for band_num in range(1,exp_ds.RasterCount+1):
+        if res_ds.GetRasterBand(band_num).Checksum() != \
+           exp_ds.GetRasterBand(band_num).Checksum():
+            match = 0
+
+    if match == 1:
+
+        # Special case for netCDF: we need to eliminate NC_GLOBAL#history
+        # since it contains the current timedate
+        if exp_ds.GetDriver().GetDescription() == 'netCDF':
+            if exp_ds.GetGeoTransform() != res_ds.GetGeoTransform():
+                return 'nomatch'
+            if exp_ds.GetProjectionRef() != res_ds.GetProjectionRef():
+                return 'nomatch'
+            exp_md = exp_ds.GetMetadata()
+            if "NC_GLOBAL#history" in exp_md:
+                del exp_md['NC_GLOBAL#history']
+            got_md = res_ds.GetMetadata()
+            if 'NC_GLOBAL#history' in got_md:
+                del got_md['NC_GLOBAL#history']
+            if exp_md != got_md:
+                return 'nomatch'
+            for band_num in range(1,exp_ds.RasterCount+1):
+                if res_ds.GetRasterBand(band_num).GetMetadata() != \
+                   exp_ds.GetRasterBand(band_num).GetMetadata():
+                    return 'nomatch'
+            return 'match'
+
+        return 'files_differ_image_match'
+
+    return 'nomatch'
+
 ###############################################################################
 # compare_result()
 
@@ -82,64 +130,39 @@ def compare_result( filename, this_path = '.' ):
     except OSError:
         return 'noexpected'
 
-    if filecmp.cmp(expected_file,result_file,0):
-        return 'match'
-
-    expected_file_alternative = expected_file + ".alternative"
-    if os.path.exists( expected_file_alternative ):
-        if filecmp.cmp(expected_file_alternative,result_file,0):
+    # netCDF files contain a NC_GLOBAL#history that contains a datetime.
+    # Binary comparison can't work
+    if not expected_file.endswith('.nc'):
+        if filecmp.cmp(expected_file,result_file,0):
             return 'match'
 
-    if expected_file[-4:] == '.xml':
-        return 'nomatch'
-    
-    ###################################################################
-    # Check image checksums with GDAL if it is available.
-    
-    try:
-        from osgeo import gdal
-
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        exp_ds = gdal.Open( expected_file )
-        gdal.PopErrorHandler()
-        if exp_ds == None:
-            return 'nomatch'
-        
-        res_ds = gdal.Open( result_file )
-
-        match = 1
-        for band_num in range(1,exp_ds.RasterCount+1):
-            if res_ds.GetRasterBand(band_num).Checksum() != \
-               exp_ds.GetRasterBand(band_num).Checksum():
-                match = 0
-
-        if match == 1:
-
-            # Special case for netCDF: we need to eliminate NC_GLOBAL#history
-            # since it contains the current timedate
-            if exp_ds.GetDriver().GetDescription() == 'netCDF':
-                if exp_ds.GetGeoTransform() != res_ds.GetGeoTransform():
-                    return 'nomatch'
-                if exp_ds.GetProjectionRef() != res_ds.GetProjectionRef():
-                    return 'nomatch'
-                exp_md = exp_ds.GetMetadata()
-                if "NC_GLOBAL#history" in exp_md:
-                    del exp_md['NC_GLOBAL#history']
-                got_md = res_ds.GetMetadata()
-                if 'NC_GLOBAL#history' in got_md:
-                    del got_md['NC_GLOBAL#history']
-                if exp_md != got_md:
-                    return 'nomatch'
-                for band_num in range(1,exp_ds.RasterCount+1):
-                    if res_ds.GetRasterBand(band_num).GetMetadata() != \
-                       exp_ds.GetRasterBand(band_num).GetMetadata():
-                        return 'nomatch'
+        expected_file_alternative = expected_file + ".alternative"
+        if os.path.exists( expected_file_alternative ):
+            if filecmp.cmp(expected_file_alternative,result_file,0):
                 return 'match'
 
-            return 'files_differ_image_match'
+        if expected_file[-4:] == '.xml':
+            return 'nomatch'
 
+    ###################################################################
+    # Check image checksums with GDAL if it is available.
+    try:
+        from osgeo import gdal
+        gdal.VersionInfo(None) # make pyflakes happy
+        has_gdal = True
     except:
-        pass
+        has_gdal = False
+
+    if has_gdal:
+        ret = check_with_gdal(result_file, expected_file)
+        if ret != 'nomatch':
+            return ret
+
+        expected_file_alternative = expected_file + ".alternative"
+        if os.path.exists( expected_file_alternative ):
+            ret = check_with_gdal(result_file, expected_file_alternative)
+            if ret != 'nomatch':
+                return ret
 
     ###################################################################
     # Test with perceptualdiff if this is tiff or png.  If we discover

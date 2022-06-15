@@ -1,13 +1,13 @@
 <?php
 
-class SymbolObjTest extends \PHPUnit\Framework\TestCase
+class symbolObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $symbol;
 
     public function setUp(): void
     {
         $map = new mapObj('maps/labels.map');
-        $this->symbol = $map->getSymbolObjectById($map->getSymbolByName("plant"));
+        $this->symbol = $map->symbolset->getSymbolByName("plant");
     }
 
     public function testSetGetImage()
@@ -45,8 +45,14 @@ class SymbolObjTest extends \PHPUnit\Framework\TestCase
 
     public function test_setgetMiny()
     {
-        $this->assertEquals(5.0, $this->symbol->minx = 5.0);
+        $this->assertEquals(5.0, $this->symbol->miny = 5.0);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($symbol, $map, $this->symbol, $this->symbol->anchorpoint_x, $this->symbol->anchorpoint_y, $this->symbol->maxx, $this->symbol->maxy, $this->symbol->minx, $this->symbol->miny);
+    }    
+    
 }
 
 ?>

@@ -1,6 +1,6 @@
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
-if(WIN32 AND (${CMAKE_VERSION} EQUAL "3.12.0") OR (${CMAKE_VERSION} EQUAL "3.12.1") OR (${CMAKE_VERSION} EQUAL "3.12.2") OR (${CMAKE_VERSION} EQUAL "3.12.3"))
+if(WIN32 AND ((${CMAKE_VERSION} EQUAL "3.12.0") OR (${CMAKE_VERSION} EQUAL "3.12.1") OR (${CMAKE_VERSION} EQUAL "3.12.2") OR (${CMAKE_VERSION} EQUAL "3.12.3")))
     message(FATAL_ERROR "Building with CMAKE ${CMAKE_VERSION} will not work. Please downgrade to 3.11.x or update to a higher version than 3.12.3")
 endif()
 

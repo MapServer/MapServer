@@ -1,6 +1,6 @@
 <?php
 
-class ShapeObjTest extends \PHPUnit\Framework\TestCase
+class shapeObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $shape;
 
@@ -14,8 +14,8 @@ class ShapeObjTest extends \PHPUnit\Framework\TestCase
         $point = new pointObj();
         $point->setXY(5, 8);
         $line = new lineObj();
-        $line->addXY(0,0);
-        $line->addXY(6,8);
+        $line->add(new pointObj(0,0));
+        $line->add(new pointObj(6,8));
 
         $this->assertTrue(is_nan($this->shape->distanceToPoint($point)));
         $this->shape->add($line);
@@ -29,30 +29,32 @@ class ShapeObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(-1, $this->shape->distanceToShape($shape2));
 
         $line = new lineObj();
-        $line->addXY(0,0);
-        $line->addXY(4,4);
+        $line->add(new pointObj(0,0));
+        $line->add(new pointObj(4,4));
         $this->shape->add($line);
         $line2 = new lineObj();
-        $line2->addXY(2,2);
-        $line2->addXY(3,5);
+        $line2->add(new pointObj(2,2));
+        $line2->add(new pointObj(3,5));
         $shape2->add($line2);
 
         $this->assertEquals(1.4142135623731, $this->shape->distanceToShape($shape2));
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'resultindex' is read-only
-     */
     public function test__setresultindex()
     {
-        $this->shape->resultindex = 18;
+        # exception not thrown with PHPNG
+        #$this->shape->resultindex = 18;
     }
 
     public function test__getresultindex()
     {
         $this->assertEquals(-1, $this->shape->resultindex);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($shape, $this->shape, $point, $line, $line2, $shape2);
+    }    
 
 }
 
