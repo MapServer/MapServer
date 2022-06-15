@@ -58,6 +58,13 @@
         return msProjectLine(projin, projout, self);
     }
 
+    /// Reproject line given a reprojection object. Transformation is done in place.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    int project(reprojectionObj *reprojector)
+    {
+        return msProjectLineEx(reprojector, self);
+    }
+
     /// Return reference to point at index *i*.
     pointObj *get(int i) 
     {

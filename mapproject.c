@@ -64,16 +64,6 @@ static void msProjectionContextUnref(projectionContext* ctx);
 
 #include "proj_experimental.h"
 
-struct reprojectionObj
-{
-    projectionObj* in;
-    projectionObj* out;
-    PJ* pj;
-    int should_do_line_cutting;
-    shapeObj splitShape;
-    int bFreePJ;
-};
-
 /* Helps considerably for use cases like msautotest/wxs/wms_inspire.map */
 /* which involve a number of layers with same SRS, and a number of exposed */
 /* output SRS */
@@ -1816,8 +1806,7 @@ int msProjectRectGrid(reprojectionObj* reprojector, rectObj *rect)
 /*                       msProjectRectAsPolygon()                       */
 /************************************************************************/
 
-static int
-msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect)
+int msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect)
 {
   shapeObj polygonObj;
   lineObj  ring;

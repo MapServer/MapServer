@@ -78,6 +78,13 @@
         return msProjectShape(projin, projout, self);
     }
 
+    /// Reproject shape given a reprojection object. Transformation is done in place.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    int project(reprojectionObj *reprojector)
+    {
+        return msProjectShapeEx(reprojector, self);
+    }
+
     /// Returns a reference to part at index. Reference is valid only during 
     /// the life of the shapeObj.
     lineObj *get(int i) {

@@ -83,6 +83,13 @@
         return msProjectRect(projin, projout, self);
     }
 
+    /// Reproject rectangle given a reprojection object. Transformation is done in place.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    int project(reprojectionObj *reprojector)
+    {
+        return msProjectRectAsPolygon(reprojector, self);
+    }
+
     /// Adjust the rect to fit the width and height. Returns cellsize of rect.
     double fit(int width, int height) {
         return  msAdjustExtent(self, width, height);
