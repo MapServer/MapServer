@@ -1,17 +1,9 @@
 #!/bin/bash
 
-phpunit=`which phpunit`
-ret=0
-
-if  test -z "$phpunit" ; then
-   echo "phpunit executable not found"
-   exit 1
-fi
-
 if test -z $PHP_MAPSCRIPT_SO; then
-   phpunit --dont-report-useless-tests --debug .
+   php phpunit-9.5.phar --debug .
    exit $?
 else
-   php -d "extension=$PHP_MAPSCRIPT_SO" $phpunit --dont-report-useless-tests --debug .
+   php -d "extension=$PHP_MAPSCRIPT_SO" phpunit-9.5.phar --debug .
    exit $?
 fi
