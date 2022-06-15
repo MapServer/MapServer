@@ -13,7 +13,7 @@ export LANG
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo locales tzdata software-properties-common python3-dev python3-pip python3-setuptools git curl \
     apt-transport-https ca-certificates gnupg software-properties-common wget \
-    php-dev php-xml && \
+    php-dev php-xml php-mbstring && \
     echo "$LANG UTF-8" > /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=$LANG
