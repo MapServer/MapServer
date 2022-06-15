@@ -33,7 +33,7 @@
     /// Create new instance of reprojectionObj. Input parameters are two projectionsObj's - in and out.
     reprojectionObj(projectionObj *in, projectionObj *out) 
     {
-	if(!in && !out) return NULL;
+        if(!in && !out) return NULL;
         return msProjectCreateReprojector(in, out);
     }
 
