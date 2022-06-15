@@ -11,7 +11,6 @@
 	processIsolation="false" 
 	stopOnFailure="false" 
 	beStrictAboutTestsThatDoNotTestAnything="false">
-  <coverage/>
   <testsuite name="MapServer PHP MapScript - Unit Test">
     <directory>./</directory>
   </testsuite>
