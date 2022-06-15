@@ -15,10 +15,6 @@ class webObjTest extends \PHPUnit\Framework\TestCase
         $this->assertInstanceOf('hashTableObj', $this->web->validation);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'validation' is an object
-     */
     public function test__setValidation()
     {
         # exception not thrown with PHPNG

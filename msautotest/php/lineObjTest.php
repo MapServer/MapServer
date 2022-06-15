@@ -30,10 +30,6 @@ class lineObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(5, $replacedPoint->x);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'numpoints' is read-only
-     */
     public function test__setNumPoints()
     {
         # exception not thrown with PHPNG

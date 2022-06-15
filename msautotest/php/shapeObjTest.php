@@ -40,10 +40,6 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1.4142135623731, $this->shape->distanceToShape($shape2));
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'resultindex' is read-only
-     */
     public function test__setresultindex()
     {
         # exception not thrown with PHPNG

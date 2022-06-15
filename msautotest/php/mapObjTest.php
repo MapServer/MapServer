@@ -10,10 +10,6 @@ class mapObjTest extends \PHPUnit\Framework\TestCase
         $this->map = new mapObj($this->map_file);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'numoutputformats' is read-only
-     */
     public function test__setnumoutputformats()
     {
         # exception not thrown with PHPNG
@@ -51,10 +47,6 @@ class mapObjTest extends \PHPUnit\Framework\TestCase
         $this->map->saveQueryAsGML("gml.gml");
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'imagetype' is read-only
-     */
     public function test__setImageType()
     {
         # exception not thrown with PHPNG
@@ -76,10 +68,6 @@ class mapObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, $this->map->numlayers);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'numlayers' is read-only
-     */
     public function test__setNumlayers()
     {
         # exception not thrown with PHPNG

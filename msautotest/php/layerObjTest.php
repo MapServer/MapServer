@@ -56,10 +56,6 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals("False", $this->layer->getProcessingKey("LABEL_NO_CLIP"));
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'numjoins' is an object and can
-     */
     public function test__setNumJoins()
     {
         # exception not thrown with PHPNG
@@ -71,11 +67,6 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(0, $this->layer->numjoins);
     }
 
-    /**
-     * test on the property and not the function
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'extent' is an object and can
-     */
     public function test__setExtent()
     {
         # exception not thrown with PHPNG
@@ -95,10 +86,6 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(8, $this->layer->maxclasses);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'maxclasses' is an object and can
-     */
     public function test__setMaxClasses()
     {
         # exception not thrown with PHPNG
@@ -115,10 +102,6 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(2.5, $this->layer->mingeowidth = 2.5);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'numitems' is an object and can
-     */
     public function test__setNumItems()
     {
         # exception not thrown with PHPNG

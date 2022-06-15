@@ -9,10 +9,6 @@ class shapeFileObjTest extends \PHPUnit\Framework\TestCase
         $this->shapeFile = new shapeFileObj('maps/data/lakes2.shp', -2);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'isopen' is read-only
-     */
     public function test__setIsOpen()
     {
         # exception not thrown with PHPNG
@@ -25,10 +21,6 @@ class shapeFileObjTest extends \PHPUnit\Framework\TestCase
         #$this->assertEquals(1, $this->shapeFile->isopen);
     #}
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'lastshape' is read-only
-     */
     public function test__setLastShape()
     {
         # exception not thrown with PHPNG

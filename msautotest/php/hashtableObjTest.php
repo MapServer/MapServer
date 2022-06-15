@@ -11,10 +11,6 @@ class hashtableObjTest extends \PHPUnit\Framework\TestCase
         $this->hash = $map->web->metadata;
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'numitems' is read-only
-     */
     public function test__setNumItems()
     {   # exception not thrown with PHPNG     
         #$this->hash->numitems = 5;

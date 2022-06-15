@@ -9,10 +9,6 @@ class owsRequestTest extends \PHPUnit\Framework\TestCase
         $this->owsRequest = new OWSRequest();
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'contenttype' is read-only
-     */
     public function test__setContentType()
     {
         # exception not thrown with PHPNG
@@ -24,10 +20,6 @@ class owsRequestTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('', $this->owsRequest->contenttype);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'postrequest' is read-only
-     */
     public function test__setPostRequest()
     {
         # exception not thrown with PHPNG
@@ -39,10 +31,6 @@ class owsRequestTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('', $this->owsRequest->postrequest);
     }
 
-    /**
-     * @expectedException           MapScriptException
-     * @expectedExceptionMessage    Property 'httpcookiedata' is read-only
-     */
     public function test__setHttpCookieData()
     {
         # exception not thrown with PHPNG
