@@ -40,6 +40,5 @@
     ~reprojectionObj() 
     {
         msProjectDestroyReprojector(self);
-        free(self);
     }
 }
