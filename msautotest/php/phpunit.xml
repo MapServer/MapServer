@@ -12,6 +12,7 @@
 	stopOnFailure="false" 
 	beStrictAboutTestsThatDoNotTestAnything="false">
   <testsuite name="MapServer PHP MapScript - Unit Test">
-    <directory>./</directory>
+    <!-- set minimum version supported for PHPUnit tests to PHP >= 7.3.0 -->
+    <directory phpVersion="7.3.0" phpVersionOperator=">=">./</directory>
   </testsuite>
 </phpunit>

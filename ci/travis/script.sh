@@ -28,7 +28,7 @@ pyenv which pip
 pyenv which python
 #pyenv which python-config
 # check for phpunit & xdebug
-phpunit --version
+php msautotest/php/phpunit-9.5.phar --version
 php -v
 
 if [ "$BUILD_NAME" = "PHP_7.4_WITH_ASAN" ]; then

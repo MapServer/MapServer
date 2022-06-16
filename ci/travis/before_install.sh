@@ -53,7 +53,7 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 
 # list installed and available Python/PHP versions
-# pyenv versions
+pyenv versions
 # echo $(pyenv root)
 # phpenv versions
 
@@ -77,6 +77,9 @@ sudo sed -i  's/peer/trust/' /etc/postgresql/12/main/pg_hba.conf
 sudo service postgresql restart 12
 
 cd msautotest
+#upgrade to recent PHPUnit
+cd php && curl -LO https://phar.phpunit.de/phpunit-9.5.phar
+cd ..
 python -m pyflakes .
 ./create_postgis_test_data.sh
 
