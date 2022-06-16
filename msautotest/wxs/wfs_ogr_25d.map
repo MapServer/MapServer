@@ -1,7 +1,7 @@
 #
 # Test both 2.5D support in OGR input and GML/WFS output
 #
-# REQUIRES: SUPPORTS=WFS SUPPORTS=POINT_Z_M INPUT=OGR
+# REQUIRES: SUPPORTS=WFS INPUT=OGR
 #
 #
 # RUN_PARMS: wfs_ogr_25d_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=point3d,linestring3d,polygon3d,multipoint3d,multilinestring3d,multipolygon3d" > [RESULT]

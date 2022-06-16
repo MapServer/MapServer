@@ -1,3 +1,8 @@
-To run these test you need PHPUNIT. You can find how to install it at http://www.phpunit.de/manual/3.7/en/installation.html.
+To run these tests you need PHPUnit (and PHP's Xdebug extension) installed. 
+You can find how to install PHPUnit at https://phpunit.readthedocs.io .  
+The official PHPUnit site is: https://phpunit.de
 
-To run the test simply run 'phpunit --process-isolation .'
+To run the tests simply run 'phpunit --debug .' from inside the /msautotest/php/
+folder.
+
+You can run a single test such as: 'phpunit --debug classObjTest.php'

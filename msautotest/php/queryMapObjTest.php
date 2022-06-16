@@ -1,6 +1,6 @@
 <?php
 
-class QueryMapObjTest extends \PHPUnit\Framework\TestCase
+class queryMapObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $queryMap;
     protected $map_file = 'maps/helloworld-gif.map';
@@ -16,6 +16,11 @@ class QueryMapObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals(5, $this->queryMap->status = 5);
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($queryMap, $map_file, $map, $this->queryMap);
+    }    
 
 }
 

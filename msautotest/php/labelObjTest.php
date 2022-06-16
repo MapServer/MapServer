@@ -1,6 +1,6 @@
 <?php
 
-class LabelObjTest extends \PHPUnit\Framework\TestCase
+class labelObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $label;
 
@@ -24,9 +24,15 @@ class LabelObjTest extends \PHPUnit\Framework\TestCase
 
     }
 
-    public function testClone()
-    {
-        $this->assertInstanceOf('labelObj', $newLabel = clone $this->label);
+    # label->clone() method not available in MapServer 8-dev
+    #public function testClone()
+    #{
+        #$this->assertInstanceOf('labelObj', $newLabel = $this->label->clone());
+    #}
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($label, $map_file, $map, $this->label);
     }
 
 }

@@ -11,4 +11,4 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build
-        run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:18.04 $PWD/.github/workflows/start.sh
+        run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh

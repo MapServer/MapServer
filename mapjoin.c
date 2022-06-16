@@ -402,7 +402,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
   for(i=0; i<join->numitems; i++) {
-    join->items[i] = (char *) malloc(8); /* plenty of space */
+    join->items[i] = (char *) malloc(12); /* plenty of space */
     sprintf(join->items[i], "%d", i+1);
   }
 

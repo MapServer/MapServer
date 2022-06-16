@@ -1,6 +1,6 @@
 <?php
 
-class PointObjTest extends \PHPUnit\Framework\TestCase
+class pointObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $point;
 
@@ -16,10 +16,16 @@ class PointObjTest extends \PHPUnit\Framework\TestCase
         $startLine->setXY(11, 15);
         $endLine = new pointObj();
         $endLine->setXY(43, 67);
-        $this->assertEquals(1.0, $this->point->distanceToLine($startLine, $endLine));
+        $this->assertEquals(1.0, $this->point->distanceToSegment($startLine, $endLine));
         $startLine->setXY(10, 15);
-        $this->assertEquals(0, $this->point->distanceToLine($startLine, $endLine));
+        $this->assertEquals(0, $this->point->distanceToSegment($startLine, $endLine));
     }
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($point, $this->point, $this->point->setXY, $startLine, $endLine);
+    }    
+    
 }
 
 ?>

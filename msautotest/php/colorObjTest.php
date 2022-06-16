@@ -1,6 +1,6 @@
 <?php
 
-class ColorObjTest extends \PHPUnit\Framework\TestCase
+class colorObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $color;
 	protected $original = "#00ff00";
@@ -58,6 +58,11 @@ class ColorObjTest extends \PHPUnit\Framework\TestCase
 		$this->color->setHex($this->original);
 		$this->color->alpha = $this->originalAlpha;
 	}
+    
+    # destroy variables, if not can lead to segmentation fault
+    public function tearDown(): void {
+        unset($color, $original, $originalAlpha, $map_file, $map, $this->color);
+    } 
 
 }
 ?>
