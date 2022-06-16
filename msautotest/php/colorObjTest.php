@@ -5,12 +5,13 @@ class colorObjTest extends \PHPUnit\Framework\TestCase
     protected $color;
 	protected $original = "#00ff00";
 	protected $originalAlpha = 255;
+	protected $map;
 
     public function setUp(): void
     {
         $map_file = 'maps/labels.map';
-        $map = new mapObj($map_file);
-        $this->color = $map->getLayer(0)->getClass(0)->getLabel(0)->color;
+        $this->map = new mapObj($map_file);
+        $this->color = $this->map->getLayer(0)->getClass(0)->getLabel(0)->color;
     }
 
     public function test__getsetAlpha()
