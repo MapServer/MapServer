@@ -3,18 +3,20 @@
 class symbolObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $symbol;
+    protected $map;
+    protected $outputFrmt;
 
     public function setUp(): void
     {
-        $map = new mapObj('maps/labels.map');
-        $this->symbol = $map->symbolset->getSymbolByName("plant");
+        $this->map = new mapObj('maps/labels.map');
+        $this->symbol = $this->map->symbolset->getSymbolByName("plant");
+        $this->outputFrmt = new outputFormatObj('AGG/PNG', 'theName');
     }
 
     public function testSetGetImage()
     {
-        $outputFrmt = new outputFormatObj('AGG/PNG', 'theName');
         //$this->assertInstanceOf('imageObj', $image = $this->symbol->getImage($outputFrmt));
-        $image = $this->symbol->getImage($outputFrmt);
+        $image = $this->symbol->getImage($this->outputFrmt);
         $this->symbol->setImage($image);
     }
 
@@ -50,7 +52,9 @@ class symbolObjTest extends \PHPUnit\Framework\TestCase
     
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($symbol, $map, $this->symbol, $this->symbol->anchorpoint_x, $this->symbol->anchorpoint_y, $this->symbol->maxx, $this->symbol->maxy, $this->symbol->minx, $this->symbol->miny);
+        unset($this->map);
+        unset($this->symbol);
+        unset($this->outputFrmt);
     }    
     
 }

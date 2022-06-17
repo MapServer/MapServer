@@ -3,12 +3,13 @@
 class hashtableObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $hash;
+    protected $map;
 
     public function setUp(): void
     {
         $map_file = 'maps/helloworld-gif.map';
-        $map = new mapObj($map_file);
-        $this->hash = $map->web->metadata;
+        $this->map = new mapObj($map_file);
+        $this->hash = $this->map->web->metadata;
     }
 
     public function test__setNumItems()
