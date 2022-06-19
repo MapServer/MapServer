@@ -49,7 +49,7 @@ class reprojectionObjTest extends \PHPUnit\Framework\TestCase
         }
         $time_elapsed_secs = microtime(true) - $start;
         //should take ~0.04 seconds long
-        echo $i." points reprojected in ".round($time_elapsed_secs, 4)." seconds";
+        echo "    ".$i." points reprojected in ".round($time_elapsed_secs, 4)." seconds\n";
         $this->layer->close();
     }
     
