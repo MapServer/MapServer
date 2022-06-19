@@ -1,0 +1,38 @@
+/* 
+PURPOSE:     test reprojection through MapScript
+SOURCE DATA: OSM places for Nova Scotia, 3843 points
+             in EPSG:4326
+DATA FORMAT: SpatiaLite database
+*/
+
+MAP
+  NAME 'reproj-mapscript'
+  EXTENT -66.374741 43.400270 -59.697577 50.267922
+  UNITS DD
+  SIZE 300 300
+  IMAGETYPE PNG
+  
+  SYMBOL
+    NAME "circle"
+    TYPE ellipse
+    POINTS 1 1 END
+    FILLED true
+  END #symbol  
+
+  LAYER
+    NAME "ns-places"
+    STATUS ON
+    TYPE POINT    
+    CONNECTIONTYPE OGR
+    CONNECTION "data/ns.db"
+    DATA "places"
+    CLASS
+      STYLE 
+        COLOR 255 100 100 
+        SYMBOL "circle"
+        SIZE 5
+      END #style
+    END #class
+  END #layer
+
+END #map
