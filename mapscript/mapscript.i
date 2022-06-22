@@ -305,6 +305,7 @@ typedef struct {
 %include "../swiginc/referencemap.i"
 %include "../swiginc/querymap.i"
 %include "../swiginc/config.i"
+%include "../swiginc/reprojection.i"
 
 /* 
 =============================================================================

@@ -87,9 +87,29 @@ but are not directly exposed by the mapscript module
     int wellknownprojection; ///< One of ``wkp_none 0``, ``wkp_lonlat 1``, or ``wkp_gmerc 2``
   } projectionObj;
 
+  typedef struct {
+#if PROJ_VERSION_MAJOR >= 6
+#ifndef SWIG
+    projectionObj* in;
+    projectionObj* out;
+    PJ* pj;
+    int should_do_line_cutting;
+    shapeObj splitShape;
+    int bFreePJ;
+#endif
+#else
+#ifndef SWIG
+    projectionObj* in;
+    projectionObj* out;
+    int should_do_line_cutting;
+    shapeObj splitShape;
+    int no_op;
+#endif
+#endif
+  } reprojectionObj;
+
 #ifndef SWIG
 
-  typedef struct reprojectionObj reprojectionObj;
   MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
   MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj* reprojector);
 
@@ -104,10 +124,10 @@ but are not directly exposed by the mapscript module
   MS_DLL_EXPORT int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape);
   MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line); /* legacy interface */
   MS_DLL_EXPORT int msProjectLineEx(reprojectionObj* reprojector, lineObj *line);
-  MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
+  MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect); /* legacy interface */
+  MS_DLL_EXPORT int msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect);
   MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
-  MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
-      debug_flag );
+  MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int debug_flag );
   MS_DLL_EXPORT char *msProjectionObj2OGCWKT( projectionObj *proj );
 
   MS_DLL_EXPORT void msFreeProjection(projectionObj *p);

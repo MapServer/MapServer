@@ -60,6 +60,13 @@
         return msProjectPoint(projin, projout, self);
     }
 
+    /// Reproject point given a reprojection object. Transformation is done in place.
+    /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
+    int project(reprojectionObj *reprojector)
+    {
+        return msProjectPointEx(reprojector, self);
+    }
+
     /// Draw the point using the styles defined by the classindex class of layer and 
     /// labelled with string text. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
