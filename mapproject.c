@@ -540,15 +540,6 @@ void msProjectionContextUnref(projectionContext* ctx)
     (void)ctx;
 }
 
-struct reprojectionObj
-{
-    projectionObj* in;
-    projectionObj* out;
-    int should_do_line_cutting;
-    shapeObj splitShape;
-    int no_op;
-};
-
 /************************************************************************/
 /*                        msProjectCreateReprojector()                  */
 /************************************************************************/

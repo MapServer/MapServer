@@ -88,19 +88,26 @@ but are not directly exposed by the mapscript module
   } projectionObj;
 
   typedef struct {
-#ifdef SWIG
-    %immutable;
-#endif
+#if PROJ_VERSION_MAJOR >= 6
+#ifndef SWIG
     projectionObj* in;
     projectionObj* out;
     PJ* pj;
     int should_do_line_cutting;
     shapeObj splitShape;
     int bFreePJ;
-#ifdef SWIG
-    %mutable;
+#endif
+#else
+#ifndef SWIG
+    projectionObj* in;
+    projectionObj* out;
+    int should_do_line_cutting;
+    shapeObj splitShape;
+    int no_op;
+#endif
 #endif
   } reprojectionObj;
+
 #ifndef SWIG
 
   MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
