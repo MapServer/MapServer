@@ -20,6 +20,7 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/vector.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 struct String : public Vector<char> {
@@ -60,5 +61,6 @@ static inline flatbuffers::string_view GetStringView(const String *str) {
 #endif  // FLATBUFFERS_HAS_STRING_VIEW
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_STRING_H_

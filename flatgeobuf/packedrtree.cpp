@@ -40,6 +40,8 @@
 #include <unordered_map>
 #include <iostream>
 
+namespace mapserver
+{
 namespace FlatGeobuf
 {
 
@@ -407,4 +409,5 @@ void PackedRTree::streamWrite(const std::function<void(uint8_t *, size_t)> &writ
 
 NodeItem PackedRTree::getExtent() const { return _extent; }
 
+}
 }

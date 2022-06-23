@@ -20,6 +20,7 @@
 #include "flatbuffers/allocator.h"
 #include "flatbuffers/base.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // DefaultAllocator uses new/delete to allocate memory regions
@@ -60,5 +61,6 @@ inline uint8_t *ReallocateDownward(Allocator *allocator, uint8_t *old_p,
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_DEFAULT_ALLOCATOR_H_

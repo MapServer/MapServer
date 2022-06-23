@@ -26,6 +26,7 @@
 #include "flatbuffers/idl.h"
 #include "flatbuffers/util.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 extern void LogCompilerWarn(const std::string &warn);
@@ -112,5 +113,6 @@ class FlatCompiler {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_FLATC_H_

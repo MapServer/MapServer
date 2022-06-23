@@ -20,6 +20,7 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/idl.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Convenience class to easily parse or generate text for arbitrary FlatBuffers.
@@ -124,5 +125,6 @@ class Registry {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_REGISTRY_H_

@@ -1,7 +1,7 @@
 #include "geometryreader.h"
 
-using namespace flatbuffers;
-using namespace FlatGeobuf;
+using namespace mapserver::flatbuffers;
+using namespace mapserver::FlatGeobuf;
 
 void GeometryReader::readPoint(shapeObj *shape)
 {

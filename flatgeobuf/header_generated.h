@@ -13,6 +13,7 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 2 &&
               FLATBUFFERS_VERSION_REVISION == 6,
              "Non-compatible flatbuffers version included");
 
+namespace mapserver {
 namespace FlatGeobuf {
 
 struct Column;
@@ -718,5 +719,6 @@ inline void FinishSizePrefixedHeaderBuffer(
 }
 
 }  // namespace FlatGeobuf
+}
 
 #endif  // FLATBUFFERS_GENERATED_HEADER_FLATGEOBUF_H_

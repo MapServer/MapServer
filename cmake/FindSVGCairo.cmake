@@ -44,7 +44,9 @@ include(FindPackageHandleStandardArgs)
 
 set(SVG_INCLUDE_DIRS ${SVG_INCLUDE_DIR})
 set(SVG_LIBRARIES ${SVG_LIBRARY})
+set(FPHSA_NAME_MISMATCHED TRUE) #handle mismatched package name warning
 find_package_handle_standard_args(SVG DEFAULT_MSG SVG_LIBRARY SVG_INCLUDE_DIR)
+unset(FPHSA_NAME_MISMATCHED)
 mark_as_advanced(SVG_LIBRARY SVG_INCLUDE_DIR)
 set(SVGCAIRO_INCLUDE_DIRS ${SVGCAIRO_INCLUDE_DIR})
 set(SVGCAIRO_LIBRARIES ${SVGCAIRO_LIBRARY})

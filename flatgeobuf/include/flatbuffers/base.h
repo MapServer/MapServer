@@ -143,10 +143,11 @@
 #define FLATBUFFERS_VERSION_REVISION 6
 #define FLATBUFFERS_STRING_EXPAND(X) #X
 #define FLATBUFFERS_STRING(X) FLATBUFFERS_STRING_EXPAND(X)
+namespace mapserver {
 namespace flatbuffers {
   // Returns version as string  "MAJOR.MINOR.REVISION".
   const char* FLATBUFFERS_VERSION();
-}
+} }
 
 #if (!defined(_MSC_VER) || _MSC_VER > 1600) && \
     (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 407)) || \
@@ -221,23 +222,26 @@ namespace flatbuffers {
     // Check for std::string_view (in c++17)
     #if __has_include(<string_view>) && (__cplusplus >= 201606 || (defined(_HAS_CXX17) && _HAS_CXX17))
       #include <string_view>
-      namespace flatbuffers {
+      namespace mapserver {
+namespace flatbuffers {
         typedef std::string_view string_view;
-      }
+      } }
       #define FLATBUFFERS_HAS_STRING_VIEW 1
     // Check for std::experimental::string_view (in c++14, compiler-dependent)
     #elif __has_include(<experimental/string_view>) && (__cplusplus >= 201411)
       #include <experimental/string_view>
-      namespace flatbuffers {
+      namespace mapserver {
+namespace flatbuffers {
         typedef std::experimental::string_view string_view;
-      }
+      } }
       #define FLATBUFFERS_HAS_STRING_VIEW 1
     // Check for absl::string_view
     #elif __has_include("absl/strings/string_view.h")
       #include "absl/strings/string_view.h"
-      namespace flatbuffers {
+      namespace mapserver {
+namespace flatbuffers {
         typedef absl::string_view string_view;
-      }
+      } }
       #define FLATBUFFERS_HAS_STRING_VIEW 1
     #endif
   #endif // __has_include
@@ -308,6 +312,7 @@ template<typename T> FLATBUFFERS_CONSTEXPR inline bool IsConstTrue(T t) {
 /// @endcond
 
 /// @file
+namespace mapserver {
 namespace flatbuffers {
 
 /// @cond FLATBUFFERS_INTERNAL
@@ -326,7 +331,7 @@ typedef uint16_t voffset_t;
 typedef uintmax_t largest_scalar_t;
 
 // In 32bits, this evaluates to 2GB - 1
-#define FLATBUFFERS_MAX_BUFFER_SIZE ((1ULL << (sizeof(::flatbuffers::soffset_t) * 8 - 1)) - 1)
+#define FLATBUFFERS_MAX_BUFFER_SIZE ((1ULL << (sizeof(::mapserver::flatbuffers::soffset_t) * 8 - 1)) - 1)
 
 // We support aligning the contents of buffers up to this size.
 #ifndef FLATBUFFERS_MAX_ALIGNMENT
@@ -473,4 +478,5 @@ inline bool IsInRange(const T &v, const T &low, const T &high) {
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 #endif  // FLATBUFFERS_BASE_H_

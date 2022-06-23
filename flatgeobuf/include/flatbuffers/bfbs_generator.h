@@ -19,6 +19,7 @@
 
 #include <cstdint>
 
+namespace mapserver {
 namespace flatbuffers {
 
 enum GeneratorStatus {
@@ -39,5 +40,6 @@ class BfbsGenerator {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_BFBS_GENERATOR_H_

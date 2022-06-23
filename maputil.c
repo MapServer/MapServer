@@ -2287,10 +2287,9 @@ void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
 */
 int msCheckParentPointer(void* p, const char *objname)
 {
-  char* msg=NULL;
   if (p == NULL) {
     if(objname != NULL) {
-      msSetError(MS_NULLPARENTERR, "The %s parent object is null", "msCheckParentPointer()", msg);
+      msSetError(MS_NULLPARENTERR, "The %s parent object is null", "msCheckParentPointer()", objname);
     } else {
       msSetError(MS_NULLPARENTERR, "The parent object is null", "msCheckParentPointer()");
     }

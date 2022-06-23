@@ -21,6 +21,7 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/default_allocator.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // DetachedBuffer is a finished flatbuffer memory region, detached from its
@@ -110,5 +111,6 @@ class DetachedBuffer {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_DETACHED_BUFFER_H_

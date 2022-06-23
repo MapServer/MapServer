@@ -1,6 +1,6 @@
 <?php
 
-class LabelleaderObjTest extends \PHPUnit\Framework\TestCase
+class labelleaderObjTest extends \PHPUnit\Framework\TestCase
 {
     protected $labelleader;
 

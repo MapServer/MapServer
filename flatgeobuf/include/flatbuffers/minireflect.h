@@ -20,6 +20,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/util.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Utilities that can be used with the "mini reflection" tables present
@@ -415,5 +416,6 @@ inline std::string FlatBufferToString(const uint8_t *buffer,
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_MINIREFLECT_H_

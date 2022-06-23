@@ -22,6 +22,7 @@
 
 #include "flatbuffers/idl.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // Utility class to assist in generating code through use of text templates.
@@ -229,5 +230,6 @@ class TypedFloatConstantGenerator : public FloatConstantGenerator {
 };
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_CODE_GENERATORS_H_

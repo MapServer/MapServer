@@ -21,6 +21,7 @@
 #include "flatbuffers/stl_emulation.h"
 #include "flatbuffers/vector.h"
 
+namespace mapserver {
 namespace flatbuffers {
 
 // This is used as a helper type for accessing arrays.
@@ -239,5 +240,6 @@ const Array<E, length> &CastToArrayOfEnum(const T (&arr)[length]) {
 }
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_ARRAY_H_

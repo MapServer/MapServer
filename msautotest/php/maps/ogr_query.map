@@ -20,7 +20,7 @@ DEBUG 5
   TYPE polygon
   TEMPLATE "junk.tmpl"
   CONNECTIONTYPE OGR
-  CONNECTION "data/shppoly"
+  CONNECTION "data/shppoly/poly.shp"
   DATA "poly"
   STATUS default
   CLASSITEM "AREA"

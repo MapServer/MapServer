@@ -26,6 +26,7 @@
 
 // Helper functionality for reflection.
 
+namespace mapserver {
 namespace flatbuffers {
 
 // ------------------------- GETTERS -------------------------
@@ -518,5 +519,6 @@ bool VerifySizePrefixed(const reflection::Schema &schema,
                         uoffset_t max_tables = 1000000);
 
 }  // namespace flatbuffers
+}  // namespace mapserver
 
 #endif  // FLATBUFFERS_REFLECTION_H_
