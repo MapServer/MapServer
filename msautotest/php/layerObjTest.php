@@ -117,6 +117,14 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals("4,2,1", $this->layer->bandsitem = "4,2,1");
     }
+    
+    public function test__setConnectionTypeFlatGeobuf()
+    {
+        $this->assertEquals(0, $this->layer->setConnectionType(MS_FLATGEOBUF, ""));
+        //handle expected exception error
+        $this->expectException(ERROR::class);
+        $this->assertEquals(0, $this->layer->setConnectionType(MS_TTT, ""));
+    }    
 
     public function testClone()
     {

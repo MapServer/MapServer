@@ -761,7 +761,7 @@
     connection type. This method should be used instead of setting the *connectiontype*
     parameter directly. In case when the layer.connectiontype = :data:`MS_PLUGIN` the *library_str* 
     parameter should also be specified so as to select the library to load by MapServer. 
-    For the other connection types this parameter is not used. 
+    For the other connection types this parameter should be set to an empty string "". 
     */
     int setConnectionType(int connectiontype, const char *library_str) 
     {    
