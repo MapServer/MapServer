@@ -125,9 +125,11 @@ class layerObjTest extends \PHPUnit\Framework\TestCase
 
     public function test__setWrongConnectionTypeFlatGeobuf()
     {
-        $this->expectException("Error");
-        $this->expectExceptionMessage("Undefined constant");        
-        $this->layer->setConnectionType(MS_TTT, "");
+        if ((float)phpversion() >= 8.0) {
+          $this->expectException("Error");
+          $this->expectExceptionMessage("Undefined constant");        
+          $this->layer->setConnectionType(MS_TTT, "");
+        }
     }    
 
     public function testClone()
