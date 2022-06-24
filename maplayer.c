@@ -2213,6 +2213,9 @@ int msInitializeVirtualTable(layerObj *layer)
     case(MS_OGR):
       return(msOGRLayerInitializeVirtualTable(layer));
       break;
+    case(MS_FLATGEOBUF):
+      return(msFlatGeobufLayerInitializeVirtualTable(layer));
+      break;
     case(MS_POSTGIS):
       return(msPostGISLayerInitializeVirtualTable(layer));
       break;

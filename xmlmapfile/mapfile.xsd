@@ -643,6 +643,7 @@
 						<xs:enumeration value="LOCAL"/>
 						<xs:enumeration value="SDE"/>
 						<xs:enumeration value="OGR"/>
+						<xs:enumeration value="FLATGEOBUF"/>
 						<xs:enumeration value="WFS"/>
 						<xs:enumeration value="POSTGIS"/>
 						<xs:enumeration value="ORACLESPATIAL"/>

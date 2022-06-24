@@ -124,6 +124,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include "maperror.h"
 #include "mapprimitive.h"
 #include "mapshape.h"
+#include "mapflatgeobuf.h"
 #include "mapsymbol.h"
 #include "maptree.h" /* quadtree spatial index */
 #include "maphash.h"
@@ -503,7 +504,7 @@ extern "C" {
 #define MS_LARGE 13
 #define MS_GIANT 16
   enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_UNUSED_2, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY, MS_IDW };
+  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_UNUSED_2, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY, MS_IDW, MS_FLATGEOBUF };
 #define IS_THIRDPARTY_LAYER_CONNECTIONTYPE(type) ((type) == MS_UNION || (type) == MS_KERNELDENSITY || (type) == MS_IDW)
   enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
   enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
@@ -2624,6 +2625,7 @@ extern "C" {
 
   MS_DLL_EXPORT int msINLINELayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msSHPLayerInitializeVirtualTable(layerObj *layer);
+  MS_DLL_EXPORT int msFlatGeobufLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msTiledSHPLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msOGRLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msPostGISLayerInitializeVirtualTable(layerObj *layer);

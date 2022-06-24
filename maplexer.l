@@ -450,6 +450,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>normal                                { MS_LEXER_RETURN_TOKEN(MS_NORMAL); }
 <INITIAL>off                                   { MS_LEXER_RETURN_TOKEN(MS_OFF); }
 <INITIAL>ogr                                   { MS_LEXER_RETURN_TOKEN(MS_OGR); }
+<INITIAL>flatgeobuf                            { MS_LEXER_RETURN_TOKEN(MS_FLATGEOBUF); }
 <INITIAL>on                                    { MS_LEXER_RETURN_TOKEN(MS_ON); }
 <INITIAL>one-to-one                            { MS_LEXER_RETURN_TOKEN(MS_JOIN_ONE_TO_ONE); }
 <INITIAL>one-to-many                           { MS_LEXER_RETURN_TOKEN(MS_JOIN_ONE_TO_MANY); }

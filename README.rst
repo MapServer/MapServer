@@ -89,6 +89,17 @@ License
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
   SOFTWARE.
+  
+  FlatGeobuf
+  ----------
+
+  Refer to the FlatGeobuf license found at /flatgeobuf/LICENSE
+  
+  FlatBuffers
+  -----------
+  
+  Refer to the FlatBuffers license found at /flatgeobuf/include/flatbuffers/LICENSE
+  
 
 
 .. |Build Status| image:: https://travis-ci.com/MapServer/MapServer.svg?branch=main
