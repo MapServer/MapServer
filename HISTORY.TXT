@@ -12,6 +12,31 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+8.0.0-beta1 release (2022-06-27)
+--------------------------------
+
+- add new MapServer config file requirement (RFC 135)
+
+- initial OGC API support (RFC 134)
+
+- rename shp2img utility to map2img (RFC 136)
+
+- make STYLES parameter mandatory for WMS GetMap requests (#6012)
+
+- improve SLD label conformance (#6017)
+
+- enable PHP 8 MapScript support, through SWIG, re-enable unit tests, and remove old native PHP MapScript (#6430) 
+
+- remove deprecated mapfile parameters (RFC 133)
+
+- improve numerical validation of mapfile parameter values (#6458)
+
+- fix various security vulnerabilities found by libFuzzer (#6419)
+
+- add new GEOMTRANSFORM 'centerline' labeling method for polygons (#6417)
+
+- upgrade Travis and GitHub CI to run on Ubuntu Focal (#6430)
+
 7.6.4 release (2021-07-12)
 --------------------------
 
