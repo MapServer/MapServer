@@ -1005,7 +1005,7 @@ if(USE_MSSQL2008)
 endif(USE_MSSQL2008)
 
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst map2img mapserv
+INSTALL(TARGETS coshp sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst map2img mapserv
         RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
 )
 
