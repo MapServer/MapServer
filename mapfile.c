@@ -6121,6 +6121,29 @@ static int loadMapInternal(mapObj *map)
   } /* next token */
 }
 
+static bool msGetCWD(char* szBuffer, size_t nBufferSize, const char* pszFunctionName)
+{
+  if(NULL == getcwd(szBuffer, nBufferSize)) {
+#ifndef _WIN32
+    if( errno == EACCES )
+        msSetError(MS_MISCERR,
+                   "getcwd() failed with EACCES: you may need to force the "
+                   "current directory in the mapserver launcher "
+                   "(e.g -d option of spawn-fcgi)", pszFunctionName);
+    else if( errno == ENAMETOOLONG )
+        msSetError(MS_MISCERR, "getcwd() returned a too long path",
+                   pszFunctionName);
+    else
+        msSetError(MS_MISCERR, "getcwd() failed with errno code %d",
+                   pszFunctionName, errno);
+#else
+    msSetError(MS_MISCERR, "getcwd() returned a too long path", pszFunctionName);
+#endif
+    return FALSE;
+  }
+  return TRUE;
+}
+
 /*
 ** Sets up string-based mapfile loading and calls loadMapInternal to do the work.
 */
@@ -6164,8 +6187,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   msyylineno = 1; /* start at line 1 (do lines mean anything here?) */
 
   /* If new_mappath is provided then use it, otherwise use the CWD */
-  if(NULL == getcwd(szCWDPath, MS_MAXPATHLEN)) {
-    msSetError(MS_MISCERR, "getcwd() returned a too long path", "msLoadMapFromString()");
+  if(!msGetCWD(szCWDPath, MS_MAXPATHLEN, "msLoadMapFromString()")) {
     msFreeMap(map);
     msReleaseLock( TLOCK_PARSER );
   }
@@ -6285,8 +6307,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath, const configObj
 
   /* If new_mappath is provided then use it, otherwise use the location */
   /* of the mapfile as the default path */
-  if(NULL == getcwd(szCWDPath, MS_MAXPATHLEN)) {
-    msSetError(MS_MISCERR, "getcwd() returned a too long path", "msLoadMap()");
+  if(!msGetCWD(szCWDPath, MS_MAXPATHLEN, "msLoadMap()")) {
     msReleaseLock( TLOCK_PARSER );
     msFreeMap(map);
     return NULL;
