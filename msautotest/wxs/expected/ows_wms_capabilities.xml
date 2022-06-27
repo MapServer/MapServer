@@ -5,7 +5,7 @@ Content-Type: text/xml; charset=UTF-8
 
 <Service>
   <Name>WMS</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
   <Title>WMS_TEST</Title>
   <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/ows?"/>
   <ContactInformation>
@@ -64,7 +64,7 @@ Content-Type: text/xml; charset=UTF-8
   <sld:UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0" InlineFeature="0" RemoteWCS="0"/>
   <Layer queryable="1">
     <Name>WMS_TEST</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
     <Title>WMS_TEST</Title>
     <Abstract>WMS_TEST</Abstract>
     <CRS>EPSG:4326</CRS>

@@ -141,7 +141,7 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>grey</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>grey</Title>
         <SRS>EPSG:32611</SRS>
         <SRS>EPSG:4326</SRS>

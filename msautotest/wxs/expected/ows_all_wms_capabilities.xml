@@ -5,7 +5,7 @@ Content-Type: text/xml; charset=UTF-8
 
 <Service>
   <Name>WMS</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
   <Title>WMS_WFS_TEST</Title>
   <Abstract>Test WFS Abstract</Abstract>
   <KeywordList>
@@ -121,7 +121,7 @@ Content-Type: text/xml; charset=UTF-8
   <sld:UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0" InlineFeature="0" RemoteWCS="0"/>
   <Layer queryable="1">
     <Name>WMS_WFS_TEST</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
     <Title>WMS_WFS_TEST</Title>
     <Abstract>Test WFS Abstract</Abstract>
     <KeywordList>
@@ -166,7 +166,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>province</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>province</Title>
         <EX_GeographicBoundingBox>
             <westBoundLongitude>-66.724329</westBoundLongitude>
