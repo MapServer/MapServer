@@ -228,9 +228,9 @@
     </ows:Constraint>
     <ows:ExtendedCapabilities>
       <inspire_dls:ExtendedCapabilities>
-        <!-- WARNING: Mandatory metadata '..._inspire_resourcelocator' was missing in this context. -->
+        <!-- WARNING: Mandatory metadata "wfs_inspire_resourcelocator" or "ows_inspire_resourcelocator" was missing in this context. -->
         <inspire_common:ResourceType>service</inspire_common:ResourceType>
-        <!-- WARNING: Mandatory metadata '..._inspire_temporal_reference' was missing in this context. -->
+        <!-- WARNING: Mandatory metadata "wfs_inspire_temporal_reference" or "ows_inspire_temporal_reference" was missing in this context. -->
         <inspire_common:TemporalReference>
           <inspire_common:DateOfLastRevision/>
         </inspire_common:TemporalReference>
@@ -242,19 +242,19 @@
           <inspire_common:Degree>notEvaluated</inspire_common:Degree>
         </inspire_common:Conformity>
         <inspire_common:MetadataPointOfContact>
-          <!-- WARNING: Mandatory metadata '..._inspire_mpoc_name' was missing in this context. -->
+          <!-- WARNING: Mandatory metadata "wfs_inspire_mpoc_name" or "ows_inspire_mpoc_name" was missing in this context. -->
           <inspire_common:OrganisationName/>
-          <!-- WARNING: Mandatory metadata '..._inspire_mpoc_email' was missing in this context. -->
+          <!-- WARNING: Mandatory metadata "wfs_inspire_mpoc_email" or "ows_inspire_mpoc_email" was missing in this context. -->
           <inspire_common:EmailAddress/>
         </inspire_common:MetadataPointOfContact>
-        <!-- WARNING: Mandatory metadata '..._inspire_metadatadate' was missing in this context. -->
+        <!-- WARNING: Mandatory metadata "wfs_inspire_metadatadate" or "ows_inspire_metadatadate" was missing in this context. -->
         <inspire_common:MetadataDate/>
         <inspire_common:SpatialDataServiceType>download</inspire_common:SpatialDataServiceType>
-        <!-- WARNING: Mandatory metadata '..._inspire_keyword' was missing in this context. -->
+        <!-- WARNING: Mandatory metadata "wfs_inspire_keyword" or "ows_inspire_keyword" was missing in this context. -->
         <inspire_common:MandatoryKeyword>
           <inspire_common:KeywordValue/>
         </inspire_common:MandatoryKeyword>
-        <!-- WARNING: Mandatory metadata '..._languages' was missing in this context. -->
+        <!-- WARNING: Mandatory metadata "wfs_languages" or "ows_languages" was missing in this context. -->
         <!--WARNING: Required metadata "inspire_dsid_code" missing-->
       </inspire_dls:ExtendedCapabilities>
     </ows:ExtendedCapabilities>

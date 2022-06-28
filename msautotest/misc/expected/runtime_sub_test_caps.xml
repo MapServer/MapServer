@@ -5,7 +5,7 @@ Content-Type: text/xml; charset=UTF-8
 
 <Service>
   <Name>WMS</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
   <Title>runtime_sub</Title>
   <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://foo/?"/>
   <ContactInformation>
@@ -34,7 +34,7 @@ Content-Type: text/xml; charset=UTF-8
   <sld:UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0" InlineFeature="0" RemoteWCS="0"/>
   <Layer>
     <Name>runtime_sub</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
     <Title>runtime_sub</Title>
     <Abstract>runtime_sub</Abstract>
     <CRS>EPSG:3857</CRS>
@@ -48,7 +48,7 @@ Content-Type: text/xml; charset=UTF-8
                 minx="125000" miny="4.785e+06" maxx="789000" maxy="5.489e+06" />
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer1</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer1</Title>
         <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
         <MetadataURL type="TC211">
@@ -58,7 +58,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer2</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer2</Title>
         <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
         <MetadataURL type="TC211">
@@ -68,7 +68,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer3</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer3</Title>
         <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
         <MetadataURL type="TC211">
@@ -78,7 +78,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer5</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer5</Title>
         <EX_GeographicBoundingBox>
             <westBoundLongitude>1.108938</westBoundLongitude>
@@ -95,7 +95,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer5b</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer5b</Title>
         <EX_GeographicBoundingBox>
             <westBoundLongitude>1.108938</westBoundLongitude>
@@ -112,7 +112,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer6</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer6</Title>
         <EX_GeographicBoundingBox>
             <westBoundLongitude>1.108938</westBoundLongitude>
@@ -129,7 +129,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer7</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer7</Title>
         <EX_GeographicBoundingBox>
             <westBoundLongitude>1.108938</westBoundLongitude>
@@ -146,7 +146,7 @@ Content-Type: text/xml; charset=UTF-8
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
         <Name>layer8</Name>
-<!-- WARNING: Mandatory metadata '..._title' was missing in this context. -->
+<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
         <Title>layer8</Title>
         <EX_GeographicBoundingBox>
             <westBoundLongitude>1.108938</westBoundLongitude>
