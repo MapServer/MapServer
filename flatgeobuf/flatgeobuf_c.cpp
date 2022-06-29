@@ -226,6 +226,7 @@ int flatgeobuf_check_magicbytes(ctx *ctx)
         return -1;
     }
 	ctx->buf = (uint8_t *) malloc(FLATGEOBUF_MAGICBYTES_SIZE);
+	ctx->buf_size = FLATGEOBUF_MAGICBYTES_SIZE;
     if (VSIFReadL(ctx->buf, 8, 1, ctx->file) != 1) {
         msSetError(MS_FGBERR, "Failed to read magicbytes", "flatgeobuf_check_magicbytes");
         return -1;
