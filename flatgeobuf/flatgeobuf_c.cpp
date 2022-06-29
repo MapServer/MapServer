@@ -349,7 +349,7 @@ int flatgeobuf_read_feature_offset(ctx *ctx, uint64_t index, uint64_t *featureOf
     {
         const auto treeSize = PackedRTree::size(ctx->features_count, ctx->index_node_size);
         const auto levelBounds = PackedRTree::generateLevelBounds(ctx->features_count, ctx->index_node_size);
-        const auto bottomLevelOffset = ctx->index_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+        const auto bottomLevelOffset = ctx->feature_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
         const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
         const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
         if (VSIFSeekL(ctx->file, featureOffsetOffset, SEEK_SET) == -1) {
