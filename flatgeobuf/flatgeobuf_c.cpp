@@ -15,15 +15,11 @@ uint8_t FLATGEOBUF_MAGICBYTES_SIZE = sizeof(flatgeobuf_magicbytes);
 uint32_t INIT_BUFFER_SIZE = 1024 * 4;
 
 template <typename T>
-char *to_string(uint8_t *data) {
+void parse_value(uint8_t *data, char **values, uint16_t i, uint32_t &offset, bool found)
+{
     using std::to_string;
-    return msStrdup(to_string(*((T*)data)).c_str());
-}
-
-template <typename T>
-void parse_value(uint8_t *data, char **values, uint16_t i, uint32_t &offset, bool found) {
     if (found)
-        values[i] = to_string<int8_t>(data + offset);
+        values[i] = msStrdup(to_string(*((T*) (data + offset))).c_str());
     offset += sizeof(T);
 }
 
@@ -73,18 +69,21 @@ void flatgeobuf_ensure_point(ctx *ctx, uint32_t len)
     }
 }
 
-void flatgeobuf_ensure_buf(ctx *ctx, uint32_t size)
+int flatgeobuf_ensure_buf(ctx *ctx, uint32_t size)
 {
+    if (size > 100 * 1024 * 1024)
+        return -1;
     if (!ctx->buf) {
         ctx->buf_size = INIT_BUFFER_SIZE;
         ctx->buf = (uint8_t *) malloc(ctx->buf_size);
-        return;
+        return 0;
     }
     if (ctx->buf_size < size) {
         ctx->buf_size = ctx->buf_size * 2;
         ctx->buf = (uint8_t *) realloc(ctx->buf, ctx->buf_size);
         flatgeobuf_ensure_buf(ctx, size);
     }
+    return 0;
 }
 
 int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
@@ -101,7 +100,10 @@ int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
     }
 
     ctx->offset += sizeof(uoffset_t);
-    flatgeobuf_ensure_buf(ctx, featureSize);
+    if (flatgeobuf_ensure_buf(ctx, featureSize) != 0) {
+        msSetError(MS_FGBERR, "Failed to allocate buffer for feature", "flatgeobuf_decode_feature");
+        return -1;
+    }
 
     if (VSIFReadL(ctx->buf, 1, featureSize, ctx->file) != featureSize) {
         msSetError(MS_FGBERR, "Failed to read feature", "flatgeobuf_decode_feature");
@@ -168,37 +170,37 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 		type = column.type;
 		switch (type) {
 		case flatgeobuf_column_type_bool:
-            parse_value<uint8_t>(data + offset, values, ii, offset, found);
+            parse_value<uint8_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_byte:
-            parse_value<int8_t>(data + offset, values, ii, offset, found);
+            parse_value<int8_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_ubyte:
-            parse_value<uint8_t>(data + offset, values, ii, offset, found);
+            parse_value<uint8_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_short:
-			parse_value<int16_t>(data + offset, values, ii, offset, found);
+			parse_value<int16_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_ushort:
-            parse_value<uint16_t>(data + offset, values, ii, offset, found);
+            parse_value<uint16_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_int:
-            parse_value<int32_t>(data + offset, values, ii, offset, found);
-			break;
+            parse_value<int32_t>(data, values, ii, offset, found);
+            break;
 		case flatgeobuf_column_type_uint:
-			parse_value<uint32_t>(data + offset, values, ii, offset, found);
+			parse_value<uint32_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_long:
-			parse_value<int64_t>(data + offset, values, ii, offset, found);
-			break;
+            parse_value<int64_t>(data, values, ii, offset, found);
+            break;
 		case flatgeobuf_column_type_ulong:
-			parse_value<uint64_t>(data + offset, values, ii, offset, found);
+			parse_value<uint64_t>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_float:
-            parse_value<float>(data + offset, values, ii, offset, found);
+            parse_value<float>(data, values, ii, offset, found);
 			break;
 		case flatgeobuf_column_type_double:
-			parse_value<double>(data + offset, values, ii, offset, found);
+			parse_value<double>(data, values, ii, offset, found);
 			break;
         case flatgeobuf_column_type_datetime:
 		case flatgeobuf_column_type_string: {
@@ -230,7 +232,7 @@ int flatgeobuf_check_magicbytes(ctx *ctx)
         msSetError(MS_FGBERR, "Unexpected offset", "flatgeobuf_check_magicbytes");
         return -1;
     }
-	ctx->buf = (uint8_t *) malloc(FLATGEOBUF_MAGICBYTES_SIZE);
+    flatgeobuf_ensure_buf(ctx, FLATGEOBUF_MAGICBYTES_SIZE);
     if (VSIFReadL(ctx->buf, 8, 1, ctx->file) != 1) {
         msSetError(MS_FGBERR, "Failed to read magicbytes", "flatgeobuf_check_magicbytes");
         return -1;
@@ -262,7 +264,9 @@ int flatgeobuf_decode_header(ctx *ctx)
         return -1;
     }
     ctx->offset += sizeof(uoffset_t);
-    flatgeobuf_ensure_buf(ctx, headerSize);
+    if (flatgeobuf_ensure_buf(ctx, headerSize) != -1) {
+        msSetError(MS_FGBERR, "Failed to allocate buffer for header", "flatgeobuf_decode_header");
+    }
     if (VSIFReadL(ctx->buf, 1, headerSize, ctx->file) != headerSize) {
         msSetError(MS_FGBERR, "Failed to read header", "flatgeobuf_decode_header");
         return -1;
@@ -349,11 +353,9 @@ int flatgeobuf_index_skip(ctx *ctx)
 
 int flatgeobuf_read_feature_offset(ctx *ctx, uint64_t index, uint64_t *featureOffset)
 {
-    try
-    {
-        const auto treeSize = PackedRTree::size(ctx->features_count, ctx->index_node_size);
+    try {
         const auto levelBounds = PackedRTree::generateLevelBounds(ctx->features_count, ctx->index_node_size);
-        const auto bottomLevelOffset = ctx->index_offset - treeSize + (levelBounds.front().first * sizeof(NodeItem));
+        const auto bottomLevelOffset = ctx->index_offset + (levelBounds.front().first * sizeof(NodeItem));
         const auto nodeItemOffset = bottomLevelOffset + (index * sizeof(NodeItem));
         const auto featureOffsetOffset = nodeItemOffset + (sizeof(double) * 4);
         if (VSIFSeekL(ctx->file, featureOffsetOffset, SEEK_SET) == -1) {
