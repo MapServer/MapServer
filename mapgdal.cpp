@@ -211,6 +211,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
     if(MS_UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
       msReleaseLock( TLOCK_GDAL );
+      msFree( filenameToFree );
       return MS_FAILURE;
     }
   } else if( format->imagemode == MS_IMAGEMODE_RGBA ) {
@@ -218,6 +219,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
     if(MS_UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
       msReleaseLock( TLOCK_GDAL );
+      msFree( filenameToFree );
       return MS_FAILURE;
     }
   } else if( format->imagemode == MS_IMAGEMODE_INT16 ) {
@@ -232,6 +234,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   } else {
     msReleaseLock( TLOCK_GDAL );
     msSetError( MS_MEMERR, "Unknown format. This is a bug.", "msSaveImageGDAL()");
+    msFree( filenameToFree );
     return MS_FAILURE;
   }
 
@@ -244,6 +247,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     msReleaseLock( TLOCK_GDAL );
     msSetError( MS_MISCERR, "Failed to find MEM driver.",
                 "msSaveImageGDAL()" );
+    msFree( filenameToFree );
     return MS_FAILURE;
   }
 
@@ -254,6 +258,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     msReleaseLock( TLOCK_GDAL );
     msSetError( MS_MISCERR, "Failed to create MEM dataset.",
                 "msSaveImageGDAL()" );
+    msFree( filenameToFree );
     return MS_FAILURE;
   }
 
@@ -307,6 +312,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
           msSetError( MS_MISCERR, "Missing RGB or A buffer.\n",
                       "msSaveImageGDAL()" );
           GDALClose(hMemDS);
+          msFree( filenameToFree );
           return MS_FAILURE;
         }
 
@@ -346,6 +352,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
           msSetError( MS_MISCERR, "GDALRasterIO() failed.\n",
                       "msSaveImageGDAL()" );
           GDALClose(hMemDS);
+          msFree( filenameToFree );
           return MS_FAILURE;
       }
     }
@@ -485,6 +492,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     msSetError( MS_MISCERR, "Failed to create output %s file.\n%s",
                 "msSaveImageGDAL()", format->driver+5,
                 CPLGetLastErrorMsg() );
+    msFree( filenameToFree );
     return MS_FAILURE;
   }
 
@@ -505,6 +513,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
       /* Something bad happened. */
       msSetError( MS_MISCERR, "XMP write to %s failed.\n",
                   "msSaveImageGDAL()", filename);
+      msFree( filenameToFree );
       return MS_FAILURE;
     }
   }
@@ -520,7 +529,10 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     int bytes_read;
 
     if( msIO_needBinaryStdout() == MS_FAILURE )
+    {
+      msFree( filenameToFree );
       return MS_FAILURE;
+    }
 
     /* We aren't sure how far back GDAL exports the VSI*L API, so
        we only use it if we suspect we need it.  But we do need it if
@@ -530,6 +542,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
       msSetError( MS_MISCERR,
                   "Failed to open %s for streaming to stdout.",
                   "msSaveImageGDAL()", filename );
+      msFree( filenameToFree );
       return MS_FAILURE;
     }
 
@@ -541,8 +554,8 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
     VSIUnlink( filename );
     msCleanVSIDir( "/vsimem/msout" );
 
-    msFree( filenameToFree );
   }
+  msFree( filenameToFree );
 
   return MS_SUCCESS;
 }

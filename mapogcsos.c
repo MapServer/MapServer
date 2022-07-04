@@ -902,7 +902,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
       }
     }
   }
-  if (ppszProcedure) {
+  if (ppszProcedure && sShape.values) {
     pszProcedureField = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item");
     for(i=0; i<lp->numitems; i++) {
       if (strcasecmp(lp->items[i], pszProcedureField) == 0) {
@@ -920,8 +920,9 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
                                               "observedproperty_id"));
 
 
-  if (lp == lpfirst || (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS &&
-                        msLayerGetItems(lpfirst) == MS_SUCCESS)) {
+  if (sShape.values &&
+      (lp == lpfirst || (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS &&
+                        msLayerGetItems(lpfirst) == MS_SUCCESS))) {
     pszSep = msOWSLookupMetadata(&(lp->map->web.metadata), "S",
                                  "encoding_tokenSeparator");
     for(i=0; i<lpfirst->numitems; i++) {
@@ -1269,7 +1270,11 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   /*operation metadata */
 
   if ((script_url=msOWSGetOnlineResource(map, "SO", "onlineresource", req)) == NULL)
+  {
+    free(xsi_schemaLocation);
+    free(schemalocation);
     return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
+  }
 
   psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata(psNsOws));
 
@@ -2277,7 +2282,10 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   if ((script_url=msOWSGetOnlineResource(map, "SO", "onlineresource", req)) == NULL)
+  {
+    free(schemalocation);
     return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
+  }
 
   xsi_schemaLocation = msStrdup("http://www.opengis.net/om/1.0 ");
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
