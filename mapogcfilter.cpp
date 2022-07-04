@@ -2230,9 +2230,8 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 
             pszExpression = msStringConcatenate(pszExpression, szTmp);
           }
-
-          msFreeCharArray(tokens, nTokens);
         }
+        msFreeCharArray(tokens, nTokens);
       }
       /*opening and closing brackets*/
       if (pszExpression)
