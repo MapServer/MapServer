@@ -902,7 +902,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
       }
     }
   }
-  if (ppszProcedure) {
+  if (ppszProcedure && sShape.values) {
     pszProcedureField = msOWSLookupMetadata(&(lp->metadata), "S", "procedure_item");
     for(i=0; i<lp->numitems; i++) {
       if (strcasecmp(lp->items[i], pszProcedureField) == 0) {
@@ -920,8 +920,9 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
                                               "observedproperty_id"));
 
 
-  if (lp == lpfirst || (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS &&
-                        msLayerGetItems(lpfirst) == MS_SUCCESS)) {
+  if (sShape.values &&
+      (lp == lpfirst || (lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS &&
+                        msLayerGetItems(lpfirst) == MS_SUCCESS))) {
     pszSep = msOWSLookupMetadata(&(lp->map->web.metadata), "S",
                                  "encoding_tokenSeparator");
     for(i=0; i<lpfirst->numitems; i++) {
