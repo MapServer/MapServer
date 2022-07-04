@@ -55,6 +55,16 @@ extern "C" {
 
 typedef struct projectionContext projectionContext;
 
+#ifndef SWIG
+typedef enum
+{
+    LINE_CUTTING_UNKNOWN = -1,
+    LINE_CUTTING_NONE = 0,
+    LINE_CUTTING_FROM_POLAR = 1,
+    LINE_CUTTING_FROM_LONGLAT_WRAP0 = 2
+} msLineCuttingCase;
+#endif
+
 /**
 The :ref:`PROJECTION <projection>` object
 MapServer's Maps and Layers have Projection attributes, and these are C projectionObj structures, 
@@ -93,7 +103,7 @@ but are not directly exposed by the mapscript module
     projectionObj* in;
     projectionObj* out;
     PJ* pj;
-    int should_do_line_cutting;
+    msLineCuttingCase lineCuttingCase;
     shapeObj splitShape;
     int bFreePJ;
 #endif
@@ -101,7 +111,7 @@ but are not directly exposed by the mapscript module
 #ifndef SWIG
     projectionObj* in;
     projectionObj* out;
-    int should_do_line_cutting;
+    msLineCuttingCase lineCuttingCase;
     shapeObj splitShape;
     int no_op;
 #endif
