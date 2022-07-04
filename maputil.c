@@ -1707,11 +1707,10 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
       image->imageurl = msStrdup(imageurl);
 
     /* initialize to requested nullvalue if there is one */
-    if( msGetOutputFormatOption(image->format,"NULLVALUE",NULL) != NULL ) {
-      int i = image->width * image->height * format->bands;
-      const char *nullvalue = msGetOutputFormatOption(image->format,
+    const char *nullvalue = msGetOutputFormatOption(image->format,
                               "NULLVALUE",NULL);
-
+    if( nullvalue != NULL ) {
+      int i = image->width * image->height * format->bands;
       if( atof(nullvalue) == 0.0 )
         /* nothing to do */;
       else if( format->imagemode == MS_IMAGEMODE_INT16 ) {
