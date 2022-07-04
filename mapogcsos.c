@@ -1269,7 +1269,11 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   /*operation metadata */
 
   if ((script_url=msOWSGetOnlineResource(map, "SO", "onlineresource", req)) == NULL)
+  {
+    free(xsi_schemaLocation);
+    free(schemalocation);
     return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
+  }
 
   psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata(psNsOws));
 
