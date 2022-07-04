@@ -479,9 +479,7 @@ xmlNodePtr _msMetadataGetContact(xmlNsPtr namespace, char *contact_element, mapO
 static
 xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer, xmlNsPtr *ppsNsGco)
 {
-  int n;
   char *value;
-  char **tokens = NULL;
   xmlNodePtr psNode = NULL;
   xmlNodePtr psDINode = NULL;
   xmlNodePtr psCNode = NULL;
@@ -521,13 +519,14 @@ xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, lay
     psKWNode = xmlNewChild(psDINode, namespace, BAD_CAST "descriptiveKeywords", NULL);
     psMDKNode = xmlNewChild(psKWNode, namespace, BAD_CAST "MD_Keywords", NULL);
 
-    tokens = msStringSplit(value, ',', &n);
+    int n = 0;
+    char** tokens = msStringSplit(value, ',', &n);
     if (tokens && n > 0) {
       for (int i=0; i<n; i++) {
         xmlAddChild(psMDKNode, _msMetadataGetCharacterString(namespace, "keyword", tokens[i], ppsNsGco));
       }
-      msFreeCharArray(tokens, n);
     }
+    msFreeCharArray(tokens, n);
   }
 
   xmlAddChild(psDINode, _msMetadataGetCharacterString(namespace, "language", (char *)msOWSGetLanguage(map, "exception"), ppsNsGco));
