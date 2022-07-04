@@ -418,7 +418,7 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     reprojectionObj* obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
     obj->in = in;
     obj->out = out;
-    obj->should_do_line_cutting = -1;
+    obj->lineCuttingCase = LINE_CUTTING_UNKNOWN;
 
     /* -------------------------------------------------------------------- */
     /*      If the source and destination are simple and equal, then do     */
@@ -550,7 +550,7 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
     obj->in = in;
     obj->out = out;
-    obj->should_do_line_cutting = -1;
+    obj->lineCuttingCase = LINE_CUTTING_UNKNOWN;
 
     /* -------------------------------------------------------------------- */
     /*      If the source and destination are equal, then do nothing.       */
@@ -1212,24 +1212,68 @@ static int msProjectSegment( reprojectionObj* reprojector,
 }
 
 /************************************************************************/
-/*                   msProjectShapeShouldDoLineCutting()                */
+/*                   msProjectGetLineCuttingCase()                      */
 /************************************************************************/
 
 /* Detect projecting from north polar stereographic to longlat or EPSG:3857 */
+/* or from lonlat lon_wrap = 0 */
 #ifdef USE_GEOS
-static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
+static msLineCuttingCase msProjectGetLineCuttingCase(reprojectionObj* reprojector)
 {
-    if( reprojector->should_do_line_cutting >= 0)
-        return reprojector->should_do_line_cutting;
+    if( reprojector->lineCuttingCase != LINE_CUTTING_UNKNOWN)
+        return reprojector->lineCuttingCase;
 
     projectionObj *in = reprojector->in;
     projectionObj *out = reprojector->out;
+    const double EPS = 1e-10;
+
+    if( !in->gt.need_geotransform && msProjIsGeographicCRS(in) )
+    {
+        int i;
+        for( i = 0; i < in->numargs; i++ )
+        {
+            if( strncmp(in->args[i], "lon_wrap=", strlen("lon_wrap=")) == 0 &&
+                atof(in->args[i] + strlen("lon_wrap=")) == 0.0 )
+            {
+                reprojector->lineCuttingCase = LINE_CUTTING_FROM_LONGLAT_WRAP0;
+
+                msInitShape(&(reprojector->splitShape));
+                reprojector->splitShape.type = MS_SHAPE_POLYGON;
+                int j;
+                for( j = -1; j <= 1; j += 2 )
+                {
+                    const double x = j * 180;
+                    pointObj p = {0}; // initialize
+                    lineObj newLine = {0,NULL};
+                    p.x = x - EPS;
+                    p.y = 90;
+                    msAddPointToLine(&newLine, &p );
+                    p.x = x + EPS;
+                    p.y = 90;
+                    msAddPointToLine(&newLine, &p );
+                    p.x = x + EPS;
+                    p.y = -90;
+                    msAddPointToLine(&newLine, &p );
+                    p.x = x - EPS;
+                    p.y = -90;
+                    msAddPointToLine(&newLine, &p );
+                    p.x = x - EPS;
+                    p.y = 90;
+                    msAddPointToLine(&newLine, &p );
+                    msAddLineDirectly(&(reprojector->splitShape), &newLine);
+                }
+
+                return reprojector->lineCuttingCase;
+            }
+        }
+    }
+
     if( !(!in->gt.need_geotransform && !msProjIsGeographicCRS(in) &&
             (msProjIsGeographicCRS(out) ||
             (out->numargs == 1 && strcmp(out->args[0], "init=epsg:3857") == 0))) )
     {
-        reprojector->should_do_line_cutting = MS_FALSE;
-        return MS_FALSE;
+        reprojector->lineCuttingCase = LINE_CUTTING_NONE;
+        return reprojector->lineCuttingCase;
     }
 
     int srcIsPolar;
@@ -1262,8 +1306,8 @@ static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
     }
     if( !srcIsPolar )
     {
-        reprojector->should_do_line_cutting = MS_FALSE;
-        return MS_FALSE;
+        reprojector->lineCuttingCase = LINE_CUTTING_NONE;
+        return reprojector->lineCuttingCase;
     }
 
     pointObj p = {0}; // initialize
@@ -1273,7 +1317,6 @@ static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
     double invgt4 = out->gt.need_geotransform ? out->gt.invgeotransform[4] : 0.0;
 
     lineObj newLine = {0,NULL};
-    const double EPS = 1e-10;
 
     p.x = invgt0 + -extremeLongEasting * (1 - EPS) * invgt1;
     p.y = invgt3 + -extremeLongEasting * (1 - EPS) * invgt4;
@@ -1298,8 +1341,8 @@ static int msProjectShapeShouldDoLineCutting(reprojectionObj* reprojector)
     reprojector->splitShape.type = MS_SHAPE_POLYGON;
     msAddLineDirectly(&(reprojector->splitShape), &newLine);
 
-    reprojector->should_do_line_cutting = MS_TRUE;
-    return MS_TRUE;
+    reprojector->lineCuttingCase = LINE_CUTTING_FROM_POLAR;
+    return reprojector->lineCuttingCase;
 }
 #endif
 
@@ -1367,8 +1410,28 @@ msProjectShapeLine(reprojectionObj* reprojector,
 #endif
 
 #ifdef USE_GEOS
+  int use_splitShape = MS_FALSE;
+  int use_splitShape_check_intersects = MS_FALSE;
   if( shape->type == MS_SHAPE_LINE &&
-      msProjectShapeShouldDoLineCutting(reprojector) )
+      msProjectGetLineCuttingCase(reprojector) == LINE_CUTTING_FROM_POLAR )
+  {
+    use_splitShape = MS_TRUE;
+    use_splitShape_check_intersects = MS_TRUE;
+  }
+  else if( shape->type == MS_SHAPE_LINE &&
+           msProjectGetLineCuttingCase(reprojector) == LINE_CUTTING_FROM_LONGLAT_WRAP0 )
+  {
+      for( i=0; i < numpoints_in; i++ )
+      {
+          if( fabs(line->point[i].x) > 180 )
+          {
+              use_splitShape = MS_TRUE;
+              break;
+          }
+      }
+  }
+
+  if( use_splitShape )
   {
     shapeObj tmpShapeInputLine;
     msInitShape(&tmpShapeInputLine);
@@ -1377,7 +1440,8 @@ msProjectShapeLine(reprojectionObj* reprojector,
     tmpShapeInputLine.line = line;
 
     shapeObj* diff = NULL;
-    if( msGEOSIntersects(&tmpShapeInputLine, &(reprojector->splitShape)) )
+    if( use_splitShape_check_intersects == MS_FALSE ||
+        msGEOSIntersects(&tmpShapeInputLine, &(reprojector->splitShape)) )
     {
         diff = msGEOSDifference(&tmpShapeInputLine, &(reprojector->splitShape));
     }
