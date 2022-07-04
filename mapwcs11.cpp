@@ -296,9 +296,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
   char *format_list;
   xmlNodePtr psCSummary;
   xmlNsPtr psOwsNs = xmlSearchNs( doc, psContents, BAD_CAST "ows" );
-  char **tokens = NULL;
   int i = 0;
-  int n = 0;
 
   status = msWCSGetCoverageMetadata(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
@@ -331,13 +329,14 @@ static int msWCSGetCapabilities11_CoverageSummary(
 
     psNode = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Keywords", NULL);
 
-    tokens = msStringSplit(value, ',', &n);
+    int n = 0;
+    char** tokens = msStringSplit(value, ',', &n);
     if (tokens && n > 0) {
       for (i=0; i<n; i++) {
         xmlNewChild(psNode, NULL, BAD_CAST "Keyword", BAD_CAST tokens[i] );
       }
-      msFreeCharArray(tokens, n);
     }
+    msFreeCharArray(tokens, n);
   }
 
   /* -------------------------------------------------------------------- */

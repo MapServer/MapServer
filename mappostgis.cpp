@@ -3735,8 +3735,7 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
 
           break;
         case MS_TOKEN_LITERAL_TIME: {
-	  char* snippet = (char *) msSmallMalloc(512);
-
+          char* snippet = (char *) msSmallMalloc(512);
           if(comparisonToken == MS_TOKEN_COMPARISON_EQ) { // TODO: support !=
             createPostgresTimeCompareEquals(node->tokensrc, snippet, 512);
           } else if(comparisonToken == MS_TOKEN_COMPARISON_GT || comparisonToken == MS_TOKEN_COMPARISON_GE) {
@@ -3744,6 +3743,7 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
           } else if(comparisonToken == MS_TOKEN_COMPARISON_LT || comparisonToken == MS_TOKEN_COMPARISON_LE) {
             createPostgresTimeCompareLessThan(node->tokensrc, snippet, 512);
           } else {
+            msFree(snippet);
             goto cleanup;
           }
 

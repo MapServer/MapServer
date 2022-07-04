@@ -1804,15 +1804,6 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         msProjectShape(&layer->projection, &projection, &tShape);
     }
 
-    /* find the end of the tag */
-    tagEnd = findTagEnd(tagStart);
-    tagEnd++;
-
-    /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
-    strlcpy(tag, tagStart, tagLength+1);
-
     /* do the replacement */
     tagValue = msStrdup(format);
     if(precision > 0)

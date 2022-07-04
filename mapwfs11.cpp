@@ -145,8 +145,7 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
   xmlNodePtr psRootNode, psNode;
   const char *value    = NULL;
   char *valueToFree;
-  char **tokens;
-  int n=0,i=0;
+  int i=0;
 
   psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
 
@@ -159,7 +158,7 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
       value = MS_DEFAULT_NAMESPACE_PREFIX;
 
   if(value) {
-    n = strlen(value)+strlen(lp->name)+1+1;
+    int n = strlen(value)+strlen(lp->name)+1+1;
     valueToFree = (char *) msSmallMalloc(n);
     snprintf(valueToFree, n, "%s:%s", value, lp->name);
 
@@ -206,7 +205,8 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     valueToFree = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", MS_FALSE);
 
   if (valueToFree) {
-    tokens = msStringSplit(valueToFree, ' ', &n);
+    int n = 0;
+    char** tokens = msStringSplit(valueToFree, ' ', &n);
     if (tokens && n > 0) {
       if( nWFSVersion == OWS_1_1_0 )
         IGNORE_RET_VAL(xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]));
@@ -219,9 +219,8 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
         else
           IGNORE_RET_VAL(xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]));
       }
-
-      msFreeCharArray(tokens, n);
     }
+    msFreeCharArray(tokens, n);
   } else
     xmlAddSibling(psNode,
                   xmlNewComment(BAD_CAST "WARNING: Mandatory mapfile parameter: (at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs/ows_srs metadata was missing in this context."));
@@ -235,11 +234,9 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
 
   {
     char *formats_list = msWFSGetOutputFormatList( map, lp, nWFSVersion );
-    int iformat, n;
-    char **tokens;
-
-    n = 0;
-    tokens = msStringSplit(formats_list, ',', &n);
+    int iformat;
+    int n = 0;
+    char** tokens = msStringSplit(formats_list, ',', &n);
 
     for( iformat = 0; iformat < n; iformat++ )
       xmlNewTextChild(psNode, NULL, BAD_CAST "Format",

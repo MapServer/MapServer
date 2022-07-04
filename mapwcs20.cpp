@@ -3289,8 +3289,7 @@ static void msWCSAddInspireDSID20(mapObj *map,
                 xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
         }
         msFreeCharArray(tokensCode, ntokensCode);
-        if( ntokensNS > 0 )
-            msFreeCharArray(tokensNS, ntokensNS);
+        msFreeCharArray(tokensNS, ntokensNS);
     }
 }
 

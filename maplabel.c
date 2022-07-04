@@ -356,7 +356,8 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
   int i;
   labelCacheSlotObj *cacheslot;
   labelCacheMemberObj *cachePtr=NULL;
-  char *annotext = NULL;
+  const char *annotext = NULL;
+  char *annotextToFree = NULL;
   layerObj *layerPtr;
   classObj *classPtr;
 
@@ -371,7 +372,10 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
   if(ts)
     annotext = ts->annotext;
   else if(shape)
-    annotext = msShapeGetLabelAnnotation(layerPtr,shape,label);
+  {
+    annotextToFree = msShapeGetLabelAnnotation(layerPtr,shape,label);
+    annotext = annotextToFree;
+  }
 
   if(!annotext) {
     /* check if we have a labelpnt style */
@@ -405,6 +409,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
       rasterBufferObj rb;
       memset(&rb, 0, sizeof (rasterBufferObj));
       if(MS_UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage, &rb))) {
+        msFree(annotextToFree);
         return MS_FAILURE;
       }
       assert(rb.type == MS_BUFFER_BYTE_RGBA);
@@ -420,9 +425,11 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
               freeTextSymbol(ts);
               free(ts);
             }
+            msFree(annotextToFree);
             return MS_SUCCESS;
           }
         } else {
+          msFree(annotextToFree);
           return MS_SUCCESS; /* label point does not intersect image extent, we cannot know if it intersects
                                 mask, so we discard it (#5237)*/
         }
@@ -436,11 +443,13 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
             if (!*alphapixptr) {
               freeTextSymbol(ts);
               free(ts);
+              msFree(annotextToFree);
               return MS_SUCCESS;
             }
           } else {
             freeTextSymbol(ts);
             free(ts);
+            msFree(annotextToFree);
             return MS_SUCCESS; /* label point does not intersect image extent, we cannot know if it intersects
                                   mask, so we discard it (#5237)*/
           }
@@ -448,6 +457,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
       }
     } else {
       msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
+      msFree(annotextToFree);
       return (MS_FAILURE);
     }
   }
@@ -455,7 +465,8 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
   if(!ts) {
     ts = msSmallMalloc(sizeof(textSymbolObj));
     initTextSymbol(ts);
-    msPopulateTextSymbolForLabelAndString(ts,label,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
+    msPopulateTextSymbolForLabelAndString(ts,label,annotextToFree,layerPtr->scalefactor,image->resolutionfactor, 1);
+    // annotextToFree = NULL;
   }
 
   if(annotext && label->autominfeaturesize && featuresize > 0) {

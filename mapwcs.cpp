@@ -1109,10 +1109,8 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   /* intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes */
   snprintf(tag, sizeof(tag), "%s_interval", name);
   if((value = msOWSLookupMetadata(&(layer->metadata), "CO", tag)) != NULL) {
-    char **tokens;
-    int numtokens;
-
-    tokens = msStringSplit(value, '/', &numtokens);
+    int numtokens = 0;
+    char** tokens = msStringSplit(value, '/', &numtokens);
     if(tokens && numtokens > 0) {
       msIO_printf("            <interval>\n");
       if(numtokens >= 1) msIO_printf("            <min>%s</min>\n", tokens[0]); /* TODO: handle closure */
@@ -1120,6 +1118,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
       if(numtokens >= 3) msIO_printf("            <res>%s</res>\n", tokens[2]);
       msIO_printf("            </interval>\n");
     }
+    msFreeCharArray(tokens, numtokens);
   }
 
   /* TODO: add default (optional) */
@@ -1138,8 +1137,6 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 
 static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params, char *script_url_encoded)
 {
-  char **tokens;
-  int numtokens;
   const char *value;
   char *epsg_buf, *encoded_format;
   coverageMetadataObj cm;
@@ -1256,12 +1253,13 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   /* compound range sets */
   if((value = msOWSLookupMetadata(&(layer->metadata), "CO", "rangeset_axes")) != NULL) {
-    tokens = msStringSplit(value, ',', &numtokens);
+    int numtokens = 0;
+    char** tokens = msStringSplit(value, ',', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msWCSDescribeCoverage_AxisDescription(layer, tokens[i]);
-      msFreeCharArray(tokens, numtokens);
     }
+    msFreeCharArray(tokens, numtokens);
   }
 
   if((value = msOWSLookupMetadata(&(layer->metadata), "CO", "rangeset_nullvalue")) != NULL) {
@@ -1282,12 +1280,13 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
     msOWSGetEPSGProj(&(layer->map->projection), &(layer->map->web.metadata), "CO", MS_FALSE, &epsg_buf);
   }
   if(epsg_buf) {
-    tokens = msStringSplit(epsg_buf, ' ', &numtokens);
+    int numtokens = 0;
+    char** tokens = msStringSplit(epsg_buf, ' ', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <requestResponseCRSs>%s</requestResponseCRSs>\n", tokens[i]);
-      msFreeCharArray(tokens, numtokens);
     }
+    msFreeCharArray(tokens, numtokens);
     msFree(epsg_buf);
   } else {
     msIO_printf("      <!-- requestResponseCRSs ERROR: missing required information, no SRSs defined -->\n");
@@ -1315,12 +1314,13 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   if( (encoded_format = msOWSGetEncodeMetadata( &(layer->metadata), "CO", "formats",
                                        "GTiff" )) != NULL ) {
-    tokens = msStringSplit(encoded_format, ' ', &numtokens);
+    int numtokens = 0;
+    char** tokens = msStringSplit(encoded_format, ' ', &numtokens);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <formats>%s</formats>\n", tokens[i]);
-      msFreeCharArray(tokens, numtokens);
     }
+    msFreeCharArray(tokens, numtokens);
     msFree(encoded_format);
   }
   msIO_printf("    </supportedFormats>\n");
