@@ -1311,7 +1311,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   const char * version;
   char *pszEPSG;
   char * tabspace=NULL, *pszChar,*pszSLD=NULL,*pszSLD2=NULL;
-  char *pszStyle, *pszStyleItem, *pszSLDBody;
+  char *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
   int i, nValue, nVersion=OWS_VERSION_NOTSET;
   /* Dimension element */
@@ -1799,12 +1799,15 @@ int msWriteMapContext(mapObj *map, FILE *stream)
         msIO_fprintf( stream, "      <StyleList>\n");
         /* Loop in each style in the style list */
         while(pszValue != NULL) {
-          pszStyle = msStrdup(pszValue);
+          char* pszStyle = msStrdup(pszValue);
           pszChar = strchr(pszStyle, ',');
           if(pszChar != NULL)
             pszStyle[pszChar - pszStyle] = '\0';
-          if(strcasecmp(pszStyle, "") == 0)
+          if(pszStyle[0] == '\0')
+          {
+            msFree(pszStyle);
             continue;
+          }
 
           if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
             msIO_fprintf( stream,"        <Style current=\"1\">\n" );
@@ -1876,7 +1879,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
           msIO_fprintf( stream,"        </Style>\n" );
 
-          free(pszStyle);
+          msFree(pszStyle);
           pszValue = strchr(pszValue, ',');
           if(pszValue)
             pszValue++;
