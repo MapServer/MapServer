@@ -817,6 +817,37 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request, int *di
 }
 
 /*
+** msOWSGetPrefixFromNamespace()
+**
+** Return the metadata name prefix from a character identifying the OWS
+** namespace.
+*/
+static
+const char* msOWSGetPrefixFromNamespace(char chNamespace)
+{
+    // Return should be a 3 character string, otherwise breaks assumption
+    // in msOWSLookupMetadata()
+    switch( chNamespace )
+    {
+        case 'O': return "ows";
+        case 'A': return "oga"; /* oga_... (OGC Geospatial API) */
+        case 'M': return "wms";
+        case 'F': return "wfs";
+        case 'C': return "wcs";
+        case 'G': return "gml";
+        case 'S': return "sos";
+        default:
+          /* We should never get here unless an invalid code (typo) is */
+          /* present in the code, but since this happened before... */
+          msSetError(MS_WMSERR,
+                     "Unsupported metadata namespace code (%c).",
+                     "msOWSGetPrefixFromNamespace()", chNamespace );
+          assert(MS_FALSE);
+          return NULL;
+    }
+}
+
+/*
 ** msOWSLookupMetadata()
 **
 ** Attempts to lookup a given metadata name in multiple OWS namespaces.
@@ -839,52 +870,11 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
     strlcpy(buf+4, name, 96);
 
     while (value == NULL && *namespaces != '\0') {
-      switch (*namespaces) {
-        case 'O':         /* ows_... */
-          buf[0] = 'o';
-          buf[1] = 'w';
-          buf[2] = 's';
-          break;
-        case 'A':         /* oga_... (OGC Geospatial API) */
-	  buf[0] = 'o';
-	  buf[1] = 'g';
-	  buf[2] = 'a';
-	  break;
-        case 'M':         /* wms_... */
-          buf[0] = 'w';
-          buf[1] = 'm';
-          buf[2] = 's';
-          break;
-        case 'F':         /* wfs_... */
-          buf[0] = 'w';
-          buf[1] = 'f';
-          buf[2] = 's';
-          break;
-        case 'C':         /* wcs_... */
-          buf[0] = 'w';
-          buf[1] = 'c';
-          buf[2] = 's';
-          break;
-        case 'G':         /* gml_... */
-          buf[0] = 'g';
-          buf[1] = 'm';
-          buf[2] = 'l';
-          break;
-        case 'S':         /* sos_... */
-          buf[0] = 's';
-          buf[1] = 'o';
-          buf[2] = 's';
-          break;
-        default:
-          /* We should never get here unless an invalid code (typo) is */
-          /* present in the code, but since this happened before... */
-          msSetError(MS_WMSERR,
-                     "Unsupported metadata namespace code (%c).",
-                     "msOWSLookupMetadata()", *namespaces );
-          assert(MS_FALSE);
+      const char* prefix = msOWSGetPrefixFromNamespace(*namespaces);
+      if( prefix == NULL )
           return NULL;
-      }
-
+      assert(strlen(prefix) == 3);
+      memcpy(buf, prefix, 3);
       value = msLookupHashTable(metadata, buf);
       namespaces++;
     }
@@ -1121,6 +1111,26 @@ const char *msOWSGetSchemasLocation(mapObj *map)
 }
 
 /*
+** msOWSGetExpandedMetadataKey()
+*/
+static
+char* msOWSGetExpandedMetadataKey(const char *namespaces, const char *metadata_name)
+{
+  char* pszRet = msStringConcatenate(NULL, "");
+  for( int i = 0; namespaces[i] != '\0'; ++i )
+  {
+      if( i > 0 )
+          pszRet = msStringConcatenate(pszRet, " or ");
+      pszRet = msStringConcatenate(pszRet, "\"");
+      pszRet = msStringConcatenate(pszRet, msOWSGetPrefixFromNamespace(namespaces[i]));
+      pszRet = msStringConcatenate(pszRet, "_");
+      pszRet = msStringConcatenate(pszRet, metadata_name);
+      pszRet = msStringConcatenate(pszRet, "\"");
+  }
+  return pszRet;
+}
+
+/*
 ** msOWSGetOnlineResource()
 **
 ** Return the online resource for this service.  First try to lookup
@@ -1144,7 +1154,9 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
     online_resource = msOWSTerminateOnlineResource(value);
   } else {
     if ((online_resource = msBuildOnlineResource(map, req)) == NULL) {
-      msSetError(MS_CGIERR, "Impossible to establish server URL.  Please set \"%s\" metadata.", "msOWSGetOnlineResource()", metadata_name);
+      char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, metadata_name);
+      msSetError(MS_CGIERR, "Please set %s metadata.", "msOWSGetOnlineResource()", pszExpandedMetadataKey);
+      msFree(pszExpandedMetadataKey);
       return NULL;
     }
   }
@@ -1511,7 +1523,9 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
     } else {
       status = action_if_not_found;
       if (OWS_WARN == action_if_not_found) {
-        msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), "inspire_metadataurl_href");
+        char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, "inspire_metadataurl_href");
+        msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+        msFree(pszExpandedMetadataKey);
       }
     }
   } else if (strcasecmp("embed",inspire_capabilities) == 0) {
@@ -1579,7 +1593,9 @@ int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *name
   } else {
     status = action_if_not_found;
     if (OWS_WARN == action_if_not_found) {
-      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), "languages");
+      char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, "languages");
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+      msFree(pszExpandedMetadataKey);
     }
   }
 
@@ -1609,7 +1625,9 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata,
     msIO_fprintf(stream, format, value);
   } else {
     if (action_if_not_found == OWS_WARN) {
-      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+      char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, name);
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+      msFree(pszExpandedMetadataKey);
       status = action_if_not_found;
     }
 
@@ -1662,7 +1680,16 @@ int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata,
     free(pszEncodedValue);
   } else {
     if (action_if_not_found == OWS_WARN) {
-      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name, (validated_language && validated_language[0]?".":""), (validated_language && validated_language[0]?validated_language:""));
+      char* pszExpandedName = msStringConcatenate(NULL, name);
+      if( validated_language && validated_language[0] )
+      {
+          pszExpandedName = msStringConcatenate(pszExpandedName, ".");
+          pszExpandedName = msStringConcatenate(pszExpandedName, validated_language);
+      }
+      char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, pszExpandedName);
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+      msFree(pszExpandedName);
+      msFree(pszExpandedMetadataKey);
       status = action_if_not_found;
     }
 
@@ -1724,7 +1751,9 @@ int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata,
     msIO_fprintf(stream, format, value);
   } else {
     if (action_if_not_found == OWS_WARN) {
-      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+      char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, name);
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+      msFree(pszExpandedMetadataKey);
       status = action_if_not_found;
     }
 
@@ -1784,7 +1813,9 @@ int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char* pszGroupName,
   }
 
   if (action_if_not_found == OWS_WARN) {
-    msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+    char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, name);
+    msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+    msFree(pszExpandedMetadataKey);
     status = action_if_not_found;
   }
 
@@ -1927,7 +1958,9 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         (!urlfrmt && format_is_mandatory) || (!href && href_is_mandatory)) {
       msIO_fprintf(stream, "<!-- WARNING: Some mandatory elements for '%s' are missing in this context. -->\n", tag_name);
       if (action_if_not_found == OWS_WARN) {
-        msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+        char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, name);
+        msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+        msFree(pszExpandedMetadataKey);
         status = action_if_not_found;
       }
     } else {
@@ -1978,7 +2011,9 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     msFree(href);
   } else {
     if (action_if_not_found == OWS_WARN) {
-      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+      char* pszExpandedMetadataKey = msOWSGetExpandedMetadataKey(namespaces, name);
+      msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata %s was missing in this context. -->\n", pszExpandedMetadataKey);
+      msFree(pszExpandedMetadataKey);
       status = action_if_not_found;
     }
   }
