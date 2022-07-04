@@ -180,3 +180,55 @@ def test_reprojection_rect_and_datum_shift():
     rect = mapscript.rectObj(545287, 6867556, 545689, 6868025)
     assert rect.project(webmercator, epsg_28992) == 0
     assert rect.minx == pytest.approx(121711, abs=2)
+
+###############################################################################
+# Test reprojection of line crossing the antimeridian from a projection
+# with +proj=longlat +lon_wrap=0
+
+def test_reprojection_from_lonlat_wrap_0():
+
+    src = mapscript.projectionObj("+proj=longlat +lon_wrap=0 +datum=WGS84")
+    dst = mapscript.projectionObj("+proj=longlat +datum=WGS84")
+
+    shape = mapscript.shapeObj( mapscript.MS_SHAPE_LINE )
+    line = mapscript.lineObj()
+    line.add( mapscript.pointObj( 179, 45 ) )
+    line.add( mapscript.pointObj( 182, 45 ) )
+    shape.add( line )
+
+    assert shape.project(src, dst) == 0
+
+    part1 = shape.get(0)
+    assert part1
+    part2 = shape.get(1)
+    assert part2
+
+    point11 = part1.get(0)
+    point12 = part1.get(1)
+    point21 = part2.get(0)
+    point22 = part2.get(1)
+    set_x = [point11.x, point12.x, point21.x, point22.x]
+    set_x.sort()
+    assert set_x == pytest.approx([-180, -178, 179, 180], abs=1e-2)
+
+
+    shape = mapscript.shapeObj( mapscript.MS_SHAPE_LINE )
+    line = mapscript.lineObj()
+    line.add( mapscript.pointObj( -179, 45 ) )
+    line.add( mapscript.pointObj( -182, 45 ) )
+    shape.add( line )
+
+    assert shape.project(src, dst) == 0
+
+    part1 = shape.get(0)
+    assert part1
+    part2 = shape.get(1)
+    assert part2
+
+    point11 = part1.get(0)
+    point12 = part1.get(1)
+    point21 = part2.get(0)
+    point22 = part2.get(1)
+    set_x = [point11.x, point12.x, point21.x, point22.x]
+    set_x.sort()
+    assert set_x == pytest.approx([-180, -179, 178, 180], abs=1e-2)
