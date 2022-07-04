@@ -1550,11 +1550,12 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
             msFree(exprBindings[binding].string);
             exprBindings[binding].string =
                 msStringBufferReleaseStringAndFree(expression);
+            expression = NULL;
             exprBindings[binding].type = MS_EXPRESSION;
             (*nexprbindings)++;
           }
         }
-        if (status == MS_FAILURE)
+        if (expression != NULL)
         {
           msStringBufferFree(expression);
           msInitExpression(&(exprBindings[binding]));
