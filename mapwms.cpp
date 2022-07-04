@@ -4372,9 +4372,6 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                         pszLayerName, pszOnlineResEncoded);
             msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
             msIO_printf("</LayerDescription>\n");
-
-            msFree(pszOnlineResEncoded);
-            msFree(pszLayerName);
           } else {
             msIO_printf("  <LayerDescription>\n");
             msIO_printf("    <owsType>wcs</owsType>\n");
@@ -4385,6 +4382,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
             msIO_printf("    </TypeName>\n");
             msIO_printf("  </LayerDescription>\n");
           }
+          msFree(pszOnlineResEncoded);
+          msFree(pszLayerName);
         } else {
           char *pszLayerName = msEncodeHTMLEntities(lp->name);
 
