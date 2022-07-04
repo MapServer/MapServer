@@ -1,0 +1,48 @@
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+
+# RUN_PARMS: sld_named_userstyle_raster.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=grid&SRS=EPSG:4326&BBOX=-180,-90,180,90&FORMAT=image/png&WIDTH=200&HEIGHT=100&STYLES=&SLD_BODY=<StyledLayerDescriptor version='1.0.0' xmlns='http://www.opengis.net/sld' xmlns:ogc='http://www.opengis.net/ogc' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd'><NamedLayer><se:Name>grid</se:Name><UserStyle><se:Name>TEST</se:Name><se:FeatureTypeStyle><se:Rule><se:RasterSymbolizer><se:Opacity>1.0</se:Opacity><ColorMap><ColorMapEntry color='#00FF00' quantity='3'/> </ColorMap></se:RasterSymbolizer></se:Rule></se:FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+
+MAP
+
+NAME TEST
+SHAPEPATH ./data
+SIZE 300 300
+IMAGECOLOR 100 100 100
+FONTSET "data/fonts.lst"
+PROJECTION
+   "init=epsg:4326"
+END
+WEB
+  IMAGEPATH "/tmp/ms_tmp/"
+  IMAGEURL "/ms_tmp/"
+  METADATA
+    "wms_title"		   "Test SLD"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+    "ows_sld_enabled" "true"
+  END
+END
+
+LAYER
+  NAME "grid"
+  TYPE raster
+  DATA data/grid.gif
+  STATUS ON
+  PROJECTION
+   "init=epsg:4326"
+  END
+  EXTENT -180 -90 180 90
+  CLASSGROUP "DefaultStyle"
+  CLASS 
+    NAME "DefaultStyle"
+    EXPRESSION ([pixel] == 3)
+    STYLE
+        COLOR 255 0 0
+    END
+  END
+END
+
+END
