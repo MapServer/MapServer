@@ -2277,7 +2277,10 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   if ((script_url=msOWSGetOnlineResource(map, "SO", "onlineresource", req)) == NULL)
+  {
+    free(schemalocation);
     return msSOSException(map, "NoApplicableCode", "NoApplicableCode");
+  }
 
   xsi_schemaLocation = msStrdup("http://www.opengis.net/om/1.0 ");
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
