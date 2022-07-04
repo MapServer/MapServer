@@ -1109,10 +1109,8 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   /* intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes */
   snprintf(tag, sizeof(tag), "%s_interval", name);
   if((value = msOWSLookupMetadata(&(layer->metadata), "CO", tag)) != NULL) {
-    char **tokens;
-    int numtokens;
-
-    tokens = msStringSplit(value, '/', &numtokens);
+    int numtokens = 0;
+    char** tokens = msStringSplit(value, '/', &numtokens);
     if(tokens && numtokens > 0) {
       msIO_printf("            <interval>\n");
       if(numtokens >= 1) msIO_printf("            <min>%s</min>\n", tokens[0]); /* TODO: handle closure */
@@ -1120,6 +1118,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
       if(numtokens >= 3) msIO_printf("            <res>%s</res>\n", tokens[2]);
       msIO_printf("            </interval>\n");
     }
+    msFreeCharArray(tokens, numtokens);
   }
 
   /* TODO: add default (optional) */
