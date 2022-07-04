@@ -266,12 +266,10 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
             }
             lp->numclasses = 0;
 
-            if( bSLDHasNamedClass ) {
-                if( sldLayer->classgroup ) {
-                    /* Set the class group to the class that has UserStyle.IsDefault */
-                    msFree( lp->classgroup);
-                    lp->classgroup = msStrdup(sldLayer->classgroup);
-                }
+            if( bSLDHasNamedClass && sldLayer->classgroup ) {
+                /* Set the class group to the class that has UserStyle.IsDefault */
+                msFree( lp->classgroup);
+                lp->classgroup = msStrdup(sldLayer->classgroup);
             }
             else {
                 /*unset the classgroup on the layer if it was set. This allows the layer to render
