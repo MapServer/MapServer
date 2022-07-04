@@ -342,10 +342,9 @@ xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer, xmlNsPtr *p
       psTNode2 = xmlNewChild(psTNode, namespace, BAD_CAST "EX_TemporalExtent", NULL);
       psENode = xmlNewChild(psTNode2, namespace, BAD_CAST "extent", NULL);
       xmlAddChild(psENode, _msMetadataGetGMLTimePeriod(temporal));
-
-      msFreeCharArray(temporal, n);
     }
   }
+  msFreeCharArray(temporal, n);
 
   return psNode;
 }
