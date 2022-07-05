@@ -266,12 +266,10 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
             }
             lp->numclasses = 0;
 
-            if( bSLDHasNamedClass ) {
-                if( sldLayer->classgroup ) {
-                    /* Set the class group to the class that has UserStyle.IsDefault */
-                    msFree( lp->classgroup);
-                    lp->classgroup = msStrdup(sldLayer->classgroup);
-                }
+            if( bSLDHasNamedClass && sldLayer->classgroup ) {
+                /* Set the class group to the class that has UserStyle.IsDefault */
+                msFree( lp->classgroup);
+                lp->classgroup = msStrdup(sldLayer->classgroup);
             }
             else {
                 /*unset the classgroup on the layer if it was set. This allows the layer to render
@@ -292,9 +290,9 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
 
               /*aliases may have been used as part of the sld text symbolizer for
                 label element. Try to process it if that is the case #3114*/
-              if (msLayerOpen(lp) == MS_SUCCESS &&
-                  msLayerGetItems(lp) == MS_SUCCESS) {
-                if (lp->class[iClass]->text.string) {
+              if (msLayerOpen(lp) == MS_SUCCESS) {
+                if (msLayerGetItems(lp) == MS_SUCCESS &&
+                    lp->class[iClass]->text.string) {
                   int z;
                   for(z=0; z<lp->numitems; z++) {
                     const char* pszFullName;
@@ -315,6 +313,7 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer, const char *psz
                     msFree(pszTmp1);
                   }
                 }
+                msLayerClose(lp);
               }
 
               iClass++;
