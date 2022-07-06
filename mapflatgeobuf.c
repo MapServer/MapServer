@@ -224,11 +224,13 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
     ctx->search_index++;
   }
 
-  int ret = flatgeobuf_decode_feature(ctx, layer, shape);
-  if (ret == -1)
-    return MS_FAILURE;
-  if (ctx->done)
-    return MS_DONE;
+  do {
+    int ret = flatgeobuf_decode_feature(ctx, layer, shape);
+    if (ret == -1)
+      return MS_FAILURE;
+    if (ctx->done)
+      return MS_DONE;
+  } while(ctx->is_null_geom);
 
   return MS_SUCCESS;
 }
