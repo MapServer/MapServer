@@ -31,6 +31,7 @@ ctx *flatgeobuf_init_ctx()
 {
     ctx *c = (ctx *) malloc(sizeof(ctx));
     memset(c, 0, sizeof(ctx));
+    c->is_null_geom = false;
     c->done = false;
     return c;
 }
@@ -88,6 +89,8 @@ void flatgeobuf_ensure_buf(ctx *ctx, uint32_t size)
 
 int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
 {
+    ctx->is_null_geom = false;
+
     uint32_t featureSize;
     if (VSIFReadL(&featureSize, sizeof(featureSize), 1, ctx->file) != 1) {
         if (VSIFEofL(ctx->file)) {
@@ -107,10 +110,12 @@ int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
     ctx->offset += featureSize;
     auto feature = GetFeature(ctx->buf);
     const auto geometry = feature->geometry();
-    if (geometry)
+    if (geometry) {
         GeometryReader(ctx, geometry).read(shape);
-    else
-        flatgeobuf_decode_feature(ctx, layer, shape); // skip to next if null geometry
+    } else {
+        ctx->is_null_geom = true;
+        return 0;
+    }
     auto properties = feature->properties();
     if (properties && properties->size() != 0) {
         ctx->properties = (uint8_t *) properties->data();

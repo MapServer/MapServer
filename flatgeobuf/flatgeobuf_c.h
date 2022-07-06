@@ -105,6 +105,7 @@ typedef struct flatgeobuf_ctx
 	pointObj *point;
 	uint32_t point_len;
 
+	bool is_null_geom;
 	int ms_type;
     uint8_t *properties;
 	uint32_t properties_size;
