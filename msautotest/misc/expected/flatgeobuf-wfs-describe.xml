@@ -1,0 +1,50 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<schema
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://www.w3.org/2001/XMLSchema"
+   xmlns:gml="http://www.opengis.net/gml"
+   elementFormDefault="qualified" version="0.1" >
+
+  <import namespace="http://www.opengis.net/gml"
+          schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd" />
+
+  <element name="africa-continent" 
+           type="ms:africa-continentType" 
+           substitutionGroup="gml:_Feature" />
+
+  <complexType name="africa-continentType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:GeometryPropertyType" minOccurs="0" maxOccurs="1"/>
+          <element name="pop_est" minOccurs="0" type="long"/>
+          <element name="name_en" minOccurs="0" type="string"/>
+          <element name="id" minOccurs="0" type="integer"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <element name="africa-classes" 
+           type="ms:africa-classesType" 
+           substitutionGroup="gml:_Feature" />
+
+  <complexType name="africa-classesType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:GeometryPropertyType" minOccurs="0" maxOccurs="1"/>
+          <element name="pop_est" minOccurs="0" type="long"/>
+          <element name="name_en" minOccurs="0" type="string"/>
+          <element name="id" minOccurs="0" type="integer"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

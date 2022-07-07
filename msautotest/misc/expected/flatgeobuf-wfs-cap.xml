@@ -1,0 +1,111 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<WFS_Capabilities 
+   version="1.0.0" 
+   updateSequence="0" 
+   xmlns="http://www.opengis.net/wfs" 
+   xmlns:ogc="http://www.opengis.net/ogc" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd">
+
+<Service>
+  <Name>MapServer WFS</Name>
+  <Title>Test FlatGeobuf WFS output</Title>
+  <Abstract>Longer text describing the FlatGeobuf WFS service.</Abstract>
+  <OnlineResource>http://localhost/path/to/flatgeobuf?</OnlineResource>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/flatgeobuf?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/flatgeobuf?" />
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeFeatureType>
+      <SchemaDescriptionLanguage>
+        <XMLSCHEMA/>
+      </SchemaDescriptionLanguage>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/flatgeobuf?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/flatgeobuf?" />
+        </HTTP>
+      </DCPType>
+    </DescribeFeatureType>
+    <GetFeature>
+      <ResultFormat>
+        <GML2/>
+      </ResultFormat>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/flatgeobuf?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/flatgeobuf?" />
+        </HTTP>
+      </DCPType>
+    </GetFeature>
+  </Request>
+</Capability>
+
+<FeatureTypeList>
+  <Operations>
+    <Query/>
+  </Operations>
+    <FeatureType>
+        <Name>africa-continent</Name>
+        <Title>Africa Continent</Title>
+        <SRS>EPSG:4326</SRS>
+        <LatLongBoundingBox minx="-17.625043" miny="-34.819166" maxx="51.133870" maxy="37.349994" />
+        <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/flatgeobuf?request=GetMetadata&amp;layer=africa-continent</MetadataURL>
+    </FeatureType>
+    <FeatureType>
+        <Name>africa-classes</Name>
+        <Title>Africa Classes</Title>
+        <SRS>EPSG:4326</SRS>
+        <LatLongBoundingBox minx="-17.625043" miny="-34.819166" maxx="51.133870" maxy="37.349994" />
+        <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/flatgeobuf?request=GetMetadata&amp;layer=africa-classes</MetadataURL>
+    </FeatureType>
+</FeatureTypeList>
+
+<ogc:Filter_Capabilities>
+  <ogc:Spatial_Capabilities>
+    <ogc:Spatial_Operators>
+      <ogc:Equals/>
+      <ogc:Disjoint/>
+      <ogc:Touches/>
+      <ogc:Within/>
+      <ogc:Overlaps/>
+      <ogc:Crosses/>
+      <ogc:Intersect/>
+      <ogc:Contains/>
+      <ogc:DWithin/>
+      <ogc:BBOX/>
+    </ogc:Spatial_Operators>
+  </ogc:Spatial_Capabilities>
+  <ogc:Scalar_Capabilities>
+    <ogc:Logical_Operators />
+    <ogc:Comparison_Operators>
+      <ogc:Simple_Comparisons />
+      <ogc:Like />
+      <ogc:Between />
+    </ogc:Comparison_Operators>
+  </ogc:Scalar_Capabilities>
+</ogc:Filter_Capabilities>
+
+</WFS_Capabilities>
