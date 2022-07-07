@@ -42,12 +42,12 @@
 static void msFGBPassThroughFieldDefinitions(layerObj *layer, flatgeobuf_ctx *ctx)
 {
   for (int i = 0; i < ctx->columns_len; i++) {
-    char item[16];
-    //int  nWidth=0, nPrecision=0;
+    char item[255];
     char gml_width[32], gml_precision[32];
     const char *gml_type = NULL;
 
     flatgeobuf_column column = ctx->columns[i];
+    strncpy(item, column.name, 255 - 1);
 
     gml_width[0] = '\0';
     gml_precision[0] = '\0';
@@ -61,25 +61,25 @@ static void msFGBPassThroughFieldDefinitions(layerObj *layer, flatgeobuf_ctx *ct
       case flatgeobuf_column_type_int:
       case flatgeobuf_column_type_uint:
         gml_type = "Integer";
-        //sprintf( gml_width, "%d", nWidth );
+        sprintf( gml_width, "%d", 4 );
         break;
       case flatgeobuf_column_type_long:
       case flatgeobuf_column_type_ulong:
         gml_type = "Long";
-        //sprintf( gml_width, "%d", nWidth );
+        sprintf( gml_width, "%d", 8 );
         break;
       case flatgeobuf_column_type_float:
       case flatgeobuf_column_type_double:
         gml_type = "Real";
-        //sprintf( gml_width, "%d", nWidth );
-        //sprintf( gml_precision, "%d", nPrecision );
+        sprintf( gml_width, "%d", 8 );
+        sprintf( gml_precision, "%d", 15 );
         break;
       case flatgeobuf_column_type_string:
       case flatgeobuf_column_type_json:
       case flatgeobuf_column_type_datetime:
       default:
         gml_type = "Character";
-        //sprintf( gml_width, "%d", nWidth );
+        sprintf( gml_width, "%d", 4096 );
         break;
     }
 
@@ -212,22 +212,25 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
   if (!ctx)
     return MS_FAILURE;
 
-  if (ctx->search_result) {
-    if (ctx->search_index >= ctx->search_result_len - 1)
-      return MS_DONE;
-    flatgeobuf_search_item item = ctx->search_result[ctx->search_index];
-    if (VSIFSeekL(ctx->file, ctx->feature_offset + item.offset, SEEK_SET) == -1) {
-        msSetError(MS_FGBERR, "Unable to seek in file", "msFlatGeobufLayerNextShape");
-        return MS_FAILURE;
-    }
-    ctx->offset = ctx->feature_offset + item.offset;
-    ctx->search_index++;
-  }
-
   do {
+    if (ctx->search_result) {
+      if (ctx->search_index >= ctx->search_result_len - 1)
+        return MS_DONE;
+      flatgeobuf_search_item item = ctx->search_result[ctx->search_index];
+      if (VSIFSeekL(ctx->file, ctx->feature_offset + item.offset, SEEK_SET) == -1) {
+          msSetError(MS_FGBERR, "Unable to seek in file", "msFlatGeobufLayerNextShape");
+          return MS_FAILURE;
+      }
+      ctx->offset = ctx->feature_offset + item.offset;
+      ctx->search_index++;
+      ctx->feature_index = item.index;
+    }
     int ret = flatgeobuf_decode_feature(ctx, layer, shape);
     if (ret == -1)
       return MS_FAILURE;
+    shape->index = ctx->feature_index;
+    if (!ctx->search_result)
+      ctx->feature_index++;
     if (ctx->done)
       return MS_DONE;
   } while(ctx->is_null_geom);
@@ -237,6 +240,7 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
 
 int msFlatGeobufLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  
   (void)shape;
   (void)record;
   flatgeobuf_ctx *ctx;
@@ -244,6 +248,10 @@ int msFlatGeobufLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *recor
   if (!ctx)
     return MS_FAILURE;
   long i = record->shapeindex;
+  if (i < 0 || (uint64_t) i >= ctx->features_count) {
+    msSetError(MS_MISCERR, "Invalid feature id", "msFlatGeobufLayerGetShape");
+    return MS_FAILURE;
+  }
   uint64_t offset;
   flatgeobuf_read_feature_offset(ctx, i, &offset);
   if (VSIFSeekL(ctx->file, ctx->feature_offset + offset, SEEK_SET) == -1) {

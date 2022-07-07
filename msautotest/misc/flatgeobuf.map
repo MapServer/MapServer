@@ -15,9 +15,32 @@ MAP
   IMAGECOLOR 255 255 255
   IMAGETYPE png
 
+  WEB
+    METADATA
+      "wfs_title"          "Test FlatGeobuf WFS output"
+      "wfs_abstract"       "Longer text describing the FlatGeobuf WFS service."
+      "wfs_onlineresource" "http://localhost/path/to/flatgeobuf?"
+      "wfs_srs"            "EPSG:4326 EPSG:4269 EPSG:3978 EPSG:3857"
+      "wfs_enable_request" "*"
+    END
+  END
+  
+  PROJECTION
+    "init=epsg:4326"
+  END  
+
   /* Africa Continent */
   LAYER
     NAME "africa-continent"
+    METADATA
+      "wfs_title"         "Africa Continent"
+      "wfs_srs"           "EPSG:4326"
+      "gml_include_items" "all"
+      "gml_featureid"     "id"
+      "gml_types"         "auto"
+      "wfs_enable_request" "*"
+      "wfs_use_default_extent_for_getfeature" "false"
+    END    
     TYPE POLYGON
     STATUS ON
     CONNECTIONTYPE flatgeobuf
@@ -28,12 +51,24 @@ MAP
         COLOR 50 50 50
         OUTLINECOLOR 120 120 120
       END #style   
-    END #class   
+    END #class
+    PROJECTION
+      "init=epsg:4326"
+    END  
   END # layer
   
   /* Africa classes */
   LAYER
     NAME "africa-classes"
+    METADATA
+      "wfs_title"         "Africa Classes"
+      "wfs_srs"           "EPSG:4326"
+      "gml_include_items" "all"
+      "gml_featureid"     "id"
+      "gml_types"         "auto"
+      "wfs_enable_request" "*"
+      "wfs_use_default_extent_for_getfeature" "false"
+    END    
     TYPE POLYGON
     STATUS ON
     CONNECTIONTYPE flatgeobuf
@@ -64,7 +99,10 @@ MAP
         OUTLINECOLOR 120 120 120
       END #style   
     END #class    
-    TEMPLATE "ttt.html"    
+    TEMPLATE "ttt.html"
+    PROJECTION
+      "init=epsg:4326"
+    END 
   END # layer  
 
 END # map

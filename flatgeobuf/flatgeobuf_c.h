@@ -106,6 +106,7 @@ typedef struct flatgeobuf_ctx
 	uint32_t point_len;
 
 	bool is_null_geom;
+	uint64_t feature_index;
 	int ms_type;
     uint8_t *properties;
 	uint32_t properties_size;
@@ -114,7 +115,7 @@ typedef struct flatgeobuf_ctx
 flatgeobuf_ctx *flatgeobuf_init_ctx();
 void flatgeobuf_free_ctx(flatgeobuf_ctx *ctx);
 
-void flatgeobuf_ensure_buf(flatgeobuf_ctx *ctx, uint32_t size);
+int flatgeobuf_ensure_buf(flatgeobuf_ctx *ctx, uint32_t size);
 void flatgeobuf_ensure_line(flatgeobuf_ctx *ctx, uint32_t len);
 void flatgeobuf_ensure_point(flatgeobuf_ctx *ctx, uint32_t len);
 
