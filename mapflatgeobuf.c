@@ -46,13 +46,13 @@ static void msFGBPassThroughFieldDefinitions(layerObj *layer, flatgeobuf_ctx *ct
     char gml_width[32], gml_precision[32];
     const char *gml_type = NULL;
 
-    flatgeobuf_column column = ctx->columns[i];
-    strncpy(item, column.name, 255 - 1);
+    const flatgeobuf_column* column = &(ctx->columns[i]);
+    strncpy(item, column->name, 255 - 1);
 
     gml_width[0] = '\0';
     gml_precision[0] = '\0';
 
-    switch( column.type ) {
+    switch( column->type ) {
       case flatgeobuf_column_type_byte:
       case flatgeobuf_column_type_ubyte:
       case flatgeobuf_column_type_bool:
@@ -109,10 +109,18 @@ int msFlatGeobufLayerInitItemInfo(layerObj *layer)
   if (!ctx)
     return MS_FAILURE;
 
-  for (int i = 0; i < layer->numitems; i++)
-    for (int j = 0; j < ctx->columns_len; j++)
-      if (strcasecmp(layer->items[i], ctx->columns[j].name) == 0)
-        ctx->columns[j].itemindex = i;
+  for (int j = 0; j < ctx->columns_len; j++)
+  {
+    ctx->columns[j].itemindex = -1;
+    for (int i = 0; i < layer->numitems; i++)
+    {
+        if (strcasecmp(layer->items[i], ctx->columns[j].name) == 0)
+        {
+            ctx->columns[j].itemindex = i;
+            break;
+        }
+    }
+  }
 
   return MS_SUCCESS;
 }
@@ -233,6 +241,10 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape)
       ctx->feature_index++;
     if (ctx->done)
       return MS_DONE;
+    if (ctx->is_null_geom) {
+        msFreeCharArray(shape->values, shape->numvalues);
+        shape->values = NULL;
+    }
   } while(ctx->is_null_geom);
 
   return MS_SUCCESS;

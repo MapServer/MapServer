@@ -19,7 +19,10 @@ void parse_value(uint8_t *data, char **values, uint16_t i, uint32_t &offset, boo
 {
     using std::to_string;
     if (found)
+    {
+        msFree(values[i]);
         values[i] = msStrdup(to_string(*((T*) (data + offset))).c_str());
+    }
     offset += sizeof(T);
 }
 
@@ -132,9 +135,6 @@ int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
 
 int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 {
-    uint16_t i;
-    int32_t ii;
-    flatgeobuf_column column;
 	uint8_t type;
 	uint32_t offset = 0;
 	uint8_t *data = ctx->properties;
@@ -146,10 +146,8 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
     if (numvalues == 0)
         return 0;
 
-    values = (char **) malloc(sizeof(char *) * numvalues);
-
-    //memset(values, 0, sizeof(char *) * numvalues);
-
+    values = (char **) msSmallCalloc(sizeof(char *), numvalues);
+    if (shape->values) msFreeCharArray(shape->values, shape->numvalues);
     shape->numvalues = numvalues;
     shape->values = values;
 
@@ -158,14 +156,15 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
         return -1;
     }
 	while (offset + 1 < size) {
+        uint16_t i;
         memcpy(&i, data + offset, sizeof(uint16_t));
 		offset += sizeof(uint16_t);
 		if (i >= ctx->columns_len) {
             msSetError(MS_FGBERR, "Column index out of range", "flatgeobuf_decode_properties");
             return -1;
         }
-		column = ctx->columns[i];
-        ii = column.itemindex;
+		const auto& column = ctx->columns[i];
+        const int32_t ii = column.itemindex;
         found = ii != -1;
 		type = column.type;
 		switch (type) {
@@ -212,9 +211,10 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 			memcpy(&len, data + offset, sizeof(uint32_t));
 			offset += sizeof(len);
 			if (found) {
-                char *str = (char *) malloc(len + 1);
+                char *str = (char *) msSmallMalloc(len + 1);
                 memcpy(str, data + offset, len);
                 str[len] = '\0';
+                msFree(values[ii]);
                 values[ii] = str;
             }
 			offset += len;
@@ -222,7 +222,13 @@ int flatgeobuf_decode_properties(ctx *ctx, layerObj *layer, shapeObj *shape)
 		}
         }
     }
-    // TODO: set missing (null) values to msStrdup("")?
+
+    for(int i = 0; i < shape->numvalues; i++)
+    {
+        if( shape->values[i] == NULL)
+            shape->values[i] = msStrdup("");
+    }
+
     return 0;
 }
 
