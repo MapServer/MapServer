@@ -105,6 +105,14 @@ static int loadConfig(configObj *config)
   }
 }
 
+static void msConfigSetConfigOption(const char* key, const char* value)
+{
+  CPLSetConfigOption(key, value);
+  if( strcasecmp(key,"PROJ_LIB") == 0 ) {
+    msSetPROJ_LIB( value, nullptr );
+  }
+}
+
 configObj *msLoadConfig(const char* ms_config_file)
 {
   configObj *config = NULL;
@@ -162,11 +170,11 @@ configObj *msLoadConfig(const char* ms_config_file)
   // load all env key/values using CPLSetConfigOption() - only do this *after* we have a good config
   const char *key = msFirstKeyFromHashTable(&config->env);
   if(key != NULL) {
-    CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
+    msConfigSetConfigOption(key, msLookupHashTable(&config->env, key));
 
     const char *last_key = key;
     while((key = msNextKeyFromHashTable(&config->env, last_key)) != NULL) {
-      CPLSetConfigOption(key, msLookupHashTable(&config->env, key));
+      msConfigSetConfigOption(key, msLookupHashTable(&config->env, key));
       last_key = key;
     }
   }
