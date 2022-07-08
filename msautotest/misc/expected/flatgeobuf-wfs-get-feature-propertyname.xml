@@ -1,0 +1,273 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/flatgeobuf?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=africa-continent&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-1.000000,-1.000000 -1.000000,-1.000000</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.1">
+        <ms:name_en>Madagascar</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.2">
+        <ms:name_en>Mozambique</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.3">
+        <ms:name_en>eSwatini</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.4">
+        <ms:name_en>Lesotho</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.5">
+        <ms:name_en>South Africa</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.6">
+        <ms:name_en>Botswana</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.7">
+        <ms:name_en>Namibia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.8">
+        <ms:name_en>Zimbabwe</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.9">
+        <ms:name_en>Zambia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.10">
+        <ms:name_en>Angola</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.11">
+        <ms:name_en>Democratic Republic of the Congo</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.12">
+        <ms:name_en>Burundi</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.13">
+        <ms:name_en>Rwanda</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.14">
+        <ms:name_en>Kenya</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.15">
+        <ms:name_en>Tanzania</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.16">
+        <ms:name_en>Malawi</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.17">
+        <ms:name_en>Somaliland</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.18">
+        <ms:name_en>Somalia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.19">
+        <ms:name_en>Ethiopia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.20">
+        <ms:name_en>Djibouti</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.21">
+        <ms:name_en>Eritrea</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.22">
+        <ms:name_en>Egypt</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.23">
+        <ms:name_en>Libya</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.24">
+        <ms:name_en>Chad</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.25">
+        <ms:name_en>Sudan</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.26">
+        <ms:name_en>South Sudan</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.27">
+        <ms:name_en>Uganda</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.28">
+        <ms:name_en>Central African Republic</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.29">
+        <ms:name_en>Cameroon</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.30">
+        <ms:name_en>Nigeria</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.31">
+        <ms:name_en>Equatorial Guinea</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.32">
+        <ms:name_en>Togo</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.33">
+        <ms:name_en>Benin</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.34">
+        <ms:name_en>Niger</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.35">
+        <ms:name_en>Tunisia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.36">
+        <ms:name_en>Algeria</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.37">
+        <ms:name_en>Morocco</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.38">
+        <ms:name_en>Western Sahara</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.39">
+        <ms:name_en>Mauritania</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.40">
+        <ms:name_en>Guinea-Bissau</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.41">
+        <ms:name_en>The Gambia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.42">
+        <ms:name_en>Senegal</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.43">
+        <ms:name_en>Mali</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.44">
+        <ms:name_en>Burkina Faso</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.45">
+        <ms:name_en>Ivory Coast</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.46">
+        <ms:name_en>Ghana</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.47">
+        <ms:name_en>Liberia</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.48">
+        <ms:name_en>Sierra Leone</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.49">
+        <ms:name_en>Guinea</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.50">
+        <ms:name_en>Gabon</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:africa-continent fid="africa-continent.51">
+        <ms:name_en>Republic of the Congo</ms:name_en>
+      </ms:africa-continent>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+
