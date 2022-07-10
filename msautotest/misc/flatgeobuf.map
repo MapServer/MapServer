@@ -121,7 +121,7 @@ MAP
     END #class    
     TEMPLATE "ttt.html"
     PROJECTION
-      "auto"
+      AUTO
     END
     EXTENT -17.625043 -34.819166 51.133870 37.349994
   END # layer  
