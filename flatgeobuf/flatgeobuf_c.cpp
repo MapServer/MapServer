@@ -300,8 +300,10 @@ int flatgeobuf_decode_header(ctx *ctx)
     ctx->has_tm = header->has_tm();
     ctx->index_node_size = header->index_node_size();
     auto crs = header->crs();
-    if (crs != nullptr)
+    if (crs != nullptr) {
         ctx->srid = crs->code();
+        ctx->wkt = crs->wkt()->c_str();
+    }
     auto columns = header->columns();
     if (columns != nullptr) {
         auto size = columns->size();

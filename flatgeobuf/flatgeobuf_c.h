@@ -87,6 +87,7 @@ typedef struct flatgeobuf_ctx
 	bool has_tm;
 	uint16_t index_node_size;
 	int32_t srid;
+	const char *wkt;
 	flatgeobuf_column *columns;
 	uint16_t columns_len;
 
