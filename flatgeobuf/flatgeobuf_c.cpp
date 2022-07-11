@@ -95,7 +95,7 @@ int flatgeobuf_ensure_buf(ctx *ctx, uint32_t size)
     if (ctx->buf_size < size) {
         ctx->buf_size = std::max(ctx->buf_size * 2, size);
         auto buf = (uint8_t *) realloc(ctx->buf, ctx->buf_size);
-        if (ctx->buf == NULL) {
+        if (buf == NULL) {
             msSetError(MS_FGBERR, "Failed to reallocate buffer", "flatgeobuf_ensure_buf");
             return -1;
         }
