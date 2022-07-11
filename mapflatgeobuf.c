@@ -167,12 +167,12 @@ int msFlatGeobufLayerOpen(layerObj *layer)
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference( NULL );
     char *pszWKT = NULL;
     if (ctx->srid > 0) {
-      if (!(OSRImportFromEPSG(hSRS, ctx->srid) != OGRERR_NONE)) {
+      if (OSRImportFromEPSG(hSRS, ctx->srid) != OGRERR_NONE) {
         OSRDestroySpatialReference(hSRS);
         flatgeobuf_free_ctx(ctx);
         return MS_FAILURE;
       }
-      if( OSRExportToWkt( hSRS, &pszWKT ) != OGRERR_NONE) {
+      if (OSRExportToWkt(hSRS, &pszWKT) != OGRERR_NONE) {
         OSRDestroySpatialReference(hSRS);
         flatgeobuf_free_ctx(ctx);
         return MS_FAILURE;
