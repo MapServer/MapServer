@@ -123,7 +123,6 @@ MAP
     PROJECTION
       AUTO
     END
-    EXTENT -17.625043 -34.819166 51.133870 37.349994
   END # layer  
 
 END # map
