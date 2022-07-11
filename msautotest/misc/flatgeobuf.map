@@ -121,8 +121,8 @@ MAP
     END #class    
     TEMPLATE "ttt.html"
     PROJECTION
-      "init=epsg:4326"
-    END 
+      AUTO
+    END
   END # layer  
 
 END # map

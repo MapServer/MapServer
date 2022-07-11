@@ -37,12 +37,17 @@ ctx *flatgeobuf_init_ctx()
 
 void flatgeobuf_free_ctx(ctx *ctx)
 {
-    if (ctx->columns)
+    if (ctx->columns) {
+        for (uint32_t i = 0; i < ctx->columns_len; i++)
+            free(ctx->columns[i].name);
         free(ctx->columns);
+    }
     if (ctx->search_result)
         free(ctx->search_result);
     if (ctx->buf)
         free(ctx->buf);
+    if (ctx->wkt)
+        free(ctx->wkt);
     free(ctx);
 }
 
@@ -74,17 +79,27 @@ void flatgeobuf_ensure_point(ctx *ctx, uint32_t len)
 
 int flatgeobuf_ensure_buf(ctx *ctx, uint32_t size)
 {
-    if (size > 100 * 1024 * 1024)
+    if (size > 100 * 1024 * 1024) {
+        msSetError(MS_FGBERR, "Invalid buffer size requested", "flatgeobuf_ensure_buf");
         return -1;
+    }
     if (!ctx->buf) {
-        ctx->buf_size = INIT_BUFFER_SIZE;
+        ctx->buf_size = std::max(INIT_BUFFER_SIZE, size);
         ctx->buf = (uint8_t *) malloc(ctx->buf_size);
+        if (ctx->buf == NULL) {
+            msSetError(MS_FGBERR, "Failed to allocate buffer", "flatgeobuf_ensure_buf");
+            return -1;
+        }
         return 0;
     }
     if (ctx->buf_size < size) {
-        ctx->buf_size = ctx->buf_size * 2;
-        ctx->buf = (uint8_t *) realloc(ctx->buf, ctx->buf_size);
-        flatgeobuf_ensure_buf(ctx, size);
+        ctx->buf_size = std::max(ctx->buf_size * 2, size);
+        auto buf = (uint8_t *) realloc(ctx->buf, ctx->buf_size);
+        if (buf == NULL) {
+            msSetError(MS_FGBERR, "Failed to reallocate buffer", "flatgeobuf_ensure_buf");
+            return -1;
+        }
+        ctx->buf = buf;
     }
     return 0;
 }
@@ -104,7 +119,6 @@ int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
 
     ctx->offset += sizeof(uoffset_t);
     if (flatgeobuf_ensure_buf(ctx, featureSize) != 0) {
-        msSetError(MS_FGBERR, "Failed to allocate buffer for feature", "flatgeobuf_decode_feature");
         return -1;
     }
 
@@ -238,7 +252,8 @@ int flatgeobuf_check_magicbytes(ctx *ctx)
         msSetError(MS_FGBERR, "Unexpected offset", "flatgeobuf_check_magicbytes");
         return -1;
     }
-    flatgeobuf_ensure_buf(ctx, FLATGEOBUF_MAGICBYTES_SIZE);
+    if (flatgeobuf_ensure_buf(ctx, FLATGEOBUF_MAGICBYTES_SIZE) != 0)
+        return -1;
     if (VSIFReadL(ctx->buf, 8, 1, ctx->file) != 1) {
         msSetError(MS_FGBERR, "Failed to read magicbytes", "flatgeobuf_check_magicbytes");
         return -1;
@@ -270,8 +285,8 @@ int flatgeobuf_decode_header(ctx *ctx)
         return -1;
     }
     ctx->offset += sizeof(uoffset_t);
-    if (flatgeobuf_ensure_buf(ctx, headerSize) != -1) {
-        msSetError(MS_FGBERR, "Failed to allocate buffer for header", "flatgeobuf_decode_header");
+    if (flatgeobuf_ensure_buf(ctx, headerSize) != 0) {
+        return -1;
     }
     if (VSIFReadL(ctx->buf, 1, headerSize, ctx->file) != headerSize) {
         msSetError(MS_FGBERR, "Failed to read header", "flatgeobuf_decode_header");
@@ -300,8 +315,12 @@ int flatgeobuf_decode_header(ctx *ctx)
     ctx->has_tm = header->has_tm();
     ctx->index_node_size = header->index_node_size();
     auto crs = header->crs();
-    if (crs != nullptr)
+    if (crs != nullptr) {
         ctx->srid = crs->code();
+        auto wkt = crs->wkt();
+        if (wkt != nullptr)
+            ctx->wkt = msStrdup(wkt->c_str());
+    }
     auto columns = header->columns();
     if (columns != nullptr) {
         auto size = columns->size();
@@ -310,7 +329,7 @@ int flatgeobuf_decode_header(ctx *ctx)
         ctx->columns_len = size;
         for (uint32_t i = 0; i < size; i++) {
             auto column = columns->Get(i);
-            ctx->columns[i].name = column->name()->c_str();
+            ctx->columns[i].name = msStrdup(column->name()->c_str());
             ctx->columns[i].type = (uint8_t) column->type();
             ctx->columns[i].itemindex = -1;
         }
