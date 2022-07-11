@@ -167,11 +167,13 @@ int msFlatGeobufLayerOpen(layerObj *layer)
   {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference( NULL );
     char *pszWKT = NULL;
-    if (ctx->srid) {
+    if (ctx->srid > 0) {
       if (!(OSRImportFromEPSG(hSRS, ctx->srid) != OGRERR_NONE))
         return MS_FAILURE;
       if( OSRExportToWkt( hSRS, &pszWKT ) != OGRERR_NONE)
         return MS_FAILURE;
+    } else if (ctx->wkt == NULL) {
+      return MS_SUCCESS;
     }
     int bOK = MS_FALSE;
     if (msOGCWKT2ProjectionObj(ctx->wkt ? ctx->wkt : pszWKT, &(layer->projection), layer->debug) == MS_SUCCESS)
