@@ -37,12 +37,17 @@ ctx *flatgeobuf_init_ctx()
 
 void flatgeobuf_free_ctx(ctx *ctx)
 {
-    if (ctx->columns)
+    if (ctx->columns) {
+        for (uint32_t i = 0; i < ctx->columns_len; i++)
+            free(ctx->columns[i].name);
         free(ctx->columns);
+    }
     if (ctx->search_result)
         free(ctx->search_result);
     if (ctx->buf)
         free(ctx->buf);
+    if (ctx->wkt)
+        free(ctx->wkt);
     free(ctx);
 }
 
@@ -302,7 +307,7 @@ int flatgeobuf_decode_header(ctx *ctx)
     auto crs = header->crs();
     if (crs != nullptr) {
         ctx->srid = crs->code();
-        ctx->wkt = crs->wkt()->c_str();
+        ctx->wkt = msStrdup(crs->wkt()->c_str());
     }
     auto columns = header->columns();
     if (columns != nullptr) {
@@ -312,7 +317,7 @@ int flatgeobuf_decode_header(ctx *ctx)
         ctx->columns_len = size;
         for (uint32_t i = 0; i < size; i++) {
             auto column = columns->Get(i);
-            ctx->columns[i].name = column->name()->c_str();
+            ctx->columns[i].name = msStrdup(column->name()->c_str());
             ctx->columns[i].type = (uint8_t) column->type();
             ctx->columns[i].itemindex = -1;
         }

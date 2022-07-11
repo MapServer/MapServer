@@ -33,7 +33,7 @@ extern uint8_t FLATGEOBUF_MAGICBYTES_SIZE;
 
 typedef struct flatgeobuf_column
 {
-	const char *name;
+	char *name;
 	uint8_t type;
 	const char *title;
 	const char *description;
@@ -87,7 +87,7 @@ typedef struct flatgeobuf_ctx
 	bool has_tm;
 	uint16_t index_node_size;
 	int32_t srid;
-	const char *wkt;
+	char *wkt;
 	flatgeobuf_column *columns;
 	uint16_t columns_len;
 
