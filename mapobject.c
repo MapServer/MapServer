@@ -166,9 +166,9 @@ int msSetConfigOption( mapObj *map, const char *key, const char *value)
 {
   /* We have special "early" handling of this so that it will be */
   /* in effect when the projection blocks are parsed and pj_init is called. */
-  if( strcasecmp(key,"PROJ_LIB") == 0 ) {
+  if( strcasecmp(key,"PROJ_DATA") == 0 || strcasecmp(key,"PROJ_LIB") == 0 ) {
     /* value may be relative to map path */
-    msSetPROJ_LIB( value, map->mappath );
+    msSetPROJ_DATA( value, map->mappath );
   }
 
   /* Same for MS_ERRORFILE, we want it to kick in as early as possible
@@ -220,8 +220,9 @@ void msApplyMapConfigOptions( mapObj *map )
        key != NULL;
        key = msNextKeyFromHashTable( &(map->configoptions), key ) ) {
     const char *value = msLookupHashTable( &(map->configoptions), key );
-    if( strcasecmp(key,"PROJ_LIB") == 0 ) {
-      msSetPROJ_LIB( value, map->mappath );
+    if( strcasecmp(key,"PROJ_DATA") == 0 ||
+        strcasecmp(key,"PROJ_LIB") == 0 ) {
+      msSetPROJ_DATA( value, map->mappath );
     } else if( strcasecmp(key,"MS_ERRORFILE") == 0 ) {
       msSetErrorFile( value, map->mappath );
     } else {
