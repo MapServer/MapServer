@@ -163,15 +163,26 @@ int msFlatGeobufLayerOpen(layerObj *layer)
   }
 
   if (layer->projection.numargs > 0 &&
-      EQUAL(layer->projection.args[0], "auto"))
-  {
+      EQUAL(layer->projection.args[0], "auto")) {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference( NULL );
-    if (ctx->srid)
-      if (!(OSRImportFromEPSG(hSRS, ctx->srid) != OGRERR_NONE))
-        return -1;
     char *pszWKT = NULL;
+    if (ctx->srid > 0) {
+      if (OSRImportFromEPSG(hSRS, ctx->srid) != OGRERR_NONE) {
+        OSRDestroySpatialReference(hSRS);
+        flatgeobuf_free_ctx(ctx);
+        return MS_FAILURE;
+      }
+      if (OSRExportToWkt(hSRS, &pszWKT) != OGRERR_NONE) {
+        OSRDestroySpatialReference(hSRS);
+        flatgeobuf_free_ctx(ctx);
+        return MS_FAILURE;
+      }
+    } else if (ctx->wkt == NULL) {
+      OSRDestroySpatialReference(hSRS);
+      return MS_SUCCESS;
+    }
     int bOK = MS_FALSE;
-    if (msOGCWKT2ProjectionObj(pszWKT, &(layer->projection), layer->debug) == MS_SUCCESS)
+    if (msOGCWKT2ProjectionObj(ctx->wkt ? ctx->wkt : pszWKT, &(layer->projection), layer->debug) == MS_SUCCESS)
       bOK = MS_TRUE;
     CPLFree(pszWKT);
     OSRDestroySpatialReference(hSRS);
