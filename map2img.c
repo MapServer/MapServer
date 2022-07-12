@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
     if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
       msGettimeofday(&requeststarttime, NULL);
 
-    /* Use PROJ_LIB env vars if set */
-    msProjLibInitFromEnv();
+    /* Use PROJ_DATA/PROJ_LIB env vars if set */
+    msProjDataInitFromEnv();
 
     /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
     if ( msDebugInitFromEnv() != MS_SUCCESS ) {
