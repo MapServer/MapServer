@@ -1077,6 +1077,8 @@ int msInitializeRendererVTable(outputFormatObj *format)
   msInitializeDummyRenderer(format->vtable);
 
   switch(format->renderer) {
+    case MS_RENDER_WITH_SKIA:
+      return msPopulateRendererVTableSkia(format->vtable);
     case MS_RENDER_WITH_AGG:
       return msPopulateRendererVTableAGG(format->vtable);
     case MS_RENDER_WITH_UTFGRID:

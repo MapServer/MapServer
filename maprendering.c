@@ -805,6 +805,7 @@ int msDrawShadeSymbol(mapObj *map, imageObj *image, shapeObj *p, styleObj *style
          */
         if(symbol->type == MS_SYMBOL_VECTOR && style->gap == 0 &&
             (image->format->renderer == MS_RENDER_WITH_AGG ||
+             image->format->renderer == MS_RENDER_WITH_SKIA ||
              image->format->renderer == MS_RENDER_WITH_CAIRO_RASTER)) {
           seamless = 1;
         }
