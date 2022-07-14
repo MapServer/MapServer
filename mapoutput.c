@@ -109,6 +109,12 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"png24","AGG/PNG","image/png; mode=24bit"},
   {"jpegpng", "AGG/MIXED", "image/vnd.jpeg-png"},
   {"jpegpng8", "AGG/MIXED", "image/vnd.jpeg-png8"},
+#ifdef USE_SKIA
+  {"png","SKIA/PNG","image/png"},
+  {"jpeg","SKIA/JPEG","image/jpeg"},
+  {"png8","SKIA/PNG8","image/png; mode=8bit"},
+  {"png24","SKIA/PNG","image/png; mode=24bit"}
+#endif
 #ifdef USE_CAIRO
   {"pdf","CAIRO/PDF","application/x-pdf"},
   {"svg","CAIRO/SVG","image/svg+xml"},
