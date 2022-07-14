@@ -113,7 +113,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"png","SKIA/PNG","image/png"},
   {"jpeg","SKIA/JPEG","image/jpeg"},
   {"png8","SKIA/PNG8","image/png; mode=8bit"},
-  {"png24","SKIA/PNG","image/png; mode=24bit"}
+  {"png24","SKIA/PNG","image/png; mode=24bit"},
 #endif
 #ifdef USE_CAIRO
   {"pdf","CAIRO/PDF","application/x-pdf"},
@@ -219,6 +219,24 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("jpg");
     format->renderer = MS_RENDER_WITH_AGG;
   }
+#if defined(USE_SKIA)
+  else if( strcasecmp(driver,"SKIA/PNG") == 0 ) {
+    if(!name) name="png";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/png");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("png");
+    format->renderer = MS_RENDER_WITH_SKIA;
+  }
+  else if( strcasecmp(driver,"SKIA/JPEG") == 0 ) {
+    if(!name) name="jpeg";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/jpeg");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("jpg");
+    format->renderer = MS_RENDER_WITH_SKIA;
+  }
+#endif
 #if defined(USE_PBF)
   else if( strcasecmp(driver,"MVT") == 0 ) {
     if(!name) name="mvt";
