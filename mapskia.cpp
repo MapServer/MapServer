@@ -57,6 +57,18 @@ int skia2FreeImage(imageObj * image)
   return MS_SUCCESS;
 }
 
+void skiaRenderPath(shapeObj *p, SkCanvas *c, SkPaint &paint) {
+  SkPath path;
+  for (int i = 0; i < p->numlines; i++) {
+    lineObj l = p->line[i];
+    pointObj *p = l.point;
+    path.moveTo(p[0].x, p[0].y);
+    for (int j = 1; j < l.numpoints; j++)
+      path.lineTo(p[j].x, p[j].y);
+  }
+  c->drawPath(path, paint);
+}
+
 int skia2RenderLine(imageObj *image, shapeObj *p, strokeStyleObj *style)
 {
   SkSurface *s = (SkSurface *) image->img.plugin;
@@ -65,15 +77,7 @@ int skia2RenderLine(imageObj *image, shapeObj *p, strokeStyleObj *style)
   paint.setStyle(SkPaint::Style::kStroke_Style);
   paint.setStrokeWidth(style->width);
   paint.setAntiAlias(style->antialiased);
-  SkPath path;
-  for (int i = 0; i < p->numlines; i++) {
-    lineObj line = p->line[i];
-    path.moveTo(line.point[0].x, line.point[0].y);
-    for (int j = 1; j < line.numpoints; j++)
-      path.lineTo(line.point[j].x, line.point[j].y);
-    path.close();
-  }
-  c->drawPath(path, paint);
+  skiaRenderPath(p, c, paint);
   return MS_SUCCESS;
 }
 
@@ -83,15 +87,7 @@ int skia2RenderPolygon(imageObj *image, shapeObj *p, colorObj *color)
   SkCanvas *c = s->getCanvas();
   SkPaint paint(skiaColor(color));
   paint.setStyle(SkPaint::Style::kFill_Style);
-  SkPath path;
-  for (int i = 0; i < p->numlines; i++) {
-    lineObj line = p->line[i];
-    path.moveTo(line.point[0].x, line.point[0].y);
-    for (int j = 1; j < line.numpoints; j++)
-      path.lineTo(line.point[j].x, line.point[j].y);
-    path.close();
-  }
-  c->drawPath(path, paint);
+  skiaRenderPath(p, c, paint);
   return MS_SUCCESS;
 }
 
@@ -117,7 +113,7 @@ int skiaGetRasterBufferHandle(imageObj *image, rasterBufferObj * rb)
   SkSurface *s = (SkSurface *) image->img.plugin;
   SkPixmap p;
   s->peekPixels(&p);
-  rb->type =MS_BUFFER_BYTE_RGBA;
+  rb->type = MS_BUFFER_BYTE_RGBA;
   rb->data.rgba.pixels = (unsigned char *) p.addr();
   rb->data.rgba.row_step = p.rowBytes();
   rb->data.rgba.pixel_step = 4;
@@ -155,7 +151,6 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
   /*renderer->compositeRasterBuffer = &aggCompositeRasterBuffer;
   agg2InitCache(&(MS_RENDERER_CACHE(renderer)));
   renderer->cleanup = agg2Cleanup;
-  renderer->renderLine = &agg2RenderLine;
 
   renderer->renderPolygon = &agg2RenderPolygon;
   renderer->renderPolygonTiled = &agg2RenderPolygonTiled;
@@ -171,17 +166,8 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
 
   renderer->renderTile = &agg2RenderTile;
 
-  renderer->getRasterBufferHandle = &aggGetRasterBufferHandle;
-  renderer->getRasterBufferCopy = aggGetRasterBufferCopy;
-  renderer->initializeRasterBuffer = aggInitializeRasterBuffer;
-
   renderer->mergeRasterBuffer = &agg2MergeRasterBuffer;
   renderer->loadImageFromFile = msLoadMSRasterBufferFromFile;
-  renderer->createImage = &agg2CreateImage;
-  renderer->saveImage = &agg2SaveImage;
-
-  renderer->startLayer = &agg2StartNewLayer;
-  renderer->endLayer = &agg2CloseNewLayer;
 
   renderer->freeImage = &agg2FreeImage;
   renderer->freeSymbol = &agg2FreeSymbol;*/
