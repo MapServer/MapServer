@@ -1,5 +1,6 @@
 #include "mapserver.h"
 #include <include/core/SkSurface.h>
+#include <include/core/SkCanvas.h>
 
 int skia2StartNewLayer(imageObj *img, mapObj* /*map*/, layerObj *layer)
 {
@@ -60,7 +61,13 @@ int skia2RenderPolygon(imageObj *image, shapeObj *p, colorObj * color)
 {
   SkSurface *s = (SkSurface *) image->img.plugin;
   SkCanvas *c = s->getCanvas();
-  //c->drawPoints();
+  SkPaint paint(SkColor4f { 255, 255, 255, 255 });
+  SkPoint points[p->line->numpoints];
+  for (int i = 0; i < p->line->numpoints; i++) {
+    points[i] = SkPoint::Make(p->line->point[i].x, p->line->point[i].y);
+  }
+  size_t count = p->line->numpoints;
+  c->drawPoints(SkCanvas::PointMode::kPolygon_PointMode, count, points, paint);
   return MS_SUCCESS;
 }
 
