@@ -1,8 +1,14 @@
 #include "mapserver.h"
 #include <include/core/SkSurface.h>
 #include <include/core/SkCanvas.h>
+#include <include/core/SkPath.h>
 
-int skia2StartNewLayer(imageObj *img, mapObj* /*map*/, layerObj *layer)
+SkColor4f skiaColor(colorObj *color)
+{
+  return SkColor4f { color->red/255.0f, color->green/255.0f, color->blue/255.0f, color->alpha/255.0f };
+}
+
+int skia2StartNewLayer(imageObj * /*img*/, mapObj * /*map*/, layerObj * /*layer*/)
 {
   return MS_SUCCESS;
 }
@@ -27,6 +33,8 @@ imageObj *skia2CreateImage(int width, int height, outputFormatObj *format, color
     SkColorType ct = format->transparent ? SkColorType::kRGBA_8888_SkColorType : SkColorType::kRGB_888x_SkColorType;
     SkImageInfo imageInfo = SkImageInfo::Make(width, height, ct, alpha);
     SkSurface *s = SkSurface::MakeRaster(imageInfo).release();
+    SkCanvas *c = s->getCanvas();
+    c->clear(skiaColor(bg));
     image->img.plugin = (void*) s;
   } else {
     msSetError(MS_RENDERERERR, "Cannot create Skia surface of size %dx%d.",
@@ -53,21 +61,37 @@ int skia2RenderLine(imageObj *image, shapeObj *p, strokeStyleObj *style)
 {
   SkSurface *s = (SkSurface *) image->img.plugin;
   SkCanvas *c = s->getCanvas();
-  //c->drawPoints();
+  SkPaint paint(skiaColor(style->color));
+  paint.setStyle(SkPaint::Style::kStroke_Style);
+  paint.setStrokeWidth(style->width);
+  paint.setAntiAlias(style->antialiased);
+  SkPath path;
+  for (int i = 0; i < p->numlines; i++) {
+    lineObj line = p->line[i];
+    path.moveTo(line.point[0].x, line.point[0].y);
+    for (int j = 1; j < line.numpoints; j++)
+      path.lineTo(line.point[j].x, line.point[j].y);
+    path.close();
+  }
+  c->drawPath(path, paint);
   return MS_SUCCESS;
 }
 
-int skia2RenderPolygon(imageObj *image, shapeObj *p, colorObj * color)
+int skia2RenderPolygon(imageObj *image, shapeObj *p, colorObj *color)
 {
   SkSurface *s = (SkSurface *) image->img.plugin;
   SkCanvas *c = s->getCanvas();
-  SkPaint paint(SkColor4f { 255, 255, 255, 255 });
-  SkPoint points[p->line->numpoints];
-  for (int i = 0; i < p->line->numpoints; i++) {
-    points[i] = SkPoint::Make(p->line->point[i].x, p->line->point[i].y);
+  SkPaint paint(skiaColor(color));
+  paint.setStyle(SkPaint::Style::kFill_Style);
+  SkPath path;
+  for (int i = 0; i < p->numlines; i++) {
+    lineObj line = p->line[i];
+    path.moveTo(line.point[0].x, line.point[0].y);
+    for (int j = 1; j < line.numpoints; j++)
+      path.lineTo(line.point[j].x, line.point[j].y);
+    path.close();
   }
-  size_t count = p->line->numpoints;
-  c->drawPoints(SkCanvas::PointMode::kPolygon_PointMode, count, points, paint);
+  c->drawPath(path, paint);
   return MS_SUCCESS;
 }
 
