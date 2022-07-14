@@ -34,6 +34,11 @@ imageObj *skia2CreateImage(int width, int height, outputFormatObj *format, color
   return image;
 }
 
+int skia2SaveImage(imageObj * /*img*/, mapObj* /*map*/, FILE * /*fp*/, outputFormatObj * /*format*/)
+{
+  return MS_FAILURE;
+}
+
 int skia2FreeImage(imageObj * image)
 {
   SkSurface *s = (SkSurface *) image->img.plugin;
@@ -107,6 +112,7 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
 
   renderer->freeImage = &skia2FreeImage;
   renderer->createImage = &skia2CreateImage;
+  renderer->saveImage = &skia2SaveImage;
 
   return MS_SUCCESS;
 }
