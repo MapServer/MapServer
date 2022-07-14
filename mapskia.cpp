@@ -1,5 +1,15 @@
 #include "mapserver.h"
-#include <include/core/SkBitmap.h>
+#include <include/core/SkSurface.h>
+
+int skia2StartNewLayer(imageObj *img, mapObj* /*map*/, layerObj *layer)
+{
+  return MS_SUCCESS;
+}
+
+int skia2CloseNewLayer(imageObj * /*img*/, mapObj * /*map*/, layerObj * /*layer*/)
+{
+  return MS_SUCCESS;
+}
 
 imageObj *skia2CreateImage(int width, int height, outputFormatObj *format, colorObj * bg)
 {
@@ -12,14 +22,40 @@ imageObj *skia2CreateImage(int width, int height, outputFormatObj *format, color
   if (width > 0 && height > 0) {
     image = (imageObj *) calloc(1, sizeof (imageObj));
     MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
-    SkBitmap *bm = new SkBitmap();
-    image->img.plugin = (void*) bm;
+    SkAlphaType alpha = format->transparent ? SkAlphaType::kPremul_SkAlphaType : SkAlphaType::kOpaque_SkAlphaType;
+    SkImageInfo imageInfo = SkImageInfo::MakeN32(width, height, alpha);
+    SkSurface *s = SkSurface::MakeRaster(imageInfo).get();
+    image->img.plugin = (void*) s;
   } else {
-    msSetError(MS_RENDERERERR, "Cannot create Skia bitmap of size %dx%d.",
+    msSetError(MS_RENDERERERR, "Cannot create Skia surface of size %dx%d.",
                "skia2CreateImage()", width, height);
   }
 
   return image;
+}
+
+int skia2FreeImage(imageObj * image)
+{
+  SkSurface *s = (SkSurface *) image->img.plugin;
+  delete s;
+  image->img.plugin = NULL;
+  return MS_SUCCESS;
+}
+
+int skia2RenderLine(imageObj *image, shapeObj *p, strokeStyleObj *style)
+{
+  SkSurface *s = (SkSurface *) image->img.plugin;
+  SkCanvas *c = s->getCanvas();
+  //c->drawPoints();
+  return MS_SUCCESS;
+}
+
+int skia2RenderPolygon(imageObj *image, shapeObj *p, colorObj * color)
+{
+  SkSurface *s = (SkSurface *) image->img.plugin;
+  SkCanvas *c = s->getCanvas();
+  //c->drawPoints();
+  return MS_SUCCESS;
 }
 
 int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
@@ -63,6 +99,13 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
   renderer->freeImage = &agg2FreeImage;
   renderer->freeSymbol = &agg2FreeSymbol;*/
 
+  renderer->renderLine = &skia2RenderLine;
+  renderer->renderPolygon = &skia2RenderPolygon;
+
+  renderer->startLayer = &skia2StartNewLayer;
+  renderer->endLayer = &skia2CloseNewLayer;
+
+  renderer->freeImage = &skia2FreeImage;
   renderer->createImage = &skia2CreateImage;
 
   return MS_SUCCESS;
