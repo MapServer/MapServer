@@ -59,12 +59,22 @@ int skia2FreeImage(imageObj * image)
 
 void skiaRenderPath(shapeObj *p, SkCanvas *c, SkPaint &paint) {
   SkPath path;
-  for (int i = 0; i < p->numlines; i++) {
-    lineObj l = p->line[i];
-    pointObj *p = l.point;
-    path.moveTo(p[0].x, p[0].y);
-    for (int j = 1; j < l.numpoints; j++)
-      path.lineTo(p[j].x, p[j].y);
+  lineObj *line = p->line;
+  pointObj *point = line->point;
+  lineObj *lend = &(p->line[p->numlines]);
+  pointObj *pend = &(line->point[line->numpoints]);
+  while (1) {
+    path.moveTo(point->x, point->y);
+    point++;
+    while (point < pend) {
+      path.lineTo(point->x, point->y);
+      point++;
+    }
+    line++;
+    if (line >= lend)
+      break;
+    point = line->point;
+    pend = &(line->point[line->numpoints]);
   }
   c->drawPath(path, paint);
 }
@@ -140,6 +150,11 @@ int skiaGetRasterBufferCopy(imageObj *image, rasterBufferObj *rb)
   return MS_FAILURE;
 }
 
+int skia2FreeSymbol(symbolObj * /*symbol*/)
+{
+  return MS_SUCCESS;
+}
+
 int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
 {
   renderer->supports_pixel_buffer = 1;
@@ -152,7 +167,6 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
   agg2InitCache(&(MS_RENDERER_CACHE(renderer)));
   renderer->cleanup = agg2Cleanup;
 
-  renderer->renderPolygon = &agg2RenderPolygon;
   renderer->renderPolygonTiled = &agg2RenderPolygonTiled;
   renderer->renderLineTiled = &agg2RenderLineTiled;
 
@@ -167,10 +181,7 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
   renderer->renderTile = &agg2RenderTile;
 
   renderer->mergeRasterBuffer = &agg2MergeRasterBuffer;
-  renderer->loadImageFromFile = msLoadMSRasterBufferFromFile;
-
-  renderer->freeImage = &agg2FreeImage;
-  renderer->freeSymbol = &agg2FreeSymbol;*/
+  renderer->loadImageFromFile = msLoadMSRasterBufferFromFile;*/
 
   renderer->getRasterBufferHandle = &skiaGetRasterBufferHandle;
   renderer->getRasterBufferCopy = skiaGetRasterBufferCopy;
@@ -185,6 +196,8 @@ int msPopulateRendererVTableSkia(rendererVTableObj * renderer)
   renderer->freeImage = &skia2FreeImage;
   renderer->createImage = &skia2CreateImage;
   renderer->saveImage = &skia2SaveImage;
+
+  renderer->freeSymbol = &skia2FreeSymbol;
 
   return MS_SUCCESS;
 }
