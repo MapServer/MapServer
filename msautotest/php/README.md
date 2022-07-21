@@ -15,3 +15,10 @@ You can run a single test such as: `phpunit --debug classObjTest.php`
 
 This folder includes a `phpunit.xml` configuration file for these tests.  More 
 info about these settings: https://phpunit.readthedocs.io/en/9.5/configuration.html
+
+# PHPNG (SWIG) MapScript API documentation
+
+Follow: https://mapserver.org/mapscript/mapscript.html
+
+
+
