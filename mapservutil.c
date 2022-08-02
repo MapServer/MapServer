@@ -2010,8 +2010,8 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
 
   msIO_installStdoutToBuffer();
 
-  /* Use PROJ_LIB env vars if set */
-  msProjLibInitFromEnv();
+  /* Use PROJ_DATA/PROJ_LIB env vars if set */
+  msProjDataInitFromEnv();
 
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if( msDebugInitFromEnv() != MS_SUCCESS ) {

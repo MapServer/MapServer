@@ -2008,8 +2008,8 @@ int msSetup()
   msThreadInit();
 #endif
 
-  /* Use PROJ_LIB env vars if set */
-  msProjLibInitFromEnv();
+  /* Use PROJ_DATA/PROJ_LIB env vars if set */
+  msProjDataInitFromEnv();
 
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if (msDebugInitFromEnv() != MS_SUCCESS)
@@ -2069,7 +2069,7 @@ void msCleanup()
 #  endif
   pj_deallocate_grids();
 #endif
-  msSetPROJ_LIB( NULL, NULL );
+  msSetPROJ_DATA( NULL, NULL );
   msProjectionContextPoolCleanup();
 
 #if defined(USE_CURL)

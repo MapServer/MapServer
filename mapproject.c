@@ -39,9 +39,9 @@
 #include "cpl_conv.h"
 #include "ogr_srs_api.h"
 
-static char *ms_proj_lib = NULL;
+static char *ms_proj_data = NULL;
 #if PROJ_VERSION_MAJOR >= 6
-static unsigned ms_proj_lib_change_counter = 0;
+static unsigned ms_proj_data_change_counter = 0;
 #endif
 
 typedef struct LinkedListOfProjContext LinkedListOfProjContext;
@@ -79,7 +79,7 @@ typedef struct
 struct projectionContext
 {
     PJ_CONTEXT* proj_ctx;
-    unsigned ms_proj_lib_change_counter;
+    unsigned ms_proj_data_change_counter;
     int ref_count;
     pjCacheEntry pj_cache[PJ_CACHE_ENTRY_SIZE];
     int pj_cache_size;
@@ -865,13 +865,13 @@ int msProcessProjection(projectionObj *p)
         return -1;
     }
   }
-  if( p->proj_ctx->ms_proj_lib_change_counter != ms_proj_lib_change_counter )
+  if( p->proj_ctx->ms_proj_data_change_counter != ms_proj_data_change_counter )
   {
     msAcquireLock( TLOCK_PROJ );
-    p->proj_ctx->ms_proj_lib_change_counter = ms_proj_lib_change_counter;
+    p->proj_ctx->ms_proj_data_change_counter = ms_proj_data_change_counter;
     {
-        const char* const paths[1] = { ms_proj_lib };
-        proj_context_set_search_paths(p->proj_ctx->proj_ctx, 1, ms_proj_lib ? paths : NULL);
+        const char* const paths[1] = { ms_proj_data };
+        proj_context_set_search_paths(p->proj_ctx->proj_ctx, 1, ms_proj_data ? paths : NULL);
     }
     msReleaseLock( TLOCK_PROJ );
   }
@@ -2501,45 +2501,46 @@ static const char *msProjFinder( const char *filename)
   if( filename == NULL )
     return NULL;
 
-  if( ms_proj_lib == NULL )
+  if( ms_proj_data == NULL )
     return filename;
 
-  last_filename = (char *) malloc(strlen(filename)+strlen(ms_proj_lib)+2);
-  sprintf( last_filename, "%s/%s", ms_proj_lib, filename );
+  last_filename = (char *) malloc(strlen(filename)+strlen(ms_proj_data)+2);
+  sprintf( last_filename, "%s/%s", ms_proj_data, filename );
 
   return last_filename;
 }
 #endif
 
 /************************************************************************/
-/*                       msProjLibInitFromEnv()                         */
+/*                       msProjDataInitFromEnv()                        */
 /************************************************************************/
-void msProjLibInitFromEnv()
+void msProjDataInitFromEnv()
 {
   const char *val;
 
-  if( (val=CPLGetConfigOption( "PROJ_LIB", NULL )) != NULL ) {
-    msSetPROJ_LIB(val, NULL);
+  if( (val=CPLGetConfigOption( "PROJ_DATA", NULL )) != NULL ||
+      (val=CPLGetConfigOption( "PROJ_LIB", NULL )) != NULL ) {
+    msSetPROJ_DATA(val, NULL);
   }
 }
 
 /************************************************************************/
-/*                           msSetPROJ_LIB()                            */
+/*                           msSetPROJ_DATA()                           */
 /************************************************************************/
-void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
+void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
 
 {
   char *extended_path = NULL;
 
   /* Handle relative path if applicable */
-  if( proj_lib && pszRelToPath
-      && proj_lib[0] != '/'
-      && proj_lib[0] != '\\'
-      && !(proj_lib[0] != '\0' && proj_lib[1] == ':') ) {
+  if( proj_data && pszRelToPath
+      && proj_data[0] != '/'
+      && proj_data[0] != '\\'
+      && !(proj_data[0] != '\0' && proj_data[1] == ':') ) {
     struct stat stat_buf;
     extended_path = (char*) msSmallMalloc(strlen(pszRelToPath)
-                                          + strlen(proj_lib) + 10);
-    sprintf( extended_path, "%s/%s", pszRelToPath, proj_lib );
+                                          + strlen(proj_data) + 10);
+    sprintf( extended_path, "%s/%s", pszRelToPath, proj_data );
 
 #ifndef S_ISDIR
 #  define S_ISDIR(x) ((x) & S_IFDIR)
@@ -2547,41 +2548,41 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
 
     if( stat( extended_path, &stat_buf ) == 0
         && S_ISDIR(stat_buf.st_mode) )
-      proj_lib = extended_path;
+      proj_data = extended_path;
   }
 
 
   msAcquireLock( TLOCK_PROJ );
 #if PROJ_VERSION_MAJOR >= 6
-  if( proj_lib == NULL && ms_proj_lib == NULL )
+  if( proj_data == NULL && ms_proj_data == NULL )
   {
      /* do nothing */
   }
-  else if( proj_lib != NULL && ms_proj_lib != NULL &&
-           strcmp(proj_lib, ms_proj_lib) == 0 )
+  else if( proj_data != NULL && ms_proj_data != NULL &&
+           strcmp(proj_data, ms_proj_data) == 0 )
   {
     /* do nothing */
   }
   else
   {
-    ms_proj_lib_change_counter++;
-    free( ms_proj_lib );
-    ms_proj_lib = proj_lib ? msStrdup(proj_lib) : NULL;
+    ms_proj_data_change_counter++;
+    free( ms_proj_data );
+    ms_proj_data = proj_data ? msStrdup(proj_data) : NULL;
   }
 #else
   {
     static int finder_installed = 0;
-    if( finder_installed == 0 && proj_lib != NULL) {
+    if( finder_installed == 0 && proj_data != NULL) {
       finder_installed = 1;
       pj_set_finder( msProjFinder );
     }
   }
 
-  if (proj_lib == NULL) pj_set_finder(NULL);
+  if (proj_data == NULL) pj_set_finder(NULL);
 
-  if( ms_proj_lib != NULL ) {
-    free( ms_proj_lib );
-    ms_proj_lib = NULL;
+  if( ms_proj_data != NULL ) {
+    free( ms_proj_data );
+    ms_proj_data = NULL;
   }
 
   if( last_filename != NULL ) {
@@ -2589,15 +2590,15 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
     last_filename = NULL;
   }
 
-  if( proj_lib != NULL )
-    ms_proj_lib = msStrdup( proj_lib );
+  if( proj_data != NULL )
+    ms_proj_data = msStrdup( proj_data );
 #endif
   msReleaseLock( TLOCK_PROJ );
 
 #if GDAL_VERSION_MAJOR >= 3
-  if( ms_proj_lib != NULL )
+  if( ms_proj_data != NULL )
   {
-    const char* const apszPaths[] = { ms_proj_lib, NULL };
+    const char* const apszPaths[] = { ms_proj_data, NULL };
     OSRSetPROJSearchPaths(apszPaths);
   }
 #endif

@@ -156,8 +156,8 @@ but are not directly exposed by the mapscript module
   MS_DLL_EXPORT void msAxisDenormalizePoints( projectionObj *proj, int count,
       double *x, double *y );
 
-  MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
-  MS_DLL_EXPORT void msProjLibInitFromEnv();
+  MS_DLL_EXPORT void msSetPROJ_DATA( const char *, const char * );
+  MS_DLL_EXPORT void msProjDataInitFromEnv();
 
   int msProjIsGeographicCRS(projectionObj* proj);
 #if PROJ_VERSION_MAJOR >= 6
