@@ -3,4 +3,4 @@ pillow
 wheel>=0.31.1
 setuptools>=40.2.0
 flake8==3.9.2; python_version == '2.7'
-flake8==5.0.3; python_version >= '3.6'
+flake8==5.0.3; python_version >= '3.0'
