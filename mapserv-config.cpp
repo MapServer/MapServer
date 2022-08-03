@@ -108,8 +108,9 @@ static int loadConfig(configObj *config)
 static void msConfigSetConfigOption(const char* key, const char* value)
 {
   CPLSetConfigOption(key, value);
-  if( strcasecmp(key,"PROJ_LIB") == 0 ) {
-    msSetPROJ_LIB( value, nullptr );
+  if( strcasecmp(key,"PROJ_DATA") == 0 ||
+      strcasecmp(key,"PROJ_LIB") == 0 ) {
+    msSetPROJ_DATA( value, nullptr );
   }
 }
 
