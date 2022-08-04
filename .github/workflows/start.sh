@@ -106,6 +106,14 @@ echo "Running FastCGI query again"
 curl -s "http://localhost/cgi-bin/mapserv.fcgi?MAP=/tmp/wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.xml
 cat /tmp/res.xml | grep wfs:WFS_Capabilities >/dev/null || (cat /tmp/res.xml && /bin/false)
 
+echo "Check that we return an error if given no arguments"
+curl -s "http://localhost/cgi-bin/mapserv.fcgi" > /tmp/res.xml
+cat /tmp/res.xml | grep -q 'QUERY_STRING is set, but empty' || (cat /tmp/res.xml && /bin/false)
+
+echo "Check again to make sure further errors are reported (#6543)"
+curl -s "http://localhost/cgi-bin/mapserv.fcgi" > /tmp/res.xml
+cat /tmp/res.xml | grep -q 'QUERY_STRING is set, but empty' || (cat /tmp/res.xml && /bin/false)
+
 cd msautotest/wxs
 
 export PATH=/tmp/install-mapserver/bin:$PATH
