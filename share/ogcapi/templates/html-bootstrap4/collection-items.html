@@ -49,9 +49,11 @@
 <table class="table">
   <thead class="thead-light">
     <th>ID</th>
+{% if response.features %}
 {% for key, value in response.features.0.properties %}
     <th>{{ key }}</th>
 {% endfor %} 
+{% endif %}
   </thead>
   <tbody>    
 {% for feature in response.features %}
