@@ -905,6 +905,9 @@ int msQueryByFilter(mapObj *map)
 
     status = msLayerWhichShapes(lp, search_rect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
+      lp->filteritem = old_filteritem; /* point back to original value */
+      msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+      msFreeExpression(&old_filter);
       msLayerClose(lp);
       continue;
     } else if(status != MS_SUCCESS) goto restore_old_filter;
