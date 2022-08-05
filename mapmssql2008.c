@@ -1348,7 +1348,7 @@ int msMSSQL2008LayerGetNumFeatures(layerObj *layer)
 }
 
 /* Prepare and execute the SQL statement for this layer */
-static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
+static int prepare_database(layerObj *layer, rectObj rect, char **query_string, int isQuery)
 {
   msMSSQL2008LayerInfo *layerinfo;
   char *query = 0;
@@ -1618,6 +1618,12 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
           query = msStringConcatenate(query, pszTmp);
           msFree(pszTmp);
       }
+      else if (isQuery && !layerinfo->sort_spec) {
+          /* Add orderby to make the result set order deterministic */
+          query = msStringConcatenate(query, " ORDER BY [");
+          query = msStringConcatenate(query, layerinfo->urid_name);
+          query = msStringConcatenate(query, "]");
+      }
   }
 
 
@@ -1682,7 +1688,7 @@ int msMSSQL2008LayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     return MS_FAILURE;
   }
 
-  set_up_result = prepare_database(layer, rect, &query_str);
+  set_up_result = prepare_database(layer, rect, &query_str, isQuery);
 
   if(set_up_result != MS_SUCCESS) {
     msFree(query_str);
