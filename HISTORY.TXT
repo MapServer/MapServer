@@ -12,6 +12,21 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+8.0.0-beta2 release (2022-08-09)
+--------------------------------
+
+- install coshp utility (#6540)
+
+- improve error messages about missing mandatory metadata (#6542)
+
+- fix reprojection of lines crossing the antimeridian (#6557) 
+
+- config file parsing: use msSetPROJ_LIB() when ENV PROJ_LIB is set (#6565)
+
+- handle PROJ_DATA as well as PROJ_LIB (#6573)
+
+- reset layer filteritem to its old value in case of no overlap (#6550)
+
 8.0.0-beta1 release (2022-06-27)
 --------------------------------
 
