@@ -24,6 +24,6 @@ mkdir shapecoverage/
 mkdir input/
 cp ../tests/*.map input/
 
-./mapfuzzer mapcoverage/ input/
-./shapefuzzer shapecoverage/
+./fuzzers/mapfuzzer mapcoverage/ input/
+./fuzzers/shapefuzzer shapecoverage/
 ```
