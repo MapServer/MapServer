@@ -12,6 +12,13 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+8.0.0-rc1 release (2022-08-19)
+------------------------------
+
+- add missing include to fix build issue on some compilers (#6595)
+
+- update the distributed mapserver-sample.conf (#6598)
+
 8.0.0-beta2 release (2022-08-09)
 --------------------------------
 
