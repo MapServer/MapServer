@@ -1801,6 +1801,10 @@ static std::string msPostGISBuildSQLSRID(layerObj *layer)
 static std::string msPostGISReplaceBoxToken(layerObj *layer, const rectObj *rect, const char *fromsource)
 {
   std::string result(fromsource);
+  
+  if( layer->debug > 1 ) {
+    msDebug("msPostGISReplaceBoxToken called.\n");
+  }  
 
   if ( strstr(fromsource, BOXTOKEN) && rect ) {
     char *strBox = nullptr;
