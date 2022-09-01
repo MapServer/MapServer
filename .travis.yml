@@ -19,7 +19,7 @@ matrix:
         - BUILD_NAME=PHP_8.0
         - PYTHON_VERSION=3.8
 
-    - php: 8.1.9
+    - php: 8.1.10
       env:
         - BUILD_NAME=PHP_8.1
         - PYTHON_VERSION=3.9
