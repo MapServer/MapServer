@@ -539,8 +539,10 @@ void msWMSPrepareNestedGroups(mapObj* map, int /* nVersion */, char*** nestedGro
  } 
  /* Iterate through layers to find out whether they are in any of the nested groups */
  for (int i = 0; i < map->numlayers; i++) {
-    if( uniqgroups.find(msStringToLower(std::string(GET_LAYER(map, i)->name))) != uniqgroups.end() ) {
-        isUsedInNestedGroup[i] = 1;
+    if (GET_LAYER(map, i)->name) {
+        if( uniqgroups.find(msStringToLower(std::string(GET_LAYER(map, i)->name))) != uniqgroups.end() ) {
+            isUsedInNestedGroup[i] = 1;
+        }
     }
   }
 }
