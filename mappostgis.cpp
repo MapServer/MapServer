@@ -1801,6 +1801,10 @@ static std::string msPostGISBuildSQLSRID(layerObj *layer)
 static std::string msPostGISReplaceBoxToken(layerObj *layer, const rectObj *rect, const char *fromsource)
 {
   std::string result(fromsource);
+  
+  if( layer->debug > 1 ) {
+    msDebug("msPostGISReplaceBoxToken called.\n");
+  }  
 
   if ( strstr(fromsource, BOXTOKEN) && rect ) {
     char *strBox = nullptr;
@@ -1901,7 +1905,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
         // If the SRID is known, we can safely use ST_Intersects()
         // otherwise if find_srid() would return 0, ST_Intersects() would not
         // work at all, which breaks the msautotest/query/query_postgis.map
-        // tests, releated to bdry_counpy2 layer that has no SRID
+        // tests, related to bdry_counpy2 layer that has no SRID
         if( layerinfo->version >= 20500 )
         {
             strRect = "ST_Intersects(\"";
@@ -2049,6 +2053,11 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect, 
   if ( layerinfo->paging && layer->startindex > 0 ) {
     strWhere += " OFFSET ";
     strWhere += std::to_string(layer->startindex-1);
+  }
+
+  if (strWhere.empty()) {
+      // return all records
+      strWhere = "true";
   }
 
   return strWhere;
