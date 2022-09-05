@@ -12,6 +12,13 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+8.0.0-rc2 release (2022-09-05)
+------------------------------
+
+- fix !BOX! token not working for a PostGIS connection (#6601)
+
+- check if a LAYER has a NAME, before including it in a GROUP (#6603)
+
 8.0.0-rc1 release (2022-08-19)
 ------------------------------
 
