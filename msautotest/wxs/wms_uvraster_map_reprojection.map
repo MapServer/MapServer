@@ -56,7 +56,7 @@ MAP
 
   METADATA
     "wms_title"       "test"
-    "gml_include_items" "all"
+    "gml_include_items" "uv_angle,uv_minus_angle,uv_length,uv_length_2,u,v"
   END
 
   PROJECTION

@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdbool.h>
 #include "mapows.h"
 #include "mapresample.h"
 #include "mapthread.h"
@@ -48,6 +49,10 @@
 #define MSUVRASTER_UINDEX   -104
 #define MSUVRASTER_V    "v"
 #define MSUVRASTER_VINDEX   -105
+#define MSUVRASTER_LON    "lon"
+#define MSUVRASTER_LONINDEX   -106
+#define MSUVRASTER_LAT    "lat"
+#define MSUVRASTER_LATINDEX   -107
 
 #define RQM_UNKNOWN               0
 #define RQM_ENTRY_PER_PIXEL       1
@@ -83,6 +88,9 @@ typedef struct {
   rectObj extent;
   int     next_shape;
   int x, y; /* used internally in msUVRasterLayerNextShape() */
+
+  bool needsLonLat;
+  reprojectionObj* reprojectorToLonLat;
 
   mapObj* mapToUseForWhichShapes; /* set if the map->extent and map->projection are valid in msUVRASTERLayerWhichShapes() */
 
@@ -121,8 +129,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
 
   itemindexes = (int*)layer->iteminfo;
   for(i=0; i<layer->numitems; i++) {
-    /* Special case for handling text string and angle coming from */
-    /* OGR style strings.  We use special attribute snames. */
+    /* Special attribute names. */
     if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
       itemindexes[i] = MSUVRASTER_ANGLEINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
@@ -135,9 +142,19 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = MSUVRASTER_UINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_V))
       itemindexes[i] = MSUVRASTER_VINDEX;
+    else if (EQUAL(layer->items[i], MSUVRASTER_LON))
+    {
+      uvlinfo->needsLonLat = true;
+      itemindexes[i] = MSUVRASTER_LONINDEX;
+    }
+    else if (EQUAL(layer->items[i], MSUVRASTER_LAT))
+    {
+      uvlinfo->needsLonLat = true;
+      itemindexes[i] = MSUVRASTER_LATINDEX;
+    }
     else {
       itemindexes[i] = -1;
-      msSetError(MS_OGRERR,
+      msSetError(MS_MISCERR,
                  "Invalid Field name: %s",
                  "msUVRASTERLayerInitItemInfo()",
                  layer->items[i]);
@@ -231,6 +248,10 @@ static void msUVRasterLayerInfoFree( layerObj *layer )
     free(uvlinfo->v);
   }
 
+  if (uvlinfo->reprojectorToLonLat) {
+      msProjectDestroyReprojector(uvlinfo->reprojectorToLonLat);
+  }
+
   free( uvlinfo );
 
   layer->layerinfo = NULL;
@@ -280,7 +301,7 @@ int msUVRASTERLayerGetItems(layerObj *layer)
     return MS_FAILURE;
 
   layer->numitems = 0;
-  layer->items = (char **) msSmallCalloc(sizeof(char *),10);;
+  layer->items = (char **) msSmallCalloc(sizeof(char *),10);
 
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_ANGLE);
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_MINUS_ANGLE);
@@ -288,6 +309,8 @@ int msUVRASTERLayerGetItems(layerObj *layer)
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LENGTH_2);
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_U);
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_V);
+  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LON);
+  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LAT);
   layer->items[layer->numitems] = NULL;
 
   return msUVRASTERLayerInitItemInfo(layer);
@@ -299,13 +322,16 @@ int msUVRASTERLayerGetItems(layerObj *layer)
  * Special attribute names are used to return some UV params: uv_angle,
  * uv_length, u and v.
  **********************************************************************/
-static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
+static char **msUVRASTERGetValues(layerObj *layer, float u, float v, const pointObj* point)
 {
   char **values;
   int i = 0;
   char tmp[100];
   float size_scale;
   int *itemindexes = (int*)layer->iteminfo;
+  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
+  double lon = HUGE_VAL;
+  double lat = HUGE_VAL;
 
   if(layer->numitems == 0)
     return(NULL);
@@ -330,20 +356,35 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
       atof(CSLFetchNameValue( layer->processing, "UV_SIZE_SCALE" ));
   }
 
+  if( uvlinfo->needsLonLat )
+  {
+      if( uvlinfo->reprojectorToLonLat == NULL )
+          uvlinfo->reprojectorToLonLat = msProjectCreateReprojector(&layer->projection, NULL);
+      if( uvlinfo->reprojectorToLonLat )
+      {
+          pointObj pointWrk = *point;
+          if( msProjectPointEx(uvlinfo->reprojectorToLonLat, &pointWrk) == MS_SUCCESS )
+          {
+              lon = pointWrk.x;
+              lat = pointWrk.y;
+          }
+      }
+  }
+
   for(i=0; i<layer->numitems; i++) {
     if (itemindexes[i] == MSUVRASTER_ANGLEINDEX) {
-      snprintf(tmp, 100, "%f", (atan2((double)*v, (double)*u) * 180 / MS_PI));
+      snprintf(tmp, 100, "%f", (atan2((double)v, (double)u) * 180 / MS_PI));
       values[i] = msStrdup(tmp);
     } else if (itemindexes[i] == MSUVRASTER_MINUSANGLEINDEX) {
       double minus_angle;
-      minus_angle = (atan2((double)*v, (double)*u) * 180 / MS_PI)+180;
+      minus_angle = (atan2((double)v, (double)u) * 180 / MS_PI)+180;
       if (minus_angle >= 360)
         minus_angle -= 360;
       snprintf(tmp, 100, "%f", minus_angle);
       values[i] = msStrdup(tmp);
     } else if ( (itemindexes[i] == MSUVRASTER_LENGTHINDEX) ||
                 (itemindexes[i] == MSUVRASTER_LENGTH2INDEX) ) {
-      float length = sqrt((*u**u)+(*v**v))*size_scale;
+      float length = sqrt((u*u)+(v*v))*size_scale;
 
       if (itemindexes[i] == MSUVRASTER_LENGTHINDEX)
         snprintf(tmp, 100, "%f", length);
@@ -352,14 +393,20 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
 
       values[i] = msStrdup(tmp);
     } else if (itemindexes[i] == MSUVRASTER_UINDEX) {
-      snprintf(tmp, 100, "%f",*u);
+      snprintf(tmp, 100, "%f",u);
       values[i] = msStrdup(tmp);
     } else if (itemindexes[i] == MSUVRASTER_VINDEX) {
-      snprintf(tmp, 100, "%f",*v);
+      snprintf(tmp, 100, "%f",v);
+      values[i] = msStrdup(tmp);
+    } else if (itemindexes[i] == MSUVRASTER_LONINDEX) {
+      snprintf(tmp, sizeof(tmp), "%.18g",lon);
+      values[i] = msStrdup(tmp);
+    } else if (itemindexes[i] == MSUVRASTER_LATINDEX) {
+      snprintf(tmp, sizeof(tmp), "%.18g",lat);
       values[i] = msStrdup(tmp);
     } else {
       values[i] = NULL;
-      }
+    }
   }
 
   return values;
@@ -877,7 +924,8 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   msComputeBounds( shape );
 
   shape->numvalues = layer->numitems;
-  shape->values = msUVRASTERGetValues(layer, &uvlinfo->u[x][y], &uvlinfo->v[x][y]);
+  shape->values = msUVRASTERGetValues(layer, uvlinfo->u[x][y], uvlinfo->v[x][y],
+                                      &point);
   shape->index = shapeindex;
   shape->resultindex = shapeindex;
 
