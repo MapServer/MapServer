@@ -308,41 +308,41 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
 static PJ* getBaseGeographicCRS(projectionObj* in)
 {
     PJ_CONTEXT* ctxt;
-    PJ_TYPE type;
+    PJ *geod_crs;
+    PJ *datum;
+    PJ *cs;
+    PJ *geog_crs;
     assert(in && in->proj);
     ctxt = in->proj_ctx->proj_ctx;
-    type = proj_get_type(in->proj);
-    if( type == PJ_TYPE_PROJECTED_CRS )
+    geod_crs = proj_crs_get_geodetic_crs(ctxt, in->proj);
+    if( geod_crs == NULL )
+        return NULL;
+#if PROJ_VERSION_MAJOR >= 8 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
+    datum = proj_crs_get_datum_forced(ctxt, geod_crs);
+#else
+    datum = proj_crs_get_datum(ctxt, geod_crs);
+#endif
+    cs = proj_create_ellipsoidal_2D_cs(ctxt, PJ_ELLPS2D_LONGITUDE_LATITUDE, NULL, 0);
+    geog_crs = proj_create_geographic_crs_from_datum(ctxt, NULL, datum, cs);
+    proj_destroy(geod_crs);
+    proj_destroy(datum);
+    proj_destroy(cs);
+    if( proj_get_type(in->proj) == PJ_TYPE_BOUND_CRS )
     {
-        return proj_get_source_crs(ctxt, in->proj);
-    }
-    if( type == PJ_TYPE_BOUND_CRS )
-    {
-        /* If it is a boundCRS of a projectedCRS, extract the geographicCRS
-         * from the projectedCRS, and rewrap it in a boundCRS */
-        PJ* source_crs = proj_get_source_crs(ctxt, in->proj);
-        PJ* geog_source_crs;
         PJ* hub_crs;
         PJ* transf;
         PJ* ret;
-        if( proj_get_type(source_crs) != PJ_TYPE_PROJECTED_CRS )
-        {
-            proj_destroy(source_crs);
-            return NULL;
-        }
-        geog_source_crs = proj_get_source_crs(ctxt, source_crs);
-        proj_destroy(source_crs);
         hub_crs = proj_get_target_crs(ctxt, in->proj);
         transf = proj_crs_get_coordoperation(ctxt, in->proj);
-        ret = proj_crs_create_bound_crs(ctxt, geog_source_crs,
+        ret = proj_crs_create_bound_crs(ctxt, geog_crs,
                                         hub_crs, transf);
-        proj_destroy(geog_source_crs);
+        proj_destroy(geog_crs);
+        geog_crs = ret;
         proj_destroy(hub_crs);
         proj_destroy(transf);
-        return ret;
-
     }
-    return NULL;
+
+    return geog_crs;
 }
 
 /************************************************************************/
