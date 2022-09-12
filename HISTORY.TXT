@@ -12,6 +12,11 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+8.0.0 release (2022-09-12)
+--------------------------
+
+RC2 was released as the final 8.0.0 (see major changes below)
+
 8.0.0-rc2 release (2022-09-05)
 ------------------------------
 
