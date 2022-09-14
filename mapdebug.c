@@ -324,9 +324,17 @@ void msDebug( const char * pszFormat, ... )
 {
   va_list args;
   debugInfoObj *debuginfo = msGetDebugInfoObj();
+  char szMessage[MESSAGELENGTH];
 
   if (debuginfo == NULL || debuginfo->debug_mode == MS_DEBUGMODE_OFF)
     return;  /* Don't waste time here! */
+
+  va_start(args, pszFormat);
+  vsnprintf( szMessage, MESSAGELENGTH, pszFormat, args );
+  va_end(args);
+  szMessage[MESSAGELENGTH-1] = '\0';
+
+  msRedactCredentials(szMessage);
 
   if (debuginfo->fp) {
     /* Writing to a stdio file handle */
@@ -345,21 +353,11 @@ void msDebug( const char * pszFormat, ... )
                    msStringChop(ctime(&t)), (long)tv.tv_usec);
     }
 
-    va_start(args, pszFormat);
-    msIO_vfprintf(debuginfo->fp, pszFormat, args);
-    va_end(args);
+    msIO_fprintf(debuginfo->fp, "%s", szMessage);
   }
 #ifdef _WIN32
   else if (debuginfo->debug_mode == MS_DEBUGMODE_WINDOWSDEBUG) {
     /* Writing to Windows Debug Console */
-
-    char szMessage[MESSAGELENGTH];
-
-    va_start(args, pszFormat);
-    vsnprintf( szMessage, MESSAGELENGTH, pszFormat, args );
-    va_end(args);
-
-    szMessage[MESSAGELENGTH-1] = '\0';
     OutputDebugStringA(szMessage);
   }
 #endif

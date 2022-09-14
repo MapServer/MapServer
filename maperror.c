@@ -324,6 +324,18 @@ char *msGetErrorString(char *delimiter)
   return(errstr);
 }
 
+void msRedactCredentials(char* str)
+{
+  char* password = strstr(str, "password=");
+  if (password != NULL) {
+    char* ptr = password + strlen("password=");
+    while (*ptr != '\0' && *ptr != ' ') {
+      *ptr = '*';
+      ptr++;
+    }
+  }
+}
+
 void msSetError(int code, const char *message_fmt, const char *routine, ...)
 {
   errorObj *ms_error;
@@ -355,6 +367,8 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
   }
   else
       ++ms_error->errorcount;
+
+  msRedactCredentials(ms_error->message);
 
   /* Log a copy of errors to MS_ERRORFILE if set (handled automatically inside msDebug()) */
   msDebug("%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
