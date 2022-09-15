@@ -1058,9 +1058,10 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
               return MS_SUCCESS;
             }
 
-            // msExecuteQuery() use a 1-based offst convention, whereas the API
+            // msExecuteQuery() use a 1-based offset convention, whereas the API
             // uses a 0-based offset convention.
             map->query.startindex = 1 + offset;
+            layer->startindex = 1 + offset;
         }
 
         if(msExecuteQuery(map) != MS_SUCCESS) {
