@@ -150,6 +150,7 @@ Errors are managed as a chained list with the first item being the most recent e
   MS_DLL_EXPORT char *msGetErrorString(const char *delimiter);
 
 #ifndef SWIG
+  MS_DLL_EXPORT void msRedactCredentials(char* str);
   MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...) MS_PRINT_FUNC_FORMAT(2,4) ;
   MS_DLL_EXPORT void msWriteError(FILE *stream);
   MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
