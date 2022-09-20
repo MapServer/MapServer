@@ -2598,25 +2598,13 @@ int msPostGISLayerOpen(layerObj *layer)
     ** Connection failed, return error message with passwords ***ed out.
     */
     if (!layerinfo->pgconn || PQstatus(layerinfo->pgconn) == CONNECTION_BAD) {
-      char *index, *maskeddata;
       if (layer->debug)
         msDebug("msPostGISLayerOpen: Connection failure.\n");
 
-      maskeddata = msStrdup(layer->connection);
-      index = strstr(maskeddata, "password=");
-      if (index != NULL) {
-        index = (char*)(index + 9);
-        while (*index != '\0' && *index != ' ') {
-          *index = '*';
-          index++;
-        }
-      }
-
-      msDebug( "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port? in msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), maskeddata);
+      msDebug( "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port? in msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), layer->connection);
       msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details.Is the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()");
 
       if(layerinfo->pgconn) PQfinish(layerinfo->pgconn);
-      free(maskeddata);
       free(layerinfo);
       return MS_FAILURE;
     }
