@@ -21,7 +21,7 @@
 /* fromstring: Factory for mapfile objects */
 
 %pythoncode %{
-def fromstring(data, mappath=None, configpath=None):
+def fromstring(data, mappath=None):
     """Creates map objects from mapfile strings.
 
     Parameters
@@ -39,12 +39,7 @@ def fromstring(data, mappath=None, configpath=None):
     """
     import re
     if re.search(r"^\s*MAP", data, re.I): 
-        # create a config object if a path is supplied
-        if configpath:
-             config = configObj(configpath):
-        else:
-             config = None
-        return msLoadMapFromString(data, mappath, config)
+        return msLoadMapFromString(data, mappath)
     elif re.search(r"^\s*LAYER", data, re.I):
         ob = layerObj()
         ob.updateFromString(data)

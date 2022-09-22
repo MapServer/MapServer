@@ -6148,7 +6148,7 @@ static bool msGetCWD(char* szBuffer, size_t nBufferSize, const char* pszFunction
 /*
 ** Sets up string-based mapfile loading and calls loadMapInternal to do the work.
 */
-mapObj *msLoadMapFromString(char *buffer, char *new_mappath, const configObj *config)
+mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
 {
   mapObj *map;
   struct mstimeval starttime = {0}, endtime = {0};
@@ -6178,8 +6178,6 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath, const configObj *co
     msFreeMap(map);
     return(NULL);
   }
-
-  map->config = config; // create a read-only reference
 
   msAcquireLock( TLOCK_PARSER ); /* might need to move this lock a bit higher, yup (bug 2108) */
 
