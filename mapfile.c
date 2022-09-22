@@ -4161,7 +4161,7 @@ int loadLayer(layerObj *layer, mapObj *map)
           plugin_library = msConfigGetPlugin(map->config, value);
           msFree(value);
           if(!plugin_library) {
-            msSetError(MS_MISCERR, "Plugin value not found in config file. See mapserver.org/config_file.html for more information." , "loadLayer()");
+            msSetError(MS_MISCERR, "Plugin value not found in config file. See mapserver.org/mapfile/config.html for more information." , "loadLayer()");
             return(-1);
           }
           layer->plugin_library_original = strdup(plugin_library);
