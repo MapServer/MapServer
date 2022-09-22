@@ -95,8 +95,8 @@ class OWSRequestTestCase(MapTestCase):
         request = mapscript.OWSRequest()
         request.contenttype = "application/xml"
 
-        post_data = """<wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc" service="WFS"
-        version="1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        post_data = """<wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc"
+        service="WFS" version="1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <wfs:Query typeName="*:POINT" xmlns:feature="http://www.openplans.org/topp">
             <ogc:Filter>
                 <ogc:PropertyIsEqualTo>
