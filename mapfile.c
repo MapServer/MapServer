@@ -5357,7 +5357,8 @@ char* msWriteQueryMapToString(queryMapObj *querymap)
 void initWeb(webObj *web)
 {
   web->template = NULL;
-  web->header = web->footer = NULL;
+  web->header = NULL;
+  web->footer = NULL;
   web->error = NULL;
   web->empty = NULL;
   web->mintemplate = NULL;
@@ -5401,10 +5402,10 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   indent++;
   writeBlockBegin(stream, indent, "WEB");
   writeString(stream, indent, "BROWSEFORMAT", "text/html", web->browseformat);
-  writeString(stream, indent, "EMPTY", NULL, web->empty);
-  writeString(stream, indent, "ERROR", NULL, web->error);
+  //writeString(stream, indent, "EMPTY", NULL, web->empty);
+  //writeString(stream, indent, "ERROR", NULL, web->error);
   writeString(stream, indent, "FOOTER", NULL, web->footer);
-  writeString(stream, indent, "HEADER", NULL, web->header);
+  //writeString(stream, indent, "HEADER", NULL, web->header);
   writeString(stream, indent, "IMAGEPATH", "", web->imagepath);
   writeString(stream, indent, "TEMPPATH", NULL, web->temppath);
   writeString(stream, indent, "IMAGEURL", "", web->imageurl);
