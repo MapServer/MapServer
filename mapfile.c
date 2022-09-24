@@ -5358,9 +5358,12 @@ void initWeb(webObj *web)
 {
   web->template = NULL;
   web->header = web->footer = NULL;
-  web->error =  web->empty = NULL;
-  web->mintemplate = web->maxtemplate = NULL;
-  web->minscaledenom = web->maxscaledenom = -1;
+  web->error = NULL;
+  web->empty = NULL;
+  web->mintemplate = NULL;
+  web->maxtemplate = NULL;
+  web->minscaledenom = -1;
+  web->maxscaledenom = -1;
   web->imagepath = msStrdup("");
   web->temppath = NULL;
   web->imageurl = msStrdup("");
