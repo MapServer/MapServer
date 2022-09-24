@@ -55,6 +55,12 @@
   {
       return msLoadMapFromString(mapText, NULL);
   }
+
+  mapObj(char *mapText, int isMapText, configObj *config=NULL) 
+  {
+      return msLoadMapFromString(mapText, NULL, config);
+  }
+
 #endif 
     
     ~mapObj() 
