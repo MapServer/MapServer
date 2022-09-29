@@ -1,11 +1,12 @@
-#include "../mapserver.h"
-#include "../mapshape.h"
+#include "mapserver.h"
+#include "mapshape.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
 extern int LLVMFuzzerTestOneInput(GByte *data, size_t size);
+extern int LLVMFuzzerInitialize(int* argc, char*** argv);
 
 static VSILFILE *
 SegmentFile(const char *filename, GByte **data_p, size_t *size_p)
@@ -23,6 +24,13 @@ SegmentFile(const char *filename, GByte **data_p, size_t *size_p)
   }
 
   return VSIFileFromMemBuffer(filename, data, size, false);
+}
+
+int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+    (void)argc;
+    (void)argv;
+    return 0;
 }
 
 int
