@@ -8,13 +8,30 @@
 extern int LLVMFuzzerTestOneInput(GByte *data, size_t size);
 extern int LLVMFuzzerInitialize(int* argc, char*** argv);
 
+static
+void *msMemmem(const void *haystack, size_t haystack_len,
+               const void * const needle, const size_t needle_len)
+{
+    if (haystack_len == 0) return NULL;
+    if (needle_len == 0) return NULL;
+
+    for (const char *h = (const char*)haystack;
+            haystack_len >= needle_len;
+            ++h, --haystack_len) {
+        if (!memcmp(h, needle, needle_len)) {
+            return (void*)h;
+        }
+    }
+    return NULL;
+}
+
 static VSILFILE *
 SegmentFile(const char *filename, GByte **data_p, size_t *size_p)
 {
   GByte *data = *data_p;
   size_t size = *size_p;
 
-  GByte *separator = memmem(data, size, "deadbeef", 8);
+  GByte *separator = (GByte*)msMemmem(data, size, "deadbeef", 8);
   if (separator != NULL) {
     size = separator - data;
     *data_p = separator + 8;
