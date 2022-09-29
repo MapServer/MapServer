@@ -37,7 +37,7 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
         $line2->add(new pointObj(3,5));
         $shape2->add($line2);
 
-        $this->assertEquals(1.4142135623731, $this->shape->distanceToShape($shape2));
+        $this->assertEquals(1.4142135623730951, $this->shape->distanceToShape($shape2));
     }
 
     public function test__setresultindex()
