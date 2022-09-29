@@ -137,7 +137,7 @@ configObj *msLoadConfig(const char* ms_config_file)
   MS_CHECK_ALLOC(config, sizeof(configObj), NULL);
 
   if(initConfig(config) != MS_SUCCESS) {
-    msFree(config);
+    msFreeConfig(config);
     return NULL;
   }
 
@@ -147,7 +147,7 @@ configObj *msLoadConfig(const char* ms_config_file)
     msDebug("Cannot open configuration file %s.\n", ms_config_file);
     msSetError(MS_IOERR, "See mapserver.org/mapfile/config.html for more information.", "msLoadConfig()");
     msReleaseLock(TLOCK_PARSER);
-    msFree(config);
+    msFreeConfig(config);
     return NULL;
   }
 
