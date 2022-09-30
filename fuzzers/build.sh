@@ -14,15 +14,27 @@
 # limitations under the License.
 #
 ################################################################################
+
+BUILD_SH_FROM_REPO="$SRC/MapServer/fuzzers/build.sh"
+if test -f "$BUILD_SH_FROM_REPO"; then
+    if test "$0" != "$BUILD_SH_FROM_REPO"; then
+        echo "Running $BUILD_SH_FROM_REPO"
+        exec "$BUILD_SH_FROM_REPO"
+        exit $?
+    fi
+fi
+
 #Build gdal dependency
 pushd $SRC/gdal
 mkdir build
 cd build
 #While Compiling the dependency, I do not want sanitizers or the fuzzing tags in the dependency library.
 cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF \
+-DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
+-DBUILD_APPS=OFF \
 -DCMAKE_C_COMPILER="clang" -DCMAKE_CXX_COMPILER="clang++" \
 -DCMAKE_C_FLAGS="-fPIC" -DCMAKE_CXX_FLAGS="-fPIC" ../
-make -j$(nproc)
+make -j$(nproc) GDAL
 make install
 popd
 
