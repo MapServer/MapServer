@@ -38,6 +38,7 @@
 
 #include <limits.h>
 #include <assert.h>
+#include <stdbool.h>
 #include "mapserver.h"
 #include "mapows.h"
 
@@ -992,7 +993,7 @@ static uchar *msSHPReadAllocateBuffer( SHPHandle psSHP, int hEntity, const char*
 {
 
   int nEntitySize = msSHXReadSize(psSHP, hEntity);
-  if( nEntitySize < 0 || nEntitySize > INT_MAX - 8 ) {
+  if( nEntitySize <= 0 || nEntitySize > INT_MAX - 8 ) {
       msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
                  pszCallingFunction, nEntitySize, hEntity);
       return NULL;
@@ -1065,7 +1066,8 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
   /* -------------------------------------------------------------------- */
   /*      Read the record.                                                */
   /* -------------------------------------------------------------------- */
-  if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 )) {
+  const int offset = msSHXReadOffset( psSHP, hEntity);
+  if( offset <= 0 || 0 != VSIFSeekL( psSHP->fpSHP, offset, 0 )) {
     msSetError(MS_IOERR, "failed to seek offset", "msSHPReadPoint()");
     return(MS_FAILURE);
   }
@@ -1094,7 +1096,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 ** successive accesses during the reading cycle (first bounds are read,
 ** then entire shapes). Each time we read a page, we mark it as read.
 */
-static int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
+static bool msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 {
   int i;
 
@@ -1105,26 +1107,33 @@ static int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
   if( shxBufferPage < 0  )
     return(MS_FAILURE);
 
+  const int nShapesToCache =
+      shxBufferPage < psSHP->nRecords / SHX_BUFFER_PAGE ? SHX_BUFFER_PAGE :
+      psSHP->nRecords - shxBufferPage * SHX_BUFFER_PAGE;
+
   if( 0 != VSIFSeekL( psSHP->fpSHX, 100 + shxBufferPage * SHX_BUFFER_PAGE * 8, 0 )) {
-    /*
-     * msSetError(MS_IOERR, "failed to seek offset", "msSHXLoadPage()");
-     * return(MS_FAILURE);
-    */
+    memset(psSHP->panRecOffset + shxBufferPage * SHX_BUFFER_PAGE, 0,
+           nShapesToCache * sizeof(psSHP->panRecOffset[0]));
+    memset(psSHP->panRecSize + shxBufferPage * SHX_BUFFER_PAGE, 0,
+           nShapesToCache * sizeof(psSHP->panRecSize[0]));
+    msSetBit(psSHP->panRecLoaded, shxBufferPage, 1);
+    msSetError(MS_IOERR, "failed to seek offset", "msSHXLoadPage()");
+    return false;
   }
-  if( SHX_BUFFER_PAGE != VSIFReadL( buffer, 8, SHX_BUFFER_PAGE, psSHP->fpSHX )) {
-    /*
-     * msSetError(MS_IOERR, "failed to fread SHX record", "msSHXLoadPage()");
-     * return(MS_FAILURE);
-     */
+
+  if( (size_t)nShapesToCache != VSIFReadL( buffer, 8, nShapesToCache, psSHP->fpSHX )) {
+    memset(psSHP->panRecOffset + shxBufferPage * SHX_BUFFER_PAGE, 0,
+           nShapesToCache * sizeof(psSHP->panRecOffset[0]));
+    memset(psSHP->panRecSize + shxBufferPage * SHX_BUFFER_PAGE, 0,
+           nShapesToCache * sizeof(psSHP->panRecSize[0]));
+    msSetBit(psSHP->panRecLoaded, shxBufferPage, 1);
+    msSetError(MS_IOERR, "failed to fread SHX record", "msSHXLoadPage()");
+    return false;
   }
 
   /* Copy the buffer contents out into the working arrays. */
-  for( i = 0; i < SHX_BUFFER_PAGE; i++ ) {
+  for( i = 0; i < nShapesToCache; i++ ) {
     int tmpOffset, tmpSize;
-
-    /* Don't write information past the end of the arrays, please. */
-    if(psSHP->nRecords <= (shxBufferPage * SHX_BUFFER_PAGE + i) )
-      break;
 
     memcpy( &tmpOffset, (buffer + (8*i)), 4);
     memcpy( &tmpSize, (buffer + (8*i) + 4), 4);
@@ -1138,8 +1147,15 @@ static int msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 
     /* SHX stores the offsets in 2 byte units, so we double them to get */
     /* an offset in bytes. */
-    tmpOffset = tmpOffset * 2;
-    tmpSize = tmpSize * 2;
+    if( tmpOffset < INT_MAX / 2 )
+        tmpOffset = tmpOffset * 2;
+    else
+        tmpOffset = 0;
+
+    if( tmpSize < INT_MAX / 2 )
+        tmpSize = tmpSize * 2;
+    else
+        tmpSize = 0;
 
     /* Write the answer into the working arrays on the SHPHandle */
     psSHP->panRecOffset[shxBufferPage * SHX_BUFFER_PAGE + i] = tmpOffset;
@@ -1157,7 +1173,12 @@ static int msSHXLoadAll( SHPHandle psSHP )
   int i;
   uchar *pabyBuf;
 
-  pabyBuf = (uchar *) msSmallMalloc(8 * psSHP->nRecords );
+  pabyBuf = (uchar *) malloc(8 * psSHP->nRecords );
+  if( pabyBuf == NULL )
+  {
+    msSetError(MS_IOERR, "failed to allocate memory for SHX buffer", "msSHXLoadAll()");
+    return MS_FAILURE;
+  }
   if((size_t)psSHP->nRecords != VSIFReadL( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )) {
     msSetError(MS_IOERR, "failed to read shx records", "msSHXLoadAll()");
     free(pabyBuf);
@@ -1174,8 +1195,20 @@ static int msSHXLoadAll( SHPHandle psSHP )
       nLength = SWAP_FOUR_BYTES( nLength );
     }
 
-    psSHP->panRecOffset[i] = nOffset*2;
-    psSHP->panRecSize[i] = nLength*2;
+    /* SHX stores the offsets in 2 byte units, so we double them to get */
+    /* an offset in bytes. */
+    if( nOffset < INT_MAX / 2 )
+        nOffset = nOffset * 2;
+    else
+        nOffset = 0;
+
+    if( nLength < INT_MAX / 2 )
+        nLength = nLength * 2;
+    else
+        nLength = 0;
+
+    psSHP->panRecOffset[i] = nOffset;
+    psSHP->panRecSize[i] = nLength;
   }
   free(pabyBuf);
   psSHP->panRecAllLoaded = 1;
@@ -1191,7 +1224,7 @@ static int msSHXReadOffset( SHPHandle psSHP, int hEntity )
 
   /*  Validate the record/entity number. */
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
-    return(MS_FAILURE);
+    return 0;
 
   if( ! (psSHP->panRecAllLoaded || msGetBit(psSHP->panRecLoaded, shxBufferPage)) ) {
     msSHXLoadPage( psSHP, shxBufferPage );
@@ -1208,7 +1241,7 @@ static int msSHXReadSize( SHPHandle psSHP, int hEntity )
 
   /*  Validate the record/entity number. */
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
-    return(MS_FAILURE);
+    return 0;
 
   if( ! (psSHP->panRecAllLoaded || msGetBit(psSHP->panRecLoaded, shxBufferPage)) ) {
     msSHXLoadPage( psSHP, shxBufferPage );
@@ -1249,8 +1282,16 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   if( hEntity < 0 || hEntity >= psSHP->nRecords )
     return;
 
-  nEntitySize = msSHXReadSize(psSHP, hEntity) + 8;
+  nEntitySize = msSHXReadSize(psSHP, hEntity);
+  if( nEntitySize < 4 || nEntitySize > INT_MAX - 8 )
+  {
+      shape->type = MS_SHAPE_NULL;
+      msSetError(MS_SHPERR, "Corrupted feature encountered.  hEntity = %d, nEntitySize=%d", "msSHPReadShape()",
+                 hEntity, nEntitySize);
+      return;
+  }
 
+  nEntitySize += 8;
   if( nEntitySize == 12 ) {
     shape->type = MS_SHAPE_NULL;
     return;
@@ -1265,7 +1306,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*      Read the record.                                                */
   /* -------------------------------------------------------------------- */
-  if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity), 0 )) {
+  const int offset = msSHXReadOffset( psSHP, hEntity);
+  if( offset <= 0 || 0 != VSIFSeekL( psSHP->fpSHP, offset, 0 )) {
     msSetError(MS_IOERR, "failed to seek offset", "msSHPReadShape()");
     shape->type = MS_SHAPE_NULL;
     return;
@@ -1626,16 +1668,18 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
     padBounds->maxy = psSHP->adBoundsMax[1];
   } else {
 
-    if( msSHXReadSize(psSHP, hEntity) == 4 ) { /* NULL shape */
+    if( msSHXReadSize(psSHP, hEntity) <= 4 ) { /* NULL shape */
       padBounds->minx = padBounds->miny = padBounds->maxx = padBounds->maxy = 0.0;
       return MS_FAILURE;
     }
 
+    const int offset = msSHXReadOffset( psSHP, hEntity);
+    if( offset <= 0 || offset >= INT_MAX - 12 || 0 != VSIFSeekL( psSHP->fpSHP, offset + 12, 0 )) {
+      msSetError(MS_IOERR, "failed to seek offset", "msSHPReadBounds()");
+      return(MS_FAILURE);
+    }
+
     if( psSHP->nShapeType != SHP_POINT && psSHP->nShapeType != SHP_POINTZ && psSHP->nShapeType != SHP_POINTM) {
-      if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity) + 12, 0 )) {
-        msSetError(MS_IOERR, "failed to seek offset", "msSHPReadBounds()");
-        return(MS_FAILURE);
-      }
       if( 1 != VSIFReadL( padBounds, sizeof(double)*4, 1, psSHP->fpSHP )) {
         msSetError(MS_IOERR, "failed to fread record", "msSHPReadBounds()");
         return(MS_FAILURE);
@@ -1657,11 +1701,6 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
       /*      For points we fetch the point, and duplicate it as the          */
       /*      minimum and maximum bound.                                      */
       /* -------------------------------------------------------------------- */
-
-      if( 0 != VSIFSeekL( psSHP->fpSHP, msSHXReadOffset( psSHP, hEntity) + 12, 0 )) {
-        msSetError(MS_IOERR, "failed to seek offset", "msSHPReadBounds()");
-        return(MS_FAILURE);
-      }
       if( 1 != VSIFReadL( padBounds, sizeof(double)*2, 1, psSHP->fpSHP )) {
         msSetError(MS_IOERR, "failed to fread record", "msSHPReadBounds()");
         return(MS_FAILURE);
