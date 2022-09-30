@@ -1,9 +1,10 @@
 This directory contain fuzzer main functions and scripts for the
 Google OSS Fuzz project: https://github.com/google/oss-fuzz/
 
-The main build scripts are in:
-https://github.com/google/oss-fuzz/tree/master/projects/mapserver
-and use fuzzer source code in this directory.
+The main Dockerfile is in:
+https://github.com/google/oss-fuzz/blob/master/projects/mapserver/Dockerfile
+and use the build.sh script and fuzzer source code in this
+(https://github.com/MapServer/MapServer/blob/main/fuzzers) directory.
 
 The list of issues is in:
 https://bugs.chromium.org/p/oss-fuzz/issues/list?q=mapserver
