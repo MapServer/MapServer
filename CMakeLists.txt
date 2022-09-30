@@ -181,8 +181,13 @@ option(WITH_APACHE_MODULE "include (experimental) support for apache module" OFF
 option(WITH_GENERIC_NINT "generic rounding" OFF)
 option(WITH_PYMAPSCRIPT_ANNOTATIONS "Add annotations to Python mapscript output" OFF)
 
-option(FUZZER "Build fuzzers using libFuzzer" OFF)
+option(FUZZER "Build fuzzers using libFuzzer (requires Clang, will disable executable - mapserv, etc. - generation)" OFF)
 mark_as_advanced(FUZZER)
+option(BUILD_FUZZER_REPRODUCER "Build fuzzer reproducer programs" ON)
+
+if(FUZZER AND BUILD_FUZZER_REPRODUCER)
+    message(FATAL_ERROR "FUZZER and BUILD_FUZZER_REPRODUCER options are mutually exclusive")
+endif()
 
 #TODO: USE_OGL? , USE_SDE, USE_CLUSTER_EXTERNAL USE_CLUSTER_PLUGIN, USE_MSSQL2008, USE_MSSQL2008_PLUGIN
 # SIGNORE_MISSING_DATA, CGI_CL_DEBUG_ARGS, EXTRA DEBUG FLAGS?,
@@ -373,6 +378,7 @@ endif(BUILD_STATIC)
 #the SOVERSION to be incremented. Similar rules hold of course for
 #non-opaque data-structures.
 
+if( NOT FUZZER )
 add_executable(mapserv mapserv.c)
 target_link_libraries(mapserv ${MAPSERVER_LIBMAPSERVER})
 add_executable(map2img map2img.c)
@@ -395,7 +401,7 @@ add_executable(tile4ms tile4ms.c)
 target_link_libraries(tile4ms ${MAPSERVER_LIBMAPSERVER})
 add_executable(shptreetst shptreetst.c)
 target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
-
+endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
   set(USE_EXTENDED_DEBUG 1)
@@ -585,7 +591,9 @@ if(WITH_FCGI)
   find_package(FCGI)
   if(FCGI_FOUND)
     include_directories(${FCGI_INCLUDE_DIR})
-    target_link_libraries(mapserv ${FCGI_LIBRARY})
+    if( NOT FUZZER )
+        target_link_libraries(mapserv ${FCGI_LIBRARY})
+    endif()
     list(APPEND ALL_INCLUDE_DIRS ${FCGI_INCLUDE_DIR})
     set (USE_FASTCGI 1)
   else(FCGI_FOUND)
@@ -866,9 +874,9 @@ if(WITH_CSHARP)
    set(USE_CSHARP_MAPSCRIPT 1)
 endif(WITH_CSHARP)
 
-if(FUZZER)
-  add_subdirectory("fuzzers")
-endif(FUZZER)
+if(FUZZER OR BUILD_FUZZER_REPRODUCER)
+add_subdirectory("fuzzers")
+endif()
 
 if(UNIX)
 ms_link_libraries( ${CMAKE_DL_LIBS} m )
@@ -1004,10 +1012,11 @@ if(USE_MSSQL2008)
    INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${INSTALL_LIB_DIR})
 endif(USE_MSSQL2008)
 
-
-INSTALL(TARGETS coshp sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst map2img mapserv
-        RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
-)
+if(NOT FUZZER)
+    INSTALL(TARGETS coshp sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst map2img mapserv
+            RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
+    )
+endif()
 
 if(BUILD_STATIC)
    INSTALL(TARGETS mapserver_static
