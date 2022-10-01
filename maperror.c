@@ -132,7 +132,7 @@ errorObj *msGetErrorObj()
   /* We don't have one ... initialize one. */
   else if( link == NULL || link->next == NULL ) {
     te_info_t *new_link;
-    errorObj   error_obj = { MS_NOERR, "", "", 0, 0, NULL };
+    errorObj   error_obj = { MS_NOERR, "", "", 0, 0, NULL, 0 };
 
     new_link = (te_info_t *) malloc(sizeof(te_info_t));
     new_link->next = error_list;
@@ -180,7 +180,7 @@ static errorObj *msInsertErrorObj(void)
   errorObj *ms_error;
   ms_error = msGetErrorObj();
 
-  if (ms_error->code != MS_NOERR) {
+  if (ms_error->code != MS_NOERR && ms_error->totalerrorcount < 100) {
     /* Head of the list already in use, insert a new errorObj after the head
      * and move head contents to this new errorObj, freeing the errorObj
      * for reuse.
@@ -207,6 +207,7 @@ static errorObj *msInsertErrorObj(void)
       ms_error->message[0] = '\0';
       ms_error->errorcount = 0;
     }
+    ms_error->totalerrorcount ++;
   }
 
   return ms_error;
@@ -236,6 +237,7 @@ void msResetErrorList()
   ms_error->routine[0] = '\0';
   ms_error->message[0] = '\0';
   ms_error->errorcount = 0;
+  ms_error->totalerrorcount = 0;
 
   /* -------------------------------------------------------------------- */
   /*      Cleanup our entry in the thread list.  This is mainly           */
