@@ -14,6 +14,7 @@ limitations under the License.
 #include <string.h>
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "mapserver.h"
 
 #define kMinInputLength 10
@@ -21,20 +22,6 @@ limitations under the License.
 
 extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
 extern int LLVMFuzzerInitialize(int* argc, char*** argv);
-
-void LoadMap(char *filename){
-
-  mapObj *original_map = NULL;
-
-  configObj *config = NULL;
-  char *config_filename = NULL;
-  config = msLoadConfig(config_filename);
-
-  original_map = msLoadMap(filename, NULL,config);
-
-  msFreeMap(original_map);
-  msFreeConfig(config);
-}
 
 int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
@@ -49,7 +36,9 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     return 1;
   }
 
-  char* filename = msStrdup(CPLGenerateTempFilename(NULL));
+  // .map extension is required otherwise default pattern validation of
+  // msLoadMap() would reject it
+  char* filename = msStrdup(CPLSPrintf("%s.map", CPLGenerateTempFilename(NULL)));
   FILE *fp = fopen(filename, "wb");
   if (!fp) {
     return 1;
@@ -57,8 +46,10 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   fwrite(Data, Size, 1, fp);
   fclose(fp);
 
-  LoadMap(filename);
+  msFreeMap(msLoadMap(filename, NULL, NULL));
   VSIUnlink(filename);
   msFree(filename);
+  msResetErrorList();
+
   return 0;
 }
