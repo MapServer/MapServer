@@ -1,6 +1,8 @@
 #include "mapserver.h"
 #include "mapshape.h"
 
+#include "cpl_vsi.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -68,18 +70,36 @@ LLVMFuzzerTestOneInput(GByte *data, size_t size)
   VSILFILE *dbf = SegmentFile("/vsimem/foo.dbf", &data, &size);
 
   shapefileObj file;
+  errorObj *ms_error = msGetErrorObj();
   if (msShapefileOpenVirtualFile(&file, "/vsimem/foo.shp", shp, shx, dbf, false) == 0) {
+    if (file.numshapes > 100 * 1000 )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL("/vsimem/foo.shx", &sStat) == 0 &&
+            sStat.st_size >= 100 &&
+            file.numshapes > (int)(sStat.st_size - 100) / 8 )
+        {
+            file.numshapes = (int)(sStat.st_size - 100) / 8;
+        }
+    }
     for (int i = 0; i < file.numshapes; ++i) {
       shapeObj shape;
       msInitShape(&shape);
       msSHPReadShape(file.hSHP, i, &shape);
       msFreeShape(&shape);
+      // Give up as soon an error is triggered to avoid too long processing time.
+      if( ms_error->code != MS_NOERR )
+          break;
     }
 
     msShapefileClose(&file);
   }
 
   msResetErrorList();
+
+  VSIUnlink("/vsimem/foo.shp");
+  VSIUnlink("/vsimem/foo.shx");
+  VSIUnlink("/vsimem/foo.dbf");
 
   return EXIT_SUCCESS;
 }
