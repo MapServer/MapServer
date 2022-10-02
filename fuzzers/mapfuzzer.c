@@ -41,6 +41,7 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   char* filename = msStrdup(CPLSPrintf("%s.map", CPLGenerateTempFilename(NULL)));
   FILE *fp = fopen(filename, "wb");
   if (!fp) {
+    msFree(filename);
     return 1;
   }
   fwrite(Data, Size, 1, fp);
