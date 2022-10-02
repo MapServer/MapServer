@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,7 +51,7 @@ int main(int argc, char* argv[])
 
     int nRet = 0;
     void* buf = nullptr;
-    int nLen = 0;
+    size_t nLen = 0;
     int nLoops = 1;
     const char* pszFilename = nullptr;
     for(int i = 1; i < argc; i++ )
@@ -58,6 +59,11 @@ int main(int argc, char* argv[])
         if( i + 1 < argc && strcmp(argv[i], "-repeat") == 0 )
         {
             nLoops = atoi(argv[i+1]);
+            // Limit to INT_MAX - 1 :-)
+            // to make fun of coverity scan that complains about tainted data
+            // being used as a loop boundary.
+            if( nLoops > INT_MAX - 1 )
+                nLoops = INT_MAX - 1;
             i++;
         }
         else if( strcmp(argv[i], "-dummy") == 0 )
@@ -90,7 +96,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
     fseek(f, 0, SEEK_END);
-    nLen = (int)ftell(f);
+    nLen = (size_t)ftell(f);
     fseek(f, 0, SEEK_SET);
     buf = malloc(nLen);
     if( !buf )
