@@ -119,6 +119,7 @@ Errors are managed as a chained list with the first item being the most recent e
     int errorcount; ///< Number of subsequent errors
 #ifndef SWIG
     struct errorObj *next;
+    int totalerrorcount;
 #endif
   } errorObj;
 
