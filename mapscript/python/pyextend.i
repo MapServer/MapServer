@@ -41,7 +41,7 @@ def fromstring(data, mappath=None, configpath=None):
     if re.search(r"^\s*MAP", data, re.I):
         # create a config object if a path is supplied
         if configpath:
-             config = configObj(configpath):
+             config = configObj(configpath)
         else:
              config = None
         return msLoadMapFromString(data, mappath, config)
