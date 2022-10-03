@@ -229,10 +229,22 @@ SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
     return( NULL );
   }
 
-  psSHP->nFileSize = (pabyBuf[24] * 256 * 256 * 256
-                      + pabyBuf[25] * 256 * 256
-                      + pabyBuf[26] * 256
-                      + pabyBuf[27]) * 2;
+  if( !bBigEndian ) SwapWord( 4, pabyBuf+24 );
+  memcpy(&psSHP->nFileSize, pabyBuf+24, 4);
+  if( psSHP->nFileSize < 0 || psSHP->nFileSize > INT_MAX / 2 ) {
+      msDebug("Invalid / unsupported nFileSize = %d value. Got it from actual file length", psSHP->nFileSize);
+      VSIFSeekL( psSHP->fpSHP, 0, SEEK_END );
+      vsi_l_offset nSize = VSIFTellL( psSHP->fpSHP );
+      if( nSize > (vsi_l_offset)INT_MAX ) {
+          msDebug("Actual .shp size is larger than 2 GB. Not suported. Invalidating nFileSize");
+          psSHP->nFileSize = 0;
+      }
+      else
+          psSHP->nFileSize = (int)nSize;
+  }
+  else {
+      psSHP->nFileSize *= 2;
+  }
 
   /* -------------------------------------------------------------------- */
   /*  Read SHX file Header info                                           */
@@ -247,7 +259,7 @@ SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
   }
 
   if( pabyBuf[0] != 0 || pabyBuf[1] != 0 || pabyBuf[2] != 0x27  || (pabyBuf[3] != 0x0a && pabyBuf[3] != 0x0d) ) {
-    msSetError(MS_SHPERR, "Corrupted .shp file", "msSHPOpen()");
+    msSetError(MS_SHPERR, "Corrupted .shx file", "msSHPOpen()");
     VSIFCloseL( psSHP->fpSHP );
     VSIFCloseL( psSHP->fpSHX );
     free( psSHP );
@@ -256,12 +268,16 @@ SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
     return( NULL );
   }
 
-  psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256 + pabyBuf[25] * 256 * 256 + pabyBuf[24] * 256 * 256 * 256;
-  if (psSHP->nRecords != 0)
-    psSHP->nRecords = (psSHP->nRecords*2 - 100) / 8;
+  int nSHXHalfFileSize;
+  if( !bBigEndian ) SwapWord( 4, pabyBuf+24 );
+  memcpy(&nSHXHalfFileSize, pabyBuf+24, 4);
+  if (nSHXHalfFileSize != 0)
+    psSHP->nRecords = (nSHXHalfFileSize - 50) / 4;   // (nSHXFileSize - 100) / 8
+  else
+    psSHP->nRecords = 0;
 
   if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 ) {
-    msSetError(MS_SHPERR, "Corrupted .shp file : nRecords = %d.", "msSHPOpen()",
+    msSetError(MS_SHPERR, "Corrupted .shx file : nRecords = %d.", "msSHPOpen()",
                psSHP->nRecords);
     VSIFCloseL( psSHP->fpSHP );
     VSIFCloseL( psSHP->fpSHX );
@@ -603,6 +619,7 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
   ms_int32  i32, nPoints, nParts;
 
   if( psSHP->nShapeType != SHP_POINT) return(-1);
+  if( psSHP->nFileSize == 0 ) return -1;
 
   psSHP->bUpdated = MS_TRUE;
 
@@ -697,6 +714,9 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   int nShapeType;
 
   ms_int32  i32, nPoints, nParts;
+
+  if( psSHP->nFileSize == 0 ) return -1;
+
   psSHP->bUpdated = MS_TRUE;
 
   /* Fill the SHX buffer if it is not already full. */
