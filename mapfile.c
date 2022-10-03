@@ -1172,6 +1172,12 @@ static int loadProjection(projectionObj *p)
         break;
       case(MS_STRING):
       case(MS_AUTO):
+        if( i == MS_MAXPROJARGS ) {
+            msSetError(MS_MISCERR, "Parsing error near (%s):(line %d): Too many arguments in projection string", "loadProjection()",
+                   msyystring_buffer, msyylineno);
+            p->numargs = i;
+            return -1;
+        }
         p->args[i] = msStrdup(msyystring_buffer);
         p->automatic = MS_TRUE;
         i++;
