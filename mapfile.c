@@ -2946,6 +2946,11 @@ int freeClass(classObj *class)
       }
     }
   }
+  if( class->numstyles == 0 && class->styles != NULL &&
+      class->styles[0] != NULL ) {
+    /* msGrowClassStyles() creates class->styles[0] during the first call */
+    msFree(class->styles[0]);
+  }
   msFree(class->styles);
 
   for(i=0; i<class->numlabels; i++) { /* each label */
