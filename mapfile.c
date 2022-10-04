@@ -2964,11 +2964,6 @@ int freeClass(classObj *class)
       }
     }
   }
-  if( class->numstyles == 0 && class->styles != NULL &&
-      class->styles[0] != NULL ) {
-    /* msGrowClassStyles() creates class->styles[0] during the first call */
-    msFree(class->styles[0]);
-  }
   msFree(class->styles);
 
   for(i=0; i<class->numlabels; i++) { /* each label */
@@ -3272,7 +3267,12 @@ int loadClass(classObj *class, layerObj *layer)
         if(msGrowClassStyles(class) == NULL)
           return(-1);
         initStyle(class->styles[class->numstyles]);
-        if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) return(-1);
+        if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) {
+            freeStyle(class->styles[class->numstyles]);
+            free(class->styles[class->numstyles]);
+            class->styles[class->numstyles] = NULL;
+            return(-1);
+        }
         class->numstyles++;
         break;
       case(TEMPLATE):
