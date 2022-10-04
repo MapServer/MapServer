@@ -3113,6 +3113,9 @@ int msMaybeAllocateClassStyle(classObj* c, int idx)
     if ( initStyle(c->styles[c->numstyles]) == MS_FAILURE ) {
       msSetError(MS_MISCERR, "Failed to init new styleObj",
                  "msMaybeAllocateClassStyle()");
+      freeStyle(c->styles[c->numstyles]);
+      free(c->styles[c->numstyles]);
+      c->styles[c->numstyles] = NULL;
       return(MS_FAILURE);
     }
     c->numstyles++;
@@ -3975,7 +3978,13 @@ int loadLayer(layerObj *layer, mapObj *map)
         if (msGrowLayerClasses(layer) == NULL)
           return(-1);
         initClass(layer->class[layer->numclasses]);
-        if(loadClass(layer->class[layer->numclasses], layer) == -1) return(-1);
+        if(loadClass(layer->class[layer->numclasses], layer) == -1)
+        {
+            freeClass(layer->class[layer->numclasses]);
+            free(layer->class[layer->numclasses]);
+            layer->class[layer->numclasses] = NULL;
+            return(-1);
+        }
         layer->numclasses++;
         break;
       case(CLUSTER):
@@ -4215,7 +4224,10 @@ int loadLayer(layerObj *layer, mapObj *map)
         if (msGrowLayerScaletokens(layer) == NULL)
           return(-1);
         initScaleToken(&layer->scaletokens[layer->numscaletokens]);
-        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) return(-1);
+        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) {
+            freeScaleToken(&layer->scaletokens[layer->numscaletokens]);
+            return(-1);
+        }
         layer->numscaletokens++;
         break;
       case(SIZEUNITS):
