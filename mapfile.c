@@ -3684,9 +3684,9 @@ int freeLayer(layerObj *layer)
   msFree(layer->requires);
   msFree(layer->labelrequires);
 
-  if(&(layer->metadata)) msFreeHashItems(&(layer->metadata));
-  if(&(layer->validation)) msFreeHashItems(&(layer->validation));
-  if(&(layer->bindvals))  msFreeHashItems(&layer->bindvals);
+  msFreeHashItems(&(layer->metadata));
+  msFreeHashItems(&(layer->validation));
+  msFreeHashItems(&layer->bindvals);
 
   if(layer->numprocessing > 0)
     msFreeCharArray(layer->processing, layer->numprocessing);
@@ -3719,7 +3719,7 @@ int freeLayer(layerObj *layer)
       msFree(layer->sortBy.properties[i].item);
   msFree(layer->sortBy.properties);
 
-  if(&(layer->connectionoptions))  msFreeHashItems(&layer->connectionoptions);
+  msFreeHashItems(&layer->connectionoptions);
 
   return MS_SUCCESS;
 }
