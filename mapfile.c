@@ -2184,7 +2184,6 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 
 int loadHashTable(hashTableObj *ptable)
 {
-  char *key=NULL, *data=NULL;
   assert(ptable);
 
   for(;;) {
@@ -2195,14 +2194,19 @@ int loadHashTable(hashTableObj *ptable)
       case(END):
         return(MS_SUCCESS);
       case(MS_STRING):
-        key = msStrdup(msyystring_buffer); /* the key is *always* a string */
-        if(getString(&data) == MS_FAILURE) return(MS_FAILURE);
+      {
+        char* data = NULL;
+        char* key = msStrdup(msyystring_buffer); /* the key is *always* a string */
+        if(getString(&data) == MS_FAILURE) {
+          free(key);
+          return(MS_FAILURE);
+        }
         msInsertHashTable(ptable, key, data);
 
         free(key);
         free(data);
-        data=NULL;
         break;
+      }
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()", msyystring_buffer, msyylineno );
         return(MS_FAILURE);
