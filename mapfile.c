@@ -6130,7 +6130,12 @@ static int loadMapInternal(mapObj *map)
       case(SYMBOL):
         if(msGrowSymbolSet(&(map->symbolset)) == NULL)
           return MS_FAILURE;
-        if((loadSymbol(map->symbolset.symbol[map->symbolset.numsymbols], map->mappath) == -1)) return MS_FAILURE;
+        if((loadSymbol(map->symbolset.symbol[map->symbolset.numsymbols], map->mappath) == -1)) {
+            msFreeSymbol(map->symbolset.symbol[map->symbolset.numsymbols]);
+            free(map->symbolset.symbol[map->symbolset.numsymbols]);
+            map->symbolset.symbol[map->symbolset.numsymbols] = NULL;
+            return MS_FAILURE;
+        }
         map->symbolset.symbol[map->symbolset.numsymbols]->inmapfile = MS_TRUE;
         map->symbolset.numsymbols++;
         break;
