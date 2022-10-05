@@ -828,30 +828,30 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
       return NULL;
     }
 
-  r->buffer = (band_type*)malloc(bufSize);
-  if (r->buffer == NULL) {
-    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
-               __FILE__, __LINE__, bufSize64);
-    free(image);
-    delete r;
-    return NULL;
-  }
-  r->m_rendering_buffer.attach(r->buffer, width, height, width * 4);
-  r->m_pixel_format.attach(r->m_rendering_buffer);
-  r->m_compop_pixel_format.attach(r->m_rendering_buffer);
-  r->m_renderer_base.attach(r->m_pixel_format);
-  r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
-  r->m_renderer_scanline.attach(r->m_renderer_base);
-  r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
-  if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
-    r->default_gamma = 0.75;
-  }
-  r->gamma_function.set(0,r->default_gamma);
-  r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
-  if( bg && !format->transparent )
-    r->m_renderer_base.clear(aggColor(bg));
-  else
-    r->m_renderer_base.clear(AGG_NO_COLOR);
+    r->buffer = (band_type*)malloc(bufSize);
+    if (r->buffer == NULL) {
+      msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
+                 __FILE__, __LINE__, bufSize64);
+      free(image);
+      delete r;
+      return NULL;
+    }
+    r->m_rendering_buffer.attach(r->buffer, width, height, width * 4);
+    r->m_pixel_format.attach(r->m_rendering_buffer);
+    r->m_compop_pixel_format.attach(r->m_rendering_buffer);
+    r->m_renderer_base.attach(r->m_pixel_format);
+    r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
+    r->m_renderer_scanline.attach(r->m_renderer_base);
+    r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
+    if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
+      r->default_gamma = 0.75;
+    }
+    r->gamma_function.set(0,r->default_gamma);
+    r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
+    if( bg && !format->transparent )
+      r->m_renderer_base.clear(aggColor(bg));
+    else
+      r->m_renderer_base.clear(AGG_NO_COLOR);
 
     if (!bg || format->transparent || format->imagemode == MS_IMAGEMODE_RGBA ) {
       r->use_alpha = true;
