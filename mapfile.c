@@ -2949,11 +2949,6 @@ int freeClass(classObj *class)
       }
     }
   }
-  if( class->numstyles == 0 && class->styles != NULL &&
-      class->styles[0] != NULL ) {
-    /* msGrowClassStyles() creates class->styles[0] during the first call */
-    msFree(class->styles[0]);
-  }
   msFree(class->styles);
 
   for(i=0; i<class->numlabels; i++) { /* each label */
@@ -3103,6 +3098,9 @@ int msMaybeAllocateClassStyle(classObj* c, int idx)
     if ( initStyle(c->styles[c->numstyles]) == MS_FAILURE ) {
       msSetError(MS_MISCERR, "Failed to init new styleObj",
                  "msMaybeAllocateClassStyle()");
+      freeStyle(c->styles[c->numstyles]);
+      free(c->styles[c->numstyles]);
+      c->styles[c->numstyles] = NULL;
       return(MS_FAILURE);
     }
     c->numstyles++;
@@ -3276,7 +3274,12 @@ int loadClass(classObj *class, layerObj *layer)
         if(msGrowClassStyles(class) == NULL)
           return(-1);
         initStyle(class->styles[class->numstyles]);
-        if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) return(-1);
+        if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) {
+            freeStyle(class->styles[class->numstyles]);
+            free(class->styles[class->numstyles]);
+            class->styles[class->numstyles] = NULL;
+            return(-1);
+        }
         class->numstyles++;
         break;
       case(TEMPLATE):
@@ -4101,7 +4104,13 @@ int loadLayer(layerObj *layer, mapObj *map)
         if (msGrowLayerClasses(layer) == NULL)
           return(-1);
         initClass(layer->class[layer->numclasses]);
-        if(loadClass(layer->class[layer->numclasses], layer) == -1) return(-1);
+        if(loadClass(layer->class[layer->numclasses], layer) == -1)
+        {
+            freeClass(layer->class[layer->numclasses]);
+            free(layer->class[layer->numclasses]);
+            layer->class[layer->numclasses] = NULL;
+            return(-1);
+        }
         layer->numclasses++;
         break;
       case(CLUSTER):
@@ -4454,7 +4463,10 @@ int loadLayer(layerObj *layer, mapObj *map)
         if (msGrowLayerScaletokens(layer) == NULL)
           return(-1);
         initScaleToken(&layer->scaletokens[layer->numscaletokens]);
-        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) return(-1);
+        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) {
+            freeScaleToken(&layer->scaletokens[layer->numscaletokens]);
+            return(-1);
+        }
         layer->numscaletokens++;
         break;
       case(SIZEUNITS):
