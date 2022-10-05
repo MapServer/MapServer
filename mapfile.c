@@ -6383,7 +6383,6 @@ static int loadMapInternal(mapObj *map)
         if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(LATLON):
-        msFreeProjectionExceptContext(&map->latlon);
         if(loadProjection(&map->latlon) == -1) return MS_FAILURE;
         break;
       case(LAYER):
