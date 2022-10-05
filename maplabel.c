@@ -825,6 +825,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
   if(!stream) {
     msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontset()",
                fontset->filename);
+    free(path);
     return(-1);
   }
 
