@@ -43,9 +43,7 @@
 #include <ogr_srs_api.h>
 
 /* Only use this macro on 32-bit integers! */
-#define SWAP_FOUR_BYTES(data) \
-  ( ((data >> 24) & 0x000000FF) | ((data >>  8) & 0x0000FF00) | \
-    ((data <<  8) & 0x00FF0000) | ((data << 24) & 0xFF000000) )
+#define SWAP_FOUR_BYTES(data) CPL_SWAP32(data)
 
 
 #define ByteCopy( a, b, c )     memcpy( b, a, c )
