@@ -1813,7 +1813,12 @@ static int loadLabel(labelObj *label)
         if(msGrowLabelStyles(label) == NULL)
           return(-1);
         initStyle(label->styles[label->numstyles]);
-        if(loadStyle(label->styles[label->numstyles]) != MS_SUCCESS) return(-1);
+        if(loadStyle(label->styles[label->numstyles]) != MS_SUCCESS) {
+            freeStyle(label->styles[label->numstyles]);
+            free(label->styles[label->numstyles]);
+            label->styles[label->numstyles] = NULL;
+            return(-1);
+        }
         if(label->styles[label->numstyles]->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
           label->styles[label->numstyles]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT; /* set a default, a marker? */
         label->numstyles++;
