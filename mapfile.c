@@ -1632,7 +1632,6 @@ static int loadLabel(labelObj *label)
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadLabel()");
-        freeLabel(label);       /* free any structures allocated before EOF */
         return(-1);
       case(EXPRESSION):
         if(loadExpression(&(label->expression)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
@@ -2215,7 +2214,6 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 
 int loadHashTable(hashTableObj *ptable)
 {
-  char *key=NULL, *data=NULL;
   assert(ptable);
 
   for(;;) {
@@ -2226,14 +2224,19 @@ int loadHashTable(hashTableObj *ptable)
       case(END):
         return(MS_SUCCESS);
       case(MS_STRING):
-        key = msStrdup(msyystring_buffer); /* the key is *always* a string */
-        if(getString(&data) == MS_FAILURE) return(MS_FAILURE);
+      {
+        char* data = NULL;
+        char* key = msStrdup(msyystring_buffer); /* the key is *always* a string */
+        if(getString(&data) == MS_FAILURE) {
+          free(key);
+          return(MS_FAILURE);
+        }
         msInsertHashTable(ptable, key, data);
 
         free(key);
         free(data);
-        data=NULL;
         break;
+      }
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadHashTable()", msyystring_buffer, msyylineno );
         return(MS_FAILURE);
@@ -3004,11 +3007,6 @@ int freeClass(classObj *class)
       }
     }
   }
-  if( class->numstyles == 0 && class->styles != NULL &&
-      class->styles[0] != NULL ) {
-    /* msGrowClassStyles() creates class->styles[0] during the first call */
-    msFree(class->styles[0]);
-  }
   msFree(class->styles);
 
   for(i=0; i<class->numlabels; i++) { /* each label */
@@ -3158,6 +3156,9 @@ int msMaybeAllocateClassStyle(classObj* c, int idx)
     if ( initStyle(c->styles[c->numstyles]) == MS_FAILURE ) {
       msSetError(MS_MISCERR, "Failed to init new styleObj",
                  "msMaybeAllocateClassStyle()");
+      freeStyle(c->styles[c->numstyles]);
+      free(c->styles[c->numstyles]);
+      c->styles[c->numstyles] = NULL;
       return(MS_FAILURE);
     }
     c->numstyles++;
@@ -3299,7 +3300,9 @@ int loadClass(classObj *class, layerObj *layer)
         initLabel(class->labels[class->numlabels]);
         class->labels[class->numlabels]->size = MS_MEDIUM; /* only set a default if the LABEL section is present */
         if(loadLabel(class->labels[class->numlabels]) == -1) {
-          msFree(class->labels[class->numlabels]);
+          freeLabel(class->labels[class->numlabels]);
+          free(class->labels[class->numlabels]);
+          class->labels[class->numlabels] = NULL;
           return(-1);
         }
         class->numlabels++;
@@ -3335,7 +3338,12 @@ int loadClass(classObj *class, layerObj *layer)
         if(msGrowClassStyles(class) == NULL)
           return(-1);
         initStyle(class->styles[class->numstyles]);
-        if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) return(-1);
+        if(loadStyle(class->styles[class->numstyles]) != MS_SUCCESS) {
+            freeStyle(class->styles[class->numstyles]);
+            free(class->styles[class->numstyles]);
+            class->styles[class->numstyles] = NULL;
+            return(-1);
+        }
         class->numstyles++;
         break;
       case(TEMPLATE):
@@ -4152,7 +4160,13 @@ int loadLayer(layerObj *layer, mapObj *map)
         if (msGrowLayerClasses(layer) == NULL)
           return(-1);
         initClass(layer->class[layer->numclasses]);
-        if(loadClass(layer->class[layer->numclasses], layer) == -1) return(-1);
+        if(loadClass(layer->class[layer->numclasses], layer) == -1)
+        {
+            freeClass(layer->class[layer->numclasses]);
+            free(layer->class[layer->numclasses]);
+            layer->class[layer->numclasses] = NULL;
+            return(-1);
+        }
         layer->numclasses++;
         break;
       case(CLUSTER):
@@ -4511,7 +4525,10 @@ int loadLayer(layerObj *layer, mapObj *map)
         if (msGrowLayerScaletokens(layer) == NULL)
           return(-1);
         initScaleToken(&layer->scaletokens[layer->numscaletokens]);
-        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) return(-1);
+        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) {
+            freeScaleToken(&layer->scaletokens[layer->numscaletokens]);
+            return(-1);
+        }
         layer->numscaletokens++;
         break;
       case(SIZEUNITS):
