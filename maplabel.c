@@ -804,6 +804,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
   char szPath[MS_MAXPATHLEN];
   int i;
   int bFullPath = 0;
+  const char* realpath;
 
   if(fontset->numfonts != 0) /* already initialized */
     return(0);
@@ -821,7 +822,12 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
   /* return(-1); */
   /* } */
 
-  stream = VSIFOpenL( msBuildPath(szPath, fontset->map->mappath, fontset->filename), "rb");
+  realpath = msBuildPath(szPath, fontset->map->mappath, fontset->filename);
+  if( !realpath ) {
+    free(path);
+    return -1;
+  }
+  stream = VSIFOpenL( realpath, "rb");
   if(!stream) {
     msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontset()",
                fontset->filename);
