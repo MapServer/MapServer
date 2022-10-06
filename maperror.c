@@ -230,6 +230,7 @@ void msResetErrorList()
 
   ms_error->next = NULL;
   ms_error->code = MS_NOERR;
+  ms_error->isreported = MS_FALSE;
   ms_error->routine[0] = '\0';
   ms_error->message[0] = '\0';
   ms_error->errorcount = 0;
