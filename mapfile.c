@@ -6070,7 +6070,6 @@ static int loadMapInternal(mapObj *map)
         map->imagetype = getToken();
         break;
       case(LATLON):
-        msFreeProjectionExceptContext(&map->latlon);
         if(loadProjection(&map->latlon) == -1) return MS_FAILURE;
         break;
       case(LAYER):
