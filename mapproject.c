@@ -731,6 +731,7 @@ static int _msProcessAutoProjection(projectionObj *p)
                "WMS/WFS AUTO/AUTO2 PROJECTION must be in the format "
                "'AUTO:proj_id,units_id,lon0,lat0' or 'AUTO2:crs_id,factor,lon0,lat0'(got '%s').\n",
                "_msProcessAutoProjection()", p->args[0]);
+    msFreeCharArray(args, numargs);
     return -1;
   }
 
