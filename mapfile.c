@@ -1833,7 +1833,12 @@ static int loadLabel(labelObj *label)
         if(msGrowLabelStyles(label) == NULL)
           return(-1);
         initStyle(label->styles[label->numstyles]);
-        if(loadStyle(label->styles[label->numstyles]) != MS_SUCCESS) return(-1);
+        if(loadStyle(label->styles[label->numstyles]) != MS_SUCCESS) {
+            freeStyle(label->styles[label->numstyles]);
+            free(label->styles[label->numstyles]);
+            label->styles[label->numstyles] = NULL;
+            return(-1);
+        }
         if(label->styles[label->numstyles]->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
           label->styles[label->numstyles]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT; /* set a default, a marker? */
         label->numstyles++;
@@ -6467,7 +6472,6 @@ static int loadMapInternal(mapObj *map)
         if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return MS_FAILURE;
         break;
       case(LATLON):
-        msFreeProjectionExceptContext(&map->latlon);
         if(loadProjection(&map->latlon) == -1) return MS_FAILURE;
         break;
       case(LAYER):
@@ -6532,7 +6536,12 @@ static int loadMapInternal(mapObj *map)
       case(SYMBOL):
         if(msGrowSymbolSet(&(map->symbolset)) == NULL)
           return MS_FAILURE;
-        if((loadSymbol(map->symbolset.symbol[map->symbolset.numsymbols], map->mappath) == -1)) return MS_FAILURE;
+        if((loadSymbol(map->symbolset.symbol[map->symbolset.numsymbols], map->mappath) == -1)) {
+            msFreeSymbol(map->symbolset.symbol[map->symbolset.numsymbols]);
+            free(map->symbolset.symbol[map->symbolset.numsymbols]);
+            map->symbolset.symbol[map->symbolset.numsymbols] = NULL;
+            return MS_FAILURE;
+        }
         map->symbolset.symbol[map->symbolset.numsymbols]->inmapfile = MS_TRUE;
         map->symbolset.numsymbols++;
         break;
