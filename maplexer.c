@@ -8,11 +8,17 @@
 
 #define yy_create_buffer msyy_create_buffer
 #define yy_delete_buffer msyy_delete_buffer
-#define yy_flex_debug msyy_flex_debug
+#define yy_scan_buffer msyy_scan_buffer
+#define yy_scan_string msyy_scan_string
+#define yy_scan_bytes msyy_scan_bytes
 #define yy_init_buffer msyy_init_buffer
 #define yy_flush_buffer msyy_flush_buffer
 #define yy_load_buffer_state msyy_load_buffer_state
 #define yy_switch_to_buffer msyy_switch_to_buffer
+#define yypush_buffer_state msyypush_buffer_state
+#define yypop_buffer_state msyypop_buffer_state
+#define yyensure_buffer_stack msyyensure_buffer_stack
+#define yy_flex_debug msyy_flex_debug
 #define yyin msyyin
 #define yyleng msyyleng
 #define yylex msyylex
@@ -28,9 +34,243 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 0
+#define YY_FLEX_SUBMINOR_VERSION 4
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
+#endif
+
+#ifdef yy_create_buffer
+#define msyy_create_buffer_ALREADY_DEFINED
+#else
+#define yy_create_buffer msyy_create_buffer
+#endif
+
+#ifdef yy_delete_buffer
+#define msyy_delete_buffer_ALREADY_DEFINED
+#else
+#define yy_delete_buffer msyy_delete_buffer
+#endif
+
+#ifdef yy_scan_buffer
+#define msyy_scan_buffer_ALREADY_DEFINED
+#else
+#define yy_scan_buffer msyy_scan_buffer
+#endif
+
+#ifdef yy_scan_string
+#define msyy_scan_string_ALREADY_DEFINED
+#else
+#define yy_scan_string msyy_scan_string
+#endif
+
+#ifdef yy_scan_bytes
+#define msyy_scan_bytes_ALREADY_DEFINED
+#else
+#define yy_scan_bytes msyy_scan_bytes
+#endif
+
+#ifdef yy_init_buffer
+#define msyy_init_buffer_ALREADY_DEFINED
+#else
+#define yy_init_buffer msyy_init_buffer
+#endif
+
+#ifdef yy_flush_buffer
+#define msyy_flush_buffer_ALREADY_DEFINED
+#else
+#define yy_flush_buffer msyy_flush_buffer
+#endif
+
+#ifdef yy_load_buffer_state
+#define msyy_load_buffer_state_ALREADY_DEFINED
+#else
+#define yy_load_buffer_state msyy_load_buffer_state
+#endif
+
+#ifdef yy_switch_to_buffer
+#define msyy_switch_to_buffer_ALREADY_DEFINED
+#else
+#define yy_switch_to_buffer msyy_switch_to_buffer
+#endif
+
+#ifdef yypush_buffer_state
+#define msyypush_buffer_state_ALREADY_DEFINED
+#else
+#define yypush_buffer_state msyypush_buffer_state
+#endif
+
+#ifdef yypop_buffer_state
+#define msyypop_buffer_state_ALREADY_DEFINED
+#else
+#define yypop_buffer_state msyypop_buffer_state
+#endif
+
+#ifdef yyensure_buffer_stack
+#define msyyensure_buffer_stack_ALREADY_DEFINED
+#else
+#define yyensure_buffer_stack msyyensure_buffer_stack
+#endif
+
+#ifdef yylex
+#define msyylex_ALREADY_DEFINED
+#else
+#define yylex msyylex
+#endif
+
+#ifdef yyrestart
+#define msyyrestart_ALREADY_DEFINED
+#else
+#define yyrestart msyyrestart
+#endif
+
+#ifdef yylex_init
+#define msyylex_init_ALREADY_DEFINED
+#else
+#define yylex_init msyylex_init
+#endif
+
+#ifdef yylex_init_extra
+#define msyylex_init_extra_ALREADY_DEFINED
+#else
+#define yylex_init_extra msyylex_init_extra
+#endif
+
+#ifdef yylex_destroy
+#define msyylex_destroy_ALREADY_DEFINED
+#else
+#define yylex_destroy msyylex_destroy
+#endif
+
+#ifdef yyget_debug
+#define msyyget_debug_ALREADY_DEFINED
+#else
+#define yyget_debug msyyget_debug
+#endif
+
+#ifdef yyset_debug
+#define msyyset_debug_ALREADY_DEFINED
+#else
+#define yyset_debug msyyset_debug
+#endif
+
+#ifdef yyget_extra
+#define msyyget_extra_ALREADY_DEFINED
+#else
+#define yyget_extra msyyget_extra
+#endif
+
+#ifdef yyset_extra
+#define msyyset_extra_ALREADY_DEFINED
+#else
+#define yyset_extra msyyset_extra
+#endif
+
+#ifdef yyget_in
+#define msyyget_in_ALREADY_DEFINED
+#else
+#define yyget_in msyyget_in
+#endif
+
+#ifdef yyset_in
+#define msyyset_in_ALREADY_DEFINED
+#else
+#define yyset_in msyyset_in
+#endif
+
+#ifdef yyget_out
+#define msyyget_out_ALREADY_DEFINED
+#else
+#define yyget_out msyyget_out
+#endif
+
+#ifdef yyset_out
+#define msyyset_out_ALREADY_DEFINED
+#else
+#define yyset_out msyyset_out
+#endif
+
+#ifdef yyget_leng
+#define msyyget_leng_ALREADY_DEFINED
+#else
+#define yyget_leng msyyget_leng
+#endif
+
+#ifdef yyget_text
+#define msyyget_text_ALREADY_DEFINED
+#else
+#define yyget_text msyyget_text
+#endif
+
+#ifdef yyget_lineno
+#define msyyget_lineno_ALREADY_DEFINED
+#else
+#define yyget_lineno msyyget_lineno
+#endif
+
+#ifdef yyset_lineno
+#define msyyset_lineno_ALREADY_DEFINED
+#else
+#define yyset_lineno msyyset_lineno
+#endif
+
+#ifdef yywrap
+#define msyywrap_ALREADY_DEFINED
+#else
+#define yywrap msyywrap
+#endif
+
+#ifdef yyalloc
+#define msyyalloc_ALREADY_DEFINED
+#else
+#define yyalloc msyyalloc
+#endif
+
+#ifdef yyrealloc
+#define msyyrealloc_ALREADY_DEFINED
+#else
+#define yyrealloc msyyrealloc
+#endif
+
+#ifdef yyfree
+#define msyyfree_ALREADY_DEFINED
+#else
+#define yyfree msyyfree
+#endif
+
+#ifdef yytext
+#define msyytext_ALREADY_DEFINED
+#else
+#define yytext msyytext
+#endif
+
+#ifdef yyleng
+#define msyyleng_ALREADY_DEFINED
+#else
+#define yyleng msyyleng
+#endif
+
+#ifdef yyin
+#define msyyin_ALREADY_DEFINED
+#else
+#define yyin msyyin
+#endif
+
+#ifdef yyout
+#define msyyout_ALREADY_DEFINED
+#else
+#define yyout msyyout
+#endif
+
+#ifdef yy_flex_debug
+#define msyy_flex_debug_ALREADY_DEFINED
+#else
+#define yy_flex_debug msyy_flex_debug
+#endif
+
+#ifdef yylineno
+#define msyylineno_ALREADY_DEFINED
+#else
+#define yylineno msyylineno
 #endif
 
 /* First, we deal with  platform-specific or compiler-specific issues. */
@@ -103,60 +343,48 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#ifndef SIZE_MAX
+#define SIZE_MAX               (~(size_t)0)
+#endif
+
 #endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
-#ifdef __cplusplus
+/* begin standard C++ headers. */
 
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* Returned upon end-of-file. */
 #define YY_NULL 0
 
-/* Promotes a possibly negative, possibly signed char to an unsigned
- * integer for use as an array index.  If the signed char is negative,
- * we want to instead treat it as an 8-bit unsigned char, hence the
- * double cast.
+/* Promotes a possibly negative, possibly signed char to an
+ *   integer in range [0..255] for use as an array index.
  */
-#define YY_SC_TO_UI(c) ((unsigned int) (unsigned char) c)
+#define YY_SC_TO_UI(c) ((YY_CHAR) (c))
 
 /* Enter a start condition.  This macro really ought to take a parameter,
  * but we do it the disgusting crufty way forced on us by the ()-less
  * definition of BEGIN.
  */
 #define BEGIN (yy_start) = 1 + 2 *
-
 /* Translate the current start state into a value that can be later handed
  * to BEGIN to return to the state.  The YYSTATE alias is for lex
  * compatibility.
  */
 #define YY_START (((yy_start) - 1) / 2)
 #define YYSTATE YY_START
-
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
-
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE msyyrestart(msyyin  )
-
+#define YY_NEW_FILE yyrestart( yyin  )
 #define YY_END_OF_BUFFER_CHAR 0
 
 /* Size of default input buffer. */
@@ -186,14 +414,14 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 typedef size_t yy_size_t;
 #endif
 
-extern yy_size_t msyyleng;
+extern int yyleng;
 
-extern FILE *msyyin, *msyyout;
+extern FILE *yyin, *yyout;
 
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
-
+    
     #define YY_LESS_LINENO(n)
     #define YY_LINENO_REWIND_TO(ptr)
     
@@ -201,16 +429,15 @@ extern FILE *msyyin, *msyyout;
 #define yyless(n) \
 	do \
 		{ \
-		/* Undo effects of setting up msyytext. */ \
+		/* Undo effects of setting up yytext. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		*yy_cp = (yy_hold_char); \
 		YY_RESTORE_YY_MORE_OFFSET \
 		(yy_c_buf_p) = yy_cp = yy_bp + yyless_macro_arg - YY_MORE_ADJ; \
-		YY_DO_BEFORE_ACTION; /* set up msyytext again */ \
+		YY_DO_BEFORE_ACTION; /* set up yytext again */ \
 		} \
 	while ( 0 )
-
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
@@ -225,7 +452,7 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
@@ -253,7 +480,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -270,8 +497,8 @@ struct yy_buffer_state
 	 * possible backing-up.
 	 *
 	 * When we actually see the EOF, we change the status to "new"
-	 * (via msyyrestart()), so that the user can continue scanning by
-	 * just pointing msyyin at a new input file.
+	 * (via yyrestart()), so that the user can continue scanning by
+	 * just pointing yyin at a new input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
 
@@ -281,7 +508,7 @@ struct yy_buffer_state
 /* Stack of input buffers. */
 static size_t yy_buffer_stack_top = 0; /**< index of top of stack. */
 static size_t yy_buffer_stack_max = 0; /**< capacity of stack. */
-static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
+static YY_BUFFER_STATE * yy_buffer_stack = NULL; /**< Stack as an array. */
 
 /* We provide macros for accessing buffer states in case in the
  * future we want to put the buffer states in a more general
@@ -292,109 +519,98 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 #define YY_CURRENT_BUFFER ( (yy_buffer_stack) \
                           ? (yy_buffer_stack)[(yy_buffer_stack_top)] \
                           : NULL)
-
 /* Same as previous macro, but useful when we know that the buffer stack is not
  * NULL or when we need an lvalue. For internal use only.
  */
 #define YY_CURRENT_BUFFER_LVALUE (yy_buffer_stack)[(yy_buffer_stack_top)]
 
-/* yy_hold_char holds the character lost when msyytext is formed. */
+/* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
 static int yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t msyyleng;
+int yyleng;
 
 /* Points to current character in buffer. */
-static char *yy_c_buf_p = (char *) 0;
+static char *yy_c_buf_p = NULL;
 static int yy_init = 0;		/* whether we need to initialize */
 static int yy_start = 0;	/* start state number */
 
-/* Flag which is used to allow msyywrap()'s to do buffer switches
- * instead of setting up a fresh msyyin.  A bit of a hack ...
+/* Flag which is used to allow yywrap()'s to do buffer switches
+ * instead of setting up a fresh yyin.  A bit of a hack ...
  */
 static int yy_did_buffer_switch_on_eof;
 
-void msyyrestart (FILE *input_file  );
-void msyy_switch_to_buffer (YY_BUFFER_STATE new_buffer  );
-YY_BUFFER_STATE msyy_create_buffer (FILE *file,int size  );
-void msyy_delete_buffer (YY_BUFFER_STATE b  );
-void msyy_flush_buffer (YY_BUFFER_STATE b  );
-void msyypush_buffer_state (YY_BUFFER_STATE new_buffer  );
-void msyypop_buffer_state (void );
+void yyrestart ( FILE *input_file  );
+void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer  );
+YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size  );
+void yy_delete_buffer ( YY_BUFFER_STATE b  );
+void yy_flush_buffer ( YY_BUFFER_STATE b  );
+void yypush_buffer_state ( YY_BUFFER_STATE new_buffer  );
+void yypop_buffer_state ( void );
 
-static void msyyensure_buffer_stack (void );
-static void msyy_load_buffer_state (void );
-static void msyy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
+static void yyensure_buffer_stack ( void );
+static void yy_load_buffer_state ( void );
+static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file  );
+#define YY_FLUSH_BUFFER yy_flush_buffer( YY_CURRENT_BUFFER )
 
-#define YY_FLUSH_BUFFER msyy_flush_buffer(YY_CURRENT_BUFFER )
+YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size  );
+YY_BUFFER_STATE yy_scan_string ( const char *yy_str  );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len  );
 
-YY_BUFFER_STATE msyy_scan_buffer (char *base,yy_size_t size  );
-YY_BUFFER_STATE msyy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE msyy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+void *yyalloc ( yy_size_t  );
+void *yyrealloc ( void *, yy_size_t  );
+void yyfree ( void *  );
 
-void *msyyalloc (yy_size_t  );
-void *msyyrealloc (void *,yy_size_t  );
-void msyyfree (void *  );
-
-#define yy_new_buffer msyy_create_buffer
-
+#define yy_new_buffer yy_create_buffer
 #define yy_set_interactive(is_interactive) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){ \
-        msyyensure_buffer_stack (); \
+        yyensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            msyy_create_buffer(msyyin,YY_BUF_SIZE ); \
+            yy_create_buffer( yyin, YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
-
 #define yy_set_bol(at_bol) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){\
-        msyyensure_buffer_stack (); \
+        yyensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            msyy_create_buffer(msyyin,YY_BUF_SIZE ); \
+            yy_create_buffer( yyin, YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
-
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
 /* Begin user sect3 */
+typedef flex_uint8_t YY_CHAR;
 
-typedef unsigned char YY_CHAR;
-
-FILE *msyyin = (FILE *) 0, *msyyout = (FILE *) 0;
+FILE *yyin = NULL, *yyout = NULL;
 
 typedef int yy_state_type;
 
-extern int msyylineno;
+extern int yylineno;
+int yylineno = 1;
 
-int msyylineno = 1;
-
-extern char *msyytext;
+extern char *yytext;
 #ifdef yytext_ptr
 #undef yytext_ptr
 #endif
-#define yytext_ptr msyytext
+#define yytext_ptr yytext
 
-static yy_state_type yy_get_previous_state (void );
-static yy_state_type yy_try_NUL_trans (yy_state_type current_state  );
-static int yy_get_next_buffer (void );
-#if defined(__GNUC__) && __GNUC__ >= 3
-__attribute__((__noreturn__))
-#endif
-static void yy_fatal_error (yyconst char msg[]  );
+static yy_state_type yy_get_previous_state ( void );
+static yy_state_type yy_try_NUL_trans ( yy_state_type current_state  );
+static int yy_get_next_buffer ( void );
+static void yynoreturn yy_fatal_error ( const char* msg  );
 
 /* Done after the current pattern has been matched and before the
- * corresponding action - sets up msyytext.
+ * corresponding action - sets up yytext.
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	msyyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (int) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-
 #define YY_NUM_RULES 352
 #define YY_END_OF_BUFFER 353
 /* This struct is not used in this scanner,
@@ -404,7 +620,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[2038] =
+static const flex_int16_t yy_accept[2038] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,  353,  350,    1,  348,  341,    2,
@@ -632,7 +848,7 @@ static yyconst flex_int16_t yy_accept[2038] =
       347,  347,  186,  347,  347,  182,    0
     } ;
 
-static yyconst YY_CHAR yy_ec[256] =
+static const YY_CHAR yy_ec[256] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    4,    1,    1,    1,    1,    1,    1,    1,
@@ -664,7 +880,7 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst YY_CHAR yy_meta[89] =
+static const YY_CHAR yy_meta[89] =
     {   0,
         1,    1,    2,    1,    3,    1,    4,    1,    1,    5,
         1,    1,    6,    1,    7,    8,    8,    8,    8,    3,
@@ -677,7 +893,7 @@ static yyconst YY_CHAR yy_meta[89] =
         1,    1,    1,    1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_uint16_t yy_base[2065] =
+static const flex_int16_t yy_base[2065] =
     {   0,
         0,    0,   86,  172,  260,    0,  348,    0,   89,   93,
        97,   99,   98,  102, 1126, 4871,  115, 4871, 4871,    0,
@@ -908,7 +1124,7 @@ static yyconst flex_uint16_t yy_base[2065] =
      4830, 4840, 4850, 4860
     } ;
 
-static yyconst flex_int16_t yy_def[2065] =
+static const flex_int16_t yy_def[2065] =
     {   0,
      2037,    1, 2038, 2038, 2037,    5, 2037,    7, 2039, 2039,
      2040, 2040, 2041, 2041, 2037, 2037, 2037, 2037, 2037, 2042,
@@ -1139,7 +1355,7 @@ static yyconst flex_int16_t yy_def[2065] =
      2037, 2037, 2037, 2037
     } ;
 
-static yyconst flex_uint16_t yy_nxt[4960] =
+static const flex_int16_t yy_nxt[4960] =
     {   0,
        16,   17,   18,   17,   17,   16,   19,   20,   16,   19,
        21,   16,   16,   16,   22,   23,   24,   25,   25,   16,
@@ -1688,7 +1904,7 @@ static yyconst flex_uint16_t yy_nxt[4960] =
      2037, 2037, 2037, 2037, 2037, 2037, 2037, 2037, 2037
     } ;
 
-static yyconst flex_int16_t yy_chk[4960] =
+static const flex_int16_t yy_chk[4960] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -2240,8 +2456,8 @@ static yyconst flex_int16_t yy_chk[4960] =
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
 
-extern int msyy_flex_debug;
-int msyy_flex_debug = 0;
+extern int yy_flex_debug;
+int yy_flex_debug = 0;
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -2250,7 +2466,7 @@ int msyy_flex_debug = 0;
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-char *msyytext;
+char *yytext;
 #line 1 "maplexer.l"
 #line 4 "maplexer.l"
 /*
@@ -2298,7 +2514,6 @@ double msyynumber;
 int msyystate=MS_TOKENIZE_DEFAULT;
 char *msyystring=NULL;
 char *msyybasepath=NULL;
-char *msyystring_buffer_ptr;
 int  msyystring_buffer_size = 0;
 int  msyystring_size;
 char msyystring_begin;
@@ -2306,22 +2521,21 @@ char *msyystring_buffer = NULL;
 int  msyystring_icase = MS_FALSE;
 int  msyystring_return_state;
 int  msyystring_begin_state;
-int  msyystring_size_tmp;
 
 int msyyreturncomments = 0;
 
-#define MS_LEXER_STRING_REALLOC(string, string_size, max_size, string_ptr)   \
-   if (string_size >= max_size) {         \
-       msyystring_size_tmp = max_size;     \
-       max_size = ((max_size*2) > string_size) ? max_size*2 : string_size+1;                     \
-       string = (char *) msSmallRealloc(string, sizeof(char *) * max_size);  \
-       string_ptr = string;    \
-       string_ptr += msyystring_size_tmp; \
-   }
+#define MS_LEXER_STRING_REALLOC(string, string_size, max_size)   \
+  do { \
+   const int string_size_macro = (int)(string_size); \
+   if (string_size_macro >= (int)(max_size)) {         \
+       max_size = (((int)(max_size)*2) > string_size_macro) ? ((int)(max_size))*2 : string_size_macro+1;   \
+       string = (char *) msSmallRealloc(string, sizeof(char *) * (max_size));  \
+   } \
+  } while(0)
 
 #define MS_LEXER_RETURN_TOKEN(token) \
    MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),  \
-                           msyystring_buffer_size, msyystring_buffer_ptr); \
+                           msyystring_buffer_size); \
    strcpy(msyystring_buffer, msyytext); \
    return(token); 
 
@@ -2331,13 +2545,9 @@ int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 
+#line 2549 "/home/even/mapserver/mapserver/maplexer.c"
 
-
-
-
-
-
-#line 2341 "/home/even/mapserver/mapserver/maplexer.c"
+#line 2551 "/home/even/mapserver/mapserver/maplexer.c"
 
 #define INITIAL 0
 #define URL_VARIABLE 1
@@ -2351,36 +2561,36 @@ char path[MS_MAXPATHLEN];
 #define YY_EXTRA_TYPE void *
 #endif
 
-static int yy_init_globals (void );
+static int yy_init_globals ( void );
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int msyylex_destroy (void );
+int yylex_destroy ( void );
 
-int msyyget_debug (void );
+int yyget_debug ( void );
 
-void msyyset_debug (int debug_flag  );
+void yyset_debug ( int debug_flag  );
 
-YY_EXTRA_TYPE msyyget_extra (void );
+YY_EXTRA_TYPE yyget_extra ( void );
 
-void msyyset_extra (YY_EXTRA_TYPE user_defined  );
+void yyset_extra ( YY_EXTRA_TYPE user_defined  );
 
-FILE *msyyget_in (void );
+FILE *yyget_in ( void );
 
-void msyyset_in  (FILE * _in_str  );
+void yyset_in  ( FILE * _in_str  );
 
-FILE *msyyget_out (void );
+FILE *yyget_out ( void );
 
-void msyyset_out  (FILE * _out_str  );
+void yyset_out  ( FILE * _out_str  );
 
-yy_size_t msyyget_leng (void );
+			int yyget_leng ( void );
 
-char *msyyget_text (void );
+char *yyget_text ( void );
 
-int msyyget_lineno (void );
+int yyget_lineno ( void );
 
-void msyyset_lineno (int _line_number  );
+void yyset_lineno ( int _line_number  );
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -2388,32 +2598,31 @@ void msyyset_lineno (int _line_number  );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int msyywrap (void );
+extern "C" int yywrap ( void );
 #else
-extern int msyywrap (void );
+extern int yywrap ( void );
 #endif
 #endif
 
 #ifndef YY_NO_UNPUT
     
-    static void yyunput (int c,char *buf_ptr  );
+    static void yyunput ( int c, char *buf_ptr  );
     
 #endif
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char *,yyconst char *,int );
+static void yy_flex_strncpy ( char *, const char *, int );
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * );
+static int yy_flex_strlen ( const char * );
 #endif
 
 #ifndef YY_NO_INPUT
-
 #ifdef __cplusplus
-static int yyinput (void );
+static int yyinput ( void );
 #else
-static int input (void );
+static int input ( void );
 #endif
 
 #endif
@@ -2433,7 +2642,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( msyytext, msyyleng, 1, msyyout )) {} } while (0)
+#define ECHO do { if (fwrite( yytext, (size_t) yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -2444,20 +2653,20 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		int n; \
 		for ( n = 0; n < max_size && \
-			     (c = getc( msyyin )) != EOF && c != '\n'; ++n ) \
+			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
 		if ( c == '\n' ) \
 			buf[n++] = (char) c; \
-		if ( c == EOF && ferror( msyyin ) ) \
+		if ( c == EOF && ferror( yyin ) ) \
 			YY_FATAL_ERROR( "input in flex scanner failed" ); \
 		result = n; \
 		} \
 	else \
 		{ \
 		errno=0; \
-		while ( (result = fread(buf, 1, max_size, msyyin))==0 && ferror(msyyin)) \
+		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, yyin)) == 0 && ferror(yyin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -2465,7 +2674,7 @@ static int input (void );
 				break; \
 				} \
 			errno=0; \
-			clearerr(msyyin); \
+			clearerr(yyin); \
 			} \
 		}\
 \
@@ -2498,12 +2707,12 @@ static int input (void );
 #ifndef YY_DECL
 #define YY_DECL_IS_OURS 1
 
-extern int msyylex (void);
+extern int yylex (void);
 
-#define YY_DECL int msyylex (void)
+#define YY_DECL int yylex (void)
 #endif /* !YY_DECL */
 
-/* Code executed at the beginning of each rule, after msyytext and msyyleng
+/* Code executed at the beginning of each rule, after yytext and yyleng
  * have been set up.
  */
 #ifndef YY_USER_ACTION
@@ -2537,24 +2746,25 @@ YY_DECL
 		if ( ! (yy_start) )
 			(yy_start) = 1;	/* first start state */
 
-		if ( ! msyyin )
-			msyyin = stdin;
+		if ( ! yyin )
+			yyin = stdin;
 
-		if ( ! msyyout )
-			msyyout = stdout;
+		if ( ! yyout )
+			yyout = stdout;
 
 		if ( ! YY_CURRENT_BUFFER ) {
-			msyyensure_buffer_stack ();
+			yyensure_buffer_stack ();
 			YY_CURRENT_BUFFER_LVALUE =
-				msyy_create_buffer(msyyin,YY_BUF_SIZE );
+				yy_create_buffer( yyin, YY_BUF_SIZE );
 		}
 
-		msyy_load_buffer_state( );
+		yy_load_buffer_state(  );
 		}
 
 	{
-#line 91 "maplexer.l"
+#line 89 "maplexer.l"
 
+#line 91 "maplexer.l"
        if (msyystring_buffer == NULL)
        {
            msyystring_buffer_size = 256;
@@ -2629,13 +2839,13 @@ YY_DECL
          break;
        }
 
-#line 2633 "/home/even/mapserver/mapserver/maplexer.c"
+#line 2843 "/home/even/mapserver/mapserver/maplexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = (yy_c_buf_p);
 
-		/* Support of msyytext. */
+		/* Support of yytext. */
 		*yy_cp = (yy_hold_char);
 
 		/* yy_bp points to the position in yy_ch_buf of the start of
@@ -2657,9 +2867,9 @@ yy_match:
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
 				if ( yy_current_state >= 2038 )
-					yy_c = yy_meta[(unsigned int) yy_c];
+					yy_c = yy_meta[yy_c];
 				}
-			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
 		while ( yy_current_state != 2037 );
@@ -2684,1645 +2894,1645 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 166 "maplexer.l"
+#line 165 "maplexer.l"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 168 "maplexer.l"
+#line 167 "maplexer.l"
 { if (msyyreturncomments) return(MS_COMMENT); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 170 "maplexer.l"
+#line 169 "maplexer.l"
 { BEGIN(MULTILINE_COMMENT); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 171 "maplexer.l"
+#line 170 "maplexer.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 172 "maplexer.l"
+#line 171 "maplexer.l"
 ;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 173 "maplexer.l"
+#line 172 "maplexer.l"
 ;
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 174 "maplexer.l"
+#line 173 "maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 176 "maplexer.l"
+#line 175 "maplexer.l"
 ;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 178 "maplexer.l"
+#line 177 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_OR); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 179 "maplexer.l"
+#line 178 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_AND); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 180 "maplexer.l"
+#line 179 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_LOGICAL_NOT); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 181 "maplexer.l"
+#line 180 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_EQ); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 182 "maplexer.l"
+#line 181 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_NE); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 183 "maplexer.l"
+#line 182 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_GT); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 184 "maplexer.l"
+#line 183 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_LT); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 185 "maplexer.l"
+#line 184 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_GE); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 186 "maplexer.l"
+#line 185 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_LE); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 187 "maplexer.l"
+#line 186 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_RE); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 189 "maplexer.l"
+#line 188 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_IEQ); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 190 "maplexer.l"
+#line 189 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_IRE); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 192 "maplexer.l"
+#line 191 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_IN); /* was IN */ }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 194 "maplexer.l"
+#line 193 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_AREA); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 195 "maplexer.l"
+#line 194 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LENGTH); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 196 "maplexer.l"
+#line 195 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_TOSTRING); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 197 "maplexer.l"
+#line 196 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_COMMIFY); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 198 "maplexer.l"
+#line 197 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_ROUND); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 199 "maplexer.l"
+#line 198 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_UPPER); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 200 "maplexer.l"
+#line 199 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LOWER); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 201 "maplexer.l"
+#line 200 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_INITCAP); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 202 "maplexer.l"
+#line 201 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FIRSTCAP); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 204 "maplexer.l"
+#line 203 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_BUFFER); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 205 "maplexer.l"
+#line 204 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DIFFERENCE); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 206 "maplexer.l"
+#line 205 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFY); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 207 "maplexer.l"
+#line 206 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFYPT); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 208 "maplexer.l"
+#line 207 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_GENERALIZE); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 209 "maplexer.l"
+#line 208 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SMOOTHSIA); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 210 "maplexer.l"
+#line 209 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_JAVASCRIPT); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 212 "maplexer.l"
+#line 211 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_INTERSECTS); }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 213 "maplexer.l"
+#line 212 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DISJOINT); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 214 "maplexer.l"
+#line 213 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_TOUCHES); }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 215 "maplexer.l"
+#line 214 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_OVERLAPS); }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 216 "maplexer.l"
+#line 215 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_CROSSES); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 217 "maplexer.l"
+#line 216 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_WITHIN); }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 218 "maplexer.l"
+#line 217 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_CONTAINS); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 219 "maplexer.l"
+#line 218 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_EQUALS); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 220 "maplexer.l"
+#line 219 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_BEYOND); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 221 "maplexer.l"
+#line 220 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DWITHIN); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 223 "maplexer.l"
+#line 222 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FROMTEXT); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 225 "maplexer.l"
+#line 224 "maplexer.l"
 { msyynumber=MS_TRUE; return(MS_TOKEN_LITERAL_BOOLEAN); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 226 "maplexer.l"
+#line 225 "maplexer.l"
 { msyynumber=MS_FALSE; return(MS_TOKEN_LITERAL_BOOLEAN); }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 228 "maplexer.l"
+#line 227 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COLORRANGE); }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 229 "maplexer.l"
+#line 228 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DATARANGE); }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 230 "maplexer.l"
+#line 229 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(RANGEITEM); }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 232 "maplexer.l"
+#line 231 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ALIGN); }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 233 "maplexer.l"
+#line 232 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ANCHORPOINT); }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 234 "maplexer.l"
+#line 233 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ANGLE); }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 235 "maplexer.l"
+#line 234 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ANTIALIAS); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 236 "maplexer.l"
+#line 235 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BACKGROUNDCOLOR); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 237 "maplexer.l"
+#line 236 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BANDSITEM); }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 238 "maplexer.l"
+#line 237 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BINDVALS); }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 239 "maplexer.l"
+#line 238 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BOM); }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 240 "maplexer.l"
+#line 239 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BROWSEFORMAT); }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 241 "maplexer.l"
+#line 240 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(BUFFER); }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 242 "maplexer.l"
+#line 241 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CHARACTER); }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 243 "maplexer.l"
+#line 242 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLASS); }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 244 "maplexer.l"
+#line 243 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLASSITEM); }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 245 "maplexer.l"
+#line 244 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLASSGROUP); }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 246 "maplexer.l"
+#line 245 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CLUSTER); }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 247 "maplexer.l"
+#line 246 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COLOR); }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 248 "maplexer.l"
+#line 247 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COMPFILTER); }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 249 "maplexer.l"
+#line 248 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COMPOSITE); }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 250 "maplexer.l"
+#line 249 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(COMPOP); }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 251 "maplexer.l"
+#line 250 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONFIG); }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 252 "maplexer.l"
+#line 251 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONNECTION); }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 253 "maplexer.l"
+#line 252 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONNECTIONTYPE); }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 254 "maplexer.l"
+#line 253 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DATA); }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 255 "maplexer.l"
+#line 254 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DATAPATTERN); }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 256 "maplexer.l"
+#line 255 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DEBUG); }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 257 "maplexer.l"
+#line 256 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DRIVER); }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 258 "maplexer.l"
+#line 257 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DUMP); }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 259 "maplexer.l"
+#line 258 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EMPTY); }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 260 "maplexer.l"
+#line 259 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ENCODING); }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 261 "maplexer.l"
+#line 260 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(END); }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 262 "maplexer.l"
+#line 261 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ERROR); }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 263 "maplexer.l"
+#line 262 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EXPRESSION); }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 264 "maplexer.l"
+#line 263 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EXTENT); }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 265 "maplexer.l"
+#line 264 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(EXTENSION); }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 266 "maplexer.l"
+#line 265 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FEATURE); }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 267 "maplexer.l"
+#line 266 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FILLED); }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 268 "maplexer.l"
+#line 267 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FILTER); }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 269 "maplexer.l"
+#line 268 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FILTERITEM); }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 270 "maplexer.l"
+#line 269 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FOOTER); }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 271 "maplexer.l"
+#line 270 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FONT); }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 272 "maplexer.l"
+#line 271 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FONTSET); }
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 273 "maplexer.l"
+#line 272 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FORCE); }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 274 "maplexer.l"
+#line 273 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FORMATOPTION); }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 275 "maplexer.l"
+#line 274 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(FROM); }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 276 "maplexer.l"
+#line 275 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GAP); }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 277 "maplexer.l"
+#line 276 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GEOMTRANSFORM); }
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 278 "maplexer.l"
+#line 277 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GRID); }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 279 "maplexer.l"
+#line 278 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GRIDSTEP); }
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 280 "maplexer.l"
+#line 279 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GRATICULE); }
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 281 "maplexer.l"
+#line 280 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(GROUP); }
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 282 "maplexer.l"
+#line 281 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(HEADER); }
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 283 "maplexer.l"
+#line 282 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGE); }
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 284 "maplexer.l"
+#line 283 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGECOLOR); }
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 285 "maplexer.l"
+#line 284 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGETYPE); }
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 286 "maplexer.l"
+#line 285 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEQUALITY); }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 287 "maplexer.l"
+#line 286 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEMODE); }
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 288 "maplexer.l"
+#line 287 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEPATH); }
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 289 "maplexer.l"
+#line 288 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEMPPATH); }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 290 "maplexer.l"
+#line 289 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(IMAGEURL); }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 291 "maplexer.l"
+#line 290 "maplexer.l"
 { BEGIN(INCLUDE); }
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 292 "maplexer.l"
+#line 291 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INDEX); }
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 293 "maplexer.l"
+#line 292 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 294 "maplexer.l"
+#line 293 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INTERLACE); }
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 295 "maplexer.l"
+#line 294 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 296 "maplexer.l"
+#line 295 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(JOIN); }
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 297 "maplexer.l"
+#line 296 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 298 "maplexer.l"
+#line 297 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(KEYSIZE); }
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 299 "maplexer.l"
+#line 298 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(KEYSPACING); }
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 300 "maplexer.l"
+#line 299 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABEL); }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 301 "maplexer.l"
+#line 300 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELCACHE); }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 302 "maplexer.l"
+#line 301 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELFORMAT); }
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 303 "maplexer.l"
+#line 302 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELITEM); }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 304 "maplexer.l"
+#line 303 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMAXSCALE); }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 305 "maplexer.l"
+#line 304 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMAXSCALEDENOM); }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 306 "maplexer.l"
+#line 305 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMINSCALE); }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 307 "maplexer.l"
+#line 306 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELMINSCALEDENOM); }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 308 "maplexer.l"
+#line 307 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LABELREQUIRES); }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 309 "maplexer.l"
+#line 308 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LATLON); }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 310 "maplexer.l"
+#line 309 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LAYER); }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 311 "maplexer.l"
+#line 310 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LEADER); }
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 312 "maplexer.l"
+#line 311 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LEGEND); }
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 313 "maplexer.l"
+#line 312 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LEGENDFORMAT); }
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 314 "maplexer.l"
+#line 313 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LINECAP); }
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 315 "maplexer.l"
+#line 314 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LINEJOIN); }
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 316 "maplexer.l"
+#line 315 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LINEJOINMAXSIZE); }
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 317 "maplexer.l"
+#line 316 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(LOG); }
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 318 "maplexer.l"
+#line 317 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAP); }
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 319 "maplexer.l"
+#line 318 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MARKER); }
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 320 "maplexer.l"
+#line 319 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MARKERSIZE); }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 321 "maplexer.l"
+#line 320 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MASK); }
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 322 "maplexer.l"
+#line 321 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXARCS); }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 323 "maplexer.l"
+#line 322 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXBOXSIZE); }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 324 "maplexer.l"
+#line 323 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXDISTANCE); }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 325 "maplexer.l"
+#line 324 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXFEATURES); }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 326 "maplexer.l"
+#line 325 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXINTERVAL); }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 327 "maplexer.l"
+#line 326 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSCALE); }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 328 "maplexer.l"
+#line 327 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSCALEDENOM); }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 329 "maplexer.l"
+#line 328 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXGEOWIDTH); }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 330 "maplexer.l"
+#line 329 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXLENGTH); }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 331 "maplexer.l"
+#line 330 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSIZE); }
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 332 "maplexer.l"
+#line 331 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXSUBDIVIDE); }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 333 "maplexer.l"
+#line 332 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXTEMPLATE); }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 334 "maplexer.l"
+#line 333 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXWIDTH); }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 335 "maplexer.l"
+#line 334 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(METADATA); }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 336 "maplexer.l"
+#line 335 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MIMETYPE); }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 337 "maplexer.l"
+#line 336 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINARCS); }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 338 "maplexer.l"
+#line 337 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINBOXSIZE); }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 339 "maplexer.l"
+#line 338 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINDISTANCE); }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 340 "maplexer.l"
+#line 339 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REPEATDISTANCE); }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 341 "maplexer.l"
+#line 340 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MAXOVERLAPANGLE); } 
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 342 "maplexer.l"
+#line 341 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINFEATURESIZE); }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 343 "maplexer.l"
+#line 342 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MININTERVAL); }
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 344 "maplexer.l"
+#line 343 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSCALE); }
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 345 "maplexer.l"
+#line 344 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSCALEDENOM); }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 346 "maplexer.l"
+#line 345 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINGEOWIDTH); }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 347 "maplexer.l"
+#line 346 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINLENGTH); }
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 348 "maplexer.l"
+#line 347 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSIZE); }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 349 "maplexer.l"
+#line 348 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINSUBDIVIDE); }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 350 "maplexer.l"
+#line 349 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINTEMPLATE); }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 351 "maplexer.l"
+#line 350 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MINWIDTH); }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 352 "maplexer.l"
+#line 351 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(NAME); }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 353 "maplexer.l"
+#line 352 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OFFSET); }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 354 "maplexer.l"
+#line 353 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OFFSITE); }
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 355 "maplexer.l"
+#line 354 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OPACITY); }
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 356 "maplexer.l"
+#line 355 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(CONNECTIONOPTIONS); }
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 357 "maplexer.l"
+#line 356 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OUTLINECOLOR); }
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 358 "maplexer.l"
+#line 357 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OUTLINEWIDTH); }
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 359 "maplexer.l"
+#line 358 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OUTPUTFORMAT); }
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 360 "maplexer.l"
+#line 359 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYBACKGROUNDCOLOR); }
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 361 "maplexer.l"
+#line 360 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYCOLOR); }
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-#line 362 "maplexer.l"
+#line 361 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYMAXSIZE); }
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 363 "maplexer.l"
+#line 362 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYMINSIZE); }
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 364 "maplexer.l"
+#line 363 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYOUTLINECOLOR); }
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 365 "maplexer.l"
+#line 364 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYSIZE); }
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 366 "maplexer.l"
+#line 365 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(OVERLAYSYMBOL); }
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 367 "maplexer.l"
+#line 366 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PARTIALS); }
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-#line 368 "maplexer.l"
+#line 367 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PATTERN); }
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 369 "maplexer.l"
+#line 368 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POINTS); }
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 370 "maplexer.l"
+#line 369 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(ITEMS); }
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 371 "maplexer.l"
+#line 370 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POSITION); }
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 372 "maplexer.l"
+#line 371 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POSTLABELCACHE); }
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 373 "maplexer.l"
+#line 372 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PRIORITY); }
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 374 "maplexer.l"
+#line 373 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PROCESSING); }
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 375 "maplexer.l"
+#line 374 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(PROJECTION); }
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 376 "maplexer.l"
+#line 375 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(QUERYFORMAT); }
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 377 "maplexer.l"
+#line 376 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(QUERYMAP); }
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 378 "maplexer.l"
+#line 377 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REFERENCE); }
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 379 "maplexer.l"
+#line 378 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REGION); }
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 380 "maplexer.l"
+#line 379 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(RELATIVETO); }
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 381 "maplexer.l"
+#line 380 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(REQUIRES); }
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 382 "maplexer.l"
+#line 381 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(RESOLUTION); }
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 383 "maplexer.l"
+#line 382 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(DEFRESOLUTION); }
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 384 "maplexer.l"
+#line 383 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALE); }
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 385 "maplexer.l"
+#line 384 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALEDENOM); }
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 386 "maplexer.l"
+#line 385 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALEBAR); }
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 387 "maplexer.l"
+#line 386 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SCALETOKEN); }
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 388 "maplexer.l"
+#line 387 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SHADOWCOLOR); }
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 389 "maplexer.l"
+#line 388 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SHADOWSIZE); }
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 390 "maplexer.l"
+#line 389 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SHAPEPATH); }
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 391 "maplexer.l"
+#line 390 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SIZE); }
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 392 "maplexer.l"
+#line 391 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SIZEUNITS); }
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 393 "maplexer.l"
+#line 392 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(STATUS); }
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-#line 394 "maplexer.l"
+#line 393 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(STYLE); }
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 395 "maplexer.l"
+#line 394 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(STYLEITEM); }
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 396 "maplexer.l"
+#line 395 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOL); }
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-#line 397 "maplexer.l"
+#line 396 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOLSCALE); }
 	YY_BREAK
 case 220:
 YY_RULE_SETUP
-#line 398 "maplexer.l"
+#line 397 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOLSCALEDENOM); }
 	YY_BREAK
 case 221:
 YY_RULE_SETUP
-#line 399 "maplexer.l"
+#line 398 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(SYMBOLSET); }
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 400 "maplexer.l"
+#line 399 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TABLE); }
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-#line 401 "maplexer.l"
+#line 400 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEMPLATE); }
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 402 "maplexer.l"
+#line 401 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEMPLATEPATTERN); }
 	YY_BREAK
 case 225:
 YY_RULE_SETUP
-#line 403 "maplexer.l"
+#line 402 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TEXT); }
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 404 "maplexer.l"
+#line 403 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TILEINDEX); }
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-#line 405 "maplexer.l"
+#line 404 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TILEITEM); }
 	YY_BREAK
 case 228:
 YY_RULE_SETUP
-#line 406 "maplexer.l"
+#line 405 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TILESRS); }
 	YY_BREAK
 case 229:
 YY_RULE_SETUP
-#line 407 "maplexer.l"
+#line 406 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TITLE); }
 	YY_BREAK
 case 230:
 YY_RULE_SETUP
-#line 408 "maplexer.l"
+#line 407 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TO); }
 	YY_BREAK
 case 231:
 YY_RULE_SETUP
-#line 409 "maplexer.l"
+#line 408 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
 	YY_BREAK
 case 232:
 YY_RULE_SETUP
-#line 410 "maplexer.l"
+#line 409 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TOLERANCEUNITS); }
 	YY_BREAK
 case 233:
 YY_RULE_SETUP
-#line 411 "maplexer.l"
+#line 410 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TRANSPARENCY); }
 	YY_BREAK
 case 234:
 YY_RULE_SETUP
-#line 412 "maplexer.l"
+#line 411 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TRANSPARENT); }
 	YY_BREAK
 case 235:
 YY_RULE_SETUP
-#line 413 "maplexer.l"
+#line 412 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 	YY_BREAK
 case 236:
 YY_RULE_SETUP
-#line 414 "maplexer.l"
+#line 413 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(TYPE); }
 	YY_BREAK
 case 237:
 YY_RULE_SETUP
-#line 415 "maplexer.l"
+#line 414 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(UNITS); }
 	YY_BREAK
 case 238:
 YY_RULE_SETUP
-#line 416 "maplexer.l"
+#line 415 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(UTFDATA); }
 	YY_BREAK
 case 239:
 YY_RULE_SETUP
-#line 417 "maplexer.l"
+#line 416 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(UTFITEM); }
 	YY_BREAK
 case 240:
 YY_RULE_SETUP
-#line 418 "maplexer.l"
+#line 417 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(VALIDATION); }
 	YY_BREAK
 case 241:
 YY_RULE_SETUP
-#line 419 "maplexer.l"
+#line 418 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(VALUES); }
 	YY_BREAK
 case 242:
 YY_RULE_SETUP
-#line 420 "maplexer.l"
+#line 419 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WEB); }
 	YY_BREAK
 case 243:
 YY_RULE_SETUP
-#line 421 "maplexer.l"
+#line 420 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WIDTH); }
 	YY_BREAK
 case 244:
 YY_RULE_SETUP
-#line 422 "maplexer.l"
+#line 421 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WKT); }
 	YY_BREAK
 case 245:
 YY_RULE_SETUP
-#line 423 "maplexer.l"
+#line 422 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(WRAP); }
 	YY_BREAK
 case 246:
 YY_RULE_SETUP
-#line 425 "maplexer.l"
+#line 424 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_ANNOTATION); }
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 426 "maplexer.l"
+#line 425 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_AUTO); }
 	YY_BREAK
 case 248:
 YY_RULE_SETUP
-#line 427 "maplexer.l"
+#line 426 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_AUTO2); }
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
-#line 428 "maplexer.l"
+#line 427 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_BEVEL); }
 	YY_BREAK
 case 250:
 YY_RULE_SETUP
-#line 429 "maplexer.l"
+#line 428 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_BITMAP); }
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
-#line 430 "maplexer.l"
+#line 429 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_BUTT); }
 	YY_BREAK
 case 252:
 YY_RULE_SETUP
-#line 431 "maplexer.l"
+#line 430 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CC); }
 	YY_BREAK
 case 253:
 YY_RULE_SETUP
-#line 432 "maplexer.l"
+#line 431 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_CENTER); }
 	YY_BREAK
 case 254:
 YY_RULE_SETUP
-#line 433 "maplexer.l"
+#line 432 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_CHART); }
 	YY_BREAK
 case 255:
 YY_RULE_SETUP
-#line 434 "maplexer.l"
+#line 433 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_CIRCLE); }
 	YY_BREAK
 case 256:
 YY_RULE_SETUP
-#line 435 "maplexer.l"
+#line 434 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CL); }
 	YY_BREAK
 case 257:
 YY_RULE_SETUP
-#line 436 "maplexer.l"
+#line 435 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CR); }
 	YY_BREAK
 case 258:
 YY_RULE_SETUP
-#line 437 "maplexer.l"
+#line 436 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DB_CSV); }
 	YY_BREAK
 case 259:
 YY_RULE_SETUP
-#line 438 "maplexer.l"
+#line 437 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DB_POSTGRES); }
 	YY_BREAK
 case 260:
 YY_RULE_SETUP
-#line 439 "maplexer.l"
+#line 438 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DB_MYSQL); }
 	YY_BREAK
 case 261:
 YY_RULE_SETUP
-#line 440 "maplexer.l"
+#line 439 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DEFAULT); }
 	YY_BREAK
 case 262:
 YY_RULE_SETUP
-#line 441 "maplexer.l"
+#line 440 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_DD); }
 	YY_BREAK
 case 263:
 YY_RULE_SETUP
-#line 442 "maplexer.l"
+#line 441 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_ELLIPSE); }
 	YY_BREAK
 case 264:
 YY_RULE_SETUP
-#line 443 "maplexer.l"
+#line 442 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_EMBED); }
 	YY_BREAK
 case 265:
 YY_RULE_SETUP
-#line 444 "maplexer.l"
+#line 443 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_FALSE); }
 	YY_BREAK
 case 266:
 YY_RULE_SETUP
-#line 445 "maplexer.l"
+#line 444 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_FEET); }
 	YY_BREAK
 case 267:
 YY_RULE_SETUP
-#line 446 "maplexer.l"
+#line 445 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_FOLLOW); }
 	YY_BREAK
 case 268:
 YY_RULE_SETUP
-#line 447 "maplexer.l"
+#line 446 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_GIANT); }
 	YY_BREAK
 case 269:
 YY_RULE_SETUP
-#line 448 "maplexer.l"
+#line 447 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_HATCH); }
 	YY_BREAK
 case 270:
 YY_RULE_SETUP
-#line 449 "maplexer.l"
+#line 448 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_KERNELDENSITY); }
 	YY_BREAK
 case 271:
 YY_RULE_SETUP
-#line 450 "maplexer.l"
+#line 449 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_HILITE); }
 	YY_BREAK
 case 272:
 YY_RULE_SETUP
-#line 451 "maplexer.l"
+#line 450 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_INCHES); }
 	YY_BREAK
 case 273:
 YY_RULE_SETUP
-#line 452 "maplexer.l"
+#line 451 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_KILOMETERS); }
 	YY_BREAK
 case 274:
 YY_RULE_SETUP
-#line 453 "maplexer.l"
+#line 452 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LARGE); }
 	YY_BREAK
 case 275:
 YY_RULE_SETUP
-#line 454 "maplexer.l"
+#line 453 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LC); }
 	YY_BREAK
 case 276:
 YY_RULE_SETUP
-#line 455 "maplexer.l"
+#line 454 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_LEFT); }
 	YY_BREAK
 case 277:
 YY_RULE_SETUP
-#line 456 "maplexer.l"
+#line 455 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_LINE); }
 	YY_BREAK
 case 278:
 YY_RULE_SETUP
-#line 457 "maplexer.l"
+#line 456 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LL); }
 	YY_BREAK
 case 279:
 YY_RULE_SETUP
-#line 458 "maplexer.l"
+#line 457 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LR); }
 	YY_BREAK
 case 280:
 YY_RULE_SETUP
-#line 459 "maplexer.l"
+#line 458 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_MEDIUM); }
 	YY_BREAK
 case 281:
 YY_RULE_SETUP
-#line 460 "maplexer.l"
+#line 459 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_METERS); }
 	YY_BREAK
 case 282:
 YY_RULE_SETUP
-#line 461 "maplexer.l"
+#line 460 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_NAUTICALMILES); }
 	YY_BREAK
 case 283:
 YY_RULE_SETUP
-#line 462 "maplexer.l"
+#line 461 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_MILES); }
 	YY_BREAK
 case 284:
 YY_RULE_SETUP
-#line 463 "maplexer.l"
+#line 462 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_MITER); }
 	YY_BREAK
 case 285:
 YY_RULE_SETUP
-#line 464 "maplexer.l"
+#line 463 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_MULTIPLE); }
 	YY_BREAK
 case 286:
 YY_RULE_SETUP
-#line 465 "maplexer.l"
+#line 464 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_NONE); }
 	YY_BREAK
 case 287:
 YY_RULE_SETUP
-#line 466 "maplexer.l"
+#line 465 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_NORMAL); }
 	YY_BREAK
 case 288:
 YY_RULE_SETUP
-#line 467 "maplexer.l"
+#line 466 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_OFF); }
 	YY_BREAK
 case 289:
 YY_RULE_SETUP
-#line 468 "maplexer.l"
+#line 467 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_OGR); }
 	YY_BREAK
 case 290:
 YY_RULE_SETUP
-#line 469 "maplexer.l"
+#line 468 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ON); }
 	YY_BREAK
 case 291:
 YY_RULE_SETUP
-#line 470 "maplexer.l"
+#line 469 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_JOIN_ONE_TO_ONE); }
 	YY_BREAK
 case 292:
 YY_RULE_SETUP
-#line 471 "maplexer.l"
+#line 470 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_JOIN_ONE_TO_MANY); }
 	YY_BREAK
 case 293:
 YY_RULE_SETUP
-#line 472 "maplexer.l"
+#line 471 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ORACLESPATIAL); }
 	YY_BREAK
 case 294:
 YY_RULE_SETUP
-#line 473 "maplexer.l"
+#line 472 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_PERCENTAGES); }
 	YY_BREAK
 case 295:
 YY_RULE_SETUP
-#line 474 "maplexer.l"
+#line 473 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_PIXMAP); }
 	YY_BREAK
 case 296:
 YY_RULE_SETUP
-#line 475 "maplexer.l"
+#line 474 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_PIXELS); }
 	YY_BREAK
 case 297:
 YY_RULE_SETUP
-#line 476 "maplexer.l"
+#line 475 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_POINT); }
 	YY_BREAK
 case 298:
 YY_RULE_SETUP
-#line 477 "maplexer.l"
+#line 476 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_POLYGON); }
 	YY_BREAK
 case 299:
 YY_RULE_SETUP
-#line 478 "maplexer.l"
+#line 477 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_POSTGIS); }
 	YY_BREAK
 case 300:
 YY_RULE_SETUP
-#line 479 "maplexer.l"
+#line 478 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_PLUGIN); }
 	YY_BREAK
 case 301:
 YY_RULE_SETUP
-#line 480 "maplexer.l"
+#line 479 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_QUERY); }
 	YY_BREAK
 case 302:
 YY_RULE_SETUP
-#line 481 "maplexer.l"
+#line 480 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_LAYER_RASTER); }
 	YY_BREAK
 case 303:
 YY_RULE_SETUP
-#line 482 "maplexer.l"
+#line 481 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_RIGHT); }
 	YY_BREAK
 case 304:
 YY_RULE_SETUP
-#line 483 "maplexer.l"
+#line 482 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_ROUND); }
 	YY_BREAK
 case 305:
 YY_RULE_SETUP
-#line 484 "maplexer.l"
+#line 483 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SELECTED); }
 	YY_BREAK
 case 306:
 YY_RULE_SETUP
-#line 485 "maplexer.l"
+#line 484 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SIMPLE); }
 	YY_BREAK
 case 307:
 YY_RULE_SETUP
-#line 486 "maplexer.l"
+#line 485 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SINGLE); }
 	YY_BREAK
 case 308:
 YY_RULE_SETUP
-#line 487 "maplexer.l"
+#line 486 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SMALL); }
 	YY_BREAK
 case 309:
 YY_RULE_SETUP
-#line 488 "maplexer.l"
+#line 487 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_SQUARE); }
 	YY_BREAK
 case 310:
 YY_RULE_SETUP
-#line 489 "maplexer.l"
+#line 488 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SVG); }
 	YY_BREAK
 case 311:
 YY_RULE_SETUP
-#line 490 "maplexer.l"
+#line 489 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(POLAROFFSET); }
 	YY_BREAK
 case 312:
 YY_RULE_SETUP
-#line 491 "maplexer.l"
+#line 490 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TINY); }
 	YY_BREAK
 case 313:
 YY_RULE_SETUP
-#line 492 "maplexer.l"
+#line 491 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CJC_TRIANGLE); }
 	YY_BREAK
 case 314:
 YY_RULE_SETUP
-#line 493 "maplexer.l"
+#line 492 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TRUE); }
 	YY_BREAK
 case 315:
 YY_RULE_SETUP
-#line 494 "maplexer.l"
+#line 493 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_TRUETYPE); }
 	YY_BREAK
 case 316:
 YY_RULE_SETUP
-#line 495 "maplexer.l"
+#line 494 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UC); }
 	YY_BREAK
 case 317:
 YY_RULE_SETUP
-#line 496 "maplexer.l"
+#line 495 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UL); }
 	YY_BREAK
 case 318:
 YY_RULE_SETUP
-#line 497 "maplexer.l"
+#line 496 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UR); }
 	YY_BREAK
 case 319:
 YY_RULE_SETUP
-#line 498 "maplexer.l"
+#line 497 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UNION); }
 	YY_BREAK
 case 320:
 YY_RULE_SETUP
-#line 499 "maplexer.l"
+#line 498 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_UVRASTER); }
 	YY_BREAK
 case 321:
 YY_RULE_SETUP
-#line 500 "maplexer.l"
+#line 499 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_CONTOUR); }
 	YY_BREAK
 case 322:
 YY_RULE_SETUP
-#line 501 "maplexer.l"
+#line 500 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_VECTOR); }
 	YY_BREAK
 case 323:
 YY_RULE_SETUP
-#line 502 "maplexer.l"
+#line 501 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 	YY_BREAK
 case 324:
 YY_RULE_SETUP
-#line 503 "maplexer.l"
+#line 502 "maplexer.l"
 { MS_LEXER_RETURN_TOKEN(MS_WMS); }
 	YY_BREAK
 case 325:
 YY_RULE_SETUP
-#line 505 "maplexer.l"
+#line 504 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer,msyytext);
                                                  return(MS_STRING);
                                                }
 	YY_BREAK
 case 326:
 YY_RULE_SETUP
-#line 513 "maplexer.l"
+#line 512 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer,msyytext);                                                 
                                                  msyynumber = atof(msyytext);
                                                  return(MS_NUMBER);
@@ -4331,19 +4541,19 @@ YY_RULE_SETUP
 case 327:
 /* rule 327 can match eol */
 YY_RULE_SETUP
-#line 523 "maplexer.l"
+#line 522 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer,msyytext);
                                                  return(MS_BINDING);
                                                }
 	YY_BREAK
 case 328:
 YY_RULE_SETUP
-#line 532 "maplexer.l"
+#line 531 "maplexer.l"
 { 
   /* attribute binding - shape (fixed value) */
   return(MS_TOKEN_BINDING_SHAPE);
@@ -4351,7 +4561,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 329:
 YY_RULE_SETUP
-#line 536 "maplexer.l"
+#line 535 "maplexer.l"
 { 
   /* attribute binding - map cellsize */
   return(MS_TOKEN_BINDING_MAP_CELLSIZE);
@@ -4359,7 +4569,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 330:
 YY_RULE_SETUP
-#line 540 "maplexer.l"
+#line 539 "maplexer.l"
 { 
   /* attribute binding - data cellsize */
   return(MS_TOKEN_BINDING_DATA_CELLSIZE);
@@ -4368,13 +4578,13 @@ YY_RULE_SETUP
 case 331:
 /* rule 331 can match eol */
 YY_RULE_SETUP
-#line 544 "maplexer.l"
+#line 543 "maplexer.l"
 {
   /* attribute binding - numeric (no quotes) */
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                          msyystring_buffer_size, msyystring_buffer_ptr);
+                          msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_DOUBLE);
 }
@@ -4382,13 +4592,13 @@ YY_RULE_SETUP
 case 332:
 /* rule 332 can match eol */
 YY_RULE_SETUP
-#line 553 "maplexer.l"
+#line 552 "maplexer.l"
 {
   /* attribute binding - string (single or double quotes) */
   msyytext+=2;
   msyytext[strlen(msyytext)-2] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                          msyystring_buffer_size, msyystring_buffer_ptr);
+                          msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_STRING);
 }
@@ -4396,23 +4606,23 @@ YY_RULE_SETUP
 case 333:
 /* rule 333 can match eol */
 YY_RULE_SETUP
-#line 562 "maplexer.l"
+#line 561 "maplexer.l"
 {
   /* attribute binding - time */
   msyytext+=2;
   msyytext[strlen(msyytext)-2] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
-                          msyystring_buffer_size, msyystring_buffer_ptr);
+                          msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_TIME);
 }
 	YY_BREAK
 case 334:
 YY_RULE_SETUP
-#line 572 "maplexer.l"
+#line 571 "maplexer.l"
 {
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                          msyystring_buffer_size, msyystring_buffer_ptr);
+                          msyystring_buffer_size);
   strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
   return(MS_NUMBER); 
@@ -4420,10 +4630,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 335:
 YY_RULE_SETUP
-#line 580 "maplexer.l"
+#line 579 "maplexer.l"
 {
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                          msyystring_buffer_size, msyystring_buffer_ptr);
+                          msyystring_buffer_size);
   strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
   return(MS_TOKEN_LITERAL_NUMBER);
@@ -4432,12 +4642,12 @@ YY_RULE_SETUP
 case 336:
 /* rule 336 can match eol */
 YY_RULE_SETUP
-#line 588 "maplexer.l"
+#line 587 "maplexer.l"
 {
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                          msyystring_buffer_size, msyystring_buffer_ptr);
+                          msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_LITERAL_TIME);
 }
@@ -4445,12 +4655,12 @@ YY_RULE_SETUP
 case 337:
 /* rule 337 can match eol */
 YY_RULE_SETUP
-#line 597 "maplexer.l"
+#line 596 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_IREGEX);
                                                }
@@ -4458,62 +4668,57 @@ YY_RULE_SETUP
 case 338:
 /* rule 338 can match eol */
 YY_RULE_SETUP
-#line 606 "maplexer.l"
+#line 605 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_REGEX);
                                                }
 	YY_BREAK
 case 339:
 YY_RULE_SETUP
-#line 615 "maplexer.l"
+#line 614 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_EXPRESSION);
                                                }
 	YY_BREAK
 case 340:
 YY_RULE_SETUP
-#line 624 "maplexer.l"
+#line 623 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                         msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_LIST);
                                                }
 	YY_BREAK
 case 341:
 YY_RULE_SETUP
-#line 633 "maplexer.l"
+#line 632 "maplexer.l"
 {
                                                  msyystring_return_state = MS_STRING;
                                                  msyystring_begin = msyytext[0]; 
                                                  msyystring_size = 0;
-                                                 msyystring_buffer_ptr = msyystring_buffer;
+                                                 msyystring_buffer[0] = '\0';
                                                  BEGIN(MSSTRING);
                                               }
 	YY_BREAK
 case 342:
 YY_RULE_SETUP
-#line 641 "maplexer.l"
+#line 640 "maplexer.l"
 {
-                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
-                                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
                                                 if (msyystring_begin == msyytext[0]) {
                                                    BEGIN(msyystring_begin_state);
-
-                                                   *msyystring_buffer_ptr = '\0';
-
                                                    if (msyystring_return_state == MS_STRING) {
                                                       if (msyystring_icase && strlen(msyytext)==2) {
                                                          msyystring_icase = MS_FALSE; // reset
@@ -4525,49 +4730,50 @@ YY_RULE_SETUP
 
                                                 }
                                                 else {
-                                                  ++msyystring_size;
-                                                  *msyystring_buffer_ptr++ = *msyytext;
+                                                  int old_size = msyystring_size;
+                                                  msyystring_size += (strlen(msyytext)==2) ? 2 : 1;
+                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
+                                                                          msyystring_buffer_size);
+                                                  msyystring_buffer[old_size] = *msyytext;
                                                   if (strlen(msyytext)==2) {
-                                                      MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
-                                                                              msyystring_buffer_size, msyystring_buffer_ptr);
-                                                     ++msyystring_size;
-                                                     *msyystring_buffer_ptr++ = msyytext[1];
+                                                     msyystring_buffer[old_size+1] = msyytext[1];
                                                   }
+                                                  msyystring_buffer[msyystring_size] = '\0';
                                                 }
                                               }
 	YY_BREAK
 case 343:
 YY_RULE_SETUP
-#line 671 "maplexer.l"
+#line 666 "maplexer.l"
 { 
-                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
-                                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
-
                                                 ++msyystring_size;
+                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
+                                                                        msyystring_buffer_size);
+
                                                 if (strlen(msyytext) == 2)
-                                                    *msyystring_buffer_ptr++ = msyytext[1]; 
+                                                    msyystring_buffer[msyystring_size-1] = msyytext[1]; 
                                                 else
-                                                    *msyystring_buffer_ptr++ = msyytext[0];
+                                                    msyystring_buffer[msyystring_size-1] = msyytext[0];
+                                                msyystring_buffer[msyystring_size] = '\0';
                                              }
 	YY_BREAK
 case 344:
 /* rule 344 can match eol */
 YY_RULE_SETUP
-#line 682 "maplexer.l"
+#line 678 "maplexer.l"
 {
-                                                 char *yptr = msyytext;
-                                                 while ( *yptr ) { 
-                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
-                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
-                                                   ++msyystring_size;
-                                                   *msyystring_buffer_ptr++ = *yptr++;
-                                                 }
+                                                 int old_size = msyystring_size;
+                                                 int msyytext_len = (int)strlen(msyytext);
+                                                 msyystring_size += msyytext_len;
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
+                                                                         msyystring_buffer_size);
+                                                 memcpy(msyystring_buffer + old_size, msyytext, msyytext_len + 1);
                                              }
 	YY_BREAK
 case 345:
 /* rule 345 can match eol */
 YY_RULE_SETUP
-#line 692 "maplexer.l"
+#line 687 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4596,21 +4802,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 346:
 YY_RULE_SETUP
-#line 718 "maplexer.l"
+#line 713 "maplexer.l"
 {
                                                  msyystring_return_state = MS_TOKEN_LITERAL_STRING;
                                                  msyystring_begin = msyytext[0]; 
                                                  msyystring_size = 0;
-                                                 msyystring_buffer_ptr = msyystring_buffer;
+                                                 msyystring_buffer[0] = '\0';
                                                  BEGIN(MSSTRING);
                                               }
 	YY_BREAK
 case 347:
 YY_RULE_SETUP
-#line 726 "maplexer.l"
+#line 721 "maplexer.l"
 { 
                                                     MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                            msyystring_buffer_size);
                                                     strcpy(msyystring_buffer, msyytext); 
                                                     return(MS_STRING); 
                                                 }
@@ -4618,11 +4824,11 @@ YY_RULE_SETUP
 case 348:
 /* rule 348 can match eol */
 YY_RULE_SETUP
-#line 733 "maplexer.l"
+#line 728 "maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 735 "maplexer.l"
+#line 730 "maplexer.l"
 {
                                                   if( --include_stack_ptr < 0 )
                                                     return(EOF); /* end of main file */
@@ -4637,32 +4843,32 @@ case YY_STATE_EOF(INITIAL):
 case 349:
 /* rule 349 can match eol */
 YY_RULE_SETUP
-#line 746 "maplexer.l"
+#line 741 "maplexer.l"
 {
   return(0); 
 }
 	YY_BREAK
 case 350:
 YY_RULE_SETUP
-#line 750 "maplexer.l"
+#line 745 "maplexer.l"
 { 
                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
-                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
+                                                                          msyystring_buffer_size);
                                                   strcpy(msyystring_buffer, msyytext); 
                                                   return(0); 
                                                 }
 	YY_BREAK
 case 351:
 YY_RULE_SETUP
-#line 756 "maplexer.l"
+#line 751 "maplexer.l"
 { return(msyytext[0]); }
 	YY_BREAK
 case 352:
 YY_RULE_SETUP
-#line 757 "maplexer.l"
+#line 752 "maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4666 "/home/even/mapserver/mapserver/maplexer.c"
+#line 4872 "/home/even/mapserver/mapserver/maplexer.c"
 case YY_STATE_EOF(URL_VARIABLE):
 case YY_STATE_EOF(URL_STRING):
 case YY_STATE_EOF(EXPRESSION_STRING):
@@ -4684,15 +4890,15 @@ case YY_STATE_EOF(MULTILINE_COMMENT):
 			{
 			/* We're scanning a new file or input source.  It's
 			 * possible that this happened because the user
-			 * just pointed msyyin at a new source and called
-			 * msyylex().  If so, then we have to assure
+			 * just pointed yyin at a new source and called
+			 * yylex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
 			 * this is the first action (other than possibly a
 			 * back-up) that will match for the new input source.
 			 */
 			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
-			YY_CURRENT_BUFFER_LVALUE->yy_input_file = msyyin;
+			YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin;
 			YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
 			}
 
@@ -4746,11 +4952,11 @@ case YY_STATE_EOF(MULTILINE_COMMENT):
 				{
 				(yy_did_buffer_switch_on_eof) = 0;
 
-				if ( msyywrap( ) )
+				if ( yywrap(  ) )
 					{
 					/* Note: because we've taken care in
 					 * yy_get_next_buffer() to have set up
-					 * msyytext, we can now set up
+					 * yytext, we can now set up
 					 * yy_c_buf_p so that if some total
 					 * hoser (like flex itself) wants to
 					 * call the scanner after we return the
@@ -4800,7 +5006,7 @@ case YY_STATE_EOF(MULTILINE_COMMENT):
 	} /* end of action switch */
 		} /* end of scanning one token */
 	} /* end of user's declarations */
-} /* end of msyylex */
+} /* end of yylex */
 
 /* yy_get_next_buffer - try to read in a new buffer
  *
@@ -4813,7 +5019,7 @@ static int yy_get_next_buffer (void)
 {
     	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
 	char *source = (yytext_ptr);
-	yy_size_t number_to_move, i;
+	int number_to_move, i;
 	int ret_val;
 
 	if ( (yy_c_buf_p) > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars) + 1] )
@@ -4842,7 +5048,7 @@ static int yy_get_next_buffer (void)
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (yy_size_t) ((yy_c_buf_p) - (yytext_ptr)) - 1;
+	number_to_move = (int) ((yy_c_buf_p) - (yytext_ptr) - 1);
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -4855,7 +5061,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -4869,7 +5075,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -4878,11 +5084,12 @@ static int yy_get_next_buffer (void)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					msyyrealloc((void *) b->yy_ch_buf,b->yy_buf_size + 2  );
+					yyrealloc( (void *) b->yy_ch_buf,
+							 (yy_size_t) (b->yy_buf_size + 2)  );
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = 0;
+				b->yy_ch_buf = NULL;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -4910,7 +5117,7 @@ static int yy_get_next_buffer (void)
 		if ( number_to_move == YY_MORE_ADJ )
 			{
 			ret_val = EOB_ACT_END_OF_FILE;
-			msyyrestart(msyyin  );
+			yyrestart( yyin  );
 			}
 
 		else
@@ -4924,12 +5131,15 @@ static int yy_get_next_buffer (void)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
 		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) msyyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size  );
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
+			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+		/* "- 2" to take care of EOB's */
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_size = (int) (new_size - 2);
 	}
 
 	(yy_n_chars) += number_to_move;
@@ -4962,9 +5172,9 @@ static int yy_get_next_buffer (void)
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
 			if ( yy_current_state >= 2038 )
-				yy_c = yy_meta[(unsigned int) yy_c];
+				yy_c = yy_meta[yy_c];
 			}
-		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 		}
 
 	return yy_current_state;
@@ -4990,9 +5200,9 @@ static int yy_get_next_buffer (void)
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
 		if ( yy_current_state >= 2038 )
-			yy_c = yy_meta[(unsigned int) yy_c];
+			yy_c = yy_meta[yy_c];
 		}
-	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 	yy_is_jam = (yy_current_state == 2037);
 
 		return yy_is_jam ? 0 : yy_current_state;
@@ -5006,13 +5216,13 @@ static int yy_get_next_buffer (void)
     
     yy_cp = (yy_c_buf_p);
 
-	/* undo effects of setting up msyytext */
+	/* undo effects of setting up yytext */
 	*yy_cp = (yy_hold_char);
 
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		yy_size_t number_to_move = (yy_n_chars) + 2;
+		int number_to_move = (yy_n_chars) + 2;
 		char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
 		char *source =
@@ -5024,7 +5234,7 @@ static int yy_get_next_buffer (void)
 		yy_cp += (int) (dest - source);
 		yy_bp += (int) (dest - source);
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars =
-			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
+			(yy_n_chars) = (int) YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
 
 		if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 			YY_FATAL_ERROR( "flex scanner push-back overflow" );
@@ -5063,7 +5273,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (int) ((yy_c_buf_p) - (yytext_ptr));
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -5080,14 +5290,14 @@ static int yy_get_next_buffer (void)
 					 */
 
 					/* Reset buffer status. */
-					msyyrestart(msyyin );
+					yyrestart( yyin );
 
 					/*FALLTHROUGH*/
 
 				case EOB_ACT_END_OF_FILE:
 					{
-					if ( msyywrap( ) )
-						return EOF;
+					if ( yywrap(  ) )
+						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -5106,7 +5316,7 @@ static int yy_get_next_buffer (void)
 		}
 
 	c = *(unsigned char *) (yy_c_buf_p);	/* cast for 8-bit char's */
-	*(yy_c_buf_p) = '\0';	/* preserve msyytext */
+	*(yy_c_buf_p) = '\0';	/* preserve yytext */
 	(yy_hold_char) = *++(yy_c_buf_p);
 
 	return c;
@@ -5118,32 +5328,32 @@ static int yy_get_next_buffer (void)
  * 
  * @note This function does not reset the start condition to @c INITIAL .
  */
-    void msyyrestart  (FILE * input_file )
+    void yyrestart  (FILE * input_file )
 {
     
 	if ( ! YY_CURRENT_BUFFER ){
-        msyyensure_buffer_stack ();
+        yyensure_buffer_stack ();
 		YY_CURRENT_BUFFER_LVALUE =
-            msyy_create_buffer(msyyin,YY_BUF_SIZE );
+            yy_create_buffer( yyin, YY_BUF_SIZE );
 	}
 
-	msyy_init_buffer(YY_CURRENT_BUFFER,input_file );
-	msyy_load_buffer_state( );
+	yy_init_buffer( YY_CURRENT_BUFFER, input_file );
+	yy_load_buffer_state(  );
 }
 
 /** Switch to a different input buffer.
  * @param new_buffer The new input buffer.
  * 
  */
-    void msyy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
+    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
 {
     
 	/* TODO. We should be able to replace this entire function body
 	 * with
-	 *		msyypop_buffer_state();
-	 *		msyypush_buffer_state(new_buffer);
+	 *		yypop_buffer_state();
+	 *		yypush_buffer_state(new_buffer);
      */
-	msyyensure_buffer_stack ();
+	yyensure_buffer_stack ();
 	if ( YY_CURRENT_BUFFER == new_buffer )
 		return;
 
@@ -5156,21 +5366,21 @@ static int yy_get_next_buffer (void)
 		}
 
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
-	msyy_load_buffer_state( );
+	yy_load_buffer_state(  );
 
 	/* We don't actually know whether we did this switch during
-	 * EOF (msyywrap()) processing, but the only time this flag
-	 * is looked at is after msyywrap() is called, so it's safe
+	 * EOF (yywrap()) processing, but the only time this flag
+	 * is looked at is after yywrap() is called, so it's safe
 	 * to go ahead and always set it.
 	 */
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 
-static void msyy_load_buffer_state  (void)
+static void yy_load_buffer_state  (void)
 {
     	(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 	(yytext_ptr) = (yy_c_buf_p) = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
-	msyyin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
+	yyin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
 	(yy_hold_char) = *(yy_c_buf_p);
 }
 
@@ -5180,35 +5390,35 @@ static void msyy_load_buffer_state  (void)
  * 
  * @return the allocated buffer state.
  */
-    YY_BUFFER_STATE msyy_create_buffer  (FILE * file, int  size )
+    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size )
 {
 	YY_BUFFER_STATE b;
     
-	b = (YY_BUFFER_STATE) msyyalloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state )  );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in msyy_create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
-	b->yy_buf_size = (yy_size_t)size;
+	b->yy_buf_size = size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) msyyalloc(b->yy_buf_size + 2  );
+	b->yy_ch_buf = (char *) yyalloc( (yy_size_t) (b->yy_buf_size + 2)  );
 	if ( ! b->yy_ch_buf )
-		YY_FATAL_ERROR( "out of dynamic memory in msyy_create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
 	b->yy_is_our_buffer = 1;
 
-	msyy_init_buffer(b,file );
+	yy_init_buffer( b, file );
 
 	return b;
 }
 
 /** Destroy the buffer.
- * @param b a buffer created with msyy_create_buffer()
+ * @param b a buffer created with yy_create_buffer()
  * 
  */
-    void msyy_delete_buffer (YY_BUFFER_STATE  b )
+    void yy_delete_buffer (YY_BUFFER_STATE  b )
 {
     
 	if ( ! b )
@@ -5218,27 +5428,27 @@ static void msyy_load_buffer_state  (void)
 		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
 	if ( b->yy_is_our_buffer )
-		msyyfree((void *) b->yy_ch_buf  );
+		yyfree( (void *) b->yy_ch_buf  );
 
-	msyyfree((void *) b  );
+	yyfree( (void *) b  );
 }
 
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
- * such as during a msyyrestart() or at EOF.
+ * such as during a yyrestart() or at EOF.
  */
-    static void msyy_init_buffer  (YY_BUFFER_STATE  b, FILE * file )
+    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file )
 
 {
 	int oerrno = errno;
     
-	msyy_flush_buffer(b );
+	yy_flush_buffer( b );
 
 	b->yy_input_file = file;
 	b->yy_fill_buffer = 1;
 
-    /* If b is the current buffer, then msyy_init_buffer was _probably_
-     * called from msyyrestart() or through yy_get_next_buffer.
+    /* If b is the current buffer, then yy_init_buffer was _probably_
+     * called from yyrestart() or through yy_get_next_buffer.
      * In that case, we don't want to reset the lineno or column.
      */
     if (b != YY_CURRENT_BUFFER){
@@ -5255,7 +5465,7 @@ static void msyy_load_buffer_state  (void)
  * @param b the buffer state to be flushed, usually @c YY_CURRENT_BUFFER.
  * 
  */
-    void msyy_flush_buffer (YY_BUFFER_STATE  b )
+    void yy_flush_buffer (YY_BUFFER_STATE  b )
 {
     	if ( ! b )
 		return;
@@ -5275,7 +5485,7 @@ static void msyy_load_buffer_state  (void)
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
 	if ( b == YY_CURRENT_BUFFER )
-		msyy_load_buffer_state( );
+		yy_load_buffer_state(  );
 }
 
 /** Pushes the new state onto the stack. The new state becomes
@@ -5284,14 +5494,14 @@ static void msyy_load_buffer_state  (void)
  *  @param new_buffer The new state.
  *  
  */
-void msyypush_buffer_state (YY_BUFFER_STATE new_buffer )
+void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
 {
     	if (new_buffer == NULL)
 		return;
 
-	msyyensure_buffer_stack();
+	yyensure_buffer_stack();
 
-	/* This block is copied from msyy_switch_to_buffer. */
+	/* This block is copied from yy_switch_to_buffer. */
 	if ( YY_CURRENT_BUFFER )
 		{
 		/* Flush out information for old buffer. */
@@ -5305,8 +5515,8 @@ void msyypush_buffer_state (YY_BUFFER_STATE new_buffer )
 		(yy_buffer_stack_top)++;
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
-	/* copied from msyy_switch_to_buffer. */
-	msyy_load_buffer_state( );
+	/* copied from yy_switch_to_buffer. */
+	yy_load_buffer_state(  );
 	(yy_did_buffer_switch_on_eof) = 1;
 }
 
@@ -5314,18 +5524,18 @@ void msyypush_buffer_state (YY_BUFFER_STATE new_buffer )
  *  The next element becomes the new top.
  *  
  */
-void msyypop_buffer_state (void)
+void yypop_buffer_state (void)
 {
     	if (!YY_CURRENT_BUFFER)
 		return;
 
-	msyy_delete_buffer(YY_CURRENT_BUFFER );
+	yy_delete_buffer(YY_CURRENT_BUFFER );
 	YY_CURRENT_BUFFER_LVALUE = NULL;
 	if ((yy_buffer_stack_top) > 0)
 		--(yy_buffer_stack_top);
 
 	if (YY_CURRENT_BUFFER) {
-		msyy_load_buffer_state( );
+		yy_load_buffer_state(  );
 		(yy_did_buffer_switch_on_eof) = 1;
 	}
 }
@@ -5333,7 +5543,7 @@ void msyypop_buffer_state (void)
 /* Allocates the stack if it does not exist.
  *  Guarantees space for at least one push.
  */
-static void msyyensure_buffer_stack (void)
+static void yyensure_buffer_stack (void)
 {
 	yy_size_t num_to_alloc;
     
@@ -5343,15 +5553,15 @@ static void msyyensure_buffer_stack (void)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-		num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
-		(yy_buffer_stack) = (struct yy_buffer_state**)msyyalloc
+      num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
+		(yy_buffer_stack) = (struct yy_buffer_state**)yyalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
-			YY_FATAL_ERROR( "out of dynamic memory in msyyensure_buffer_stack()" );
-								  
+			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
+
 		memset((yy_buffer_stack), 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		(yy_buffer_stack_max) = num_to_alloc;
 		(yy_buffer_stack_top) = 0;
 		return;
@@ -5363,12 +5573,12 @@ static void msyyensure_buffer_stack (void)
 		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = (yy_buffer_stack_max) + grow_size;
-		(yy_buffer_stack) = (struct yy_buffer_state**)msyyrealloc
+		(yy_buffer_stack) = (struct yy_buffer_state**)yyrealloc
 								((yy_buffer_stack),
 								num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
-			YY_FATAL_ERROR( "out of dynamic memory in msyyensure_buffer_stack()" );
+			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
 
 		/* zero only the new slots.*/
 		memset((yy_buffer_stack) + (yy_buffer_stack_max), 0, grow_size * sizeof(struct yy_buffer_state*));
@@ -5380,9 +5590,9 @@ static void msyyensure_buffer_stack (void)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * 
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE msyy_scan_buffer  (char * base, yy_size_t  size )
+YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )
 {
 	YY_BUFFER_STATE b;
     
@@ -5390,69 +5600,69 @@ YY_BUFFER_STATE msyy_scan_buffer  (char * base, yy_size_t  size )
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return 0;
+		return NULL;
 
-	b = (YY_BUFFER_STATE) msyyalloc(sizeof( struct yy_buffer_state )  );
+	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state )  );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in msyy_scan_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
 
-	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
+	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = 0;
+	b->yy_input_file = NULL;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
 	b->yy_fill_buffer = 0;
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
-	msyy_switch_to_buffer(b  );
+	yy_switch_to_buffer( b  );
 
 	return b;
 }
 
-/** Setup the input buffer state to scan a string. The next call to msyylex() will
+/** Setup the input buffer state to scan a string. The next call to yylex() will
  * scan from a @e copy of @a str.
  * @param yystr a NUL-terminated string to scan
  * 
  * @return the newly allocated buffer state object.
  * @note If you want to scan bytes that may contain NUL values, then use
- *       msyy_scan_bytes() instead.
+ *       yy_scan_bytes() instead.
  */
-YY_BUFFER_STATE msyy_scan_string (yyconst char * yystr )
+YY_BUFFER_STATE yy_scan_string (const char * yystr )
 {
     
-	return msyy_scan_bytes(yystr,strlen(yystr) );
+	return yy_scan_bytes( yystr, (int) strlen(yystr) );
 }
 
-/** Setup the input buffer state to scan the given bytes. The next call to msyylex() will
+/** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
  * @param yybytes the byte buffer to scan
  * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE msyy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	yy_size_t i;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
-	n = _yybytes_len + 2;
-	buf = (char *) msyyalloc(n  );
+	n = (yy_size_t) (_yybytes_len + 2);
+	buf = (char *) yyalloc( n  );
 	if ( ! buf )
-		YY_FATAL_ERROR( "out of dynamic memory in msyy_scan_bytes()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_bytes()" );
 
 	for ( i = 0; i < _yybytes_len; ++i )
 		buf[i] = yybytes[i];
 
 	buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-	b = msyy_scan_buffer(buf,n );
+	b = yy_scan_buffer( buf, n );
 	if ( ! b )
-		YY_FATAL_ERROR( "bad buffer in msyy_scan_bytes()" );
+		YY_FATAL_ERROR( "bad buffer in yy_scan_bytes()" );
 
 	/* It's okay to grow etc. this buffer, and we should throw it
 	 * away when we're done.
@@ -5466,9 +5676,9 @@ YY_BUFFER_STATE msyy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_le
 #define YY_EXIT_FAILURE 2
 #endif
 
-static void yy_fatal_error (yyconst char* msg )
+static void yynoreturn yy_fatal_error (const char* msg )
 {
-			(void) fprintf( stderr, "%s\n", msg );
+			fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -5478,14 +5688,14 @@ static void yy_fatal_error (yyconst char* msg )
 #define yyless(n) \
 	do \
 		{ \
-		/* Undo effects of setting up msyytext. */ \
+		/* Undo effects of setting up yytext. */ \
         int yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
-		msyytext[msyyleng] = (yy_hold_char); \
-		(yy_c_buf_p) = msyytext + yyless_macro_arg; \
+		yytext[yyleng] = (yy_hold_char); \
+		(yy_c_buf_p) = yytext + yyless_macro_arg; \
 		(yy_hold_char) = *(yy_c_buf_p); \
 		*(yy_c_buf_p) = '\0'; \
-		msyyleng = yyless_macro_arg; \
+		yyleng = yyless_macro_arg; \
 		} \
 	while ( 0 )
 
@@ -5494,126 +5704,126 @@ static void yy_fatal_error (yyconst char* msg )
 /** Get the current line number.
  * 
  */
-int msyyget_lineno  (void)
+int yyget_lineno  (void)
 {
-        
-    return msyylineno;
+    
+    return yylineno;
 }
 
 /** Get the input stream.
  * 
  */
-FILE *msyyget_in  (void)
+FILE *yyget_in  (void)
 {
-        return msyyin;
+        return yyin;
 }
 
 /** Get the output stream.
  * 
  */
-FILE *msyyget_out  (void)
+FILE *yyget_out  (void)
 {
-        return msyyout;
+        return yyout;
 }
 
 /** Get the length of the current token.
  * 
  */
-yy_size_t msyyget_leng  (void)
+int yyget_leng  (void)
 {
-        return msyyleng;
+        return yyleng;
 }
 
 /** Get the current token.
  * 
  */
 
-char *msyyget_text  (void)
+char *yyget_text  (void)
 {
-        return msyytext;
+        return yytext;
 }
 
 /** Set the current line number.
  * @param _line_number line number
  * 
  */
-void msyyset_lineno (int  _line_number )
+void yyset_lineno (int  _line_number )
 {
     
-    msyylineno = _line_number;
+    yylineno = _line_number;
 }
 
 /** Set the input stream. This does not discard the current
  * input buffer.
  * @param _in_str A readable stream.
  * 
- * @see msyy_switch_to_buffer
+ * @see yy_switch_to_buffer
  */
-void msyyset_in (FILE *  _in_str )
+void yyset_in (FILE *  _in_str )
 {
-        msyyin = _in_str ;
+        yyin = _in_str ;
 }
 
-void msyyset_out (FILE *  _out_str )
+void yyset_out (FILE *  _out_str )
 {
-        msyyout = _out_str ;
+        yyout = _out_str ;
 }
 
-int msyyget_debug  (void)
+int yyget_debug  (void)
 {
-        return msyy_flex_debug;
+        return yy_flex_debug;
 }
 
-void msyyset_debug (int  _bdebug )
+void yyset_debug (int  _bdebug )
 {
-        msyy_flex_debug = _bdebug ;
+        yy_flex_debug = _bdebug ;
 }
 
 static int yy_init_globals (void)
 {
         /* Initialization is the same as for the non-reentrant scanner.
-     * This function is called from msyylex_destroy(), so don't allocate here.
+     * This function is called from yylex_destroy(), so don't allocate here.
      */
 
-    (yy_buffer_stack) = 0;
+    (yy_buffer_stack) = NULL;
     (yy_buffer_stack_top) = 0;
     (yy_buffer_stack_max) = 0;
-    (yy_c_buf_p) = (char *) 0;
+    (yy_c_buf_p) = NULL;
     (yy_init) = 0;
     (yy_start) = 0;
 
 /* Defined in main.c */
 #ifdef YY_STDINIT
-    msyyin = stdin;
-    msyyout = stdout;
+    yyin = stdin;
+    yyout = stdout;
 #else
-    msyyin = (FILE *) 0;
-    msyyout = (FILE *) 0;
+    yyin = NULL;
+    yyout = NULL;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
-     * msyylex_init()
+     * yylex_init()
      */
     return 0;
 }
 
-/* msyylex_destroy is for both reentrant and non-reentrant scanners. */
-int msyylex_destroy  (void)
+/* yylex_destroy is for both reentrant and non-reentrant scanners. */
+int yylex_destroy  (void)
 {
     
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
-		msyy_delete_buffer(YY_CURRENT_BUFFER  );
+		yy_delete_buffer( YY_CURRENT_BUFFER  );
 		YY_CURRENT_BUFFER_LVALUE = NULL;
-		msyypop_buffer_state();
+		yypop_buffer_state();
 	}
 
 	/* Destroy the stack itself. */
-	msyyfree((yy_buffer_stack) );
+	yyfree((yy_buffer_stack) );
 	(yy_buffer_stack) = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
-     * msyylex() is called, initialization will occur. */
+     * yylex() is called, initialization will occur. */
     yy_init_globals( );
 
     return 0;
@@ -5624,7 +5834,7 @@ int msyylex_destroy  (void)
  */
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
+static void yy_flex_strncpy (char* s1, const char * s2, int n )
 {
 		
 	int i;
@@ -5634,7 +5844,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * s )
+static int yy_flex_strlen (const char * s )
 {
 	int n;
 	for ( n = 0; s[n]; ++n )
@@ -5644,12 +5854,12 @@ static int yy_flex_strlen (yyconst char * s )
 }
 #endif
 
-void *msyyalloc (yy_size_t  size )
+void *yyalloc (yy_size_t  size )
 {
-			return (void *) malloc( size );
+			return malloc(size);
 }
 
-void *msyyrealloc  (void * ptr, yy_size_t  size )
+void *yyrealloc  (void * ptr, yy_size_t  size )
 {
 		
 	/* The cast to (char *) in the following accommodates both
@@ -5659,18 +5869,17 @@ void *msyyrealloc  (void * ptr, yy_size_t  size )
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
-	return (void *) realloc( (char *) ptr, size );
+	return realloc(ptr, size);
 }
 
-void msyyfree (void * ptr )
+void yyfree (void * ptr )
 {
-			free( (char *) ptr );	/* see msyyrealloc() for (char *) cast */
+			free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
 }
 
 #define YYTABLES_NAME "yytables"
 
-#line 757 "maplexer.l"
-
+#line 752 "maplexer.l"
 
 
 /*
