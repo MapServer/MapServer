@@ -269,10 +269,10 @@ SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
   int nSHXHalfFileSize;
   if( !bBigEndian ) SwapWord( 4, pabyBuf+24 );
   memcpy(&nSHXHalfFileSize, pabyBuf+24, 4);
-  if (nSHXHalfFileSize != 0)
+  if (nSHXHalfFileSize >= 50)
     psSHP->nRecords = (nSHXHalfFileSize - 50) / 4;   // (nSHXFileSize - 100) / 8
   else
-    psSHP->nRecords = 0;
+    psSHP->nRecords = -1;
 
   if( psSHP->nRecords < 0 || psSHP->nRecords > 256000000 ) {
     msSetError(MS_SHPERR, "Corrupted .shx file : nRecords = %d.", "msSHPOpen()",
