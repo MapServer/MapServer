@@ -912,6 +912,7 @@ void freeFeatureList(featureListNodeObjPtr list)
 /* lineObj = multipointObj */
 static int loadFeaturePoints(lineObj *points)
 {
+  int ret = -1;
   int buffer_size=0;
 
   points->point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE);
@@ -919,30 +920,48 @@ static int loadFeaturePoints(lineObj *points)
   points->numpoints = 0;
   buffer_size = MS_FEATUREINITSIZE;
 
-  for(;;) {
+  while( ret < 0 ) {
     switch(msyylex()) {
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadFeaturePoints()");
-        return(MS_FAILURE);
+        ret = MS_FAILURE;
+        break;
       case(END):
-        return(MS_SUCCESS);
+        ret = MS_SUCCESS;
+        break;
       case(MS_NUMBER):
         if(points->numpoints == buffer_size) { /* just add it to the end */
-          points->point = (pointObj *) realloc(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));
-          MS_CHECK_ALLOC(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT), MS_FAILURE);
+          pointObj* newPoints = (pointObj *) realloc(points->point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));
+          if( newPoints == NULL ) {
+            msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__,
+                       __FILE__, __LINE__, (unsigned int)(sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT)));
+            ret = MS_FAILURE;
+            break;
+          }
+          points->point = newPoints;
           buffer_size+=MS_FEATUREINCREMENT;
         }
 
         points->point[points->numpoints].x = atof(msyystring_buffer);
-        if(getDouble(&(points->point[points->numpoints].y), MS_NUM_CHECK_NONE, -1, -1) == -1) return(MS_FAILURE);
-
+        if(getDouble(&(points->point[points->numpoints].y), MS_NUM_CHECK_NONE, -1, -1) == -1) {
+          ret = MS_FAILURE;
+          break;
+        }
         points->numpoints++;
         break;
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadFeaturePoints()",  msyystring_buffer, msyylineno );
-        return(MS_FAILURE);
+        ret = MS_FAILURE;
+        break;
     }
   }
+
+  if( ret == MS_FAILURE ) {
+    msFree(points->point); /* clean up */
+    points->point = NULL;
+    points->numpoints = 0;
+  }
+  return ret;
 }
 
 static int loadFeature(layerObj *player, int type)
