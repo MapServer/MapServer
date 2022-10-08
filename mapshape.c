@@ -1165,12 +1165,12 @@ static bool msSHXLoadPage( SHPHandle psSHP, int shxBufferPage )
 
     /* SHX stores the offsets in 2 byte units, so we double them to get */
     /* an offset in bytes. */
-    if( tmpOffset < INT_MAX / 2 )
+    if( tmpOffset > 0 && tmpOffset < INT_MAX / 2 )
         tmpOffset = tmpOffset * 2;
     else
         tmpOffset = 0;
 
-    if( tmpSize < INT_MAX / 2 )
+    if( tmpSize > 0 && tmpSize < INT_MAX / 2 )
         tmpSize = tmpSize * 2;
     else
         tmpSize = 0;
@@ -1215,12 +1215,12 @@ static int msSHXLoadAll( SHPHandle psSHP )
 
     /* SHX stores the offsets in 2 byte units, so we double them to get */
     /* an offset in bytes. */
-    if( nOffset < INT_MAX / 2 )
+    if( nOffset > 0 && nOffset < INT_MAX / 2 )
         nOffset = nOffset * 2;
     else
         nOffset = 0;
 
-    if( nLength < INT_MAX / 2 )
+    if( nLength > 0 && nLength < INT_MAX / 2 )
         nLength = nLength * 2;
     else
         nLength = 0;
