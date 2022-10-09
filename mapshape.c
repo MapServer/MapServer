@@ -1377,11 +1377,12 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       const ms_int32 end = i == nParts - 1
         ? nPoints
         : psSHP->panParts[i+1];
-      shape->line[i].numpoints = end - psSHP->panParts[i];
       if (psSHP->panParts[i] < 0 || end < 0 || end > nPoints ||
           psSHP->panParts[i] >= end) {
-        msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].numpoints=%d", "msSHPReadShape()",
-                   hEntity, i, shape->line[i].numpoints);
+        msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].start=%d, shape->line[%d].end=%d", "msSHPReadShape()",
+                   hEntity,
+                   i, psSHP->panParts[i],
+                   i, end);
         while(--i >= 0)
           free(shape->line[i].point);
         free(shape->line);
@@ -1391,6 +1392,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         return;
       }
 
+      shape->line[i].numpoints = end - psSHP->panParts[i];
       if( (shape->line[i].point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints)) == NULL ) {
         while(--i >= 0)
           free(shape->line[i].point);
