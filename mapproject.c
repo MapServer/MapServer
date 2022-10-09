@@ -975,6 +975,8 @@ int msProcessProjection(projectionObj *p)
 /************************************************************************/
 int msIsAxisInverted(int epsg_code)
 {
+  if( epsg_code < 0 )
+    return MS_FALSE;
   const unsigned int row = epsg_code / 8;
   const unsigned char index = epsg_code % 8;
 
