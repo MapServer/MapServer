@@ -1142,7 +1142,7 @@ static int loadProjection(projectionObj *p)
 
   p->gt.need_geotransform = MS_FALSE;
 
-  if ( p->proj != NULL ) {
+  if ( p->proj != NULL || p->numargs != 0 ) {
     msSetError(MS_MISCERR, "Projection is already initialized. Multiple projection definitions are not allowed in this object. (line %d)",
                "loadProjection()", msyylineno);
     return(-1);
