@@ -231,8 +231,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
           msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
           return(-1);
         }
+        msFree(s->full_pixmap_path);
         s->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolpath, msyystring_buffer));
         /* Set imagepath */
+        msFree(s->imagepath);
         s->imagepath = msStrdup(msyystring_buffer);
         break;
       case(NAME):
