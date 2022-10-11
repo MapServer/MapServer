@@ -4180,8 +4180,8 @@ YY_RULE_SETUP
 #line 486 "maplexer.l"
 {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 msyytext[msyyleng-1-1] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                          msyystring_buffer_size);
                                                  strcpy(msyystring_buffer,msyytext);
                                                  return(MS_BINDING);
@@ -4218,8 +4218,8 @@ YY_RULE_SETUP
 {
   /* attribute binding - numeric (no quotes) */
   msyytext++;
-  msyytext[strlen(msyytext)-1] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  msyytext[msyyleng-1-1] = '\0';
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_DOUBLE);
@@ -4232,8 +4232,8 @@ YY_RULE_SETUP
 {
   /* attribute binding - string (single or double quotes) */
   msyytext+=2;
-  msyytext[strlen(msyytext)-2] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  msyytext[msyyleng-2-2] = '\0';
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_STRING);
@@ -4246,8 +4246,8 @@ YY_RULE_SETUP
 {
   /* attribute binding - time */
   msyytext+=2;
-  msyytext[strlen(msyytext)-2] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
+  msyytext[msyyleng-2-2] = '\0';
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng,
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_TIME);
@@ -4257,7 +4257,7 @@ case 326:
 YY_RULE_SETUP
 #line 535 "maplexer.l"
 {
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
@@ -4268,7 +4268,7 @@ case 327:
 YY_RULE_SETUP
 #line 543 "maplexer.l"
 {
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
@@ -4281,8 +4281,8 @@ YY_RULE_SETUP
 #line 551 "maplexer.l"
 {
   msyytext++;
-  msyytext[strlen(msyytext)-1] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  msyytext[msyyleng-1-1] = '\0';
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_LITERAL_TIME);
@@ -4294,8 +4294,8 @@ YY_RULE_SETUP
 #line 560 "maplexer.l"
 {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-2] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 msyytext[msyyleng-1-2] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                          msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_IREGEX);
@@ -4307,8 +4307,8 @@ YY_RULE_SETUP
 #line 569 "maplexer.l"
 {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 msyytext[msyyleng-1-1] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                          msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_REGEX);
@@ -4319,8 +4319,8 @@ YY_RULE_SETUP
 #line 578 "maplexer.l"
 {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 msyytext[msyyleng-1-1] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                          msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_EXPRESSION);
@@ -4331,8 +4331,8 @@ YY_RULE_SETUP
 #line 587 "maplexer.l"
 {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 msyytext[msyyleng-1-1] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                          msyystring_buffer_size);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_LIST);
@@ -4356,7 +4356,7 @@ YY_RULE_SETUP
                                                 if (msyystring_begin == msyytext[0]) {
                                                    BEGIN(msyystring_begin_state);
                                                    if (msyystring_return_state == MS_STRING) {
-                                                      if (msyystring_icase && strlen(msyytext)==2) {
+                                                      if (msyystring_icase && msyyleng==2) {
                                                          msyystring_icase = MS_FALSE; // reset
                                                          return MS_ISTRING;
                                                       } else
@@ -4367,11 +4367,11 @@ YY_RULE_SETUP
                                                 }
                                                 else {
                                                   int old_size = msyystring_size;
-                                                  msyystring_size += (strlen(msyytext)==2) ? 2 : 1;
+                                                  msyystring_size += (msyyleng==2) ? 2 : 1;
                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                           msyystring_buffer_size);
                                                   msyystring_buffer[old_size] = *msyytext;
-                                                  if (strlen(msyytext)==2) {
+                                                  if (msyyleng==2) {
                                                      msyystring_buffer[old_size+1] = msyytext[1];
                                                   }
                                                   msyystring_buffer[msyystring_size] = '\0';
@@ -4386,7 +4386,7 @@ YY_RULE_SETUP
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                         msyystring_buffer_size);
 
-                                                if (strlen(msyytext) == 2)
+                                                if (msyyleng == 2)
                                                     msyystring_buffer[msyystring_size-1] = msyytext[1]; 
                                                 else
                                                     msyystring_buffer[msyystring_size-1] = msyytext[0];
@@ -4399,20 +4399,19 @@ YY_RULE_SETUP
 #line 642 "maplexer.l"
 {
                                                  int old_size = msyystring_size;
-                                                 int msyytext_len = (int)strlen(msyytext);
-                                                 msyystring_size += msyytext_len;
+                                                 msyystring_size += msyyleng;
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                          msyystring_buffer_size);
-                                                 memcpy(msyystring_buffer + old_size, msyytext, msyytext_len + 1);
+                                                 memcpy(msyystring_buffer + old_size, msyytext, msyyleng + 1);
                                              }
 	YY_BREAK
 case 337:
 /* rule 337 can match eol */
 YY_RULE_SETUP
-#line 651 "maplexer.l"
+#line 650 "maplexer.l"
 {
                                                  msyytext++;
-                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 msyytext[msyyleng-1-1] = '\0';
 
                                                  if(include_stack_ptr >= MAX_INCLUDE_DEPTH) {
                                                    msSetError(MS_IOERR, "Includes nested to deeply.", "msyylex()");
@@ -4438,7 +4437,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 338:
 YY_RULE_SETUP
-#line 677 "maplexer.l"
+#line 676 "maplexer.l"
 {
                                                  msyystring_return_state = MS_TOKEN_LITERAL_STRING;
                                                  msyystring_begin = msyytext[0]; 
@@ -4449,9 +4448,9 @@ YY_RULE_SETUP
 	YY_BREAK
 case 339:
 YY_RULE_SETUP
-#line 685 "maplexer.l"
+#line 684 "maplexer.l"
 { 
-                                                    MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                    MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                             msyystring_buffer_size);
                                                     strcpy(msyystring_buffer, msyytext); 
                                                     return(MS_STRING); 
@@ -4460,12 +4459,12 @@ YY_RULE_SETUP
 case 340:
 /* rule 340 can match eol */
 YY_RULE_SETUP
-#line 692 "maplexer.l"
+#line 691 "maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(CONFIG_FILE):
-#line 694 "maplexer.l"
+#line 693 "maplexer.l"
 {
                                                   if( --include_stack_ptr < 0 )
                                                     return(EOF); /* end of main file */
@@ -4480,16 +4479,16 @@ case YY_STATE_EOF(CONFIG_FILE):
 case 341:
 /* rule 341 can match eol */
 YY_RULE_SETUP
-#line 705 "maplexer.l"
+#line 704 "maplexer.l"
 {
   return(0); 
 }
 	YY_BREAK
 case 342:
 YY_RULE_SETUP
-#line 709 "maplexer.l"
+#line 708 "maplexer.l"
 { 
-                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                                                                           msyystring_buffer_size);
                                                   strcpy(msyystring_buffer, msyytext); 
                                                   return(0); 
@@ -4497,15 +4496,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 343:
 YY_RULE_SETUP
-#line 715 "maplexer.l"
+#line 714 "maplexer.l"
 { return(msyytext[0]); }
 	YY_BREAK
 case 344:
 YY_RULE_SETUP
-#line 716 "maplexer.l"
+#line 715 "maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4509 "/home/even/mapserver/mapserver/maplexer.c"
+#line 4508 "/home/even/mapserver/mapserver/maplexer.c"
 case YY_STATE_EOF(EXPRESSION_STRING):
 case YY_STATE_EOF(INCLUDE):
 case YY_STATE_EOF(MSSTRING):
@@ -5514,7 +5513,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 716 "maplexer.l"
+#line 715 "maplexer.l"
 
 
 /*
