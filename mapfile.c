@@ -466,6 +466,7 @@ int loadColor(colorObj *color, attributeBindingObj *binding)
     }
   } else {
     assert(binding);
+    msFree(binding->item);
     binding->item = msStrdup(msyystring_buffer);
     binding->index = -1;
   }
