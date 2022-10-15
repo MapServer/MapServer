@@ -249,6 +249,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
               done = MS_TRUE;
               break;
             case(MS_NUMBER):
+              if(s->numpoints == MS_MAXVECTORPOINTS) {
+                msSetError(MS_SYMERR, "POINT block contains too many points.", "loadSymbol()");
+		return(-1);
+	      }
               s->points[s->numpoints].x = atof(msyystring_buffer); /* grab the x */
               if(getDouble(&(s->points[s->numpoints].y)) == -1) return(-1); /* grab the y */
               if(s->points[s->numpoints].x!=-99) {
