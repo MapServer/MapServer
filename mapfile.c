@@ -1176,7 +1176,7 @@ static int loadProjection(projectionObj *p)
 
   p->gt.need_geotransform = MS_FALSE;
 
-  if ( p->proj != NULL ) {
+  if ( p->proj != NULL || p->numargs != 0 ) {
     msSetError(MS_MISCERR, "Projection is already initialized. Multiple projection definitions are not allowed in this object. (line %d)",
                "loadProjection()", msyylineno);
     return(-1);
@@ -1563,7 +1563,13 @@ static int loadLeader(labelLeaderObj *leader)
         if(msGrowLeaderStyles(leader) == NULL)
           return(-1);
         initStyle(leader->styles[leader->numstyles]);
-        if(loadStyle(leader->styles[leader->numstyles]) != MS_SUCCESS) return(-1);
+        if(loadStyle(leader->styles[leader->numstyles]) != MS_SUCCESS)
+        {
+            freeStyle(leader->styles[leader->numstyles]);
+            free(leader->styles[leader->numstyles]);
+            leader->styles[leader->numstyles] = NULL;
+            return -1;
+        }
         leader->numstyles++;
         break;
       default:

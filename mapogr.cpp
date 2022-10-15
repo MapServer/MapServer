@@ -5484,8 +5484,9 @@ shapeObj *msOGRShapeFromWKT(const char *string)
   if( msOGRGeometryToShape( hGeom, shape,
                             wkbFlatten(OGR_G_GetGeometryType(hGeom)) )
       == MS_FAILURE ) {
+    msFreeShape(shape);
     free( shape );
-    return NULL;
+    shape = NULL;
   }
 
   OGR_G_DestroyGeometry( hGeom );
