@@ -1181,8 +1181,6 @@ static void writeGrid(FILE *stream, int indent, graticuleObj *pGraticule)
 
 static int loadProjection(projectionObj *p)
 {
-  int i=0;
-
   p->gt.need_geotransform = MS_FALSE;
 
   if ( p->proj != NULL || p->numargs != 0 ) {
@@ -1197,16 +1195,16 @@ static int loadProjection(projectionObj *p)
         msSetError(MS_EOFERR, NULL, "loadProjection()");
         return(-1);
       case(END):
-        if( i == 1 && strstr(p->args[0],"+") != NULL ) {
+        if( p->numargs == 1 && strstr(p->args[0],"+") != NULL ) {
           char *one_line_def = p->args[0];
           int result;
 
           p->args[0] = NULL;
+          p->numargs = 0;
           result = msLoadProjectionString( p, one_line_def );
           free( one_line_def );
           return result;
         } else {
-          p->numargs = i;
           if(p->numargs != 0)
             return msProcessProjection(p);
           else
@@ -1215,15 +1213,14 @@ static int loadProjection(projectionObj *p)
         break;
       case(MS_STRING):
       case(MS_AUTO):
-        if( i == MS_MAXPROJARGS ) {
+        if( p->numargs == MS_MAXPROJARGS ) {
             msSetError(MS_MISCERR, "Parsing error near (%s):(line %d): Too many arguments in projection string", "loadProjection()",
                    msyystring_buffer, msyylineno);
-            p->numargs = i;
             return -1;
         }
-        p->args[i] = msStrdup(msyystring_buffer);
+        p->args[p->numargs] = msStrdup(msyystring_buffer);
         p->automatic = MS_TRUE;
-        i++;
+        p->numargs++;
         break;
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadProjection()",
