@@ -1702,21 +1702,30 @@ int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape)
 #undef p_y
 #endif
 
-  for( i = shape->numlines-1; i >= 0; i-- ) {
-    if( shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON ) {
-      if( msProjectShapeLine( reprojector, shape, i ) == MS_FAILURE )
-        msShapeDeleteLine( shape, i );
-    } else if( msProjectLineEx(reprojector, shape->line+i ) == MS_FAILURE ) {
-      msShapeDeleteLine( shape, i );
-    }
-  }
-
-  if( shape->numlines == 0 ) {
-    msFreeShape( shape );
-    return MS_FAILURE;
+  if (shape->numlines == 0) {
+      // don't attempt to project any NULL geometries
+      // but if we want to return the record's attributes we won't free the shape
+      // and throw an error
+      shape->type = MS_SHAPE_NULL;
+      return MS_SUCCESS;
   } else {
-    msComputeBounds( shape ); /* fixes bug 1586 */
-    return(MS_SUCCESS);
+    for( i = shape->numlines-1; i >= 0; i-- ) {
+      if( shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON ) {
+        if( msProjectShapeLine( reprojector, shape, i ) == MS_FAILURE )
+          msShapeDeleteLine( shape, i );
+      } else if( msProjectLineEx(reprojector, shape->line+i ) == MS_FAILURE ) {
+        msShapeDeleteLine( shape, i );
+      }
+    }
+
+    if ( shape->numlines == 0 ) {
+        msFreeShape(shape);
+        return MS_FAILURE;
+    }
+    else {
+        msComputeBounds(shape); /* fixes bug 1586 */
+        return(MS_SUCCESS);
+    }
   }
 }
 

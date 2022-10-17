@@ -1248,6 +1248,7 @@ int msQueryByRect(mapObj *map)
               break;
             }
         }
+        // msProjectShapeEx can free the shape if there is a NULL geometry, but there is no check on the return status of this function
         msProjectShapeEx(reprojector, &shape);
       }
 
