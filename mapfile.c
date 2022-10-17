@@ -4476,7 +4476,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeCluster(stream, indent, &(layer->cluster));
   writeLayerCompositer(stream, indent, layer->compositer);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 13, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY", MS_IDW, "IDW", MS_FLATGEOBUF, "FLATGEOBUF");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 12, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY", MS_IDW, "IDW", MS_FLATGEOBUF, "FLATGEOBUF");
   writeHashTableInline(stream, indent, "CONNECTIONOPTIONS", &(layer->connectionoptions));
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
