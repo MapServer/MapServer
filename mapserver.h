@@ -2183,6 +2183,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
                                         int default_result );
   MS_DLL_EXPORT void msApplyMapConfigOptions( mapObj *map );
   MS_DLL_EXPORT int msMapComputeGeotransform( mapObj *map );
+  int msMapComputeGeotransformEx( mapObj * map, double resolutionX, double resolutionY );
 
   MS_DLL_EXPORT void msMapPixelToGeoref( mapObj *map, double *x, double *y );
   MS_DLL_EXPORT void msMapGeorefToPixel( mapObj *map, double *x, double *y );

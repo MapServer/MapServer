@@ -2479,7 +2479,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   map->cellsize = params->resx; /* pick one, MapServer only supports square cells (what about msAdjustExtent here!) */
 
-  msMapComputeGeotransform(map);
+  if( params->width == 1 || params->height == 1 )
+      msMapComputeGeotransformEx(map, params->resx, params->resy);
+  else
+      msMapComputeGeotransform(map);
 
   /* Do we need to fake out stuff for rotated support? */
   if( map->gt.need_geotransform )

@@ -4423,6 +4423,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       x_1 = cm.geotransform[0]
             + orig_bbox.minx * cm.geotransform[1]
             + orig_bbox.miny * cm.geotransform[2];
+      // below +1 look suspicious to me (E. Rouault) and probably mean that
+      // there are still issues with pixel-center vs pixel-corner convention
+      // The resolution computed on wcs_20_post_getcov_trim_x_y_both_1px
+      // with that is 11, whereas it should be 10
       x_2 = cm.geotransform[0]
             + (orig_bbox.maxx+1) * cm.geotransform[1]
             + (orig_bbox.maxy+1) * cm.geotransform[2];
@@ -4431,6 +4435,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       subsets.maxx = MS_MAX(x_1, x_2);
     }
     if(subsets.miny != -DBL_MAX || subsets.maxy != DBL_MAX) {
+      // below +1 are suspicious. See bove comment in the minx/maxx cases
       y_1 = cm.geotransform[3]
             + (orig_bbox.maxx+1) * cm.geotransform[4]
             + (orig_bbox.maxy+1) * cm.geotransform[5];
@@ -4589,6 +4594,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   /* WCS 2.0 is center of pixel oriented */
+  rectObj bboxOriginIsCorner = bbox;
   bbox.minx += params->resolutionX * 0.5;
   bbox.maxx -= params->resolutionX * 0.5;
   bbox.miny += params->resolutionY * 0.5;
@@ -4611,12 +4617,24 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       msDebug("msWCSGetCoverage20(): projecting to outputcrs %s\n", params->outputcrs);
 
       msProjectRect(&(map->projection), &outputProj, &bbox);
-      msFreeProjection(&(map->projection));
-      map->projection = outputProj;
 
       /* recalculate resolutions, needed if UOM changes (e.g: deg -> m) */
-      params->resolutionX = (bbox.maxx - bbox.minx) / params->width;
-      params->resolutionY = (bbox.maxy - bbox.miny) / params->height;
+      if( params->width == 1 || params->height == 1 )
+      {
+          // if one of the dimension is 1, we cannot use the center-of-pixel bbox,
+          // but must use the origin-is-corner one.
+          msProjectRect(&(map->projection), &outputProj, &bboxOriginIsCorner);
+          params->resolutionX = (bboxOriginIsCorner.maxx - bboxOriginIsCorner.minx) / params->width;
+          params->resolutionY = (bboxOriginIsCorner.maxy - bboxOriginIsCorner.miny) / params->height;
+      }
+      else
+      {
+          params->resolutionX = (bbox.maxx - bbox.minx) / (params->width - 1);
+          params->resolutionY = (bbox.maxy - bbox.miny) / (params->height - 1);
+      }
+
+      msFreeProjection(&(map->projection));
+      map->projection = outputProj;
     }
     else {
       msFreeProjection(&outputProj);
@@ -4676,7 +4694,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /*    make sure layer is on   */
   layer->status = MS_ON;
 
-  msMapComputeGeotransform(map);
+  if( params->width == 1 || params->height == 1 )
+      msMapComputeGeotransformEx(map, params->resolutionX, params->resolutionY);
+  else
+      msMapComputeGeotransform(map);
 
   /*    fill in bands rangeset info, if required.  */
   /* msWCSSetDefaultBandsRangeSetInfo(params, &cm, layer); */

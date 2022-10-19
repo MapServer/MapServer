@@ -382,18 +382,13 @@ int msMapSetSize( mapObj *map, int width, int height )
 
 extern int InvGeoTransform( double *gt_in, double *gt_out );
 
-int msMapComputeGeotransform( mapObj * map )
+int msMapComputeGeotransformEx( mapObj * map, double resolutionX, double resolutionY )
 
 {
   double rot_angle;
   double geo_width, geo_height, center_x, center_y;
 
   map->saved_extent = map->extent;
-
-  /* Do we have all required parameters? */
-  if( map->extent.minx == map->extent.maxx
-      || map->width == 0 || map->height == 0 )
-    return MS_FAILURE;
 
   rot_angle = map->gt.rotation_angle * MS_PI / 180.0;
 
@@ -409,17 +404,17 @@ int msMapComputeGeotransform( mapObj * map )
   ** edges as is expected in a geotransform.
   */
   map->gt.geotransform[1] =
-    cos(rot_angle) * geo_width / (map->width-1);
+    cos(rot_angle) * resolutionX;
   map->gt.geotransform[2] =
-    sin(rot_angle) * geo_height / (map->height-1);
+    sin(rot_angle) * resolutionY;
   map->gt.geotransform[0] = center_x
                             - (map->width * 0.5) * map->gt.geotransform[1]
                             - (map->height * 0.5) * map->gt.geotransform[2];
 
   map->gt.geotransform[4] =
-    sin(rot_angle) * geo_width / (map->width-1);
+    sin(rot_angle) * resolutionX;
   map->gt.geotransform[5] =
-    - cos(rot_angle) * geo_height / (map->height-1);
+    - cos(rot_angle) * resolutionY;
   map->gt.geotransform[3] = center_y
                             - (map->width * 0.5) * map->gt.geotransform[4]
                             - (map->height * 0.5) * map->gt.geotransform[5];
@@ -429,6 +424,21 @@ int msMapComputeGeotransform( mapObj * map )
     return MS_SUCCESS;
   else
     return MS_FAILURE;
+}
+
+int msMapComputeGeotransform( mapObj * map )
+
+{
+  /* Do we have all required parameters? */
+  if( map->extent.minx == map->extent.maxx
+      || map->width <= 1 || map->height <= 1 )
+    return MS_FAILURE;
+
+  const double geo_width = map->extent.maxx - map->extent.minx;
+  const double geo_height = map->extent.maxy - map->extent.miny;
+  return msMapComputeGeotransformEx(map,
+                                    geo_width / (map->width-1),
+                                    geo_height / (map->height-1));
 }
 
 /************************************************************************/
