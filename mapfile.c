@@ -370,6 +370,7 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
   if (NULL == msBuildPath(szLibPath, plugin_dir, lib_str)) {
     return MS_FAILURE;
   }
+  msFree(*dest);
   *dest = msStrdup(szLibPath);
 
   return MS_SUCCESS;
@@ -4217,6 +4218,7 @@ int loadLayer(layerObj *layer, mapObj *map)
             msSetError(MS_MISCERR, "Plugin value not found in config file. See mapserver.org/mapfile/config.html for more information." , "loadLayer()");
             return(-1);
           }
+          msFree(layer->plugin_library_original);
           layer->plugin_library_original = strdup(plugin_library);
         } else {
           if(getString(&layer->plugin_library_original) == MS_FAILURE) return(-1);
