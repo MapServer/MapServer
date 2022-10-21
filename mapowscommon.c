@@ -718,7 +718,6 @@ int msOWSSchemaValidation(const char* xml_schema, const char* xml)
 
   /* If XML Schema hasn't been rightly loaded */
   if (schema == NULL) {
-    xmlSchemaCleanupTypes();
     xmlMemoryDump();
     xmlCleanupParser();
     return ret;
