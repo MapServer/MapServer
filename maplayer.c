@@ -2110,10 +2110,10 @@ int msConnectLayer(layerObj *layer,
   /* For internal types, library_str is ignored */
   if (connectiontype == MS_PLUGIN) {
     int rv;
-    msFree(layer->plugin_library);
-    msFree(layer->plugin_library_original);
 
+    msFree(layer->plugin_library_original);
     layer->plugin_library_original = msStrdup(library_str);
+
     rv = msBuildPluginLibraryPath(&layer->plugin_library,
                                   layer->plugin_library_original,
                                   layer->map);
