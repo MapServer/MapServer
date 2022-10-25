@@ -4322,7 +4322,10 @@ int loadLayer(layerObj *layer, mapObj *map)
           return(-1);
         }
 
-        if(loadJoin(&(layer->joins[layer->numjoins])) == -1) return(-1);
+        if(loadJoin(&(layer->joins[layer->numjoins])) == -1) {
+            freeJoin(&(layer->joins[layer->numjoins]));
+            return(-1);
+        }
         layer->numjoins++;
         break;
       case(LABELCACHE):
