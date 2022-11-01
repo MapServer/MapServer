@@ -1117,8 +1117,10 @@ static int loadGrid( layerObj *pLayer )
         break; /* for string loads */
       case( LABELFORMAT ):
         if(getString(&(pLayer->grid->labelformat)) == MS_FAILURE) {
-          if(strcasecmp(msyystring_buffer, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
+          if(strcasecmp(msyystring_buffer, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */ {
+            msFree(pLayer->grid->labelformat);
             pLayer->grid->labelformat = msStrdup("DD");
+          }
           else
             return(-1);
         }
@@ -4382,7 +4384,10 @@ int loadLayer(layerObj *layer, mapObj *map)
           return(-1);
         }
 
-        if(loadJoin(&(layer->joins[layer->numjoins])) == -1) return(-1);
+        if(loadJoin(&(layer->joins[layer->numjoins])) == -1) {
+            freeJoin(&(layer->joins[layer->numjoins]));
+            return(-1);
+        }
         layer->numjoins++;
         break;
       case(LABELCACHE):
