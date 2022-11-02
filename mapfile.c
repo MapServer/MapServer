@@ -1465,7 +1465,9 @@ int freeLabelLeader(labelLeaderObj *leader)
 {
   int i;
   for(i=0; i<leader->numstyles; i++) {
-    msFree(leader->styles[i]);
+    if(freeStyle(leader->styles[i]) == MS_SUCCESS) {
+      msFree(leader->styles[i]);
+    }
   }
   msFree(leader->styles);
 
