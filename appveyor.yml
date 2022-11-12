@@ -49,6 +49,7 @@ init:
 build_script:
   - ps: Write-Host "Build tags - $env:APPVEYOR_REPO_TAG $env:APPVEYOR_REPO_TAG_NAME"
   - rename C:\Python310 Python310_Ignore
+  - rename C:\Python311 Python311_Ignore  
   - set "BUILD_FOLDER=%APPVEYOR_BUILD_FOLDER:\=/%"
   - if "%platform%" == "x64" SET VS_FULL=%VS_VERSION%
   - if "%platform%" == "x64" SET VS_ARCH=x64
