@@ -58,7 +58,7 @@ ms_bitarray msAllocBitArray(int numbits)
 int msGetBit(ms_const_bitarray array, int index)
 {
   array += index / MS_ARRAY_BIT;
-  return (*array & (1 << (index % MS_ARRAY_BIT))) != 0;    /* 0 or 1 */
+  return (*array & (1U << (index % MS_ARRAY_BIT))) != 0;    /* 0 or 1 */
 }
 
 /*
@@ -78,7 +78,7 @@ int msGetNextBit(ms_const_bitarray array, int i, int size)
     if( b && (b >> (i % MS_ARRAY_BIT)) ) {
       /* There is something in this byte */
       /* And it is not to the right of us */
-      if( b & ( 1 << (i % MS_ARRAY_BIT)) ) {
+      if( b & ( 1U << (i % MS_ARRAY_BIT)) ) {
         /* There is something at this bit! */
         return i;
       } else {
@@ -98,9 +98,9 @@ void msSetBit(ms_bitarray array, int index, int value)
 {
   array += index / MS_ARRAY_BIT;
   if (value)
-    *array |= 1 << (index % MS_ARRAY_BIT);           /* set bit */
+    *array |= 1U << (index % MS_ARRAY_BIT);           /* set bit */
   else
-    *array &= ~(1 << (index % MS_ARRAY_BIT));        /* clear bit */
+    *array &= ~(1U << (index % MS_ARRAY_BIT));        /* clear bit */
 }
 
 void msSetAllBits(ms_bitarray array, int numbits, int value)
@@ -114,5 +114,5 @@ void msSetAllBits(ms_bitarray array, int numbits, int value)
 void msFlipBit(ms_bitarray array, int index)
 {
   array += index / MS_ARRAY_BIT;
-  *array ^= 1 << (index % MS_ARRAY_BIT);                   /* flip bit */
+  *array ^= 1U << (index % MS_ARRAY_BIT);                   /* flip bit */
 }
