@@ -1092,6 +1092,7 @@ mark_as_advanced(
   MAPSERVER_DATA_SUBDIR
   MAPSERVER_CONFIG_FILE
 )
+add_definitions(-DMAPSERVER_BUILD)
 add_definitions(-DMAPSERVER_CONFIG_FILE="${MAPSERVER_CONFIG_FILE}")
 
 install(
