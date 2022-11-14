@@ -49,6 +49,8 @@
 #
 # RUN_PARMS: wfs_ogr_native_sql_20.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsLike wildCard="*" singleChar="?" escape="!"><PropertyName>name</PropertyName><Literal>V*o</Literal></PropertyIsLike></Filter>" > [RESULT]
 # RUN_PARMS: wfs_ogr_native_sql_21.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsLike wildCard="*" singleChar="?" escape="!" matchCase="false"><PropertyName>name</PropertyName><Literal>v*o</Literal></PropertyIsLike></Filter>" > [RESULT]
+# RUN_PARMS: wfs_ogr_native_sql_like_parenthesis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=layer_with_special_characters&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsLike  wildCard="*" singleChar="?" escape="X"><PropertyName>text</PropertyName><Literal>*( )</Literal></PropertyIsLike></Filter>" > [RESULT]
+# RUN_PARMS: wfs_ogr_native_sql_like_backslash_and_single_quote.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=layer_with_special_characters&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsLike  wildCard="*" singleChar="?" escape="X"><PropertyName>text</PropertyName><Literal>*\ with single ' quote</Literal></PropertyIsLike></Filter>" > [RESULT]
 #
 # bug in MS: ? is treated as * in this case:
 #
@@ -318,6 +320,30 @@ LAYER
   PROCESSING "NATIVE_SQL=YES"
   METADATA
     "ows_title"         "select_zero_feature"
+    "wfs_featureid"     "ID"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_getfeature_formatlist" "ogrgml"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:32632"
+  END
+
+  TEMPLATE "wfs_ogr_native_sql.map"
+END # Layer
+# Layer
+
+LAYER
+
+  NAME layer_with_special_characters
+  DATA "layer_with_special_characters"
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/db.sqlite"
+  PROCESSING "NATIVE_SQL=YES"
+  METADATA
+    "ows_title"         "layer_with_special_characters"
     "wfs_featureid"     "ID"
     "gml_include_items" "all"
     "gml_types"         "auto"
