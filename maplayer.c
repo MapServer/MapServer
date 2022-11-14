@@ -643,7 +643,6 @@ const char *msExpressionTokenToString(int token) {
     case MS_TOKEN_COMPARISON_RE: return " ~ ";
     case MS_TOKEN_COMPARISON_IRE: return " ~* ";
     case MS_TOKEN_COMPARISON_IN: return " in ";
-    case MS_TOKEN_COMPARISON_LIKE: return " like ";
 
     case MS_TOKEN_COMPARISON_INTERSECTS: return "intersects";
     case MS_TOKEN_COMPARISON_DISJOINT: return "disjoint";

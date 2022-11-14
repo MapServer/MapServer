@@ -3792,9 +3792,6 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
         case MS_TOKEN_COMPARISON_IN:
           native_string = msStringConcatenate(native_string, " IN ");
           break;
-        case MS_TOKEN_COMPARISON_LIKE:
-          native_string = msStringConcatenate(native_string, " LIKE ");
-          break;
         case MS_TOKEN_COMPARISON_INTERSECTS:
           native_string = msStringConcatenate(native_string, " ST_INTERSECTS ");
           break;

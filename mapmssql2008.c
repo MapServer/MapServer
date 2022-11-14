@@ -3229,8 +3229,7 @@ int process_node(layerObj* layer, expressionObj *filter)
       filter->native_string = msStringConcatenate(filter->native_string, " IN ");
       break;
     case MS_TOKEN_COMPARISON_RE: 
-    case MS_TOKEN_COMPARISON_IRE: 
-    case MS_TOKEN_COMPARISON_LIKE: {
+    case MS_TOKEN_COMPARISON_IRE: {
       /* process regexp */
       size_t i = 0, j = 0;
       char c;

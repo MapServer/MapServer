@@ -1901,9 +1901,8 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
     // the origin may be mapfile (complex regexes, layer->map.query.filter.string == NULL, regex may have //) or 
     // OGC Filter (simple patterns only, layer->map.query.filter.string != NULL)
     case MS_TOKEN_COMPARISON_RE: 
-    case MS_TOKEN_COMPARISON_IRE: 
-    case MS_TOKEN_COMPARISON_LIKE: {
-        int case_sensitive = n->token == MS_TOKEN_COMPARISON_RE || n->token == MS_TOKEN_COMPARISON_LIKE;
+    case MS_TOKEN_COMPARISON_IRE: {
+        int case_sensitive = n->token == MS_TOKEN_COMPARISON_RE;
         // in PostgreSQL and OGR: LIKE (case sensitive) and ILIKE (case insensitive)
         // in SQLite: LIKE (case insensitive) and GLOB (case sensitive)
         const char *op = case_sensitive ? "LIKE" : "ILIKE";
@@ -3228,7 +3227,6 @@ static int exprGetPriority(int token)
         return 6;
     else if (token == MS_TOKEN_COMPARISON_EQ ||
              token == MS_TOKEN_COMPARISON_IEQ ||
-             token == MS_TOKEN_COMPARISON_LIKE ||
              token == MS_TOKEN_COMPARISON_RE ||
              token == MS_TOKEN_COMPARISON_IRE ||
              token == MS_TOKEN_COMPARISON_NE)
@@ -3285,7 +3283,6 @@ static std::unique_ptr<msExprNode> BuildExprTree(tokenListNodeObjPtr node,
                  node->token == MS_TOKEN_COMPARISON_LT ||
                  node->token == MS_TOKEN_COMPARISON_EQ ||
                  node->token == MS_TOKEN_COMPARISON_IEQ ||
-                 node->token == MS_TOKEN_COMPARISON_LIKE ||
                  node->token == MS_TOKEN_COMPARISON_NE ||
                  node->token == MS_TOKEN_COMPARISON_RE ||
                  node->token == MS_TOKEN_COMPARISON_IRE ||
@@ -3565,7 +3562,6 @@ static std::string msOGRGetTokenText(int nToken)
         case MS_TOKEN_COMPARISON_LT: return "<";
         case MS_TOKEN_COMPARISON_EQ: return "=";
         case MS_TOKEN_COMPARISON_NE: return "!=";
-        case MS_TOKEN_COMPARISON_LIKE: return "LIKE";
 
         default:
             return std::string();
