@@ -1940,10 +1940,11 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
                 op = "~*";
         }
 
-        char *re = (char *) msSmallMalloc(strlen(regex)+3);
+        const size_t regex_len = strlen(regex);
+        char *re = (char *) msSmallMalloc(2 * regex_len+3);
         size_t i = 0, j = 0;
         re[j++] = '\'';
-        while (i < strlen(regex)) {
+        while (i < regex_len) {
             char c = regex[i];
             char c_next = regex[i+1];
                 
@@ -1959,6 +1960,18 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node) {
             }
             else if( c == '$' && c_next == 0 ) {
                 break;
+            }
+            else if( c == '\'' )
+            {
+                re[j++] = '\'';
+            }
+            else if( c == '\\' )
+            {
+                if( c_next == 0 ) {
+                    break;
+                }
+                i++;
+                c = c_next;
             }
 
             re[j++] = c;
