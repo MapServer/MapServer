@@ -4126,7 +4126,6 @@ int loadLayer(layerObj *layer, mapObj *map)
         layer->numclasses++;
         break;
       case(CLUSTER):
-        initCluster(&layer->cluster);
         if(loadCluster(&layer->cluster) == -1) return(-1);
         break;
       case(CLASSGROUP):
