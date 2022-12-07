@@ -1499,7 +1499,9 @@ int freeLabelLeader(labelLeaderObj *leader)
 {
   int i;
   for(i=0; i<leader->numstyles; i++) {
-    msFree(leader->styles[i]);
+    if(freeStyle(leader->styles[i]) == MS_SUCCESS) {
+      msFree(leader->styles[i]);
+    }
   }
   msFree(leader->styles);
 
@@ -4180,7 +4182,6 @@ int loadLayer(layerObj *layer, mapObj *map)
         layer->numclasses++;
         break;
       case(CLUSTER):
-        initCluster(&layer->cluster);
         if(loadCluster(&layer->cluster) == -1) return(-1);
         break;
       case(CLASSGROUP):
