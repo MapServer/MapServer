@@ -1340,7 +1340,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 
     for( i = 0; i < count; i++ ) {
       const char *mimetype = NULL;
-      FILE *fp;
+      VSILFILE *fp;
       unsigned char block[4000];
       int bytes_read;
 
