@@ -1480,7 +1480,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if (msDrawLayer(map, lp, img) != 0)
       status = MS_FAILURE;
   } else {
-    FILE *fp;
+    VSILFILE *fp;
     char *wldfile;
     /* OK, we have to resample the raster to map projection... */
     lp->transform = MS_TRUE;
