@@ -524,7 +524,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, const char *filenameIn )
   /*      stdout and delete the file.                                     */
   /* -------------------------------------------------------------------- */
   if( bFileIsTemporary ) {
-    FILE *fp;
+    VSILFILE *fp;
     unsigned char block[4000];
     int bytes_read;
 
