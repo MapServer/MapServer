@@ -1222,7 +1222,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   else if( EQUAL(form,"simple") ) {
     char buffer[1024];
     int  bytes_read;
-    FILE *fp;
+    VSILFILE *fp;
     const char *jsonp;
 
     jsonp = msGetOutputFormatOption( format, "JSONP", NULL );
@@ -1270,7 +1270,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     CSLDestroy(papszAdditionalFiles);
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
-      FILE *fp;
+      VSILFILE *fp;
       int bytes_read;
       char buffer[1024];
 
@@ -1307,7 +1307,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Handle the case of a zip file result.                           */
   /* -------------------------------------------------------------------- */
   else if( EQUAL(form,"zip") ) {
-    FILE *fp;
+    VSILFILE *fp;
     char *zip_filename = msTmpFile(map, NULL, "/vsimem/ogrzip/", "zip" );
     void *hZip;
     int bytes_read;
