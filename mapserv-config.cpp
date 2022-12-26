@@ -121,6 +121,12 @@ configObj *msLoadConfig(const char* ms_config_file)
   if (ms_config_file == NULL) {
     // get config filename from environment
     ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
+    // If MAPSERVER_CONFIG_FILE not set,
+    // Tries to use HTTP_X_MAPSERVER_CONFIG_FILE
+    // (under suExec environment, SetEnv can affect to only HTTP_X_*)
+    if (ms_config_file == NULL) {
+      ms_config_file = getenv("HTTP_X_MAPSERVER_CONFIG_FILE");
+    }
   }
 
   if(ms_config_file == NULL && MAPSERVER_CONFIG_FILE[0] != '\0') {
