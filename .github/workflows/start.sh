@@ -121,6 +121,7 @@ export PATH=/tmp/install-mapserver/bin:$PATH
 # Demonstrate that mapserv will error out if cannot find config file
 mapserv 2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo yes
 mapserv QUERY_STRING="MAP=wfs_simple.map&REQUEST=GetCapabilities" 2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo yes
+mapserv QUERY_STRING="map=ows_context.map&CONTEXT=ows_context.xml&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities"  2>&1  | grep "msLoadConfig(): Unable to access file" >/dev/null && echo "Check that we can't load a OWS context file if MS_CONTEXT_PATTERN is not defined: yes"
 
 echo "Check that MS_MAP_NO_PATH works"
 cat <<EOF >/tmp/mapserver.conf
