@@ -30,6 +30,7 @@
 #include "mapows.h"
 
 #include "cpl_vsi.h"
+#include "cpl_conv.h"
 
 
 #if defined(USE_WMS_LYR)
@@ -1129,6 +1130,12 @@ int msLoadMapContext(mapObj *map, const char *filename, int unique_layer_names)
   char szPath[MS_MAXPATHLEN];
   int nVersion=-1;
   char szVersionBuf[OWS_VERSION_MAXLEN];
+
+  const char *ms_contextfile_pattern = CPLGetConfigOption("MS_CONTEXTFILE_PATTERN", MS_DEFAULT_CONTEXTFILE_PATTERN);
+  if(msEvalRegex(ms_contextfile_pattern, filename) != MS_TRUE) {
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMapContext()");
+    return MS_FAILURE;
+  }
 
   /*  */
   /* Load the raw XML file */

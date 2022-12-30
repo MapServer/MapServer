@@ -234,6 +234,7 @@ extern "C" {
 #else
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
 #endif
+#define MS_DEFAULT_CONTEXTFILE_PATTERN "\\.[Xx][Mm][Ll]$"
 #define MS_TEMPLATE_MAGIC_STRING "MapServer Template"
 #define MS_TEMPLATE_EXPR "\\.(xml|wml|html|htm|svg|kml|gml|js|tmpl)$"
 
