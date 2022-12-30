@@ -688,6 +688,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
       sprintf(pszProj, "init=epsg:%s", pszValue+5);
     }
 
+    msFreeProjection(&map->projection);
     msInitProjection(&map->projection);
     map->projection.args[map->projection.numargs] = msStrdup(pszProj);
     map->projection.numargs++;
@@ -752,12 +753,20 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     pszValue = (char*)CPLGetXMLValue(psMapContext,
                                      "id", NULL);
     if (pszValue)
+    {
+      msFree(map->name);
       map->name = msStrdup(pszValue);
+    }
   } else {
+    char* pszMapName = NULL;
     if(msGetMapContextXMLStringValue(psGeneral, "Name",
-                                     &(map->name)) == MS_FAILURE) {
+                                     &pszMapName) == MS_FAILURE) {
       msGetMapContextXMLStringValue(psGeneral, "gml:name",
-                                    &(map->name));
+                                    &pszMapName);
+    }
+    if( pszMapName ) {
+      msFree(map->name);
+      map->name = pszMapName;
     }
   }
   /* Keyword */
