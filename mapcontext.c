@@ -664,7 +664,7 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
 */
 int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
                             CPLXMLNode *psMapContext, int nVersion,
-                            char *filename)
+                            const char *filename)
 {
 
   char *pszProj=NULL;
@@ -809,7 +809,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
 ** Load a Layer block from a MapContext document
 */
 int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
-                          char *filename, int unique_layer_names)
+                          const char *filename, int unique_layer_names)
 {
   char *pszValue;
   const char *pszHash;
@@ -1106,7 +1106,7 @@ int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names)
 ** (eg l:1:park. l:2:road ...). If It is set to MS_FALSE, the layer name
 ** would be the same name as the layer name in the context
 */
-int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
+int msLoadMapContext(mapObj *map, const char *filename, int unique_layer_names)
 {
 #if defined(USE_WMS_LYR)
   char *pszWholeText, *pszValue;
