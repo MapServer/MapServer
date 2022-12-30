@@ -46,11 +46,11 @@
 ** Take the filename in argument
 ** Return value must be freed by caller
 */
-char * msGetMapContextFileText(char *filename)
+static char * msGetMapContextFileText(const char *filename)
 {
   char *pszBuffer;
   VSILFILE *stream;
-  int  nLength;
+  vsi_l_offset  nLength;
 
   /* open file */
   if(filename != NULL && strlen(filename) > 0) {
@@ -65,10 +65,16 @@ char * msGetMapContextFileText(char *filename)
   }
 
   VSIFSeekL( stream, 0, SEEK_END );
-  nLength = (int) VSIFTellL( stream );
+  nLength = VSIFTellL( stream );
   VSIFSeekL( stream, 0, SEEK_SET );
+  if( nLength > 100 * 1024 * 1024U )
+  {
+    msSetError(MS_MEMERR, "(%s): too big file", "msGetMapContextFileText()", filename);
+    VSIFCloseL( stream );
+    return NULL;
+  }
 
-  pszBuffer = (char *) malloc(nLength+1);
+  pszBuffer = (char *) malloc((size_t)nLength+1);
   if( pszBuffer == NULL ) {
     msSetError(MS_MEMERR, "(%s)", "msGetMapContextFileText()", filename);
     VSIFCloseL( stream );
