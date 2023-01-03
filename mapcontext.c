@@ -30,6 +30,7 @@
 #include "mapows.h"
 
 #include "cpl_vsi.h"
+#include "cpl_conv.h"
 
 
 #if defined(USE_WMS_LYR)
@@ -46,11 +47,11 @@
 ** Take the filename in argument
 ** Return value must be freed by caller
 */
-char * msGetMapContextFileText(char *filename)
+static char * msGetMapContextFileText(const char *filename)
 {
   char *pszBuffer;
   VSILFILE *stream;
-  int  nLength;
+  vsi_l_offset  nLength;
 
   /* open file */
   if(filename != NULL && strlen(filename) > 0) {
@@ -65,10 +66,16 @@ char * msGetMapContextFileText(char *filename)
   }
 
   VSIFSeekL( stream, 0, SEEK_END );
-  nLength = (int) VSIFTellL( stream );
+  nLength = VSIFTellL( stream );
   VSIFSeekL( stream, 0, SEEK_SET );
+  if( nLength > 100 * 1024 * 1024U )
+  {
+    msSetError(MS_MEMERR, "(%s): too big file", "msGetMapContextFileText()", filename);
+    VSIFCloseL( stream );
+    return NULL;
+  }
 
-  pszBuffer = (char *) malloc(nLength+1);
+  pszBuffer = (char *) malloc((size_t)nLength+1);
   if( pszBuffer == NULL ) {
     msSetError(MS_MEMERR, "(%s)", "msGetMapContextFileText()", filename);
     VSIFCloseL( stream );
@@ -664,7 +671,7 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
 */
 int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
                             CPLXMLNode *psMapContext, int nVersion,
-                            char *filename)
+                            const char *filename)
 {
 
   char *pszProj=NULL;
@@ -682,6 +689,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
       sprintf(pszProj, "init=epsg:%s", pszValue+5);
     }
 
+    msFreeProjection(&map->projection);
     msInitProjection(&map->projection);
     map->projection.args[map->projection.numargs] = msStrdup(pszProj);
     map->projection.numargs++;
@@ -746,12 +754,20 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     pszValue = (char*)CPLGetXMLValue(psMapContext,
                                      "id", NULL);
     if (pszValue)
+    {
+      msFree(map->name);
       map->name = msStrdup(pszValue);
+    }
   } else {
+    char* pszMapName = NULL;
     if(msGetMapContextXMLStringValue(psGeneral, "Name",
-                                     &(map->name)) == MS_FAILURE) {
+                                     &pszMapName) == MS_FAILURE) {
       msGetMapContextXMLStringValue(psGeneral, "gml:name",
-                                    &(map->name));
+                                    &pszMapName);
+    }
+    if( pszMapName ) {
+      msFree(map->name);
+      map->name = pszMapName;
     }
   }
   /* Keyword */
@@ -809,7 +825,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
 ** Load a Layer block from a MapContext document
 */
 int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
-                          char *filename, int unique_layer_names)
+                          const char *filename, int unique_layer_names)
 {
   char *pszValue;
   const char *pszHash;
@@ -1106,7 +1122,7 @@ int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names)
 ** (eg l:1:park. l:2:road ...). If It is set to MS_FALSE, the layer name
 ** would be the same name as the layer name in the context
 */
-int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
+int msLoadMapContext(mapObj *map, const char *filename, int unique_layer_names)
 {
 #if defined(USE_WMS_LYR)
   char *pszWholeText, *pszValue;
@@ -1114,6 +1130,12 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
   char szPath[MS_MAXPATHLEN];
   int nVersion=-1;
   char szVersionBuf[OWS_VERSION_MAXLEN];
+
+  const char *ms_contextfile_pattern = CPLGetConfigOption("MS_CONTEXTFILE_PATTERN", MS_DEFAULT_CONTEXTFILE_PATTERN);
+  if(msEvalRegex(ms_contextfile_pattern, filename) != MS_TRUE) {
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMapContext()");
+    return MS_FAILURE;
+  }
 
   /*  */
   /* Load the raw XML file */

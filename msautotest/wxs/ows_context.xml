@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<ViewContext version="1.1.0" id="mapcontext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.opengis.net/context" xmlns:sld="http://www.opengis.net/sld" xsi:schemaLocation="http://www.opengis.net/context http://schemas.opengis.net/context/1.1.0/context.xsd">
+  <General>
+    <Window width="400" height="300"/>
+    <!-- Bounding box corners and spatial reference system -->
+    <BoundingBox SRS="EPSG:4326" minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000"/>
+    <!-- Title of Context -->
+    <Title>Map Context demo</Title>
+    <Abstract>Demo for map context document</Abstract>
+    <ContactInformation>
+    </ContactInformation>
+  </General>
+</ViewContext>
