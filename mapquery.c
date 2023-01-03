@@ -1248,8 +1248,10 @@ int msQueryByRect(mapObj *map)
               break;
             }
         }
-        // msProjectShapeEx can free the shape if there is a NULL geometry, but there is no check on the return status of this function
-        msProjectShapeEx(reprojector, &shape);
+        if( msProjectShapeEx(reprojector, &shape) != MS_SUCCESS ) {
+            // msProjectShapeEx() calls msFreeShape() on error
+            continue;
+        }
       }
 
       if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
@@ -1265,6 +1267,9 @@ int msQueryByRect(mapObj *map)
           case MS_SHAPE_POLYGON:
             status = msIntersectPolygons(&shape, &searchshape);
             break;
+          case MS_SHAPE_NULL:
+              status = MS_TRUE;
+              break;
           default:
             break;
         }
