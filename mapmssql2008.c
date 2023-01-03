@@ -991,35 +991,24 @@ int msMSSQL2008LayerOpen(layerObj *layer)
     if(!layerinfo->conn || layerinfo->conn->errorMessage[0]) {
       char *errMess = "Out of memory";
 
-      msDebug("FAILURE!!!");
-      maskeddata = (char *)msSmallMalloc(strlen(layer->connection) + 1);
-      strcpy(maskeddata, layer->connection);
-      index = strstr(maskeddata, "password=");
-      if(index != NULL) {
-        index = (char *)(index + 9);
-        count = (int)(strstr(index, " ") - index);
-        for(i = 0; i < count; i++) {
-          strlcpy(index, "*", (int)1);
-          index++;
-        }
-      }
+      if (layer->debug)
+          msDebug("MSMSSQL2008LayerOpen: Connection failure.\n");
 
       if (layerinfo->conn) {
         errMess = layerinfo->conn->errorMessage;
       }
 
-      msSetError(MS_QUERYERR,
-                 "Couldnt make connection to MS SQL Server 2008 with connect string '%s'.\n<br>\n"
-                 "Error reported was '%s'.\n<br>\n\n"
-                 "This error occured when trying to make a connection to the specified SQL server.  \n"
-                 "<br>\nMost commonly this is caused by <br>\n"
-                 "(1) incorrect connection string <br>\n"
-                 "(2) you didn't specify a 'user id=...' in your connection string <br>\n"
-                 "(3) SQL server isnt running <br>\n"
-                 "(4) TCPIP not enabled for SQL Client or server <br>\n\n",
-                 "msMSSQL2008LayerOpen()", maskeddata, errMess);
+      msDebug("Couldn't make connection to MS SQL Server with connect string '%s'.\n"
+                 "Error reported was '%s'.\n\n"
+                 "This error occured when trying to make a connection to the specified SQL server.\n"
+                 "Most commonly this is caused by \n"
+                 "(1) incorrect connection string \n"
+                 "(2) you didn't specify a 'user id=...' in your connection string \n"
+                 "(3) SQL server isnt running \n"
+                 "(4) TCPIP not enabled for SQL Client or server \n\n",
+                 errMess, layer->connection);
+      msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details.Is SQL Server running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "MSMSSQL2008LayerOpen()");
 
-      msFree(maskeddata);
       msMSSQL2008CloseConnection(layerinfo->conn);
       msFree(layerinfo);
       return MS_FAILURE;
