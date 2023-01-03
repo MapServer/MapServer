@@ -926,8 +926,6 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
 int msMSSQL2008LayerOpen(layerObj *layer)
 {
   msMSSQL2008LayerInfo  *layerinfo;
-  char                *index, *maskeddata;
-  int                 i, count;
   char *conn_decrypted = NULL;
 
   if(layer->debug) {
@@ -1001,13 +999,13 @@ int msMSSQL2008LayerOpen(layerObj *layer)
       msDebug("Couldn't make connection to MS SQL Server with connect string '%s'.\n"
                  "Error reported was '%s'.\n\n"
                  "This error occured when trying to make a connection to the specified SQL server.\n"
-                 "Most commonly this is caused by \n"
+                 "Most commonly this is caused by: \n"
                  "(1) incorrect connection string \n"
                  "(2) you didn't specify a 'user id=...' in your connection string \n"
                  "(3) SQL server isnt running \n"
                  "(4) TCPIP not enabled for SQL Client or server \n\n",
                  layer->connection, errMess);
-      msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details.Is SQL Server running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "MSMSSQL2008LayerOpen()");
+      msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details. Is SQL Server running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "MSMSSQL2008LayerOpen()");
 
       msMSSQL2008CloseConnection(layerinfo->conn);
       msFree(layerinfo);
