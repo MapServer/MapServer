@@ -1006,7 +1006,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
                  "(2) you didn't specify a 'user id=...' in your connection string \n"
                  "(3) SQL server isnt running \n"
                  "(4) TCPIP not enabled for SQL Client or server \n\n",
-                 errMess, layer->connection);
+                 layer->connection, errMess);
       msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details.Is SQL Server running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "MSMSSQL2008LayerOpen()");
 
       msMSSQL2008CloseConnection(layerinfo->conn);
