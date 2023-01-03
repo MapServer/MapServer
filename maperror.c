@@ -331,7 +331,11 @@ char *msGetErrorString(const char *delimiter)
 
 void msRedactCredentials(char* str)
 {
-  char* password = strstr(str, "password=");
+
+  char* ptr=NULL;
+  char* password=NULL;
+
+  password = strstr(str, "password=");
   if (password != NULL) {
     char* ptr = password + strlen("password=");
     while (*ptr != '\0' && *ptr != ' ') {
@@ -339,6 +343,16 @@ void msRedactCredentials(char* str)
       ptr++;
     }
   }
+
+  password = strstr(str, "pwd=");
+  if (password != NULL) {
+      ptr = password + strlen("pwd=");
+      while (*ptr != '\0' && *ptr != ' ') {
+          *ptr = '*';
+          ptr++;
+      }
+  }
+
 }
 
 void msSetError(int code, const char *message_fmt, const char *routine, ...)
