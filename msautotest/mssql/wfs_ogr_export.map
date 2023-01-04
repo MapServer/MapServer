@@ -10,6 +10,9 @@
 # RUN_PARMS: null_multiline.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_multiline&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: null_multipolygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_multipolygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 
+# RUN_PARMS: null_and_point.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_and_point&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: null_and_point_reprojected.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_and_point&OUTPUTFORMAT=geojson&srsName=EPSG:4326" > [RESULT_DEMIME]
+
 # RUN_PARMS: point.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=point&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: line.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=line&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: polygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=polygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
@@ -23,6 +26,11 @@
 MAP
   NAME 'wfs_export_mssql'
   UNITS METERS
+  EXTENT 0 0 100 100
+  SIZE 100 100
+  PROJECTION
+    "init=epsg:3857"
+  END
 
   WEB
     METADATA
@@ -160,4 +168,15 @@ MAP
     ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), (30 20, 20 15, 20 25, 30 20)))', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
   END
 
+  LAYER
+    NAME 'null_and_point'
+    TYPE POINT
+    PROJECTION
+      "init=epsg:3857"
+    END	
+    INCLUDE 'include/mssql_connection.map'
+    INCLUDE 'include/wfs_ogr_export_metadata.map'
+    DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POINT EMPTY', 3857) geom UNION ALL SELECT 2 fid, geometry::STGeomFromText('POINT (10 10)', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
+  END
+  
 END
