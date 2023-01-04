@@ -11,7 +11,7 @@
 # RUN_PARMS: null_multipolygon.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_multipolygon&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 
 # RUN_PARMS: null_and_point.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_and_point&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
-# RUN_PARMS: null_and_point_reprojected.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_and_point&OUTPUTFORMAT=geojson&srsName=EPSG:4326" > [RESULT_DEMIME]
+# RUN_PARMS: null_and_point_reprojected.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=null_and_point&OUTPUTFORMAT=geojson_truncated&srsName=EPSG:4326" > [RESULT_DEMIME]
 
 # RUN_PARMS: point.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=point&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: line.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=line&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
@@ -37,7 +37,7 @@ MAP
       "wfs_title"            "Test wfs export"
       "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
       "wfs_srs"              "EPSG:3857 EPSG:4326"
-      "wfs_getfeature_formatlist" "gml,geojson"
+      "wfs_getfeature_formatlist" "gml,geojson,geojson_truncated"
       "ows_enable_request" "*"
     END
   END
@@ -49,6 +49,16 @@ MAP
       FORMATOPTION "FORM=SIMPLE"
       FORMATOPTION "STORAGE=memory"
       FORMATOPTION "LCO:NATIVE_MEDIA_TYPE=application/vnd.geo+json"
+  END
+  
+  OUTPUTFORMAT
+      NAME "geojson_truncated"
+      DRIVER "OGR/GEOJSON"
+      MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+      FORMATOPTION "FORM=SIMPLE"
+      FORMATOPTION "STORAGE=memory"
+      FORMATOPTION "LCO:NATIVE_MEDIA_TYPE=application/vnd.geo+json"
+      FORMATOPTION "LCO:COORDINATE_PRECISION=6"
   END
 
   # test all null cases
@@ -178,5 +188,5 @@ MAP
     INCLUDE 'include/wfs_ogr_export_metadata.map'
     DATA "geom from (SELECT 1 fid, geometry::STGeomFromText('POINT EMPTY', 3857) geom UNION ALL SELECT 2 fid, geometry::STGeomFromText('POINT (10 10)', 3857) geom) as foo USING UNIQUE fid USING SRID=3857"
   END
-  
+
 END
