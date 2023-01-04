@@ -19,9 +19,6 @@ environment:
   # VS 2019
   VS_VERSION: Visual Studio 16 2019
   matrix:
-    Python_ROOT_DIR: c:/python36-x64
-  - platform: x64
-    Python_ROOT_DIR: c:/python37-x64
   - platform: x64
     Python_ROOT_DIR: c:/python38-x64
 
