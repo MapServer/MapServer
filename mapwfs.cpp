@@ -2540,6 +2540,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         layerObj *lp;
         lp = GET_LAYER(map, j);
         if (lp->status == MS_ON) {
+          lp->numclasses = 0;
           int status = msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
           if( status != MS_SUCCESS )
               return status;
