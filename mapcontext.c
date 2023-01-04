@@ -1277,7 +1277,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
 int msSaveMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
-  VSILFILE *stream;
+  FILE *stream;
   char szPath[MS_MAXPATHLEN];
   int nStatus;
 
