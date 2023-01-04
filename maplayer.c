@@ -809,7 +809,13 @@ static void buildLayerItemList(layerObj *layer)
 
   /* layer classes */
   for(i=0; i<layer->numclasses; i++) {
-    
+
+    // if classgroup has been set we can ignore any fields required
+    // for rendering unused classes
+    if (layer->class[i]->group && layer->classgroup &&
+        strcasecmp(layer->class[i]->group, layer->classgroup) != 0)
+        continue;
+
     if(layer->class[i]->expression.type == MS_EXPRESSION) /* class expression */
       msTokenizeExpression(&(layer->class[i]->expression), layer->items, &(layer->numitems));
 
