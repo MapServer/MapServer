@@ -2860,10 +2860,10 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
   if(i == -1) return(MS_DONE); /* nothing else to read */
 
   msSHPReadShape(shpfile->hSHP, i, shape);
-  //if(shape->type == MS_SHAPE_NULL) {
-  //  msFreeShape(shape);
-  //  return msSHPLayerNextShape(layer, shape); /* skip NULL shapes */
-  //}
+  if(shape->type == MS_SHAPE_NULL) {
+    msFreeShape(shape);
+    return msSHPLayerNextShape(layer, shape); /* skip NULL shapes */
+  }
   shape->numvalues = layer->numitems;
   shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
   if(!shape->values) shape->numvalues = 0;

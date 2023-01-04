@@ -1095,8 +1095,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
       else
       {
-          status = msCopyShape(layer->resultcache->results[i].shape, &resultshape);
-          //status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
+          status = msLayerGetShape(layer, &resultshape, &(layer->resultcache->results[i]));
       }
       
       if(status != MS_SUCCESS) {
