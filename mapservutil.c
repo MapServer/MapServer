@@ -303,8 +303,30 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
           if(strncasecmp(mapserv->request->ParamValues[i],"http",4) == 0) {
             if(msGetConfigOption(map, "CGI_CONTEXT_URL"))
               msLoadMapContextURL(map, mapserv->request->ParamValues[i], MS_FALSE);
-          } else
-            msLoadMapContext(map, mapserv->request->ParamValues[i], MS_FALSE);
+          } else {
+            const char *map_context_filename = mapserv->request->ParamValues[i];
+            const char *ms_context_pattern = CPLGetConfigOption("MS_CONTEXT_PATTERN", NULL);
+            const char *ms_context_bad_pattern = CPLGetConfigOption("MS_CONTEXT_BAD_PATTERN", NULL);
+            if(ms_context_bad_pattern == NULL) ms_context_bad_pattern = ms_map_bad_pattern_default;
+
+            if(ms_context_pattern == NULL) { // can't go any further, bail
+              msSetError(MS_WEBERR, "Required configuration value MS_CONTEXT_PATTERN not set.", "msCGILoadMap()");
+              msFreeMap(map);
+              return NULL;
+            }
+            if(msIsValidRegex(ms_context_bad_pattern) == MS_FALSE ||
+               msEvalRegex(ms_context_bad_pattern, map_context_filename) == MS_TRUE) {
+              msSetError(MS_WEBERR, "CGI variable \"context\" fails to validate.", "msCGILoadMap()");
+              msFreeMap(map);
+              return NULL;
+            }
+            if(msEvalRegex(ms_context_pattern, map_context_filename) != MS_TRUE) {
+              msSetError(MS_WEBERR, "CGI variable \"context\" fails to validate.", "msCGILoadMap()");
+              msFreeMap(map);
+              return NULL;
+            }
+            msLoadMapContext(map, map_context_filename, MS_FALSE);
+          }
         }
       }
     }

@@ -551,7 +551,7 @@ MS_DLL_EXPORT char *msWFSExecuteGetFeature(layerObj *lp);
 
 MS_DLL_EXPORT int msWriteMapContext(mapObj *map, FILE *stream);
 MS_DLL_EXPORT int msSaveMapContext(mapObj *map, char *filename);
-MS_DLL_EXPORT int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names);
+MS_DLL_EXPORT int msLoadMapContext(mapObj *map, const char *filename, int unique_layer_names);
 MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names);
 
 
