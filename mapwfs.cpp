@@ -2162,9 +2162,19 @@ static int msWFSRunFilter(mapObj* map,
 
     }
 
+    // ignore any classes used by the WFS layer to avoid selecting fields we don't need
+    int numclasses = lp->numclasses;
+    lp->numclasses = 0;
+
     /* run filter.  If no results are found, do not throw exception */
     /* this is a null result */
-    if( FLTApplyFilterToLayer(psNode, map, lp->index) != MS_SUCCESS ) {
+    int status = FLTApplyFilterToLayer(psNode, map, lp->index);
+
+    // set the class count to the original value
+    lp->numclasses = numclasses;
+
+    if(status != MS_SUCCESS )
+    {
         errorObj* ms_error = msGetErrorObj();
 
         if(ms_error->code != MS_NOTFOUND) {
@@ -2540,10 +2550,13 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         layerObj *lp;
         lp = GET_LAYER(map, j);
         if (lp->status == MS_ON) {
-          // classes don't affect retrieval of features, so set the count to 0
+          // classes don't affect retrieval of features, so set the count to 0 when the query is executed
           // this avoids selecting any fields referenced in a CLASS from the data source
+          int numclasses = lp->numclasses;
           lp->numclasses = 0;
           int status = msWFSRunBasicGetFeature(map, lp, paramsObj, nWFSVersion);
+          // set the class count back to its original value once the query is run
+          lp->numclasses = numclasses;
           if( status != MS_SUCCESS )
               return status;
         }
