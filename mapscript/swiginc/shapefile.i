@@ -33,8 +33,8 @@
     * Create a new instance. Omit the type argument or use a value of -1 to open 
     * an existing shapefile.
     *
-    * Type should be one of :data:`MS_SHP_POINT`, :data:`MS_SHP_ARC`, 
-    * :data:`MS_SHP_POLYGON` or :data:`MS_SHP_MULTIPOINT`
+    * Type should be one of :data:`MS_SHAPEFILE_POINT`, :data:`MS_SHAPEFILE_ARC`,
+    * :data:`MS_SHAPEFILE_POLYGON` or :data:`MS_SHAPEFILE_MULTIPOINT`
     */
     shapefileObj(char *filename, int type=-1) 
     {    
