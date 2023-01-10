@@ -15,6 +15,7 @@ sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compi
 sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs
 sudo apt-get install -y --allow-unauthenticated libperl-dev
 sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
+sudo apt-get install -y --allow-unauthenticated libonig5
 
 #install recent cmake on GH build action
 if [ -z ${TRAVIS+x} ]; then
