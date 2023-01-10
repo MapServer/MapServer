@@ -55,7 +55,7 @@ class reprojectionObjTest extends \PHPUnit\Framework\TestCase
     
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($reprojector, $this->reprojection, $this->map, $this->layer, $this->sourceProjection, $this->outputProjection, $point);
+        unset($reprojector, $this->map, $this->layer, $this->sourceProjection, $this->outputProjection, $point);
     }    
     
 }
