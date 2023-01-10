@@ -27,7 +27,7 @@ class reprojectionObjTest extends \PHPUnit\Framework\TestCase
     public function testReprojectionInstance()
     {
 
-        $this->assertInstanceOf("reprojectionObj",  $this->reprojection = new reprojectionObj( $this->sourceProjection,  $this->outputProjection ));
+        $this->assertInstanceOf("reprojectionObj", new reprojectionObj( $this->sourceProjection,  $this->outputProjection ));
     }
 
     public function testProjectMethodSpeed()
