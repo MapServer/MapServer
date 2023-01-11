@@ -331,10 +331,8 @@ char *msGetErrorString(const char *delimiter)
 
 void msRedactString(char* str, const char* keyword, const char delimeter)
 {
-    char* ptr = NULL;
-    char* password = NULL;
 
-    password = strstr(str, keyword);
+    char* password = strstr(str, keyword);
     if (password != NULL) {
         char* ptr = password + strlen(keyword);
         while (*ptr != '\0' && *ptr != delimeter) {
