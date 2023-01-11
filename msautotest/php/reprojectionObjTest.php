@@ -27,7 +27,7 @@ class reprojectionObjTest extends \PHPUnit\Framework\TestCase
     public function testReprojectionInstance()
     {
 
-        $this->assertInstanceOf("reprojectionObj",  $this->reprojection = new reprojectionObj( $this->sourceProjection,  $this->outputProjection ));
+        $this->assertInstanceOf("reprojectionObj", new reprojectionObj( $this->sourceProjection,  $this->outputProjection ));
     }
 
     public function testProjectMethodSpeed()
@@ -55,7 +55,7 @@ class reprojectionObjTest extends \PHPUnit\Framework\TestCase
     
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($reprojector, $this->reprojection, $this->map, $this->layer, $this->sourceProjection, $this->outputProjection, $point);
+        unset($reprojector, $this->map, $this->layer, $this->sourceProjection, $this->outputProjection, $point);
     }    
     
 }
