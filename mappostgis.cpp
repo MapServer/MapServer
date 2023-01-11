@@ -2975,7 +2975,7 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
       gml_width = std::to_string( fmod-4 );
 
     } else if( oid == BOOLOID ) {
-      gml_type = "Integer";
+      gml_type = "Boolean";
       gml_width = '1';
 
     } else if( oid == INT2OID ) {
