@@ -329,30 +329,30 @@ char *msGetErrorString(const char *delimiter)
   return(errstr);
 }
 
+void msRedactString(char* str, const char* keyword, const char delimeter)
+{
+    char* ptr = NULL;
+    char* password = NULL;
+
+    password = strstr(str, keyword);
+    if (password != NULL) {
+        char* ptr = password + strlen(keyword);
+        while (*ptr != '\0' && *ptr != delimeter) {
+            *ptr = '*';
+            ptr++;
+        }
+    }
+}
+
 void msRedactCredentials(char* str)
 {
 
-  char* ptr=NULL;
-  char* password=NULL;
-
-  password = strstr(str, "password=");
-  if (password != NULL) {
-    char* ptr = password + strlen("password=");
-    while (*ptr != '\0' && *ptr != ' ') {
-      *ptr = '*';
-      ptr++;
-    }
-  }
-
-  password = strstr(str, "pwd=");
-  if (password != NULL) {
-      ptr = password + strlen("pwd=");
-      while (*ptr != '\0' && *ptr != ' ') {
-          *ptr = '*';
-          ptr++;
-      }
-  }
-
+  // postgres formats
+  msRedactString(str, "password=", ' ');
+  // mssql use semi-colons as delimeters for parameters
+  msRedactString(str, "password=", ';');
+  // ODBC connections can use pwd rather than password
+  msRedactString(str, "pwd=", ';');
 }
 
 void msSetError(int code, const char *message_fmt, const char *routine, ...)
