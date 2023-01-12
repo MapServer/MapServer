@@ -2976,7 +2976,6 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
 
     } else if( oid == BOOLOID ) {
       gml_type = "Boolean";
-      gml_width = '1';
 
     } else if( oid == INT2OID ) {
       gml_type = "Integer";
