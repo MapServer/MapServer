@@ -532,11 +532,19 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 
 char *msGetVersion()
 {
-  static char version[1024];
+  static char version[2048];
 
   if(CPLGetConfigOption("MS_NO_VERSION", NULL) != NULL) return ""; // supressing version information
 
   sprintf(version, "MapServer version %s", MS_VERSION);
+
+  static char projVersion[20];
+  sprintf(projVersion, " Proj version %d.%d", PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR);
+  strcat(version, projVersion);
+
+  static char GDALVersion[20];
+  sprintf(GDALVersion, " GDAL version %d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR);
+  strcat(version, GDALVersion);
 
 #if (defined USE_PNG)
   strcat(version, " OUTPUT=PNG");
