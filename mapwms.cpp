@@ -1088,6 +1088,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       } else if( colon != NULL && strchr(colon + 1, ':') == NULL ) {
         srsOk = true;
         srsbuffer = values[i];
+        epsgbuf = srsbuffer;
       }
       if (!srsOk) {
         if (nVersion >= OWS_1_3_0) {
