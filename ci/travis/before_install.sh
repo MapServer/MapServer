@@ -84,6 +84,9 @@ cd ..
 python -m pyflakes .
 ./create_postgis_test_data.sh
 
+# copy custom projection to the PROJ_DATA folder
+cp /wxs/data/epsg2 /usr/share/proj/
+
 if [ $PYTHON_VERSION = "2.7" ]; then
     python -m SimpleHTTPServer &> /dev/null &
 else
