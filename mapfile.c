@@ -1364,23 +1364,21 @@ int msLoadProjectionCodeString(projectionObj* p, const char* value) {
       return -1;
   }
 
-  char** papszList = NULL;
-  papszList = msStringSplit(value, ':', &(num_params));
+  char** papszList = msStringSplit(value, ':', &(num_params));
 
   if (num_params != 2) {
+      msFreeCharArray(papszList, num_params);
       return -1;
   }
 
-  size_t buffer_size = 0;
-  char* init_string = NULL;
-  buffer_size = 5 + strlen(value) + 1;
-  init_string = (char*)msSmallMalloc(buffer_size);
+  const size_t buffer_size = 5 + strlen(value) + 1;
+  char* init_string = (char*)msSmallMalloc(buffer_size);
 
   /* translate into PROJ format. */
   msStringToLower(papszList[0]);
   snprintf(init_string, buffer_size, "init=%s:%d", papszList[0], atoi(papszList[1]));
   
-  p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+  p->args = (char**)msSmallMalloc(sizeof(char*));
   p->args[0] = init_string;
   p->numargs = 1;
 
