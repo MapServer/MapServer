@@ -1092,12 +1092,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if (!srsOk) {
         if (nVersion >= OWS_1_3_0) {
           msSetError(MS_WMSERR,
-                     "Unsupported CRS namespace (only EPSG, AUTO2, CRS currently supported).",
+                     "Unsupported CRS namespace (CRS must be in the format AUTH:XXXX).",
                      "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, "InvalidCRS", wms_exception_format);
         } else {
           msSetError(MS_WMSERR,
-                     "Unsupported SRS namespace (only EPSG and AUTO currently supported).",
+                     "Unsupported SRS namespace (SRS must be in the format AUTH:XXXX).",
                      "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, "InvalidSRS", wms_exception_format);
         }
