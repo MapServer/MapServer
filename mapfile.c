@@ -1357,18 +1357,18 @@ int msLoadProjectionCodeString(projectionObj* p, const char* value) {
 
   // exit if init= is already at the start of the string e.g. from msOGRSpatialRef2ProjectionObj
   if (strncasecmp(value, "init=", 5) == 0) {
-      return MS_FALSE;
+      return -1;
   }
 
   if (!strchr(value, ':')) {
-      return MS_FALSE;
+      return -1;
   }
 
   char** papszList = NULL;
   papszList = msStringSplit(value, ':', &(num_params));
 
   if (num_params != 2) {
-      return MS_FALSE;
+      return -1;
   }
 
   size_t buffer_size = 0;
@@ -1384,8 +1384,7 @@ int msLoadProjectionCodeString(projectionObj* p, const char* value) {
   p->args[0] = init_string;
   p->numargs = 1;
 
-  if (papszList)
-      msFreeCharArray(papszList, num_params);
+  msFreeCharArray(papszList, num_params);
 
   return 0;
 }
