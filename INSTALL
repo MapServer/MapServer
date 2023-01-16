@@ -1,14 +1,14 @@
-Visit http://www.mapserver.org/ for full documentation and installation 
+Visit https://mapserver.org/ for full documentation and installation 
 instructions.
 
 Unix compilation instructions
 -----------------------------
 
 See INSTALL.CMAKE or the document on the MapServer website at 
-<http://www.mapserver.org/installation/unix.html>
+<https://mapserver.org/installation/unix.html>
 
 Win32 compilation instructions
 ------------------------------
 
 See README.WIN32 or the document on the MapServer website at
-<http://www.mapserver.org/installation/win32.html>
+<https://mapserver.org/installation/win32.html>
