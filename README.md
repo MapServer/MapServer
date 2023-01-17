@@ -1,7 +1,10 @@
 MapServer
 =========
 
-| |Build Status| |Appveyor Build Status| |Coveralls Status| |DOI|
+[![Build Status](https://travis-ci.com/MapServer/MapServer.svg?branch=main)](https://travis-ci.com/MapServer/MapServer)
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true)](https://ci.appveyor.com/project/mapserver/mapserver)
+[![Coveralls Status](https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main)](https://coveralls.io/github/MapServer/MapServer?branch=main)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5842012.svg)](https://doi.org/10.5281/zenodo.5842012)
 
 -------
 Summary
@@ -29,8 +32,6 @@ please let us know so that they might be incorporated into future releases.
 Join the MapServer user mailing list online at:
 
   https://mapserver.org/community/lists.html
-
- 
 
 Credits
 -------
@@ -67,50 +68,20 @@ Supporting packages are covered by their own copyrights.
 License
 -------
 
-::
+See [LICENSE.md](LICENSE.md)
 
-  Copyright (c) 2008-2023 Open Source Geospatial Foundation.
-  Copyright (c) 1996-2008 Regents of the University of Minnesota.
+Security policy
+---------------
 
-  Permission is hereby granted, free of charge, to any person obtaining a copy 
-  of this software and associated documentation files (the "Software"), to deal 
-  in the Software without restriction, including without limitation the rights 
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-  copies of the Software, and to permit persons to whom the Software is furnished
-  to do so, subject to the following conditions:
+See [SECURITY.md](SECURITY.md)
 
-  The above copyright notice and this permission notice shall be included in all 
-  copies of this Software or works derived from this Software.
+How to Contribute
+-----------------
 
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
-  SOFTWARE.
-  
-  FlatGeobuf
-  ----------
+See [CONTRIBUTING.md](CONTRIBUTING.md)
 
-  Refer to the FlatGeobuf license found at /flatgeobuf/LICENSE
-  
-  FlatBuffers
-  -----------
-  
-  Refer to the FlatBuffers license found at /flatgeobuf/include/flatbuffers/LICENSE
-  
+Documentation Repository
+------------------------
 
-
-.. |Build Status| image:: https://travis-ci.com/MapServer/MapServer.svg?branch=main
-   :target: https://travis-ci.com/MapServer/MapServer
-
-.. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true
-   :target: https://ci.appveyor.com/project/mapserver/mapserver
-
-.. |Coveralls Status| image:: https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main
-   :target: https://coveralls.io/github/MapServer/MapServer?branch=main
-
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5842012.svg
-   :target: https://doi.org/10.5281/zenodo.5842012
-   :alt: Digital Object Identifier (DOI) for MapServer
+Use the separate [MapServer-documentation](https://github.com/MapServer/MapServer-documentation) 
+repository for filing documentation tickets and changes.
