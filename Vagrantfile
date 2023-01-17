@@ -40,6 +40,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", path: "scripts/vagrant/virtualbox-fix.sh"
   config.vm.provision "shell", path: "scripts/vagrant/packages.sh"
   config.vm.provision "shell", path: "scripts/vagrant/postgis.sh"
+  config.vm.provision "shell", path: "scripts/vagrant/msautotest.sh"  
   config.vm.provision "shell", path: "scripts/vagrant/mapserver.sh"
 
   config.vm.provision "shell", inline: $set_environment_variables, run: "always"
