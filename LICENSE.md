@@ -28,9 +28,9 @@ SOFTWARE.
 FlatGeobuf
 ----------
 
-Refer to the FlatGeobuf license found at /flatgeobuf/LICENSE
+Refer to the FlatGeobuf license found at [/flatgeobuf/LICENSE](flatgeobuf/LICENSE)
 
 FlatBuffers
 -----------
 
-Refer to the FlatBuffers license found at /flatgeobuf/include/flatbuffers/LICENSE
+Refer to the FlatBuffers license found at [/flatgeobuf/include/flatbuffers/LICENSE](flatgeobuf/include/flatbuffers/LICENSE)
