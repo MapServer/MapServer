@@ -999,6 +999,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       const char *name;
       gmlItemObj *item = item_list->items + i;
       OGRFieldType eType;
+      OGRFieldSubType sType = OGRFieldSubType::OFSTNone;
 
       if( !item->visible )
         continue;
@@ -1024,13 +1025,17 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         eType = OFTTime;
       else if( EQUAL(item->type,"DateTime") )
         eType = OFTDateTime;
-      else if( EQUAL(item->type,"Boolean") )
+      else if( EQUAL(item->type,"Boolean") ){
         eType = OFTInteger;
+        sType = OFSTBoolean;
+      }
       else
         eType = OFTString;
 
       hFldDefn = OGR_Fld_Create( name, eType );
-
+      if(sType != OGRFieldSubType::OFSTNone) {
+        OGR_Fld_SetSubType(hFldDefn, sType);
+      }
       if( item->width != 0 )
         OGR_Fld_SetWidth( hFldDefn, item->width );
       if( item->precision != 0 )
