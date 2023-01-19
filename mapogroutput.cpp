@@ -494,6 +494,7 @@ static int msOGRWriteShape( OGRLayerH hOGRLayer,
       }
     }
 
+    const char* pszValue = shape->values[i];
 #if GDAL_VERSION_MAJOR <= 2 || (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR < 7)
     // Boolean true and false values are handled in GDAL 3.7+
     // otherwise any string values revert to false
