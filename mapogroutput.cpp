@@ -503,7 +503,7 @@ static int msOGRWriteShape( OGRLayerH hOGRLayer,
         OGRFieldSubType eFieldSubType = OGR_Fld_GetSubType(hFieldDefn);
         if (eFieldSubType == OFSTBoolean)
         {
-            shape->values[i] = msStrdup("1");
+            pszValue = "1";
         }
     }
 
