@@ -517,7 +517,7 @@ static int msOGRWriteShape( OGRLayerH hOGRLayer,
     }
 #endif
 
-    OGR_F_SetFieldString( hFeat, out_field++, shape->values[i] );
+    OGR_F_SetFieldString( hFeat, out_field++, pszValue );
   }
 
   /* -------------------------------------------------------------------- */
