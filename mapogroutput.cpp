@@ -494,6 +494,28 @@ static int msOGRWriteShape( OGRLayerH hOGRLayer,
       }
     }
 
+#if GDAL_VERSION_MAJOR <= 2 || (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR < 7)
+    // Boolean true and false values are handled in GDAL 3.7+
+    // otherwise any string values revert to false
+    if (strcmp(shape->values[i], "true") == 0) {
+        OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
+        OGRFieldSubType eFieldSubType = OGR_Fld_GetSubType(hFieldDefn);
+        if (eFieldSubType == OFSTBoolean)
+        {
+            shape->values[i] = msStrdup("1");
+        }
+    }
+
+    if (strcmp(shape->values[i], "false") == 0) {
+        OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
+        OGRFieldSubType eFieldSubType = OGR_Fld_GetSubType(hFieldDefn);
+        if (eFieldSubType == OFSTBoolean)
+        {
+            shape->values[i] = msStrdup("0");
+        }
+    }
+#endif
+
     OGR_F_SetFieldString( hFeat, out_field++, shape->values[i] );
   }
 
