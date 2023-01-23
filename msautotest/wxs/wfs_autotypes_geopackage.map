@@ -1,0 +1,75 @@
+#
+# Test WFS types when reading from a geopackage
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+#
+# RUN_PARMS: wfs_autotypes10_geopackage.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAMES=autotypes" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_autotypes11_geopackage.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAMES=autotypes" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_autotypes20_geopackage.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAMES=autotypes" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_getfeaturetypes10_geopackage.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAMES=autotypes" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_getfeaturetypes11_geopackage.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAMES=autotypes" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_getfeaturetypes20_geopackage.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=autotypes" > [RESULT_DEVERSION]
+
+# also check GeoJSON output
+# RUN_PARMS: wfs_getfeaturetypes20_geopackage.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=autotypes&outputFormat=geojson" > [RESULT_DEVERSION]
+
+MAP
+
+NAME WFS_TEST
+STATUS ON
+SIZE 400 300
+EXTENT -180 -90 180 90
+
+OUTPUTFORMAT
+  NAME "geojson"
+  DRIVER "OGR/GEOJSON"
+  MIMETYPE "application/json"
+  FORMATOPTION "FORM=SIMPLE"
+  FORMATOPTION "STORAGE=memory"
+END
+
+#
+# Start of web interface definition
+#
+WEB
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wfs_title"        "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?myparam=something&"
+    "wfs_srs"          "EPSG:4326"
+    "ows_enable_request" "*"
+    "wfs_getfeature_formatlist" "geojson"
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+
+  NAME autotypes
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/types.gpkg"
+  
+  METADATA
+    "wfs_title" "autotypes"
+    "wfs_featureid" "id"
+    "gml_include_items" "all"
+    "gml_types" "auto"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+END
+
+END # Map File
