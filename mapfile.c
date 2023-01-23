@@ -6468,7 +6468,9 @@ static void mapSubstituteString(mapObj *map, const char *from, const char *to) {
       map->outputformatlist[l]->formatoptions[o] = msCaseReplaceSubstring(map->outputformatlist[l]->formatoptions[o], from, to);
     }
   }
+
   hashTableSubstituteString(&map->web.metadata, from, to);
+  if(map->web.template) map->web.template = msCaseReplaceSubstring(map->web.template, from, to);
 }
 
 static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const char *option, hashTableObj *table)
