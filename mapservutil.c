@@ -1038,7 +1038,9 @@ int msCGILoadForm(mapservObj *mapserv)
       continue;
     }
 
-    if(strcasecmp(mapserv->request->ParamNames[i],"mapsize") == 0) { /* size of new map (pixels) */
+    /* size of new map (pixels), map.size/map_size are included for backwards compatibility and may be removed in future release */
+    if(strcasecmp(mapserv->request->ParamNames[i],"mapsize") == 0 ||
+       strcasecmp(mapserv->request->ParamNames[i],"map.size") == 0 || strcasecmp(mapserv->request->ParamNames[i],"map_size") == 0) {
       tokens = msStringSplit(mapserv->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
