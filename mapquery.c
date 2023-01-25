@@ -177,9 +177,11 @@ static int canCacheShape(mapObj* map, queryCacheObj *queryCache, int shape_ram_s
       if( !queryCache->cachedShapeCountWarningEmitted )
       {
           queryCache->cachedShapeCountWarningEmitted = MS_TRUE;
-          msDebug("map->query.max_cached_shape_count = %d reached. "
+          if (map->debug >= MS_DEBUGLEVEL_V) {
+              msDebug("map->query.max_cached_shape_count = %d reached. "
                   "Next features will not be cached.\n",
                   map->query.max_cached_shape_count);
+          }
       }
       return MS_FALSE;
   }
@@ -190,10 +192,12 @@ static int canCacheShape(mapObj* map, queryCacheObj *queryCache, int shape_ram_s
       if( !queryCache->cachedShapeRAMWarningEmitted )
       {
           queryCache->cachedShapeRAMWarningEmitted = MS_TRUE;
-          msDebug("map->query.max_cached_shape_ram_amount = %d reached after %d cached features. "
+          if (map->debug >= MS_DEBUGLEVEL_V) {
+              msDebug("map->query.max_cached_shape_ram_amount = %d reached after %d cached features. "
                   "Next features will not be cached.\n",
                   map->query.max_cached_shape_ram_amount,
                   queryCache->cachedShapeCount);
+          }
       }
       return MS_FALSE;
   }
