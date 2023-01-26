@@ -1,6 +1,7 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 msGetFontFace(): General error message. Could not find font with key &quot;foobar&quot; in fontset
 </BODY></HTML>
