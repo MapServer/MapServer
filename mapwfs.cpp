@@ -820,10 +820,6 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
               wmtver, updatesequence ? updatesequence : "0",
               msOWSGetSchemasLocation(map), wmtver);
 
-  /* Report MapServer Version Information */
-  const char *version = msGetVersion();
-  if(version[0] != '\0') msIO_printf("\n<!-- %s -->\n\n", version);
-
   /*
   ** SERVICE definition
   */

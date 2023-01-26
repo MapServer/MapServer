@@ -534,8 +534,6 @@ char *msGetVersion()
 {
   static char version[2048];
 
-  if(CPLGetConfigOption("MS_NO_VERSION", NULL) != NULL) return ""; // supressing version information
-
   sprintf(version, "MapServer version %s", MS_VERSION);
 
   // add versions of required dependencies
