@@ -1,7 +1,8 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 loadOutputFormat(): General error message. OUTPUTFORMAT (nonexistingdrv) clause references driver (OGR/nonexistingdrv), but this driver isn&#39;t configured.
 msInitDefaultOGROutputFormat(): General error message. No OGR driver named `nonexistingdrv&#39; available.
 </BODY></HTML>

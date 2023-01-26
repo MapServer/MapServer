@@ -2,7 +2,7 @@ Content-Type: text/xml; charset=UTF-8
 
 <?xml version="1.0" encoding="UTF-8"?>
 <sos:Capabilities xmlns:gml="http://www.opengis.net/gml" xmlns:om="http://www.opengis.net/om/1.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:swe="http://www.opengis.net/swe/1.0.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" xmlns:sos="http://www.opengis.net/sos/1.0" version="1.0.0" updateSequence="foo" xsi:schemaLocation="http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetCapabilities.xsd">
-   <ows:ServiceIdentification>
+  <ows:ServiceIdentification>
     <ows:Title>Test SOS Title</ows:Title>
     <ows:Abstract>Test SOS Abstract</ows:Abstract>
     <ows:Keywords>
