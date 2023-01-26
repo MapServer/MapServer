@@ -10,12 +10,23 @@
 # RUN_PARMS: wfs_getfeaturetypes11_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAMES=autotypes" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_getfeaturetypes20_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=autotypes" > [RESULT_DEVERSION]
 
+# also check GeoJSON output
+# RUN_PARMS: wfs_getfeaturetypes20_booleans_postgis.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=booleans&outputFormat=geojson" > [RESULT_DEVERSION]
+
 MAP
 
 NAME WFS_TEST
 STATUS ON
 SIZE 400 300
 EXTENT -180 -90 180 90
+
+OUTPUTFORMAT
+  NAME "geojson"
+  DRIVER "OGR/GEOJSON"
+  MIMETYPE "application/json"
+  FORMATOPTION "FORM=SIMPLE"
+  FORMATOPTION "STORAGE=memory"
+END
 
 #
 # Start of web interface definition
@@ -30,7 +41,8 @@ WEB
     "wfs_title"        "Test simple wfs"
     "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?myparam=something&"
     "wfs_srs"          "EPSG:4326"
-    "ows_enable_request" "*" 
+    "ows_enable_request" "*"
+    "wfs_getfeature_formatlist" "geojson"
   END
 END
 
@@ -63,4 +75,29 @@ LAYER
   STATUS ON
 END
 
+
+LAYER
+
+  NAME booleans
+  INCLUDE "postgis.include"
+  DATA "the_geom from ( 
+            select 1 as id
+            ,1::Boolean as my_bool_true
+            ,0::Boolean as my_bool_false
+            ,GeomFromEWKT('SRID=4326;POINT(1 2)') as the_geom
+            ) as foo using unique id using srid=4326"
+  METADATA
+    "wfs_title" "booleans"
+    "wfs_featureid" "id"
+    "gml_include_items" "all"
+    "gml_types" "auto"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+END
+ 
 END # Map File

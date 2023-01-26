@@ -2714,6 +2714,8 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
 
   for(i=0; i<numitems; i++) {
     OGRFieldDefnH hField = OGR_FD_GetFieldDefn( hDefn, i );
+    OGRFieldSubType eFieldSubType = OGR_Fld_GetSubType(hField);
+
     char gml_width[32], gml_precision[32];
     const char *gml_type = NULL;
     const char *item = OGR_Fld_GetNameRef( hField );
@@ -2723,9 +2725,13 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
 
     switch( OGR_Fld_GetType( hField ) ) {
       case OFTInteger:
-        gml_type = "Integer";
-        if( OGR_Fld_GetWidth( hField) > 0 )
-          sprintf( gml_width, "%d", OGR_Fld_GetWidth( hField) );
+        if (eFieldSubType == OFSTBoolean) {
+            gml_type = "Boolean";
+        } else {
+            gml_type = "Integer";
+            if( OGR_Fld_GetWidth( hField) > 0 )
+              sprintf( gml_width, "%d", OGR_Fld_GetWidth( hField) );
+        }
         break;
 
 #if GDAL_VERSION_MAJOR >= 2

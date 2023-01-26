@@ -494,7 +494,30 @@ static int msOGRWriteShape( OGRLayerH hOGRLayer,
       }
     }
 
-    OGR_F_SetFieldString( hFeat, out_field++, shape->values[i] );
+    const char* pszValue = shape->values[i];
+#if GDAL_VERSION_MAJOR <= 2 || (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR < 7)
+    // Boolean true and false values are handled in GDAL 3.7+
+    // otherwise any string values revert to false
+    if (strcmp(pszValue, "true") == 0) {
+        OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
+        OGRFieldSubType eFieldSubType = OGR_Fld_GetSubType(hFieldDefn);
+        if (eFieldSubType == OFSTBoolean)
+        {
+            pszValue = "1";
+        }
+    }
+
+    if (strcmp(pszValue, "false") == 0) {
+        OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
+        OGRFieldSubType eFieldSubType = OGR_Fld_GetSubType(hFieldDefn);
+        if (eFieldSubType == OFSTBoolean)
+        {
+            pszValue = "0";
+        }
+    }
+#endif
+
+    OGR_F_SetFieldString( hFeat, out_field++, pszValue );
   }
 
   /* -------------------------------------------------------------------- */
@@ -999,6 +1022,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       const char *name;
       gmlItemObj *item = item_list->items + i;
       OGRFieldType eType;
+      OGRFieldSubType sType = OGRFieldSubType::OFSTNone;
 
       if( !item->visible )
         continue;
@@ -1024,13 +1048,17 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         eType = OFTTime;
       else if( EQUAL(item->type,"DateTime") )
         eType = OFTDateTime;
-      else if( EQUAL(item->type,"Boolean") )
+      else if( EQUAL(item->type,"Boolean") ){
         eType = OFTInteger;
+        sType = OFSTBoolean;
+      }
       else
         eType = OFTString;
 
       hFldDefn = OGR_Fld_Create( name, eType );
-
+      if(sType != OGRFieldSubType::OFSTNone) {
+        OGR_Fld_SetSubType(hFldDefn, sType);
+      }
       if( item->width != 0 )
         OGR_Fld_SetWidth( hFldDefn, item->width );
       if( item->precision != 0 )

@@ -1,0 +1,11 @@
+Content-Disposition: attachment; filename=result.dat
+Content-Type: application/json
+
+{
+"type": "FeatureCollection",
+"numberMatched": 1,
+"name": "booleans",
+"features": [
+{ "type": "Feature", "properties": { "id": 1, "my_bool_true": true, "my_bool_false": false }, "geometry": { "type": "Point", "coordinates": [ 1.0, 2.0 ] } }
+]
+}
