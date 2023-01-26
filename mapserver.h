@@ -2092,7 +2092,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /**
   Sets up string-based mapfile loading and calls loadMapInternal to do the work
   */
-  MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath);
+  MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath, const configObj* config);
 
   /* Function prototypes, not wrapable */
 
