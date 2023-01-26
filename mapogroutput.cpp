@@ -1337,7 +1337,30 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
 
-      CPLCreateFileInZip( hZip, CPLGetFilename(file_list[i]), NULL );
+      const std::string osArchiveFilename(CPLGetFilename(file_list[i]));
+#if GDAL_VERSION_MAJOR > 3 || (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR >= 7)
+      if( CPLAddFileInZip(hZip, osArchiveFilename.c_str(), file_list[i],
+                          nullptr, nullptr, nullptr, nullptr) != CE_None )
+      {
+          msSetError( MS_MISCERR,
+                      "CPLAddFileInZip() failed for %s",
+                      "msOGRWriteFromQuery()",
+                      file_list[i] );
+          CPLCloseZip( hZip );
+          msOGRCleanupDS( datasource_name );
+          return MS_FAILURE;
+      }
+#else
+      if( CPLCreateFileInZip( hZip, osArchiveFilename.c_str(), NULL ) != CE_None )
+      {
+          msSetError( MS_MISCERR,
+                      "CPLWriteFileInZip() failed for %s",
+                      "msOGRWriteFromQuery()",
+                      file_list[i] );
+          CPLCloseZip( hZip );
+          msOGRCleanupDS( datasource_name );
+          return MS_FAILURE;
+      }
 
       fp = VSIFOpenL( file_list[i], "r" );
       if( fp == NULL ) {
@@ -1345,17 +1368,29 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         msSetError( MS_MISCERR,
                     "Failed to open result file '%s'.",
                     "msOGRWriteFromQuery()",
-                    file_list[0] );
+                    file_list[i] );
         msOGRCleanupDS( datasource_name );
         return MS_FAILURE;
       }
 
       while( (bytes_read = VSIFReadL( buffer, 1, sizeof(buffer), fp )) > 0 ) {
-        CPLWriteFileInZip( hZip, buffer, bytes_read );
+        if( CPLWriteFileInZip( hZip, buffer, bytes_read ) != CE_None )
+        {
+            msSetError( MS_MISCERR,
+                        "CPLWriteFileInZip() failed for %s",
+                        "msOGRWriteFromQuery()",
+                        file_list[i] );
+            VSIFCloseL( fp );
+            CPLCloseFileInZip( hZip );
+            CPLCloseZip( hZip );
+            msOGRCleanupDS( datasource_name );
+            return MS_FAILURE;
+        }
       }
       VSIFCloseL( fp );
 
       CPLCloseFileInZip( hZip );
+#endif
     }
     CPLCloseZip( hZip );
 
