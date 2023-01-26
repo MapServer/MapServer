@@ -8,7 +8,6 @@ Content-Type: text/xml; charset=UTF-8
    xmlns:ogc="http://www.opengis.net/ogc" 
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd">
-
 <Service>
   <Name>MapServer WFS</Name>
   <Title>Sample OWS for MapServer OGC Web Services Workshop</Title>

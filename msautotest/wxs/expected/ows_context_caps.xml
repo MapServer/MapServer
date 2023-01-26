@@ -7,7 +7,6 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
  ]>  <!-- end of DOCTYPE declaration -->
 
 <WMT_MS_Capabilities version="1.1.1">
-
 <Service>
   <Name>OGC:WMS</Name>
   <Title>Map Context demo</Title>
