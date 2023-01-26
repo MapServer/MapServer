@@ -1,6 +1,7 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 msCGILoadMap(): Web application error. Required configuration value MS_MAP_PATTERN not set.
 </BODY></HTML>

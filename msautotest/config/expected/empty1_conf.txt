@@ -1,6 +1,7 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 msLoadConfig(): Unknown identifier. First token must be CONFIG, this doesn&#39;t look like a mapserver config file.
 </BODY></HTML>

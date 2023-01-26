@@ -1,7 +1,8 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 msDrawMap(): Image handling error. Failed to draw layer named &#39;centerline5&#39;.
 msGeomTransformShape(): Expression parser error. Failed to process shape expression: centerline(densify([shape],-5))
 yyparse(): Expression parser error. Executing densify failed.
