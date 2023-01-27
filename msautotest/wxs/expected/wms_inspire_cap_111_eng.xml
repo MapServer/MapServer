@@ -5,7 +5,6 @@
  ]>  <!-- end of DOCTYPE declaration -->
 
 <WMT_MS_Capabilities version="1.1.1">
-
 <Service>
   <Name>OGC:WMS</Name>
   <Title>INSPIRE test service</Title>

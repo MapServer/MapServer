@@ -1,7 +1,8 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 msDrawMap(): Image handling error. Failed to draw layer named &#39;layer3&#39;.
 [stripped line matching "ShapefileOpen"]
 [stripped line matching "ShapefileOpen"]

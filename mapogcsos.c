@@ -1258,9 +1258,6 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/sosGetCapabilities.xsd");
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
-  const char *version = msGetVersion();
-  if(version[0] != '\0') xmlAddChild(psRootNode, xmlNewComment(BAD_CAST version));
-
   /*service identification*/
   xmlAddChild(psRootNode, msOWSCommonServiceIdentification(psNsOws, map, "SOS", pszSOSVersion, "SO", NULL));
 

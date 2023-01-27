@@ -1,6 +1,7 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 msCGIDispatchAPIRequest(): Web application error. Invalid API signature.
 </BODY></HTML>

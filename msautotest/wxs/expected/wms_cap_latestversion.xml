@@ -2,7 +2,6 @@ Content-Type: text/xml; charset=UTF-8
 
 <?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <WMS_Capabilities version="1.3.0" updateSequence="123"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wms_simple?service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
-
 <Service>
   <Name>WMS</Name>
   <Title>Test simple wms</Title>
