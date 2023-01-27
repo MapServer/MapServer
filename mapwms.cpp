@@ -1776,8 +1776,7 @@ this request. Check wms/ows_enable_request settings.",
     }
 
     if (styles == nullptr && sld_url == nullptr && sld_body == nullptr &&
-        (strcasecmp(request, "GetMap") == 0 ||
-         strcasecmp(request, "GetFeatureInfo") == 0) &&
+        strcasecmp(request, "GetMap") == 0 &&
         msOWSLookupMetadata(&(map->web.metadata), "M",
                             "allow_getmap_without_styles") == nullptr) {
       msSetError(MS_WMSERR,

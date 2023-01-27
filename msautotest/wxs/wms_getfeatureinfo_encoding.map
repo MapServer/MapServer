@@ -4,7 +4,7 @@
 # REQUIRES: SUPPORTS=WMS
 # 
 # Check that WMS GetFeatureInfo response in GML format are encoded
-# RUN_PARMS: wms_getfeatureinfo_encoding.xml [MAPSERV] "QUERY_STRING=map=[MAPFILE]&service=WMS&request=GetFeatureInfo&version=1.3.0&CRS=EPSG:3857&width=200&height=200&layers=encoding_layer&bbox=-20,-20,20,20&format=image/png&query_layers=encoding_layer&i=100&j=100&&info_format=gml&styles=" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getfeatureinfo_encoding.xml [MAPSERV] "QUERY_STRING=map=[MAPFILE]&service=WMS&request=GetFeatureInfo&version=1.3.0&CRS=EPSG:3857&width=200&height=200&layers=encoding_layer&bbox=-20,-20,20,20&format=image/png&query_layers=encoding_layer&i=100&j=100&&info_format=gml" > [RESULT_DEMIME]
 
 MAP
     IMAGETYPE png
