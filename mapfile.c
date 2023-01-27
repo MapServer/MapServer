@@ -1375,7 +1375,7 @@ int msLoadProjectionCodeString(projectionObj* p, const char* value) {
   char* init_string = (char*)msSmallMalloc(buffer_size);
 
   /* translate into PROJ format. */
-  snprintf(init_string, buffer_size, "init=%s:%d", papszList[0], atoi(papszList[1]));
+  snprintf(init_string, buffer_size, "init=%s:%s", papszList[0], papszList[1]);
   
   p->args = (char**)msSmallMalloc(sizeof(char*));
   p->args[0] = init_string;
