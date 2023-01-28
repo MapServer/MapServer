@@ -1351,6 +1351,41 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
   return msLoadProjectionString(p, value);
 }
 
+int msLoadProjectionCodeString(projectionObj* p, const char* value) {
+
+  int num_params = 0;
+
+  // exit if init= is already at the start of the string e.g. from msOGRSpatialRef2ProjectionObj
+  if (strncasecmp(value, "init=", 5) == 0) {
+      return -1;
+  }
+
+  if (!strchr(value, ':')) {
+      return -1;
+  }
+
+  char** papszList = msStringSplit(value, ':', &(num_params));
+
+  if (num_params != 2) {
+      msFreeCharArray(papszList, num_params);
+      return -1;
+  }
+
+  const size_t buffer_size = 5 + strlen(value) + 1;
+  char* init_string = (char*)msSmallMalloc(buffer_size);
+
+  /* translate into PROJ format. */
+  snprintf(init_string, buffer_size, "init=%s:%s", papszList[0], papszList[1]);
+  
+  p->args = (char**)msSmallMalloc(sizeof(char*));
+  p->args[0] = init_string;
+  p->numargs = 1;
+
+  msFreeCharArray(papszList, num_params);
+
+  return 0;
+}
+
 int msLoadProjectionString(projectionObj *p, const char *value)
 {
   assert(p);
@@ -1403,6 +1438,8 @@ int msLoadProjectionString(projectionObj *p, const char *value)
   } else if (msLoadProjectionStringEPSGLike(p, value, "http://www.opengis.net/gml/srs/epsg.xml#", MS_FALSE) == 0 ) {
     /* We assume always lon/lat ordering, as that is what GeoServer does... */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0 ) {
+  } else if (msLoadProjectionCodeString(p, value) == 0) {
+       /* allow strings in the form AUTH:XXXX */
   }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
