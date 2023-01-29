@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"numberMatched": 2,
+"name": "null_and_point",
+"features": [
+{ "type": "Feature", "properties": { "fid": 1 }, "geometry": null },
+{ "type": "Feature", "properties": { "fid": 2 }, "geometry": { "type": "Point", "coordinates": [ 0.000089831528412, 0.000089831528412 ] } }
+]
+}
