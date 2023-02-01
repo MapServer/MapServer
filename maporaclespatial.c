@@ -2086,6 +2086,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
     msFree(tmp1_str);
 
     tmp_str = msStringConcatenate(tmp_str,  query_str2);
+    memset(query_str,0,strlen(query_str));
     query_str = msStringConcatenate(query_str, tmp_str);
     msFree(tmp_str);
   }
