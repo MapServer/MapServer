@@ -709,9 +709,18 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 
 static void outputJson(const json& j, const char *mimetype)
 {
+  std::string js;
+
+  try {
+    js = j.dump();
+  } catch (...) {
+    outputError(OGCAPI_CONFIG_ERROR, "Invalid UTF-8 data, check encoding.");
+    return;
+  }
+
   msIO_setHeader("Content-Type", "%s", mimetype);
   msIO_sendHeaders();
-  msIO_printf("%s\n", j.dump().c_str());
+  msIO_printf("%s\n", js.c_str());
 }
 
 static void outputTemplate(const char *directory, const char *filename, const json& j, const char *mimetype)
