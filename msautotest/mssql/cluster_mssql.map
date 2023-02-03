@@ -9,6 +9,10 @@
 MAP
   NAME 'cluster_mssql'
 
+  PROJECTION
+    "init=epsg:3857"
+  END
+
   SYMBOL 
     NAME "circle"
     TYPE ellipse
@@ -27,7 +31,6 @@ MAP
     PROCESSING "CLUSTER_ALGORITHM=SIMPLE"
     PROCESSING "CLUSTER_GET_ALL_SHAPES=OFF"
     PROCESSING "CLUSTER_KEEP_LOCATIONS=OFF"
-    INCLUDE 'include/mssql_connection.map'
     STATUS ON
     DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857"
     CLUSTER

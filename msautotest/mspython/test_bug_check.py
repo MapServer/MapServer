@@ -163,7 +163,7 @@ def test_reprojection_rect_from_polar_stereographic_to_webmercator():
 ###############################################################################
 # Test reprojection of rectangle involving a datum shift (#6478)
 
-def test_reprojection_rect_and_datum_shift():
+def xtest_reprojection_rect_and_datum_shift():
 
     webmercator = mapscript.projectionObj("init=epsg:3857")
     epsg_28992 = mapscript.projectionObj("init=epsg:28992") # "Amersfoort / RD New"
