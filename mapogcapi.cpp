@@ -729,8 +729,6 @@ static void outputTemplate(const char *directory, const char *filename, const js
   std::string _filename(filename);
   Environment env {_directory}; // catch
 
-  // somehow need to limit include processing to the directory
-
   // ERB-style instead of Mustache (we'll see)
   // env.set_expression("<%=", "%>");
   // env.set_statement("<%", "%>");
@@ -739,6 +737,13 @@ static void outputTemplate(const char *directory, const char *filename, const js
   //   - match (regex)
   //   - contains (substring)
   //   - URL encode
+
+  try {
+    std::string js = j.dump();
+  } catch (...) {
+    outputError(OGCAPI_CONFIG_ERROR, "Invalid UTF-8 data, check encoding.");
+    return;
+  }
 
   try {
     Template t = env.parse_template(_filename); // catch

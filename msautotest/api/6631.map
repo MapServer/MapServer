@@ -1,5 +1,7 @@
 # RUN_PARMS: ogcapi_collections_tanzania1_items.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/tanzania1/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_tanzania2_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/tanzania2/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_tanzania1_items.html.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/tanzania1/items" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_tanzania2_items.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/tanzania2/items" "QUERY_STRING=f=html" > [RESULT_DEMIME]
 
 MAP
   EXTENT 29.339998 -11.720938 40.316590 -0.950000
