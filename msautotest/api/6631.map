@@ -1,0 +1,67 @@
+# RUN_PARMS: ogcapi_collections_tanzania1_items.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/tanzania1/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_tanzania2_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/tanzania2/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+
+MAP
+  EXTENT 29.339998 -11.720938 40.316590 -0.950000
+  SIZE 800 800
+  
+  PROJECTION "+init=epsg:4326" END
+  UNITS METERS
+
+  WEB
+    METADATA
+      "oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
+      "oga_title"          "Issue #6631" ## REQUIRED
+      "oga_description"	   "This is a test OGC API server description for issue #6631."
+      "oga_contactperson"  "Contact person"
+      "oga_contacturl"     "http://example.com/contact"
+      "oga_contactelectronicmailaddress" "email@example.com"
+      "oga_termsofservice" "Terms of Service"
+      "oga_onlineresource" "http://localhost/cgi-bin/mapserv/6631/ogcapi" ## REQUIRED      
+      "oga_server_description" "Server description"
+      "oga_enable_request" "OGCAPI" ## REQUIRED
+      "oga_geometry_precision" "4"
+      "oga_compliance_mode" "true"
+    END
+  END
+  
+  LAYER
+    NAME "tanzania1"
+    DATA "data/countries-tanzania"
+    TYPE POLYGON
+    STATUS OFF
+    METADATA
+      "oga_keywords" "boundary,Tanzania" # falls back to wfs_keywordlist
+      "oga_description" "Tanzania Boundary"
+      "oga_title" "Tanzania Boundary"
+      "gml_include_items" "name,nr_id,name_hu" # also works with oga prefix
+      "oga_featureid" "ne_id"
+    END
+    VALIDATION
+      "ne_id" "^1159321337$" # only one acceptable value
+    END
+    PROJECTION "+init=epsg:4326" END
+    TEMPLATE VOID
+  END
+
+  LAYER
+    NAME "tanzania2"
+    DATA "data/countries-tanzania"
+    TYPE POLYGON
+    STATUS OFF
+    ENCODING "ISO-8859-1"
+    METADATA
+      "oga_keywords" "boundary,Tanzania" # falls back to wfs_keywordlist
+      "oga_description" "Tanzania Boundary"
+      "oga_title" "Tanzania Boundary"
+      "gml_include_items" "name,nr_id,name_hu" # also works with oga prefix
+      "oga_featureid" "ne_id"
+    END
+    VALIDATION
+      "ne_id" "^1159321337$" # only one acceptable value
+    END
+    PROJECTION "+init=epsg:4326" END
+    TEMPLATE VOID
+  END
+
+END
