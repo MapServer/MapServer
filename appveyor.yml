@@ -92,8 +92,6 @@ build_script:
 
 before_test:
   - set PATH=%SDK_BIN%/gdal/apps;%PATH%;
-  # ensure the GDAL MSSQL Driver is loaded
-  - set GDAL_DRIVER_PATH=%SDK_BIN%/gdal/plugins-optional
   - cd %BUILD_FOLDER%/msautotest
   - "./mssql/create_mssql_db.bat"
   - "%Python_ROOT_DIR%/python -m pip install -U -r requirements.txt"
