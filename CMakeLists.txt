@@ -121,7 +121,7 @@ check_function_exists("strlcpy"  HAVE_STRLCPY)
 check_function_exists("strlen"  HAVE_STRLEN)
 check_function_exists("strncasecmp"  HAVE_STRNCASECMP)
 
-check_symbol_exists(vsnprintf stdio.h HAVE_SNPRINTF)
+check_symbol_exists(vsnprintf stdio.h HAVE_VSNPRINTF)
 IF(NOT HAVE_SNPRINTF)
     check_function_exists("vsnprintf"  HAVE_VSNPRINTF)
 ENDIF()
