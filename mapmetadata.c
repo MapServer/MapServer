@@ -828,7 +828,7 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request)
 
     context = msIO_getHandler(stdout);
 
-    xmlDocDumpFormatMemory(xml_document, &xml_buffer, &buffersize, "UTF-8", 1);
+    xmlDocDumpFormatMemoryEnc(xml_document, &xml_buffer, &buffersize, "UTF-8", 1);
     msIO_contextWrite(context, xml_buffer, buffersize);
 
     xmlFree(xml_buffer);
