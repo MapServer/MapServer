@@ -4,7 +4,7 @@
 # REQUIRES: OUTPUT=PNG
 #
 # RUN_PARMS: cluster_mssql.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: cluster_mssql_getmetadata.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=cities" > [RESULT_DEMIME]
+# cluster_mssql_getmetadata.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=cities" > [RESULT_DEMIME]
 
 MAP
   NAME 'cluster_mssql'
