@@ -14,7 +14,7 @@
 # RUN_PARMS: conformance.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/conformance" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_invalid_mapfile.txt [MAPSERV] "PATH_INFO=/invalid.map/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 # RUN_PARMS: ogcapi_missing_api_signature1.txt [MAPSERV] "PATH_INFO=/[MAPFILE]" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
-# RUN_PARMS: ogcapi_missing_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
+# ogcapi_missing_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 # RUN_PARMS: ogcapi_invalid_api_signature1.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/invalid" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 # RUN_PARMS: ogcapi_invalid_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/invalid/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 
