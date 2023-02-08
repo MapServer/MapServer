@@ -11,6 +11,7 @@ endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 
 include(CheckLibraryExists)
 include(CheckFunctionExists)
+include(CheckSymbolExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
@@ -119,7 +120,12 @@ check_function_exists("strlcat"  HAVE_STRLCAT)
 check_function_exists("strlcpy"  HAVE_STRLCPY)
 check_function_exists("strlen"  HAVE_STRLEN)
 check_function_exists("strncasecmp"  HAVE_STRNCASECMP)
-check_function_exists("vsnprintf"  HAVE_VSNPRINTF)
+
+check_symbol_exists(vsnprintf stdio.h HAVE_VSNPRINTF)
+IF(NOT HAVE_VSNPRINTF)
+    check_function_exists("vsnprintf"  HAVE_VSNPRINTF)
+ENDIF()
+
 check_function_exists("lrintf" HAVE_LRINTF)
 check_function_exists("lrint" HAVE_LRINT)
 

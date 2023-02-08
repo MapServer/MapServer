@@ -821,11 +821,15 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *cgi_request)
     int buffersize = 0;
     xmlDocSetRootElement(xml_document, psRootNode);
 
-    msIO_setHeader("Content-type", "text/xml");
+    msIO_setHeader("Content-type", "text/xml; charset=UTF-8");
     msIO_sendHeaders();
 
-    xmlDocDumpFormatMemory(xml_document, &xml_buffer, &buffersize, 1);
-    msIO_printf("%s", (char *) xml_buffer);
+    msIOContext* context = NULL;
+
+    context = msIO_getHandler(stdout);
+
+    xmlDocDumpFormatMemoryEnc(xml_document, &xml_buffer, &buffersize, "UTF-8", 1);
+    msIO_contextWrite(context, xml_buffer, buffersize);
 
     xmlFree(xml_buffer);
   }
