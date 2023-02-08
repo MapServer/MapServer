@@ -351,7 +351,7 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
           n++;
       }
 
-      if(n < 2) { // not enough non-zero length components for a legitimate API request
+      if(n < 1) { // we need at least a mapfile key for a legitimate request
         msFreeCharArray(tmp_api_path, tmp_api_path_length);
         return MS_FALSE;
       }

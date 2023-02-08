@@ -279,7 +279,8 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if(mapserv->request->api_path != NULL) {
+    if(mapserv->request->api_path != NULL && mapserv->request->api_path_length > 1) {
+      // API requests require a map key and a path
       if(msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
 	msCGIWriteError(mapserv);
 	goto end_request;
