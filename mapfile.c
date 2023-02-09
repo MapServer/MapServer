@@ -6716,7 +6716,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath)
 
     if (msTransformXmlMapfile(getenv("MS_XMLMAPFILE_XSLT"), filename, msyyin) != MS_SUCCESS) {
       fclose(msyyin);
-      msFreeMap(map)
+      msFreeMap(map);
       return NULL;
     }
     fseek ( msyyin , 0 , SEEK_SET );
