@@ -819,6 +819,7 @@ static int _msProcessAutoProjection(projectionObj *p)
     int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
     msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
                "msProcessProjection()", proj_errno_string(l_pj_errno), szProjBuf) ;
+    msFreeCharArray(args, numargs);
     return(-1);
   }
 #else
@@ -828,6 +829,7 @@ static int _msProcessAutoProjection(projectionObj *p)
     msReleaseLock( TLOCK_PROJ );
     msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
                "msProcessProjection()", pj_strerrno(*pj_errno_ref), szProjBuf) ;
+    msFreeCharArray(args, numargs);
     return(-1);
   }
   msReleaseLock( TLOCK_PROJ );
