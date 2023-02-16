@@ -1,4 +1,3 @@
-
 MapServer Revision History
 ==========================
 
@@ -11,6 +10,8 @@ the top of the list.)
 For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
+
+The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
 8.0.0 release (2022-09-12)
 --------------------------
@@ -231,7 +232,7 @@ see detailed changelog for other fixes
 - No other major changes, see detailed changelog for bug fixes
 
 7.2.0-beta1 release (2018-5-9)
---------------------
+------------------------------
 
 - Support for Enhanced Layer Metadata Management (RFC82)
 
@@ -331,7 +332,7 @@ see detailed changelog for other fixes
 - Implementation of offsets on follow labels (#4399)
 
 6.2.0 release (git branch-6-2) 2012/11/14:
---------------------------------------------------
+------------------------------------------
 
 - Fix WFS GetFeature result bounds are not written in requested projection (#4494)
 
@@ -361,7 +362,7 @@ see detailed changelog for other fixes
 - implement OFFSET x -99 on ANGLE FOLLOW labels (#4399)
 
 Version 6.2 (beta1: 20120629): 
--------------------------------------------------
+------------------------------
 
 - Fix WFS filter is produced as non-standard XML (#4171)
 
