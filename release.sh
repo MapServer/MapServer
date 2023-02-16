@@ -25,7 +25,7 @@ fi
 echo "#"
 echo "# make sure:"
 echo "# - you are on branch-$ms_version_major-$ms_version_minor"
-echo "# - you have edited HISTORY.TXT with changes related to this release"
+echo "# - you have edited HISTORY.md with changes related to this release"
 echo "#"
 echo ""
 
@@ -38,7 +38,7 @@ else
   echo "sed -i '/set (MapServer_VERSION_SUFFIX/c\set (MapServer_VERSION_SUFFIX \"\")' CMakeLists.txt"
 fi
 
-echo "git add HISTORY.TXT CMakeLists.txt"
+echo "git add HISTORY.md CMakeLists.txt"
 echo "git commit -m \"update for $ms_version release\""
 echo "git tag -a $tagname -m \"Create $ms_version tag\""
 echo "git push origin branch-$ms_version_major-$ms_version_minor --tags"
