@@ -39,7 +39,7 @@
 
 import os
 import sys
-import distutils.util
+import sysconfig
 import unittest
 
 # define the path to mapserver test data
@@ -50,7 +50,7 @@ XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
 TEST_IMAGE = os.path.join(TESTS_PATH, 'test.png')
 
 # Put local build directory on head of python path
-platformdir = '-'.join((distutils.util.get_platform(), 
+platformdir = '-'.join((sysconfig.get_platform(), 
                         '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, os.path.join('build', 'lib.' + platformdir))
 
