@@ -2933,8 +2933,9 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     writeAttributeBinding(stream, indent, "WIDTH", &(style->bindings[MS_STYLE_BINDING_WIDTH]));
   else writeNumber(stream, indent, "WIDTH", 1, style->width);
 
-  if(style->rangeitem) {
-    writeString(stream, indent, "RANGEITEM", NULL, style->rangeitem);
+  writeString(stream, indent, "RANGEITEM", NULL, style->rangeitem);
+  /* If COLORRANGE is valid, assume DATARANGE also needs to be written */
+  if(MS_VALID_COLOR(style->mincolor) && MS_VALID_COLOR(style->maxcolor)) {
     writeColorRange(stream, indent, "COLORRANGE", &(style->mincolor), &(style->maxcolor));
     writeDoubleRange(stream, indent, "DATARANGE", style->minvalue, style->maxvalue);
   }
@@ -4514,7 +4515,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
 
   indent++;
   writeBlockBegin(stream, indent, "LAYER");
-  /* bindvals */
+  writeHashTable(stream, indent, "BINDVALS", &(layer->bindvals));
   /* class - see below */
   writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
@@ -4573,6 +4574,8 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
   writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_ANNOTATION, "ANNOTATION", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
+  writeExpression(stream, indent, "UTFDATA", &(layer->utfdata));
+  writeString(stream, indent, "UTFITEM", NULL, layer->utfitem);
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
   /* write potentially multiply occuring objects last */
