@@ -134,14 +134,14 @@ int WARN_UNUSED msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
 {
 
   int c;
-  double left,bottom,cur; /*shortcut to pixel boundaries of the chart*/
+  double left,cur; /*shortcut to pixel boundaries of the chart*/
   double height = 0;
 
   for(c=0; c<numvalues; c++) {
     height += values[c];
   }
 
-  cur = bottom = center->y+height/2.;
+  cur = center->y+height/2.;
   left = center->x-barWidth/2.;
 
   for(c=0; c<numvalues; c++) {
