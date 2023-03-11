@@ -2926,14 +2926,15 @@ int msOWSNegotiateUpdateSequence(const char *requested_updatesequence, const cha
     return -1;
 
   if (valtype1 == 1) { /* integer */
-    if (atoi(requested_updatesequence) < atoi(updatesequence))
+    const int requested_updatesequence_i = atoi(requested_updatesequence);
+    const int updatesequence_i = atoi(updatesequence);
+    if (requested_updatesequence_i < updatesequence_i)
       return -1;
 
-    if (atoi(requested_updatesequence) > atoi(updatesequence))
+    if (requested_updatesequence_i > updatesequence_i)
       return 1;
 
-    if (atoi(requested_updatesequence) == atoi(updatesequence))
-      return 0;
+    return 0;
   }
 
   if (valtype1 == 2) /* string */
