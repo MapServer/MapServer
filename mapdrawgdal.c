@@ -473,12 +473,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       isDefaultGreyscale = true;
 
       for( i = 0; i < 256; i++ ) {
-        colorObj pixel;
+        colorObj pixel = {i, i, i, 0};
         GDALColorEntry sEntry;
-
-        pixel.red = i;
-        pixel.green = i;
-        pixel.blue = i;
 
         if(MS_COMPARE_COLORS(pixel, layer->offsite)) {
           sEntry.c1 = 0;
@@ -671,9 +667,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
     color_count = MS_MIN(256,GDALGetColorEntryCount(hColorMap));
     const bool bScaleColors = bScaled && !isDefaultGreyscale;
-
-    if( !bScaleColors && color_count > 256 )
-      color_count = 256;
 
     for(i=0; i < color_count; i++) {
       GDALColorEntry sEntry;
