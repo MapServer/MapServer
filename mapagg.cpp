@@ -67,6 +67,7 @@
 #include <pixman.h>
 #endif
 
+#include <limits>
 #include <memory>
 #include <new>
 #include <vector>
@@ -787,9 +788,8 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
     AGG2Renderer *r = new AGG2Renderer();
   
     /* Compute size on 64bit and check that it is compatible of the platform size_t */
-    AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
-    size_t bufSize = (size_t)bufSize64;
-    if( (AGG_INT64U)bufSize != bufSize64 ) {
+    const AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
+    if( bufSize64 > std::numeric_limits<size_t>::max() / 2 ) {
       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
                  __FILE__, __LINE__, bufSize64);
       free(image);
@@ -797,6 +797,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
       return NULL;
     }
 
+    const size_t bufSize = (size_t)bufSize64;
     try
     {
       r->buffer.resize(bufSize / sizeof(band_type));
