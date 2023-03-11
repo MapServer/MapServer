@@ -2221,6 +2221,7 @@ int msGetUnicodeEntity(const char *inptr, unsigned int *unicode)
       char *p;
       struct mapentities_s key;
       key.name = p = entity_name_buf;
+      key.value = 0; // unused, but makes cppcheck happy
       for (l = 1; l <=  MAP_ENTITY_NAME_LENGTH_MAX+1; l++) {
         if (*in == '\0') /*end of string before possible entity: return*/
           break;
