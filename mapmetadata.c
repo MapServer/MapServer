@@ -47,12 +47,11 @@ int msMetadataParseRequest(cgiRequestObj *request,
 
 static
 xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, const char *name, const char *value, xmlNsPtr* ppsNsGco) {
-  xmlNodePtr psNode = NULL;
 
   if( *ppsNsGco == NULL )
     *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
 
-  psNode = xmlNewNode(namespace, BAD_CAST name);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST name);
 
   if (!value)
     xmlNewNsProp(psNode, *ppsNsGco, BAD_CAST "nilReason", BAD_CAST "missing");
@@ -71,12 +70,11 @@ xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, const char *name, c
 
 static
 xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, const char *name, const char *value, xmlNsPtr* ppsNsGco) {
-  xmlNodePtr psNode = NULL;
 
   if( *ppsNsGco == NULL )
     *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
 
-  psNode = xmlNewNode(namespace, BAD_CAST name);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST name);
 
   if (!value)
     xmlNewNsProp(psNode, *ppsNsGco, BAD_CAST "nilReason", BAD_CAST "missing");
@@ -104,19 +102,12 @@ static
 xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, const char *service, const char *format, const char *desc, const char *url_in, xmlNsPtr* ppsNsGco) {
 
   int status;
-  char *url = NULL;
-  char buffer[32];
   const char *link_protocol = "unknown protocol";
 
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psORNode = NULL;
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST "onLine");
+  xmlNodePtr psORNode = xmlNewChild(psNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
 
-  rectObj rect;
-
-  psNode = xmlNewNode(namespace, BAD_CAST "onLine");
-  psORNode = xmlNewChild(psNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
-
-  url = msStrdup(url_in);
+  char* url = msStrdup(url_in);
 
   if (strcasecmp(service, "M") == 0) {
     url = _stringConcatenateAndEncodeHTML(url, "service=WMS&version=1.3.0&request=GetMap&width=500&height=300&styles=&layers=");
@@ -132,9 +123,11 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, const char 
     }
     link_protocol = "WWW:DOWNLOAD-1.0-http-get-map";
 
+    rectObj rect;
     status = msLayerGetExtent(layer, &rect);
 
     if (status == 0) {
+      char buffer[32];
       url = _stringConcatenateAndEncodeHTML(url, "&bbox=");
       sprintf(buffer, "%f", rect.miny);
       url = msStringConcatenate(url, buffer);
@@ -185,15 +178,12 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, const char 
 static
 xmlNodePtr _msMetadataGetInteger(xmlNsPtr namespace, const char *name, int value, xmlNsPtr* ppsNsGco) {
   char buffer[8];
-
-  xmlNodePtr psNode = NULL;
-
   sprintf(buffer, "%d", value);
 
   if( *ppsNsGco == NULL )
     *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
 
-  psNode = xmlNewNode(namespace, BAD_CAST name);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST name);
 
   if (!value)
     xmlNewNsProp(psNode, *ppsNsGco, BAD_CAST "nilReason", BAD_CAST "missing");
@@ -212,15 +202,12 @@ xmlNodePtr _msMetadataGetInteger(xmlNsPtr namespace, const char *name, int value
 static
 xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, const char *name, double value, xmlNsPtr* ppsNsGco) {
   char buffer[32];
-
-  xmlNodePtr psNode = NULL;
-
   snprintf(buffer, sizeof(buffer), "%.6f", value);
 
   if( *ppsNsGco == NULL )
     *ppsNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
 
-  psNode = xmlNewNode(namespace, BAD_CAST name);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST name);
 
   if (!value)
     xmlNewNsProp(psNode, *ppsNsGco, BAD_CAST "nilReason", BAD_CAST "missing");
@@ -238,14 +225,11 @@ xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, const char *name, double va
 
 xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, const char *parent_element, const char *name, const char *value) {
   char *codelist = NULL;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psCodeNode = NULL;
-
   codelist = msStrdup("http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#");
   codelist = msStringConcatenate(codelist, name);
 
-  psNode = xmlNewNode(namespace, BAD_CAST parent_element);
-  psCodeNode = xmlNewChild(psNode, namespace, BAD_CAST name, BAD_CAST value);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST parent_element);
+  xmlNodePtr psCodeNode = xmlNewChild(psNode, namespace, BAD_CAST name, BAD_CAST value);
   xmlNewProp(psCodeNode, BAD_CAST "codeSpace", BAD_CAST "ISOTC211/19115");
   xmlNewProp(psCodeNode, BAD_CAST "codeList", BAD_CAST codelist);
   xmlNewProp(psCodeNode, BAD_CAST "codeListValue", BAD_CAST value);
@@ -263,11 +247,8 @@ xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, const char *parent_element
 static
 xmlNodePtr _msMetadataGetGMLTimePeriod(char **temporal)
 {
-  xmlNsPtr psNsGml = NULL;
-  xmlNodePtr psNode = NULL;
-
-  psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
-  psNode = xmlNewNode(psNsGml, BAD_CAST "TimePeriod");
+  xmlNsPtr psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+  xmlNodePtr psNode = xmlNewNode(psNsGml, BAD_CAST "TimePeriod");
   xmlNewNsProp(psNode, psNsGml, BAD_CAST "id", BAD_CAST "T001");
   xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
   xmlSetNs(psNode, psNsGml);
@@ -289,20 +270,12 @@ xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer, xmlNsPtr *p
 {
   int n = 0;
   int status;
-  char *value = NULL;
   char **temporal = NULL;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psEXNode = NULL;
-  xmlNodePtr psGNode = NULL;
-  xmlNodePtr psGNode2 = NULL;
-  xmlNodePtr psTNode = NULL;
-  xmlNodePtr psTNode2 = NULL;
-  xmlNodePtr psENode = NULL;
 
   rectObj rect;
 
-  psNode = xmlNewNode(namespace, BAD_CAST "extent");
-  psEXNode = xmlNewChild(psNode, namespace, BAD_CAST "EX_Extent", NULL);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST "extent");
+  xmlNodePtr psEXNode = xmlNewChild(psNode, namespace, BAD_CAST "EX_Extent", NULL);
 
   /* scan for geospatial extent */
   status = msLayerGetExtent(layer, &rect); 
@@ -311,8 +284,8 @@ xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer, xmlNsPtr *p
     /* always project to lat long */
     msOWSProjectToWGS84(&layer->projection, &rect);
 
-    psGNode = xmlNewChild(psEXNode, namespace, BAD_CAST "geographicElement", NULL);
-    psGNode2 = xmlNewChild(psGNode, namespace, BAD_CAST "EX_GeographicBoundingBox", NULL);
+    xmlNodePtr psGNode = xmlNewChild(psEXNode, namespace, BAD_CAST "geographicElement", NULL);
+    xmlNodePtr psGNode2 = xmlNewChild(psGNode, namespace, BAD_CAST "EX_GeographicBoundingBox", NULL);
     xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "westBoundLongitude", rect.minx, ppsNsGco));
     xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "eastBoundLongitude", rect.maxx, ppsNsGco));
     xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "southBoundLatitude", rect.miny, ppsNsGco));
@@ -320,27 +293,27 @@ xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer, xmlNsPtr *p
   }
 
   /* scan for temporal extent */
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MO", "timeextent");
+  const char* value = msOWSLookupMetadata(&(layer->metadata), "MO", "timeextent");
   if (value) { /* WMS */
     temporal = msStringSplit(value, '/', &n);
   }
   else { /* WCS */
-    value = (char *)msOWSLookupMetadata(&(layer->metadata), "CO", "timeposition");
+    value = msOWSLookupMetadata(&(layer->metadata), "CO", "timeposition");
     if (value) {
       /* split extent */
       temporal = msStringSplit(value, ',', &n);
     }
   }
   if (!value) { /* SOS */
-      value = (char *)msOWSLookupMetadata(&(layer->metadata), "SO", "offering_timeextent");
+      value = msOWSLookupMetadata(&(layer->metadata), "SO", "offering_timeextent");
       if (value)
         temporal = msStringSplit(value, '/', &n);
   }
   if (value) { 
     if (temporal && n > 0) {
-      psTNode = xmlNewChild(psEXNode, namespace, BAD_CAST "temporalElement", NULL);
-      psTNode2 = xmlNewChild(psTNode, namespace, BAD_CAST "EX_TemporalExtent", NULL);
-      psENode = xmlNewChild(psTNode2, namespace, BAD_CAST "extent", NULL);
+      xmlNodePtr psTNode = xmlNewChild(psEXNode, namespace, BAD_CAST "temporalElement", NULL);
+      xmlNodePtr psTNode2 = xmlNewChild(psTNode, namespace, BAD_CAST "EX_TemporalExtent", NULL);
+      xmlNodePtr psENode = xmlNewChild(psTNode2, namespace, BAD_CAST "extent", NULL);
       xmlAddChild(psENode, _msMetadataGetGMLTimePeriod(temporal));
     }
   }
@@ -359,17 +332,12 @@ xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer, xmlNsPtr *p
 static
 xmlNodePtr _msMetadataGetReferenceSystemInfo(xmlNsPtr namespace, layerObj *layer, xmlNsPtr* ppsNsGco)
 {
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST "referenceSystemInfo");
+  xmlNodePtr psRSNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_ReferenceSystem", NULL);
+  xmlNodePtr psRSINode = xmlNewChild(psRSNode, namespace, BAD_CAST "referenceSystemIdentifier", NULL);
+  xmlNodePtr psRSINode2 = xmlNewChild(psRSINode, namespace, BAD_CAST "RS_Identifier", NULL);
+
   char *epsg_str = NULL;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psRSNode = NULL;
-  xmlNodePtr psRSINode = NULL;
-  xmlNodePtr psRSINode2 = NULL;
-
-  psNode = xmlNewNode(namespace, BAD_CAST "referenceSystemInfo");
-  psRSNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_ReferenceSystem", NULL);
-  psRSINode = xmlNewChild(psRSNode, namespace, BAD_CAST "referenceSystemIdentifier", NULL);
-  psRSINode2 = xmlNewChild(psRSINode, namespace, BAD_CAST "RS_Identifier", NULL);
-
   msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "MFCSGO", MS_TRUE, &epsg_str);
   xmlAddChild(psRSINode2, _msMetadataGetCharacterString(namespace, "code", epsg_str, ppsNsGco));
   xmlAddChild(psRSINode2, _msMetadataGetCharacterString(namespace, "codeSpace", "http://www.epsg-registry.org", ppsNsGco));
@@ -388,78 +356,66 @@ xmlNodePtr _msMetadataGetReferenceSystemInfo(xmlNsPtr namespace, layerObj *layer
 
 xmlNodePtr _msMetadataGetContact(xmlNsPtr namespace, char *contact_element, mapObj *map, xmlNsPtr* ppsNsGco)
 {
-  char *value = NULL;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psCNode = NULL;
-  xmlNodePtr psCINode = NULL;
-  xmlNodePtr psCINode2 = NULL;
-  xmlNodePtr psPhoneNode = NULL;
-  xmlNodePtr psCIPhoneNode = NULL;
-  xmlNodePtr psAddressNode = NULL;
-  xmlNodePtr psCIAddressNode = NULL;
-  xmlNodePtr psORNode = NULL;
-  xmlNodePtr psORNode2 = NULL;
-
-  psNode = xmlNewNode(namespace, BAD_CAST contact_element);
-  psCNode = xmlNewChild(psNode, namespace, BAD_CAST "CI_ResponsibleParty", NULL);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST contact_element);
+  xmlNodePtr psCNode = xmlNewChild(psNode, namespace, BAD_CAST "CI_ResponsibleParty", NULL);
   xmlNewProp(psCNode, BAD_CAST "id", BAD_CAST contact_element);
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactperson");
+  const char* value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactperson");
   if (value)
     xmlAddChild(psCNode, _msMetadataGetCharacterString(namespace, "individualName", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactorganization");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactorganization");
   if (value)
     xmlAddChild(psCNode, _msMetadataGetCharacterString(namespace, "organisationName", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactposition");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactposition");
   if (value)
     xmlAddChild(psCNode, _msMetadataGetCharacterString(namespace, "positionName", value, ppsNsGco));
 
-  psCINode = xmlNewChild(psCNode, namespace, BAD_CAST "contactInfo", NULL);
-  psCINode2 = xmlNewChild(psCINode, namespace, BAD_CAST "CI_Contact", NULL);
-  psPhoneNode = xmlNewChild(psCINode2, namespace, BAD_CAST "phone", NULL);
-  psCIPhoneNode = xmlNewChild(psPhoneNode, namespace, BAD_CAST "CI_Telephone", NULL);
+  xmlNodePtr psCINode = xmlNewChild(psCNode, namespace, BAD_CAST "contactInfo", NULL);
+  xmlNodePtr psCINode2 = xmlNewChild(psCINode, namespace, BAD_CAST "CI_Contact", NULL);
+  xmlNodePtr psPhoneNode = xmlNewChild(psCINode2, namespace, BAD_CAST "phone", NULL);
+  xmlNodePtr psCIPhoneNode = xmlNewChild(psPhoneNode, namespace, BAD_CAST "CI_Telephone", NULL);
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactvoicetelephone");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactvoicetelephone");
   if (value)
     xmlAddChild(psCIPhoneNode, _msMetadataGetCharacterString(namespace, "voice", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactfacsimiletelephone");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactfacsimiletelephone");
   if (value)
     xmlAddChild(psCIPhoneNode, _msMetadataGetCharacterString(namespace, "facsimile", value, ppsNsGco));
 
-  psAddressNode = xmlNewChild(psCINode2, namespace, BAD_CAST "address", NULL);
-  psCIAddressNode = xmlNewChild(psAddressNode, namespace, BAD_CAST "CI_Address", NULL);
+  xmlNodePtr psAddressNode = xmlNewChild(psCINode2, namespace, BAD_CAST "address", NULL);
+  xmlNodePtr psCIAddressNode = xmlNewChild(psAddressNode, namespace, BAD_CAST "CI_Address", NULL);
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "address");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "address");
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "deliveryPoint", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "city");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "city");
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "city", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "stateorprovince");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "stateorprovince");
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "administrativeArea", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "postcode");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "postcode");
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "postalCode", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "country");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "country");
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "country", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactelectronicmailaddress");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "contactelectronicmailaddress");
   if (value)
     xmlAddChild(psCIAddressNode, _msMetadataGetCharacterString(namespace, "electronicMailAddress", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(map->web.metadata), "MCFO", "onlineresource");
+  value = msOWSLookupMetadata(&(map->web.metadata), "MCFO", "onlineresource");
   if (value) {
-    psORNode = xmlNewChild(psCINode2, namespace, BAD_CAST "onlineResource", NULL);
-    psORNode2 = xmlNewChild(psORNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
+    xmlNodePtr psORNode = xmlNewChild(psCINode2, namespace, BAD_CAST "onlineResource", NULL);
+    xmlNodePtr psORNode2 = xmlNewChild(psORNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
     xmlAddChild(psORNode2, _msMetadataGetURL(namespace, "linkage", value, ppsNsGco));
   }
 
@@ -478,45 +434,36 @@ xmlNodePtr _msMetadataGetContact(xmlNsPtr namespace, char *contact_element, mapO
 static
 xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer, xmlNsPtr *ppsNsGco)
 {
-  char *value;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psDINode = NULL;
-  xmlNodePtr psCNode = NULL;
-  xmlNodePtr psCINode = NULL;
-  xmlNodePtr psDNode = NULL;
-  xmlNodePtr psKWNode = NULL;
-  xmlNodePtr psMDKNode = NULL;
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST "identificationInfo");
 
-  psNode = xmlNewNode(namespace, BAD_CAST "identificationInfo");
-
-  psDINode = xmlNewChild(psNode, namespace, BAD_CAST "MD_DataIdentification", NULL);
+  xmlNodePtr psDINode = xmlNewChild(psNode, namespace, BAD_CAST "MD_DataIdentification", NULL);
   xmlNewProp(psDINode, BAD_CAST "id", BAD_CAST layer->name);
-  psCNode = xmlNewChild(psDINode, namespace, BAD_CAST "citation", NULL);
-  psCINode = xmlNewChild(psCNode, namespace, BAD_CAST "CI_Citation", NULL);
+  xmlNodePtr psCNode = xmlNewChild(psDINode, namespace, BAD_CAST "citation", NULL);
+  xmlNodePtr psCINode = xmlNewChild(psCNode, namespace, BAD_CAST "CI_Citation", NULL);
 
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "title");
+  const char* value = msOWSLookupMetadata(&(layer->metadata), "MCFGO", "title");
   if (!value)
-      value = (char *)msOWSLookupMetadata(&(layer->metadata), "S", "offering_name");
+      value = msOWSLookupMetadata(&(layer->metadata), "S", "offering_name");
   xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "title", value, ppsNsGco));
 
-  psDNode = xmlNewChild(psCINode, namespace, BAD_CAST "date", NULL);
+  xmlNodePtr psDNode = xmlNewChild(psCINode, namespace, BAD_CAST "date", NULL);
   xmlNewNsProp(psDNode, *ppsNsGco, BAD_CAST "nilReason", BAD_CAST "missing");
 
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "attribution_title");
+  value = msOWSLookupMetadata(&(layer->metadata), "MCFGO", "attribution_title");
   if (value) {
       xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "otherCitationDetails", value, ppsNsGco));
   }
 
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "abstract");
+  value = msOWSLookupMetadata(&(layer->metadata), "MCFGO", "abstract");
   if (!value)
-      value = (char *)msOWSLookupMetadata(&(layer->metadata), "S", "offering_description");
+      value = msOWSLookupMetadata(&(layer->metadata), "S", "offering_description");
   xmlAddChild(psDINode, _msMetadataGetCharacterString(namespace, "abstract", value, ppsNsGco));
 
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "keywordlist");
+  value = msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "keywordlist");
 
   if (value) {
-    psKWNode = xmlNewChild(psDINode, namespace, BAD_CAST "descriptiveKeywords", NULL);
-    psMDKNode = xmlNewChild(psKWNode, namespace, BAD_CAST "MD_Keywords", NULL);
+    xmlNodePtr psKWNode = xmlNewChild(psDINode, namespace, BAD_CAST "descriptiveKeywords", NULL);
+    xmlNodePtr psMDKNode = xmlNewChild(psKWNode, namespace, BAD_CAST "MD_Keywords", NULL);
 
     int n = 0;
     char** tokens = msStringSplit(value, ',', &n);
@@ -544,24 +491,19 @@ xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, lay
 static
 xmlNodePtr _msMetadataGetSpatialRepresentationInfo(xmlNsPtr namespace, layerObj *layer, xmlNsPtr* ppsNsGco)
 {
-  char *value;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psSRNode = NULL;
-  xmlNodePtr psGONode = NULL;
-  xmlNodePtr psGONode2 = NULL;
-
-  psNode = xmlNewNode(namespace, BAD_CAST "spatialRepresentationInfo");
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST "spatialRepresentationInfo");
 
   if (layer->type == MS_LAYER_RASTER) {
-    psSRNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_GridSpatialRepresentation", NULL);
+    xmlNodePtr psSRNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_GridSpatialRepresentation", NULL);
     xmlAddChild(psSRNode, _msMetadataGetInteger(namespace, "numberOfDimensions", 2, ppsNsGco));
     xmlAddChild(psSRNode, _msMetadataGetCodeList(namespace, "cellGeometry", "MD_CellGeometryCode", "area"));
   }
   else {
-    psSRNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_VectorSpatialRepresentation", NULL);
+    xmlNodePtr psSRNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_VectorSpatialRepresentation", NULL);
     xmlAddChild(psSRNode, _msMetadataGetCodeList(namespace, "topologyLevel", "MD_TopologyLevelCode", "geometryOnly"));
-    psGONode = xmlNewChild(psSRNode, namespace, BAD_CAST "geometricObjects", NULL);
-    psGONode2 = xmlNewChild(psGONode, namespace, BAD_CAST "MD_GeometricObjects", NULL);
+    xmlNodePtr psGONode = xmlNewChild(psSRNode, namespace, BAD_CAST "geometricObjects", NULL);
+    xmlNodePtr psGONode2 = xmlNewChild(psGONode, namespace, BAD_CAST "MD_GeometricObjects", NULL);
+    const char* value;
     if (layer->type == MS_LAYER_POINT)
       value = "point";
     else if (layer->type == MS_LAYER_LINE)
@@ -589,15 +531,9 @@ static
 xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer, cgiRequestObj *cgi_request, xmlNsPtr* ppsNsGco)
 {
   char *url = NULL;
-  xmlNodePtr psNode = NULL;
-  xmlNodePtr psMDNode = NULL;
-  xmlNodePtr psTONode = NULL;
-  xmlNodePtr psDTONode = NULL;
-  xmlNodePtr psDNode = NULL;
-  xmlNodePtr psDNode2 = NULL;
 
-  psNode = xmlNewNode(namespace, BAD_CAST "distributionInfo");
-  psMDNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_Distribution", NULL);
+  xmlNodePtr psNode = xmlNewNode(namespace, BAD_CAST "distributionInfo");
+  xmlNodePtr psMDNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_Distribution", NULL);
 
   {
       char* pszTmp = msOWSGetOnlineResource(map, "MFCSGO", "onlineresource", cgi_request);
@@ -606,13 +542,13 @@ xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layer
   }
 
   /* gmd:distributor */
-  psDNode = xmlNewChild(psMDNode, namespace, BAD_CAST "distributor", NULL);
-  psDNode2 = xmlNewChild(psDNode, namespace, BAD_CAST "MD_Distributor", NULL);
+  xmlNodePtr psDNode = xmlNewChild(psMDNode, namespace, BAD_CAST "distributor", NULL);
+  xmlNodePtr psDNode2 = xmlNewChild(psDNode, namespace, BAD_CAST "MD_Distributor", NULL);
   xmlAddChild(psDNode2, _msMetadataGetContact(namespace, "distributorContact", map, ppsNsGco));
 
   /* gmd:transferOptions */
-  psTONode = xmlNewChild(psMDNode, namespace, BAD_CAST "transferOptions", NULL);
-  psDTONode = xmlNewChild(psTONode, namespace, BAD_CAST "MD_DigitalTransferOptions", NULL);
+  xmlNodePtr psTONode = xmlNewChild(psMDNode, namespace, BAD_CAST "transferOptions", NULL);
+  xmlNodePtr psDTONode = xmlNewChild(psTONode, namespace, BAD_CAST "MD_DigitalTransferOptions", NULL);
   xmlAddChild(psDTONode, _msMetadataGetCharacterString(namespace, "unitsOfDistribution", "KB", ppsNsGco));
 
   /* links */

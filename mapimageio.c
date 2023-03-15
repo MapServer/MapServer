@@ -486,6 +486,7 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
         palettePath = szPath;
       }
       if(readPalette(palettePath,paletteGiven,&numPaletteGivenEntries,format->transparent) != MS_SUCCESS) {
+        msFree(qrb.data.palette.pixels);
         return MS_FAILURE;
       }
 

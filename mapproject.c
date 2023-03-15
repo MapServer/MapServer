@@ -2205,6 +2205,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
         }
     }
 #endif
+    // cppcheck-suppress knownConditionTrueFalse
     if(out && apply_over && out->numargs > 0 &&
         (strncmp(out->args[0], "init=", 5) == 0 || strncmp(out->args[0], "proj=", 5) == 0)) {
       bFreeOutOver = MS_TRUE;
@@ -2218,6 +2219,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     } else {
       outp = out;
     }
+    // cppcheck-suppress knownConditionTrueFalse
     if(in && apply_over && in->numargs > 0 &&
         (strncmp(in->args[0], "init=", 5) == 0 || strncmp(in->args[0], "proj=", 5) == 0)) {
       bFreeInOver = MS_TRUE;

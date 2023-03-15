@@ -352,8 +352,8 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   /* -------------------------------------------------------------------- */
   pszTypename = psParams->pszTypeName;
   if (!pszTypename) {
-    if ((pszTmp = strstr(lp->connection, "TYPENAME=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "typename=")) == NULL ) {
+    if (strstr(lp->connection, "TYPENAME=") == NULL &&
+        strstr(lp->connection, "typename=") == NULL ) {
       msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layer", "msBuildWFSLayerGetURL()");
       return NULL;
     }

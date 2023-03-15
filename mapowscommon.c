@@ -355,31 +355,26 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws)
 
 xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, const char *name, int method, const char *url)
 {
-  xmlNodePtr psRootNode      = NULL;
-  xmlNodePtr psNode          = NULL;
-  xmlNodePtr psSubNode       = NULL;
-  xmlNodePtr psSubSubNode    = NULL;
-
   if (_validateNamespace(psNsOws) == MS_FAILURE)
-    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
 
-  psRootNode = xmlNewNode(psNsOws, BAD_CAST "Operation");
+  xmlNodePtr psRootNode = xmlNewNode(psNsOws, BAD_CAST "Operation");
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "DCP", NULL);
+  xmlNodePtr psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "DCP", NULL);
 
-  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "HTTP", NULL);
+  xmlNodePtr psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "HTTP", NULL);
 
   if (method  == OWS_METHOD_GET || method == OWS_METHOD_GETPOST ) {
-    psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Get", NULL);
+    xmlNodePtr psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Get", NULL);
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "href", BAD_CAST url);
   }
 
   if (method == OWS_METHOD_POST || method == OWS_METHOD_GETPOST ) {
-    psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Post", NULL);
+    xmlNodePtr psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Post", NULL);
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "type", BAD_CAST "simple");
     xmlNewNsProp(psSubSubNode, psXLinkNs, BAD_CAST "href", BAD_CAST url);
   }
@@ -407,13 +402,10 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
 
 xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, const char *elname, const char *name, const char *values)
 {
-  xmlNodePtr psRootNode = NULL;
-  xmlNodePtr psNode = NULL;
-
   if (_validateNamespace(psNsOws) == MS_FAILURE)
-    psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+    psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
-  psRootNode = xmlNewNode(psNsOws, BAD_CAST elname);
+  xmlNodePtr psRootNode = xmlNewNode(psNsOws, BAD_CAST elname);
 
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
@@ -421,7 +413,7 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws
     msLibXml2GenerateList(psRootNode, psNsOws, "Value", values, ',');
   }
   if (version == OWS_1_1_0 || version == OWS_2_0_0) {
-    psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AllowedValues", NULL);
+    xmlNodePtr psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AllowedValues", NULL);
     msLibXml2GenerateList(psNode, psNsOws, "Value", values, ',');
   }
 

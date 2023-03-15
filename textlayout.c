@@ -630,10 +630,10 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   for(i=0; i<nruns; i++) {
     /* split the text into bidi runs */
     if(runs[i].rtl >= 0) {
-      int j, cur_run_start, original_num_glyphs, original_offset;
+      int j, original_num_glyphs, original_offset;
       FriBidiLevel prevlevel;
       FriBidiParType dir = FRIBIDI_PAR_LTR;
-      original_offset = cur_run_start = runs[i].offset;
+      original_offset = runs[i].offset;
       original_num_glyphs = runs[i].length;
       fribidi_get_bidi_types(glyphs.unicodes + original_offset, runs[i].length, glyphs.ctypes + original_offset);
       {
@@ -679,9 +679,9 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
       runs[i].script = HB_SCRIPT_LATIN;
       continue; /* skip runs we have determined we are latin (no shaping needed) */
     } else {
-      int j, cur_run_start, original_num_glyphs, original_offset;
+      int j, original_num_glyphs, original_offset;
       hb_script_t prevscript;
-      original_offset = cur_run_start = runs[i].offset;
+      original_offset = runs[i].offset;
       original_num_glyphs = runs[i].length;
       get_scripts(glyphs.unicodes + original_offset, runs[i].length, glyphs.scripts + original_offset);
       /* if we have different scripts, create a run for each one */

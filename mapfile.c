@@ -4171,8 +4171,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(getString(&layer->group) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         break;
       case(GEOMTRANSFORM): {
-        int s;
-        if((s = getSymbol(1, MS_EXPRESSION)) == -1) return(MS_FAILURE);
+        if(getSymbol(1, MS_EXPRESSION) == -1) return(MS_FAILURE);
         /* handle expression case here for the moment */
         msFree(layer->_geomtransform.string);
         layer->_geomtransform.string = msStrdup(msyystring_buffer);
