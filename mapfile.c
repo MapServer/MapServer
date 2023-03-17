@@ -4034,7 +4034,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         LayerCompositer *compositer = msSmallMalloc(sizeof(LayerCompositer));
         initLayerCompositer(compositer);
         if(MS_FAILURE == loadLayerCompositer(compositer)) {
-          msFree(compositer);
+          freeLayerCompositer(compositer);
           return -1;
           }
         if(!layer->compositer) {
