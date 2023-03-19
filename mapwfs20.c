@@ -332,7 +332,7 @@ static void msWFSAddInspireDSID(mapObj *map,
                 xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
         }
         msFreeCharArray(tokensCode, ntokensCode);
-        if( ntokensNS > 0 )
+        if( tokensNS )
             msFreeCharArray(tokensNS, ntokensNS);
     }
 }
