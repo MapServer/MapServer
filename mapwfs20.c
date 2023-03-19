@@ -820,7 +820,7 @@ static char* msWFSGetStoredQuery(mapObj *map, const char* pszURN)
 
             fseek(f, 0, SEEK_END);
             length = ftell(f);
-            if( length > 1000000 )
+            if( length < 0 || length > 1000000 )
             {
                 msSetError(MS_WFSERR, "%s: too big (%ld bytes > 1000000)",
                            "msWFSGetStoredQuery()", value, length);
