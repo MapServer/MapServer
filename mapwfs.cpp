@@ -3074,7 +3074,10 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
         {
             int j;
             mapObj* mapTmp = (mapObj*)msSmallCalloc(1, sizeof(mapObj));
-            initMap(mapTmp);
+            if( initMap(mapTmp) == -1 ) {
+                free(mapTmp);
+                return 0;
+            }
             msCopyMap(mapTmp, map);
 
             /* Re-run the query but with no limit */
