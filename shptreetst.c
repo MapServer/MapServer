@@ -69,6 +69,7 @@ char* AddFileSuffix ( const char * Filename, const char * Suffix )
   /* -------------------------------------------------------------------- */
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s%s", pszBasename, Suffix);
+  msFree(pszBasename);
 
   return (pszFullname);
 }
