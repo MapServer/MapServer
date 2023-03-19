@@ -4000,11 +4000,6 @@ int loadLayerCompositer(LayerCompositer *compositer) {
         else {
           msSetError(MS_PARSEERR,"Unknown COMPOP \"%s\"", "loadLayerCompositer()", compop);
           free(compop);
-          if (compositer->filter) {
-            msFree(compositer->filter->filter);
-            msFree(compositer->filter);
-            compositer->filter=NULL;
-            }
           return MS_FAILURE;
         }
         free(compop);
@@ -4014,21 +4009,11 @@ int loadLayerCompositer(LayerCompositer *compositer) {
         return MS_SUCCESS;
       case OPACITY:
         if (getInteger(&(compositer->opacity), MS_NUM_CHECK_RANGE, 0, 100) == -1) {
-          if (compositer->filter) {
-            msFree(compositer->filter->filter);
-            msFree(compositer->filter);
-            compositer->filter=NULL;
-          }
           msSetError(MS_PARSEERR,"OPACITY must be between 0 and 100 (line %d)","loadLayerCompositer()",msyylineno);
           return MS_FAILURE;
         }
         break;
       default:
-        if (compositer->filter) {
-          msFree(compositer->filter->filter);
-          msFree(compositer->filter);
-          compositer->filter=NULL;
-          }
         msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)", "loadLayerCompositer()",  msyystring_buffer, msyylineno );
         return(MS_FAILURE);
     }
