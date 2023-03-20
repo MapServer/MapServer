@@ -637,12 +637,14 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
           if (msLoadProjectionString(&(lp->projection), szProj) != 0) {
             msFree(pszEPSGCodeFromLayer);
             msFree(ows_srs);
+            free(pszEPSG);
             return MS_FAILURE;
           }
         } else {
           if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0) {
             msFree(pszEPSGCodeFromLayer);
             msFree(ows_srs);
+            free(pszEPSG);
             return MS_FAILURE;
           }
         }

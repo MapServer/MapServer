@@ -656,6 +656,8 @@ treeObj *msReadTree(char *filename, int debug)
 
   tree->root = readTreeNode( disktree );
 
+  msSHPDiskTreeClose(disktree);
+
   return(tree);
 }
 

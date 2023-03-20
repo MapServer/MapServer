@@ -31,6 +31,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <math.h>
 #include <time.h>
 
 #include "mapserver.h"
@@ -1385,11 +1386,11 @@ pointObj *msIntersectionPointLine(pointObj *p, pointObj *a, pointObj *b)
 /************************************************************************/
 pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 {
-  pointObj    oFirst;
-  pointObj    oSecond;
+  pointObj    oFirst = {0, 0, 0, 0};
+  pointObj    oSecond = {0, 0, 0, 0};
 
   if (shape && point) {
-    double      dfMinDist = 1e35;
+    double      dfMinDist = HUGE_VAL;
     for (int i=0; i<shape->numlines; i++) {
       lineObj line = shape->line[i];
       /* -------------------------------------------------------------------- */

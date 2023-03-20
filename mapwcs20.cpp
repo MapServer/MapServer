@@ -2664,7 +2664,9 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
     cm->numbands = 1;
     if( (value = msOWSLookupMetadata(&(layer->metadata), "CO", "bandcount")) != NULL) {
       int numbands = 0;
-      msStringParseInteger(value, &numbands);
+      if(msStringParseInteger(value, &numbands) != MS_SUCCESS) {
+        return MS_FAILURE;
+      }
       cm->numbands = (size_t)numbands;
     }
 

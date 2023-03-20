@@ -877,6 +877,7 @@ arcStrokeCircle(const pointObj& p1, const pointObj& p2, const pointObj& p3,
     pointObj p;
     p.x = center.x + radius*cos(current_angle_r);
     p.y = center.y + radius*sin(current_angle_r);
+    p.z = 0;
     pointArrayAddPoint(pa, p);
     current_angle_r += segment_angle_r;
   }

@@ -699,6 +699,7 @@ void KmlRenderer::renderGlyphs(imageObj *, const textSymbolObj *ts, colorObj *cl
   pointObj pt;
   pt.x = ts->textpath->glyphs[0].pnt.x;
   pt.y = ts->textpath->glyphs[0].pnt.y;
+  pt.z = 0.0;
   addCoordsNode(geomNode, &pt, 1);
 }
 
@@ -769,6 +770,7 @@ void KmlRenderer::renderSymbol(imageObj *img, double x, double y, symbolObj *sym
   pointObj pt;
   pt.x = x;
   pt.y = y;
+  pt.z = 0.0;
   addCoordsNode(geomNode, &pt, 1);
 }
 

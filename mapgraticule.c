@@ -636,7 +636,6 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
   rectObj cliprect;
   graticuleObj   *pInfo  = NULL;
   double dfTmp;
-  graticuleIntersectionObj *psValues = NULL;
   int i=0;
 
   if (layer->connectiontype != MS_GRATICULE)
@@ -647,10 +646,6 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
   /*set cellsize if bnot already set*/
   if (map->cellsize == 0)
     map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
-
-  psValues = (graticuleIntersectionObj *)msSmallMalloc(sizeof(graticuleIntersectionObj));
-
-  msGraticuleLayerInitIntersectionPoints(psValues);
 
   if(layer->transform == MS_TRUE)
     searchrect = map->extent;
@@ -685,6 +680,9 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
   /* clip using the layer projection */
   /* msProjectRect(&map->projection , &layer->projection,  &cliprect); */
+
+  graticuleIntersectionObj* psValues = (graticuleIntersectionObj *)msSmallMalloc(sizeof(graticuleIntersectionObj));
+  msGraticuleLayerInitIntersectionPoints(psValues);
 
   while((status = msLayerNextShape(layer, &shapegrid)) == MS_SUCCESS) {
     /*don't really need a class here*/

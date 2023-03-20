@@ -96,7 +96,14 @@ int main(int argc, char* argv[])
         exit(1);
     }
     fseek(f, 0, SEEK_END);
-    nLen = (size_t)ftell(f);
+    long pos = ftell(f);
+    if( pos < 0 )
+    {
+        fprintf(stderr, "ftell() failed.\n");
+        fclose(f);
+        exit(1);
+    }
+    nLen = (size_t)pos;
     fseek(f, 0, SEEK_SET);
     buf = malloc(nLen);
     if( !buf )

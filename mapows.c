@@ -2889,7 +2889,6 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
 
 int msOWSNegotiateUpdateSequence(const char *requested_updatesequence, const char *updatesequence)
 {
-  int i;
   int valtype1 = 1; /* default datatype for updatesequence passed by client */
   int valtype2 = 1; /* default datatype for updatesequence set by server */
   struct tm tm_requested_updatesequence, tm_updatesequence;
@@ -2940,15 +2939,10 @@ int msOWSNegotiateUpdateSequence(const char *requested_updatesequence, const cha
   if (valtype1 == 2) /* string */
     return strcasecmp(requested_updatesequence, updatesequence);
 
-  if (valtype1 == 3) { /* timestamp */
-    /* compare timestamps */
-    i = msDateCompare(&tm_requested_updatesequence, &tm_updatesequence) +
-        msTimeCompare(&tm_requested_updatesequence, &tm_updatesequence);
-    return i;
-  }
-
-  /* return default -1 */
-  return -1;
+  assert(valtype1 == 3); /* timestamp */
+  /* compare timestamps */
+  return msDateCompare(&tm_requested_updatesequence, &tm_updatesequence) +
+         msTimeCompare(&tm_requested_updatesequence, &tm_updatesequence);
 }
 
 

@@ -720,7 +720,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
             break;
           }
         }
-        if (i < lpfirst->numitems) {
+        if (i < lpfirst->numitems && sShape.values) {
           snprintf(szTmp, sizeof(szTmp), "%s", "urn:ogc:def:procedure:");
           pszTmp = msStringConcatenate(pszTmp, szTmp);
           pszValueShape = msEncodeHTMLEntities(sShape.values[i]);

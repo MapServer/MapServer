@@ -779,9 +779,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     pnt.y += map->legend.keyspacingy; /* bump y for next label */
 
     /* clean up */
-    head = cur;
-    cur = cur->pred;
-    free(head);
+    legendlabel* cur_pred = cur->pred;
+    free(cur);
+    cur = cur_pred;
   } /* next legend */
 
 cleanup:
@@ -790,9 +790,9 @@ cleanup:
     /* might free &map->legend.label, so make it clear we won't */
     freeTextSymbolEx(&cur->ts, MS_FALSE);
     MS_REFCNT_DECR(cur->ts.label);
-    head = cur;
-    cur = cur->pred;
-    free(head);
+    legendlabel* cur_pred = cur->pred;
+    free(cur);
+    cur = cur_pred;
   }
   if(MS_UNLIKELY(ret != MS_SUCCESS)) {
     if(image) msFreeImage(image);
