@@ -1121,6 +1121,7 @@ int msCopyLayer(layerObj *dst, const layerObj *src)
     msCopyHashTable(&(dst->metadata), &(src->metadata));
   }
   msCopyHashTable(&dst->validation,&src->validation);
+  msCopyHashTable(&dst->connectionoptions,&src->connectionoptions);
 
   MS_COPYSTELEM(debug);
 
