@@ -103,6 +103,10 @@
     %newobject clone;
     /**
     Return an independent copy of the layer with no parent map.
+
+    .. note::
+
+        In the Java & PHP modules this method is named ``cloneLayer``.    
     */
     layerObj *clone() 
 #endif

@@ -96,7 +96,13 @@
     classObj *cloneClass() 
 #else
     %newobject clone;
-    /// Return an independent copy of the class without a parent layer
+    /**
+    Return an independent copy of the class without a parent layer
+
+    .. note::
+
+        In the Java & PHP modules this method is named ``cloneClass``.    
+    */ 
     classObj *clone() 
 #endif
     {
