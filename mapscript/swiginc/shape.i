@@ -119,7 +119,13 @@
     shapeObj *cloneShape()
 #else
     %newobject clone;
-    /// Return an independent copy of the shape.
+    /**
+    Return an independent copy of the shape.
+
+    .. note::
+
+        In the Java & PHP modules this method is named ``cloneShape``.    
+    */    
     shapeObj *clone()
 #endif
     {

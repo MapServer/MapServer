@@ -95,7 +95,13 @@
     styleObj *cloneStyle() 
 #else
     %newobject clone;
-    /// Returns an independent copy of the style with no parent class. 
+    /**
+    Return an independent copy of the style with no parent class.
+
+    .. note::
+
+        In the Java & PHP modules this method is named ``cloneStyle``.    
+    */ 
     styleObj *clone() 
 #endif
     {
