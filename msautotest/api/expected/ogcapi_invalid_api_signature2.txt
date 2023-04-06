@@ -3,5 +3,5 @@ Content-Type: text/html
 <HTML>
 <HEAD><TITLE>MapServer Message</TITLE></HEAD>
 <BODY BGCOLOR="#FFFFFF">
-msCGIDispatchAPIRequest(): Web application error. Invalid API signature.
+mapserv(): Web application error. Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided.
 </BODY></HTML>

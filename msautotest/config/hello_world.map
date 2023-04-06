@@ -1,4 +1,6 @@
 # RUN_PARMS: hello_world.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: hello_world.png [MAPSERV] "PATH_INFO=/[MAPFILE]" QUERY_STRING="mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: hello_world.png [MAPSERV] "PATH_INFO=/[MAPFILE]/" QUERY_STRING="mode=map" > [RESULT_DEMIME]
 # RUN_PARMS: hello_world_post.png [MAPSERV] [POST]map=[MAPFILE]&mode=map[/POST] > [RESULT_DEMIME]
 # RUN_PARMS: missing_conf.txt [MAPSERV] -conf missing.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
 # RUN_PARMS: empty1_conf.txt [MAPSERV] -conf empty1.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEVERSION]
