@@ -484,6 +484,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       msDebug("Using CURL_CA_BUNDLE=%s\n", pszCurlCABundle);
   }
 
+  const char* pszHttpVersion = CPLGetConfigOption("CURL_HTTP_VERSION", NULL);
+
   /* Alloc a curl-multi handle, and add a curl-easy handle to it for each
    * file to download.
    */
@@ -544,6 +546,13 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
 
     unchecked_curl_easy_setopt(http_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP|CURLPROTO_HTTPS );
+
+    if (pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                                   CURL_HTTP_VERSION_1_0);
+    else if (pszHttpVersion && strcmp(pszHttpVersion, "1.1") == 0)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                                   CURL_HTTP_VERSION_1_1);
 
     /* Set User-Agent (auto-generate if not set by caller */
     if (pasReqInfo[i].pszUserAgent == NULL) {
