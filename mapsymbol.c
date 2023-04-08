@@ -598,7 +598,8 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 
     if(!foundSymbolSetToken && token != SYMBOLSET) {
       msSetError(MS_IDENTERR, "First token must be SYMBOLSET, this doesn't look like a symbol file.", "msLoadSymbolSet()");
-      return(-1);
+      status = -1;
+      break;
     }
 
     switch(token) {
