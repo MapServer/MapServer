@@ -41,6 +41,41 @@ int msyylineno = 1;
 
 #define YY_NO_INPUT
 
+/* Below is a redefinition of the default YY_INPUT() macro but replacing the
+ * YY_FATAL_ERROR() macro with a call to msSetError().
+ */
+/* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
+ * is returned in "result".
+ */
+#define YY_INPUT(buf,result,max_size) \
+	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
+		{ \
+		int c = '*'; \
+		int n; \
+		for ( n = 0; n < max_size && \
+			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
+			buf[n] = (char) c; \
+		if ( c == '\n' ) \
+			buf[n++] = (char) c; \
+		if ( c == EOF && ferror( yyin ) ) \
+            msSetError(MS_PARSEERR, "%s", "msyyparse()", "input in flex scanner failed"); \
+		result = n; \
+		} \
+	else \
+		{ \
+		errno=0; \
+		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, yyin)) == 0 && ferror(yyin)) \
+			{ \
+			if( errno != EINTR) \
+				{ \
+                msSetError(MS_PARSEERR, "%s", "msyyparse()", "input in flex scanner failed"); \
+				break; \
+				} \
+			errno=0; \
+			clearerr(yyin); \
+			} \
+		}
+
 int msyysource=MS_STRING_TOKENS;
 double msyynumber;
 int msyystate=MS_TOKENIZE_DEFAULT;
