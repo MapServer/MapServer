@@ -74,11 +74,11 @@
 #else
     %newobject clone;
     /**
-    Returns a independent copy of the map, less any caches.
+    Return an independent copy of the map, less any caches.
 
     .. note::
 
-        In the Java module this method is named ``cloneMap``.
+        In the Java & PHP modules this method is named ``cloneMap``.
     */
     mapObj *clone() 
 #endif
