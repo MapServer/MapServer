@@ -691,16 +691,16 @@ char path[MS_MAXPATHLEN];
                                                    return(-1);
                                                  }
 
-                                                 include_stack[include_stack_ptr] = YY_CURRENT_BUFFER; /* save state */
-                                                 include_lineno[include_stack_ptr] = msyylineno;
-                                                 include_stack_ptr++;
-
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
                                                    msyyin = YY_CURRENT_BUFFER->yy_input_file;
                                                    return(-1);
                                                  }
+
+                                                 include_stack[include_stack_ptr] = YY_CURRENT_BUFFER; /* save state */
+                                                 include_lineno[include_stack_ptr] = msyylineno;
+                                                 include_stack_ptr++;
 
                                                  msyy_switch_to_buffer( msyy_create_buffer(msyyin, YY_BUF_SIZE) );
                                                  msyylineno = 1;
