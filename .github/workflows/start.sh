@@ -11,7 +11,7 @@ export PYTHON_VERSION=system
 LANG=en_US.UTF-8
 export LANG
 #add PHP repo
-add-apt-repository -y ppa:ondrej/php
+DEBIAN_FRONTEND=noninteractive add-apt-repository ppa:ondrej/php -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo locales tzdata software-properties-common python3-dev python3-pip python3-setuptools git curl \
     apt-transport-https ca-certificates gnupg software-properties-common wget \
