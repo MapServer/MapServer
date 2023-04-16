@@ -26,14 +26,14 @@ class styleObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(2.2, $this->style->minscaledenom = 2.2);
     }
 
-    public function testsClone()
+    public function testClone()
     {
         $newStyle = $this->style->cloneStyle();
     }
     
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($style, $map_file, $map, $this->style, $this->style->initialgap, $this->style->maxscaledenom, $this->style->minscaledenom);
+        unset($style, $map_file, $map, $this->style, $this->style->initialgap, $this->style->maxscaledenom, $this->style->minscaledenom, $newStyle);
     }    
 
 }
