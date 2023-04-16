@@ -4,7 +4,7 @@ set -e
 
 apt-get update -y
 
-export BUILD_NAME=PHP_7.4_WITH_PROJ8
+export BUILD_NAME=PHP_8.1_WITH_PROJ8
 #export PYTHON_VERSION=3.6
 export PYTHON_VERSION=system
 
@@ -12,11 +12,14 @@ LANG=en_US.UTF-8
 export LANG
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo locales tzdata software-properties-common python3-dev python3-pip python3-setuptools git curl \
-    apt-transport-https ca-certificates gnupg software-properties-common wget \
-    php-dev php-xml php-mbstring && \
+    apt-transport-https ca-certificates gnupg software-properties-common wget
+#install PHP 8.1
+DEBIAN_FRONTEND=noninteractive add-apt-repository ppa:ondrej/php -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    sudo php8.1-dev php8.1-xml php8.1-mbstring && \
     echo "$LANG UTF-8" > /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
-    update-locale LANG=$LANG
+    update-locale LANG=$LANG    
 
 USER=root
 export USER
