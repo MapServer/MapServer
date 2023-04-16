@@ -53,12 +53,6 @@ swig -version
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 
-#install Python version
-FILE=ls ~/.pyenv/versions/$PYTHON_VERSION
-if [ ! -d "$FILE" ]; then
-    pyenv install $PYTHON_VERSION
-fi
-
 # list installed and available Python/PHP versions
 pyenv versions
 # echo $(pyenv root)
