@@ -234,7 +234,7 @@ SHPHandle msSHPOpenVirtualFile( VSILFILE * fpSHP, VSILFILE * fpSHX )
       VSIFSeekL( psSHP->fpSHP, 0, SEEK_END );
       vsi_l_offset nSize = VSIFTellL( psSHP->fpSHP );
       if( nSize > (vsi_l_offset)INT_MAX ) {
-          msDebug("Actual .shp size is larger than 2 GB. Not suported. Invalidating nFileSize");
+          msDebug("Actual .shp size is larger than 2 GB. Not supported. Invalidating nFileSize");
           psSHP->nFileSize = 0;
       }
       else
