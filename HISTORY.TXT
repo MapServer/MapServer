@@ -12,6 +12,15 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+7.6.5 release (2023-04-17)
+--------------------------
+
+- remove password content from logs (#6621)
+
+- increase security and stability (#6818)
+
+see detailed changelog for other fixes
+
 7.6.4 release (2021-07-12)
 --------------------------
 
