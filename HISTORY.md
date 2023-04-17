@@ -13,6 +13,17 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.0.1 release (2023-04-17)
+--------------------------
+
+- fix WFS paging on Oracle (#6774) 
+
+- allow runtime substitutions on the Web template parameter (#6804)
+
+- handle multiple PROJ_DATA paths through config (#6863)
+
+see detailed changelog for other fixes
+
 8.0.0 release (2022-09-12)
 --------------------------
 
