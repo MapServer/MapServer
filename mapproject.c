@@ -37,6 +37,7 @@
 #include "mapaxisorder.h"
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_srs_api.h"
 
 static char *ms_proj_data = NULL;
@@ -873,8 +874,23 @@ int msProcessProjection(projectionObj *p)
     msAcquireLock( TLOCK_PROJ );
     p->proj_ctx->ms_proj_data_change_counter = ms_proj_data_change_counter;
     {
-        const char* const paths[1] = { ms_proj_data };
-        proj_context_set_search_paths(p->proj_ctx->proj_ctx, 1, ms_proj_data ? paths : NULL);
+        if( ms_proj_data )
+        {
+            int num_tokens = 0;
+#ifdef _WIN32
+            char sep = ';';
+#else
+            char sep = ':';
+#endif
+            char** paths = msStringSplit(ms_proj_data, sep, &num_tokens);
+            proj_context_set_search_paths(p->proj_ctx->proj_ctx, num_tokens,
+                                          (const char* const*)paths);
+            msFreeCharArray(paths, num_tokens);
+        }
+        else
+        {
+            proj_context_set_search_paths(p->proj_ctx->proj_ctx, 0, NULL);
+        }
     }
     msReleaseLock( TLOCK_PROJ );
   }
@@ -2614,8 +2630,14 @@ void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
 #if GDAL_VERSION_MAJOR >= 3
   if( ms_proj_data != NULL )
   {
-    const char* const apszPaths[] = { ms_proj_data, NULL };
-    OSRSetPROJSearchPaths(apszPaths);
+#ifdef _WIN32
+    const char* sep = ";";
+#else
+    const char* sep = ":";
+#endif
+    char** papszPaths = CSLTokenizeString2(ms_proj_data, sep, 0);
+    OSRSetPROJSearchPaths((const char* const *)papszPaths);
+    CSLDestroy(papszPaths);
   }
 #endif
 
