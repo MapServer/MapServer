@@ -2,19 +2,21 @@ branches:
   except:
   - /^(cherry-pick-)?backport-\d+-to-/
 
-dist: bionic
+dist: focal
 language: php
 
 matrix:
   include:
 
-    - php: 7.3
+    - php: 8.1
       env:
-        - BUILD_NAME=PHP_7.3_WITH_ASAN
+        - BUILD_NAME=PHP_8.1_WITH_ASAN
+        - PYTHON_VERSION=3.8
 
-    - php: 7.4
+    - php: 8.2.0
       env:
-        - BUILD_NAME=PHP_7.4_WITH_PROJ6
+        - BUILD_NAME=PHP_8.2
+        - PYTHON_VERSION=3.9
 
 cache:
     apt: true
