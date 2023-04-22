@@ -297,6 +297,10 @@ if(WIN32)
     # Suppress warnings for regex.c
     set_source_files_properties(${REGEX_SOURCES} PROPERTIES COMPILE_FLAGS /w)
   endif(MSVC)
+  if(MINGW)
+    # mingw provides stdlib.h
+    add_definitions(-DSTDC_HEADERS=1)
+  endif(MINGW)
 else(WIN32)
   set(REGEX_SOURCES "")
 endif(WIN32)
