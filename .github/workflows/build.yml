@@ -8,7 +8,7 @@ jobs:
 
     steps:
       - name: Checkout repository contents
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build
         run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
