@@ -1985,6 +1985,7 @@ int LayerDefaultGetNumFeatures(layerObj *layer)
     result = 0;
     while ((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
         ++result;
+        msFreeShape(&shape);
     }
 
     return result;
