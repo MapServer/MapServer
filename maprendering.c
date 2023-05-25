@@ -661,7 +661,7 @@ line_cleanup:
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
       msDrawLineSymbolIM(map, image, p, style, scalefactor);
     else {
-      msSetError(MS_RENDERERERR, "unsupported renderer", "msDrawShadeSymbol()");
+      msSetError(MS_RENDERERERR, "unsupported renderer", "msDrawLineSymbol()");
       status = MS_FAILURE;
     }
   } else {
