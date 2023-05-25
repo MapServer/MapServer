@@ -1,6 +1,6 @@
-# RUN_PARMS: labels-priority.png [MAP2IMG] -m [MAPFILE] -l label_priority_binding -o [RESULT]
-# RUN_PARMS: labels-priority.png [MAP2IMG] -m [MAPFILE] -l label_priority_fixed -o [RESULT]
-# RUN_PARMS: labels-priority.png [MAP2IMG] -m [MAPFILE] -l label_priority_expression -o [RESULT]
+# RUN_PARMS: label_priority_binding.png [MAP2IMG] -m [MAPFILE] -l label_priority_binding -o [RESULT]
+# RUN_PARMS: label_priority_fixed.png [MAP2IMG] -m [MAPFILE] -l label_priority_fixed -o [RESULT]
+# RUN_PARMS: label_priority_expression.png [MAP2IMG] -m [MAPFILE] -l label_priority_expression -o [RESULT]
 #
 # Test label priorities
 #
