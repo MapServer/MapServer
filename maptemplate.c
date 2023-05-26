@@ -455,26 +455,24 @@ static int sortLayerByMetadata(mapObj *map, const char* pszMetadata)
 **
 ** Tag can be [TAG] or [TAG something]
 */
-char *findTag(char *pszInstr, char *pszTag)
+static const char *findTag(const char *pszInstr, const char *pszTag)
 {
-  char *pszTag1, *pszStart=NULL;
-  char *pszTemp;
+  const char* pszStart=NULL;
   int done=MS_FALSE;
-  int length;
 
   if(!pszInstr || !pszTag) {
     msSetError(MS_WEBERR, "Invalid pointer.", "findTag()");
     return NULL;
   }
 
-  length = strlen(pszTag) + 1; /* adding [ character to the beginning */
-  pszTag1 = (char*) msSmallMalloc(length+1);
+  const int length = strlen(pszTag) + 1; /* adding [ character to the beginning */
+  char* pszTag1 = (char*) msSmallMalloc(length+1);
 
   strcpy(pszTag1, "[");
   strcat(pszTag1, pszTag);
 
-  pszTemp = pszInstr;
-  while(!done) {
+  const char* pszTemp = pszInstr;
+  do {
     pszStart = strstr(pszTemp, pszTag1);
 
     if(pszStart == NULL)
@@ -483,7 +481,7 @@ char *findTag(char *pszInstr, char *pszTag)
       done = MS_TRUE; /* valid tag */
     else
       pszTemp += length; /* skip ahead and start over */
-  }
+  } while(!done);
 
   free(pszTag1);
 
@@ -521,9 +519,9 @@ char *findTagEnd(const char *pszTag)
 ** Return a hashtableobj from instr of all
 ** arguments. hashtable must be freed by caller.
 */
-int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
+static int getTagArgs(const char* pszTag, const char* pszInstr, hashTableObj **ppoHashTable)
 {
-  char *pszStart, *pszEnd, *pszArgs;
+  const char *pszStart, *pszEnd;
   int nLength;
   char **papszArgs, **papszVarVal;
   int nArgs, nDummy;
@@ -549,7 +547,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
       nLength = pszEnd - pszStart;
 
       if(nLength > 0) { /* is there arguments ? */
-        pszArgs = (char*)msSmallMalloc(nLength + 1);
+        char* pszArgs = (char*)msSmallMalloc(nLength + 1);
         strlcpy(pszArgs, pszStart, nLength+1);
 
         if(!(*ppoHashTable))
@@ -592,9 +590,9 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 ** pszNextInstr will be a pointer at the end of the
 ** first occurence found.
 */
-int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
+static int getInlineTag(const char *pszTag, const char *pszInstr, char **pszResult)
 {
-  char *pszStart, *pszEnd=NULL,  *pszEndTag, *pszPatIn, *pszPatOut=NULL, *pszTmp;
+  const char *pszEnd=NULL;
   int nInst=0;
   int nLength;
 
@@ -605,17 +603,17 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
     return MS_FAILURE;
   }
 
-  pszEndTag = (char*)msSmallMalloc(strlen(pszTag) + 3);
+  char* pszEndTag = (char*)msSmallMalloc(strlen(pszTag) + 3);
   strcpy(pszEndTag, "[/");
   strcat(pszEndTag, pszTag);
 
   /* find start tag */
-  pszPatIn  = findTag(pszInstr, pszTag);
-  pszPatOut = strstr(pszInstr, pszEndTag);
+  const char* pszPatIn  = findTag(pszInstr, pszTag);
+  const char* pszPatOut = strstr(pszInstr, pszEndTag);
 
-  pszStart = pszPatIn;
+  const char* pszStart = pszPatIn;
 
-  pszTmp = pszInstr;
+  const char* pszTmp = pszInstr;
 
   if(pszPatIn) {
     do {
@@ -678,15 +676,7 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
 int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
 {
   /*   char *pszNextInstr = pszInstr; */
-  char *pszStart, *pszEnd=NULL;
-  const char *pszName, *pszValue, *pszOperator, *pszHTValue;
-  char *pszThen=NULL;
-  char *pszIfTag;
-  char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
-  int nInst = 0;
-  int nLength;
-
-  hashTableObj *ifArgs=NULL;
+  const char *pszEnd=NULL;
 
   if(!*pszInstr) {
     msSetError(MS_WEBERR, "Invalid pointer.", "processIfTag()");
@@ -695,13 +685,14 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
 
   /* find the if start tag */
 
-  pszStart  = findTag(*pszInstr, "if");
+  const char* pszStart  = findTag(*pszInstr, "if");
 
   while (pszStart) {
-    pszPatIn  = findTag(pszStart, "if");
-    pszPatOut = strstr(pszStart, "[/if]");
-    pszTmp = pszPatIn;
+    const char* pszPatIn  = findTag(pszStart, "if");
+    const char* pszPatOut = strstr(pszStart, "[/if]");
+    const char* pszTmp = pszPatIn;
 
+    int nInst = 0;
     do {
       if(pszPatIn && pszPatIn < pszPatOut) {
         nInst++;
@@ -720,20 +711,22 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
     } while (nInst > 0);
 
     /* get the then string (if expression is true) */
+    char *pszThen=NULL;
     if(getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS) {
       msSetError(MS_WEBERR, "Malformed then if tag.", "processIfTag()");
       return MS_FAILURE;
     }
 
     /* retrieve if tag args */
+    hashTableObj *ifArgs=NULL;
     if(getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS) {
       msSetError(MS_WEBERR, "Malformed args if tag.", "processIfTag()");
       return MS_FAILURE;
     }
 
-    pszName = msLookupHashTable(ifArgs, "name");
-    pszValue = msLookupHashTable(ifArgs, "value");
-    pszOperator = msLookupHashTable(ifArgs, "oper");
+    const char* pszName = msLookupHashTable(ifArgs, "name");
+    const char* pszValue = msLookupHashTable(ifArgs, "value");
+    const char* pszOperator = msLookupHashTable(ifArgs, "oper");
     if(pszOperator == NULL) /* Default operator if not set is "eq" */
       pszOperator = "eq";
 
@@ -743,13 +736,13 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
       /* build the complete if tag ([if all_args]then string[/if]) */
       /* to replace if by then string if expression is true */
       /* or by a white space if not. */
-      nLength = pszEnd - pszStart;
-      pszIfTag = (char*)msSmallMalloc(nLength + 6);
+      const int nLength = pszEnd - pszStart;
+      char* pszIfTag = (char*)msSmallMalloc(nLength + 6);
       strlcpy(pszIfTag, pszStart, nLength+1);
       pszIfTag[nLength] = '\0';
       strcat(pszIfTag, "[/if]");
 
-      pszHTValue = msLookupHashTable(ht, pszName);
+      const char* pszHTValue = msLookupHashTable(ht, pszName);
 
       if(strcmp(pszOperator, "neq") == 0) {
         if(pszValue && pszHTValue && strcasecmp(pszValue, pszHTValue) != 0) {
@@ -785,20 +778,18 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
         }
       } else {
         msSetError(MS_WEBERR, "Unsupported operator (%s) in if tag.",  "processIfTag()", pszOperator);
+        free(pszIfTag);
+        free (pszThen);
+        msFreeHashTable(ifArgs);
         return MS_FAILURE;
       }
 
       free(pszIfTag);
-      pszIfTag = NULL;
     }
 
-    if(pszThen)
-      free (pszThen);
-
-    pszThen=NULL;
+    free (pszThen);
 
     msFreeHashTable(ifArgs);
-    ifArgs=NULL;
 
     /* find the if start tag */
     if(bEmpty)
@@ -845,7 +836,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   char *preTag, *postTag; /* text before and after the tag */
 
   const char *argValue;
-  char *tag, *tagInstance, *tagStart;
+  char *tag, *tagInstance;
   hashTableObj *tagArgs=NULL;
 
   int limit=-1;
@@ -858,7 +849,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "feature");
+  const char* tagStart = findTag(*line, "feature");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   /* check for any tag arguments */
@@ -986,7 +977,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
   char *preTag, *postTag; /* text before and after the tag */
 
-  char *tag, *tagStart;
+  char *tag;
   hashTableObj *tagArgs=NULL;
 
   const char *layerName=NULL;
@@ -999,7 +990,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "resultset");
+  const char* tagStart = findTag(*line, "resultset");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   while (tagStart) {
@@ -1096,7 +1087,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 */
 static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int mode)
 {
-  char *tag, *tagStart, *tagEnd;
+  char *tag, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
@@ -1111,7 +1102,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "include");
+  const char* tagStart = findTag(*line, "include");
 
   /* It is OK to have no include tags, just return. */
   if( !tagStart ) return MS_SUCCESS;
@@ -1184,42 +1175,34 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 {
   int i;
 
-  char *tag, *tagStart, *tagEnd;
-  hashTableObj *tagArgs=NULL;
-  int tagLength;
-  char *encodedTagValue=NULL, *tagValue=NULL;
-
-  const char *argValue=NULL;
-
-  const char *name=NULL, *pattern=NULL;
-  const char *format=NULL, *nullFormat=NULL;
-  int precision;
-  int padding;
-  int uc, lc, commify;
-  int escape;
+  char *tagEnd;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processItemTag()");
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "item");
+  const char* tagStart = findTag(*line, "item");
 
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   while (tagStart) {
-    format = "$value"; /* initialize the tag arguments */
-    nullFormat = "";
-    precision = -1;
-    padding = -1;
-    name = pattern = NULL;
-    uc = lc = commify = MS_FALSE;
-    escape=ESCAPE_HTML;
+    const char* format = "$value"; /* initialize the tag arguments */
+    const char* nullFormat = "";
+    int precision = -1;
+    int padding = -1;
+    const char* name = NULL;
+    const char* pattern = NULL;
+    int uc = MS_FALSE;
+    int lc = MS_FALSE;
+    int commify = MS_FALSE;
+    int escape=ESCAPE_HTML;
 
     /* check for any tag arguments */
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs("item", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "name");
+      const char* argValue = msLookupHashTable(tagArgs, "name");
       if(argValue) name = argValue;
 
       argValue = msLookupHashTable(tagArgs, "pattern");
@@ -1270,6 +1253,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     /*
     ** now we know which item so build the tagValue
     */
+    char* tagValue = NULL;
     if(shape->values[i] && strlen(shape->values[i]) > 0) {
       char *itemValue=NULL;
 
@@ -1322,24 +1306,33 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     switch(escape) {
       case ESCAPE_HTML:
-        encodedTagValue = msEncodeHTMLEntities(tagValue);
+      {
+        char* encodedTagValue = msEncodeHTMLEntities(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_JSON:
-        encodedTagValue = msEscapeJSonString(tagValue);
+      {
+        char* encodedTagValue = msEscapeJSonString(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_URL:
-        encodedTagValue = msEncodeUrl(tagValue);
+      {
+        char* encodedTagValue = msEncodeUrl(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_NONE:
         *line = msReplaceSubstring(*line, tag, tagValue);
         break;
@@ -1349,13 +1342,8 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* clean up */
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     msFree(tagValue);
-    tagValue=NULL;
-    msFree(encodedTagValue);
-    encodedTagValue=NULL;
 
     tagStart = findTag(*line, "item");
   }
@@ -1368,12 +1356,6 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 */
 static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent, projectionObj *rectProj)
 {
-  char *tag, *tagStart, *tagEnd;
-  hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-
-  char *encodedTagValue=NULL, *tagValue=NULL;
-
   rectObj tempExtent;
 
   char number[64]; /* holds a single number in the extent */
@@ -1384,7 +1366,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, name); /* this supports any extent */
+  const char* tagStart = findTag(*line, name); /* this supports any extent */
 
   /* It is OK to have no include tags, just return. */
   if(!tagStart) return MS_SUCCESS;
@@ -1402,9 +1384,10 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     else
       escape = ESCAPE_HTML;
 
-    tagOffset = tagStart - *line;
+    const int tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs(name, tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       const char* argValue = msLookupHashTable(tagArgs, "expand");
@@ -1463,7 +1446,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
         msProjectRect(rectProj, &projection, &tempExtent);
     }
 
-    tagValue = msStrdup(format);
+    char* tagValue = msStrdup(format);
 
     if(precision != -1)
       snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
@@ -1480,24 +1463,30 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     tagValue = msReplaceSubstring(tagValue, "$maxy", number);
 
     /* find the end of the tag */
-    tagEnd = findTagEnd(tagStart);
+    char* tagEnd = findTagEnd(tagStart);
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     switch(escape) {
       case ESCAPE_HTML:
-        encodedTagValue = msEncodeHTMLEntities(tagValue);
+      {
+        char* encodedTagValue = msEncodeHTMLEntities(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_URL:
-        encodedTagValue = msEncodeUrl(tagValue);
+      {
+        char* encodedTagValue = msEncodeUrl(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_NONE:
         *line = msReplaceSubstring(*line, tag, tagValue);
         break;
@@ -1507,13 +1496,8 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
     /* clean up */
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     msFree(tagValue);
-    tagValue=NULL;
-    msFree(encodedTagValue);
-    encodedTagValue=NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, name);
@@ -1527,13 +1511,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 // RFC 77 TODO: Need to validate these changes with Assefa...
 static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 {
-  char *tag, *tagStart, *tagEnd;
-  char *tagValue=NULL;
-  hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-  const char *format;
-  const char *argValue=NULL;
-  const char *projectionString=NULL;
+  char *tagEnd;
   shapeObj tShape;
   int precision=0;
   int clip_to_map=MS_TRUE;
@@ -1552,7 +1530,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
   if(msCheckParentPointer(layer->map,"map") == MS_FAILURE)
     return MS_FAILURE;
 
-  tagStart = findTag(*line, "shplabel");
+  const char* tagStart = findTag(*line, "shplabel");
 
   /* It is OK to have no shplabel tags, just return. */
   if(!tagStart)
@@ -1569,13 +1547,14 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     msInitShape(shape);
     msCopyShape(origshape, shape);
 
-    projectionString = NULL;
-    format = "$x,$y";
-    tagOffset = tagStart - *line;
+    const char* projectionString = NULL;
+    const char* format = "$x,$y";
+    const int tagOffset = tagStart - *line;
 
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs("shplabel", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "format");
+      const char* argValue = msLookupHashTable(tagArgs, "format");
       if(argValue) format = argValue;
 
       argValue = msLookupHashTable(tagArgs, "precision");
@@ -1805,7 +1784,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     }
 
     /* do the replacement */
-    tagValue = msStrdup(format);
+    char* tagValue = msStrdup(format);
     if(precision > 0)
       snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
     else
@@ -1844,8 +1823,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     *line = msReplaceSubstring(*line, tag, tagValue);
@@ -1853,11 +1832,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     /* clean up */
     msFreeShape(&tShape);
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     msFree(tagValue);
-    tagValue=NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "shplabel");
@@ -1878,7 +1854,7 @@ static int processDateTag(char **line)
   struct tm *datetime;
   time_t t;
   int result;
-  char *tag=NULL, *tagStart, *tagEnd;
+  char *tag=NULL, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 #define DATE_BUFLEN 1024
@@ -1891,7 +1867,7 @@ static int processDateTag(char **line)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "date");
+  const char* tagStart = findTag(*line, "date");
 
   /* It is OK to have no date tags, just return. */
   if( !tagStart )
@@ -1966,35 +1942,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   int i,j,p;
   int status;
 
-  char *tag, *tagStart, *tagEnd;
-  hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-
-  const char *argValue=NULL;
-  char *pointFormat1=NULL, *pointFormat2=NULL;
-  int pointFormatLength;
-
-  /*
-  ** Pointers to static strings, naming convention is:
-  **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring, or=outer ring
-  **   last char - h=header, f=footer, s=seperator
-  */
-  const char *xh, *xf, *yh, *yf;
-  const char *cs;
-  const char *ph, *pf, *ps;
-  const char *sh, *sf;
-  const char *irh, *irf; /* inner ring: necessary for complex polygons */
-  const char *orh, *orf; /* outer ring */
-
-  int centroid;
-  int precision;
-
-  double scale_x, scale_y;
-
-  const char *projectionString=NULL;
+  char *tagEnd;
 
   shapeObj tShape;
-  char *coords=NULL, point[128];
+  char point[128];
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processShpxyTag()");
@@ -2003,7 +1954,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   if( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
     return MS_FAILURE;
 
-  tagStart = findTag(*line, "shpxy");
+  const char* tagStart = findTag(*line, "shpxy");
 
   /* It is OK to have no shpxy tags, just return. */
   if( !tagStart )
@@ -2019,23 +1970,36 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     double buffer = 0;
     int bufferUnits = -1;
 #endif
-    xh = yh = yf = ph = pf = sh = sf = ""; /* initialize the tag arguments */
-    xf= ",";
-    irh = irf = orh = orf = "";
-    ps = cs = " ";
 
-    centroid = MS_FALSE;
-    precision = 0;
-    scale_x = scale_y = 1.0;
+    /*
+    ** Pointers to static strings, naming convention is:
+    **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring, or=outer ring
+    **   last char - h=header, f=footer, s=seperator
+    */
+    const char *xh = "", *yh = "";
+    const char *xf = ",";
+    const char *yf = "";
+    const char *cs = " ";
+    const char *ph = "", *pf = "";
+    const char *ps = " ";
+    const char *sh = "", *sf = "";
+    const char *irh = "", *irf = ""; /* inner ring: necessary for complex polygons */
+    const char *orh = "", *orf = ""; /* outer ring */
 
-    projectionString = NULL;
+    int centroid = MS_FALSE;
+    int precision = 0;
+    double scale_x = 1.0;
+    double scale_y = 1.0;
 
-    tagOffset = tagStart - *line;
+    const char* projectionString = NULL;
+
+    const int tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "xh");
+      const char* argValue = msLookupHashTable(tagArgs, "xh");
       if(argValue) xh = argValue;
       argValue = msLookupHashTable(tagArgs, "xf");
       if(argValue) xf = argValue;
@@ -2102,10 +2066,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
-    pointFormatLength = strlen(xh) + strlen(xf) + strlen(yh) + strlen(yf) + strlen(cs) + 12 + 1;
-    pointFormat1 = (char *) msSmallMalloc(pointFormatLength);
+    const int pointFormatLength = strlen(xh) + strlen(xf) + strlen(yh) + strlen(yf) + strlen(cs) + 12 + 1;
+    char* pointFormat1 = (char *) msSmallMalloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs);
-    pointFormat2 = (char *) msSmallMalloc(pointFormatLength);
+    char* pointFormat2 = (char *) msSmallMalloc(pointFormatLength);
     snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf);
 
     /* make a copy of the original shape or compute a centroid if necessary */
@@ -2217,6 +2181,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     ** build the coordinate string
     */
 
+    char* coords = NULL;
     if(strlen(sh) > 0) coords = msStringConcatenate(coords, sh);
 
     /* do we need to handle inner/outer rings */
@@ -2293,8 +2258,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
@@ -2302,15 +2267,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* clean up */
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     free(pointFormat1);
-    pointFormat1 = NULL;
     free(pointFormat2);
-    pointFormat2 = NULL;
     free(coords);
-    coords = NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "shpxy");
@@ -2331,7 +2291,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 int processMetadata(char** pszInstr, hashTableObj *ht)
 {
   /* char *pszNextInstr = pszInstr; */
-  char *pszEnd, *pszStart;
+  char *pszEnd;
   char *pszMetadataTag;
   const char *pszHashName;
   const char *pszHashValue;
@@ -2345,7 +2305,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
   }
 
   /* set position to the begining of metadata tag */
-  pszStart = findTag(*pszInstr, "metadata");
+  const char* pszStart = findTag(*pszInstr, "metadata");
 
   while (pszStart) {
     /* get metadata args */
@@ -2397,7 +2357,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
 int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char* pszPrefix)
 {
   int nWidth, nHeight, nLen;
-  char szImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
+  char szImgFname[1024], *pszImgTag;
   char szPath[MS_MAXPATHLEN];
   hashTableObj *myHashTable=NULL;
   FILE *fIcon;
@@ -2455,7 +2415,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
              pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight,
              szStyleCode, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
-    pszFullImgFname = msStrdup(msBuildPath3(szPath, map->mappath,
+    char* pszFullImgFname = msStrdup(msBuildPath3(szPath, map->mappath,
                                             map->web.imagepath, szImgFname));
 
     /* check if icon already exist in cache */
@@ -2479,6 +2439,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
           msFreeHashTable(myHashTable);
 
         msSetError(MS_IMGERR, "Error while creating image.", "processIcon()");
+        msFree(pszFullImgFname);
         return MS_FAILURE;
       }
 
@@ -2498,7 +2459,6 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
     }
 
     msFree(pszFullImgFname);
-    pszFullImgFname = NULL;
 
     nLen = (strchr(pszImgTag, ']') + 1) - pszImgTag;
 
@@ -2510,14 +2470,13 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       pszTag = (char*)msSmallMalloc(nLen + 1);
       strlcpy(pszTag, pszImgTag, nLen+1);
 
-      pszFullImgFname = (char*)msSmallMalloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
-      strcpy(pszFullImgFname, map->web.imageurl);
-      strcat(pszFullImgFname, szImgFname);
+      char* pszFullImgUrlFname = (char*)msSmallMalloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
+      strcpy(pszFullImgUrlFname, map->web.imageurl);
+      strcat(pszFullImgUrlFname, szImgFname);
 
-      *pszInstr = msReplaceSubstring(*pszInstr, pszTag, pszFullImgFname);
+      *pszInstr = msReplaceSubstring(*pszInstr, pszTag, pszFullImgUrlFname);
 
-      msFree(pszFullImgFname);
-      pszFullImgFname = NULL;
+      msFree(pszFullImgUrlFname);
       msFree(pszTag);
 
       /* find the begining of tag */
@@ -2995,7 +2954,6 @@ char *generateLegendTemplate(mapservObj *mapserv)
   char **papszGroups = NULL;
   int nGroupNames = 0;
 
-  int nLegendOrder = 0;
   const char *pszOrderValue;
 
   hashTableObj *groupArgs = NULL;
@@ -3258,7 +3216,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
           if(pszOrderMetadata) {
             pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
             if(pszOrderValue) {
-              nLegendOrder = atoi(pszOrderValue);
+              const int nLegendOrder = atoi(pszOrderValue);
               if(nLegendOrder < 0)
                 continue;
             }
@@ -3325,7 +3283,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
           if(pszOrderMetadata) {
             pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
             if(pszOrderValue) {
-              nLegendOrder = atoi(pszOrderValue);
+              const int nLegendOrder = atoi(pszOrderValue);
               if(nLegendOrder < 0)
                 continue;
             }
@@ -3378,11 +3336,10 @@ char *generateLegendTemplate(mapservObj *mapserv)
         if(pszOrderMetadata) {
           pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
           if(pszOrderValue) {
-            nLegendOrder = atoi(pszOrderValue);
+            const int nLegendOrder = atoi(pszOrderValue);
             if(nLegendOrder < 0)
               continue;
-          } else
-            nLegendOrder=0;
+          }
         }
         if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].status == 0) {
           continue;
@@ -3443,7 +3400,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
           if(pszOrderMetadata) {
             pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
             if(pszOrderValue) {
-              nLegendOrder = atoi(pszOrderValue);
+              const int nLegendOrder = atoi(pszOrderValue);
               if(nLegendOrder < 0)
                 continue;
             }

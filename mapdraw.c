@@ -2568,6 +2568,7 @@ void offsetAndTest(mapObj *map, labelCacheMemberObj *cachePtr, double ox, double
   leaderpt.x = cachePtr->point.x + ox;
   leaderpt.y = cachePtr->point.y + oy;
   leaderpt.z = 0;
+  leaderpt.m = 0;
 
   status = msTestLabelCacheLeaderCollision(map, &cachePtr->point, &leaderpt);
   if(!status) {

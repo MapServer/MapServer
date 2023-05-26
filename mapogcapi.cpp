@@ -1527,7 +1527,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
 
       std::string collectionNamePath("/collections/");
       collectionNamePath += layer->name;
-      paths[collectionNamePath]["get"] = collection_get;
+      paths[collectionNamePath]["get"] = std::move(collection_get);
 
       // check metadata, layer then map
       const char* max_limit_str = msOWSLookupMetadata(&(layer->metadata), "A", "max_limit");
@@ -1590,7 +1590,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
           }}
       };
       std::string itemsFeatureIdPath(collectionNamePath + "/items/{featureId}");
-      paths[itemsFeatureIdPath]["get"] = feature_id_get;
+      paths[itemsFeatureIdPath]["get"] = std::move(feature_id_get);
   }
 
   response["paths"] = paths;

@@ -4007,7 +4007,6 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
   char szTmp[100];
   char *pszSLD = NULL;
   char szHexColor[7];
-  char *pszGraphicSLD = NULL;
   double dfSize;
   char sCssParam[30];
   char sNameSpace[10];
@@ -4033,7 +4032,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
 
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
+    char* pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
     if (pszGraphicSLD) {
       snprintf(szTmp, sizeof(szTmp), "<%sGraphicFill>\n",  sNameSpace);
 
@@ -4046,7 +4045,6 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
       free(pszGraphicSLD);
-      pszGraphicSLD = NULL;
     }
 
     sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
@@ -4082,7 +4080,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
     /* style should be set to -1. Else It won't apply here. */
     if (psStyle->color.red == -1 && psStyle->color.green == -1 &&
         psStyle->color.blue == -1) {
-      pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
+      char* pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
       if (pszGraphicSLD) {
         snprintf(szTmp, sizeof(szTmp), "<%sGraphicFill>\n",  sNameSpace);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
@@ -4092,7 +4090,6 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         free(pszGraphicSLD);
-        pszGraphicSLD = NULL;
       }
     }
 

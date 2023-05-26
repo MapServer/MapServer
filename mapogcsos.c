@@ -834,7 +834,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
       for(i=0; i<lpfirst->numitems; i++) {
         snprintf(szTmp, sizeof(szTmp), "%s_alias", lpfirst->items[i]);
         pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
-        if (pszValue) {
+        if (pszValue && sShape.values) {
           for (j=0; j<lp->numitems; j++) {
             if (strcasecmp(lpfirst->items[i],  lpfirst->items[j]) == 0) {
               /*if there is an alias used, use it to output the
@@ -1737,7 +1737,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   SOSProcedureNode *paDiffrentProc = NULL;
   int iItemPosition, status;
   shapeObj sShape;
-  char* pszEscapedStr = NULL;
 
   sBbox = map->extent;
 
@@ -1970,19 +1969,20 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
                 pszBuffer = msStringConcatenate(pszBuffer, "'[");
                 pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
               } else {
-                pszEscapedStr = msLayerEscapePropertyName(lp, (char *)pszProcedureItem);
+                char* pszEscapedStr = msLayerEscapePropertyName(lp, (char *)pszProcedureItem);
                 pszBuffer = msStringConcatenate(pszBuffer, pszEscapedStr);
                 msFree(pszEscapedStr);
-                pszEscapedStr = NULL;
               }
 
               if (!bSpatialDB)
                 pszBuffer = msStringConcatenate(pszBuffer, "]'");
 
               pszBuffer = msStringConcatenate(pszBuffer, " = '");
-              pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[j]);
-              pszBuffer = msStringConcatenate(pszBuffer,  pszEscapedStr);
-              msFree(pszEscapedStr);
+              {
+                char* pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[j]);
+                pszBuffer = msStringConcatenate(pszBuffer,  pszEscapedStr);
+                msFree(pszEscapedStr);
+              }
               pszBuffer = msStringConcatenate(pszBuffer,  "')");
             }
 

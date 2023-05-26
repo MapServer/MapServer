@@ -645,7 +645,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     struct legend_struct* pred;
   };
   typedef struct legend_struct legendlabel;
-  legendlabel *head=NULL,*cur=NULL;
+  legendlabel *head=NULL;
 
   if(!MS_RENDERER_PLUGIN(map->outputformat)) {
     msSetError(MS_MISCERR,"unsupported output format","msDrawLegend()");
@@ -701,7 +701,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
           continue;
       }
 
-      cur = (legendlabel*) msSmallMalloc(sizeof(legendlabel));
+      legendlabel* cur = (legendlabel*) msSmallMalloc(sizeof(legendlabel));
       initTextSymbol(&cur->ts);
       if(*text) {
         msPopulateTextSymbolForLabelAndString(&cur->ts,&map->legend.label,msStrdup(text),map->resolution/map->defresolution,map->resolution/map->defresolution, 0);
@@ -745,7 +745,8 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
   pnt.y = VMARGIN;
   pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
 
-  while(cur) { /* cur initially points on the last legend item, i.e. the one that should be at the top */
+  while(head) { /* head initially points on the last legend item, i.e. the one that should be at the top */
+    legendlabel* cur = head;
     class_hittest *ch = NULL;
 
     /* set the scale factor so that scale dependant symbols are drawn in the legend with their default size */
@@ -779,20 +780,19 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     pnt.y += map->legend.keyspacingy; /* bump y for next label */
 
     /* clean up */
-    legendlabel* cur_pred = cur->pred;
+    head = cur->pred;
     free(cur);
-    cur = cur_pred;
   } /* next legend */
 
 cleanup:
-  while(cur) {
+  while(head) {
+    legendlabel* cur = head;
     /* Coverity Scan is confused by label refcount, and wrongly believe we */
     /* might free &map->legend.label, so make it clear we won't */
     freeTextSymbolEx(&cur->ts, MS_FALSE);
     MS_REFCNT_DECR(cur->ts.label);
-    legendlabel* cur_pred = cur->pred;
+    head = cur->pred;
     free(cur);
-    cur = cur_pred;
   }
   if(MS_UNLIKELY(ret != MS_SUCCESS)) {
     if(image) msFreeImage(image);
