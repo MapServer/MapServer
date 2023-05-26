@@ -1181,19 +1181,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 {
   int i;
 
-  char *tag, *tagEnd;
-  hashTableObj *tagArgs=NULL;
-  int tagLength;
-  char *encodedTagValue=NULL, *tagValue=NULL;
-
-  const char *argValue=NULL;
-
-  const char *name=NULL, *pattern=NULL;
-  const char *format=NULL, *nullFormat=NULL;
-  int precision;
-  int padding;
-  int uc, lc, commify;
-  int escape;
+  char *tagEnd;
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processItemTag()");
@@ -1205,18 +1193,22 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   while (tagStart) {
-    format = "$value"; /* initialize the tag arguments */
-    nullFormat = "";
-    precision = -1;
-    padding = -1;
-    name = pattern = NULL;
-    uc = lc = commify = MS_FALSE;
-    escape=ESCAPE_HTML;
+    const char* format = "$value"; /* initialize the tag arguments */
+    const char* nullFormat = "";
+    int precision = -1;
+    int padding = -1;
+    const char* name = NULL;
+    const char* pattern = NULL;
+    int uc = MS_FALSE;
+    int lc = MS_FALSE;
+    int commify = MS_FALSE;
+    int escape=ESCAPE_HTML;
 
     /* check for any tag arguments */
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs("item", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "name");
+      const char* argValue = msLookupHashTable(tagArgs, "name");
       if(argValue) name = argValue;
 
       argValue = msLookupHashTable(tagArgs, "pattern");
@@ -1267,6 +1259,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     /*
     ** now we know which item so build the tagValue
     */
+    char* tagValue = NULL;
     if(shape->values[i] && strlen(shape->values[i]) > 0) {
       char *itemValue=NULL;
 
@@ -1319,24 +1312,33 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     switch(escape) {
       case ESCAPE_HTML:
-        encodedTagValue = msEncodeHTMLEntities(tagValue);
+      {
+        char* encodedTagValue = msEncodeHTMLEntities(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_JSON:
-        encodedTagValue = msEscapeJSonString(tagValue);
+      {
+        char* encodedTagValue = msEscapeJSonString(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_URL:
-        encodedTagValue = msEncodeUrl(tagValue);
+      {
+        char* encodedTagValue = msEncodeUrl(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_NONE:
         *line = msReplaceSubstring(*line, tag, tagValue);
         break;
@@ -1346,13 +1348,8 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* clean up */
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     msFree(tagValue);
-    tagValue=NULL;
-    msFree(encodedTagValue);
-    encodedTagValue=NULL;
 
     tagStart = findTag(*line, "item");
   }
