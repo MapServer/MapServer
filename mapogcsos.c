@@ -1737,7 +1737,6 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   SOSProcedureNode *paDiffrentProc = NULL;
   int iItemPosition, status;
   shapeObj sShape;
-  char* pszEscapedStr = NULL;
 
   sBbox = map->extent;
 
@@ -1970,19 +1969,20 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
                 pszBuffer = msStringConcatenate(pszBuffer, "'[");
                 pszBuffer = msStringConcatenate(pszBuffer, (char *)pszProcedureItem);
               } else {
-                pszEscapedStr = msLayerEscapePropertyName(lp, (char *)pszProcedureItem);
+                char* pszEscapedStr = msLayerEscapePropertyName(lp, (char *)pszProcedureItem);
                 pszBuffer = msStringConcatenate(pszBuffer, pszEscapedStr);
                 msFree(pszEscapedStr);
-                pszEscapedStr = NULL;
               }
 
               if (!bSpatialDB)
                 pszBuffer = msStringConcatenate(pszBuffer, "]'");
 
               pszBuffer = msStringConcatenate(pszBuffer, " = '");
-              pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[j]);
-              pszBuffer = msStringConcatenate(pszBuffer,  pszEscapedStr);
-              msFree(pszEscapedStr);
+              {
+                char* pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[j]);
+                pszBuffer = msStringConcatenate(pszBuffer,  pszEscapedStr);
+                msFree(pszEscapedStr);
+              }
               pszBuffer = msStringConcatenate(pszBuffer,  "')");
             }
 
