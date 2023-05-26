@@ -2397,7 +2397,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
 int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char* pszPrefix)
 {
   int nWidth, nHeight, nLen;
-  char szImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
+  char szImgFname[1024], *pszImgTag;
   char szPath[MS_MAXPATHLEN];
   hashTableObj *myHashTable=NULL;
   FILE *fIcon;
@@ -2455,7 +2455,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
              pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight,
              szStyleCode, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
-    pszFullImgFname = msStrdup(msBuildPath3(szPath, map->mappath,
+    char* pszFullImgFname = msStrdup(msBuildPath3(szPath, map->mappath,
                                             map->web.imagepath, szImgFname));
 
     /* check if icon already exist in cache */
@@ -2479,6 +2479,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
           msFreeHashTable(myHashTable);
 
         msSetError(MS_IMGERR, "Error while creating image.", "processIcon()");
+        msFree(pszFullImgFname);
         return MS_FAILURE;
       }
 
@@ -2498,7 +2499,6 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
     }
 
     msFree(pszFullImgFname);
-    pszFullImgFname = NULL;
 
     nLen = (strchr(pszImgTag, ']') + 1) - pszImgTag;
 
@@ -2510,14 +2510,13 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       pszTag = (char*)msSmallMalloc(nLen + 1);
       strlcpy(pszTag, pszImgTag, nLen+1);
 
-      pszFullImgFname = (char*)msSmallMalloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
-      strcpy(pszFullImgFname, map->web.imageurl);
-      strcat(pszFullImgFname, szImgFname);
+      char* pszFullImgUrlFname = (char*)msSmallMalloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
+      strcpy(pszFullImgUrlFname, map->web.imageurl);
+      strcat(pszFullImgUrlFname, szImgFname);
 
-      *pszInstr = msReplaceSubstring(*pszInstr, pszTag, pszFullImgFname);
+      *pszInstr = msReplaceSubstring(*pszInstr, pszTag, pszFullImgUrlFname);
 
-      msFree(pszFullImgFname);
-      pszFullImgFname = NULL;
+      msFree(pszFullImgUrlFname);
       msFree(pszTag);
 
       /* find the begining of tag */
