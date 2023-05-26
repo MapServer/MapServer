@@ -677,13 +677,6 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
 {
   /*   char *pszNextInstr = pszInstr; */
   const char *pszEnd=NULL;
-  const char *pszName, *pszValue, *pszOperator, *pszHTValue;
-  char *pszThen=NULL;
-  char *pszIfTag;
-  int nInst = 0;
-  int nLength;
-
-  hashTableObj *ifArgs=NULL;
 
   if(!*pszInstr) {
     msSetError(MS_WEBERR, "Invalid pointer.", "processIfTag()");
@@ -699,6 +692,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
     const char* pszPatOut = strstr(pszStart, "[/if]");
     const char* pszTmp = pszPatIn;
 
+    int nInst = 0;
     do {
       if(pszPatIn && pszPatIn < pszPatOut) {
         nInst++;
@@ -717,20 +711,22 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
     } while (nInst > 0);
 
     /* get the then string (if expression is true) */
+    char *pszThen=NULL;
     if(getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS) {
       msSetError(MS_WEBERR, "Malformed then if tag.", "processIfTag()");
       return MS_FAILURE;
     }
 
     /* retrieve if tag args */
+    hashTableObj *ifArgs=NULL;
     if(getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS) {
       msSetError(MS_WEBERR, "Malformed args if tag.", "processIfTag()");
       return MS_FAILURE;
     }
 
-    pszName = msLookupHashTable(ifArgs, "name");
-    pszValue = msLookupHashTable(ifArgs, "value");
-    pszOperator = msLookupHashTable(ifArgs, "oper");
+    const char* pszName = msLookupHashTable(ifArgs, "name");
+    const char* pszValue = msLookupHashTable(ifArgs, "value");
+    const char* pszOperator = msLookupHashTable(ifArgs, "oper");
     if(pszOperator == NULL) /* Default operator if not set is "eq" */
       pszOperator = "eq";
 
@@ -740,13 +736,13 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
       /* build the complete if tag ([if all_args]then string[/if]) */
       /* to replace if by then string if expression is true */
       /* or by a white space if not. */
-      nLength = pszEnd - pszStart;
-      pszIfTag = (char*)msSmallMalloc(nLength + 6);
+      const int nLength = pszEnd - pszStart;
+      char* pszIfTag = (char*)msSmallMalloc(nLength + 6);
       strlcpy(pszIfTag, pszStart, nLength+1);
       pszIfTag[nLength] = '\0';
       strcat(pszIfTag, "[/if]");
 
-      pszHTValue = msLookupHashTable(ht, pszName);
+      const char* pszHTValue = msLookupHashTable(ht, pszName);
 
       if(strcmp(pszOperator, "neq") == 0) {
         if(pszValue && pszHTValue && strcasecmp(pszValue, pszHTValue) != 0) {
@@ -782,20 +778,18 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
         }
       } else {
         msSetError(MS_WEBERR, "Unsupported operator (%s) in if tag.",  "processIfTag()", pszOperator);
+        free(pszIfTag);
+        free (pszThen);
+        msFreeHashTable(ifArgs);
         return MS_FAILURE;
       }
 
       free(pszIfTag);
-      pszIfTag = NULL;
     }
 
-    if(pszThen)
-      free (pszThen);
-
-    pszThen=NULL;
+    free (pszThen);
 
     msFreeHashTable(ifArgs);
-    ifArgs=NULL;
 
     /* find the if start tag */
     if(bEmpty)
