@@ -20,11 +20,15 @@ environment:
   VS_VERSION: Visual Studio 16 2019
   matrix:
   - platform: x64
-    Python_ROOT_DIR: c:/python36-x64
-  - platform: x64
     Python_ROOT_DIR: c:/python37-x64
   - platform: x64
     Python_ROOT_DIR: c:/python38-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python39-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python310-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python311-x64
 
 matrix:
   fast_finish: true
@@ -36,7 +40,7 @@ init:
   - net start MSSQL$SQL2019
   - ps: |
         if ($env:APPVEYOR_REPO_TAG -ne $TRUE) {
-            if ("c:/python27-x64","c:/python36-x64" -contains $env:Python_ROOT_DIR -eq $TRUE) {
+            if ("c:/python37-x64" -contains $env:Python_ROOT_DIR -eq $TRUE) {
                 Write-Host "Skipping build, not a tagged release."
                 Exit-AppVeyorBuild
             }
@@ -115,7 +119,7 @@ artifacts:
 deploy_script:
   - ps: |
         if ($env:APPVEYOR_REPO_TAG -ne $TRUE -or ($env:APPVEYOR_REPO_TAG_NAME -cSplit "-").Count -ne 4) { return }
-        if ($env:Python_ROOT_DIR -eq "c:/python36-x64") {
+        if ($env:Python_ROOT_DIR -eq "c:/python310-x64") {
             Write-Host "Deploying Python source distribution to PyPI. Tag $env:APPVEYOR_REPO_TAG_NAME"
             cd $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release
                 & "$env:Python_ROOT_DIR/python" setup.py sdist
