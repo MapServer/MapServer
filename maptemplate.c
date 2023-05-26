@@ -455,26 +455,24 @@ static int sortLayerByMetadata(mapObj *map, const char* pszMetadata)
 **
 ** Tag can be [TAG] or [TAG something]
 */
-char *findTag(char *pszInstr, char *pszTag)
+static const char *findTag(const char *pszInstr, const char *pszTag)
 {
-  char *pszTag1, *pszStart=NULL;
-  char *pszTemp;
+  const char* pszStart=NULL;
   int done=MS_FALSE;
-  int length;
 
   if(!pszInstr || !pszTag) {
     msSetError(MS_WEBERR, "Invalid pointer.", "findTag()");
     return NULL;
   }
 
-  length = strlen(pszTag) + 1; /* adding [ character to the beginning */
-  pszTag1 = (char*) msSmallMalloc(length+1);
+  const int length = strlen(pszTag) + 1; /* adding [ character to the beginning */
+  char* pszTag1 = (char*) msSmallMalloc(length+1);
 
   strcpy(pszTag1, "[");
   strcat(pszTag1, pszTag);
 
-  pszTemp = pszInstr;
-  while(!done) {
+  const char* pszTemp = pszInstr;
+  do {
     pszStart = strstr(pszTemp, pszTag1);
 
     if(pszStart == NULL)
@@ -483,7 +481,7 @@ char *findTag(char *pszInstr, char *pszTag)
       done = MS_TRUE; /* valid tag */
     else
       pszTemp += length; /* skip ahead and start over */
-  }
+  } while(!done);
 
   free(pszTag1);
 
@@ -521,9 +519,9 @@ char *findTagEnd(const char *pszTag)
 ** Return a hashtableobj from instr of all
 ** arguments. hashtable must be freed by caller.
 */
-int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
+static int getTagArgs(const char* pszTag, const char* pszInstr, hashTableObj **ppoHashTable)
 {
-  char *pszStart, *pszEnd, *pszArgs;
+  const char *pszStart, *pszEnd;
   int nLength;
   char **papszArgs, **papszVarVal;
   int nArgs, nDummy;
@@ -549,7 +547,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
       nLength = pszEnd - pszStart;
 
       if(nLength > 0) { /* is there arguments ? */
-        pszArgs = (char*)msSmallMalloc(nLength + 1);
+        char* pszArgs = (char*)msSmallMalloc(nLength + 1);
         strlcpy(pszArgs, pszStart, nLength+1);
 
         if(!(*ppoHashTable))
@@ -592,9 +590,9 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 ** pszNextInstr will be a pointer at the end of the
 ** first occurence found.
 */
-int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
+static int getInlineTag(const char *pszTag, const char *pszInstr, char **pszResult)
 {
-  char *pszStart, *pszEnd=NULL,  *pszEndTag, *pszPatIn, *pszPatOut=NULL, *pszTmp;
+  const char *pszEnd=NULL;
   int nInst=0;
   int nLength;
 
@@ -605,17 +603,17 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
     return MS_FAILURE;
   }
 
-  pszEndTag = (char*)msSmallMalloc(strlen(pszTag) + 3);
+  char* pszEndTag = (char*)msSmallMalloc(strlen(pszTag) + 3);
   strcpy(pszEndTag, "[/");
   strcat(pszEndTag, pszTag);
 
   /* find start tag */
-  pszPatIn  = findTag(pszInstr, pszTag);
-  pszPatOut = strstr(pszInstr, pszEndTag);
+  const char* pszPatIn  = findTag(pszInstr, pszTag);
+  const char* pszPatOut = strstr(pszInstr, pszEndTag);
 
-  pszStart = pszPatIn;
+  const char* pszStart = pszPatIn;
 
-  pszTmp = pszInstr;
+  const char* pszTmp = pszInstr;
 
   if(pszPatIn) {
     do {
@@ -678,11 +676,10 @@ int getInlineTag(char *pszTag, char *pszInstr, char **pszResult)
 int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
 {
   /*   char *pszNextInstr = pszInstr; */
-  char *pszStart, *pszEnd=NULL;
+  const char *pszEnd=NULL;
   const char *pszName, *pszValue, *pszOperator, *pszHTValue;
   char *pszThen=NULL;
   char *pszIfTag;
-  char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
   int nInst = 0;
   int nLength;
 
@@ -695,12 +692,12 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
 
   /* find the if start tag */
 
-  pszStart  = findTag(*pszInstr, "if");
+  const char* pszStart  = findTag(*pszInstr, "if");
 
   while (pszStart) {
-    pszPatIn  = findTag(pszStart, "if");
-    pszPatOut = strstr(pszStart, "[/if]");
-    pszTmp = pszPatIn;
+    const char* pszPatIn  = findTag(pszStart, "if");
+    const char* pszPatOut = strstr(pszStart, "[/if]");
+    const char* pszTmp = pszPatIn;
 
     do {
       if(pszPatIn && pszPatIn < pszPatOut) {
@@ -845,7 +842,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   char *preTag, *postTag; /* text before and after the tag */
 
   const char *argValue;
-  char *tag, *tagInstance, *tagStart;
+  char *tag, *tagInstance;
   hashTableObj *tagArgs=NULL;
 
   int limit=-1;
@@ -858,7 +855,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "feature");
+  const char* tagStart = findTag(*line, "feature");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   /* check for any tag arguments */
@@ -986,7 +983,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
   char *preTag, *postTag; /* text before and after the tag */
 
-  char *tag, *tagStart;
+  char *tag;
   hashTableObj *tagArgs=NULL;
 
   const char *layerName=NULL;
@@ -999,7 +996,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "resultset");
+  const char* tagStart = findTag(*line, "resultset");
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
   while (tagStart) {
@@ -1096,7 +1093,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 */
 static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int mode)
 {
-  char *tag, *tagStart, *tagEnd;
+  char *tag, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
@@ -1111,7 +1108,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "include");
+  const char* tagStart = findTag(*line, "include");
 
   /* It is OK to have no include tags, just return. */
   if( !tagStart ) return MS_SUCCESS;
@@ -1184,7 +1181,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 {
   int i;
 
-  char *tag, *tagStart, *tagEnd;
+  char *tag, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagLength;
   char *encodedTagValue=NULL, *tagValue=NULL;
@@ -1203,7 +1200,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "item");
+  const char* tagStart = findTag(*line, "item");
 
   if(!tagStart) return(MS_SUCCESS); /* OK, just return; */
 
@@ -1368,8 +1365,6 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 */
 static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent, projectionObj *rectProj)
 {
-  char *tagStart;
-
   rectObj tempExtent;
 
   char number[64]; /* holds a single number in the extent */
@@ -1380,7 +1375,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, name); /* this supports any extent */
+  const char* tagStart = findTag(*line, name); /* this supports any extent */
 
   /* It is OK to have no include tags, just return. */
   if(!tagStart) return MS_SUCCESS;
@@ -1525,7 +1520,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 // RFC 77 TODO: Need to validate these changes with Assefa...
 static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 {
-  char *tag, *tagStart, *tagEnd;
+  char *tag, *tagEnd;
   char *tagValue=NULL;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
@@ -1550,7 +1545,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
   if(msCheckParentPointer(layer->map,"map") == MS_FAILURE)
     return MS_FAILURE;
 
-  tagStart = findTag(*line, "shplabel");
+  const char* tagStart = findTag(*line, "shplabel");
 
   /* It is OK to have no shplabel tags, just return. */
   if(!tagStart)
@@ -1876,7 +1871,7 @@ static int processDateTag(char **line)
   struct tm *datetime;
   time_t t;
   int result;
-  char *tag=NULL, *tagStart, *tagEnd;
+  char *tag=NULL, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 #define DATE_BUFLEN 1024
@@ -1889,7 +1884,7 @@ static int processDateTag(char **line)
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "date");
+  const char* tagStart = findTag(*line, "date");
 
   /* It is OK to have no date tags, just return. */
   if( !tagStart )
@@ -1964,7 +1959,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   int i,j,p;
   int status;
 
-  char *tagStart, *tagEnd;
+  char *tagEnd;
 
   shapeObj tShape;
   char point[128];
@@ -1976,7 +1971,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   if( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
     return MS_FAILURE;
 
-  tagStart = findTag(*line, "shpxy");
+  const char* tagStart = findTag(*line, "shpxy");
 
   /* It is OK to have no shpxy tags, just return. */
   if( !tagStart )
@@ -2313,7 +2308,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 int processMetadata(char** pszInstr, hashTableObj *ht)
 {
   /* char *pszNextInstr = pszInstr; */
-  char *pszEnd, *pszStart;
+  char *pszEnd;
   char *pszMetadataTag;
   const char *pszHashName;
   const char *pszHashValue;
@@ -2327,7 +2322,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
   }
 
   /* set position to the begining of metadata tag */
-  pszStart = findTag(*pszInstr, "metadata");
+  const char* pszStart = findTag(*pszInstr, "metadata");
 
   while (pszStart) {
     /* get metadata args */
