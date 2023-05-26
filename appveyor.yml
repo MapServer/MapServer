@@ -97,8 +97,7 @@ test_script:
   - cd %BUILD_FOLDER%/msautotest/mssql
   - "%Python_ROOT_DIR%/python run_test.py"
   - cd %BUILD_FOLDER%/msautotest/mspython
-  # skip the datum shift test - see #6824 and PROJ9 issue
-  - "%Python_ROOT_DIR%/python run_all_tests.py -k \"not test_reprojection_rect_and_datum_shift\""
+  - "%Python_ROOT_DIR%/python run_all_tests.py"
 
 after_test:
   - cd %BUILD_FOLDER%
