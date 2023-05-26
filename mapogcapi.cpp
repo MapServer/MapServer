@@ -38,6 +38,7 @@
 
 #include <string>
 #include <iostream>
+#include <utility>
 
 using namespace inja;
 using json = nlohmann::json;
@@ -75,35 +76,57 @@ enum class OGCAPIFormat
 
 #ifdef USE_OGCAPI_SVR
 
-#define OGCAPI_SERVER_ERROR 0 // error codes
-#define OGCAPI_CONFIG_ERROR 1
-#define OGCAPI_PARAM_ERROR 2
-#define OGCAPI_NOT_FOUND_ERROR 3
-#define OGCAPI_NUM_ERROR_CODES 4
+// Error types
+typedef enum
+{
+    OGCAPI_SERVER_ERROR = 0,
+    OGCAPI_CONFIG_ERROR = 1,
+    OGCAPI_PARAM_ERROR = 2,
+    OGCAPI_NOT_FOUND_ERROR = 3,
+} OGCAPIErrorType;
 
 /*
 ** Returns a JSON object using and a description.
 */
-static void outputError(int code, const std::string& description)
+static void outputError(OGCAPIErrorType errorType, const std::string& description)
 {
-  if(code < 0 || code >= OGCAPI_NUM_ERROR_CODES) code = 0;
-
-  json error_codes = {
-    { {"text", "ServerError"}, {"status", "500"} },
-    { {"text", "ConfigError"}, {"status", "500"} },
-    { {"text", "InvalidParamterValue"}, {"status", "400"} },
-    { {"text", "NotFound"}, {"status", "404"} }
-  };
+  const char* code = "";
+  const char* status = "";
+  switch(errorType)
+  {
+      case OGCAPI_SERVER_ERROR:
+      {
+          code = "ServerError";
+          status = "500";
+          break;
+      }
+      case OGCAPI_CONFIG_ERROR:
+      {
+          code = "ConfigError";
+          status = "500";
+          break;
+      }
+      case OGCAPI_PARAM_ERROR:
+      {
+          code = "InvalidParamterValue";
+          status = "400";
+          break;
+      }
+      case OGCAPI_NOT_FOUND_ERROR:
+      {
+          code = "NotFound";
+          status = "404";
+          break;
+      }
+  }
 
   json j = {
-    { "code", error_codes[code]["text"] },
+    { "code", code },
     { "description", description }
   };
 
-  std::string status = error_codes[code]["status"];
-
   msIO_setHeader("Content-Type", "%s", OGCAPI_MIMETYPE_JSON);
-  msIO_setHeader("Status", "%s", status.c_str());
+  msIO_setHeader("Status", "%s", status);
   msIO_sendHeaders();
   msIO_printf("%s\n", j.dump().c_str());
 }
