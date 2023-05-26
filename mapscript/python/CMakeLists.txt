@@ -10,8 +10,9 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
 
 set(SwigFile ${PROJECT_SOURCE_DIR}/mapscript/mapscript.i)
 
-# add annotations to py file output - requires >= SWIG 4.1
+# add and comments annotations to py file output - requires >= SWIG 4.1
 if (WITH_PYMAPSCRIPT_ANNOTATIONS AND ${Python_VERSION_MAJOR} GREATER_EQUAL 3)
+  set_property(SOURCE ${SwigFile} APPEND PROPERTY SWIG_FLAGS -doxygen)
   if (${Python_VERSION_MINOR} GREATER_EQUAL 6)
      set_property(SOURCE ${SwigFile} APPEND PROPERTY SWIG_FLAGS -features python:annotations=c)
   else ()
