@@ -2205,10 +2205,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
                   first_retry_idx = k-1;
                 }
                 retry_offset = compute_retry_offset(ts, first_retry_idx, retry_offset, max_dec_retry_offset, max_inc_retry_offset);
-                if(retry_offset == 0.0) { /* no offsetted position to try */
-                  freeTextPath(tp);
-                  free(tp);
-                } else {
+                if(retry_offset != 0.0) { /* offsetted position to try */
                   if(direction<0) {
                     retry_offset = -retry_offset;
                   }
@@ -2304,12 +2301,18 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
         msCopyTextSymbol(tsnew,ts);
         ts->textpath = tmptp;
         tsnew->textpath = tp;
+        tp = NULL;
         tsnew->textpath->absolute = 1;
       }
       
       cur_label_position += label_buffer;
       retry_offset = 0;
     } while(retry_offset);
+
+    if (tp) {
+      freeTextPath(tp);
+      free(tp);
+    }
   }
   return MS_SUCCESS;
 
