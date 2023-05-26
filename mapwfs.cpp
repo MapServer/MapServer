@@ -2410,7 +2410,6 @@ static int msWFSRetrieveFeatures(mapObj* map,
   if (pszFeatureId != NULL) {
     char **tokens = NULL;
     int nTokens = 0, j=0, k=0;
-    FilterEncodingNode *psNode = NULL;
     char **aFIDLayers = NULL;
     char **aFIDValues = NULL;
     int iFIDLayers = 0;
@@ -2501,7 +2500,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         /* Force setting a template to enable query. */
         lp->_template = msStrdup("ttt.html");
       }
-      psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
+      FilterEncodingNode *psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
 
       if( FLTApplyFilterToLayer(psNode, map, lp->index) != MS_SUCCESS ) {
         msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature");
@@ -2512,7 +2511,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       }
 
       FLTFreeFilterEncodingNode( psNode );
-      psNode = NULL;
 
       /* Decrement the total maxfeatures */
       if( map->query.maxfeatures >= 0 )
