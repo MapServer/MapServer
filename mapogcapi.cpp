@@ -1567,7 +1567,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
           }}
       };
       std::string itemsFeatureIdPath(collectionNamePath + "/items/{featureId}");
-      paths[itemsFeatureIdPath]["get"] = feature_id_get;
+      paths[itemsFeatureIdPath]["get"] = std::move(feature_id_get);
   }
 
   response["paths"] = paths;
