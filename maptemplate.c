@@ -1368,11 +1368,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 */
 static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectObj *extent, projectionObj *rectProj)
 {
-  char *tag, *tagStart, *tagEnd;
-  hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-
-  char *encodedTagValue=NULL, *tagValue=NULL;
+  char *tagStart;
 
   rectObj tempExtent;
 
@@ -1402,9 +1398,10 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     else
       escape = ESCAPE_HTML;
 
-    tagOffset = tagStart - *line;
+    const int tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs(name, tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       const char* argValue = msLookupHashTable(tagArgs, "expand");
@@ -1463,7 +1460,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
         msProjectRect(rectProj, &projection, &tempExtent);
     }
 
-    tagValue = msStrdup(format);
+    char* tagValue = msStrdup(format);
 
     if(precision != -1)
       snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
@@ -1480,24 +1477,30 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     tagValue = msReplaceSubstring(tagValue, "$maxy", number);
 
     /* find the end of the tag */
-    tagEnd = findTagEnd(tagStart);
+    char* tagEnd = findTagEnd(tagStart);
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
     switch(escape) {
       case ESCAPE_HTML:
-        encodedTagValue = msEncodeHTMLEntities(tagValue);
+      {
+        char* encodedTagValue = msEncodeHTMLEntities(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_URL:
-        encodedTagValue = msEncodeUrl(tagValue);
+      {
+        char* encodedTagValue = msEncodeUrl(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        msFree(encodedTagValue);
         break;
+      }
       case ESCAPE_NONE:
         *line = msReplaceSubstring(*line, tag, tagValue);
         break;
@@ -1507,13 +1510,8 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 
     /* clean up */
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     msFree(tagValue);
-    tagValue=NULL;
-    msFree(encodedTagValue);
-    encodedTagValue=NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, name);
