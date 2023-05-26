@@ -36,6 +36,8 @@
 #include "third-party/include_nlohmann_json.hpp"
 #include "third-party/include_pantor_inja.hpp"
 
+#include <algorithm>
+#include <map>
 #include <string>
 #include <iostream>
 #include <utility>
@@ -73,6 +75,9 @@ enum class OGCAPIFormat
 #define OGCAPI_MAX_LIMIT 10000
 
 #define OGCAPI_DEFAULT_GEOMETRY_PRECISION 6
+
+constexpr const char* EPSG_PREFIX_URL = "http://www.opengis.net/def/crs/EPSG/0/";
+constexpr const char* CRS84_URL = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
 #ifdef USE_OGCAPI_SVR
 
@@ -222,23 +227,68 @@ static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *l
   return MS_SUCCESS;
 }
 
+// Return the content of the "crs" member of the /collections/{name} response
+static json getCrsList(mapObj *map, layerObj *layer)
+{
+  char* pszSRSList = NULL;
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "AOF", MS_FALSE, &pszSRSList);
+  if( !pszSRSList )
+    msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "AOF", MS_FALSE, &pszSRSList);
+  json jCrsList;
+  if( pszSRSList )
+  {
+      const auto tokens = msStringSplit(pszSRSList, ' ');
+      for( const auto& crs: tokens )
+      {
+          if( crs.find("EPSG:") == 0 )
+          {
+              if( jCrsList.empty() )
+              {
+                  jCrsList.push_back(CRS84_URL);
+              }
+              const std::string url = std::string(EPSG_PREFIX_URL) + crs.substr(strlen("EPSG:"));
+              jCrsList.push_back(url);
+          }
+      }
+      msFree(pszSRSList);
+  }
+  return jCrsList;
+}
+
+// Return the content of the "storageCrs" member of the /collections/{name} response
+static std::string getStorageCrs(layerObj *layer)
+{
+  std::string storageCrs;
+  char* pszFirstSRS = nullptr;
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "AOF", MS_TRUE, &pszFirstSRS);
+  if( pszFirstSRS )
+  {
+      if( std::string(pszFirstSRS).find("EPSG:") == 0 )
+      {
+          storageCrs = std::string(EPSG_PREFIX_URL) + (pszFirstSRS + strlen("EPSG:"));
+      }
+      msFree(pszFirstSRS);
+  }
+  return storageCrs;
+}
+
 /*
-** Returns the bbox in SRS of the map.
+** Returns the bbox in output CRS (CRS84 by default, or "crs" request parameter when specified)
 */
-static bool getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
+static bool getBbox(mapObj *map, layerObj* layer, cgiRequestObj *request, rectObj *bbox, projectionObj* outputProj)
 {
   int status;
-  const char *p;
 
-  p = getRequestParameter(request, "bbox");
-  if(!p || (p && strlen(p) == 0)) { // missing or empty - assign map->extent (no projection necessary)
+  const char* bboxParam = getRequestParameter(request, "bbox");
+  if(!bboxParam || strlen(bboxParam) == 0) { // missing or empty - assign map->extent (no projection necessary)
     bbox->minx = map->extent.minx;
     bbox->miny = map->extent.miny;
     bbox->maxx = map->extent.maxx;
     bbox->maxy = map->extent.maxy;
   } else {
-    const auto tokens = msStringSplit(p, ',');
+    const auto tokens = msStringSplit(bboxParam, ',');
     if(tokens.size() != 4) {
+      outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
       return false;
     }
 
@@ -246,6 +296,7 @@ static bool getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     for(int i=0; i<4; i++) {
       status = msStringToDouble(tokens[i].c_str(), &values[i]);
       if(status != MS_SUCCESS) {
+        outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
         return false;
       }
     }
@@ -256,11 +307,59 @@ static bool getBbox(mapObj *map, cgiRequestObj *request, rectObj *bbox)
     bbox->maxy = values[3];
 
     // validate bbox is well-formed (degenerate is ok)
-    if(MS_VALID_SEARCH_EXTENT(*bbox) != MS_TRUE) return false;
+    if(MS_VALID_SEARCH_EXTENT(*bbox) != MS_TRUE) {
+      outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+      return false;
+    }
 
-    // at the moment we are assuming the bbox is given in lat/lon
-    status = msProjectRect(&map->latlon, &map->projection, bbox);
-    if(status != MS_SUCCESS) return false;
+    std::string bboxCrs = "EPSG:4326";
+    bool axisInverted = false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
+    const char* bboxCrsParam = getRequestParameter(request, "bbox-crs");
+    if( bboxCrsParam )
+    {
+        bool isExpectedCrs = false;
+        for( const auto& crsItem: getCrsList(map, layer) )
+        {
+            if( bboxCrsParam == crsItem.get<std::string>() ) {
+                isExpectedCrs = true;
+                break;
+            }
+        }
+        if( !isExpectedCrs ) {
+            outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox-crs.");
+            return false;
+        }
+        if( std::string(bboxCrsParam) != CRS84_URL )
+        {
+          if( std::string(bboxCrsParam).find(EPSG_PREFIX_URL) == 0 )
+          {
+              const char* code = bboxCrsParam + strlen(EPSG_PREFIX_URL);
+              bboxCrs = std::string("EPSG:") + code;
+              axisInverted = msIsAxisInverted(atoi(code));
+          }
+       }
+    }
+    if( axisInverted )
+    {
+        std::swap(bbox->minx, bbox->miny);
+        std::swap(bbox->maxx, bbox->maxy);
+    }
+
+    projectionObj bboxProj;
+    msInitProjection(&bboxProj);
+    msProjectionInheritContextFrom(&bboxProj, &(map->projection));
+    if (msLoadProjectionString(&bboxProj, bboxCrs.c_str()) != 0) {
+       msFreeProjection(&bboxProj);
+       outputError(OGCAPI_SERVER_ERROR, "Cannot process bbox-crs.");
+       return false;
+    }
+
+    status = msProjectRect(&bboxProj, outputProj, bbox);
+    msFreeProjection(&bboxProj);
+    if(status != MS_SUCCESS) {
+        outputError(OGCAPI_SERVER_ERROR, "Cannot reproject bbox from bbox-crs to output CRS.");
+        return false;
+    }
   }
 
   return true;
@@ -415,7 +514,7 @@ static double round_up(double value, int decimal_places) {
   return std::ceil(value * multiplier) / multiplier;
 }
 
-static json getFeatureGeometry(shapeObj *shape, int precision)
+static json getFeatureGeometry(shapeObj *shape, int precision, bool outputCrsAxisInverted)
 {
   json geometry; // empty (null)
   int *outerList=NULL, numOuterRings=0;
@@ -429,12 +528,20 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
 
     if(shape->line[0].numpoints == 1) {
       geometry["type"] = "Point";
-      geometry["coordinates"] = { round_up(shape->line[0].point[0].x, precision), round_up(shape->line[0].point[0].y, precision) };
+      double x = shape->line[0].point[0].x;
+      double y = shape->line[0].point[0].y;
+      if( outputCrsAxisInverted )
+          std::swap(x, y);
+      geometry["coordinates"] = { round_up(x, precision), round_up(y, precision) };
     } else {
       geometry["type"] = "MultiPoint";
       geometry["coordinates"] = json::array();
       for(int j=0; j<shape->line[0].numpoints; j++) {
-        geometry["coordinates"].push_back( { round_up(shape->line[0].point[j].x, precision), round_up(shape->line[0].point[j].y, precision) } );
+        double x = shape->line[0].point[j].x;
+        double y = shape->line[0].point[j].y;
+        if( outputCrsAxisInverted )
+          std::swap(x, y);
+        geometry["coordinates"].push_back( { round_up(x, precision), round_up(y, precision) } );
       }
     }
     break;
@@ -446,7 +553,11 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
       geometry["type"] = "LineString";
       geometry["coordinates"] = json::array();
       for(int j=0; j<shape->line[0].numpoints; j++) {
-	geometry["coordinates"].push_back( { round_up(shape->line[0].point[j].x, precision), round_up(shape->line[0].point[j].y, precision) } );
+        double x = shape->line[0].point[j].x;
+        double y = shape->line[0].point[j].y;
+        if( outputCrsAxisInverted )
+          std::swap(x, y);
+        geometry["coordinates"].push_back( { round_up(x, precision), round_up(y, precision) } );
       }
     } else {
       geometry["type"] = "MultiLineString";
@@ -454,7 +565,11 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
       for(int i=0; i<shape->numlines; i++) {
         json part = json::array();
         for(int j=0; j<shape->line[i].numpoints; j++) {
-          part.push_back( { round_up(shape->line[i].point[j].x, precision), round_up(shape->line[i].point[j].y, precision) } );
+          double x = shape->line[i].point[j].x;
+          double y = shape->line[i].point[j].y;
+          if( outputCrsAxisInverted )
+            std::swap(x, y);
+          part.push_back( { round_up(x, precision), round_up(y, precision) } );
         }
         geometry["coordinates"].push_back(part);
       }
@@ -477,7 +592,11 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
       for(int i=0; i<shape->numlines; i++) {
         json part = json::array();
         for(int j=0; j<shape->line[i].numpoints; j++) {
-          part.push_back( { round_up(shape->line[i].point[j].x, precision), round_up(shape->line[i].point[j].y, precision) } );
+          double x = shape->line[i].point[j].x;
+          double y = shape->line[i].point[j].y;
+          if( outputCrsAxisInverted )
+            std::swap(x, y);
+          part.push_back( { round_up(x, precision), round_up(y, precision) } );
         }
         geometry["coordinates"].push_back(part);
       }
@@ -498,7 +617,11 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
             if(i == k || outerList[i] == MS_TRUE) { // add outer ring (k) and any inner rings
               json part = json::array();
               for(int j=0; j<shape->line[i].numpoints; j++) {
-                part.push_back( { round_up(shape->line[i].point[j].x, precision), round_up(shape->line[i].point[j].y, precision) } );
+                double x = shape->line[i].point[j].x;
+                double y = shape->line[i].point[j].y;
+                if( outputCrsAxisInverted )
+                  std::swap(x, y);
+                part.push_back( { round_up(x, precision), round_up(y, precision) } );
               }
               polygon.push_back(part);
             }
@@ -522,7 +645,7 @@ static json getFeatureGeometry(shapeObj *shape, int precision)
 /*
 ** Return a GeoJSON representation of a shape.
 */
-static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, int geometry_precision)
+static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, int geometry_precision, bool outputCrsAxisInverted)
 {
   int i;
   json feature; // empty (null)
@@ -569,7 +692,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
 
   // geometry
   try {
-    json geometry = getFeatureGeometry(shape, geometry_precision);
+    json geometry = getFeatureGeometry(shape, geometry_precision,outputCrsAxisInverted);
     if(!geometry.is_null()) feature["geometry"] = geometry;
   } catch (const std::runtime_error &) {
     throw std::runtime_error("Error fetching geometry.");
@@ -665,7 +788,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
                          round_down(bbox.miny, geometry_precision),
                          round_up(bbox.maxx, geometry_precision),
                          round_up(bbox.maxy, geometry_precision) }}},
-            { "crs", "http://www.opengis.net/def/crs/OGC/1.3/CRS84" }
+            { "crs", CRS84_URL }
           }
         }
       }
@@ -723,6 +846,21 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
     }
   }
 
+  // Part 2 - CRS support
+  // Inspect metadata to set the "crs": [] member and "storageCrs" member
+
+  json jCrsList = getCrsList(map, layer);
+  if( !jCrsList.empty() )
+  {
+      collection["crs"] = jCrsList;
+
+      const std::string storageCrs = getStorageCrs(layer);
+      if( !storageCrs.empty() )
+      {
+          collection["storageCrs"] = storageCrs;
+      }
+  }
+
   return collection;
 }
 
@@ -730,7 +868,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 ** Output stuff...
 */
 
-static void outputJson(const json& j, const char *mimetype)
+static void outputJson(const json& j, const char *mimetype, const std::map<std::string, std::string>& extraHeaders)
 {
   std::string js;
 
@@ -742,6 +880,10 @@ static void outputJson(const json& j, const char *mimetype)
   }
 
   msIO_setHeader("Content-Type", "%s", mimetype);
+  for( const auto& kvp: extraHeaders )
+  {
+      msIO_setHeader(kvp.first.c_str(), "%s", kvp.second.c_str());
+  }
   msIO_sendHeaders();
   msIO_printf("%s\n", js.c_str());
 }
@@ -792,17 +934,21 @@ static void outputTemplate(const char *directory, const char *filename, const js
 /*
 ** Generic response outputr.
 */
-static void outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format, const char *filename, const json& response)
+static void outputResponse(mapObj *map, cgiRequestObj *request,
+                           OGCAPIFormat format,
+                           const char *filename,
+                           const json& response,
+                           const std::map<std::string, std::string>& extraHeaders = std::map<std::string, std::string>() )
 {
   const char *path = NULL;
   char fullpath[MS_MAXPATHLEN];
 
   if(format == OGCAPIFormat::JSON) {
-    outputJson(response, OGCAPI_MIMETYPE_JSON);
+    outputJson(response, OGCAPI_MIMETYPE_JSON, extraHeaders);
   } else if(format == OGCAPIFormat::GeoJSON) {
-    outputJson(response, OGCAPI_MIMETYPE_GEOJSON);
+    outputJson(response, OGCAPI_MIMETYPE_GEOJSON, extraHeaders);
   } else if(format == OGCAPIFormat::OpenAPI_V3) {
-    outputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3);
+    outputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
   } else if(format == OGCAPIFormat::HTML) {
     if((path = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
       outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
@@ -949,6 +1095,7 @@ static int processConformanceRequest(mapObj *map, cgiRequestObj *request, OGCAPI
         "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
         "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
         "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+        "http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs",
       }
     }
   };
@@ -994,8 +1141,95 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     return MS_SUCCESS;
   }
 
-  if(!getBbox(map, request, &bbox)) {
-    outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+  const char* crs = getRequestParameter(request, "crs");
+
+  std::string outputCrs = "EPSG:4326";
+  bool outputCrsAxisInverted = false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
+  std::map<std::string, std::string> extraHeaders;
+  if(crs) {
+      bool isExpectedCrs = false;
+      for( const auto& crsItem: getCrsList(map, layer) )
+      {
+          if( crs == crsItem.get<std::string>() ) {
+              isExpectedCrs = true;
+              break;
+          }
+      }
+      if( !isExpectedCrs ) {
+          outputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
+          return MS_SUCCESS;
+      }
+      if( std::string(crs) != CRS84_URL )
+      {
+          if( std::string(crs).find(EPSG_PREFIX_URL) == 0 )
+          {
+              extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
+              const char* code = crs + strlen(EPSG_PREFIX_URL);
+              outputCrs = std::string("EPSG:") + code;
+              outputCrsAxisInverted = msIsAxisInverted(atoi(code));
+          }
+      }
+  }
+
+  struct ReprojectionObjects
+  {
+      reprojectionObj *reprojector = NULL;
+      projectionObj proj;
+
+      ReprojectionObjects()
+      {
+          msInitProjection(&proj);
+      }
+
+      ~ReprojectionObjects()
+      {
+          msProjectDestroyReprojector(reprojector);
+          msFreeProjection(&proj);
+      }
+
+      int executeQuery(mapObj* map)
+      {
+          projectionObj backupMapProjection = map->projection;
+          map->projection = proj;
+          int ret = msExecuteQuery(map);
+          map->projection = backupMapProjection;
+          return ret;
+      }
+  };
+  ReprojectionObjects reprObjs;
+
+  msProjectionInheritContextFrom(&reprObjs.proj, &(map->projection));
+  if (msLoadProjectionString(&reprObjs.proj, outputCrs.c_str()) != 0) {
+    outputError(OGCAPI_SERVER_ERROR, "Cannot instanciate output CRS.");
+    return MS_SUCCESS;
+  }
+
+  if(layer->projection.numargs > 0) {
+    if(msProjectionsDiffer(&(layer->projection), &reprObjs.proj)) {
+      reprObjs.reprojector = msProjectCreateReprojector(&(layer->projection), &reprObjs.proj);
+      if(reprObjs.reprojector == NULL) {
+        outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+        return MS_SUCCESS;
+      }
+    }
+  } else if(map->projection.numargs > 0) {
+    if(msProjectionsDiffer(&(map->projection), &reprObjs.proj)) {
+      reprObjs.reprojector = msProjectCreateReprojector(&(map->projection), &reprObjs.proj);
+      if(reprObjs.reprojector == NULL) {
+        outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+        return MS_SUCCESS;
+      }
+    }
+  } else {
+    outputError(OGCAPI_CONFIG_ERROR, "Unable to transform geometries, no projection defined.");
+    return MS_SUCCESS;
+  }
+
+  if(map->projection.numargs > 0 ) {
+    msProjectRect(&(map->projection), &reprObjs.proj, &map->extent);
+  }
+
+  if(!getBbox(map, layer, request, &bbox, &reprObjs.proj)) {
     return MS_SUCCESS;
   }
 
@@ -1026,7 +1260,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.filter.type = MS_STRING;
     map->query.filter.string = strdup(featureId);
 
-    if(msExecuteQuery(map) != MS_SUCCESS) {
+    if(reprObjs.executeQuery(map) != MS_SUCCESS) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
       return MS_SUCCESS;
     }
@@ -1043,9 +1277,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
         const char* paramName = request->ParamNames[j];
         if (strcmp(paramName, "f") == 0 ||
             strcmp(paramName, "bbox") == 0 ||
+            strcmp(paramName, "bbox-crs") == 0 ||
             strcmp(paramName, "datetime") == 0 ||
             strcmp(paramName, "limit") == 0 ||
-            strcmp(paramName, "offset") == 0)
+            strcmp(paramName, "offset") == 0 ||
+            strcmp(paramName, "crs") == 0)
         {
           // ok
         }
@@ -1065,7 +1301,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.only_cache_result_count = MS_TRUE;
 
     // get number matched
-    if(msExecuteQuery(map) != MS_SUCCESS) {
+    if(reprObjs.executeQuery(map) != MS_SUCCESS) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
@@ -1101,7 +1337,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
             layer->startindex = 1 + offset;
         }
 
-        if(msExecuteQuery(map) != MS_SUCCESS) {
+        if(reprObjs.executeQuery(map) != MS_SUCCESS || !layer->resultcache) {
           outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
           return MS_SUCCESS;
         }
@@ -1117,6 +1353,16 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     std::string extra_kvp = "&limit=" + std::to_string(limit);
     extra_kvp += "&offset=" + std::to_string(offset);
 
+    std::string other_extra_kvp;
+    if( crs )
+        other_extra_kvp += "&crs=" + std::string(crs);
+    const char* bbox = getRequestParameter(request, "bbox");
+    if( bbox )
+        other_extra_kvp += "&bbox=" + std::string(bbox);
+    const char* bboxCrs = getRequestParameter(request, "bbox-crs");
+    if( bboxCrs )
+        other_extra_kvp += "&bbox-crs=" + std::string(bboxCrs);
+
     response = {
       { "type", "FeatureCollection" },
       { "numberMatched", numberMatched },
@@ -1127,12 +1373,12 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
               { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
               { "type", OGCAPI_MIMETYPE_GEOJSON },
               { "title", "Items for this collection as GeoJSON" },
-              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" + extra_kvp }
+              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" + extra_kvp + other_extra_kvp }
           },{
               { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
               { "type", OGCAPI_MIMETYPE_HTML },
               { "title", "Items for this collection as HTML" },
-              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" + extra_kvp }
+              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" + extra_kvp + other_extra_kvp }
           }
       }}
     };
@@ -1146,7 +1392,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
             { "href", api_root + "/collections/" + std::string(id_encoded) +
                       "/items?f=" + (format==OGCAPIFormat::JSON? "json" : "html") +
                       "&limit=" + std::to_string(limit) +
-                      "&offset=" + std::to_string(offset + limit) }
+                      "&offset=" + std::to_string(offset + limit) + other_extra_kvp }
         });
     }
 
@@ -1159,7 +1405,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 	    { "href", api_root + "/collections/" + std::string(id_encoded) +
 	              "/items?f=" + (format==OGCAPIFormat::JSON? "json" : "html") +
 		      "&limit=" + std::to_string(limit) +
-		      "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) }
+		      "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) + other_extra_kvp }
 	});
     }
 
@@ -1184,49 +1430,20 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
     const int geometry_precision = getGeometryPrecision(map, layer);
 
-    // reprojection to EPSG:4326 (if necessary)
-    reprojectionObj *reprojector = NULL;
-    if(layer->projection.numargs > 0) { 
-      if(msProjectionsDiffer(&(layer->projection), &(map->latlon))) {
-        reprojector = msProjectCreateReprojector(&(layer->projection), &(map->latlon));
-        if(reprojector == NULL) {
-          msGMLFreeItems(items);
-          msGMLFreeConstants(constants);
-          outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
-          return MS_SUCCESS;
-        }
-      }
-    } else if(map->projection.numargs > 0) {
-      if(msProjectionsDiffer(&(map->projection), &(map->latlon))) {
-        reprojector = msProjectCreateReprojector(&(map->projection), &(map->latlon));
-        if(reprojector == NULL) {
-	  msGMLFreeItems(items);
-          msGMLFreeConstants(constants);
-	  outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
-          return MS_SUCCESS;
-        }
-      }
-    } else {
-      outputError(OGCAPI_CONFIG_ERROR, "Unable to transform geometries, no projection defined.");
-      return MS_SUCCESS;
-    }
-
     for(i=0; i<layer->resultcache->numresults; i++) {
       int status = msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
       if(status != MS_SUCCESS) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
-        msProjectDestroyReprojector(reprojector);
         outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
         return MS_SUCCESS;
       }
 
-      if(reprojector) {
-        status = msProjectShapeEx(reprojector, &shape);
+      if(reprObjs.reprojector) {
+        status = msProjectShapeEx(reprObjs.reprojector, &shape);
         if(status != MS_SUCCESS) {
           msGMLFreeItems(items);
           msGMLFreeConstants(constants);
-          msProjectDestroyReprojector(reprojector);
           msFreeShape(&shape);
           outputError(OGCAPI_SERVER_ERROR, "Error reprojecting feature.");
           return MS_SUCCESS;
@@ -1234,7 +1451,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       }
 
       try {
-        json feature = getFeature(layer, &shape, items, constants, geometry_precision);
+        json feature = getFeature(layer, &shape, items, constants, geometry_precision, outputCrsAxisInverted);
         if(featureId) {
           response = feature;
         } else {
@@ -1243,7 +1460,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       } catch (const std::runtime_error &e) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
-        msProjectDestroyReprojector(reprojector);
         msFreeShape(&shape);
         outputError(OGCAPI_SERVER_ERROR, "Error getting feature. " + std::string(e.what()));
         return MS_SUCCESS;
@@ -1254,7 +1470,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
     msGMLFreeItems(items); // clean up
     msGMLFreeConstants(constants);
-    msProjectDestroyReprojector(reprojector);
   }
 
   // extend the response a bit for templating (HERE)
@@ -1301,10 +1516,17 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
 
     msFree(id_encoded);
 
-    outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM, response);
+    outputResponse(map, request,
+                   format==OGCAPIFormat::JSON? OGCAPIFormat::GeoJSON : format,
+                   OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM,
+                   response, extraHeaders);
   }
-  else
-    outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS, response);
+  else {
+    outputResponse(map, request,
+                   format==OGCAPIFormat::JSON? OGCAPIFormat::GeoJSON : format,
+                   OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS,
+                   response, extraHeaders);
+  }
   return MS_SUCCESS;
 }
 
@@ -1441,6 +1663,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
   response["servers"].push_back(server);
 
   const std::string oapif_yaml_url = "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml";
+  const std::string oapif_part2_yaml_url = "http://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml";
 
   json paths;
 
@@ -1545,6 +1768,8 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat f
               {{ "$ref", "#/components/parameters/f"}},
               {{ "$ref", oapif_yaml_url + "#/components/parameters/bbox"}},
               {{ "$ref", oapif_yaml_url + "#/components/parameters/datetime"}},
+              {{ "$ref", oapif_part2_yaml_url + "#/components/parameters/bbox-crs"}},
+              {{ "$ref", oapif_part2_yaml_url + "#/components/parameters/crs"}},
               {{ "$ref", "#/components/parameters/offset"}},
           }},
           { "responses", {
