@@ -834,7 +834,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
       for(i=0; i<lpfirst->numitems; i++) {
         snprintf(szTmp, sizeof(szTmp), "%s_alias", lpfirst->items[i]);
         pszValue = msOWSLookupMetadata(&(lpfirst->metadata), "S", szTmp);
-        if (pszValue) {
+        if (pszValue && sShape.values) {
           for (j=0; j<lp->numitems; j++) {
             if (strcasecmp(lpfirst->items[i],  lpfirst->items[j]) == 0) {
               /*if there is an alias used, use it to output the
