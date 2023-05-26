@@ -1964,35 +1964,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   int i,j,p;
   int status;
 
-  char *tag, *tagStart, *tagEnd;
-  hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-
-  const char *argValue=NULL;
-  char *pointFormat1=NULL, *pointFormat2=NULL;
-  int pointFormatLength;
-
-  /*
-  ** Pointers to static strings, naming convention is:
-  **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring, or=outer ring
-  **   last char - h=header, f=footer, s=seperator
-  */
-  const char *xh, *xf, *yh, *yf;
-  const char *cs;
-  const char *ph, *pf, *ps;
-  const char *sh, *sf;
-  const char *irh, *irf; /* inner ring: necessary for complex polygons */
-  const char *orh, *orf; /* outer ring */
-
-  int centroid;
-  int precision;
-
-  double scale_x, scale_y;
-
-  const char *projectionString=NULL;
+  char *tagStart, *tagEnd;
 
   shapeObj tShape;
-  char *coords=NULL, point[128];
+  char point[128];
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processShpxyTag()");
@@ -2017,23 +1992,36 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     double buffer = 0;
     int bufferUnits = -1;
 #endif
-    xh = yh = yf = ph = pf = sh = sf = ""; /* initialize the tag arguments */
-    xf= ",";
-    irh = irf = orh = orf = "";
-    ps = cs = " ";
 
-    centroid = MS_FALSE;
-    precision = 0;
-    scale_x = scale_y = 1.0;
+    /*
+    ** Pointers to static strings, naming convention is:
+    **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring, or=outer ring
+    **   last char - h=header, f=footer, s=seperator
+    */
+    const char *xh = "", *yh = "";
+    const char *xf = ",";
+    const char *yf = "";
+    const char *cs = " ";
+    const char *ph = "", *pf = "";
+    const char *ps = " ";
+    const char *sh = "", *sf = "";
+    const char *irh = "", *irf = ""; /* inner ring: necessary for complex polygons */
+    const char *orh = "", *orf = ""; /* outer ring */
 
-    projectionString = NULL;
+    int centroid = MS_FALSE;
+    int precision = 0;
+    double scale_x = 1.0;
+    double scale_y = 1.0;
 
-    tagOffset = tagStart - *line;
+    const char* projectionString = NULL;
+
+    const int tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "xh");
+      const char* argValue = msLookupHashTable(tagArgs, "xh");
       if(argValue) xh = argValue;
       argValue = msLookupHashTable(tagArgs, "xf");
       if(argValue) xf = argValue;
@@ -2100,10 +2088,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
-    pointFormatLength = strlen(xh) + strlen(xf) + strlen(yh) + strlen(yf) + strlen(cs) + 12 + 1;
-    pointFormat1 = (char *) msSmallMalloc(pointFormatLength);
+    const int pointFormatLength = strlen(xh) + strlen(xf) + strlen(yh) + strlen(yf) + strlen(cs) + 12 + 1;
+    char* pointFormat1 = (char *) msSmallMalloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs);
-    pointFormat2 = (char *) msSmallMalloc(pointFormatLength);
+    char* pointFormat2 = (char *) msSmallMalloc(pointFormatLength);
     snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf);
 
     /* make a copy of the original shape or compute a centroid if necessary */
@@ -2215,6 +2203,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     ** build the coordinate string
     */
 
+    char* coords = NULL;
     if(strlen(sh) > 0) coords = msStringConcatenate(coords, sh);
 
     /* do we need to handle inner/outer rings */
@@ -2291,8 +2280,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     /* do the replacement */
@@ -2300,15 +2289,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
     /* clean up */
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     free(pointFormat1);
-    pointFormat1 = NULL;
     free(pointFormat2);
-    pointFormat2 = NULL;
     free(coords);
-    coords = NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "shpxy");
