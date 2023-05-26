@@ -1520,13 +1520,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
 // RFC 77 TODO: Need to validate these changes with Assefa...
 static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 {
-  char *tag, *tagEnd;
-  char *tagValue=NULL;
-  hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
-  const char *format;
-  const char *argValue=NULL;
-  const char *projectionString=NULL;
+  char *tagEnd;
   shapeObj tShape;
   int precision=0;
   int clip_to_map=MS_TRUE;
@@ -1562,13 +1556,14 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     msInitShape(shape);
     msCopyShape(origshape, shape);
 
-    projectionString = NULL;
-    format = "$x,$y";
-    tagOffset = tagStart - *line;
+    const char* projectionString = NULL;
+    const char* format = "$x,$y";
+    const int tagOffset = tagStart - *line;
 
+    hashTableObj *tagArgs=NULL;
     if(getTagArgs("shplabel", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "format");
+      const char* argValue = msLookupHashTable(tagArgs, "format");
       if(argValue) format = argValue;
 
       argValue = msLookupHashTable(tagArgs, "precision");
@@ -1798,7 +1793,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     }
 
     /* do the replacement */
-    tagValue = msStrdup(format);
+    char* tagValue = msStrdup(format);
     if(precision > 0)
       snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
     else
@@ -1837,8 +1832,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     tagEnd++;
 
     /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *) msSmallMalloc(tagLength + 1);
+    const int tagLength = tagEnd - tagStart;
+    char* tag = (char *) msSmallMalloc(tagLength + 1);
     strlcpy(tag, tagStart, tagLength+1);
 
     *line = msReplaceSubstring(*line, tag, tagValue);
@@ -1846,11 +1841,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
     /* clean up */
     msFreeShape(&tShape);
     free(tag);
-    tag = NULL;
     msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     msFree(tagValue);
-    tagValue=NULL;
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "shplabel");
