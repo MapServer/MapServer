@@ -150,7 +150,7 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter)
 {
   int bIscharacter;
-  char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
+  char *pszExpression = NULL, *pszTmpExpression=NULL;
   char **paszElements = NULL, **papszRangeElements=NULL;
   int numelements,i,nrangeelements;
 
@@ -182,16 +182,16 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
           } else
             pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
 
-          pszEscapedStr = msLayerEscapeSQLParam(lp, paszElements[i]);
-          pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+          {
+            char* pszEscapedStr = msLayerEscapeSQLParam(lp, paszElements[i]);
+            pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+            msFree(pszEscapedStr);
+          }
 
           if (bIscharacter) {
               pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
           }
           pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
-
-          msFree(pszEscapedStr);
-          pszEscapedStr=NULL;
 
           if (pszExpression != NULL)
             pszExpression = msStringConcatenate(pszExpression, " OR ");
@@ -226,10 +226,11 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " >= ");
 
-              pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[0]);
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
-              msFree(pszEscapedStr);
-              pszEscapedStr=NULL;
+              {
+                char* pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[0]);
+                pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+                msFree(pszEscapedStr);
+              }
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " AND ");
 
@@ -241,10 +242,11 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " <= ");
 
-              pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[1]);
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
-              msFree(pszEscapedStr);
-              pszEscapedStr=NULL;
+              {
+                char* pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[1]);
+                pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+                msFree(pszEscapedStr);
+              }
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
             } else if (nrangeelements == 1) {
@@ -257,10 +259,11 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
 
-              pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[0]);
-              pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
-              msFree(pszEscapedStr);
-              pszEscapedStr=NULL;
+              {
+                char* pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[0]);
+                pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+                msFree(pszEscapedStr);
+              }
 
               pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
             }
