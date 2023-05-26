@@ -2994,7 +2994,6 @@ char *generateLegendTemplate(mapservObj *mapserv)
   char **papszGroups = NULL;
   int nGroupNames = 0;
 
-  int nLegendOrder = 0;
   const char *pszOrderValue;
 
   hashTableObj *groupArgs = NULL;
@@ -3257,7 +3256,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
           if(pszOrderMetadata) {
             pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
             if(pszOrderValue) {
-              nLegendOrder = atoi(pszOrderValue);
+              const int nLegendOrder = atoi(pszOrderValue);
               if(nLegendOrder < 0)
                 continue;
             }
@@ -3324,7 +3323,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
           if(pszOrderMetadata) {
             pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
             if(pszOrderValue) {
-              nLegendOrder = atoi(pszOrderValue);
+              const int nLegendOrder = atoi(pszOrderValue);
               if(nLegendOrder < 0)
                 continue;
             }
@@ -3377,11 +3376,10 @@ char *generateLegendTemplate(mapservObj *mapserv)
         if(pszOrderMetadata) {
           pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
           if(pszOrderValue) {
-            nLegendOrder = atoi(pszOrderValue);
+            const int nLegendOrder = atoi(pszOrderValue);
             if(nLegendOrder < 0)
               continue;
-          } else
-            nLegendOrder=0;
+          }
         }
         if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].status == 0) {
           continue;
@@ -3442,7 +3440,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
           if(pszOrderMetadata) {
             pszOrderValue = msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->metadata), pszOrderMetadata);
             if(pszOrderValue) {
-              nLegendOrder = atoi(pszOrderValue);
+              const int nLegendOrder = atoi(pszOrderValue);
               if(nLegendOrder < 0)
                 continue;
             }
