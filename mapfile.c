@@ -2715,14 +2715,25 @@ int loadStyle(styleObj *style)
         }
         break;
       case(SIZE):
-        if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+          if (style->exprBindings[MS_STYLE_BINDING_SIZE].string) {
+              msFreeExpression(&style->exprBindings[MS_STYLE_BINDING_SIZE]);
+              style->nexprbindings--;
+          }
+
+        if((symbol = getSymbol(3, MS_EXPRESSION,MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
         if(symbol == MS_NUMBER) {
           if(msCheckNumber(msyynumber, MS_NUM_CHECK_GT, 0, -1) == MS_FAILURE) {
             msSetError(MS_MISCERR, "Invalid SIZE, must be greater than 0 (line %d)", "loadStyle()", msyylineno);
             return(MS_FAILURE);
           }
           style->size = (double) msyynumber;
-        } else {
+        } else if (symbol == MS_EXPRESSION) {
+            msFree(style->exprBindings[MS_STYLE_BINDING_SIZE].string);
+            style->exprBindings[MS_STYLE_BINDING_SIZE].string = msStrdup(msyystring_buffer);
+            style->exprBindings[MS_STYLE_BINDING_SIZE].type = MS_EXPRESSION;
+            style->nexprbindings++;
+        }
+        else {
           if (style->bindings[MS_STYLE_BINDING_SIZE].item != NULL)
             msFree(style->bindings[MS_STYLE_BINDING_SIZE].item);
           style->bindings[MS_STYLE_BINDING_SIZE].item = msStrdup(msyystring_buffer);
