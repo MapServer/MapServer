@@ -391,6 +391,12 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
       bindColorAttribute(&label->outlinecolor, txt);
       msFree(txt);
     }
+    if (label->exprBindings[MS_LABEL_BINDING_PRIORITY].type == MS_EXPRESSION)
+    {
+        label->priority = msEvalDoubleExpression(
+            &(label->exprBindings[MS_LABEL_BINDING_PRIORITY]),
+            shape);
+    }
   }
 }
 

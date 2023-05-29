@@ -1805,14 +1805,25 @@ static int loadLabel(labelObj *label)
         }
         break;
       case(PRIORITY):
-        if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(-1);
+        if (label->exprBindings[MS_LABEL_BINDING_PRIORITY].string) {
+            msFreeExpression(&label->exprBindings[MS_LABEL_BINDING_PRIORITY]);
+            label->nexprbindings--;
+        }
+
+        if((symbol = getSymbol(3, MS_EXPRESSION,MS_NUMBER,MS_BINDING)) == -1) return(-1);
         if(symbol == MS_NUMBER) {
           if(msCheckNumber(msyynumber, MS_NUM_CHECK_RANGE, 1, MS_MAX_LABEL_PRIORITY) == MS_FAILURE) {
             msSetError(MS_MISCERR, "Invalid PRIORITY, must be an integer between 1 and %d (line %d)" , "loadLabel()", MS_MAX_LABEL_PRIORITY, msyylineno);
             return(-1);
           }
           label->priority = (int) msyynumber;
-        } else {
+        } else if (symbol == MS_EXPRESSION) {
+            msFree(label->exprBindings[MS_LABEL_BINDING_PRIORITY].string);
+            label->exprBindings[MS_LABEL_BINDING_PRIORITY].string = msStrdup(msyystring_buffer);
+            label->exprBindings[MS_LABEL_BINDING_PRIORITY].type = MS_EXPRESSION;
+            label->nexprbindings++;
+        }
+        else {
           if (label->bindings[MS_LABEL_BINDING_PRIORITY].item != NULL)
             msFree(label->bindings[MS_LABEL_BINDING_PRIORITY].item);
           label->bindings[MS_LABEL_BINDING_PRIORITY].item = msStrdup(msyystring_buffer);

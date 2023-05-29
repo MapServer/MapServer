@@ -1,0 +1,80 @@
+# RUN_PARMS: label_priority_binding.png [MAP2IMG] -m [MAPFILE] -l label_priority_binding -o [RESULT]
+# RUN_PARMS: label_priority_fixed.png [MAP2IMG] -m [MAPFILE] -l label_priority_fixed -o [RESULT]
+# RUN_PARMS: label_priority_expression.png [MAP2IMG] -m [MAPFILE] -l label_priority_expression -o [RESULT]
+#
+# Test label priorities
+#
+
+MAP
+    IMAGETYPE "png"
+    SIZE 400 400
+    EXTENT -.5 -.5 1.5 1.5
+    FONTSET "../misc/fonts.lst"
+    PROJECTION
+        "init=epsg:4326"
+    END
+    LAYER
+        NAME "label_priority_fixed"
+        TYPE POINT
+        STATUS OFF
+        DATA "data/label_alias_offset.shp"
+        LABELITEM "label"
+        CLASS
+            # make sure pnt7 gets labelling priority
+            EXPRESSION ([priority] = 7)
+            LABEL
+                FONT "default"
+                TYPE TRUETYPE
+                SIZE 40
+                COLOR 0 0 0
+                PRIORITY 10
+            END
+        END
+        CLASS
+            EXPRESSION ([priority] != 7)
+            LABEL
+                FONT "default"
+                TYPE TRUETYPE
+                SIZE 12
+                COLOR 0 0 0
+                PRIORITY 1
+            END
+        END
+    END
+    LAYER
+        NAME "label_priority_binding"
+        TYPE POINT
+        STATUS OFF
+        DATA "data/label_alias_offset.shp"
+        LABELITEM "label"
+        CLASS
+            LABEL
+                FONT "default"
+                TYPE TRUETYPE
+                SIZE 12
+                COLOR 0 0 0
+                PRIORITY [priority]
+            END
+        END
+    END
+    LAYER
+        NAME "label_priority_expression"
+        TYPE POINT
+        STATUS OFF
+        DATA "data/label_alias_offset.shp"
+        LABELITEM "label"
+        CLASS
+            LABEL
+                FONT "default"
+                TYPE TRUETYPE
+                SIZE 12
+                COLOR 0 0 0
+                # add a duplicate PRIORITY that will be ignored
+                # but check it is cleaned up correctly
+                PRIORITY ([priority] * 2)
+                # use an expression to invert the label priorities
+                PRIORITY (10 - [priority])
+            END
+        END
+    END
+END
