@@ -2,7 +2,7 @@
 # RUN_PARMS: style_size_fixed.png [MAP2IMG] -m [MAPFILE] -l style_size_fixed -o [RESULT]
 # RUN_PARMS: style_size_expression.png [MAP2IMG] -m [MAPFILE] -l style_size_expression -o [RESULT]
 #
-# Test label priorities
+# Test style size settings using fixed values, attribute bindings, and expressions
 #
 
 MAP
