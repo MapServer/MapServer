@@ -1136,13 +1136,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
 
       if( layer->project && resultshape.type != MS_SHAPE_NULL) {
-        if( layer->reprojectorLayerToMap == NULL )
-        {
-            layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                &layer->projection, &layer->map->projection);
-        }
-        if( layer->reprojectorLayerToMap )
-            status = msProjectShapeEx(layer->reprojectorLayerToMap, &resultshape);
+        reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+        if( reprojector )
+            status = msProjectShapeEx(reprojector, &resultshape);
         else
             status = MS_FAILURE;
       }
