@@ -414,11 +414,19 @@ void msProjectionContextUnref(projectionContext* ctx)
 /*                        msProjectCreateReprojector()                  */
 /************************************************************************/
 
+/* The pointed objects need to remain valid during the lifetime of the
+ * reprojector, as only their pointer is stored.
+ *
+ * If the *content* of in and/or out is changed, then the reprojector is
+ * no longer valid. This can be detected with msProjectIsReprojectorStillValid()
+ */
 reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out)
 {
     reprojectionObj* obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
     obj->in = in;
     obj->out = out;
+    obj->generation_number_in = in ? in->generation_number : 0;
+    obj->generation_number_out = out ? out->generation_number : 0;
     obj->lineCuttingCase = LINE_CUTTING_UNKNOWN;
 
     /* -------------------------------------------------------------------- */
@@ -551,6 +559,8 @@ reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* ou
     obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
     obj->in = in;
     obj->out = out;
+    obj->generation_number_in = in ? in->generation_number : 0;
+    obj->generation_number_out = out ? out->generation_number : 0;
     obj->lineCuttingCase = LINE_CUTTING_UNKNOWN;
 
     /* -------------------------------------------------------------------- */
@@ -626,6 +636,7 @@ int msInitProjection(projectionObj *p)
 #elif PJ_VERSION >= 480
   p->proj_ctx = NULL;
 #endif
+  p->generation_number = 0;
   return(0);
 }
 
@@ -654,6 +665,7 @@ void msFreeProjection(projectionObj *p)
   msFreeCharArray(p->args, p->numargs);
   p->args = NULL;
   p->numargs = 0;
+  p->generation_number ++;
 }
 
 void msFreeProjectionExceptContext(projectionObj *p)
@@ -844,6 +856,8 @@ static int _msProcessAutoProjection(projectionObj *p)
 int msProcessProjection(projectionObj *p)
 {
   assert( p->proj == NULL );
+
+  p->generation_number ++;
 
   if( strcasecmp(p->args[0],"GEOGRAPHIC") == 0 ) {
     msSetError(MS_PROJERR,
@@ -1366,6 +1380,19 @@ static msLineCuttingCase msProjectGetLineCuttingCase(reprojectionObj* reprojecto
     return reprojector->lineCuttingCase;
 }
 #endif
+
+/************************************************************************/
+/*                msProjectIsReprojectorStillValid()                    */
+/************************************************************************/
+
+int msProjectIsReprojectorStillValid(reprojectionObj* reprojector)
+{
+    if( reprojector->in && reprojector->in->generation_number != reprojector->generation_number_in )
+        return MS_FALSE;
+    if( reprojector->out && reprojector->out->generation_number != reprojector->generation_number_out )
+        return MS_FALSE;
+    return MS_TRUE;
+}
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */
