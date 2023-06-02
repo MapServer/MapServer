@@ -362,14 +362,10 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
 
   if (psParent && psShape) {
     if (msProjectionsDiffer(&map->projection, &lp->projection) == MS_TRUE) {
-      if( lp->reprojectorLayerToMap == NULL )
+      reprojectionObj* reprojector = msLayerGetReprojectorToMap(lp, map);
+      if( reprojector )
       {
-        lp->reprojectorLayerToMap = msProjectCreateReprojector(
-            &lp->projection, &map->projection);
-      }
-      if( lp->reprojectorLayerToMap )
-      {
-        msProjectShapeEx(lp->reprojectorLayerToMap, psShape);
+        msProjectShapeEx(reprojector, psShape);
       }
       msOWSGetEPSGProj(&(map->projection), &(lp->metadata), "SO", MS_TRUE, &pszEpsg_buf);
       pszEpsg = pszEpsg_buf;
@@ -780,14 +776,10 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
 
     if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
     {
-      if( lp->reprojectorLayerToMap == NULL )
+      reprojectionObj* reprojector = msLayerGetReprojectorToMap(lp, map);
+      if( reprojector )
       {
-        lp->reprojectorLayerToMap = msProjectCreateReprojector(
-            &lp->projection, &map->projection);
-      }
-      if( lp->reprojectorLayerToMap )
-      {
-        msProjectShapeEx(lp->reprojectorLayerToMap, &sShape);
+        msProjectShapeEx(reprojector, &sShape);
       }
     }
 

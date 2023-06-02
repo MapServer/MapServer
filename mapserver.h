@@ -2618,6 +2618,8 @@ extern "C" {
   int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
   int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 
+  reprojectionObj MS_DLL_EXPORT* msLayerGetReprojectorToMap(layerObj* layer, mapObj* map);
+
   MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                                          OGRwkbGeometryType type);
 

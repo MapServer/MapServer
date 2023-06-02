@@ -1770,16 +1770,12 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
 
   if (layer->project && layer->transform == MS_TRUE)
   {
-      if( layer->reprojectorLayerToMap == NULL )
+      reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, map);
+      if( reprojector == NULL )
       {
-          layer->reprojectorLayerToMap = msProjectCreateReprojector(
-              &layer->projection, &map->projection);
-        if( layer->reprojectorLayerToMap == NULL )
-        {
-            return MS_FAILURE;
-        }
+        return MS_FAILURE;
       }
-      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+      msProjectShapeEx(reprojector, shape);
   }
 
   // Only take into account map rotation if the label and style angles are
@@ -2098,16 +2094,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   if (layer->project && layer->transform == MS_TRUE)
   {
-      if( layer->reprojectorLayerToMap == NULL )
+      reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, map);
+      if( reprojector == NULL )
       {
-          layer->reprojectorLayerToMap = msProjectCreateReprojector(
-              &layer->projection, &map->projection);
-        if( layer->reprojectorLayerToMap == NULL )
-        {
-            return MS_FAILURE;
-        }
+        return MS_FAILURE;
       }
-      msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+      msProjectShapeEx(reprojector, shape);
   }
 
   /* check if we'll need the unclipped shape */
