@@ -1920,6 +1920,25 @@ void msLayerEnablePaging(layerObj *layer, int value)
   layer->vtable->LayerEnablePaging(layer, value);
 }
 
+/** Returns a cached reprojector from the layer projection to the map projection */
+reprojectionObj* msLayerGetReprojectorToMap(layerObj* layer, mapObj* map)
+{
+  if( layer->reprojectorLayerToMap != NULL &&
+      !msProjectIsReprojectorStillValid(layer->reprojectorLayerToMap) )
+  {
+    msProjectDestroyReprojector(layer->reprojectorLayerToMap);
+    layer->reprojectorLayerToMap = NULL;
+  }
+
+  if( layer->reprojectorLayerToMap == NULL )
+  {
+    layer->reprojectorLayerToMap = msProjectCreateReprojector(
+      &layer->projection, &map->projection);
+  }
+  return layer->reprojectorLayerToMap;
+}
+
+
 int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
 {
   (void)layer;

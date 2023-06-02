@@ -1598,14 +1598,10 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         if(layer->transform == MS_TRUE) {
           if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
           {
-            if( layer->reprojectorLayerToMap == NULL )
+            reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+            if( reprojector )
             {
-                layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                    &layer->projection, &layer->map->projection);
-            }
-            if( layer->reprojectorLayerToMap )
-            {
-                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+                msProjectShapeEx(reprojector, shape);
             }
           }
 
@@ -1619,14 +1615,10 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       if(layer->transform == MS_TRUE) {
         if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
         {
-            if( layer->reprojectorLayerToMap == NULL )
+            reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+            if( reprojector )
             {
-                layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                    &layer->projection, &layer->map->projection);
-            }
-            if( layer->reprojectorLayerToMap )
-            {
-                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+                msProjectShapeEx(reprojector, shape);
             }
         }
 
@@ -1659,14 +1651,10 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       if(layer->transform == MS_TRUE) {
         if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
         {
-            if( layer->reprojectorLayerToMap == NULL )
+            reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+            if( reprojector )
             {
-                layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                    &layer->projection, &layer->map->projection);
-            }
-            if( layer->reprojectorLayerToMap )
-            {
-                msProjectShapeEx(layer->reprojectorLayerToMap, shape);
+                msProjectShapeEx(reprojector, shape);
             }
         }
 
@@ -1757,14 +1745,10 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
       /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
       {
-        if( layer->reprojectorLayerToMap == NULL )
+        reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+        if( reprojector )
         {
-            layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                &layer->projection, &layer->map->projection);
-        }
-        if( layer->reprojectorLayerToMap )
-        {
-            msProjectShapeEx(layer->reprojectorLayerToMap, &tShape);
+            msProjectShapeEx(reprojector, &tShape);
         }
       }
 
@@ -2119,14 +2103,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
       {
-        if( layer->reprojectorLayerToMap == NULL )
+        reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+        if( reprojector )
         {
-            layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                &layer->projection, &layer->map->projection);
-        }
-        if( layer->reprojectorLayerToMap )
-        {
-            msProjectShapeEx(layer->reprojectorLayerToMap, &tShape);
+            msProjectShapeEx(reprojector, &tShape);
         }
       }
 

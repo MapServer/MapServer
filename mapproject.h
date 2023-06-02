@@ -89,7 +89,8 @@ but are not directly exposed by the mapscript module
     %immutable;
 #endif
     int numargs; ///< Actual number of projection args
-    int automatic; ///< Projection object was to fetched from the layer
+    short automatic; ///< Projection object was to fetched from the layer
+    unsigned short generation_number; ///< To be incremented when the content of the object change, so that reprojector can be invalidated
 #ifdef SWIG
     %mutable;
 #endif
@@ -116,12 +117,15 @@ but are not directly exposed by the mapscript module
     int no_op;
 #endif
 #endif
+    unsigned short generation_number_in;
+    unsigned short generation_number_out;
   } reprojectionObj;
 
 #ifndef SWIG
 
   MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
   MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj* reprojector);
+  MS_DLL_EXPORT int msProjectIsReprojectorStillValid(reprojectionObj* reprojector);
 
   MS_DLL_EXPORT projectionContext* msProjectionContextGetFromPool(void);
   MS_DLL_EXPORT void msProjectionContextReleaseToPool(projectionContext* ctx);
