@@ -2654,7 +2654,6 @@ void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
 #endif
   msReleaseLock( TLOCK_PROJ );
 
-#if GDAL_VERSION_MAJOR >= 3
   if( ms_proj_data != NULL )
   {
 #ifdef _WIN32
@@ -2666,7 +2665,6 @@ void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
     OSRSetPROJSearchPaths((const char* const *)papszPaths);
     CSLDestroy(papszPaths);
   }
-#endif
 
   if ( extended_path )
     msFree( extended_path );
