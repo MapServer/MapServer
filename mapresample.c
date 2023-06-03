@@ -673,9 +673,7 @@ typedef struct {
   double adfDstGeoTransform[6];
 
   int  bUseProj;
-#if PROJ_VERSION_MAJOR >= 6
   reprojectionObj* pReprojectionDstToSrc;
-#endif
 } msProjTransformInfo;
 
 /************************************************************************/
@@ -736,7 +734,6 @@ void *msInitProjTransformer( projectionObj *psSrc,
   memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform,
           sizeof(double) * 6 );
 
-#if PROJ_VERSION_MAJOR >= 6
   if( psPTInfo->bUseProj )
   {
     psPTInfo->pReprojectionDstToSrc =
@@ -747,7 +744,6 @@ void *msInitProjTransformer( projectionObj *psSrc,
         return NULL;
     }
   }
-#endif
 
   return psPTInfo;
 }
@@ -759,13 +755,11 @@ void *msInitProjTransformer( projectionObj *psSrc,
 void msFreeProjTransformer( void * pCBData )
 
 {
-#if PROJ_VERSION_MAJOR >= 6
   if( pCBData )
   {
       msProjTransformInfo *psPTInfo = (msProjTransformInfo *)pCBData;
       msProjectDestroyReprojector(psPTInfo->pReprojectionDstToSrc);
   }
-#endif
   free( pCBData );
 }
 
@@ -796,7 +790,6 @@ int msProjTransformer( void *pCBData, int nPoints,
     panSuccess[i] = 1;
   }
 
-#if PROJ_VERSION_MAJOR >= 6
   if( psPTInfo->bUseProj ) {
     if( msProjectTransformPoints( psPTInfo->pReprojectionDstToSrc,
                                   nPoints, x, y ) != MS_SUCCESS ) {
@@ -810,58 +803,6 @@ int msProjTransformer( void *pCBData, int nPoints,
         panSuccess[i] = 0;
     }
   }
-#else
-  /* -------------------------------------------------------------------- */
-  /*      Transform from degrees to radians if geographic.                */
-  /* -------------------------------------------------------------------- */
-  if( psPTInfo->bDstIsGeographic ) {
-    for( i = 0; i < nPoints; i++ ) {
-      x[i] = x[i] * DEG_TO_RAD;
-      y[i] = y[i] * DEG_TO_RAD;
-    }
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Transform back to source projection space.                      */
-  /* -------------------------------------------------------------------- */
-  if( psPTInfo->bUseProj ) {
-    double *z;
-    int tr_result;
-
-    z = (double *) msSmallCalloc(sizeof(double),nPoints);
-
-    msAcquireLock( TLOCK_PROJ );
-    tr_result = pj_transform( psPTInfo->psDstProjObj->proj, psPTInfo->psSrcProjObj->proj,
-                              nPoints, 1, x, y,  z);
-    msReleaseLock( TLOCK_PROJ );
-
-    if( tr_result != 0 ) {
-      free( z );
-      for( i = 0; i < nPoints; i++ )
-        panSuccess[i] = 0;
-
-      return MS_FALSE;
-    }
-    free( z );
-
-    for( i = 0; i < nPoints; i++ ) {
-      if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
-        panSuccess[i] = 0;
-    }
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Transform back to degrees if source is geographic.              */
-  /* -------------------------------------------------------------------- */
-  if( psPTInfo->bSrcIsGeographic ) {
-    for( i = 0; i < nPoints; i++ ) {
-      if( panSuccess[i] ) {
-        x[i] = x[i] * RAD_TO_DEG;
-        y[i] = y[i] * RAD_TO_DEG;
-      }
-    }
-  }
-#endif
 
   /* -------------------------------------------------------------------- */
   /*      Transform to source raster space.                               */
@@ -1039,9 +980,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
   int   i, nSamples = 0, bOutInit = 0;
   double      dfRatio;
   double  x[MAX_SIZE], y[MAX_SIZE];
-#if PROJ_VERSION_MAJOR < 6
-  double z[MAX_SIZE];
-#endif
 
   /* -------------------------------------------------------------------- */
   /*      Collect edges in map image pixel/line coordinates               */
@@ -1091,16 +1029,12 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 
     x[i] = x_out;
     y[i] = y_out;
-#if PROJ_VERSION_MAJOR < 6
-    z[i] = 0.0;
-#endif
   }
 
   /* -------------------------------------------------------------------- */
   /*      Transform to layer georeferenced coordinates.                   */
   /* -------------------------------------------------------------------- */
   if( psDstProj->proj && psSrcProj->proj ) {
-#if PROJ_VERSION_MAJOR >= 6
     reprojectionObj* reprojector = msProjectCreateReprojector(psDstProj, psSrcProj);
     if( !reprojector )
         return MS_FALSE;
@@ -1109,32 +1043,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
       return MS_FALSE;
     }
     msProjectDestroyReprojector(reprojector);
-#else
-    int tr_result;
-    if( msProjIsGeographicCRS(psDstProj) ) {
-      for( i = 0; i < nSamples; i++ ) {
-        x[i] = x[i] * DEG_TO_RAD;
-        y[i] = y[i] * DEG_TO_RAD;
-      }
-    }
-
-    msAcquireLock( TLOCK_PROJ );
-    tr_result = pj_transform( psDstProj->proj, psSrcProj->proj,
-                              nSamples, 1, x, y, z );
-    msReleaseLock( TLOCK_PROJ );
-
-    if( tr_result != 0 )
-      return MS_FALSE;
-
-    if( msProjIsGeographicCRS(psSrcProj) ) {
-      for( i = 0; i < nSamples; i++ ) {
-        if( x[i] != HUGE_VAL && y[i] != HUGE_VAL ) {
-          x[i] = x[i] * RAD_TO_DEG;
-          y[i] = y[i] * RAD_TO_DEG;
-        }
-      }
-    }
-#endif
   }
 
   /* -------------------------------------------------------------------- */
@@ -1196,9 +1104,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
       if( bHasLonWrap )
       {
           double x2[2], y2[2];
-#if PROJ_VERSION_MAJOR < 6
-          double z2[2];
-#endif
           int nCountY = 0;
           double dfY = 0.0;
           double dfXMinOut = 0.0;
@@ -1237,7 +1142,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
           x2[1] = dfLonWrap+180-1e-7;
           y2[1] = dfY;
 
-#if PROJ_VERSION_MAJOR >= 6
           {
             reprojectionObj* reprojector = msProjectCreateReprojector(psSrcProj, psDstProj);
             if( reprojector )
@@ -1246,14 +1150,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
               msProjectDestroyReprojector(reprojector);
             }
           }
-#else
-          z2[0] = 0.0;
-          z2[1] = 0.0;
-          msAcquireLock( TLOCK_PROJ );
-          pj_transform( psSrcProj->proj, psDstProj->proj,
-                        2, 1, x2, y2, z2 );
-          msReleaseLock( TLOCK_PROJ );
-#endif
 
           if( x2[0] >= dfXMinOut - dfHalfRes && x2[0] <= dfXMaxOut + dfHalfRes &&
               y2[0] >= dfYMinOut && y2[0] <= dfYMaxOut )

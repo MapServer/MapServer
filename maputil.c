@@ -2069,13 +2069,6 @@ void msCleanup()
 #endif
   msReleaseLock( TLOCK_GDAL );
 
-
-#if PROJ_VERSION_MAJOR < 6
-#  if PJ_VERSION >= 480
-  pj_clear_initcache();
-#  endif
-  pj_deallocate_grids();
-#endif
   msSetPROJ_DATA( NULL, NULL );
   msProjectionContextPoolCleanup();
 
