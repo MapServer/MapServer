@@ -134,8 +134,9 @@
     return msGetExpressionString(&(self->exprBindings[binding]));
   }
 
-  /// Set the expression binding for a specified label property. Binding constants look like this: ``MS_LABEL_BINDING_[attribute name]``:
-  /// >>> new_label.setExpressionBinding(MS_LABEL_BINDING_PRIORITY, "([priority] * 2)")
+  /// Set the expression binding for a specified label property. Binding constants look like this: ``MS_LABEL_BINDING_[attribute name]``
+  /// Expressions are automatically wrapped in brackets, so do not need to be added to the input string
+  /// >>> new_label.setExpressionBinding(MS_LABEL_BINDING_PRIORITY, "[priority] * 2")
   int setExpressionBinding(int binding, char *text) 
   {
     if (!text || strlen(text) == 0) {

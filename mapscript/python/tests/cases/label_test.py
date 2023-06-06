@@ -42,7 +42,7 @@ class NewLabelsTestCase(MapTestCase):
         """expression binding can be set and get"""
         new_label = mapscript.labelObj()
         assert (not new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY))
-        new_label.setExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY, "([MY_ATTRIBUTE] * 2)")
+        new_label.setExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY, "[MY_ATTRIBUTE] * 2")
         assert (new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY) == "([MY_ATTRIBUTE] * 2)")
 
 
