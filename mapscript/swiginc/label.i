@@ -112,7 +112,51 @@
     return MS_SUCCESS;
   }
 
-  /// Set the label expression.
+  /// Remove an expression binding for a specified label property.
+  int removeExpressionBinding(int binding) 
+  {
+    if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
+
+    if(self->exprBindings[binding].string) {
+      msFreeExpression(&self->exprBindings[binding]);
+      self->nexprbindings--;
+    }
+
+    return MS_SUCCESS;
+  }
+
+  /// Get the expression binding for a specified label property. Returns NULL if there is no binding for this property.
+  %newobject getExpressionBinding;
+  char *getExpressionBinding(int binding) 
+  {
+    if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return NULL;
+
+    return msGetExpressionString(&(self->exprBindings[binding]));
+  }
+
+  /// Set the expression binding for a specified label property. Binding constants look like this: ``MS_LABEL_BINDING_[attribute name]``:
+  /// >>> new_label.setExpressionBinding(MS_LABEL_BINDING_PRIORITY, "([priority] * 2)")
+  int setExpressionBinding(int binding, char *text) 
+  {
+    if (!text || strlen(text) == 0) {
+      return MS_FAILURE;
+    }
+
+    if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
+
+    if(self->exprBindings[binding].string) {
+      msFreeExpression(&self->exprBindings[binding]);
+      self->nexprbindings--;
+    }
+
+    self->exprBindings[binding].string = msStrdup(text);
+    self->exprBindings[binding].type = MS_EXPRESSION;
+    self->nexprbindings++;
+
+    return MS_SUCCESS;
+  }
+
+  /// Set the label expression property
   int setExpression(char *expression) 
   {
     if (!expression || strlen(expression) == 0) {
