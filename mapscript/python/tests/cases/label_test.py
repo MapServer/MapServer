@@ -45,6 +45,10 @@ class NewLabelsTestCase(MapTestCase):
         new_label.setExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY, "[MY_ATTRIBUTE] * 2")
         assert (new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY) == "([MY_ATTRIBUTE] * 2)")
 
+        exp = 'LABEL\n  SIZE 10\n  COLOR [NEW_BINDING]\n  OFFSET 0 0\n  POSITION CC\n  ' \
+              'PRIORITY ([MY_ATTRIBUTE] * 2)\n  SHADOWSIZE 1 1\nEND # LABEL\n'
+        assert (new_label.convertToString() == exp)
+
 
 class LabelCacheMemberTestCase(MapTestCase):
 
