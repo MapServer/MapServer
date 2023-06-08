@@ -1000,9 +1000,7 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
     return MS_SUCCESS;
   }
 
-#if PROJ_VERSION_MAJOR >= 6
-  // This could be done also in the < 6 case, but would be useless.
-  // Here this helps avoiding going through potentially lossy PROJ4 strings
+  // This helps avoiding going through potentially lossy PROJ4 strings
   const char* pszAuthName = OSRGetAuthorityName(hSRS, NULL);
   if( pszAuthName && EQUAL(pszAuthName, "EPSG") )
   {
@@ -1018,7 +1016,6 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
         return msLoadProjectionString(proj, szInitStr) == 0 ? MS_SUCCESS : MS_FAILURE;
     }
   }
-#endif
 
   // Export OGR SRS to a PROJ4 string
   char *pszProj = NULL;

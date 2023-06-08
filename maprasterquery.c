@@ -415,9 +415,6 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   CPLErr      eErr;
   rasterLayerInfo *rlinfo;
   rectObj     searchrect;
-#if PROJ_VERSION_MAJOR < 6
-  int         mayNeedLonWrapAdjustment = MS_FALSE;
-#endif
 
   rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
@@ -554,16 +551,6 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     + sqrt( rlinfo->range_dist );
   dfAdjustedRange = dfAdjustedRange * dfAdjustedRange;
 
-#if PROJ_VERSION_MAJOR < 6
-    if( layer->project &&
-        msProjIsGeographicCRS(&(layer->projection)) &&
-        msProjIsGeographicCRS(&(map->projection)) )
-    {
-        double dfLonWrap = 0;
-        mayNeedLonWrapAdjustment = msProjectHasLonWrap(&(layer->projection), &dfLonWrap);
-    }
-#endif
-
   reprojectionObj* reprojector = NULL;
   if( layer->project )
   {
@@ -596,19 +583,6 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       pointObj sReprojectedPixelLocation = sPixelLocation;
       if( reprojector )
       {
-#if PROJ_VERSION_MAJOR < 6
-        /* Works around a bug in PROJ < 6 when reprojecting from a lon_wrap */
-        /* geogCRS to a geogCRS, and the input abs(longitude) is > 180. Then */
-        /* lon_wrap was ignored and the output longitude remained as the source */
-        if( mayNeedLonWrapAdjustment )
-        {
-            if( rlinfo->target_point.x < sReprojectedPixelLocation.x - 180 )
-                sReprojectedPixelLocation.x -= 360;
-            else if( rlinfo->target_point.x > sReprojectedPixelLocation.x + 180 )
-                sReprojectedPixelLocation.x += 360;
-        }
-#endif
-
         msProjectPointEx( reprojector, &sReprojectedPixelLocation);
       }
 
