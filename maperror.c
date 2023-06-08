@@ -549,9 +549,11 @@ char *msGetVersion()
   sprintf(version, "MapServer version %s", MS_VERSION);
 
   // add versions of required dependencies
+#if PROJ_VERSION_MAJOR >= 6
   static char PROJVersion[20];
   sprintf(PROJVersion, " PROJ version %d.%d", PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR);
   strcat(version, PROJVersion);
+#endif
 
   static char GDALVersion[20];
   sprintf(GDALVersion, " GDAL version %d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR);
