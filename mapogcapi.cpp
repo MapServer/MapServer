@@ -1889,6 +1889,18 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
     return MS_FAILURE; // let normal error handling take over
   }
 
+  for(int i=0; i<request->NumParams; i++) {
+    for(int j=i+1; j<request->NumParams; j++) {
+      if(strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
+        std::string errorMsg("Query parameter ");
+        errorMsg += request->ParamNames[i];
+        errorMsg += " is repeated";
+        outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
+        return MS_SUCCESS;
+      }
+    }
+  }
+
   OGCAPIFormat format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
 
