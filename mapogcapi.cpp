@@ -113,7 +113,7 @@ static void outputError(OGCAPIErrorType errorType, const std::string& descriptio
       }
       case OGCAPI_PARAM_ERROR:
       {
-          code = "InvalidParamterValue";
+          code = "InvalidParameterValue";
           status = "400";
           break;
       }
