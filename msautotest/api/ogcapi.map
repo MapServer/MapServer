@@ -4,6 +4,7 @@
 # RUN_PARMS: ogcapi_error_repeated_query_parameter.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&f=bar" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=html" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_storage_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&crs=http://www.opengis.net/def/crs/EPSG/0/32615&limit=1" > [RESULT]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_epsg_4326.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1" > [RESULT_DEMIME]

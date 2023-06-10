@@ -12,6 +12,20 @@
 </ul>
 {% endif %}
 
+{% if existsIn(response, "storageCrs") %}
+<h2>Storage CRS</h2>
+<a href="{{ response.storageCrs }}">{{ response.storageCrs }}</a>
+{% endif %}
+
+{% if existsIn(response, "crs") %}
+<h2>Supported CRS</h2>
+<ul>
+{% for href in response.crs %}
+<li> <a href="{{ href }}">{{ href }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+
 <h2>Links</h2>
 <ul>
 {% for link in response.links %}
