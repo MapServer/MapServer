@@ -127,7 +127,7 @@
 
   /// Get the expression binding for a specified label property. Returns NULL if there is no binding for this property.
   %newobject getExpressionBinding;
-  char *getExpressionBinding(int binding) 
+  const char *getExpressionBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return NULL;
 
