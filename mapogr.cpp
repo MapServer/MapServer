@@ -353,7 +353,6 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
  **********************************************************************/
 static OGRGeometryH ogrGetLinearGeometry(OGRFeatureH hFeature)
 {
-#if GDAL_VERSION_MAJOR >= 2
     /* Convert in place and reassign to the feature */
     OGRGeometryH hGeom = OGR_F_StealGeometry(hFeature);
     if( hGeom != NULL )
@@ -362,9 +361,6 @@ static OGRGeometryH ogrGetLinearGeometry(OGRFeatureH hFeature)
         OGR_F_SetGeometryDirectly(hFeature, hGeom);
     }
     return hGeom;
-#else
-    return OGR_F_GetGeometryRef( hFeature );
-#endif
 }
 
 /**********************************************************************
@@ -1000,9 +996,7 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
     return MS_SUCCESS;
   }
 
-#if PROJ_VERSION_MAJOR >= 6
-  // This could be done also in the < 6 case, but would be useless.
-  // Here this helps avoiding going through potentially lossy PROJ4 strings
+  // This helps avoiding going through potentially lossy PROJ4 strings
   const char* pszAuthName = OSRGetAuthorityName(hSRS, NULL);
   if( pszAuthName && EQUAL(pszAuthName, "EPSG") )
   {
@@ -1018,7 +1012,6 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
         return msLoadProjectionString(proj, szInitStr) == 0 ? MS_SUCCESS : MS_FAILURE;
     }
   }
-#endif
 
   // Export OGR SRS to a PROJ4 string
   char *pszProj = NULL;
@@ -2182,15 +2175,9 @@ static char* msOGRLayerBuildSQLOrderBy(layerObj *layer, msOGRFileInfo *psInfo)
       }
       else
       {
-#if GDAL_VERSION_MAJOR < 2
-          // Old GDAL don't like quoted identifiers in ORDER BY
-          strOrderBy = msStringConcatenate(strOrderBy,
-                                           layer->sortBy.properties[i].item);
-#else
           strOrderBy = msStringConcatenate(strOrderBy, "\"");
           strOrderBy = msStringConcatenate(strOrderBy, escapedItem);
           strOrderBy = msStringConcatenate(strOrderBy, "\"");
-#endif
       }
       msFree(escapedItem);
       if( layer->sortBy.properties[i].sortOrder == SORT_DESC )
@@ -2734,13 +2721,11 @@ msOGRPassThroughFieldDefinitions( layerObj *layer, msOGRFileInfo *psInfo )
         }
         break;
 
-#if GDAL_VERSION_MAJOR >= 2
       case OFTInteger64:
         gml_type = "Long";
         if( OGR_Fld_GetWidth( hField) > 0 )
           sprintf( gml_width, "%d", OGR_Fld_GetWidth( hField) );
         break;
-#endif
 
       case OFTReal:
         gml_type = "Real";

@@ -37,17 +37,7 @@
 extern "C" {
 #endif
 
-#if PROJ_VERSION_MAJOR >= 6
-#  include <proj.h>
-#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR == 0
-#error "PROJ 6.0 is not supported. Use PROJ 6.1 or later"
-#endif
-#else
-#  include <proj_api.h>
-#if PJ_VERSION >= 470 && PJ_VERSION < 480
-   void pj_clear_initcache();
-#endif
-#endif
+#include <proj.h>
 
 #define wkp_none 0
 #define wkp_lonlat 1
@@ -73,15 +63,8 @@ but are not directly exposed by the mapscript module
   typedef struct {
 #ifndef SWIG
       char **args; /* variable number of projection args */
-#if PROJ_VERSION_MAJOR >= 6
       PJ* proj;
       projectionContext* proj_ctx;
-#else
-      projPJ proj; /* a projection structure for the PROJ package */
-#if PJ_VERSION >= 480
-      projCtx proj_ctx;
-#endif
-#endif
       geotransformObj gt; /* extra transformation to apply */
 #endif
 
@@ -89,7 +72,8 @@ but are not directly exposed by the mapscript module
     %immutable;
 #endif
     int numargs; ///< Actual number of projection args
-    int automatic; ///< Projection object was to fetched from the layer
+    short automatic; ///< Projection object was to fetched from the layer
+    unsigned short generation_number; ///< To be incremented when the content of the object change, so that reprojector can be invalidated
 #ifdef SWIG
     %mutable;
 #endif
@@ -98,7 +82,6 @@ but are not directly exposed by the mapscript module
   } projectionObj;
 
   typedef struct {
-#if PROJ_VERSION_MAJOR >= 6
 #ifndef SWIG
     projectionObj* in;
     projectionObj* out;
@@ -107,21 +90,15 @@ but are not directly exposed by the mapscript module
     shapeObj splitShape;
     int bFreePJ;
 #endif
-#else
-#ifndef SWIG
-    projectionObj* in;
-    projectionObj* out;
-    msLineCuttingCase lineCuttingCase;
-    shapeObj splitShape;
-    int no_op;
-#endif
-#endif
+    unsigned short generation_number_in;
+    unsigned short generation_number_out;
   } reprojectionObj;
 
 #ifndef SWIG
 
   MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
   MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj* reprojector);
+  MS_DLL_EXPORT int msProjectIsReprojectorStillValid(reprojectionObj* reprojector);
 
   MS_DLL_EXPORT projectionContext* msProjectionContextGetFromPool(void);
   MS_DLL_EXPORT void msProjectionContextReleaseToPool(projectionContext* ctx);
@@ -160,10 +137,8 @@ but are not directly exposed by the mapscript module
   MS_DLL_EXPORT void msProjDataInitFromEnv();
 
   int msProjIsGeographicCRS(projectionObj* proj);
-#if PROJ_VERSION_MAJOR >= 6
   int msProjectTransformPoints( reprojectionObj* reprojector,
                                 int npoints, double* x, double* y );
-#endif
 
   /*utility functions */
   MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);

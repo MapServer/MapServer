@@ -232,3 +232,52 @@ def test_reprojection_from_lonlat_wrap_0():
     set_x = [point11.x, point12.x, point21.x, point22.x]
     set_x.sort()
     assert set_x == pytest.approx([-180, -179, 178, 180], abs=1e-2)
+
+
+###############################################################################
+# Check that we can draw a map several times by changing the map projection
+
+def test_bug_6896():
+
+    try:
+        os.mkdir(get_relpath_to_this('result'))
+    except:
+        pass
+
+    def load_map():
+        # Generate a reference image
+        map = mapscript.mapObj(get_relpath_to_this('../misc/ogr_direct.map'))
+        layer = map.getLayer(0)
+        layer.setProjection('+proj=utm +zone=11 +datum=WGS84')
+        return map
+
+    def draw_another_projection(map):
+        # Draw map with one reprojection.
+        map.setProjection('+proj=utm +zone=12 +datum=WGS84')
+        map.setExtent(-10675, 4781937, -7127, 4784428 )
+        map.draw()
+
+    def draw_wgs84(map):
+        # Draw map with WGS 84 projection
+        map.setProjection('+proj=latlong +datum=WGS84')
+        map.setExtent(-117.25,43.02,-117.21,43.05)
+        img = map.draw()
+        return img
+
+    map = load_map()
+    img = draw_wgs84(map)
+    ref_filename = get_relpath_to_this('result/bug6896_ref.png')
+    img.save(ref_filename)
+
+    # Reload map
+    map = load_map()
+    draw_another_projection(map)
+    img = draw_wgs84(map)
+    test_filename = get_relpath_to_this('result/bug6896.png')
+    img.save(test_filename)
+
+    assert open(ref_filename, 'rb').read() == \
+           open(test_filename, 'rb').read()
+
+    os.unlink(ref_filename)
+    os.unlink(test_filename)

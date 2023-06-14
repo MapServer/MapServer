@@ -39,11 +39,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "proj_experimental.h"
 
 static char *ms_proj_data = NULL;
-#if PROJ_VERSION_MAJOR >= 6
 static unsigned ms_proj_data_change_counter = 0;
-#endif
 
 typedef struct LinkedListOfProjContext LinkedListOfProjContext;
 struct LinkedListOfProjContext
@@ -60,10 +59,6 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 
 static projectionContext* msProjectionContextCreate(void);
 static void msProjectionContextUnref(projectionContext* ctx);
-
-#if PROJ_VERSION_MAJOR >= 6
-
-#include "proj_experimental.h"
 
 /* Helps considerably for use cases like msautotest/wxs/wms_inspire.map */
 /* which involve a number of layers with same SRS, and a number of exposed */
@@ -137,12 +132,7 @@ static PJ* createNormalizedPJ(projectionObj *in, projectionObj *out, int* pbFree
     {
         /* Special case to avoid out_str below to cause in_str to become invalid */
         *pbFreePJ = TRUE;
-#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR == 0
-        /* 6.0 didn't support proj=noop */
-        return proj_create(in->proj_ctx->proj_ctx, "+proj=affine");
-#else
         return proj_create(in->proj_ctx->proj_ctx, "+proj=noop");
-#endif
     }
 
     const char* const wkt_options[] = { "MULTILINE=NO", NULL };
@@ -354,11 +344,7 @@ static void msProjErrorLogger(void * user_data,
                              int level, const char * message)
 {
     (void)user_data;
-#if PROJ_VERSION_MAJOR >= 6    
     if( level == PJ_LOG_ERROR && msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_VV )
-#else
-    if( level == PJ_LOG_ERROR )
-#endif
     {
         msDebug( "PROJ: Error: %s\n", message );
     }
@@ -414,11 +400,19 @@ void msProjectionContextUnref(projectionContext* ctx)
 /*                        msProjectCreateReprojector()                  */
 /************************************************************************/
 
+/* The pointed objects need to remain valid during the lifetime of the
+ * reprojector, as only their pointer is stored.
+ *
+ * If the *content* of in and/or out is changed, then the reprojector is
+ * no longer valid. This can be detected with msProjectIsReprojectorStillValid()
+ */
 reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out)
 {
     reprojectionObj* obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
     obj->in = in;
     obj->out = out;
+    obj->generation_number_in = in ? in->generation_number : 0;
+    obj->generation_number_out = out ? out->generation_number : 0;
     obj->lineCuttingCase = LINE_CUTTING_UNKNOWN;
 
     /* -------------------------------------------------------------------- */
@@ -521,94 +515,6 @@ int msProjectTransformPoints( reprojectionObj* reprojector,
     return MS_SUCCESS;
 }
 
-#else
-
-/************************************************************************/
-/*                        msProjectionContextCreate()                   */
-/************************************************************************/
-
-projectionContext* msProjectionContextCreate(void)
-{
-    return NULL;
-}
-
-/************************************************************************/
-/*                        msProjectionContextUnref()                    */
-/************************************************************************/
-
-void msProjectionContextUnref(projectionContext* ctx)
-{
-    (void)ctx;
-}
-
-/************************************************************************/
-/*                        msProjectCreateReprojector()                  */
-/************************************************************************/
-
-reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out)
-{
-    reprojectionObj* obj;
-    obj = (reprojectionObj*)msSmallCalloc(1, sizeof(reprojectionObj));
-    obj->in = in;
-    obj->out = out;
-    obj->lineCuttingCase = LINE_CUTTING_UNKNOWN;
-
-    /* -------------------------------------------------------------------- */
-    /*      If the source and destination are equal, then do nothing.       */
-    /* -------------------------------------------------------------------- */
-    if( in && out && in->numargs == out->numargs && in->numargs > 0
-        && strcmp(in->args[0],out->args[0]) == 0 )
-    {
-        int i;
-        obj->no_op = MS_TRUE;
-        for( i = 1; i < in->numargs; i++ )
-        {
-            if( strcmp(in->args[i],out->args[i]) != 0 ) {
-                obj->no_op = MS_FALSE;
-                break;
-            }
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      If we have a fully defined input coordinate system and          */
-    /*      output coordinate system, then we will use pj_transform         */
-    /* -------------------------------------------------------------------- */
-    else if( in && in->proj && out && out->proj ) {
-        /* do nothing for now */
-    }
-    /* nothing to do if the other coordinate system is also lat/long */
-    else if( in == NULL && (out == NULL || msProjIsGeographicCRS(out) ))
-    {
-        obj->no_op = MS_TRUE;
-    }
-    else if( out == NULL && in != NULL && msProjIsGeographicCRS(in) )
-    {
-        obj->no_op = MS_TRUE;
-    }
-    else if( (in == NULL || in->proj == NULL) &&
-             (out == NULL || out->proj == NULL) )
-    {
-        msProjectDestroyReprojector(obj);
-        return NULL;
-    }
-    return obj;
-}
-
-/************************************************************************/
-/*                      msProjectDestroyReprojector()                   */
-/************************************************************************/
-
-void msProjectDestroyReprojector(reprojectionObj* reprojector)
-{
-    if( !reprojector )
-        return;
-    msFreeShape(&(reprojector->splitShape));
-    msFree(reprojector);
-}
-
-#endif
-
 /*
 ** Initialize, load and free a projectionObj structure
 */
@@ -621,51 +527,32 @@ int msInitProjection(projectionObj *p)
   p->proj = NULL;
   p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *));
   MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS*sizeof(char *), -1);
-#if PROJ_VERSION_MAJOR >= 6
   p->proj_ctx = NULL;
-#elif PJ_VERSION >= 480
-  p->proj_ctx = NULL;
-#endif
+  p->generation_number = 0;
   return(0);
 }
 
 void msFreeProjection(projectionObj *p)
 {
-#if PROJ_VERSION_MAJOR >= 6
   proj_destroy(p->proj);
   p->proj = NULL;
   msProjectionContextUnref(p->proj_ctx);
   p->proj_ctx = NULL;
-#else
-  if(p->proj) {
-    pj_free(p->proj);
-    p->proj = NULL;
-  }
-#if PJ_VERSION >= 480
-  if(p->proj_ctx) {
-    pj_ctx_free(p->proj_ctx);
-    p->proj_ctx = NULL;
-  }
-#endif
-#endif
 
   p->gt.need_geotransform = MS_FALSE;
   p->wellknownprojection = wkp_none;
   msFreeCharArray(p->args, p->numargs);
   p->args = NULL;
   p->numargs = 0;
+  p->generation_number ++;
 }
 
 void msFreeProjectionExceptContext(projectionObj *p)
 {
-#if PROJ_VERSION_MAJOR >= 6
   projectionContext* ctx = p->proj_ctx;
   p->proj_ctx = NULL;
   msFreeProjection(p);
   p->proj_ctx = ctx;
-#else
-  msFreeProjection(p);
-#endif
 }
 
 /************************************************************************/
@@ -674,16 +561,11 @@ void msFreeProjectionExceptContext(projectionObj *p)
 
 void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pSrc)
 {
-#if PROJ_VERSION_MAJOR >= 6
     if( pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL)
     {
         pDst->proj_ctx = pSrc->proj_ctx;
         pDst->proj_ctx->ref_count ++;
     }
-#else
-    (void)pDst;
-    (void)pSrc;
-#endif
 }
 
 /************************************************************************/
@@ -692,16 +574,11 @@ void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pS
 
 void msProjectionSetContext(projectionObj *p, projectionContext* ctx)
 {
-#if PROJ_VERSION_MAJOR >= 6
     if( p->proj_ctx == NULL && ctx != NULL)
     {
         p->proj_ctx = ctx;
         p->proj_ctx->ref_count ++;
     }
-#else
-    (void)p;
-    (void)ctx;
-#endif
 }
 
 /*
@@ -815,7 +692,6 @@ static int _msProcessAutoProjection(projectionObj *p)
   /* OK, pass the definition to pj_init() */
   args = msStringSplit(szProjBuf, '+', &numargs);
 
-#if PROJ_VERSION_MAJOR >= 6
   if( !(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, numargs, args)) ) {
     int l_pj_errno = proj_context_errno (p->proj_ctx->proj_ctx);
     msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
@@ -823,18 +699,6 @@ static int _msProcessAutoProjection(projectionObj *p)
     msFreeCharArray(args, numargs);
     return(-1);
   }
-#else
-  msAcquireLock( TLOCK_PROJ );
-  if( !(p->proj = pj_init(numargs, args)) ) {
-    int *pj_errno_ref = pj_get_errno_ref();
-    msReleaseLock( TLOCK_PROJ );
-    msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
-               "msProcessProjection()", pj_strerrno(*pj_errno_ref), szProjBuf) ;
-    msFreeCharArray(args, numargs);
-    return(-1);
-  }
-  msReleaseLock( TLOCK_PROJ );
-#endif
 
   msFreeCharArray(args, numargs);
 
@@ -844,6 +708,8 @@ static int _msProcessAutoProjection(projectionObj *p)
 int msProcessProjection(projectionObj *p)
 {
   assert( p->proj == NULL );
+
+  p->generation_number ++;
 
   if( strcasecmp(p->args[0],"GEOGRAPHIC") == 0 ) {
     msSetError(MS_PROJERR,
@@ -860,7 +726,6 @@ int msProcessProjection(projectionObj *p)
     return 0;
   }
 
-#if PROJ_VERSION_MAJOR >= 6
   if( p->proj_ctx == NULL )
   {
     p->proj_ctx = msProjectionContextCreate();
@@ -894,7 +759,6 @@ int msProcessProjection(projectionObj *p)
     }
     msReleaseLock( TLOCK_PROJ );
   }
-#endif
 
   if (strncasecmp(p->args[0], "AUTO:", 5) == 0 ||
       strncasecmp(p->args[0], "AUTO2:", 6) == 0) {
@@ -903,7 +767,6 @@ int msProcessProjection(projectionObj *p)
     return _msProcessAutoProjection(p);
   }
 
-#if PROJ_VERSION_MAJOR >= 6
   if( p->numargs == 1 && strncmp(p->args[0], "init=", 5) != 0 )
   {
       /* Deal e.g. with EPSG:XXXX or ESRI:XXXX */
@@ -953,29 +816,6 @@ int msProcessProjection(projectionObj *p)
       }
       free(args);
   }
-#else
-  msAcquireLock( TLOCK_PROJ );
-#if PJ_VERSION < 480
-  if( !(p->proj = pj_init(p->numargs, p->args)) ) {
-#else
-  p->proj_ctx = pj_ctx_alloc();
-  if( !(p->proj=pj_init_ctx(p->proj_ctx, p->numargs, p->args)) ) {
-#endif
-
-    int *pj_errno_ref = pj_get_errno_ref();
-    msReleaseLock( TLOCK_PROJ );
-    if(p->numargs>1) {
-      msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
-                 "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0],p->args[1]) ;
-    } else {
-      msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
-                 "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0]) ;
-    }
-    return(-1);
-  }
-
-  msReleaseLock( TLOCK_PROJ );
-#endif
 
 #ifdef USE_PROJ_FASTPATHS
   if(strcasestr(p->args[0],"epsg:4326")) {
@@ -1046,7 +886,6 @@ int msProjectPointEx(reprojectionObj* reprojector, pointObj *point)
     point->y = y_out;
   }
 
-#if PROJ_VERSION_MAJOR >= 6
   if( reprojector->pj ) {
     PJ_COORD c;
     c.xyzt.x = point->x;
@@ -1060,73 +899,6 @@ int msProjectPointEx(reprojectionObj* reprojector, pointObj *point)
     point->x = c.xyzt.x;
     point->y = c.xyzt.y;
   }
-#else
-  if( reprojector->no_op ) {
-    /* do nothing, no transformation required */
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      If we have a fully defined input coordinate system and          */
-  /*      output coordinate system, then we will use pj_transform.        */
-  /* -------------------------------------------------------------------- */
-  else if( in && in->proj && out && out->proj ) {
-    int error;
-    double  z = 0.0;
-
-    if( pj_is_latlong(in->proj) ) {
-      point->x *= DEG_TO_RAD;
-      point->y *= DEG_TO_RAD;
-    }
-
-#if PJ_VERSION < 480
-    msAcquireLock( TLOCK_PROJ );
-#endif
-    error = pj_transform( in->proj, out->proj, 1, 0,
-                          &(point->x), &(point->y), &z );
-#if PJ_VERSION < 480
-    msReleaseLock( TLOCK_PROJ );
-#endif
-
-    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL ) {
-//      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
-      return MS_FAILURE;
-    }
-
-    if( pj_is_latlong(out->proj) ) {
-      point->x *= RAD_TO_DEG;
-      point->y *= RAD_TO_DEG;
-    }
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Otherwise we fallback to using pj_fwd() or pj_inv() and         */
-  /*      assuming that the NULL projectionObj is supposed to be          */
-  /*      lat/long in the same datum as the other projectionObj.  This    */
-  /*      is essentially a backwards compatibility mode.                  */
-  /* -------------------------------------------------------------------- */
-  else {
-    projUV p;
-
-    p.u = point->x;
-    p.v = point->y;
-
-    if(in==NULL || in->proj==NULL) { /* input coordinates are lat/lon */
-      p.u *= DEG_TO_RAD; /* convert to radians */
-      p.v *= DEG_TO_RAD;
-      p = pj_fwd(p, out->proj);
-    } else /* if(out==NULL || out->proj==NULL) */ { /* output coordinates are lat/lon */
-      p = pj_inv(p, in->proj);
-      p.u *= RAD_TO_DEG; /* convert to decimal degrees */
-      p.v *= RAD_TO_DEG;
-    }
-
-    point->x = p.u;
-    point->y = p.v;
-    if( point->x == HUGE_VAL || point->y == HUGE_VAL ) {
-      return MS_FAILURE;
-    }
-  }
-#endif
 
   if( out && out->gt.need_geotransform ) {
     double x_out, y_out;
@@ -1366,6 +1138,19 @@ static msLineCuttingCase msProjectGetLineCuttingCase(reprojectionObj* reprojecto
     return reprojector->lineCuttingCase;
 }
 #endif
+
+/************************************************************************/
+/*                msProjectIsReprojectorStillValid()                    */
+/************************************************************************/
+
+int msProjectIsReprojectorStillValid(reprojectionObj* reprojector)
+{
+    if( reprojector->in && reprojector->in->generation_number != reprojector->generation_number_in )
+        return MS_FALSE;
+    if( reprojector->out && reprojector->out->generation_number != reprojector->generation_number_out )
+        return MS_FALSE;
+    return MS_TRUE;
+}
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */
@@ -2264,84 +2049,6 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   return ret;
 }
 
-#if PROJ_VERSION_MAJOR < 6
-
-static int msProjectSortString(const void* firstelt, const void* secondelt)
-{
-    char* firststr = *(char**)firstelt;
-    char* secondstr = *(char**)secondelt;
-    return strcmp(firststr, secondstr);
-}
-
-/************************************************************************/
-/*                        msGetProjectNormalized()                      */
-/************************************************************************/
-
-static projectionObj* msGetProjectNormalized( const projectionObj* p )
-{
-  int i;
-#if PROJ_VERSION_MAJOR >= 6
-  const char* pszNewProj4Def;
-#else
-  char* pszNewProj4Def;
-#endif
-  projectionObj* pnew;
-
-  pnew = (projectionObj*)msSmallMalloc(sizeof(projectionObj));
-  msInitProjection(pnew);
-  msCopyProjection(pnew, (projectionObj*)p);
-
-  if(p->proj == NULL )
-      return pnew;
-
-  /* Normalize definition so that msProjectDiffers() works better */
-#if PROJ_VERSION_MAJOR >= 6
-  pszNewProj4Def = proj_as_proj_string(p->proj_ctx->proj_ctx, p->proj, PJ_PROJ_4, NULL);
-#else
-  pszNewProj4Def = pj_get_def( p->proj, 0 );
-#endif
-  msFreeCharArray(pnew->args, pnew->numargs);
-  pnew->args = msStringSplit(pszNewProj4Def,'+', &pnew->numargs);
-  for(i = 0; i < pnew->numargs; i++)
-  {
-      /* Remove trailing space */
-      if( strlen(pnew->args[i]) > 0 && pnew->args[i][strlen(pnew->args[i])-1] == ' ' )
-          pnew->args[i][strlen(pnew->args[i])-1] = '\0';
-      /* Remove spurious no_defs or init= */
-      if( strcmp(pnew->args[i], "no_defs") == 0 ||
-          strncmp(pnew->args[i], "init=", 5) == 0 )
-      {
-          if( i < pnew->numargs - 1 )
-          {
-              msFree(pnew->args[i]);
-              memmove(pnew->args + i, pnew->args + i + 1,
-                      sizeof(char*) * (pnew->numargs - 1 -i ));
-          }
-          else 
-          {
-              msFree(pnew->args[i]);
-          }
-          pnew->numargs --;
-          i --;
-          continue;
-      }
-  }
-  /* Sort the strings so they can be compared */
-  qsort(pnew->args, pnew->numargs, sizeof(char*), msProjectSortString);
-  /*{
-      fprintf(stderr, "'%s' =\n", pszNewProj4Def);
-      for(i = 0; i < p->numargs; i++)
-          fprintf(stderr, "'%s' ", p->args[i]);
-      fprintf(stderr, "\n");
-  }*/
-#if PROJ_VERSION_MAJOR < 6
-  pj_dalloc(pszNewProj4Def);
-#endif
-
-  return pnew;
-}
-#endif
-
 /************************************************************************/
 /*                        msProjectionsDiffer()                         */
 /************************************************************************/
@@ -2383,29 +2090,7 @@ static int msProjectionsDifferInternal( projectionObj *proj1, projectionObj *pro
 
 int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
 {
-    int ret;
-
-    ret = msProjectionsDifferInternal(proj1, proj2);
-#if PROJ_VERSION_MAJOR < 6
-    if( ret &&
-        /* to speed up things, do normalization only if one proj is */
-        /* likely of the form init=epsg:XXX and the other proj=XXX datum=YYY... */
-        ( (proj1->numargs == 1 && proj2->numargs > 1) ||
-          (proj1->numargs > 1 && proj2->numargs == 1) ) )
-    {
-        projectionObj* p1normalized;
-        projectionObj* p2normalized;
-
-        p1normalized = msGetProjectNormalized( proj1 );
-        p2normalized = msGetProjectNormalized( proj2 );
-        ret = msProjectionsDifferInternal(p1normalized, p2normalized);
-        msFreeProjection(p1normalized);
-        msFree(p1normalized);
-        msFreeProjection(p2normalized);
-        msFree(p2normalized);
-    }
-#endif
-    return ret;
+    return msProjectionsDifferInternal(proj1, proj2);
 }
 
 /************************************************************************/
@@ -2518,32 +2203,6 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 }
 
 /************************************************************************/
-/*                            msProjFinder()                            */
-/************************************************************************/
-
-#if PROJ_VERSION_MAJOR < 6
-static char *last_filename = NULL;
-
-static const char *msProjFinder( const char *filename)
-
-{
-  if( last_filename != NULL )
-    free( last_filename );
-
-  if( filename == NULL )
-    return NULL;
-
-  if( ms_proj_data == NULL )
-    return filename;
-
-  last_filename = (char *) malloc(strlen(filename)+strlen(ms_proj_data)+2);
-  sprintf( last_filename, "%s/%s", ms_proj_data, filename );
-
-  return last_filename;
-}
-#endif
-
-/************************************************************************/
 /*                       msProjDataInitFromEnv()                        */
 /************************************************************************/
 void msProjDataInitFromEnv()
@@ -2585,7 +2244,7 @@ void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
 
 
   msAcquireLock( TLOCK_PROJ );
-#if PROJ_VERSION_MAJOR >= 6
+
   if( proj_data == NULL && ms_proj_data == NULL )
   {
      /* do nothing */
@@ -2601,33 +2260,9 @@ void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
     free( ms_proj_data );
     ms_proj_data = proj_data ? msStrdup(proj_data) : NULL;
   }
-#else
-  {
-    static int finder_installed = 0;
-    if( finder_installed == 0 && proj_data != NULL) {
-      finder_installed = 1;
-      pj_set_finder( msProjFinder );
-    }
-  }
 
-  if (proj_data == NULL) pj_set_finder(NULL);
-
-  if( ms_proj_data != NULL ) {
-    free( ms_proj_data );
-    ms_proj_data = NULL;
-  }
-
-  if( last_filename != NULL ) {
-    free( last_filename );
-    last_filename = NULL;
-  }
-
-  if( proj_data != NULL )
-    ms_proj_data = msStrdup( proj_data );
-#endif
   msReleaseLock( TLOCK_PROJ );
 
-#if GDAL_VERSION_MAJOR >= 3
   if( ms_proj_data != NULL )
   {
 #ifdef _WIN32
@@ -2639,7 +2274,6 @@ void msSetPROJ_DATA( const char *proj_data, const char *pszRelToPath )
     OSRSetPROJSearchPaths((const char* const *)papszPaths);
     CSLDestroy(papszPaths);
   }
-#endif
 
   if ( extended_path )
     msFree( extended_path );
@@ -2805,7 +2439,6 @@ void msAxisDenormalizePoints( projectionObj *proj, int count,
 
 int msProjIsGeographicCRS(projectionObj* proj)
 {
-#if PROJ_VERSION_MAJOR >= 6
     PJ_TYPE type;
     if( !proj->proj )
         return FALSE;
@@ -2820,9 +2453,6 @@ int msProjIsGeographicCRS(projectionObj* proj)
         return type == PJ_TYPE_GEOGRAPHIC_2D_CRS || type == PJ_TYPE_GEOGRAPHIC_3D_CRS;
     }
     return FALSE;
-#else
-    return proj->proj != NULL && pj_is_latlong(proj->proj);
-#endif
 }
 
 /************************************************************************/
@@ -2859,20 +2489,10 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit)
 /************************************************************************/
 int GetMapserverUnitUsingProj(projectionObj *psProj)
 {
-#if PROJ_VERSION_MAJOR >= 6
-  const char *proj_str;
-#else
-  char *proj_str;
-#endif
-
   if( msProjIsGeographicCRS( psProj ) )
     return MS_DD;
 
-#if PROJ_VERSION_MAJOR >= 6
-  proj_str = proj_as_proj_string(psProj->proj_ctx->proj_ctx, psProj->proj, PJ_PROJ_4, NULL);
-#else
-  proj_str = pj_get_def( psProj->proj, 0 );
-#endif
+  const char* proj_str = proj_as_proj_string(psProj->proj_ctx->proj_ctx, psProj->proj, PJ_PROJ_4, NULL);
   if( proj_str == NULL )
     return -1;
 
@@ -2884,9 +2504,6 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
     char *blank;
 
     strlcpy( units, (strstr(proj_str,"units=")+6), sizeof(units) );
-#if PROJ_VERSION_MAJOR < 6
-    pj_dalloc( proj_str );
-#endif
 
     blank = strchr(units, ' ');
     if( blank != NULL )
@@ -2905,9 +2522,6 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
 
     strlcpy(to_meter_str,(strstr(proj_str,"to_meter=")+9),
             sizeof(to_meter_str));
-#if PROJ_VERSION_MAJOR < 6
-    pj_dalloc( proj_str );
-#endif
 
     blank = strchr(to_meter_str, ' ');
     if( blank != NULL )
@@ -2931,9 +2545,6 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
       return -1;
   }
 
-#if PROJ_VERSION_MAJOR < 6
-  pj_dalloc( proj_str );
-#endif
   return -1;
 }
 

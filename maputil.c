@@ -2061,21 +2061,10 @@ void msCleanup()
 
   /* Release both GDAL and OGR resources */
   msAcquireLock( TLOCK_GDAL );
-#if GDAL_VERSION_MAJOR >= 3 || (GDAL_VERSION_MAJOR == 2 && GDAL_VERSION_MINOR == 4)
   /* Cleanup some GDAL global resources in particular */
   GDALDestroy();
-#else
-  GDALDestroyDriverManager();
-#endif
   msReleaseLock( TLOCK_GDAL );
 
-
-#if PROJ_VERSION_MAJOR < 6
-#  if PJ_VERSION >= 480
-  pj_clear_initcache();
-#  endif
-  pj_deallocate_grids();
-#endif
   msSetPROJ_DATA( NULL, NULL );
   msProjectionContextPoolCleanup();
 

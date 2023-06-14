@@ -495,7 +495,7 @@ static int msOGRWriteShape( OGRLayerH hOGRLayer,
     }
 
     const char* pszValue = shape->values[i];
-#if GDAL_VERSION_MAJOR <= 2 || (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR < 7)
+#if GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR < 7
     // Boolean true and false values are handled in GDAL 3.7+
     // otherwise any string values revert to false
     if (strcmp(pszValue, "true") == 0) {
@@ -1166,13 +1166,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
 
       if( layer->project && resultshape.type != MS_SHAPE_NULL && shapeFromCache != true) {
-        if( layer->reprojectorLayerToMap == NULL )
-        {
-            layer->reprojectorLayerToMap = msProjectCreateReprojector(
-                &layer->projection, &layer->map->projection);
-        }
-        if( layer->reprojectorLayerToMap )
-            status = msProjectShapeEx(layer->reprojectorLayerToMap, &resultshape);
+        reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
+        if( reprojector )
+            status = msProjectShapeEx(reprojector, &resultshape);
         else
             status = MS_FAILURE;
       }
