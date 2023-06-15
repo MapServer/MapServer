@@ -31,7 +31,7 @@
 {
 
     /// Create a new instance of :class:`mapObj`. Note that the *filename* is optional.
-    mapObj(char *filename="", configObj *config=NULL) 
+    mapObj(const char *filename="", configObj *config=NULL) 
     {
         if (filename && strlen(filename))
             return msLoadMap(filename, NULL, config);
@@ -42,7 +42,7 @@
 
 #ifdef SWIGCSHARP
 
-  mapObj(char *filename) 
+  mapObj(const char *filename) 
   {
         if (filename && strlen(filename))
             return msLoadMap(filename, NULL, NULL);
@@ -200,7 +200,7 @@
 
     %newobject getLayerByName;
     /// Returns a reference to the named layer.
-    layerObj *getLayerByName(char *name) {
+    layerObj *getLayerByName(const char *name) {
       int i;
 
       i = msGetLayerIndex(self, name);

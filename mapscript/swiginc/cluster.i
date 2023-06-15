@@ -45,7 +45,7 @@
 
   /// Set :ref:`GROUP <mapfile-cluster-group>` string where `group` is a MapServer text expression.
   /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
-  int setGroup(char *group) 
+  int setGroup(const char *group) 
   {
     if (!group || strlen(group) == 0) {
        msFreeExpression(&self->group);
@@ -56,13 +56,13 @@
 
   %newobject getGroupString;
   /// Return a string representation of :ref:`GROUP <mapfile-cluster-group>`
-  char *getGroupString() {
+  const char *getGroupString() {
     return msGetExpressionString(&(self->group));
   }
 
   /// Set :ref:`FILTER <mapfile-cluster-filter>` string where `filter` is a MapServer text expression.
   /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
-  int setFilter(char *filter) {
+  int setFilter(const char *filter) {
     if (!filter || strlen(filter) == 0) {
       msFreeExpression(&self->filter);
       return MS_SUCCESS;
@@ -72,7 +72,7 @@
 
   /// Return a string representation of :ref:`FILTER <mapfile-cluster-filter>`
   %newobject getFilterString;
-  char *getFilterString() {
+  const char *getFilterString() {
     return msGetExpressionString(&(self->filter));
   }
 }
