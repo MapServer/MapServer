@@ -249,7 +249,7 @@
         :func:`mapObj.setImageType` remains in the module but its use 
         is deprecated in favor of :func:`mapObj.selectOutputFormat`.
     */
-    void setImageType( char * imagetype ) {
+    void setImageType( const char * imagetype ) {
         outputFormatObj *format;
 
         format = msSelectOutputFormat( self, imagetype );
@@ -268,7 +268,7 @@
     Set the map's active output format to the internal format named imagetype. 
     Built-in formats are "PNG", "PNG24", "JPEG", "GIF", "GTIFF".
     */
-    void selectOutputFormat( char *imagetype )
+    void selectOutputFormat( const char *imagetype )
     {
         outputFormatObj *format;
 
@@ -656,7 +656,7 @@
     case insensitive and allows an output format to be found either by driver 
     (like 'AGG/PNG') or name (like 'png').
     */
-    outputFormatObj *getOutputFormatByName(char *name) {
+    outputFormatObj *getOutputFormatByName(const char *name) {
         return msSelectOutputFormat(self, name); 
     }
 
@@ -668,7 +668,7 @@
 
     /// Removes the format named name from the map's output format list. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE`
-    int removeOutputFormat(char *name) {
+    int removeOutputFormat(const char *name) {
         return msRemoveOutputFormat(self, name);
     }
 

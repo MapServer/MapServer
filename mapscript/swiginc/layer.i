@@ -544,7 +544,7 @@
 
     /// Sets a filter expression similarly to the FILTER expression in a map file. 
     /// Returns :data:`MS_SUCCESS` or :data:`MS_FAILURE` if the expression fails to parse.
-    int setFilter(const char *filter) 
+    int setFilter(char *filter) 
     {
         if (!filter || strlen(filter) == 0) {
             msFreeExpression(&self->filter);
@@ -555,7 +555,7 @@
 
     %newobject getFilterString;
     /// Returns the current filter expression.
-    const char *getFilterString() 
+    char *getFilterString() 
     {
         return msGetExpressionString(&(self->filter));
     }

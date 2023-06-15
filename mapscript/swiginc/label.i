@@ -113,7 +113,7 @@
   }
 
   /// Set the label expression.
-  int setExpression(const char *expression) 
+  int setExpression(char *expression) 
   {
     if (!expression || strlen(expression) == 0) {
        msFreeExpression(&self->expression);
@@ -124,7 +124,7 @@
 
   /// Returns the label expression string.
   %newobject getExpressionString;
-  const char *getExpressionString() {
+  char *getExpressionString() {
     return msGetExpressionString(&(self->expression));
   }
 

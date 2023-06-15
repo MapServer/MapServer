@@ -158,7 +158,7 @@
     }
 
     /// Remove the attribute binding for a specified style property. 
-    int setBinding(int binding, char *item) 
+    int setBinding(int binding, const char *item) 
     {
         if(!item) return MS_FAILURE;
         if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return MS_FAILURE;
@@ -178,7 +178,7 @@
 
     /// Get the attribute binding for a specified style property. 
     /// Returns NULL if there is no binding for this property. 
-    char *getBinding(int binding) 
+    const char *getBinding(int binding) 
     {
         if(binding < 0 || binding >= MS_STYLE_BINDING_LENGTH) return NULL;
 
