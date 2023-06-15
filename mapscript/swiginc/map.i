@@ -200,7 +200,7 @@
 
     %newobject getLayerByName;
     /// Returns a reference to the named layer.
-    layerObj *getLayerByName(const char *name) {
+    layerObj *getLayerByName(char *name) {
       int i;
 
       i = msGetLayerIndex(self, name);
