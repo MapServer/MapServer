@@ -1116,9 +1116,11 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       /*
       ** Read the shape.
       */
+      bool shapeFromCache = false;
       if( layer->resultcache->results[i].shape )
       {
           /* msDebug("Using cached shape %ld\n", layer->resultcache->results[i].shapeindex); */
+          shapeFromCache = true;
           status = msCopyShape(layer->resultcache->results[i].shape, &resultshape);
       }
       else
@@ -1163,7 +1165,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         }
       }
 
-      if( layer->project && resultshape.type != MS_SHAPE_NULL) {
+      if( layer->project && resultshape.type != MS_SHAPE_NULL && shapeFromCache != true) {
         reprojectionObj* reprojector = msLayerGetReprojectorToMap(layer, layer->map);
         if( reprojector )
             status = msProjectShapeEx(reprojector, &resultshape);
