@@ -85,7 +85,7 @@
   }
 
   /// Get the attribute binding for a specified label property. Returns NULL if there is no binding for this property.
-  char *getBinding(int binding) 
+  const char *getBinding(int binding) 
   {
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return NULL;
 
@@ -94,7 +94,7 @@
 
   /// Set the attribute binding for a specified label property. Binding constants look like this: ``MS_LABEL_BINDING_[attribute name]``:
   /// >>> new_label.setBinding(MS_LABEL_BINDING_COLOR, "FIELD_NAME_COLOR")
-  int setBinding(int binding, char *item) 
+  int setBinding(int binding, const char *item) 
   {
     if(!item) return MS_FAILURE;
     if(binding < 0 || binding >= MS_LABEL_BINDING_LENGTH) return MS_FAILURE;
