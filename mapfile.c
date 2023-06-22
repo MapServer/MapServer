@@ -2022,6 +2022,8 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_PRIORITY].item)
     writeAttributeBinding(stream, indent, "PRIORITY", &(label->bindings[MS_LABEL_BINDING_PRIORITY]));
+  else if (label->nexprbindings > 0 && label->exprBindings[MS_LABEL_BINDING_PRIORITY].string)
+    writeExpression(stream, indent, "PRIORITY", &(label->exprBindings[MS_LABEL_BINDING_PRIORITY]));
   else writeNumber(stream, indent, "PRIORITY", MS_DEFAULT_LABEL_PRIORITY, label->priority);
 
   writeNumber(stream, indent, "REPEATDISTANCE", 0, label->repeatdistance);
