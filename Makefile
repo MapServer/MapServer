@@ -95,8 +95,8 @@ asan_compatible_tests:  cmakebuild
 lexer: maplexer.c
 parser: mapparser.c
 
-maplexer.c: maplexer.l
-	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/src/maplexer.c maplexer.l
+maplexer.c: src/maplexer.l
+	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/src/maplexer.c src/maplexer.l
 
-mapparser.c: mapparser.y
-	$(YACC) -d -o$(CURDIR)/src/mapparser.c mapparser.y
+mapparser.c: src/mapparser.y
+	$(YACC) -d -o$(CURDIR)/src/mapparser.c src/mapparser.y
