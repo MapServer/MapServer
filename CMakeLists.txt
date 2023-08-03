@@ -255,36 +255,36 @@ else(LINK_STATIC_LIBMAPSERVER)
 endif(LINK_STATIC_LIBMAPSERVER)
 
 set(agg_SOURCES
-renderers/agg/src/agg_arc.cpp
-renderers/agg/src/agg_vcgen_dash.cpp
-renderers/agg/src/agg_vcgen_contour.cpp
-renderers/agg/src/agg_curves.cpp
-renderers/agg/src/agg_embedded_raster_fonts.cpp
-renderers/agg/src/agg_trans_affine.cpp
-renderers/agg/src/agg_vcgen_stroke.cpp
-renderers/agg/src/agg_font_freetype.cpp
-renderers/agg/src/agg_line_aa_basics.cpp
-renderers/agg/src/clipper.cpp
+src/renderers/agg/src/agg_arc.cpp
+src/renderers/agg/src/agg_vcgen_dash.cpp
+src/renderers/agg/src/agg_vcgen_contour.cpp
+src/renderers/agg/src/agg_curves.cpp
+src/renderers/agg/src/agg_embedded_raster_fonts.cpp
+src/renderers/agg/src/agg_trans_affine.cpp
+src/renderers/agg/src/agg_vcgen_stroke.cpp
+src/renderers/agg/src/agg_font_freetype.cpp
+src/renderers/agg/src/agg_line_aa_basics.cpp
+src/renderers/agg/src/clipper.cpp
 )
-include_directories(renderers/agg/include)
+include_directories(src/renderers/agg/include)
 
 set(v8_SOURCES
-  mapscript/v8/v8_object_wrap.hpp  
-  mapscript/v8/point.cpp
-  mapscript/v8/line.cpp
-  mapscript/v8/shape.cpp  
-  mapscript/v8/v8_mapscript.cpp
-  mapv8.cpp
+  src/mapscript/v8/v8_object_wrap.hpp  
+  src/mapscript/v8/point.cpp
+  src/mapscript/v8/line.cpp
+  src/mapscript/v8/shape.cpp  
+  src/mapscript/v8/v8_mapscript.cpp
+  src/mapv8.cpp
 )
-include_directories(mapscript/v8/)
+include_directories(src/mapscript/v8/)
 
 # point to FlatGeobuf files
 set(flatgeobuf_SOURCES
-flatgeobuf/flatgeobuf_c.cpp
-flatgeobuf/geometryreader.cpp
-flatgeobuf/packedrtree.cpp
+src/flatgeobuf/flatgeobuf_c.cpp
+src/flatgeobuf/geometryreader.cpp
+src/flatgeobuf/packedrtree.cpp
 )
-include_directories(flatgeobuf/include)
+include_directories(src/flatgeobuf/include)
 
 #add_definitions(-DHASH_DEBUG=1)
 if(WIN32)
@@ -307,41 +307,41 @@ else(WIN32)
   set(REGEX_SOURCES "")
 endif(WIN32)
 
-set(mapserver_SOURCES fontcache.c 
-cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.cpp classobject.c
-mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c mapogcapi.cpp
-mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
-maphttp.c mapparser.c mapstring.cpp mapxmp.c mapcairo.c mapimageio.c
-mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
-mapcluster.c mapio.c mappostgis.cpp maptemplate.c mapcontext.c mapjoin.c
-mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
-mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
-maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.cpp
-mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
-mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
-mapwcs.cpp maperror.c mapogcfilter.cpp mapregex.c mapwcs11.cpp mapfile.c
-mapogcfiltercommon.cpp maprendering.c mapwcs20.cpp mapogcsld.c mapmetadata.c
-mapresample.c mapwfs.cpp mapgdal.cpp mapogcsos.c mapscale.c mapwfs11.cpp mapwfs20.c
-mapgeomtransform.c mapogroutput.cpp mapwfslayer.c mapagg.cpp mapkml.cpp
-mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
-mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c
-idw.c interpolation.c mapflatgeobuf.c mapcompositingfilter.c mapmvt.c mapiconv.c
-mapgraph.cpp mapserv-config.cpp)
+set(mapserver_SOURCES src/fontcache.c 
+src/cgiutil.c src/mapgeos.c src/maporaclespatial.c src/mapsearch.c src/mapwms.cpp src/classobject.c
+src/mapgml.c src/mapoutput.c src/mapwmslayer.c src/layerobject.c src/mapgraticule.c src/mapows.c src/mapogcapi.cpp
+src/mapservutil.c src/mapxbase.c src/maphash.c src/mapowscommon.c src/mapshape.c src/mapxml.c src/mapbits.c
+src/maphttp.c src/mapparser.c src/mapstring.cpp src/mapxmp.c src/mapcairo.c src/mapimageio.c
+src/mappluginlayer.c src/mapsymbol.c src/mapchart.c src/mapimagemap.c src/mappool.c src/maptclutf.c
+src/mapcluster.c src/mapio.c src/mappostgis.cpp src/maptemplate.c src/mapcontext.c src/mapjoin.c
+src/mappostgresql.c src/mapthread.c src/mapcopy.c src/maplabel.c src/mapprimitive.c src/maptile.c
+src/mapcpl.c src/maplayer.c src/mapproject.c src/maptime.c src/mapcrypto.c src/maplegend.c src/hittest.c
+src/maptree.c src/mapdebug.c src/maplexer.c src/mapquantization.c src/mapunion.cpp
+src/mapdraw.c src/maplibxml2.c src/mapquery.c src/maputil.c src/strptime.c src/mapdrawgdal.c
+src/mapraster.c src/mapuvraster.c src/mapdummyrenderer.c src/mapobject.c src/maprasterquery.c
+src/mapwcs.cpp src/maperror.c src/mapogcfilter.cpp src/mapregex.c src/mapwcs11.cpp src/mapfile.c
+src/mapogcfiltercommon.cpp src/maprendering.c src/mapwcs20.cpp src/mapogcsld.c src/mapmetadata.c
+src/mapresample.c src/mapwfs.cpp src/mapgdal.cpp src/mapogcsos.c src/mapscale.c src/mapwfs11.cpp src/mapwfs20.c
+src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src/mapkml.cpp
+src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
+src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
+src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
+src/mapgraph.cpp src/mapserv-config.cpp)
 
 set(mapserver_HEADERS
-cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
-mapaxisorder.h mapcopy.h mapentities.h maperror.h mapfile.h mapgml.h maphash.h
-maphttp.h mapio.h mapkmlrenderer.h maplibxml2.h mapogcfilter.h mapogcsld.h
-mapoglcontext.h mapoglrenderer.h mapowscommon.h mapows.h mapparser.h mapogcapi.h
-mappostgis.h mapprimitive.h mapproject.h mapraster.h mapregex.h mapresample.h
-mapserver-api.h mapserver.h mapserv.h mapshape.h mapsymbol.h maptemplate.h
-mapthread.h maptile.h maptime.h maptree.h maputfgrid.h mapwcs.h uthash.h mapiconv.h
-mapflatgeobuf.h mapgraph.h mapserv-config.h)
+src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
+src/mapaxisorder.h src/mapcopy.h src/mapentities.h src/maperror.h src/mapfile.h src/mapgml.h src/maphash.h
+src/maphttp.h src/mapio.h src/mapkmlrenderer.h src/maplibxml2.h src/mapogcfilter.h src/mapogcsld.h
+src/mapoglcontext.h src/mapoglrenderer.h src/mapowscommon.h src/mapows.h src/mapparser.h src/mapogcapi.h
+src/mappostgis.h src/mapprimitive.h src/mapproject.h src/mapraster.h src/mapregex.h src/mapresample.h
+src/mapserver-api.h src/mapserver.h src/mapserv.h src/mapshape.h src/mapsymbol.h src/maptemplate.h
+src/mapthread.h src/maptile.h src/maptime.h src/maptree.h src/maputfgrid.h src/mapwcs.h src/uthash.h src/mapiconv.h
+src/mapflatgeobuf.h src/mapgraph.h src/mapserv-config.h)
 
 if(WIN32)
 	configure_file(
-	  ${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in
-	  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	  ${CMAKE_CURRENT_SOURCE_DIR}/src/version.rc.in
+	  ${CMAKE_CURRENT_BINARY_DIR}/src/version.rc
 	  @ONLY)
 	set(mapserver_SOURCES ${mapserver_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif(WIN32)
@@ -838,7 +838,7 @@ if(WITH_EXEMPI)
 endif(WITH_EXEMPI)
 
 if(WITH_PYTHON)
-   add_subdirectory("mapscript/python")
+   add_subdirectory("src/mapscript/python")
    set(USE_PYTHON_MAPSCRIPT 1)
 endif(WITH_PYTHON)
 
@@ -859,32 +859,32 @@ if(WITH_V8)
 ENDIF(WITH_V8)
 
 if(WITH_PHPNG)
-   add_subdirectory("mapscript/phpng")
+   add_subdirectory("src/mapscript/phpng")
    set(USE_PHPNG_MAPSCRIPT 1)
 endif(WITH_PHPNG)
 
 if(WITH_APACHE_MODULE)
-   add_subdirectory("apache")
+   add_subdirectory("src/apache")
    set(USE_APACHE_MODULE 1)
 endif(WITH_APACHE_MODULE)
 
 if(WITH_PERL)
-   add_subdirectory("mapscript/perl")
+   add_subdirectory("src/mapscript/perl")
    set(USE_PERL_MAPSCRIPT 1)
 endif(WITH_PERL)
 
 if(WITH_RUBY)
-   add_subdirectory("mapscript/ruby")
+   add_subdirectory("src/mapscript/ruby")
    set(USE_RUBY_MAPSCRIPT 1)
 endif(WITH_RUBY)
 
 if(WITH_JAVA)
-   add_subdirectory("mapscript/java")
+   add_subdirectory("src/mapscript/java")
    set(USE_JAVA_MAPSCRIPT 1)
 endif(WITH_JAVA)
 
 if(WITH_CSHARP)
-   add_subdirectory("mapscript/csharp")
+   add_subdirectory("src/mapscript/csharp")
    set(USE_CSHARP_MAPSCRIPT 1)
 endif(WITH_CSHARP)
 
@@ -905,13 +905,13 @@ if (WIN32)
 endif (WIN32)
 
 configure_file (
-  "${PROJECT_SOURCE_DIR}/mapserver-config.h.in"
-  "${PROJECT_BINARY_DIR}/mapserver-config.h"
+  "${PROJECT_SOURCE_DIR}/src/mapserver-config.h.in"
+  "${PROJECT_BINARY_DIR}/src/mapserver-config.h"
   )
 
 configure_file (
-  "${PROJECT_SOURCE_DIR}/mapserver-version.h.in"
-  "${PROJECT_BINARY_DIR}/mapserver-version.h"
+  "${PROJECT_SOURCE_DIR}/src/mapserver-version.h.in"
+  "${PROJECT_BINARY_DIR}/src/mapserver-version.h"
   )
 
 if(BUILD_DYNAMIC)
