@@ -95,5 +95,5 @@ else
 fi
 
 cd ..
-touch maplexer.l
-touch mapparser.y
+touch src/maplexer.l
+touch src/mapparser.y

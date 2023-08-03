@@ -83,20 +83,20 @@ perl-testcase:
 
 test:  cmakebuild
 	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase mspython-testcase
-	@./print-test-results.sh
+	@./src/print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
 	@$(MAKE) $(MFLAGS)	csharp-testcase
 	@$(MAKE) $(MFLAGS)	perl-testcase
 
 asan_compatible_tests:  cmakebuild
 	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase
-	@./print-test-results.sh
+	@./src/print-test-results.sh
 
 lexer: maplexer.c
 parser: mapparser.c
 
 maplexer.c: maplexer.l
-	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/maplexer.c maplexer.l
+	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/src/maplexer.c maplexer.l
 
 mapparser.c: mapparser.y
-	$(YACC) -d -o$(CURDIR)/mapparser.c mapparser.y
+	$(YACC) -d -o$(CURDIR)/src/mapparser.c mapparser.y
