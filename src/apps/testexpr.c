@@ -29,9 +29,9 @@
 
 #include <time.h>
 
-#include "mapserver.h"
-#include "mapparser.h"
-#include "mapfile.h"
+#include "../mapserver.h"
+#include "../mapparser.h"
+#include "../mapfile.h"
 
 
 

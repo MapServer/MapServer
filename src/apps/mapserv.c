@@ -31,7 +31,7 @@
 #define _XOPEN_SOURCE 500 // for putenv
 #endif
 
-#include "mapserver-config.h"
+#include "../mapserver-config.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -41,8 +41,8 @@
 #endif
 
 #include "mapserv.h"
-#include "mapio.h"
-#include "maptime.h"
+#include "../mapio.h"
+#include "../maptime.h"
 
 #include "cpl_conv.h"
 

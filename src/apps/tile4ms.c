@@ -40,7 +40,7 @@
 *
 */
 
-#include "mapserver.h"
+#include "../mapserver.h"
 #include <string.h>
 
 

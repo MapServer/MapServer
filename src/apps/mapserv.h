@@ -37,8 +37,8 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "maptemplate.h"
-#include "maptile.h"
+#include "../maptemplate.h"
+#include "../maptile.h"
 
 #include "cgiutil.h"
 

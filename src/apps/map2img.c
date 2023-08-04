@@ -29,8 +29,8 @@
 
 #include <stdbool.h>
 
-#include "mapserver.h"
-#include "maptime.h"
+#include "../mapserver.h"
+#include "../maptime.h"
 
 #include "limits.h"
 

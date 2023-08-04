@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "mapserver.h"
-#include "maptree.h"
+#include "../mapserver.h"
+#include "../maptree.h"
 #include <string.h>
 
 
