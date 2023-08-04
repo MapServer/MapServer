@@ -357,12 +357,12 @@ if(WITH_PROTOBUFC)
     # Create custom command for protoc-c
     ADD_CUSTOM_COMMAND(
        COMMAND ${PROTOBUFC_COMPILER}
-       ARGS --c_out=${PROJECT_BINARY_DIR}/src/renderers/mvt --proto_path=${PROJECT_SOURCE_DIR}/src/renderers/mvt ${PROJECT_SOURCE_DIR}/src/renderers/mvt/vector_tile.proto
-       OUTPUT ${PROJECT_BINARY_DIR}/src/renderers/mvt/vector_tile.pb-c.c ${PROJECT_BINARY_DIR}/src/renderers/mvt/vector_tile.pb-c.h
+       ARGS --c_out=${PROJECT_BINARY_DIR}/renderers/mvt --proto_path=${PROJECT_SOURCE_DIR}/src/renderers/mvt ${PROJECT_SOURCE_DIR}/src/renderers/mvt/vector_tile.proto
+       OUTPUT ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.h
     )
 
-    SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/src/renderers/mvt/vector_tile.pb-c.h ${PROJECT_BINARY_DIR}/src/renderers/mvt/vector_tile.pb-c.c GENERATED)
-    set (vectortile_SOURCES ${PROJECT_BINARY_DIR}/src/renderers/mvt/vector_tile.pb-c.c)
+    SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.h ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c GENERATED)
+    set (vectortile_SOURCES ${PROJECT_BINARY_DIR}/renderers/mvt/vector_tile.pb-c.c)
 
     set (USE_PBF 1)
  endif(NOT PROTOBUFC_FOUND)
