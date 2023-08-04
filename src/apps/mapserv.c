@@ -31,7 +31,7 @@
 #define _XOPEN_SOURCE 500 // for putenv
 #endif
 
-#include "../mapserver-config.h"
+#include "mapserver-config.h"
 #include <stdbool.h>
 #include <stdlib.h>
 

@@ -8,9 +8,9 @@ if(NOT JNI_INCLUDE_DIRS OR NOT Java_JAVAC_EXECUTABLE OR NOT Java_JAR_EXECUTABLE)
 endif(NOT JNI_INCLUDE_DIRS OR NOT Java_JAVAC_EXECUTABLE OR NOT Java_JAR_EXECUTABLE)
 
 include_directories(${JNI_INCLUDE_DIRS})
-include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
-include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
-include_directories(${PROJECT_SOURCE_DIR}/mapscript/java)
+include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/swiginc)
+include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
+include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/java)
 set (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
 set(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
 

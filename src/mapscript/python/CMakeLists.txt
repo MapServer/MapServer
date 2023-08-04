@@ -4,11 +4,11 @@ include(${SWIG_USE_FILE})
 find_package (Python REQUIRED COMPONENTS Interpreter Development)
 
 include_directories(${Python_INCLUDE_DIRS})
-include_directories(${PROJECT_SOURCE_DIR}/mapscript/swiginc)
-include_directories(${PROJECT_SOURCE_DIR}/mapscript/)
-include_directories(${PROJECT_SOURCE_DIR}/mapscript/python)
+include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/swiginc)
+include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
+include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/python)
 
-set(SwigFile ${PROJECT_SOURCE_DIR}/mapscript/mapscript.i)
+set(SwigFile ${PROJECT_SOURCE_DIR}/src/mapscript/mapscript.i)
 
 # add and comments annotations to py file output - requires >= SWIG 4.1
 if (WITH_PYMAPSCRIPT_ANNOTATIONS AND ${Python_VERSION_MAJOR} GREATER_EQUAL 3)
@@ -31,7 +31,7 @@ swig_link_libraries(pythonmapscript ${Python_LIBRARIES} ${MAPSERVER_LIBMAPSERVER
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_pythonmapscript_REAL_NAME} PROPERTIES OUTPUT_NAME _mapscript)
 
-set(SETUP_PY_IN "${PROJECT_SOURCE_DIR}/mapscript/python/setup.py.in")
+set(SETUP_PY_IN "${PROJECT_SOURCE_DIR}/src/mapscript/python/setup.py.in")
 set(SETUP_PY_TEMP "${CMAKE_CURRENT_BINARY_DIR}/setup.py.temp")
 
 configure_file(${SETUP_PY_IN} ${SETUP_PY_TEMP} @ONLY)
@@ -67,7 +67,7 @@ add_custom_command(
     COMMAND ${Python_EXECUTABLE} -m pip install pip --upgrade
     COMMAND ${Python_EXECUTABLE} -m pip install virtualenv
     COMMAND ${Python_EXECUTABLE} -m virtualenv mapscriptvenv
-    COMMAND ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/mapscript/python/requirements-dev.txt > requires.log
+    COMMAND ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
 
@@ -107,13 +107,13 @@ add_custom_command(
     TARGET ${SWIG_MODULE_pythonmapscript_REAL_NAME}
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/mapscript/__init__.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py
+    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/src/mapscript/python/mapscript/__init__.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mapscript.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}>" "$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/$<TARGET_FILE_NAME:${SWIG_MODULE_pythonmapscript_REAL_NAME}>"
-    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/mapscript/python/README.rst" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/tests/cases" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests
+    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/src/mapscript/python/README.rst" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/src/mapscript/python/tests/cases" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/tests" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests/data
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/src/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
     COMMENT "Copying files required to build Mapscript"
 )
 
