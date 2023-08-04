@@ -906,12 +906,12 @@ endif (WIN32)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/src/mapserver-config.h.in"
-  "${PROJECT_BINARY_DIR}/src/mapserver-config.h"
+  "${PROJECT_BINARY_DIR}/mapserver-config.h"
   )
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/src/mapserver-version.h.in"
-  "${PROJECT_BINARY_DIR}/src/mapserver-version.h"
+  "${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
 
 if(BUILD_DYNAMIC)
