@@ -40,7 +40,7 @@
 #include "../maptemplate.h"
 #include "../maptile.h"
 
-#include "cgiutil.h"
+#include "../cgiutil.h"
 
 /*
 ** Defines
