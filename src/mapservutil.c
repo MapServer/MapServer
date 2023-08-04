@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-#include "mapserv.h"
+#include "apps/mapserv.h"
 #include "maptime.h"
 #include "mapows.h"
 #include "mapogcapi.h"

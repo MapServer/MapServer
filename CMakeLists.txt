@@ -334,7 +334,7 @@ src/mapaxisorder.h src/mapcopy.h src/mapentities.h src/maperror.h src/mapfile.h 
 src/maphttp.h src/mapio.h src/mapkmlrenderer.h src/maplibxml2.h src/mapogcfilter.h src/mapogcsld.h
 src/mapoglcontext.h src/mapoglrenderer.h src/mapowscommon.h src/mapows.h src/mapparser.h src/mapogcapi.h
 src/mappostgis.h src/mapprimitive.h src/mapproject.h src/mapraster.h src/mapregex.h src/mapresample.h
-src/mapserver-api.h src/mapserver.h src/mapserv.h src/mapshape.h src/mapsymbol.h src/maptemplate.h
+src/mapserver-api.h src/mapserver.h src/apps/mapserv.h src/mapshape.h src/mapsymbol.h src/maptemplate.h
 src/mapthread.h src/maptile.h src/maptime.h src/maptree.h src/maputfgrid.h src/mapwcs.h src/uthash.h src/mapiconv.h
 src/mapflatgeobuf.h src/mapgraph.h src/mapserv-config.h)
 

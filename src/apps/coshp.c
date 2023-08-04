@@ -31,7 +31,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "mapserver.h"
+#include "../mapserver.h"
 
 
 typedef struct {

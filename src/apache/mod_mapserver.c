@@ -14,7 +14,7 @@
 
 #include "../mapserver.h"  /* for mapObj */
 #include "../cgiutil.h"
-#include "../mapserv.h"
+#include "../apps/mapserv.h"
 
 module AP_MODULE_DECLARE_DATA mapserver_module;
 
