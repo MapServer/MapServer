@@ -83,14 +83,14 @@ perl-testcase:
 
 test:  cmakebuild
 	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase mspython-testcase
-	@./src/print-test-results.sh
+	@./scripts/print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
 	@$(MAKE) $(MFLAGS)	csharp-testcase
 	@$(MAKE) $(MFLAGS)	perl-testcase
 
 asan_compatible_tests:  cmakebuild
 	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase
-	@./src/print-test-results.sh
+	@./scripts/print-test-results.sh
 
 lexer: maplexer.c
 parser: mapparser.c
