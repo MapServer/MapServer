@@ -343,7 +343,7 @@ if(WIN32)
 	  ${CMAKE_CURRENT_SOURCE_DIR}/src/version.rc.in
 	  ${CMAKE_CURRENT_BINARY_DIR}/src/version.rc
 	  @ONLY)
-	set(mapserver_SOURCES ${mapserver_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+	set(mapserver_SOURCES ${mapserver_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/src/version.rc)
 endif(WIN32)
 
 if(WITH_PROTOBUFC)
