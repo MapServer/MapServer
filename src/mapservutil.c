@@ -341,8 +341,8 @@ int msCGIIsAPIRequest(mapservObj *mapserv)
 
   mapserv->request->path_info = getenv("PATH_INFO");
   if(mapserv->request->path_info != NULL && strlen(mapserv->request->path_info) > 0) {
-    tmp_api_path = msStringSplit(mapserv->request->path_info, '/', &tmp_api_path_length); // ignores consecutive delimeters
-    if(tmp_api_path_length >= 3) { // /{mapfile}/{signature} so 3 components at a minimum (1st component is a zero-length string)
+    tmp_api_path = msStringSplit(mapserv->request->path_info, '/', &tmp_api_path_length); // ignores consecutive delimiters
+    if(tmp_api_path_length >= 2) { // we can access a mapfile by key using /{mapfile-key} so 2 components at a minimum (1st component is a zero-length string)
 
       // capture only non-zero length components
       n = 0;
