@@ -73,7 +73,7 @@ but are not directly exposed by the mapscript module
 #endif
     int numargs; ///< Actual number of projection args
     short automatic; ///< Projection object was to fetched from the layer
-    unsigned short generation_number; ///< To be incremented when the content of the object change, so that reprojector can be invalidated
+    unsigned short generation_number; ///< To be incremented when the content of the object changes, so that a reprojector can be invalidated
 #ifdef SWIG
     %mutable;
 #endif
@@ -81,6 +81,10 @@ but are not directly exposed by the mapscript module
     int wellknownprojection; ///< One of ``wkp_none 0``, ``wkp_lonlat 1``, or ``wkp_gmerc 2``
   } projectionObj;
 
+/**
+A holder object for projection coordinate transformations, introduced in RFC 126.
+This allows caching of reprojections improving performance.
+*/
   typedef struct {
 #ifndef SWIG
     projectionObj* in;
@@ -90,8 +94,8 @@ but are not directly exposed by the mapscript module
     shapeObj splitShape;
     int bFreePJ;
 #endif
-    unsigned short generation_number_in;
-    unsigned short generation_number_out;
+    unsigned short generation_number_in; ///< A counter that is incremented when the input projectionObj changes
+    unsigned short generation_number_out; ///< A counter that is incremented when the output projectionObj changes
   } reprojectionObj;
 
 #ifndef SWIG
