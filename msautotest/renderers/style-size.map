@@ -49,7 +49,6 @@ MAP
         DATA "data/label_alias_offset.shp"
         LABELITEM "label"
         CLASS
-        CLASS
             STYLE
                 SYMBOL "circle"
                 # add a duplicate SIZE that will be ignored
