@@ -95,7 +95,7 @@ before_test:
   - cd %BUILD_FOLDER%/msautotest
   - "./mssql/create_mssql_db.bat"
   - "%Python_ROOT_DIR%/python -m pip install -U -r requirements.txt"
-  - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file://%BUILD_FOLDER%/build/mapscript/python/Release/dist mapscript"
+  - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file://%BUILD_FOLDER%/build/src/mapscript/python/Release/dist mapscript"
 
 test_script:
   - cd %BUILD_FOLDER%/msautotest/mssql
@@ -121,9 +121,9 @@ deploy_script:
         if ($env:APPVEYOR_REPO_TAG -ne $TRUE -or ($env:APPVEYOR_REPO_TAG_NAME -cSplit "-").Count -ne 4) { return }
         if ($env:Python_ROOT_DIR -eq "c:/python310-x64") {
             Write-Host "Deploying Python source distribution to PyPI. Tag $env:APPVEYOR_REPO_TAG_NAME"
-            cd $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release
+            cd $env:APPVEYOR_BUILD_FOLDER\build\src\mapscript\python\Release
                 & "$env:Python_ROOT_DIR/python" setup.py sdist
         }
         Write-Host "Deploying Python Wheel to PyPI. Tag $env:APPVEYOR_REPO_TAG_NAME"
         & "$env:Python_ROOT_DIR/python" -W ignore -m pip --disable-pip-version-check install twine
-        & "$env:Python_ROOT_DIR/python" -m twine upload --repository-url https://upload.pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\mapscript\python\Release\dist\*
+        & "$env:Python_ROOT_DIR/python" -m twine upload --repository-url https://upload.pypi.org/legacy/ --skip-existing $env:APPVEYOR_BUILD_FOLDER\build\src\mapscript\python\Release\dist\*
