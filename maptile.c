@@ -491,6 +491,8 @@ int msTileSetExtent(mapservObj* msObj)
     msDebug( "msTileSetExtent (%f, %f) (%f, %f)\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
   }
 
+  map->units = MS_METERS;  // now the units are meters
+
   return MS_SUCCESS;
 #else
   msSetError(MS_CGIERR, "Tile API is not available.", "msTileSetExtent()");
