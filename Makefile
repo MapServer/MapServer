@@ -1,9 +1,9 @@
 AUTOTEST_OPTS?=--strict_mode
-PHP_MAPSCRIPT?=build/mapscript/phpng/php_mapscriptng.so
-PYTHON_MAPSCRIPT_PATH=build/mapscript/python
-JAVA_MAPSCRIPT_PATH=build/mapscript/java
-CSHARP_MAPSCRIPT_PATH=build/mapscript/csharp
-PERL_MAPSCRIPT_PATH=build/mapscript/perl
+PHP_MAPSCRIPT?=build/src/mapscript/phpng/php_mapscriptng.so
+PYTHON_MAPSCRIPT_PATH=build/src/mapscript/python
+JAVA_MAPSCRIPT_PATH=build/src/mapscript/java
+CSHARP_MAPSCRIPT_PATH=build/src/mapscript/csharp
+PERL_MAPSCRIPT_PATH=build/src/mapscript/perl
 BUILDPATH=../../build
 FLEX=flex
 YACC=yacc
@@ -65,10 +65,10 @@ phpng-build:
 	cd build && cmake --build . --config Release
 
 java-testcase:
-	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../$(JAVA_MAPSCRIPT_PATH)" && cd mapscript/java && ./run_test.sh)
+	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../../$(JAVA_MAPSCRIPT_PATH)" && cd src/mapscript/java && ./run_test.sh)
 
 csharp-testcase:
-	test -d "$(CSHARP_MAPSCRIPT_PATH)" && (export CSHARP_MAPSCRIPT_SO="../../$(CSHARP_MAPSCRIPT_PATH)" && cd mapscript/csharp && ./run_test.sh)
+	test -d "$(CSHARP_MAPSCRIPT_PATH)" && (export CSHARP_MAPSCRIPT_SO="../../../$(CSHARP_MAPSCRIPT_PATH)" && cd src/mapscript/csharp && ./run_test.sh)
 
 perl-testcase:
 	cd "$(PERL_MAPSCRIPT_PATH)" \
