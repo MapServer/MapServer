@@ -74,10 +74,10 @@ perl-testcase:
 	cd "$(PERL_MAPSCRIPT_PATH)" \
 	&& export PERL5LIB=`pwd` \
 	&& prove tests \
-	&& perl examples/RFC24.pl ../../../tests/test.map \
-	&& perl examples/shp_in_shp.pl --infile1 ../../../tests/line.shp --infile1_shpid 0 --infile2 ../../../tests/polygon.shp --infile2_shpid 0 \
-	&& perl examples/dump.pl --file ../../../tests/line.shp \
-	&& perl examples/thin.pl --input ../../../tests/polygon --output examples/junk --tolerance=5
+	&& perl examples/RFC24.pl ../../../../tests/test.map \
+	&& perl examples/shp_in_shp.pl --infile1 ../../../../tests/line.shp --infile1_shpid 0 --infile2 ../../../tests/polygon.shp --infile2_shpid 0 \
+	&& perl examples/dump.pl --file ../../../../tests/line.shp \
+	&& perl examples/thin.pl --input ../../../../tests/polygon --output examples/junk --tolerance=5
 
 
 
