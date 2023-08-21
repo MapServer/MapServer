@@ -1,0 +1,44 @@
+#
+# Test for mode=tile and the use of MAXSCALEDENOM and MINSCALEDENOM when
+# UNITS=dd.
+# This test should generate a blank tile because the layer is out of scale
+# (zoom level too low).
+#
+# REQUIRES: INPUT=OGR OUTPUT=PNG SUPPORTS=PROJ
+#
+# RUN_PARMS: tile_scale_z4.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&MODE=tile&TILEMODE=gmap&TILE=5+5+4&LAYERS=canada-poly" > [RESULT_DEMIME]
+#
+MAP
+  NAME "TILE_SCALE_TEST"
+  IMAGETYPE PNG
+  EXTENT -140.992892 41.976786 -55.630945 71.990315
+  SIZE 400 400
+  DEBUG 5
+  UNITS dd
+  
+  PROJECTION
+    "init=epsg:4326"
+  END #projection
+
+  LAYER
+    DEBUG 5
+    NAME "canada-poly"
+    TYPE POLYGON
+    STATUS DEFAULT
+    CONNECTIONTYPE OGR
+    CONNECTION "data/canada.dgn"
+    DATA "elements"
+    MINSCALEDENOM 30000000
+    MAXSCALEDENOM 70000000
+    PROJECTION
+      "init=epsg:4326"
+    END #projection
+    CLASS
+      STYLE
+        OUTLINECOLOR 0 0 0 
+        COLOR 120 120 120 
+      END
+    END #class
+  END #layer
+  
+END #map
