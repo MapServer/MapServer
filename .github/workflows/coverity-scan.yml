@@ -25,10 +25,10 @@ jobs:
       - name: Build MapServer
         run: |
           mkdir build
-          touch maplexer.l
-          touch mapparser.y
-          flex --nounistd -Pmsyy -i -omaplexer.c maplexer.l
-          yacc -d -omapparser.c mapparser.y
+          touch src/maplexer.l
+          touch src/mapparser.y
+          flex --nounistd -Pmsyy -i -osrc/maplexer.c src/maplexer.l
+          yacc -d -osrc/mapparser.c src/mapparser.y
           cd build
           cmake -G "Unix Makefiles" \
             -DWITH_CLIENT_WMS=1 -DWITH_CLIENT_WFS=1 -DWITH_SOS=1 \
