@@ -1,9 +1,9 @@
 AUTOTEST_OPTS?=--strict_mode
-PHP_MAPSCRIPT?=build/mapscript/phpng/php_mapscriptng.so
-PYTHON_MAPSCRIPT_PATH=build/mapscript/python
-JAVA_MAPSCRIPT_PATH=build/mapscript/java
-CSHARP_MAPSCRIPT_PATH=build/mapscript/csharp
-PERL_MAPSCRIPT_PATH=build/mapscript/perl
+PHP_MAPSCRIPT?=build/src/mapscript/phpng/php_mapscriptng.so
+PYTHON_MAPSCRIPT_PATH=build/src/mapscript/python
+JAVA_MAPSCRIPT_PATH=build/src/mapscript/java
+CSHARP_MAPSCRIPT_PATH=build/src/mapscript/csharp
+PERL_MAPSCRIPT_PATH=build/src/mapscript/perl
 BUILDPATH=../../build
 FLEX=flex
 YACC=yacc
@@ -65,38 +65,38 @@ phpng-build:
 	cd build && cmake --build . --config Release
 
 java-testcase:
-	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../$(JAVA_MAPSCRIPT_PATH)" && cd mapscript/java && ./run_test.sh)
+	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../../$(JAVA_MAPSCRIPT_PATH)" && cd src/mapscript/java && ./run_test.sh)
 
 csharp-testcase:
-	test -d "$(CSHARP_MAPSCRIPT_PATH)" && (export CSHARP_MAPSCRIPT_SO="../../$(CSHARP_MAPSCRIPT_PATH)" && cd mapscript/csharp && ./run_test.sh)
+	test -d "$(CSHARP_MAPSCRIPT_PATH)" && (export CSHARP_MAPSCRIPT_SO="../../../$(CSHARP_MAPSCRIPT_PATH)" && cd src/mapscript/csharp && ./run_test.sh)
 
 perl-testcase:
 	cd "$(PERL_MAPSCRIPT_PATH)" \
 	&& export PERL5LIB=`pwd` \
 	&& prove tests \
-	&& perl examples/RFC24.pl ../../../tests/test.map \
-	&& perl examples/shp_in_shp.pl --infile1 ../../../tests/line.shp --infile1_shpid 0 --infile2 ../../../tests/polygon.shp --infile2_shpid 0 \
-	&& perl examples/dump.pl --file ../../../tests/line.shp \
-	&& perl examples/thin.pl --input ../../../tests/polygon --output examples/junk --tolerance=5
+	&& perl examples/RFC24.pl ../../../../tests/test.map \
+	&& perl examples/shp_in_shp.pl --infile1 ../../../../tests/line.shp --infile1_shpid 0 --infile2 ../../../../tests/polygon.shp --infile2_shpid 0 \
+	&& perl examples/dump.pl --file ../../../../tests/line.shp \
+	&& perl examples/thin.pl --input ../../../../tests/polygon --output examples/junk --tolerance=5
 
 
 
 test:  cmakebuild
 	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase mspython-testcase
-	@./print-test-results.sh
+	@./scripts/print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
 	@$(MAKE) $(MFLAGS)	csharp-testcase
 	@$(MAKE) $(MFLAGS)	perl-testcase
 
 asan_compatible_tests:  cmakebuild
 	@$(MAKE) $(MFLAGS)	api-testcase config-testcase wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase sld-testcase
-	@./print-test-results.sh
+	@./scripts/print-test-results.sh
 
 lexer: maplexer.c
 parser: mapparser.c
 
-maplexer.c: maplexer.l
-	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/maplexer.c maplexer.l
+maplexer.c: src/maplexer.l
+	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/src/maplexer.c src/maplexer.l
 
-mapparser.c: mapparser.y
-	$(YACC) -d -o$(CURDIR)/mapparser.c mapparser.y
+mapparser.c: src/mapparser.y
+	$(YACC) -d -o$(CURDIR)/src/mapparser.c src/mapparser.y

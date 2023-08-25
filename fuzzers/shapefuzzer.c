@@ -1,5 +1,5 @@
-#include "mapserver.h"
-#include "mapshape.h"
+#include "src/mapserver.h"
+#include "src/mapshape.h"
 
 #include "cpl_vsi.h"
 

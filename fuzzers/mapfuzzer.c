@@ -15,7 +15,7 @@ limitations under the License.
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "mapserver.h"
+#include "src/mapserver.h"
 
 #define kMinInputLength 10
 #define kMaxInputLength 10240
