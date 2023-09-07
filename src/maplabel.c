@@ -788,8 +788,7 @@ int msFreeFontSet(fontSetObj *fontset)
   if (fontset->filename)
     free(fontset->filename);
   fontset->filename = NULL;
-  if (&(fontset->fonts))
-    msFreeHashItems(&(fontset->fonts));
+  msFreeHashItems(&(fontset->fonts));
   /* fontset->fonts = NULL; */
   fontset->numfonts = 0;
 

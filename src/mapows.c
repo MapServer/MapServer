@@ -1802,7 +1802,7 @@ int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char* pszGroupName,
   int i;
 
   for (i=0; i<map->numlayers; i++) {
-    if (GET_LAYER(map, i)->group && (strcmp(GET_LAYER(map, i)->group, pszGroupName) == 0) && &(GET_LAYER(map, i)->metadata)) {
+    if (GET_LAYER(map, i)->group && (strcmp(GET_LAYER(map, i)->group, pszGroupName) == 0)) {
       if((value = msOWSLookupMetadataWithLanguage(&(GET_LAYER(map, i)->metadata), namespaces, name, validated_language))) {
         encoded = msEncodeHTMLEntities(value);
         msIO_fprintf(stream, format, encoded);

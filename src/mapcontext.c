@@ -515,7 +515,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   if (psStyleSLDBody == NULL)
     psStyleSLDBody = CPLGetXMLNode(psStyle, "SLD.sld:StyledLayerDescriptor");
 
-  if(psStyleSLDBody != NULL && &(layer->metadata) != NULL) {
+  if(psStyleSLDBody != NULL) {
     pszValue = CPLSerializeXMLTree(psStyleSLDBody);
     if(pszValue != NULL) {
       /* Before including SLDBody in the mapfile, we must replace the */
