@@ -696,10 +696,10 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     msProcessProjection(&map->projection);
 
     if( (nTmp = GetMapserverUnitUsingProj(&(map->projection))) == -1) {
-      free(pszProj);
       msSetError( MS_MAPCONTEXTERR,
                   "Unable to set units for projection '%s'",
                   "msLoadMapContext()", pszProj );
+      free(pszProj);
       return MS_FAILURE;
     } else {
       map->units = nTmp;
