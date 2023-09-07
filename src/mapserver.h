@@ -1874,7 +1874,11 @@ The :ref:`REFERENCE <reference>` object
     char *filteritem; ///< Attribute defining filter - see :ref:`FILTERITEM <mapfile-layer-filteritem>`
     char *styleitem; ///< item to be used for style lookup - can also be 'AUTO' - see :ref:`STYLEITEM <mapfile-layer-styleitem>`
 
+#ifndef __cplusplus
     char *requires; ///< Context expressions, simple enough to not use expressionObj - see :ref:`REQUIRES <mapfile-layer-requires>`
+#else
+    char *_requires;
+#endif
     char *labelrequires;  ///< Simple logical expression - see :ref:`LABELREQUIRES <mapfile-layer-labelrequires>`
 
     int debug; ///< Enable debugging of layer-  :data:`MS_ON` or :data:`MS_OFF` (default) - see :ref:`DEBUG <mapfile-layer-debug>`
