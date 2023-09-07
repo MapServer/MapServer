@@ -804,22 +804,22 @@ cleanup:
 /* TODO */
 int msEmbedLegend(mapObj *map, imageObj *img)
 {
-  int s,l;
   pointObj point;
   imageObj *image = NULL;
   symbolObj *legendSymbol;
   char* imageType = NULL;
+  const char* const LEGEND_SYMBOL_NAME = "legend";
 
   rendererVTableObj *renderer;
 
-  s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
-  if(s != -1)
-    msRemoveSymbol(&(map->symbolset), s); /* solves some caching issues in AGG with long-running processes */
+  int symbolIdx = msGetSymbolIndex(&(map->symbolset), LEGEND_SYMBOL_NAME, MS_FALSE);
+  if(symbolIdx != -1)
+    msRemoveSymbol(&(map->symbolset), symbolIdx); /* solves some caching issues in AGG with long-running processes */
 
   if(msGrowSymbolSet(&map->symbolset) == NULL)
     return -1;
-  s = map->symbolset.numsymbols;
-  legendSymbol = map->symbolset.symbol[s];
+  symbolIdx = map->symbolset.numsymbols;
+  legendSymbol = map->symbolset.symbol[symbolIdx];
   map->symbolset.numsymbols++;
   initSymbol(legendSymbol);
 
@@ -859,7 +859,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   if(!legendSymbol->pixmap_buffer) return(MS_FAILURE); /* something went wrong creating scalebar */
 
   legendSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  legendSymbol->name = msStrdup("legend");
+  legendSymbol->name = msStrdup(LEGEND_SYMBOL_NAME);
   legendSymbol->sizex = legendSymbol->pixmap_buffer->width;
   legendSymbol->sizey = legendSymbol->pixmap_buffer->height;
 
@@ -894,55 +894,62 @@ int msEmbedLegend(mapObj *map, imageObj *img)
       break;
   }
 
-  l = msGetLayerIndex(map, "__embed__legend");
-  if(l == -1) {
+  const char* const EMBED_LEGEND_LAYER_NAME = "__embed__legend";
+  int layerIdx = msGetLayerIndex(map, EMBED_LEGEND_LAYER_NAME);
+  if(layerIdx == -1) {
     if(msGrowMapLayers(map) == NULL)
       return(-1);
-    l = map->numlayers;
+    layerIdx = map->numlayers;
     map->numlayers++;
-    if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
-    GET_LAYER(map, l)->name = msStrdup("__embed__legend");
-    GET_LAYER(map, l)->type = MS_LAYER_POINT;
+    layerObj* layer = GET_LAYER(map, layerIdx);
+    if(initLayer(layer, map) == -1) return(-1);
+    layer->name = msStrdup(EMBED_LEGEND_LAYER_NAME);
+    layer->type = MS_LAYER_POINT;
 
-    if(msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
+    if(msGrowLayerClasses( layer ) == NULL)
       return(-1);
-    if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
-    GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
+    if(initClass(layer->class[0]) == -1) return(-1);
+    layer->numclasses = 1; /* so we make sure to free it */
 
     /* update the layer order list with the layer's index. */
-    map->layerorder[l] = l;
+    map->layerorder[layerIdx] = layerIdx;
   }
 
-  GET_LAYER(map, l)->status = MS_ON;
+  layerObj* layer = GET_LAYER(map, layerIdx);
 
+  layer->status = MS_ON;
+
+  classObj* klass = layer->class[0];
   if(map->legend.postlabelcache) { /* add it directly to the image */
-    if(MS_UNLIKELY(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE)) return MS_FAILURE;
-    GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
-    if(MS_UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0)))
+    if(MS_UNLIKELY(msMaybeAllocateClassStyle(klass, 0)==MS_FAILURE)) return MS_FAILURE;
+    klass->styles[0]->symbol = symbolIdx;
+    if(MS_UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, img, &point, klass->styles[0], 1.0)))
       return MS_FAILURE;
   } else {
-    if(!GET_LAYER(map, l)->class[0]->labels) {
-      if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
-      initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
-      GET_LAYER(map, l)->class[0]->numlabels = 1;
-      GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
-      GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
-      GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
+    if(!klass->labels) {
+      if(msGrowClassLabels(klass) == NULL) return MS_FAILURE;
+      labelObj* label = klass->labels[0];
+      initLabel(label);
+      klass->numlabels = 1;
+      label->force = MS_TRUE;
+      label->size = MS_MEDIUM; /* must set a size to have a valid label definition */
+      label->priority = MS_MAX_LABEL_PRIORITY;
     }
-    if(GET_LAYER(map, l)->class[0]->labels[0]->numstyles == 0) {
-      if(msGrowLabelStyles(GET_LAYER(map,l)->class[0]->labels[0]) == NULL)
+    labelObj* label = klass->labels[0];
+    if(label->numstyles == 0) {
+      if(msGrowLabelStyles(label) == NULL)
         return(MS_FAILURE);
-      GET_LAYER(map,l)->class[0]->labels[0]->numstyles = 1;
-      initStyle(GET_LAYER(map,l)->class[0]->labels[0]->styles[0]);
-      GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
+      label->numstyles = 1;
+      initStyle(label->styles[0]);
+      label->styles[0]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
     }
-    GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->symbol = s;
-    if(MS_UNLIKELY(MS_FAILURE == msAddLabel(map, img, GET_LAYER(map, l)->class[0]->labels[0], l, 0, NULL, &point, -1, NULL)))
+    label->styles[0]->symbol = symbolIdx;
+    if(MS_UNLIKELY(MS_FAILURE == msAddLabel(map, img, label, layerIdx, 0, NULL, &point, -1, NULL)))
       return MS_FAILURE;
   }
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
-  GET_LAYER(map, l)->status = MS_DELETE;
+  layer->status = MS_DELETE;
 
   return MS_SUCCESS;
 }
