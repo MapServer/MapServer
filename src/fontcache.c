@@ -216,7 +216,7 @@ unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode) {
 
 #define MS_DEFAULT_FONT_KEY "_ms_default_"
 
-face_element* msGetFontFace(char *key, fontSetObj *fontset) {
+face_element* msGetFontFace(const char *key, fontSetObj *fontset) {
   face_element *fc;
   int error;
   ft_cache *cache = msGetFontCache();

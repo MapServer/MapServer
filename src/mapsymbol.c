@@ -353,7 +353,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
 **
 ** Returns the symbol index or -1 if it could not be added.
 */
-int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
+int msAddImageSymbol(symbolSetObj *symbolset, const char *filename)
 {
   char szPath[MS_MAXPATHLEN];
   symbolObj *symbol=NULL;
@@ -642,7 +642,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   return(status);
 }
 
-int msGetCharacterSize(mapObj *map, char* font, int size, char *character, rectObj *r) {
+int msGetCharacterSize(mapObj *map, const char* font, int size, const char *character, rectObj *r) {
   unsigned int unicode, codepoint;
   glyph_element *glyph;
   face_element *face = msGetFontFace(font, &map->fontset);
@@ -738,7 +738,7 @@ int msGetMarkerSize(mapObj *map, styleObj *style, double *width, double *height,
  * Add a default new symbol. If the symbol name exists
  * return the id of the symbol.
  */
-int msAddNewSymbol(mapObj *map, char *name)
+int msAddNewSymbol(mapObj *map, const char *name)
 {
   int i = 0;
 

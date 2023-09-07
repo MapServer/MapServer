@@ -75,7 +75,7 @@ struct face_element{
 };
 
 
-face_element* msGetFontFace(char *key, fontSetObj *fontset);
+face_element* msGetFontFace(const char *key, fontSetObj *fontset);
 outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph);
 glyph_element* msGetBitmapGlyph(rendererVTableObj *renderer, unsigned int size, unsigned int unicode);
 unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode);

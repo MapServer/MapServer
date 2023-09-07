@@ -382,7 +382,7 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
 ** If try_addimage_if_notfound==MS_TRUE then msAddImageSymbol() will be called
 ** to try to allocate the symbol as an image symbol.
 */
-int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notfound)
+int msGetSymbolIndex(symbolSetObj *symbols, const char *name, int try_addimage_if_notfound)
 {
   int i;
 

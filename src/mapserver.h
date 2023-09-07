@@ -2213,7 +2213,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1, const char *pattern2, const char *pattern3, const char *pattern4);
   MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
-  MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
+  MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, const char *name, int try_addimage_if_notfound);
   MS_DLL_EXPORT mapObj  *msLoadMap(const char *filename, const char *new_mappath, const configObj *config);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
   MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
@@ -2426,10 +2426,10 @@ extern "C" {
   MS_DLL_EXPORT int msCopyHashTable(hashTableObj *dst, const hashTableObj *src);
   MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
   MS_DLL_EXPORT symbolObj *msGrowSymbolSet( symbolSetObj *symbolset );
-  MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
+  MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, const char *filename);
   MS_DLL_EXPORT int msFreeSymbolSet(symbolSetObj *symbolset);
   MS_DLL_EXPORT int msFreeSymbol(symbolObj *symbol);
-  MS_DLL_EXPORT int msAddNewSymbol(mapObj *map, char *name);
+  MS_DLL_EXPORT int msAddNewSymbol(mapObj *map, const char *name);
   MS_DLL_EXPORT int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol);
   MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
   MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
@@ -2438,7 +2438,7 @@ extern "C" {
   MS_DLL_EXPORT int msPreloadSVGSymbol(symbolObj *symbol);
   MS_DLL_EXPORT symbolObj *msRotateSymbol(symbolObj *symbol, double angle);
 
-  MS_DLL_EXPORT int WARN_UNUSED msGetCharacterSize(mapObj *map, char* font, int size, char *character, rectObj *r);
+  MS_DLL_EXPORT int WARN_UNUSED msGetCharacterSize(mapObj *map, const char* font, int size, const char *character, rectObj *r);
   MS_DLL_EXPORT int WARN_UNUSED msGetMarkerSize(mapObj *map, styleObj *style, double *width, double *height, double scalefactor);
   /* MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect); */
   MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
