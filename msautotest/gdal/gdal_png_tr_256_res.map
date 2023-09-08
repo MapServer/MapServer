@@ -1,6 +1,7 @@
 
 #
 # Tests transparent 8bit output via GDAL with resampling.
+# FIXME/REMOVE_ME?: this used to be the case at the GD era, but now it is actually RGBA
 #
 # REQUIRES: SUPPORTS=PROJ
 #
@@ -18,13 +19,10 @@ PROJECTION
   "datum=WGS84"
 END
 
-IMAGETYPE png8_t
-
 OUTPUTFORMAT
-  NAME png8_t
+  NAME gdal_png
   DRIVER "GDAL/PNG"
-  IMAGEMODE PC256
-  TRANSPARENT ON
+  IMAGEMODE RGBA
 END
 
 #

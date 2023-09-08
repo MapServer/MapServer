@@ -29,10 +29,10 @@ MAP
     END
 
     OUTPUTFORMAT
-        NAME GDPNG
-        DRIVER "GD/PNG"
-        MIMETYPE "image/png"
-        EXTENSION "png"
+      NAME png
+      DRIVER "AGG/PNG8"
+      MIMETYPE "image/png"
+      EXTENSION "png"
     END
 
     LAYER
