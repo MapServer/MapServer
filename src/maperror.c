@@ -93,7 +93,7 @@ static char *const ms_errorCodes[MS_NUMERRORCODES] = { "",
 // Get the MapServer error object
 errorObj *msGetErrorObj()
 {
-  static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, 0, NULL};
+  static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, 0, NULL, 0};
   return &ms_error;
 }
 #endif

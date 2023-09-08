@@ -382,7 +382,7 @@ int msBuildPluginLibraryPath(char **dest, const char *lib_str, mapObj *map)
 ** If try_addimage_if_notfound==MS_TRUE then msAddImageSymbol() will be called
 ** to try to allocate the symbol as an image symbol.
 */
-int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notfound)
+int msGetSymbolIndex(symbolSetObj *symbols, const char *name, int try_addimage_if_notfound)
 {
   int i;
 
@@ -3049,8 +3049,8 @@ int freeClass(classObj *class)
   msFree(class->template);
   msFree(class->group);
 
-  if (&(class->metadata)) msFreeHashItems(&(class->metadata));
-  if (&(class->validation)) msFreeHashItems(&(class->validation));
+  msFreeHashItems(&(class->metadata));
+  msFreeHashItems(&(class->validation));
 
   for(i=0; i<class->numstyles; i++) { /* each style */
     if(class->styles[i]!=NULL) {
@@ -5501,8 +5501,8 @@ void freeWeb(webObj *web)
   msFree(web->queryformat);
   msFree(web->legendformat);
   msFree(web->browseformat);
-  if(&(web->metadata)) msFreeHashItems(&(web->metadata));
-  if(&(web->validation)) msFreeHashItems(&(web->validation));
+  msFreeHashItems(&(web->metadata));
+  msFreeHashItems(&(web->validation));
 }
 
 static void writeWeb(FILE *stream, int indent, webObj *web)

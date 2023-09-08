@@ -515,7 +515,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   if (psStyleSLDBody == NULL)
     psStyleSLDBody = CPLGetXMLNode(psStyle, "SLD.sld:StyledLayerDescriptor");
 
-  if(psStyleSLDBody != NULL && &(layer->metadata) != NULL) {
+  if(psStyleSLDBody != NULL) {
     pszValue = CPLSerializeXMLTree(psStyleSLDBody);
     if(pszValue != NULL) {
       /* Before including SLDBody in the mapfile, we must replace the */
@@ -696,10 +696,10 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     msProcessProjection(&map->projection);
 
     if( (nTmp = GetMapserverUnitUsingProj(&(map->projection))) == -1) {
-      free(pszProj);
       msSetError( MS_MAPCONTEXTERR,
                   "Unable to set units for projection '%s'",
                   "msLoadMapContext()", pszProj );
+      free(pszProj);
       return MS_FAILURE;
     } else {
       map->units = nTmp;

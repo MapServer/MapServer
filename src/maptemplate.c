@@ -3754,7 +3754,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream, i
    * reworked by SG to use HashTable methods
    */
 
-  if(&(mapserv->map->web.metadata) && strstr(outstr, "web_")) {
+  if(strstr(outstr, "web_")) {
     for (j=0; j<MS_HASHSIZE; j++) {
       if(mapserv->map->web.metadata.items[j] != NULL) {
         for(tp=mapserv->map->web.metadata.items[j]; tp!=NULL; tp=tp->next) {
@@ -3772,7 +3772,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream, i
 
   /* allow layer metadata access in template */
   for(i=0; i<mapserv->map->numlayers; i++) {
-    if(&(GET_LAYER(mapserv->map, i)->metadata) && GET_LAYER(mapserv->map, i)->name && strstr(outstr, GET_LAYER(mapserv->map, i)->name)) {
+    if(GET_LAYER(mapserv->map, i)->name && strstr(outstr, GET_LAYER(mapserv->map, i)->name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
         if(GET_LAYER(mapserv->map, i)->metadata.items[j] != NULL) {
           for(tp=GET_LAYER(mapserv->map, i)->metadata.items[j]; tp!=NULL; tp=tp->next) {
@@ -3930,7 +3930,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream, i
     /* if(resultlayer->description) outstr = msReplaceSubstring(outstr, "[cd]", resultlayer->description); */ /* current layer description */
 
     /* allow layer metadata access when there is a current result layer (implicitly a query template) */
-    if(&(mapserv->resultlayer->metadata) && strstr(outstr, "[metadata_")) {
+    if(strstr(outstr, "[metadata_")) {
       for(i=0; i<MS_HASHSIZE; i++) {
         if(mapserv->resultlayer->metadata.items[i] != NULL) {
           for(tp=mapserv->resultlayer->metadata.items[i]; tp!=NULL; tp=tp->next) {

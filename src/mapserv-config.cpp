@@ -57,9 +57,9 @@ static int initConfig(configObj *config)
 void msFreeConfig(configObj *config)
 {
   if(config == NULL) return;
-  if(&(config->env)) msFreeHashItems(&(config->env));
-  if(&(config->maps)) msFreeHashItems(&(config->maps));
-  if(&(config->plugins)) msFreeHashItems(&(config->plugins));
+  msFreeHashItems(&(config->env));
+  msFreeHashItems(&(config->maps));
+  msFreeHashItems(&(config->plugins));
 
   msFree(config);
 }

@@ -58,7 +58,8 @@
 debugInfoObj *msGetDebugInfoObj()
 {
   static debugInfoObj debuginfo = {MS_DEBUGLEVEL_ERRORSONLY,
-                                   MS_DEBUGMODE_OFF, NULL, NULL
+                                   MS_DEBUGMODE_OFF, NULL, NULL,
+                                   0, NULL
                                   };
   return &debuginfo;
 }

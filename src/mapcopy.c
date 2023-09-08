@@ -183,12 +183,8 @@ int msCopyFontSet(fontSetObj *dst, const fontSetObj *src, mapObj *map)
 
   MS_COPYSTRING(dst->filename, src->filename);
   MS_COPYSTELEM(numfonts);
-  if (&(src->fonts)) {
-    /* if (!dst->fonts) */
-    /* dst->fonts = msCreateHashTable(); */
-    if (msCopyHashTable(&(dst->fonts), &(src->fonts)) != MS_SUCCESS)
-      return MS_FAILURE;
-  }
+  if (msCopyHashTable(&(dst->fonts), &(src->fonts)) != MS_SUCCESS)
+    return MS_FAILURE;
 
   dst->map = map;
 
@@ -448,11 +444,8 @@ int msCopyWeb(webObj *dst, const webObj *src, mapObj *map)
   MS_COPYSTRING(dst->mintemplate, src->mintemplate);
   MS_COPYSTRING(dst->maxtemplate, src->maxtemplate);
 
-  if (&(src->metadata)) {
-    /* dst->metadata = msCreateHashTable(); */
-    if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
-      return MS_FAILURE;
-  }
+  if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
+    return MS_FAILURE;
   msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTRING(dst->queryformat, src->queryformat);
@@ -612,10 +605,7 @@ int msCopyClass(classObj *dst, const classObj *src, layerObj *layer_unused)
   MS_COPYSTRING(dst->_template, src->_template);
 #endif
 
-  if (&(src->metadata) != NULL) {
-    /* dst->metadata = msCreateHashTable(); */
-    msCopyHashTable(&(dst->metadata), &(src->metadata));
-  }
+  msCopyHashTable(&(dst->metadata), &(src->metadata));
   msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTELEM(minscaledenom);
@@ -1117,9 +1107,7 @@ int msCopyLayer(layerObj *dst, const layerObj *src)
   MS_COPYSTRING(dst->requires, src->requires);
   MS_COPYSTRING(dst->labelrequires, src->labelrequires);
 
-  if (&(src->metadata)) {
-    msCopyHashTable(&(dst->metadata), &(src->metadata));
-  }
+  msCopyHashTable(&(dst->metadata), &(src->metadata));
   msCopyHashTable(&dst->validation,&src->validation);
   msCopyHashTable(&dst->connectionoptions,&src->connectionoptions);
 
