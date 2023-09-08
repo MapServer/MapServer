@@ -217,9 +217,10 @@
     /// Remove the styleObj at *index* from the styles array and return a copy.
     styleObj *removeStyle(int index) {
         styleObj* style = (styleObj *) msRemoveLabelStyle(self, index);
-        if (style)
+        if (style) {
             MS_REFCNT_INCR(style);
-            return style;
+        }
+        return style;
     }
 
     /// Swap the styleObj at *index* with the styleObj index - 1.
