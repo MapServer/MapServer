@@ -55,7 +55,7 @@ class owsRequestTest extends \PHPUnit\Framework\TestCase
 
     public function test__setParameter()
     {
-        $this->owsRequest->setParameter('SERVICE', 'WFS' );
+        $this->owsRequest->setParameter('SERVICE', 'WFS');
         $this->assertEquals(1, $this->owsRequest->NumParams);
     }    
     
