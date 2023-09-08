@@ -2,7 +2,7 @@
 
 class owsRequestTest extends \PHPUnit\Framework\TestCase
 {
-    protected $owsRequest;
+    protected $owsRequest;    
 
     public function setUp(): void
     {
@@ -42,9 +42,28 @@ class owsRequestTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('', $this->owsRequest->httpcookiedata);
     }
     
+    public function test__loadParamsFromURL()
+    {
+        $this->assertEquals(4, $this->owsRequest->loadParamsFromURL('MAP=maps/ows_wms.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities'));
+    }
+
+    public function test__numParams()
+    {
+        $this->owsRequest->loadParamsFromURL('MAP=maps/ows_wms.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities');
+        $this->assertEquals(4, $this->owsRequest->NumParams);
+    }
+
+    public function test__setParameter()
+    {
+        $this->owsRequest->setParameter('SERVICE', 'WFS' );
+        $this->assertEquals(1, $this->owsRequest->NumParams);
+    }    
+    
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($owsRequest, $this->owsRequest, $this->owsRequest->postrequest, $this->owsRequest->httpcookiedata);
+        unset($owsRequest, $this->owsRequest, $this->owsRequest->postrequest);
+        unset($this->owsRequest->httpcookiedata, $this->owsRequest->loadParamsFromURL);
+        unset($this->owsRequest->NumParams, $this->owsRequest->setParameter);
     }
     
 }
