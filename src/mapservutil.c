@@ -1675,6 +1675,20 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
 
     /* finally execute the query */
     if(msExecuteQuery(mapserv->map) != MS_SUCCESS) return MS_FAILURE;
+
+    /* catch empty result set when web->empty is set (#6907) */
+    if(mapserv->map->web.empty) {
+      int n;
+      for(int i=0; i<mapserv->map->numlayers; i++) { // count results for each layer
+	if (mapserv->map->layers[i]->resultcache) {
+          n += mapserv->map->layers[i]->resultcache->numresults;
+	}
+      }
+      if(n == 0) {
+	msSetError(MS_NOTFOUND, "No matching record(s) found.", "msCGIDispatchQueryRequest()"); // this message will never be displayed
+	return(MS_FAILURE);
+      }
+    }
   }
 
   if(mapserv->map->querymap.width > 0 && mapserv->map->querymap.width <= mapserv->map->maxsize) mapserv->map->width = mapserv->map->querymap.width; /* make sure we use the right size */
