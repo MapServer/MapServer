@@ -1678,7 +1678,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
 
     /* catch empty result set when web->empty is set (#6907) */
     if(mapserv->map->web.empty) {
-      int n;
+      int n=0;
       for(int i=0; i<mapserv->map->numlayers; i++) { // count results for each layer
 	if (mapserv->map->layers[i]->resultcache) {
           n += mapserv->map->layers[i]->resultcache->numresults;
