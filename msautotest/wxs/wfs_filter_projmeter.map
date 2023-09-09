@@ -60,15 +60,6 @@ SYMBOLSET etc/symbols.sym
 FONTSET etc/fonts.txt
 
 
-OUTPUTFORMAT
-  NAME GDPNG
-  DRIVER "GD/PNG"
-  MIMETYPE "image/png"
-  IMAGEMODE RGB
-  EXTENSION "png"
-END
-
-
 #
 # Start of web interface definition
 #

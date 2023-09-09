@@ -1,6 +1,7 @@
 
 #
 # Tests transparent 8bit output via GDAL without resampling.
+# FIXME/REMOVE_ME?: this used to be the case at the GD era, but now it is actually RGBA
 #
 MAP
 
@@ -10,13 +11,10 @@ SIZE 500 500
 EXTENT 0.5 0.5 399.5 299.5
 IMAGECOLOR 255 255 0
 
-IMAGETYPE png8_t
-
 OUTPUTFORMAT
-  NAME png8_t
+  NAME gdal_png
   DRIVER "GDAL/PNG"
-  IMAGEMODE PC256
-  TRANSPARENT ON
+  IMAGEMODE RGBA
 END
 
 #

@@ -21,10 +21,9 @@ FONTSET etc/fonts.txt
 
 
 OUTPUTFORMAT
-  NAME GDPNG
-  DRIVER "GD/PNG"
+  NAME png
+  DRIVER "AGG/PNG8"
   MIMETYPE "image/png"
-#  IMAGEMODE RGB
   EXTENSION "png"
 END
 

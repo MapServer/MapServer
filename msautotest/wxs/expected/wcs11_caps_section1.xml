@@ -73,10 +73,10 @@
       <ows:Parameter name="format">
         <ows:AllowedValues>
           <ows:Value>image/tiff</ows:Value>
-          <ows:Value>image/png; mode=8bit</ows:Value>
           <ows:Value>image/x-aaigrid</ows:Value>
           <ows:Value>image/png</ows:Value>
           <ows:Value>image/jpeg</ows:Value>
+          <ows:Value>image/png; mode=8bit</ows:Value>
           <ows:Value>image/vnd.jpeg-png</ows:Value>
           <ows:Value>image/vnd.jpeg-png8</ows:Value>
         </ows:AllowedValues>
