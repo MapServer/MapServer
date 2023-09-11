@@ -196,4 +196,64 @@
         free(buffer.data);
         return size;
     }
+
+    /* Pastes another imageObj on top of this imageObj.
+       If optional dstx,dsty are provided then they define the position where the
+       image should be copied (dstx,dsty = top-left corner position).
+       NOTE : this function only works for 8 bits GD images.
+    */
+    int pasteImage(imageObj *imageSrc, double opacity=1.0, int dstx=0, int dsty=0)
+    {
+        rendererVTableObj *renderer = NULL;
+        rasterBufferObj rb;
+
+        if (!MS_RENDERER_PLUGIN(self->format) ||
+            !MS_RENDERER_PLUGIN(self->format)) {
+            msSetError(MS_IMGERR, "PasteImage function should only be used with renderer plugin drivers.",
+                       "imageObj::pasteImage");
+            return MS_FAILURE;
+        }
+
+        memset(&rb,0,sizeof(rasterBufferObj));
+
+        renderer = self->format->vtable;
+        if(MS_SUCCESS != renderer->getRasterBufferHandle(imageSrc, &rb)) {
+            msSetError(MS_IMGERR, "PasteImage failed to extract rasterbuffer handle",
+                       "imageObj::pasteImage");
+            return MS_FAILURE;
+        }
+
+        if(MS_SUCCESS != renderer->mergeRasterBuffer(self, &rb, opacity, 0, 0, dstx, dsty, rb.width, rb.height)) {
+            msSetError(MS_IMGERR, "PasteImage failed to merge raster buffer",
+                       "imageObj::pasteImage");
+            return MS_FAILURE;
+        }
+
+        return MS_SUCCESS;
+
+    }
+
+    /* Writes image to temp directory.  Returns image URL. */
+    char *saveWebImage()
+    {
+        char *imageFile = NULL;
+        char *imageFilename = NULL;
+        char path[MS_MAXPATHLEN];
+        char *imageUrlFull = NULL;
+
+        imageFilename = msTmpFilename(self->format->extension);
+        imageFile = msBuildPath(path, self->imagepath, imageFilename);
+
+        if (msSaveImage(NULL, self, imageFile) != MS_SUCCESS) {
+            msSetError(MS_IMGERR, "Failed writing image to %s",
+                       "imageObj::saveWebImage",
+                       imageFile);
+            return;
+        }
+
+        imageUrlFull = msBuildPath(path, self->imageurl, imageFilename);
+        msFree(imageFilename);
+
+        return imageUrlFull;
+    }
 }
