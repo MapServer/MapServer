@@ -4674,7 +4674,7 @@ static int msOGRUpdateStyleSortFct(const void* pA, const void* pB)
 
 static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
 {
-  GBool bIsBrush=MS_FALSE;
+  int bIsBrush=MS_FALSE;
   int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
   int nPriority;
   int bIsPenBrushOnly = msOGRUpdateStyleCheckPenBrushOnly(hStyleMgr);
@@ -4744,7 +4744,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       styleObj* s;
       int nIndex = 0;
 
-      GBool bBgColorIsNull = MS_TRUE;
+      int bBgColorIsNull = MS_TRUE;
       OGR_ST_GetParamStr(hStylePart, OGRSTBrushBColor, &bBgColorIsNull);
 
       if (!bBgColorIsNull) {
@@ -4827,7 +4827,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
 static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
                                       OGRStyleToolH hLabelStyle)
 {
-  GBool bIsNull;
+  int bIsNull;
   int r=0,g=0,b=0,t=0;
 
       // Enclose the text string inside quotes to make sure it is seen
@@ -4979,7 +4979,7 @@ static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
                                     OGRStyleToolH hPenStyle, int bIsBrush,
                                     int* pbPriority)
 {
-  GBool bIsNull;
+  int bIsNull;
   int r=0,g=0,b=0,t=0;
 
       const char *pszPenName, *pszPattern, *pszCap, *pszJoin;
@@ -5132,7 +5132,7 @@ static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
 
 static int msOGRAddBgColorStyleParseBrush(styleObj* s, OGRStyleToolH hBrushStyle)
 {
-    GBool bIsNull;
+    int bIsNull;
     int r = 0, g = 0, b = 0, t = 0;
     const char* pszColor = OGR_ST_GetParamStr(hBrushStyle,
         OGRSTBrushBColor, &bIsNull);
@@ -5149,7 +5149,7 @@ static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
                                       OGRStyleToolH hBrushStyle, int* pbIsBrush,
                                       int* pbPriority)
 {
-  GBool bIsNull;
+  int bIsNull;
   int r=0,g=0,b=0,t=0;
 
       const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle,
@@ -5219,7 +5219,7 @@ static int msOGRUpdateStyleParseSymbol(mapObj *map, styleObj *s,
                                        OGRStyleToolH hSymbolStyle,
                                        int* pbPriority)
 {
-  GBool bIsNull;
+  int bIsNull;
   int r=0,g=0,b=0,t=0;
 
       const char *pszColor = OGR_ST_GetParamStr(hSymbolStyle,
