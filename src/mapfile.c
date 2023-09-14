@@ -6748,7 +6748,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
   */
   const char *ms_mapfile_pattern = CPLGetConfigOption("MS_MAPFILE_PATTERN", MS_DEFAULT_MAPFILE_PATTERN);
   if(msEvalRegex(ms_mapfile_pattern, filename) != MS_TRUE) {
-    msSetError(MS_REGEXERR, "Filename validation failed." , "msLoadMap()");
+    msSetError(MS_REGEXERR, "Filename validation failed." , "msTokenizeMap()");
     return(NULL);
   }
 
