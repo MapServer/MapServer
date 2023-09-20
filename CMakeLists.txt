@@ -658,6 +658,10 @@ if(NOT GDAL_FOUND)
   report_mandatory_not_found(GDAL)
 endif(NOT GDAL_FOUND)
 
+# Add compatibility for deprecated integer data types no longer available
+# by default in GDAL 4.0 (GIntBig)
+add_definitions(-DGDAL_USE_OLD_INT_TYPES=1)
+
 include_directories(${GDAL_INCLUDE_DIR})
 ms_link_libraries( ${GDAL_LIBRARY})
 list(APPEND ALL_INCLUDE_DIRS ${GDAL_INCLUDE_DIR})
