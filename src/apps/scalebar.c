@@ -29,34 +29,31 @@
 
 #include "../mapserver.h"
 
-
-
-int main(int argc, char *argv[])
-{
-  mapObj *map=NULL;
-  imageObj         *image = NULL;
+int main(int argc, char *argv[]) {
+  mapObj *map = NULL;
+  imageObj *image = NULL;
 
   msSetup();
-  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+  if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
     exit(0);
   }
 
   /* ---- check the number of arguments, return syntax if not correct ---- */
-  if( argc < 3 ) {
-    fprintf(stdout,"Syntax: scalebar [mapfile] [output image]\n" );
+  if (argc < 3) {
+    fprintf(stdout, "Syntax: scalebar [mapfile] [output image]\n");
     exit(1);
   }
 
   map = msLoadMap(argv[1], NULL, NULL);
-  if(!map) {
+  if (!map) {
     msWriteError(stderr);
     exit(1);
   }
 
   image = msDrawScalebar(map);
 
-  if(!image) {
+  if (!image) {
     msWriteError(stderr);
     exit(1);
   }
@@ -65,5 +62,5 @@ int main(int argc, char *argv[])
   msFreeImage(image);
 
   msFreeMap(map);
-  return(MS_TRUE);
+  return (MS_TRUE);
 }

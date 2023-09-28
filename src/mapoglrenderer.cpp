@@ -36,8 +36,6 @@
 #include "maperror.h"
 #include "mapoglrenderer.h"
 
-
-
 using namespace std;
 
 double OglRenderer::SIZE_RES = 100.0 / 72.0;
@@ -55,18 +53,22 @@ std::vector<GLuint> OglRenderer::shapes = std::vector<GLuint>();
 GLvoid CALLBACK beginCallback(GLenum which);
 GLvoid CALLBACK errorCallback(GLenum errorCode);
 GLvoid CALLBACK endCallback(void);
-GLvoid CALLBACK combineDataCallback(GLdouble coords[3], GLdouble* vertex_data[4], GLfloat weight[4], void** dataOut, void* polygon_data);
+GLvoid CALLBACK combineDataCallback(GLdouble coords[3],
+                                    GLdouble *vertex_data[4], GLfloat weight[4],
+                                    void **dataOut, void *polygon_data);
 GLvoid CALLBACK vertexCallback(GLdouble *vertex);
 
-OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
-  : width(width), height(height), texture(NULL), transparency(1.0), valid(false)
-{
+OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj *color)
+    : width(width), height(height), texture(NULL), transparency(1.0),
+      valid(false) {
   context = new OglContext(width, height);
-  if (!context->isValid()) return;
-  if (!context->makeCurrent()) return;
+  if (!context->isValid())
+    return;
+  if (!context->makeCurrent())
+    return;
 
   int viewPort[4];
-  glGetIntegerv(GL_VIEWPORT ,viewPort);
+  glGetIntegerv(GL_VIEWPORT, viewPort);
   viewportX = viewPort[0];
   viewportY = viewPort[1];
   viewportWidth = viewPort[2];
@@ -79,9 +81,9 @@ OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
   glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 
   glEnable(GL_TEXTURE_2D);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glDisable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
@@ -96,17 +98,17 @@ OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
     return;
   }
 
-  gluTessCallback(tess, GLU_TESS_VERTEX, (void (CALLBACK*)(void)) vertexCallback);
-  gluTessCallback(tess, GLU_TESS_BEGIN, (void(CALLBACK*)(void)) beginCallback);
-  gluTessCallback(tess, GLU_TESS_END, (void(CALLBACK*)(void)) endCallback);
-  gluTessCallback(tess, GLU_TESS_ERROR, (void(CALLBACK*)(void)) errorCallback);
-  gluTessCallback(tess, GLU_TESS_COMBINE_DATA, (void(CALLBACK*)(void)) combineDataCallback);
+  gluTessCallback(tess, GLU_TESS_VERTEX,
+                  (void(CALLBACK *)(void))vertexCallback);
+  gluTessCallback(tess, GLU_TESS_BEGIN, (void(CALLBACK *)(void))beginCallback);
+  gluTessCallback(tess, GLU_TESS_END, (void(CALLBACK *)(void))endCallback);
+  gluTessCallback(tess, GLU_TESS_ERROR, (void(CALLBACK *)(void))errorCallback);
+  gluTessCallback(tess, GLU_TESS_COMBINE_DATA,
+                  (void(CALLBACK *)(void))combineDataCallback);
 
   if (color) {
-    glClearColor((double) color->red / 255,
-                 (double) color->green / 255,
-                 (double) color->blue / 255,
-                 (double)color->alpha / 100);
+    glClearColor((double)color->red / 255, (double)color->green / 255,
+                 (double)color->blue / 255, (double)color->alpha / 100);
   } else {
     glClearColor(0.0, 0.0, 0.0, 0.0);
   }
@@ -121,54 +123,55 @@ OglRenderer::OglRenderer(ms_uint32 width, ms_uint32 height, colorObj* color)
   valid = true;
 }
 
-OglRenderer::~OglRenderer()
-{
+OglRenderer::~OglRenderer() {
   makeCurrent();
   glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
   glPopMatrix();
   delete context;
 }
 
-OglCachePtr OglRenderer::getTexture()
-{
+OglCachePtr OglRenderer::getTexture() {
   if (!texture) {
     makeCurrent();
     texture = new OglCache();
-    texture->texture = createTexture(0,0);//TEXTURE_BORDER/2, TEXTURE_BORDER/2);
+    texture->texture =
+        createTexture(0, 0); // TEXTURE_BORDER/2, TEXTURE_BORDER/2);
     texture->width = this->width;
     texture->height = this->height;
   }
   return texture;
 }
 
-GLuint OglRenderer::createTexture(ms_uint32 offsetX, ms_uint32 offsetY)
-{
+GLuint OglRenderer::createTexture(ms_uint32 offsetX, ms_uint32 offsetY) {
   GLuint texture = 0;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   if (OglContext::MAX_ANISOTROPY != 0) {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, OglContext::MAX_ANISOTROPY);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                    OglContext::MAX_ANISOTROPY);
   }
-  glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, offsetX, offsetY, context->getWidth(), context->getHeight(), 0);
-  glBindTexture(GL_TEXTURE_2D,0);
+  glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, offsetX, offsetY,
+                   context->getWidth(), context->getHeight(), 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
   return texture;
 }
 
-bool OglRenderer::getStringBBox(char *font, double size, char *string, rectObj *rect, double** advances)
-{
-  FTFont* face = getFTFont(font, size);
+bool OglRenderer::getStringBBox(char *font, double size, char *string,
+                                rectObj *rect, double **advances) {
+  FTFont *face = getFTFont(font, size);
   if (!face) {
-    msSetError(MS_OGLERR, "Failed to load font (%s).", "OglRenderer::getStringBBox()", font);
+    msSetError(MS_OGLERR, "Failed to load font (%s).",
+               "OglRenderer::getStringBBox()", font);
     return false;
   }
 
-  float llx =0.0f, lly=0.0f, llz=0.0f, urx=0.0f, ury=0.0f, urz=0.0f;
-  glPushAttrib( GL_ALL_ATTRIB_BITS );
+  float llx = 0.0f, lly = 0.0f, llz = 0.0f, urx = 0.0f, ury = 0.0f, urz = 0.0f;
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
   FTBBox boundingBox = face->BBox(string);
   glPopAttrib();
 
@@ -188,31 +191,31 @@ bool OglRenderer::getStringBBox(char *font, double size, char *string, rectObj *
   return true;
 }
 
-void OglRenderer::initializeRasterBuffer(rasterBufferObj * rb, int width, int height, bool useAlpha)
-{
-  unsigned char* buffer = new unsigned char[4 * width * height];
+void OglRenderer::initializeRasterBuffer(rasterBufferObj *rb, int width,
+                                         int height, bool useAlpha) {
+  unsigned char *buffer = new unsigned char[4 * width * height];
   rb->data.rgba.pixels = buffer;
   rb->data.rgba.r = &buffer[2];
   rb->data.rgba.g = &buffer[1];
   rb->data.rgba.b = &buffer[0];
-  if (useAlpha) rb->data.rgba.a = &buffer[3];
+  if (useAlpha)
+    rb->data.rgba.a = &buffer[3];
 
-  rb->type =MS_BUFFER_BYTE_RGBA;
-  rb->data.rgba.row_step = 4*width;
+  rb->type = MS_BUFFER_BYTE_RGBA;
+  rb->data.rgba.row_step = 4 * width;
   rb->data.rgba.pixel_step = 4;
   rb->width = width;
   rb->height = height;
 }
 
-void OglRenderer::readRasterBuffer(rasterBufferObj * rb)
-{
+void OglRenderer::readRasterBuffer(rasterBufferObj *rb) {
   makeCurrent();
-  unsigned char* buffer = new unsigned char[4 * width * height];
+  unsigned char *buffer = new unsigned char[4 * width * height];
   glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
 
-  rb->type =MS_BUFFER_BYTE_RGBA;
+  rb->type = MS_BUFFER_BYTE_RGBA;
   rb->data.rgba.pixels = buffer;
-  rb->data.rgba.row_step = 4*width;
+  rb->data.rgba.row_step = 4 * width;
   rb->data.rgba.pixel_step = 4;
   rb->width = width;
   rb->height = height;
@@ -222,29 +225,30 @@ void OglRenderer::readRasterBuffer(rasterBufferObj * rb)
   rb->data.rgba.a = NULL;
 }
 
-void OglRenderer::drawRasterBuffer(rasterBufferObj *overlay, double opacity, int srcX, int srcY, int dstX, int dstY, int width, int height)
-{
-  // todo to support all alpha and srcx/y this needs to be done by creating a texture
+void OglRenderer::drawRasterBuffer(rasterBufferObj *overlay, double opacity,
+                                   int srcX, int srcY, int dstX, int dstY,
+                                   int width, int height) {
+  // todo to support all alpha and srcx/y this needs to be done by creating a
+  // texture
   makeCurrent();
-  glDrawPixels(width, height, GL_BGRA, GL_UNSIGNED_BYTE, overlay->data.rgba.pixels);
+  glDrawPixels(width, height, GL_BGRA, GL_UNSIGNED_BYTE,
+               overlay->data.rgba.pixels);
 }
 
-void OglRenderer::setTransparency(double transparency)
-{
+void OglRenderer::setTransparency(double transparency) {
   this->transparency = transparency;
 }
 
-void OglRenderer::setColor(colorObj *color)
-{
+void OglRenderer::setColor(colorObj *color) {
   if (color && MS_VALID_COLOR(*color)) {
-    glColor4d((double) color->red / 255, (double) color->green / 255, (double) color->blue / 255, transparency);
+    glColor4d((double)color->red / 255, (double)color->green / 255,
+              (double)color->blue / 255, transparency);
   } else {
     glColor4d(0.0, 0.0, 0.0, 1.0);
   }
 }
 
-void OglRenderer::drawVectorLineStrip(symbolObj *symbol, double width)
-{
+void OglRenderer::drawVectorLineStrip(symbolObj *symbol, double width) {
   glPushMatrix();
   glLineWidth(width);
   glBegin(GL_LINE_STRIP);
@@ -261,8 +265,8 @@ void OglRenderer::drawVectorLineStrip(symbolObj *symbol, double width)
   glPopMatrix();
 }
 
-double OglRenderer::drawTriangles(pointObj* p1, pointObj* p2, double width, double tilelength, double textureStart)
-{
+double OglRenderer::drawTriangles(pointObj *p1, pointObj *p2, double width,
+                                  double tilelength, double textureStart) {
   double dx = p1->x - p2->x;
   double dy = p1->y - p2->y;
   double dist = sqrt(dx * dx + dy * dy);
@@ -289,8 +293,8 @@ double OglRenderer::drawTriangles(pointObj* p1, pointObj* p2, double width, doub
   return dist;
 }
 
-double OglRenderer::drawQuad(pointObj* p1, pointObj* p2, double width, double tilelength, double textureStart)
-{
+double OglRenderer::drawQuad(pointObj *p1, pointObj *p2, double width,
+                             double tilelength, double textureStart) {
   double dx = p1->x - p2->x;
   double dy = p1->y - p2->y;
   double dist = sqrt(dx * dx + dy * dy);
@@ -309,9 +313,11 @@ double OglRenderer::drawQuad(pointObj* p1, pointObj* p2, double width, double ti
   glTexCoord2d(textureStart, 1);
   glVertex2d(p1->x, p1->y - width / 2); // Bottom Left Of The Texture and Quad
   glTexCoord2d(textureStart + (dist / tilelength), 1);
-  glVertex2d(p1->x + dist, p1->y - width / 2); // Bottom Right Of The Texture and Quad
+  glVertex2d(p1->x + dist,
+             p1->y - width / 2); // Bottom Right Of The Texture and Quad
   glTexCoord2d(textureStart + (dist / tilelength), 0);
-  glVertex2d(p1->x + dist, p1->y + width / 2); // Top Right Of The Texture and Quad
+  glVertex2d(p1->x + dist,
+             p1->y + width / 2); // Top Right Of The Texture and Quad
   glTexCoord2d(textureStart, 0);
   glVertex2d(p1->x, p1->y + width / 2); // Top Left Of The Texture and Quad
   glEnd();
@@ -321,8 +327,8 @@ double OglRenderer::drawQuad(pointObj* p1, pointObj* p2, double width, double ti
   return dist;
 }
 
-void OglRenderer::renderTile(const OglCachePtr& tile, double x, double y, double angle)
-{
+void OglRenderer::renderTile(const OglCachePtr &tile, double x, double y,
+                             double angle) {
   makeCurrent();
   glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
   glBindTexture(GL_TEXTURE_2D, tile->texture);
@@ -334,13 +340,17 @@ void OglRenderer::renderTile(const OglCachePtr& tile, double x, double y, double
   glTranslated(-x, -y, 0);
   glBegin(GL_QUADS);
   glTexCoord2d(0, 1);
-  glVertex2d( x-(tile->width/2), y+(tile->height/2));    // Bottom Left Of The Texture and Quad
+  glVertex2d(x - (tile->width / 2),
+             y + (tile->height / 2)); // Bottom Left Of The Texture and Quad
   glTexCoord2d(1, 1);
-  glVertex2d( x+(tile->width/2), y+(tile->height/2));    // Bottom Right Of The Texture and Quad
+  glVertex2d(x + (tile->width / 2),
+             y + (tile->height / 2)); // Bottom Right Of The Texture and Quad
   glTexCoord2d(1, 0);
-  glVertex2d( x+(tile->width/2), y-(tile->height/2));    // Top Right Of The Texture and Quad
+  glVertex2d(x + (tile->width / 2),
+             y - (tile->height / 2)); // Top Right Of The Texture and Quad
   glTexCoord2d(0, 0);
-  glVertex2d( x-(tile->width/2), y-(tile->height/2));    // Top Left Of The Texture and Quad
+  glVertex2d(x - (tile->width / 2),
+             y - (tile->height / 2)); // Top Left Of The Texture and Quad
   glEnd();
 
   glPopMatrix();
@@ -348,8 +358,7 @@ void OglRenderer::renderTile(const OglCachePtr& tile, double x, double y, double
   glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 }
 
-void OglRenderer::renderPolylineTile(shapeObj *shape, const OglCachePtr& tile)
-{
+void OglRenderer::renderPolylineTile(shapeObj *shape, const OglCachePtr &tile) {
   makeCurrent();
   glBindTexture(GL_TEXTURE_2D, tile->texture); // Select Our Texture
   glBegin(GL_TRIANGLE_STRIP);
@@ -357,25 +366,28 @@ void OglRenderer::renderPolylineTile(shapeObj *shape, const OglCachePtr& tile)
   double place = 0.0;
   for (int i = 0; i < shape->numlines; i++) {
     for (int j = 0; j < shape->line[i].numpoints - 1; j++) {
-      double dist = drawTriangles(&shape->line[i].point[j], &shape->line[i].point[j + 1], tile->height, tile->width, place / tile->width);
+      double dist =
+          drawTriangles(&shape->line[i].point[j], &shape->line[i].point[j + 1],
+                        tile->height, tile->width, place / tile->width);
       place = (place + dist);
-      while (place >= tile->width) place -= tile->width;
+      while (place >= tile->width)
+        place -= tile->width;
     }
   }
   glEnd();
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-
-void OglRenderer::renderVectorSymbol(double x, double y, symbolObj *symbol, double scale, double angle, colorObj *c, colorObj *oc, double ow)
-{
+void OglRenderer::renderVectorSymbol(double x, double y, symbolObj *symbol,
+                                     double scale, double angle, colorObj *c,
+                                     colorObj *oc, double ow) {
   makeCurrent();
   glPushMatrix();
   glTranslated(x, y, 0);
   glRotated(angle, 0, 0, 1);
   glScaled(scale, scale, 0);
 
-  glTranslated(-symbol->sizex/2, -symbol->sizey/2, 0.0);
+  glTranslated(-symbol->sizex / 2, -symbol->sizey / 2, 0.0);
 
   if (oc != NULL && MS_VALID_COLOR(*oc) && ow > 0) {
     setColor(oc);
@@ -391,9 +403,9 @@ void OglRenderer::renderVectorSymbol(double x, double y, symbolObj *symbol, doub
 }
 
 void OglRenderer::renderPolyline(shapeObj *p, colorObj *c, double width,
-                                 int patternlength, double* pattern, int lineCap, int joinStyle,
-                                 colorObj *outlinecolor, double outlinewidth)
-{
+                                 int patternlength, double *pattern,
+                                 int lineCap, int joinStyle,
+                                 colorObj *outlinecolor, double outlinewidth) {
   makeCurrent();
   if (outlinecolor) {
     glEnable(GL_DEPTH_TEST);
@@ -410,7 +422,7 @@ void OglRenderer::renderPolyline(shapeObj *p, colorObj *c, double width,
     /* FIXME */
     if (p->renderer_cache == NULL)
       return;
-    OglCache* cache = (OglCache*) p->renderer_cache;
+    OglCache *cache = (OglCache *)p->renderer_cache;
     GLuint texture = cache->texture;
     if (cache->patternDistance > 0) {
       glBindTexture(GL_TEXTURE_2D, texture);
@@ -418,10 +430,9 @@ void OglRenderer::renderPolyline(shapeObj *p, colorObj *c, double width,
       glBegin(GL_TRIANGLE_STRIP);
       for (int j = 0; j < p->numlines; j++) {
         for (int i = 0; i < p->line[j].numpoints - 1; i++) {
-          double dist = drawTriangles(&p->line[j].point[i],
-                                      &p->line[j].point[i + 1], width,
-                                      cache->patternDistance, place
-                                      / cache->patternDistance);
+          double dist = drawTriangles(
+              &p->line[j].point[i], &p->line[j].point[i + 1], width,
+              cache->patternDistance, place / cache->patternDistance);
           place = (place + dist);
           while (place >= cache->patternDistance)
             place -= cache->patternDistance; // better than mod, no rounding
@@ -436,22 +447,24 @@ void OglRenderer::renderPolyline(shapeObj *p, colorObj *c, double width,
     bool quads = !(width >= widthRange[0] && width <= widthRange[1]);
     double circleScale = width / SHAPE_CIRCLE_RADIUS / 2;
     glLineWidth(width);
-    if (quads || (width > 1.0 && (lineCap == MS_CJC_ROUND || joinStyle == MS_CJC_ROUND))) {
+    if (quads || (width > 1.0 &&
+                  (lineCap == MS_CJC_ROUND || joinStyle == MS_CJC_ROUND))) {
       for (int j = 0; j < p->numlines; j++) {
         for (int i = 0; i < p->line[j].numpoints; i++) {
           if (i != p->line[j].numpoints - 1) {
             if (quads) {
-              drawQuad(&p->line[j].point[i], &p->line[j].point[i
-                       + 1], width);
+              drawQuad(&p->line[j].point[i], &p->line[j].point[i + 1], width);
             } else {
               glBegin(GL_LINES);
               glVertex2f(p->line[j].point[i].x, p->line[j].point[i].y);
-              glVertex2f(p->line[j].point[i + 1].x,p->line[j].point[i + 1].y);
+              glVertex2f(p->line[j].point[i + 1].x, p->line[j].point[i + 1].y);
               glEnd();
             }
           }
-          if ((lineCap == MS_CJC_ROUND && (i == 0 || i == p->line[j].numpoints - 1)) ||
-              (joinStyle == MS_CJC_ROUND && (i > 0 && i < p->line[j].numpoints - 1))) {
+          if ((lineCap == MS_CJC_ROUND &&
+               (i == 0 || i == p->line[j].numpoints - 1)) ||
+              (joinStyle == MS_CJC_ROUND &&
+               (i > 0 && i < p->line[j].numpoints - 1))) {
             glPushMatrix();
             glTranslated(p->line[j].point[i].x, p->line[j].point[i].y, 0);
             glScaled(circleScale, circleScale, 0);
@@ -467,7 +480,6 @@ void OglRenderer::renderPolyline(shapeObj *p, colorObj *c, double width,
           glVertex2f(p->line[j].point[i].x, p->line[j].point[i].y);
         }
         glEnd();
-
       }
     }
   }
@@ -477,23 +489,26 @@ void OglRenderer::renderPolyline(shapeObj *p, colorObj *c, double width,
     double owidth = MS_MAX(width + OUTLINE_WIDTH, outlinewidth);
     glPushMatrix();
     glTranslated(0, 0, -1);
-    renderPolyline(p, outlinecolor, owidth, patternlength, pattern, lineCap, joinStyle);
+    renderPolyline(p, outlinecolor, owidth, patternlength, pattern, lineCap,
+                   joinStyle);
     glPopMatrix();
     glDisable(GL_DEPTH_TEST);
   }
-
 }
 
-void OglRenderer::renderPolygon(shapeObj *p, colorObj *color, colorObj *outlinecolor, double outlinewidth, const OglCachePtr& tile, int lineCap, int joinStyle)
-{
+void OglRenderer::renderPolygon(shapeObj *p, colorObj *color,
+                                colorObj *outlinecolor, double outlinewidth,
+                                const OglCachePtr &tile, int lineCap,
+                                int joinStyle) {
   /*
-   OpenGL cannot draw complex polygons so we need to use a Tessallator to draw the polygon using a GL_TRIANGLE_FAN
+   OpenGL cannot draw complex polygons so we need to use a Tessallator to draw
+   the polygon using a GL_TRIANGLE_FAN
 
-   ISSUE: There's a problem here. It would seem that changing the dimensions or bounding box area breaks the code.
-   Reports need for a combine callback.
+   ISSUE: There's a problem here. It would seem that changing the dimensions or
+   bounding box area breaks the code. Reports need for a combine callback.
    */
   makeCurrent();
-  std::vector<GLdouble*> pointers;
+  std::vector<GLdouble *> pointers;
   double texWidth = 0;
   double texHeight = 0;
 
@@ -503,12 +518,12 @@ void OglRenderer::renderPolygon(shapeObj *p, colorObj *color, colorObj *outlinec
     texHeight = tile->height;
   }
   setColor(color);
-  gluTessBeginPolygon(tess, NULL );
+  gluTessBeginPolygon(tess, NULL);
   for (int j = 0; j < p->numlines; j++) {
     gluTessBeginContour(tess);
     for (int i = 0; i < p->line[j].numpoints; i++) {
       // create temp array and place
-      GLdouble* dbls = new GLdouble[5];
+      GLdouble *dbls = new GLdouble[5];
       pointers.push_back(dbls);
       dbls[0] = p->line[j].point[i].x;
       dbls[1] = p->line[j].point[i].y;
@@ -518,32 +533,33 @@ void OglRenderer::renderPolygon(shapeObj *p, colorObj *color, colorObj *outlinec
       gluTessVertex(tess, dbls, dbls);
     }
     gluTessEndContour(tess);
-
   }
   gluTessEndPolygon(tess);
 
   // destroy temp arrays
-  for (std::vector<GLdouble*>::iterator iter = pointers.begin(); iter
-       != pointers.end(); iter++) {
-    delete[] *iter;
+  for (std::vector<GLdouble *>::iterator iter = pointers.begin();
+       iter != pointers.end(); iter++) {
+    delete[] * iter;
   }
 
   glBindTexture(GL_TEXTURE_2D, 0); // Select Our Texture
 
-  if (outlinecolor != NULL && MS_VALID_COLOR(*outlinecolor) && outlinewidth > 0) {
-    renderPolyline(p, outlinecolor, outlinewidth, 0, NULL, lineCap,
-                   joinStyle);
+  if (outlinecolor != NULL && MS_VALID_COLOR(*outlinecolor) &&
+      outlinewidth > 0) {
+    renderPolyline(p, outlinecolor, outlinewidth, 0, NULL, lineCap, joinStyle);
   }
 }
 
 void OglRenderer::renderGlyphs(double x, double y, colorObj *color,
-                               colorObj *outlinecolor, double size, const char* font, char *thechars, double angle,
-                               colorObj *shadowcolor, double shdx, double shdy)
-{
+                               colorObj *outlinecolor, double size,
+                               const char *font, char *thechars, double angle,
+                               colorObj *shadowcolor, double shdx,
+                               double shdy) {
   makeCurrent();
-  FTFont* face = getFTFont(font, size);
+  FTFont *face = getFTFont(font, size);
   if (!face) {
-    msSetError(MS_OGLERR, "Failed to load font (%s).", "OglRenderer::renderGlyphs()", font);
+    msSetError(MS_OGLERR, "Failed to load font (%s).",
+               "OglRenderer::renderGlyphs()", font);
     return;
   }
 
@@ -577,25 +593,26 @@ void OglRenderer::renderGlyphs(double x, double y, colorObj *color,
 }
 
 void OglRenderer::renderPixmap(symbolObj *symbol, double x, double y,
-                               double angle, double scale)
-{
+                               double angle, double scale) {
   makeCurrent();
 
   float zoomX, zoomY;
   glGetFloatv(GL_ZOOM_X, &zoomX);
   glGetFloatv(GL_ZOOM_Y, &zoomY);
 
-
-  GLubyte* imgdata = symbol->pixmap_buffer->data.rgba.pixels;
-  glPixelZoom(zoomX*scale, zoomY*scale);
-  glRasterPos2d(x-symbol->pixmap_buffer->width/2, y-symbol->pixmap_buffer->height/2);
-  glDrawPixels(symbol->pixmap_buffer->width, symbol->pixmap_buffer->height, GL_BGRA, GL_UNSIGNED_BYTE, imgdata);
+  GLubyte *imgdata = symbol->pixmap_buffer->data.rgba.pixels;
+  glPixelZoom(zoomX * scale, zoomY * scale);
+  glRasterPos2d(x - symbol->pixmap_buffer->width / 2,
+                y - symbol->pixmap_buffer->height / 2);
+  glDrawPixels(symbol->pixmap_buffer->width, symbol->pixmap_buffer->height,
+               GL_BGRA, GL_UNSIGNED_BYTE, imgdata);
   glPixelZoom(zoomX, zoomY);
 }
 
-void OglRenderer::renderEllipse(double x, double y, double angle, double width, double height,
-                                colorObj *color, colorObj *outlinecolor, double outlinewidth = 1.0)
-{
+void OglRenderer::renderEllipse(double x, double y, double angle, double width,
+                                double height, colorObj *color,
+                                colorObj *outlinecolor,
+                                double outlinewidth = 1.0) {
   makeCurrent();
   if (outlinecolor && MS_VALID_COLOR(*outlinecolor)) {
     glEnable(GL_DEPTH_TEST);
@@ -610,7 +627,8 @@ void OglRenderer::renderEllipse(double x, double y, double angle, double width, 
     glRotated(angle, 0, 0, 1);
   }
   glTranslated(x, y, 0);
-  glScaled(width / SHAPE_CIRCLE_RADIUS / 2, height / SHAPE_CIRCLE_RADIUS / 2, 1);
+  glScaled(width / SHAPE_CIRCLE_RADIUS / 2, height / SHAPE_CIRCLE_RADIUS / 2,
+           1);
   glCallList(shapes[circle]);
   glPopMatrix();
 
@@ -618,16 +636,15 @@ void OglRenderer::renderEllipse(double x, double y, double angle, double width, 
     glPopMatrix();
     glPushMatrix();
     glTranslated(0, 0, -1);
-    renderEllipse(x, y, angle, width + outlinewidth, height, outlinecolor, NULL, 0);
+    renderEllipse(x, y, angle, width + outlinewidth, height, outlinecolor, NULL,
+                  0);
     glPopMatrix();
     glDisable(GL_DEPTH_TEST);
   }
-
 }
 
-bool OglRenderer::loadLine(shapeObj* shape, double width, int patternlength,
-                           double* pattern)
-{
+bool OglRenderer::loadLine(shapeObj *shape, double width, int patternlength,
+                           double *pattern) {
   /*    OglCache* cache = (OglCache*) shape->renderer_cache;
 
       if (cache->patternDistance == 0)
@@ -638,8 +655,9 @@ bool OglRenderer::loadLine(shapeObj* shape, double width, int patternlength,
           }
       }
       GLubyte imgdata[TEX_SIZE * TEX_SIZE * 4];
-      int pow2length = min(max(NextPowerOf2(cache->patternDistance), MIN_TEX_SIZE), TEX_SIZE);
-      int pow2width = min(max(NextPowerOf2(width), MIN_TEX_SIZE), TEX_SIZE);
+      int pow2length = min(max(NextPowerOf2(cache->patternDistance),
+     MIN_TEX_SIZE), TEX_SIZE); int pow2width = min(max(NextPowerOf2(width),
+     MIN_TEX_SIZE), TEX_SIZE);
 
       double lengthScale = (double) pow2length / cache->patternDistance;
       glColor3d(0, 0, 0);
@@ -683,42 +701,34 @@ bool OglRenderer::loadLine(shapeObj* shape, double width, int patternlength,
   return true;
 }
 
-FTFont* OglRenderer::getFTFont(const char* font, double size)
-{
-  FTFont** face = &fontCache[font][size];
+FTFont *OglRenderer::getFTFont(const char *font, double size) {
+  FTFont **face = &fontCache[font][size];
   if (*face == NULL && ifstream(font)) {
-    *face = new FTGLTextureFont( font );
+    *face = new FTGLTextureFont(font);
     if (*face) {
       (*face)->UseDisplayList(true);
-      (*face)->FaceSize(size*SIZE_RES);
+      (*face)->FaceSize(size * SIZE_RES);
     }
   }
   return *face;
 }
 
-GLvoid CALLBACK beginCallback(GLenum which)
-{
-  glBegin(which);
-}
+GLvoid CALLBACK beginCallback(GLenum which) { glBegin(which); }
 
-GLvoid CALLBACK errorCallback(GLenum errorCode)
-{
+GLvoid CALLBACK errorCallback(GLenum errorCode) {
   const GLubyte *estring;
   estring = gluErrorString(errorCode);
   fprintf(stderr, "Tessellation Error: %d %s\n", errorCode, estring);
   exit(0);
 }
 
-GLvoid CALLBACK endCallback(void)
-{
-  glEnd();
-}
+GLvoid CALLBACK endCallback(void) { glEnd(); }
 
-GLvoid CALLBACK combineDataCallback(GLdouble coords[3], GLdouble* vertex_data[4],
-                                    GLfloat weight[4], void** dataOut, void* polygon_data)
-{
+GLvoid CALLBACK combineDataCallback(GLdouble coords[3],
+                                    GLdouble *vertex_data[4], GLfloat weight[4],
+                                    void **dataOut, void *polygon_data) {
   GLdouble *vertex;
-  vertex = (GLdouble *) malloc(5 * sizeof(GLdouble));
+  vertex = (GLdouble *)malloc(5 * sizeof(GLdouble));
   vertex[0] = coords[0];
   vertex[1] = coords[1];
   vertex[2] = coords[2];
@@ -727,21 +737,21 @@ GLvoid CALLBACK combineDataCallback(GLdouble coords[3], GLdouble* vertex_data[4]
   *dataOut = vertex;
 }
 
-GLvoid CALLBACK vertexCallback(GLdouble *vertex)
-{
-  if (vertex[3] > 0) glTexCoord2d(vertex[0]/vertex[3], vertex[1]/vertex[4]);
+GLvoid CALLBACK vertexCallback(GLdouble *vertex) {
+  if (vertex[3] > 0)
+    glTexCoord2d(vertex[0] / vertex[3], vertex[1] / vertex[4]);
   glVertex3dv(vertex);
 }
 
-void OglRenderer::createShapes()
-{
+void OglRenderer::createShapes() {
   double da = MS_MIN(OGL_PI / 2, OGL_PI / SHAPE_CIRCLE_RES);
   GLuint circle = glGenLists(1);
   glNewList(circle, GL_COMPILE);
   glBegin(GL_TRIANGLE_FAN);
   glVertex2d(0, 0);
   for (double a = 0.0; a <= 2 * OGL_PI; a += da) {
-    glVertex2d(0 + cos(a) * SHAPE_CIRCLE_RADIUS, 0 + sin(a) * SHAPE_CIRCLE_RADIUS);
+    glVertex2d(0 + cos(a) * SHAPE_CIRCLE_RADIUS,
+               0 + sin(a) * SHAPE_CIRCLE_RADIUS);
   }
   glVertex2d(0 + SHAPE_CIRCLE_RADIUS, 0);
   glEnd();
@@ -750,9 +760,6 @@ void OglRenderer::createShapes()
   shapes.push_back(circle);
 }
 
-void OglRenderer::makeCurrent()
-{
-  context->makeCurrent();
-}
+void OglRenderer::makeCurrent() { context->makeCurrent(); }
 
 #endif

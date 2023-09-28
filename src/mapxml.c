@@ -39,8 +39,8 @@
 
 extern int xmlLoadExtDtdDefaultValue;
 
-int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile)
-{
+int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile,
+                          FILE *tmpfile) {
   xsltStylesheetPtr cur = NULL;
   int status = MS_FAILURE;
   xmlDocPtr doc = NULL, res = NULL;
@@ -53,24 +53,27 @@ int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *
 
   cur = xsltParseStylesheetFile((const xmlChar *)stylesheet);
   if (cur == NULL) {
-    msSetError(MS_MISCERR, "Failed to load xslt stylesheet", "msTransformXmlMapfile()");
+    msSetError(MS_MISCERR, "Failed to load xslt stylesheet",
+               "msTransformXmlMapfile()");
     goto done;
   }
 
   doc = xmlParseFile(xmlMapfile);
   if (doc == NULL) {
-    msSetError(MS_MISCERR, "Failed to load xml mapfile", "msTransformXmlMapfile()");
+    msSetError(MS_MISCERR, "Failed to load xml mapfile",
+               "msTransformXmlMapfile()");
     goto done;
   }
 
   res = xsltApplyStylesheet(cur, doc, NULL);
   if (res == NULL) {
-    msSetError(MS_MISCERR, "Failed to apply style sheet to %s", "msTransformXmlMapfile()", xmlMapfile);
+    msSetError(MS_MISCERR, "Failed to apply style sheet to %s",
+               "msTransformXmlMapfile()", xmlMapfile);
     goto done;
   }
 
-  if ( xsltSaveResultToFile(tmpfile, res, cur) != -1 )
-    status =  MS_SUCCESS;
+  if (xsltSaveResultToFile(tmpfile, res, cur) != -1)
+    status = MS_SUCCESS;
 
 done:
   if (cur)

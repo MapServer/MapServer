@@ -29,16 +29,21 @@
 ###############################################################################
 
 import os
-import pytest
 import sys
 
-sys.path.append( '../pymod' )
+import pytest
+
+sys.path.append("../pymod")
 
 import mstestlib
 
 os.environ["TNS_ADMIN"] = "."
 
-@pytest.mark.parametrize('map,out_file,command', mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))))
+
+@pytest.mark.parametrize(
+    "map,out_file,command",
+    mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))),
+)
 def test(map, out_file, command, extra_args):
     mstestlib.run_pytest(map, out_file, command, extra_args)
 
@@ -46,5 +51,5 @@ def test(map, out_file, command, extra_args):
 ###############################################################################
 # main()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(mstestlib.pytest_main())

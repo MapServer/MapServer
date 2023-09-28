@@ -29,39 +29,32 @@
 #ifndef MAPRASTER_H
 #define MAPRASTER_H
 
+int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
+                               rectObj *psearchrect, int is_query,
+                               int *ptilelayerindex, /* output */
+                               int *ptileitemindex,  /* output */
+                               int *ptilesrsindex,   /* output */
+                               layerObj **ptlp /* output */);
 
-  int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
-                                 rectObj* psearchrect,
-                                 int is_query,
-                                 int* ptilelayerindex, /* output */
-                                 int* ptileitemindex, /* output */
-                                 int* ptilesrsindex, /* output */
-                                 layerObj **ptlp  /* output */ );
+void msDrawRasterCleanupTileLayer(layerObj *tlp, int tilelayerindex);
 
-  void msDrawRasterCleanupTileLayer(layerObj* tlp,
-                                    int tilelayerindex);
+int msDrawRasterIterateTileIndex(layerObj *layer, layerObj *tlp,
+                                 shapeObj *ptshp, /* input-output */
+                                 int tileitemindex, int tilesrsindex,
+                                 char *tilename, /* output */
+                                 size_t sizeof_tilename,
+                                 char *tilesrsname, /* output */
+                                 size_t sizeof_tilesrsname);
 
-  int msDrawRasterIterateTileIndex(layerObj *layer,
-                                   layerObj* tlp,
-                                   shapeObj* ptshp, /* input-output */
-                                   int tileitemindex,
-                                   int tilesrsindex,
-                                   char* tilename, /* output */
-                                   size_t sizeof_tilename,
-                                   char* tilesrsname, /* output */
-                                   size_t sizeof_tilesrsname);
+int msDrawRasterBuildRasterPath(mapObj *map, layerObj *layer,
+                                const char *filename,
+                                char szPath[MS_MAXPATHLEN]);
 
-  int msDrawRasterBuildRasterPath(mapObj *map, layerObj *layer,
-                                  const char* filename,
-                                  char szPath[MS_MAXPATHLEN]);
+const char *msDrawRasterGetCPLErrorMsg(const char *decrypted_path,
+                                       const char *szPath);
 
-  const char* msDrawRasterGetCPLErrorMsg(const char* decrypted_path,
-                                         const char* szPath);
-
-  int msDrawRasterLoadProjection(layerObj *layer,
-                                 GDALDatasetH hDS,
-                                 const char* filename,
-                                 int tilesrsindex,
-                                 const char* tilesrsname);
+int msDrawRasterLoadProjection(layerObj *layer, GDALDatasetH hDS,
+                               const char *filename, int tilesrsindex,
+                               const char *tilesrsname);
 
 #endif /* MAPRASTER_H */

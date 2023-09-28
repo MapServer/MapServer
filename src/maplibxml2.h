@@ -32,10 +32,10 @@
 
 #ifdef USE_LIBXML2
 
-#include<libxml/parser.h>
-#include<libxml/tree.h>
-#include<libxml/xpath.h>
-#include<libxml/xpathInternals.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 #include <libxml/xmlschemas.h>
 #include <libxml/xmlschemastypes.h>
 
@@ -43,9 +43,11 @@
 extern "C" {
 #endif
 
-xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath);
+xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context,
+                                    xmlChar *xpath);
 
-void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elname, const char *values, char delim);
+void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs,
+                           const char *elname, const char *values, char delim);
 
 char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath);
 

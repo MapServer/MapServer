@@ -33,29 +33,28 @@
 
 using namespace v8;
 
-class Line: public ObjectWrap
-{
+class Line : public ObjectWrap {
 public:
   static void Initialize(Handle<Object> target);
-  static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Dispose();
   static Handle<Function> Constructor();
 
   Line(lineObj *l, ObjectWrap *p = NULL);
   ~Line();
-  inline lineObj* get() { return this_; }
+  inline lineObj *get() { return this_; }
   inline void disableMemoryHandler() { this->freeInternal = false; }
 
   static void getProp(Local<String> property,
-                      const PropertyCallbackInfo<Value>& info);
-  static void setProp(Local<String> property,
-                      Local<Value> value,
-                      const PropertyCallbackInfo<void>& info);
+                      const PropertyCallbackInfo<Value> &info);
+  static void setProp(Local<String> property, Local<Value> value,
+                      const PropertyCallbackInfo<void> &info);
 
-  static void getPoint(const v8::FunctionCallbackInfo<Value>& args);
-  static void addXY(const v8::FunctionCallbackInfo<Value>& args);
-  static void addXYZ(const v8::FunctionCallbackInfo<Value>& args);
-  static void addPoint(const v8::FunctionCallbackInfo<Value>& args);
+  static void getPoint(const v8::FunctionCallbackInfo<Value> &args);
+  static void addXY(const v8::FunctionCallbackInfo<Value> &args);
+  static void addXYZ(const v8::FunctionCallbackInfo<Value> &args);
+  static void addPoint(const v8::FunctionCallbackInfo<Value> &args);
+
 private:
   static Persistent<FunctionTemplate> constructor;
   lineObj *this_;

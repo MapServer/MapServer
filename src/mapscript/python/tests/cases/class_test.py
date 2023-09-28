@@ -25,12 +25,13 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import MapTestCase
 
 
 class ClassObjTestCase(unittest.TestCase):
-
     def testConstructorNoArg(self):
         c = mapscript.classObj()
         assert c.thisown == 1
@@ -39,7 +40,7 @@ class ClassObjTestCase(unittest.TestCase):
 
     def testConstructorWithArg(self):
         lyr = mapscript.layerObj()
-        lyr.name = 'foo'
+        lyr.name = "foo"
         c = mapscript.classObj(lyr)
         assert c.thisown == 1
         assert c.layer.name == lyr.name
@@ -48,14 +49,14 @@ class ClassObjTestCase(unittest.TestCase):
     def testGetSetAttributes(self):
         c = mapscript.classObj()
 
-        val = '/tmp/legend.png'
+        val = "/tmp/legend.png"
         c.keyimage = val
         assert c.keyimage == val
 
         c.debug = mapscript.MS_TRUE
         assert c.debug == mapscript.MS_TRUE
 
-        val = 'Group1'
+        val = "Group1"
         c.group = val
         assert c.group == val
 
@@ -71,24 +72,23 @@ class ClassObjTestCase(unittest.TestCase):
         c.minscaledenom = val
         assert c.minscaledenom == val
 
-        val = 'Class1'
+        val = "Class1"
         c.name = val
         assert c.name == val
 
         c.status = mapscript.MS_OFF
         assert c.status == mapscript.MS_OFF
 
-        val = 'template.html'
+        val = "template.html"
         c.template = val
         assert c.template == val
 
-        val = 'Title1'
+        val = "Title1"
         c.title = val
         assert c.title == val
 
 
 class ClassCloningTestCase(unittest.TestCase):
-
     def testCloneClass(self):
         """check attributes of a cloned class"""
         c = mapscript.classObj()
@@ -103,42 +103,42 @@ class ClassIconTestCase(MapTestCase):
     """testing for bug 1250"""
 
     def testAlphaTransparentPixmap(self):
-        lo = self.map.getLayerByName('INLINE-PIXMAP-RGBA')
+        lo = self.map.getLayerByName("INLINE-PIXMAP-RGBA")
         co = lo.getClass(0)
-        self.map.selectOutputFormat('PNG')
+        self.map.selectOutputFormat("PNG")
         im = co.createLegendIcon(self.map, lo, 48, 48)
-        im.save('testAlphaTransparentPixmapIcon.png')
+        im.save("testAlphaTransparentPixmapIcon.png")
 
     def testAlphaTransparentPixmapPNG24(self):
-        lo = self.map.getLayerByName('INLINE-PIXMAP-RGBA')
+        lo = self.map.getLayerByName("INLINE-PIXMAP-RGBA")
         co = lo.getClass(0)
-        self.map.selectOutputFormat('PNG24')
+        self.map.selectOutputFormat("PNG24")
         im = co.createLegendIcon(self.map, lo, 48, 48)
-        im.save('testAlphaTransparentPixmapIcon24.png')
+        im.save("testAlphaTransparentPixmapIcon24.png")
 
     def testAlphaTransparentPixmapJPG(self):
-        lo = self.map.getLayerByName('INLINE-PIXMAP-RGBA')
+        lo = self.map.getLayerByName("INLINE-PIXMAP-RGBA")
         co = lo.getClass(0)
-        self.map.selectOutputFormat('JPEG')
+        self.map.selectOutputFormat("JPEG")
         im = co.createLegendIcon(self.map, lo, 48, 48)
-        im.save('testAlphaTransparentPixmapIcon.jpg')
+        im.save("testAlphaTransparentPixmapIcon.jpg")
 
     def testIndexedTransparentPixmap(self):
-        lo = self.map.getLayerByName('INLINE-PIXMAP-PCT')
+        lo = self.map.getLayerByName("INLINE-PIXMAP-PCT")
         lo.type = mapscript.MS_LAYER_POINT
         co = lo.getClass(0)
-        self.map.selectOutputFormat('PNG')
+        self.map.selectOutputFormat("PNG")
         im = co.createLegendIcon(self.map, lo, 32, 32)
-        im.save('testIndexedTransparentPixmapIcon.png')
+        im.save("testIndexedTransparentPixmapIcon.png")
 
     def testIndexedTransparentPixmapJPG(self):
-        lo = self.map.getLayerByName('INLINE-PIXMAP-PCT')
+        lo = self.map.getLayerByName("INLINE-PIXMAP-PCT")
         lo.type = mapscript.MS_LAYER_POINT
         co = lo.getClass(0)
-        self.map.selectOutputFormat('JPEG')
+        self.map.selectOutputFormat("JPEG")
         im = co.createLegendIcon(self.map, lo, 32, 32)
-        im.save('testIndexedTransparentPixmapIcon.jpg')
+        im.save("testIndexedTransparentPixmapIcon.jpg")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

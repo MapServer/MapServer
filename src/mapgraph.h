@@ -30,7 +30,7 @@
 #ifndef MAPGRAPH_H
 #define MAPGRAPH_H
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -50,9 +50,10 @@ void msFreeGraph(graphObj *graph);
 int msGraphAddEdge(graphObj *graph, int src, int dest, double weight);
 void msPrintGraph(graphObj *graph);
 
-int *msGraphGetLongestShortestPath(graphObj *graph, int src, int *path_size, double *path_dist);
+int *msGraphGetLongestShortestPath(graphObj *graph, int src, int *path_size,
+                                   double *path_dist);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

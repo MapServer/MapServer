@@ -25,7 +25,9 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import TESTMAPFILE
 
 
@@ -42,7 +44,6 @@ class MapCloneTestCase(unittest.TestCase):
 
 
 class MapCloningTestCase(MapCloneTestCase):
-
     def testClonedName(self):
         """MapCloningTestCase.testClonedName: the name of a cloned map equals the original"""
         assert self.mapobj_clone.name == self.mapobj_orig.name
@@ -50,8 +51,7 @@ class MapCloningTestCase(MapCloneTestCase):
     def testClonedLayers(self):
         """MapCloningTestCase.testClonedLayers: the layers of a cloned map equal the original"""
         assert self.mapobj_clone.numlayers == self.mapobj_orig.numlayers
-        assert self.mapobj_clone.getLayer(0).data \
-            == self.mapobj_orig.getLayer(0).data
+        assert self.mapobj_clone.getLayer(0).data == self.mapobj_orig.getLayer(0).data
 
     def testSetFontSet(self):
         """MapCloningTestCase.testSetFontSet: the number of fonts in a cloned map equal original"""
@@ -66,33 +66,33 @@ class MapCloningTestCase(MapCloneTestCase):
         """drawing a cloned map works properly"""
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
-        filename = 'testClone.png'
-        fh = open(filename, 'wb')
+        filename = "testClone.png"
+        fh = open(filename, "wb")
         msimg.write(fh)
         fh.close()
 
     def testDrawCloneJPEG(self):
         """drawing a cloned map works properly"""
-        self.mapobj_clone.selectOutputFormat('JPEG')
-        self.mapobj_clone.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
+        self.mapobj_clone.selectOutputFormat("JPEG")
+        self.mapobj_clone.getLayerByName("INLINE-PIXMAP-RGBA").status = mapscript.MS_ON
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
-        filename = 'testClone.jpg'
-        fh = open(filename, 'wb')
+        filename = "testClone.jpg"
+        fh = open(filename, "wb")
         msimg.write(fh)
         fh.close()
 
     def testDrawClonePNG24(self):
         """drawing a cloned map works properly"""
-        self.mapobj_clone.selectOutputFormat('PNG24')
-        self.mapobj_clone.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
+        self.mapobj_clone.selectOutputFormat("PNG24")
+        self.mapobj_clone.getLayerByName("INLINE-PIXMAP-RGBA").status = mapscript.MS_ON
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
-        filename = 'testClonePNG24.png'
-        fh = open(filename, 'wb')
+        filename = "testClonePNG24.png"
+        fh = open(filename, "wb")
         msimg.write(fh)
         fh.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

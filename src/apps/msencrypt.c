@@ -29,17 +29,14 @@
 
 #include "../mapserver.h"
 
-
-
-void PrintUsage()
-{
-  printf("Usage: msencrypt <-keygen filename>|<-key filename string_to_encrypt>\n");
+void PrintUsage() {
+  printf("Usage: msencrypt <-keygen filename>|<-key filename "
+         "string_to_encrypt>\n");
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
-  if (argc == 3 && strcmp(argv[1], "-keygen")==0) {
+  if (argc == 3 && strcmp(argv[1], "-keygen") == 0) {
 
     /* TODO: Move this to a function */
     unsigned char pabyKey[16];
@@ -55,7 +52,7 @@ int main(int argc, char *argv[])
       printf("ERROR: Failed writing to %s\n", argv[2]);
       return -1;
     }
-  } else if (argc == 4 && strcmp(argv[1], "-key")==0) {
+  } else if (argc == 4 && strcmp(argv[1], "-key") == 0) {
     unsigned char key[16];
     char *pszBuf;
 
@@ -64,8 +61,8 @@ int main(int argc, char *argv[])
       return -1;
     }
 
-    pszBuf = (char*)malloc((strlen(argv[3])*2+17)*sizeof(char));
-    MS_CHECK_ALLOC(pszBuf, (strlen(argv[3])*2+17)*sizeof(char), -1);
+    pszBuf = (char *)malloc((strlen(argv[3]) * 2 + 17) * sizeof(char));
+    MS_CHECK_ALLOC(pszBuf, (strlen(argv[3]) * 2 + 17) * sizeof(char), -1);
 
     msEncryptStringWithKey(key, argv[3], pszBuf);
 

@@ -31,17 +31,16 @@
 
 #ifdef USE_LIBXML2
 
-#include<libxml/parser.h>
-#include<libxml/tree.h>
-#include<libxml/xpath.h>
-#include<libxml/xpathInternals.h>
-
-
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 
 /**
  * msLibXml2GenerateList()
  *
- * Convenience function to produce a series of XML elements from a delimited list
+ * Convenience function to produce a series of XML elements from a delimited
+ * list
  *
  * @param xmlNodePtr psParent the encompassing node
  * @param xmlNsPtr psNs the namespace object
@@ -51,16 +50,17 @@
  *
  */
 
-void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elname, const char *values, char delim)
-{
+void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs,
+                           const char *elname, const char *values, char delim) {
   char **tokens = NULL;
   int n = 0;
   int i = 0;
   tokens = msStringSplit(values, delim, &n);
-  for (i=0; i<n; i++) {
+  for (i = 0; i < n; i++) {
     // Not sure we really need to distinguish empty vs non-empty case, but
-    // this does change the result of msautotest/wxs/expected/wcs_empty_cap111.xml otherwise
-    if( tokens[i] && tokens[i][0] != '\0' )
+    // this does change the result of
+    // msautotest/wxs/expected/wcs_empty_cap111.xml otherwise
+    if (tokens[i] && tokens[i][0] != '\0')
       xmlNewTextChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
     else
       xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
@@ -81,15 +81,15 @@ void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elnam
  *
  */
 
-xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, xmlChar *xpath)
-{
+xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context,
+                                    xmlChar *xpath) {
   (void)doc;
   xmlXPathObjectPtr result;
   result = xmlXPathEval(xpath, context);
   if (result == NULL) {
     return NULL;
   }
-  if(xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+  if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
     xmlXPathFreeObject(result);
     return NULL;
   }
@@ -108,8 +108,7 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
  *
  */
 
-char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath)
-{
+char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath) {
   xmlBufferPtr xbuf;
   char *result = NULL;
 

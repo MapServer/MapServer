@@ -7,14 +7,13 @@
 #include FT_OUTLINE_H
 
 #ifdef USE_FRIBIDI
- #if (defined(_WIN32) && !defined(__CYGWIN__)) || defined(HAVE_FRIBIDI2)
-  #include "fribidi.h"
- #else
-  #include <fribidi/fribidi.h>
- #endif
- #include <hb-ft.h>
+#if (defined(_WIN32) && !defined(__CYGWIN__)) || defined(HAVE_FRIBIDI2)
+#include "fribidi.h"
+#else
+#include <fribidi/fribidi.h>
 #endif
-
+#include <hb-ft.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +37,7 @@ typedef struct {
   unsigned int size;
 } glyph_element_key;
 
-struct glyph_element{
+struct glyph_element {
   glyph_element_key key;
   glyph_metrics metrics;
   UT_hash_handle hh;
@@ -64,7 +63,7 @@ typedef struct {
   UT_hash_handle hh;
 } bitmap_element;
 
-struct face_element{
+struct face_element {
   char *font;
   FT_Face face;
   index_element *index_cache;
@@ -74,12 +73,13 @@ struct face_element{
   UT_hash_handle hh;
 };
 
-
-face_element* msGetFontFace(const char *key, fontSetObj *fontset);
-outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph);
-glyph_element* msGetBitmapGlyph(rendererVTableObj *renderer, unsigned int size, unsigned int unicode);
+face_element *msGetFontFace(const char *key, fontSetObj *fontset);
+outline_element *msGetGlyphOutline(face_element *face, glyph_element *glyph);
+glyph_element *msGetBitmapGlyph(rendererVTableObj *renderer, unsigned int size,
+                                unsigned int unicode);
 unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode);
-glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned int codepoint);
+glyph_element *msGetGlyphByIndex(face_element *face, unsigned int size,
+                                 unsigned int codepoint);
 int msIsGlyphASpace(glyphObj *glyph);
 
 #ifdef __cplusplus

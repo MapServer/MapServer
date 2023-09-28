@@ -9,9 +9,10 @@ project_csv.py cities.csv 2 1 EPSG:4326 EPSG:3857
 
 """
 
-import sys
 import csv
+import sys
 from io import open
+
 import mapscript
 
 
@@ -22,7 +23,7 @@ def main(input_file, x_field_idx, y_field_idx, input_proj, output_proj):
     proj_out = mapscript.projectionObj(output_proj)
 
     # open file
-    with open(input_file, encoding='utf-8') as f:
+    with open(input_file, encoding="utf-8") as f:
         # read csv
         csv_in = csv.reader(f)
         headers = next(csv_in)
@@ -48,13 +49,16 @@ def usage():
     """
     Display usage if program is used incorrectly
     """
-    print("Syntax: %s <csvfile> <x_col> <y_col> <epsg_code_in> <epsg_code_out>" % sys.argv[0])
+    print(
+        "Syntax: %s <csvfile> <x_col> <y_col> <epsg_code_in> <epsg_code_out>"
+        % sys.argv[0]
+    )
     sys.exit(2)
 
 
 # check input parameters
 
-if (len(sys.argv) != 6):
+if len(sys.argv) != 6:
     usage()
 
 
@@ -67,6 +71,6 @@ y_field_idx = int(sys.argv[3])
 
 # get projection codes
 
-input_proj = "init="+sys.argv[4].lower()
-output_proj = "init="+sys.argv[5].lower()
+input_proj = "init=" + sys.argv[4].lower()
+output_proj = "init=" + sys.argv[5].lower()
 main(input_file, x_field_idx, y_field_idx, input_proj, output_proj)

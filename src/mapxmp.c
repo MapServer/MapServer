@@ -29,7 +29,6 @@
 
 #include "mapserver.h"
 
-
 #ifdef USE_EXEMPI
 
 /* To pull parts out of hash keys */
@@ -40,34 +39,32 @@
 #include <xmpconsts.h>
 
 /**
-* Get standard Exempi namespace URI for a given namespace string
-*/
-static const char*
-msXmpUri(char *ns_name)
-{
+ * Get standard Exempi namespace URI for a given namespace string
+ */
+static const char *msXmpUri(char *ns_name) {
   /* Creative Commons */
-  if( strcmp(ns_name, "cc") == 0 )
+  if (strcmp(ns_name, "cc") == 0)
     return NS_CC;
   /* Dublin Core */
-  else if( strcmp(ns_name, "dc") == 0 )
+  else if (strcmp(ns_name, "dc") == 0)
     return NS_DC;
   /* XMP Meta */
-  else if( strcmp(ns_name, "meta") == 0 )
+  else if (strcmp(ns_name, "meta") == 0)
     return NS_XMP_META;
   /* XMP Rights */
-  else if( strcmp(ns_name, "rights") == 0 )
+  else if (strcmp(ns_name, "rights") == 0)
     return NS_XAP_RIGHTS;
   /* EXIF */
-  else if( strcmp(ns_name, "exif") == 0 )
+  else if (strcmp(ns_name, "exif") == 0)
     return NS_EXIF;
   /* TIFF */
-  else if( strcmp(ns_name, "tiff") == 0 )
+  else if (strcmp(ns_name, "tiff") == 0)
     return NS_TIFF;
   /* Photoshop Camera Raw Schema */
-  else if( strcmp(ns_name, "crs") == 0 )
+  else if (strcmp(ns_name, "crs") == 0)
     return NS_CAMERA_RAW_SETTINGS;
   /* Photoshop */
-  else if( strcmp(ns_name, "photoshop") == 0 )
+  else if (strcmp(ns_name, "photoshop") == 0)
     return NS_PHOTOSHOP;
   else
     return NULL;
@@ -76,11 +73,9 @@ msXmpUri(char *ns_name)
 #endif
 
 /**
-* Is there any XMP metadata in the map file for us to worry about?
-*/
-int
-msXmpPresent( mapObj *map )
-{
+ * Is there any XMP metadata in the map file for us to worry about?
+ */
+int msXmpPresent(mapObj *map) {
 #ifdef USE_EXEMPI
 
   /* Read the WEB.METADATA */
@@ -92,16 +87,16 @@ msXmpPresent( mapObj *map )
   key = msFirstKeyFromHashTable(&hash_metadata);
 
   /* No first key? No license info. */
-  if ( ! key )
+  if (!key)
     return MS_FALSE;
 
   do {
     /* Found one! Break out and return true */
-    if ( strcasestr(key, "xmp_") == key ) {
+    if (strcasestr(key, "xmp_") == key) {
       rv = MS_TRUE;
       break;
     }
-  } while( (key = msNextKeyFromHashTable(&hash_metadata, key)) );
+  } while ((key = msNextKeyFromHashTable(&hash_metadata, key)));
 
   return rv;
 
@@ -110,20 +105,18 @@ msXmpPresent( mapObj *map )
 #endif
 }
 
-
 /**
-* Is there any XMP metadata in the map file for us to worry about?
-*/
-int
-msXmpWrite( mapObj *map, const char *filename )
-{
+ * Is there any XMP metadata in the map file for us to worry about?
+ */
+int msXmpWrite(mapObj *map, const char *filename) {
 #ifdef USE_EXEMPI
 
   /* Should hold our keys */
   hashTableObj hash_metadata = map->web.metadata;
   /* Temporary place for custom name spaces */
   hashTableObj hash_ns;
-  /* We use regex to strip out the namespace and XMP key value from the metadata key */
+  /* We use regex to strip out the namespace and XMP key value from the metadata
+   * key */
   regex_t xmp_regex;
   const char *xmp_ns_str = "^xmp_(.+)_namespace$";
   const char *xmp_tag_str = "^xmp_(.+)_(.+)$";
@@ -140,31 +133,29 @@ msXmpWrite( mapObj *map, const char *filename )
   /* Prepare XMP library */
   xmp_init();
   f = xmp_files_open_new(filename, XMP_OPEN_FORUPDATE);
-  if ( ! f ) {
-    msSetError( MS_MISCERR,
-                "Unable to open temporary file '%s' to write XMP info",
-                "msXmpWrite()", filename );
+  if (!f) {
+    msSetError(MS_MISCERR,
+               "Unable to open temporary file '%s' to write XMP info",
+               "msXmpWrite()", filename);
     return MS_FAILURE;
   }
 
   /* Create a new XMP structure if the file doesn't already have one */
   xmp = xmp_files_get_new_xmp(f);
-  if ( xmp == NULL )
+  if (xmp == NULL)
     xmp = xmp_new_empty();
 
   /* Check we can write to the file */
-  if ( ! xmp_files_can_put_xmp(f, xmp) ) {
-    msSetError( MS_MISCERR,
-                "Unable to write XMP information to '%s'",
-                "msXmpWrite()", filename );
+  if (!xmp_files_can_put_xmp(f, xmp)) {
+    msSetError(MS_MISCERR, "Unable to write XMP information to '%s'",
+               "msXmpWrite()", filename);
     return MS_FAILURE;
   }
 
   /* Compile our "xmp_*_namespace" regex */
-  if ( regcomp(&xmp_regex, xmp_ns_str, regflags) ) {
-    msSetError( MS_MISCERR,
-                "Unable compile regex '%s'",
-                "msXmpWrite()", xmp_ns_str );
+  if (regcomp(&xmp_regex, xmp_ns_str, regflags)) {
+    msSetError(MS_MISCERR, "Unable compile regex '%s'", "msXmpWrite()",
+               xmp_ns_str);
     return MS_FAILURE;
   }
 
@@ -173,7 +164,7 @@ msXmpWrite( mapObj *map, const char *filename )
   key = msFirstKeyFromHashTable(&hash_metadata);
 
   /* No first key? No license info. We shouldn't get here. */
-  if ( ! key )
+  if (!key)
     return MS_SUCCESS;
 
   do {
@@ -181,7 +172,7 @@ msXmpWrite( mapObj *map, const char *filename )
     regmatch_t matches[2];
 
     /* Found a custom namespace entry! Store it for later. */
-    if ( 0 == regexec(&xmp_regex, key, 2, matches, 0) ) {
+    if (0 == regexec(&xmp_regex, key, 2, matches, 0)) {
       size_t ns_size = 0;
       char *ns_name = NULL;
       const char *ns_uri;
@@ -198,28 +189,26 @@ msXmpWrite( mapObj *map, const char *filename )
       xmp_register_namespace(ns_uri, ns_name, NULL);
       msFree(ns_name);
     }
-  } while( (key = msNextKeyFromHashTable(&hash_metadata, key)) );
+  } while ((key = msNextKeyFromHashTable(&hash_metadata, key)));
   /* Clean up regex */
   regfree(&xmp_regex);
 
-
   /* Compile our "xmp_*_*" regex */
-  if ( regcomp(&xmp_regex, xmp_tag_str, regflags) ) {
+  if (regcomp(&xmp_regex, xmp_tag_str, regflags)) {
     msFreeHashItems(&hash_ns);
-    msSetError( MS_MISCERR,
-                "Unable compile regex '%s'",
-                "msXmpWrite()", xmp_tag_str );
+    msSetError(MS_MISCERR, "Unable compile regex '%s'", "msXmpWrite()",
+               xmp_tag_str);
     return MS_FAILURE;
   }
 
   /* Check all the keys for "xmp_*_*" pattern */
   key = msFirstKeyFromHashTable(&hash_metadata);
-  for( ; key != NULL; key = msNextKeyFromHashTable(&hash_metadata, key) ) {
+  for (; key != NULL; key = msNextKeyFromHashTable(&hash_metadata, key)) {
     /* Our regex has two match slots */
     regmatch_t matches[3];
 
     /* Found a namespace entry! Write it into XMP. */
-    if ( 0 == regexec(&xmp_regex, key, 3, matches, 0) ) {
+    if (0 == regexec(&xmp_regex, key, 3, matches, 0)) {
       /* Get the namespace and tag name */
       size_t ns_name_size = matches[1].rm_eo - matches[1].rm_so;
       size_t ns_tag_size = matches[2].rm_eo - matches[2].rm_so;
@@ -229,28 +218,30 @@ msXmpWrite( mapObj *map, const char *filename )
       memcpy(ns_name, key + matches[1].rm_so, ns_name_size);
       memcpy(ns_tag, key + matches[2].rm_so, ns_tag_size);
       ns_name[ns_name_size] = 0; /* null terminate */
-      ns_tag[ns_tag_size] = 0; /* null terminate */
+      ns_tag[ns_tag_size] = 0;   /* null terminate */
 
-      if ( strcmp(ns_tag,"namespace") == 0 ) {
+      if (strcmp(ns_tag, "namespace") == 0) {
         msFree(ns_name);
         msFree(ns_tag);
         continue;
       }
 
       /* If this is a default name space?... */
-      if ( (ns_uri = msXmpUri(ns_name)) ) {
+      if ((ns_uri = msXmpUri(ns_name))) {
         xmp_register_namespace(ns_uri, ns_name, NULL);
-        xmp_set_property(xmp, ns_uri, ns_tag, msLookupHashTable(&hash_metadata, key), 0);
+        xmp_set_property(xmp, ns_uri, ns_tag,
+                         msLookupHashTable(&hash_metadata, key), 0);
       }
       /* Or maybe it's a custom one?... */
-      else if ( (ns_uri = msLookupHashTable(&hash_ns, ns_name)) ) {
-        xmp_set_property(xmp, ns_uri, ns_tag, msLookupHashTable(&hash_metadata, key), 0);
+      else if ((ns_uri = msLookupHashTable(&hash_ns, ns_name))) {
+        xmp_set_property(xmp, ns_uri, ns_tag,
+                         msLookupHashTable(&hash_metadata, key), 0);
       }
       /* Or perhaps we're screwed. */
       else {
-        msSetError( MS_MISCERR,
-                    "Unable to identify XMP namespace '%s' in metadata key '%s'",
-                    "msXmpWrite()", ns_name, key );
+        msSetError(MS_MISCERR,
+                   "Unable to identify XMP namespace '%s' in metadata key '%s'",
+                   "msXmpWrite()", ns_name, key);
         msFreeHashItems(&hash_ns);
         msFree(ns_name);
         msFree(ns_tag);
@@ -265,20 +256,18 @@ msXmpWrite( mapObj *map, const char *filename )
   regfree(&xmp_regex);
 
   /* Write out the XMP */
-  if ( !xmp_files_put_xmp(f, xmp) ) {
+  if (!xmp_files_put_xmp(f, xmp)) {
     msFreeHashItems(&hash_ns);
-    msSetError( MS_MISCERR,
-                "Unable to execute '%s' on pointer %p",
-                "msXmpWrite()", "xmp_files_put_xmp", f );
+    msSetError(MS_MISCERR, "Unable to execute '%s' on pointer %p",
+               "msXmpWrite()", "xmp_files_put_xmp", f);
     return MS_FAILURE;
   }
 
   /* Write out the file and flush */
-  if ( !xmp_files_close(f, XMP_CLOSE_SAFEUPDATE) ) {
+  if (!xmp_files_close(f, XMP_CLOSE_SAFEUPDATE)) {
     msFreeHashItems(&hash_ns);
-    msSetError( MS_MISCERR,
-                "Unable to execute '%s' on pointer %p",
-                "msXmpWrite()", "xmp_files_close", f );
+    msSetError(MS_MISCERR, "Unable to execute '%s' on pointer %p",
+               "msXmpWrite()", "xmp_files_close", f);
     return MS_FAILURE;
   }
 
@@ -292,4 +281,3 @@ msXmpWrite( mapObj *map, const char *filename )
   return MS_FAILURE;
 #endif
 }
-
