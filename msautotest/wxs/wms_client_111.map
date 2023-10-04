@@ -55,6 +55,7 @@ MAP
 			"wms_server_version"	"1.1.1"
 			"wms_format"	"image/png"
 			"wms_enable_request" "*"
+			"wms_allowed_gdal_drivers" "PNG" # would be set automatically given wms_format=image/png
 		END
 	END
 END		

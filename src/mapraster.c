@@ -639,10 +639,43 @@ void *msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
   if (!layer->tileindex) {
     char **connectionoptions =
         msGetStringListFromHashTable(&(layer->connectionoptions));
+    char **papszAllowedDrivers = NULL;
+    // ALLOWED_GDAL_DRIVERS typically set by msDrawWMSLayerLow()
+    const char *pszAllowedDrivers =
+        msLayerGetProcessingKey(layer, "ALLOWED_GDAL_DRIVERS");
+    if (pszAllowedDrivers && !EQUAL(pszAllowedDrivers, "*"))
+      papszAllowedDrivers = CSLTokenizeString2(pszAllowedDrivers, ",", 0);
     GDALDatasetH hDS =
-        GDALOpenEx(*p_decrypted_path, GDAL_OF_RASTER | GDAL_OF_SHARED, NULL,
+        GDALOpenEx(*p_decrypted_path, GDAL_OF_RASTER | GDAL_OF_SHARED,
+                   (const char *const *)papszAllowedDrivers,
                    (const char *const *)connectionoptions, NULL);
+    CSLDestroy(papszAllowedDrivers);
     CSLDestroy(connectionoptions);
+
+    // Give a hint about which GDAL driver should be enabled, but only in
+    // debug mode.
+    if (layer->debug && hDS == NULL && pszAllowedDrivers &&
+        !EQUAL(pszAllowedDrivers, "*")) {
+      GDALDriverH hDrv = GDALIdentifyDriver(*p_decrypted_path, NULL);
+      if (hDrv) {
+        const char *pszDrvName = GDALGetDescription(hDrv);
+        bool bFound = false;
+        for (int i = 0; papszAllowedDrivers && papszAllowedDrivers[i]; ++i) {
+          if (EQUAL(papszAllowedDrivers[i], pszDrvName)) {
+            bFound = true;
+            break;
+          }
+        }
+        if (!bFound) {
+          msSetError(MS_IMGERR,
+                     "Failed to draw layer named '%s'. The image returned "
+                     "is recognized by GDAL driver %s, but it is not allowed "
+                     "currently.",
+                     "msDrawRasterLayerLowOpenDataset()", layer->name,
+                     pszDrvName);
+        }
+      }
+    }
     return hDS;
   } else {
     return GDALOpenShared(*p_decrypted_path, GA_ReadOnly);

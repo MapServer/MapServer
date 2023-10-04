@@ -187,6 +187,71 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams) {
 }
 
 #ifdef USE_WMS_LYR
+
+static bool IsPNGFormat(const char *pszValue) {
+  return EQUAL(pszValue, "PNG") || EQUAL(pszValue, "image/png");
+}
+
+static bool IsJPEGFormat(const char *pszValue) {
+  return EQUAL(pszValue, "JPEG") || EQUAL(pszValue, "image/jpeg");
+}
+
+/**********************************************************************
+ *                          msWMSLayerGetFormat()
+ *
+ * Returns the value of the "FORMAT" parameter (to be freed with msFree())
+ * or NULL in case of error
+ **********************************************************************/
+static char *msWMSLayerGetFormat(layerObj *lp) {
+  const char *pszFormat = msOWSLookupMetadata(&(lp->metadata), "MO", "format");
+  if (pszFormat)
+    return msStrdup(pszFormat);
+
+  const char *pszFormatList =
+      msOWSLookupMetadata(&(lp->metadata), "MO", "formatlist");
+  if (pszFormatList == NULL) {
+    msSetError(MS_WMSCONNERR,
+               "At least wms_format or wms_formatlist is required for "
+               "layer %s.  "
+               "Please either provide a valid CONNECTION URL, or provide "
+               "those values in the layer's metadata.\n",
+               "msBuildWMSLayerURLBase()", lp->name);
+    return NULL;
+  }
+
+  /* Look for the first format in list that matches */
+  int i, n;
+  char **papszTok = msStringSplit(pszFormatList, ',', &n);
+
+  for (i = 0; pszFormat == NULL && i < n; i++) {
+    if (0
+#if defined USE_PNG
+        || IsPNGFormat(papszTok[i])
+#endif
+#if defined USE_JPEG
+        || IsJPEGFormat(papszTok[i])
+#endif
+    ) {
+      pszFormat = papszTok[i];
+    }
+  }
+
+  if (pszFormat) {
+    char *pszRet = msStrdup(pszFormat);
+    msFreeCharArray(papszTok, n);
+    return pszRet;
+  } else {
+    msSetError(MS_WMSCONNERR,
+               "Could not find a format that matches supported input "
+               "formats in wms_formatlist metdata in layer %s.  "
+               "Please either provide a valid CONNECTION URL, or "
+               "provide the required layer metadata.\n",
+               "msBuildWMSLayerURLBase()", lp->name);
+    msFreeCharArray(papszTok, n);
+    return NULL;
+  }
+}
+
 /**********************************************************************
  *                          msBuildWMSLayerURLBase()
  *
@@ -204,8 +269,8 @@ static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams) {
  **********************************************************************/
 static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
                                   wmsParamsObj *psWMSParams, int nRequestType) {
-  const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
-  const char *pszFormatList, *pszStyle, /* *pszStyleList,*/ *pszTime;
+  const char *pszOnlineResource, *pszVersion, *pszName;
+  const char *pszStyle, /* *pszStyleList,*/ *pszTime;
   const char *pszBgColor, *pszTransparent;
   const char *pszSLD = NULL, *pszStyleSLDBody = NULL, *pszVersionKeyword = NULL;
   const char *pszSLDBody = NULL, *pszSLDURL = NULL;
@@ -220,8 +285,6 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
   pszVersion = msOWSLookupMetadata(&(lp->metadata), "MO", "server_version");
   pszName = msOWSLookupMetadata(&(lp->metadata), "MO", "name");
-  pszFormat = msOWSLookupMetadata(&(lp->metadata), "MO", "format");
-  pszFormatList = msOWSLookupMetadata(&(lp->metadata), "MO", "formatlist");
   pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
   /*pszStyleList =      msOWSLookupMetadata(&(lp->metadata), "MO",
    * "stylelist");*/
@@ -258,53 +321,13 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
   msSetWMSParamString(psWMSParams, "SERVICE", "WMS", MS_FALSE, nVersion);
   msSetWMSParamString(psWMSParams, "LAYERS", pszName, MS_TRUE, nVersion);
 
-  if (pszFormat == NULL && pszFormatList == NULL) {
-    msSetError(MS_WMSCONNERR,
-               "At least wms_format or wms_formatlist is required for "
-               "layer %s.  "
-               "Please either provide a valid CONNECTION URL, or provide "
-               "those values in the layer's metadata.\n",
-               "msBuildWMSLayerURLBase()", lp->name);
+  char *pszFormat = msWMSLayerGetFormat(lp);
+  if (!pszFormat) {
     return MS_FAILURE;
   }
 
-  if (pszFormat != NULL) {
-    msSetWMSParamString(psWMSParams, "FORMAT", pszFormat, MS_TRUE, nVersion);
-  } else {
-    /* Look for the first format in list that matches */
-    char **papszTok;
-    int i, n;
-    papszTok = msStringSplit(pszFormatList, ',', &n);
-
-    for (i = 0; pszFormat == NULL && i < n; i++) {
-      if (0
-#if defined USE_PNG
-          || strcasecmp(papszTok[i], "PNG") ||
-          strcasecmp(papszTok[i], "image/png")
-#endif
-#if defined USE_JPEG
-          || strcasecmp(papszTok[i], "JPEG") ||
-          strcasecmp(papszTok[i], "image/jpeg")
-#endif
-      ) {
-        pszFormat = papszTok[i];
-      }
-    }
-
-    if (pszFormat) {
-      msSetWMSParamString(psWMSParams, "FORMAT", pszFormat, MS_TRUE, nVersion);
-      msFreeCharArray(papszTok, n);
-    } else {
-      msSetError(MS_WMSCONNERR,
-                 "Could not find a format that matches supported input "
-                 "formats in wms_formatlist metdata in layer %s.  "
-                 "Please either provide a valid CONNECTION URL, or "
-                 "provide the required layer metadata.\n",
-                 "msBuildWMSLayerURLBase()", lp->name);
-      msFreeCharArray(papszTok, n);
-      return MS_FAILURE;
-    }
-  }
+  msSetWMSParamString(psWMSParams, "FORMAT", pszFormat, MS_TRUE, nVersion);
+  msFree(pszFormat);
 
   if (pszStyle == NULL) {
     /* When no style is selected, use "" which is a valid default. */
@@ -1457,7 +1480,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
   currenttype = lp->type;
   currentconnectiontype = lp->connectiontype;
   lp->type = MS_LAYER_RASTER;
-  lp->connectiontype = MS_SHAPEFILE;
+  lp->connectiontype = MS_RASTER;
 
   /* set the classes to 0 so that It won't do client side */
   /* classification if an sld was set. */
@@ -1477,6 +1500,23 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
     lp->data = mem_filename;
   else
     lp->data = msStrdup(pasReqInfo[iReq].pszOutputFile);
+
+  const char *pszAllowedDrivers =
+      msOWSLookupMetadata(&(lp->metadata), "MO", "allowed_gdal_drivers");
+  if (!pszAllowedDrivers) {
+    char *pszFormat = msWMSLayerGetFormat(lp);
+    if (IsPNGFormat(pszFormat))
+      pszAllowedDrivers = "PNG";
+    else if (IsJPEGFormat(pszFormat))
+      pszAllowedDrivers = "JPEG";
+    else
+      pszAllowedDrivers = "PNG,JPEG";
+    msFree(pszFormat);
+  }
+  // This will be used by msDrawRasterLayerLow()
+  msLayerSetProcessingKey(lp, "ALLOWED_GDAL_DRIVERS", pszAllowedDrivers);
+  if (lp->debug)
+    msDebug("Setting ALLOWED_GDAL_DRIVERS = %s\n", pszAllowedDrivers);
 
   /* #3138 If PROCESSING "RESAMPLE=..." is set we cannot use the simple case */
   if (!msProjectionsDiffer(&(map->projection), &(lp->projection)) &&
