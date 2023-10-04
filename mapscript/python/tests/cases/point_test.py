@@ -25,20 +25,20 @@
 # ===========================================================================
 
 import unittest
-import mapscript
 
+import mapscript
 
 have_image = False
 
 try:
     from PIL import Image
+
     have_image = True
 except ImportError:
     pass
 
 
 class PointObjTestCase(unittest.TestCase):
-
     def testPointObjConstructorNoArgs(self):
         """point can be created with no arguments"""
         p = mapscript.pointObj()
@@ -57,7 +57,7 @@ class PointObjTestCase(unittest.TestCase):
         p.setXY(1.0, 1.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 1.0)
-        if hasattr(p, 'm'):
+        if hasattr(p, "m"):
             self.assertAlmostEqual(p.m, -2e38)
 
     def testSetXYM(self):
@@ -66,7 +66,7 @@ class PointObjTestCase(unittest.TestCase):
         p.setXY(1.0, 1.0, 1.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 1.0)
-        if hasattr(p, 'm'):
+        if hasattr(p, "m"):
             self.assertAlmostEqual(p.m, 1.0)
 
     def testSetXYZ(self):
@@ -75,7 +75,7 @@ class PointObjTestCase(unittest.TestCase):
         p.setXYZ(1.0, 2.0, 3.0, 4.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 2.0)
-        if hasattr(p, 'z') and hasattr(p, 'm'):
+        if hasattr(p, "z") and hasattr(p, "m"):
             self.assertAlmostEqual(p.z, 3.0)
             self.assertAlmostEqual(p.m, 4.0)
 
@@ -103,12 +103,12 @@ class PointObjTestCase(unittest.TestCase):
         END"""
 
         test_map = mapscript.fromstring(map_string)
-        layer = test_map.getLayerByName('punkt')
+        layer = test_map.getLayerByName("punkt")
         cls = mapscript.classObj()
         style = mapscript.styleObj()
-        style.outlinecolor.setHex('#00aa00ff')
+        style.outlinecolor.setHex("#00aa00ff")
         style.size = 10
-        style.setSymbolByName(test_map, 'circle')
+        style.setSymbolByName(test_map, "circle")
 
         cls.insertStyle(style)
         class_idx = layer.insertClass(cls)
@@ -117,8 +117,8 @@ class PointObjTestCase(unittest.TestCase):
         img = test_map.prepareImage()
         point.draw(test_map, layer, img, class_idx, "test")
 
-        filename = 'testDrawPoint.png'
-        with open(filename, 'wb') as fh:
+        filename = "testDrawPoint.png"
+        with open(filename, "wb") as fh:
             img.write(fh)
 
         if have_image:
@@ -128,7 +128,7 @@ class PointObjTestCase(unittest.TestCase):
     def testPoint__str__(self):
         """return properly formatted string"""
         p = mapscript.pointObj(1.0, 1.0)
-        if hasattr(p, 'z'):
+        if hasattr(p, "z"):
             p_str = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g }" % (p.x, p.y, p.z)
         else:
             p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
@@ -137,9 +137,13 @@ class PointObjTestCase(unittest.TestCase):
     def testPointToString(self):
         """return properly formatted string in toString()"""
         p = mapscript.pointObj(1.0, 1.0, 0.002, 15.0)
-        if hasattr(p, 'z') and hasattr(p, 'm'):
-            p_str = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g, 'm': %.16g }" \
-                  % (p.x, p.y, p.z, p.m)
+        if hasattr(p, "z") and hasattr(p, "m"):
+            p_str = "{ 'x': %.16g, 'y': %.16g, 'z': %.16g, 'm': %.16g }" % (
+                p.x,
+                p.y,
+                p.z,
+                p.m,
+            )
         else:
             p_str = "{ 'x': %.16g, 'y': %.16g }" % (p.x, p.y)
 
@@ -148,11 +152,14 @@ class PointObjTestCase(unittest.TestCase):
     def testPointGeoInterface(self):
         """return point using the  __geo_interface__ protocol"""
         p = mapscript.pointObj(1.0, 1.0, 0.002, 15.0)
-        if hasattr(p, 'z'):
-            assert p.__geo_interface__ == {"type": "Point", "coordinates": (1.0, 1.0, 0.002)}
+        if hasattr(p, "z"):
+            assert p.__geo_interface__ == {
+                "type": "Point",
+                "coordinates": (1.0, 1.0, 0.002),
+            }
         else:
             assert p.__geo_interface__ == {"type": "Point", "coordinates": (1.0, 1.0)}
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

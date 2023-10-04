@@ -30,8 +30,6 @@
 #include "mapserver.h"
 #include "mapthread.h"
 
-
-
 typedef struct {
   char *name;
   layerVTableObj vtable;
@@ -40,15 +38,12 @@ typedef struct {
 typedef struct {
   unsigned int size;
   unsigned int first_free;
-  VTFactoryItemObj ** vtItems;
+  VTFactoryItemObj **vtItems;
 } VTFactoryObj;
 
 static VTFactoryObj gVirtualTableFactory = {0, 0, NULL};
 
-
-static VTFactoryItemObj *
-createVTFItem(const char *name)
-{
+static VTFactoryItemObj *createVTFItem(const char *name) {
   VTFactoryItemObj *pVTFI;
 
   pVTFI = (VTFactoryItemObj *)malloc(sizeof(VTFactoryItemObj));
@@ -60,9 +55,7 @@ createVTFItem(const char *name)
   return pVTFI;
 }
 
-static void
-destroyVTFItem(VTFactoryItemObj **pVTFI)
-{
+static void destroyVTFItem(VTFactoryItemObj **pVTFI) {
   free((*pVTFI)->name);
   (*pVTFI)->name = NULL;
   memset(&(*pVTFI)->vtable, 0, sizeof(layerVTableObj));
@@ -70,13 +63,10 @@ destroyVTFItem(VTFactoryItemObj **pVTFI)
   *pVTFI = NULL;
 }
 
-
-static VTFactoryItemObj *
-lookupVTFItem(VTFactoryObj *VTFactory,
-              const char *key)
-{
+static VTFactoryItemObj *lookupVTFItem(VTFactoryObj *VTFactory,
+                                       const char *key) {
   unsigned int i;
-  for (i=0; i < VTFactory->size && VTFactory->vtItems[i]; ++i) {
+  for (i = 0; i < VTFactory->size && VTFactory->vtItems[i]; ++i) {
     if (0 == strcasecmp(key, VTFactory->vtItems[i]->name)) {
       return VTFactory->vtItems[i];
     }
@@ -84,24 +74,24 @@ lookupVTFItem(VTFactoryObj *VTFactory,
   return NULL;
 }
 
-static int
-insertNewVTFItem(VTFactoryObj *pVTFactory,
-                 VTFactoryItemObj *pVTFI)
-{
+static int insertNewVTFItem(VTFactoryObj *pVTFactory, VTFactoryItemObj *pVTFI) {
   /* Ensure there is room for one more item in the array
    * (safe to use for initial alloc of the array as well)
    */
   if (pVTFactory->first_free == pVTFactory->size) {
     VTFactoryItemObj **vtItemPtr;
-    vtItemPtr = (VTFactoryItemObj**)realloc(pVTFactory->vtItems,
-                                            (pVTFactory->size+MS_LAYER_ALLOCSIZE)*sizeof(VTFactoryItemObj*));
-    MS_CHECK_ALLOC(vtItemPtr, (pVTFactory->size+MS_LAYER_ALLOCSIZE)*sizeof(VTFactoryItemObj*), MS_FAILURE);
-
+    vtItemPtr = (VTFactoryItemObj **)realloc(
+        pVTFactory->vtItems,
+        (pVTFactory->size + MS_LAYER_ALLOCSIZE) * sizeof(VTFactoryItemObj *));
+    MS_CHECK_ALLOC(vtItemPtr,
+                   (pVTFactory->size + MS_LAYER_ALLOCSIZE) *
+                       sizeof(VTFactoryItemObj *),
+                   MS_FAILURE);
 
     pVTFactory->size += MS_LAYER_ALLOCSIZE;
     pVTFactory->vtItems = vtItemPtr;
 
-    for (unsigned i=pVTFactory->first_free; i<pVTFactory->size; i++)
+    for (unsigned i = pVTFactory->first_free; i < pVTFactory->size; i++)
       pVTFactory->vtItems[i] = NULL;
   }
 
@@ -112,27 +102,29 @@ insertNewVTFItem(VTFactoryObj *pVTFactory,
   return MS_SUCCESS;
 }
 
-static VTFactoryItemObj *
-loadCustomLayerDLL(layerObj *layer, const char *library_path)
-{
+static VTFactoryItemObj *loadCustomLayerDLL(layerObj *layer,
+                                            const char *library_path) {
   int (*pfnPluginInitVTable)(layerVTableObj *, layerObj *);
 
   VTFactoryItemObj *pVTFI;
 
-  pfnPluginInitVTable = msGetSymbol(library_path, "PluginInitializeVirtualTable");
-  if ( ! pfnPluginInitVTable) {
-    msSetError(MS_MISCERR, "Failed to load dynamic Layer LIB: %s", "loadCustomLayerDLL", library_path);
+  pfnPluginInitVTable =
+      msGetSymbol(library_path, "PluginInitializeVirtualTable");
+  if (!pfnPluginInitVTable) {
+    msSetError(MS_MISCERR, "Failed to load dynamic Layer LIB: %s",
+               "loadCustomLayerDLL", library_path);
     return NULL;
   }
 
   pVTFI = createVTFItem(library_path);
-  if ( ! pVTFI) {
+  if (!pVTFI) {
     return NULL;
   }
 
   if (pfnPluginInitVTable(&pVTFI->vtable, layer)) {
     destroyVTFItem(&pVTFI);
-    msSetError(MS_MISCERR, "Failed to initialize dynamic Layer: %s", "loadCustomLayerDLL", library_path);
+    msSetError(MS_MISCERR, "Failed to initialize dynamic Layer: %s",
+               "loadCustomLayerDLL", library_path);
     return NULL;
   }
   return pVTFI;
@@ -149,53 +141,80 @@ loadCustomLayerDLL(layerObj *layer, const char *library_path)
  * Because of that, it is possible for plugin layer to use default
  * layer API default functions,  just leave those function pointers to NULL.
  */
-static void
-copyVirtualTable(layerVTableObj *dest,
-                 const layerVTableObj *src)
-{
-  dest->LayerTranslateFilter = src->LayerTranslateFilter ? src->LayerTranslateFilter : dest->LayerTranslateFilter;
-  dest->LayerSupportsCommonFilters = src->LayerSupportsCommonFilters ? src->LayerSupportsCommonFilters : dest->LayerSupportsCommonFilters;
-  dest->LayerInitItemInfo = src->LayerInitItemInfo ? src->LayerInitItemInfo : dest->LayerInitItemInfo;
-  dest->LayerFreeItemInfo = src->LayerFreeItemInfo ? src->LayerFreeItemInfo : dest->LayerFreeItemInfo;
+static void copyVirtualTable(layerVTableObj *dest, const layerVTableObj *src) {
+  dest->LayerTranslateFilter = src->LayerTranslateFilter
+                                   ? src->LayerTranslateFilter
+                                   : dest->LayerTranslateFilter;
+  dest->LayerSupportsCommonFilters = src->LayerSupportsCommonFilters
+                                         ? src->LayerSupportsCommonFilters
+                                         : dest->LayerSupportsCommonFilters;
+  dest->LayerInitItemInfo =
+      src->LayerInitItemInfo ? src->LayerInitItemInfo : dest->LayerInitItemInfo;
+  dest->LayerFreeItemInfo =
+      src->LayerFreeItemInfo ? src->LayerFreeItemInfo : dest->LayerFreeItemInfo;
   dest->LayerOpen = src->LayerOpen ? src->LayerOpen : dest->LayerOpen;
   dest->LayerIsOpen = src->LayerIsOpen ? src->LayerIsOpen : dest->LayerIsOpen;
-  dest->LayerWhichShapes = src->LayerWhichShapes ? src->LayerWhichShapes : dest->LayerWhichShapes;
-  dest->LayerNextShape = src->LayerNextShape ? src->LayerNextShape : dest->LayerNextShape;
-  dest->LayerGetShape = src->LayerGetShape ? src->LayerGetShape : dest->LayerGetShape;
-  /* dest->LayerResultsGetShape = src->LayerResultsGetShape ? src->LayerResultsGetShape : dest->LayerResultsGetShape; */
-  dest->LayerGetShapeCount = src->LayerGetShapeCount ? src->LayerGetShapeCount : dest->LayerGetShapeCount;
+  dest->LayerWhichShapes =
+      src->LayerWhichShapes ? src->LayerWhichShapes : dest->LayerWhichShapes;
+  dest->LayerNextShape =
+      src->LayerNextShape ? src->LayerNextShape : dest->LayerNextShape;
+  dest->LayerGetShape =
+      src->LayerGetShape ? src->LayerGetShape : dest->LayerGetShape;
+  /* dest->LayerResultsGetShape = src->LayerResultsGetShape ?
+   * src->LayerResultsGetShape : dest->LayerResultsGetShape; */
+  dest->LayerGetShapeCount = src->LayerGetShapeCount ? src->LayerGetShapeCount
+                                                     : dest->LayerGetShapeCount;
   dest->LayerClose = src->LayerClose ? src->LayerClose : dest->LayerClose;
-  dest->LayerGetItems = src->LayerGetItems ? src->LayerGetItems : dest->LayerGetItems;
-  dest->LayerGetExtent = src->LayerGetExtent ? src->LayerGetExtent : dest->LayerGetExtent;
-  dest->LayerGetAutoStyle = src->LayerGetAutoStyle ? src->LayerGetAutoStyle : dest->LayerGetAutoStyle;
-  dest->LayerCloseConnection = src->LayerCloseConnection ? src->LayerCloseConnection : dest->LayerCloseConnection;
-  dest->LayerSetTimeFilter = src->LayerSetTimeFilter ? src->LayerSetTimeFilter : dest->LayerSetTimeFilter;
-  dest->LayerApplyFilterToLayer = src->LayerApplyFilterToLayer ? src->LayerApplyFilterToLayer : dest->LayerApplyFilterToLayer;
-  dest->LayerCreateItems = src->LayerCreateItems ? src->LayerCreateItems : dest->LayerCreateItems;
-  dest->LayerGetNumFeatures = src->LayerGetNumFeatures ? src->LayerGetNumFeatures : dest->LayerGetNumFeatures;
-  dest->LayerGetAutoProjection = src->LayerGetAutoProjection ? src->LayerGetAutoProjection: dest->LayerGetAutoProjection;
-  dest->LayerEscapeSQLParam = src->LayerEscapeSQLParam ? src->LayerEscapeSQLParam: dest->LayerEscapeSQLParam;
-  dest->LayerEscapePropertyName = src->LayerEscapePropertyName ? src->LayerEscapePropertyName: dest->LayerEscapePropertyName;
-  dest->LayerEscapeSQLParam = src->LayerEscapeSQLParam ? src->LayerEscapeSQLParam: dest->LayerEscapeSQLParam;
-  dest->LayerEnablePaging = src->LayerEnablePaging ? src->LayerEnablePaging: dest->LayerEnablePaging;
-  dest->LayerGetPaging = src->LayerGetPaging ? src->LayerGetPaging: dest->LayerGetPaging;
+  dest->LayerGetItems =
+      src->LayerGetItems ? src->LayerGetItems : dest->LayerGetItems;
+  dest->LayerGetExtent =
+      src->LayerGetExtent ? src->LayerGetExtent : dest->LayerGetExtent;
+  dest->LayerGetAutoStyle =
+      src->LayerGetAutoStyle ? src->LayerGetAutoStyle : dest->LayerGetAutoStyle;
+  dest->LayerCloseConnection = src->LayerCloseConnection
+                                   ? src->LayerCloseConnection
+                                   : dest->LayerCloseConnection;
+  dest->LayerSetTimeFilter = src->LayerSetTimeFilter ? src->LayerSetTimeFilter
+                                                     : dest->LayerSetTimeFilter;
+  dest->LayerApplyFilterToLayer = src->LayerApplyFilterToLayer
+                                      ? src->LayerApplyFilterToLayer
+                                      : dest->LayerApplyFilterToLayer;
+  dest->LayerCreateItems =
+      src->LayerCreateItems ? src->LayerCreateItems : dest->LayerCreateItems;
+  dest->LayerGetNumFeatures = src->LayerGetNumFeatures
+                                  ? src->LayerGetNumFeatures
+                                  : dest->LayerGetNumFeatures;
+  dest->LayerGetAutoProjection = src->LayerGetAutoProjection
+                                     ? src->LayerGetAutoProjection
+                                     : dest->LayerGetAutoProjection;
+  dest->LayerEscapeSQLParam = src->LayerEscapeSQLParam
+                                  ? src->LayerEscapeSQLParam
+                                  : dest->LayerEscapeSQLParam;
+  dest->LayerEscapePropertyName = src->LayerEscapePropertyName
+                                      ? src->LayerEscapePropertyName
+                                      : dest->LayerEscapePropertyName;
+  dest->LayerEscapeSQLParam = src->LayerEscapeSQLParam
+                                  ? src->LayerEscapeSQLParam
+                                  : dest->LayerEscapeSQLParam;
+  dest->LayerEnablePaging =
+      src->LayerEnablePaging ? src->LayerEnablePaging : dest->LayerEnablePaging;
+  dest->LayerGetPaging =
+      src->LayerGetPaging ? src->LayerGetPaging : dest->LayerGetPaging;
 }
 
-int
-msPluginLayerInitializeVirtualTable(layerObj *layer)
-{
+int msPluginLayerInitializeVirtualTable(layerObj *layer) {
   VTFactoryItemObj *pVTFI;
 
-  if (!layer->plugin_library){
-      return MS_FAILURE;
+  if (!layer->plugin_library) {
+    return MS_FAILURE;
   }
 
   msAcquireLock(TLOCK_LAYER_VTABLE);
 
   pVTFI = lookupVTFItem(&gVirtualTableFactory, layer->plugin_library);
-  if ( ! pVTFI) {
+  if (!pVTFI) {
     pVTFI = loadCustomLayerDLL(layer, layer->plugin_library);
-    if ( ! pVTFI) {
+    if (!pVTFI) {
       msReleaseLock(TLOCK_LAYER_VTABLE);
       return MS_FAILURE;
     }
@@ -214,12 +233,10 @@ msPluginLayerInitializeVirtualTable(layerObj *layer)
 /* msPluginFreeVirtualTableFactory()
 ** Called by msCleanup() to free the virtual table factory
 */
-void
-msPluginFreeVirtualTableFactory()
-{
+void msPluginFreeVirtualTableFactory() {
   msAcquireLock(TLOCK_LAYER_VTABLE);
 
-  for (unsigned i=0; i<gVirtualTableFactory.size; i++) {
+  for (unsigned i = 0; i < gVirtualTableFactory.size; i++) {
     if (gVirtualTableFactory.vtItems[i])
       destroyVTFItem(&(gVirtualTableFactory.vtItems[i]));
   }

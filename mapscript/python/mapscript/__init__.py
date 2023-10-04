@@ -1,7 +1,7 @@
-import sys
-import platform
-import os
 import inspect
+import os
+import platform
+import sys
 
 # As of Python 3.8 PATH can no longer be used to resolve the MapServer
 # DLLs on Windows. Instead users will be required to set a new MAPSERVER_DLL_PATH
@@ -17,27 +17,26 @@ def add_dll_path(pth):
         os.add_dll_directory(pth)
     else:
         # add the directory to the Windows path for earlier Python version
-        os.environ['PATH'] = pth + ';' + os.environ['PATH']
+        os.environ["PATH"] = pth + ";" + os.environ["PATH"]
 
 
-if platform.system() == 'Windows':
-    mapserver_dll_path = os.getenv('MAPSERVER_DLL_PATH', '')
-    dll_paths = list(filter(os.path.exists, mapserver_dll_path.split(';')))
+if platform.system() == "Windows":
+    mapserver_dll_path = os.getenv("MAPSERVER_DLL_PATH", "")
+    dll_paths = list(filter(os.path.exists, mapserver_dll_path.split(";")))
     # add paths in the order listed in the string
     dll_paths.reverse()
     for pth in dll_paths:
         add_dll_path(pth)
 
 
-from .mapscript import *
-
+from .mapscript import *  # NOQA
 
 # change all the class module names from mapscript.mapscript to mapscript
 
 for key, value in globals().copy().items():
-    if inspect.isclass(value) and value.__module__.startswith('mapscript.'):
-        value.__module__= 'mapscript'
+    if inspect.isclass(value) and value.__module__.startswith("mapscript."):
+        value.__module__ = "mapscript"
 
 # remove the submodule name
 
-del mapscript
+del mapscript  # NOQA

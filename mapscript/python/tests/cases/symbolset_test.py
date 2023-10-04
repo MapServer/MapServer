@@ -26,14 +26,15 @@
 
 import os
 import unittest
+
 import mapscript
-from .testing import MapTestCase, XMARKS_IMAGE, TESTS_PATH
+
+from .testing import TESTS_PATH, XMARKS_IMAGE, MapTestCase
 
 SYMBOLSET = os.path.join(TESTS_PATH, "symbols.txt")
 
 
 class SymbolSetTestCase(unittest.TestCase):
-
     def testConstructorNoArgs(self):
         """new instance of symbolSetObj should have one symbol"""
         symbolset = mapscript.symbolSetObj()
@@ -49,13 +50,13 @@ class SymbolSetTestCase(unittest.TestCase):
     def testAddSymbolToNewSymbolSet(self):
         """add two new symbols to a SymbolSet"""
         symbolset = mapscript.symbolSetObj(SYMBOLSET)
-        symbola = mapscript.symbolObj('testa')
-        symbolb = mapscript.symbolObj('testb')
+        symbola = mapscript.symbolObj("testa")
+        symbolb = mapscript.symbolObj("testb")
         symbolset.appendSymbol(symbola)
         symbolset.appendSymbol(symbolb)
         num = symbolset.numsymbols
         assert num == 6, num
-        names = [None, 'circle', 'xmarks-png', 'home-png', 'testa', 'testb']
+        names = [None, "circle", "xmarks-png", "home-png", "testa", "testb"]
         for i in range(symbolset.numsymbols):
             symbol = symbolset.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -70,23 +71,24 @@ class SymbolSetTestCase(unittest.TestCase):
     def testSaveNewSymbolSet(self):
         """save a new SymbolSet to disk"""
         symbolset = mapscript.symbolSetObj(SYMBOLSET)
-        symbola = mapscript.symbolObj('testa')
-        symbolb = mapscript.symbolObj('testb')
+        symbola = mapscript.symbolObj("testa")
+        symbolb = mapscript.symbolObj("testb")
         symbolset.appendSymbol(symbola)
         symbolset.appendSymbol(symbolb)
-        assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
+        assert symbolset.save("new_symbols.txt") == mapscript.MS_SUCCESS
 
     def testError(self):
         symbolset = mapscript.symbolSetObj(SYMBOLSET)
-        symbola = mapscript.symbolObj('testa')
-        symbolb = mapscript.symbolObj('testb')
+        symbola = mapscript.symbolObj("testa")
+        symbolb = mapscript.symbolObj("testb")
         symbolset.appendSymbol(symbola)
         symbolset.appendSymbol(symbolb)
-        self.assertRaises(mapscript.MapServerError, symbolset.save, '/bogus/new_symbols.txt')
+        self.assertRaises(
+            mapscript.MapServerError, symbolset.save, "/bogus/new_symbols.txt"
+        )
 
 
 class MapSymbolSetTestCase(MapTestCase):
-
     def testGetNumSymbols(self):
         """expect getNumSymbols == 2 from test fixture test.map"""
         num = self.map.getNumSymbols()
@@ -100,23 +102,23 @@ class MapSymbolSetTestCase(MapTestCase):
     def testSymbolSetSymbolNames(self):
         """test names of symbols in test fixture's symbolset"""
         set = self.map.symbolset
-        names = [None, 'circle', 'xmarks-png', 'home-png']
+        names = [None, "circle", "xmarks-png", "home-png"]
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
 
     def testSymbolIndex(self):
         """expect index of 'circle' symbol to be 1 in test fixture symbolset"""
-        i = self.map.symbolset.index('circle')
+        i = self.map.symbolset.index("circle")
         assert i == 1, i
 
     def testBug1962(self):
         """resetting imagepath doesn't cause segfault"""
-        layer = self.map.getLayerByName('POINT')
+        layer = self.map.getLayerByName("POINT")
         style0 = layer.getClass(0).getStyle(0)
         sym0 = style0.symbol
         sym1 = self.map.symbolset.getSymbol(sym0)
-        sym2 = mapscript.symbolObj('xxx')
+        sym2 = mapscript.symbolObj("xxx")
         assert sym2 is not None
         sym1.setImagepath(XMARKS_IMAGE)
         # self.assertRaises(IOError, sym1.setImagepath, '/bogus/new_symbols.txt')
@@ -124,29 +126,29 @@ class MapSymbolSetTestCase(MapTestCase):
         msimg = self.map.draw()
         assert msimg.thisown == 1
         data = msimg.getBytes()
-        filename = 'testBug1962.png'
-        fh = open(filename, 'wb')
+        filename = "testBug1962.png"
+        fh = open(filename, "wb")
         fh.write(data)
         fh.close()
 
     def testDrawNewSymbol(self):
         """draw using a new symbol added to the fixture"""
-        symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
+        symbol = mapscript.symbolObj("xmarks", XMARKS_IMAGE)
         symbol_index = self.map.symbolset.appendSymbol(symbol)
         assert symbol_index == 4, symbol_index
         num = self.map.symbolset.numsymbols
         assert num == 5, num
-        inline_layer = self.map.getLayerByName('INLINE')
+        inline_layer = self.map.getLayerByName("INLINE")
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
         # s.size = 24
         msimg = self.map.draw()
         assert msimg.thisown == 1
-        filename = 'testDrawNewSymbol.png'
-        fh = open(filename, 'wb')
+        filename = "testDrawNewSymbol.png"
+        fh = open(filename, "wb")
         msimg.write(fh)
         fh.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

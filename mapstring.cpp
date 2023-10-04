@@ -5,8 +5,8 @@
  * Purpose:  Various string handling functions.
  * Author:   Steve Lime and the MapServer team.
  *
- * Notes: A couple of string handling functions (strrstr, strlcat) were taken from
- * other sources. Copyright notices accompany those functions below.
+ * Notes: A couple of string handling functions (strrstr, strlcat) were taken
+ *from other sources. Copyright notices accompany those functions below.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
@@ -101,8 +101,7 @@
 ** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 ** OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
 */
-char *strrstr(const char *string, const char *find)
-{
+char *strrstr(const char *string, const char *find) {
   size_t stringlen, findlen;
   const char *cp;
 
@@ -113,7 +112,7 @@ char *strrstr(const char *string, const char *find)
 
   for (cp = string + stringlen - findlen; cp >= string; cp--)
     if (strncmp(cp, find, findlen) == 0)
-      return (char*) cp;
+      return (char *)cp;
 
   return NULL;
 }
@@ -143,8 +142,7 @@ char *strrstr(const char *string, const char *find)
  * Returns strlen(src) + MS_MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
-size_t strlcat(char *dst, const char *src, size_t siz)
-{
+size_t strlcat(char *dst, const char *src, size_t siz) {
   char *d = dst;
   const char *s = src;
   size_t n = siz;
@@ -157,7 +155,7 @@ size_t strlcat(char *dst, const char *src, size_t siz)
   n = siz - dlen;
 
   if (n == 0)
-    return(dlen + strlen(s));
+    return (dlen + strlen(s));
   while (*s != '\0') {
     if (n != 1) {
       *d++ = *s;
@@ -167,7 +165,7 @@ size_t strlcat(char *dst, const char *src, size_t siz)
   }
   *d = '\0';
 
-  return(dlen + (s - src));/* count does not include NUL */
+  return (dlen + (s - src)); /* count does not include NUL */
 }
 #endif
 
@@ -204,9 +202,7 @@ size_t strlcat(char *dst, const char *src, size_t siz)
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t
-strlcpy(char *dst, const char *src, size_t siz)
-{
+size_t strlcpy(char *dst, const char *src, size_t siz) {
   char *d = dst;
   const char *s = src;
   size_t n = siz;
@@ -222,12 +218,12 @@ strlcpy(char *dst, const char *src, size_t siz)
   /* Not enough room in dst, add NUL and traverse rest of src */
   if (n == 0) {
     if (siz != 0)
-      *d = '\0';              /* NUL-terminate dst */
+      *d = '\0'; /* NUL-terminate dst */
     while (*s++)
       ;
   }
 
-  return(s - src - 1);    /* count does not include NUL */
+  return (s - src - 1); /* count does not include NUL */
 }
 #endif
 
@@ -263,8 +259,7 @@ strlcpy(char *dst, const char *src, size_t siz)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-char *strcasestr(const char *s, const char *find)
-{
+char *strcasestr(const char *s, const char *find) {
   char c, sc;
   size_t len;
 
@@ -284,131 +279,129 @@ char *strcasestr(const char *s, const char *find)
 #endif
 
 #ifndef HAVE_STRNCASECMP
-int strncasecmp(const char *s1, const char *s2, size_t len)
-{
+int strncasecmp(const char *s1, const char *s2, size_t len) {
   const char *cp1, *cp2;
 
   cp1 = s1;
   cp2 = s2;
 
-  if(len == 0)
-    return(0);
+  if (len == 0)
+    return (0);
 
   if (!*cp1)
     return -1;
   else if (!*cp2)
     return 1;
 
-  while(*cp1 && *cp2 && len) {
+  while (*cp1 && *cp2 && len) {
     int cmp;
-    if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
-      return(cmp);
+    if ((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
+      return (cmp);
     cp1++;
     cp2++;
     len--;
   }
 
-  if(len == 0) {
-    return(0);
+  if (len == 0) {
+    return (0);
   }
-  if(*cp1 || *cp2) {
+  if (*cp1 || *cp2) {
     if (*cp1)
-      return(1);
+      return (1);
     else
       return (-1);
   }
-  return(0);
+  return (0);
 }
 #endif
 
 #ifndef HAVE_STRCASECMP
-int strcasecmp(const char *s1, const char *s2)
-{
+int strcasecmp(const char *s1, const char *s2) {
   const char *cp1, *cp2;
 
   cp1 = s1;
   cp2 = s2;
-  if ((!cp1) || (!cp2 )) {
+  if ((!cp1) || (!cp2)) {
     return (0);
   }
-  while(*cp1 && *cp2) {
+  while (*cp1 && *cp2) {
     int cmp;
-    if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
-      return(cmp);
+    if ((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
+      return (cmp);
     cp1++;
     cp2++;
   }
-  if(*cp1 || *cp2) {
+  if (*cp1 || *cp2) {
     if (*cp1)
-      return(1);
+      return (1);
     else
       return (-1);
   }
 
-  return(0);
+  return (0);
 }
 #endif
 
 /*
-** msStringToInt() and msStringToDouble() are helper functions to convert strings to numbers. They
-** return MS_FAILURE if the input string is NULL or if the entire string did not convert successfully.
+** msStringToInt() and msStringToDouble() are helper functions to convert
+*strings to numbers. They
+** return MS_FAILURE if the input string is NULL or if the entire string did not
+*convert successfully.
 */
-int msStringToInt(const char *str, int *value, int base)
-{
+int msStringToInt(const char *str, int *value, int base) {
   char *parse_check = NULL;
 
-  if(!str) return MS_FAILURE;
+  if (!str)
+    return MS_FAILURE;
 
   *value = (int)strtol(str, &parse_check, base);
-  if(*parse_check != '\0') return MS_FAILURE;
+  if (*parse_check != '\0')
+    return MS_FAILURE;
 
   return MS_SUCCESS;
 }
 
-int msStringToDouble(const char *str, double *value)
-{
+int msStringToDouble(const char *str, double *value) {
   char *parse_check = NULL;
 
-  if(!str) return MS_FAILURE;
+  if (!str)
+    return MS_FAILURE;
 
   *value = strtod(str, &parse_check);
-  if(*parse_check != '\0') return MS_FAILURE;
+  if (*parse_check != '\0')
+    return MS_FAILURE;
 
   return MS_SUCCESS;
 }
 
-char *msLongToString(long value)
-{
+char *msLongToString(long value) {
   size_t bufferSize = 256;
-  char *buffer = (char*)msSmallMalloc(bufferSize);
+  char *buffer = (char *)msSmallMalloc(bufferSize);
 
   snprintf(buffer, bufferSize, "%ld", value);
-  return(buffer);
+  return (buffer);
 }
 
-char *msDoubleToString(double value, int force_f)
-{
+char *msDoubleToString(double value, int force_f) {
   size_t bufferSize = 256;
-  char *buffer = (char*)msSmallMalloc(bufferSize);
+  char *buffer = (char *)msSmallMalloc(bufferSize);
 
   if (force_f == MS_TRUE)
     snprintf(buffer, bufferSize, "%f", value);
   else
     snprintf(buffer, bufferSize, "%g", value);
-  return(buffer);
+  return (buffer);
 }
 
-char *msIntToString(int value)
-{
+char *msIntToString(int value) {
   size_t bufferSize = 256;
-  char *buffer = (char*)msSmallMalloc(bufferSize);
+  char *buffer = (char *)msSmallMalloc(bufferSize);
 
   snprintf(buffer, bufferSize, "%i", value);
-  return(buffer);
+  return (buffer);
 }
 
-void msStringToUpper(char *string)
-{
+void msStringToUpper(char *string) {
   int i;
 
   if (string != NULL) {
@@ -419,8 +412,7 @@ void msStringToUpper(char *string)
   }
 }
 
-void msStringToLower(char *string)
-{
+void msStringToLower(char *string) {
   int i;
 
   if (string != NULL) {
@@ -431,10 +423,10 @@ void msStringToLower(char *string)
   }
 }
 
-std::string msStringToLower(const std::string& s) {
+std::string msStringToLower(const std::string &s) {
   std::string ret(s);
-  std::transform(ret.begin(), ret.end(), ret.begin(), 
-                 [](unsigned char c){ return std::tolower(c); });
+  std::transform(ret.begin(), ret.end(), ret.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
   return ret;
 }
 
@@ -442,10 +434,9 @@ std::string msStringToLower(const std::string& s) {
  * Force the first character to uppercase and the rest of the characters to
  * lower case for EACH word in the string.
  */
-void msStringInitCap(char *string)
-{
+void msStringInitCap(char *string) {
   int i;
-  int start = 1; 
+  int start = 1;
   if (string != NULL) {
     for (i = 0; i < (int)strlen(string); i++) {
       if (string[i] == ' ')
@@ -453,8 +444,7 @@ void msStringInitCap(char *string)
       else if (start) {
         string[i] = toupper(string[i]);
         start = 0;
-      }
-      else {
+      } else {
         string[i] = tolower(string[i]);
       }
     }
@@ -465,78 +455,72 @@ void msStringInitCap(char *string)
  * Force the first character to uppercase for the FIRST word in the string
  * and the rest of the characters to lower case.
  */
-void msStringFirstCap(char *string)
-{
+void msStringFirstCap(char *string) {
   int i;
-  int start = 1; 
+  int start = 1;
   if (string != NULL) {
     for (i = 0; i < (int)strlen(string); i++) {
       if (string[i] != ' ') {
         if (start) {
           string[i] = toupper(string[i]);
           start = 0;
-        }
-        else
+        } else
           string[i] = tolower(string[i]);
       }
     }
   }
 }
 
-char *msStringChop(char *string)
-{
+char *msStringChop(char *string) {
   int n;
 
   n = strlen(string);
-  if(n>0)
-    string[n-1] = '\0';
+  if (n > 0)
+    string[n - 1] = '\0';
 
-  return(string);
+  return (string);
 }
 
 /*
 ** Trim leading and trailing white space.
 */
-void msStringTrim(char *str)
-{
+void msStringTrim(char *str) {
   int i;
 
   /* Send nulls home without supper. */
-  if( ! str ) return;
+  if (!str)
+    return;
 
   /* Move non-white string to the front. */
   i = strspn(str, " ");
-  if(i) {
+  if (i) {
     memmove(str, str + i, strlen(str) - i + 1);
   }
   /* Nothing left? Exit. */
-  if(strlen(str) == 0) {
+  if (strlen(str) == 0) {
     return;
   }
   /* Null-terminate end of non-white string. */
-  for(i=strlen(str)-1; i>=0; i--) { /* step backwards from end */
-    if(str[i] != ' ') {
-      str[i+1] = '\0';
+  for (i = strlen(str) - 1; i >= 0; i--) { /* step backwards from end */
+    if (str[i] != ' ') {
+      str[i + 1] = '\0';
       return;
     }
   }
   return;
 }
 
-void msStringTrim(std::string& string)
-{
+void msStringTrim(std::string &string) {
   const size_t npos = string.find_first_not_of(' ');
-  if( npos != std::string::npos )
+  if (npos != std::string::npos)
     string.erase(0, npos);
   msStringTrimBlanks(string);
 }
 
-
 /*
 ** Remove leading white spaces and shift everything to the left.
 */
-char *msStringTrimLeft(char *string)
-{
+char *msStringTrimLeft(char *string) {
   char *read, *write;
   int i, length;
 
@@ -545,7 +529,7 @@ char *msStringTrimLeft(char *string)
     read = string;
     write = string;
 
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
       if (isspace(string[i]))
         read++;
       else
@@ -564,76 +548,77 @@ char *msStringTrimLeft(char *string)
   return string;
 }
 
-void msStringTrimLeft(std::string& string)
-{
+void msStringTrimLeft(std::string &string) {
   const size_t length = string.length();
-  for( size_t i = 0; i < length; i++ ) {
-    if( !isspace(string[i]) ) {
-        if( i > 0 ) {
-          string.erase(0, i-1);
-        }
-        return;
+  for (size_t i = 0; i < length; i++) {
+    if (!isspace(string[i])) {
+      if (i > 0) {
+        string.erase(0, i - 1);
+      }
+      return;
     }
   }
   string.clear();
 }
 
-/* ------------------------------------------------------------------------------- */
-/*       Trims trailing blanks from a string                                        */
-/* ------------------------------------------------------------------------------- */
-void msStringTrimBlanks(char *string)
-{
-  int i,n;
+/* -------------------------------------------------------------------------------
+ */
+/*       Trims trailing blanks from a string */
+/* -------------------------------------------------------------------------------
+ */
+void msStringTrimBlanks(char *string) {
+  int i, n;
 
   n = strlen(string);
-  for(i=n-1; i>=0; i--) { /* step backwards through the string */
-    if(string[i] != ' ') {
-      string[i+1] = '\0';
+  for (i = n - 1; i >= 0; i--) { /* step backwards through the string */
+    if (string[i] != ' ') {
+      string[i + 1] = '\0';
       return;
     }
   }
 }
 
-void msStringTrimBlanks(std::string& string)
-{
+void msStringTrimBlanks(std::string &string) {
   const size_t npos = string.find_last_not_of(' ');
-  if( npos != std::string::npos )
-    string.resize(npos+1);
+  if (npos != std::string::npos)
+    string.resize(npos + 1);
 }
 
-/* ------------------------------------------------------------------------------- */
-/*       Trims end-of-line marker from a string                                    */
-/*       Usefull in conjunction with fgets() calls                                 */
-/* ------------------------------------------------------------------------------- */
-void msStringTrimEOL(char *string)
-{
+/* -------------------------------------------------------------------------------
+ */
+/*       Trims end-of-line marker from a string */
+/*       Usefull in conjunction with fgets() calls */
+/* -------------------------------------------------------------------------------
+ */
+void msStringTrimEOL(char *string) {
   int i;
 
-  for(i=0 ; string[i] != '\0'; i++) {
-    if(string[i] == '\n') {
+  for (i = 0; string[i] != '\0'; i++) {
+    if (string[i] == '\n') {
       string[i] = '\0'; /* Terminate the string at the newline */
       return;
     }
   }
 }
 
-/* ------------------------------------------------------------------------------- */
-/*       Replace all occurances of old with new in str.                            */
-/*       It is assumed that str was dynamically created using malloc.              */
-/* ------------------------------------------------------------------------------- */
-char *msReplaceSubstring(char *str, const char *old, const char *newstr)
-{
+/* -------------------------------------------------------------------------------
+ */
+/*       Replace all occurances of old with new in str. */
+/*       It is assumed that str was dynamically created using malloc. */
+/* -------------------------------------------------------------------------------
+ */
+char *msReplaceSubstring(char *str, const char *old, const char *newstr) {
   size_t str_len, old_len, new_len, tmp_offset;
   char *tmp_ptr;
 
-  if(newstr == NULL)
+  if (newstr == NULL)
     newstr = "";
 
   /*
   ** If old is not found then leave str alone
   */
-  if( (tmp_ptr = strstr(str, old)) == NULL)
-    return(str);
+  if ((tmp_ptr = strstr(str, old)) == NULL)
+    return (str);
 
   /*
   ** Grab some info about incoming strings
@@ -645,16 +630,17 @@ char *msReplaceSubstring(char *str, const char *old, const char *newstr)
   /*
   ** Now loop until old is NOT found in new
   */
-  while( tmp_ptr != NULL ) {
+  while (tmp_ptr != NULL) {
 
     /*
     ** re-allocate memory for buf assuming 1 replacement of old with new
-          ** don't bother reallocating if old is larger than new)
+    ** don't bother reallocating if old is larger than new)
     */
     if (old_len < new_len) {
       tmp_offset = tmp_ptr - str;
       str_len = str_len - old_len + new_len;
-      str = (char *)msSmallRealloc(str, (str_len + 1)); /* make new space for a copy */
+      str = (char *)msSmallRealloc(
+          str, (str_len + 1)); /* make new space for a copy */
       tmp_ptr = str + tmp_offset;
     }
 
@@ -662,7 +648,8 @@ char *msReplaceSubstring(char *str, const char *old, const char *newstr)
     ** Move the trailing part of str to make some room unless old_len == new_len
     */
     if (old_len != new_len) {
-      memmove(tmp_ptr+new_len, tmp_ptr+old_len, strlen(tmp_ptr)-old_len+1);
+      memmove(tmp_ptr + new_len, tmp_ptr + old_len,
+              strlen(tmp_ptr) - old_len + 1);
     }
 
     /*
@@ -676,7 +663,7 @@ char *msReplaceSubstring(char *str, const char *old, const char *newstr)
     tmp_ptr = strstr(tmp_ptr + new_len, old);
   }
 
-  return(str);
+  return (str);
 }
 
 /*
@@ -684,81 +671,81 @@ char *msReplaceSubstring(char *str, const char *old, const char *newstr)
  * when we won't have to do reallocs etc
  * used to replace the wrap characetr by a newline for labels
  */
-void msReplaceChar(char *str, char old, char newstr)
-{
-  while(*(str++))
-    if(*str==old)
-      *str=newstr;
+void msReplaceChar(char *str, char old, char newstr) {
+  while (*(str++))
+    if (*str == old)
+      *str = newstr;
 }
 
 /*
 ** how many times does ch occur in str
 */
-int msCountChars(char *str, char ch)
-{
-  int i, l, n=0;
+int msCountChars(char *str, char ch) {
+  int i, l, n = 0;
 
   l = strlen(str);
-  for(i=0; i<l; i++)
-    if(str[i] == ch) n++;
+  for (i = 0; i < l; i++)
+    if (str[i] == ch)
+      n++;
 
-  return(n);
+  return (n);
 }
 
-/* ------------------------------------------------------------------------------- */
-/*       Strip filename from a full path                                           */
-/* ------------------------------------------------------------------------------- */
-char *msStripPath(char *fn)
-{
+/* -------------------------------------------------------------------------------
+ */
+/*       Strip filename from a full path */
+/* -------------------------------------------------------------------------------
+ */
+char *msStripPath(char *fn) {
   char *pSlash;
   char *pBackslash;
 
   /* try to locate both, the last slash or backslash */
-  pSlash = strrchr(fn,'/');
-  pBackslash = strrchr(fn,'\\');
+  pSlash = strrchr(fn, '/');
+  pBackslash = strrchr(fn, '\\');
 
-  if( pSlash != NULL && pBackslash != NULL ) {
-    if( pSlash < pBackslash )
+  if (pSlash != NULL && pBackslash != NULL) {
+    if (pSlash < pBackslash)
       return ++pBackslash;
     else
       return ++pSlash;
-  } else if ( pSlash != NULL )
+  } else if (pSlash != NULL)
     return ++pSlash; /* skip past the "slash" */
-  else if ( pBackslash != NULL )
+  else if (pBackslash != NULL)
     return ++pBackslash; /* skip past the "backslash" */
   else
-    return(fn);
+    return (fn);
 }
 
 /*
-** Returns the *path* portion of the filename fn. Memory is allocated using malloc.
+** Returns the *path* portion of the filename fn. Memory is allocated using
+*malloc.
 */
-char *msGetPath(const char *fn)
-{
+char *msGetPath(const char *fn) {
   char *str;
   int i, length;
 
   length = strlen(fn);
-  if((str = msStrdup(fn)) == NULL)
-    return(NULL);
+  if ((str = msStrdup(fn)) == NULL)
+    return (NULL);
 
-  for(i=length-1; i>=0; i--) { /* step backwards through the string */
-    if((str[i] == '/') || (str[i] == '\\')) {
-      str[i+1] = '\0';
+  for (i = length - 1; i >= 0; i--) { /* step backwards through the string */
+    if ((str[i] == '/') || (str[i] == '\\')) {
+      str[i + 1] = '\0';
       break;
     }
   }
 
-  if(strcmp(str, fn) == 0) {
+  if (strcmp(str, fn) == 0) {
     msFree(str);
 #if defined(_WIN32) && !defined(__CYGWIN__)
     str = msStrdup(".\\");
 #else
-    str= msStrdup("./");
+    str = msStrdup("./");
 #endif
   }
 
-  return(str);
+  return (str);
 }
 
 /*
@@ -766,13 +753,11 @@ char *msGetPath(const char *fn)
 ** The pszReturnPath must be declared by the caller function as an array
 ** of MS_MAXPATHLEN char
 */
-char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
-{
-  int   abslen = 0;
-  int   pathlen = 0;
+char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path) {
+  int abslen = 0;
+  int pathlen = 0;
 
-
-  if(path == NULL) {
+  if (path == NULL) {
     msSetError(MS_IOERR, NULL, "msBuildPath");
     return NULL;
   }
@@ -781,7 +766,7 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
   if (abs_path)
     abslen = strlen(abs_path);
 
-  if((pathlen + abslen + 2) > MS_MAXPATHLEN) {
+  if ((pathlen + abslen + 2) > MS_MAXPATHLEN) {
     msSetError(MS_IOERR, "Path is too long.  Check server logs.",
                "msBuildPath()");
     msDebug("msBuildPath(): (%s%s): path is too long.\n", abs_path, path);
@@ -789,21 +774,20 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
   }
 
   /* Check if path is absolute */
-  if((abs_path == NULL) || (abslen == 0) ||
-      (path[0] == '\\') || (path[0] == '/') ||
-      (pathlen > 1 && (path[1] == ':'))) {
+  if ((abs_path == NULL) || (abslen == 0) || (path[0] == '\\') ||
+      (path[0] == '/') || (pathlen > 1 && (path[1] == ':'))) {
     strlcpy(pszReturnPath, path, MS_MAXPATHLEN);
-    return(pszReturnPath);
+    return (pszReturnPath);
   }
 
   /* else return abs_path/path */
-  if((abs_path[abslen-1] == '/') || (abs_path[abslen-1] == '\\')) {
+  if ((abs_path[abslen - 1] == '/') || (abs_path[abslen - 1] == '\\')) {
     snprintf(pszReturnPath, MS_MAXPATHLEN, "%s%s", abs_path, path);
   } else {
     snprintf(pszReturnPath, MS_MAXPATHLEN, "%s/%s", abs_path, path);
   }
 
-  return(pszReturnPath);
+  return (pszReturnPath);
 }
 
 /*
@@ -812,8 +796,8 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
 ** The pszReturnPath must be declared by the caller function as an array
 ** of MS_MAXPATHLEN char
 */
-char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1,const char *path2)
-{
+char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1,
+                   const char *path2) {
   char szPath[MS_MAXPATHLEN];
 
   return msBuildPath(pszReturnPath, abs_path,
@@ -830,17 +814,17 @@ char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1,
 char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path)
 
 {
-  VSILFILE  *fp;
+  VSILFILE *fp;
 
-  if( msBuildPath( szReturnPath, abs_path, path ) == NULL )
+  if (msBuildPath(szReturnPath, abs_path, path) == NULL)
     return NULL;
 
-  fp = VSIFOpenL( szReturnPath, "r" );
-  if( fp == NULL ) {
-    strlcpy( szReturnPath, path, MS_MAXPATHLEN);
+  fp = VSIFOpenL(szReturnPath, "r");
+  if (fp == NULL) {
+    strlcpy(szReturnPath, path, MS_MAXPATHLEN);
     return NULL;
   } else
-    VSIFCloseL( fp );
+    VSIFCloseL(fp);
 
   return szReturnPath;
 }
@@ -852,59 +836,60 @@ char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path)
 ** Returns NULL if the resulting path doesn't point to a readable file.
 */
 
-char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2)
+char *msTryBuildPath3(char *szReturnPath, const char *abs_path,
+                      const char *path1, const char *path2)
 
 {
-  VSILFILE  *fp;
+  VSILFILE *fp;
 
-  if( msBuildPath3( szReturnPath, abs_path, path1, path2 ) == NULL )
+  if (msBuildPath3(szReturnPath, abs_path, path1, path2) == NULL)
     return NULL;
 
-  fp = VSIFOpenL( szReturnPath, "r" );
-  if( fp == NULL ) {
-    strlcpy( szReturnPath, path2, MS_MAXPATHLEN);
+  fp = VSIFOpenL(szReturnPath, "r");
+  if (fp == NULL) {
+    strlcpy(szReturnPath, path2, MS_MAXPATHLEN);
     return NULL;
   } else
-    VSIFCloseL( fp );
+    VSIFCloseL(fp);
 
   return szReturnPath;
 }
 
 /*
-** Splits a string into multiple strings based on ch. Consecutive ch's are ignored.
+** Splits a string into multiple strings based on ch. Consecutive ch's are
+*ignored.
 */
-char **msStringSplit(const char *string, char ch, int *num_tokens)
-{
-  int i,j,k;
-  int length,n;
+char **msStringSplit(const char *string, char ch, int *num_tokens) {
+  int i, j, k;
+  int length, n;
   char **token;
-  char last_ch='\0';
+  char last_ch = '\0';
 
   n = 1; /* always at least 1 token, the string itself */
   length = strlen(string);
-  for(i=0; i<length; i++) {
-    if(string[i] == ch && last_ch != ch)
+  for (i = 0; i < length; i++) {
+    if (string[i] == ch && last_ch != ch)
       n++;
     last_ch = string[i];
   }
 
-  token = (char **) msSmallMalloc(sizeof(char *)*n);
+  token = (char **)msSmallMalloc(sizeof(char *) * n);
 
   k = 0;
-  token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
+  token[k] = (char *)msSmallMalloc(sizeof(char) * (length + 1));
 
   j = 0;
-  last_ch='\0';
-  for(i=0; i<length; i++) {
-    if(string[i] == ch) {
+  last_ch = '\0';
+  for (i = 0; i < length; i++) {
+    if (string[i] == ch) {
 
-      if(last_ch == ch)
+      if (last_ch == ch)
         continue;
 
       token[k][j] = '\0'; /* terminate current token */
 
       k++;
-      token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
+      token[k] = (char *)msSmallMalloc(sizeof(char) * (length + 1));
 
       j = 0;
     } else {
@@ -919,19 +904,18 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
 
   *num_tokens = n;
 
-  return(token);
+  return (token);
 }
 
-std::vector<std::string> msStringSplit(const char *string, char ch)
-{
-    int num_tokens = 0;
-    char** tmp = msStringSplit(string, ch, &num_tokens);
-    std::vector<std::string> res;
-    res.reserve(num_tokens);
-    for( int i = 0; i < num_tokens; i++ )
-        res.push_back(tmp[i]);
-    msFreeCharArray(tmp, num_tokens);
-    return res;
+std::vector<std::string> msStringSplit(const char *string, char ch) {
+  int num_tokens = 0;
+  char **tmp = msStringSplit(string, ch, &num_tokens);
+  std::vector<std::string> res;
+  res.reserve(num_tokens);
+  for (int i = 0; i < num_tokens; i++)
+    res.push_back(tmp[i]);
+  msFreeCharArray(tmp, num_tokens);
+  return res;
 }
 
 /*
@@ -953,35 +937,34 @@ std::vector<std::string> msStringSplit(const char *string, char ch)
  * and for literal double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  */
-char ** msStringSplitComplex( const char * pszString,
-                              const char * pszDelimiters,
-                              int *num_tokens,
-                              int nFlags )
+char **msStringSplitComplex(const char *pszString, const char *pszDelimiters,
+                            int *num_tokens, int nFlags)
 
 {
-  char        **papszRetList = NULL;
-  int         nRetMax = 0, nRetLen = 0;
-  char        *pszToken;
-  int         nTokenMax, nTokenLen;
-  int         bHonourStrings = (nFlags & MS_HONOURSTRINGS);
-  int         bAllowEmptyTokens = (nFlags & MS_ALLOWEMPTYTOKENS);
-  int         bStripLeadSpaces = (nFlags & MS_STRIPLEADSPACES);
-  int         bStripEndSpaces = (nFlags & MS_STRIPENDSPACES);
+  char **papszRetList = NULL;
+  int nRetMax = 0, nRetLen = 0;
+  char *pszToken;
+  int nTokenMax, nTokenLen;
+  int bHonourStrings = (nFlags & MS_HONOURSTRINGS);
+  int bAllowEmptyTokens = (nFlags & MS_ALLOWEMPTYTOKENS);
+  int bStripLeadSpaces = (nFlags & MS_STRIPLEADSPACES);
+  int bStripEndSpaces = (nFlags & MS_STRIPENDSPACES);
 
-  pszToken = (char *) msSmallMalloc(sizeof(char)*10);;
+  pszToken = (char *)msSmallMalloc(sizeof(char) * 10);
+  ;
   nTokenMax = 10;
 
-  while( pszString != NULL && *pszString != '\0' ) {
-    int     bInString = MS_FALSE;
-    int     bStartString = MS_TRUE;
+  while (pszString != NULL && *pszString != '\0') {
+    int bInString = MS_FALSE;
+    int bStartString = MS_TRUE;
 
     nTokenLen = 0;
 
     /* Try to find the next delimeter, marking end of token */
-    for( ; *pszString != '\0'; pszString++ ) {
+    for (; *pszString != '\0'; pszString++) {
 
       /* End if this is a delimeter skip it and break. */
-      if( !bInString && strchr(pszDelimiters, *pszString) != NULL ) {
+      if (!bInString && strchr(pszDelimiters, *pszString) != NULL) {
         pszString++;
         break;
       }
@@ -989,13 +972,13 @@ char ** msStringSplitComplex( const char * pszString,
       /* If this is a quote, and we are honouring constant
          strings, then process the constant strings, with out delim
          but don't copy over the quotes */
-      if( bHonourStrings && *pszString == '"' ) {
-        if( nFlags & MS_PRESERVEQUOTES ) {
+      if (bHonourStrings && *pszString == '"') {
+        if (nFlags & MS_PRESERVEQUOTES) {
           pszToken[nTokenLen] = *pszString;
           nTokenLen++;
         }
 
-        if( bInString ) {
+        if (bInString) {
           bInString = MS_FALSE;
           continue;
         } else {
@@ -1009,9 +992,9 @@ char ** msStringSplitComplex( const char * pszString,
        * processing them we will unescape the quotes and \\ sequence
        * reduces to \
        */
-      if( bInString && pszString[0] == '\\' ) {
-        if ( pszString[1] == '"' || pszString[1] == '\\' ) {
-          if( nFlags & MS_PRESERVEESCAPES ) {
+      if (bInString && pszString[0] == '\\') {
+        if (pszString[1] == '"' || pszString[1] == '\\') {
+          if (nFlags & MS_PRESERVEESCAPES) {
             pszToken[nTokenLen] = *pszString;
             nTokenLen++;
           }
@@ -1023,8 +1006,8 @@ char ** msStringSplitComplex( const char * pszString,
       /*
        * Strip spaces at the token start if requested.
        */
-      if ( !bInString && bStripLeadSpaces
-           && bStartString && isspace((unsigned char)*pszString) )
+      if (!bInString && bStripLeadSpaces && bStartString &&
+          isspace((unsigned char)*pszString))
         continue;
 
       bStartString = MS_FALSE;
@@ -1032,9 +1015,9 @@ char ** msStringSplitComplex( const char * pszString,
       /*
        * Extend token buffer if we are running close to its end.
        */
-      if( nTokenLen >= nTokenMax-3 ) {
+      if (nTokenLen >= nTokenMax - 3) {
         nTokenMax = nTokenMax * 2 + 10;
-        pszToken = (char *) msSmallRealloc(pszToken, sizeof(char)*nTokenMax);
+        pszToken = (char *)msSmallRealloc(pszToken, sizeof(char) * nTokenMax);
       }
 
       pszToken[nTokenLen] = *pszString;
@@ -1044,8 +1027,8 @@ char ** msStringSplitComplex( const char * pszString,
     /*
      * Strip spaces at the token end if requested.
      */
-    if ( !bInString && bStripEndSpaces ) {
-      while ( nTokenLen && isspace((unsigned char)pszToken[nTokenLen - 1]) )
+    if (!bInString && bStripEndSpaces) {
+      while (nTokenLen && isspace((unsigned char)pszToken[nTokenLen - 1]))
         nTokenLen--;
     }
 
@@ -1054,13 +1037,14 @@ char ** msStringSplitComplex( const char * pszString,
     /*
      * Add the token.
      */
-    if( pszToken[0] != '\0' || bAllowEmptyTokens ) {
-      if( nRetLen >= nRetMax - 1 ) {
+    if (pszToken[0] != '\0' || bAllowEmptyTokens) {
+      if (nRetLen >= nRetMax - 1) {
         nRetMax = nRetMax * 2 + 10;
-        papszRetList = (char **) msSmallRealloc(papszRetList, sizeof(char*)*nRetMax);
+        papszRetList =
+            (char **)msSmallRealloc(papszRetList, sizeof(char *) * nRetMax);
       }
 
-      papszRetList[nRetLen++] = msStrdup( pszToken );
+      papszRetList[nRetLen++] = msStrdup(pszToken);
       papszRetList[nRetLen] = NULL;
     }
   }
@@ -1069,19 +1053,20 @@ char ** msStringSplitComplex( const char * pszString,
    * If the last token was empty, then we need to capture
    * it now, as the loop would skip it.
    */
-  if( pszString != NULL && *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0
-      && strchr(pszDelimiters,*(pszString-1)) != NULL ) {
-    if( nRetLen >= nRetMax - 1 ) {
+  if (pszString != NULL && *pszString == '\0' && bAllowEmptyTokens &&
+      nRetLen > 0 && strchr(pszDelimiters, *(pszString - 1)) != NULL) {
+    if (nRetLen >= nRetMax - 1) {
       nRetMax = nRetMax * 2 + 10;
-      papszRetList = (char **) msSmallRealloc(papszRetList, sizeof(char*)*nRetMax);
+      papszRetList =
+          (char **)msSmallRealloc(papszRetList, sizeof(char *) * nRetMax);
     }
 
     papszRetList[nRetLen++] = msStrdup("");
     papszRetList[nRetLen] = NULL;
   }
 
-  if( papszRetList == NULL )
-    papszRetList = (char **) msSmallMalloc(sizeof(char *)*1);
+  if (papszRetList == NULL)
+    papszRetList = (char **)msSmallMalloc(sizeof(char *) * 1);
 
   *num_tokens = nRetLen;
   free(pszToken);
@@ -1091,42 +1076,44 @@ char ** msStringSplitComplex( const char * pszString,
 
 /* This method is similar to msStringSplit but support quoted strings.
    It also support multi-characters delimiter and allows to preserve quotes */
-char **msStringTokenize( const char *pszLine, const char *pszDelim,
-                         int *num_tokens, int preserve_quote )
-{
+char **msStringTokenize(const char *pszLine, const char *pszDelim,
+                        int *num_tokens, int preserve_quote) {
   char **papszResult = NULL;
-  int n = 1, iChar, nLength = strlen(pszLine), iTokenChar = 0, bInQuotes = MS_FALSE;
-  char *pszToken = (char *) msSmallMalloc(sizeof(char)*(nLength+1));
+  int n = 1, iChar, nLength = strlen(pszLine), iTokenChar = 0,
+      bInQuotes = MS_FALSE;
+  char *pszToken = (char *)msSmallMalloc(sizeof(char) * (nLength + 1));
   int nDelimLen = strlen(pszDelim);
 
   /* Compute the number of tokens */
-  for( iChar = 0; pszLine[iChar] != '\0'; iChar++ ) {
-    if( bInQuotes && pszLine[iChar] == '"' && pszLine[iChar+1] == '"' ) {
+  for (iChar = 0; pszLine[iChar] != '\0'; iChar++) {
+    if (bInQuotes && pszLine[iChar] == '"' && pszLine[iChar + 1] == '"') {
       iChar++;
-    } else if( pszLine[iChar] == '"' ) {
+    } else if (pszLine[iChar] == '"') {
       bInQuotes = !bInQuotes;
-    } else if ( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 ) {
+    } else if (!bInQuotes &&
+               strncmp(pszLine + iChar, pszDelim, nDelimLen) == 0) {
       iChar += nDelimLen - 1;
       n++;
     }
   }
 
-  papszResult = (char **) msSmallMalloc(sizeof(char *)*n);
+  papszResult = (char **)msSmallMalloc(sizeof(char *) * n);
   n = iTokenChar = bInQuotes = 0;
-  for( iChar = 0; pszLine[iChar] != '\0'; iChar++ ) {
-    if( bInQuotes && pszLine[iChar] == '"' && pszLine[iChar+1] == '"' ) {
+  for (iChar = 0; pszLine[iChar] != '\0'; iChar++) {
+    if (bInQuotes && pszLine[iChar] == '"' && pszLine[iChar + 1] == '"') {
       if (preserve_quote == MS_TRUE)
         pszToken[iTokenChar++] = '"';
       pszToken[iTokenChar++] = '"';
       iChar++;
-    } else if( pszLine[iChar] == '"' ) {
+    } else if (pszLine[iChar] == '"') {
       if (preserve_quote == MS_TRUE)
         pszToken[iTokenChar++] = '"';
       bInQuotes = !bInQuotes;
-    } else if( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 ) {
+    } else if (!bInQuotes &&
+               strncmp(pszLine + iChar, pszDelim, nDelimLen) == 0) {
       pszToken[iTokenChar++] = '\0';
       papszResult[n] = pszToken;
-      pszToken = (char *) msSmallMalloc(sizeof(char)*(nLength+1));
+      pszToken = (char *)msSmallMalloc(sizeof(char) * (nLength + 1));
       iChar += nDelimLen - 1;
       iTokenChar = 0;
       n++;
@@ -1138,7 +1125,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
   pszToken[iTokenChar++] = '\0';
   papszResult[n] = pszToken;
 
-  *num_tokens = n+1;
+  *num_tokens = n + 1;
 
   return papszResult;
 }
@@ -1152,30 +1139,27 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
  *
  **********************************************************************/
 
-int msEncodeChar(const char c)
-{
-  if (
-    (c >= 0x61 && c <= 0x7A ) ||   /* Letters a-z */
-    (c >= 0x41 && c <= 0x5A ) ||   /* Letters A-Z */
-    (c >= 0x30 && c <= 0x39 ) ||   /* Numbers 0-9 */
-    (c >= 0x27 && c <= 0x2A ) ||   /* * ' ( )     */
-    (c >= 0x2D && c <= 0x2E ) ||   /* - .         */
-    (c == 0x5F ) ||                /* _           */
-    (c == 0x21 ) ||                /* !           */
-    (c == 0x7E ) ) {               /* ~           */
-    return(0);
+int msEncodeChar(const char c) {
+  if ((c >= 0x61 && c <= 0x7A) || /* Letters a-z */
+      (c >= 0x41 && c <= 0x5A) || /* Letters A-Z */
+      (c >= 0x30 && c <= 0x39) || /* Numbers 0-9 */
+      (c >= 0x27 && c <= 0x2A) || /* * ' ( )     */
+      (c >= 0x2D && c <= 0x2E) || /* - .         */
+      (c == 0x5F) ||              /* _           */
+      (c == 0x21) ||              /* !           */
+      (c == 0x7E)) {              /* ~           */
+    return (0);
   } else {
-    return(1);
+    return (1);
   }
 }
 
-char *msEncodeUrl(const char *data)
-{
+char *msEncodeUrl(const char *data) {
   /*
    * Delegate to msEncodeUrlExcept, with a null second argument
    * to render the except handling moot.
    */
-  return(msEncodeUrlExcept(data, '\0'));
+  return (msEncodeUrlExcept(data, '\0'));
 }
 
 /**********************************************************************
@@ -1187,28 +1171,27 @@ char *msEncodeUrl(const char *data)
  *
  **********************************************************************/
 
-char *msEncodeUrlExcept(const char *data, const char except)
-{
+char *msEncodeUrlExcept(const char *data, const char except) {
   static const char *hex = "0123456789ABCDEF";
   const char *i;
-  char  *j, *code;
-  int   inc;
+  char *j, *code;
+  int inc;
   unsigned char ch;
 
-  for (inc=0, i=data; *i!='\0'; i++)
+  for (inc = 0, i = data; *i != '\0'; i++)
     if (msEncodeChar(*i))
       inc += 2;
 
-  code = (char*)msSmallMalloc(strlen(data)+inc+1);
+  code = (char *)msSmallMalloc(strlen(data) + inc + 1);
 
-  for (j=code, i=data; *i!='\0'; i++, j++) {
-    if ( except != '\0' && *i == except ) {
+  for (j = code, i = data; *i != '\0'; i++, j++) {
+    if (except != '\0' && *i == except) {
       *j = except;
     } else if (msEncodeChar(*i)) {
       ch = *i;
       *j++ = '%';
-      *j++ = hex[ch/16];
-      *j   = hex[ch%16];
+      *j++ = hex[ch / 16];
+      *j = hex[ch % 16];
     } else
       *j = *i;
   }
@@ -1223,69 +1206,50 @@ char *msEncodeUrlExcept(const char *data, const char except)
 
 /* The input (and output) string are not supposed to start/end with double */
 /* quote characters. It is the responsibility of the caller to do that. */
-char* msEscapeJSonString(const char* pszJSonString)
-{
-    /* Worst case is one character to become \uABCD so 6 characters */
-    char* pszRet;
-    int i = 0, j = 0;
-    static const char* pszHex = "0123456789ABCDEF";
-    
-    pszRet = (char*) msSmallMalloc(strlen(pszJSonString) * 6 + 1);
-    /* From http://www.json.org/ */
-    for(i = 0; pszJSonString[i] != '\0'; i++)
-    {
-        unsigned char ch = pszJSonString[i];
-        if( ch == '\b' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = 'b';
-        }
-        else if( ch == '\f' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = 'f';
-        }
-        else if( ch == '\n' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = 'n';
-        }
-        else if( ch == '\r' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = 'r';
-        }
-        else if( ch == '\t' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = 't';
-        }
-        else if( ch < 32 )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = 'u';
-            pszRet[j++] = '0';
-            pszRet[j++] = '0';
-            pszRet[j++] = pszHex[ch / 16];
-            pszRet[j++] = pszHex[ch % 16];
-        }
-        else if( ch == '"' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = '"';
-        }
-        else if( ch == '\\' )
-        {
-            pszRet[j++] = '\\';
-            pszRet[j++] = '\\';
-        }
-        else
-        {
-            pszRet[j++] = ch;
-        }
+char *msEscapeJSonString(const char *pszJSonString) {
+  /* Worst case is one character to become \uABCD so 6 characters */
+  char *pszRet;
+  int i = 0, j = 0;
+  static const char *pszHex = "0123456789ABCDEF";
+
+  pszRet = (char *)msSmallMalloc(strlen(pszJSonString) * 6 + 1);
+  /* From http://www.json.org/ */
+  for (i = 0; pszJSonString[i] != '\0'; i++) {
+    unsigned char ch = pszJSonString[i];
+    if (ch == '\b') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = 'b';
+    } else if (ch == '\f') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = 'f';
+    } else if (ch == '\n') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = 'n';
+    } else if (ch == '\r') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = 'r';
+    } else if (ch == '\t') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = 't';
+    } else if (ch < 32) {
+      pszRet[j++] = '\\';
+      pszRet[j++] = 'u';
+      pszRet[j++] = '0';
+      pszRet[j++] = '0';
+      pszRet[j++] = pszHex[ch / 16];
+      pszRet[j++] = pszHex[ch % 16];
+    } else if (ch == '"') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = '"';
+    } else if (ch == '\\') {
+      pszRet[j++] = '\\';
+      pszRet[j++] = '\\';
+    } else {
+      pszRet[j++] = ch;
     }
-    pszRet[j] = '\0';
-    return pszRet;
+  }
+  pszRet[j] = '\0';
+  return pszRet;
 }
 
 /* msEncodeHTMLEntities()
@@ -1296,55 +1260,55 @@ char* msEscapeJSonString(const char* pszJSonString)
 ** The replacements performed are:
 **  '&' -> "&amp;", '"' -> "&quot;", '<' -> "&lt;" and '>' -> "&gt;"
 **/
-char *msEncodeHTMLEntities(const char *string)
-{
+char *msEncodeHTMLEntities(const char *string) {
   int buflen, i;
   char *newstring;
   const char *c;
 
-  if(string == NULL)
+  if (string == NULL)
     return NULL;
 
   /* Start with 100 extra chars for replacements...  */
   /* should be good enough for most cases */
   buflen = strlen(string) + 100;
-  newstring = (char*)malloc(buflen+1);
-  MS_CHECK_ALLOC(newstring, buflen+1, NULL);
+  newstring = (char *)malloc(buflen + 1);
+  MS_CHECK_ALLOC(newstring, buflen + 1, NULL);
 
-  for(i=0, c=string; *c != '\0'; c++) {
+  for (i = 0, c = string; *c != '\0'; c++) {
     /* Need to realloc buffer? */
-    if (i+6 > buflen) {
+    if (i + 6 > buflen) {
       /* If we had to realloc then this string must contain several */
       /* entities... so let's go with twice the previous buffer size */
       buflen *= 2;
       /* cppcheck-suppress memleakOnRealloc */
-      newstring = (char*)realloc(newstring, buflen+1);
-      MS_CHECK_ALLOC(newstring, buflen+1, NULL);
+      newstring = (char *)realloc(newstring, buflen + 1);
+      MS_CHECK_ALLOC(newstring, buflen + 1, NULL);
     }
 
-    switch(*c) {
-      case '&':
-        strcpy(newstring+i, "&amp;");
-        i += 5;
-        break;
-      case '<':
-        strcpy(newstring+i, "&lt;");
-        i += 4;
-        break;
-      case '>':
-        strcpy(newstring+i, "&gt;");
-        i += 4;
-        break;
-      case '"':
-        strcpy(newstring+i, "&quot;");
-        i += 6;
-        break;
-      case '\'':
-        strcpy(newstring+i, "&#39;"); /* changed from &apos; and i += 6 (bug 1040) */
-        i += 5;
-        break;
-      default:
-        newstring[i++] = *c;
+    switch (*c) {
+    case '&':
+      strcpy(newstring + i, "&amp;");
+      i += 5;
+      break;
+    case '<':
+      strcpy(newstring + i, "&lt;");
+      i += 4;
+      break;
+    case '>':
+      strcpy(newstring + i, "&gt;");
+      i += 4;
+      break;
+    case '"':
+      strcpy(newstring + i, "&quot;");
+      i += 6;
+      break;
+    case '\'':
+      strcpy(newstring + i,
+             "&#39;"); /* changed from &apos; and i += 6 (bug 1040) */
+      i += 5;
+      break;
+    default:
+      newstring[i++] = *c;
     }
   }
 
@@ -1353,7 +1317,6 @@ char *msEncodeHTMLEntities(const char *string)
   return newstring;
 }
 
-
 /* msDecodeHTMLEntities()
 **
 ** Modify the string to replace encoded characters by their true value
@@ -1361,26 +1324,25 @@ char *msEncodeHTMLEntities(const char *string)
 ** The replacements performed are:
 **  "&amp;" -> '&', "&quot;" -> '"', "&lt;" -> '<' and "&gt;" -> '>'
 **/
-void msDecodeHTMLEntities(const char *string)
-{
-  char *pszAmp=NULL, *pszSemiColon=NULL, *pszReplace=NULL, *pszEnd=NULL;
-  char *pszBuffer=NULL;
+void msDecodeHTMLEntities(const char *string) {
+  char *pszAmp = NULL, *pszSemiColon = NULL, *pszReplace = NULL, *pszEnd = NULL;
+  char *pszBuffer = NULL;
   size_t bufferSize = 0;
 
-  if(string == NULL)
+  if (string == NULL)
     return;
   else
-    pszBuffer = (char*)string;
+    pszBuffer = (char *)string;
 
   bufferSize = strlen(pszBuffer);
-  pszReplace = (char*) msSmallMalloc(bufferSize+1);
-  pszEnd = (char*) msSmallMalloc(bufferSize+1);
+  pszReplace = (char *)msSmallMalloc(bufferSize + 1);
+  pszEnd = (char *)msSmallMalloc(bufferSize + 1);
 
-  while((pszAmp = strchr(pszBuffer, '&')) != NULL) {
+  while ((pszAmp = strchr(pszBuffer, '&')) != NULL) {
     /* Get the &...; */
     strlcpy(pszReplace, pszAmp, bufferSize);
     pszSemiColon = strchr(pszReplace, ';');
-    if(pszSemiColon == NULL)
+    if (pszSemiColon == NULL)
       break;
     else
       pszSemiColon++;
@@ -1388,26 +1350,26 @@ void msDecodeHTMLEntities(const char *string)
     /* Get everything after the &...; */
     strlcpy(pszEnd, pszSemiColon, bufferSize);
 
-    pszReplace[pszSemiColon-pszReplace] = '\0';
+    pszReplace[pszSemiColon - pszReplace] = '\0';
 
     /* Replace the &...; */
-    if(strcasecmp(pszReplace, "&amp;") == 0) {
+    if (strcasecmp(pszReplace, "&amp;") == 0) {
       pszBuffer[pszAmp - pszBuffer] = '&';
       pszBuffer[pszAmp - pszBuffer + 1] = '\0';
       strcat(pszBuffer, pszEnd);
-    } else if(strcasecmp(pszReplace, "&lt;") == 0) {
+    } else if (strcasecmp(pszReplace, "&lt;") == 0) {
       pszBuffer[pszAmp - pszBuffer] = '<';
       pszBuffer[pszAmp - pszBuffer + 1] = '\0';
       strcat(pszBuffer, pszEnd);
-    } else if(strcasecmp(pszReplace, "&gt;") == 0) {
+    } else if (strcasecmp(pszReplace, "&gt;") == 0) {
       pszBuffer[pszAmp - pszBuffer] = '>';
       pszBuffer[pszAmp - pszBuffer + 1] = '\0';
       strcat(pszBuffer, pszEnd);
-    } else if(strcasecmp(pszReplace, "&quot;") == 0) {
+    } else if (strcasecmp(pszReplace, "&quot;") == 0) {
       pszBuffer[pszAmp - pszBuffer] = '"';
       pszBuffer[pszAmp - pszBuffer + 1] = '\0';
       strcat(pszBuffer, pszEnd);
-    } else if(strcasecmp(pszReplace, "&apos;") == 0) {
+    } else if (strcasecmp(pszReplace, "&apos;") == 0) {
       pszBuffer[pszAmp - pszBuffer] = '\'';
       pszBuffer[pszAmp - pszBuffer + 1] = '\0';
       strcat(pszBuffer, pszEnd);
@@ -1429,30 +1391,26 @@ void msDecodeHTMLEntities(const char *string)
 ** A-Z, a-z, 0-9, '_', '-', '.', and ':'
 ** Return MS_TRUE or MS_FALSE
 */
-int msIsXMLTagValid(const char *string)
-{
+int msIsXMLTagValid(const char *string) {
   int i, nLen;
 
   nLen = strlen(string);
 
-  for(i=0; i<nLen; i++) {
-    if( !( string[i] >= 'A' && string[i] <= 'Z' ) &&
-        !( string[i] >= 'a' && string[i] <= 'z' ) &&
-        !( string[i] >= '0' && string[i] <= '9' ) &&
-        string[i] != '-' && string[i] != '.' &&
-        string[i] != ':' && string[i] != '_' )
+  for (i = 0; i < nLen; i++) {
+    if (!(string[i] >= 'A' && string[i] <= 'Z') &&
+        !(string[i] >= 'a' && string[i] <= 'z') &&
+        !(string[i] >= '0' && string[i] <= '9') && string[i] != '-' &&
+        string[i] != '.' && string[i] != ':' && string[i] != '_')
       return MS_FALSE;
   }
 
   return MS_TRUE;
 }
 
-
 /*
  * Concatenate pszSrc to pszDest and reallocate memory if necessary.
-*/
-char *msStringConcatenate(char *pszDest, const char *pszSrc)
-{
+ */
+char *msStringConcatenate(char *pszDest, const char *pszSrc) {
   int nLen;
 
   if (pszSrc == NULL)
@@ -1466,13 +1424,14 @@ char *msStringConcatenate(char *pszDest, const char *pszSrc)
 
     nLen = strlen(pszDest) + strlen(pszSrc);
 
-    pszTemp = (char*)realloc(pszDest, nLen + 1);
+    pszTemp = (char *)realloc(pszDest, nLen + 1);
     if (pszTemp) {
       pszDest = pszTemp;
       strcat(pszDest, pszSrc);
       pszDest[nLen] = '\0';
     } else {
-      msSetError(MS_MEMERR, "Error while reallocating memory.", "msStringConcatenate()");
+      msSetError(MS_MEMERR, "Error while reallocating memory.",
+                 "msStringConcatenate()");
       return NULL;
     }
   }
@@ -1480,25 +1439,25 @@ char *msStringConcatenate(char *pszDest, const char *pszSrc)
   return pszDest;
 }
 
-char *msJoinStrings(char **array, int arrayLength, const char *delimeter)
-{
+char *msJoinStrings(char **array, int arrayLength, const char *delimeter) {
   char *string;
-  int stringLength=0;
+  int stringLength = 0;
   int delimeterLength;
   int i;
 
-  if(!array || arrayLength <= 0 || !delimeter) return NULL;
+  if (!array || arrayLength <= 0 || !delimeter)
+    return NULL;
 
   delimeterLength = strlen(delimeter);
 
-  for(i=0; i<arrayLength; i++)
+  for (i = 0; i < arrayLength; i++)
     stringLength += strlen(array[i]) + delimeterLength;
 
-  string = (char *)calloc(stringLength+1, sizeof(char));
-  MS_CHECK_ALLOC(string, (stringLength+1)* sizeof(char), NULL);
+  string = (char *)calloc(stringLength + 1, sizeof(char));
+  MS_CHECK_ALLOC(string, (stringLength + 1) * sizeof(char), NULL);
   string[0] = '\0';
 
-  for(i=0; i<arrayLength-1; i++) {
+  for (i = 0; i < arrayLength - 1; i++) {
     strlcat(string, array[i], stringLength);
     strlcat(string, delimeter, stringLength);
   }
@@ -1507,101 +1466,107 @@ char *msJoinStrings(char **array, int arrayLength, const char *delimeter)
   return string;
 }
 
-#define HASH_SIZE  16
+#define HASH_SIZE 16
 /*
  * Return a hashed string for a given input string.
  * The caller should free the return value.
-*/
-char *msHashString(const char *pszStr)
-{
-  unsigned char sums[HASH_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+ */
+char *msHashString(const char *pszStr) {
+  unsigned char sums[HASH_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0,
+                                   0, 0, 0, 0, 0, 0, 0, 0};
   char *pszOutBuf = NULL;
   size_t bufferSize = 0;
-  int i=0;
+  int i = 0;
 
-  bufferSize = HASH_SIZE*2+1;
-  pszOutBuf = (char*)msSmallMalloc(bufferSize);
+  bufferSize = HASH_SIZE * 2 + 1;
+  pszOutBuf = (char *)msSmallMalloc(bufferSize);
 
-  for(i=0; pszStr && pszStr[i]; i++) {
-    sums[i%HASH_SIZE] += (unsigned char)(pszStr[i]);
+  for (i = 0; pszStr && pszStr[i]; i++) {
+    sums[i % HASH_SIZE] += (unsigned char)(pszStr[i]);
   }
 
-  for(i=0; i<HASH_SIZE; i++) {
-    snprintf(pszOutBuf + i*2, bufferSize-(i*2), "%02x", sums[i]);
+  for (i = 0; i < HASH_SIZE; i++) {
+    snprintf(pszOutBuf + i * 2, bufferSize - (i * 2), "%02x", sums[i]);
   }
 
   return pszOutBuf;
 }
 
-char *msCommifyString(char *str)
-{
+char *msCommifyString(char *str) {
   int i, j, old_length, new_length;
-  int num_commas=0, num_decimal_points=0;
+  int num_commas = 0, num_decimal_points = 0;
   int add_commas;
 
-  char comma=',', decimal_point='.';
+  char comma = ',', decimal_point = '.';
 
-  if(!str) return NULL;
+  if (!str)
+    return NULL;
 
   num_decimal_points = msCountChars(str, decimal_point);
-  if(num_decimal_points > 1) return str;
+  if (num_decimal_points > 1)
+    return str;
 
   old_length = strlen(str);
-  if(num_decimal_points == 0) {
-    num_commas =  floor((old_length - 1)/3);
-    add_commas=1; /* add commas right away */
+  if (num_decimal_points == 0) {
+    num_commas = floor((old_length - 1) / 3);
+    add_commas = 1; /* add commas right away */
   } else {
-    num_commas = floor(((old_length - strlen(strchr(str, decimal_point))) - 1)/3);
-    add_commas=0; /* wait until after the decimal point */
+    num_commas =
+        floor(((old_length - strlen(strchr(str, decimal_point))) - 1) / 3);
+    add_commas = 0; /* wait until after the decimal point */
   }
 
-  if(num_commas < 1) return str; /* nothing to add */
+  if (num_commas < 1)
+    return str; /* nothing to add */
 
   new_length = old_length + num_commas;
-  str = (char *) msSmallRealloc(str, new_length+1);
+  str = (char *)msSmallRealloc(str, new_length + 1);
   str[new_length] = '\0';
 
   j = 0;
-  for(i=new_length-1; i>=0; i--) { /* step backwards through the string */
+  for (i = new_length - 1; i >= 0;
+       i--) { /* step backwards through the string */
 
-    if(num_decimal_points == 1 &&  add_commas == 0) { /* to the right of the decimal point, no commas */
-      str[i] = str[i-num_commas];
-      if(str[i] == decimal_point) add_commas = 1;
-    } else if(add_commas == 1 && j>2) { /* need a comma */
+    if (num_decimal_points == 1 &&
+        add_commas == 0) { /* to the right of the decimal point, no commas */
+      str[i] = str[i - num_commas];
+      if (str[i] == decimal_point)
+        add_commas = 1;
+    } else if (add_commas == 1 && j > 2) { /* need a comma */
       str[i] = comma;
       num_commas--; /* need one fewer now */
-      j = 0; /* reset */
+      j = 0;        /* reset */
     } else {
-      str[i] = str[i-num_commas]; /* shift to the right */
+      str[i] = str[i - num_commas]; /* shift to the right */
       j++;
     }
 
-    if(num_commas == 0) break; /* done, rest of string is ok "as is" */
+    if (num_commas == 0)
+      break; /* done, rest of string is ok "as is" */
   }
 
   return str;
 }
 
-
-/* ------------------------------------------------------------------------------- */
-/*       Replace all occurrences of old with new in str.                           */
-/*       It is assumed that str was dynamically created using malloc.              */
-/*       Same function as msReplaceSubstring but this is case insensitive          */
-/* ------------------------------------------------------------------------------- */
-char *msCaseReplaceSubstring(char *str, const char *old, const char *newstr)
-{
+/* -------------------------------------------------------------------------------
+ */
+/*       Replace all occurrences of old with new in str. */
+/*       It is assumed that str was dynamically created using malloc. */
+/*       Same function as msReplaceSubstring but this is case insensitive */
+/* -------------------------------------------------------------------------------
+ */
+char *msCaseReplaceSubstring(char *str, const char *old, const char *newstr) {
   size_t str_len, old_len, new_len, tmp_offset;
   char *tmp_ptr;
 
   /*
   ** If old is not found then leave str alone
   */
-  if( (tmp_ptr = (char *) strcasestr(str, old)) == NULL)
-    return(str);
-  
-  if(newstr == NULL)
-    newstr = "";
+  if ((tmp_ptr = (char *)strcasestr(str, old)) == NULL)
+    return (str);
 
+  if (newstr == NULL)
+    newstr = "";
 
   /*
   ** Grab some info about incoming strings
@@ -1613,16 +1578,17 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *newstr)
   /*
   ** Now loop until old is NOT found in new
   */
-  while( tmp_ptr != NULL ) {
+  while (tmp_ptr != NULL) {
 
     /*
     ** re-allocate memory for buf assuming 1 replacement of old with new
-          ** don't bother reallocating if old is larger than new)
+    ** don't bother reallocating if old is larger than new)
     */
     if (old_len < new_len) {
       tmp_offset = tmp_ptr - str;
       str_len = str_len - old_len + new_len;
-      str = (char *)msSmallRealloc(str, (str_len + 1)); /* make new space for a copy */
+      str = (char *)msSmallRealloc(
+          str, (str_len + 1)); /* make new space for a copy */
       tmp_ptr = str + tmp_offset;
     }
 
@@ -1630,7 +1596,8 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *newstr)
     ** Move the trailing part of str to make some room unless old_len == new_len
     */
     if (old_len != new_len) {
-      memmove(tmp_ptr+new_len, tmp_ptr+old_len, strlen(tmp_ptr)-old_len+1);
+      memmove(tmp_ptr + new_len, tmp_ptr + old_len,
+              strlen(tmp_ptr) - old_len + 1);
     }
 
     /*
@@ -1641,34 +1608,31 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *newstr)
     /*
     ** And look for more matches in the rest of the string
     */
-    tmp_ptr = (char *) strcasestr(tmp_ptr + new_len, old);
+    tmp_ptr = (char *)strcasestr(tmp_ptr + new_len, old);
   }
 
-  return(str);
+  return (str);
 }
 
 /*
 ** Converts a 2 character hexidecimal string to an integer.
 */
-int msHexToInt(char *hex)
-{
+int msHexToInt(char *hex) {
   int number;
 
-  number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A')+10 : (hex[0] - '0'));
+  number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A') + 10 : (hex[0] - '0'));
   number *= 16;
-  number += (hex[1] >= 'A' ? ((hex[1] & 0xdf) - 'A')+10 : (hex[1] - '0'));
+  number += (hex[1] >= 'A' ? ((hex[1] & 0xdf) - 'A') + 10 : (hex[1] - '0'));
 
-  return(number);
+  return (number);
 }
-
 
 /*
 ** Use FRIBIDI to encode the string.
 ** The return value must be freed by the caller.
 */
 #ifdef USE_FRIBIDI
-char *msGetFriBidiEncodedString(const char *string, const char *encoding)
-{
+char *msGetFriBidiEncodedString(const char *string, const char *encoding) {
   FriBidiChar logical[MAX_STR_LEN];
   FriBidiParType base;
   size_t len;
@@ -1683,15 +1647,15 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
   len = strlen(string);
 
 #ifdef FRIBIDI_NO_CHARSETS
-  to_ucs4 = iconv_open ("WCHAR_T", encoding);
-  from_ucs4 = iconv_open ("UTF-8", "WCHAR_T");
+  to_ucs4 = iconv_open("WCHAR_T", encoding);
+  from_ucs4 = iconv_open("UTF-8", "WCHAR_T");
 #else
-  to_char_set_num = fribidi_parse_charset ((char*)encoding);
-  from_char_set_num = fribidi_parse_charset ("UTF-8");
+  to_char_set_num = fribidi_parse_charset((char *)encoding);
+  from_char_set_num = fribidi_parse_charset("UTF-8");
 #endif
 
 #ifdef FRIBIDI_NO_CHARSETS
-  if (to_ucs4 == (iconv_t) (-1) || from_ucs4 == (iconv_t) (-1))
+  if (to_ucs4 == (iconv_t)(-1) || from_ucs4 == (iconv_t)(-1))
 #else
   if (!to_char_set_num || !from_char_set_num)
 #endif
@@ -1703,14 +1667,15 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 
 #ifdef FRIBIDI_NO_CHARSETS
   {
-    char *st = string, *ust = (char *) logical;
-    int in_len = (int) len;
+    char *st = string, *ust = (char *)logical;
+    int in_len = (int)len;
     len = sizeof logical;
-    iconv (to_ucs4, &st, &in_len, &ust, (int *) &len);
-    len = (FriBidiChar *) ust - logical;
+    iconv(to_ucs4, &st, &in_len, &ust, (int *)&len);
+    len = (FriBidiChar *)ust - logical;
   }
 #else
-  len = fribidi_charset_to_unicode (to_char_set_num, (char*)string, len, logical);
+  len =
+      fribidi_charset_to_unicode(to_char_set_num, (char *)string, len, logical);
 #endif
 
   {
@@ -1721,28 +1686,29 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     FriBidiStrIndex new_len;
     fribidi_boolean log2vis;
 
-    visual = (FriBidiChar *) msSmallMalloc (sizeof (FriBidiChar) * (len + 1));
+    visual = (FriBidiChar *)msSmallMalloc(sizeof(FriBidiChar) * (len + 1));
     ltov = NULL;
     vtol = NULL;
     levels = NULL;
 
     // fribidi_log2vis() doesn't support multi-line paragraphs.
-    // See: https://lists.freedesktop.org/archives/fribidi/2008-January/000515.html
-    for( size_t i = 0; i < len; i++ )
-    {
-        if (logical[i] == '\n') {
-          msSetError(MS_IDENTERR,
-                     "Input string is a multi-line paragraph, which is not supported.",
-                     "msGetFriBidiEncodedString()");
-          msFree(visual);
-          return NULL;
-        }
+    // See:
+    // https://lists.freedesktop.org/archives/fribidi/2008-January/000515.html
+    for (size_t i = 0; i < len; i++) {
+      if (logical[i] == '\n') {
+        msSetError(
+            MS_IDENTERR,
+            "Input string is a multi-line paragraph, which is not supported.",
+            "msGetFriBidiEncodedString()");
+        msFree(visual);
+        return NULL;
+      }
     }
 
     /* Create a bidi string. */
-    log2vis = fribidi_log2vis (logical, len, &base,
-                               /* output */
-                               visual, ltov, vtol, levels);
+    log2vis = fribidi_log2vis(logical, len, &base,
+                              /* output */
+                              visual, ltov, vtol, levels);
 
     if (!log2vis) {
       msSetError(MS_IDENTERR, "Failed to create bidi string.",
@@ -1754,23 +1720,23 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     /* Convert it to utf-8 for display. */
 #ifdef FRIBIDI_NO_CHARSETS
     {
-      char *str = outstring, *ust = (char *) visual;
+      char *str = outstring, *ust = (char *)visual;
       int in_len = len * sizeof visual[0];
       new_len = sizeof outstring;
-      iconv (from_ucs4, &ust, &in_len, &str, (int *) &new_len);
+      iconv(from_ucs4, &ust, &in_len, &str, (int *)&new_len);
       *str = '\0';
       new_len = str - outstring;
     }
 #else
     new_len =
-      fribidi_unicode_to_charset (from_char_set_num,
-                                  visual, len, outstring);
+        fribidi_unicode_to_charset(from_char_set_num, visual, len, outstring);
 
     /* scan str and compress out FRIBIDI_CHAR_FILL UTF8 characters */
 
-    int j=0;
-    for (int i=0; i<new_len; i++, j++) {
-      if (outstring[i] == '\xef' && outstring[i+1] == '\xbb' && outstring[i+2] == '\xbf') {
+    int j = 0;
+    for (int i = 0; i < new_len; i++, j++) {
+      if (outstring[i] == '\xef' && outstring[i + 1] == '\xbb' &&
+          outstring[i + 2] == '\xbf') {
         i += 3;
       }
       if (i != j) {
@@ -1791,8 +1757,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 ** Simple charset converter. Converts string from specified encoding to UTF-8.
 ** The return value must be freed by the caller.
 */
-char *msGetEncodedString(const char *string, const char *encoding)
-{
+char *msGetEncodedString(const char *string, const char *encoding) {
 #ifdef USE_ICONV
   iconv_t cd = NULL;
   const char *inp;
@@ -1802,7 +1767,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
 
 #ifdef USE_FRIBIDI
   msAcquireLock(TLOCK_FRIBIDI);
-  if(fribidi_parse_charset ((char*)encoding)) {
+  if (fribidi_parse_charset((char *)encoding)) {
     char *ret = msGetFriBidiEncodedString(string, encoding);
     msReleaseLock(TLOCK_FRIBIDI);
     return ret;
@@ -1811,11 +1776,11 @@ char *msGetEncodedString(const char *string, const char *encoding)
 #endif
   len = strlen(string);
 
-  if (len == 0 || strcasecmp(encoding, "UTF-8")==0)
-    return msStrdup(string);    /* Nothing to do: string already in UTF-8 */
+  if (len == 0 || strcasecmp(encoding, "UTF-8") == 0)
+    return msStrdup(string); /* Nothing to do: string already in UTF-8 */
 
   cd = iconv_open("UTF-8", encoding);
-  if(cd == (iconv_t)-1) {
+  if (cd == (iconv_t)-1) {
     msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
                "msGetEncodedString()", encoding);
     return NULL;
@@ -1823,8 +1788,8 @@ char *msGetEncodedString(const char *string, const char *encoding)
 
   bufsize = len * 6 + 1; /* Each UTF-8 char can be up to 6 bytes */
   inp = string;
-  out = (char*) malloc(bufsize);
-  if(out == NULL) {
+  out = (char *)malloc(bufsize);
+  if (out == NULL) {
     msSetError(MS_MEMERR, NULL, "msGetEncodedString()");
     iconv_close(cd);
     return NULL;
@@ -1835,8 +1800,9 @@ char *msGetEncodedString(const char *string, const char *encoding)
   bufleft = bufsize;
 
   while (len > 0) {
-    const size_t iconv_status = msIconv(cd, (char**)&inp, &len, &outp, &bufleft);
-    if(iconv_status == static_cast<size_t>(-1)) {
+    const size_t iconv_status =
+        msIconv(cd, (char **)&inp, &len, &outp, &bufleft);
+    if (iconv_status == static_cast<size_t>(-1)) {
       msFree(out);
       iconv_close(cd);
       return msStrdup(string);
@@ -1848,34 +1814,33 @@ char *msGetEncodedString(const char *string, const char *encoding)
 
   return out;
 #else
-  if (*string == '\0' || (encoding && strcasecmp(encoding, "UTF-8")==0))
-    return msStrdup(string);    /* Nothing to do: string already in UTF-8 */
+  if (*string == '\0' || (encoding && strcasecmp(encoding, "UTF-8") == 0))
+    return msStrdup(string); /* Nothing to do: string already in UTF-8 */
 
-  msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.", "msGetEncodedString()");
+  msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.",
+             "msGetEncodedString()");
   return NULL;
 #endif
 }
 
-
-char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
-{
+char *msConvertWideStringToUTF8(const wchar_t *string, const char *encoding) {
 #ifdef USE_ICONV
 
-  char* output = NULL;
-  const char* errormessage = NULL;
+  char *output = NULL;
+  const char *errormessage = NULL;
   iconv_t cd = NULL;
   size_t nStr;
   size_t nInSize;
   size_t nOutSize;
   size_t nBufferSize;
 
-  char* pszUTF8 = NULL;
-  const wchar_t* pwszWide = NULL;
+  char *pszUTF8 = NULL;
+  const wchar_t *pwszWide = NULL;
 
   if (string != NULL) {
-    nStr = wcslen (string);
+    nStr = wcslen(string);
     nBufferSize = ((nStr * 6) + 1);
-    output = (char*) msSmallMalloc (nBufferSize);
+    output = (char *)msSmallMalloc(nBufferSize);
 
     if (nStr == 0) {
       /* return an empty 8 byte string */
@@ -1887,28 +1852,31 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
 
     nOutSize = nBufferSize;
     if ((iconv_t)-1 != cd) {
-      nInSize = sizeof (wchar_t)*nStr;
+      nInSize = sizeof(wchar_t) * nStr;
       pszUTF8 = output;
       pwszWide = string;
-      size_t iconv_status = msIconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
+      size_t iconv_status =
+          msIconv(cd, (char **)&pwszWide, &nInSize, &pszUTF8, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
-          case E2BIG:
-            errormessage = "There is not sufficient room in buffer";
-            break;
-          case EILSEQ:
-            errormessage = "An invalid multibyte sequence has been encountered in the input";
-            break;
-          case EINVAL:
-            errormessage = "An incomplete multibyte sequence has been encountered in the input";
-            break;
-          default:
-            errormessage = "Unknown";
-            break;
+        case E2BIG:
+          errormessage = "There is not sufficient room in buffer";
+          break;
+        case EILSEQ:
+          errormessage =
+              "An invalid multibyte sequence has been encountered in the input";
+          break;
+        case EINVAL:
+          errormessage = "An incomplete multibyte sequence has been "
+                         "encountered in the input";
+          break;
+        default:
+          errormessage = "Unknown";
+          break;
         }
-        msSetError(MS_MISCERR, "Unable to convert string in encoding '%s' to UTF8 %s",
-                   "msConvertWideStringToUTF8()",
-                   encoding,errormessage);
+        msSetError(MS_MISCERR,
+                   "Unable to convert string in encoding '%s' to UTF8 %s",
+                   "msConvertWideStringToUTF8()", encoding, errormessage);
         iconv_close(cd);
         msFree(output);
         return NULL;
@@ -1916,8 +1884,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
       iconv_close(cd);
     } else {
       msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).",
-                 "msConvertWideStringToUTF8()",
-                 encoding);
+                 "msConvertWideStringToUTF8()", encoding);
       msFree(output);
       return NULL;
     }
@@ -1931,29 +1898,29 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
   output[nBufferSize - nOutSize] = '\0';
   return output;
 #else
-  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msConvertWideStringToUTF8()");
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.",
+             "msConvertWideStringToUTF8()");
   return NULL;
 #endif
 }
 
-wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
-{
+wchar_t *msConvertWideStringFromUTF8(const char *string, const char *encoding) {
 #ifdef USE_ICONV
-  wchar_t* output = NULL;
-  const char* errormessage = NULL;
+  wchar_t *output = NULL;
+  const char *errormessage = NULL;
   iconv_t cd = NULL;
   size_t nStr;
   size_t nInSize;
   size_t nOutSize;
   size_t nBufferSize;
 
-  const char* pszUTF8 = NULL;
-  wchar_t* pwszWide = NULL;
+  const char *pszUTF8 = NULL;
+  wchar_t *pwszWide = NULL;
 
   if (string != NULL) {
-    nStr = strlen (string);
+    nStr = strlen(string);
     nBufferSize = ((nStr * 6) + 1);
-    output = (wchar_t*) msSmallMalloc (nBufferSize);
+    output = (wchar_t *)msSmallMalloc(nBufferSize);
 
     if (nStr == 0) {
       /* return an empty 8 byte string */
@@ -1965,28 +1932,31 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
 
     nOutSize = nBufferSize;
     if ((iconv_t)-1 != cd) {
-      nInSize = sizeof (char)*nStr;
+      nInSize = sizeof(char) * nStr;
       pszUTF8 = string;
       pwszWide = output;
-      size_t iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize, (char **)&pwszWide, &nOutSize);
+      size_t iconv_status = msIconv(cd, (char **)&pszUTF8, &nInSize,
+                                    (char **)&pwszWide, &nOutSize);
       if ((size_t)-1 == iconv_status) {
         switch (errno) {
-          case E2BIG:
-            errormessage = "There is not sufficient room in buffer";
-            break;
-          case EILSEQ:
-            errormessage = "An invalid multibyte sequence has been encountered in the input";
-            break;
-          case EINVAL:
-            errormessage = "An incomplete multibyte sequence has been encountered in the input";
-            break;
-          default:
-            errormessage = "Unknown";
-            break;
+        case E2BIG:
+          errormessage = "There is not sufficient room in buffer";
+          break;
+        case EILSEQ:
+          errormessage =
+              "An invalid multibyte sequence has been encountered in the input";
+          break;
+        case EINVAL:
+          errormessage = "An incomplete multibyte sequence has been "
+                         "encountered in the input";
+          break;
+        default:
+          errormessage = "Unknown";
+          break;
         }
-        msSetError(MS_MISCERR, "Unable to convert string in UTF8 to encoding '%s' %s",
-                   "msConvertWideStringFromUTF8()",
-                   encoding, errormessage);
+        msSetError(MS_MISCERR,
+                   "Unable to convert string in UTF8 to encoding '%s' %s",
+                   "msConvertWideStringFromUTF8()", encoding, errormessage);
         iconv_close(cd);
         msFree(output);
         return NULL;
@@ -1994,8 +1964,7 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
       iconv_close(cd);
     } else {
       msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).",
-                 "msConvertWideStringFromUTF8()",
-                 encoding);
+                 "msConvertWideStringFromUTF8()", encoding);
       msFree(output);
       return NULL;
     }
@@ -2005,12 +1974,13 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
   }
 
   /* NULL-terminate the output string */
-  if (nOutSize >= sizeof (wchar_t))
-    *((wchar_t *) pwszWide) = L'\0';
+  if (nOutSize >= sizeof(wchar_t))
+    *((wchar_t *)pwszWide) = L'\0';
 
   return output;
 #else
-  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msConvertWideStringFromUTF8()");
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.",
+             "msConvertWideStringFromUTF8()");
   return NULL;
 #endif
 }
@@ -2045,105 +2015,104 @@ wchar_t* msConvertWideStringFromUTF8 (const char* string, const char* encoding)
 ** U-00200000 U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 ** U-04000000 U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 */
-int msGetNextGlyph(const char **in_ptr, char *out_string)
-{
+int msGetNextGlyph(const char **in_ptr, char *out_string) {
   unsigned char in;
-  int numbytes=0;
+  int numbytes = 0;
   unsigned int unicode;
   int i;
 
   in = (unsigned char)**in_ptr;
 
   if (in == 0)
-    return -1;  /* Empty string */
-  if((numbytes=msGetUnicodeEntity(*in_ptr,&unicode))>0) {
-    if(out_string) {
-      for(i=0; i<numbytes; i++) {
-        out_string[i]=(*in_ptr)[i];
+    return -1; /* Empty string */
+  if ((numbytes = msGetUnicodeEntity(*in_ptr, &unicode)) > 0) {
+    if (out_string) {
+      for (i = 0; i < numbytes; i++) {
+        out_string[i] = (*in_ptr)[i];
       }
-      out_string[numbytes]='\0';
+      out_string[numbytes] = '\0';
     }
-    *in_ptr+=numbytes;
+    *in_ptr += numbytes;
     return numbytes;
   }
   if (in < 0xC0) {
     /*
-    * Handles properly formed UTF-8 characters between
-    * 0x01 and 0x7F.  Also treats \0 and naked trail
-    * bytes 0x80 to 0xBF as valid characters representing
-    * themselves.
-    */
+     * Handles properly formed UTF-8 characters between
+     * 0x01 and 0x7F.  Also treats \0 and naked trail
+     * bytes 0x80 to 0xBF as valid characters representing
+     * themselves.
+     */
     /*goto end of loop to return just the char*/
   } else if (in < 0xE0) {
-    if (((*in_ptr)[1]& 0xC0) == 0x80) {
-      if(out_string) {
-        out_string[0]=in;
-        out_string[1]=(*in_ptr)[1];
-        out_string[2]='\0';
+    if (((*in_ptr)[1] & 0xC0) == 0x80) {
+      if (out_string) {
+        out_string[0] = in;
+        out_string[1] = (*in_ptr)[1];
+        out_string[2] = '\0';
       }
-      *in_ptr+=2;
+      *in_ptr += 2;
       return 2; /*110xxxxx 10xxxxxx*/
     }
   } else if (in < 0xF0) {
-    if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80) {
-      if(out_string) {
-        out_string[0]=in;
-        *in_ptr+=numbytes;
-        out_string[1]=(*in_ptr)[1];
-        out_string[2]=(*in_ptr)[2];
-        out_string[3]='\0';
+    if (((*in_ptr)[1] & 0xC0) == 0x80 && ((*in_ptr)[2] & 0xC0) == 0x80) {
+      if (out_string) {
+        out_string[0] = in;
+        *in_ptr += numbytes;
+        out_string[1] = (*in_ptr)[1];
+        out_string[2] = (*in_ptr)[2];
+        out_string[3] = '\0';
       }
-      *in_ptr+=3;
-      return 3;   /* 1110xxxx 10xxxxxx 10xxxxxx */
+      *in_ptr += 3;
+      return 3; /* 1110xxxx 10xxxxxx 10xxxxxx */
     }
   } else if (in < 0xF8) {
-    if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80
-        && ((*in_ptr)[3]& 0xC0) == 0x80) {
-      if(out_string) {
-        out_string[0]=in;
-        out_string[1]=(*in_ptr)[1];
-        out_string[2]=(*in_ptr)[2];
-        out_string[3]=(*in_ptr)[3];
-        out_string[4]='\0';
+    if (((*in_ptr)[1] & 0xC0) == 0x80 && ((*in_ptr)[2] & 0xC0) == 0x80 &&
+        ((*in_ptr)[3] & 0xC0) == 0x80) {
+      if (out_string) {
+        out_string[0] = in;
+        out_string[1] = (*in_ptr)[1];
+        out_string[2] = (*in_ptr)[2];
+        out_string[3] = (*in_ptr)[3];
+        out_string[4] = '\0';
       }
-      *in_ptr+=4;
-      return 4;   /* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
+      *in_ptr += 4;
+      return 4; /* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
     }
   } else if (in < 0xFC) {
-    if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80
-        && ((*in_ptr)[3]& 0xC0) == 0x80 && ((*in_ptr)[4]& 0xC0) == 0x80) {
-      if(out_string) {
-        out_string[0]=in;
-        out_string[1]=(*in_ptr)[1];
-        out_string[2]=(*in_ptr)[2];
-        out_string[3]=(*in_ptr)[3];
-        out_string[4]=(*in_ptr)[4];
-        out_string[5]='\0';
+    if (((*in_ptr)[1] & 0xC0) == 0x80 && ((*in_ptr)[2] & 0xC0) == 0x80 &&
+        ((*in_ptr)[3] & 0xC0) == 0x80 && ((*in_ptr)[4] & 0xC0) == 0x80) {
+      if (out_string) {
+        out_string[0] = in;
+        out_string[1] = (*in_ptr)[1];
+        out_string[2] = (*in_ptr)[2];
+        out_string[3] = (*in_ptr)[3];
+        out_string[4] = (*in_ptr)[4];
+        out_string[5] = '\0';
       }
-      *in_ptr+=5;
-      return 5;   /* 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+      *in_ptr += 5;
+      return 5; /* 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
     }
   } else if (in < 0xFE) {
-    if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80
-        && ((*in_ptr)[3]& 0xC0) == 0x80 && ((*in_ptr)[4]& 0xC0) == 0x80
-        && ((*in_ptr)[5]& 0xC0) == 0x80) {
-      if(out_string) {
-        out_string[0]=in;
-        out_string[1]=(*in_ptr)[1];
-        out_string[2]=(*in_ptr)[2];
-        out_string[3]=(*in_ptr)[3];
-        out_string[4]=(*in_ptr)[4];
-        out_string[5]=(*in_ptr)[5];
-        out_string[6]='\0';
+    if (((*in_ptr)[1] & 0xC0) == 0x80 && ((*in_ptr)[2] & 0xC0) == 0x80 &&
+        ((*in_ptr)[3] & 0xC0) == 0x80 && ((*in_ptr)[4] & 0xC0) == 0x80 &&
+        ((*in_ptr)[5] & 0xC0) == 0x80) {
+      if (out_string) {
+        out_string[0] = in;
+        out_string[1] = (*in_ptr)[1];
+        out_string[2] = (*in_ptr)[2];
+        out_string[3] = (*in_ptr)[3];
+        out_string[4] = (*in_ptr)[4];
+        out_string[5] = (*in_ptr)[5];
+        out_string[6] = '\0';
       }
-      *in_ptr+=6;
-      return 6;   /* 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+      *in_ptr += 6;
+      return 6; /* 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
     }
   }
 
   if (out_string) {
-    out_string[0]=in;
-    out_string[1] = '\0';   /* 0xxxxxxx */
+    out_string[0] = in;
+    out_string[1] = '\0'; /* 0xxxxxxx */
   }
   (*in_ptr)++;
   return 1;
@@ -2152,20 +2121,18 @@ int msGetNextGlyph(const char **in_ptr, char *out_string)
 /*
 ** Returns the number of glyphs in string
 */
-int msGetNumGlyphs(const char *in_ptr)
-{
-  int numchars=0;
+int msGetNumGlyphs(const char *in_ptr) {
+  int numchars = 0;
 
-  while( msGetNextGlyph(&in_ptr, NULL) != -1 )
+  while (msGetNextGlyph(&in_ptr, NULL) != -1)
     numchars++;
 
   return numchars;
 }
 
-static int cmp_entities(const void *e1, const void *e2)
-{
-  struct mapentities_s *en1 = (struct mapentities_s *) e1;
-  struct mapentities_s *en2 = (struct mapentities_s *) e2;
+static int cmp_entities(const void *e1, const void *e2) {
+  struct mapentities_s *en1 = (struct mapentities_s *)e1;
+  struct mapentities_s *en2 = (struct mapentities_s *)e2;
   return strcmp(en1->name, en2->name);
 }
 /*
@@ -2176,67 +2143,65 @@ static int cmp_entities(const void *e1, const void *e2)
  * - if the string does start with such entity,it returns the number of
  * bytes occupied by said entity, and stores the unicode value in *unicode
  */
-int msGetUnicodeEntity(const char *inptr, unsigned int *unicode)
-{
-  unsigned char *in = (unsigned char*)inptr;
-  int l,val=0;
-  if(*in=='&') {
+int msGetUnicodeEntity(const char *inptr, unsigned int *unicode) {
+  unsigned char *in = (unsigned char *)inptr;
+  int l, val = 0;
+  if (*in == '&') {
     in++;
-    if(*in=='#') {
+    if (*in == '#') {
       in++;
-      if(*in=='x'||*in=='X') {
+      if (*in == 'x' || *in == 'X') {
         in++;
-        for(l=3; l<8; l++) {
+        for (l = 3; l < 8; l++) {
           char byte;
-          if(*in>='0'&&*in<='9')
+          if (*in >= '0' && *in <= '9')
             byte = *in - '0';
-          else if(*in>='a'&&*in<='f')
+          else if (*in >= 'a' && *in <= 'f')
             byte = *in - 'a' + 10;
-          else if(*in>='A'&&*in<='F')
+          else if (*in >= 'A' && *in <= 'F')
             byte = *in - 'A' + 10;
           else
             break;
           in++;
           val = (val * 16) + byte;
         }
-        if(*in==';' && l>3 ) {
-          *unicode=val;
+        if (*in == ';' && l > 3) {
+          *unicode = val;
           return ++l;
         }
       } else {
-        for(l=2; l<8; l++) {
-          if(*in>='0'&&*in<='9') {
-            val = val*10+*in-'0';
+        for (l = 2; l < 8; l++) {
+          if (*in >= '0' && *in <= '9') {
+            val = val * 10 + *in - '0';
             in++;
           } else
             break;
         }
-        if(*in==';' && l>2 ) {
-          *unicode=val;
+        if (*in == ';' && l > 2) {
+          *unicode = val;
           return ++l;
         }
       }
     } else {
-      char entity_name_buf[MAP_ENTITY_NAME_LENGTH_MAX+1];
+      char entity_name_buf[MAP_ENTITY_NAME_LENGTH_MAX + 1];
       char *p;
       struct mapentities_s key;
       key.name = p = entity_name_buf;
-      for (l = 1; l <=  MAP_ENTITY_NAME_LENGTH_MAX+1; l++) {
+      for (l = 1; l <= MAP_ENTITY_NAME_LENGTH_MAX + 1; l++) {
         if (*in == '\0') /*end of string before possible entity: return*/
           break;
         if (*in == ';') { /*possible end of entity: do a lookup*/
           *p++ = '\0';
-          const struct mapentities_s* res =
-            static_cast<const struct mapentities_s*>(bsearch(
-                &key,
-                mapentities,
-                MAP_NR_OF_ENTITIES,
-                sizeof(mapentities[0]), cmp_entities));
+          const struct mapentities_s *res =
+              static_cast<const struct mapentities_s *>(
+                  bsearch(&key, mapentities, MAP_NR_OF_ENTITIES,
+                          sizeof(mapentities[0]), cmp_entities));
           if (res) {
             *unicode = res->value;
             return ++l;
           }
-          break; /*the string was of the form of an entity but didn't correspond to an existing one: return*/
+          break; /*the string was of the form of an entity but didn't correspond
+                    to an existing one: return*/
         }
         *p++ = *in;
         in++;
@@ -2256,8 +2221,7 @@ int msGetUnicodeEntity(const char *inptr, unsigned int *unicode)
  * @return MS_SUCCESS or MS_FAILURE
  */
 
-int msStringIsInteger(const char *string)
-{
+int msStringIsInteger(const char *string) {
   int length, i;
 
   length = strlen(string);
@@ -2265,7 +2229,7 @@ int msStringIsInteger(const char *string)
   if (length == 0)
     return MS_FAILURE;
 
-  for(i=0; i<length; i++) {
+  for (i = 0; i < length; i++) {
     if (!isdigit(string[i]))
       return MS_FAILURE;
   }
@@ -2279,28 +2243,26 @@ int msStringIsInteger(const char *string)
 
 /* Safe version of msStrdup(). This function is taken from gdal/cpl. */
 
-char *msStrdup(const char * pszString)
-{
-    size_t nStringLength; 
-    char *pszReturn;
+char *msStrdup(const char *pszString) {
+  size_t nStringLength;
+  char *pszReturn;
 
-    if (pszString == NULL)
-        pszString = "";
+  if (pszString == NULL)
+    pszString = "";
 
-    nStringLength = strlen(pszString) + 1; /* null terminated byte */
-    pszReturn = static_cast<char*>(malloc(nStringLength));
+  nStringLength = strlen(pszString) + 1; /* null terminated byte */
+  pszReturn = static_cast<char *>(malloc(nStringLength));
 
-    if (pszReturn == NULL) {
-        fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
+  if (pszReturn == NULL) {
+    fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
             (long)strlen(pszString));
-        exit(1);
-    }
+    exit(1);
+  }
 
-    memcpy(pszReturn, pszString, nStringLength);
+  memcpy(pszReturn, pszString, nStringLength);
 
-    return pszReturn;
+  return pszReturn;
 }
-
 
 /************************************************************************/
 /*                             msStringEscape()                         */
@@ -2310,24 +2272,24 @@ char *msStrdup(const char * pszString)
    NOTE: the user must free the returned char* if it is different than the
    one passed in */
 
-char* msStringEscape( const char * pszString )
-{
+char *msStringEscape(const char *pszString) {
   char *string_tmp, *string_ptr;
-  int i,ncharstoescape=0;
+  int i, ncharstoescape = 0;
 
-  if (pszString ==  NULL || strlen(pszString) == 0)
+  if (pszString == NULL || strlen(pszString) == 0)
     return msStrdup("");
 
-  for (i=0; pszString[i]; i++)
-    ncharstoescape += ((pszString[i] == '\"')||(pszString[i] == '\''));
-  
-  if(!ncharstoescape) {
-    return (char*)pszString;
+  for (i = 0; pszString[i]; i++)
+    ncharstoescape += ((pszString[i] == '\"') || (pszString[i] == '\''));
+
+  if (!ncharstoescape) {
+    return (char *)pszString;
   }
 
-  string_tmp = (char*)msSmallMalloc(strlen(pszString)+ncharstoescape+1);
-  for (string_ptr=(char*)pszString,i=0; *string_ptr!='\0'; ++string_ptr,++i) {
-    if ( (*string_ptr == '\"') || (*string_ptr == '\'') ) {
+  string_tmp = (char *)msSmallMalloc(strlen(pszString) + ncharstoescape + 1);
+  for (string_ptr = (char *)pszString, i = 0; *string_ptr != '\0';
+       ++string_ptr, ++i) {
+    if ((*string_ptr == '\"') || (*string_ptr == '\'')) {
       string_tmp[i] = '\\';
       ++i;
     }
@@ -2338,12 +2300,11 @@ char* msStringEscape( const char * pszString )
   return string_tmp;
 }
 
-std::string msStdStringEscape( const char * pszString )
-{
-  char* tmp = msStringEscape(pszString);
+std::string msStdStringEscape(const char *pszString) {
+  char *tmp = msStringEscape(pszString);
   std::string ret(tmp);
-  if( tmp != pszString )
-      msFree(tmp);
+  if (tmp != pszString)
+    msFree(tmp);
   return ret;
 }
 
@@ -2352,26 +2313,25 @@ std::string msStdStringEscape( const char * pszString )
 /************************************************************************/
 
 /* Check if a string is in a array */
-int msStringInArray( const char * pszString, char **array, int numelements)
-{
+int msStringInArray(const char *pszString, char **array, int numelements) {
   int i;
-  for (i=0; i<numelements; ++i) {
-    if (strcasecmp(pszString, array[i])==0)
+  for (i = 0; i < numelements; ++i) {
+    if (strcasecmp(pszString, array[i]) == 0)
       return MS_TRUE;
   }
   return MS_FALSE;
 }
 
-bool msStringInArray( const char * pszString, const std::vector<std::string>& array)
-{
-  for( const auto& str: array ) {
-    if (strcasecmp(pszString, str.c_str())==0)
+bool msStringInArray(const char *pszString,
+                     const std::vector<std::string> &array) {
+  for (const auto &str : array) {
+    if (strcasecmp(pszString, str.c_str()) == 0)
       return true;
   }
   return false;
 }
 
-int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
+int msLayerEncodeShapeAttributes(layerObj *layer, shapeObj *shape) {
 
 #ifdef USE_ICONV
   iconv_t cd = NULL;
@@ -2380,24 +2340,25 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   size_t len, bufsize, bufleft;
   int i;
 
-  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+  if (!layer->encoding || !*layer->encoding ||
+      !strcasecmp(layer->encoding, "UTF-8"))
     return MS_SUCCESS;
 
   cd = iconv_open("UTF-8", layer->encoding);
-  if(cd == (iconv_t)-1) {
+  if (cd == (iconv_t)-1) {
     msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
                "msGetEncodedString()", layer->encoding);
     return MS_FAILURE;
   }
 
-  for(i=0;i <shape->numvalues; i++) {
-    if(!shape->values[i] || (len = strlen(shape->values[i]))==0) {
-      continue;    /* Nothing to do */
+  for (i = 0; i < shape->numvalues; i++) {
+    if (!shape->values[i] || (len = strlen(shape->values[i])) == 0) {
+      continue; /* Nothing to do */
     }
 
     bufsize = len * 6 + 1; /* Each UTF-8 char can be up to 6 bytes */
     inp = shape->values[i];
-    out = (char*) msSmallMalloc(bufsize);
+    out = (char *)msSmallMalloc(bufsize);
 
     strlcpy(out, shape->values[i], bufsize);
     outp = out;
@@ -2406,13 +2367,14 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
     bool failedIconv = false;
     while (len > 0) {
-      const size_t iconv_status = msIconv(cd, (char**)&inp, &len, &outp, &bufleft);
-      if(iconv_status == static_cast<size_t>(-1)) {
+      const size_t iconv_status =
+          msIconv(cd, (char **)&inp, &len, &outp, &bufleft);
+      if (iconv_status == static_cast<size_t>(-1)) {
         failedIconv = true;
         break;
       }
     }
-    if( failedIconv ) {
+    if (failedIconv) {
       msFree(out);
       continue; /* silently ignore failed conversions */
     }
@@ -2424,9 +2386,11 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
   return MS_SUCCESS;
 #else
-  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+  if (!layer->encoding || !*layer->encoding ||
+      !strcasecmp(layer->encoding, "UTF-8"))
     return MS_SUCCESS;
-  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msGetEncodedString()");
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.",
+             "msGetEncodedString()");
   return MS_FAILURE;
 #endif
 }
@@ -2435,77 +2399,68 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 /*                             msStringBuffer                           */
 /************************************************************************/
 
-struct msStringBuffer
-{
-    size_t alloc_size;
-    size_t length;
-    char  *str;
+struct msStringBuffer {
+  size_t alloc_size;
+  size_t length;
+  char *str;
 };
 
 /************************************************************************/
 /*                         msStringBufferAlloc()                        */
 /************************************************************************/
 
-msStringBuffer* msStringBufferAlloc(void)
-{
-    return (msStringBuffer*)msSmallCalloc(sizeof(msStringBuffer), 1);
+msStringBuffer *msStringBufferAlloc(void) {
+  return (msStringBuffer *)msSmallCalloc(sizeof(msStringBuffer), 1);
 }
 
 /************************************************************************/
 /*                         msStringBufferFree()                         */
 /************************************************************************/
 
-void msStringBufferFree(msStringBuffer* sb)
-{
-    if( sb )
-        msFree(sb->str);
-    msFree(sb);
+void msStringBufferFree(msStringBuffer *sb) {
+  if (sb)
+    msFree(sb->str);
+  msFree(sb);
 }
 
 /************************************************************************/
 /*                       msStringBufferGetString()                      */
 /************************************************************************/
 
-const char* msStringBufferGetString(msStringBuffer* sb)
-{
-    return sb->str;
-}
+const char *msStringBufferGetString(msStringBuffer *sb) { return sb->str; }
 
 /************************************************************************/
 /*                   msStringBufferReleaseStringAndFree()               */
 /************************************************************************/
 
-char* msStringBufferReleaseStringAndFree(msStringBuffer* sb)
-{
-    char* str = sb->str;
-    sb->str = NULL;
-    sb->alloc_size = 0;
-    sb->length = 0;
-    msStringBufferFree(sb);
-    return str;
+char *msStringBufferReleaseStringAndFree(msStringBuffer *sb) {
+  char *str = sb->str;
+  sb->str = NULL;
+  sb->alloc_size = 0;
+  sb->length = 0;
+  msStringBufferFree(sb);
+  return str;
 }
 
 /************************************************************************/
 /*                        msStringBufferAppend()                        */
 /************************************************************************/
 
-int msStringBufferAppend(msStringBuffer* sb, const char* pszAppendedString)
-{
-    size_t nAppendLen = strlen(pszAppendedString);
-    if( sb->length + nAppendLen >= sb->alloc_size )
-    {
-        size_t newAllocSize1 = sb->alloc_size + sb->alloc_size / 3;
-        size_t newAllocSize2 = sb->length + nAppendLen + 1;
-        size_t newAllocSize = MAX(newAllocSize1, newAllocSize2);
-        void* newStr = realloc(sb->str, newAllocSize);
-        if( newStr == NULL ) {
-            msSetError(MS_MEMERR, "Not enough memory", "msStringBufferAppend()");
-            return MS_FAILURE;
-        }
-        sb->alloc_size = newAllocSize;
-        sb->str = (char*) newStr;
+int msStringBufferAppend(msStringBuffer *sb, const char *pszAppendedString) {
+  size_t nAppendLen = strlen(pszAppendedString);
+  if (sb->length + nAppendLen >= sb->alloc_size) {
+    size_t newAllocSize1 = sb->alloc_size + sb->alloc_size / 3;
+    size_t newAllocSize2 = sb->length + nAppendLen + 1;
+    size_t newAllocSize = MAX(newAllocSize1, newAllocSize2);
+    void *newStr = realloc(sb->str, newAllocSize);
+    if (newStr == NULL) {
+      msSetError(MS_MEMERR, "Not enough memory", "msStringBufferAppend()");
+      return MS_FAILURE;
     }
-    memcpy(sb->str + sb->length, pszAppendedString, nAppendLen + 1);
-    sb->length += nAppendLen;
-    return MS_SUCCESS;
+    sb->alloc_size = newAllocSize;
+    sb->str = (char *)newStr;
+  }
+  memcpy(sb->str + sb->length, pszAppendedString, nAppendLen + 1);
+  sb->length += nAppendLen;
+  return MS_SUCCESS;
 }

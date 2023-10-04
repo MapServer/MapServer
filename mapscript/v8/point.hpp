@@ -33,27 +33,26 @@
 
 using namespace v8;
 
-class Point: public ObjectWrap
-{
+class Point : public ObjectWrap {
 public:
   static void Initialize(Handle<Object> target);
-  static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Dispose();
   static Handle<Function> Constructor();
 
   Point(pointObj *p, ObjectWrap *pa = NULL);
   ~Point();
-  inline pointObj* get() { return this_; }
+  inline pointObj *get() { return this_; }
   inline void disableMemoryHandler() { this->freeInternal = false; }
 
   static void getProp(Local<String> property,
-                      const PropertyCallbackInfo<Value>& info);
-  static void setProp(Local<String> property,
-                      Local<Value> value,
-                      const PropertyCallbackInfo<void>& info);
+                      const PropertyCallbackInfo<Value> &info);
+  static void setProp(Local<String> property, Local<Value> value,
+                      const PropertyCallbackInfo<void> &info);
 
-  static void setXY(const v8::FunctionCallbackInfo<v8::Value>& args);
-  static void setXYZ(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void setXY(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void setXYZ(const v8::FunctionCallbackInfo<v8::Value> &args);
+
 private:
   static Persistent<FunctionTemplate> constructor;
   pointObj *this_;

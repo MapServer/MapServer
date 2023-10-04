@@ -26,10 +26,8 @@
 #include <assert.h>
 
 class ObjectWrap {
- public:
-  ObjectWrap() {
-    refs_ = 0;
-  }
+public:
+  ObjectWrap() { refs_ = 0; }
 
   virtual ~ObjectWrap() {
     if (persistent().IsEmpty())
@@ -39,35 +37,27 @@ class ObjectWrap {
     persistent().Dispose();
   }
 
-
-  template <class T>
-  static inline T* Unwrap(v8::Handle<v8::Object> handle) {
+  template <class T> static inline T *Unwrap(v8::Handle<v8::Object> handle) {
     assert(!handle.IsEmpty());
     assert(handle->InternalFieldCount() > 0);
     // Cast to ObjectWrap before casting to T.  A direct cast from void
     // to T won't work right when T has more than one base class.
-    void* ptr = handle->GetAlignedPointerFromInternalField(0);
-    ObjectWrap* wrap = static_cast<ObjectWrap*>(ptr);
-    return static_cast<T*>(wrap);
+    void *ptr = handle->GetAlignedPointerFromInternalField(0);
+    ObjectWrap *wrap = static_cast<ObjectWrap *>(ptr);
+    return static_cast<T *>(wrap);
   }
-
 
   inline v8::Local<v8::Object> handle() {
     return handle(v8::Isolate::GetCurrent());
   }
 
-
-  inline v8::Local<v8::Object> handle(v8::Isolate* isolate) {
+  inline v8::Local<v8::Object> handle(v8::Isolate *isolate) {
     return v8::Local<v8::Object>::New(isolate, persistent());
   }
 
+  inline v8::Persistent<v8::Object> &persistent() { return handle_; }
 
-  inline v8::Persistent<v8::Object>& persistent() {
-    return handle_;
-  }
-
-
- protected:
+protected:
   inline void Wrap(v8::Handle<v8::Object> handle) {
     assert(persistent().IsEmpty());
     assert(handle->InternalFieldCount() > 0);
@@ -75,7 +65,6 @@ class ObjectWrap {
     persistent().Reset(v8::Isolate::GetCurrent(), handle);
     MakeWeak();
   }
-
 
   inline void MakeWeak(void) {
     persistent().MakeWeak(this, WeakCallback);
@@ -109,12 +98,11 @@ class ObjectWrap {
       MakeWeak();
   }
 
-  int refs_;  // ro
+  int refs_; // ro
 
- private:
-  static void WeakCallback(v8::Isolate* isolate,
-                           v8::Persistent<v8::Object>* pobj,
-                           ObjectWrap* wrap) {
+private:
+  static void WeakCallback(v8::Isolate *isolate,
+                           v8::Persistent<v8::Object> *pobj, ObjectWrap *wrap) {
     v8::HandleScope scope(isolate);
     assert(wrap->refs_ == 0);
     assert(*pobj == wrap->persistent());
@@ -125,5 +113,4 @@ class ObjectWrap {
   v8::Persistent<v8::Object> handle_;
 };
 
-
-#endif  // v8_OBJECT_WRAP_H_
+#endif // v8_OBJECT_WRAP_H_

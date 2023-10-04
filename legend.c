@@ -29,32 +29,29 @@
 
 #include "mapserver.h"
 
-
-
-int main(int argc, char *argv[])
-{
-  mapObj *map=NULL;
-  imageObj *img=NULL;
+int main(int argc, char *argv[]) {
+  mapObj *map = NULL;
+  imageObj *img = NULL;
 
   msSetup();
-  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+  if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
     exit(0);
   }
 
-  if( argc < 3 ) {
-    fprintf(stdout,"Syntax: legend [mapfile] [output image]\n" );
+  if (argc < 3) {
+    fprintf(stdout, "Syntax: legend [mapfile] [output image]\n");
     exit(0);
   }
 
   map = msLoadMap(argv[1], NULL, NULL);
-  if(!map) {
+  if (!map) {
     msWriteError(stderr);
     exit(0);
   }
 
   img = msDrawLegend(map, MS_FALSE, NULL);
-  if(!img) {
+  if (!img) {
     msWriteError(stderr);
     exit(0);
   }
@@ -64,5 +61,5 @@ int main(int argc, char *argv[])
   msFreeImage(img);
   msFreeMap(map);
 
-  return(MS_TRUE);
+  return (MS_TRUE);
 }

@@ -39,6 +39,7 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
 
 PG_CONNECTION_STRING = "dbname=mapserver_test user=postgres"
@@ -48,7 +49,7 @@ class TableTest(unittest.TestCase):
     def setUp(self):
         self.mo = mapscript.mapObj()
         lo = mapscript.layerObj()
-        lo.name = 'pg_layer'
+        lo.name = "pg_layer"
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
         lo.connection = PG_CONNECTION_STRING
@@ -61,14 +62,14 @@ class TableTest(unittest.TestCase):
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
-        self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+        self.assertEqual(atts, ["1", "1", "A Polygon"], atts)
 
 
 class ViewTest(unittest.TestCase):
     def setUp(self):
         self.mo = mapscript.mapObj()
         lo = mapscript.layerObj()
-        lo.name = 'pg_sub_layer'
+        lo.name = "pg_sub_layer"
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
         lo.connection = PG_CONNECTION_STRING
@@ -81,14 +82,14 @@ class ViewTest(unittest.TestCase):
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
-        self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+        self.assertEqual(atts, ["1", "1", "A Polygon"], atts)
 
 
 class SubSelectTest(unittest.TestCase):
     def setUp(self):
         self.mo = mapscript.mapObj()
         lo = mapscript.layerObj()
-        lo.name = 'pg_sub_layer'
+        lo.name = "pg_sub_layer"
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
         lo.connection = PG_CONNECTION_STRING
@@ -101,15 +102,16 @@ class SubSelectTest(unittest.TestCase):
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
-        self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+        self.assertEqual(atts, ["1", "1", "A Polygon"], atts)
 
 
 class SubSelectNoSRIDTest(unittest.TestCase):
     """SRID should be diagnosed from the selection"""
+
     def setUp(self):
         self.mo = mapscript.mapObj()
         lo = mapscript.layerObj()
-        lo.name = 'pg_sub_layer'
+        lo.name = "pg_sub_layer"
         lo.type = mapscript.MS_LAYER_POLYGON
         lo.connectiontype = mapscript.MS_POSTGIS
         lo.connection = PG_CONNECTION_STRING
@@ -122,8 +124,8 @@ class SubSelectNoSRIDTest(unittest.TestCase):
         f = self.lo.getFeature(1, -1)
         atts = [f.getValue(i) for i in range(self.lo.numitems)]
         self.lo.close()
-        self.assertEqual(atts, ['1', '1', 'A Polygon'], atts)
+        self.assertEqual(atts, ["1", "1", "A Polygon"], atts)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

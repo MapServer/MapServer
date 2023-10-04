@@ -31,15 +31,13 @@
 
 #include "mapserver.h"
 
-
 /* ===========================================================================
    msInsertClass
 
    Returns the index at which the class was inserted.
    ======================================================================== */
 
-int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
-{
+int msInsertClass(layerObj *layer, classObj *classobj, int nIndex) {
   int i;
 
   if (!classobj) {
@@ -54,36 +52,36 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
   /* Catch attempt to insert past end of styles array */
   else if (nIndex >= layer->numclasses) {
     msSetError(MS_CHILDERR, "Cannot insert class beyond index %d",
-               "msInsertClass()", layer->numclasses-1);
+               "msInsertClass()", layer->numclasses - 1);
     return -1;
   } else if (nIndex < 0) { /* Insert at the end by default */
 #ifndef __cplusplus
-    layer->class[layer->numclasses]=classobj;
+    layer->class[layer->numclasses] = classobj;
 #else
-    layer->_class[layer->numclasses]=classobj;
+    layer->_class[layer->numclasses] = classobj;
 #endif
     /* set parent pointer */
-    classobj->layer=layer;
+    classobj->layer = layer;
     MS_REFCNT_INCR(classobj);
     layer->numclasses++;
-    return layer->numclasses-1;
+    return layer->numclasses - 1;
   } else {
 
     /* Copy classes existing at the specified nIndex or greater */
     /* to an index one higher */
 
 #ifndef __cplusplus
-    for (i=layer->numclasses-1; i>=nIndex; i--)
-      layer->class[i+1] = layer->class[i];
-    layer->class[nIndex]=classobj;
+    for (i = layer->numclasses - 1; i >= nIndex; i--)
+      layer->class[i + 1] = layer->class[i];
+    layer->class[nIndex] = classobj;
 #else
-    for (i=layer->numclasses-1; i>=nIndex; i--)
-      layer->_class[i+1] = layer->_class[i];
-    layer->_class[nIndex]=classobj;
+    for (i = layer->numclasses - 1; i >= nIndex; i--)
+      layer->_class[i + 1] = layer->_class[i];
+    layer->_class[nIndex] = classobj;
 #endif
 
     /* set parent pointer */
-    classobj->layer=layer;
+    classobj->layer = layer;
     MS_REFCNT_INCR(classobj);
     /* increment number of classes and return */
     layer->numclasses++;
@@ -97,8 +95,7 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
    remove the class at an index from a layer, returning a copy
    ======================================================================== */
 
-classObj *msRemoveClass(layerObj *layer, int nIndex)
-{
+classObj *msRemoveClass(layerObj *layer, int nIndex) {
   int i;
   classObj *classobj;
 
@@ -108,25 +105,25 @@ classObj *msRemoveClass(layerObj *layer, int nIndex)
     return NULL;
   } else {
 #ifndef __cplusplus
-    classobj=layer->class[nIndex];
+    classobj = layer->class[nIndex];
 #else
-    classobj=layer->_class[nIndex];
+    classobj = layer->_class[nIndex];
 #endif
-    classobj->layer=NULL;
+    classobj->layer = NULL;
     MS_REFCNT_DECR(classobj);
 
     /* Iteratively copy the higher index classes down one index */
-    for (i=nIndex; i<layer->numclasses-1; i++) {
+    for (i = nIndex; i < layer->numclasses - 1; i++) {
 #ifndef __cplusplus
-      layer->class[i]=layer->class[i+1];
+      layer->class[i] = layer->class[i + 1];
 #else
-      layer->_class[i]=layer->_class[i+1];
+      layer->_class[i] = layer->_class[i + 1];
 #endif
     }
 #ifndef __cplusplus
-    layer->class[i]=NULL;
+    layer->class[i] = NULL;
 #else
-    layer->_class[i]=NULL;
+    layer->_class[i] = NULL;
 #endif
 
     /* decrement number of layers and return copy of removed layer */
@@ -138,38 +135,34 @@ classObj *msRemoveClass(layerObj *layer, int nIndex)
 /**
  * Move the class up inside the array of classes.
  */
-int msMoveClassUp(layerObj *layer, int nClassIndex)
-{
+int msMoveClassUp(layerObj *layer, int nClassIndex) {
   classObj *psTmpClass = NULL;
-  if (layer && nClassIndex < layer->numclasses && nClassIndex >0) {
-    psTmpClass=layer->class[nClassIndex];
+  if (layer && nClassIndex < layer->numclasses && nClassIndex > 0) {
+    psTmpClass = layer->class[nClassIndex];
 
-    layer->class[nClassIndex] = layer->class[nClassIndex-1];
+    layer->class[nClassIndex] = layer->class[nClassIndex - 1];
 
-    layer->class[nClassIndex-1] = psTmpClass;
+    layer->class[nClassIndex - 1] = psTmpClass;
 
-    return(MS_SUCCESS);
+    return (MS_SUCCESS);
   }
-  msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassUp()",
-             nClassIndex);
+  msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassUp()", nClassIndex);
   return (MS_FAILURE);
 }
-
 
 /**
  * Move the class down inside the array of classes.
  */
-int msMoveClassDown(layerObj *layer, int nClassIndex)
-{
+int msMoveClassDown(layerObj *layer, int nClassIndex) {
   classObj *psTmpClass = NULL;
-  if (layer && nClassIndex < layer->numclasses-1 && nClassIndex >=0) {
-    psTmpClass=layer->class[nClassIndex];
+  if (layer && nClassIndex < layer->numclasses - 1 && nClassIndex >= 0) {
+    psTmpClass = layer->class[nClassIndex];
 
-    layer->class[nClassIndex] = layer->class[nClassIndex+1];
+    layer->class[nClassIndex] = layer->class[nClassIndex + 1];
 
-    layer->class[nClassIndex+1] = psTmpClass;
+    layer->class[nClassIndex + 1] = psTmpClass;
 
-    return(MS_SUCCESS);
+    return (MS_SUCCESS);
   }
   msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassDown()",
              nClassIndex);
@@ -180,9 +173,8 @@ int msMoveClassDown(layerObj *layer, int nClassIndex)
  * Set the extent of a layer.
  */
 
-int msLayerSetExtent( layerObj *layer,
-                      double minx, double miny, double maxx, double maxy)
-{
+int msLayerSetExtent(layerObj *layer, double minx, double miny, double maxx,
+                     double maxy) {
 
   layer->extent.minx = minx;
   layer->extent.miny = miny;
@@ -190,12 +182,16 @@ int msLayerSetExtent( layerObj *layer,
   layer->extent.maxy = maxy;
 
   if (minx == -1.0 && miny == -1.0 && maxx == -1.0 && maxy == -1.0)
-    return(MS_SUCCESS);
+    return (MS_SUCCESS);
 
   if (!MS_VALID_EXTENT(layer->extent)) {
-    msSetError(MS_MISCERR, "Given layer extent is invalid. minx=%lf, miny=%lf, maxx=%lf, maxy=%lf.", "msLayerSetExtent()", layer->extent.minx, layer->extent.miny, layer->extent.maxx, layer->extent.maxy);
-    return(MS_FAILURE);
+    msSetError(MS_MISCERR,
+               "Given layer extent is invalid. minx=%lf, miny=%lf, maxx=%lf, "
+               "maxy=%lf.",
+               "msLayerSetExtent()", layer->extent.minx, layer->extent.miny,
+               layer->extent.maxx, layer->extent.maxy);
+    return (MS_FAILURE);
   }
 
-  return(MS_SUCCESS);
+  return (MS_SUCCESS);
 }

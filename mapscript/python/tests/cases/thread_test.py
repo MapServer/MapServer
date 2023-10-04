@@ -25,10 +25,12 @@
 # ===========================================================================
 
 import os
-import unittest
 import threading
+import unittest
+
 import mapscript
-from .testing import TESTMAPFILE, INCOMING
+
+from .testing import INCOMING, TESTMAPFILE
 
 
 def draw_map(name, save=0):
@@ -37,7 +39,7 @@ def draw_map(name, save=0):
     mo = mapscript.mapObj(TESTMAPFILE)
     im = mo.draw()
     if save:
-        im.save('threadtest_%s.png' % (name))
+        im.save("threadtest_%s.png" % (name))
 
 
 def trigger_exception(name):
@@ -52,13 +54,12 @@ def trigger_exception(name):
 
 
 class MultipleThreadsTestCase(unittest.TestCase):
-
     def testDrawMultiThreads(self):
         """map drawing with multiple threads"""
 
         workers = []
         for i in range(10):
-            name = 'd%d' % (i)
+            name = "d%d" % (i)
             thread = threading.Thread(target=draw_map, name=name, args=(name, 1))
             workers.append(thread)
             thread.start()
@@ -68,7 +69,7 @@ class MultipleThreadsTestCase(unittest.TestCase):
 
         workers = []
         for i in range(10):
-            name = 'e%d' % (i)
+            name = "e%d" % (i)
             thread = threading.Thread(target=trigger_exception, name=name, args=(name,))
             workers.append(thread)
             thread.start()
@@ -80,13 +81,13 @@ class MultipleThreadsTestCase(unittest.TestCase):
 
         # Trigger an exception in the first started thread
         for i in range(0, 1):
-            name = 'c%d' % (i)
+            name = "c%d" % (i)
             thread = threading.Thread(target=trigger_exception, name=name, args=(name,))
             workers.append(thread)
 
         # Draw normally
         for i in range(1, num):
-            name = 'c%d' % (i)
+            name = "c%d" % (i)
             thread = threading.Thread(target=draw_map, name=name, args=(name,))
             workers.append(thread)
 
@@ -102,32 +103,32 @@ def draw_map_wfs(name, save=0):
 
     # WFS layer
     lo = mapscript.layerObj()
-    lo.name = 'cheapo_wfs'
-    lo.setProjection('+init=epsg:4326')
+    lo.name = "cheapo_wfs"
+    lo.setProjection("+init=epsg:4326")
     lo.connectiontype = mapscript.MS_WFS
-    lo.connection = 'http://zcologia.com:9001/mapserver/members/features.rpy?'
-    lo.metadata.set('wfs_service', 'WFS')
-    lo.metadata.set('wfs_typename', 'users')
-    lo.metadata.set('wfs_version', '1.0.0')
+    lo.connection = "http://zcologia.com:9001/mapserver/members/features.rpy?"
+    lo.metadata.set("wfs_service", "WFS")
+    lo.metadata.set("wfs_typename", "users")
+    lo.metadata.set("wfs_version", "1.0.0")
     lo.type = mapscript.MS_LAYER_POINT
     lo.status = mapscript.MS_DEFAULT
-    lo.labelitem = 'zco:mid'
+    lo.labelitem = "zco:mid"
 
     so1 = mapscript.styleObj()
-    so1.color.setHex('#FFFFFF')
+    so1.color.setHex("#FFFFFF")
     so1.size = 9
     so1.symbol = 1  # mo.symbolset.index('circle')
 
     so2 = mapscript.styleObj()
-    so2.color.setHex('#333333')
+    so2.color.setHex("#333333")
     so2.size = 7
     so2.symbol = 1  # mo.symbolset.index('circle')
 
     co = mapscript.classObj()
     co.label.type = mapscript.MS_BITMAP
     co.label.size = mapscript.MS_SMALL
-    co.label.color.setHex('#000000')
-    co.label.outlinecolor.setHex('#FFFFFF')
+    co.label.color.setHex("#000000")
+    co.label.outlinecolor.setHex("#FFFFFF")
     co.label.position = mapscript.MS_AUTO
 
     co.insertStyle(so1)
@@ -136,11 +137,11 @@ def draw_map_wfs(name, save=0):
     mo.insertLayer(lo)
 
     if not mo.web.imagepath:
-        mo.web.imagepath = os.environ.get('TEMP', None) or INCOMING
+        mo.web.imagepath = os.environ.get("TEMP", None) or INCOMING
     mo.debug = mapscript.MS_ON
     im = mo.draw()
     if save:
-        im.save('threadtest_wfs_%s.png' % (name))
+        im.save("threadtest_wfs_%s.png" % (name))
 
 
 def draw_map_wms(name, save=0):
@@ -149,27 +150,27 @@ def draw_map_wms(name, save=0):
     mo = mapscript.mapObj(TESTMAPFILE)
     # WFS layer
     lo = mapscript.layerObj()
-    lo.name = 'jpl_wms'
-    lo.setProjection('+init=epsg:4326')
+    lo.name = "jpl_wms"
+    lo.setProjection("+init=epsg:4326")
     lo.connectiontype = mapscript.MS_WMS
-    lo.connection = 'http://vmap0.tiles.osgeo.org/wms/vmap0?'
-    lo.metadata.set('wms_service', 'WMS')
-    lo.metadata.set('wms_server_version', '1.1.1')
-    lo.metadata.set('wms_name', 'basic')
-    lo.metadata.set('wms_style', 'visual')
-    lo.metadata.set('wms_format', 'image/jpeg')
+    lo.connection = "http://vmap0.tiles.osgeo.org/wms/vmap0?"
+    lo.metadata.set("wms_service", "WMS")
+    lo.metadata.set("wms_server_version", "1.1.1")
+    lo.metadata.set("wms_name", "basic")
+    lo.metadata.set("wms_style", "visual")
+    lo.metadata.set("wms_format", "image/jpeg")
     lo.type = mapscript.MS_LAYER_RASTER
     lo.status = mapscript.MS_DEFAULT
     lo.debug = mapscript.MS_ON
     mo.insertLayer(lo)
 
     if not mo.web.imagepath:
-        mo.web.imagepath = os.environ.get('TEMP', None) or INCOMING
+        mo.web.imagepath = os.environ.get("TEMP", None) or INCOMING
     mo.debug = mapscript.MS_ON
-    mo.selectOutputFormat('image/jpeg')
+    mo.selectOutputFormat("image/jpeg")
     im = mo.draw()
     if save:
-        im.save('threadtest_wms_%s.jpg' % (name))
+        im.save("threadtest_wms_%s.jpg" % (name))
 
 
 class OWSRequestTestCase(unittest.TestCase):
@@ -185,11 +186,11 @@ class OWSRequestTestCase(unittest.TestCase):
     def testDrawWMS(self):
         workers = []
         for i in range(10):
-            name = 'd%d' % (i)
+            name = "d%d" % (i)
             thread = threading.Thread(target=draw_map_wms, name=name, args=(name, 1))
             workers.append(thread)
             thread.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

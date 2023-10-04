@@ -25,12 +25,13 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import MapZoomTestCase
 
 
 class ZoomPointTestCase(MapZoomTestCase):
-
     def testRecenter(self):
         """ZoomPointTestCase.testRecenter: recentering the map with a point returns the same extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
@@ -78,8 +79,9 @@ class ZoomPointTestCase(MapZoomTestCase):
         extent = self.mapobj1.extent
         w = 0
         h = -1
-        self.assertRaises(mapscript.MapServerError,
-                          self.mapobj1.zoomPoint, -2, p, w, h, extent, None)
+        self.assertRaises(
+            mapscript.MapServerError, self.mapobj1.zoomPoint, -2, p, w, h, extent, None
+        )
 
     def testZoomBadExtent(self):
         """ZoomPointTestCase.testZoomBadExtent: zooming to a bad extent raises proper error"""
@@ -89,12 +91,12 @@ class ZoomPointTestCase(MapZoomTestCase):
         extent.maxx = extent.maxx - 1000000
         w = 100
         h = 100
-        self.assertRaises(mapscript.MapServerError,
-                          self.mapobj1.zoomPoint, -2, p, w, h, extent, None)
+        self.assertRaises(
+            mapscript.MapServerError, self.mapobj1.zoomPoint, -2, p, w, h, extent, None
+        )
 
 
 class ZoomRectangleTestCase(MapZoomTestCase):
-
     def testZoomRectangle(self):
         """ZoomRectangleTestCase.testZoomRectangle: zooming to an extent returns proper map extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
@@ -119,12 +121,12 @@ class ZoomRectangleTestCase(MapZoomTestCase):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         r = mapscript.rectObj(0, 0, 200, 200)
         extent = self.mapobj1.extent
-        self.assertRaises(mapscript.MapServerError,
-                          self.mapobj1.zoomRectangle, r, w, h, extent, None)
+        self.assertRaises(
+            mapscript.MapServerError, self.mapobj1.zoomRectangle, r, w, h, extent, None
+        )
 
 
 class ZoomScaleTestCase(MapZoomTestCase):
-
     def testRecenter(self):
         """ZoomScaleTestCase.testRecenter: recentering map returns proper extent"""
         w, h = (self.mapobj1.width, self.mapobj1.height)  # 100 by 100
@@ -148,7 +150,9 @@ class ZoomScaleTestCase(MapZoomTestCase):
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
         # self.assertRectsEqual(new_extent, mapscript.rectObj(-25, -25, 25, 25))  # old values
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-24.75, -24.75, 24.75, 24.75))
+        self.assertRectsEqual(
+            new_extent, mapscript.rectObj(-24.75, -24.75, 24.75, 24.75)
+        )
 
     def testZoomOutScale(self):
         """ZoomScaleTestCase.testZoomOutScale: zooming out to a specified scale returns proper extent"""
@@ -176,5 +180,5 @@ class ZoomScaleTestCase(MapZoomTestCase):
         self.assertRectsEqual(new_extent, max)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
