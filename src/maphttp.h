@@ -30,8 +30,6 @@
 #ifndef MAPHTTP_H
 #define MAPHTTP_H
 
-
-
 #include "mapprimitive.h"
 #include <stdio.h>
 
@@ -39,86 +37,73 @@
 extern "C" {
 #endif
 
-#define MS_HTTP_SUCCESS(status)  (status == 200 || status == 242)
+#define MS_HTTP_SUCCESS(status) (status == 200 || status == 242)
 
-  enum MS_HTTP_PROXY_TYPE
-  {
-    MS_HTTP,
-    MS_SOCKS5
-  };
+enum MS_HTTP_PROXY_TYPE { MS_HTTP, MS_SOCKS5 };
 
-  enum MS_HTTP_AUTH_TYPE {
-    MS_BASIC,
-    MS_DIGEST,
-    MS_NTLM,
-    MS_ANY,
-    MS_ANYSAFE
-  };
+enum MS_HTTP_AUTH_TYPE { MS_BASIC, MS_DIGEST, MS_NTLM, MS_ANY, MS_ANYSAFE };
 
-  typedef struct http_request_info {
-    int     nLayerId;
-    char    *pszGetUrl;
-    char    *pszOutputFile;
-    int     nTimeout;
-    int     nMaxBytes;
-    rectObj bbox;
-    int     width;
-    int     height;
-    int     nStatus;            /* 200=success, value < 0 if request failed */
-    char    *pszContentType;    /* Content-Type of the response */
-    char    *pszErrBuf;         /* Buffer where curl can write errors */
-    char    *pszPostRequest;    /* post request content (NULL for GET) */
-    char    *pszPostContentType;/* post request MIME type */
-    char    *pszUserAgent;      /* User-Agent, auto-generated if not set */
-    char    *pszHTTPCookieData; /* HTTP Cookie data */
+typedef struct http_request_info {
+  int nLayerId;
+  char *pszGetUrl;
+  char *pszOutputFile;
+  int nTimeout;
+  int nMaxBytes;
+  rectObj bbox;
+  int width;
+  int height;
+  int nStatus;              /* 200=success, value < 0 if request failed */
+  char *pszContentType;     /* Content-Type of the response */
+  char *pszErrBuf;          /* Buffer where curl can write errors */
+  char *pszPostRequest;     /* post request content (NULL for GET) */
+  char *pszPostContentType; /* post request MIME type */
+  char *pszUserAgent;       /* User-Agent, auto-generated if not set */
+  char *pszHTTPCookieData;  /* HTTP Cookie data */
 
-    char    *pszProxyAddress;   /* The address (IP or hostname) of proxy svr */
-    long     nProxyPort;        /* The proxy's port                          */
-    enum MS_HTTP_PROXY_TYPE eProxyType; /* The type of proxy                 */
-    enum MS_HTTP_AUTH_TYPE  eProxyAuthType; /* Auth method against proxy     */
-    char    *pszProxyUsername;  /* Proxy authentication username             */
-    char    *pszProxyPassword;  /* Proxy authentication password             */
+  char *pszProxyAddress; /* The address (IP or hostname) of proxy svr */
+  long nProxyPort;       /* The proxy's port                          */
+  enum MS_HTTP_PROXY_TYPE eProxyType;    /* The type of proxy                 */
+  enum MS_HTTP_AUTH_TYPE eProxyAuthType; /* Auth method against proxy     */
+  char *pszProxyUsername; /* Proxy authentication username             */
+  char *pszProxyPassword; /* Proxy authentication password             */
 
-    enum MS_HTTP_AUTH_TYPE eHttpAuthType; /* HTTP Authentication type        */
-    char    *pszHttpUsername;   /* HTTP Authentication username              */
-    char    *pszHttpPassword;   /* HTTP Authentication password              */
+  enum MS_HTTP_AUTH_TYPE eHttpAuthType; /* HTTP Authentication type        */
+  char *pszHttpUsername; /* HTTP Authentication username              */
+  char *pszHttpPassword; /* HTTP Authentication password              */
 
-    /* For debugging/profiling */
-    int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
+  /* For debugging/profiling */
+  int debug; /* Debug mode?  MS_TRUE/MS_FALSE */
 
-    /* Private members */
-    void      * curl_handle;   /* CURLM * handle */
-    FILE      * fp;            /* FILE * used during download */
+  /* Private members */
+  void *curl_handle; /* CURLM * handle */
+  FILE *fp;          /* FILE * used during download */
 
-    char      * result_data;   /* output if pszOutputFile is NULL */
-    int       result_size;
-    int       result_buf_size;
+  char *result_data; /* output if pszOutputFile is NULL */
+  int result_size;
+  int result_buf_size;
 
-  } httpRequestObj;
+} httpRequestObj;
 
 #ifdef USE_CURL
 
-  int msHTTPInit(void);
-  void msHTTPCleanup(void);
+int msHTTPInit(void);
+void msHTTPCleanup(void);
 
-  void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-  void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-  int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
-                             int bCheckLocalCache);
-  int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
-                     int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
-                     int bDebug, int nMaxBytes);
+void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
+                          int bCheckLocalCache);
+int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
+                  int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
+                  int bDebug, int nMaxBytes);
 
-  int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
-                           httpRequestObj *pasReqInfo, int numRequests,
-                           mapObj *map, const char* namespaces);
+int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
+                         httpRequestObj *pasReqInfo, int numRequests,
+                         mapObj *map, const char *namespaces);
 #endif /*USE_CURL*/
 
 #ifdef __cplusplus
 }
 #endif
-
-
-
 
 #endif /* MAPHTTP_H */

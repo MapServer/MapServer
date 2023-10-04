@@ -26,19 +26,19 @@
 
 import unittest
 from random import random
+
 import mapscript
+
 from .testing import MapTestCase
 
 
 class MapLayerTestCase(MapTestCase):
-
     def setUp(self):
         MapTestCase.setUp(self)
         self.layer = self.map.getLayer(1)
 
 
 class LayerConstructorTestCase(MapLayerTestCase):
-
     def testLayerConstructorNoArg(self):
         """test layer constructor with no argument"""
         layer = mapscript.layerObj()
@@ -52,17 +52,16 @@ class LayerConstructorTestCase(MapLayerTestCase):
         layer = mapscript.layerObj(self.map)
         assert layer.__class__.__name__ == "layerObj"
         assert layer.thisown == 1
-        lyr = self.map.getLayer(self.map.numlayers-1)
+        lyr = self.map.getLayer(self.map.numlayers - 1)
         assert lyr is not None
         # assert str(layer) == str(lyr) # TODO - check why these are not equal
         assert layer.map is not None, layer.map
 
 
 class LayerItemDefinitionTestCase(MapLayerTestCase):
-
     def setUp(self):
         MapTestCase.setUp(self)
-        self.layer = self.map.getLayerByName('POINT')
+        self.layer = self.map.getLayerByName("POINT")
         self.layer.open()
 
     def tearDown(self):
@@ -94,7 +93,7 @@ class LayerItemDefinitionTestCase(MapLayerTestCase):
     def testLayerGetNonDefinedItemType(self):
         """test getting layer item information for a layer with gml_types auto"""
 
-        layer = self.map.getLayerByName('POLYGON')
+        layer = self.map.getLayerByName("POLYGON")
         layer.open()
         item_type = layer.getItemType(0)
         assert item_type == ""
@@ -102,7 +101,6 @@ class LayerItemDefinitionTestCase(MapLayerTestCase):
 
 
 class LayerCloningTestCase(MapLayerTestCase):
-
     def testLayerCloning(self):
         """check attributes of a cloned layer"""
         clone = self.layer.clone()
@@ -115,10 +113,9 @@ class LayerCloningTestCase(MapLayerTestCase):
 
 
 class LayerExtentTestCase(MapTestCase):
-
     def setUp(self):
         MapTestCase.setUp(self)
-        self.layer = self.map.getLayerByName('POLYGON')
+        self.layer = self.map.getLayerByName("POLYGON")
 
     def testPolygonExtent(self):
         """retrieve the extent of a polygon layer"""
@@ -142,13 +139,13 @@ class LayerExtentTestCase(MapTestCase):
 
     def testResetLayerExtent(self):
         """test resetting a layer's extent"""
-        layer = self.map.getLayerByName('POLYGON')
+        layer = self.map.getLayerByName("POLYGON")
         layer.setExtent()
         self.assertRectsEqual(layer.extent, mapscript.rectObj())
 
     def testDirectExtentAccess(self):
         """direct access to a layer's extent works properly"""
-        pt_layer = self.map.getLayerByName('POINT')
+        pt_layer = self.map.getLayerByName("POINT")
         rect = pt_layer.extent
         assert str(pt_layer.extent) == str(rect), (pt_layer.extent, rect)
         e = mapscript.rectObj(-0.5, 51.0, 0.5, 52.0)
@@ -156,28 +153,27 @@ class LayerExtentTestCase(MapTestCase):
 
 
 class LayerRasterProcessingTestCase(MapLayerTestCase):
-
     def testAddProcessing(self):
         """adding a layer's processing directive works"""
-        self.layer.addProcessing('directive0=foo')
+        self.layer.addProcessing("directive0=foo")
         assert self.layer.numprocessing == 1, self.layer.numprocessing
-        self.layer.addProcessing('directive1=bar')
+        self.layer.addProcessing("directive1=bar")
         assert self.layer.numprocessing == 2, self.layer.numprocessing
-        directives = [self.layer.getProcessing(i)
-                      for i in range(self.layer.numprocessing)]
-        assert directives == ['directive0=foo', 'directive1=bar']
+        directives = [
+            self.layer.getProcessing(i) for i in range(self.layer.numprocessing)
+        ]
+        assert directives == ["directive0=foo", "directive1=bar"]
 
     def testClearProcessing(self):
         """clearing a self.layer's processing directive works"""
-        self.layer.addProcessing('directive0=foo')
+        self.layer.addProcessing("directive0=foo")
         assert self.layer.numprocessing == 1, self.layer.numprocessing
-        self.layer.addProcessing('directive1=bar')
+        self.layer.addProcessing("directive1=bar")
         assert self.layer.numprocessing == 2, self.layer.numprocessing
         assert self.layer.clearProcessing() == mapscript.MS_SUCCESS
 
 
 class RemoveClassTestCase(MapLayerTestCase):
-
     def testRemoveClass1NumClasses(self):
         """RemoveClassTestCase.testRemoveClass1NumClasses: removing the layer's first class
         by index leaves one class left"""
@@ -202,7 +198,7 @@ class RemoveClassTestCase(MapLayerTestCase):
 
     def testRemoveClass2ClassName(self):
         """RemoveClassTestCase.testRemoveClass2ClassName: confirm removing the layer's second class reverts
-         the name of the first class"""
+        the name of the first class"""
         c1name = self.layer.getClass(0).name
         c = self.layer.removeClass(1)
         assert c is not None
@@ -210,12 +206,11 @@ class RemoveClassTestCase(MapLayerTestCase):
 
 
 class InsertClassTestCase(MapLayerTestCase):
-
     def testLayerInsertClass(self):
         """insert class at default index"""
         n = self.layer.numclasses
         new_class = mapscript.classObj()
-        new_class.name = 'foo'
+        new_class.name = "foo"
         new_index = self.layer.insertClass(new_class)
         assert new_index == n
         assert self.layer.numclasses == n + 1
@@ -227,7 +222,7 @@ class InsertClassTestCase(MapLayerTestCase):
         """insert class at index 0"""
         n = self.layer.numclasses
         new_class = mapscript.classObj()
-        new_class.name = 'foo'
+        new_class.name = "foo"
         new_index = self.layer.insertClass(new_class, 0)
         assert new_index == 0
         assert self.layer.numclasses == n + 1
@@ -237,8 +232,7 @@ class InsertClassTestCase(MapLayerTestCase):
 
     def testInsertNULLClass(self):
         """inserting NULL class should raise an error"""
-        self.assertRaises(mapscript.MapServerChildError,
-                          self.layer.insertClass, None)
+        self.assertRaises(mapscript.MapServerChildError, self.layer.insertClass, None)
 
 
 class LayerTestCase(MapTestCase):
@@ -259,11 +253,11 @@ class LayerTestCase(MapTestCase):
         order = self.map.getLayerOrder()
         assert order == ord, order
 
+
 # Layer removal tests
 
 
 class RemoveLayerTestCase(MapTestCase):
-
     def testRemoveLayer1NumLayers(self):
         """removing the first layer by index from the mapfile leaves three"""
         self.map.removeLayer(0)
@@ -288,18 +282,17 @@ class RemoveLayerTestCase(MapTestCase):
 
 
 class ExpressionTestCase(MapLayerTestCase):
-
     def testClearExpression(self):
         """layer expression can be properly cleared"""
-        self.layer.setFilter('')
+        self.layer.setFilter("")
         fs = self.layer.getFilterString()
         assert fs is None, fs
 
     def testSetStringExpression(self):
         """layer expression can be set to string"""
-        self.layer.setFilter('foo')
+        self.layer.setFilter("foo")
         fs = self.layer.getFilterString()
-        self.layer.filteritem = 'fid'
+        self.layer.filteritem = "fid"
         assert fs == '"foo"', fs
         self.map.draw()
 
@@ -307,23 +300,23 @@ class ExpressionTestCase(MapLayerTestCase):
         """layer expression string can be quoted"""
         self.layer.setFilter('"foo"')
         fs = self.layer.getFilterString()
-        self.layer.filteritem = 'fid'
+        self.layer.filteritem = "fid"
         assert fs == '"foo"', fs
         self.map.draw()
 
     def testSetRegularExpression(self):
         """layer expression can be regular expression"""
-        self.layer.setFilter('/foo/')
-        self.layer.filteritem = 'fid'
+        self.layer.setFilter("/foo/")
+        self.layer.filteritem = "fid"
         fs = self.layer.getFilterString()
-        assert fs == '/foo/', fs
+        assert fs == "/foo/", fs
         self.map.draw()
 
     def testSetLogicalExpression(self):
         """layer expression can be logical expression"""
-        self.layer.setFilter('([fid] >= 2)')
+        self.layer.setFilter("([fid] >= 2)")
         fs = self.layer.getFilterString()
-        assert fs == '([fid] >= 2)', fs
+        assert fs == "([fid] >= 2)", fs
         self.map.draw()
 
     def testSetCompoundLogicalExpression(self):
@@ -338,15 +331,13 @@ class ExpressionTestCase(MapLayerTestCase):
 
 
 class LayerQueryTestCase(MapLayerTestCase):
-
     def setUp(self):
         MapLayerTestCase.setUp(self)
-        self.layer = self.map.getLayerByName('POINT')
-        self.layer.template = 'foo'
+        self.layer = self.map.getLayerByName("POINT")
+        self.layer.template = "foo"
 
 
 class SpatialLayerQueryTestCase(LayerQueryTestCase):
-
     def testRectQuery(self):
         qrect = mapscript.rectObj(-10.0, 45.0, 10.0, 55.0)
         self.layer.queryByRect(self.map, qrect)
@@ -381,31 +372,34 @@ class SpatialLayerQueryTestCase(LayerQueryTestCase):
 
 
 class AttributeLayerQueryTestCase(LayerQueryTestCase):
-
     def testAttributeQuery(self):
-        self.layer.queryByAttributes(self.map, "FNAME", '"A Point"',
-                                     mapscript.MS_MULTIPLE)
+        self.layer.queryByAttributes(
+            self.map, "FNAME", '"A Point"', mapscript.MS_MULTIPLE
+        )
         assert self.layer.getNumResults() == 1
 
     def testLogicalAttributeQuery(self):
-        self.layer.queryByAttributes(self.map, None, '("[FNAME]" == "A Point")',
-                                     mapscript.MS_MULTIPLE)
+        self.layer.queryByAttributes(
+            self.map, None, '("[FNAME]" == "A Point")', mapscript.MS_MULTIPLE
+        )
         assert self.layer.getNumResults() == 1
 
     def testAttributeQueryNoResults(self):
-        self.layer.queryByAttributes(self.map, "FNAME", '"Bogus Point"',
-                                     mapscript.MS_MULTIPLE)
+        self.layer.queryByAttributes(
+            self.map, "FNAME", '"Bogus Point"', mapscript.MS_MULTIPLE
+        )
         assert self.layer.getNumResults() == 0
 
 
 class LayerVisibilityTestCase(MapLayerTestCase):
-
     def setUp(self):
         MapLayerTestCase.setUp(self)
         self.layer.minscaledenom = 1000
         self.layer.maxscaledenom = 2000
         self.layer.status = mapscript.MS_ON
-        self.map.zoomScale(1500, mapscript.pointObj(100, 100), 200, 200, self.map.extent, None)
+        self.map.zoomScale(
+            1500, mapscript.pointObj(100, 100), 200, 200, self.map.extent, None
+        )
 
     def testInitialVisibility(self):
         """expect visibility"""
@@ -418,12 +412,13 @@ class LayerVisibilityTestCase(MapLayerTestCase):
 
     def testZoomOutVisibility(self):
         """expect false visibility after zooming out beyond maximum"""
-        self.map.zoomScale(2500, mapscript.pointObj(100, 100), 200, 200, self.map.extent, None)
+        self.map.zoomScale(
+            2500, mapscript.pointObj(100, 100), 200, 200, self.map.extent, None
+        )
         assert self.layer.isVisible() == mapscript.MS_FALSE
 
 
 class InlineLayerTestCase(unittest.TestCase):
-
     def setUp(self):
         # Inline feature layer
         self.ilayer = mapscript.layerObj()
@@ -431,8 +426,8 @@ class InlineLayerTestCase(unittest.TestCase):
         self.ilayer.status = mapscript.MS_DEFAULT
         self.ilayer.connectiontype = mapscript.MS_INLINE
 
-        cs = 'f7fcfd, e5f5f9, ccece6, 99d8c9, 66c2a4, 41ae76, 238b45, 006d2c, 00441b'
-        colors = ['#' + h for h in cs.split(', ')]
+        cs = "f7fcfd, e5f5f9, ccece6, 99d8c9, 66c2a4, 41ae76, 238b45, 006d2c, 00441b"
+        colors = ["#" + h for h in cs.split(", ")]
 
         for i in range(9):
             # Make a class for feature
@@ -443,15 +438,15 @@ class InlineLayerTestCase(unittest.TestCase):
             so.color.setHex(colors[i])
             li = co.addLabel(mapscript.labelObj())
             lbl = co.getLabel(li)
-            lbl.color.setHex('#000000')
-            lbl.outlinecolor.setHex('#FFFFFF')
+            lbl.color.setHex("#000000")
+            lbl.outlinecolor.setHex("#FFFFFF")
             lbl.type = mapscript.MS_BITMAP
             lbl.size = mapscript.MS_SMALL
 
             # The shape to add is randomly generated
-            xc = 4.0*(random() - 0.5)
-            yc = 4.0*(random() - 0.5)
-            r = mapscript.rectObj(xc-0.25, yc-0.25, xc+0.25, yc+0.25)
+            xc = 4.0 * (random() - 0.5)
+            yc = 4.0 * (random() - 0.5)
+            r = mapscript.rectObj(xc - 0.25, yc - 0.25, xc + 0.25, yc + 0.25)
             s = r.toPolygon()
 
             # Classify
@@ -465,11 +460,11 @@ class InlineLayerTestCase(unittest.TestCase):
         mo = mapscript.mapObj()
         mo.setSize(400, 400)
         mo.setExtent(-2.5, -2.5, 2.5, 2.5)
-        mo.selectOutputFormat('image/png')
+        mo.selectOutputFormat("image/png")
         mo.insertLayer(self.ilayer)
         im = mo.draw()
-        im.save('testExternalClassification.png')
+        im.save("testExternalClassification.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

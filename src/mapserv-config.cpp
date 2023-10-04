@@ -6,7 +6,7 @@
  * Author:   Steve Lime and the MapServer team.
  *
  **********************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota. 
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,23 +40,25 @@ extern "C" int msyystate;
 extern "C" int msyylineno;
 extern "C" char *msyystring_buffer;
 
-static int initConfig(configObj *config)
-{
+static int initConfig(configObj *config) {
   if (config == NULL) {
     msSetError(MS_MEMERR, "Config object is NULL.", "initConfig()");
     return MS_FAILURE;
   }
 
-  if(initHashTable(&(config->env)) != MS_SUCCESS) return MS_FAILURE;
-  if(initHashTable(&(config->maps)) != MS_SUCCESS) return MS_FAILURE;
-  if(initHashTable(&(config->plugins)) != MS_SUCCESS) return MS_FAILURE;
+  if (initHashTable(&(config->env)) != MS_SUCCESS)
+    return MS_FAILURE;
+  if (initHashTable(&(config->maps)) != MS_SUCCESS)
+    return MS_FAILURE;
+  if (initHashTable(&(config->plugins)) != MS_SUCCESS)
+    return MS_FAILURE;
 
   return MS_SUCCESS;
 }
 
-void msFreeConfig(configObj *config)
-{
-  if(config == NULL) return;
+void msFreeConfig(configObj *config) {
+  if (config == NULL)
+    return;
   msFreeHashItems(&(config->env));
   msFreeHashItems(&(config->maps));
   msFreeHashItems(&(config->plugins));
@@ -64,58 +66,62 @@ void msFreeConfig(configObj *config)
   msFree(config);
 }
 
-static int loadConfig(configObj *config)
-{
+static int loadConfig(configObj *config) {
   int token;
 
-  if(config == NULL) return MS_FAILURE;
+  if (config == NULL)
+    return MS_FAILURE;
 
   token = msyylex();
-  if(token != MS_CONFIG_SECTION) {
-    msSetError(MS_IDENTERR, "First token must be CONFIG, this doesn't look like a mapserver config file.", "msLoadConfig()");
+  if (token != MS_CONFIG_SECTION) {
+    msSetError(MS_IDENTERR,
+               "First token must be CONFIG, this doesn't look like a mapserver "
+               "config file.",
+               "msLoadConfig()");
     return MS_FAILURE;
   }
 
-  for(;;) {
-    switch(msyylex()) {
-    case(MS_CONFIG_SECTION_ENV): {
-      if(loadHashTable(&(config->env)) != MS_SUCCESS) return MS_FAILURE;
+  for (;;) {
+    switch (msyylex()) {
+    case (MS_CONFIG_SECTION_ENV): {
+      if (loadHashTable(&(config->env)) != MS_SUCCESS)
+        return MS_FAILURE;
       break;
     }
-    case(MS_CONFIG_SECTION_MAPS):
-      if(loadHashTable(&config->maps) != MS_SUCCESS) return MS_FAILURE;
+    case (MS_CONFIG_SECTION_MAPS):
+      if (loadHashTable(&config->maps) != MS_SUCCESS)
+        return MS_FAILURE;
       break;
-    case(MS_CONFIG_SECTION_PLUGINS):
-      if(loadHashTable(&config->plugins) != MS_SUCCESS) return MS_FAILURE;
+    case (MS_CONFIG_SECTION_PLUGINS):
+      if (loadHashTable(&config->plugins) != MS_SUCCESS)
+        return MS_FAILURE;
       break;
-    case(EOF):
+    case (EOF):
       msSetError(MS_EOFERR, NULL, "msLoadConfig()");
       return MS_FAILURE;
-    case(END):
-      if(msyyin) {
-	fclose(msyyin);
-	msyyin = NULL;
+    case (END):
+      if (msyyin) {
+        fclose(msyyin);
+        msyyin = NULL;
       }
       return MS_SUCCESS;
       break;
     default:
-      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "msLoadConfig()", msyystring_buffer, msyylineno);
+      msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)",
+                 "msLoadConfig()", msyystring_buffer, msyylineno);
       return MS_FAILURE;
     }
   }
 }
 
-static void msConfigSetConfigOption(const char* key, const char* value)
-{
+static void msConfigSetConfigOption(const char *key, const char *value) {
   CPLSetConfigOption(key, value);
-  if( strcasecmp(key,"PROJ_DATA") == 0 ||
-      strcasecmp(key,"PROJ_LIB") == 0 ) {
-    msSetPROJ_DATA( value, nullptr );
+  if (strcasecmp(key, "PROJ_DATA") == 0 || strcasecmp(key, "PROJ_LIB") == 0) {
+    msSetPROJ_DATA(value, nullptr);
   }
 }
 
-configObj *msLoadConfig(const char* ms_config_file)
-{
+configObj *msLoadConfig(const char *ms_config_file) {
   configObj *config = NULL;
 
   if (ms_config_file == NULL) {
@@ -123,12 +129,12 @@ configObj *msLoadConfig(const char* ms_config_file)
     ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
   }
 
-  if(ms_config_file == NULL && MAPSERVER_CONFIG_FILE[0] != '\0') {
+  if (ms_config_file == NULL && MAPSERVER_CONFIG_FILE[0] != '\0') {
     // Fallback to hardcoded file name
     ms_config_file = MAPSERVER_CONFIG_FILE;
   }
 
-  if(ms_config_file == NULL) {
+  if (ms_config_file == NULL) {
     msSetError(MS_MISCERR, "No config file set.", "msLoadConfig()");
     return NULL;
   }
@@ -136,16 +142,18 @@ configObj *msLoadConfig(const char* ms_config_file)
   config = (configObj *)calloc(sizeof(configObj), 1);
   MS_CHECK_ALLOC(config, sizeof(configObj), NULL);
 
-  if(initConfig(config) != MS_SUCCESS) {
+  if (initConfig(config) != MS_SUCCESS) {
     msFreeConfig(config);
     return NULL;
   }
 
   msAcquireLock(TLOCK_PARSER);
 
-  if((msyyin = fopen(ms_config_file, "r")) == NULL) {    
+  if ((msyyin = fopen(ms_config_file, "r")) == NULL) {
     msDebug("Cannot open configuration file %s.\n", ms_config_file);
-    msSetError(MS_IOERR, "See mapserver.org/mapfile/config.html for more information.", "msLoadConfig()");
+    msSetError(MS_IOERR,
+               "See mapserver.org/mapfile/config.html for more information.",
+               "msLoadConfig()");
     msReleaseLock(TLOCK_PARSER);
     msFreeConfig(config);
     return NULL;
@@ -157,10 +165,10 @@ configObj *msLoadConfig(const char* ms_config_file)
   msyyrestart(msyyin); // start at line 1
   msyylineno = 1;
 
-  if(loadConfig(config) != MS_SUCCESS) {
+  if (loadConfig(config) != MS_SUCCESS) {
     msFreeConfig(config);
     msReleaseLock(TLOCK_PARSER);
-    if(msyyin) {
+    if (msyyin) {
       fclose(msyyin);
       msyyin = NULL;
     }
@@ -168,35 +176,36 @@ configObj *msLoadConfig(const char* ms_config_file)
   }
   msReleaseLock(TLOCK_PARSER);
 
-  // load all env key/values using CPLSetConfigOption() - only do this *after* we have a good config
+  // load all env key/values using CPLSetConfigOption() - only do this *after*
+  // we have a good config
   const char *key = msFirstKeyFromHashTable(&config->env);
-  if(key != NULL) {
+  if (key != NULL) {
     msConfigSetConfigOption(key, msLookupHashTable(&config->env, key));
 
     const char *last_key = key;
-    while((key = msNextKeyFromHashTable(&config->env, last_key)) != NULL) {
+    while ((key = msNextKeyFromHashTable(&config->env, last_key)) != NULL) {
       msConfigSetConfigOption(key, msLookupHashTable(&config->env, key));
       last_key = key;
     }
   }
 
-  return config;  
+  return config;
 }
 
-const char *msConfigGetEnv(const configObj *config, const char *key) 
-{
-  if(config == NULL || key == NULL) return NULL;
+const char *msConfigGetEnv(const configObj *config, const char *key) {
+  if (config == NULL || key == NULL)
+    return NULL;
   return msLookupHashTable(&config->env, key);
 }
 
-const char *msConfigGetMap(const configObj *config, const char *key)
-{
-  if(config == NULL || key == NULL) return NULL;
+const char *msConfigGetMap(const configObj *config, const char *key) {
+  if (config == NULL || key == NULL)
+    return NULL;
   return msLookupHashTable(&config->maps, key);
 }
 
-const char *msConfigGetPlugin(const configObj *config, const char *key)
-{
-  if(config == NULL || key == NULL) return NULL;
+const char *msConfigGetPlugin(const configObj *config, const char *key) {
+  if (config == NULL || key == NULL)
+    return NULL;
   return msLookupHashTable(&config->plugins, key);
 }

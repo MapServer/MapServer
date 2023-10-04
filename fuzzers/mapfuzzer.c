@@ -21,24 +21,24 @@ limitations under the License.
 #define kMaxInputLength 10240
 
 extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
-extern int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern int LLVMFuzzerInitialize(int *argc, char ***argv);
 
-int LLVMFuzzerInitialize(int* argc, char*** argv)
-{
-    (void)argc;
-    (void)argv;
-    return 0;
+int LLVMFuzzerInitialize(int *argc, char ***argv) {
+  (void)argc;
+  (void)argv;
+  return 0;
 }
 
 extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
-  if (Size < kMinInputLength || Size > kMaxInputLength){
+  if (Size < kMinInputLength || Size > kMaxInputLength) {
     return 1;
   }
 
   // .map extension is required otherwise default pattern validation of
   // msLoadMap() would reject it
-  char* filename = msStrdup(CPLSPrintf("%s.map", CPLGenerateTempFilename(NULL)));
+  char *filename =
+      msStrdup(CPLSPrintf("%s.map", CPLGenerateTempFilename(NULL)));
   FILE *fp = fopen(filename, "wb");
   if (!fp) {
     msFree(filename);

@@ -32,8 +32,10 @@
 
 #define USE_TILE_API 1
 
-#define SPHEREMERC_PROJ4 "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +units=m +k=1.0 +nadgrids=@null"
-#define SPHEREMERC_GROUND_SIZE (20037508.34*2)
+#define SPHEREMERC_PROJ4                                                       \
+  "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 "   \
+  "+units=m +k=1.0 +nadgrids=@null"
+#define SPHEREMERC_GROUND_SIZE (20037508.34 * 2)
 #define SPHEREMERC_IMAGE_SIZE 0x0100
 
 enum tileModes { TILE_GMAP, TILE_VE };
@@ -41,13 +43,12 @@ enum tileModes { TILE_GMAP, TILE_VE };
 MS_DLL_EXPORT int msTileSetup(mapservObj *msObj);
 MS_DLL_EXPORT int msTileSetExtent(mapservObj *msObj);
 MS_DLL_EXPORT int msTileSetProjections(mapObj *map);
-MS_DLL_EXPORT imageObj* msTileDraw(mapservObj *msObj);
+MS_DLL_EXPORT imageObj *msTileDraw(mapservObj *msObj);
 
 typedef struct {
-  int metatile_level; /* In zoom levels above tile request: best bet is 0, 1 or 2 */
-  int tile_width; /* In pixels */
-  int tile_height; /* In pixels */
+  int metatile_level;  /* In zoom levels above tile request: best bet is 0, 1 or
+                          2 */
+  int tile_width;      /* In pixels */
+  int tile_height;     /* In pixels */
   int map_edge_buffer; /* In pixels */
 } tileParams;
-
-

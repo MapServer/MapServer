@@ -26,12 +26,13 @@
 
 import unittest
 import xml.dom.minidom
+
 import mapscript
+
 from .testing import MapTestCase
 
 
 class OWSRequestTestCase(MapTestCase):
-
     def testInit(self):
         """OWSRequestTestCase.testInit: OWS initializer works right"""
         request = mapscript.OWSRequest()
@@ -43,23 +44,23 @@ class OWSRequestTestCase(MapTestCase):
     def testGetParameter(self):
         """OWSRequestTestCase.testGetParameter: OWS can get request parameters by index"""
         request = mapscript.OWSRequest()
-        request.setParameter('foo', 'bar')
-        assert request.getValue(0) == 'bar'
+        request.setParameter("foo", "bar")
+        assert request.getValue(0) == "bar"
 
     def testGetParameterByName(self):
         """OWSRequestTestCase.testGetParameterByName: OWS can get request parameters by name"""
         request = mapscript.OWSRequest()
-        request.setParameter('foo', 'bar')
-        assert request.getValueByName('Foo') == 'bar'
+        request.setParameter("foo", "bar")
+        assert request.getValueByName("Foo") == "bar"
 
     def testResetParam(self):
         """OWSRequestTestCase.testResetParam: OWS can reset parameters by name"""
         request = mapscript.OWSRequest()
-        request.setParameter('foo', 'bar')
+        request.setParameter("foo", "bar")
         assert request.NumParams == 1
-        request.setParameter('Foo', 'bra')
+        request.setParameter("Foo", "bra")
         assert request.NumParams == 1
-        assert request.getValue(0) == 'bra'
+        assert request.getValue(0) == "bra"
 
     def testLoadWMSRequest(self):
         """OWSRequestTestCase.testLoadWMSRequest: OWS can load a WMS request"""
@@ -117,8 +118,8 @@ class OWSRequestTestCase(MapTestCase):
         mapscript.msIO_stripStdoutBufferContentHeaders()
         result = mapscript.msIO_getStdoutBufferBytes()
         dom = xml.dom.minidom.parseString(result)
-        assert len(dom.getElementsByTagName('ms:POINT')) == 1
+        assert len(dom.getElementsByTagName("ms:POINT")) == 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

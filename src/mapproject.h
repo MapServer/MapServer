@@ -46,108 +46,125 @@ extern "C" {
 typedef struct projectionContext projectionContext;
 
 #ifndef SWIG
-typedef enum
-{
-    LINE_CUTTING_UNKNOWN = -1,
-    LINE_CUTTING_NONE = 0,
-    LINE_CUTTING_FROM_POLAR = 1,
-    LINE_CUTTING_FROM_LONGLAT_WRAP0 = 2
+typedef enum {
+  LINE_CUTTING_UNKNOWN = -1,
+  LINE_CUTTING_NONE = 0,
+  LINE_CUTTING_FROM_POLAR = 1,
+  LINE_CUTTING_FROM_LONGLAT_WRAP0 = 2
 } msLineCuttingCase;
 #endif
 
 /**
 The :ref:`PROJECTION <projection>` object
-MapServer's Maps and Layers have Projection attributes, and these are C projectionObj structures, 
-but are not directly exposed by the mapscript module
+MapServer's Maps and Layers have Projection attributes, and these are C
+projectionObj structures, but are not directly exposed by the mapscript module
 */
-  typedef struct {
+typedef struct {
 #ifndef SWIG
-      char **args; /* variable number of projection args */
-      PJ* proj;
-      projectionContext* proj_ctx;
-      geotransformObj gt; /* extra transformation to apply */
+  char **args; /* variable number of projection args */
+  PJ *proj;
+  projectionContext *proj_ctx;
+  geotransformObj gt; /* extra transformation to apply */
 #endif
 
 #ifdef SWIG
     %immutable;
 #endif
-    int numargs; ///< Actual number of projection args
-    short automatic; ///< Projection object was to fetched from the layer
-    unsigned short generation_number; ///< To be incremented when the content of the object changes, so that a reprojector can be invalidated
+  int numargs;     ///< Actual number of projection args
+  short automatic; ///< Projection object was to fetched from the layer
+  unsigned short
+      generation_number; ///< To be incremented when the content of the object
+                         ///< changes, so that a reprojector can be invalidated
 #ifdef SWIG
     %mutable;
 #endif
 
-    int wellknownprojection; ///< One of ``wkp_none 0``, ``wkp_lonlat 1``, or ``wkp_gmerc 2``
-  } projectionObj;
+  int wellknownprojection; ///< One of ``wkp_none 0``, ``wkp_lonlat 1``, or
+                           ///< ``wkp_gmerc 2``
+} projectionObj;
 
 /**
-A holder object for projection coordinate transformations, introduced in RFC 126.
-This allows caching of reprojections improving performance.
+A holder object for projection coordinate transformations, introduced in RFC
+126. This allows caching of reprojections improving performance.
 */
-  typedef struct {
+typedef struct {
 #ifndef SWIG
-    projectionObj* in;
-    projectionObj* out;
-    PJ* pj;
-    msLineCuttingCase lineCuttingCase;
-    shapeObj splitShape;
-    int bFreePJ;
+  projectionObj *in;
+  projectionObj *out;
+  PJ *pj;
+  msLineCuttingCase lineCuttingCase;
+  shapeObj splitShape;
+  int bFreePJ;
 #endif
-    unsigned short generation_number_in; ///< A counter that is incremented when the input projectionObj changes
-    unsigned short generation_number_out; ///< A counter that is incremented when the output projectionObj changes
-  } reprojectionObj;
+  unsigned short generation_number_in;  ///< A counter that is incremented when
+                                        ///< the input projectionObj changes
+  unsigned short generation_number_out; ///< A counter that is incremented when
+                                        ///< the output projectionObj changes
+} reprojectionObj;
 
 #ifndef SWIG
 
-  MS_DLL_EXPORT reprojectionObj* msProjectCreateReprojector(projectionObj* in, projectionObj* out);
-  MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj* reprojector);
-  MS_DLL_EXPORT int msProjectIsReprojectorStillValid(reprojectionObj* reprojector);
+MS_DLL_EXPORT reprojectionObj *msProjectCreateReprojector(projectionObj *in,
+                                                          projectionObj *out);
+MS_DLL_EXPORT void msProjectDestroyReprojector(reprojectionObj *reprojector);
+MS_DLL_EXPORT int
+msProjectIsReprojectorStillValid(reprojectionObj *reprojector);
 
-  MS_DLL_EXPORT projectionContext* msProjectionContextGetFromPool(void);
-  MS_DLL_EXPORT void msProjectionContextReleaseToPool(projectionContext* ctx);
-  MS_DLL_EXPORT void msProjectionContextPoolCleanup(void);
+MS_DLL_EXPORT projectionContext *msProjectionContextGetFromPool(void);
+MS_DLL_EXPORT void msProjectionContextReleaseToPool(projectionContext *ctx);
+MS_DLL_EXPORT void msProjectionContextPoolCleanup(void);
 
-  MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
-  MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point); /* legacy interface */
-  MS_DLL_EXPORT int msProjectPointEx(reprojectionObj* reprojector, pointObj *point);
-  MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape); /* legacy interface */
-  MS_DLL_EXPORT int msProjectShapeEx(reprojectionObj* reprojector, shapeObj *shape);
-  MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line); /* legacy interface */
-  MS_DLL_EXPORT int msProjectLineEx(reprojectionObj* reprojector, lineObj *line);
-  MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect); /* legacy interface */
-  MS_DLL_EXPORT int msProjectRectAsPolygon(reprojectionObj* reprojector, rectObj *rect);
-  MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
-  MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int debug_flag );
-  MS_DLL_EXPORT char *msProjectionObj2OGCWKT( projectionObj *proj );
+MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
+MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out,
+                                 pointObj *point); /* legacy interface */
+MS_DLL_EXPORT int msProjectPointEx(reprojectionObj *reprojector,
+                                   pointObj *point);
+MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out,
+                                 shapeObj *shape); /* legacy interface */
+MS_DLL_EXPORT int msProjectShapeEx(reprojectionObj *reprojector,
+                                   shapeObj *shape);
+MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out,
+                                lineObj *line); /* legacy interface */
+MS_DLL_EXPORT int msProjectLineEx(reprojectionObj *reprojector, lineObj *line);
+MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out,
+                                rectObj *rect); /* legacy interface */
+MS_DLL_EXPORT int msProjectRectAsPolygon(reprojectionObj *reprojector,
+                                         rectObj *rect);
+MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
+MS_DLL_EXPORT int msOGCWKT2ProjectionObj(const char *pszWKT,
+                                         projectionObj *proj, int debug_flag);
+MS_DLL_EXPORT char *msProjectionObj2OGCWKT(projectionObj *proj);
 
-  MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
-  MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
-  MS_DLL_EXPORT int msInitProjection(projectionObj *p);
-  MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst, const projectionObj* pSrc);
-  MS_DLL_EXPORT void msProjectionSetContext(projectionObj *p, projectionContext* ctx);
-  MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
-  MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
-  MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, const char *value);
-  MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
-  int msIsAxisInvertedProj( projectionObj *proj );
-  void msAxisSwapShape(shapeObj *shape);
-  MS_DLL_EXPORT void msAxisNormalizePoints( projectionObj *proj, int count,
-      double *x, double *y );
-  MS_DLL_EXPORT void msAxisDenormalizePoints( projectionObj *proj, int count,
-      double *x, double *y );
+MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
+MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
+MS_DLL_EXPORT int msInitProjection(projectionObj *p);
+MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst,
+                                                  const projectionObj *pSrc);
+MS_DLL_EXPORT void msProjectionSetContext(projectionObj *p,
+                                          projectionContext *ctx);
+MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
+MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
+MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p,
+                                             const char *value);
+MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
+int msIsAxisInvertedProj(projectionObj *proj);
+void msAxisSwapShape(shapeObj *shape);
+MS_DLL_EXPORT void msAxisNormalizePoints(projectionObj *proj, int count,
+                                         double *x, double *y);
+MS_DLL_EXPORT void msAxisDenormalizePoints(projectionObj *proj, int count,
+                                           double *x, double *y);
 
-  MS_DLL_EXPORT void msSetPROJ_DATA( const char *, const char * );
-  MS_DLL_EXPORT void msProjDataInitFromEnv();
+MS_DLL_EXPORT void msSetPROJ_DATA(const char *, const char *);
+MS_DLL_EXPORT void msProjDataInitFromEnv();
 
-  int msProjIsGeographicCRS(projectionObj* proj);
-  int msProjectTransformPoints( reprojectionObj* reprojector,
-                                int npoints, double* x, double* y );
+int msProjIsGeographicCRS(projectionObj *proj);
+int msProjectTransformPoints(reprojectionObj *reprojector, int npoints,
+                             double *x, double *y);
 
-  /*utility functions */
-  MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
+/*utility functions */
+MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
 
-  int msProjectHasLonWrap(projectionObj *in, double* pdfLonWrap);
+int msProjectHasLonWrap(projectionObj *in, double *pdfLonWrap);
 #endif
 
 #ifdef __cplusplus

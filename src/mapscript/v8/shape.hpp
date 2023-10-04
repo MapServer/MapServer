@@ -37,44 +37,41 @@ using namespace v8;
 using std::map;
 using std::string;
 
-class Shape: public ObjectWrap
-{
+class Shape : public ObjectWrap {
 public:
   static void Initialize(Handle<Object> target);
-  static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Dispose();
   static Handle<Function> Constructor();
 
   Shape(shapeObj *p);
-  ~Shape();  
-  inline shapeObj* get() { return this_; }
+  ~Shape();
+  inline shapeObj *get() { return this_; }
   inline void disableMemoryHandler() { this->freeInternal = false; }
-  
-  inline void setLayer(layerObj *layer) { this->layer = layer; };
-  
-  static void getProp(Local<String> property,
-                      const PropertyCallbackInfo<Value>& info);
-  static void setProp(Local<String> property,
-                      Local<Value> value,
-                      const PropertyCallbackInfo<void>& info);
 
-  static void clone(const v8::FunctionCallbackInfo<v8::Value>& args);
-  static void getLine(const v8::FunctionCallbackInfo<v8::Value>& args);
-  static void addLine(const v8::FunctionCallbackInfo<v8::Value>& args);
-  static void setGeometry(const v8::FunctionCallbackInfo<v8::Value>& args);
+  inline void setLayer(layerObj *layer) { this->layer = layer; };
+
+  static void getProp(Local<String> property,
+                      const PropertyCallbackInfo<Value> &info);
+  static void setProp(Local<String> property, Local<Value> value,
+                      const PropertyCallbackInfo<void> &info);
+
+  static void clone(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void getLine(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void addLine(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void setGeometry(const v8::FunctionCallbackInfo<v8::Value> &args);
 
   /* This could be generic in the future.. */
-  static void attributeWeakCallback(v8::Isolate* isolate,
-                                    v8::Persistent<v8::Object>* pobj,
+  static void attributeWeakCallback(v8::Isolate *isolate,
+                                    v8::Persistent<v8::Object> *pobj,
                                     map<string, int> *map);
   static void attributeGetValue(Local<String> name,
                                 const PropertyCallbackInfo<Value> &info);
-  static void attributeSetValue(Local<String> name,
-                                Local<Value> value,
+  static void attributeSetValue(Local<String> name, Local<Value> value,
                                 const PropertyCallbackInfo<Value> &info);
-  static void attributeMapDestroy(Isolate *isolate,
-                                  Persistent<Object> *object,
-                                  map<string, int> *map);  
+  static void attributeMapDestroy(Isolate *isolate, Persistent<Object> *object,
+                                  map<string, int> *map);
+
 private:
   static Persistent<FunctionTemplate> constructor;
   bool freeInternal;

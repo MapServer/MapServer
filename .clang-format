@@ -1,0 +1,7 @@
+---
+Language:        Cpp
+BasedOnStyle:    LLVM
+SortIncludes:    false
+Standard:        Cpp11
+TabWidth:        2
+UseTab:          Never

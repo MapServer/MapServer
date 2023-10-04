@@ -31,7 +31,7 @@
 from osgeo import gdal, osr
 
 sr = osr.SpatialReference()
-print('epsg_code')
+print("epsg_code")
 for code in range(32767):
     gdal.PushErrorHandler()
     ret = sr.ImportFromEPSGA(code)

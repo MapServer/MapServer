@@ -26,12 +26,13 @@
 
 import gc
 import unittest
+
 import mapscript
+
 from .testing import TESTMAPFILE
 
 
 class ParentReferenceTestCase(unittest.TestCase):
-
     def initMap(self):
         self.map = mapscript.mapObj(TESTMAPFILE)
 
@@ -39,15 +40,15 @@ class ParentReferenceTestCase(unittest.TestCase):
         self.initMap()
         layer = self.map.getLayer(1)
         self.map = None
-        assert str(layer.p_map).find('mapscript.mapObj') != -1
+        assert str(layer.p_map).find("mapscript.mapObj") != -1
         gc.collect()
         assert layer.map is not None, layer.map
 
     def testGetLayerObjByName(self):
         self.initMap()
-        layer = self.map.getLayerByName('POLYGON')
+        layer = self.map.getLayerByName("POLYGON")
         self.map = None
-        assert str(layer.p_map).find('mapscript.mapObj') != -1
+        assert str(layer.p_map).find("mapscript.mapObj") != -1
         gc.collect()
         assert layer.map is not None, layer.map
 
@@ -55,7 +56,7 @@ class ParentReferenceTestCase(unittest.TestCase):
         self.initMap()
         layer = mapscript.layerObj(self.map)
         self.map = None
-        assert str(layer.p_map).find('mapscript.mapObj') != -1
+        assert str(layer.p_map).find("mapscript.mapObj") != -1
         gc.collect()
         assert layer.map is not None, layer.map
 
@@ -64,7 +65,7 @@ class ParentReferenceTestCase(unittest.TestCase):
         layer = mapscript.layerObj()
         self.map.insertLayer(layer)
         self.map = None
-        assert str(layer.p_map).find('mapscript.mapObj') != -1
+        assert str(layer.p_map).find("mapscript.mapObj") != -1
         gc.collect()
         assert layer.map is not None, layer.map
 
@@ -74,7 +75,7 @@ class ParentReferenceTestCase(unittest.TestCase):
         clazz = layer.getClass(0)
         self.map = None
         layer = None
-        assert str(clazz.p_layer).find('mapscript.layerObj') != -1
+        assert str(clazz.p_layer).find("mapscript.layerObj") != -1
         gc.collect()
         assert clazz.layer is not None, clazz.layer
 
@@ -84,7 +85,7 @@ class ParentReferenceTestCase(unittest.TestCase):
         clazz = mapscript.classObj(layer)
         self.map = None
         layer = None
-        assert str(clazz.p_layer).find('mapscript.layerObj') != -1
+        assert str(clazz.p_layer).find("mapscript.layerObj") != -1
         gc.collect()
         assert clazz.layer is not None, clazz.layer
 
@@ -95,7 +96,7 @@ class ParentReferenceTestCase(unittest.TestCase):
         layer.insertClass(clazz)
         self.map = None
         layer = None
-        assert str(clazz.p_layer).find('mapscript.layerObj') != -1
+        assert str(clazz.p_layer).find("mapscript.layerObj") != -1
         gc.collect()
         assert clazz.layer is not None, clazz.layer
 
@@ -103,7 +104,7 @@ class ParentReferenceTestCase(unittest.TestCase):
         self.initMap()
         layer = self.map.getLayer(1)
         clazz = layer.removeClass(0)
-        if hasattr(clazz, 'p_layer'):
+        if hasattr(clazz, "p_layer"):
             assert clazz.p_layer is None, clazz.p_layer
         assert clazz.layer is None, clazz.layer
         self.initMap()
@@ -113,5 +114,5 @@ class ParentReferenceTestCase(unittest.TestCase):
         assert clazz.layer is not None, clazz.layer
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

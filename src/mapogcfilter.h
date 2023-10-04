@@ -36,8 +36,8 @@
 
 #ifdef USE_LIBXML2
 
-#include<libxml/parser.h>
-#include<libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 #endif
 
 #ifdef __cplusplus
@@ -48,26 +48,32 @@ typedef struct {
   char *pszWildCard;
   char *pszSingleChar;
   char *pszEscapeChar;
-  int  bCaseInsensitive;
+  int bCaseInsensitive;
 } FEPropertyIsLike;
 
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
 MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
-MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression);
-MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter);
+MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp,
+                                            const char *pszExpression);
+MS_DLL_EXPORT char *FLTGetExpressionForValuesRanges(layerObj *lp,
+                                                    const char *item,
+                                                    const char *value,
+                                                    int forcecharcter);
 
-MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString);
+MS_DLL_EXPORT FilterEncodingNode *
+FLTParseFilterEncoding(const char *szXMLString);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFilterEncodingNode(void);
-MS_DLL_EXPORT char** FLTSplitFilters(const char* pszStr, int* pnTokens);
+MS_DLL_EXPORT char **FLTSplitFilters(const char *pszStr, int *pnTokens);
 MS_DLL_EXPORT int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                         int iLayerIndex);
 
-MS_DLL_EXPORT int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-    int iLayerIndex);
-MS_DLL_EXPORT int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-    int iLayerIndex);
+MS_DLL_EXPORT int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode,
+                                                    mapObj *map,
+                                                    int iLayerIndex);
+MS_DLL_EXPORT int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode,
+                                                  mapObj *map, int iLayerIndex);
 
 MS_DLL_EXPORT void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 
@@ -80,11 +86,12 @@ MS_DLL_EXPORT int FLTIsPointFilter(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT int FLTIsLineFilter(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT int FLTIsPolygonFilter(FilterEncodingNode *psFilterNode);
 
-MS_DLL_EXPORT int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
+MS_DLL_EXPORT int
+FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
 MS_DLL_EXPORT int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode);
 
 MS_DLL_EXPORT void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
-    CPLXMLNode *psXMLNode);
+                                          CPLXMLNode *psXMLNode);
 MS_DLL_EXPORT int FLTIsLogicalFilterType(const char *pszValue);
 MS_DLL_EXPORT int FLTIsBinaryComparisonFilterType(const char *pszValue);
 MS_DLL_EXPORT int FLTIsComparisonFilterType(const char *pszValue);
@@ -93,60 +100,81 @@ MS_DLL_EXPORT int FLTIsSpatialFilterType(const char *pszValue);
 MS_DLL_EXPORT int FLTIsTemporalFilterType(const char *pszValue);
 MS_DLL_EXPORT int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
 
-MS_DLL_EXPORT const char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
-const char* FLTGetDuring(FilterEncodingNode *psFilterNode, const char** ppszTimeField);
+MS_DLL_EXPORT const char *FLTGetBBOX(FilterEncodingNode *psFilterNode,
+                                     rectObj *psRect);
+const char *FLTGetDuring(FilterEncodingNode *psFilterNode,
+                         const char **ppszTimeField);
 
-MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
-                                    int *pnUnit);
+MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode,
+                                    double *pdfDistance, int *pnUnit);
 
 MS_DLL_EXPORT int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 
-
 /*SQL expressions related functions.*/
-MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
-    int iLayerIndex);
+MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode,
+                                          mapObj *map, int iLayerIndex);
 
-MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,layerObj *lp);
-MS_DLL_EXPORT char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,
+                                        layerObj *lp);
+MS_DLL_EXPORT char *
+FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+                                     layerObj *lp);
+MS_DLL_EXPORT char *
+FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+                                        layerObj *lp);
+MS_DLL_EXPORT char *
+FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
+                                    layerObj *lp);
 
-MS_DLL_EXPORT char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
-    layerObj *lp);
+MS_DLL_EXPORT char *
+FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
+                                      layerObj *lp);
 MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
-MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(const char *pszString);
+MS_DLL_EXPORT FilterEncodingNode *
+FLTCreateFeatureIdFilterEncoding(const char *pszString);
 
-MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
-MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
+MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox,
+                                      char **ppszSRS);
+MS_DLL_EXPORT int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox,
+                                 char **ppszSRS);
 
 /*common-expressions*/
-MS_DLL_EXPORT  char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression);
+MS_DLL_EXPORT char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode,
+                                           layerObj *lp);
+MS_DLL_EXPORT int
+FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex,
+                                      const char *pszExpression);
 
 #ifdef USE_LIBXML2
-MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
+MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent,
+                                            xmlNsPtr psNsOgc, int bTemporal);
 #endif
 
-void FLTDoAxisSwappingIfNecessary(mapObj *map, FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
+void FLTDoAxisSwappingIfNecessary(mapObj *map, FilterEncodingNode *psFilterNode,
+                                  int bDefaultSRSNeedsAxisSwapping);
 
 void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
-                                       mapObj *map, int i, const char *namespaces);
-int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
-                             mapObj *map, int i);
+                                       mapObj *map, int i,
+                                       const char *namespaces);
+int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode, mapObj *map,
+                             int i);
 int FLTCheckInvalidOperand(FilterEncodingNode *psFilterNode);
-int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
-                            mapObj *map, int i);
-FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
-                                int* pnEvaluation);
-int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect);
-int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode,
-                            mapObj *map, int i);
-int FLTLayerSetInvalidRectIfSupported(layerObj* lp, rectObj* rect);
+int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode, mapObj *map,
+                            int i);
+FilterEncodingNode *FLTSimplify(FilterEncodingNode *psFilterNode,
+                                int *pnEvaluation);
+int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex,
+                                                  const char *pszExpression,
+                                                  rectObj rect);
+int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode, mapObj *map,
+                             int i);
+int FLTLayerSetInvalidRectIfSupported(layerObj *lp, rectObj *rect);
 
 #ifdef __cplusplus
 }
-std::string FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+std::string FLTGetTimeExpression(FilterEncodingNode *psFilterNode,
+                                 layerObj *lp);
 
 #endif
 
