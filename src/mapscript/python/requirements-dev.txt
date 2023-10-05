@@ -1,6 +1,4 @@
 pytest
 pillow
-wheel>=0.31.1
-setuptools>=40.2.0
-flake8==3.9.2; python_version == '2.7'
-flake8==5.0.3; python_version >= '3.0'
+wheel>=0.38.0
+setuptools>=45.0.0
