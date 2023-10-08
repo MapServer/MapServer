@@ -1018,6 +1018,7 @@ char *msWFSGetResolvedStoredQuery20(mapObj *map, wfsParamsObj *wfsparams,
         }
 
         snprintf(szTmp, sizeof(szTmp), "${%s}", (const char *)parameterName);
+        // value should already be a valid XML fragment
         storedQuery = msReplaceSubstring(storedQuery, szTmp, value);
       }
       xmlFree(parameterName);
