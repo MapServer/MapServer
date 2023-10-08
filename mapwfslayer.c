@@ -38,11 +38,8 @@
 #include <process.h>
 #endif
 
-
-
-#define WFS_V_0_0_14  14
-#define WFS_V_1_0_0  100
-
+#define WFS_V_0_0_14 14
+#define WFS_V_1_0_0 100
 
 /*====================================================================
  *  Private (static) functions
@@ -63,8 +60,7 @@
 /*                                                                      */
 /************************************************************************/
 static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
-    rectObj *bbox_ret)
-{
+                                          rectObj *bbox_ret) {
   wfsParamsObj *psParams = NULL;
   rectObj bbox;
   const char *pszTmp;
@@ -85,7 +81,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (!pszTmp)
       pszTmp = strstr(lp->connection, "version=");
     if (pszTmp) {
-      pszVersion = strchr(pszTmp, '=')+1;
+      pszVersion = strchr(pszTmp, '=') + 1;
       if (strncmp(pszVersion, "0.0.14", 6) == 0)
         psParams->pszVersion = msStrdup("0.0.14");
       else if (strncmp(pszVersion, "1.0.0", 5) == 0)
@@ -126,17 +122,17 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (!pszTmp)
       pszTmp = strstr(lp->connection, "typename=");
     if (pszTmp) {
-      pszTypeName = strchr(pszTmp, '=')+1;
+      pszTypeName = strchr(pszTmp, '=') + 1;
       if (pszTypeName) {
         const int nLength = strlen(pszTypeName);
         if (nLength > 0) {
-          int i=0;
-          for (; i<nLength; i++) {
+          int i = 0;
+          for (; i < nLength; i++) {
             if (pszTypeName[i] == '&')
               break;
           }
 
-          if (i<nLength) {
+          if (i < nLength) {
             char *pszTypeNameTmp = NULL;
             pszTypeNameTmp = msStrdup(pszTypeName);
             pszTypeNameTmp[i] = '\0';
@@ -151,12 +147,17 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
 
   pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "filter");
   if (pszTmp && strlen(pszTmp) > 0) {
-    if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter") != NULL)
+    if (strstr(pszTmp, "<Filter>") != NULL ||
+        strstr(pszTmp, "<ogc:Filter") != NULL)
       psParams->pszFilter = msStrdup(pszTmp);
     else {
-      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">");
-      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, (char*)pszTmp);
-      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
+      psParams->pszFilter = msStringConcatenate(
+          psParams->pszFilter,
+          "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">");
+      psParams->pszFilter =
+          msStringConcatenate(psParams->pszFilter, (char *)pszTmp);
+      psParams->pszFilter =
+          msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
     }
   }
 
@@ -166,7 +167,6 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
 
   /* Request is always GetFeature; */
   psParams->pszRequest = msStrdup("GetFeature");
-
 
   /* ------------------------------------------------------------------
    * Figure the SRS we'll use for the request.
@@ -178,7 +178,8 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
 
   /* __TODO__ WFS servers support only one SRS... need to decide how we'll */
   /* handle this and document it well. */
-  /* It's likely that we'll simply reproject the BBOX to teh layer's projection. */
+  /* It's likely that we'll simply reproject the BBOX to teh layer's projection.
+   */
 
   /* ------------------------------------------------------------------
    * Set layer SRS and reproject map extents to the layer's SRS
@@ -188,7 +189,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   if ((pszTmp = msGetEPSGProj(&(lp->projection), NULL, MS_TRUE)) == NULL ||
       strcasecmp(pszEPSG, pszTmp) != 0) {
     char szProj[20];
-    snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
+    snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG + 5);
     if (msLoadProjectionString(&(lp->projection), szProj) != 0)
       return NULL;
   }
@@ -202,7 +203,6 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   *bbox_ret = bbox;
 
   return psParams;
-
 }
 
 /**********************************************************************
@@ -213,8 +213,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed
  * by the caller.
  **********************************************************************/
-static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams)
-{
+static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams) {
   char *pszPostReq = NULL;
   char *pszFilter = NULL;
   char *pszGeometryName = "Geometry";
@@ -223,17 +222,18 @@ static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams)
   if (psParams->pszVersion == NULL ||
       (strncmp(psParams->pszVersion, "0.0.14", 6) != 0 &&
        strncmp(psParams->pszVersion, "1.0.0", 5)) != 0) {
-    msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).", "msBuildWFSLayerPostRequest()");
+    msSetError(MS_WFSCONNERR,
+               "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the "
+               "version metadata wfs_version).",
+               "msBuildWFSLayerPostRequest()");
     return NULL;
   }
-
-
 
   if (psParams->pszTypeName == NULL) {
-    msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layer", "msBuildWFSLayerPostRequest()");
+    msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layer",
+               "msBuildWFSLayerPostRequest()");
     return NULL;
   }
-
 
   if (psParams->pszGeometryName) {
     pszGeometryName = psParams->pszGeometryName;
@@ -244,44 +244,59 @@ static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams)
   else {
     bufferSize = 500;
     pszFilter = (char *)msSmallMalloc(bufferSize);
-    snprintf(pszFilter, bufferSize, "<ogc:Filter>\n"
+    snprintf(pszFilter, bufferSize,
+             "<ogc:Filter>\n"
              "<ogc:BBOX>\n"
              "<ogc:PropertyName>%s</ogc:PropertyName>\n"
              "<gml:Box>\n"
              "<gml:coordinates>%f,%f %f,%f</gml:coordinates>\n"
              "</gml:Box>\n"
              "</ogc:BBOX>\n"
-             "</ogc:Filter>", pszGeometryName, bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+             "</ogc:Filter>",
+             pszGeometryName, bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
   }
 
-  bufferSize = strlen(pszFilter)+strlen(psParams->pszTypeName)+500;
+  bufferSize = strlen(pszFilter) + strlen(psParams->pszTypeName) + 500;
   pszPostReq = (char *)msSmallMalloc(bufferSize);
   if (psParams->nMaxFeatures > 0)
-    snprintf(pszPostReq, bufferSize, "<?xml version=\"1.0\" ?>\n"
+    snprintf(pszPostReq, bufferSize,
+             "<?xml version=\"1.0\" ?>\n"
              "<wfs:GetFeature\n"
              "service=\"WFS\"\n"
              "version=\"1.0.0\"\n"
              "maxFeatures=\"%d\"\n"
              "outputFormat=\"GML2\"\n"
-			 "xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:ogc=\"http://www.opengis.net/ogc\" xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/wfs.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\">\n"
+             "xmlns:wfs=\"http://www.opengis.net/wfs\" "
+             "xmlns:ogc=\"http://www.opengis.net/ogc\" "
+             "xsi:schemaLocation=\"http://www.opengis.net/wfs "
+             "http://schemas.opengis.net/wfs/1.0.0/wfs.xsd\" "
+             "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+             "xmlns:gml=\"http://www.opengis.net/gml\">\n"
              "<wfs:Query typeName=\"%s\">\n"
              "%s"
              "</wfs:Query>\n"
-             "</wfs:GetFeature>\n", psParams->nMaxFeatures, psParams->pszTypeName, pszFilter);
+             "</wfs:GetFeature>\n",
+             psParams->nMaxFeatures, psParams->pszTypeName, pszFilter);
   else
-    snprintf(pszPostReq, bufferSize, "<?xml version=\"1.0\" ?>\n"
+    snprintf(pszPostReq, bufferSize,
+             "<?xml version=\"1.0\" ?>\n"
              "<wfs:GetFeature\n"
              "service=\"WFS\"\n"
              "version=\"1.0.0\"\n"
              "outputFormat=\"GML2\"\n"
-             "xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:ogc=\"http://www.opengis.net/ogc\" xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/wfs.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\">\n"
+             "xmlns:wfs=\"http://www.opengis.net/wfs\" "
+             "xmlns:ogc=\"http://www.opengis.net/ogc\" "
+             "xsi:schemaLocation=\"http://www.opengis.net/wfs "
+             "http://schemas.opengis.net/wfs/1.0.0/wfs.xsd\" "
+             "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+             "xmlns:gml=\"http://www.opengis.net/gml\">\n"
              "<wfs:Query typeName=\"%s\">\n"
              "%s"
              "</wfs:Query>\n"
-             "</wfs:GetFeature>\n", psParams->pszTypeName, pszFilter);
+             "</wfs:GetFeature>\n",
+             psParams->pszTypeName, pszFilter);
   if (psParams->pszFilter == NULL)
     free(pszFilter);
-
 
   return pszPostReq;
 }
@@ -295,9 +310,8 @@ static char *msBuildWFSLayerPostRequest(rectObj *bbox, wfsParamsObj *psParams)
  * by the caller.
  **********************************************************************/
 static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
-                                   wfsParamsObj *psParams)
-{
-  char *pszURL = NULL, *pszOnlineResource=NULL;
+                                   wfsParamsObj *psParams) {
+  char *pszURL = NULL, *pszOnlineResource = NULL;
   const char *pszTmp;
   char *pszVersion, *pszService, *pszTypename = NULL;
   int bVersionInConnection = 0;
@@ -319,21 +333,22 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   pszVersion = psParams->pszVersion;
   if (!pszVersion) {
     if ((pszTmp = strstr(lp->connection, "VERSION=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "version=")) == NULL ) {
-      msSetError(MS_WFSCONNERR, "Metadata wfs_version must be set in the layer", "msBuildWFSLayerGetURL()");
+        (pszTmp = strstr(lp->connection, "version=")) == NULL) {
+      msSetError(MS_WFSCONNERR, "Metadata wfs_version must be set in the layer",
+                 "msBuildWFSLayerGetURL()");
       return NULL;
     }
-    pszVersion = strchr(pszTmp, '=')+1;
+    pszVersion = strchr(pszTmp, '=') + 1;
     bVersionInConnection = 1;
   }
-
 
   if (strncmp(pszVersion, "0.0.14", 6) != 0 &&
       strncmp(pszVersion, "1.0.0", 5) != 0 &&
       strncmp(pszVersion, "1.1", 3) != 0) {
     msSetError(MS_WFSCONNERR,
-	       "MapServer supports only WFS 1.1.0, 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).",
-	       "msBuildWFSLayerGetURL()");
+               "MapServer supports only WFS 1.1.0, 1.0.0 or 0.0.14 (please "
+               "verify the version metadata wfs_version).",
+               "msBuildWFSLayerGetURL()");
     return NULL;
   }
 
@@ -342,7 +357,6 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   /*      msBuildRequestParms  (check Bug 1302 for details).              */
   /* -------------------------------------------------------------------- */
   pszService = psParams->pszService;
-
 
   /* -------------------------------------------------------------------- */
   /*      Find out the typename. Look first for the wfs_tyename           */
@@ -353,13 +367,14 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   pszTypename = psParams->pszTypeName;
   if (!pszTypename) {
     if ((pszTmp = strstr(lp->connection, "TYPENAME=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "typename=")) == NULL ) {
-      msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layer", "msBuildWFSLayerGetURL()");
+        (pszTmp = strstr(lp->connection, "typename=")) == NULL) {
+      msSetError(MS_WFSCONNERR,
+                 "Metadata wfs_typename must be set in the layer",
+                 "msBuildWFSLayerGetURL()");
       return NULL;
     }
     bTypenameInConnection = 1;
   }
-
 
   /* --------------------------------------------------------------------
    * Build the request URL.
@@ -379,7 +394,7 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
    *   TYPENAME
    * -------------------------------------------------------------------- */
   /* Make sure we have a big enough buffer for the URL */
-  bufferSize = strlen(lp->connection)+1024;
+  bufferSize = strlen(lp->connection) + 1024;
   pszURL = (char *)malloc(bufferSize);
   MS_CHECK_ALLOC(pszURL, bufferSize, NULL);
 
@@ -396,18 +411,22 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   msFree(pszOnlineResource);
 
   /* REQUEST */
-  snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&REQUEST=GetFeature");
+  snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+           "&REQUEST=GetFeature");
 
   /* VERSION */
   if (!bVersionInConnection)
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&VERSION=%s", pszVersion);
+    snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+             "&VERSION=%s", pszVersion);
 
   /* SERVICE */
-  snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&SERVICE=%s", pszService);
+  snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL), "&SERVICE=%s",
+           pszService);
 
   /* TYPENAME */
   if (!bTypenameInConnection)
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),  "&TYPENAME=%s", pszTypename);
+    snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+             "&TYPENAME=%s", pszTypename);
 
   /* -------------------------------------------------------------------- */
   /*      If the filter parameter is given in the wfs_filter metadata,    */
@@ -416,53 +435,51 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   /* -------------------------------------------------------------------- */
   if (psParams->pszFilter) {
     char *encoded_filter = msEncodeUrl(psParams->pszFilter);
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), "&FILTER=%s",encoded_filter);
+    snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL), "&FILTER=%s",
+             encoded_filter);
     free(encoded_filter);
   } else {
-	  /*
-	   * take care about the axis order for WFS 1.1
-	   */
-	  char *projUrn;
-	  char *projEpsg;
-	  projUrn = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", 1);
-	  msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", 1, &projEpsg);
+    /*
+     * take care about the axis order for WFS 1.1
+     */
+    char *projUrn;
+    char *projEpsg;
+    projUrn = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", 1);
+    msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", 1, &projEpsg);
 
-	  /*
-	   * WFS 1.1 supports including the SRS in the BBOX parameter, should
-	   * respect axis order in the BBOX and has a separate SRSNAME parameter for
-	   * the desired result SRS.
-	   * WFS 1.0 is always easting, northing, doesn't include the SRS as part of
-	   * the BBOX parameter and has no SRSNAME parameter: if we don't have a
-	   * URN then fallback to WFS 1.0 style */
-	  if ((strncmp(pszVersion, "1.1", 3) == 0) && projUrn) {
-		 if (projEpsg && (strncmp(projEpsg, "EPSG:", 5) == 0) &&
-				 msIsAxisInverted(atoi(projEpsg + 5))) {
-			 snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
-					 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s",
-					 bbox->miny, bbox->minx, bbox->maxy, bbox->maxx,
-					 projUrn, projUrn);
-		 } else {
-			 snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
-					 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s",
-					 bbox->minx, bbox->miny, bbox->maxx, bbox->maxy,
-					 projUrn, projUrn);
-		 }
-	  } else {
-		  snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
-				  "&BBOX=%.15g,%.15g,%.15g,%.15g",
-				  bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
-	  }
+    /*
+     * WFS 1.1 supports including the SRS in the BBOX parameter, should
+     * respect axis order in the BBOX and has a separate SRSNAME parameter for
+     * the desired result SRS.
+     * WFS 1.0 is always easting, northing, doesn't include the SRS as part of
+     * the BBOX parameter and has no SRSNAME parameter: if we don't have a
+     * URN then fallback to WFS 1.0 style */
+    if ((strncmp(pszVersion, "1.1", 3) == 0) && projUrn) {
+      if (projEpsg && (strncmp(projEpsg, "EPSG:", 5) == 0) &&
+          msIsAxisInverted(atoi(projEpsg + 5))) {
+        snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+                 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s", bbox->miny,
+                 bbox->minx, bbox->maxy, bbox->maxx, projUrn, projUrn);
+      } else {
+        snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+                 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s", bbox->minx,
+                 bbox->miny, bbox->maxx, bbox->maxy, projUrn, projUrn);
+      }
+    } else {
+      snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+               "&BBOX=%.15g,%.15g,%.15g,%.15g", bbox->minx, bbox->miny,
+               bbox->maxx, bbox->maxy);
+    }
 
-	  msFree(projUrn);
-	  msFree(projEpsg);
+    msFree(projUrn);
+    msFree(projEpsg);
   }
 
   if (psParams->nMaxFeatures > 0)
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),
+    snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
              "&MAXFEATURES=%d", psParams->nMaxFeatures);
 
   return pszURL;
-
 }
 
 /**********************************************************************
@@ -470,23 +487,22 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
  *
  **********************************************************************/
 typedef struct ms_wfs_layer_info_t {
-  char        *pszGMLFilename;
-  rectObj     rect;                     /* set by WhichShapes */
-  char        *pszGetUrl;
-  int         nStatus;           /* HTTP status */
-  int         bLayerHasValidGML;  /* False until msWFSLayerWhichShapes() is called and determines the result GML is valid with features*/
+  char *pszGMLFilename;
+  rectObj rect; /* set by WhichShapes */
+  char *pszGetUrl;
+  int nStatus;           /* HTTP status */
+  int bLayerHasValidGML; /* False until msWFSLayerWhichShapes() is called and
+                            determines the result GML is valid with features*/
 } msWFSLayerInfo;
-
 
 /**********************************************************************
  *                          msAllocWFSLayerInfo()
  *
  **********************************************************************/
-static msWFSLayerInfo *msAllocWFSLayerInfo(void)
-{
+static msWFSLayerInfo *msAllocWFSLayerInfo(void) {
   msWFSLayerInfo *psInfo;
 
-  psInfo = (msWFSLayerInfo*)calloc(1,sizeof(msWFSLayerInfo));
+  psInfo = (msWFSLayerInfo *)calloc(1, sizeof(msWFSLayerInfo));
   MS_CHECK_ALLOC(psInfo, sizeof(msWFSLayerInfo), NULL);
 
   psInfo->pszGMLFilename = NULL;
@@ -502,8 +518,7 @@ static msWFSLayerInfo *msAllocWFSLayerInfo(void)
  *                          msFreeWFSLayerInfo()
  *
  **********************************************************************/
-static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo)
-{
+static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo) {
   if (psInfo) {
     if (psInfo->pszGMLFilename)
       free(psInfo->pszGMLFilename);
@@ -526,8 +541,7 @@ static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo)
  **********************************************************************/
 
 int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
-                             httpRequestObj *pasReqInfo, int *numRequests)
-{
+                             httpRequestObj *pasReqInfo, int *numRequests) {
 #ifdef USE_WFS_LYR
   char *pszURL = NULL;
   const char *pszTmp;
@@ -538,7 +552,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   int bPostRequest = 0;
   wfsParamsObj *psParams = NULL;
   char *pszHTTPCookieData = NULL;
-
 
   if (lp->connectiontype != MS_WFS || lp->connection == NULL)
     return MS_FAILURE;
@@ -559,9 +572,9 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   /*      If it is a Post request, the URL will only contain the          */
   /*      connection string comming from the layer.                       */
   /* -------------------------------------------------------------------- */
-  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
-                                    "FO", "request_method")) != NULL) {
-    if (strncmp(pszTmp, "GET", 3) ==0) {
+  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "request_method")) !=
+      NULL) {
+    if (strncmp(pszTmp, "GET", 3) == 0) {
       pszURL = msBuildWFSLayerGetURL(lp, &bbox, psParams);
       if (!pszURL) {
         /* an error was already reported. */
@@ -580,9 +593,9 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * the case we will use it, else we use the default which is 30 seconds.
    * First check the metadata in the layer object and then in the map object.
    * ------------------------------------------------------------------ */
-  nTimeout = 30;  /* Default is 30 seconds  */
+  nTimeout = 30; /* Default is 30 seconds  */
   if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                    "FO", "connectiontimeout")) != NULL) {
+                                     "FO", "connectiontimeout")) != NULL) {
     nTimeout = atoi(pszTmp);
   }
 
@@ -591,21 +604,21 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * If Cookie differ between the two connection, it's NOT OK to merge
    * the connection
    * ------------------------------------------------------------------ */
-  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
-                                    "FO", "http_cookie")) != NULL) {
-    if(strcasecmp(pszTmp, "forward") == 0) {
-      pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
-      if(pszTmp != NULL) {
+  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "http_cookie")) !=
+      NULL) {
+    if (strcasecmp(pszTmp, "forward") == 0) {
+      pszTmp = msLookupHashTable(&(map->web.metadata), "http_cookie_data");
+      if (pszTmp != NULL) {
         pszHTTPCookieData = msStrdup(pszTmp);
       }
     } else {
       pszHTTPCookieData = msStrdup(pszTmp);
     }
-  } else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata),
-                       "FO", "http_cookie")) != NULL) {
-    if(strcasecmp(pszTmp, "forward") == 0) {
-      pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
-      if(pszTmp != NULL) {
+  } else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata), "FO",
+                                           "http_cookie")) != NULL) {
+    if (strcasecmp(pszTmp, "forward") == 0) {
+      pszTmp = msLookupHashTable(&(map->web.metadata), "http_cookie_data");
+      if (pszTmp != NULL) {
         pszHTTPCookieData = msStrdup(pszTmp);
       }
     } else {
@@ -618,7 +631,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * ------------------------------------------------------------------ */
   if (nLayerId == -1) {
     int iLayer;
-    for(iLayer=0; iLayer < map->numlayers; iLayer++) {
+    for (iLayer = 0; iLayer < map->numlayers; iLayer++) {
       if (GET_LAYER(map, iLayer) == lp) {
         nLayerId = iLayer;
         break;
@@ -634,14 +647,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (bPostRequest) {
     pasReqInfo[(*numRequests)].pszPostRequest =
-      msBuildWFSLayerPostRequest(&bbox, psParams);
-    pasReqInfo[(*numRequests)].pszPostContentType =
-      msStrdup("text/xml");
+        msBuildWFSLayerPostRequest(&bbox, psParams);
+    pasReqInfo[(*numRequests)].pszPostContentType = msStrdup("text/xml");
   }
 
-
   /* We'll store the remote server's response to a tmp file. */
-  pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map, map->mappath, NULL, "tmp.gml");
+  pasReqInfo[(*numRequests)].pszOutputFile =
+      msTmpFile(map, map->mappath, NULL, "tmp.gml");
 
   /* TODO: Implement Caching of GML responses. There was an older caching
    * method, but it suffered from a race condition. See #3137.
@@ -654,26 +666,26 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   pasReqInfo[(*numRequests)].bbox = bbox;
   pasReqInfo[(*numRequests)].debug = lp->debug;
 
-  if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
-                           pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS) {
+  if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata), pasReqInfo,
+                           *numRequests, map, "FO") != MS_SUCCESS) {
     msWFSFreeParamsObj(psParams);
     return MS_FAILURE;
   }
-  
+
   /* ------------------------------------------------------------------
    * Pre-Open the layer now, (i.e. alloc and fill msWFSLayerInfo inside
    * layer obj).  Layer will be ready for use when the main mapserver
    * code calls msLayerOpen().
    * ------------------------------------------------------------------ */
   if (lp->wfslayerinfo != NULL) {
-    psInfo =(msWFSLayerInfo*)(lp->wfslayerinfo);
+    psInfo = (msWFSLayerInfo *)(lp->wfslayerinfo);
   } else {
     lp->wfslayerinfo = psInfo = msAllocWFSLayerInfo();
   }
 
   if (psInfo->pszGMLFilename)
     free(psInfo->pszGMLFilename);
-  psInfo->pszGMLFilename=msStrdup(pasReqInfo[(*numRequests)].pszOutputFile);
+  psInfo->pszGMLFilename = msStrdup(pasReqInfo[(*numRequests)].pszOutputFile);
 
   psInfo->rect = pasReqInfo[(*numRequests)].bbox;
 
@@ -695,10 +707,9 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msPrepareWFSLayerRequest");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 
 #endif /* USE_WFS_LYR */
-
 }
 
 /**********************************************************************
@@ -709,13 +720,12 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * msWFSLayerInfo struct.  Things to copy here are the HTTP status, exceptions
  * information, mime type, etc.
  **********************************************************************/
-void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo)
-{
+void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo) {
 #ifdef USE_WFS_LYR
   if (lp->wfslayerinfo) {
     msWFSLayerInfo *psInfo = NULL;
 
-    psInfo =(msWFSLayerInfo*)(lp->wfslayerinfo);
+    psInfo = (msWFSLayerInfo *)(lp->wfslayerinfo);
 
     /* Copy request results infos to msWFSLayerInfo struct */
     /* For now there is only nStatus, but we should eventually add */
@@ -740,18 +750,17 @@ void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo)
  *
  **********************************************************************/
 
-int msWFSLayerOpen(layerObj *lp,
-                   const char *pszGMLFilename, rectObj *defaultBBOX)
-{
+int msWFSLayerOpen(layerObj *lp, const char *pszGMLFilename,
+                   rectObj *defaultBBOX) {
 #ifdef USE_WFS_LYR
   int status = MS_SUCCESS;
   msWFSLayerInfo *psInfo = NULL;
 
-  if ( msCheckParentPointer(lp->map,"map")==MS_FAILURE )
+  if (msCheckParentPointer(lp->map, "map") == MS_FAILURE)
     return MS_FAILURE;
 
   if (lp->wfslayerinfo != NULL) {
-    psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
+    psInfo = (msWFSLayerInfo *)lp->wfslayerinfo;
 
     /* Layer already opened.  If explicit filename requested then check */
     /* that file was already opened with the same filename. */
@@ -759,18 +768,20 @@ int msWFSLayerOpen(layerObj *lp,
     /* previously opened layer... this will happen in a msDrawMap() call. */
     if (pszGMLFilename == NULL ||
         (psInfo->pszGMLFilename &&
-         strcmp(psInfo->pszGMLFilename, pszGMLFilename) == 0) ) {
+         strcmp(psInfo->pszGMLFilename, pszGMLFilename) == 0)) {
       if (lp->layerinfo == NULL) {
-        if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) == MS_FAILURE) /* no access to context (draw vs. query) here, although I doubt it matters... */
+        if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) ==
+            MS_FAILURE) /* no access to context (draw vs. query) here, although
+                           I doubt it matters... */
           return MS_FAILURE;
       }
-      return MS_SUCCESS;  /* Nothing to do... layer is already opened */
+      return MS_SUCCESS; /* Nothing to do... layer is already opened */
     } else {
       /* Hmmm... should we produce a fatal error? */
       /* For now we'll just close the layer and reopen it. */
       if (lp->debug)
         msDebug("msWFSLayerOpen(): Layer already opened (%s)\n",
-                lp->name?lp->name:"(null)" );
+                lp->name ? lp->name : "(null)");
       msWFSLayerClose(lp);
     }
   }
@@ -783,10 +794,8 @@ int msWFSLayerOpen(layerObj *lp,
   if (pszGMLFilename)
     psInfo->pszGMLFilename = msStrdup(pszGMLFilename);
   else {
-    psInfo->pszGMLFilename = msTmpFile(lp->map,
-                                       lp->map->mappath,
-                                       NULL,
-                                       "tmp.gml");
+    psInfo->pszGMLFilename =
+        msTmpFile(lp->map, lp->map->mappath, NULL, "tmp.gml");
   }
 
   if (defaultBBOX) {
@@ -805,12 +814,14 @@ int msWFSLayerOpen(layerObj *lp,
   /* between now and the time whichshapes() would have been called by */
   /* the MapServer core. */
 
-  if((lp->map->projection.numargs > 0) && (lp->projection.numargs > 0))
-    msProjectRect(&lp->map->projection, &lp->projection, &psInfo->rect); /* project the searchrect to source coords */
+  if ((lp->map->projection.numargs > 0) && (lp->projection.numargs > 0))
+    msProjectRect(&lp->map->projection, &lp->projection,
+                  &psInfo->rect); /* project the searchrect to source coords */
 
-  if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) == MS_FAILURE)  /* no access to context (draw vs. query) here, although I doubt it matters... */
+  if (msWFSLayerWhichShapes(lp, psInfo->rect, MS_FALSE) ==
+      MS_FAILURE) /* no access to context (draw vs. query) here, although I
+                     doubt it matters... */
     status = MS_FAILURE;
-
 
   return status;
 #else
@@ -819,7 +830,7 @@ int msWFSLayerOpen(layerObj *lp,
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerOpen()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 
 #endif /* USE_WFS_LYR */
 }
@@ -829,11 +840,7 @@ int msWFSLayerOpen(layerObj *lp,
  *
  * Overloaded version of msWFSLayerOpen for virtual table architecture
  **********************************************************************/
-int
-msWFSLayerOpenVT(layerObj *lp)
-{
-  return msWFSLayerOpen(lp, NULL, NULL);
-}
+int msWFSLayerOpenVT(layerObj *lp) { return msWFSLayerOpen(lp, NULL, NULL); }
 
 /**********************************************************************
  *                          msWFSLayerIsOpen()
@@ -842,8 +849,7 @@ msWFSLayerOpenVT(layerObj *lp)
  *
  **********************************************************************/
 
-int msWFSLayerIsOpen(layerObj *lp)
-{
+int msWFSLayerIsOpen(layerObj *lp) {
 #ifdef USE_WFS_LYR
   if (lp->wfslayerinfo != NULL)
     return MS_TRUE;
@@ -855,7 +861,7 @@ int msWFSLayerIsOpen(layerObj *lp)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerIsOpen()");
-  return(MS_FALSE);
+  return (MS_FALSE);
 
 #endif /* USE_WFS_LYR */
 }
@@ -865,8 +871,7 @@ int msWFSLayerIsOpen(layerObj *lp)
  *
  **********************************************************************/
 
-int msWFSLayerInitItemInfo(layerObj *layer)
-{
+int msWFSLayerInitItemInfo(layerObj *layer) {
   (void)layer;
   /* Nothing to do here.  OGR will do its own initialization when it */
   /* opens the actual file. */
@@ -879,19 +884,18 @@ int msWFSLayerInitItemInfo(layerObj *layer)
  *                          msWFSLayerGetShape()
  *
  **********************************************************************/
-int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
-{
+int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
 #ifdef USE_WFS_LYR
-  msWFSLayerInfo* psInfo = NULL;
+  msWFSLayerInfo *psInfo = NULL;
 
-  if(layer != NULL && layer->wfslayerinfo != NULL)
-    psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+  if (layer != NULL && layer->wfslayerinfo != NULL)
+    psInfo = (msWFSLayerInfo *)layer->wfslayerinfo;
   else {
     msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetShape()");
     return MS_FAILURE;
   }
 
-  if(psInfo->bLayerHasValidGML)
+  if (psInfo->bLayerHasValidGML)
     return msOGRLayerGetShape(layer, shape, record);
   else {
     /* Layer is successful, but there is no data to process */
@@ -905,28 +909,26 @@ int msWFSLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerGetShape()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 #endif /* USE_WFS_LYR */
-
 }
 
 /**********************************************************************
  *                          msWFSLayerGetNextShape()
  *
  **********************************************************************/
-int msWFSLayerNextShape(layerObj *layer, shapeObj *shape)
-{
+int msWFSLayerNextShape(layerObj *layer, shapeObj *shape) {
 #ifdef USE_WFS_LYR
-  msWFSLayerInfo* psInfo = NULL;
+  msWFSLayerInfo *psInfo = NULL;
 
-  if(layer != NULL && layer->wfslayerinfo != NULL)
-    psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+  if (layer != NULL && layer->wfslayerinfo != NULL)
+    psInfo = (msWFSLayerInfo *)layer->wfslayerinfo;
   else {
     msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerNextShape()");
     return MS_FAILURE;
   }
 
-  if(psInfo->bLayerHasValidGML)
+  if (psInfo->bLayerHasValidGML)
     return msOGRLayerNextShape(layer, shape);
   else {
     /* Layer is successful, but there is no data to process */
@@ -940,32 +942,31 @@ int msWFSLayerNextShape(layerObj *layer, shapeObj *shape)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerNextShape()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 #endif /* USE_WFS_LYR */
-
 }
 
 /**********************************************************************
  *                          msWFSLayerGetExtent()
  *
  **********************************************************************/
-int msWFSLayerGetExtent(layerObj *layer, rectObj *extent)
-{
+int msWFSLayerGetExtent(layerObj *layer, rectObj *extent) {
 #ifdef USE_WFS_LYR
-  msWFSLayerInfo* psInfo = NULL;
+  msWFSLayerInfo *psInfo = NULL;
 
-  if(layer != NULL && layer->wfslayerinfo != NULL)
-    psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+  if (layer != NULL && layer->wfslayerinfo != NULL)
+    psInfo = (msWFSLayerInfo *)layer->wfslayerinfo;
   else {
     msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetExtent()");
     return MS_FAILURE;
   }
 
-  if(psInfo->bLayerHasValidGML)
+  if (psInfo->bLayerHasValidGML)
     return msOGRLayerGetExtent(layer, extent);
   else {
     /* Layer is successful, but there is no data to process */
-    msSetError(MS_WFSERR, "Unable to get extents for this layer.", "msWFSLayerGetExtent()");
+    msSetError(MS_WFSERR, "Unable to get extents for this layer.",
+               "msWFSLayerGetExtent()");
     return MS_FAILURE;
   }
 #else
@@ -974,9 +975,8 @@ int msWFSLayerGetExtent(layerObj *layer, rectObj *extent)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerGetExtent()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 #endif /* USE_WFS_LYR */
-
 }
 
 /**********************************************************************
@@ -984,24 +984,23 @@ int msWFSLayerGetExtent(layerObj *layer, rectObj *extent)
  *
  **********************************************************************/
 
-int msWFSLayerGetItems(layerObj *layer)
-{
+int msWFSLayerGetItems(layerObj *layer) {
 #ifdef USE_WFS_LYR
   /* For now this method simply lets OGR parse the GML and figure the  */
   /* schema itself. */
   /* It could also be implemented to call DescribeFeatureType for */
   /* this layer, but we don't need to do it so why waste resources? */
 
-  msWFSLayerInfo* psInfo = NULL;
+  msWFSLayerInfo *psInfo = NULL;
 
-  if(layer != NULL && layer->wfslayerinfo != NULL)
-    psInfo = (msWFSLayerInfo*)layer->wfslayerinfo;
+  if (layer != NULL && layer->wfslayerinfo != NULL)
+    psInfo = (msWFSLayerInfo *)layer->wfslayerinfo;
   else {
     msSetError(MS_WFSERR, "Layer is not opened.", "msWFSLayerGetItems()");
     return MS_FAILURE;
   }
 
-  if(psInfo->bLayerHasValidGML)
+  if (psInfo->bLayerHasValidGML)
     return msOGRLayerGetItems(layer);
   else {
     /* Layer is successful, but there is no data to process */
@@ -1015,9 +1014,8 @@ int msWFSLayerGetItems(layerObj *layer)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerGetItems()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 #endif /* USE_WFS_LYR */
-
 }
 
 /**********************************************************************
@@ -1025,38 +1023,37 @@ int msWFSLayerGetItems(layerObj *layer)
  *
  **********************************************************************/
 
-int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
-{
+int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery) {
 #ifdef USE_WFS_LYR
   msWFSLayerInfo *psInfo;
   int status = MS_SUCCESS;
   const char *pszTmp;
   FILE *fp;
 
-  if ( msCheckParentPointer(lp->map,"map")==MS_FAILURE )
+  if (msCheckParentPointer(lp->map, "map") == MS_FAILURE)
     return MS_FAILURE;
 
-
-  psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
+  psInfo = (msWFSLayerInfo *)lp->wfslayerinfo;
 
   if (psInfo == NULL) {
     msSetError(MS_WFSCONNERR, "Assertion failed: WFS layer not opened!!!",
                "msWFSLayerWhichShapes()");
-    return(MS_FAILURE);
+    return (MS_FAILURE);
   }
 
   /* ------------------------------------------------------------------
    * Check if layer overlaps current view window (using wfs_latlonboundingbox)
    * ------------------------------------------------------------------ */
-  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
-                                    "FO", "latlonboundingbox")) != NULL) {
+  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO",
+                                    "latlonboundingbox")) != NULL) {
     char **tokens;
     int n;
     rectObj ext;
 
     tokens = msStringSplit(pszTmp, ' ', &n);
-    if (tokens==NULL || n != 4) {
-      msSetError(MS_WFSCONNERR, "Wrong number of values in 'wfs_latlonboundingbox' metadata.",
+    if (tokens == NULL || n != 4) {
+      msSetError(MS_WFSCONNERR,
+                 "Wrong number of values in 'wfs_latlonboundingbox' metadata.",
                  "msWFSLayerWhichShapes()");
       return MS_FAILURE;
     }
@@ -1075,17 +1072,15 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
     if (!msRectOverlap(&rect, &ext)) {
       /* No overlap... nothing to do. If layer was never opened, go open it.*/
       if (lp->layerinfo)
-        return MS_DONE;  /* No overlap. */
+        return MS_DONE; /* No overlap. */
     }
   }
-
 
   /* ------------------------------------------------------------------
    * __TODO__ If new bbox differs from current one then we should
    * invalidate current GML file in cache
    * ------------------------------------------------------------------ */
   psInfo->rect = rect;
-
 
   /* ------------------------------------------------------------------
    * If file not downloaded yet then do it now.
@@ -1096,10 +1091,10 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
 
     msHTTPInitRequestObj(asReqInfo, 2);
 
-    if ( msPrepareWFSLayerRequest(-1, lp->map, lp,
-                                  asReqInfo, &numReq) == MS_FAILURE  ||
-         msOWSExecuteRequests(asReqInfo, numReq,
-                              lp->map, MS_TRUE) == MS_FAILURE ) {
+    if (msPrepareWFSLayerRequest(-1, lp->map, lp, asReqInfo, &numReq) ==
+            MS_FAILURE ||
+        msOWSExecuteRequests(asReqInfo, numReq, lp->map, MS_TRUE) ==
+            MS_FAILURE) {
       /* Delete tmp file... we don't want it to stick around. */
       unlink(asReqInfo[0].pszOutputFile);
       return MS_FAILURE;
@@ -1107,18 +1102,16 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
 
     /* Cleanup */
     msHTTPFreeRequestObj(asReqInfo, numReq);
-
   }
 
-  if ( !MS_HTTP_SUCCESS( psInfo->nStatus ) ) {
+  if (!MS_HTTP_SUCCESS(psInfo->nStatus)) {
     /* Delete tmp file... we don't want it to stick around. */
     unlink(psInfo->pszGMLFilename);
 
-    msSetError(MS_WFSCONNERR,
-               "Got HTTP status %d downloading WFS layer %s",
-               "msWFSLayerWhichShapes()",
-               psInfo->nStatus, lp->name?lp->name:"(null)");
-    return(MS_FAILURE);
+    msSetError(MS_WFSCONNERR, "Got HTTP status %d downloading WFS layer %s",
+               "msWFSLayerWhichShapes()", psInfo->nStatus,
+               lp->name ? lp->name : "(null)");
+    return (MS_FAILURE);
   }
 
   /* ------------------------------------------------------------------
@@ -1126,45 +1119,40 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
    * ------------------------------------------------------------------ */
   if ((fp = fopen(psInfo->pszGMLFilename, "r")) != NULL) {
     char szHeader[2000];
-    int  nBytes = 0;
+    int nBytes = 0;
 
-    nBytes = fread( szHeader, 1, sizeof(szHeader)-1, fp );
+    nBytes = fread(szHeader, 1, sizeof(szHeader) - 1, fp);
     fclose(fp);
 
     if (nBytes < 0)
       nBytes = 0;
     szHeader[nBytes] = '\0';
 
-    if ( nBytes == 0 ) {
-      msSetError(MS_WFSCONNERR,
-                 "WFS request produced no oputput for layer %s.",
-                 "msWFSLayerWhichShapes()",
-                 lp->name?lp->name:"(null)");
-      return(MS_FAILURE);
-
+    if (nBytes == 0) {
+      msSetError(MS_WFSCONNERR, "WFS request produced no oputput for layer %s.",
+                 "msWFSLayerWhichShapes()", lp->name ? lp->name : "(null)");
+      return (MS_FAILURE);
     }
-    if ( strstr(szHeader, "<WFS_Exception>") ||
-         strstr(szHeader, "<ServiceExceptionReport>") ) {
-      msOWSProcessException(lp, psInfo->pszGMLFilename,
-                            MS_WFSCONNERR, "msWFSLayerWhichShapes()" );
+    if (strstr(szHeader, "<WFS_Exception>") ||
+        strstr(szHeader, "<ServiceExceptionReport>")) {
+      msOWSProcessException(lp, psInfo->pszGMLFilename, MS_WFSCONNERR,
+                            "msWFSLayerWhichShapes()");
       return MS_FAILURE;
-    } else if ( strstr(szHeader,"opengis.net/gml") &&
-                strstr(szHeader,"featureMember>") == NULL ) {
+    } else if (strstr(szHeader, "opengis.net/gml") &&
+               strstr(szHeader, "featureMember>") == NULL) {
       /* This looks like valid GML, but contains 0 features. */
       return MS_DONE;
-    } else if ( strstr(szHeader,"opengis.net/gml") == NULL ||
-                strstr(szHeader,"featureMember>") == NULL ) {
+    } else if (strstr(szHeader, "opengis.net/gml") == NULL ||
+               strstr(szHeader, "featureMember>") == NULL) {
       /* This is probably just junk. */
       msSetError(MS_WFSCONNERR,
                  "WFS request produced unexpected output (junk?) for layer %s.",
-                 "msWFSLayerWhichShapes()",
-                 lp->name?lp->name:"(null)");
-      return(MS_FAILURE);
+                 "msWFSLayerWhichShapes()", lp->name ? lp->name : "(null)");
+      return (MS_FAILURE);
     }
 
     /* If we got this far, it must be a valid GML dataset... keep going */
   }
-
 
   /* ------------------------------------------------------------------
    * Open GML file using OGR.
@@ -1184,20 +1172,17 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerWhichShapes()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 
 #endif /* USE_WFS_LYR */
 }
-
-
 
 /**********************************************************************
  *                          msWFSLayerClose()
  *
  **********************************************************************/
 
-int msWFSLayerClose(layerObj *lp)
-{
+int msWFSLayerClose(layerObj *lp) {
 #ifdef USE_WFS_LYR
 
   /* ------------------------------------------------------------------
@@ -1224,18 +1209,16 @@ int msWFSLayerClose(layerObj *lp)
    * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.",
              "msWFSLayerClose()");
-  return(MS_FAILURE);
+  return (MS_FAILURE);
 
 #endif /* USE_WFS_LYR */
-
 }
 
 /**********************************************************************
  *                          msWFSExecuteGetFeature()
  * Returns the temporary gml file name. User shpuld free the return string.
  **********************************************************************/
-char *msWFSExecuteGetFeature(layerObj *lp)
-{
+char *msWFSExecuteGetFeature(layerObj *lp) {
 #ifdef USE_WFS_LYR
   char *gmltmpfile = NULL;
   msWFSLayerInfo *psInfo = NULL;
@@ -1244,8 +1227,8 @@ char *msWFSExecuteGetFeature(layerObj *lp)
     return NULL;
 
   msWFSLayerOpen(lp, NULL, NULL);
-  psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
-  if (psInfo &&  psInfo->pszGMLFilename)
+  psInfo = (msWFSLayerInfo *)lp->wfslayerinfo;
+  if (psInfo && psInfo->pszGMLFilename)
     gmltmpfile = msStrdup(psInfo->pszGMLFilename);
   msWFSLayerClose(lp);
 
@@ -1260,12 +1243,9 @@ char *msWFSExecuteGetFeature(layerObj *lp)
   return NULL;
 
 #endif /* USE_WFS_LYR */
-
 }
 
-int
-msWFSLayerInitializeVirtualTable(layerObj *layer)
-{
+int msWFSLayerInitializeVirtualTable(layerObj *layer) {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 

@@ -29,12 +29,9 @@
 
 #include "mapserver.h"
 
+void printAtts(mapObj *, const char *);
 
-
-void printAtts(mapObj*, const char*);
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
   mapObj *original_map, *clone_map;
 
@@ -45,7 +42,7 @@ int main(int argc, char *argv[])
   /* Load map file */
   original_map = msLoadMap("tests/test.map", NULL);
 
-  if (original_map ==  NULL) {
+  if (original_map == NULL) {
     /* Write errors */
     msWriteError(stderr);
     msResetErrorList();
@@ -75,8 +72,7 @@ int main(int argc, char *argv[])
   exit(0);
 }
 
-void printAtts(mapObj *map, const char *title)
-{
+void printAtts(mapObj *map, const char *title) {
   printf("\n%s Attributes\n----------------------\n", title);
   printf("Map Name: %s\n", map->name);
   printf("Numlayers: %d\n", map->numlayers);

@@ -41,58 +41,57 @@
 
 #include "cpl_conv.h"
 
-static char *const ms_errorCodes[MS_NUMERRORCODES] = { "",
-  "Unable to access file.",
-  "Memory allocation error.",
-  "Incorrect data type.",
-  "Symbol definition error.",
-  "Regular expression error.",
-  "TrueType Font error.",
-  "DBASE file error.",
-  "GD library error.",
-  "Unknown identifier.",
-  "Premature End-of-File.",
-  "Projection library error.",
-  "General error message.",
-  "CGI error.",
-  "Web application error.",
-  "Image handling error.",
-  "Hash table error.",
-  "Join error.",
-  "Search returned no results.",
-  "Shapefile error.",
-  "Expression parser error.",
-  "SDE error.",
-  "OGR error.",
-  "Query error.",
-  "WMS server error.",
-  "WMS connection error.",
-  "OracleSpatial error.",
-  "WFS server error.",
-  "WFS connection error.",
-  "WMS Map Context error.",
-  "HTTP request error.",
-  "Child array error.",
-  "WCS server error.",
-  "GEOS library error.",
-  "Invalid rectangle.",
-  "Date/time error.",
-  "GML encoding error.",
-  "SOS server error.",
-  "NULL parent pointer error.",
-  "AGG library error.",
-  "OWS error.",
-  "OpenGL renderer error.",
-  "Renderer error.",
-  "V8 engine error.",
-  "OCG API error."
-};
+static char *const ms_errorCodes[MS_NUMERRORCODES] = {
+    "",
+    "Unable to access file.",
+    "Memory allocation error.",
+    "Incorrect data type.",
+    "Symbol definition error.",
+    "Regular expression error.",
+    "TrueType Font error.",
+    "DBASE file error.",
+    "GD library error.",
+    "Unknown identifier.",
+    "Premature End-of-File.",
+    "Projection library error.",
+    "General error message.",
+    "CGI error.",
+    "Web application error.",
+    "Image handling error.",
+    "Hash table error.",
+    "Join error.",
+    "Search returned no results.",
+    "Shapefile error.",
+    "Expression parser error.",
+    "SDE error.",
+    "OGR error.",
+    "Query error.",
+    "WMS server error.",
+    "WMS connection error.",
+    "OracleSpatial error.",
+    "WFS server error.",
+    "WFS connection error.",
+    "WMS Map Context error.",
+    "HTTP request error.",
+    "Child array error.",
+    "WCS server error.",
+    "GEOS library error.",
+    "Invalid rectangle.",
+    "Date/time error.",
+    "GML encoding error.",
+    "SOS server error.",
+    "NULL parent pointer error.",
+    "AGG library error.",
+    "OWS error.",
+    "OpenGL renderer error.",
+    "Renderer error.",
+    "V8 engine error.",
+    "OCG API error."};
 
 #ifndef USE_THREAD
 
 // Get the MapServer error object
-errorObj *msGetErrorObj()
-{
+errorObj *msGetErrorObj() {
   static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, 0, NULL};
   return &ms_error;
 }
@@ -108,33 +107,33 @@ typedef struct te_info {
 
 static te_info_t *error_list = NULL;
 
-errorObj *msGetErrorObj()
-{
+errorObj *msGetErrorObj() {
   te_info_t *link;
   void *thread_id;
   errorObj *ret_obj;
 
-  msAcquireLock( TLOCK_ERROROBJ );
+  msAcquireLock(TLOCK_ERROROBJ);
 
   thread_id = msGetThreadId();
 
   /* find link for this thread */
 
-  for( link = error_list;
-       link != NULL && link->thread_id != thread_id
-       && link->next != NULL && link->next->thread_id != thread_id;
-       link = link->next ) {}
+  for (link = error_list;
+       link != NULL && link->thread_id != thread_id && link->next != NULL &&
+       link->next->thread_id != thread_id;
+       link = link->next) {
+  }
 
   /* If the target thread link is already at the head of the list were ok */
-  if( error_list != NULL && error_list->thread_id == thread_id ) {
+  if (error_list != NULL && error_list->thread_id == thread_id) {
   }
 
   /* We don't have one ... initialize one. */
-  else if( link == NULL || link->next == NULL ) {
+  else if (link == NULL || link->next == NULL) {
     te_info_t *new_link;
-    errorObj   error_obj = { MS_NOERR, "", "", 0, 0, NULL, 0 };
+    errorObj error_obj = {MS_NOERR, "", "", 0, 0, NULL, 0};
 
-    new_link = (te_info_t *) malloc(sizeof(te_info_t));
+    new_link = (te_info_t *)malloc(sizeof(te_info_t));
     new_link->next = error_list;
     new_link->thread_id = thread_id;
     new_link->ms_error = error_obj;
@@ -153,7 +152,7 @@ errorObj *msGetErrorObj()
 
   ret_obj = &(error_list->ms_error);
 
-  msReleaseLock( TLOCK_ERROROBJ );
+  msReleaseLock(TLOCK_ERROROBJ);
 
   return ret_obj;
 }
@@ -175,8 +174,7 @@ errorObj *msGetErrorObj()
 ** the head is moved to the new errorObj, freeing the head errorObj to receive
 ** the new error information.
 */
-static errorObj *msInsertErrorObj(void)
-{
+static errorObj *msInsertErrorObj(void) {
   errorObj *ms_error;
   ms_error = msGetErrorObj();
 
@@ -196,8 +194,10 @@ static errorObj *msInsertErrorObj(void)
       new_error->next = ms_error->next;
       new_error->code = ms_error->code;
       new_error->isreported = ms_error->isreported;
-      strlcpy(new_error->routine, ms_error->routine, sizeof(new_error->routine));
-      strlcpy(new_error->message, ms_error->message, sizeof(new_error->message));
+      strlcpy(new_error->routine, ms_error->routine,
+              sizeof(new_error->routine));
+      strlcpy(new_error->message, ms_error->message,
+              sizeof(new_error->message));
       new_error->errorcount = ms_error->errorcount;
 
       ms_error->next = new_error;
@@ -207,7 +207,7 @@ static errorObj *msInsertErrorObj(void)
       ms_error->message[0] = '\0';
       ms_error->errorcount = 0;
     }
-    ms_error->totalerrorcount ++;
+    ms_error->totalerrorcount++;
   }
 
   return ms_error;
@@ -217,13 +217,12 @@ static errorObj *msInsertErrorObj(void)
 **
 ** Clear the list of error objects.
 */
-void msResetErrorList()
-{
+void msResetErrorList() {
   errorObj *ms_error, *this_error;
   ms_error = msGetErrorObj();
 
   this_error = ms_error->next;
-  while( this_error != NULL) {
+  while (this_error != NULL) {
     errorObj *next_error;
 
     next_error = this_error->next;
@@ -245,41 +244,41 @@ void msResetErrorList()
   /* -------------------------------------------------------------------- */
 #ifdef USE_THREAD
   {
-    void*  thread_id = msGetThreadId();
+    void *thread_id = msGetThreadId();
     te_info_t *link;
 
-    msAcquireLock( TLOCK_ERROROBJ );
+    msAcquireLock(TLOCK_ERROROBJ);
 
     /* find link for this thread */
 
-    for( link = error_list;
-         link != NULL && link->thread_id != thread_id
-         && link->next != NULL && link->next->thread_id != thread_id;
-         link = link->next ) {}
+    for (link = error_list;
+         link != NULL && link->thread_id != thread_id && link->next != NULL &&
+         link->next->thread_id != thread_id;
+         link = link->next) {
+    }
 
-    if( link->thread_id == thread_id ) {
+    if (link->thread_id == thread_id) {
       /* presumably link is at head of list.  */
-      if( error_list == link )
+      if (error_list == link)
         error_list = link->next;
 
-      free( link );
-    } else if( link->next != NULL && link->next->thread_id == thread_id ) {
+      free(link);
+    } else if (link->next != NULL && link->next->thread_id == thread_id) {
       te_info_t *next_link = link->next;
       link->next = link->next->next;
-      free( next_link );
+      free(next_link);
     }
-    msReleaseLock( TLOCK_ERROROBJ );
+    msReleaseLock(TLOCK_ERROROBJ);
   }
 #endif
 }
 
-char *msGetErrorCodeString(int code)
-{
+char *msGetErrorCodeString(int code) {
 
-  if(code<0 || code>MS_NUMERRORCODES-1)
-    return("Invalid error code.");
+  if (code < 0 || code > MS_NUMERRORCODES - 1)
+    return ("Invalid error code.");
 
-  return(ms_errorCodes[code]);
+  return (ms_errorCodes[code]);
 }
 
 /* -------------------------------------------------------------------- */
@@ -287,63 +286,72 @@ char *msGetErrorCodeString(int code)
 /*      and reallocates the memory enough to hold the characters.       */
 /*      If source is null returns a newly allocated string              */
 /* -------------------------------------------------------------------- */
-char *msAddErrorDisplayString(char *source, errorObj *error)
-{
-  if((source = msStringConcatenate(source, error->routine)) == NULL) return(NULL);
-  if((source = msStringConcatenate(source, ": ")) == NULL) return(NULL);
-  if((source = msStringConcatenate(source, ms_errorCodes[error->code])) == NULL) return(NULL);
-  if((source = msStringConcatenate(source, " ")) == NULL) return(NULL);
-  if((source = msStringConcatenate(source, error->message)) == NULL) return(NULL);
+char *msAddErrorDisplayString(char *source, errorObj *error) {
+  if ((source = msStringConcatenate(source, error->routine)) == NULL)
+    return (NULL);
+  if ((source = msStringConcatenate(source, ": ")) == NULL)
+    return (NULL);
+  if ((source = msStringConcatenate(source, ms_errorCodes[error->code])) ==
+      NULL)
+    return (NULL);
+  if ((source = msStringConcatenate(source, " ")) == NULL)
+    return (NULL);
+  if ((source = msStringConcatenate(source, error->message)) == NULL)
+    return (NULL);
   if (error->errorcount > 0) {
-    char* pszTmp;
-    if((source = msStringConcatenate(source, " (message repeated ")) == NULL) return(NULL);
+    char *pszTmp;
+    if ((source = msStringConcatenate(source, " (message repeated ")) == NULL)
+      return (NULL);
     pszTmp = msIntToString(error->errorcount);
-    if((source = msStringConcatenate(source, pszTmp)) == NULL) {
+    if ((source = msStringConcatenate(source, pszTmp)) == NULL) {
       msFree(pszTmp);
-      return(NULL);
+      return (NULL);
     }
     msFree(pszTmp);
-    if((source = msStringConcatenate(source, " times)")) == NULL) return(NULL);
+    if ((source = msStringConcatenate(source, " times)")) == NULL)
+      return (NULL);
   }
 
   return source;
 }
 
-char *msGetErrorString(const char *delimiter)
-{
-  char *errstr=NULL;
+char *msGetErrorString(const char *delimiter) {
+  char *errstr = NULL;
 
   errorObj *error = msGetErrorObj();
 
-  if(!delimiter || !error) return(NULL);
+  if (!delimiter || !error)
+    return (NULL);
 
-  while(error && error->code != MS_NOERR) {
-    if((errstr = msAddErrorDisplayString(errstr, error)) == NULL) return(NULL);
+  while (error && error->code != MS_NOERR) {
+    if ((errstr = msAddErrorDisplayString(errstr, error)) == NULL)
+      return (NULL);
 
-    if(error->next && error->next->code != MS_NOERR) { /* (peek ahead) more errors, use delimiter */
-      if((errstr = msStringConcatenate(errstr, delimiter)) == NULL) return(NULL);
+    if (error->next &&
+        error->next->code !=
+            MS_NOERR) { /* (peek ahead) more errors, use delimiter */
+      if ((errstr = msStringConcatenate(errstr, delimiter)) == NULL)
+        return (NULL);
     }
     error = error->next;
   }
 
-  return(errstr);
+  return (errstr);
 }
 
-void msRedactString(char* str, const char* keyword, const char delimeter)
-{
+void msRedactString(char *str, const char *keyword, const char delimeter) {
 
-    char* password = strstr(str, keyword);
-    if (password != NULL) {
-        char* ptr = password + strlen(keyword);
-        while (*ptr != '\0' && *ptr != delimeter) {
-            *ptr = '*';
-            ptr++;
-        }
+  char *password = strstr(str, keyword);
+  if (password != NULL) {
+    char *ptr = password + strlen(keyword);
+    while (*ptr != '\0' && *ptr != delimeter) {
+      *ptr = '*';
+      ptr++;
     }
+  }
 }
 
-void msRedactCredentials(char* str)
-{
+void msRedactCredentials(char *str) {
 
   // postgres formats
   msRedactString(str, "password=", ' ');
@@ -353,58 +361,56 @@ void msRedactCredentials(char* str)
   msRedactString(str, "pwd=", ';');
 }
 
-void msSetError(int code, const char *message_fmt, const char *routine, ...)
-{
+void msSetError(int code, const char *message_fmt, const char *routine, ...) {
   errorObj *ms_error;
   va_list args;
   char message[MESSAGELENGTH];
 
-  if(!message_fmt)
+  if (!message_fmt)
     strcpy(message, "");
   else {
     va_start(args, routine);
-    vsnprintf( message, MESSAGELENGTH, message_fmt, args );
+    vsnprintf(message, MESSAGELENGTH, message_fmt, args);
     va_end(args);
   }
 
   ms_error = msGetErrorObj();
 
   /* Insert the error to the list if it is not the same as the previous error*/
-  if (ms_error->code != code || !EQUAL(message, ms_error->message) || 
-                     !EQUAL(routine, ms_error->routine)) {
-      ms_error = msInsertErrorObj();
-      if(!routine)
-        strcpy(ms_error->routine, "");
-      else {
-        strlcpy(ms_error->routine, routine, sizeof(ms_error->routine));
-      }
-      strlcpy(ms_error->message, message, sizeof(ms_error->message));
-      ms_error->code = code;
-      ms_error->errorcount = 0;
-  }
-  else
-      ++ms_error->errorcount;
+  if (ms_error->code != code || !EQUAL(message, ms_error->message) ||
+      !EQUAL(routine, ms_error->routine)) {
+    ms_error = msInsertErrorObj();
+    if (!routine)
+      strcpy(ms_error->routine, "");
+    else {
+      strlcpy(ms_error->routine, routine, sizeof(ms_error->routine));
+    }
+    strlcpy(ms_error->message, message, sizeof(ms_error->message));
+    ms_error->code = code;
+    ms_error->errorcount = 0;
+  } else
+    ++ms_error->errorcount;
 
   msRedactCredentials(ms_error->message);
 
-  /* Log a copy of errors to MS_ERRORFILE if set (handled automatically inside msDebug()) */
-  msDebug("%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
-
+  /* Log a copy of errors to MS_ERRORFILE if set (handled automatically inside
+   * msDebug()) */
+  msDebug("%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code],
+          ms_error->message);
 }
 
-void msWriteError(FILE *stream)
-{
+void msWriteError(FILE *stream) {
   errorObj *ms_error = msGetErrorObj();
 
   while (ms_error && ms_error->code != MS_NOERR) {
-    msIO_fprintf(stream, "%s: %s %s <br>\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+    msIO_fprintf(stream, "%s: %s %s <br>\n", ms_error->routine,
+                 ms_errorCodes[ms_error->code], ms_error->message);
     ms_error->isreported = MS_TRUE;
     ms_error = ms_error->next;
   }
 }
 
-void msWriteErrorXML(FILE *stream)
-{
+void msWriteErrorXML(FILE *stream) {
   char *message;
   errorObj *ms_error = msGetErrorObj();
 
@@ -420,28 +426,28 @@ void msWriteErrorXML(FILE *stream)
   }
 }
 
-void msWriteErrorImage(mapObj *map, char *filename, int blank)
-{
+void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   imageObj *img;
-  int width=400, height=300;
-  const int nMargin =5;
+  int width = 400, height = 300;
+  const int nMargin = 5;
 
   char **papszLines = NULL;
-  pointObj pnt = { 0 };
+  pointObj pnt = {0};
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");
   errorObj *error = msGetErrorObj();
   char *imagepath = NULL, *imageurl = NULL;
-  colorObj imagecolor, *imagecolorptr=NULL;
+  colorObj imagecolor, *imagecolorptr = NULL;
   textSymbolObj ts;
   labelObj label;
-  int charWidth = 5, charHeight = 8; /* hardcoded, should be looked up from ft face */
-  if(!errormsg) {
+  int charWidth = 5,
+      charHeight = 8; /* hardcoded, should be looked up from ft face */
+  if (!errormsg) {
     errormsg = msStrdup("No error found sorry. This is likely a bug");
   }
 
   if (map) {
-    if( map->width > 0 && map->height > 0 ) {
+    if (map->width > 0 && map->height > 0) {
       width = map->width;
       height = map->height;
     }
@@ -452,68 +458,73 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 
   /* Default to GIF if no suitable GD output format set */
   if (format == NULL || !MS_RENDERER_PLUGIN(format))
-    format = msCreateDefaultOutputFormat( NULL, "AGG/PNG8", "png", NULL );
+    format = msCreateDefaultOutputFormat(NULL, "AGG/PNG8", "png", NULL);
 
-  if(!format->transparent) {
-    if(map && MS_VALID_COLOR(map->imagecolor)) {
+  if (!format->transparent) {
+    if (map && MS_VALID_COLOR(map->imagecolor)) {
       imagecolorptr = &map->imagecolor;
     } else {
-      MS_INIT_COLOR(imagecolor,255,255,255,255);
+      MS_INIT_COLOR(imagecolor, 255, 255, 255, 255);
       imagecolorptr = &imagecolor;
     }
   }
 
-  img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,imagecolorptr);
+  img = msImageCreate(width, height, format, imagepath, imageurl,
+                      MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION,
+                      imagecolorptr);
 
   const int nTextLength = strlen(errormsg);
-  const int nWidthTxt  =  nTextLength * charWidth;
-  const int nUsableWidth = width - (nMargin*2);
+  const int nWidthTxt = nTextLength * charWidth;
+  const int nUsableWidth = width - (nMargin * 2);
 
-  /* Check to see if it all fits on one line. If not, split the text on several lines. */
-  if(!blank) {
+  /* Check to see if it all fits on one line. If not, split the text on several
+   * lines. */
+  if (!blank) {
     int nLines;
     if (nWidthTxt > nUsableWidth) {
-      const int nMaxCharsPerLine =  nUsableWidth/charWidth;
-      nLines = (int) ceil ((double)nTextLength / (double)nMaxCharsPerLine);
+      const int nMaxCharsPerLine = nUsableWidth / charWidth;
+      nLines = (int)ceil((double)nTextLength / (double)nMaxCharsPerLine);
       if (nLines > 0) {
-        papszLines = (char **)malloc(nLines*sizeof(char *));
-        for (int i=0; i<nLines; i++) {
-          papszLines[i] = (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
+        papszLines = (char **)malloc(nLines * sizeof(char *));
+        for (int i = 0; i < nLines; i++) {
+          papszLines[i] = (char *)malloc((nMaxCharsPerLine + 1) * sizeof(char));
           papszLines[i][0] = '\0';
         }
       }
-      for (int i=0; i<nLines; i++) {
-        const int nStart = i*nMaxCharsPerLine;
+      for (int i = 0; i < nLines; i++) {
+        const int nStart = i * nMaxCharsPerLine;
         int nEnd = nStart + nMaxCharsPerLine;
         if (nStart < nTextLength) {
           if (nEnd > nTextLength)
             nEnd = nTextLength;
-          const int nLength = nEnd-nStart;
+          const int nLength = nEnd - nStart;
 
-          strncpy(papszLines[i], errormsg+nStart, nLength);
+          strncpy(papszLines[i], errormsg + nStart, nLength);
           papszLines[i][nLength] = '\0';
         }
       }
     } else {
       nLines = 1;
-      papszLines = (char **)malloc(nLines*sizeof(char *));
+      papszLines = (char **)malloc(nLines * sizeof(char *));
       papszLines[0] = msStrdup(errormsg);
     }
     initLabel(&label);
-    MS_INIT_COLOR(label.color,0,0,0,255);
-    MS_INIT_COLOR(label.outlinecolor,255,255,255,255);
+    MS_INIT_COLOR(label.color, 0, 0, 0, 255);
+    MS_INIT_COLOR(label.outlinecolor, 255, 255, 255, 255);
     label.outlinewidth = 1;
 
     label.size = MS_SMALL;
     MS_REFCNT_INCR((&label));
-    for (int i=0; i<nLines; i++) {
-      pnt.y = charHeight * ((i*2) +1);
+    for (int i = 0; i < nLines; i++) {
+      pnt.y = charHeight * ((i * 2) + 1);
       pnt.x = charWidth;
       initTextSymbol(&ts);
-      msPopulateTextSymbolForLabelAndString(&ts,&label,papszLines[i],1,1,0);
-      if(MS_LIKELY(MS_SUCCESS == msComputeTextPath(map,&ts))) {
-        if(MS_SUCCESS!=msDrawTextSymbol(NULL,img,pnt,&ts)) {
-          /* an error occured, but there's nothing much we can do about it here as we are already handling an error condition */
+      msPopulateTextSymbolForLabelAndString(&ts, &label, papszLines[i], 1, 1,
+                                            0);
+      if (MS_LIKELY(MS_SUCCESS == msComputeTextPath(map, &ts))) {
+        if (MS_SUCCESS != msDrawTextSymbol(NULL, img, pnt, &ts)) {
+          /* an error occured, but there's nothing much we can do about it here
+           * as we are already handling an error condition */
         }
         freeTextSymbol(&ts);
       }
@@ -524,15 +535,15 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   }
 
   /* actually write the image */
-  if(!filename) {
-    msIO_setHeader("Content-Type","%s", MS_IMAGE_MIME_TYPE(format));
+  if (!filename) {
+    msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(format));
     msIO_sendHeaders();
   }
-  msSaveImage(NULL,img,filename);
+  msSaveImage(NULL, img, filename);
   msFreeImage(img);
 
   /* the errors are reported */
-  while(error && error->code != MS_NOERR) {
+  while (error && error->code != MS_NOERR) {
     error->isreported = MS_TRUE;
     error = error->next;
   }
@@ -542,8 +553,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   msFree(errormsg);
 }
 
-char *msGetVersion()
-{
+char *msGetVersion() {
   static char version[2048];
 
   sprintf(version, "MapServer version %s", MS_VERSION);
@@ -551,12 +561,14 @@ char *msGetVersion()
   // add versions of required dependencies
 #if PROJ_VERSION_MAJOR >= 6
   static char PROJVersion[20];
-  sprintf(PROJVersion, " PROJ version %d.%d", PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR);
+  sprintf(PROJVersion, " PROJ version %d.%d", PROJ_VERSION_MAJOR,
+          PROJ_VERSION_MINOR);
   strcat(version, PROJVersion);
 #endif
 
   static char GDALVersion[20];
-  sprintf(GDALVersion, " GDAL version %d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR);
+  sprintf(GDALVersion, " GDAL version %d.%d", GDAL_VERSION_MAJOR,
+          GDAL_VERSION_MINOR);
   strcat(version, GDALVersion);
 
 #if (defined USE_PNG)
@@ -576,11 +588,11 @@ char *msGetVersion()
 #endif
 #if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
   strcat(version, " SUPPORTS=SVG_SYMBOLS");
-  #ifdef USE_SVG_CAIRO
-    strcat(version, " SUPPORTS=SVGCAIRO");
-  #else
-    strcat(version, " SUPPORTS=RSVG");
-  #endif
+#ifdef USE_SVG_CAIRO
+  strcat(version, " SUPPORTS=SVGCAIRO");
+#else
+  strcat(version, " SUPPORTS=RSVG");
+#endif
 #endif
 #ifdef USE_OGL
   strcat(version, " SUPPORTS=OPENGL");
@@ -646,10 +658,7 @@ char *msGetVersion()
   strcat(version, " INPUT=GDAL");
   strcat(version, " INPUT=SHAPEFILE");
   strcat(version, " INPUT=FLATGEOBUF");
-  return(version);
+  return (version);
 }
 
-int msGetVersionInt()
-{
-  return MS_VERSION_NUM;
-}
+int msGetVersionInt() { return MS_VERSION_NUM; }

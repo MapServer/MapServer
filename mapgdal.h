@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-int msGDALDriverSupportsVirtualIOOutput( GDALDriverH hDriver );
+int msGDALDriverSupportsVirtualIOOutput(GDALDriverH hDriver);
 
 #ifdef __cplusplus
 }

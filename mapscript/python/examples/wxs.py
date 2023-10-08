@@ -10,6 +10,7 @@ python wxs.py test.map
 """
 import sys
 import xml.dom.minidom
+
 import mapscript
 
 
@@ -36,8 +37,10 @@ def main(map_file):
     result = mapscript.msIO_getStdoutBufferBytes()
 
     # [('Content-Type', 'application/vnd.ogc.wms_xml; charset=UTF-8'), ('Content-Length', '11385')]
-    response_headers = [('Content-Type', content_type),
-                        ('Content-Length', str(len(result)))]
+    response_headers = [
+        ("Content-Type", content_type),
+        ("Content-Length", str(len(result))),
+    ]
 
     assert int(response_headers[1][1]) > 0
 

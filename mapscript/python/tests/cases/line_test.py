@@ -26,7 +26,9 @@
 
 
 import unittest
+
 import mapscript
+
 from .testing import MapPrimitivesTestCase
 
 
@@ -35,8 +37,7 @@ class LineObjTestCase(MapPrimitivesTestCase):
 
     def setUp(self):
         """The test fixture is a line with two points"""
-        self.points = (mapscript.pointObj(0.0, 1.0),
-                       mapscript.pointObj(2.0, 3.0))
+        self.points = (mapscript.pointObj(0.0, 1.0), mapscript.pointObj(2.0, 3.0))
         self.line = mapscript.lineObj()
         self.addPointToLine(self.line, self.points[0])
         self.addPointToLine(self.line, self.points[1])
@@ -76,8 +77,11 @@ class LineObjTestCase(MapPrimitivesTestCase):
 
     def testLineGeoInterface(self):
         """return line using the  __geo_interface__ protocol"""
-        assert self.line.__geo_interface__ == {"type": "LineString", "coordinates": [(0.0, 1.0, 0.0), (2.0, 3.0, 0.0)]}
+        assert self.line.__geo_interface__ == {
+            "type": "LineString",
+            "coordinates": [(0.0, 1.0, 0.0), (2.0, 3.0, 0.0)],
+        }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

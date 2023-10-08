@@ -25,24 +25,26 @@
 # ===========================================================================
 
 import unittest
-import mapscript
-from .testing import MapTestCase
 
+import mapscript
+
+from .testing import MapTestCase
 
 # ===========================================================================
 # Base class for hashtable tests.  Derived classes use these tests, but
 # defined different values for self.table.
 
+
 class HashTableBaseTestCase(object):
 
-    keys = ['key1', 'key2', 'key3', 'key4']
-    values = ['value1', 'value2', 'value3', 'value4']
+    keys = ["key1", "key2", "key3", "key4"]
+    values = ["value1", "value2", "value3", "value4"]
 
     def testUseNonExistentKey(self):
-        assert self.table.get('bogus') is None
+        assert self.table.get("bogus") is None
 
     def testUseNonExistentKeyWithDefault(self):
-        assert self.table.get('bogus', 'default') == 'default'
+        assert self.table.get("bogus", "default") == "default"
 
     def testGetValue(self):
         for key, value in zip(self.keys, self.values):
@@ -52,9 +54,9 @@ class HashTableBaseTestCase(object):
 
     def testGetValueWithDefault(self):
         for key, value in zip(self.keys, self.values):
-            assert self.table.get(key, 'foo') == value
-            assert self.table.get(key.upper(), 'foo') == value
-            assert self.table.get(key.capitalize(), 'foo') == value
+            assert self.table.get(key, "foo") == value
+            assert self.table.get(key.upper(), "foo") == value
+            assert self.table.get(key.capitalize(), "foo") == value
 
     def testClear(self):
         self.table.clear()
@@ -107,6 +109,7 @@ class HashTableBaseTestCase(object):
 # HashTable test case
 #
 
+
 class HashTableTestCase(unittest.TestCase, HashTableBaseTestCase):
     """Tests of the MapServer HashTable object"""
 
@@ -127,13 +130,13 @@ class HashTableTestCase(unittest.TestCase, HashTableBaseTestCase):
 # ==============================================================================
 # following tests use the tests/test.map fixture
 
-class WebMetadataTestCase(MapTestCase, HashTableBaseTestCase):
 
+class WebMetadataTestCase(MapTestCase, HashTableBaseTestCase):
     def setUp(self):
         MapTestCase.setUp(self)
         self.table = self.map.web.metadata
-        self.keys = ['key1', 'key2', 'key3', 'key4', 'ows_enable_request']
-        self.values = ['value1', 'value2', 'value3', 'value4', '*']
+        self.keys = ["key1", "key2", "key3", "key4", "ows_enable_request"]
+        self.values = ["value1", "value2", "value3", "value4", "*"]
 
     def tearDown(self):
         MapTestCase.tearDown(self)
@@ -141,18 +144,16 @@ class WebMetadataTestCase(MapTestCase, HashTableBaseTestCase):
 
 
 class LayerMetadataTestCase(WebMetadataTestCase):
-
     def setUp(self):
         MapTestCase.setUp(self)
         self.table = self.map.getLayer(1).metadata
 
 
 class ClassMetadataTestCase(WebMetadataTestCase):
-
     def setUp(self):
         MapTestCase.setUp(self)
         self.table = self.map.getLayer(1).getClass(0).metadata
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

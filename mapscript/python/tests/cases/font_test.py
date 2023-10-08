@@ -26,17 +26,17 @@
 
 import os
 import unittest
+
 import mapscript
+
 from .testing import TESTS_PATH
 
 
 class FontTestCase(unittest.TestCase):
-
     def testSettingFonts(self):
         mo = mapscript.mapObj()
         assert mo.fontset.numfonts == 0
-        mo.fontset.fonts.set('Vera', os.path.join(TESTS_PATH, 'vera',
-                                                  'Vera.ttf'))
+        mo.fontset.fonts.set("Vera", os.path.join(TESTS_PATH, "vera", "Vera.ttf"))
         # NB: this does *not* increment the fonset.numfonts -- new bug
 
         mo.setSize(300, 300)
@@ -50,14 +50,14 @@ class FontTestCase(unittest.TestCase):
         co = mapscript.classObj()
         lbl = mapscript.labelObj()
         lbl.type = mapscript.MS_TRUETYPE
-        lbl.font = 'Vera'
+        lbl.font = "Vera"
         lbl.size = 10
-        lbl.color.setHex('#000000')
+        lbl.color.setHex("#000000")
         co.addLabel(lbl)
 
         so = mapscript.styleObj()
         so.symbol = 0
-        so.color.setHex('#000000')
+        so.color.setHex("#000000")
 
         co.insertStyle(so)
         lo.insertClass(co)
@@ -70,7 +70,7 @@ class FontTestCase(unittest.TestCase):
         shape = mapscript.shapeObj(lo.type)
         shape.add(line)
         shape.setBounds()
-        shape.text = 'Foo'
+        shape.text = "Foo"
         shape.classindex = 0
 
         lo.addFeature(shape)
@@ -78,8 +78,8 @@ class FontTestCase(unittest.TestCase):
 
         # im = mo.prepareImage()
         # shape.draw(mo, lo, im)
-        im.save('testSettingFonts.png')
+        im.save("testSettingFonts.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

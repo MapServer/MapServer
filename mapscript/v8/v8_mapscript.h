@@ -48,28 +48,26 @@
 
 using namespace v8;
 
-using std::string;
-using std::stack;
 using std::map;
+using std::stack;
+using std::string;
 
-class V8Context
-{
+class V8Context {
 public:
-  V8Context(Isolate *isolate)
-    : isolate(isolate) {}
+  V8Context(Isolate *isolate) : isolate(isolate) {}
   Isolate *isolate;
   stack<string> paths; /* for relative paths and the require function */
-  map<string, Persistent<Script> > scripts;
+  map<string, Persistent<Script>> scripts;
   Persistent<Context> context;
   layerObj *layer; /* current layer, used in geomtransform */
 };
 
-#define V8CONTEXT(map) ((V8Context*) (map)->v8context)
+#define V8CONTEXT(map) ((V8Context *)(map)->v8context)
 
 inline void NODE_SET_PROTOTYPE_METHOD(v8::Handle<v8::FunctionTemplate> recv,
-                                      const char* name,
+                                      const char *name,
                                       v8::FunctionCallback callback) {
-  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Isolate *isolate = v8::Isolate::GetCurrent();
   v8::HandleScope handle_scope(isolate);
   v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(callback);
   recv->InstanceTemplate()->Set(v8::String::NewFromUtf8(isolate, name),
@@ -79,29 +77,22 @@ inline void NODE_SET_PROTOTYPE_METHOD(v8::Handle<v8::FunctionTemplate> recv,
 
 #define TOSTR(obj) (*String::Utf8Value((obj)->ToString()))
 
-#define SET(target, name, value)                 \
+#define SET(target, name, value)                                               \
   (target)->PrototypeTemplate()->Set(String::NewSymbol(name), value);
 
-#define SET_ATTRIBUTE(t, name, get, set)   \
+#define SET_ATTRIBUTE(t, name, get, set)                                       \
   t->InstanceTemplate()->SetAccessor(String::NewSymbol(name), get, set)
 
-#define SET_ATTRIBUTE_RO(t, name, get)             \
-  t->InstanceTemplate()->SetAccessor(              \
-        String::NewSymbol(name),                   \
-        get, 0,                                    \
-        Handle<Value>(),                           \
-        DEFAULT,                                   \
-        static_cast<PropertyAttribute>(            \
-          ReadOnly|DontDelete))
+#define SET_ATTRIBUTE_RO(t, name, get)                                         \
+  t->InstanceTemplate()->SetAccessor(                                          \
+      String::NewSymbol(name), get, 0, Handle<Value>(), DEFAULT,               \
+      static_cast<PropertyAttribute>(ReadOnly | DontDelete))
 
-#define NODE_DEFINE_CONSTANT(target, name, constant)     \
-    (target)->Set(String::NewSymbol(name),               \
-                  Integer::New(constant),                \
-                  static_cast<PropertyAttribute>(        \
-                  ReadOnly|DontDelete));
+#define NODE_DEFINE_CONSTANT(target, name, constant)                           \
+  (target)->Set(String::NewSymbol(name), Integer::New(constant),               \
+                static_cast<PropertyAttribute>(ReadOnly | DontDelete));
 
-char* getStringValue(Local<Value> value, const char *fallback="");
-
+char *getStringValue(Local<Value> value, const char *fallback = "");
 
 #endif
 

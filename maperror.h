@@ -36,9 +36,9 @@
 extern "C" {
 #endif
 
-  /*====================================================================
-   *   maperror.c
-   *====================================================================*/
+/*====================================================================
+ *   maperror.c
+ *====================================================================*/
 
 #define MS_NOERR 0 /* general error codes */
 #define MS_IOERR 1
@@ -63,14 +63,14 @@ extern "C" {
 #define MS_UNUSEDERR 21
 #define MS_OGRERR 22
 #define MS_QUERYERR 23
-#define MS_WMSERR 24      /* WMS server error */
-#define MS_WMSCONNERR 25  /* WMS connectiontype error */
+#define MS_WMSERR 24     /* WMS server error */
+#define MS_WMSCONNERR 25 /* WMS connectiontype error */
 #define MS_ORACLESPATIALERR 26
-#define MS_WFSERR 27      /* WFS server error */
-#define MS_WFSCONNERR 28  /* WFS connectiontype error */
+#define MS_WFSERR 27        /* WFS server error */
+#define MS_WFSCONNERR 28    /* WFS connectiontype error */
 #define MS_MAPCONTEXTERR 29 /* Map Context error */
 #define MS_HTTPERR 30
-#define MS_CHILDERR 31    /* Errors involving arrays of child objects */
+#define MS_CHILDERR 31 /* Errors involving arrays of child objects */
 #define MS_WCSERR 32
 #define MS_GEOSERR 33
 #define MS_RECTERR 34
@@ -93,117 +93,129 @@ extern "C" {
 #define MS_ERROR_LANGUAGE "en-US"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#  define MS_DLL_EXPORT     __declspec(dllexport)
+#define MS_DLL_EXPORT __declspec(dllexport)
 #else
-#define  MS_DLL_EXPORT
+#define MS_DLL_EXPORT
 #endif
 
 #ifndef MS_PRINT_FUNC_FORMAT
 #if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
-#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#define MS_PRINT_FUNC_FORMAT(format_idx, arg_idx)                              \
+  __attribute__((__format__(__printf__, format_idx, arg_idx)))
 #else
-#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#define MS_PRINT_FUNC_FORMAT(format_idx, arg_idx)
 #endif
 #endif
 
 /**
-This class allows inspection of the MapServer error stack. 
-Instances of errorObj are created internally by MapServer as errors happen. 
-Errors are managed as a chained list with the first item being the most recent error.
+This class allows inspection of the MapServer error stack.
+Instances of errorObj are created internally by MapServer as errors happen.
+Errors are managed as a chained list with the first item being the most recent
+error.
 */
-  typedef struct errorObj {
-    int code; ///< MapServer error code such as :data:`MS_IMGERR`
-    char routine[ROUTINELENGTH]; ///< MapServer function in which the error was set
-    char message[MESSAGELENGTH]; ///< Context-dependent error message
-    int isreported; ///< :data:`MS_TRUE` or :data:`MS_FALSE` flag indicating if the error has been output
-    int errorcount; ///< Number of subsequent errors
+typedef struct errorObj {
+  int code; ///< MapServer error code such as :data:`MS_IMGERR`
+  char
+      routine[ROUTINELENGTH]; ///< MapServer function in which the error was set
+  char message[MESSAGELENGTH]; ///< Context-dependent error message
+  int isreported; ///< :data:`MS_TRUE` or :data:`MS_FALSE` flag indicating if
+                  ///< the error has been output
+  int errorcount; ///< Number of subsequent errors
 #ifndef SWIG
-    struct errorObj *next;
-    int totalerrorcount;
+  struct errorObj *next;
+  int totalerrorcount;
 #endif
-  } errorObj;
+} errorObj;
 
-  /*
-  ** Function prototypes
-  */
+/*
+** Function prototypes
+*/
 
-  /**
-  Get the MapServer error object
-  */
-  MS_DLL_EXPORT errorObj *msGetErrorObj(void);
-  /**
-  Clear the list of error objects
-  */
-  MS_DLL_EXPORT void msResetErrorList(void);
-  /**
-  Returns a string containing MapServer version information, and details on what optional components 
-  are built in - the same report as produced by ``mapserv -v``
-  */
-  MS_DLL_EXPORT char *msGetVersion(void);
-  /**
-  Returns the MapServer version number (x.y.z) as an integer (x*10000 + y*100 + z) 
-  e.g. V7.4.2 would return 70402
-  */
-  MS_DLL_EXPORT int  msGetVersionInt(void);
-  /**
-  Return a string of all errors
-  */
-  MS_DLL_EXPORT char *msGetErrorString(const char *delimiter);
+/**
+Get the MapServer error object
+*/
+MS_DLL_EXPORT errorObj *msGetErrorObj(void);
+/**
+Clear the list of error objects
+*/
+MS_DLL_EXPORT void msResetErrorList(void);
+/**
+Returns a string containing MapServer version information, and details on what
+optional components are built in - the same report as produced by ``mapserv -v``
+*/
+MS_DLL_EXPORT char *msGetVersion(void);
+/**
+Returns the MapServer version number (x.y.z) as an integer (x*10000 + y*100 + z)
+e.g. V7.4.2 would return 70402
+*/
+MS_DLL_EXPORT int msGetVersionInt(void);
+/**
+Return a string of all errors
+*/
+MS_DLL_EXPORT char *msGetErrorString(const char *delimiter);
 
 #ifndef SWIG
-  MS_DLL_EXPORT void msRedactCredentials(char* str);
-  MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...) MS_PRINT_FUNC_FORMAT(2,4) ;
-  MS_DLL_EXPORT void msWriteError(FILE *stream);
-  MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
-  MS_DLL_EXPORT char *msGetErrorCodeString(int code);
-  MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
+MS_DLL_EXPORT void msRedactCredentials(char *str);
+MS_DLL_EXPORT void msSetError(int code, const char *message,
+                              const char *routine, ...)
+    MS_PRINT_FUNC_FORMAT(2, 4);
+MS_DLL_EXPORT void msWriteError(FILE *stream);
+MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
+MS_DLL_EXPORT char *msGetErrorCodeString(int code);
+MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 
-  struct mapObj;
-  MS_DLL_EXPORT void msWriteErrorImage(struct mapObj *map, char *filename, int blank);
+struct mapObj;
+MS_DLL_EXPORT void msWriteErrorImage(struct mapObj *map, char *filename,
+                                     int blank);
 
 #endif /* SWIG */
 
-  /*====================================================================
-   *   mapdebug.c (See also MS-RFC-28)
-   *====================================================================*/
+/*====================================================================
+ *   mapdebug.c (See also MS-RFC-28)
+ *====================================================================*/
 
-  typedef enum { MS_DEBUGLEVEL_ERRORSONLY = 0,  /* DEBUG OFF, log fatal errors */
-                 MS_DEBUGLEVEL_DEBUG      = 1,  /* DEBUG ON */
-                 MS_DEBUGLEVEL_TUNING     = 2,  /* Reports timing info */
-                 MS_DEBUGLEVEL_V          = 3,  /* Verbose */
-                 MS_DEBUGLEVEL_VV         = 4,  /* Very verbose */
-                 MS_DEBUGLEVEL_VVV        = 5,  /* Very very verbose */
-                 MS_DEBUGLEVEL_DEVDEBUG   = 20, /* Undocumented, will trigger debug messages only useful for developers */
-               } debugLevel;
+typedef enum {
+  MS_DEBUGLEVEL_ERRORSONLY = 0, /* DEBUG OFF, log fatal errors */
+  MS_DEBUGLEVEL_DEBUG = 1,      /* DEBUG ON */
+  MS_DEBUGLEVEL_TUNING = 2,     /* Reports timing info */
+  MS_DEBUGLEVEL_V = 3,          /* Verbose */
+  MS_DEBUGLEVEL_VV = 4,         /* Very verbose */
+  MS_DEBUGLEVEL_VVV = 5,        /* Very very verbose */
+  MS_DEBUGLEVEL_DEVDEBUG = 20, /* Undocumented, will trigger debug messages only
+                                  useful for developers */
+} debugLevel;
 
 #ifndef SWIG
 
-  typedef enum { MS_DEBUGMODE_OFF,
-                 MS_DEBUGMODE_FILE,
-                 MS_DEBUGMODE_STDERR,
-                 MS_DEBUGMODE_STDOUT,
-                 MS_DEBUGMODE_WINDOWSDEBUG
-               } debugMode;
+typedef enum {
+  MS_DEBUGMODE_OFF,
+  MS_DEBUGMODE_FILE,
+  MS_DEBUGMODE_STDERR,
+  MS_DEBUGMODE_STDOUT,
+  MS_DEBUGMODE_WINDOWSDEBUG
+} debugMode;
 
-  typedef struct debug_info_obj {
-    debugLevel  global_debug_level;
-    debugMode   debug_mode;
-    char        *errorfile;
-    FILE        *fp;
-    /* The following 2 members are used only with USE_THREAD (but we won't #ifndef them) */
-    void* thread_id;
-    struct debug_info_obj *next;
-  } debugInfoObj;
+typedef struct debug_info_obj {
+  debugLevel global_debug_level;
+  debugMode debug_mode;
+  char *errorfile;
+  FILE *fp;
+  /* The following 2 members are used only with USE_THREAD (but we won't #ifndef
+   * them) */
+  void *thread_id;
+  struct debug_info_obj *next;
+} debugInfoObj;
 
-
-  MS_DLL_EXPORT void msDebug( const char * pszFormat, ... ) MS_PRINT_FUNC_FORMAT(1,2) ;
-  MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath);
-  MS_DLL_EXPORT void msCloseErrorFile( void );
-  MS_DLL_EXPORT const char *msGetErrorFile( void );
-  MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);
-  MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel( void );
-  MS_DLL_EXPORT int msDebugInitFromEnv( void );
-  MS_DLL_EXPORT void msDebugCleanup( void );
+MS_DLL_EXPORT void msDebug(const char *pszFormat, ...)
+    MS_PRINT_FUNC_FORMAT(1, 2);
+MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile,
+                                 const char *pszRelToPath);
+MS_DLL_EXPORT void msCloseErrorFile(void);
+MS_DLL_EXPORT const char *msGetErrorFile(void);
+MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);
+MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel(void);
+MS_DLL_EXPORT int msDebugInitFromEnv(void);
+MS_DLL_EXPORT void msDebugCleanup(void);
 
 #endif /* SWIG */
 

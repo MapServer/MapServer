@@ -30,10 +30,11 @@
 #ifndef MAPPRIMITIVE_H
 #define MAPPRIMITIVE_H
 
- /**
- A rectObj represents a rectangle or bounding box.
- A rectObj may be a lone object or an attribute of another object and has no other associations.
- */
+/**
+A rectObj represents a rectangle or bounding box.
+A rectObj may be a lone object or an attribute of another object and has no
+other associations.
+*/
 typedef struct {
   double minx; ///< Minimum easting
   double miny; ///< Minimum northing
@@ -76,21 +77,22 @@ typedef struct {
 } lineObj;
 
 /**
-Each feature of a layer's data is a :class:`shapeObj`. Each part of the shape is a closed :class:`lineObj`.
+Each feature of a layer's data is a :class:`shapeObj`. Each part of the shape is
+a closed :class:`lineObj`.
 */
 typedef struct {
 
 #ifndef SWIG
-    lineObj *line;
-    char **values;
-    void *geometry;
-    void *renderer_cache;
+  lineObj *line;
+  char **values;
+  void *geometry;
+  void *renderer_cache;
 #endif
 
 #ifdef SWIG
   %immutable;
 #endif
-  int numlines; ///< Number of parts
+  int numlines;  ///< Number of parts
   int numvalues; ///< Number of shape attributes
 
 #ifdef SWIG
@@ -98,11 +100,12 @@ typedef struct {
 #endif
 
   rectObj bounds; ///< Bounding box of shape
-  int type; ///< MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or MS_SHAPE_NULL
-  long index; ///< Feature index within the layer
-  int tileindex; ///< Index of tiled file for tile-indexed layers
+  int type;       ///< MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or
+                  ///< MS_SHAPE_NULL
+  long index;     ///< Feature index within the layer
+  int tileindex;  ///< Index of tiled file for tile-indexed layers
   int classindex; ///< The class index for features of a classified layer
-  char *text; ///< Shape annotation
+  char *text;     ///< Shape annotation
 
   int scratch;
   int resultindex; ///< Index within a query result set
@@ -123,7 +126,7 @@ typedef struct {
 
 #ifndef SWIG
 typedef struct {
-  int  need_geotransform;
+  int need_geotransform;
   double rotation_angle;
   double geotransform[6];    /* Pixel/line to georef. */
   double invgeotransform[6]; /* georef to pixel/line */

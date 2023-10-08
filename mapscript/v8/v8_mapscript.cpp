@@ -32,15 +32,14 @@
 #include "mapserver.h"
 #include "v8_mapscript.h"
 
-char* getStringValue(Local<Value> value, const char *fallback)
-{
+char *getStringValue(Local<Value> value, const char *fallback) {
   if (value->IsString()) {
     String::AsciiValue string(value);
-    char *str = (char *) malloc(string.length() + 1);
+    char *str = (char *)malloc(string.length() + 1);
     strcpy(str, *string);
     return str;
   }
-  char *str = (char *) malloc(strlen(fallback) + 1);
+  char *str = (char *)malloc(strlen(fallback) + 1);
   strcpy(str, fallback);
   return str;
 }

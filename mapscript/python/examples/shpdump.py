@@ -9,9 +9,10 @@ python shpdump.py polygon.shp
 
 """
 
-import mapscript
-import sys
 import os
+import sys
+
+import mapscript
 
 
 def plural(x):
@@ -21,8 +22,8 @@ def plural(x):
     Useful in print statements to avoid something like 'point(s)'
     """
     if x > 1:
-        return 's'
-    return ''
+        return "s"
+    return ""
 
 
 def get_shapefile_object(sf_path):
@@ -56,7 +57,15 @@ def main(sf_path):
         # get the object at index i
         sf_obj.get(i, s_obj)
         print("Shape %i has %i part%s" % (i, s_obj.numlines, plural(s_obj.numlines)))
-        print("Bounds (%f, %f) (%f, %f)" % (s_obj.bounds.minx, s_obj.bounds.miny, s_obj.bounds.maxx, s_obj.bounds.maxy))
+        print(
+            "Bounds (%f, %f) (%f, %f)"
+            % (
+                s_obj.bounds.minx,
+                s_obj.bounds.miny,
+                s_obj.bounds.maxx,
+                s_obj.bounds.maxy,
+            )
+        )
 
         # loop through parts of each shape
 
@@ -65,7 +74,9 @@ def main(sf_path):
             # get the jth part of the ith object
 
             part = s_obj.get(j)
-            print("Part %i has %i point%s" % (j, part.numpoints, plural(part.numpoints)))
+            print(
+                "Part %i has %i point%s" % (j, part.numpoints, plural(part.numpoints))
+            )
 
             # loop through points in each part
 

@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -50,16 +49,11 @@
 #include <windows.h> /* OutputDebugStringA() */
 #endif
 
-
-
-
 #ifndef USE_THREAD
 
-debugInfoObj *msGetDebugInfoObj()
-{
-  static debugInfoObj debuginfo = {MS_DEBUGLEVEL_ERRORSONLY,
-                                   MS_DEBUGMODE_OFF, NULL, NULL
-                                  };
+debugInfoObj *msGetDebugInfoObj() {
+  static debugInfoObj debuginfo = {MS_DEBUGLEVEL_ERRORSONLY, MS_DEBUGMODE_OFF,
+                                   NULL, NULL};
   return &debuginfo;
 }
 
@@ -67,32 +61,32 @@ debugInfoObj *msGetDebugInfoObj()
 
 static debugInfoObj *debuginfo_list = NULL;
 
-debugInfoObj *msGetDebugInfoObj()
-{
+debugInfoObj *msGetDebugInfoObj() {
   debugInfoObj *link;
-  void* thread_id;
+  void *thread_id;
   debugInfoObj *ret_obj;
 
-  msAcquireLock( TLOCK_DEBUGOBJ );
+  msAcquireLock(TLOCK_DEBUGOBJ);
 
   thread_id = msGetThreadId();
 
   /* find link for this thread */
 
-  for( link = debuginfo_list;
-       link != NULL && link->thread_id != thread_id
-       && link->next != NULL && link->next->thread_id != thread_id;
-       link = link->next ) {}
+  for (link = debuginfo_list;
+       link != NULL && link->thread_id != thread_id && link->next != NULL &&
+       link->next->thread_id != thread_id;
+       link = link->next) {
+  }
 
   /* If the target thread link is already at the head of the list were ok */
-  if( debuginfo_list != NULL && debuginfo_list->thread_id == thread_id ) {
+  if (debuginfo_list != NULL && debuginfo_list->thread_id == thread_id) {
   }
 
   /* We don't have one ... initialize one. */
-  else if( link == NULL || link->next == NULL ) {
+  else if (link == NULL || link->next == NULL) {
     debugInfoObj *new_link;
 
-    new_link = (debugInfoObj *) msSmallMalloc(sizeof(debugInfoObj));
+    new_link = (debugInfoObj *)msSmallMalloc(sizeof(debugInfoObj));
     new_link->next = debuginfo_list;
     new_link->thread_id = thread_id;
     new_link->global_debug_level = MS_DEBUGLEVEL_ERRORSONLY;
@@ -113,12 +107,11 @@ debugInfoObj *msGetDebugInfoObj()
 
   ret_obj = debuginfo_list;
 
-  msReleaseLock( TLOCK_DEBUGOBJ );
+  msReleaseLock(TLOCK_DEBUGOBJ);
 
   return ret_obj;
 }
 #endif
-
 
 /* msSetErrorFile()
 **
@@ -130,8 +123,7 @@ debugInfoObj *msGetDebugInfoObj()
 **
 ** Returns MS_SUCCESS/MS_FAILURE
 */
-int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
-{
+int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath) {
   char extended_path[MS_MAXPATHLEN];
   debugInfoObj *debuginfo = msGetDebugInfoObj();
 
@@ -139,7 +131,7 @@ int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
       strcmp(pszErrorFile, "stdout") != 0 &&
       strcmp(pszErrorFile, "windowsdebug") != 0) {
     /* Try to make the path relative */
-    if(msBuildPath(extended_path, pszRelToPath, pszErrorFile) == NULL)
+    if (msBuildPath(extended_path, pszRelToPath, pszErrorFile) == NULL)
       return MS_FAILURE;
     pszErrorFile = extended_path;
   }
@@ -171,13 +163,17 @@ int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
     debuginfo->fp = NULL;
     debuginfo->debug_mode = MS_DEBUGMODE_WINDOWSDEBUG;
 #else
-    msSetError(MS_MISCERR, "'MS_ERRORFILE windowsdebug' is available only on Windows platforms.", "msSetErrorFile()");
+    msSetError(
+        MS_MISCERR,
+        "'MS_ERRORFILE windowsdebug' is available only on Windows platforms.",
+        "msSetErrorFile()");
     return MS_FAILURE;
 #endif
   } else {
     debuginfo->fp = fopen(pszErrorFile, "a");
     if (debuginfo->fp == NULL) {
-      msSetError(MS_MISCERR, "Failed to open MS_ERRORFILE %s", "msSetErrorFile()", pszErrorFile);
+      msSetError(MS_MISCERR, "Failed to open MS_ERRORFILE %s",
+                 "msSetErrorFile()", pszErrorFile);
       return MS_FAILURE;
     }
     debuginfo->errorfile = msStrdup(pszErrorFile);
@@ -191,8 +187,7 @@ int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
 **
 ** Close current output file (if one is open) and reset related members
 */
-void msCloseErrorFile()
-{
+void msCloseErrorFile() {
   debugInfoObj *debuginfo = msGetDebugInfoObj();
 
   if (debuginfo && debuginfo->debug_mode != MS_DEBUGMODE_OFF) {
@@ -212,16 +207,13 @@ void msCloseErrorFile()
   }
 }
 
-
-
 /* msGetErrorFile()
 **
 ** Returns name of current error file
 **
 ** Returns NULL if not set.
 */
-const char *msGetErrorFile()
-{
+const char *msGetErrorFile() {
   debugInfoObj *debuginfo = msGetDebugInfoObj();
 
   if (debuginfo)
@@ -235,16 +227,14 @@ const char *msGetErrorFile()
 ** the context of mapObj or layerObj.
 **
 */
-void msSetGlobalDebugLevel(int level)
-{
+void msSetGlobalDebugLevel(int level) {
   debugInfoObj *debuginfo = msGetDebugInfoObj();
 
   if (debuginfo)
     debuginfo->global_debug_level = (debugLevel)level;
 }
 
-debugLevel msGetGlobalDebugLevel()
-{
+debugLevel msGetGlobalDebugLevel() {
   debugInfoObj *debuginfo = msGetDebugInfoObj();
 
   if (debuginfo)
@@ -253,67 +243,63 @@ debugLevel msGetGlobalDebugLevel()
   return MS_DEBUGLEVEL_ERRORSONLY;
 }
 
-
 /* msDebugInitFromEnv()
 **
 ** Init debug state from MS_ERRORFILE and MS_DEBUGLEVEL env vars if set
 **
 ** Returns MS_SUCCESS/MS_FAILURE
 */
-int msDebugInitFromEnv()
-{
+int msDebugInitFromEnv() {
   const char *val;
 
-  if( (val=CPLGetConfigOption("MS_ERRORFILE", NULL)) != NULL ) {
-    if ( msSetErrorFile(val, NULL) != MS_SUCCESS )
+  if ((val = CPLGetConfigOption("MS_ERRORFILE", NULL)) != NULL) {
+    if (msSetErrorFile(val, NULL) != MS_SUCCESS)
       return MS_FAILURE;
   }
 
-  if( (val=CPLGetConfigOption("MS_DEBUGLEVEL", NULL)) != NULL )
+  if ((val = CPLGetConfigOption("MS_DEBUGLEVEL", NULL)) != NULL)
     msSetGlobalDebugLevel(atoi(val));
 
   return MS_SUCCESS;
 }
 
-
 /* msDebugCleanup()
 **
 ** Called by msCleanup to remove info related to this thread.
 */
-void msDebugCleanup()
-{
+void msDebugCleanup() {
   /* make sure file is closed */
   msCloseErrorFile();
 
 #ifdef USE_THREAD
   {
-    void*  thread_id = msGetThreadId();
+    void *thread_id = msGetThreadId();
     debugInfoObj *link;
 
-    msAcquireLock( TLOCK_DEBUGOBJ );
+    msAcquireLock(TLOCK_DEBUGOBJ);
 
     /* find link for this thread */
 
-    for( link = debuginfo_list;
-         link != NULL && link->thread_id != thread_id
-         && link->next != NULL && link->next->thread_id != thread_id;
-         link = link->next ) {}
+    for (link = debuginfo_list;
+         link != NULL && link->thread_id != thread_id && link->next != NULL &&
+         link->next->thread_id != thread_id;
+         link = link->next) {
+    }
 
-    if( link->thread_id == thread_id ) {
+    if (link->thread_id == thread_id) {
       /* presumably link is at head of list.  */
-      if( debuginfo_list == link )
+      if (debuginfo_list == link)
         debuginfo_list = link->next;
 
-      free( link );
-    } else if( link->next != NULL && link->next->thread_id == thread_id ) {
+      free(link);
+    } else if (link->next != NULL && link->next->thread_id == thread_id) {
       debugInfoObj *next_link = link->next;
       link->next = link->next->next;
-      free( next_link );
+      free(next_link);
     }
-    msReleaseLock( TLOCK_DEBUGOBJ );
+    msReleaseLock(TLOCK_DEBUGOBJ);
   }
 #endif
-
 }
 
 /* msDebug()
@@ -322,19 +308,18 @@ void msDebugCleanup()
 ** (see msSetErrorFile())
 **
 */
-void msDebug( const char * pszFormat, ... )
-{
+void msDebug(const char *pszFormat, ...) {
   va_list args;
   debugInfoObj *debuginfo = msGetDebugInfoObj();
   char szMessage[MESSAGELENGTH];
 
   if (debuginfo == NULL || debuginfo->debug_mode == MS_DEBUGMODE_OFF)
-    return;  /* Don't waste time here! */
+    return; /* Don't waste time here! */
 
   va_start(args, pszFormat);
-  vsnprintf( szMessage, MESSAGELENGTH, pszFormat, args );
+  vsnprintf(szMessage, MESSAGELENGTH, pszFormat, args);
   va_end(args);
-  szMessage[MESSAGELENGTH-1] = '\0';
+  szMessage[MESSAGELENGTH - 1] = '\0';
 
   msRedactCredentials(szMessage);
 
@@ -351,8 +336,8 @@ void msDebug( const char * pszFormat, ... )
       time_t t;
       msGettimeofday(&tv, NULL);
       t = tv.tv_sec;
-      msIO_fprintf(debuginfo->fp, "[%s].%ld ",
-                   msStringChop(ctime(&t)), (long)tv.tv_usec);
+      msIO_fprintf(debuginfo->fp, "[%s].%ld ", msStringChop(ctime(&t)),
+                   (long)tv.tv_usec);
     }
 
     msIO_fprintf(debuginfo->fp, "%s", szMessage);
@@ -363,16 +348,11 @@ void msDebug( const char * pszFormat, ... )
     OutputDebugStringA(szMessage);
   }
 #endif
-
 }
-
 
 /* msDebug2()
 **
 ** Variadic function with no operation
 **
 */
-void msDebug2( int level, ... )
-{
-    (void)level;
-}
+void msDebug2(int level, ...) { (void)level; }

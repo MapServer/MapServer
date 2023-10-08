@@ -25,12 +25,13 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import TESTCONFIGFILE
 
 
 class ConfigConstructorTestCase(unittest.TestCase):
-
     def testConfigConstructorFilenameArg(self):
         """ConfigConstructorTestCase.testConfigConstructorFilenameArg: map constructor with filename argument"""
         test_config = mapscript.configObj(TESTCONFIGFILE)
@@ -39,7 +40,6 @@ class ConfigConstructorTestCase(unittest.TestCase):
 
 
 class ConfigHashTableTests(unittest.TestCase):
-
     def testGetEnv(self):
 
         test_config = mapscript.configObj(TESTCONFIGFILE)
@@ -59,5 +59,5 @@ class ConfigHashTableTests(unittest.TestCase):
         assert test_config.plugins.numitems == 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

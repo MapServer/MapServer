@@ -35,8 +35,7 @@ using namespace v8;
 
 Persistent<FunctionTemplate> Line::constructor;
 
-void Line::Initialize(Handle<Object> target)
-{
+void Line::Initialize(Handle<Object> target) {
   HandleScope scope;
 
   Handle<FunctionTemplate> c = FunctionTemplate::New(Line::New);
@@ -55,78 +54,66 @@ void Line::Initialize(Handle<Object> target)
   constructor.Reset(Isolate::GetCurrent(), c);
 }
 
-void Line::Dispose()
-{
+void Line::Dispose() {
   Line::constructor.Dispose();
   Line::constructor.Clear();
 }
 
-Line::~Line()
-{
+Line::~Line() {
   if (this->freeInternal) {
     msFree(this->this_->point);
     msFree(this->this_);
   }
 }
 
-Handle<Function> Line::Constructor()
-{
+Handle<Function> Line::Constructor() {
   return (*Line::constructor)->GetFunction();
 }
 
-void Line::New(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Line::New(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
 
-  if (args[0]->IsExternal())
-  {
+  if (args[0]->IsExternal()) {
     Local<External> ext = Local<External>::Cast(args[0]);
     void *ptr = ext->Value();
-    Line *line = static_cast<Line*>(ptr);
+    Line *line = static_cast<Line *>(ptr);
     Handle<Object> self = args.Holder();
     line->Wrap(self);
     if (line->parent_) {
       self->SetHiddenValue(String::New("__parent__"), line->parent_->handle());
       line->disableMemoryHandler();
     }
-  }
-  else
-  {
+  } else {
     lineObj *l = (lineObj *)msSmallMalloc(sizeof(lineObj));
 
-    l->numpoints=0;
-    l->point=NULL;
+    l->numpoints = 0;
+    l->point = NULL;
 
     Line *line = new Line(l);
     line->Wrap(args.Holder());
   }
-
 }
 
-Line::Line(lineObj *l, ObjectWrap *p):
-  ObjectWrap()
-{
+Line::Line(lineObj *l, ObjectWrap *p) : ObjectWrap() {
   this->this_ = l;
   this->parent_ = p;
   this->freeInternal = true;
 }
 
 void Line::getProp(Local<String> property,
-                   const PropertyCallbackInfo<Value>& info)
-{
-    HandleScope scope;
-    Line* l = ObjectWrap::Unwrap<Line>(info.Holder());
-    std::string name = TOSTR(property);
-    Handle<Value> value = Undefined();
+                   const PropertyCallbackInfo<Value> &info) {
+  HandleScope scope;
+  Line *l = ObjectWrap::Unwrap<Line>(info.Holder());
+  std::string name = TOSTR(property);
+  Handle<Value> value = Undefined();
 
-    if (name == "numpoints")
-      value = Integer::New(l->get()->numpoints);
+  if (name == "numpoints")
+    value = Integer::New(l->get()->numpoints);
 
-    info.GetReturnValue().Set(value);
+  info.GetReturnValue().Set(value);
 }
 
-void Line::getPoint(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Line::getPoint(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 1 || !args[0]->IsInt32()) {
@@ -134,13 +121,12 @@ void Line::getPoint(const v8::FunctionCallbackInfo<Value>& args)
     return;
   }
 
-  Line* l = ObjectWrap::Unwrap<Line>(args.Holder());
-  lineObj* line = l->get();
+  Line *l = ObjectWrap::Unwrap<Line>(args.Holder());
+  lineObj *line = l->get();
 
   int index = args[0]->Int32Value();
 
-  if (index < 0 || index >= line->numpoints)
-  {
+  if (index < 0 || index >= line->numpoints) {
     ThrowException(String::New("Invalid point index."));
     return;
   }
@@ -150,8 +136,7 @@ void Line::getPoint(const v8::FunctionCallbackInfo<Value>& args)
   args.GetReturnValue().Set(Point::Constructor()->NewInstance(1, &ext));
 }
 
-void Line::addXY(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Line::addXY(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 2 || !args[0]->IsNumber() || !args[1]->IsNumber()) {
@@ -159,13 +144,14 @@ void Line::addXY(const v8::FunctionCallbackInfo<Value>& args)
     return;
   }
 
-  Line* l = ObjectWrap::Unwrap<Line>(args.Holder());
-  lineObj* line = l->get();
+  Line *l = ObjectWrap::Unwrap<Line>(args.Holder());
+  lineObj *line = l->get();
 
-  if(line->numpoints == 0) /* new */
+  if (line->numpoints == 0) /* new */
     line->point = (pointObj *)msSmallMalloc(sizeof(pointObj));
   else /* extend array */
-    line->point = (pointObj *)msSmallRealloc(line->point, sizeof(pointObj)*(line->numpoints+1));
+    line->point = (pointObj *)msSmallRealloc(
+        line->point, sizeof(pointObj) * (line->numpoints + 1));
 
   line->point[line->numpoints].x = args[0]->NumberValue();
   line->point[line->numpoints].y = args[1]->NumberValue();
@@ -175,23 +161,23 @@ void Line::addXY(const v8::FunctionCallbackInfo<Value>& args)
   line->numpoints++;
 }
 
-void Line::addXYZ(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Line::addXYZ(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
 
-  if (args.Length() < 3 || !args[0]->IsNumber() ||
-      !args[1]->IsNumber() || !args[2]->IsNumber()) {
+  if (args.Length() < 3 || !args[0]->IsNumber() || !args[1]->IsNumber() ||
+      !args[2]->IsNumber()) {
     ThrowException(String::New("Invalid argument"));
     return;
   }
 
-  Line* l = ObjectWrap::Unwrap<Line>(args.Holder());
-  lineObj* line = l->get();
+  Line *l = ObjectWrap::Unwrap<Line>(args.Holder());
+  lineObj *line = l->get();
 
-  if(line->numpoints == 0) /* new */
+  if (line->numpoints == 0) /* new */
     line->point = (pointObj *)msSmallMalloc(sizeof(pointObj));
   else /* extend array */
-    line->point = (pointObj *)msSmallRealloc(line->point, sizeof(pointObj)*(line->numpoints+1));
+    line->point = (pointObj *)msSmallRealloc(
+        line->point, sizeof(pointObj) * (line->numpoints + 1));
 
   line->point[line->numpoints].x = args[0]->NumberValue();
   line->point[line->numpoints].y = args[1]->NumberValue();
@@ -201,25 +187,26 @@ void Line::addXYZ(const v8::FunctionCallbackInfo<Value>& args)
   line->numpoints++;
 }
 
-void Line::addPoint(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Line::addPoint(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 1 || !args[0]->IsObject() ||
-      !args[0]->ToObject()->GetConstructorName()->Equals(String::New("pointObj"))) {
+      !args[0]->ToObject()->GetConstructorName()->Equals(
+          String::New("pointObj"))) {
     ThrowException(String::New("Invalid argument"));
     return;
   }
 
-  Line* l = ObjectWrap::Unwrap<Line>(args.Holder());
-  lineObj* line = l->get();
-  Point* p = ObjectWrap::Unwrap<Point>(args[0]->ToObject());
-  pointObj* point = p->get();
+  Line *l = ObjectWrap::Unwrap<Line>(args.Holder());
+  lineObj *line = l->get();
+  Point *p = ObjectWrap::Unwrap<Point>(args[0]->ToObject());
+  pointObj *point = p->get();
 
-  if(line->numpoints == 0) /* new */
+  if (line->numpoints == 0) /* new */
     line->point = (pointObj *)msSmallMalloc(sizeof(pointObj));
   else /* extend array */
-    line->point = (pointObj *)msSmallRealloc(line->point, sizeof(pointObj)*(line->numpoints+1));
+    line->point = (pointObj *)msSmallRealloc(
+        line->point, sizeof(pointObj) * (line->numpoints + 1));
 
   line->point[line->numpoints].x = point->x;
   line->point[line->numpoints].y = point->y;

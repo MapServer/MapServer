@@ -38,8 +38,7 @@ using std::string;
 
 Persistent<FunctionTemplate> Shape::constructor;
 
-void Shape::Initialize(Handle<Object> target)
-{
+void Shape::Initialize(Handle<Object> target) {
   HandleScope scope;
 
   Handle<FunctionTemplate> c = FunctionTemplate::New(Shape::New);
@@ -59,28 +58,22 @@ void Shape::Initialize(Handle<Object> target)
   NODE_SET_PROTOTYPE_METHOD(c, "add", addLine);
   NODE_SET_PROTOTYPE_METHOD(c, "setGeometry", setGeometry);
 
-  NODE_DEFINE_CONSTANT(c->GetFunction(),
-                       "Point",MS_SHAPE_POINT);
-  NODE_DEFINE_CONSTANT(c->GetFunction(),
-                       "Line",MS_SHAPE_LINE);
-  NODE_DEFINE_CONSTANT(c->GetFunction(),
-                       "Polygon",MS_SHAPE_POLYGON);
-  NODE_DEFINE_CONSTANT(c->GetFunction(),
-                       "Null",MS_SHAPE_NULL);
+  NODE_DEFINE_CONSTANT(c->GetFunction(), "Point", MS_SHAPE_POINT);
+  NODE_DEFINE_CONSTANT(c->GetFunction(), "Line", MS_SHAPE_LINE);
+  NODE_DEFINE_CONSTANT(c->GetFunction(), "Polygon", MS_SHAPE_POLYGON);
+  NODE_DEFINE_CONSTANT(c->GetFunction(), "Null", MS_SHAPE_NULL);
 
   target->Set(String::NewSymbol("shapeObj"), c->GetFunction());
 
   constructor.Reset(Isolate::GetCurrent(), c);
 }
 
-void Shape::Dispose()
-{
+void Shape::Dispose() {
   Shape::constructor.Dispose();
   Shape::constructor.Clear();
 }
 
-Shape::~Shape()
-{
+Shape::~Shape() {
   /* this is set to false if the shapeObj is owned by mapserver and not v8 */
   if (freeInternal) {
     msFreeShape(this->get());
@@ -88,33 +81,27 @@ Shape::~Shape()
   }
 }
 
-Handle<Function> Shape::Constructor()
-{
+Handle<Function> Shape::Constructor() {
   return (*Shape::constructor)->GetFunction();
 }
 
-void Shape::New(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Shape::New(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
   Handle<Object> self = args.Holder();
   Shape *shape;
 
-  if (args[0]->IsExternal())
-  {
+  if (args[0]->IsExternal()) {
     Local<External> ext = Local<External>::Cast(args[0]);
     void *ptr = ext->Value();
-    shape = static_cast<Shape*>(ptr);
+    shape = static_cast<Shape *>(ptr);
     shape->Wrap(args.Holder());
-  }
-  else
-  {
+  } else {
     shapeObj *s = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
 
     msInitShape(s);
-    if(args.Length() >= 1) {
+    if (args.Length() >= 1) {
       s->type = args[0]->Int32Value();
-    }
-    else {
+    } else {
       s->type = MS_SHAPE_NULL;
     }
 
@@ -130,11 +117,11 @@ void Shape::New(const v8::FunctionCallbackInfo<Value>& args)
   Handle<Object> attributes = attributes_templ->NewInstance();
   map<string, int> *attributes_map = new map<string, int>();
   attributes->SetInternalField(0, External::New(attributes_map));
-  attributes->SetInternalField(1, External::New(shape->get()->values));  
+  attributes->SetInternalField(1, External::New(shape->get()->values));
   attributes->SetHiddenValue(String::New("__parent__"), self);
 
   if (shape->layer) {
-    for (int i=0; i<shape->layer->numitems; ++i) {
+    for (int i = 0; i < shape->layer->numitems; ++i) {
       (*attributes_map)[string(shape->layer->items[i])] = i;
     }
   }
@@ -147,59 +134,53 @@ void Shape::New(const v8::FunctionCallbackInfo<Value>& args)
   self->Set(String::New("attributes"), attributes);
 }
 
-Shape::Shape(shapeObj *s):
-  ObjectWrap()
-{
+Shape::Shape(shapeObj *s) : ObjectWrap() {
   this->this_ = s;
   this->layer = NULL;
   this->freeInternal = true;
 }
 
 void Shape::getProp(Local<String> property,
-                    const PropertyCallbackInfo<Value>& info)
-{
-    HandleScope scope;
-    Shape* s = ObjectWrap::Unwrap<Shape>(info.Holder());
-    std::string name = TOSTR(property);
-    Handle<Value> value = Undefined();
-
-    if (name == "numvalues")
-      value = Integer::New(s->get()->numvalues);
-    else if (name == "numlines")
-      value = Integer::New(s->get()->numlines);
-    else if (name == "index")
-      value = Number::New(s->get()->index);
-    else if (name == "type")
-      value = Integer::New(s->get()->type);
-    else if (name == "tileindex")
-      value = Integer::New(s->get()->tileindex);
-    else if (name == "classindex")
-      value = Integer::New(s->get()->classindex);
-    else if (name == "text")
-      value = String::New(s->get()->text);
-
-    info.GetReturnValue().Set(value);
-}
-
-void Shape::setProp(Local<String> property,
-                    Local<Value> value,
-                    const PropertyCallbackInfo<void>& info)
-{
-    HandleScope scope;
-    Shape* s = ObjectWrap::Unwrap<Shape>(info.Holder());
-    std::string name = TOSTR(property);
-
-    if (name == "text") {
-      if (s->get()->text)
-        msFree(s->get()->text);
-      s->get()->text = getStringValue(value);
-    }
-}
-
-void Shape::clone(const v8::FunctionCallbackInfo<v8::Value>& args)
-{
+                    const PropertyCallbackInfo<Value> &info) {
   HandleScope scope;
-  Shape* s = ObjectWrap::Unwrap<Shape>(args.Holder());
+  Shape *s = ObjectWrap::Unwrap<Shape>(info.Holder());
+  std::string name = TOSTR(property);
+  Handle<Value> value = Undefined();
+
+  if (name == "numvalues")
+    value = Integer::New(s->get()->numvalues);
+  else if (name == "numlines")
+    value = Integer::New(s->get()->numlines);
+  else if (name == "index")
+    value = Number::New(s->get()->index);
+  else if (name == "type")
+    value = Integer::New(s->get()->type);
+  else if (name == "tileindex")
+    value = Integer::New(s->get()->tileindex);
+  else if (name == "classindex")
+    value = Integer::New(s->get()->classindex);
+  else if (name == "text")
+    value = String::New(s->get()->text);
+
+  info.GetReturnValue().Set(value);
+}
+
+void Shape::setProp(Local<String> property, Local<Value> value,
+                    const PropertyCallbackInfo<void> &info) {
+  HandleScope scope;
+  Shape *s = ObjectWrap::Unwrap<Shape>(info.Holder());
+  std::string name = TOSTR(property);
+
+  if (name == "text") {
+    if (s->get()->text)
+      msFree(s->get()->text);
+    s->get()->text = getStringValue(value);
+  }
+}
+
+void Shape::clone(const v8::FunctionCallbackInfo<v8::Value> &args) {
+  HandleScope scope;
+  Shape *s = ObjectWrap::Unwrap<Shape>(args.Holder());
   shapeObj *shape = s->get();
 
   shapeObj *new_shape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
@@ -208,16 +189,19 @@ void Shape::clone(const v8::FunctionCallbackInfo<v8::Value>& args)
 
   Shape *ns = new Shape(new_shape);
   Handle<Value> ext = External::New(ns);
-  Handle<Object> clone =  Shape::Constructor()->NewInstance(1, &ext);
+  Handle<Object> clone = Shape::Constructor()->NewInstance(1, &ext);
 
   /* we need this to copy shape attributes */
   Handle<Object> self = s->handle();
-  Handle<Object> self_attributes = self->Get(String::New("attributes"))->ToObject();
-  Local<External> wrap = Local<External>::Cast(self_attributes->GetInternalField(0));
+  Handle<Object> self_attributes =
+      self->Get(String::New("attributes"))->ToObject();
+  Local<External> wrap =
+      Local<External>::Cast(self_attributes->GetInternalField(0));
   void *ptr = wrap->Value();
   map<string, int> *self_attributes_map = static_cast<map<string, int> *>(ptr);
 
-  Handle<Object> clone_attributes = clone->Get(String::New("attributes"))->ToObject();
+  Handle<Object> clone_attributes =
+      clone->Get(String::New("attributes"))->ToObject();
   wrap = Local<External>::Cast(clone_attributes->GetInternalField(0));
   ptr = wrap->Value();
   map<string, int> *clone_attributes_map = static_cast<map<string, int> *>(ptr);
@@ -228,8 +212,7 @@ void Shape::clone(const v8::FunctionCallbackInfo<v8::Value>& args)
   args.GetReturnValue().Set(clone);
 }
 
-void Shape::getLine(const v8::FunctionCallbackInfo<v8::Value>& args)
-{
+void Shape::getLine(const v8::FunctionCallbackInfo<v8::Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 1 || !args[0]->IsInt32()) {
@@ -239,11 +222,10 @@ void Shape::getLine(const v8::FunctionCallbackInfo<v8::Value>& args)
 
   int index = args[0]->Int32Value();
 
-  Shape* s = ObjectWrap::Unwrap<Shape>(args.Holder());
+  Shape *s = ObjectWrap::Unwrap<Shape>(args.Holder());
   shapeObj *shape = s->get();
 
-  if (index < 0 || index >= shape->numlines)
-  {
+  if (index < 0 || index >= shape->numlines) {
     ThrowException(String::New("Invalid line index."));
     return;
   }
@@ -253,45 +235,46 @@ void Shape::getLine(const v8::FunctionCallbackInfo<v8::Value>& args)
   args.GetReturnValue().Set(Line::Constructor()->NewInstance(1, &ext));
 }
 
-void Shape::addLine(const v8::FunctionCallbackInfo<v8::Value>& args)
-{
+void Shape::addLine(const v8::FunctionCallbackInfo<v8::Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 1 || !args[0]->IsObject() ||
-      !args[0]->ToObject()->GetConstructorName()->Equals(String::New("lineObj"))) {
+      !args[0]->ToObject()->GetConstructorName()->Equals(
+          String::New("lineObj"))) {
     ThrowException(String::New("Invalid argument"));
     return;
   }
 
-  Shape* s = ObjectWrap::Unwrap<Shape>(args.Holder());
+  Shape *s = ObjectWrap::Unwrap<Shape>(args.Holder());
   shapeObj *shape = s->get();
 
-  Line* l = ObjectWrap::Unwrap<Line>(args[0]->ToObject());
+  Line *l = ObjectWrap::Unwrap<Line>(args[0]->ToObject());
   lineObj *line = l->get();
 
   msAddLine(shape, line);
 }
 
-void Shape::setGeometry(const v8::FunctionCallbackInfo<v8::Value>& args)
-{
+void Shape::setGeometry(const v8::FunctionCallbackInfo<v8::Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 1 || !args[0]->IsObject() ||
-      !args[0]->ToObject()->GetConstructorName()->Equals(String::New("shapeObj"))) {
+      !args[0]->ToObject()->GetConstructorName()->Equals(
+          String::New("shapeObj"))) {
     ThrowException(String::New("Invalid argument"));
     return;
   }
 
-  Shape* s = ObjectWrap::Unwrap<Shape>(args.Holder());
+  Shape *s = ObjectWrap::Unwrap<Shape>(args.Holder());
   shapeObj *shape = s->get();
-  Shape* ns = ObjectWrap::Unwrap<Shape>(args[0]->ToObject());
+  Shape *ns = ObjectWrap::Unwrap<Shape>(args[0]->ToObject());
   shapeObj *new_shape = ns->get();
 
   /* clean current shape */
   for (int i = 0; i < shape->numlines; i++) {
     free(shape->line[i].point);
   }
-  if (shape->line) free(shape->line);
+  if (shape->line)
+    free(shape->line);
   shape->line = NULL;
   shape->numlines = 0;
 
@@ -302,18 +285,17 @@ void Shape::setGeometry(const v8::FunctionCallbackInfo<v8::Value>& args)
   return;
 }
 
-void Shape::attributeWeakCallback(v8::Isolate* isolate,
-                           v8::Persistent<v8::Object>* pobj,
-                           map<string, int> *map) {
-    v8::HandleScope scope(isolate);
-    pobj->Dispose();
-    pobj->Clear();
-    delete map;
+void Shape::attributeWeakCallback(v8::Isolate *isolate,
+                                  v8::Persistent<v8::Object> *pobj,
+                                  map<string, int> *map) {
+  v8::HandleScope scope(isolate);
+  pobj->Dispose();
+  pobj->Clear();
+  delete map;
 }
 
 void Shape::attributeGetValue(Local<String> name,
-                              const PropertyCallbackInfo<Value> &info)
-{
+                              const PropertyCallbackInfo<Value> &info) {
   Local<Object> self = info.Holder();
   Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
   void *ptr = wrap->Value();
@@ -332,10 +314,8 @@ void Shape::attributeGetValue(Local<String> name,
   }
 }
 
-void Shape::attributeSetValue(Local<String> name,
-                              Local<Value> value,
-                              const PropertyCallbackInfo<Value> &info)
-{
+void Shape::attributeSetValue(Local<String> name, Local<Value> value,
+                              const PropertyCallbackInfo<Value> &info) {
   Local<Object> self = info.Holder();
   Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
   void *ptr = wrap->Value();
@@ -351,9 +331,7 @@ void Shape::attributeSetValue(Local<String> name,
 
   if (iter == indexes->end()) {
     ThrowException(String::New("Invalid value name."));
-  }
-  else
-  {
+  } else {
     const int &index = (*iter).second;
     msFree(values[index]);
     values[index] = msStrdup(*utf8_value);

@@ -32,8 +32,6 @@
 
 #include "mapserver.h"
 
-
-
 #include <limits.h>
 
 /*
@@ -41,24 +39,23 @@
  * See function msGetNextBit for another hardcoded value.
  */
 
-/* #define msGetBit(array, index) (*((array) + (index)/MS_ARRAY_BIT) & ( 1 << ((index) % MS_ARRAY_BIT))) */
+/* #define msGetBit(array, index) (*((array) + (index)/MS_ARRAY_BIT) & ( 1 <<
+ * ((index) % MS_ARRAY_BIT))) */
 
-size_t msGetBitArraySize(int numbits)
-{
-  return((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT);
+size_t msGetBitArraySize(int numbits) {
+  return ((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT);
 }
 
-ms_bitarray msAllocBitArray(int numbits)
-{
-  ms_bitarray array = calloc((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT, MS_ARRAY_BIT);
+ms_bitarray msAllocBitArray(int numbits) {
+  ms_bitarray array =
+      calloc((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT, MS_ARRAY_BIT);
 
-  return(array);
+  return (array);
 }
 
-int msGetBit(ms_const_bitarray array, int index)
-{
+int msGetBit(ms_const_bitarray array, int index) {
   array += index / MS_ARRAY_BIT;
-  return (*array & (1U << (index % MS_ARRAY_BIT))) != 0;    /* 0 or 1 */
+  return (*array & (1U << (index % MS_ARRAY_BIT))) != 0; /* 0 or 1 */
 }
 
 /*
@@ -68,17 +65,16 @@ int msGetBit(ms_const_bitarray array, int index)
 ** If hits end of bitmap without finding set bit, will return -1.
 **
 */
-int msGetNextBit(ms_const_bitarray array, int i, int size)
-{
+int msGetNextBit(ms_const_bitarray array, int i, int size) {
 
   register ms_uint32 b;
 
-  while(i < size) {
-    b = *(array + (i/MS_ARRAY_BIT));
-    if( b && (b >> (i % MS_ARRAY_BIT)) ) {
+  while (i < size) {
+    b = *(array + (i / MS_ARRAY_BIT));
+    if (b && (b >> (i % MS_ARRAY_BIT))) {
       /* There is something in this byte */
       /* And it is not to the right of us */
-      if( b & ( 1U << (i % MS_ARRAY_BIT)) ) {
+      if (b & (1U << (i % MS_ARRAY_BIT))) {
         /* There is something at this bit! */
         return i;
       } else {
@@ -94,25 +90,22 @@ int msGetNextBit(ms_const_bitarray array, int i, int size)
   return -1;
 }
 
-void msSetBit(ms_bitarray array, int index, int value)
-{
+void msSetBit(ms_bitarray array, int index, int value) {
   array += index / MS_ARRAY_BIT;
   if (value)
-    *array |= 1U << (index % MS_ARRAY_BIT);           /* set bit */
+    *array |= 1U << (index % MS_ARRAY_BIT); /* set bit */
   else
-    *array &= ~(1U << (index % MS_ARRAY_BIT));        /* clear bit */
+    *array &= ~(1U << (index % MS_ARRAY_BIT)); /* clear bit */
 }
 
-void msSetAllBits(ms_bitarray array, int numbits, int value)
-{
+void msSetAllBits(ms_bitarray array, int numbits, int value) {
   if (value)
-    memset(array, 0xff, ((numbits + 7) / 8) ); /* set bit */
+    memset(array, 0xff, ((numbits + 7) / 8)); /* set bit */
   else
-    memset(array, 0x0,  ((numbits + 7) / 8) ); /* clear bit */
+    memset(array, 0x0, ((numbits + 7) / 8)); /* clear bit */
 }
 
-void msFlipBit(ms_bitarray array, int index)
-{
+void msFlipBit(ms_bitarray array, int index) {
   array += index / MS_ARRAY_BIT;
-  *array ^= 1U << (index % MS_ARRAY_BIT);                   /* flip bit */
+  *array ^= 1U << (index % MS_ARRAY_BIT); /* flip bit */
 }

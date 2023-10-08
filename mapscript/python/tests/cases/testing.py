@@ -32,23 +32,25 @@
 # ===========================================================================
 
 import os
-import unittest
 import tempfile
+import unittest
+
 import mapscript
 
 # define the path to mapserver test data
 TESTS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
-TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
-TESTCONFIGFILE = os.path.join(TESTS_PATH, 'mapserver-sample.conf')
-XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
-HOME_IMAGE = os.path.join(TESTS_PATH, 'home.png')
-TEST_IMAGE = os.path.join(TESTS_PATH, 'test.png')
+TESTMAPFILE = os.path.join(TESTS_PATH, "test.map")
+TESTCONFIGFILE = os.path.join(TESTS_PATH, "mapserver-sample.conf")
+XMARKS_IMAGE = os.path.join(TESTS_PATH, "xmarks.png")
+HOME_IMAGE = os.path.join(TESTS_PATH, "home.png")
+TEST_IMAGE = os.path.join(TESTS_PATH, "test.png")
 
 INCOMING = tempfile.mkdtemp(prefix="mapscript")
 
 
 # ==========================================================================
 # Base testing classes
+
 
 class MapPrimitivesTestCase(unittest.TestCase):
     """Base class for testing primitives (points, lines, shapes)
@@ -121,6 +123,7 @@ class MapPrimitivesTestCase(unittest.TestCase):
 
 class MapTestCase(MapPrimitivesTestCase):
     """Base class for testing with a map fixture"""
+
     def setUp(self):
         self.map = mapscript.mapObj(TESTMAPFILE)
         # self.xmarks_image = xmarks_image
@@ -132,6 +135,7 @@ class MapTestCase(MapPrimitivesTestCase):
 
 class MapZoomTestCase(MapPrimitivesTestCase):
     "Testing new zoom* methods that we are adapting from the PHP MapScript"
+
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(TESTMAPFILE)
         # Change the extent for purposes of zoom testing
@@ -147,4 +151,5 @@ class MapZoomTestCase(MapPrimitivesTestCase):
 
 class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
+
     pass

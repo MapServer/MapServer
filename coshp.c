@@ -33,7 +33,6 @@
 
 #include "mapserver.h"
 
-
 typedef struct {
   SHPHandle inSHP, outSHP;
   DBFHandle inDBF, outDBF;
@@ -41,39 +40,37 @@ typedef struct {
   int numDbfFields;
 } writeState;
 
-static char* AddFileSuffix ( const char * Filename, const char * Suffix )
-{
-  char  *pszFullname, *pszBasename;
+static char *AddFileSuffix(const char *Filename, const char *Suffix) {
+  char *pszFullname, *pszBasename;
   int i;
 
   /* -------------------------------------------------------------------- */
   /*  Compute the base (layer) name.  If there is any extension     */
   /*  on the passed in filename we will strip it off.         */
   /* -------------------------------------------------------------------- */
-  pszBasename = (char *) msSmallMalloc(strlen(Filename)+5);
-  strcpy( pszBasename, Filename );
-  for( i = (int)strlen(pszBasename)-1;
-       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-       && pszBasename[i] != '\\';
-       i-- ) {}
+  pszBasename = (char *)msSmallMalloc(strlen(Filename) + 5);
+  strcpy(pszBasename, Filename);
+  for (i = (int)strlen(pszBasename) - 1;
+       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' &&
+       pszBasename[i] != '\\';
+       i--) {
+  }
 
-  if( pszBasename[i] == '.' )
+  if (pszBasename[i] == '.')
     pszBasename[i] = '\0';
 
   /* -------------------------------------------------------------------- */
   /*  Open the .shp and .shx files.  Note that files pulled from      */
   /*  a PC to Unix with upper case filenames won't work!        */
   /* -------------------------------------------------------------------- */
-  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-  sprintf( pszFullname, "%s%s", pszBasename, Suffix);
+  pszFullname = (char *)msSmallMalloc(strlen(pszBasename) + 5);
+  sprintf(pszFullname, "%s%s", pszBasename, Suffix);
 
   free(pszBasename);
   return (pszFullname);
 }
 
-
-static int writeShape(writeState *state, int shapeId)
-{
+static int writeShape(writeState *state, int shapeId) {
   int j = 0;
   int i = state->currentOutRecord;
   char fName[20];
@@ -81,33 +78,37 @@ static int writeShape(writeState *state, int shapeId)
   shapeObj shape;
 
   /* Copy the DBF record over */
-  for(j=0; j<state->numDbfFields; j++) {
+  for (j = 0; j < state->numDbfFields; j++) {
 
-    DBFFieldType dbfField = msDBFGetFieldInfo(state->inDBF, j, fName, &fWidth, &fnDecimals);
+    DBFFieldType dbfField =
+        msDBFGetFieldInfo(state->inDBF, j, fName, &fWidth, &fnDecimals);
 
     switch (dbfField) {
-      case FTInteger:
-        msDBFWriteIntegerAttribute(state->outDBF, i, j,
+    case FTInteger:
+      msDBFWriteIntegerAttribute(
+          state->outDBF, i, j,
           msDBFReadIntegerAttribute(state->inDBF, shapeId, j));
-        break;
-      case FTDouble:
-        msDBFWriteDoubleAttribute(state->outDBF, i, j,
+      break;
+    case FTDouble:
+      msDBFWriteDoubleAttribute(
+          state->outDBF, i, j,
           msDBFReadDoubleAttribute(state->inDBF, shapeId, j));
-        break;
-      case FTString:
-        msDBFWriteStringAttribute(state->outDBF, i, j,
+      break;
+    case FTString:
+      msDBFWriteStringAttribute(
+          state->outDBF, i, j,
           msDBFReadStringAttribute(state->inDBF, shapeId, j));
-        break;
-      default:
-        fprintf(stderr,"Unsupported data type for field: %s, exiting.\n",fName);
-        exit(0);
+      break;
+    default:
+      fprintf(stderr, "Unsupported data type for field: %s, exiting.\n", fName);
+      exit(0);
     }
   }
 
   /* Copy the SHP record over */
-  msSHPReadShape( state->inSHP, shapeId, &shape );
-  msSHPWriteShape( state->outSHP, &shape );
-  msFreeShape( &shape );
+  msSHPReadShape(state->inSHP, shapeId, &shape);
+  msSHPWriteShape(state->outSHP, &shape);
+  msFreeShape(&shape);
 
   /* Increment output row number */
   state->currentOutRecord++;
@@ -115,59 +116,59 @@ static int writeShape(writeState *state, int shapeId)
   return MS_SUCCESS;
 }
 
-
-static int writeNode(writeState *state, treeNodeObj *node)
-{
+static int writeNode(writeState *state, treeNodeObj *node) {
   int i;
   if (node->ids) {
-    for(i = 0; i < node->numshapes; i++) {
+    for (i = 0; i < node->numshapes; i++) {
       int curRec = state->currentOutRecord;
       writeShape(state, node->ids[i]);
       node->ids[i] = curRec;
     }
   }
-  for(i = 0; i < node->numsubnodes; i++) {
+  for (i = 0; i < node->numsubnodes; i++) {
     if (node->subnode[i])
       writeNode(state, node->subnode[i]);
   }
   return MS_SUCCESS;
 }
 
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   treeObj *tree;          /* In-memory index */
   shapefileObj shapefile; /* Input shapefile */
-  SHPHandle    outSHP;    /* Output SHP */
-  DBFHandle    outDBF;    /* Output DBF */
+  SHPHandle outSHP;       /* Output SHP */
+  DBFHandle outDBF;       /* Output DBF */
   DBFFieldType dbfField;
-  writeState   state;
-  int          shpType, nShapes;
-  char         fName[20];
-  int          fWidth, fnDecimals;
-  char         buffer[1024];
-  int          numFields;
-  int          i;
+  writeState state;
+  int shpType, nShapes;
+  char fName[20];
+  int fWidth, fnDecimals;
+  char buffer[1024];
+  int numFields;
+  int i;
 
-  if(argc > 1 && strcmp(argv[1], "-v") == 0) {
+  if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
     exit(0);
   }
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Check the number of arguments, return syntax if not correct               */
-  /* ------------------------------------------------------------------------------- */
-  if( argc != 3 ) {
-    fprintf(stderr,"Syntax: %s [infile] [outfile]\n", argv[0]);
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Check the number of arguments, return syntax if not correct */
+  /* -------------------------------------------------------------------------------
+   */
+  if (argc != 3) {
+    fprintf(stderr, "Syntax: %s [infile] [outfile]\n", argv[0]);
     exit(1);
   }
 
   msSetErrorFile("stderr", NULL);
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Open the shapefile                                                        */
-  /* ------------------------------------------------------------------------------- */
-  if(msShapefileOpen(&shapefile, "rb", argv[1], MS_TRUE) < 0) {
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Open the shapefile */
+  /* -------------------------------------------------------------------------------
+   */
+  if (msShapefileOpen(&shapefile, "rb", argv[1], MS_TRUE) < 0) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }
@@ -176,37 +177,45 @@ int main(int argc, char *argv[])
   shpType = shapefile.type;
   numFields = msDBFGetFieldCount(shapefile.hDBF);
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Index the shapefile (auto-calculate depth)                                */
-  /* ------------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Index the shapefile (auto-calculate depth) */
+  /* -------------------------------------------------------------------------------
+   */
   tree = msCreateTree(&shapefile, 0);
   msTreeTrim(tree);
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Setup the output .shp/.shx and .dbf files                                 */
-  /* ------------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Setup the output .shp/.shx and .dbf files */
+  /* -------------------------------------------------------------------------------
+   */
   outSHP = msSHPCreate(argv[2], shpType);
-  if( outSHP == NULL ) {
-    fprintf( stderr, "Failed to create file '%s'.\n", argv[2] );
-    exit( 1 );
+  if (outSHP == NULL) {
+    fprintf(stderr, "Failed to create file '%s'.\n", argv[2]);
+    exit(1);
   }
 
-  sprintf(buffer,"%s.dbf", argv[2]);
+  sprintf(buffer, "%s.dbf", argv[2]);
   outDBF = msDBFCreate(buffer);
-  if( outDBF == NULL ) {
-    fprintf( stderr, "Failed to create dbf file '%s'.\n", buffer );
-    exit( 1 );
+  if (outDBF == NULL) {
+    fprintf(stderr, "Failed to create dbf file '%s'.\n", buffer);
+    exit(1);
   }
 
   /* Clone the fields from the input to the output definition */
-  for(i=0; i<numFields; i++) {
-    dbfField = msDBFGetFieldInfo(shapefile.hDBF, i, fName, &fWidth, &fnDecimals); /* ---- Get field info from in file ---- */
+  for (i = 0; i < numFields; i++) {
+    dbfField = msDBFGetFieldInfo(
+        shapefile.hDBF, i, fName, &fWidth,
+        &fnDecimals); /* ---- Get field info from in file ---- */
     msDBFAddField(outDBF, fName, dbfField, fWidth, fnDecimals);
   }
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Write the sorted .shp/.shx and .dbf files                                 */
-  /* ------------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Write the sorted .shp/.shx and .dbf files */
+  /* -------------------------------------------------------------------------------
+   */
 
   /* Set up writer state */
   state.inSHP = shapefile.hSHP;
@@ -218,19 +227,25 @@ int main(int argc, char *argv[])
 
   writeNode(&state, tree->root);
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Write the spatial index                                                   */
-  /* ------------------------------------------------------------------------------- */
-  msWriteTree(tree, AddFileSuffix(argv[2], MS_INDEX_EXTENSION), MS_NEW_LSB_ORDER);
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Write the spatial index */
+  /* -------------------------------------------------------------------------------
+   */
+  msWriteTree(tree, AddFileSuffix(argv[2], MS_INDEX_EXTENSION),
+              MS_NEW_LSB_ORDER);
   msDestroyTree(tree);
 
-  /* ------------------------------------------------------------------------------- */
-  /*       Close all files                                                           */
-  /* ------------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------------
+   */
+  /*       Close all files */
+  /* -------------------------------------------------------------------------------
+   */
   msShapefileClose(&shapefile);
   msSHPClose(outSHP);
   msDBFClose(outDBF);
 
-  fprintf(stdout, "Wrote %d spatially sorted shapes into shapefile '%s'\n", nShapes, argv[2]);
-  return(0);
+  fprintf(stdout, "Wrote %d spatially sorted shapes into shapefile '%s'\n",
+          nShapes, argv[2]);
+  return (0);
 }

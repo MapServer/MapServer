@@ -7,9 +7,8 @@
 
 extern int LLVMFuzzerTestOneInput(GByte *data, size_t size);
 
-static VSILFILE *
-SegmentFile(const char *filename, GByte **data_p, size_t *size_p)
-{
+static VSILFILE *SegmentFile(const char *filename, GByte **data_p,
+                             size_t *size_p) {
   GByte *data = *data_p;
   size_t size = *size_p;
 
@@ -25,13 +24,12 @@ SegmentFile(const char *filename, GByte **data_p, size_t *size_p)
   return VSIFileFromMemBuffer(filename, data, size, false);
 }
 
-int
-LLVMFuzzerTestOneInput(GByte *data, size_t size)
-{
+int LLVMFuzzerTestOneInput(GByte *data, size_t size) {
   /* this fuzzer expects three files concatenated, separated by the
      string "deadbeef"; you can generate such a file by typing:
 
-     { cat foo.shp; echo -n "deadbeef"; cat foo.shx; echo -n "deadbeef"; cat foo.dbf; } >/tmp/corpus/start
+     { cat foo.shp; echo -n "deadbeef"; cat foo.shx; echo -n "deadbeef"; cat
+     foo.dbf; } >/tmp/corpus/start
 
      then run the fuzzer:
 
@@ -43,7 +41,8 @@ LLVMFuzzerTestOneInput(GByte *data, size_t size)
   VSILFILE *dbf = SegmentFile("/vsimem/foo.dbf", &data, &size);
 
   shapefileObj file;
-  if (msShapefileOpenVirtualFile(&file, "/vsimem/foo.shp", shp, shx, dbf, false) == 0) {
+  if (msShapefileOpenVirtualFile(&file, "/vsimem/foo.shp", shp, shx, dbf,
+                                 false) == 0) {
     for (int i = 0; i < file.numshapes; ++i) {
       shapeObj shape;
       msInitShape(&shape);

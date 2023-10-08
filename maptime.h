@@ -40,26 +40,26 @@ extern "C" {
  */
 #if defined(_WIN32) && !defined(__CYGWIN__)
 struct mstimeval {
-  long    tv_sec;         /* seconds */
-  long    tv_usec;        /* and microseconds */
+  long tv_sec;  /* seconds */
+  long tv_usec; /* and microseconds */
 };
 MS_DLL_EXPORT void msGettimeofday(struct mstimeval *t, void *__not_used_here__);
 #else
-#  include <sys/time.h>     /* for gettimeofday() */
-#  define  mstimeval timeval
-#  define  msGettimeofday(t,u) gettimeofday(t,u)
+#include <sys/time.h> /* for gettimeofday() */
+#define mstimeval timeval
+#define msGettimeofday(t, u) gettimeofday(t, u)
 #endif
 
 typedef enum {
   TIME_RESOLUTION_UNDEFINED = -1,
-  TIME_RESOLUTION_MICROSECOND =0,
-  TIME_RESOLUTION_MILLISECOND =1,
-  TIME_RESOLUTION_SECOND =2,
-  TIME_RESOLUTION_MINUTE =3,
-  TIME_RESOLUTION_HOUR =4,
-  TIME_RESOLUTION_DAY =5,
-  TIME_RESOLUTION_MONTH =6,
-  TIME_RESOLUTION_YEAR =7
+  TIME_RESOLUTION_MICROSECOND = 0,
+  TIME_RESOLUTION_MILLISECOND = 1,
+  TIME_RESOLUTION_SECOND = 2,
+  TIME_RESOLUTION_MINUTE = 3,
+  TIME_RESOLUTION_HOUR = 4,
+  TIME_RESOLUTION_DAY = 5,
+  TIME_RESOLUTION_MONTH = 6,
+  TIME_RESOLUTION_YEAR = 7
 } MS_TIME_RESOLUTION;
 
 /* function prototypes */
