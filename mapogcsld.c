@@ -5392,22 +5392,34 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
 
         char *pszTmp = NULL;
         char *pszTmpFilters = NULL;
-        char *token = strtok((char *)psClass->expression.string, ",");
+        int nArgs = 0;
+        int i = 0;
         int tokenCount = 0;
+        char **papszArgs;
+
+        papszArgs =
+            msStringTokenize(psClass->expression.string, ",", &nArgs, MS_TRUE);
 
         // loop through all values in the list and create a PropertyIsEqualTo
         // for each value
-        while (token != NULL) {
-          tokenCount++;
+        for (i = 0; i < nArgs; i++) {
+
+          if (strlen(papszArgs[i]) == 0) {
+            free(papszArgs[i]);
+            continue;
+          }
+
           snprintf(szBuffer, sizeof(szBuffer),
                    "<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</"
                    "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
                    "ogc:PropertyIsEqualTo>\n",
-                   psClass->layer->classitem, token);
+                   psClass->layer->classitem, papszArgs[i]);
 
           pszTmpFilters = msStringConcatenate(pszTmpFilters, szBuffer);
-          token = strtok(NULL, ",");
+          tokenCount++;
+          free(papszArgs[i]);
         }
+        free(papszArgs);
 
         pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
 
