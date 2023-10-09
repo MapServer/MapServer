@@ -17,6 +17,9 @@
 # RUN_PARMS: wms_getstyles_expressions10.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test10" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions11.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test11" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions12.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test12" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions13.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test13" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions14.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test14" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions15.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test15" > [RESULT_DEMIME]
 
 MAP
     NAME WMS_TEST
@@ -166,6 +169,48 @@ MAP
       TYPE POINT
       CLASS
         EXPRESSION (NOT([FID] = 1))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # list expression
+    LAYER
+      NAME "Test13"
+      TYPE POINT
+      CLASSITEM "FID"
+      CLASS
+        EXPRESSION {2,4,6}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # list expression with one value
+    LAYER
+      NAME "Test14"
+      TYPE POINT
+      CLASSITEM "FID"
+      CLASS
+        EXPRESSION {2}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # empty list expression
+    LAYER
+      NAME "Test15"
+      TYPE POINT
+      CLASSITEM "FID"
+      CLASS
+        EXPRESSION {}
         STYLE
             COLOR 220 0 0
             WIDTH 1

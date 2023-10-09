@@ -5383,6 +5383,48 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
     } else if (psClass->expression.type == MS_EXPRESSION) {
       pszFilter =
           msSLDParseLogicalExpression(psClass->expression.string, pszWfsFilter);
+    } else if (psClass->expression.type == MS_LIST) {
+      if (psClass->layer && psClass->layer->classitem &&
+          psClass->expression.string) {
+
+        char *pszTmp = NULL;
+        char *pszTmpFilters = NULL;
+        char *token = strtok((char *)psClass->expression.string, ",");
+        int tokenCount = 0;
+
+        // loop through all values in the list and create a PropertyIsEqualTo
+        // for each value
+        while (token != NULL) {
+          tokenCount++;
+          snprintf(szBuffer, sizeof(szBuffer),
+                   "<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</"
+                   "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
+                   "ogc:PropertyIsEqualTo>\n",
+                   psClass->layer->classitem, token);
+
+          pszTmpFilters = msStringConcatenate(pszTmpFilters, szBuffer);
+          token = strtok(NULL, ",");
+        }
+
+        pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
+
+        // no need for an OR clause if there is only one item in the list
+        if (tokenCount == 1) {
+          pszTmp = msStringConcatenate(pszTmp, pszTmpFilters);
+        } else if (tokenCount > 1) {
+          pszTmp = msStringConcatenate(pszTmp, "<ogc:Or>");
+          pszTmp = msStringConcatenate(pszTmp, pszTmpFilters);
+          pszTmp = msStringConcatenate(pszTmp, "</ogc:Or>");
+        }
+
+        pszTmp = msStringConcatenate(pszTmp, "</ogc:Filter>");
+
+        // don't filter when the list is empty
+        if (tokenCount > 0) {
+          pszFilter = msStrdup(pszTmp);
+        }
+        free(pszTmp);
+      }
     } else if (psClass->expression.type == MS_REGEX) {
       if (psClass->layer && psClass->layer->classitem &&
           psClass->expression.string) {
