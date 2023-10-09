@@ -5424,6 +5424,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
           pszFilter = msStrdup(pszTmp);
         }
         free(pszTmp);
+        free(pszTmpFilters);
       }
     } else if (psClass->expression.type == MS_REGEX) {
       if (psClass->layer && psClass->layer->classitem &&
