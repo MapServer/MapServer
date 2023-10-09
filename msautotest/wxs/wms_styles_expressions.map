@@ -20,6 +20,8 @@
 # RUN_PARMS: wms_getstyles_expressions13.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test13" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions14.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test14" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions15.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test15" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions16.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test16" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions17.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test17" > [RESULT_DEMIME]
 
 MAP
     NAME WMS_TEST
@@ -217,4 +219,32 @@ MAP
         END
       END
     END
+    
+    # string list expression
+    LAYER
+      NAME "Test16"
+      TYPE POINT
+      CLASSITEM "locationtype"
+      CLASS
+        EXPRESSION {primary location,secondary location}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END    
+
+    # string list expression with quotes
+    LAYER
+      NAME "Test17"
+      TYPE POINT
+      CLASSITEM "poi"
+      CLASS
+        EXPRESSION {"main" square,city's centre}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END 
 END
