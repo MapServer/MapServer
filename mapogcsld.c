@@ -5392,34 +5392,30 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
 
         char *pszTmp = NULL;
         char *pszTmpFilters = NULL;
-        int nArgs = 0;
+
+        char **listExpressionValues = NULL;
+        int numListExpressionValues = 0;
         int i = 0;
         int tokenCount = 0;
-        char **papszArgs;
 
-        papszArgs =
-            msStringTokenize(psClass->expression.string, ",", &nArgs, MS_TRUE);
+        listExpressionValues = msStringSplit(psClass->expression.string, ',',
+                                             &numListExpressionValues);
 
         // loop through all values in the list and create a PropertyIsEqualTo
         // for each value
-        for (i = 0; i < nArgs; i++) {
+        for (i = 0; i < numListExpressionValues; i++) {
+          if (listExpressionValues[i] && listExpressionValues[i][0] != '\0') {
 
-          if (strlen(papszArgs[i]) == 0) {
-            free(papszArgs[i]);
-            continue;
+            snprintf(szBuffer, sizeof(szBuffer),
+                     "<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</"
+                     "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
+                     "ogc:PropertyIsEqualTo>\n",
+                     psClass->layer->classitem, listExpressionValues[i]);
+
+            pszTmpFilters = msStringConcatenate(pszTmpFilters, szBuffer);
+            tokenCount++;
           }
-
-          snprintf(szBuffer, sizeof(szBuffer),
-                   "<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</"
-                   "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
-                   "ogc:PropertyIsEqualTo>\n",
-                   psClass->layer->classitem, papszArgs[i]);
-
-          pszTmpFilters = msStringConcatenate(pszTmpFilters, szBuffer);
-          tokenCount++;
-          free(papszArgs[i]);
         }
-        free(papszArgs);
 
         pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
 
@@ -5438,6 +5434,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         if (tokenCount > 0) {
           pszFilter = msStrdup(pszTmp);
         }
+        msFreeCharArray(listExpressionValues, numListExpressionValues);
         free(pszTmp);
         free(pszTmpFilters);
       }
