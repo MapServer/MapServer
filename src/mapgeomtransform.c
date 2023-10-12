@@ -32,7 +32,7 @@
 
 extern int yyparse(parseObj *p);
 
-void msStyleSetGeomTransform(styleObj *s, char *transform) {
+void msStyleSetGeomTransform(styleObj *s, const char *transform) {
   msFree(s->_geomtransform.string);
   if (!transform) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
