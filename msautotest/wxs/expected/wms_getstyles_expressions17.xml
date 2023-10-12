@@ -4,7 +4,7 @@
 <UserStyle>
 <se:FeatureTypeStyle>
 <se:Rule>
-<ogc:Filter><ogc:Or><ogc:PropertyIsEqualTo><ogc:PropertyName>poi</ogc:PropertyName><ogc:Literal>"main" square</ogc:Literal></ogc:PropertyIsEqualTo>
+<ogc:Filter><ogc:Or><ogc:PropertyIsEqualTo><ogc:PropertyName>poi</ogc:PropertyName><ogc:Literal>&quot;main&quot; square</ogc:Literal></ogc:PropertyIsEqualTo>
 <ogc:PropertyIsEqualTo><ogc:PropertyName>poi</ogc:PropertyName><ogc:Literal>city's centre</ogc:Literal></ogc:PropertyIsEqualTo>
 </ogc:Or></ogc:Filter><se:PointSymbolizer>
 <se:Graphic>

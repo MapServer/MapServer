@@ -5270,6 +5270,37 @@ static char *msSLDConvertRegexExpToOgcIsLike(const char *pszRegex) {
 }
 
 /************************************************************************/
+/*                          XMLEscape                                   */
+/************************************************************************/
+static std::string XMLEscape(const char *pszValue) {
+  char *pszEscaped = CPLEscapeString(pszValue, -1, CPLES_XML);
+  std::string osRet(pszEscaped);
+  CPLFree(pszEscaped);
+  return osRet;
+}
+
+static std::string GetPropertyIsEqualTo(const char *pszPropertyName,
+                                        const char *pszLiteral) {
+  std::string osFilter("<ogc:PropertyIsEqualTo><ogc:PropertyName>");
+  osFilter += XMLEscape(pszPropertyName);
+  osFilter += "</ogc:PropertyName><ogc:Literal>";
+  osFilter += XMLEscape(pszLiteral);
+  osFilter += "</ogc:Literal></ogc:PropertyIsEqualTo>";
+  return osFilter;
+}
+
+static std::string GetPropertyIsLike(const char *pszPropertyName,
+                                     const char *pszLiteral) {
+  std::string osFilter("<ogc:PropertyIsLike wildCard=\"*\" singleChar=\".\" "
+                       "escape=\"\\\"><ogc:PropertyName>");
+  osFilter += XMLEscape(pszPropertyName);
+  osFilter += "</ogc:PropertyName><ogc:Literal>";
+  osFilter += XMLEscape(pszLiteral);
+  osFilter += "</ogc:Literal></ogc:PropertyIsLike>";
+  return osFilter;
+}
+
+/************************************************************************/
 /*                              msSLDGetFilter                          */
 /*                                                                      */
 /*      Get the corresponding ogc Filter based on the class             */
@@ -5278,28 +5309,24 @@ static char *msSLDConvertRegexExpToOgcIsLike(const char *pszRegex) {
 /************************************************************************/
 char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
   char *pszFilter = NULL;
-  char szBuffer[500];
   char *pszOgcFilter = NULL;
 
   if (psClass && psClass->expression.string) {
     /* string expression */
     if (psClass->expression.type == MS_STRING) {
       if (psClass->layer && psClass->layer->classitem) {
-        if (pszWfsFilter)
-          snprintf(
-              szBuffer, sizeof(szBuffer),
-              "<ogc:Filter><ogc:And>%s<ogc:PropertyIsEqualTo><ogc:PropertyName>"
-              "%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
-              "ogc:PropertyIsEqualTo></ogc:And></ogc:Filter>\n",
-              pszWfsFilter, psClass->layer->classitem,
-              psClass->expression.string);
-        else
-          snprintf(szBuffer, sizeof(szBuffer),
-                   "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</"
-                   "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
-                   "ogc:PropertyIsEqualTo></ogc:Filter>\n",
-                   psClass->layer->classitem, psClass->expression.string);
-        pszFilter = msStrdup(szBuffer);
+        std::string osFilter("<ogc:Filter>");
+        if (pszWfsFilter) {
+          osFilter += "<ogc:And>";
+          osFilter += pszWfsFilter;
+        }
+        osFilter += GetPropertyIsEqualTo(psClass->layer->classitem,
+                                         psClass->expression.string);
+        if (pszWfsFilter) {
+          osFilter += "</ogc:And>";
+        }
+        osFilter += "</ogc:Filter>\n";
+        pszFilter = msStrdup(osFilter.c_str());
       }
     } else if (psClass->expression.type == MS_EXPRESSION) {
       pszFilter =
@@ -5307,13 +5334,11 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
     } else if (psClass->expression.type == MS_LIST) {
       if (psClass->layer && psClass->layer->classitem) {
 
-        char *pszTmp = NULL;
-        char *pszTmpFilters = NULL;
-
         char **listExpressionValues = NULL;
         int numListExpressionValues = 0;
         int i = 0;
         int tokenCount = 0;
+        std::string osOrFilters;
 
         listExpressionValues = msStringSplit(psClass->expression.string, ',',
                                              &numListExpressionValues);
@@ -5322,70 +5347,57 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         // for each value
         for (i = 0; i < numListExpressionValues; i++) {
           if (listExpressionValues[i] && listExpressionValues[i][0] != '\0') {
-
-            snprintf(szBuffer, sizeof(szBuffer),
-                     "<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</"
-                     "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
-                     "ogc:PropertyIsEqualTo>\n",
-                     psClass->layer->classitem, listExpressionValues[i]);
-
-            pszTmpFilters = msStringConcatenate(pszTmpFilters, szBuffer);
+            osOrFilters += GetPropertyIsEqualTo(psClass->layer->classitem,
+                                                listExpressionValues[i]);
+            osOrFilters += '\n';
             tokenCount++;
           }
         }
 
-        pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
+        std::string osFilter("<ogc:Filter>");
 
         // no need for an OR clause if there is only one item in the list
         if (tokenCount == 1) {
-          pszTmp = msStringConcatenate(pszTmp, pszTmpFilters);
+          osFilter += osOrFilters;
         } else if (tokenCount > 1) {
-          pszTmp = msStringConcatenate(pszTmp, "<ogc:Or>");
-          pszTmp = msStringConcatenate(pszTmp, pszTmpFilters);
-          pszTmp = msStringConcatenate(pszTmp, "</ogc:Or>");
+          osFilter += "<ogc:Or>";
+          osFilter += osOrFilters;
+          osFilter += "</ogc:Or>";
         }
-
-        pszTmp = msStringConcatenate(pszTmp, "</ogc:Filter>");
+        osFilter += "</ogc:Filter>";
 
         // don't filter when the list is empty
         if (tokenCount > 0) {
-          pszFilter = msStrdup(pszTmp);
+          pszFilter = msStrdup(osFilter.c_str());
         }
         msFreeCharArray(listExpressionValues, numListExpressionValues);
-        free(pszTmp);
-        free(pszTmpFilters);
       }
     } else if (psClass->expression.type == MS_REGEX) {
       if (psClass->layer && psClass->layer->classitem) {
         pszOgcFilter =
             msSLDConvertRegexExpToOgcIsLike(psClass->expression.string);
 
-        if (pszWfsFilter)
-          snprintf(szBuffer, sizeof(szBuffer),
-                   "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" "
-                   "singleChar=\".\" "
-                   "escape=\"\\\"><ogc:PropertyName>%s</"
-                   "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
-                   "ogc:PropertyIsLike></ogc:And></ogc:Filter>\n",
-                   pszWfsFilter, psClass->layer->classitem, pszOgcFilter);
-        else
-          snprintf(
-              szBuffer, sizeof(szBuffer),
-              "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\".\" "
-              "escape=\"\\\"><ogc:PropertyName>%s</"
-              "ogc:PropertyName><ogc:Literal>%s</ogc:Literal></"
-              "ogc:PropertyIsLike></ogc:Filter>\n",
-              psClass->layer->classitem, pszOgcFilter);
+        std::string osFilter("<ogc:Filter>");
+        if (pszWfsFilter) {
+          osFilter += "<ogc:And>";
+          osFilter += pszWfsFilter;
+        }
+        osFilter += GetPropertyIsLike(psClass->layer->classitem, pszOgcFilter);
 
         free(pszOgcFilter);
 
-        pszFilter = msStrdup(szBuffer);
+        if (pszWfsFilter) {
+          osFilter += "</ogc:And>";
+        }
+        osFilter += "</ogc:Filter>\n";
+        pszFilter = msStrdup(osFilter.c_str());
       }
     }
   } else if (pszWfsFilter) {
-    snprintf(szBuffer, sizeof(szBuffer), "<ogc:Filter>%s</ogc:Filter>\n",
-             pszWfsFilter);
-    pszFilter = msStrdup(szBuffer);
+    std::string osFilter("<ogc:Filter>");
+    osFilter += pszWfsFilter;
+    osFilter += "</ogc:Filter>\n";
+    pszFilter = msStrdup(osFilter.c_str());
   }
   return pszFilter;
 }
