@@ -5305,8 +5305,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
       pszFilter =
           msSLDParseLogicalExpression(psClass->expression.string, pszWfsFilter);
     } else if (psClass->expression.type == MS_LIST) {
-      if (psClass->layer && psClass->layer->classitem &&
-          psClass->expression.string) {
+      if (psClass->layer && psClass->layer->classitem) {
 
         char *pszTmp = NULL;
         char *pszTmpFilters = NULL;
@@ -5357,8 +5356,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         free(pszTmpFilters);
       }
     } else if (psClass->expression.type == MS_REGEX) {
-      if (psClass->layer && psClass->layer->classitem &&
-          psClass->expression.string) {
+      if (psClass->layer && psClass->layer->classitem) {
         pszOgcFilter =
             msSLDConvertRegexExpToOgcIsLike(psClass->expression.string);
 
