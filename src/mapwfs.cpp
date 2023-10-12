@@ -3203,7 +3203,10 @@ static int msWFSResolveStoredQuery(mapObj *map, wfsParamsObj *paramsObj,
     if (req->NumParams > 0 && req->postrequest == NULL) {
       for (i = 0; i < req->NumParams; i++) {
         if (req->ParamNames[i] && req->ParamValues[i]) {
-          msInsertHashTable(hashTable, req->ParamNames[i], req->ParamValues[i]);
+          char *pszXMLValue = CPLEscapeString(
+              req->ParamValues[i], strlen(req->ParamValues[i]), CPLES_XML);
+          msInsertHashTable(hashTable, req->ParamNames[i], pszXMLValue);
+          CPLFree(pszXMLValue);
         }
       }
     }
