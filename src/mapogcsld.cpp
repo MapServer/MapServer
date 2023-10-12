@@ -4557,7 +4557,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion) {
 #endif
 }
 
-char *msSLDGetComparisonValue(char *pszExpression) {
+static char *msSLDGetComparisonValue(const char *pszExpression) {
   char *pszValue = NULL;
   if (!pszExpression)
     return NULL;
@@ -4582,25 +4582,25 @@ char *msSLDGetComparisonValue(char *pszExpression) {
   return pszValue;
 }
 
-char *msSLDGetLogicalOperator(char *pszExpression) {
+static const char *msSLDGetLogicalOperator(const char *pszExpression) {
 
   if (!pszExpression)
     return NULL;
 
   if (strcasestr(pszExpression, " AND ") || strcasestr(pszExpression, "AND("))
-    return msStrdup("And");
+    return "And";
 
   if (strcasestr(pszExpression, " OR ") || strcasestr(pszExpression, "OR("))
-    return msStrdup("Or");
+    return "Or";
 
   if (strcasestr(pszExpression, "NOT ") || strcasestr(pszExpression, "NOT("))
-    return msStrdup("Not");
+    return "Not";
 
   return NULL;
 }
 
-char *msSLDGetRightExpressionOfOperator(char *pszExpression) {
-  char *pszAnd = NULL, *pszOr = NULL, *pszNot = NULL;
+static char *msSLDGetRightExpressionOfOperator(const char *pszExpression) {
+  const char *pszAnd = NULL, *pszOr = NULL, *pszNot = NULL;
 
   pszAnd = strcasestr(pszExpression, " AND ");
 
@@ -4632,7 +4632,7 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression) {
   return NULL;
 }
 
-char *msSLDGetLeftExpressionOfOperator(char *pszExpression) {
+static char *msSLDGetLeftExpressionOfOperator(const char *pszExpression) {
   char *pszReturn = NULL;
   int nLength = 0, iReturn = 0;
 
@@ -4693,11 +4693,11 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression) {
   return pszReturn;
 }
 
-int msSLDNumberOfLogicalOperators(char *pszExpression) {
-  char *pszAnd = NULL;
-  char *pszOr = NULL;
-  char *pszNot = NULL;
-  char *pszSecondAnd = NULL, *pszSecondOr = NULL;
+static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
+  const char *pszAnd = NULL;
+  const char *pszOr = NULL;
+  const char *pszNot = NULL;
+  const char *pszSecondAnd = NULL, *pszSecondOr = NULL;
   if (!pszExpression)
     return 0;
 
@@ -4739,8 +4739,9 @@ int msSLDNumberOfLogicalOperators(char *pszExpression) {
     return 2;
 }
 
-char *msSLDGetAttributeNameOrValue(char *pszExpression, char *pszComparionValue,
-                                   int bReturnName) {
+static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
+                                          const char *pszComparionValue,
+                                          int bReturnName) {
   char **aszValues = NULL;
   char *pszAttributeName = NULL;
   char *pszAttributeValue = NULL;
@@ -4979,11 +4980,13 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression, char *pszComparionValue,
   }
 }
 
-char *msSLDGetAttributeName(char *pszExpression, char *pszComparionValue) {
+static char *msSLDGetAttributeName(const char *pszExpression,
+                                   const char *pszComparionValue) {
   return msSLDGetAttributeNameOrValue(pszExpression, pszComparionValue, 1);
 }
 
-char *msSLDGetAttributeValue(char *pszExpression, char *pszComparionValue) {
+static char *msSLDGetAttributeValue(const char *pszExpression,
+                                    const char *pszComparionValue) {
   return msSLDGetAttributeNameOrValue(pszExpression, pszComparionValue, 0);
 }
 
@@ -4998,13 +5001,12 @@ char *msSLDGetAttributeValue(char *pszExpression, char *pszComparionValue) {
 /*        A OR B                                                        */
 /*        NOT A                                                         */
 /************************************************************************/
-FilterEncodingNode *BuildExpressionTree(char *pszExpression,
-                                        FilterEncodingNode *psNode) {
+static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
+                                               FilterEncodingNode *psNode) {
   int nOperators = 0;
   char *pszComparionValue = NULL, *pszAttibuteName = NULL;
   char *pszAttibuteValue = NULL;
-  char *pszLeftExpression = NULL, *pszRightExpression = NULL,
-       *pszOperator = NULL;
+  char *pszLeftExpression = NULL, *pszRightExpression = NULL;
 
   if (!pszExpression || strlen(pszExpression) == 0)
     return NULL;
@@ -5052,14 +5054,13 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
     return psNode;
 
   } else if (nOperators == 1) {
-    pszOperator = msSLDGetLogicalOperator(pszExpression);
+    const char *pszOperator = msSLDGetLogicalOperator(pszExpression);
     if (pszOperator) {
       if (!psNode)
         psNode = FLTCreateFilterEncodingNode();
 
       psNode->eType = FILTER_NODE_TYPE_LOGICAL;
       psNode->pszValue = msStrdup(pszOperator);
-      free(pszOperator);
 
       pszLeftExpression = msSLDGetLeftExpressionOfOperator(pszExpression);
       pszRightExpression = msSLDGetRightExpressionOfOperator(pszExpression);
@@ -5132,7 +5133,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
   }
 }
 
-char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode) {
+static char *msSLDBuildFilterEncoding(const FilterEncodingNode *psNode) {
   char *pszTmp = NULL;
   char szTmp[200];
   char *pszExpression = NULL;
@@ -5174,8 +5175,8 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode) {
   return pszExpression;
 }
 
-char *msSLDParseLogicalExpression(char *pszExpression,
-                                  const char *pszWfsFilter) {
+static char *msSLDParseLogicalExpression(const char *pszExpression,
+                                         const char *pszWfsFilter) {
   FilterEncodingNode *psNode = NULL;
   char *pszFLTExpression = NULL;
   char *pszTmp = NULL;
@@ -5237,7 +5238,8 @@ char *msSLDParseLogicalExpression(char *pszExpression,
 /*      converted to T* which is not correct.                           */
 /*                                                                      */
 /************************************************************************/
-char *msSLDConvertRegexExpToOgcIsLike(char *pszRegex) {
+
+static char *msSLDConvertRegexExpToOgcIsLike(const char *pszRegex) {
   char szBuffer[1024];
   int iBuffer = 0, i = 0;
   int nLength = 0;
