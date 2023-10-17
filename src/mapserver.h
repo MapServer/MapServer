@@ -3793,7 +3793,7 @@ enum MS_GEOMTRANSFORM_TYPE {
 MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, imageObj *image,
                                          shapeObj *shape, styleObj *style,
                                          double scalefactor);
-MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *s, char *transform);
+MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *s, const char *transform);
 MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
 
 MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer,
