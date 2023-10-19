@@ -4269,15 +4269,15 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
 
   if ((strstr(outstr, "lat]") || strstr(outstr, "lon]") ||
        strstr(outstr, "lon_esc]")) &&
-      mapserv->map->projection.proj != NULL &&
-      !msProjIsGeographicCRS(&(mapserv->map->projection))) {
+      mapserv->map->projection.proj != NULL) {
     llextent = mapserv->map->extent;
     llpoint = mapserv->mappnt;
-    msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon),
+    if (!msProjIsGeographicCRS(&(mapserv->map->projection))) {
+      msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon),
                   &llextent);
-    msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon),
+      msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon),
                    &llpoint);
-
+    }
     snprintf(repstr, sizeof(repstr), "%f", llpoint.x);
     outstr = msReplaceSubstring(outstr, "[maplon]", repstr);
     snprintf(repstr, sizeof(repstr), "%f", llpoint.y);
