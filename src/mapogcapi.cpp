@@ -360,16 +360,27 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-static const char *getTemplateDirectory(mapObj *map, const char *key,
+static std::string getTemplateDirectory(mapObj *map, const char *key,
                                         const char *envvar) {
   const char *directory;
 
-  if ((directory = msOWSLookupMetadata(&(map->web.metadata), "A", key)) != NULL)
-    return msAddTrailingSlash(directory);
-  else if ((directory = CPLGetConfigOption(envvar, NULL)) != NULL)
-    return msAddTrailingSlash(directory);
-  else
-    return NULL;
+  directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+
+  if (directory == NULL) {
+    directory = CPLGetConfigOption(envvar, NULL);
+  }
+
+  std::string s = directory;
+  if (!s.empty() && (s.back() != '/' || s.back() != '\\')) {
+    // add a trailing slash if missing
+    std::string slash = "/";
+#ifdef _WIN32
+    slash = "\\";
+#endif
+    s += slash;
+  }
+
+  return s;
 }
 
 /*
@@ -939,14 +950,14 @@ static void outputTemplate(const char *directory, const char *filename,
 }
 
 /*
-** Generic response outputr.
+** Generic response output.
 */
 static void
 outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
                const char *filename, const json &response,
                const std::map<std::string, std::string> &extraHeaders =
                    std::map<std::string, std::string>()) {
-  const char *path = NULL;
+  std::string path;
   char fullpath[MS_MAXPATHLEN];
 
   if (format == OGCAPIFormat::JSON) {
@@ -956,13 +967,13 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
   } else if (format == OGCAPIFormat::OpenAPI_V3) {
     outputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
   } else if (format == OGCAPIFormat::HTML) {
-    if ((path = getTemplateDirectory(map, "html_template_directory",
-                                     "OGCAPI_HTML_TEMPLATE_DIRECTORY")) ==
-        NULL) {
+    path = getTemplateDirectory(map, "html_template_directory",
+                                "OGCAPI_HTML_TEMPLATE_DIRECTORY");
+    if (path.empty()) {
       outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
       return; // bail
     }
-    msBuildPath(fullpath, map->mappath, path);
+    msBuildPath(fullpath, map->mappath, path.c_str());
 
     json j;
 

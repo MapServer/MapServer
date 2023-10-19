@@ -691,38 +691,6 @@ int msCountChars(char *str, char ch) {
   return (n);
 }
 
-/*
- * Add a trailing slash to a string, using backslashes on Windows
- * and forward slashes otherwise
- */
-
-const char *msAddTrailingSlash(const char *string) {
-
-  if (string == NULL || string[0] == '\0') {
-    return string; // Handle empty or null strings
-  }
-
-  int length = strlen(string);
-  char lastChar = string[length - 1];
-
-  // Check if the last character is not a forward or back slash
-  if (lastChar != '/' && lastChar != '\\') {
-
-    char *stringWithSlash = (char *)msSmallMalloc(length + 2);
-    strcpy(stringWithSlash, string);
-    // Add a slash based on the platform (forward slash or back slash)
-    char slash = '/';
-#ifdef _WIN32
-    slash = '\\'; // Use a backward slash on Windows
-#endif
-
-    stringWithSlash[length] = slash;
-    stringWithSlash[length + 1] = '\0';
-    return stringWithSlash;
-  }
-  return string; // string already has a trailing slash
-}
-
 /* -------------------------------------------------------------------------------
  */
 /*       Strip filename from a full path */
