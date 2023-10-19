@@ -370,14 +370,17 @@ static std::string getTemplateDirectory(mapObj *map, const char *key,
     directory = CPLGetConfigOption(envvar, NULL);
   }
 
-  std::string s = directory;
-  if (!s.empty() && (s.back() != '/' && s.back() != '\\')) {
-    // add a trailing slash if missing
-    std::string slash = "/";
+  std::string s;
+  if (directory != NULL) {
+    s = directory;
+    if (!s.empty() && (s.back() != '/' && s.back() != '\\')) {
+      // add a trailing slash if missing
+      std::string slash = "/";
 #ifdef _WIN32
-    slash = "\\";
+      slash = "\\";
 #endif
-    s += slash;
+      s += slash;
+    }
   }
 
   return s;
