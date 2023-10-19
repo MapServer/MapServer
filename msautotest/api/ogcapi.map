@@ -14,6 +14,7 @@
 # RUN_PARMS: ogcapi_collections_mn_counties_items_bbox_crs_epsg_4326.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=-90,-180,90,0&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_bad_bbox_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=-90,-180,90,0&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/12345&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_empty_bbox_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=-90,-180,90,0&bbox-crs=&limit=1" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_antimeridian_bbox.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=160.6,-55.95,-170,-25.89&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1_offset_2.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1&offset=2" > [RESULT_DEMIME]

@@ -301,6 +301,11 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
     bbox->maxx = values[2];
     bbox->maxy = values[3];
 
+    if (bbox->minx > bbox->maxx) {
+      // the bbox can span the antimeridian and give the
+      // lower-value first - in this case swap the values
+      std::swap(bbox->minx, bbox->maxx);
+    }
     // validate bbox is well-formed (degenerate is ok)
     if (MS_VALID_SEARCH_EXTENT(*bbox) != MS_TRUE) {
       outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
