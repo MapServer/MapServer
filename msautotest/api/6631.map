@@ -12,7 +12,7 @@ MAP
 
   WEB
     METADATA
-      "oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
+      "oga_html_template_directory" "../../share/ogcapi/templates/html-plain"
       "oga_title"          "Issue #6631" ## REQUIRED
       "oga_description"	   "This is a test OGC API server description for issue #6631."
       "oga_contactperson"  "Contact person"

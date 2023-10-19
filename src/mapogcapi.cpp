@@ -364,13 +364,10 @@ static const char *getTemplateDirectory(mapObj *map, const char *key,
                                         const char *envvar) {
   const char *directory;
 
-  // TODO: if directory is provided then perhaps we need to check for a trailing
-  // slash
-
   if ((directory = msOWSLookupMetadata(&(map->web.metadata), "A", key)) != NULL)
-    return directory;
+    return msAddTrailingSlash(directory);
   else if ((directory = CPLGetConfigOption(envvar, NULL)) != NULL)
-    return directory;
+    return msAddTrailingSlash(directory);
   else
     return NULL;
 }
