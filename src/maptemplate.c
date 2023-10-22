@@ -4274,9 +4274,9 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     llpoint = mapserv->mappnt;
     if (!msProjIsGeographicCRS(&(mapserv->map->projection))) {
       msProjectRect(&(mapserv->map->projection), &(mapserv->map->latlon),
-                  &llextent);
+                    &llextent);
       msProjectPoint(&(mapserv->map->projection), &(mapserv->map->latlon),
-                   &llpoint);
+                     &llpoint);
     }
     snprintf(repstr, sizeof(repstr), "%f", llpoint.x);
     outstr = msReplaceSubstring(outstr, "[maplon]", repstr);
