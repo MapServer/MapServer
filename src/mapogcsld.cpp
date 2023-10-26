@@ -4557,29 +4557,28 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion) {
 #endif
 }
 
-static char *msSLDGetComparisonValue(const char *pszExpression) {
-  char *pszValue = NULL;
+static const char *msSLDGetComparisonValue(const char *pszExpression) {
   if (!pszExpression)
     return NULL;
 
   if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
-    pszValue = msStrdup("PropertyIsLessThanOrEqualTo");
+    return "PropertyIsLessThanOrEqualTo";
   else if (strstr(pszExpression, "=~"))
-    pszValue = msStrdup("PropertyIsLike");
+    return "PropertyIsLike";
   else if (strstr(pszExpression, "~*"))
-    pszValue = msStrdup("PropertyIsLike");
+    return "PropertyIsLike";
   else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
-    pszValue = msStrdup("PropertyIsGreaterThanOrEqualTo");
+    return "PropertyIsGreaterThanOrEqualTo";
   else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne "))
-    pszValue = msStrdup("PropertyIsNotEqualTo");
+    return "PropertyIsNotEqualTo";
   else if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
-    pszValue = msStrdup("PropertyIsEqualTo");
+    return "PropertyIsEqualTo";
   else if (strstr(pszExpression, "<") || strstr(pszExpression, " lt "))
-    pszValue = msStrdup("PropertyIsLessThan");
+    return "PropertyIsLessThan";
   else if (strstr(pszExpression, ">") || strstr(pszExpression, " gt "))
-    pszValue = msStrdup("PropertyIsGreaterThan");
+    return "PropertyIsGreaterThan";
 
-  return pszValue;
+  return NULL;
 }
 
 static const char *msSLDGetLogicalOperator(const char *pszExpression) {
@@ -5004,9 +5003,6 @@ static char *msSLDGetAttributeValue(const char *pszExpression,
 static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
                                                FilterEncodingNode *psNode) {
   int nOperators = 0;
-  char *pszComparionValue = NULL, *pszAttibuteName = NULL;
-  char *pszAttibuteValue = NULL;
-  char *pszLeftExpression = NULL, *pszRightExpression = NULL;
 
   if (!pszExpression || strlen(pszExpression) == 0)
     return NULL;
@@ -5025,9 +5021,11 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
     if (!psNode)
       psNode = FLTCreateFilterEncodingNode();
 
-    pszComparionValue = msSLDGetComparisonValue(pszExpression);
-    pszAttibuteName = msSLDGetAttributeName(pszExpression, pszComparionValue);
-    pszAttibuteValue = msSLDGetAttributeValue(pszExpression, pszComparionValue);
+    const char *pszComparionValue = msSLDGetComparisonValue(pszExpression);
+    char *pszAttibuteName =
+        msSLDGetAttributeName(pszExpression, pszComparionValue);
+    char *pszAttibuteValue =
+        msSLDGetAttributeValue(pszExpression, pszComparionValue);
     if (pszComparionValue && pszAttibuteName && pszAttibuteValue) {
       psNode->eType = FILTER_NODE_TYPE_COMPARISON;
       psNode->pszValue = msStrdup(pszComparionValue);
@@ -5047,10 +5045,9 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
         ((FEPropertyIsLike *)psNode->pOther)->pszSingleChar = msStrdup("#");
         ((FEPropertyIsLike *)psNode->pOther)->pszEscapeChar = msStrdup("!");
       }
-      free(pszComparionValue);
-      free(pszAttibuteName);
-      free(pszAttibuteValue);
     }
+    free(pszAttibuteName);
+    free(pszAttibuteValue);
     return psNode;
 
   } else if (nOperators == 1) {
@@ -5062,15 +5059,17 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
       psNode->eType = FILTER_NODE_TYPE_LOGICAL;
       psNode->pszValue = msStrdup(pszOperator);
 
-      pszLeftExpression = msSLDGetLeftExpressionOfOperator(pszExpression);
-      pszRightExpression = msSLDGetRightExpressionOfOperator(pszExpression);
+      char *pszLeftExpression = msSLDGetLeftExpressionOfOperator(pszExpression);
+      char *pszRightExpression =
+          msSLDGetRightExpressionOfOperator(pszExpression);
 
       if (pszLeftExpression || pszRightExpression) {
         if (pszLeftExpression) {
-          pszComparionValue = msSLDGetComparisonValue(pszLeftExpression);
-          pszAttibuteName =
+          const char *pszComparionValue =
+              msSLDGetComparisonValue(pszLeftExpression);
+          char *pszAttibuteName =
               msSLDGetAttributeName(pszLeftExpression, pszComparionValue);
-          pszAttibuteValue =
+          char *pszAttibuteValue =
               msSLDGetAttributeValue(pszLeftExpression, pszComparionValue);
 
           if (pszComparionValue && pszAttibuteName && pszAttibuteValue) {
@@ -5088,18 +5087,18 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
             psNode->psLeftNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
             psNode->psLeftNode->psRightNode->pszValue =
                 msStrdup(pszAttibuteValue);
-
-            free(pszComparionValue);
-            free(pszAttibuteName);
-            free(pszAttibuteValue);
-            free(pszLeftExpression);
           }
+
+          free(pszAttibuteName);
+          free(pszAttibuteValue);
+          free(pszLeftExpression);
         }
         if (pszRightExpression) {
-          pszComparionValue = msSLDGetComparisonValue(pszRightExpression);
-          pszAttibuteName =
+          const char *pszComparionValue =
+              msSLDGetComparisonValue(pszRightExpression);
+          char *pszAttibuteName =
               msSLDGetAttributeName(pszRightExpression, pszComparionValue);
-          pszAttibuteValue =
+          char *pszAttibuteValue =
               msSLDGetAttributeValue(pszRightExpression, pszComparionValue);
 
           if (pszComparionValue && pszAttibuteName && pszAttibuteValue) {
@@ -5117,12 +5116,10 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
             psNode->psRightNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
             psNode->psRightNode->psRightNode->pszValue =
                 msStrdup(pszAttibuteValue);
-
-            free(pszComparionValue);
-            free(pszAttibuteName);
-            free(pszAttibuteValue);
-            free(pszRightExpression);
           }
+          free(pszAttibuteName);
+          free(pszAttibuteValue);
+          free(pszRightExpression);
         }
       }
     }
