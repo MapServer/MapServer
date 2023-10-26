@@ -1182,14 +1182,16 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       outputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
       return MS_SUCCESS;
     }
+    extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
     if (std::string(crs) != CRS84_URL) {
       if (std::string(crs).find(EPSG_PREFIX_URL) == 0) {
-        extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
         const char *code = crs + strlen(EPSG_PREFIX_URL);
         outputCrs = std::string("EPSG:") + code;
         outputCrsAxisInverted = msIsAxisInverted(atoi(code));
       }
     }
+  } else {
+    extraHeaders["Content-Crs"] = '<' + std::string(CRS84_URL) + '>';
   }
 
   struct ReprojectionObjects {
