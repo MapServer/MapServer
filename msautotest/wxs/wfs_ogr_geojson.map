@@ -11,7 +11,7 @@
 # RUN_PARMS: wfsogr20_geojson_with_predefine_native_data.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_fid&OUTPUTFORMAT=geojson_with_predefined_native_data&COUNT=10" > [RESULT]
 #
 # Check that OUTPUTFORMAT does not affect resultType=hits and returns XML
-# RUN_PARMS: wfsogr20_geojson_resulttype_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=popplace_fid&OUTPUTFORMAT=geojson&RESULTTYPE=hits" > [RESULT]
+# RUN_PARMS: wfsogr20_geojson_resulttype_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=popplace_fid&OUTPUTFORMAT=geojson&RESULTTYPE=hits" > [RESULT_DEVERSION]
 
 MAP
 
