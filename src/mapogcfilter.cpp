@@ -3150,9 +3150,8 @@ int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode, mapObj *map,
     layerWasOpened = msLayerIsOpen(lp);
 
     /* Horrible HACK to compensate for the lack of null testing in MapServer */
-    if ((lp->connectiontype == MS_POSTGIS ||
-         (lp->connectiontype == MS_OGR && msOGRSupportsIsNull(lp))) &&
-        strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0) {
+    if (lp->connectiontype == MS_POSTGIS ||
+        (lp->connectiontype == MS_OGR && msOGRSupportsIsNull(lp))) {
       msFree(psFilterNode->pszValue);
       psFilterNode->pszValue = msStrdup("PropertyIsEqualTo");
       psFilterNode->psRightNode = FLTCreateBinaryCompFilterEncodingNode();
