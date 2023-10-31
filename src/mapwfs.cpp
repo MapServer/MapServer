@@ -3885,6 +3885,11 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
                             MS_OWS_ERROR_INVALID_PARAMETER_VALUE,
                             paramsObj->pszVersion);
     }
+    // only GML is supported for resultType=hits, so ignore any other
+    // outputformat
+    if (iResultTypeHits == 1) {
+      psFormat = NULL;
+    }
   } else {
     outputformat = (OWSGMLVersion)status;
   }
