@@ -1329,6 +1329,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
          *  - draw the shape (the outline) in the first pass of the
          *    caching mechanism
          */
+        msBindLayerToShape(layer, &shape, drawmode | MS_DRAWMODE_SINGLESTYLE);
         msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
       }
       status = msDrawShape(
