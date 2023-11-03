@@ -1259,7 +1259,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
                                 layer -> class[shape.classindex] -> styles[0]
                          -> bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index !=
                                 -1)))) {
-      int i;
       cache = MS_TRUE; /* only line layers with multiple styles need be cached
                           (I don't think POLYLINE layers need caching - SDL) */
       // we also cache line layers with outlinewidths
