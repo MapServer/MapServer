@@ -946,7 +946,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image) {
     }
   }
   /*
-  ** redirect procesing of some layer types.
+  ** redirect processing of some layer types.
   */
   if (layer->connectiontype == MS_WMS) {
 #ifdef USE_WMS_LYR
@@ -988,7 +988,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image) {
      * hack to work around bug #3834: if we have use an alternate renderer, the
      * symbolset may contain symbols that reference it. We want to remove those
      * references before the altFormat is destroyed to avoid a segfault and/or a
-     * leak, and so the the main renderer doesn't pick the cache up thinking
+     * leak, and so the main renderer doesn't pick the cache up thinking
      * it's for him.
      */
     for (i = 0; i < map->symbolset.numsymbols; i++) {
@@ -1127,7 +1127,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
       if (layer->connectiontype == MS_UVRASTER) {
         /* Nasty hack to make msUVRASTERLayerWhichShapes() aware that the */
         /* original area of interest is (map->extent, map->projection)... */
-        /* Useful when dealin with UVRASTER that extend beyond 180 deg */
+        /* Useful when dealing with UVRASTER that extend beyond 180 deg */
         msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layer, map);
 
         searchrect = msUVRASTERGetSearchRect(layer, map);
@@ -1252,19 +1252,17 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
     if (layer->type == MS_LAYER_LINE &&
         (layer->class[shape.classindex]
          -> numstyles > 1 ||
-                (layer->class[shape.classindex] -> numstyles == 1 && layer
-                 -> class[shape.classindex] -> styles[0] -> outlinewidth >
-                                                                0))) {
+                (layer->class[shape.classindex]
+                 -> numstyles == 1 &&
+                        (layer->class[shape.classindex] -> styles[0]
+                         -> outlinewidth > 0 ||
+                                layer -> class[shape.classindex] -> styles[0]
+                         -> bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index !=
+                                -1)))) {
       int i;
       cache = MS_TRUE; /* only line layers with multiple styles need be cached
                           (I don't think POLYLINE layers need caching - SDL) */
-
-      /* we can't handle caching with attribute binding other than for the first
-       * style (#3976) */
-      for (i = 1; i < layer->class[shape.classindex] -> numstyles; i++) {
-        if (layer->class[shape.classindex] -> styles[i] -> numbindings > 0)
-          cache = MS_FALSE;
-      }
+      // we also cache line layers with outlinewidths
     }
 
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
@@ -1322,13 +1320,13 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
 
       // first ensure the style properties are bound to the shape
+      // any outlinewidth bindings will then be set
       if (msBindLayerToShape(layer, &shape, drawmode) != MS_SUCCESS) {
         retcode = MS_FAILURE;
         break;
       }
 
-      if (pStyle->outlinewidth > 0 ||
-          pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
+      if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation
          * if an outlinewidth is used:
@@ -1343,8 +1341,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
       status = msDrawShape(map, layer, &shape, image, 0,
                            drawmode | MS_DRAWMODE_SINGLESTYLE);
 
-      if (pStyle->outlinewidth > 0 ||
-          pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
+      if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation: switch back the styleobj to its
          * original state, so the line fill will be drawn in the
