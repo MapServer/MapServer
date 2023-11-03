@@ -1320,7 +1320,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
 
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
-      if (pStyle->outlinewidth > 0) {
+      if (pStyle->outlinewidth > 0 ||
+          pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
         /*
          * RFC 49 implementation
          * if an outlinewidth is used:
@@ -1329,13 +1330,12 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
          *  - draw the shape (the outline) in the first pass of the
          *    caching mechanism
          */
+        // first ensure the style properties are bound to the shape
         msBindLayerToShape(layer, &shape, drawmode | MS_DRAWMODE_SINGLESTYLE);
         msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
-      }
-      status = msDrawShape(
-          map, layer, &shape, image, 0,
-          drawmode | MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
-      if (pStyle->outlinewidth > 0) {
+        /* draw a single style */
+        status = msDrawShape(map, layer, &shape, image, 0,
+                             drawmode | MS_DRAWMODE_SINGLESTYLE);
         /*
          * RFC 49 implementation: switch back the styleobj to its
          * original state, so the line fill will be drawn in the
@@ -1343,11 +1343,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
          */
         msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
       }
-    }
-
-    else
+    } else {
       status =
           msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles */
+    }
 
     if (rendermode == MS_ALL_MATCHING_CLASSES) {
       // In SLD "painters model" rendering mode, all applicable classes are
@@ -1409,7 +1408,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
                 (map->scaledenom < pStyle->minscaledenom))
               continue;
           }
-          if (s == 0 && pStyle->outlinewidth > 0 &&
+          if (s == 0 &&
+              (pStyle->outlinewidth > 0 ||
+               pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) &&
               MS_VALID_COLOR(pStyle->color)) {
             if (MS_UNLIKELY(MS_FAILURE ==
                             msDrawLineSymbol(map, image, &current->shape,
@@ -1417,7 +1418,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
               return MS_FAILURE;
             }
           } else if (s > 0) {
-            if (pStyle->outlinewidth > 0 &&
+            if ((pStyle->outlinewidth > 0 ||
+                 pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) &&
                 MS_VALID_COLOR(pStyle->outlinecolor)) {
               /*
                * RFC 49 implementation
@@ -1674,17 +1676,27 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image) {
 
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
-      if (pStyle->outlinewidth > 0)
-        msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
-      status = msDrawShape(
-          map, layer, &shape, image, 0,
-          drawmode | MS_DRAWMODE_SINGLESTYLE); /* draw only the first style */
-      if (pStyle->outlinewidth > 0)
-        msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
-    } else {
-      status =
-          msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles */
+
+      if (pStyle->outlinewidth > 0 ||
+          pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
+
+        if (msBindLayerToShape(layer, &shape,
+                               drawmode | MS_DRAWMODE_SINGLESTYLE) !=
+            MS_SUCCESS) {
+          status = MS_FAILURE;
+        } else {
+          msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
+          /* draw only the first style */
+          status = msDrawShape(map, layer, &shape, image, 0,
+                               drawmode | MS_DRAWMODE_SINGLESTYLE);
+          msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
+        }
+      } else {
+        /* all styles */
+        status = msDrawShape(map, layer, &shape, image, -1, drawmode);
+      }
     }
+
     if (status != MS_SUCCESS) {
       msLayerClose(layer);
       msFree(colorbuffer);
@@ -2313,7 +2325,7 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
 ** Function to render an individual shape, the style variable enables/disables
 *the drawing of a single style
 ** versus a single style. This is necessary when drawing entire layers as proper
-*overlay can only be achived
+*overlay can only be achieved
 ** through caching. "querymapMode" parameter is used to tell msBindLayerToShape
 *to not override the
 ** QUERYMAP HILITE color.
@@ -2533,9 +2545,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image,
     goto draw_shape_cleanup;
   }
 
-  if (msBindLayerToShape(layer, shape, drawmode) != MS_SUCCESS) {
-    ret = MS_FAILURE; /* error message is set in msBindLayerToShape() */
-    goto draw_shape_cleanup;
+  // if we are only drawing a single style then it may have been modified
+  // outside this function by msOutlineRenderingPrepareStyle and we don't want
+  // to rebind the style to the layer
+  if (style != 0) {
+    if (msBindLayerToShape(layer, shape, drawmode) != MS_SUCCESS) {
+      ret = MS_FAILURE; /* error message is set in msBindLayerToShape() */
+      goto draw_shape_cleanup;
+    }
   }
 
   switch (layer->type) {
