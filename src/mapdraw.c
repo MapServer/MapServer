@@ -1320,6 +1320,13 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
 
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
+
+      // first ensure the style properties are bound to the shape
+      if (msBindLayerToShape(layer, &shape, drawmode) != MS_SUCCESS) {
+        retcode = MS_FAILURE;
+        break;
+      }
+
       if (pStyle->outlinewidth > 0 ||
           pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
         /*
@@ -1330,12 +1337,14 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
          *  - draw the shape (the outline) in the first pass of the
          *    caching mechanism
          */
-        // first ensure the style properties are bound to the shape
-        msBindLayerToShape(layer, &shape, drawmode | MS_DRAWMODE_SINGLESTYLE);
         msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
-        /* draw a single style */
-        status = msDrawShape(map, layer, &shape, image, 0,
-                             drawmode | MS_DRAWMODE_SINGLESTYLE);
+      }
+      /* draw a single style */
+      status = msDrawShape(map, layer, &shape, image, 0,
+                           drawmode | MS_DRAWMODE_SINGLESTYLE);
+
+      if (pStyle->outlinewidth > 0 ||
+          pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
         /*
          * RFC 49 implementation: switch back the styleobj to its
          * original state, so the line fill will be drawn in the
@@ -1680,9 +1689,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image) {
       if (pStyle->outlinewidth > 0 ||
           pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
 
-        if (msBindLayerToShape(layer, &shape,
-                               drawmode | MS_DRAWMODE_SINGLESTYLE) !=
-            MS_SUCCESS) {
+        if (msBindLayerToShape(layer, &shape, drawmode) != MS_SUCCESS) {
           status = MS_FAILURE;
         } else {
           msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
