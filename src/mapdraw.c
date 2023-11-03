@@ -1660,19 +1660,15 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image) {
     if (layer->type == MS_LAYER_LINE &&
         (layer->class[shape.classindex]
          -> numstyles > 1 ||
-                (layer->class[shape.classindex] -> numstyles == 1 && layer
-                 -> class[shape.classindex] -> styles[0] -> outlinewidth >
-                                                                0))) {
-      int i;
+                (layer->class[shape.classindex]
+                 -> numstyles == 1 &&
+                        (layer->class[shape.classindex] -> styles[0]
+                         -> outlinewidth > 0 ||
+                                layer -> class[shape.classindex] -> styles[0]
+                         -> bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index !=
+                                -1)))) {
       cache = MS_TRUE; /* only line layers with multiple styles need be cached
                           (I don't think POLYLINE layers need caching - SDL) */
-
-      /* we can't handle caching with attribute binding other than for the first
-       * style (#3976) */
-      for (i = 1; i < layer->class[shape.classindex] -> numstyles; i++) {
-        if (layer->class[shape.classindex] -> styles[i] -> numbindings > 0)
-          cache = MS_FALSE;
-      }
     }
 
     if (annotate && layer->class[shape.classindex] -> numlabels > 0) {
@@ -1682,22 +1678,20 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image) {
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
 
-      if (pStyle->outlinewidth > 0 ||
-          pStyle->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
-
-        if (msBindLayerToShape(layer, &shape, drawmode) != MS_SUCCESS) {
-          status = MS_FAILURE;
-        } else {
+      if (msBindLayerToShape(layer, &shape, drawmode) == MS_SUCCESS) {
+        if (pStyle->outlinewidth > 0) {
           msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
-          /* draw only the first style */
-          status = msDrawShape(map, layer, &shape, image, 0,
-                               drawmode | MS_DRAWMODE_SINGLESTYLE);
+        }
+        /* draw only the first style */
+        status = msDrawShape(map, layer, &shape, image, 0,
+                             drawmode | MS_DRAWMODE_SINGLESTYLE);
+        if (pStyle->outlinewidth > 0) {
           msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
         }
-      } else {
-        /* all styles */
-        status = msDrawShape(map, layer, &shape, image, -1, drawmode);
       }
+    } else {
+      /* all styles */
+      status = msDrawShape(map, layer, &shape, image, -1, drawmode);
     }
 
     if (status != MS_SUCCESS) {
