@@ -48,9 +48,6 @@ int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile,
   exsltRegisterAll();
   xsltRegisterTestModule();
 
-  xmlSubstituteEntitiesDefault(1);
-  xmlLoadExtDtdDefaultValue = 1;
-
   cur = xsltParseStylesheetFile((const xmlChar *)stylesheet);
   if (cur == NULL) {
     msSetError(MS_MISCERR, "Failed to load xslt stylesheet",
@@ -58,7 +55,7 @@ int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile,
     goto done;
   }
 
-  doc = xmlParseFile(xmlMapfile);
+  doc = xmlReadFile(xmlMapfile, NULL, XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
   if (doc == NULL) {
     msSetError(MS_MISCERR, "Failed to load xml mapfile",
                "msTransformXmlMapfile()");
