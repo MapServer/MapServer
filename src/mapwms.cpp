@@ -664,7 +664,7 @@ static bool msWMSValidateDimensionValue(const char *value,
     if (strstr(dimensionextent, "/") == NULL) {
       /*multiple values*/
       isextentavalue = true;
-      aextentvalues = extents;
+      aextentvalues = std::move(extents);
       if (!forcecharacter)
         ischaracter = FLTIsNumeric(aextentvalues[0].c_str()) == MS_FALSE;
     } else { /*multiple range extent*/
@@ -3050,23 +3050,23 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   std::string dtd_url;
   if (nVersion < OWS_1_0_7) {
     nVersion = OWS_1_0_0;
-    dtd_url = schemalocation;
+    dtd_url = std::move(schemalocation);
     dtd_url += "/wms/1.0.0/capabilities_1_0_0.dtd";
   }
 
   else if (nVersion < OWS_1_1_0) {
     nVersion = OWS_1_0_7;
-    dtd_url = schemalocation;
+    dtd_url = std::move(schemalocation);
     dtd_url += "/wms/1.0.7/capabilities_1_0_7.dtd";
   } else if (nVersion < OWS_1_1_1) {
     nVersion = OWS_1_1_0;
-    dtd_url = schemalocation;
+    dtd_url = std::move(schemalocation);
     dtd_url += "/wms/1.1.0/capabilities_1_1_0.dtd";
   } else if (nVersion < OWS_1_3_0) {
     nVersion = OWS_1_1_1;
-    dtd_url = schemalocation;
+    dtd_url = std::move(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
-    if (strcasecmp(schemalocation.c_str(), OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
+    if (strcasecmp(dtd_url.c_str(), OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
       dtd_url += "/wms/1.1.1/WMS_MS_Capabilities.dtd";
     else
       dtd_url += "/wms/1.1.1/capabilities_1_1_1.dtd";
