@@ -70,8 +70,7 @@ typedef struct {
 #ifdef SWIG
     %immutable;
 #endif
-  int numargs;     ///< Actual number of projection args
-  short automatic; ///< Projection object was to fetched from the layer
+  int numargs; ///< Actual number of projection args
   unsigned short
       generation_number; ///< To be incremented when the content of the object
                          ///< changes, so that a reprojector can be invalidated

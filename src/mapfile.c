@@ -1310,7 +1310,6 @@ static int loadProjection(projectionObj *p) {
         return -1;
       }
       p->args[p->numargs] = msStrdup(msyystring_buffer);
-      p->automatic = MS_TRUE;
       p->numargs++;
       break;
     default:
