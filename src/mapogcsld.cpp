@@ -335,11 +335,11 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
                     pszTmp1 = msStrdup(lp->_class[iClass]->text.string);
                     if (pszFullName != NULL &&
                         (strstr(pszTmp1, pszFullName) != NULL)) {
-                      char *tmpstr1 = msReplaceSubstring(pszTmp1, pszFullName,
-                                                         lp->items[z]);
+                      pszTmp1 = msReplaceSubstring(pszTmp1, pszFullName,
+                                                   lp->items[z]);
                       char *pszTmp2 =
-                          (char *)malloc(sizeof(char) * (strlen(tmpstr1) + 3));
-                      sprintf(pszTmp2, "(%s)", tmpstr1);
+                          (char *)malloc(sizeof(char) * (strlen(pszTmp1) + 3));
+                      sprintf(pszTmp2, "(%s)", pszTmp1);
                       msLoadExpressionString(&(lp->_class[iClass]->text),
                                              pszTmp2);
                       msFree(pszTmp2);
