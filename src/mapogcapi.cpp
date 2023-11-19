@@ -849,7 +849,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
                                 "keywordlist"); // fallback on keywordlist
   if (value) {
     std::vector<std::string> keywords = msStringSplit(value, ',');
-    for (std::string keyword : keywords) {
+    for (const std::string &keyword : keywords) {
       collection["keywords"].push_back(keyword);
     }
   }
@@ -857,7 +857,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
   value = msOWSLookupMetadata(&(layer->metadata), "A", "links");
   if (value) {
     std::vector<std::string> names = msStringSplit(value, ',');
-    for (std::string name : names) {
+    for (const std::string &name : names) {
       try {
         json link = getLink(&(layer->metadata), name);
         collection["links"].push_back(link);
@@ -874,9 +874,9 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
   if (!jCrsList.empty()) {
     collection["crs"] = std::move(jCrsList);
 
-    const std::string storageCrs = getStorageCrs(layer);
+    std::string storageCrs = getStorageCrs(layer);
     if (!storageCrs.empty()) {
-      collection["storageCrs"] = storageCrs;
+      collection["storageCrs"] = std::move(storageCrs);
     }
   }
 
