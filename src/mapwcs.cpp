@@ -2256,7 +2256,7 @@ void msWCSApplySourceDatasetMetadata(layerObj *lp, outputFormatObj *format,
                     .c_str(),
                 ',');
             if (tokens.size() == 2) {
-              const auto varType = tokens[1];
+              const auto &varType = tokens[1];
               msSetOutputFormatOption(
                   format,
                   ("mdi_default_NETCDF_DIM_" + osExtraDimName + "_DEF").c_str(),
