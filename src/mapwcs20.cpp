@@ -1459,7 +1459,7 @@ int msWCSParseRequest20(mapObj *map, cgiRequestObj *request,
 
     /* parse to DOM-Structure and get root element */
     if (doc == NULL) {
-      xmlErrorPtr error = xmlGetLastError();
+      const xmlError *error = xmlGetLastError();
       msSetError(MS_WCSERR, "XML parsing error: %s", "msWCSParseRequest20()",
                  error->message);
       return MS_FAILURE;
