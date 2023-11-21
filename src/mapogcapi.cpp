@@ -706,7 +706,7 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items,
     json geometry =
         getFeatureGeometry(shape, geometry_precision, outputCrsAxisInverted);
     if (!geometry.is_null())
-      feature["geometry"] = geometry;
+      feature["geometry"] = std::move(geometry);
   } catch (const std::runtime_error &) {
     throw std::runtime_error("Error fetching geometry.");
   }
@@ -849,7 +849,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
                                 "keywordlist"); // fallback on keywordlist
   if (value) {
     std::vector<std::string> keywords = msStringSplit(value, ',');
-    for (std::string keyword : keywords) {
+    for (const std::string &keyword : keywords) {
       collection["keywords"].push_back(keyword);
     }
   }
@@ -857,7 +857,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
   value = msOWSLookupMetadata(&(layer->metadata), "A", "links");
   if (value) {
     std::vector<std::string> names = msStringSplit(value, ',');
-    for (std::string name : names) {
+    for (const std::string &name : names) {
       try {
         json link = getLink(&(layer->metadata), name);
         collection["links"].push_back(link);
@@ -872,11 +872,11 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
 
   json jCrsList = getCrsList(map, layer);
   if (!jCrsList.empty()) {
-    collection["crs"] = jCrsList;
+    collection["crs"] = std::move(jCrsList);
 
-    const std::string storageCrs = getStorageCrs(layer);
+    std::string storageCrs = getStorageCrs(layer);
     if (!storageCrs.empty()) {
-      collection["storageCrs"] = storageCrs;
+      collection["storageCrs"] = std::move(storageCrs);
     }
   }
 
@@ -1473,9 +1473,9 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
         json feature = getFeature(layer, &shape, items, constants,
                                   geometry_precision, outputCrsAxisInverted);
         if (featureId) {
-          response = feature;
+          response = std::move(feature);
         } else {
-          response["features"].push_back(feature);
+          response["features"].emplace_back(std::move(feature));
         }
       } catch (const std::runtime_error &e) {
         msGMLFreeItems(items);
@@ -1839,7 +1839,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
     items_get["parameters"].emplace_back(param_limit);
 
     std::string itemsPath(collectionNamePath + "/items");
-    paths[itemsPath]["get"] = items_get;
+    paths[itemsPath]["get"] = std::move(items_get);
 
     json feature_id_get = {
         {"summary",
@@ -1867,7 +1867,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
     paths[itemsFeatureIdPath]["get"] = std::move(feature_id_get);
   }
 
-  response["paths"] = paths;
+  response["paths"] = std::move(paths);
 
   json components;
   components["responses"]["200"] = {{"description", "successful operation"}};
@@ -1912,9 +1912,9 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
       {"explode", false},
   };
 
-  components["parameters"] = parameters;
+  components["parameters"] = std::move(parameters);
 
-  response["components"] = components;
+  response["components"] = std::move(components);
 
   // TODO: "tags" array ?
 

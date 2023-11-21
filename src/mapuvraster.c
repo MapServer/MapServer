@@ -571,7 +571,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 
     map_tmp->projection.numargs = 0;
     map_tmp->projection.gt = layer->projection.gt;
-    map_tmp->projection.automatic = layer->projection.automatic;
 
     for (i = 0; i < layer->projection.numargs; i++) {
       if (strncmp(layer->projection.args[i],

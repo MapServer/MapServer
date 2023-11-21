@@ -57,7 +57,6 @@ int msCopyProjectionExtended(projectionObj *dst, const projectionObj *src,
                              char **args, int num_args) {
   MS_COPYSTELEM(numargs);
   MS_COPYSTELEM(gt);
-  MS_COPYSTELEM(automatic);
 
   for (int i = 0; i < dst->numargs; i++) {
     /* Our destination consists of unallocated pointers */
