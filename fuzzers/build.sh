@@ -74,7 +74,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_STATIC=ON \
 make -j$(nproc) mapserver_static
 
 #Fuzzers
-for fuzzer in mapfuzzer shapefuzzer; do
+for fuzzer in mapfuzzer shapefuzzer configfuzzer; do
     $CC $CFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. -DPROJ_VERSION_MAJOR=6 -c ../fuzzers/${fuzzer}.c
 
     $CXX $CXXFLAGS $LIB_FUZZING_ENGINE ${fuzzer}.o -o ${fuzzer} \
@@ -89,3 +89,4 @@ cd ..
 
 zip -r $OUT/mapfuzzer_seed_corpus.zip tests/*.map
 zip -r $OUT/shapefuzzer_seed_corpus.zip tests/*.shp tests/*.shx tests/*.dbf
+zip -r $OUT/configfuzzer_seed_corpus.zip tests/*.conf etc/*.conf msautotest/config/*.conf
