@@ -1119,7 +1119,6 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y,
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
   }
-  assert(svg_cache->pixmap_buffer->height && svg_cache->pixmap_buffer->width);
 
   pixstyle = *style;
   pixstyle.rotation = 0.0;
@@ -1128,8 +1127,13 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y,
   pixsymbol.pixmap_buffer = svg_cache->pixmap_buffer;
   pixsymbol.type = MS_SYMBOL_PIXMAP;
 
-  status = MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img, x, y, &pixsymbol,
-                                                      &pixstyle);
+  if (svg_cache->pixmap_buffer->height && svg_cache->pixmap_buffer->width)
+    status = MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img, x, y, &pixsymbol,
+                                                        &pixstyle);
+  else {
+    msDebug("SVG symbol with too small size to be rendered");
+    status = MS_SUCCESS;
+  }
   MS_IMAGE_RENDERER(img)->freeSymbol(&pixsymbol);
   return status;
 #else
