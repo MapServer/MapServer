@@ -20,7 +20,9 @@ https://bugs.chromium.org/p/oss-fuzz/issues/list?q=mapserver
     $ fuzzers/shapefuzzer_reproducer path_to_reproducer_file
   ```
 
-- Run locally OSS Fuzz:
+- Run OSS Fuzz locally. Note you need to have Docker installed and the Docker daemon running for the Python script to run.
+  The helper.py script builds and runs the Docker images, then the fuzzers can be run.
+
   ```
     $ git clone https://github.com/google/oss-fuzz.git
     $ cd oss-fuzz
