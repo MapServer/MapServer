@@ -5309,16 +5309,22 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
   char *pszOgcFilter = NULL;
 
   if (psClass && psClass->expression.string) {
+
+    char *pszExpression = msStrdup(psClass->expression.string);
+
     /* string expression */
     if (psClass->expression.type == MS_STRING) {
+
+      // ensure any trailing whitespace is removed
+      msStringTrimBlanks(pszExpression);
       if (psClass->layer && psClass->layer->classitem) {
         std::string osFilter("<ogc:Filter>");
         if (pszWfsFilter) {
           osFilter += "<ogc:And>";
           osFilter += pszWfsFilter;
         }
-        osFilter += GetPropertyIsEqualTo(psClass->layer->classitem,
-                                         psClass->expression.string);
+        osFilter +=
+            GetPropertyIsEqualTo(psClass->layer->classitem, pszExpression);
         if (pszWfsFilter) {
           osFilter += "</ogc:And>";
         }
@@ -5326,8 +5332,8 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         pszFilter = msStrdup(osFilter.c_str());
       }
     } else if (psClass->expression.type == MS_EXPRESSION) {
-      pszFilter =
-          msSLDParseLogicalExpression(psClass->expression.string, pszWfsFilter);
+      msStringTrimBlanks(pszExpression);
+      pszFilter = msSLDParseLogicalExpression(pszExpression, pszWfsFilter);
     } else if (psClass->expression.type == MS_LIST) {
       if (psClass->layer && psClass->layer->classitem) {
 
@@ -5337,8 +5343,8 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         int tokenCount = 0;
         std::string osOrFilters;
 
-        listExpressionValues = msStringSplit(psClass->expression.string, ',',
-                                             &numListExpressionValues);
+        listExpressionValues =
+            msStringSplit(pszExpression, ',', &numListExpressionValues);
 
         // loop through all values in the list and create a PropertyIsEqualTo
         // for each value
@@ -5390,6 +5396,8 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         pszFilter = msStrdup(osFilter.c_str());
       }
     }
+
+    msFree(pszExpression);
   } else if (pszWfsFilter) {
     std::string osFilter("<ogc:Filter>");
     osFilter += pszWfsFilter;
