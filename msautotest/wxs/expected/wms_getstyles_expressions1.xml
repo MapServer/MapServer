@@ -4,7 +4,7 @@
 <UserStyle>
 <se:FeatureTypeStyle>
 <se:Rule>
-<ogc:Filter><ogc:And><ogc:PropertyIsGreaterThan><ogc:PropertyName>FID</ogc:PropertyName><ogc:Literal>1</ogc:Literal></ogc:PropertyIsGreaterThan><ogc:PropertyIsLessThanOrEqualTo><ogc:PropertyName>FID</ogc:PropertyName><ogc:Literal>10 </ogc:Literal></ogc:PropertyIsLessThanOrEqualTo></ogc:And></ogc:Filter>
+<ogc:Filter><ogc:And><ogc:PropertyIsGreaterThan><ogc:PropertyName>FID</ogc:PropertyName><ogc:Literal>1</ogc:Literal></ogc:PropertyIsGreaterThan><ogc:PropertyIsLessThanOrEqualTo><ogc:PropertyName>FID</ogc:PropertyName><ogc:Literal>10</ogc:Literal></ogc:PropertyIsLessThanOrEqualTo></ogc:And></ogc:Filter>
 <se:PointSymbolizer>
 <se:Graphic>
 <se:Mark>
