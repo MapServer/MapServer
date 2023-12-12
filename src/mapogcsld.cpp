@@ -5315,7 +5315,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
     /* string expression */
     if (psClass->expression.type == MS_STRING) {
 
-      // ensure any trailing whitespace after numeric values are removed
+      // ensure any trailing whitespace is removed
       msStringTrimBlanks(pszExpression);
       if (psClass->layer && psClass->layer->classitem) {
         std::string osFilter("<ogc:Filter>");
@@ -5332,6 +5332,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
         pszFilter = msStrdup(osFilter.c_str());
       }
     } else if (psClass->expression.type == MS_EXPRESSION) {
+      msStringTrimBlanks(pszExpression);
       pszFilter = msSLDParseLogicalExpression(pszExpression, pszWfsFilter);
     } else if (psClass->expression.type == MS_LIST) {
       if (psClass->layer && psClass->layer->classitem) {
