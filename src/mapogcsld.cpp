@@ -5310,7 +5310,6 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter) {
 
   if (psClass && psClass->expression.string) {
 
-    
     char *pszExpression = msStrdup(psClass->expression.string);
 
     /* string expression */
