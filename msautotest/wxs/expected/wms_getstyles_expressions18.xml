@@ -5,7 +5,7 @@
 <se:FeatureTypeStyle>
 <se:Rule>
 <ogc:Filter><ogc:Or><ogc:PropertyIsEqualTo><ogc:PropertyName>locationtype</ogc:PropertyName><ogc:Literal>primary location</ogc:Literal></ogc:PropertyIsEqualTo>
-<ogc:PropertyIsEqualTo><ogc:PropertyName>locationtype</ogc:PropertyName><ogc:Literal>secondary location</ogc:Literal></ogc:PropertyIsEqualTo>
+<ogc:PropertyIsEqualTo><ogc:PropertyName>locationtype</ogc:PropertyName><ogc:Literal>secondary location </ogc:Literal></ogc:PropertyIsEqualTo>
 </ogc:Or></ogc:Filter><se:PointSymbolizer>
 <se:Graphic>
 <se:Mark>
