@@ -484,9 +484,6 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     return (MS_FAILURE);
   }
 
-  struct curl_slist **headersArray =
-      msSmallMalloc(numRequests * sizeof(struct curl_slist *));
-
   for (i = 0; i < numRequests; i++) {
     CURL *http_handle;
     FILE *fp;
@@ -685,11 +682,14 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     unchecked_curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER,
                                pasReqInfo[i].pszErrBuf);
 
+    pasReqInfo[i].curl_headers = NULL;
+
     if (pasReqInfo[i].pszPostRequest != NULL) {
       char szBuf[100];
+
       snprintf(szBuf, 100, "Content-Type: %s",
                pasReqInfo[i].pszPostContentType);
-      headersArray[i] = curl_slist_append(NULL, szBuf);
+      pasReqInfo[i].curl_headers = curl_slist_append(NULL, szBuf);
 
       unchecked_curl_easy_setopt(http_handle, CURLOPT_POST, 1);
       unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS,
@@ -698,7 +698,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         msDebug("HTTP: POST = %s", pasReqInfo[i].pszPostRequest);
       }
       unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER,
-                                 headersArray[i]);
+                                 pasReqInfo[i].curl_headers);
     }
 
     /* Added by RFC-42 HTTP Cookie Forwarding */
@@ -915,15 +915,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     /* Cleanup this handle */
     unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, "");
     curl_multi_remove_handle(multi_handle, http_handle);
-
-    for (int i = 0; i < numRequests; ++i) {
-      curl_slist_free_all(headersArray[i]);
-    }
-
-    msFree(headersArray);
-
     curl_easy_cleanup(http_handle);
     psReq->curl_handle = NULL;
+    curl_slist_free_all(psReq->curl_headers); // free the header list
   }
 
   /* Cleanup multi handle, each handle had to be cleaned up individually */
