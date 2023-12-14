@@ -423,10 +423,10 @@ int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
  * Fetch a map slide via HTTP request and save to specified temp file.
  *
  * If bCheckLocalCache==MS_TRUE then if the pszOutputfile already exists
- * then is is not downloaded again, and status 242 is returned.
+ * then it is not downloaded again, and status 242 is returned.
  *
  * Return value:
- * MS_SUCCESS if all requests completed succesfully.
+ * MS_SUCCESS if all requests completed successfully.
  * MS_FAILURE if a fatal error happened
  * MS_DONE if some requests failed with 40x status for instance (not fatal)
  **********************************************************************/
@@ -435,7 +435,6 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
   int i, nStatus = MS_SUCCESS, nTimeout, still_running = 0, num_msgs = 0;
   CURLM *multi_handle;
   CURLMsg *curl_msg;
-  struct curl_slist *headers = NULL;
   char debug = MS_FALSE;
   const char *pszCurlCABundle = NULL;
 
@@ -484,6 +483,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                "msHTTPExecuteRequests()");
     return (MS_FAILURE);
   }
+
+  struct curl_slist **headersArray =
+      msSmallMalloc(numRequests * sizeof(struct curl_slist *));
 
   for (i = 0; i < numRequests; i++) {
     CURL *http_handle;
@@ -687,7 +689,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       char szBuf[100];
       snprintf(szBuf, 100, "Content-Type: %s",
                pasReqInfo[i].pszPostContentType);
-      headers = curl_slist_append(headers, szBuf);
+      headersArray[i] = curl_slist_append(NULL, szBuf);
 
       unchecked_curl_easy_setopt(http_handle, CURLOPT_POST, 1);
       unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS,
@@ -695,7 +697,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       if (debug) {
         msDebug("HTTP: POST = %s", pasReqInfo[i].pszPostRequest);
       }
-      unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
+      unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER,
+                                 headersArray[i]);
     }
 
     /* Added by RFC-42 HTTP Cookie Forwarding */
@@ -763,7 +766,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       /*      it is called the second time and all the calls after            */
       /*      that. This causes an infinite loop.                             */
       /*      I do not really know why.                                       */
-      /*      To sovle the problem the break frop case -1 has been removed.   */
+      /*      To solve the problem the break from case -1 has been removed.   */
       /* ==================================================================== */
 #ifndef _WIN32
       break;
@@ -913,9 +916,11 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, "");
     curl_multi_remove_handle(multi_handle, http_handle);
 
-    if (headers) {
-      curl_slist_free_all(headers); /* free the header list */
+    for (int i = 0; i < numRequests; ++i) {
+      curl_slist_free_all(headersArray[i]);
     }
+
+    msFree(headersArray);
 
     curl_easy_cleanup(http_handle);
     psReq->curl_handle = NULL;
