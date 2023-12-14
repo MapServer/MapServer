@@ -75,8 +75,9 @@ typedef struct http_request_info {
   int debug; /* Debug mode?  MS_TRUE/MS_FALSE */
 
   /* Private members */
-  void *curl_handle; /* CURLM * handle */
-  FILE *fp;          /* FILE * used during download */
+  void *curl_headers; /* property to store a curl_slist handle */
+  void *curl_handle;  /* CURLM * handle */
+  FILE *fp;           /* FILE * used during download */
 
   char *result_data; /* output if pszOutputFile is NULL */
   int result_size;
