@@ -4942,8 +4942,11 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
           break;
         else if (pszAttributeValue[i] == '"' && bDoubleQuote)
           break;
-        else if (pszAttributeValue[i] == ')')
+        else if (pszAttributeValue[i] == ')') {
+          // remove any spaces prior to the closing bracket
+          msStringTrimBlanks(pszFinalAttributeValue);
           break;
+        }
         pszFinalAttributeValue[iAtt++] = pszAttributeValue[i];
       }
       pszFinalAttributeValue[iAtt] = '\0';
