@@ -25,6 +25,9 @@
 # RUN_PARMS: wms_getstyles_expressions18.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test18" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions19.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test19" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions20.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test20" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions21.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test21" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions22.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test22" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions23.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test23" > [RESULT_DEMIME]
 
 MAP
     NAME WMS_TEST
@@ -284,6 +287,45 @@ MAP
       TYPE POINT
       CLASS
         EXPRESSION ( [locationtype] = "primary location " )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+    
+    # test for multiple expressions with brackets and spaces
+    LAYER
+      NAME "Test21"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( ( [FID] > 1 ) AND ( [FID] <= 10 ) )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # test for multiple string expressions with brackets and spaces
+    LAYER
+      NAME "Test22"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( ( [locationtype] = "primary location " ) OR ( [locationtype] = " secondary location" ) )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # test for multiple expressions with spaces but not brackets
+    LAYER
+      NAME "Test23"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] > 1 AND [FID] <= 10 )
         STYLE
             COLOR 220 0 0
             WIDTH 1
