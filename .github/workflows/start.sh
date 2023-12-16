@@ -4,10 +4,6 @@ set -e
 
 apt-get update -y
 
-export BUILD_NAME=PHP_8.1_WITH_PROJ8
-#export PYTHON_VERSION=3.6
-export PYTHON_VERSION=system
-
 LANG=en_US.UTF-8
 export LANG
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -24,25 +20,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 USER=root
 export USER
 
-# Install pyenv
-curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-export PATH="/root/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-ln -s /usr/bin/python3 /usr/bin/python
-#ln -s /usr/bin/pip3 /usr/bin/pip
-
-export CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module
-pip install --upgrade pip
-
-# Install recent cmake
-wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-
 cd "$WORK_DIR"
 
-ci/travis/before_install.sh
-ci/travis/script.sh
+ci/setup.sh
+ci/build.sh
 
 # Validate openapi document
 pip install jsonschema

@@ -1,4 +1,4 @@
-name: Build
+name: Build with Memory Leak Checks
 
 on: [push, pull_request]
 
@@ -9,8 +9,8 @@ jobs:
       TEST_MAPSCRIPT_PYTHON: 'true'
       TEST_MAPSCRIPT_PHP: 'true'
       RUN_MSAUTOTESTS: 'true'
-      RUN_COVERALLS: 'true'
-      WITH_ASAN: 'false'
+      RUN_COVERALLS: 'false'
+      WITH_ASAN: 'true'
 
     steps:
       - name: Checkout repository contents

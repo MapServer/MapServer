@@ -1,0 +1,34 @@
+name: Build and test PHP MapScript
+
+on:
+  push:
+    branches:
+      - '*'
+    except:
+      - /^(cherry-pick-)?backport-\d+-to-/
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        php-version: [8.1, 8.2]
+    env:
+      TEST_MAPSCRIPT_PHP: 'true'
+      RUN_MSAUTOTESTS: 'false'
+      RUN_COVERALLS: 'false'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+
+      - name: Install dependencies
+        run: ./ci/setup.sh
+
+      - name: Build
+        run: ./ci/build.sh
