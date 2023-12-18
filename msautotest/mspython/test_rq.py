@@ -458,7 +458,7 @@ def test_rq_10():
 # Issue another point query, on colored text.
 
 
-def rqtest_12():
+def test_rqtest_12():
 
     map = mapscript.mapObj(get_relpath_to_this("../gdal/classtest1.map"))
     layer = map.getLayer(0)
@@ -467,7 +467,7 @@ def rqtest_12():
     pnt.x = 13.5
     pnt.y = 36.5
 
-    pmstestlib.layer.queryByPoint(map, pnt, mapscript.MS_SINGLE, 10.0)
+    layer.queryByPoint(map, pnt, mapscript.MS_SINGLE, 10.0)
 
     ###############################################################################
     # Scan results.  This query is for a pixel at a grid intersection.  This
