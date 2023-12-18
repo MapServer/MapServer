@@ -3850,6 +3850,9 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion) {
       snprintf(szTmp, sizeof(szTmp), "%.2f ", psStyle->pattern[i]);
       pszDashArray = msStringConcatenate(pszDashArray, szTmp);
     }
+    // remove the final trailing space from the last pattern value
+    msStringTrimBlanks(pszDashArray);
+
     snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke-dasharray\">%s</%s>\n",
              sCssParam, pszDashArray, sCssParam);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
