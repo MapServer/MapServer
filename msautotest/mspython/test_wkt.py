@@ -114,4 +114,12 @@ def test_wkt_3():
         shp = mapscript.shapeObj.fromWKT(orig_wkt)
         new_wkt = shp.toWKT()
 
-        assert new_wkt == orig_wkt
+        # Recent GEOS versions format as MULTIPOINT ((x1,y1),(x2,y2))
+        if (
+            orig_wkt.startswith("MULTIPOINT")
+            and new_wkt
+            == "MULTIPOINT ((2000.0000000000000000 2000.0000000000000000), (2000.0000000000000000 1900.0000000000000000))"
+        ):
+            pass
+        else:
+            assert new_wkt == orig_wkt
