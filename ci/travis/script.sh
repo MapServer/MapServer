@@ -29,7 +29,7 @@ php -v
 if [ "$WITH_ASAN" = "YES" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
     make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-g -fsanitize=address -DNDEBUG" CMAKE_CXX_FLAGS="-g -fsanitize=address -DNDEBUG" EXTRA_CMAKEFLAGS="-DCMAKE_BUILD_TYPE=None -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"
-    export AUTOTEST_OPTS="--strict --run_under_asan"
+    export AUTOTEST_OPTS="--strict_mode --run_under_asan"
     # Only run tests that only involve mapserv/map2img binaries. mspython, etc would require LD_PREOLOAD'ing the asan shared object
     make -j4 asan_compatible_tests
 else
