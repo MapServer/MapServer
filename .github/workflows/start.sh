@@ -4,8 +4,6 @@ set -e
 
 apt-get update -y
 
-export BUILD_NAME=PHP_8.1_WITH_PROJ8
-#export PYTHON_VERSION=3.6
 export PYTHON_VERSION=system
 
 LANG=en_US.UTF-8

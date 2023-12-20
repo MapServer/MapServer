@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-if [ "$BUILD_NAME" != "PHP_8.1_WITH_ASAN" ]; then
+if [ "$WITH_ASAN" != "YES" ]; then
     # Only run coverage when it is safe to do so (not on pull requests), and only on main branch
     echo "$TRAVIS_SECURE_ENV_VARS"
     echo "$TRAVIS_BRANCH"
