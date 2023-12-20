@@ -386,7 +386,7 @@
     on which the query is performed, and *qstring* is the expression to match. 
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
     Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
-    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
     */
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
     {
@@ -419,7 +419,7 @@
     Query layer at point location specified in georeferenced map coordinates (i.e. not pixels). 
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
     Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
-    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
     */
     int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) 
     {
@@ -446,7 +446,7 @@
     Query layer using a rectangle specified in georeferenced map coordinates (i.e. not pixels).
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
     Note that the layer's FILTER/FILTERITEM are ignored by this function. The :data:`MS_MULTIPLE` mode is set by default.
-    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
     */
     int queryByRect(mapObj *map, rectObj rect) 
     {
@@ -471,7 +471,7 @@
     /**
     Perform a query set based on a previous set of results from another layer. 
     At present the results MUST be based on a polygon layer. 
-    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
     */
     int queryByFeatures(mapObj *map, int slayer) 
     {
@@ -490,7 +490,7 @@
 
     /**
     Query layer based on a single shape, the shape has to be a polygon at this point. 
-    Returns :data:`MS_SUCCESS` if shapes were found or :data:`MS_FAILURE` if nothing was found or if some other error happened.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
     */
     int queryByShape(mapObj *map, shapeObj *shape) 
     {
