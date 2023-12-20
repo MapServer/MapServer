@@ -23,6 +23,10 @@ export USER
 cd "$WORK_DIR"
 
 ci/setup.sh
+
+# ensure python points to python3
+ln -s /usr/bin/python3 /usr/bin/python
+
 ci/build.sh
 
 # Validate openapi document

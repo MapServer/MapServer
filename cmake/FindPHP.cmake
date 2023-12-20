@@ -18,7 +18,7 @@ SET(PHP_POSSIBLE_INCLUDE_PATHS
   ${PHP_INCLUDES}
 )
 
-find_library(PHP_LIBRARY NAMES php5ts php5 php7ts php7 PATHS /sw /opt/local)
+find_library(PHP_LIBRARY NAMES php5ts php5 php7ts php7 php8 PATHS /sw /opt/local)
 
 if(WIN32)
   string(SUBSTRING $ENV{VSCMD_VER} 0 2 VSCMD_VER)

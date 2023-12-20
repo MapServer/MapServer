@@ -26,6 +26,8 @@ wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | 
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 sudo apt-get install -y --allow-unauthenticated cmake
 
+cmake --version
+
 #upgrade to recent SWIG
 git clone https://github.com/swig/swig.git swig-git-master
 cd swig-git-master

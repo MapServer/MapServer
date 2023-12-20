@@ -6,8 +6,8 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     env:
-      TEST_MAPSCRIPT_PYTHON: 'true'
-      TEST_MAPSCRIPT_PHP: 'true'
+      MAPSCRIPT_PYTHON: 'true'
+      MAPSCRIPT_PHP: 'true'
       RUN_MSAUTOTESTS: 'true'
       RUN_COVERALLS: 'false'
       WITH_ASAN: 'true'
@@ -17,4 +17,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build
-        run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
+        run: |
+            docker run \
+            -e WORK_DIR="$PWD" \
+            -e MAPSCRIPT_PYTHON=${{ env.MAPSCRIPT_PYTHON }} \
+            -e MAPSCRIPT_PHP=${{ env.MAPSCRIPT_PHP }} \
+            -e RUN_MSAUTOTESTS=${{ env.RUN_MSAUTOTESTS }} \
+            -e RUN_COVERALLS=${{ env.RUN_COVERALLS }} \
+            -e WITH_ASAN=${{ env.WITH_ASAN }} \
+            -e WORK_DIR="$PWD" \
+            -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
