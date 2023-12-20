@@ -153,7 +153,6 @@ def test_rq_2():
     s = layer.getShape(result)
 
     pmstestlib.check_items(layer, s, [("value_0", "132"), ("x", "44.5"), ("y", "25.5")])
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -200,7 +199,6 @@ def test_rq_4():
     s = layer.getShape(result)
 
     pmstestlib.check_items(layer, s, [("value_0", "107"), ("x", "36.5"), ("y", "24.5")])
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -240,7 +238,6 @@ def test_rq_6():
     s = layer.getShape(result)
 
     pmstestlib.check_items(layer, s, [("value_0", "115"), ("x", "35.5"), ("y", "25.5")])
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -312,7 +309,6 @@ def test_rq_8():
             ("y", "25.5"),
         ],
     )
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -394,7 +390,6 @@ def test_rq_9():
     s = layer.getShape(result)
 
     pmstestlib.check_items(layer, s, [("value_0", "148"), ("x", "44.5"), ("y", "24.5")])
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -450,7 +445,6 @@ def test_rq_10():
             ("y", "7.5"),
         ],
     )
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -458,7 +452,7 @@ def test_rq_10():
 # Issue another point query, on colored text.
 
 
-def rqtest_12():
+def test_rqtest_12():
 
     map = mapscript.mapObj(get_relpath_to_this("../gdal/classtest1.map"))
     layer = map.getLayer(0)
@@ -467,7 +461,7 @@ def rqtest_12():
     pnt.x = 13.5
     pnt.y = 36.5
 
-    pmstestlib.layer.queryByPoint(map, pnt, mapscript.MS_SINGLE, 10.0)
+    layer.queryByPoint(map, pnt, mapscript.MS_SINGLE, 10.0)
 
     ###############################################################################
     # Scan results.  This query is for a pixel at a grid intersection.  This
@@ -503,7 +497,6 @@ def rqtest_12():
             ("y", "36.5"),
         ],
     )
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -553,7 +546,6 @@ def test_rq_14():
 
     assert count == 4
 
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -603,7 +595,6 @@ def test_rq_16():
 
     assert count == 4
 
-    layer.close()
     layer.close()  # discard resultset.
 
 
@@ -645,5 +636,4 @@ def test_rq_18():
 
     assert count == 1
 
-    layer.close()
     layer.close()  # discard resultset.
