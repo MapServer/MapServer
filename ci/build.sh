@@ -57,6 +57,7 @@ if [ "${RUN_MSAUTOTESTS:-}" = "true" ]; then
 
     if [ "${WITH_ASAN:-}" != "true" ]; then
         # upload coverage
+        set -eu
         ln -s ../../../src/mapparser.y build/CMakeFiles/mapserver.dir/
         ln -s ../../../src/maplexer.l build/CMakeFiles/mapserver.dir/
         coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c \
