@@ -32,7 +32,7 @@ jobs:
       - name: Setup PHP
         run: |
           sudo add-apt-repository ppa:ondrej/php -y
-          sudo apt-get install -y --no-install-recommends \
+          sudo apt-get install -y php${{ matrix.php-version }} \
           php${{ matrix.php-version }}-dev php${{ matrix.php-version }}-xml php${{ matrix.php-version }}-mbstring
 
       # - name: Set up PHP ${{ matrix.php-version }}
