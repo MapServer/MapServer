@@ -16,6 +16,8 @@ else
         make mspython-wheel
     else
         make cmakebuild MFLAGS="-j2" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
+        make mspython-wheel
+        make phpng-build
     fi
 fi
 
