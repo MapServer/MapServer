@@ -21,14 +21,15 @@ sudo apt-get install -y --allow-unauthenticated libperl-dev
 sudo apt-get install -y --allow-unauthenticated openjdk-8-jdk
 sudo apt-get install -y --allow-unauthenticated libonig5
 
-#install recent cmake on GH build action
+#install recent cmake
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
 sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 sudo apt-get install -y --allow-unauthenticated cmake
 
+echo "cmake version"
 cmake --version
 
-#upgrade to recent SWIG
+# upgrade to recent SWIG
 git clone https://github.com/swig/swig.git swig-git-master
 cd swig-git-master
 wget https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
@@ -40,8 +41,20 @@ sudo make install
 sudo ldconfig
 
 #check SWIG version
+echo "SWIG version"
 swig -version
 
 cd ..
 touch src/maplexer.l
 touch src/mapparser.y
+
+# report Python locations
+which python
+which pip
+
+# install Python dependencies (required for msautotests)
+pip install --upgrade pip
+# pip install cryptography==3.4.6 # avoid requiring rust compiler for the cryptography dependency
+pip install cpp-coveralls pyflakes
+pip install -r msautotest/requirements.txt
+

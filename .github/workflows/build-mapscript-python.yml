@@ -14,24 +14,11 @@ jobs:
       matrix:
         python-version: [3.8, 3.9]
     env:
-      MAPSCRIPT_PYTHON: 'true'
-      RUN_MSAUTOTESTS: 'false'
-      RUN_COVERALLS: 'false'
+      MAPSCRIPT_PYTHON_ONLY: 'true'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Uninstall PHP
-        run: |
-          sudo apt-get purge '^php.*' -y
-
-      # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2004-Readme.md#php-tools
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-          extensions: xml, mbstring
 
       - name: Set up Python
         uses: actions/setup-python@v2

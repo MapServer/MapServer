@@ -4,6 +4,8 @@ set -e
 
 apt-get update -y
 
+export PYTHON_VERSION=system
+
 LANG=en_US.UTF-8
 export LANG
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -20,13 +22,22 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 USER=root
 export USER
 
-cd "$WORK_DIR"
-
-ci/setup.sh
-
+# Install pyenv
+curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+export PATH="/root/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 # ensure python points to python3
 ln -s /usr/bin/python3 /usr/bin/python
 
+export CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module
+
+# set the global Python version
+pyenv global $PYTHON_VERSION
+
+cd "$WORK_DIR"
+
+ci/setup.sh
 ci/build.sh
 
 # Validate openapi document

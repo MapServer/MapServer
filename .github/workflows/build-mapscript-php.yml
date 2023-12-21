@@ -14,9 +14,7 @@ jobs:
       matrix:
         php-version: [8.1, 8.2]
     env:
-      MAPSCRIPT_PHP: 'true'
-      RUN_MSAUTOTESTS: 'false'
-      RUN_COVERALLS: 'false'
+      RUN_MSAUTOTESTS: 'true'
 
     steps:
       - name: Checkout code

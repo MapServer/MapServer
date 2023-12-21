@@ -5,12 +5,22 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Regular
+            WITH_ASAN: "false"
+
+          - name: Address_sanitizer
+            WITH_ASAN: "true"
+
+    name: ${{ matrix.name }}
+
     env:
-      MAPSCRIPT_PYTHON: 'true'
-      MAPSCRIPT_PHP: 'true'
       RUN_MSAUTOTESTS: 'true'
-      RUN_COVERALLS: 'true'
-      WITH_ASAN: 'false'
+      WITH_ASAN: ${{ matrix.WITH_ASAN }}
 
     steps:
       - name: Checkout repository contents
@@ -20,10 +30,7 @@ jobs:
         run: |
             docker run \
             -e WORK_DIR="$PWD" \
-            -e MAPSCRIPT_PYTHON=${{ env.MAPSCRIPT_PYTHON }} \
-            -e MAPSCRIPT_PHP=${{ env.MAPSCRIPT_PHP }} \
             -e RUN_MSAUTOTESTS=${{ env.RUN_MSAUTOTESTS }} \
-            -e RUN_COVERALLS=${{ env.RUN_COVERALLS }} \
             -e WITH_ASAN=${{ env.WITH_ASAN }} \
             -e WORK_DIR="$PWD" \
             -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
