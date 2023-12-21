@@ -56,10 +56,10 @@ if [ "${RUN_MSAUTOTESTS:-}" = "true" ]; then
     fi
 
     if [ "${WITH_ASAN:-}" != "true" ]; then
-        # upload coverage
-        set -eu
+        git config --global --add safe.directory "${WORK_DIR:=..}"
         ln -s ../../../src/mapparser.y build/CMakeFiles/mapserver.dir/
         ln -s ../../../src/maplexer.l build/CMakeFiles/mapserver.dir/
+        # upload coverage
         coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c \
         --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude map2img.c --exclude legend.c --exclude scalebar.c \
         --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c \
