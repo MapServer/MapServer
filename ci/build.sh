@@ -54,7 +54,7 @@ if [ "${RUN_MSAUTOTESTS:-}" = "true" ]; then
     fi
 fi
 
-if [ "${WITH_ASAN:-}" = "true" ]; then
+if [ "${WITH_ASAN:-}" != "true" ]; then
     # upload coverage
     ln -s ../../../src/mapparser.y build/CMakeFiles/mapserver.dir/
     ln -s ../../../src/maplexer.l build/CMakeFiles/mapserver.dir/
