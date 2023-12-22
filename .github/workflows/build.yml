@@ -19,7 +19,6 @@ jobs:
     name: ${{ matrix.name }}
 
     env:
-      RUN_MSAUTOTESTS: 'true'
       WITH_ASAN: ${{ matrix.WITH_ASAN }}
 
     steps:
@@ -30,7 +29,6 @@ jobs:
         run: |
             docker run \
             -e WORK_DIR="$PWD" \
-            -e RUN_MSAUTOTESTS=${{ env.RUN_MSAUTOTESTS }} \
             -e WITH_ASAN=${{ env.WITH_ASAN }} \
             -e WORK_DIR="$PWD" \
             -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
