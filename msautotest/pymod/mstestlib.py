@@ -598,10 +598,11 @@ def _run(map, out_file, command, extra_args):
 
     # Used in msautotest/wxs/wcs_netcdf_input_output.map as for some unknown
     # reason comparison fails on Travis-CI but not in the github action tests
+    # when using Docker. Likely due to a pre-installed library on the test runners
     ignore_comparison_result = False
-    if "[IGNORE_COMPARISON_RESULT_ON_TRAVIS]" in command:
-        command = command.replace("[IGNORE_COMPARISON_RESULT_ON_TRAVIS]", "")
-        if "TRAVIS" in os.environ:
+    if "[IGNORE_COMPARISON_RESULT_ON_CI]" in command:
+        command = command.replace("[IGNORE_COMPARISON_RESULT_ON_CI]", "")
+        if "IGNORE_COMPARISON_RESULT_ON_CI" in os.environ:
             ignore_comparison_result = True
 
     os.environ["MS_PDF_CREATION_DATE"] = "dummy date"

@@ -6,9 +6,31 @@ jobs:
   build:
     runs-on: ubuntu-20.04
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Regular
+            WITH_ASAN: "false"
+
+          - name: Address_sanitizer
+            WITH_ASAN: "true"
+
+    name: ${{ matrix.name }}
+
+    env:
+      WITH_ASAN: ${{ matrix.WITH_ASAN }}
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
     steps:
       - name: Checkout repository contents
         uses: actions/checkout@v3
 
       - name: Build
-        run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
+        run: |
+            docker run \
+            -e WORK_DIR="$PWD" \
+            -e WITH_ASAN=${{ env.WITH_ASAN }} \
+            -e COVERALLS_REPO_TOKEN=${{ env.COVERALLS_REPO_TOKEN }} \
+            -e WORK_DIR="$PWD" \
+            -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh

@@ -57,7 +57,12 @@ MS_API_EXPORT(int) ms_regcomp(ms_regex_t *regex, const char *expr, int cflags) {
   /* Must free in regfree() */
   regex_t *sys_regex = (regex_t *)msSmallMalloc(sizeof(regex_t));
   regex->sys_regex = (void *)sys_regex;
-  return regcomp(sys_regex, expr, cflags);
+  int ret = regcomp(sys_regex, expr, cflags);
+  if (ret != 0) {
+    free(regex->sys_regex);
+    regex->sys_regex = NULL;
+  }
+  return ret;
 }
 
 MS_API_EXPORT(size_t)

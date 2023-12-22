@@ -11,7 +11,6 @@ run_code_coverage_upload.sh export-ignore
 release-notes.sh export-ignore
 print-test-results.sh export-ignore
 appveyor.yml export-ignore
-.travis.yml export-ignore
 astyle.sh export-ignore
 create_mapaxisorder_csv.py export-ignore
 genhtml.patch export-ignore

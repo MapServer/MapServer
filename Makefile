@@ -7,6 +7,11 @@ PERL_MAPSCRIPT_PATH=build/src/mapscript/perl
 BUILDPATH=../../build
 FLEX=flex
 YACC=yacc
+CMAKEFLAGS_MAPSCRIPT_PYTHON=-DWITH_CLIENT_WMS=1 \
+			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 \
+			  -DWITH_PYTHON=1-DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=1 -DWITH_EXEMPI=1 \
+			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
+
 CMAKEFLAGS_NOCOVERAGE=-DWITH_CLIENT_WMS=1 \
 			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_CSHARP=1 -DWITH_PHPNG=1 -DWITH_PERL=1 \
 			  -DWITH_PYTHON=1 -DWITH_JAVA=1 -DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=1 -DWITH_EXEMPI=1 \
@@ -25,6 +30,10 @@ cmakebuild_nocoverage: lexer parser
 	if test ! -s build_nocoverage/Makefile; then  mkdir -p build_nocoverage ; cd build_nocoverage ; cmake .. $(CMAKEFLAGS_NOCOVERAGE); fi
 	cd build_nocoverage && $(MAKE) $(MFLAGS) && $(MAKE) $(MFLAGS) install
 
+cmakebuild_mapscript_python: lexer parser
+	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS_MAPSCRIPT_PYTHON); fi
+	cd build && $(MAKE) $(MFLAGS)
+    
 warning:
 	$(error "This Makefile is used to run the \"test\" target")
 
