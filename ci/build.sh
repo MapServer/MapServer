@@ -58,8 +58,8 @@ if [ "${WITH_ASAN:-}" = "true" ]; then
 else
     make -j4 test
 fi
-   
-if [ "${EVENT_NAME:-}" = "push" ] && [ "${WITH_ASAN:-}" != "true" ] && [ -n "${COVERALLS_REPO_TOKEN:-}" ]; then
+
+if "${UPLOAD_COVERALLS:-}" = "true" ]; then
     echo "uploading to coveralls"
     git config --global --add safe.directory "${WORK_DIR:=..}"
     ln -s ../../../src/mapparser.y build/CMakeFiles/mapserver.dir/
