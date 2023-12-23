@@ -21,6 +21,7 @@ jobs:
     env:
       WITH_ASAN: ${{ matrix.WITH_ASAN }}
       COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      COVERALLS_SERVICE_NAME: "GitHub Actions"
 
     steps:
       - name: Checkout repository contents
@@ -30,7 +31,8 @@ jobs:
         run: |
             docker run \
             -e WORK_DIR="$PWD" \
-            -e WITH_ASAN=${{ env.WITH_ASAN }} \
-            -e COVERALLS_REPO_TOKEN=${{ env.COVERALLS_REPO_TOKEN }} \
-            -e WORK_DIR="$PWD" \
+            -e WITH_ASAN="${{ env.WITH_ASAN }}" \
+            -e COVERALLS_REPO_TOKEN="${{ env.COVERALLS_REPO_TOKEN }}" \
+            -e COVERALLS_SERVICE_NAME="${{ env.COVERALLS_SERVICE_NAME }}" \
+            -e EVENT_NAME="${{ github.event_name }}" \
             -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh

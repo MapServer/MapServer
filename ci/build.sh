@@ -58,15 +58,15 @@ if [ "${WITH_ASAN:-}" = "true" ]; then
 else
     make -j4 test
 fi
-
-if [ "${WITH_ASAN:-}" != "true" ]; then
+   
+if [ "${EVENT_NAME:-}" = "push" ] && [ "${WITH_ASAN:-}" != "true" ] && [ -n "${COVERALLS_REPO_TOKEN:-}" ]; then
+    echo "uploading to coveralls"
     git config --global --add safe.directory "${WORK_DIR:=..}"
     ln -s ../../../src/mapparser.y build/CMakeFiles/mapserver.dir/
     ln -s ../../../src/maplexer.l build/CMakeFiles/mapserver.dir/
-    # upload coverage - always return true if there are errors
+
     coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c \
     --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude map2img.c --exclude legend.c --exclude scalebar.c \
     --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c \
-    --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp || true
+    --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
 fi
-
