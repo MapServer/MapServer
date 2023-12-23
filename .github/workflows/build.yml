@@ -36,7 +36,6 @@ jobs:
 
       - name: Build
         run: |
-            echo "${{ env.UPLOAD_COVERALLS }}"
             docker run \
             -e WORK_DIR="$PWD" \
             -e WITH_ASAN="${{ env.WITH_ASAN }}" \
