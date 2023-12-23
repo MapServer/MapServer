@@ -29,11 +29,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set RUN_COVERALLS Environment Variable
-        if: env.WITH_ASAN != 'true'
-        # if: (github.event.pull_request.merged == true || github.event_name == 'push') && env.WITH_ASAN != 'true'
-        run: echo "Setting UPLOAD_COVERALLS to true"
-        env:
-          UPLOAD_COVERALLS: true
+        if: (github.event.pull_request.merged == true || github.event_name == 'push') && env.WITH_ASAN != 'true'
+        run: |
+            echo "Setting UPLOAD_COVERALLS to true"
+            echo "UPLOAD_COVERALLS=true" >>${GITHUB_ENV}
 
       - name: Build
         run: |
