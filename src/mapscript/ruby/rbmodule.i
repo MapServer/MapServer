@@ -129,7 +129,7 @@ static void _raise_ms_exception() {
             default:
                 _raise_ms_exception();
                 msResetErrorList();
-                return NULL;
+                return 0;
         }
 
     }
