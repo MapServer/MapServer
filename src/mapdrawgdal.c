@@ -505,7 +505,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   /*
    * Allocate imagery buffers.
    */
-  pabyRaw1 = (unsigned char *)malloc(dst_xsize * dst_ysize * band_count);
+  pabyRaw1 =
+      (unsigned char *)malloc(((size_t)dst_xsize) * dst_ysize * band_count);
   if (pabyRaw1 == NULL) {
     msSetError(MS_MEMERR, "Allocating work image of size %dx%dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize, band_count);
@@ -710,8 +711,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
       band_count++;
 
-      pabyRaw1 = (unsigned char *)realloc(pabyOrig,
-                                          dst_xsize * dst_ysize * band_count);
+      pabyRaw1 = (unsigned char *)realloc(pabyOrig, ((size_t)dst_xsize) *
+                                                        dst_ysize * band_count);
 
       if (pabyRaw1 == NULL) {
         msSetError(MS_MEMERR, "Allocating work image of size %dx%dx%d failed.",
@@ -1779,7 +1780,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Allocate buffer, and read data into it.                         */
   /* -------------------------------------------------------------------- */
-  pBuffer = malloc(dst_xsize * dst_ysize * image->format->bands *
+  pBuffer = malloc(((size_t)dst_xsize) * dst_ysize * image->format->bands *
                    (GDALGetDataTypeSize(eDataType) / 8));
   if (pBuffer == NULL) {
     msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",

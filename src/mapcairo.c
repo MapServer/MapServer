@@ -775,10 +775,10 @@ int getRasterBufferCopyCairo(imageObj *img, rasterBufferObj *rb) {
   rb->data.rgba.pixel_step = 4;
   rb->width = cairo_image_surface_get_width(r->surface);
   rb->height = cairo_image_surface_get_height(r->surface);
-  pb = (unsigned char *)malloc(rb->height * rb->data.rgba.row_step *
-                               sizeof(unsigned char));
+  pb = (unsigned char *)malloc(sizeof(unsigned char) * rb->height *
+                               rb->data.rgba.row_step);
   memcpy(pb, cairo_image_surface_get_data(r->surface),
-         rb->height * rb->data.rgba.row_step);
+         ((size_t)rb->height) * rb->data.rgba.row_step);
   rb->data.rgba.pixels = pb;
   rb->data.rgba.r = &(pb[2]);
   rb->data.rgba.g = &(pb[1]);
@@ -950,8 +950,8 @@ int initializeRasterBufferCairo(rasterBufferObj *rb, int width, int height,
   rb->height = height;
   rb->data.rgba.pixel_step = 4;
   rb->data.rgba.row_step = width * 4;
-  rb->data.rgba.pixels =
-      (unsigned char *)calloc(width * height * 4, sizeof(unsigned char));
+  rb->data.rgba.pixels = (unsigned char *)calloc(((size_t)width) * height * 4,
+                                                 sizeof(unsigned char));
   rb->data.rgba.r = &(rb->data.rgba.pixels[2]);
   rb->data.rgba.g = &(rb->data.rgba.pixels[1]);
   rb->data.rgba.b = &(rb->data.rgba.pixels[0]);
@@ -1113,7 +1113,7 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y,
     initializeRasterBufferCairo(svg_cache->pixmap_buffer, surface_w, surface_h,
                                 0);
     memcpy(svg_cache->pixmap_buffer->data.rgba.pixels, pb,
-           surface_w * surface_h * 4 * sizeof(unsigned char));
+           sizeof(unsigned char) * surface_w * surface_h * 4);
     svg_cache->scale = style->scale;
     svg_cache->rotation = style->rotation;
     cairo_destroy(cr);

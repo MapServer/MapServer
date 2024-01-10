@@ -239,7 +239,8 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
       rlinfo->qc_y_reproj =
           (double *)msSmallCalloc(sizeof(double), rlinfo->query_alloc_max);
       rlinfo->qc_values = (float *)msSmallCalloc(
-          sizeof(float), rlinfo->query_alloc_max * rlinfo->band_count);
+          sizeof(float),
+          ((size_t)rlinfo->query_alloc_max) * rlinfo->band_count);
       rlinfo->qc_red =
           (int *)msSmallCalloc(sizeof(int), rlinfo->query_alloc_max);
       rlinfo->qc_green =
@@ -503,8 +504,8 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   /*      band in the file.  Later we will deal with the various band     */
   /*      selection criteria.                                             */
   /* -------------------------------------------------------------------- */
-  pafRaster =
-      (float *)calloc(sizeof(float), nWinXSize * nWinYSize * nBandCount);
+  pafRaster = (float *)calloc(sizeof(float),
+                              ((size_t)nWinXSize) * nWinYSize * nBandCount);
   MS_CHECK_ALLOC(pafRaster, sizeof(float) * nWinXSize * nWinYSize * nBandCount,
                  -1);
 

@@ -262,7 +262,7 @@ static imageObj *utfgridCreateImage(int width, int height,
   r->width = width / r->utfresolution;
   r->height = height / r->utfresolution;
 
-  r->buffer.resize(r->width * r->height);
+  r->buffer.resize(static_cast<size_t>(r->width) * r->height);
 
   /* AGG specific operations */
   r->m_rendering_buffer.attach(&r->buffer[0], r->width, r->height, r->width);
