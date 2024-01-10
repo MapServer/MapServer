@@ -35,8 +35,7 @@ using namespace v8;
 
 Persistent<FunctionTemplate> Point::constructor;
 
-void Point::Initialize(Handle<Object> target)
-{
+void Point::Initialize(Handle<Object> target) {
   HandleScope scope;
 
   Handle<FunctionTemplate> c = FunctionTemplate::New(Point::New);
@@ -56,42 +55,35 @@ void Point::Initialize(Handle<Object> target)
   constructor.Reset(Isolate::GetCurrent(), c);
 }
 
-void Point::Dispose()
-{
+void Point::Dispose() {
   Point::constructor.Dispose();
   Point::constructor.Clear();
 }
 
-Point::~Point()
-{
+Point::~Point() {
   if (this->freeInternal) {
     msFree(this->get());
   }
 }
 
-Handle<Function> Point::Constructor()
-{
+Handle<Function> Point::Constructor() {
   return (*Point::constructor)->GetFunction();
 }
 
-void Point::New(const v8::FunctionCallbackInfo<Value>& args)
-{
+void Point::New(const v8::FunctionCallbackInfo<Value> &args) {
   HandleScope scope;
 
-  if (args[0]->IsExternal())
-  {
+  if (args[0]->IsExternal()) {
     Local<External> ext = Local<External>::Cast(args[0]);
     void *ptr = ext->Value();
-    Point *point = static_cast<Point*>(ptr);
+    Point *point = static_cast<Point *>(ptr);
     Handle<Object> self = args.Holder();
     point->Wrap(self);
     if (point->parent_) {
       self->SetHiddenValue(String::New("__parent__"), point->parent_->handle());
       point->disableMemoryHandler();
     }
-  }
-  else
-  {
+  } else {
     pointObj *p = (pointObj *)msSmallMalloc(sizeof(pointObj));
 
     p->x = 0;
@@ -104,58 +96,51 @@ void Point::New(const v8::FunctionCallbackInfo<Value>& args)
   }
 }
 
- Point::Point(pointObj *p, ObjectWrap *pa):
-  ObjectWrap()
-{
-    this->this_ = p;
-    this->parent_ = pa;
-    this->freeInternal = true;
+Point::Point(pointObj *p, ObjectWrap *pa) : ObjectWrap() {
+  this->this_ = p;
+  this->parent_ = pa;
+  this->freeInternal = true;
 }
 
 void Point::getProp(Local<String> property,
-                    const PropertyCallbackInfo<Value>& info)
-{
-    HandleScope scope;
-    Point* p = ObjectWrap::Unwrap<Point>(info.Holder());
-    std::string name = TOSTR(property);
-    Handle<Value> value = Undefined();
-    
-    if (name == "x")
-      value = Number::New(p->get()->x);
-    else if (name == "y")
-      value = Number::New(p->get()->y);
-    else if (name == "z")
-      value = Number::New(p->get()->z);
-    else if (name == "m")
-      value = Number::New(p->get()->m);
+                    const PropertyCallbackInfo<Value> &info) {
+  HandleScope scope;
+  Point *p = ObjectWrap::Unwrap<Point>(info.Holder());
+  std::string name = TOSTR(property);
+  Handle<Value> value = Undefined();
 
-    info.GetReturnValue().Set(value);
+  if (name == "x")
+    value = Number::New(p->get()->x);
+  else if (name == "y")
+    value = Number::New(p->get()->y);
+  else if (name == "z")
+    value = Number::New(p->get()->z);
+  else if (name == "m")
+    value = Number::New(p->get()->m);
+
+  info.GetReturnValue().Set(value);
 }
 
-void Point::setProp(Local<String> property,
-                    Local<Value> value,
-                    const PropertyCallbackInfo<void>& info)
-{
-    HandleScope scope;
-    Point* p = ObjectWrap::Unwrap<Point>(info.Holder());
-    std::string name = TOSTR(property);
-    if (!value->IsNumber())
-      ThrowException(Exception::TypeError(
-                           String::New("point value must be a number")));
-    if (name == "x") {
-      p->get()->x = value->NumberValue();
-    } else if (name == "y") {
-      p->get()->y = value->NumberValue();
-    }
-    else if (name == "z") {
-      p->get()->z = value->NumberValue();
-    } else if (name == "m") {
-      p->get()->m = value->NumberValue();
-    }
+void Point::setProp(Local<String> property, Local<Value> value,
+                    const PropertyCallbackInfo<void> &info) {
+  HandleScope scope;
+  Point *p = ObjectWrap::Unwrap<Point>(info.Holder());
+  std::string name = TOSTR(property);
+  if (!value->IsNumber())
+    ThrowException(
+        Exception::TypeError(String::New("point value must be a number")));
+  if (name == "x") {
+    p->get()->x = value->NumberValue();
+  } else if (name == "y") {
+    p->get()->y = value->NumberValue();
+  } else if (name == "z") {
+    p->get()->z = value->NumberValue();
+  } else if (name == "m") {
+    p->get()->m = value->NumberValue();
+  }
 }
 
-void Point::setXY(const v8::FunctionCallbackInfo<v8::Value>& args)
-{
+void Point::setXY(const v8::FunctionCallbackInfo<v8::Value> &args) {
   HandleScope scope;
 
   if (args.Length() < 2 || !args[0]->IsNumber() || !args[1]->IsNumber()) {
@@ -163,24 +148,22 @@ void Point::setXY(const v8::FunctionCallbackInfo<v8::Value>& args)
     return;
   }
 
-  Point* p = ObjectWrap::Unwrap<Point>(args.Holder());
+  Point *p = ObjectWrap::Unwrap<Point>(args.Holder());
 
   p->get()->x = args[0]->NumberValue();
   p->get()->y = args[1]->NumberValue();
-
 }
 
-void Point::setXYZ(const v8::FunctionCallbackInfo<v8::Value>& args)
-{
+void Point::setXYZ(const v8::FunctionCallbackInfo<v8::Value> &args) {
   HandleScope scope;
 
-  if (args.Length() < 3 ||
-      !args[0]->IsNumber() || !args[1]->IsNumber() || !args[2]->IsNumber()) {
+  if (args.Length() < 3 || !args[0]->IsNumber() || !args[1]->IsNumber() ||
+      !args[2]->IsNumber()) {
     ThrowException(String::New("Invalid argument"));
     return;
   }
 
-  Point* p = ObjectWrap::Unwrap<Point>(args.Holder());
+  Point *p = ObjectWrap::Unwrap<Point>(args.Holder());
 
   p->get()->x = args[0]->NumberValue();
   p->get()->y = args[1]->NumberValue();

@@ -6,7 +6,7 @@
  * Author:   Steve Lime and the MapServer team.
  *
  **********************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota. 
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,13 +29,13 @@
 #ifndef MAPOGCAPI_H
 #define MAPOGCAPI_H
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

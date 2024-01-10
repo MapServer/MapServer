@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/wfsclient?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=continents&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-86.923950,46.381596 -60.381756,65.176476</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:continents>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-60.393715,46.381596 -60.381756,46.394154</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>-60.393715,46.386185 -60.387363,46.393707 -60.382725,46.394154 -60.381756,46.391628 -60.390778,46.381596 -60.393715,46.386185 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:continents>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:continents>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-86.923950,65.167961 -86.892601,65.176476</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>-86.903679,65.171326 -86.896553,65.171494 -86.892601,65.169724 -86.905548,65.167961 -86.923950,65.173294 -86.921654,65.176186 -86.906311,65.176476 -86.903679,65.171326 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:continents>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

@@ -6,7 +6,7 @@
  * Author:   Steve Lime and the MapServer team.
  *
  **********************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota. 
+ * Copyright (c) 1996-2005 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,17 +58,12 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM "collection-item.html"
 #define OGCAPI_TEMPLATE_HTML_OPENAPI "openapi.html"
 
-enum class OGCAPIFormat
-{
-    JSON,
-    GeoJSON,
-    OpenAPI_V3,
-    HTML
-};
+enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML };
 
 #define OGCAPI_MIMETYPE_JSON "application/json"
 #define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
-#define OGCAPI_MIMETYPE_OPENAPI_V3 "application/vnd.oai.openapi+json;version=3.0"
+#define OGCAPI_MIMETYPE_OPENAPI_V3                                             \
+  "application/vnd.oai.openapi+json;version=3.0"
 #define OGCAPI_MIMETYPE_HTML "text/html"
 
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
@@ -76,59 +71,52 @@ enum class OGCAPIFormat
 
 #define OGCAPI_DEFAULT_GEOMETRY_PRECISION 6
 
-constexpr const char* EPSG_PREFIX_URL = "http://www.opengis.net/def/crs/EPSG/0/";
-constexpr const char* CRS84_URL = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
+constexpr const char *EPSG_PREFIX_URL =
+    "http://www.opengis.net/def/crs/EPSG/0/";
+constexpr const char *CRS84_URL =
+    "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
 #ifdef USE_OGCAPI_SVR
 
 // Error types
-typedef enum
-{
-    OGCAPI_SERVER_ERROR = 0,
-    OGCAPI_CONFIG_ERROR = 1,
-    OGCAPI_PARAM_ERROR = 2,
-    OGCAPI_NOT_FOUND_ERROR = 3,
+typedef enum {
+  OGCAPI_SERVER_ERROR = 0,
+  OGCAPI_CONFIG_ERROR = 1,
+  OGCAPI_PARAM_ERROR = 2,
+  OGCAPI_NOT_FOUND_ERROR = 3,
 } OGCAPIErrorType;
 
 /*
 ** Returns a JSON object using and a description.
 */
-static void outputError(OGCAPIErrorType errorType, const std::string& description)
-{
-  const char* code = "";
-  const char* status = "";
-  switch(errorType)
-  {
-      case OGCAPI_SERVER_ERROR:
-      {
-          code = "ServerError";
-          status = "500";
-          break;
-      }
-      case OGCAPI_CONFIG_ERROR:
-      {
-          code = "ConfigError";
-          status = "500";
-          break;
-      }
-      case OGCAPI_PARAM_ERROR:
-      {
-          code = "InvalidParameterValue";
-          status = "400";
-          break;
-      }
-      case OGCAPI_NOT_FOUND_ERROR:
-      {
-          code = "NotFound";
-          status = "404";
-          break;
-      }
+static void outputError(OGCAPIErrorType errorType,
+                        const std::string &description) {
+  const char *code = "";
+  const char *status = "";
+  switch (errorType) {
+  case OGCAPI_SERVER_ERROR: {
+    code = "ServerError";
+    status = "500";
+    break;
+  }
+  case OGCAPI_CONFIG_ERROR: {
+    code = "ConfigError";
+    status = "500";
+    break;
+  }
+  case OGCAPI_PARAM_ERROR: {
+    code = "InvalidParameterValue";
+    status = "400";
+    break;
+  }
+  case OGCAPI_NOT_FOUND_ERROR: {
+    code = "NotFound";
+    status = "404";
+    break;
+  }
   }
 
-  json j = {
-    { "code", code },
-    { "description", description }
-  };
+  json j = {{"code", code}, {"description", description}};
 
   msIO_setHeader("Content-Type", "%s", OGCAPI_MIMETYPE_JSON);
   msIO_setHeader("Status", "%s", status);
@@ -137,9 +125,8 @@ static void outputError(OGCAPIErrorType errorType, const std::string& descriptio
 }
 
 static int includeLayer(mapObj *map, layerObj *layer) {
-  if(!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) || 
-     !msWFSIsLayerSupported(layer) || 
-     !msIsLayerQueryable(layer)) {
+  if (!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) ||
+      !msWFSIsLayerSupported(layer) || !msIsLayerQueryable(layer)) {
     return MS_FALSE;
   } else {
     return MS_TRUE;
@@ -151,58 +138,63 @@ static int includeLayer(mapObj *map, layerObj *layer) {
 */
 
 /*
-** Returns the value associated with an item from the request's query string and NULL if the item was not found.
+** Returns the value associated with an item from the request's query string and
+*NULL if the item was not found.
 */
-static const char *getRequestParameter(cgiRequestObj *request, const char *item)
-{
+static const char *getRequestParameter(cgiRequestObj *request,
+                                       const char *item) {
   int i;
 
-  for(i=0; i<request->NumParams; i++) {
-    if(strcmp(item, request->ParamNames[i]) == 0)
+  for (i = 0; i < request->NumParams; i++) {
+    if (strcmp(item, request->ParamNames[i]) == 0)
       return request->ParamValues[i];
   }
 
   return NULL;
 }
 
-static int getMaxLimit(mapObj *map, layerObj *layer)
-{
+static int getMaxLimit(mapObj *map, layerObj *layer) {
   int max_limit = OGCAPI_MAX_LIMIT;
-  const char *value;  
+  const char *value;
 
   // check metadata, layer then map
   value = msOWSLookupMetadata(&(layer->metadata), "A", "max_limit");
-  if(value == NULL) value = msOWSLookupMetadata(&(map->web.metadata), "A", "max_limit");
+  if (value == NULL)
+    value = msOWSLookupMetadata(&(map->web.metadata), "A", "max_limit");
 
-  if(value != NULL) {
+  if (value != NULL) {
     int status = msStringToInt(value, &max_limit, 10);
-    if(status != MS_SUCCESS) max_limit = OGCAPI_MAX_LIMIT; // conversion failed
+    if (status != MS_SUCCESS)
+      max_limit = OGCAPI_MAX_LIMIT; // conversion failed
   }
 
   return max_limit;
 }
 
-static int getDefaultLimit(mapObj *map, layerObj *layer)
-{
+static int getDefaultLimit(mapObj *map, layerObj *layer) {
   int default_limit = OGCAPI_DEFAULT_LIMIT;
 
   // check metadata, layer then map
-  const char* value = msOWSLookupMetadata(&(layer->metadata), "A", "default_limit");
-  if(value == NULL) value = msOWSLookupMetadata(&(map->web.metadata), "A", "default_limit");
+  const char *value =
+      msOWSLookupMetadata(&(layer->metadata), "A", "default_limit");
+  if (value == NULL)
+    value = msOWSLookupMetadata(&(map->web.metadata), "A", "default_limit");
 
-  if(value != NULL) {
+  if (value != NULL) {
     int status = msStringToInt(value, &default_limit, 10);
-    if(status != MS_SUCCESS) default_limit = OGCAPI_DEFAULT_LIMIT; // conversion failed
+    if (status != MS_SUCCESS)
+      default_limit = OGCAPI_DEFAULT_LIMIT; // conversion failed
   }
 
   return default_limit;
 }
 
 /*
-** Returns the limit as an int - between 1 and getMaxLimit(). We always return a valid value...
+** Returns the limit as an int - between 1 and getMaxLimit(). We always return a
+*valid value...
 */
-static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *limit)
-{
+static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer,
+                    int *limit) {
   int status;
   const char *p;
 
@@ -210,15 +202,17 @@ static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *l
   max_limit = getMaxLimit(map, layer);
 
   p = getRequestParameter(request, "limit");
-  if(!p || (p && strlen(p) == 0)) { // missing or empty
-    *limit = MS_MIN(getDefaultLimit(map, layer), max_limit); // max could be smaller than the default
+  if (!p || (p && strlen(p) == 0)) { // missing or empty
+    *limit = MS_MIN(getDefaultLimit(map, layer),
+                    max_limit); // max could be smaller than the default
   } else {
     status = msStringToInt(p, limit, 10);
-    if(status != MS_SUCCESS)
+    if (status != MS_SUCCESS)
       return MS_FAILURE;
 
-    if(*limit <= 0) {
-      *limit = MS_MIN(getDefaultLimit(map, layer), max_limit); // max could be smaller than the default
+    if (*limit <= 0) {
+      *limit = MS_MIN(getDefaultLimit(map, layer),
+                      max_limit); // max could be smaller than the default
     } else {
       *limit = MS_MIN(*limit, max_limit);
     }
@@ -228,74 +222,75 @@ static int getLimit(mapObj *map, cgiRequestObj *request, layerObj *layer, int *l
 }
 
 // Return the content of the "crs" member of the /collections/{name} response
-static json getCrsList(mapObj *map, layerObj *layer)
-{
-  char* pszSRSList = NULL;
-  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "AOF", MS_FALSE, &pszSRSList);
-  if( !pszSRSList )
-    msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "AOF", MS_FALSE, &pszSRSList);
+static json getCrsList(mapObj *map, layerObj *layer) {
+  char *pszSRSList = NULL;
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "AOF", MS_FALSE,
+                   &pszSRSList);
+  if (!pszSRSList)
+    msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "AOF", MS_FALSE,
+                     &pszSRSList);
   json jCrsList;
-  if( pszSRSList )
-  {
-      const auto tokens = msStringSplit(pszSRSList, ' ');
-      for( const auto& crs: tokens )
-      {
-          if( crs.find("EPSG:") == 0 )
-          {
-              if( jCrsList.empty() )
-              {
-                  jCrsList.push_back(CRS84_URL);
-              }
-              const std::string url = std::string(EPSG_PREFIX_URL) + crs.substr(strlen("EPSG:"));
-              jCrsList.push_back(url);
-          }
+  if (pszSRSList) {
+    const auto tokens = msStringSplit(pszSRSList, ' ');
+    for (const auto &crs : tokens) {
+      if (crs.find("EPSG:") == 0) {
+        if (jCrsList.empty()) {
+          jCrsList.push_back(CRS84_URL);
+        }
+        const std::string url =
+            std::string(EPSG_PREFIX_URL) + crs.substr(strlen("EPSG:"));
+        jCrsList.push_back(url);
       }
-      msFree(pszSRSList);
+    }
+    msFree(pszSRSList);
   }
   return jCrsList;
 }
 
-// Return the content of the "storageCrs" member of the /collections/{name} response
-static std::string getStorageCrs(layerObj *layer)
-{
+// Return the content of the "storageCrs" member of the /collections/{name}
+// response
+static std::string getStorageCrs(layerObj *layer) {
   std::string storageCrs;
-  char* pszFirstSRS = nullptr;
-  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "AOF", MS_TRUE, &pszFirstSRS);
-  if( pszFirstSRS )
-  {
-      if( std::string(pszFirstSRS).find("EPSG:") == 0 )
-      {
-          storageCrs = std::string(EPSG_PREFIX_URL) + (pszFirstSRS + strlen("EPSG:"));
-      }
-      msFree(pszFirstSRS);
+  char *pszFirstSRS = nullptr;
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "AOF", MS_TRUE,
+                   &pszFirstSRS);
+  if (pszFirstSRS) {
+    if (std::string(pszFirstSRS).find("EPSG:") == 0) {
+      storageCrs =
+          std::string(EPSG_PREFIX_URL) + (pszFirstSRS + strlen("EPSG:"));
+    }
+    msFree(pszFirstSRS);
   }
   return storageCrs;
 }
 
 /*
-** Returns the bbox in output CRS (CRS84 by default, or "crs" request parameter when specified)
+** Returns the bbox in output CRS (CRS84 by default, or "crs" request parameter
+*when specified)
 */
-static bool getBbox(mapObj *map, layerObj* layer, cgiRequestObj *request, rectObj *bbox, projectionObj* outputProj)
-{
+static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
+                    rectObj *bbox, projectionObj *outputProj) {
   int status;
 
-  const char* bboxParam = getRequestParameter(request, "bbox");
-  if(!bboxParam || strlen(bboxParam) == 0) { // missing or empty - assign map->extent (no projection necessary)
+  const char *bboxParam = getRequestParameter(request, "bbox");
+  if (!bboxParam ||
+      strlen(bboxParam) == 0) { // missing or empty - assign map->extent (no
+                                // projection necessary)
     bbox->minx = map->extent.minx;
     bbox->miny = map->extent.miny;
     bbox->maxx = map->extent.maxx;
     bbox->maxy = map->extent.maxy;
   } else {
     const auto tokens = msStringSplit(bboxParam, ',');
-    if(tokens.size() != 4) {
+    if (tokens.size() != 4) {
       outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
       return false;
     }
 
     double values[4];
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
       status = msStringToDouble(tokens[i].c_str(), &values[i]);
-      if(status != MS_SUCCESS) {
+      if (status != MS_SUCCESS) {
         outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
         return false;
       }
@@ -307,58 +302,55 @@ static bool getBbox(mapObj *map, layerObj* layer, cgiRequestObj *request, rectOb
     bbox->maxy = values[3];
 
     // validate bbox is well-formed (degenerate is ok)
-    if(MS_VALID_SEARCH_EXTENT(*bbox) != MS_TRUE) {
+    if (MS_VALID_SEARCH_EXTENT(*bbox) != MS_TRUE) {
       outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
       return false;
     }
 
     std::string bboxCrs = "EPSG:4326";
-    bool axisInverted = false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
-    const char* bboxCrsParam = getRequestParameter(request, "bbox-crs");
-    if( bboxCrsParam )
-    {
-        bool isExpectedCrs = false;
-        for( const auto& crsItem: getCrsList(map, layer) )
-        {
-            if( bboxCrsParam == crsItem.get<std::string>() ) {
-                isExpectedCrs = true;
-                break;
-            }
+    bool axisInverted =
+        false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
+    const char *bboxCrsParam = getRequestParameter(request, "bbox-crs");
+    if (bboxCrsParam) {
+      bool isExpectedCrs = false;
+      for (const auto &crsItem : getCrsList(map, layer)) {
+        if (bboxCrsParam == crsItem.get<std::string>()) {
+          isExpectedCrs = true;
+          break;
         }
-        if( !isExpectedCrs ) {
-            outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox-crs.");
-            return false;
+      }
+      if (!isExpectedCrs) {
+        outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox-crs.");
+        return false;
+      }
+      if (std::string(bboxCrsParam) != CRS84_URL) {
+        if (std::string(bboxCrsParam).find(EPSG_PREFIX_URL) == 0) {
+          const char *code = bboxCrsParam + strlen(EPSG_PREFIX_URL);
+          bboxCrs = std::string("EPSG:") + code;
+          axisInverted = msIsAxisInverted(atoi(code));
         }
-        if( std::string(bboxCrsParam) != CRS84_URL )
-        {
-          if( std::string(bboxCrsParam).find(EPSG_PREFIX_URL) == 0 )
-          {
-              const char* code = bboxCrsParam + strlen(EPSG_PREFIX_URL);
-              bboxCrs = std::string("EPSG:") + code;
-              axisInverted = msIsAxisInverted(atoi(code));
-          }
-       }
+      }
     }
-    if( axisInverted )
-    {
-        std::swap(bbox->minx, bbox->miny);
-        std::swap(bbox->maxx, bbox->maxy);
+    if (axisInverted) {
+      std::swap(bbox->minx, bbox->miny);
+      std::swap(bbox->maxx, bbox->maxy);
     }
 
     projectionObj bboxProj;
     msInitProjection(&bboxProj);
     msProjectionInheritContextFrom(&bboxProj, &(map->projection));
     if (msLoadProjectionString(&bboxProj, bboxCrs.c_str()) != 0) {
-       msFreeProjection(&bboxProj);
-       outputError(OGCAPI_SERVER_ERROR, "Cannot process bbox-crs.");
-       return false;
+      msFreeProjection(&bboxProj);
+      outputError(OGCAPI_SERVER_ERROR, "Cannot process bbox-crs.");
+      return false;
     }
 
     status = msProjectRect(&bboxProj, outputProj, bbox);
     msFreeProjection(&bboxProj);
-    if(status != MS_SUCCESS) {
-        outputError(OGCAPI_SERVER_ERROR, "Cannot reproject bbox from bbox-crs to output CRS.");
-        return false;
+    if (status != MS_SUCCESS) {
+      outputError(OGCAPI_SERVER_ERROR,
+                  "Cannot reproject bbox from bbox-crs to output CRS.");
+      return false;
     }
   }
 
@@ -368,28 +360,41 @@ static bool getBbox(mapObj *map, layerObj* layer, cgiRequestObj *request, rectOb
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-static const char *getTemplateDirectory(mapObj *map, const char *key, const char *envvar)
-{
+static std::string getTemplateDirectory(mapObj *map, const char *key,
+                                        const char *envvar) {
   const char *directory;
 
-  // TODO: if directory is provided then perhaps we need to check for a trailing slash
+  directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
 
-  if((directory = msOWSLookupMetadata(&(map->web.metadata), "A", key)) != NULL) 
-    return directory;
-  else if((directory = CPLGetConfigOption(envvar, NULL)) != NULL)
-    return directory;
-  else
-    return NULL;
+  if (directory == NULL) {
+    directory = CPLGetConfigOption(envvar, NULL);
+  }
+
+  std::string s;
+  if (directory != NULL) {
+    s = directory;
+    if (!s.empty() && (s.back() != '/' && s.back() != '\\')) {
+      // add a trailing slash if missing
+      std::string slash = "/";
+#ifdef _WIN32
+      slash = "\\";
+#endif
+      s += slash;
+    }
+  }
+
+  return s;
 }
 
 /*
-** Returns the service title from oga_{key} and/or ows_{key} or a default value if not set.
+** Returns the service title from oga_{key} and/or ows_{key} or a default value
+*if not set.
 */
-static const char *getWebMetadata(mapObj *map, const char* domain, const char* key, const char* defaultVal)
-{
+static const char *getWebMetadata(mapObj *map, const char *domain,
+                                  const char *key, const char *defaultVal) {
   const char *value;
 
-  if((value = msOWSLookupMetadata(&(map->web.metadata), domain, key)) != NULL)
+  if ((value = msOWSLookupMetadata(&(map->web.metadata), domain, key)) != NULL)
     return value;
   else
     return defaultVal;
@@ -398,107 +403,94 @@ static const char *getWebMetadata(mapObj *map, const char* domain, const char* k
 /*
 ** Returns the service title from oga|ows_title or a default value if not set.
 */
-static const char *getTitle(mapObj *map)
-{
+static const char *getTitle(mapObj *map) {
   return getWebMetadata(map, "OA", "title", OGCAPI_DEFAULT_TITLE);
 }
 
 /*
-** Returns the API root URL from oga_onlineresource or builds a value if not set.
+** Returns the API root URL from oga_onlineresource or builds a value if not
+*set.
 */
-static std::string getApiRootUrl(mapObj *map)
-{
+static std::string getApiRootUrl(mapObj *map) {
   const char *root;
 
-  if((root = msOWSLookupMetadata(&(map->web.metadata), "A", "onlineresource")) != NULL)
+  if ((root = msOWSLookupMetadata(&(map->web.metadata), "A",
+                                  "onlineresource")) != NULL)
     return std::string(root);
   else
-    return "http://" + std::string(getenv("SERVER_NAME")) + ":" + std::string(getenv("SERVER_PORT")) + std::string(getenv("SCRIPT_NAME")) + std::string(getenv("PATH_INFO"));
+    return "http://" + std::string(getenv("SERVER_NAME")) + ":" +
+           std::string(getenv("SERVER_PORT")) +
+           std::string(getenv("SCRIPT_NAME")) +
+           std::string(getenv("PATH_INFO"));
 }
 
-static json getFeatureConstant(const gmlConstantObj *constant)
-{
+static json getFeatureConstant(const gmlConstantObj *constant) {
   json j; // empty (null)
 
-  if(!constant) throw std::runtime_error("Null constant metadata.");
-  if(!constant->value) return j;
-  
+  if (!constant)
+    throw std::runtime_error("Null constant metadata.");
+  if (!constant->value)
+    return j;
+
   // initialize
-  j = { { constant->name, constant->value } };  
+  j = {{constant->name, constant->value}};
 
   return j;
 }
 
-static json getFeatureItem(const gmlItemObj *item, const char *value)
-{
+static json getFeatureItem(const gmlItemObj *item, const char *value) {
   json j; // empty (null)
   const char *key;
 
-  if(!item) throw std::runtime_error("Null item metadata.");
-  if(!item->visible) return j;
+  if (!item)
+    throw std::runtime_error("Null item metadata.");
+  if (!item->visible)
+    return j;
 
-  if(item->alias)
+  if (item->alias)
     key = item->alias;
   else
     key = item->name;
 
   // initialize
-  j = { { key, value } };
+  j = {{key, value}};
 
-  if( item->type && (EQUAL(item->type, "Date") ||
-                     EQUAL(item->type, "DateTime") ||
-                     EQUAL(item->type, "Time")) ) {
-      struct tm tm;
-      if( msParseTime(value, &tm) == MS_TRUE ) {
-          char tmpValue[64];
-          if( EQUAL(item->type, "Date") )
-              snprintf(tmpValue, sizeof(tmpValue),
-                       "%04d-%02d-%02d",
-                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-          else if( EQUAL(item->type, "Time") )
-              snprintf(tmpValue, sizeof(tmpValue),
-                       "%02d:%02d:%02dZ",
-                       tm.tm_hour, tm.tm_min, tm.tm_sec);
-          else
-              snprintf(tmpValue, sizeof(tmpValue),
-                       "%04d-%02d-%02dT%02d:%02d:%02dZ",
-                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-                       tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-          j = { { key, tmpValue } };
-      }
-  }
-  else if( item->type && (EQUAL(item->type, "Integer") ||
-                          EQUAL(item->type, "Long")) )
-  {
-      try
-      {
-          j = { { key, std::stoll(value) } };
-      }
-      catch( const std::exception& )
-      {
-      }
-  }
-  else if( item->type && EQUAL(item->type, "Real"))
-  {
-      try
-      {
-          j = { { key, std::stod(value) } };
-      }
-      catch( const std::exception& )
-      {
-      }
-  }
-  else if( item->type && EQUAL(item->type, "Boolean"))
-  {
-      if( EQUAL(value,"0") || EQUAL(value,"false") )
-      {
-          j = { { key, false } };
-      }
+  if (item->type &&
+      (EQUAL(item->type, "Date") || EQUAL(item->type, "DateTime") ||
+       EQUAL(item->type, "Time"))) {
+    struct tm tm;
+    if (msParseTime(value, &tm) == MS_TRUE) {
+      char tmpValue[64];
+      if (EQUAL(item->type, "Date"))
+        snprintf(tmpValue, sizeof(tmpValue), "%04d-%02d-%02d",
+                 tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+      else if (EQUAL(item->type, "Time"))
+        snprintf(tmpValue, sizeof(tmpValue), "%02d:%02d:%02dZ", tm.tm_hour,
+                 tm.tm_min, tm.tm_sec);
       else
-      {
-          j = { { key, true } };
-      }
+        snprintf(tmpValue, sizeof(tmpValue), "%04d-%02d-%02dT%02d:%02d:%02dZ",
+                 tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+                 tm.tm_min, tm.tm_sec);
+
+      j = {{key, tmpValue}};
+    }
+  } else if (item->type &&
+             (EQUAL(item->type, "Integer") || EQUAL(item->type, "Long"))) {
+    try {
+      j = {{key, std::stoll(value)}};
+    } catch (const std::exception &) {
+    }
+  } else if (item->type && EQUAL(item->type, "Real")) {
+    try {
+      j = {{key, std::stod(value)}};
+    } catch (const std::exception &) {
+    }
+  } else if (item->type && EQUAL(item->type, "Boolean")) {
+    if (EQUAL(value, "0") || EQUAL(value, "false")) {
+      j = {{key, false}};
+    } else {
+      j = {{key, true}};
+    }
   }
 
   return j;
@@ -514,89 +506,98 @@ static double round_up(double value, int decimal_places) {
   return std::ceil(value * multiplier) / multiplier;
 }
 
-static json getFeatureGeometry(shapeObj *shape, int precision, bool outputCrsAxisInverted)
-{
+static json getFeatureGeometry(shapeObj *shape, int precision,
+                               bool outputCrsAxisInverted) {
   json geometry; // empty (null)
-  int *outerList=NULL, numOuterRings=0;
+  int *outerList = NULL, numOuterRings = 0;
 
-  if(!shape) throw std::runtime_error("Null shape.");
+  if (!shape)
+    throw std::runtime_error("Null shape.");
 
-  switch(shape->type) {
-  case(MS_SHAPE_POINT):
-    if(shape->numlines == 0 || shape->line[0].numpoints == 0) // not enough info for a point
+  switch (shape->type) {
+  case (MS_SHAPE_POINT):
+    if (shape->numlines == 0 ||
+        shape->line[0].numpoints == 0) // not enough info for a point
       return geometry;
 
-    if(shape->line[0].numpoints == 1) {
+    if (shape->line[0].numpoints == 1) {
       geometry["type"] = "Point";
       double x = shape->line[0].point[0].x;
       double y = shape->line[0].point[0].y;
-      if( outputCrsAxisInverted )
-          std::swap(x, y);
-      geometry["coordinates"] = { round_up(x, precision), round_up(y, precision) };
+      if (outputCrsAxisInverted)
+        std::swap(x, y);
+      geometry["coordinates"] = {round_up(x, precision),
+                                 round_up(y, precision)};
     } else {
       geometry["type"] = "MultiPoint";
       geometry["coordinates"] = json::array();
-      for(int j=0; j<shape->line[0].numpoints; j++) {
+      for (int j = 0; j < shape->line[0].numpoints; j++) {
         double x = shape->line[0].point[j].x;
         double y = shape->line[0].point[j].y;
-        if( outputCrsAxisInverted )
+        if (outputCrsAxisInverted)
           std::swap(x, y);
-        geometry["coordinates"].push_back( { round_up(x, precision), round_up(y, precision) } );
+        geometry["coordinates"].push_back(
+            {round_up(x, precision), round_up(y, precision)});
       }
     }
     break;
-  case(MS_SHAPE_LINE):
-    if(shape->numlines == 0 || shape->line[0].numpoints < 2) // not enough info for a line
+  case (MS_SHAPE_LINE):
+    if (shape->numlines == 0 ||
+        shape->line[0].numpoints < 2) // not enough info for a line
       return geometry;
 
-    if(shape->numlines == 1) {
+    if (shape->numlines == 1) {
       geometry["type"] = "LineString";
       geometry["coordinates"] = json::array();
-      for(int j=0; j<shape->line[0].numpoints; j++) {
+      for (int j = 0; j < shape->line[0].numpoints; j++) {
         double x = shape->line[0].point[j].x;
         double y = shape->line[0].point[j].y;
-        if( outputCrsAxisInverted )
+        if (outputCrsAxisInverted)
           std::swap(x, y);
-        geometry["coordinates"].push_back( { round_up(x, precision), round_up(y, precision) } );
+        geometry["coordinates"].push_back(
+            {round_up(x, precision), round_up(y, precision)});
       }
     } else {
       geometry["type"] = "MultiLineString";
       geometry["coordinates"] = json::array();
-      for(int i=0; i<shape->numlines; i++) {
+      for (int i = 0; i < shape->numlines; i++) {
         json part = json::array();
-        for(int j=0; j<shape->line[i].numpoints; j++) {
+        for (int j = 0; j < shape->line[i].numpoints; j++) {
           double x = shape->line[i].point[j].x;
           double y = shape->line[i].point[j].y;
-          if( outputCrsAxisInverted )
+          if (outputCrsAxisInverted)
             std::swap(x, y);
-          part.push_back( { round_up(x, precision), round_up(y, precision) } );
+          part.push_back({round_up(x, precision), round_up(y, precision)});
         }
         geometry["coordinates"].push_back(part);
       }
     }
     break;
-  case(MS_SHAPE_POLYGON):
-    if(shape->numlines == 0 || shape->line[0].numpoints < 4) // not enough info for a polygon (first=last)
+  case (MS_SHAPE_POLYGON):
+    if (shape->numlines == 0 ||
+        shape->line[0].numpoints <
+            4) // not enough info for a polygon (first=last)
       return geometry;
 
     outerList = msGetOuterList(shape);
-    if(outerList == NULL) throw std::runtime_error("Unable to allocate list of outer rings.");
-    for(int k=0; k<shape->numlines; k++) {
-      if(outerList[k] == MS_TRUE)
-	numOuterRings++;
+    if (outerList == NULL)
+      throw std::runtime_error("Unable to allocate list of outer rings.");
+    for (int k = 0; k < shape->numlines; k++) {
+      if (outerList[k] == MS_TRUE)
+        numOuterRings++;
     }
 
-    if(numOuterRings == 1) {
+    if (numOuterRings == 1) {
       geometry["type"] = "Polygon";
       geometry["coordinates"] = json::array();
-      for(int i=0; i<shape->numlines; i++) {
+      for (int i = 0; i < shape->numlines; i++) {
         json part = json::array();
-        for(int j=0; j<shape->line[i].numpoints; j++) {
+        for (int j = 0; j < shape->line[i].numpoints; j++) {
           double x = shape->line[i].point[j].x;
           double y = shape->line[i].point[j].y;
-          if( outputCrsAxisInverted )
+          if (outputCrsAxisInverted)
             std::swap(x, y);
-          part.push_back( { round_up(x, precision), round_up(y, precision) } );
+          part.push_back({round_up(x, precision), round_up(y, precision)});
         }
         geometry["coordinates"].push_back(part);
       }
@@ -604,24 +605,28 @@ static json getFeatureGeometry(shapeObj *shape, int precision, bool outputCrsAxi
       geometry["type"] = "MultiPolygon";
       geometry["coordinates"] = json::array();
 
-      for(int k=0; k<shape->numlines; k++) {
-        if(outerList[k] == MS_TRUE) { // outer ring: generate polygon and add to coordinates
+      for (int k = 0; k < shape->numlines; k++) {
+        if (outerList[k] ==
+            MS_TRUE) { // outer ring: generate polygon and add to coordinates
           int *innerList = msGetInnerList(shape, k, outerList);
-          if(innerList == NULL) {
+          if (innerList == NULL) {
             msFree(outerList);
             throw std::runtime_error("Unable to allocate list of inner rings.");
           }
 
           json polygon = json::array();
-          for(int i=0; i<shape->numlines; i++) {
-            if(i == k || outerList[i] == MS_TRUE) { // add outer ring (k) and any inner rings
+          for (int i = 0; i < shape->numlines; i++) {
+            if (i == k ||
+                outerList[i] ==
+                    MS_TRUE) { // add outer ring (k) and any inner rings
               json part = json::array();
-              for(int j=0; j<shape->line[i].numpoints; j++) {
+              for (int j = 0; j < shape->line[i].numpoints; j++) {
                 double x = shape->line[i].point[j].x;
                 double y = shape->line[i].point[j].y;
-                if( outputCrsAxisInverted )
+                if (outputCrsAxisInverted)
                   std::swap(x, y);
-                part.push_back( { round_up(x, precision), round_up(y, precision) } );
+                part.push_back(
+                    {round_up(x, precision), round_up(y, precision)});
               }
               polygon.push_back(part);
             }
@@ -645,55 +650,63 @@ static json getFeatureGeometry(shapeObj *shape, int precision, bool outputCrsAxi
 /*
 ** Return a GeoJSON representation of a shape.
 */
-static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, gmlConstantListObj *constants, int geometry_precision, bool outputCrsAxisInverted)
-{
+static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items,
+                       gmlConstantListObj *constants, int geometry_precision,
+                       bool outputCrsAxisInverted) {
   int i;
   json feature; // empty (null)
 
-  if(!layer || !shape) throw std::runtime_error("Null arguments.");
+  if (!layer || !shape)
+    throw std::runtime_error("Null arguments.");
 
   // initialize
-  feature = {
-    { "type", "Feature" },
-    { "properties", json::object() }
-  };
+  feature = {{"type", "Feature"}, {"properties", json::object()}};
 
   // id
-  const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
-  if(featureIdItem == NULL) throw std::runtime_error("Missing required featureid metadata."); // should have been trapped earlier
-  for(i=0; i<items->numitems; i++) {
-    if(strcasecmp(featureIdItem, items->items[i].name) == 0) {
+  const char *featureIdItem =
+      msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
+  if (featureIdItem == NULL)
+    throw std::runtime_error(
+        "Missing required featureid metadata."); // should have been trapped
+                                                 // earlier
+  for (i = 0; i < items->numitems; i++) {
+    if (strcasecmp(featureIdItem, items->items[i].name) == 0) {
       feature["id"] = shape->values[i];
       break;
     }
   }
 
-  if(i == items->numitems) throw std::runtime_error("Feature id not found.");
+  if (i == items->numitems)
+    throw std::runtime_error("Feature id not found.");
 
   // properties - build from items and constants, no group support for now
 
-  for(int i=0; i<items->numitems; i++) {    
+  for (int i = 0; i < items->numitems; i++) {
     try {
       json item = getFeatureItem(&(items->items[i]), shape->values[i]);
-      if(!item.is_null()) feature["properties"].insert(item.begin(), item.end());
+      if (!item.is_null())
+        feature["properties"].insert(item.begin(), item.end());
     } catch (const std::runtime_error &) {
       throw std::runtime_error("Error fetching item.");
     }
   }
 
-  for(int i=0; i<constants->numconstants; i++) {
+  for (int i = 0; i < constants->numconstants; i++) {
     try {
       json constant = getFeatureConstant(&(constants->constants[i]));
-      if(!constant.is_null()) feature["properties"].insert(constant.begin(), constant.end());
+      if (!constant.is_null())
+        feature["properties"].insert(constant.begin(), constant.end());
     } catch (const std::runtime_error &) {
-      throw std::runtime_error("Error fetching constant.");  
+      throw std::runtime_error("Error fetching constant.");
     }
   }
 
   // geometry
   try {
-    json geometry = getFeatureGeometry(shape, geometry_precision,outputCrsAxisInverted);
-    if(!geometry.is_null()) feature["geometry"] = geometry;
+    json geometry =
+        getFeatureGeometry(shape, geometry_precision, outputCrsAxisInverted);
+    if (!geometry.is_null())
+      feature["geometry"] = std::move(geometry);
   } catch (const std::runtime_error &) {
     throw std::runtime_error("Error fetching geometry.");
   }
@@ -701,72 +714,85 @@ static json getFeature(layerObj *layer, shapeObj *shape, gmlItemListObj *items, 
   return feature;
 }
 
-static json getLink(hashTableObj *metadata, const std::string& name)
-{
+static json getLink(hashTableObj *metadata, const std::string &name) {
   json link;
 
-  const char *href = msOWSLookupMetadata(metadata, "A", (name + "_href").c_str());
-  if(!href) throw std::runtime_error("Missing required link href property.");
+  const char *href =
+      msOWSLookupMetadata(metadata, "A", (name + "_href").c_str());
+  if (!href)
+    throw std::runtime_error("Missing required link href property.");
 
-  const char *title = msOWSLookupMetadata(metadata, "A", (name + "_title").c_str());
-  const char *type = msOWSLookupMetadata(metadata, "A", (name + "_type").c_str());
+  const char *title =
+      msOWSLookupMetadata(metadata, "A", (name + "_title").c_str());
+  const char *type =
+      msOWSLookupMetadata(metadata, "A", (name + "_type").c_str());
 
-  link = {
-    { "href", href },
-    { "title", title?title:href },
-    { "type", type?type:"text/html" }
-  };
+  link = {{"href", href},
+          {"title", title ? title : href},
+          {"type", type ? type : "text/html"}};
 
   return link;
 }
 
-static const char* getCollectionDescription(layerObj* layer)
-{
-  const char *description = msOWSLookupMetadata(&(layer->metadata), "A", "description");
-  if(!description) description = msOWSLookupMetadata(&(layer->metadata), "OF", "abstract"); // fallback on abstract
-  if(!description) description = "<!-- Warning: unable to set the collection description. -->"; // finally a warning...
+static const char *getCollectionDescription(layerObj *layer) {
+  const char *description =
+      msOWSLookupMetadata(&(layer->metadata), "A", "description");
+  if (!description)
+    description = msOWSLookupMetadata(&(layer->metadata), "OF",
+                                      "abstract"); // fallback on abstract
+  if (!description)
+    description =
+        "<!-- Warning: unable to set the collection description. -->"; // finally
+                                                                       // a
+                                                                       // warning...
   return description;
 }
 
-static const char* getCollectionTitle(layerObj* layer)
-{
-    const char* title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
-    if(!title) title = layer->name; // revert to layer name if no title found
-    return title;
+static const char *getCollectionTitle(layerObj *layer) {
+  const char *title = msOWSLookupMetadata(&(layer->metadata), "AOF", "title");
+  if (!title)
+    title = layer->name; // revert to layer name if no title found
+  return title;
 }
 
-static int getGeometryPrecision(mapObj *map, layerObj *layer)
-{
-    int geometry_precision = OGCAPI_DEFAULT_GEOMETRY_PRECISION;
-    if(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision")) {
-      geometry_precision = atoi(msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision"));
-    } else if(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision")) {
-      geometry_precision = atoi(msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision"));
-    }
-    return geometry_precision;
+static int getGeometryPrecision(mapObj *map, layerObj *layer) {
+  int geometry_precision = OGCAPI_DEFAULT_GEOMETRY_PRECISION;
+  if (msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision")) {
+    geometry_precision = atoi(
+        msOWSLookupMetadata(&(layer->metadata), "AF", "geometry_precision"));
+  } else if (msOWSLookupMetadata(&map->web.metadata, "AF",
+                                 "geometry_precision")) {
+    geometry_precision = atoi(
+        msOWSLookupMetadata(&map->web.metadata, "AF", "geometry_precision"));
+  }
+  return geometry_precision;
 }
 
-static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
-{
+static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
   json collection; // empty (null)
   rectObj bbox;
 
-  if(!map || !layer) return collection;
+  if (!map || !layer)
+    return collection;
 
-  if(!includeLayer(map, layer)) return collection;
+  if (!includeLayer(map, layer))
+    return collection;
 
   // initialize some things
   std::string api_root = getApiRootUrl(map);
 
-  if(msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
+  if (msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
     if (layer->projection.numargs > 0)
       msOWSProjectToWGS84(&layer->projection, &bbox);
     else if (map->projection.numargs > 0)
       msOWSProjectToWGS84(&map->projection, &bbox);
     else
-      throw std::runtime_error("Unable to transform bounding box, no projection defined.");
+      throw std::runtime_error(
+          "Unable to transform bounding box, no projection defined.");
   } else {
-    throw std::runtime_error("Unable to get collection bounding box."); // might be too harsh since extent is optional
+    throw std::runtime_error(
+        "Unable to get collection bounding box."); // might be too harsh since
+                                                   // extent is optional
   }
 
   const char *description = getCollectionDescription(layer);
@@ -778,69 +804,64 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   const int geometry_precision = getGeometryPrecision(map, layer);
 
   // build collection object
-  collection = {
-    { "id", id },
-    { "description", description },
-    { "title", title },
-    { "extent", {
-        { "spatial", {
-            { "bbox", {{ round_down(bbox.minx, geometry_precision),
-                         round_down(bbox.miny, geometry_precision),
-                         round_up(bbox.maxx, geometry_precision),
-                         round_up(bbox.maxy, geometry_precision) }}},
-            { "crs", CRS84_URL }
-          }
-        }
-      }
-    },
-    { "links", {
-        {
-          { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "This collection as JSON" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=json" }
-        },{
-          { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "This collection as HTML" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
-        },{
-          { "rel", "items" },
-          { "type", OGCAPI_MIMETYPE_GEOJSON },
-          { "title", "Items for this collection as GeoJSON" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" }
-        },{
-          { "rel", "items" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "Items for this collection as HTML" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" }
-        }
+  collection = {{"id", id},
+                {"description", description},
+                {"title", title},
+                {"extent",
+                 {{"spatial",
+                   {{"bbox",
+                     {{round_down(bbox.minx, geometry_precision),
+                       round_down(bbox.miny, geometry_precision),
+                       round_up(bbox.maxx, geometry_precision),
+                       round_up(bbox.maxy, geometry_precision)}}},
+                    {"crs", CRS84_URL}}}}},
+                {"links",
+                 {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+                   {"type", OGCAPI_MIMETYPE_JSON},
+                   {"title", "This collection as JSON"},
+                   {"href", api_root + "/collections/" +
+                                std::string(id_encoded) + "?f=json"}},
+                  {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+                   {"type", OGCAPI_MIMETYPE_HTML},
+                   {"title", "This collection as HTML"},
+                   {"href", api_root + "/collections/" +
+                                std::string(id_encoded) + "?f=html"}},
+                  {{"rel", "items"},
+                   {"type", OGCAPI_MIMETYPE_GEOJSON},
+                   {"title", "Items for this collection as GeoJSON"},
+                   {"href", api_root + "/collections/" +
+                                std::string(id_encoded) + "/items?f=json"}},
+                  {{"rel", "items"},
+                   {"type", OGCAPI_MIMETYPE_HTML},
+                   {"title", "Items for this collection as HTML"},
+                   {"href", api_root + "/collections/" +
+                                std::string(id_encoded) + "/items?f=html"}}
 
-      }
-    },
-    { "itemType", "feature" }
-  };
+                 }},
+                {"itemType", "feature"}};
 
   msFree(id_encoded); // done
 
   // handle optional configuration (keywords and links)
   const char *value = msOWSLookupMetadata(&(layer->metadata), "A", "keywords");
-  if(!value) value = msOWSLookupMetadata(&(layer->metadata), "OF", "keywordlist"); // fallback on keywordlist
-  if(value) {
+  if (!value)
+    value = msOWSLookupMetadata(&(layer->metadata), "OF",
+                                "keywordlist"); // fallback on keywordlist
+  if (value) {
     std::vector<std::string> keywords = msStringSplit(value, ',');
-    for(std::string keyword : keywords) {
+    for (const std::string &keyword : keywords) {
       collection["keywords"].push_back(keyword);
     }
   }
 
   value = msOWSLookupMetadata(&(layer->metadata), "A", "links");
-  if(value) {
+  if (value) {
     std::vector<std::string> names = msStringSplit(value, ',');
-    for(std::string name : names) {
+    for (const std::string &name : names) {
       try {
         json link = getLink(&(layer->metadata), name);
         collection["links"].push_back(link);
-      } catch(const std::runtime_error &e) {
+      } catch (const std::runtime_error &e) {
         throw e;
       }
     }
@@ -850,15 +871,13 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
   // Inspect metadata to set the "crs": [] member and "storageCrs" member
 
   json jCrsList = getCrsList(map, layer);
-  if( !jCrsList.empty() )
-  {
-      collection["crs"] = jCrsList;
+  if (!jCrsList.empty()) {
+    collection["crs"] = std::move(jCrsList);
 
-      const std::string storageCrs = getStorageCrs(layer);
-      if( !storageCrs.empty() )
-      {
-          collection["storageCrs"] = storageCrs;
-      }
+    std::string storageCrs = getStorageCrs(layer);
+    if (!storageCrs.empty()) {
+      collection["storageCrs"] = std::move(storageCrs);
+    }
   }
 
   return collection;
@@ -868,8 +887,8 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format)
 ** Output stuff...
 */
 
-static void outputJson(const json& j, const char *mimetype, const std::map<std::string, std::string>& extraHeaders)
-{
+static void outputJson(const json &j, const char *mimetype,
+                       const std::map<std::string, std::string> &extraHeaders) {
   std::string js;
 
   try {
@@ -880,19 +899,18 @@ static void outputJson(const json& j, const char *mimetype, const std::map<std::
   }
 
   msIO_setHeader("Content-Type", "%s", mimetype);
-  for( const auto& kvp: extraHeaders )
-  {
-      msIO_setHeader(kvp.first.c_str(), "%s", kvp.second.c_str());
+  for (const auto &kvp : extraHeaders) {
+    msIO_setHeader(kvp.first.c_str(), "%s", kvp.second.c_str());
   }
   msIO_sendHeaders();
   msIO_printf("%s\n", js.c_str());
 }
 
-static void outputTemplate(const char *directory, const char *filename, const json& j, const char *mimetype)
-{
+static void outputTemplate(const char *directory, const char *filename,
+                           const json &j, const char *mimetype) {
   std::string _directory(directory);
   std::string _filename(filename);
-  Environment env {_directory}; // catch
+  Environment env{_directory}; // catch
 
   // ERB-style instead of Mustache (we'll see)
   // env.set_expression("<%=", "%>");
@@ -916,78 +934,85 @@ static void outputTemplate(const char *directory, const char *filename, const js
 
     msIO_setHeader("Content-Type", "%s", mimetype);
     msIO_sendHeaders();
-    msIO_printf("%s\n", result.c_str()); 
-  } catch(const inja::RenderError &e) {
-    outputError(OGCAPI_CONFIG_ERROR, "Template rendering error. " + std::string(e.what()) + " (" + std::string(filename) + ").");
+    msIO_printf("%s\n", result.c_str());
+  } catch (const inja::RenderError &e) {
+    outputError(OGCAPI_CONFIG_ERROR, "Template rendering error. " +
+                                         std::string(e.what()) + " (" +
+                                         std::string(filename) + ").");
     return;
-  }
-    catch (const inja::InjaError& e) {
-        outputError(OGCAPI_CONFIG_ERROR, "InjaError error. " + std::string(e.what()) + " (" + std::string(filename) + ")."
-            + " (" + std::string(directory) + ").");
-        return;
-  } catch(...) {
+  } catch (const inja::InjaError &e) {
+    outputError(OGCAPI_CONFIG_ERROR, "InjaError error. " +
+                                         std::string(e.what()) + " (" +
+                                         std::string(filename) + ")." + " (" +
+                                         std::string(directory) + ").");
+    return;
+  } catch (...) {
     outputError(OGCAPI_SERVER_ERROR, "General template handling error.");
     return;
   }
 }
 
 /*
-** Generic response outputr.
+** Generic response output.
 */
-static void outputResponse(mapObj *map, cgiRequestObj *request,
-                           OGCAPIFormat format,
-                           const char *filename,
-                           const json& response,
-                           const std::map<std::string, std::string>& extraHeaders = std::map<std::string, std::string>() )
-{
-  const char *path = NULL;
+static void
+outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
+               const char *filename, const json &response,
+               const std::map<std::string, std::string> &extraHeaders =
+                   std::map<std::string, std::string>()) {
+  std::string path;
   char fullpath[MS_MAXPATHLEN];
 
-  if(format == OGCAPIFormat::JSON) {
+  if (format == OGCAPIFormat::JSON) {
     outputJson(response, OGCAPI_MIMETYPE_JSON, extraHeaders);
-  } else if(format == OGCAPIFormat::GeoJSON) {
+  } else if (format == OGCAPIFormat::GeoJSON) {
     outputJson(response, OGCAPI_MIMETYPE_GEOJSON, extraHeaders);
-  } else if(format == OGCAPIFormat::OpenAPI_V3) {
+  } else if (format == OGCAPIFormat::OpenAPI_V3) {
     outputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
-  } else if(format == OGCAPIFormat::HTML) {
-    if((path = getTemplateDirectory(map, "html_template_directory", "OGCAPI_HTML_TEMPLATE_DIRECTORY")) == NULL) {
+  } else if (format == OGCAPIFormat::HTML) {
+    path = getTemplateDirectory(map, "html_template_directory",
+                                "OGCAPI_HTML_TEMPLATE_DIRECTORY");
+    if (path.empty()) {
       outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
       return; // bail
     }
-    msBuildPath(fullpath, map->mappath, path);
+    msBuildPath(fullpath, map->mappath, path.c_str());
 
     json j;
 
-    j["response"] = response; // nest the response so we could write the whole object in the template
+    j["response"] = response; // nest the response so we could write the whole
+                              // object in the template
 
     // extend the JSON with a few things that we need for templating
-    j["template"] = {
-      { "path", json::array() },
-      { "params", json::object() },
-      { "api_root", getApiRootUrl(map) },
-      { "title", getTitle(map) },
-      { "tags", json::object() }
-    };
+    j["template"] = {{"path", json::array()},
+                     {"params", json::object()},
+                     {"api_root", getApiRootUrl(map)},
+                     {"title", getTitle(map)},
+                     {"tags", json::object()}};
 
     // api path
-    for( int i=0; i<request->api_path_length; i++ )
+    for (int i = 0; i < request->api_path_length; i++)
       j["template"]["path"].push_back(request->api_path[i]);
 
     // parameters (optional)
-    for( int i=0; i<request->NumParams; i++) {
-      if(request->ParamValues[i] && strlen(request->ParamValues[i]) > 0) { // skip empty params
-        j["template"]["params"].update({{ request->ParamNames[i], request->ParamValues[i] }});
+    for (int i = 0; i < request->NumParams; i++) {
+      if (request->ParamValues[i] &&
+          strlen(request->ParamValues[i]) > 0) { // skip empty params
+        j["template"]["params"].update(
+            {{request->ParamNames[i], request->ParamValues[i]}});
       }
     }
 
     // add custom tags (optional)
-    const char *tags = msOWSLookupMetadata(&(map->web.metadata), "A", "html_tags");
-    if(tags) {
+    const char *tags =
+        msOWSLookupMetadata(&(map->web.metadata), "A", "html_tags");
+    if (tags) {
       std::vector<std::string> names = msStringSplit(tags, ',');
-      for(std::string name : names) {
-        const char *value = msOWSLookupMetadata(&(map->web.metadata), "A", ("tag_" + name).c_str());
-        if(value) {
-              j["template"]["tags"].update({{ name, value }}); // add object
+      for (std::string name : names) {
+        const char *value = msOWSLookupMetadata(&(map->web.metadata), "A",
+                                                ("tag_" + name).c_str());
+        if (value) {
+          j["template"]["tags"].update({{name, value}}); // add object
         }
       }
     }
@@ -1001,77 +1026,72 @@ static void outputResponse(mapObj *map, cgiRequestObj *request,
 /*
 ** Process stuff...
 */
-static int processLandingRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat format)
-{
+static int processLandingRequest(mapObj *map, cgiRequestObj *request,
+                                 OGCAPIFormat format) {
   json response;
 
   // define ambiguous elements
-  const char *description = msOWSLookupMetadata(&(map->web.metadata), "A", "description");
-  if(!description) description = msOWSLookupMetadata(&(map->web.metadata), "OF", "abstract"); // fallback on abstract if necessary
+  const char *description =
+      msOWSLookupMetadata(&(map->web.metadata), "A", "description");
+  if (!description)
+    description =
+        msOWSLookupMetadata(&(map->web.metadata), "OF",
+                            "abstract"); // fallback on abstract if necessary
 
   // define api root url
   std::string api_root = getApiRootUrl(map);
 
   // build response object
   //   - consider conditionally excluding links for HTML format
-  response =  {
-    { "title", getTitle(map) },
-    { "description", description?description:"" },
-    { "links", {
-        {
-          { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "This document as JSON" },
-          { "href", api_root + "?f=json" }
-        },{
-          { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "This document as HTML" },
-          { "href", api_root + "?f=html" }
-        },{
-          { "rel", "conformance" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "OCG API conformance classes implemented by this server (JSON)" },
-          { "href", api_root + "/conformance?f=json" }
-        },{
-          { "rel", "conformance" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "OCG API conformance classes implemented by this server" },
-          { "href", api_root + "/conformance?f=html" }
-        },{
-          { "rel", "data" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "Information about feature collections available from this server (JSON)" },
-          { "href", api_root + "/collections?f=json" }
-        },{
-          { "rel", "data" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "Information about feature collections available from this server" },
-          { "href", api_root + "/collections?f=html" }
-        },{
-          { "rel", "service-desc" },
-          { "type", OGCAPI_MIMETYPE_OPENAPI_V3 },
-          { "title", "OpenAPI document" },
-          { "href", api_root + "/api?f=json" }
-        },{
-          { "rel", "service-doc" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "API documentation" },
-          { "href", api_root + "/api?f=html" }
-        }
-      }
-    }
-  };
+  response = {
+      {"title", getTitle(map)},
+      {"description", description ? description : ""},
+      {"links",
+       {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+         {"type", OGCAPI_MIMETYPE_JSON},
+         {"title", "This document as JSON"},
+         {"href", api_root + "?f=json"}},
+        {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "This document as HTML"},
+         {"href", api_root + "?f=html"}},
+        {{"rel", "conformance"},
+         {"type", OGCAPI_MIMETYPE_JSON},
+         {"title",
+          "OCG API conformance classes implemented by this server (JSON)"},
+         {"href", api_root + "/conformance?f=json"}},
+        {{"rel", "conformance"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "OCG API conformance classes implemented by this server"},
+         {"href", api_root + "/conformance?f=html"}},
+        {{"rel", "data"},
+         {"type", OGCAPI_MIMETYPE_JSON},
+         {"title", "Information about feature collections available from this "
+                   "server (JSON)"},
+         {"href", api_root + "/collections?f=json"}},
+        {{"rel", "data"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title",
+          "Information about feature collections available from this server"},
+         {"href", api_root + "/collections?f=html"}},
+        {{"rel", "service-desc"},
+         {"type", OGCAPI_MIMETYPE_OPENAPI_V3},
+         {"title", "OpenAPI document"},
+         {"href", api_root + "/api?f=json"}},
+        {{"rel", "service-doc"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "API documentation"},
+         {"href", api_root + "/api?f=html"}}}}};
 
   // handle custom links (optional)
   const char *links = msOWSLookupMetadata(&(map->web.metadata), "A", "links");
-  if(links) {
+  if (links) {
     std::vector<std::string> names = msStringSplit(links, ',');
-    for(std::string name : names) {
+    for (std::string name : names) {
       try {
         json link = getLink(&(map->web.metadata), name);
         response["links"].push_back(link);
-      } catch(const std::runtime_error &e) {
+      } catch (const std::runtime_error &e) {
         outputError(OGCAPI_CONFIG_ERROR, std::string(e.what()));
         return MS_SUCCESS;
       }
@@ -1082,30 +1102,32 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request, OGCAPIForm
   return MS_SUCCESS;
 }
 
-static int processConformanceRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat format)
-{
+static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
+                                     OGCAPIFormat format) {
   json response;
- 
+
   // build response object
   response = {
-    { "conformsTo", {
-        "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core",
-        "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
-        "http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs",
-      }
-    }
-  };
+      {"conformsTo",
+       {
+           "http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core",
+           "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections",
+           "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+           "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+           "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
+           "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+           "http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs",
+       }}};
 
-  outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_CONFORMANCE, response);
+  outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_CONFORMANCE,
+                 response);
   return MS_SUCCESS;
 }
 
-static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, const char *collectionId, const char *featureId, OGCAPIFormat format)
-{
+static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
+                                         const char *collectionId,
+                                         const char *featureId,
+                                         OGCAPIFormat format) {
   json response;
   int i;
   layerObj *layer;
@@ -1116,19 +1138,20 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   int numberMatched = 0;
 
   // find the right layer
-  for(i=0; i<map->numlayers; i++) {
-    if(strcmp(map->layers[i]->name, collectionId) == 0) break; // match
+  for (i = 0; i < map->numlayers; i++) {
+    if (strcmp(map->layers[i]->name, collectionId) == 0)
+      break; // match
   }
 
-  if(i == map->numlayers) { // invalid collectionId
+  if (i == map->numlayers) { // invalid collectionId
     outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
 
   layer = map->layers[i]; // for convenience
-  layer->status = MS_ON; // force on (do we need to save and reset?)
+  layer->status = MS_ON;  // force on (do we need to save and reset?)
 
-  if(!includeLayer(map, layer)) {
+  if (!includeLayer(map, layer)) {
     outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
@@ -1136,65 +1159,59 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   //
   // handle parameters specific to this endpoint
   //
-  if(getLimit(map, request, layer, &limit) != MS_SUCCESS) {
+  if (getLimit(map, request, layer, &limit) != MS_SUCCESS) {
     outputError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
     return MS_SUCCESS;
   }
 
-  const char* crs = getRequestParameter(request, "crs");
+  const char *crs = getRequestParameter(request, "crs");
 
   std::string outputCrs = "EPSG:4326";
-  bool outputCrsAxisInverted = false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
+  bool outputCrsAxisInverted =
+      false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
   std::map<std::string, std::string> extraHeaders;
-  if(crs) {
-      bool isExpectedCrs = false;
-      for( const auto& crsItem: getCrsList(map, layer) )
-      {
-          if( crs == crsItem.get<std::string>() ) {
-              isExpectedCrs = true;
-              break;
-          }
+  if (crs) {
+    bool isExpectedCrs = false;
+    for (const auto &crsItem : getCrsList(map, layer)) {
+      if (crs == crsItem.get<std::string>()) {
+        isExpectedCrs = true;
+        break;
       }
-      if( !isExpectedCrs ) {
-          outputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
-          return MS_SUCCESS;
+    }
+    if (!isExpectedCrs) {
+      outputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
+      return MS_SUCCESS;
+    }
+    extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
+    if (std::string(crs) != CRS84_URL) {
+      if (std::string(crs).find(EPSG_PREFIX_URL) == 0) {
+        const char *code = crs + strlen(EPSG_PREFIX_URL);
+        outputCrs = std::string("EPSG:") + code;
+        outputCrsAxisInverted = msIsAxisInverted(atoi(code));
       }
-      if( std::string(crs) != CRS84_URL )
-      {
-          if( std::string(crs).find(EPSG_PREFIX_URL) == 0 )
-          {
-              extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
-              const char* code = crs + strlen(EPSG_PREFIX_URL);
-              outputCrs = std::string("EPSG:") + code;
-              outputCrsAxisInverted = msIsAxisInverted(atoi(code));
-          }
-      }
+    }
+  } else {
+    extraHeaders["Content-Crs"] = '<' + std::string(CRS84_URL) + '>';
   }
 
-  struct ReprojectionObjects
-  {
-      reprojectionObj *reprojector = NULL;
-      projectionObj proj;
+  struct ReprojectionObjects {
+    reprojectionObj *reprojector = NULL;
+    projectionObj proj;
 
-      ReprojectionObjects()
-      {
-          msInitProjection(&proj);
-      }
+    ReprojectionObjects() { msInitProjection(&proj); }
 
-      ~ReprojectionObjects()
-      {
-          msProjectDestroyReprojector(reprojector);
-          msFreeProjection(&proj);
-      }
+    ~ReprojectionObjects() {
+      msProjectDestroyReprojector(reprojector);
+      msFreeProjection(&proj);
+    }
 
-      int executeQuery(mapObj* map)
-      {
-          projectionObj backupMapProjection = map->projection;
-          map->projection = proj;
-          int ret = msExecuteQuery(map);
-          map->projection = backupMapProjection;
-          return ret;
-      }
+    int executeQuery(mapObj *map) {
+      projectionObj backupMapProjection = map->projection;
+      map->projection = proj;
+      int ret = msExecuteQuery(map);
+      map->projection = backupMapProjection;
+      return ret;
+    }
   };
   ReprojectionObjects reprObjs;
 
@@ -1204,39 +1221,43 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     return MS_SUCCESS;
   }
 
-  if(layer->projection.numargs > 0) {
-    if(msProjectionsDiffer(&(layer->projection), &reprObjs.proj)) {
-      reprObjs.reprojector = msProjectCreateReprojector(&(layer->projection), &reprObjs.proj);
-      if(reprObjs.reprojector == NULL) {
+  if (layer->projection.numargs > 0) {
+    if (msProjectionsDiffer(&(layer->projection), &reprObjs.proj)) {
+      reprObjs.reprojector =
+          msProjectCreateReprojector(&(layer->projection), &reprObjs.proj);
+      if (reprObjs.reprojector == NULL) {
         outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
         return MS_SUCCESS;
       }
     }
-  } else if(map->projection.numargs > 0) {
-    if(msProjectionsDiffer(&(map->projection), &reprObjs.proj)) {
-      reprObjs.reprojector = msProjectCreateReprojector(&(map->projection), &reprObjs.proj);
-      if(reprObjs.reprojector == NULL) {
+  } else if (map->projection.numargs > 0) {
+    if (msProjectionsDiffer(&(map->projection), &reprObjs.proj)) {
+      reprObjs.reprojector =
+          msProjectCreateReprojector(&(map->projection), &reprObjs.proj);
+      if (reprObjs.reprojector == NULL) {
         outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
         return MS_SUCCESS;
       }
     }
   } else {
-    outputError(OGCAPI_CONFIG_ERROR, "Unable to transform geometries, no projection defined.");
+    outputError(OGCAPI_CONFIG_ERROR,
+                "Unable to transform geometries, no projection defined.");
     return MS_SUCCESS;
   }
 
-  if(map->projection.numargs > 0 ) {
+  if (map->projection.numargs > 0) {
     msProjectRect(&(map->projection), &reprObjs.proj, &map->extent);
   }
 
-  if(!getBbox(map, layer, request, &bbox, &reprObjs.proj)) {
+  if (!getBbox(map, layer, request, &bbox, &reprObjs.proj)) {
     return MS_SUCCESS;
   }
 
   int offset = 0;
-  if(featureId) {
-    const char *featureIdItem = msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
-    if(featureIdItem == NULL) {
+  if (featureId) {
+    const char *featureIdItem =
+        msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
+    if (featureIdItem == NULL) {
       outputError(OGCAPI_CONFIG_ERROR, "Missing required featureid metadata.");
       return MS_SUCCESS;
     }
@@ -1244,8 +1265,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     // TODO: does featureIdItem exist in the data?
 
     // optional validation
-    const char *featureIdValidation = msLookupHashTable(&(layer->validation), featureIdItem);
-    if(featureIdValidation && msValidateParameter(featureId, featureIdValidation, NULL, NULL, NULL) != MS_SUCCESS) {
+    const char *featureIdValidation =
+        msLookupHashTable(&(layer->validation), featureIdItem);
+    if (featureIdValidation &&
+        msValidateParameter(featureId, featureIdValidation, NULL, NULL, NULL) !=
+            MS_SUCCESS) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid feature id.");
       return MS_SUCCESS;
     }
@@ -1260,34 +1284,31 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.filter.type = MS_STRING;
     map->query.filter.string = strdup(featureId);
 
-    if(reprObjs.executeQuery(map) != MS_SUCCESS) {
+    if (reprObjs.executeQuery(map) != MS_SUCCESS) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
       return MS_SUCCESS;
     }
 
-    if(!layer->resultcache || layer->resultcache->numresults != 1) {
+    if (!layer->resultcache || layer->resultcache->numresults != 1) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
       return MS_SUCCESS;
     }
   } else { // bbox query
 
-    const char *compliance_mode = msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
-    if(compliance_mode != NULL && strcasecmp(compliance_mode, "true") == 0) {
-      for(int j=0; j<request->NumParams; j++) {
-        const char* paramName = request->ParamNames[j];
-        if (strcmp(paramName, "f") == 0 ||
-            strcmp(paramName, "bbox") == 0 ||
+    const char *compliance_mode =
+        msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
+    if (compliance_mode != NULL && strcasecmp(compliance_mode, "true") == 0) {
+      for (int j = 0; j < request->NumParams; j++) {
+        const char *paramName = request->ParamNames[j];
+        if (strcmp(paramName, "f") == 0 || strcmp(paramName, "bbox") == 0 ||
             strcmp(paramName, "bbox-crs") == 0 ||
             strcmp(paramName, "datetime") == 0 ||
             strcmp(paramName, "limit") == 0 ||
-            strcmp(paramName, "offset") == 0 ||
-            strcmp(paramName, "crs") == 0)
-        {
+            strcmp(paramName, "offset") == 0 || strcmp(paramName, "crs") == 0) {
           // ok
-        }
-        else
-        {
-          outputError(OGCAPI_PARAM_ERROR,
+        } else {
+          outputError(
+              OGCAPI_PARAM_ERROR,
               (std::string("Unknown query parameter: ") + paramName).c_str());
           return MS_SUCCESS;
         }
@@ -1301,51 +1322,49 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     map->query.only_cache_result_count = MS_TRUE;
 
     // get number matched
-    if(reprObjs.executeQuery(map) != MS_SUCCESS) {
+    if (reprObjs.executeQuery(map) != MS_SUCCESS) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
 
-    if(!layer->resultcache) {
+    if (!layer->resultcache) {
       outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
       return MS_SUCCESS;
     }
 
     numberMatched = layer->resultcache->numresults;
 
-    if( numberMatched > 0 ) {
-        map->query.only_cache_result_count = MS_FALSE;
-        map->query.maxfeatures = limit;
+    if (numberMatched > 0) {
+      map->query.only_cache_result_count = MS_FALSE;
+      map->query.maxfeatures = limit;
 
-        const char* offsetStr = getRequestParameter(request, "offset");
-        if( offsetStr )
-        {
-            if( msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS )
-            {
-              outputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
-              return MS_SUCCESS;
-            }
-
-            if(offset < 0 || offset >= numberMatched) {
-              outputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
-              return MS_SUCCESS;
-            }
-
-            // msExecuteQuery() use a 1-based offset convention, whereas the API
-            // uses a 0-based offset convention.
-            map->query.startindex = 1 + offset;
-            layer->startindex = 1 + offset;
-        }
-
-        if(reprObjs.executeQuery(map) != MS_SUCCESS || !layer->resultcache) {
-          outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+      const char *offsetStr = getRequestParameter(request, "offset");
+      if (offsetStr) {
+        if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
+          outputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
           return MS_SUCCESS;
         }
+
+        if (offset < 0 || offset >= numberMatched) {
+          outputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
+          return MS_SUCCESS;
+        }
+
+        // msExecuteQuery() use a 1-based offset convention, whereas the API
+        // uses a 0-based offset convention.
+        map->query.startindex = 1 + offset;
+        layer->startindex = 1 + offset;
+      }
+
+      if (reprObjs.executeQuery(map) != MS_SUCCESS || !layer->resultcache) {
+        outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+        return MS_SUCCESS;
+      }
     }
   }
 
   // build response object
-  if(!featureId) {
+  if (!featureId) {
     std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
@@ -1354,59 +1373,57 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     extra_kvp += "&offset=" + std::to_string(offset);
 
     std::string other_extra_kvp;
-    if( crs )
-        other_extra_kvp += "&crs=" + std::string(crs);
-    const char* bbox = getRequestParameter(request, "bbox");
-    if( bbox )
-        other_extra_kvp += "&bbox=" + std::string(bbox);
-    const char* bboxCrs = getRequestParameter(request, "bbox-crs");
-    if( bboxCrs )
-        other_extra_kvp += "&bbox-crs=" + std::string(bboxCrs);
+    if (crs)
+      other_extra_kvp += "&crs=" + std::string(crs);
+    const char *bbox = getRequestParameter(request, "bbox");
+    if (bbox)
+      other_extra_kvp += "&bbox=" + std::string(bbox);
+    const char *bboxCrs = getRequestParameter(request, "bbox-crs");
+    if (bboxCrs)
+      other_extra_kvp += "&bbox-crs=" + std::string(bboxCrs);
 
     response = {
-      { "type", "FeatureCollection" },
-      { "numberMatched", numberMatched },
-      { "numberReturned", layer->resultcache->numresults },
-      { "features", json::array() },
-      { "links", {
-          {
-              { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
-              { "type", OGCAPI_MIMETYPE_GEOJSON },
-              { "title", "Items for this collection as GeoJSON" },
-              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=json" + extra_kvp + other_extra_kvp }
-          },{
-              { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
-              { "type", OGCAPI_MIMETYPE_HTML },
-              { "title", "Items for this collection as HTML" },
-              { "href", api_root + "/collections/" + std::string(id_encoded) + "/items?f=html" + extra_kvp + other_extra_kvp }
-          }
-      }}
-    };
+        {"type", "FeatureCollection"},
+        {"numberMatched", numberMatched},
+        {"numberReturned", layer->resultcache->numresults},
+        {"features", json::array()},
+        {"links",
+         {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+           {"type", OGCAPI_MIMETYPE_GEOJSON},
+           {"title", "Items for this collection as GeoJSON"},
+           {"href", api_root + "/collections/" + std::string(id_encoded) +
+                        "/items?f=json" + extra_kvp + other_extra_kvp}},
+          {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+           {"type", OGCAPI_MIMETYPE_HTML},
+           {"title", "Items for this collection as HTML"},
+           {"href", api_root + "/collections/" + std::string(id_encoded) +
+                        "/items?f=html" + extra_kvp + other_extra_kvp}}}}};
 
-    if( offset + layer->resultcache->numresults < numberMatched )
-    {
-        response["links"].push_back({
-            { "rel", "next" },
-            { "type", format==OGCAPIFormat::JSON? OGCAPI_MIMETYPE_GEOJSON : OGCAPI_MIMETYPE_HTML },
-            { "title", "next page" },
-            { "href", api_root + "/collections/" + std::string(id_encoded) +
-                      "/items?f=" + (format==OGCAPIFormat::JSON? "json" : "html") +
-                      "&limit=" + std::to_string(limit) +
-                      "&offset=" + std::to_string(offset + limit) + other_extra_kvp }
-        });
+    if (offset + layer->resultcache->numresults < numberMatched) {
+      response["links"].push_back(
+          {{"rel", "next"},
+           {"type", format == OGCAPIFormat::JSON ? OGCAPI_MIMETYPE_GEOJSON
+                                                 : OGCAPI_MIMETYPE_HTML},
+           {"title", "next page"},
+           {"href",
+            api_root + "/collections/" + std::string(id_encoded) +
+                "/items?f=" + (format == OGCAPIFormat::JSON ? "json" : "html") +
+                "&limit=" + std::to_string(limit) + "&offset=" +
+                std::to_string(offset + limit) + other_extra_kvp}});
     }
 
-    if( offset > 0 ) 
-    {
-        response["links"].push_back({
-	    { "rel", "prev" },
-            { "type", format==OGCAPIFormat::JSON? OGCAPI_MIMETYPE_GEOJSON : OGCAPI_MIMETYPE_HTML },
-	    { "title", "previous page" },
-	    { "href", api_root + "/collections/" + std::string(id_encoded) +
-	              "/items?f=" + (format==OGCAPIFormat::JSON? "json" : "html") +
-		      "&limit=" + std::to_string(limit) +
-		      "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) + other_extra_kvp }
-	});
+    if (offset > 0) {
+      response["links"].push_back(
+          {{"rel", "prev"},
+           {"type", format == OGCAPIFormat::JSON ? OGCAPI_MIMETYPE_GEOJSON
+                                                 : OGCAPI_MIMETYPE_HTML},
+           {"title", "previous page"},
+           {"href",
+            api_root + "/collections/" + std::string(id_encoded) +
+                "/items?f=" + (format == OGCAPIFormat::JSON ? "json" : "html") +
+                "&limit=" + std::to_string(limit) +
+                "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) +
+                other_extra_kvp}});
     }
 
     msFree(id_encoded); // done
@@ -1421,27 +1438,29 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
     gmlItemListObj *items = msGMLGetItems(layer, "AG");
     gmlConstantListObj *constants = msGMLGetConstants(layer, "AG");
 
-    if(!items || !constants) {
+    if (!items || !constants) {
       msGMLFreeItems(items);
       msGMLFreeConstants(constants);
-      outputError(OGCAPI_SERVER_ERROR, "Error fetching layer attribute metadata.");
+      outputError(OGCAPI_SERVER_ERROR,
+                  "Error fetching layer attribute metadata.");
       return MS_SUCCESS;
     }
 
     const int geometry_precision = getGeometryPrecision(map, layer);
 
-    for(i=0; i<layer->resultcache->numresults; i++) {
-      int status = msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
-      if(status != MS_SUCCESS) {
+    for (i = 0; i < layer->resultcache->numresults; i++) {
+      int status =
+          msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
+      if (status != MS_SUCCESS) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
         outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
         return MS_SUCCESS;
       }
 
-      if(reprObjs.reprojector) {
+      if (reprObjs.reprojector) {
         status = msProjectShapeEx(reprObjs.reprojector, &shape);
-        if(status != MS_SUCCESS) {
+        if (status != MS_SUCCESS) {
           msGMLFreeItems(items);
           msGMLFreeConstants(constants);
           msFreeShape(&shape);
@@ -1451,17 +1470,19 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
       }
 
       try {
-        json feature = getFeature(layer, &shape, items, constants, geometry_precision, outputCrsAxisInverted);
-        if(featureId) {
-          response = feature;
+        json feature = getFeature(layer, &shape, items, constants,
+                                  geometry_precision, outputCrsAxisInverted);
+        if (featureId) {
+          response = std::move(feature);
         } else {
-          response["features"].push_back(feature);
+          response["features"].emplace_back(std::move(feature));
         }
       } catch (const std::runtime_error &e) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
         msFreeShape(&shape);
-        outputError(OGCAPI_SERVER_ERROR, "Error getting feature. " + std::string(e.what()));
+        outputError(OGCAPI_SERVER_ERROR,
+                    "Error getting feature. " + std::string(e.what()));
         return MS_SUCCESS;
       }
 
@@ -1473,94 +1494,89 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request, co
   }
 
   // extend the response a bit for templating (HERE)
-  if(format == OGCAPIFormat::HTML) {
+  if (format == OGCAPIFormat::HTML) {
     const char *title = getCollectionTitle(layer);
     const char *id = layer->name;
-    response["collection"] = {
-      { "id", id },
-      { "title", title?title:"" }
-    };
+    response["collection"] = {{"id", id}, {"title", title ? title : ""}};
   }
 
-  if(featureId)
-  {
+  if (featureId) {
     std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
     response["links"] = {
-      {
-          { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_GEOJSON },
-          { "title", "This document as GeoJSON" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) +
-              "/items/" + featureId + "?f=json" }
-      },{
-          { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "This document as HTML" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) +
-              "/items/" + featureId + "?f=html" }
-      },{
-          { "rel", "collection" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "This collection as JSON" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=json" }
-      },{
-          { "rel", "collection" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "This collection as HTML" },
-          { "href", api_root + "/collections/" + std::string(id_encoded) + "?f=html" }
-      }
-    };
+        {{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+         {"type", OGCAPI_MIMETYPE_GEOJSON},
+         {"title", "This document as GeoJSON"},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "/items/" + featureId + "?f=json"}},
+        {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "This document as HTML"},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "/items/" + featureId + "?f=html"}},
+        {{"rel", "collection"},
+         {"type", OGCAPI_MIMETYPE_JSON},
+         {"title", "This collection as JSON"},
+         {"href",
+          api_root + "/collections/" + std::string(id_encoded) + "?f=json"}},
+        {{"rel", "collection"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "This collection as HTML"},
+         {"href",
+          api_root + "/collections/" + std::string(id_encoded) + "?f=html"}}};
 
     msFree(id_encoded);
 
-    outputResponse(map, request,
-                   format==OGCAPIFormat::JSON? OGCAPIFormat::GeoJSON : format,
-                   OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM,
-                   response, extraHeaders);
-  }
-  else {
-    outputResponse(map, request,
-                   format==OGCAPIFormat::JSON? OGCAPIFormat::GeoJSON : format,
-                   OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS,
-                   response, extraHeaders);
+    outputResponse(
+        map, request,
+        format == OGCAPIFormat::JSON ? OGCAPIFormat::GeoJSON : format,
+        OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM, response, extraHeaders);
+  } else {
+    outputResponse(
+        map, request,
+        format == OGCAPIFormat::JSON ? OGCAPIFormat::GeoJSON : format,
+        OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS, response, extraHeaders);
   }
   return MS_SUCCESS;
 }
 
-static int processCollectionRequest(mapObj *map, cgiRequestObj *request, const char *collectionId, OGCAPIFormat format)
-{
+static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
+                                    const char *collectionId,
+                                    OGCAPIFormat format) {
   json response;
   int l;
 
-  for(l=0; l<map->numlayers; l++) {
-    if(strcmp(map->layers[l]->name, collectionId) == 0) break; // match
+  for (l = 0; l < map->numlayers; l++) {
+    if (strcmp(map->layers[l]->name, collectionId) == 0)
+      break; // match
   }
 
-  if(l == map->numlayers) { // invalid collectionId
+  if (l == map->numlayers) { // invalid collectionId
     outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
 
   try {
     response = getCollection(map, map->layers[l], format);
-    if(response.is_null()) { // same as not found
+    if (response.is_null()) { // same as not found
       outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
       return MS_SUCCESS;
     }
   } catch (const std::runtime_error &e) {
-    outputError(OGCAPI_CONFIG_ERROR, "Error getting collection. " + std::string(e.what()));
+    outputError(OGCAPI_CONFIG_ERROR,
+                "Error getting collection. " + std::string(e.what()));
     return MS_SUCCESS;
   }
 
-  outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTION, response);
+  outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTION,
+                 response);
   return MS_SUCCESS;
 }
 
-static int processCollectionsRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat format)
-{
+static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
+                                     OGCAPIFormat format) {
   json response;
   int i;
 
@@ -1568,330 +1584,363 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request, OGCAPI
   std::string api_root = getApiRootUrl(map);
 
   // build response object
-  response = {
-    { "links", {
-        {
-          { "rel", format==OGCAPIFormat::JSON?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_JSON },
-          { "title", "This document as JSON" },
-          { "href", api_root + "/collections?f=json" }
-        },{
-          { "rel", format==OGCAPIFormat::HTML?"self":"alternate" },
-          { "type", OGCAPI_MIMETYPE_HTML },
-          { "title", "This document as HTML" },
-          { "href", api_root + "/collections?f=html" }
-        }
-      }
-    },{
-      "collections", json::array()
-    }
-  };
+  response = {{"links",
+               {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+                 {"type", OGCAPI_MIMETYPE_JSON},
+                 {"title", "This document as JSON"},
+                 {"href", api_root + "/collections?f=json"}},
+                {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+                 {"type", OGCAPI_MIMETYPE_HTML},
+                 {"title", "This document as HTML"},
+                 {"href", api_root + "/collections?f=html"}}}},
+              {"collections", json::array()}};
 
-  for(i=0; i<map->numlayers; i++) {
+  for (i = 0; i < map->numlayers; i++) {
     try {
       json collection = getCollection(map, map->layers[i], format);
-      if(!collection.is_null()) response["collections"].push_back(collection);
+      if (!collection.is_null())
+        response["collections"].push_back(collection);
     } catch (const std::runtime_error &e) {
-      outputError(OGCAPI_CONFIG_ERROR, "Error getting collection." + std::string(e.what()));
+      outputError(OGCAPI_CONFIG_ERROR,
+                  "Error getting collection." + std::string(e.what()));
       return MS_SUCCESS;
     }
   }
 
-  outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTIONS, response);
+  outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_COLLECTIONS,
+                 response);
   return MS_SUCCESS;
 }
 
-static int processApiRequest(mapObj *map, cgiRequestObj *request, OGCAPIFormat format)
-{
-  // Strongly inspired from https://github.com/geopython/pygeoapi/blob/master/pygeoapi/openapi.py
+static int processApiRequest(mapObj *map, cgiRequestObj *request,
+                             OGCAPIFormat format) {
+  // Strongly inspired from
+  // https://github.com/geopython/pygeoapi/blob/master/pygeoapi/openapi.py
 
   json response;
 
   response = {
-      { "openapi", "3.0.2" },
-      { "tags", json::array() },
+      {"openapi", "3.0.2"},
+      {"tags", json::array()},
   };
 
   response["info"] = {
-      { "title", getTitle(map) },
-      { "version", getWebMetadata(map, "A", "version", "1.0.0") },
+      {"title", getTitle(map)},
+      {"version", getWebMetadata(map, "A", "version", "1.0.0")},
   };
 
-  for( const char* item: { "description", "termsOfService" }) {
-      const char* value = getWebMetadata(map, "AO", item, nullptr);
-      if( value ) {
-          response["info"][item] = value;
-      }
+  for (const char *item : {"description", "termsOfService"}) {
+    const char *value = getWebMetadata(map, "AO", item, nullptr);
+    if (value) {
+      response["info"][item] = value;
+    }
   }
 
-  for( const auto& pair: {
-          std::make_pair("name", "contactperson"),
-          std::make_pair("url", "contacturl"),
-          std::make_pair("email", "contactelectronicmailaddress"),
-        }) {
-      const char* value = getWebMetadata(map, "AO", pair.second, nullptr);
-      if( value ) {
-          response["info"]["contact"][pair.first] = value;
-      }
+  for (const auto &pair : {
+           std::make_pair("name", "contactperson"),
+           std::make_pair("url", "contacturl"),
+           std::make_pair("email", "contactelectronicmailaddress"),
+       }) {
+    const char *value = getWebMetadata(map, "AO", pair.second, nullptr);
+    if (value) {
+      response["info"]["contact"][pair.first] = value;
+    }
   }
 
-  for( const auto& pair: {
-          std::make_pair("name", "licensename"),
-          std::make_pair("url", "licenseurl"),
-        }) {
-      const char* value = getWebMetadata(map, "AO", pair.second, nullptr);
-      if( value ) {
-          response["info"]["license"][pair.first] = value;
-      }
+  for (const auto &pair : {
+           std::make_pair("name", "licensename"),
+           std::make_pair("url", "licenseurl"),
+       }) {
+    const char *value = getWebMetadata(map, "AO", pair.second, nullptr);
+    if (value) {
+      response["info"]["license"][pair.first] = value;
+    }
   }
 
   {
-      const char* value = getWebMetadata(map, "AO", "keywords", nullptr);
-      if( value ) {
-          response["info"]["x-keywords"] = value;
-      }
+    const char *value = getWebMetadata(map, "AO", "keywords", nullptr);
+    if (value) {
+      response["info"]["x-keywords"] = value;
+    }
   }
 
   json server;
   server["url"] = getApiRootUrl(map);
   {
-      const char* value = getWebMetadata(map, "AO", "server_description", nullptr);
-      if( value ) {
-          server["description"] = value;
-      }
+    const char *value =
+        getWebMetadata(map, "AO", "server_description", nullptr);
+    if (value) {
+      server["description"] = value;
+    }
   }
   response["servers"].push_back(server);
 
-  const std::string oapif_yaml_url = "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/ogcapi-features-1.yaml";
-  const std::string oapif_part2_yaml_url = "http://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/ogcapi-features-2.yaml";
+  const std::string oapif_yaml_url =
+      "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/"
+      "ogcapi-features-1.yaml";
+  const std::string oapif_part2_yaml_url =
+      "http://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/"
+      "ogcapi-features-2.yaml";
 
   json paths;
 
   paths["/"]["get"] = {
-      { "summary", "Landing page" },
-      { "description", "Landing page" },
-      { "tags", { "server" } },
-      { "operationId", "getLandingPage" },
-        { "parameters", {
-          {{ "$ref", "#/components/parameters/f"}},
-      }},
-      { "responses", {
-          { "200", {{"$ref", oapif_yaml_url + "#/components/responses/LandingPage"}} },
-          { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-          { "500", {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}} }
-      }}
-  };
+      {"summary", "Landing page"},
+      {"description", "Landing page"},
+      {"tags", {"server"}},
+      {"operationId", "getLandingPage"},
+      {"parameters",
+       {
+           {{"$ref", "#/components/parameters/f"}},
+       }},
+      {"responses",
+       {{"200",
+         {{"$ref", oapif_yaml_url + "#/components/responses/LandingPage"}}},
+        {"400",
+         {{"$ref",
+           oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+        {"500",
+         {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
 
   paths["/api"]["get"] = {
-      { "summary", "API documentation" },
-      { "description", "API documentation" },
-      { "tags", { "server" } },
-      { "operationId", "getOpenapi" },
-      { "parameters", {
-          {{ "$ref", "#/components/parameters/f"}},
-      }},
-      { "responses", {
-          { "200", {{"$ref", "#/components/responses/200"}} },
-          { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-          { "default", {{"$ref", "#/components/responses/default"}} }
-      }}
-  };
+      {"summary", "API documentation"},
+      {"description", "API documentation"},
+      {"tags", {"server"}},
+      {"operationId", "getOpenapi"},
+      {"parameters",
+       {
+           {{"$ref", "#/components/parameters/f"}},
+       }},
+      {"responses",
+       {{"200", {{"$ref", "#/components/responses/200"}}},
+        {"400",
+         {{"$ref",
+           oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+        {"default", {{"$ref", "#/components/responses/default"}}}}}};
 
   paths["/conformance"]["get"] = {
-      { "summary", "API conformance definition" },
-      { "description", "API conformance definition" },
-      { "tags", { "server" } },
-      { "operationId", "getConformanceDeclaration" },
-      { "parameters", {
-          {{ "$ref", "#/components/parameters/f"}},
-      }},
-      { "responses", {
-          { "200", {{"$ref", oapif_yaml_url + "#/components/responses/ConformanceDeclaration"}} },
-          { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-          { "500", {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}} }
-      }}
-  };
+      {"summary", "API conformance definition"},
+      {"description", "API conformance definition"},
+      {"tags", {"server"}},
+      {"operationId", "getConformanceDeclaration"},
+      {"parameters",
+       {
+           {{"$ref", "#/components/parameters/f"}},
+       }},
+      {"responses",
+       {{"200",
+         {{"$ref",
+           oapif_yaml_url + "#/components/responses/ConformanceDeclaration"}}},
+        {"400",
+         {{"$ref",
+           oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+        {"500",
+         {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
 
   paths["/collections"]["get"] = {
-      { "summary", "Collections" },
-      { "description", "Collections" },
-      { "tags", { "server" } },
-      { "operationId", "getCollections" },
-      { "parameters", {
-          {{ "$ref", "#/components/parameters/f"}},
-      }},
-      { "responses", {
-          { "200", {{"$ref", oapif_yaml_url + "#/components/responses/Collections"}} },
-          { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-          { "500", {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}} }
-      }}
-  };
+      {"summary", "Collections"},
+      {"description", "Collections"},
+      {"tags", {"server"}},
+      {"operationId", "getCollections"},
+      {"parameters",
+       {
+           {{"$ref", "#/components/parameters/f"}},
+       }},
+      {"responses",
+       {{"200",
+         {{"$ref", oapif_yaml_url + "#/components/responses/Collections"}}},
+        {"400",
+         {{"$ref",
+           oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+        {"500",
+         {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
 
-  for(int i=0; i<map->numlayers; i++) {
-      layerObj* layer = map->layers[i];
-      if(!includeLayer(map, layer)) {
-          continue;
-      }
+  for (int i = 0; i < map->numlayers; i++) {
+    layerObj *layer = map->layers[i];
+    if (!includeLayer(map, layer)) {
+      continue;
+    }
 
-      json collection_get = {
-          { "summary", std::string("Get ") + getCollectionTitle(layer) + " metadata" },
-          { "description", getCollectionDescription(layer) },
-          { "tags", { layer->name } },
-          { "operationId", "describe" + std::string(layer->name) + "Collection" },
-          { "parameters", {
-              {{ "$ref", "#/components/parameters/f"}},
-          }},
-          { "responses", {
-              { "200", {{"$ref", oapif_yaml_url + "#/components/responses/Collection"}} },
-              { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-              { "500", {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}} }
-          }}
-      };
+    json collection_get = {
+        {"summary",
+         std::string("Get ") + getCollectionTitle(layer) + " metadata"},
+        {"description", getCollectionDescription(layer)},
+        {"tags", {layer->name}},
+        {"operationId", "describe" + std::string(layer->name) + "Collection"},
+        {"parameters",
+         {
+             {{"$ref", "#/components/parameters/f"}},
+         }},
+        {"responses",
+         {{"200",
+           {{"$ref", oapif_yaml_url + "#/components/responses/Collection"}}},
+          {"400",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+          {"500",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
 
-      std::string collectionNamePath("/collections/");
-      collectionNamePath += layer->name;
-      paths[collectionNamePath]["get"] = std::move(collection_get);
+    std::string collectionNamePath("/collections/");
+    collectionNamePath += layer->name;
+    paths[collectionNamePath]["get"] = std::move(collection_get);
 
-      // check metadata, layer then map
-      const char* max_limit_str = msOWSLookupMetadata(&(layer->metadata), "A", "max_limit");
-      if(max_limit_str == nullptr)
-          max_limit_str = msOWSLookupMetadata(&(map->web.metadata), "A", "max_limit");
-      const int max_limit = max_limit_str ? atoi(max_limit_str) : OGCAPI_MAX_LIMIT;
-      const int default_limit = getDefaultLimit(map, layer);
+    // check metadata, layer then map
+    const char *max_limit_str =
+        msOWSLookupMetadata(&(layer->metadata), "A", "max_limit");
+    if (max_limit_str == nullptr)
+      max_limit_str =
+          msOWSLookupMetadata(&(map->web.metadata), "A", "max_limit");
+    const int max_limit =
+        max_limit_str ? atoi(max_limit_str) : OGCAPI_MAX_LIMIT;
+    const int default_limit = getDefaultLimit(map, layer);
 
-      json items_get = {
-          { "summary", std::string("Get ") + getCollectionTitle(layer) + " items" },
-          { "description", getCollectionDescription(layer) },
-          { "tags", { layer->name } },
-          { "operationId", "get" + std::string(layer->name) + "Features" },
-          { "parameters", {
-              {{ "$ref", "#/components/parameters/f"}},
-              {{ "$ref", oapif_yaml_url + "#/components/parameters/bbox"}},
-              {{ "$ref", oapif_yaml_url + "#/components/parameters/datetime"}},
-              {{ "$ref", oapif_part2_yaml_url + "#/components/parameters/bbox-crs"}},
-              {{ "$ref", oapif_part2_yaml_url + "#/components/parameters/crs"}},
-              {{ "$ref", "#/components/parameters/offset"}},
-          }},
-          { "responses", {
-              { "200", {{"$ref", oapif_yaml_url + "#/components/responses/Features"}} },
-              { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-              { "500", {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}} }
-          }}
-      };
+    json items_get = {
+        {"summary", std::string("Get ") + getCollectionTitle(layer) + " items"},
+        {"description", getCollectionDescription(layer)},
+        {"tags", {layer->name}},
+        {"operationId", "get" + std::string(layer->name) + "Features"},
+        {"parameters",
+         {
+             {{"$ref", "#/components/parameters/f"}},
+             {{"$ref", oapif_yaml_url + "#/components/parameters/bbox"}},
+             {{"$ref", oapif_yaml_url + "#/components/parameters/datetime"}},
+             {{"$ref",
+               oapif_part2_yaml_url + "#/components/parameters/bbox-crs"}},
+             {{"$ref", oapif_part2_yaml_url + "#/components/parameters/crs"}},
+             {{"$ref", "#/components/parameters/offset"}},
+         }},
+        {"responses",
+         {{"200",
+           {{"$ref", oapif_yaml_url + "#/components/responses/Features"}}},
+          {"400",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+          {"500",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
 
-      json param_limit = {
-        { "name", "limit"},
-        { "in", "query"},
-        { "description", "The optional limit parameter limits the number of items that are presented in the response document."},
-        { "required", false},
-        { "schema", {
-            { "type", "integer"},
-            { "minimum", 1},
-            { "maximum", max_limit},
-            { "default", default_limit},
-        }},
-        { "style", "form" },
-        { "explode", false },
-      };
-      items_get["parameters"].emplace_back(param_limit);
+    json param_limit = {
+        {"name", "limit"},
+        {"in", "query"},
+        {"description", "The optional limit parameter limits the number of "
+                        "items that are presented in the response document."},
+        {"required", false},
+        {"schema",
+         {
+             {"type", "integer"},
+             {"minimum", 1},
+             {"maximum", max_limit},
+             {"default", default_limit},
+         }},
+        {"style", "form"},
+        {"explode", false},
+    };
+    items_get["parameters"].emplace_back(param_limit);
 
-      std::string itemsPath(collectionNamePath + "/items");
-      paths[itemsPath]["get"] = items_get;
+    std::string itemsPath(collectionNamePath + "/items");
+    paths[itemsPath]["get"] = std::move(items_get);
 
-      json feature_id_get = {
-          { "summary", std::string("Get ") + getCollectionTitle(layer) + " item by id" },
-          { "description", getCollectionDescription(layer) },
-          { "tags", { layer->name } },
-          { "operationId", "get" + std::string(layer->name) + "Feature" },
-          { "parameters", {
-              {{ "$ref", "#/components/parameters/f"}},
-              {{ "$ref", oapif_yaml_url + "#/components/parameters/featureId"}},
-          }},
-          { "responses", {
-              { "200", {{"$ref", oapif_yaml_url + "#/components/responses/Feature"}} },
-              { "400", {{"$ref", oapif_yaml_url + "#/components/responses/InvalidParameter"}} },
-              { "404", {{"$ref", oapif_yaml_url + "#/components/responses/NotFound"}} },
-              { "500", {{"$ref", oapif_yaml_url + "#/components/responses/ServerError"}} }
-          }}
-      };
-      std::string itemsFeatureIdPath(collectionNamePath + "/items/{featureId}");
-      paths[itemsFeatureIdPath]["get"] = std::move(feature_id_get);
+    json feature_id_get = {
+        {"summary",
+         std::string("Get ") + getCollectionTitle(layer) + " item by id"},
+        {"description", getCollectionDescription(layer)},
+        {"tags", {layer->name}},
+        {"operationId", "get" + std::string(layer->name) + "Feature"},
+        {"parameters",
+         {
+             {{"$ref", "#/components/parameters/f"}},
+             {{"$ref", oapif_yaml_url + "#/components/parameters/featureId"}},
+         }},
+        {"responses",
+         {{"200",
+           {{"$ref", oapif_yaml_url + "#/components/responses/Feature"}}},
+          {"400",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+          {"404",
+           {{"$ref", oapif_yaml_url + "#/components/responses/NotFound"}}},
+          {"500",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
+    std::string itemsFeatureIdPath(collectionNamePath + "/items/{featureId}");
+    paths[itemsFeatureIdPath]["get"] = std::move(feature_id_get);
   }
 
-  response["paths"] = paths;
+  response["paths"] = std::move(paths);
 
   json components;
-  components["responses"]["200"] = {
-      { "description", "successful operation" }
-  };
+  components["responses"]["200"] = {{"description", "successful operation"}};
   components["responses"]["default"] = {
-      { "description", "unexpected error" },
-      { "content", {
-          { "application/json", {
-              { "schema", {
-                  { "$ref", "https://raw.githubusercontent.com/opengeospatial/ogcapi-processes/master/core/openapi/schemas/exception.yaml" }
-              }}
-          }}
-      }}
-  };
+      {"description", "unexpected error"},
+      {"content",
+       {{"application/json",
+         {{"schema",
+           {{"$ref", "https://raw.githubusercontent.com/opengeospatial/"
+                     "ogcapi-processes/master/core/openapi/schemas/"
+                     "exception.yaml"}}}}}}}};
 
   json parameters;
   parameters["f"] = {
-    { "name", "f"},
-    { "in", "query"},
-    { "description", "The optional f parameter indicates the output format which the server shall provide as part of the response document.  The default format is GeoJSON."},
-    { "required", false},
-    { "schema", {
-        { "type", "string"},
-            {"enum", {"json", "html"}},
-            {"default", "json"}
-    }},
-    { "style", "form" },
-    { "explode", false },
+      {"name", "f"},
+      {"in", "query"},
+      {"description", "The optional f parameter indicates the output format "
+                      "which the server shall provide as part of the response "
+                      "document.  The default format is GeoJSON."},
+      {"required", false},
+      {"schema",
+       {{"type", "string"}, {"enum", {"json", "html"}}, {"default", "json"}}},
+      {"style", "form"},
+      {"explode", false},
   };
 
   parameters["offset"] = {
-    { "name", "offset"},
-    { "in", "query"},
-    { "description", "The optional offset parameter indicates the index within the result set from which the server shall begin presenting results in the response document.  The first element has an index of 0 (default)."},
-    { "required", false},
-    { "schema", {
-        { "type", "integer"},
-        { "minimum", 0},
-        { "default", 0},
-    }},
-    { "style", "form" },
-    { "explode", false },
+      {"name", "offset"},
+      {"in", "query"},
+      {"description",
+       "The optional offset parameter indicates the index within the result "
+       "set from which the server shall begin presenting results in the "
+       "response document.  The first element has an index of 0 (default)."},
+      {"required", false},
+      {"schema",
+       {
+           {"type", "integer"},
+           {"minimum", 0},
+           {"default", 0},
+       }},
+      {"style", "form"},
+      {"explode", false},
   };
 
-  components["parameters"] = parameters;
+  components["parameters"] = std::move(parameters);
 
-  response["components"] = components;
+  response["components"] = std::move(components);
 
   // TODO: "tags" array ?
 
   outputResponse(map, request,
-                 format == OGCAPIFormat::JSON ? OGCAPIFormat::OpenAPI_V3 : format,
+                 format == OGCAPIFormat::JSON ? OGCAPIFormat::OpenAPI_V3
+                                              : format,
                  OGCAPI_TEMPLATE_HTML_OPENAPI, response);
   return MS_SUCCESS;
 }
 
 #endif
 
-int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
-{
+int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
 #ifdef USE_OGCAPI_SVR
 
   // make sure ogcapi requests are enabled for this map
   int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
-  if(status != MS_TRUE) {
-    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.", "msCGIDispatchAPIRequest()");
+  if (status != MS_TRUE) {
+    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
+               "msCGIDispatchAPIRequest()");
     return MS_FAILURE; // let normal error handling take over
   }
 
-  for(int i=0; i<request->NumParams; i++) {
-    for(int j=i+1; j<request->NumParams; j++) {
-      if(strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
+  for (int i = 0; i < request->NumParams; i++) {
+    for (int j = i + 1; j < request->NumParams; j++) {
+      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
         std::string errorMsg("Query parameter ");
         errorMsg += request->ParamNames[i];
         errorMsg += " is repeated";
@@ -1905,27 +1954,25 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
   const char *p = getRequestParameter(request, "f");
 
   // if f= query parameter is not specified, use HTTP Accept header if available
-  if( p == nullptr )
-  {
-      const char* accept = getenv("HTTP_ACCEPT");
-      if( accept )
-      {
-          if( strcmp(accept, "*/*") == 0 )
-              p = OGCAPI_MIMETYPE_JSON;
-          else
-              p = accept;
-      }
+  if (p == nullptr) {
+    const char *accept = getenv("HTTP_ACCEPT");
+    if (accept) {
+      if (strcmp(accept, "*/*") == 0)
+        p = OGCAPI_MIMETYPE_JSON;
+      else
+        p = accept;
+    }
   }
 
-  if(p && (strcmp(p, "json") == 0 ||
-           strstr(p, OGCAPI_MIMETYPE_JSON) != nullptr ||
-           strstr(p, OGCAPI_MIMETYPE_GEOJSON) != nullptr ||
-           strstr(p, OGCAPI_MIMETYPE_OPENAPI_V3) != nullptr)) {
+  if (p &&
+      (strcmp(p, "json") == 0 || strstr(p, OGCAPI_MIMETYPE_JSON) != nullptr ||
+       strstr(p, OGCAPI_MIMETYPE_GEOJSON) != nullptr ||
+       strstr(p, OGCAPI_MIMETYPE_OPENAPI_V3) != nullptr)) {
     format = OGCAPIFormat::JSON;
-  } else if(p && (strcmp(p, "html") == 0 ||
-                  strstr(p, OGCAPI_MIMETYPE_HTML) != nullptr)) {
+  } else if (p && (strcmp(p, "html") == 0 ||
+                   strstr(p, OGCAPI_MIMETYPE_HTML) != nullptr)) {
     format = OGCAPIFormat::HTML;
-  } else if(p) {
+  } else if (p) {
     std::string errorMsg("Unsupported format requested: ");
     errorMsg += p;
     outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
@@ -1934,47 +1981,57 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request)
     format = OGCAPIFormat::HTML; // default for now
   }
 
-  if(request->api_path_length == 2) {
+  if (request->api_path_length == 2) {
 
     return processLandingRequest(map, request, format);
 
-  } else if(request->api_path_length == 3) {
+  } else if (request->api_path_length == 3) {
 
-    if(strcmp(request->api_path[2], "conformance") == 0) {
+    if (strcmp(request->api_path[2], "conformance") == 0) {
       return processConformanceRequest(map, request, format);
-    } else if(strcmp(request->api_path[2], "conformance.html") == 0) {
+    } else if (strcmp(request->api_path[2], "conformance.html") == 0) {
       return processConformanceRequest(map, request, OGCAPIFormat::HTML);
-    } else if(strcmp(request->api_path[2], "collections") == 0) {
+    } else if (strcmp(request->api_path[2], "collections") == 0) {
       return processCollectionsRequest(map, request, format);
-    } else if(strcmp(request->api_path[2], "collections.html") == 0) {
+    } else if (strcmp(request->api_path[2], "collections.html") == 0) {
       return processCollectionsRequest(map, request, OGCAPIFormat::HTML);
-    } else if(strcmp(request->api_path[2], "api") == 0) {
+    } else if (strcmp(request->api_path[2], "api") == 0) {
       return processApiRequest(map, request, format);
     }
 
-  } else if(request->api_path_length == 4) {
+  } else if (request->api_path_length == 4) {
 
-    if(strcmp(request->api_path[2], "collections") == 0) { // next argument (3) is collectionId
-      return processCollectionRequest(map, request, request->api_path[3], format);
+    if (strcmp(request->api_path[2], "collections") ==
+        0) { // next argument (3) is collectionId
+      return processCollectionRequest(map, request, request->api_path[3],
+                                      format);
     }
 
-  } else if(request->api_path_length == 5) {
+  } else if (request->api_path_length == 5) {
 
-    if(strcmp(request->api_path[2], "collections") == 0 && strcmp(request->api_path[4], "items") == 0)  { // middle argument (3) is the collectionId
-      return processCollectionItemsRequest(map, request, request->api_path[3], NULL, format);
+    if (strcmp(request->api_path[2], "collections") == 0 &&
+        strcmp(request->api_path[4], "items") ==
+            0) { // middle argument (3) is the collectionId
+      return processCollectionItemsRequest(map, request, request->api_path[3],
+                                           NULL, format);
     }
 
-  } else if(request->api_path_length == 6) {
+  } else if (request->api_path_length == 6) {
 
-    if(strcmp(request->api_path[2], "collections") == 0 && strcmp(request->api_path[4], "items") == 0)  { // middle argument (3) is the collectionId, last argument (5) is featureId
-      return processCollectionItemsRequest(map, request, request->api_path[3], request->api_path[5], format);
+    if (strcmp(request->api_path[2], "collections") == 0 &&
+        strcmp(request->api_path[4], "items") ==
+            0) { // middle argument (3) is the collectionId, last argument (5)
+                 // is featureId
+      return processCollectionItemsRequest(map, request, request->api_path[3],
+                                           request->api_path[5], format);
     }
   }
 
   outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid API path.");
   return MS_SUCCESS; // avoid any downstream MapServer processing
 #else
-  msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.", "msOGCAPIDispatchRequest()");
+  msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.",
+             "msOGCAPIDispatchRequest()");
   return MS_FAILURE;
 #endif
 }

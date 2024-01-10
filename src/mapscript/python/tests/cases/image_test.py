@@ -25,24 +25,25 @@
 # ===========================================================================
 
 import unittest
-from io import BytesIO
 import urllib
+from io import BytesIO
+
 import mapscript
+
 from .testing import TEST_IMAGE as test_image
 from .testing import MapTestCase
-
 
 have_image = False
 
 try:
     from PIL import Image
+
     have_image = True
 except ImportError:
     pass
 
 
 class ImageObjTestCase(unittest.TestCase):
-
     def testConstructor(self):
         """imageObj constructor works"""
         imgobj = mapscript.imageObj(10, 10)
@@ -52,7 +53,7 @@ class ImageObjTestCase(unittest.TestCase):
 
     def testConstructorWithFormat(self):
         """imageObj with an optional driver works"""
-        driver = 'AGG/PNG'
+        driver = "AGG/PNG"
         format = mapscript.outputFormatObj(driver)
         imgobj = mapscript.imageObj(10, 10, format)
         assert imgobj.thisown == 1
@@ -66,7 +67,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
-        imgobj.save('testConstructorFilename.png')
+        imgobj.save("testConstructorFilename.png")
 
     def xtestConstructorFilenameDriver(self):
         """imageObj with a filename and a driver works"""
@@ -74,11 +75,11 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
-        imgobj.save('testConstructorFilenameDriver.png')
+        imgobj.save("testConstructorFilenameDriver.png")
 
     def xtestConstructorStream(self):
         """imageObj with a file stream works"""
-        f = open(test_image, 'rb')
+        f = open(test_image, "rb")
         imgobj = mapscript.imageObj(f)
         f.close()
         assert imgobj.thisown == 1
@@ -87,7 +88,7 @@ class ImageObjTestCase(unittest.TestCase):
 
     def xtestConstructorBytesIO(self):
         """imageObj with a BytesIO works"""
-        with open(test_image, 'rb') as f:
+        with open(test_image, "rb") as f:
             data = f.read()
         s = BytesIO(data)
         imgobj = mapscript.imageObj(s)
@@ -97,29 +98,28 @@ class ImageObjTestCase(unittest.TestCase):
 
     def xtestConstructorUrlStream(self):
         """imageObj with a URL stream works"""
-        url = urllib.urlopen('http://mapserver.org/_static/banner.png')
-        imgobj = mapscript.imageObj(url, 'AGG/JPEG')
+        url = urllib.urlopen("http://mapserver.org/_static/banner.png")
+        imgobj = mapscript.imageObj(url, "AGG/JPEG")
         assert imgobj.thisown == 1
         assert imgobj.height == 68
         assert imgobj.width == 439
-        imgobj.save('testConstructorUrlStream.jpg')
+        imgobj.save("testConstructorUrlStream.jpg")
 
 
 class ImageWriteTestCase(MapTestCase):
-
     def testImageWrite(self):
         """image writes data to an open filehandle"""
         image = self.map.draw()
         assert image.thisown == 1
-        filename = 'testImageWrite.png'
-        fh = open(filename, 'wb')
+        filename = "testImageWrite.png"
+        fh = open(filename, "wb")
         image.write(fh)
         fh.close()
         if have_image:
             pyimg = Image.open(filename)
-            assert pyimg.format == 'PNG'
+            assert pyimg.format == "PNG"
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'RGB'
+            assert pyimg.mode == "RGB"
 
     def testImageWriteBytesIO(self):
         """image writes data to a BytesIO instance"""
@@ -129,14 +129,14 @@ class ImageWriteTestCase(MapTestCase):
         s = BytesIO()
         image.write(s)
 
-        filename = 'testImageWriteBytesIO.png'
-        with open(filename, 'wb') as fh:
+        filename = "testImageWriteBytesIO.png"
+        with open(filename, "wb") as fh:
             fh.write(s.getvalue())
         if have_image:
             pyimg = Image.open(filename)
-            assert pyimg.format == 'PNG'
+            assert pyimg.format == "PNG"
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'RGB'
+            assert pyimg.mode == "RGB"
 
     def testImageGetBytes(self):
         """image returns bytes"""
@@ -145,15 +145,15 @@ class ImageWriteTestCase(MapTestCase):
 
         s = BytesIO(image.getBytes())
 
-        filename = 'testImageGetBytes.png'
-        with open(filename, 'wb') as fh:
+        filename = "testImageGetBytes.png"
+        with open(filename, "wb") as fh:
             fh.write(s.getvalue())
         if have_image:
             pyimg = Image.open(filename)
-            assert pyimg.format == 'PNG'
+            assert pyimg.format == "PNG"
             assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'RGB'
+            assert pyimg.mode == "RGB"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

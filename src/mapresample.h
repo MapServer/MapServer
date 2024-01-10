@@ -36,19 +36,16 @@
 #include <gdal.h>
 #include <cpl_string.h>
 
-typedef int (*SimpleTransformer)( void *pCBData, int nPoints,
-                                  double *x, double *y, int *panSuccess );
+typedef int (*SimpleTransformer)(void *pCBData, int nPoints, double *x,
+                                 double *y, int *panSuccess);
 
-void *msInitProjTransformer( projectionObj *psSrc,
-                             double *padfSrcGeoTransform,
-                             projectionObj *psDst,
-                             double *padfDstGeoTransform );
-void msFreeProjTransformer( void * );
-int msProjTransformer( void *pCBData, int nPoints,
-                       double *x, double *y, int *panSuccess );
+void *msInitProjTransformer(projectionObj *psSrc, double *padfSrcGeoTransform,
+                            projectionObj *psDst, double *padfDstGeoTransform);
+void msFreeProjTransformer(void *);
+int msProjTransformer(void *pCBData, int nPoints, double *x, double *y,
+                      int *panSuccess);
 
-int msResampleGDALToMap( mapObj *map, layerObj *layer,
-                         imageObj *image, rasterBufferObj *rb,
-                         GDALDatasetH hDS );
+int msResampleGDALToMap(mapObj *map, layerObj *layer, imageObj *image,
+                        rasterBufferObj *rb, GDALDatasetH hDS);
 
 #endif /* ndef RESAMPLE_H */

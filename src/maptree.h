@@ -34,40 +34,39 @@
 extern "C" {
 #endif
 
-  /* this can be 2 or 4 for binary or quad tree */
+/* this can be 2 or 4 for binary or quad tree */
 #define MAX_SUBNODES 4
 
-  typedef struct shape_tree_node {
-    /* area covered by this node */
-    rectObj rect;
+typedef struct shape_tree_node {
+  /* area covered by this node */
+  rectObj rect;
 
-    /* list of shapes stored at this node. */
-    ms_int32 numshapes;
-    ms_int32 *ids;
+  /* list of shapes stored at this node. */
+  ms_int32 numshapes;
+  ms_int32 *ids;
 
-    int numsubnodes;
-    struct shape_tree_node *subnode[MAX_SUBNODES];
-  } treeNodeObj;
+  int numsubnodes;
+  struct shape_tree_node *subnode[MAX_SUBNODES];
+} treeNodeObj;
 
-  typedef struct {
-    ms_int32 numshapes;
-    ms_int32 maxdepth;
-    treeNodeObj *root;
-  } treeObj;
+typedef struct {
+  ms_int32 numshapes;
+  ms_int32 maxdepth;
+  treeNodeObj *root;
+} treeObj;
 
+typedef struct {
+  FILE *fp;
+  char signature[3];
+  char LSB_order;
+  char needswap;
+  char version;
+  char flags[3];
 
-  typedef struct {
-    FILE        *fp;
-    char        signature[3];
-    char  LSB_order;
-    char        needswap;
-    char  version;
-    char  flags[3];
-
-    ms_int32        nShapes;
-    ms_int32        nDepth;
-  } SHPTreeInfo;
-  typedef SHPTreeInfo * SHPTreeHandle;
+  ms_int32 nShapes;
+  ms_int32 nDepth;
+} SHPTreeInfo;
+typedef SHPTreeInfo *SHPTreeHandle;
 
 #define MS_LSB_ORDER -1
 #define MS_MSB_ORDER -2
@@ -75,22 +74,23 @@ extern "C" {
 #define MS_NEW_LSB_ORDER 1
 #define MS_NEW_MSB_ORDER 2
 
+MS_DLL_EXPORT SHPTreeHandle msSHPDiskTreeOpen(const char *pszTree, int debug);
+MS_DLL_EXPORT void msSHPDiskTreeClose(SHPTreeHandle disktree);
+MS_DLL_EXPORT treeNodeObj *readTreeNode(SHPTreeHandle disktree);
 
-  MS_DLL_EXPORT SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug);
-  MS_DLL_EXPORT void msSHPDiskTreeClose(SHPTreeHandle disktree);
-  MS_DLL_EXPORT treeNodeObj *readTreeNode( SHPTreeHandle disktree );
+MS_DLL_EXPORT treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth);
+MS_DLL_EXPORT void msTreeTrim(treeObj *tree);
+MS_DLL_EXPORT void msDestroyTree(treeObj *tree);
 
-  MS_DLL_EXPORT treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth);
-  MS_DLL_EXPORT void msTreeTrim(treeObj *tree);
-  MS_DLL_EXPORT void msDestroyTree(treeObj *tree);
+MS_DLL_EXPORT ms_bitarray msSearchTree(const treeObj *tree, rectObj aoi);
+MS_DLL_EXPORT ms_bitarray msSearchDiskTree(const char *filename, rectObj aoi,
+                                           int debug, int numshapes);
 
-  MS_DLL_EXPORT ms_bitarray msSearchTree(const treeObj *tree, rectObj aoi);
-  MS_DLL_EXPORT ms_bitarray msSearchDiskTree(const char *filename, rectObj aoi, int debug, int numshapes);
+MS_DLL_EXPORT treeObj *msReadTree(char *filename, int debug);
+MS_DLL_EXPORT int msWriteTree(treeObj *tree, char *filename, int LSB_order);
 
-  MS_DLL_EXPORT treeObj *msReadTree(char *filename, int debug);
-  MS_DLL_EXPORT int msWriteTree(treeObj *tree, char *filename, int LSB_order);
-
-  MS_DLL_EXPORT void msFilterTreeSearch(shapefileObj *shp, ms_bitarray status, rectObj search_rect);
+MS_DLL_EXPORT void msFilterTreeSearch(shapefileObj *shp, ms_bitarray status,
+                                      rectObj search_rect);
 
 #ifdef __cplusplus
 }

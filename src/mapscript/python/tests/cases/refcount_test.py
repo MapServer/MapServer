@@ -25,12 +25,13 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import TESTMAPFILE
 
 
 class ReferenceCountingTestCase(unittest.TestCase):
-
     def initMap(self):
         self.map = mapscript.mapObj(TESTMAPFILE)
 
@@ -62,7 +63,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
         self.initMap()
         n = self.map.numlayers
         layer = mapscript.layerObj()
-        layer.name = 'new'
+        layer.name = "new"
         assert layer.refcount == 1
         assert layer.thisown == 1
         index = self.map.insertLayer(layer)
@@ -80,7 +81,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
         self.initMap()
         n = self.map.numlayers
         layer = mapscript.layerObj()
-        layer.name = 'new'
+        layer.name = "new"
         assert layer.refcount == 1
         assert layer.thisown == 1
         index = self.map.insertLayer(layer, 0)
@@ -97,9 +98,9 @@ class ReferenceCountingTestCase(unittest.TestCase):
         """removal of highest index (tail) layer"""
         self.initMap()
         n = self.map.numlayers
-        layer = self.map.removeLayer(n-1)
-        assert self.map.numlayers == n-1
-        assert layer.name == 'INLINE-PIXMAP-PCT'
+        layer = self.map.removeLayer(n - 1)
+        assert self.map.numlayers == n - 1
+        assert layer.name == "INLINE-PIXMAP-PCT"
         assert layer.thisown == 1
         assert layer.refcount == 1, layer.refcount
         self.map.draw()
@@ -109,8 +110,8 @@ class ReferenceCountingTestCase(unittest.TestCase):
         self.initMap()
         n = self.map.numlayers
         layer = self.map.removeLayer(0)
-        assert self.map.numlayers == n-1
-        assert layer.name == 'RASTER'
+        assert self.map.numlayers == n - 1
+        assert layer.name == "RASTER"
         assert layer.thisown == 1
         assert layer.refcount == 1, layer.refcount
         self.map.draw()
@@ -119,7 +120,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
         """behave when parent (map) is null"""
         self.initMap()
         layer = mapscript.layerObj()
-        layer.name = 'new'
+        layer.name = "new"
         index = self.map.insertLayer(layer, 0)
         assert index == 0, index
         self.map = None
@@ -135,7 +136,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
     def testLayerClone(self):
         """Clone a layer"""
         layer = mapscript.layerObj()
-        layer.name = 'sample'
+        layer.name = "sample"
         copy = layer.clone()
 
         assert layer.refcount == 1, layer.refcount
@@ -155,7 +156,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
         """behave when parent (map) is not null"""
         self.initMap()
         layer = mapscript.layerObj(self.map)
-        layer.name = 'new'
+        layer.name = "new"
         assert layer.refcount == 2, layer.refcount
 
     def testDummyClass(self):
@@ -191,8 +192,12 @@ class ReferenceCountingTestCase(unittest.TestCase):
         assert clazz.refcount == 1, clazz.refcount
         idx = self.map.getLayer(1).insertClass(clazz)
         assert clazz.refcount == 2, clazz.refcount
-        assert self.map.getLayer(1).getClass(idx).refcount == 3, self.map.getLayer(1).getClass(idx).refcount
-        assert self.map.getLayer(1).getClass(idx).minscaledenom == 666, self.map.getLayer(1).getClass(idx).minscaledenom
+        assert self.map.getLayer(1).getClass(idx).refcount == 3, (
+            self.map.getLayer(1).getClass(idx).refcount
+        )
+        assert self.map.getLayer(1).getClass(idx).minscaledenom == 666, (
+            self.map.getLayer(1).getClass(idx).minscaledenom
+        )
 
     def testClassInsertAtMiddle(self):
         """classObj insert at pos. 1"""
@@ -203,9 +208,15 @@ class ReferenceCountingTestCase(unittest.TestCase):
         idx = self.map.getLayer(1).insertClass(clazz, 1)
         assert idx == 1, idx
         assert clazz.refcount == 2, clazz.refcount
-        assert self.map.getLayer(1).getClass(idx).refcount == 3, self.map.getLayer(1).getClass(idx).refcount
-        assert self.map.getLayer(1).getClass(idx).thisown, self.map.getLayer(1).getClass(idx).thisown
-        assert self.map.getLayer(1).getClass(idx).minscaledenom == 666, self.map.getLayer(1).getClass(idx).minscaledenom
+        assert self.map.getLayer(1).getClass(idx).refcount == 3, (
+            self.map.getLayer(1).getClass(idx).refcount
+        )
+        assert self.map.getLayer(1).getClass(idx).thisown, (
+            self.map.getLayer(1).getClass(idx).thisown
+        )
+        assert self.map.getLayer(1).getClass(idx).minscaledenom == 666, (
+            self.map.getLayer(1).getClass(idx).minscaledenom
+        )
 
     def testRemoveFirstClass(self):
         """removal of first class"""
@@ -279,7 +290,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
         assert clone.thisown == 1, clone.thisown
 
     def testBasicSymbolRefcounting(self):
-        """symbolObj refcounting """
+        """symbolObj refcounting"""
         self.initMap()
         symb = self.map.symbolset.getSymbol(0)
         assert symb.refcount == 2, symb.refcount
@@ -292,7 +303,7 @@ class ReferenceCountingTestCase(unittest.TestCase):
         assert symb2.thisown == 1, symb2.thisown
 
     def testSymbolAppendRemove(self):
-        """appendSymbolObj refcounting """
+        """appendSymbolObj refcounting"""
         self.initMap()
         symb = mapscript.symbolObj("ANEWSYMBOL")
         assert symb.refcount == 1, symb.refcount
@@ -305,5 +316,5 @@ class ReferenceCountingTestCase(unittest.TestCase):
         assert symb.thisown == 1, symb.thisown
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

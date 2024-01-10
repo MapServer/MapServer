@@ -73,15 +73,6 @@ add_custom_command(
 
 add_custom_command(
     DEPENDS mapscriptvenv.stamp
-    OUTPUT mapscriptlinting.stamp
-    WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMAND ${Python_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests --max-line-length=140
-    COMMAND ${Python_VENV_SCRIPTS}/flake8 $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples --max-line-length=120
-    COMMENT "Linting test suite and examples with flake8" # note only one comment is output per custom command block
-)
-
-add_custom_command(
-    DEPENDS mapscriptlinting.stamp
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMAND ${Python_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log

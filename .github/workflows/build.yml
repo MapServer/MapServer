@@ -2,13 +2,51 @@ name: Build
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Regular
+            WITH_ASAN: "false"
+
+          - name: Address_sanitizer
+            WITH_ASAN: "true"
+
+    name: ${{ matrix.name }}
+
+    env:
+      WITH_ASAN: ${{ matrix.WITH_ASAN }}
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      COVERALLS_SERVICE_NAME: "GitHub Actions"
+      UPLOAD_COVERALLS: "false"
 
     steps:
       - name: Checkout repository contents
         uses: actions/checkout@v3
 
+      - name: Set RUN_COVERALLS Environment Variable
+        if: (github.event.pull_request.merged == true || github.event_name == 'push') && env.WITH_ASAN != 'true'
+        run: |
+            echo "Setting UPLOAD_COVERALLS to true"
+            echo "UPLOAD_COVERALLS=true" >>${GITHUB_ENV}
+
       - name: Build
-        run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
+        run: |
+            docker run \
+            -e WORK_DIR="$PWD" \
+            -e WITH_ASAN="${{ env.WITH_ASAN }}" \
+            -e COVERALLS_REPO_TOKEN="${{ env.COVERALLS_REPO_TOKEN }}" \
+            -e COVERALLS_SERVICE_NAME="${{ env.COVERALLS_SERVICE_NAME }}" \
+            -e UPLOAD_COVERALLS="${{ env.UPLOAD_COVERALLS }}" \
+            -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh

@@ -28,14 +28,13 @@
  ****************************************************************************/
 
 #include <assert.h>
-#include <ctype.h>    /* isxdigit() */
-#include <stdlib.h>   /* rand() */
-#include <time.h>     /* time() */
+#include <ctype.h>  /* isxdigit() */
+#include <stdlib.h> /* rand() */
+#include <time.h>   /* time() */
 
 #include "mapserver.h"
 
 #include "cpl_conv.h"
-
 
 /**********************************************************************
  * encipher() and decipher() from the Tiny Encryption Algorithm (TEA)
@@ -86,35 +85,34 @@
  **********************************************************************/
 
 static void encipher(const ms_uint32 *const v, ms_uint32 *const w,
-                     const ms_uint32 *const k)
-{
-  register ms_uint32   y=v[0],z=v[1],sum=0,delta=0x9E3779B9,n=32;
+                     const ms_uint32 *const k) {
+  register ms_uint32 y = v[0], z = v[1], sum = 0, delta = 0x9E3779B9, n = 32;
 
-  while(n-->0) {
-    y += ((z << 4 ^ z >> 5) + z) ^ (sum + k[sum&3]);
+  while (n-- > 0) {
+    y += ((z << 4 ^ z >> 5) + z) ^ (sum + k[sum & 3]);
     sum += delta;
-    z += ((y << 4 ^ y >> 5) + y) ^ (sum + k[sum>>11 & 3]);
+    z += ((y << 4 ^ y >> 5) + y) ^ (sum + k[sum >> 11 & 3]);
   }
 
-  w[0]=y;
-  w[1]=z;
+  w[0] = y;
+  w[1] = z;
 }
 
 static void decipher(const ms_uint32 *const v, ms_uint32 *const w,
-                     const ms_uint32 *const k)
-{
-  register ms_uint32       y=v[0],z=v[1],sum=0xC6EF3720, delta=0x9E3779B9,n=32;
+                     const ms_uint32 *const k) {
+  register ms_uint32 y = v[0], z = v[1], sum = 0xC6EF3720, delta = 0x9E3779B9,
+                     n = 32;
 
   /* sum = delta<<5, in general sum = delta * n */
 
-  while(n-->0) {
-    z -= ((y << 4 ^ y >> 5) + y) ^ (sum + k[sum>>11 & 3]);
+  while (n-- > 0) {
+    z -= ((y << 4 ^ y >> 5) + y) ^ (sum + k[sum >> 11 & 3]);
     sum -= delta;
-    y -= ((z << 4 ^ z >> 5) + z) ^ (sum + k[sum&3]);
+    y -= ((z << 4 ^ z >> 5) + z) ^ (sum + k[sum & 3]);
   }
 
-  w[0]=y;
-  w[1]=z;
+  w[0] = y;
+  w[1] = z;
 }
 
 /**********************************************************************
@@ -125,13 +123,12 @@ static void decipher(const ms_uint32 *const v, ms_uint32 *const w,
  * out[] should be preallocated by the caller to be at least 2*numbytes+1
  * (+1 for the terminating '\0')
  **********************************************************************/
-void msHexEncode(const unsigned char *in, char *out, int numbytes)
-{
+void msHexEncode(const unsigned char *in, char *out, int numbytes) {
   char *hex = "0123456789ABCDEF";
 
   while (numbytes-- > 0) {
-    *out++ = hex[*in/16];
-    *out++ = hex[*in%16];
+    *out++ = hex[*in / 16];
+    *out++ = hex[*in % 16];
     in++;
   }
   *out = '\0';
@@ -151,20 +148,19 @@ void msHexEncode(const unsigned char *in, char *out, int numbytes)
  * Returns the number of bytes written to out[] which may be different from
  * numchars/2 if an error or a '\0' is encountered.
  **********************************************************************/
-int msHexDecode(const char *in, unsigned char *out, int numchars)
-{
+int msHexDecode(const char *in, unsigned char *out, int numchars) {
   int numbytes_out = 0;
 
   /* Make sure numchars is even */
-  numchars = (numchars/2) * 2;
+  numchars = (numchars / 2) * 2;
 
   if (numchars < 2)
     numchars = -1; /* Will result in this value being ignored in the loop*/
 
-  while (*in != '\0' && *(in+1) != '\0' && numchars != 0) {
-    *out = 0x10 * (*in >= 'A' ? ((*in & 0xdf) - 'A')+10 : (*in - '0'));
+  while (*in != '\0' && *(in + 1) != '\0' && numchars != 0) {
+    *out = 0x10 * (*in >= 'A' ? ((*in & 0xdf) - 'A') + 10 : (*in - '0'));
     in++;
-    *out += (*in >= 'A' ? ((*in & 0xdf) - 'A')+10 : (*in - '0'));
+    *out += (*in >= 'A' ? ((*in & 0xdf) - 'A') + 10 : (*in - '0'));
     in++;
 
     out++;
@@ -176,7 +172,6 @@ int msHexDecode(const char *in, unsigned char *out, int numchars)
   return numbytes_out;
 }
 
-
 /**********************************************************************
  *                       msGenerateEncryptionKey()
  *
@@ -185,15 +180,13 @@ int msHexDecode(const char *in, unsigned char *out, int numchars)
  * The output buffer should be at least MS_ENCRYPTION_KEY_SIZE bytes.
  **********************************************************************/
 
-int msGenerateEncryptionKey(unsigned char *k)
-{
+int msGenerateEncryptionKey(unsigned char *k) {
   int i;
 
   /* Use current time as seed for rand() */
-  srand( (unsigned int) time( NULL ));
+  srand((unsigned int)time(NULL));
 
-  for(i=0; i<MS_ENCRYPTION_KEY_SIZE; i++)
-  {
+  for (i = 0; i < MS_ENCRYPTION_KEY_SIZE; i++) {
     /* coverity[dont_call] */
     k[i] = (unsigned char)rand();
   }
@@ -211,8 +204,7 @@ int msGenerateEncryptionKey(unsigned char *k)
  * Returns MS_SUCCESS/MS_FAILURE.
  **********************************************************************/
 
-int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k)
-{
+int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k) {
   FILE *fp;
   char szBuf[100];
   int numchars;
@@ -223,18 +215,19 @@ int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k)
     return MS_FAILURE;
   }
 
-  numchars = fread(szBuf, sizeof(unsigned char), MS_ENCRYPTION_KEY_SIZE*2, fp);
+  numchars =
+      fread(szBuf, sizeof(unsigned char), MS_ENCRYPTION_KEY_SIZE * 2, fp);
   fclose(fp);
-  szBuf[MS_ENCRYPTION_KEY_SIZE*2] = '\0';
+  szBuf[MS_ENCRYPTION_KEY_SIZE * 2] = '\0';
 
-  if (numchars != MS_ENCRYPTION_KEY_SIZE*2) {
+  if (numchars != MS_ENCRYPTION_KEY_SIZE * 2) {
     msSetError(MS_MISCERR, "Invalid key file, got %d chars, expected %d.",
-               "msReadEncryptionKeyFromFile()",
-               numchars, MS_ENCRYPTION_KEY_SIZE*2);
+               "msReadEncryptionKeyFromFile()", numchars,
+               MS_ENCRYPTION_KEY_SIZE * 2);
     return MS_FAILURE;
   }
 
-  msHexDecode(szBuf, k, MS_ENCRYPTION_KEY_SIZE*2);
+  msHexDecode(szBuf, k, MS_ENCRYPTION_KEY_SIZE * 2);
 
   return MS_SUCCESS;
 }
@@ -257,8 +250,7 @@ int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k)
  * Returns MS_SUCCESS/MS_FAILURE.
  **********************************************************************/
 
-static int msLoadEncryptionKey(mapObj *map)
-{
+static int msLoadEncryptionKey(mapObj *map) {
   const char *keyfile;
 
   if (map == NULL) {
@@ -267,16 +259,18 @@ static int msLoadEncryptionKey(mapObj *map)
   }
 
   if (map->encryption_key_loaded)
-    return MS_SUCCESS;  /* Already loaded */
+    return MS_SUCCESS; /* Already loaded */
 
   keyfile = msGetConfigOption(map, "MS_ENCRYPTION_KEY");
-  if(!keyfile) keyfile = CPLGetConfigOption("MS_ENCRYPTION_KEY", NULL);
+  if (!keyfile)
+    keyfile = CPLGetConfigOption("MS_ENCRYPTION_KEY", NULL);
 
   if (keyfile &&
-      msReadEncryptionKeyFromFile(keyfile,map->encryption_key) == MS_SUCCESS) {
+      msReadEncryptionKeyFromFile(keyfile, map->encryption_key) == MS_SUCCESS) {
     map->encryption_key_loaded = MS_TRUE;
   } else {
-    msSetError(MS_MISCERR, "Failed reading encryption key. Make sure "
+    msSetError(MS_MISCERR,
+               "Failed reading encryption key. Make sure "
                "MS_ENCRYPTION_KEY is set and points to a valid key file.",
                "msLoadEncryptionKey()");
     return MS_FAILURE;
@@ -294,8 +288,8 @@ static int msLoadEncryptionKey(mapObj *map)
  *
  **********************************************************************/
 
-void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
-{
+void msEncryptStringWithKey(const unsigned char *key, const char *in,
+                            char *out) {
   ms_uint32 v[4], w[4];
   const ms_uint32 *k;
   int last_block = MS_FALSE;
@@ -303,9 +297,9 @@ void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
   /* Casting the key this way is safe only as long as longs are 4 bytes
    * on this platform */
   assert(sizeof(ms_uint32) == 4);
-  k = (const ms_uint32 *) key;
+  k = (const ms_uint32 *)key;
 
-  while(!last_block) {
+  while (!last_block) {
     int i, j;
     /* encipher() takes v[2] (64 bits) as input.
      * Copy bytes from in[] to the v[2] input array (pair of 4 bytes)
@@ -313,14 +307,14 @@ void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
      */
     v[0] = 0;
     v[1] = 0;
-    for(i=0; !last_block && i<2; i++) {
-      for(j=0; j<4; j++) {
+    for (i = 0; !last_block && i < 2; i++) {
+      for (j = 0; j < 4; j++) {
         if (*in == '\0') {
           last_block = MS_TRUE;
           break;
         }
 
-        v[i] |= *in << (j*8);
+        v[i] |= *in << (j * 8);
         in++;
       }
     }
@@ -334,9 +328,8 @@ void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
     /* Append hex-encoded bytes to output, 4 bytes at a time */
     msHexEncode((unsigned char *)w, out, 4);
     out += 8;
-    msHexEncode((unsigned char *)(w+1), out, 4);
+    msHexEncode((unsigned char *)(w + 1), out, 4);
     out += 8;
-
   }
 
   /* Make sure output is 0-terminated */
@@ -352,8 +345,8 @@ void msEncryptStringWithKey(const unsigned char *key, const char *in, char *out)
  *
  **********************************************************************/
 
-void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out)
-{
+void msDecryptStringWithKey(const unsigned char *key, const char *in,
+                            char *out) {
   ms_uint32 v[4], w[4];
   const ms_uint32 *k;
   int last_block = MS_FALSE;
@@ -361,9 +354,9 @@ void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out)
   /* Casting the key this way is safe only as long as longs are 4 bytes
    * on this platform */
   assert(sizeof(ms_uint32) == 4);
-  k = (const ms_uint32 *) key;
+  k = (const ms_uint32 *)key;
 
-  while(!last_block) {
+  while (!last_block) {
     int i;
     /* decipher() takes v[2] (64 bits) as input.
      * Copy bytes from in[] to the v[2] input array (pair of 4 bytes)
@@ -376,7 +369,7 @@ void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out)
       last_block = MS_TRUE;
     else {
       in += 8;
-      if (msHexDecode(in, (unsigned char *)(v+1), 8) != 4)
+      if (msHexDecode(in, (unsigned char *)(v + 1), 8) != 4)
         last_block = MS_TRUE;
       else
         in += 8;
@@ -386,7 +379,7 @@ void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out)
     decipher(v, w, k);
 
     /* Copy the results to out[] */
-    for(i=0; i<2; i++) {
+    for (i = 0; i < 2; i++) {
       *out++ = (w[i] & 0x000000ff);
       *out++ = (w[i] & 0x0000ff00) >> 8;
       *out++ = (w[i] & 0x00ff0000) >> 16;
@@ -410,8 +403,7 @@ void msDecryptStringWithKey(const unsigned char *key, const char *in, char *out)
  *
  **********************************************************************/
 
-char *msDecryptStringTokens(mapObj *map, const char *in)
-{
+char *msDecryptStringTokens(mapObj *map, const char *in) {
   char *outbuf, *out;
 
   if (map == NULL) {
@@ -421,13 +413,13 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
 
   /* Start with a copy of the string. Decryption can only result in
    * a string with the same or shorter length */
-  if ((outbuf = (char *)malloc((strlen(in)+1)*sizeof(char))) == NULL) {
+  if ((outbuf = (char *)malloc((strlen(in) + 1) * sizeof(char))) == NULL) {
     msSetError(MS_MEMERR, NULL, "msDecryptStringTokens()");
     return NULL;
   }
   out = outbuf;
 
-  while(*in != '\0') {
+  while (*in != '\0') {
     if (*in == '{') {
       /* Possibly beginning of a token, look for closing bracket
       ** and make sure all chars in between are valid hex encoding chars
@@ -435,12 +427,11 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
       const char *pszStart, *pszEnd;
       int valid_token = MS_FALSE;
 
-      pszStart = in+1;
-      if ( (pszEnd = strchr(pszStart, '}')) != NULL &&
-           pszEnd - pszStart > 1) {
+      pszStart = in + 1;
+      if ((pszEnd = strchr(pszStart, '}')) != NULL && pszEnd - pszStart > 1) {
         const char *pszTmp;
         valid_token = MS_TRUE;
-        for(pszTmp = pszStart; pszTmp < pszEnd; pszTmp++) {
+        for (pszTmp = pszStart; pszTmp < pszEnd; pszTmp++) {
           if (!isxdigit(*pszTmp)) {
             valid_token = MS_FALSE;
             break;
@@ -460,13 +451,13 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
         if (msLoadEncryptionKey(map) != MS_SUCCESS)
           return NULL;
 
-        pszTmp = (char*)malloc( (pszEnd-pszStart+1)*sizeof(char));
-        strlcpy(pszTmp, pszStart, (pszEnd-pszStart)+1);
+        pszTmp = (char *)malloc((pszEnd - pszStart + 1) * sizeof(char));
+        strlcpy(pszTmp, pszStart, (pszEnd - pszStart) + 1);
 
         msDecryptStringWithKey(map->encryption_key, pszTmp, out);
 
         out += strlen(out);
-        in = pszEnd+1;
+        in = pszEnd + 1;
         free(pszTmp);
       } else {
         /* Not a valid token, just copy the '{' and keep going */
@@ -482,7 +473,6 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
   return outbuf;
 }
 
-
 #ifdef TEST_MAPCRYPTO
 
 /* Test for mapcrypto.c functions. To run these tests, use the following
@@ -493,10 +483,9 @@ test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c
 
 **
 */
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   const unsigned char bytes_in[] = {0x12, 0x34, 0xff, 0x00, 0x44, 0x22};
-  unsigned char bytes_out[8], encryption_key[MS_ENCRYPTION_KEY_SIZE*2+1];
+  unsigned char bytes_out[8], encryption_key[MS_ENCRYPTION_KEY_SIZE * 2 + 1];
   char string_buf[256], string_buf2[256];
   int numbytes = 0;
 
@@ -511,29 +500,30 @@ int main(int argc, char *argv[])
   */
   memset(bytes_out, 0, 8);
   numbytes = msHexDecode(string_buf, bytes_out, -1);
-  printf("msHexDecode(%s, -1) = %d, bytes_out = %x, %x, %x, %x, %x, %x, %x, %x\n",
-         string_buf, numbytes,
-         bytes_out[0], bytes_out[1], bytes_out[2], bytes_out[3],
-         bytes_out[4], bytes_out[5], bytes_out[6], bytes_out[7]);
+  printf(
+      "msHexDecode(%s, -1) = %d, bytes_out = %x, %x, %x, %x, %x, %x, %x, %x\n",
+      string_buf, numbytes, bytes_out[0], bytes_out[1], bytes_out[2],
+      bytes_out[3], bytes_out[4], bytes_out[5], bytes_out[6], bytes_out[7]);
 
   memset(bytes_out, 0, 8);
   numbytes = msHexDecode(string_buf, bytes_out, 4);
-  printf("msHexDecode(%s, 4) = %d, bytes_out = %x, %x, %x, %x, %x, %x, %x, %x\n",
-         string_buf, numbytes,
-         bytes_out[0], bytes_out[1], bytes_out[2], bytes_out[3],
-         bytes_out[4], bytes_out[5], bytes_out[6], bytes_out[7]);
+  printf(
+      "msHexDecode(%s, 4) = %d, bytes_out = %x, %x, %x, %x, %x, %x, %x, %x\n",
+      string_buf, numbytes, bytes_out[0], bytes_out[1], bytes_out[2],
+      bytes_out[3], bytes_out[4], bytes_out[5], bytes_out[6], bytes_out[7]);
 
   memset(bytes_out, 0, 8);
   numbytes = msHexDecode(string_buf, bytes_out, 20);
-  printf("msHexDecode(%s, 20) = %d, bytes_out = %x, %x, %x, %x, %x, %x, %x, %x\n",
-         string_buf, numbytes,
-         bytes_out[0], bytes_out[1], bytes_out[2], bytes_out[3],
-         bytes_out[4], bytes_out[5], bytes_out[6], bytes_out[7]);
+  printf(
+      "msHexDecode(%s, 20) = %d, bytes_out = %x, %x, %x, %x, %x, %x, %x, %x\n",
+      string_buf, numbytes, bytes_out[0], bytes_out[1], bytes_out[2],
+      bytes_out[3], bytes_out[4], bytes_out[5], bytes_out[6], bytes_out[7]);
 
   /*
   ** Test loading encryption key
   */
-  if (msReadEncryptionKeyFromFile("/tmp/test.key", encryption_key) != MS_SUCCESS) {
+  if (msReadEncryptionKeyFromFile("/tmp/test.key", encryption_key) !=
+      MS_SUCCESS) {
     printf("msReadEncryptionKeyFromFile() = MS_FAILURE\n");
     printf("Aborting tests!\n");
     msWriteError(stderr);
@@ -552,21 +542,24 @@ int main(int argc, char *argv[])
   printf("msEncryptStringWithKey('test1234') returned '%s'\n", string_buf);
 
   msDecryptStringWithKey(encryption_key, string_buf, string_buf2);
-  printf("msDecryptStringWithKey('%s') returned '%s'\n", string_buf, string_buf2);
+  printf("msDecryptStringWithKey('%s') returned '%s'\n", string_buf,
+         string_buf2);
 
   /* Next with an 1 byte input string */
   msEncryptStringWithKey(encryption_key, "t", string_buf);
   printf("msEncryptStringWithKey('t') returned '%s'\n", string_buf);
 
   msDecryptStringWithKey(encryption_key, string_buf, string_buf2);
-  printf("msDecryptStringWithKey('%s') returned '%s'\n", string_buf, string_buf2);
+  printf("msDecryptStringWithKey('%s') returned '%s'\n", string_buf,
+         string_buf2);
 
   /* Next with an 12 bytes input string */
   msEncryptStringWithKey(encryption_key, "test123456", string_buf);
   printf("msEncryptStringWithKey('test123456') returned '%s'\n", string_buf);
 
   msDecryptStringWithKey(encryption_key, string_buf, string_buf2);
-  printf("msDecryptStringWithKey('%s') returned '%s'\n", string_buf, string_buf2);
+  printf("msDecryptStringWithKey('%s') returned '%s'\n", string_buf,
+         string_buf2);
 
   /*
   ** Test decryption with tokens
@@ -586,8 +579,8 @@ int main(int argc, char *argv[])
       msWriteError(stderr);
       return -1;
     } else {
-      printf("msDecryptStringTokens('%s') returned '%s'\n",
-             string_buf2, pszBuf);
+      printf("msDecryptStringTokens('%s') returned '%s'\n", string_buf2,
+             pszBuf);
     }
     msFree(pszBuf);
     msFreeMap(map);
@@ -595,6 +588,5 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
 
 #endif /* TEST_MAPCRYPTO */

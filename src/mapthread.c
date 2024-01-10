@@ -132,20 +132,18 @@ files instead.
 
 ******************************************************************************/
 
-
 #include <assert.h>
 #include "mapserver.h"
 #include "mapthread.h"
-
-
 
 #if defined(USE_THREAD)
 static int thread_debug = 0;
 
 static char *const lock_names[] = {
-  NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE",
-  "ORACLE", "OWS", "LAYER_VTABLE", "IOCONTEXT", "TMPFILE", "DEBUGOBJ", "OGR", "TIME", "FRIBIDI", "WXS", "GEOS", NULL
-};
+    NULL,           "PARSER",    "GDAL",    "ERROROBJ", "PROJ",
+    "TTF",          "POOL",      "SDE",     "ORACLE",   "OWS",
+    "LAYER_VTABLE", "IOCONTEXT", "TMPFILE", "DEBUGOBJ", "OGR",
+    "TIME",         "FRIBIDI",   "WXS",     "GEOS",     NULL};
 #endif
 
 /************************************************************************/
@@ -170,61 +168,61 @@ void msThreadInit()
 {
   static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
 
-  if( thread_debug )
-    fprintf( stderr, "msThreadInit() (posix)\n" );
+  if (thread_debug)
+    fprintf(stderr, "msThreadInit() (posix)\n");
 
-  pthread_mutex_lock( &core_lock );
+  pthread_mutex_lock(&core_lock);
 
-  for( ; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++ )
-    pthread_mutex_init( mutex_locks + mutexes_initialized, NULL );
+  for (; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++)
+    pthread_mutex_init(mutex_locks + mutexes_initialized, NULL);
 
-  pthread_mutex_unlock( &core_lock );
+  pthread_mutex_unlock(&core_lock);
 }
 
 /************************************************************************/
 /*                           msGetThreadId()                            */
 /************************************************************************/
 
-void* msGetThreadId()
+void *msGetThreadId()
 
 {
-  return (void*) pthread_self();
+  return (void *)pthread_self();
 }
 
 /************************************************************************/
 /*                           msAcquireLock()                            */
 /************************************************************************/
 
-void msAcquireLock( int nLockId )
+void msAcquireLock(int nLockId)
 
 {
-  if( mutexes_initialized == 0 )
+  if (mutexes_initialized == 0)
     msThreadInit();
 
-  assert( nLockId >= 0 && nLockId < mutexes_initialized );
+  assert(nLockId >= 0 && nLockId < mutexes_initialized);
 
-  if( thread_debug )
-    fprintf( stderr, "msAcquireLock(%d/%s) (posix)\n",
-             nLockId, lock_names[nLockId] );
+  if (thread_debug)
+    fprintf(stderr, "msAcquireLock(%d/%s) (posix)\n", nLockId,
+            lock_names[nLockId]);
 
-  pthread_mutex_lock( mutex_locks + nLockId );
+  pthread_mutex_lock(mutex_locks + nLockId);
 }
 
 /************************************************************************/
 /*                           msReleaseLock()                            */
 /************************************************************************/
 
-void msReleaseLock( int nLockId )
+void msReleaseLock(int nLockId)
 
 {
-  assert( mutexes_initialized > 0 );
-  assert( nLockId >= 0 && nLockId < mutexes_initialized );
+  assert(mutexes_initialized > 0);
+  assert(nLockId >= 0 && nLockId < mutexes_initialized);
 
-  if( thread_debug )
-    fprintf( stderr, "msReleaseLock(%d/%s) (posix)\n",
-             nLockId, lock_names[nLockId] );
+  if (thread_debug)
+    fprintf(stderr, "msReleaseLock(%d/%s) (posix)\n", nLockId,
+            lock_names[nLockId]);
 
-  pthread_mutex_unlock( mutex_locks + nLockId );
+  pthread_mutex_unlock(mutex_locks + nLockId);
 }
 
 #endif /* defined(USE_THREAD) && !defined(_WIN32) */
@@ -252,67 +250,67 @@ void msThreadInit()
   /* static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER; */
   static HANDLE core_lock = NULL;
 
-  if( mutexes_initialized >= TLOCK_STATIC_MAX )
+  if (mutexes_initialized >= TLOCK_STATIC_MAX)
     return;
 
-  if( thread_debug )
-    fprintf( stderr, "msThreadInit() (win32)\n" );
+  if (thread_debug)
+    fprintf(stderr, "msThreadInit() (win32)\n");
 
-  if( core_lock == NULL )
-    core_lock = CreateMutex( NULL, TRUE, NULL );
+  if (core_lock == NULL)
+    core_lock = CreateMutex(NULL, TRUE, NULL);
   else
-    WaitForSingleObject( core_lock, INFINITE );
+    WaitForSingleObject(core_lock, INFINITE);
 
-  for( ; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++ )
-    mutex_locks[mutexes_initialized] = CreateMutex( NULL, FALSE, NULL );
+  for (; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++)
+    mutex_locks[mutexes_initialized] = CreateMutex(NULL, FALSE, NULL);
 
-  ReleaseMutex( core_lock );
+  ReleaseMutex(core_lock);
 }
 
 /************************************************************************/
 /*                           msGetThreadId()                            */
 /************************************************************************/
 
-void* msGetThreadId()
+void *msGetThreadId()
 
 {
-  return (void*) (size_t) GetCurrentThreadId();
+  return (void *)(size_t)GetCurrentThreadId();
 }
 
 /************************************************************************/
 /*                           msAcquireLock()                            */
 /************************************************************************/
 
-void msAcquireLock( int nLockId )
+void msAcquireLock(int nLockId)
 
 {
-  if( mutexes_initialized == 0 )
+  if (mutexes_initialized == 0)
     msThreadInit();
 
-  assert( nLockId >= 0 && nLockId < mutexes_initialized );
+  assert(nLockId >= 0 && nLockId < mutexes_initialized);
 
-  if( thread_debug )
-    fprintf( stderr, "msAcquireLock(%d/%s) (win32)\n",
-             nLockId, lock_names[nLockId] );
+  if (thread_debug)
+    fprintf(stderr, "msAcquireLock(%d/%s) (win32)\n", nLockId,
+            lock_names[nLockId]);
 
-  WaitForSingleObject( mutex_locks[nLockId], INFINITE );
+  WaitForSingleObject(mutex_locks[nLockId], INFINITE);
 }
 
 /************************************************************************/
 /*                           msReleaseLock()                            */
 /************************************************************************/
 
-void msReleaseLock( int nLockId )
+void msReleaseLock(int nLockId)
 
 {
-  assert( mutexes_initialized > 0 );
-  assert( nLockId >= 0 && nLockId < mutexes_initialized );
+  assert(mutexes_initialized > 0);
+  assert(nLockId >= 0 && nLockId < mutexes_initialized);
 
-  if( thread_debug )
-    fprintf( stderr, "msReleaseLock(%d/%s) (win32)\n",
-             nLockId, lock_names[nLockId] );
+  if (thread_debug)
+    fprintf(stderr, "msReleaseLock(%d/%s) (win32)\n", nLockId,
+            lock_names[nLockId]);
 
-  ReleaseMutex( mutex_locks[nLockId] );
+  ReleaseMutex(mutex_locks[nLockId]);
 }
 
 #endif /* defined(USE_THREAD) && defined(_WIN32) */

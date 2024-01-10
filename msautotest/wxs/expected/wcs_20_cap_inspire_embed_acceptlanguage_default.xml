@@ -149,10 +149,10 @@
   </ows:OperationsMetadata>
   <wcs:ServiceMetadata>
     <wcs:formatSupported>image/tiff</wcs:formatSupported>
-    <wcs:formatSupported>image/png; mode=8bit</wcs:formatSupported>
     <wcs:formatSupported>image/x-aaigrid</wcs:formatSupported>
     <wcs:formatSupported>image/png</wcs:formatSupported>
     <wcs:formatSupported>image/jpeg</wcs:formatSupported>
+    <wcs:formatSupported>image/png; mode=8bit</wcs:formatSupported>
     <wcs:formatSupported>image/vnd.jpeg-png</wcs:formatSupported>
     <wcs:formatSupported>image/vnd.jpeg-png8</wcs:formatSupported>
     <wcs:Extension>

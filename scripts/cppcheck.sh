@@ -15,7 +15,7 @@ case $SCRIPT_DIR in
         ;;
 esac
 
-TOPDIR="$SCRIPT_DIR/.."
+TOPDIR="$SCRIPT_DIR/../src"
 
 CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
 CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"

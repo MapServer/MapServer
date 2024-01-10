@@ -21,14 +21,7 @@ PROJECTION
   "datum=WGS84"
 END
 
-IMAGETYPE png8_t
-
-OUTPUTFORMAT
-  NAME png8_t
-  DRIVER "GD/PNG"
-  IMAGEMODE PC256
-  TRANSPARENT OFF
-END
+IMAGETYPE PNG8
 
 #
 # Start of layer definitions

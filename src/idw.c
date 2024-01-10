@@ -32,45 +32,51 @@
 #define EPSILON 0.000000001
 #include <time.h>
 
-void msIdw(float *xyz, int width, int height, int npoints, interpolationProcessingParams *interpParams, unsigned char *iValues) {
-    int i,j,index;
-    int radius = interpParams->radius;
-    float power = interpParams->power;
-    for (j=0; j < height; j++) {
-        for (i=0; i < width; i++) {
-            double den = EPSILON, num = 0;
-            for(index = 0; index < npoints*3; index += 3){
-                double d = (xyz[index] - i)*(xyz[index] - i)+(xyz[index+1] - j)*(xyz[index+1] - j);
-                if(radius*radius > d) {
-                    double w = 1.0/(pow(d, power) + EPSILON);
-                    num += w*xyz[index+2];
-                    den += w;
-                }
-            }
-            iValues[j*width + i] = num/den;
+void msIdw(float *xyz, int width, int height, int npoints,
+           interpolationProcessingParams *interpParams,
+           unsigned char *iValues) {
+  int i, j, index;
+  int radius = interpParams->radius;
+  float power = interpParams->power;
+  for (j = 0; j < height; j++) {
+    for (i = 0; i < width; i++) {
+      double den = EPSILON, num = 0;
+      for (index = 0; index < npoints * 3; index += 3) {
+        double d = (xyz[index] - i) * (xyz[index] - i) +
+                   (xyz[index + 1] - j) * (xyz[index + 1] - j);
+        if (radius * radius > d) {
+          double w = 1.0 / (pow(d, power) + EPSILON);
+          num += w * xyz[index + 2];
+          den += w;
         }
+      }
+      iValues[j * width + i] = num / den;
     }
+  }
 }
 
-void msIdwProcessing(layerObj *layer, interpolationProcessingParams *interpParams) {
-    const char *interpParamsProcessing = msLayerGetProcessingKey( layer, "IDW_POWER" );
-    if(interpParamsProcessing) {
-        interpParams->power = atof(interpParamsProcessing);
-    } else{
-        interpParams->power = 1.0;
-    }
+void msIdwProcessing(layerObj *layer,
+                     interpolationProcessingParams *interpParams) {
+  const char *interpParamsProcessing =
+      msLayerGetProcessingKey(layer, "IDW_POWER");
+  if (interpParamsProcessing) {
+    interpParams->power = atof(interpParamsProcessing);
+  } else {
+    interpParams->power = 1.0;
+  }
 
-    interpParamsProcessing = msLayerGetProcessingKey( layer, "IDW_RADIUS" );
-    if(interpParamsProcessing){
-        interpParams->radius = atof(interpParamsProcessing);
-    } else {
-        interpParams->radius = MAX(layer->map->width,layer->map->height);
-    }
+  interpParamsProcessing = msLayerGetProcessingKey(layer, "IDW_RADIUS");
+  if (interpParamsProcessing) {
+    interpParams->radius = atof(interpParamsProcessing);
+  } else {
+    interpParams->radius = MAX(layer->map->width, layer->map->height);
+  }
 
-    interpParamsProcessing = msLayerGetProcessingKey( layer, "IDW_COMPUTE_BORDERS" );
-    if(interpParamsProcessing && strcasecmp(interpParamsProcessing,"OFF")){
-        interpParams->expand_searchrect = 1;
-    } else {
-        interpParams->expand_searchrect = 0;
-    }
+  interpParamsProcessing =
+      msLayerGetProcessingKey(layer, "IDW_COMPUTE_BORDERS");
+  if (interpParamsProcessing && strcasecmp(interpParamsProcessing, "OFF")) {
+    interpParams->expand_searchrect = 1;
+  } else {
+    interpParams->expand_searchrect = 0;
+  }
 }

@@ -27,15 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "../mapserver.h"
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
 #include <stdlib.h>
-
-
 
 #ifdef SHPT_POLYGON
 #undef MAPSERVER
@@ -44,71 +41,70 @@
 #define SHPT_POLYGON SHP_POLYGON
 #endif
 
-char* AddFileSuffix ( const char * Filename, const char * Suffix )
-{
-  char  *pszFullname, *pszBasename;
+char *AddFileSuffix(const char *Filename, const char *Suffix) {
+  char *pszFullname, *pszBasename;
   size_t i;
 
   /* -------------------------------------------------------------------- */
   /*  Compute the base (layer) name.  If there is any extension     */
   /*  on the passed in filename we will strip it off.         */
   /* -------------------------------------------------------------------- */
-  pszBasename = (char *) msSmallMalloc(strlen(Filename)+5);
-  strcpy( pszBasename, Filename );
-  for( i = strlen(pszBasename)-1;
-       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-       && pszBasename[i] != '\\';
-       i-- ) {}
+  pszBasename = (char *)msSmallMalloc(strlen(Filename) + 5);
+  strcpy(pszBasename, Filename);
+  for (i = strlen(pszBasename) - 1;
+       i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/' &&
+       pszBasename[i] != '\\';
+       i--) {
+  }
 
-  if( pszBasename[i] == '.' )
+  if (pszBasename[i] == '.')
     pszBasename[i] = '\0';
 
   /* -------------------------------------------------------------------- */
   /*  Open the .shp and .shx files.  Note that files pulled from      */
   /*  a PC to Unix with upper case filenames won't work!        */
   /* -------------------------------------------------------------------- */
-  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-  sprintf( pszFullname, "%s%s", pszBasename, Suffix);
+  pszFullname = (char *)msSmallMalloc(strlen(pszBasename) + 5);
+  sprintf(pszFullname, "%s%s", pszBasename, Suffix);
 
   free(pszBasename);
   return (pszFullname);
 }
 
-
-int main( int argc, char ** argv )
+int main(int argc, char **argv)
 
 {
   SHPHandle hSHP;
-  DBFHandle   hDBF;
+  DBFHandle hDBF;
   SHPTreeHandle qix;
 
-  char  *myfile = NULL;
+  char *myfile = NULL;
 
   treeNodeObj *node;
 
 #ifdef MAPSERVER
-  shapeObj  shape;
+  shapeObj shape;
   lineObj line[3];
-  pointObj  pts[6];
+  pointObj pts[6];
 #else
   SHPObject *shape;
-  double  X[6], Y[6];
+  double X[6], Y[6];
 #endif
-  int   result;
-  
+  int result;
+
   /*
   char  mBigEndian;
   int   i;
   */
 
-  int   this_rec;
+  int this_rec;
 
   /* -------------------------------------------------------------------- */
   /*      Display a usage message.                                        */
   /* -------------------------------------------------------------------- */
-  if( argc <= 2 ) {
-    printf( "shptreevis shapefile new_shapefile \n" );
-    exit( 1 );
+  if (argc <= 2) {
+    printf("shptreevis shapefile new_shapefile \n");
+    exit(1);
   }
 
   /*
@@ -119,9 +115,8 @@ int main( int argc, char ** argv )
     mBigEndian = 1;
   */
 
-
-  qix = msSHPDiskTreeOpen (AddFileSuffix(argv[1],".qix"), 0 /* no debug*/);
-  if( qix == NULL ) {
+  qix = msSHPDiskTreeOpen(AddFileSuffix(argv[1], ".qix"), 0 /* no debug*/);
+  if (qix == NULL) {
     printf("unable to open index file %s \n", argv[1]);
     exit(-1);
   }
@@ -129,63 +124,63 @@ int main( int argc, char ** argv )
   /* -------------------------------------------------------------------- */
   /*      Open the passed shapefile.                                      */
   /* -------------------------------------------------------------------- */
-  myfile = AddFileSuffix(argv[2],".shp");
+  myfile = AddFileSuffix(argv[2], ".shp");
 
 #ifdef MAPSERVER
-  hSHP = msSHPCreate ( myfile, SHPT_POLYGON );
-  hDBF = msDBFCreate (  AddFileSuffix(argv[2],".dbf") );
+  hSHP = msSHPCreate(myfile, SHPT_POLYGON);
+  hDBF = msDBFCreate(AddFileSuffix(argv[2], ".dbf"));
 #else
-  hSHP = SHPCreate ( myfile, SHPT_POLYGON );
-  hDBF = DBFCreate (  AddFileSuffix(argv[2],".dbf") );
+  hSHP = SHPCreate(myfile, SHPT_POLYGON);
+  hDBF = DBFCreate(AddFileSuffix(argv[2], ".dbf"));
 #endif
 
-  if ( (!hSHP) || (!hDBF) ) {
-    printf ("create error for %s    ... exiting \n", myfile);
-    exit (-1);
+  if ((!hSHP) || (!hDBF)) {
+    printf("create error for %s    ... exiting \n", myfile);
+    exit(-1);
   }
 
   /* add fields to dbf */
 #ifdef MAPSERVER
-  msDBFAddField ( hDBF, "ITEMS", FTInteger, 15,0 );
-  msDBFAddField ( hDBF, "SUBNODES", FTInteger, 15,0 );
-  msDBFAddField ( hDBF, "FACTOR", FTInteger, 15,0 );
+  msDBFAddField(hDBF, "ITEMS", FTInteger, 15, 0);
+  msDBFAddField(hDBF, "SUBNODES", FTInteger, 15, 0);
+  msDBFAddField(hDBF, "FACTOR", FTInteger, 15, 0);
 #else
-  DBFAddField ( hDBF, "ITEMS", FTInteger, 15,0 );
-  DBFAddField ( hDBF, "SUBNODES", FTInteger, 15,0 );
-  DBFAddField ( hDBF, "FACTOR", FTInteger, 15,0 );
+  DBFAddField(hDBF, "ITEMS", FTInteger, 15, 0);
+  DBFAddField(hDBF, "SUBNODES", FTInteger, 15, 0);
+  DBFAddField(hDBF, "FACTOR", FTInteger, 15, 0);
 #endif
 
 #ifndef MAPSERVER
-  SHPClose ( hSHP );
-  hSHP = SHPOpen ( myfile, "r+b" );
+  SHPClose(hSHP);
+  hSHP = SHPOpen(myfile, "r+b");
 
-  DBFClose (hDBF);
-  hDBF = DBFOpen ( myfile, "r+b");
+  DBFClose(hDBF);
+  hDBF = DBFOpen(myfile, "r+b");
 #endif
 
-  printf ("This %s %s index supports a shapefile with %d shapes, %d depth \n",
-          (qix->version ? "new": "old"), (qix->LSB_order? "LSB": "MSB"), (int) qix->nShapes, (int) qix->nDepth);
-
+  printf("This %s %s index supports a shapefile with %d shapes, %d depth \n",
+         (qix->version ? "new" : "old"), (qix->LSB_order ? "LSB" : "MSB"),
+         (int)qix->nShapes, (int)qix->nDepth);
 
   /* -------------------------------------------------------------------- */
   /*  Skim over the list of shapes, printing all the vertices.  */
   /* -------------------------------------------------------------------- */
 
-  while( 1 ) {
-    node = readTreeNode (qix);
-    if (node ) {
+  while (1) {
+    node = readTreeNode(qix);
+    if (node) {
 
       this_rec = hDBF->nRecords;
 
-#ifdef  MAPSERVER
-      msDBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
-      msDBFWriteIntegerAttribute( hDBF, this_rec, 1, node->numsubnodes);
+#ifdef MAPSERVER
+      msDBFWriteIntegerAttribute(hDBF, this_rec, 0, node->numshapes);
+      msDBFWriteIntegerAttribute(hDBF, this_rec, 1, node->numsubnodes);
 #else
-      DBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
-      DBFWriteIntegerAttribute( hDBF, this_rec, 1, node->numsubnodes);
+      DBFWriteIntegerAttribute(hDBF, this_rec, 0, node->numshapes);
+      DBFWriteIntegerAttribute(hDBF, this_rec, 1, node->numsubnodes);
 #endif
 
-#ifdef  MAPSERVER
+#ifdef MAPSERVER
       shape.numlines = 1;
       shape.type = SHPT_POLYGON;
 
@@ -205,10 +200,10 @@ int main( int argc, char ** argv )
       shape.line = &line[0];
       shape.bounds = node->rect;
 
-      result = msSHPWriteShape ( hSHP, &shape );
-      if ( result < 0 ) {
-        printf ("unable to write shape \n");
-        exit (0);
+      result = msSHPWriteShape(hSHP, &shape);
+      if (result < 0) {
+        printf("unable to write shape \n");
+        exit(0);
       }
 
 #else
@@ -224,23 +219,23 @@ int main( int argc, char ** argv )
       Y[3] = node->rect.maxy;
       Y[4] = node->rect.miny;
 
-      shape = SHPCreateSimpleObject( SHPT_POLYGON, 5, X, Y, NULL);
+      shape = SHPCreateSimpleObject(SHPT_POLYGON, 5, X, Y, NULL);
       SHPWriteObject(hSHP, -1, shape);
-      SHPDestroyObject ( shape );
+      SHPDestroyObject(shape);
 #endif
     } else
       break;
   }
 
 #ifdef MAPSERVER
-  msSHPClose( hSHP );
-  msDBFClose( hDBF );
+  msSHPClose(hSHP);
+  msDBFClose(hDBF);
 #else
-  SHPClose( hSHP );
-  DBFClose( hDBF );
+  SHPClose(hSHP);
+  DBFClose(hDBF);
 #endif
 
-  msSHPDiskTreeClose (qix);
+  msSHPDiskTreeClose(qix);
 
-  return(0);
+  return (0);
 }

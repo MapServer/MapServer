@@ -86,11 +86,7 @@
  * terms specified in this license.
  */
 
-
 #include "mapserver.h"
-
-
-
 
 /* The source code of Tcl_UtfToUniChar() was borrowed from tclUtf.c
  * from the Tcl/Tk project:
@@ -159,9 +155,7 @@ terms specified in this license.
 
 ***********************************************************/
 
-
 #define TCL_UTF_MAX 6
-
 
 /*
  * The following structures are used when mapping between Unicode (UCS-2)
@@ -169,28 +163,30 @@ terms specified in this license.
  */
 
 static const unsigned char totalBytes[256] = {
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 #if TCL_UTF_MAX > 3
-  4,4,4,4,4,4,4,4,
+    4, 4, 4, 4, 4, 4, 4, 4,
 #else
-  1,1,1,1,1,1,1,1,
+    1, 1, 1, 1, 1, 1, 1, 1,
 #endif
 #if TCL_UTF_MAX > 4
-  5,5,5,5,
+    5, 5, 5, 5,
 #else
-  1,1,1,1,
+    1, 1, 1, 1,
 #endif
 #if TCL_UTF_MAX > 5
-  6,6,6,6
+    6, 6, 6, 6
 #else
-  1,1,1,1
+    1, 1, 1, 1
 #endif
 };
 
@@ -220,16 +216,15 @@ static const unsigned char totalBytes[256] = {
  *---------------------------------------------------------------------------
  */
 
-int ms_Tcl_UtfToUniChar(register const char *str, register unsigned int *chPtr)
-{
+int ms_Tcl_UtfToUniChar(register const char *str,
+                        register unsigned int *chPtr) {
   register int byte;
-
 
   /*
    * Unroll 1 to 3 byte UTF-8 sequences, use loop to handle longer ones.
    */
 
-  byte = *((unsigned char *) str);
+  byte = *((unsigned char *)str);
   if (byte < 0xC0) {
     /*
      * Handles properly formed UTF-8 characters between 0x01 and 0x7F.
@@ -261,8 +256,8 @@ int ms_Tcl_UtfToUniChar(register const char *str, register unsigned int *chPtr)
        * Three-byte-character lead byte followed by two trail bytes.
        */
 
-      *chPtr = (((byte & 0x0F) << 12)
-                              | ((str[1] & 0x3F) << 6) | (str[2] & 0x3F));
+      *chPtr =
+          (((byte & 0x0F) << 12) | ((str[1] & 0x3F) << 6) | (str[2] & 0x3F));
       return 3;
     }
     /*
@@ -301,7 +296,6 @@ int ms_Tcl_UtfToUniChar(register const char *str, register unsigned int *chPtr)
   return 1;
 }
 
-
 /* msUTF8ToUniChar()
  *
  *  Extract the Unicode Char represented by the UTF-8 string.  Bad
@@ -316,17 +310,15 @@ int ms_Tcl_UtfToUniChar(register const char *str, register unsigned int *chPtr)
  * Results:
  *  *chPtr is filled with the Unicode Char value, and the return value
  *  is the number of bytes from the UTF-8 string that were consumed.
-**
-**/
-int msUTF8ToUniChar(const char *str, /* The UTF-8 string. */
-                    unsigned int *chPtr)      /* Filled with the Unicode Char represented
-                                      * by the UTF-8 string. */
+ **
+ **/
+int msUTF8ToUniChar(const char *str,     /* The UTF-8 string. */
+                    unsigned int *chPtr) /* Filled with the Unicode Char
+                                          * represented by the UTF-8 string. */
 {
   /*check if the string is an html entity (eg &#123; or &#x12a;)*/
   int entitylgth;
-  if(*str == '&' && (entitylgth=msGetUnicodeEntity(str, chPtr))>0)
+  if (*str == '&' && (entitylgth = msGetUnicodeEntity(str, chPtr)) > 0)
     return entitylgth;
   return ms_Tcl_UtfToUniChar(str, chPtr);
 }
-
-

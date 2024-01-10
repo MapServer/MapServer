@@ -29,8 +29,8 @@ SYMBOLSET etc/symbols.sym
 FONTSET etc/fonts.txt
 
 OUTPUTFORMAT
-  NAME GDPNG
-  DRIVER "GD/PNG"
+  NAME png
+  DRIVER "AGG/PNG8"
   MIMETYPE "image/png"
   EXTENSION "png"
 END

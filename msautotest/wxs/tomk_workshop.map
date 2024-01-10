@@ -86,13 +86,13 @@ MAP
  END
 
  # image format options
- OUTPUTFORMAT
-  NAME png
-  DRIVER "GD/PNG"
-  MIMETYPE "image/png"
-  IMAGEMODE RGBA
-  EXTENSION "png"
- END
+  OUTPUTFORMAT
+    NAME png
+    DRIVER "AGG/PNG8"
+    MIMETYPE "image/png"
+    EXTENSION "png"
+    TRANSPARENT ON
+  END
 
  OUTPUTFORMAT
   NAME GEOTIFF_RGB

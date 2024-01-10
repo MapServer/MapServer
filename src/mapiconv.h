@@ -36,9 +36,8 @@ extern "C" {
 #include <iconv.h>
 
 /* Wrapper of iconv() to be used from C++ */
-size_t msIconv(iconv_t cd,
-               char **inbuf, size_t *inbytesleft,
-               char **outbuf, size_t *outbytesleft);
+size_t msIconv(iconv_t cd, char **inbuf, size_t *inbytesleft, char **outbuf,
+               size_t *outbytesleft);
 
 #ifdef __cplusplus
 }

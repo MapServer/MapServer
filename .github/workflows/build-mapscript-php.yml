@@ -1,0 +1,50 @@
+name: Build and test PHP MapScript
+
+on:
+  push:
+    branches:
+      - 'main'
+    except:
+      - /^(cherry-pick-)?backport-\d+-to-/
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        php-version: [8.1, 8.2]
+    env:
+      IGNORE_COMPARISON_RESULT_ON_CI: 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Setup PHP
+        run: |
+          # for pre-installed software see 
+          # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2004-Readme.md
+          # both swig and php are included, so removed these
+          sudo apt-get -qq remove "php*-cli" "php*-dev"
+          sudo apt-get -qq remove "swig*"
+          sudo add-apt-repository ppa:ondrej/php -y
+          sudo apt-get -qq update
+          sudo apt-get -qq install php${{ matrix.php-version }}-cli php${{ matrix.php-version }}-dev
+
+      - name: Install dependencies
+        run: ./ci/setup.sh
+
+      - name: Build
+        run: ./ci/build.sh

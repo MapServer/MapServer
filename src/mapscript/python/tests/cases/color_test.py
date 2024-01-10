@@ -25,11 +25,11 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
 
 
 class ColorObjTestCase(unittest.TestCase):
-
     def testColorObjConstructorNoArgs(self):
         """a color can be initialized with no arguments"""
         c = mapscript.colorObj()
@@ -43,7 +43,7 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjToHex(self):
         """a color can be outputted as hex"""
         c = mapscript.colorObj(255, 255, 255)
-        assert c.toHex() == '#ffffff'
+        assert c.toHex() == "#ffffff"
 
     def testColorObjToHexBadly(self):
         """raise an error in the case of an undefined color"""
@@ -59,20 +59,20 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjSetHexLower(self):
         """a color can be set using lower case hex"""
         c = mapscript.colorObj()
-        c.setHex('#ffffff64')
+        c.setHex("#ffffff64")
         assert (c.red, c.green, c.blue, c.alpha) == (255, 255, 255, 100)
 
     def testColorObjSetHexUpper(self):
         """a color can be set using upper case hex"""
         c = mapscript.colorObj()
-        c.setHex('#FFFFFF')
+        c.setHex("#FFFFFF")
         assert (c.red, c.green, c.blue) == (255, 255, 255)
 
     def testColorObjSetHexBadly(self):
         """invalid hex color string raises proper error"""
         c = mapscript.colorObj()
-        self.assertRaises(mapscript.MapServerError, c.setHex, '#fffffg')
+        self.assertRaises(mapscript.MapServerError, c.setHex, "#fffffg")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

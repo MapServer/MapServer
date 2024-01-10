@@ -46,38 +46,42 @@
   doesn't #define away our ms_*/
 
 #if defined(_WIN32) && !defined(__CYGWIN__) && _MSC_VER < 1900
-#define off_t  long
+#define off_t long
 #endif
 
 #include "mapserver.h"
 #include "mapregex.h"
 #include <regex.h>
 
-MS_API_EXPORT(int) ms_regcomp(ms_regex_t *regex, const char *expr, int cflags)
-{
+MS_API_EXPORT(int) ms_regcomp(ms_regex_t *regex, const char *expr, int cflags) {
   /* Must free in regfree() */
-  regex_t* sys_regex = (regex_t*) msSmallMalloc(sizeof(regex_t));
-  regex->sys_regex = (void*) sys_regex;
-  return regcomp(sys_regex, expr, cflags);
+  regex_t *sys_regex = (regex_t *)msSmallMalloc(sizeof(regex_t));
+  regex->sys_regex = (void *)sys_regex;
+  int ret = regcomp(sys_regex, expr, cflags);
+  if (ret != 0) {
+    free(regex->sys_regex);
+    regex->sys_regex = NULL;
+  }
+  return ret;
 }
 
-MS_API_EXPORT(size_t) ms_regerror(int errcode, const ms_regex_t *regex, char *errbuf, size_t errbuf_size)
-{
-  return regerror(errcode, (regex_t*)(regex->sys_regex), errbuf, errbuf_size);
+MS_API_EXPORT(size_t)
+ms_regerror(int errcode, const ms_regex_t *regex, char *errbuf,
+            size_t errbuf_size) {
+  return regerror(errcode, (regex_t *)(regex->sys_regex), errbuf, errbuf_size);
 }
 
-MS_API_EXPORT(int) ms_regexec(const ms_regex_t *regex, const char *string, size_t nmatch, ms_regmatch_t pmatch[], int eflags)
-{
+MS_API_EXPORT(int)
+ms_regexec(const ms_regex_t *regex, const char *string, size_t nmatch,
+           ms_regmatch_t pmatch[], int eflags) {
   /*This next line only works because we know that regmatch_t
     and ms_regmatch_t are exactly alike (POSIX STANDARD)*/
-  return regexec((const regex_t*)(regex->sys_regex),
-                 string, nmatch,
-                 (regmatch_t*) pmatch, eflags);
+  return regexec((const regex_t *)(regex->sys_regex), string, nmatch,
+                 (regmatch_t *)pmatch, eflags);
 }
 
-MS_API_EXPORT(void) ms_regfree(ms_regex_t *regex)
-{
-  regfree((regex_t*)(regex->sys_regex));
+MS_API_EXPORT(void) ms_regfree(ms_regex_t *regex) {
+  regfree((regex_t *)(regex->sys_regex));
   free(regex->sys_regex);
   return;
 }

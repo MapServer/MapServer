@@ -17,6 +17,17 @@
 # RUN_PARMS: wms_getstyles_expressions10.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test10" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions11.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test11" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions12.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test12" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions13.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test13" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions14.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test14" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions15.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test15" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions16.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test16" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions17.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test17" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions18.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test18" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions19.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test19" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions20.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test20" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions21.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test21" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions22.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test22" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions23.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test23" > [RESULT_DEMIME]
 
 MAP
     NAME WMS_TEST
@@ -166,6 +177,155 @@ MAP
       TYPE POINT
       CLASS
         EXPRESSION (NOT([FID] = 1))
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # list expression
+    LAYER
+      NAME "Test13"
+      TYPE POINT
+      CLASSITEM "FID"
+      CLASS
+        EXPRESSION {2,4,6}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # list expression with one value
+    LAYER
+      NAME "Test14"
+      TYPE POINT
+      CLASSITEM "FID"
+      CLASS
+        EXPRESSION {2}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # empty list expression
+    LAYER
+      NAME "Test15"
+      TYPE POINT
+      CLASSITEM "FID"
+      CLASS
+        EXPRESSION {}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+    
+    # string list expression
+    LAYER
+      NAME "Test16"
+      TYPE POINT
+      CLASSITEM "locationtype"
+      CLASS
+        EXPRESSION {primary location,secondary location}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END    
+
+    # string list expression with quotes
+    LAYER
+      NAME "Test17"
+      TYPE POINT
+      CLASSITEM "poi"
+      CLASS
+        EXPRESSION {"main" square,city's centre}
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # string list expression with trailing space
+    LAYER
+      NAME "Test18"
+      TYPE POINT
+      CLASSITEM "locationtype"
+      CLASS
+        EXPRESSION {primary location,secondary location }
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # string expression
+    LAYER
+      NAME "Test19"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [locationtype] = "primary location" )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # string expression with trailing space
+    LAYER
+      NAME "Test20"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [locationtype] = "primary location " )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+    
+    # test for multiple expressions with brackets and spaces
+    LAYER
+      NAME "Test21"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( ( [FID] > 1 ) AND ( [FID] <= 10 ) )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # test for multiple string expressions with brackets and spaces
+    LAYER
+      NAME "Test22"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( ( [locationtype] = "primary location " ) OR ( [locationtype] = " secondary location" ) )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # test for multiple expressions with spaces but not brackets
+    LAYER
+      NAME "Test23"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] > 1 AND [FID] <= 10 )
         STYLE
             COLOR 220 0 0
             WIDTH 1

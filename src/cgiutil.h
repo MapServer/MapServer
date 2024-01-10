@@ -5,7 +5,8 @@
  * Purpose:  cgiRequestObj and CGI parsing utility related declarations.
  * Author:   Steve Lime and the MapServer team.
  *
- * Notes: Portions derived from NCSA HTTPd Server's example CGI programs (util.c).
+ * Notes: Portions derived from NCSA HTTPd Server's example CGI programs
+ *(util.c).
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
@@ -37,9 +38,9 @@ extern "C" {
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#  define MS_DLL_EXPORT     __declspec(dllexport)
+#define MS_DLL_EXPORT __declspec(dllexport)
 #else
-#define  MS_DLL_EXPORT
+#define MS_DLL_EXPORT
 #endif
 
 /*
@@ -47,7 +48,7 @@ extern "C" {
 */
 #define MS_DEFAULT_CGI_PARAMS 100
 
-enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
+enum MS_REQUEST_TYPE { MS_GET_REQUEST, MS_POST_REQUEST };
 
 /**
 Class for programming OWS services
@@ -66,9 +67,10 @@ typedef struct {
   %mutable;
 #endif
 
-  enum MS_REQUEST_TYPE type; ///< A :ref:`request type constant<mapfile-constants-requesttype>`
-  char *contenttype; ///< The content type of the request
-  char *postrequest; ///< Any POST data request
+  enum MS_REQUEST_TYPE
+      type; ///< A :ref:`request type constant<mapfile-constants-requesttype>`
+  char *contenttype;    ///< The content type of the request
+  char *postrequest;    ///< Any POST data request
   char *httpcookiedata; ///< Any cookie data associated with the request
 
 #ifndef SWIG
@@ -78,13 +80,15 @@ typedef struct {
 #endif
 } cgiRequestObj;
 
-
 /*
 ** Function prototypes
 */
 #ifndef SWIG
-MS_DLL_EXPORT int loadParams(cgiRequestObj *request, char* (*getenv2)(const char*, void* thread_context),
-                             char *raw_post_data, ms_uint32 raw_post_data_length, void* thread_context);
+MS_DLL_EXPORT int
+loadParams(cgiRequestObj *request,
+           char *(*getenv2)(const char *, void *thread_context),
+           char *raw_post_data, ms_uint32 raw_post_data_length,
+           void *thread_context);
 MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);
 MS_DLL_EXPORT char *makeword(char *, char);

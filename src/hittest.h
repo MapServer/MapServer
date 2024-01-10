@@ -26,7 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #ifndef HITTEST_H
 #define HITTEST_H
 
@@ -50,7 +49,7 @@ typedef struct {
   int status;
 } layer_hittest;
 
-typedef struct map_hittest{
+typedef struct map_hittest {
   layer_hittest *layerhits;
 } map_hittest;
 

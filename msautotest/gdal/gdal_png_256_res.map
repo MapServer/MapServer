@@ -1,6 +1,7 @@
 
 #
 # Tests non-transparent 8bit output via GDAL with resampling.
+# FIXME/REMOVE_ME?: this used to be the case at the GD era, but now it is actually RGBA
 #
 # NOTE: Input is transparent, but we see through to the opaque background
 # set via IMAGECOLOR directive.  This file also tests all-in-one projection
@@ -22,13 +23,10 @@ PROJECTION
   "datum=WGS84"
 END
 
-IMAGETYPE png8_t
-
 OUTPUTFORMAT
-  NAME png8_t
+  NAME gdal_png
   DRIVER "GDAL/PNG"
-  IMAGEMODE PC256
-  TRANSPARENT OFF
+  IMAGEMODE RGB
 END
 
 #

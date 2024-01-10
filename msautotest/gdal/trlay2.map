@@ -3,6 +3,7 @@
 #
 # Final result is RGBA and transparency from both input images, and the
 # layer TRANSPARENCY flag all have an influence.
+# FIXME/REMOVE_ME?: this used to be the case at the GD era, but now it goes through AGG/PNG8
 #
 MAP
 
@@ -12,12 +13,12 @@ SIZE 400 300
 EXTENT 0.5 0.5 399.5 299.5
 IMAGECOLOR 255 255 0
 
-IMAGETYPE png_24
+IMAGETYPE png8_t
 
 OUTPUTFORMAT
-  NAME png_24
-  DRIVER "GD/PNG"
-  IMAGEMODE RGBA
+  NAME png8_t
+  DRIVER "AGG/PNG8"
+  IMAGEMODE RGB
   TRANSPARENT ON
 END
 

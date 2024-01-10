@@ -32,12 +32,11 @@
 
 #ifdef USE_OGL
 
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <windows.h>
-#include<GL/gl.h>
-#include<GL/glu.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 #include "opengl/glext.h"
 #include "opengl/wglext.h"
@@ -50,11 +49,11 @@ typedef HGLRC OGL_PBUFFER;
 
 #else
 
-#include<GL/gl.h>
-#include<GL/glx.h>
-#include<GL/glu.h>
+#include <GL/gl.h>
+#include <GL/glx.h>
+#include <GL/glu.h>
 
-typedef Display* OGL_WINDOW;
+typedef Display *OGL_WINDOW;
 typedef GLXContext OGL_CONTEXT;
 typedef GLXPbuffer OGL_PBUFFER;
 
@@ -64,10 +63,9 @@ typedef GLXPbuffer OGL_PBUFFER;
 
 class OglRenderer;
 
-class OglContext
-{
+class OglContext {
 private:
-  static OglContext* current;
+  static OglContext *current;
   static bool initWindow();
   static bool initSharingContext();
   static ms_uint32 getTextureSize(GLuint dimension, ms_uint32 value);
@@ -79,9 +77,9 @@ private:
   HDC hPBufferDC;
   HGLRC hPBufferRC;
 #else
-  static Display* window;
+  static Display *window;
   static GLXContext sharingContext;
-  static GLXFBConfig* configs;
+  static GLXFBConfig *configs;
   GLXPbuffer pbuffer;
 #endif
 
@@ -93,17 +91,12 @@ public:
 
   OglContext(ms_uint32 width, ms_uint32 height);
   ~OglContext();
-  int getHeight() const {
-    return height;
-  }
-  int getWidth() const {
-    return width;
-  }
-  bool isValid() const {
-    return valid;
-  }
+  int getHeight() const { return height; }
+  int getWidth() const { return width; }
+  bool isValid() const { return valid; }
   bool makeCurrent();
   void bindPBufferToTexture();
+
 private:
   bool createPBuffer(ms_uint32 width, ms_uint32 height);
   ms_uint32 width;

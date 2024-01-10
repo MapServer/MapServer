@@ -25,43 +25,52 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import MapTestCase
 
 
 class NewLabelsTestCase(MapTestCase):
-
     def testLabelBinding(self):
         """attribute binding can be set and get"""
         new_label = mapscript.labelObj()
-        assert (not new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR))
+        assert not new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR)
         new_label.setBinding(mapscript.MS_LABEL_BINDING_COLOR, "NEW_BINDING")
-        assert (new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR) == "NEW_BINDING")
+        assert new_label.getBinding(mapscript.MS_LABEL_BINDING_COLOR) == "NEW_BINDING"
 
     def testLabelExpressionBinding(self):
         """expression binding can be set and get"""
         new_label = mapscript.labelObj()
-        assert (not new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY))
-        new_label.setExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY, "[MY_ATTRIBUTE] * 2")
-        assert (new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY) == "([MY_ATTRIBUTE] * 2)")
+        assert not new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY)
+        new_label.setExpressionBinding(
+            mapscript.MS_LABEL_BINDING_PRIORITY, "[MY_ATTRIBUTE] * 2"
+        )
+        assert (
+            new_label.getExpressionBinding(mapscript.MS_LABEL_BINDING_PRIORITY)
+            == "([MY_ATTRIBUTE] * 2)"
+        )
 
-        exp = 'LABEL\n  SIZE 10\n  OFFSET 0 0\n  POSITION CC\n  ' \
-              'PRIORITY ([MY_ATTRIBUTE] * 2)\n  SHADOWSIZE 1 1\nEND # LABEL\n'
-        assert (new_label.convertToString() == exp)
+        exp = (
+            "LABEL\n  SIZE 10\n  OFFSET 0 0\n  POSITION CC\n  "
+            "PRIORITY ([MY_ATTRIBUTE] * 2)\n  SHADOWSIZE 1 1\nEND # LABEL\n"
+        )
+        assert new_label.convertToString() == exp
 
 
 class LabelCacheMemberTestCase(MapTestCase):
-
     def testCacheMemberText(self):
         """string attribute has been renamed to 'text' (bug 852)"""
-        lo = self.map.getLayerByName('POINT')
+        lo = self.map.getLayerByName("POINT")
         lo.status = mapscript.MS_ON
         img = self.map.draw()
         assert img is not None
-        assert self.map.labelcache.num_rendered_members == 1, self.map.labelcache.num_rendered_members
+        assert (
+            self.map.labelcache.num_rendered_members == 1
+        ), self.map.labelcache.num_rendered_members
         # label = self.map.nextLabel()
         # assert label.text == 'A Point', label.text
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

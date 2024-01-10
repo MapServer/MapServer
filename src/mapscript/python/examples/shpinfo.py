@@ -8,9 +8,10 @@ Usage:
 python shpinfo.py point.shp
 
 """
-import mapscript
-import sys
 import os
+import sys
+
+import mapscript
 
 
 def get_shapefile_object(sf_path):
@@ -31,30 +32,33 @@ def get_shapefile_details(sf_obj):
     # dictionary of shapefile types
 
     types = {
-              mapscript.MS_SHAPEFILE_POINT: 'Point',
-              mapscript.MS_SHAPEFILE_ARC: 'Line',
-              mapscript.MS_SHAPEFILE_POLYGON: 'Polygon',
-              mapscript.MS_SHAPEFILE_MULTIPOINT: 'Multipoint',
-
-              mapscript.MS_SHP_POINTZ: 'PointZ',
-              mapscript.MS_SHP_ARCZ: 'LineZ',
-              mapscript.MS_SHP_POLYGONZ: 'PolygonZ',
-              mapscript.MS_SHP_MULTIPOINTZ: 'MultipointZ',
-
-              mapscript.MS_SHP_POINTM: 'Multipoint',
-              mapscript.MS_SHP_ARCM: 'LineM',
-              mapscript.MS_SHP_POLYGONM: 'PolygonM',
-              mapscript.MS_SHP_MULTIPOINTM: 'MultipointM'
-            }
+        mapscript.MS_SHAPEFILE_POINT: "Point",
+        mapscript.MS_SHAPEFILE_ARC: "Line",
+        mapscript.MS_SHAPEFILE_POLYGON: "Polygon",
+        mapscript.MS_SHAPEFILE_MULTIPOINT: "Multipoint",
+        mapscript.MS_SHP_POINTZ: "PointZ",
+        mapscript.MS_SHP_ARCZ: "LineZ",
+        mapscript.MS_SHP_POLYGONZ: "PolygonZ",
+        mapscript.MS_SHP_MULTIPOINTZ: "MultipointZ",
+        mapscript.MS_SHP_POINTM: "Multipoint",
+        mapscript.MS_SHP_ARCM: "LineM",
+        mapscript.MS_SHP_POLYGONM: "PolygonM",
+        mapscript.MS_SHP_MULTIPOINTM: "MultipointM",
+    }
 
     # print out basic information that is part of the shapefile object
 
     print("\tType: %s" % types[sf_obj.type])
 
-    print("\tBounds: (%f, %f) (%f, %f)" % (sf_obj.bounds.minx,
-                                           sf_obj.bounds.miny,
-                                           sf_obj.bounds.maxx,
-                                           sf_obj.bounds.maxy))
+    print(
+        "\tBounds: (%f, %f) (%f, %f)"
+        % (
+            sf_obj.bounds.minx,
+            sf_obj.bounds.miny,
+            sf_obj.bounds.maxx,
+            sf_obj.bounds.maxy,
+        )
+    )
 
     print("\tNumber of features: %i" % sf_obj.numshapes)
 
@@ -70,14 +74,21 @@ def get_dbf_details(sf_obj):
     print("\tNumber of records in DBF: %i" % dbf_obj.nRecords)
     print("\tNumber of fields: %i" % dbf_obj.nFields)
     print("")
-    print("\t%-20s %12s %8s %10s" % ("Name", "Type",  "Length", "Decimals"))
+    print("\t%-20s %12s %8s %10s" % ("Name", "Type", "Length", "Decimals"))
     print("\t-----------------------------------------------------")
 
     # print out field characteristics
 
     for idx in range(0, dbf_obj.nFields):
-        print("\t%-20s %12s %8d %10d" % (dbf_obj.getFieldName(idx), dbf_obj.getFieldType(idx),
-                                         dbf_obj.getFieldWidth(idx), dbf_obj.getFieldDecimals(idx)))
+        print(
+            "\t%-20s %12s %8d %10d"
+            % (
+                dbf_obj.getFieldName(idx),
+                dbf_obj.getFieldType(idx),
+                dbf_obj.getFieldWidth(idx),
+                dbf_obj.getFieldDecimals(idx),
+            )
+        )
 
 
 def main(sf_path):

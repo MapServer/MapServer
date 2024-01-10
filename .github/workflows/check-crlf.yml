@@ -5,6 +5,13 @@ name: Check CRLF
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   Check-CRLF:
     name: verify that only LF linefeeds are used

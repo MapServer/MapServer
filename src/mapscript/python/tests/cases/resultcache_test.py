@@ -25,16 +25,17 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
+
 from .testing import MapTestCase
 
 
 class LayerQueryTestCase(MapTestCase):
-
     def setUp(self):
         MapTestCase.setUp(self)
         self.layer = self.map.getLayer(1)
-        self.layer.template = 'some day i will fix this!'
+        self.layer.template = "some day i will fix this!"
 
     def pointquery(self):
         p = mapscript.pointObj(0.0, 51.5)
@@ -47,10 +48,9 @@ class LayerQueryTestCase(MapTestCase):
 
 
 class ResultCacheTestCase(LayerQueryTestCase):
-
     def testNoDirectAccess(self):
         """denying direct access to layer's resultcache"""
-        self.assertRaises(AttributeError, getattr, self.layer, 'resultcache')
+        self.assertRaises(AttributeError, getattr, self.layer, "resultcache")
 
     def testNullResultCache(self):
         """before a query layer's resultcache should be NULL"""
@@ -59,7 +59,6 @@ class ResultCacheTestCase(LayerQueryTestCase):
 
 
 class PointQueryResultsTestCase(LayerQueryTestCase):
-
     def testCacheAfterQuery(self):
         """simple point query returns one result"""
         results = self.pointquery()
@@ -94,7 +93,7 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
         feature = self.layer.getShape(res)
         self.layer.close()
         self.assertRectsEqual(results.bounds, feature.bounds)
-        assert feature.getValue(1) == 'A Polygon'
+        assert feature.getValue(1) == "A Polygon"
 
     def testQueryResultsListComp(self):
         """get all results using list comprehension"""
@@ -114,21 +113,19 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
 
 
 class DumpAndLoadTestCase(LayerQueryTestCase):
-
     def testSaveAndLoadQuery(self):
         """test saving query to a file"""
         results = self.pointquery()
-        self.map.saveQuery('test.qy')
+        self.map.saveQuery("test.qy")
         self.map.freeQuery()
         results = self.layer.getResults()
         assert results is None
-        self.map.loadQuery('test.qy')
+        self.map.loadQuery("test.qy")
         results = self.layer.getResults()
         assert results is not None
 
 
 class LayerOffQueryTestCase(LayerQueryTestCase):
-
     def testPointQueryOffLayer(self):
         """simple point query returns one result, even if layer is off"""
         self.layer.status = mapscript.MS_OFF
@@ -142,5 +139,5 @@ class LayerOffQueryTestCase(LayerQueryTestCase):
         assert results.numresults == 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

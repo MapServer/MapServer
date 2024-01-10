@@ -1,0 +1,54 @@
+#
+# Test WFS 1.0.0 Client
+#
+# REQUIRES: OUTPUT=PNG SUPPORTS=WFS_CLIENT SUPPORTS=WFS
+# GetFeature
+# RUN_PARMS: wfs_client_100.xml [MAPSERV] -conf ../etc/mapserv.conf QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=continents" > [RESULT_DEMIME]
+
+MAP
+    NAME WFS_CLIENT_TEST_100
+    STATUS ON
+    SIZE 400 300
+    EXTENT -180 -90 180 90
+    UNITS DD
+    PROJECTION
+        "init=epsg:4326"
+    END
+    SYMBOLSET etc/symbols.sym
+    FONTSET etc/fonts.txt
+
+    WEB
+        IMAGEPATH "./tmp"
+        METADATA
+            "ows_updatesequence"    "123"
+            "wfs_title"    "Test WFS 1.0.0 client"
+            "wfs_srs"    "EPSG:4326"
+            "ows_enable_request"    "*"
+            "ows_onlineresource" "http://localhost/wfsclient?"
+        END
+    END
+
+    LAYER
+      NAME "continents"
+      TYPE POLYGON
+      STATUS ON
+      CONNECTION "https://demo.mapserver.org/cgi-bin/wfs?"
+      CONNECTIONTYPE WFS
+      METADATA
+        "wfs_typename"          "continents"
+        "wfs_version"           "1.0.0"
+        "wfs_connectiontimeout" "60"
+        "wfs_maxfeatures"       "2"
+      END
+      PROJECTION
+        "init=epsg:4326"
+      END
+      CLASS
+        NAME "Continents"
+        STYLE
+          COLOR 255 128 128
+          OUTLINECOLOR 96 96 96
+        END
+      END
+    END # Layer
+END

@@ -25,18 +25,18 @@
 # ===========================================================================
 
 import unittest
+
 import mapscript
 
 
 class ClusterObjTestCase(unittest.TestCase):
-
     def testClusterObjUpdateFromString(self):
         """a cluster can be updated from a string"""
         c = mapscript.clusterObj()
         c.updateFromString("CLUSTER \n MAXDISTANCE 5 \n REGION \n 'rectangle' END")
 
         assert c.maxdistance == 5
-        assert c.region == 'rectangle'
+        assert c.region == "rectangle"
 
         s = c.convertToString()
         assert s == 'CLUSTER\n  MAXDISTANCE 5\n  REGION "rectangle"\nEND # CLUSTER\n'
@@ -44,17 +44,17 @@ class ClusterObjTestCase(unittest.TestCase):
     def testClusterObjGetSetFilter(self):
         """a cluster filter can be set and read"""
         c = mapscript.clusterObj()
-        filter = '[attr1] > 5'
+        filter = "[attr1] > 5"
         c.setFilter(filter)
         assert '"{}"'.format(filter) == c.getFilterString()
 
     def testClusterObjGetSetGroup(self):
         """a cluster filter can be set and read"""
         c = mapscript.clusterObj()
-        exp = '100'  # TODO not sure what would be a relevant expression here
+        exp = "100"  # TODO not sure what would be a relevant expression here
         c.setGroup(exp)
         assert '"{}"'.format(exp) == c.getGroupString()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
