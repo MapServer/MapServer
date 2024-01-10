@@ -7,6 +7,13 @@ on:
     except:
       - /^(cherry-pick-)?backport-\d+-to-/
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-20.04
