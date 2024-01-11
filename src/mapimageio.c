@@ -219,7 +219,7 @@ int saveAsJPEG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
 
   jpeg_start_compress(&cinfo, TRUE);
   rowdata =
-      (JSAMPLE *)malloc(rb->width * cinfo.input_components * sizeof(JSAMPLE));
+      (JSAMPLE *)malloc(sizeof(JSAMPLE) * rb->width * cinfo.input_components);
 
   for (row = 0; row < rb->height; row++) {
     JSAMPLE *pixptr = rowdata;
@@ -476,7 +476,7 @@ int saveAsPNG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
     qrb.width = rb->width;
     qrb.height = rb->height;
     qrb.data.palette.pixels =
-        (unsigned char *)malloc(qrb.width * qrb.height * sizeof(unsigned char));
+        (unsigned char *)malloc(sizeof(unsigned char) * qrb.width * qrb.height);
     qrb.data.palette.scaling_maxval = 255;
     int ret;
     if (force_pc256) {
@@ -667,7 +667,7 @@ int readPNG(char *path, rasterBufferObj *rb) {
   rb->height = height;
   rb->type = MS_BUFFER_BYTE_RGBA;
   rb->data.rgba.pixels =
-      (unsigned char *)malloc(width * height * 4 * sizeof(unsigned char));
+      (unsigned char *)malloc(sizeof(unsigned char) * width * height * 4);
   row_pointers = (unsigned char **)malloc(height * sizeof(unsigned char *));
   rb->data.rgba.pixel_step = 4;
   rb->data.rgba.row_step = width * 4;
@@ -897,8 +897,8 @@ int readGIF(char *path, rasterBufferObj *rb) {
   rb->height = image->SHeight;
   rb->data.rgba.row_step = rb->width * 4;
   rb->data.rgba.pixel_step = 4;
-  rb->data.rgba.pixels = (unsigned char *)malloc(rb->width * rb->height * 4 *
-                                                 sizeof(unsigned char));
+  rb->data.rgba.pixels = (unsigned char *)malloc(sizeof(unsigned char) *
+                                                 rb->width * rb->height * 4);
   b = rb->data.rgba.b = &rb->data.rgba.pixels[0];
   g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
   r = rb->data.rgba.r = &rb->data.rgba.pixels[2];

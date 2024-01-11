@@ -51,8 +51,8 @@ static int msDrawGradientSymbol(rendererVTableObj *renderer,
   rb->height = height;
   rb->data.rgba.row_step = rb->width * 4;
   rb->data.rgba.pixel_step = 4;
-  rb->data.rgba.pixels = (unsigned char *)malloc(rb->width * rb->height * 4 *
-                                                 sizeof(unsigned char));
+  rb->data.rgba.pixels = (unsigned char *)malloc(sizeof(unsigned char) *
+                                                 rb->width * rb->height * 4);
   b = rb->data.rgba.b = &rb->data.rgba.pixels[0];
   g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
   r = rb->data.rgba.r = &rb->data.rgba.pixels[2];

@@ -1767,14 +1767,14 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     }
 
     if (format->imagemode == MS_IMAGEMODE_INT16)
-      image->img.raw_16bit =
-          (short *)msSmallCalloc(sizeof(short), width * height * format->bands);
+      image->img.raw_16bit = (short *)msSmallCalloc(
+          sizeof(short), ((size_t)width) * height * format->bands);
     else if (format->imagemode == MS_IMAGEMODE_FLOAT32)
-      image->img.raw_float =
-          (float *)msSmallCalloc(sizeof(float), width * height * format->bands);
+      image->img.raw_float = (float *)msSmallCalloc(
+          sizeof(float), ((size_t)width) * height * format->bands);
     else if (format->imagemode == MS_IMAGEMODE_BYTE)
       image->img.raw_byte = (unsigned char *)msSmallCalloc(
-          sizeof(unsigned char), width * height * format->bands);
+          sizeof(unsigned char), ((size_t)width) * height * format->bands);
 
     if (image->img.raw_16bit == NULL) {
       msFree(image);

@@ -348,7 +348,7 @@ static void wkbSkipGeometry(wkbObj *w) {
   case WKB_CIRCULARSTRING:
   case WKB_LINESTRING: {
     const int npoints = wkbReadInt(w);
-    w->ptr += npoints * nCoordDim * sizeof(double);
+    w->ptr += sizeof(double) * npoints * nCoordDim;
     break;
   }
   case WKB_POLYGON: {
@@ -357,7 +357,7 @@ static void wkbSkipGeometry(wkbObj *w) {
       return;
     for (int i = 0; i < nrings; i++) {
       const int npoints = wkbReadInt(w);
-      w->ptr += npoints * nCoordDim * sizeof(double);
+      w->ptr += sizeof(double) * npoints * nCoordDim;
     }
     break;
   }

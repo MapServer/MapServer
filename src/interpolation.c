@@ -161,9 +161,10 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
       int l, p, s, c;
       double weight = 1.0;
       if (!values) { /* defer allocation until we effectively have a feature */
-        values = (float *)msSmallCalloc(im_width * im_height, sizeof(float));
-        xyz_values =
-            (float *)msSmallCalloc(im_width * im_height, sizeof(float));
+        values = (float *)msSmallCalloc(((size_t)im_width) * im_height,
+                                        sizeof(float));
+        xyz_values = (float *)msSmallCalloc(((size_t)im_width) * im_height,
+                                            sizeof(float));
       }
       if (layer->project)
         msProjectShape(&layer->projection, &map->projection, &shape);
@@ -232,10 +233,10 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
 
   if (npoints > 0 && interpParams.expand_searchrect) {
     iValues =
-        msSmallMalloc(image->width * image->height * sizeof(unsigned char));
+        msSmallMalloc(sizeof(unsigned char) * image->width * image->height);
   } else {
     iValues =
-        msSmallCalloc(1, image->width * image->height * sizeof(unsigned char));
+        msSmallCalloc(1, sizeof(unsigned char) * image->width * image->height);
   }
 
   if (npoints >
