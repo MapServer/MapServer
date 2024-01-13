@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout repository contents
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set RUN_COVERALLS Environment Variable
         if: (github.event.pull_request.merged == true || github.event_name == 'push') && env.WITH_ASAN != 'true'
