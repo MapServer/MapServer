@@ -17,36 +17,31 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Regular
+          - name: Regular, with coverage
             WITH_ASAN: "false"
+            WITH_COVERAGE: "true"
 
           - name: Address_sanitizer
             WITH_ASAN: "true"
+            WITH_COVERAGE: "false"
 
     name: ${{ matrix.name }}
-
-    env:
-      WITH_ASAN: ${{ matrix.WITH_ASAN }}
-      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      COVERALLS_SERVICE_NAME: "GitHub Actions"
-      UPLOAD_COVERALLS: "false"
 
     steps:
       - name: Checkout repository contents
         uses: actions/checkout@v4
 
-      - name: Set RUN_COVERALLS Environment Variable
-        if: (github.event.pull_request.merged == true || github.event_name == 'push') && env.WITH_ASAN != 'true'
-        run: |
-            echo "Setting UPLOAD_COVERALLS to true"
-            echo "UPLOAD_COVERALLS=true" >>${GITHUB_ENV}
-
       - name: Build
         run: |
             docker run \
             -e WORK_DIR="$PWD" \
-            -e WITH_ASAN="${{ env.WITH_ASAN }}" \
-            -e COVERALLS_REPO_TOKEN="${{ env.COVERALLS_REPO_TOKEN }}" \
-            -e COVERALLS_SERVICE_NAME="${{ env.COVERALLS_SERVICE_NAME }}" \
-            -e UPLOAD_COVERALLS="${{ env.UPLOAD_COVERALLS }}" \
+            -e WITH_ASAN="${{ matrix.WITH_ASAN }}" \
+            -e WITH_COVERAGE="${{ matrix.WITH_COVERAGE }}" \
             -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        if: ${{ matrix.WITH_COVERAGE == 'true' }}
+        with:
+          format: lcov
+          file: mapserver.info

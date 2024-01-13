@@ -55,6 +55,6 @@ which pip
 # install Python dependencies (required for msautotests)
 pip install --upgrade pip
 # pip install cryptography==3.4.6 # avoid requiring rust compiler for the cryptography dependency
-pip install cpp-coveralls pyflakes
+pip install pyflakes
 pip install -r msautotest/requirements.txt
 
