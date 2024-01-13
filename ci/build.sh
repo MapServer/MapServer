@@ -59,14 +59,7 @@ else
     make -j4 test
 fi
 
-if "${UPLOAD_COVERALLS:-}" = "true" ]; then
-    echo "uploading to coveralls"
-    git config --global --add safe.directory "${WORK_DIR:=..}"
-    ln -s ../../../src/mapparser.y build/CMakeFiles/mapserver.dir/
-    ln -s ../../../src/maplexer.l build/CMakeFiles/mapserver.dir/
-
-    coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c \
-    --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude map2img.c --exclude legend.c --exclude scalebar.c \
-    --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c \
-    --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
+if [ "${WITH_COVERAGE:-}" = "true" ]; then
+    lcov --directory . --capture --output-file mapserver.info 2>/dev/null
+    lcov --remove mapserver.info '/usr/*' --output-file mapserver.info
 fi
