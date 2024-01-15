@@ -4331,9 +4331,12 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter,
         native_string = msStringConcatenate(native_string, snippet);
         if (ieq == MS_TRUE) {
           native_string = msStringConcatenate(native_string, "$");
-          ieq = MS_FALSE;
         }
         native_string = msStringConcatenate(native_string, "'");
+        if (ieq == MS_TRUE) {
+          native_string = msStringConcatenate(native_string, ")");
+          ieq = MS_FALSE;
+        }
         msFree(snippet);
         break;
       case MS_TOKEN_LITERAL_BOOLEAN:
