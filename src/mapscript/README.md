@@ -19,9 +19,9 @@ The MapScript family tree looks like this:
                    | 
               SWIGMapScript
                    |
-        +----+-----+----+----+--+--+-----------+
-        |    |     |    |    |  |  |           |
-      Perl Python Ruby Java C# Tcl PHPNG ...
+   +----+-----+----+----+--+--+-----------+
+   |    |     |    |    |  |  |           |
+ Perl Python Ruby Java C# Tcl PHPNG ...
 ```                 
 
 
