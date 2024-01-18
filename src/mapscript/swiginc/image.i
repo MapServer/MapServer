@@ -197,18 +197,17 @@
         return size;
     }
 
-    /* Pastes another imageObj on top of this imageObj.
-       If optional dstx,dsty are provided then they define the position where the
-       image should be copied (dstx,dsty = top-left corner position).
-       NOTE : this function only works for 8 bits GD images.
+    /**
+    Pastes another imageObj on top of this imageObj.
+    If optional dstx,dsty are provided then they define the position where the
+    image should be copied (dstx,dsty = top-left corner position).
     */
     int pasteImage(imageObj *imageSrc, double opacity=1.0, int dstx=0, int dsty=0)
     {
         rendererVTableObj *renderer = NULL;
         rasterBufferObj rb;
 
-        if (!MS_RENDERER_PLUGIN(self->format) ||
-            !MS_RENDERER_PLUGIN(self->format)) {
+        if (!MS_RENDERER_PLUGIN(self->format)) {
             msSetError(MS_IMGERR, "PasteImage function should only be used with renderer plugin drivers.",
                        "imageObj::pasteImage");
             return MS_FAILURE;
@@ -233,7 +232,10 @@
 
     }
 
-    /* Writes image to temp directory.  Returns image URL. */
+    /**
+    Writes the image to temp directory.
+    Returns the image URL.
+    */
     char *saveWebImage()
     {
         char *imageFile = NULL;
@@ -248,7 +250,7 @@
             msSetError(MS_IMGERR, "Failed writing image to %s",
                        "imageObj::saveWebImage",
                        imageFile);
-            return;
+            return NULL;
         }
 
         imageUrlFull = msBuildPath(path, self->imageurl, imageFilename);
