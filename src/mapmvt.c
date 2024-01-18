@@ -417,32 +417,35 @@ static void freeMvtTile(VectorTile__Tile *mvt_tile) {
 }
 
 /*
-** In case any type of query filter (SLD, OGC, ...) is involved, intercept the msLayerWhichShapes() call.
+** In case any type of query filter (SLD, OGC, ...) is involved, intercept the
+*msLayerWhichShapes() call.
 */
-int msMVTWhichShapes(layerObj *layer, rectObj rect, int isQuery)
-{
-    if (!layer->resultcache)
-      return msLayerWhichShapes(layer, rect, isQuery);
+int msMVTWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
+  if (!layer->resultcache)
+    return msLayerWhichShapes(layer, rect, isQuery);
 
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }
 
 /*
 ** Provides the next shape for the layer. Two possibilities:
-**   - No query filter involved (SLD, OGC, ...), go for msLayerNextShape() since msMVTWhichShapes() let msLayerWhichShapes() pass through.
-**   - A query filter is involved (SLD, OGC, ...), look for resultcache given the last requested index (iShape) -> TODO: may be find a better way.
+**   - No query filter involved (SLD, OGC, ...), go for msLayerNextShape() since
+*msMVTWhichShapes() let msLayerWhichShapes() pass through.
+**   - A query filter is involved (SLD, OGC, ...), look for resultcache given
+*the last requested index (iShape) -> TODO: may be find a better way.
 **
 */
 int msMVTGetNextShape(layerObj *layer, shapeObj *shape, int *iShape) {
-    if (!iShape)
-      return MS_FAILURE;
+  if (!iShape)
+    return MS_FAILURE;
 
-    (*iShape)++;
+  (*iShape)++;
 
-    if (!layer->resultcache)
-      return msLayerNextShape(layer, shape);
+  if (!layer->resultcache)
+    return msLayerNextShape(layer, shape);
 
-    return msLayerGetShape(layer, shape, &(layer->resultcache->results[(*iShape)-1]));
+  return msLayerGetShape(layer, shape,
+                         &(layer->resultcache->results[(*iShape) - 1]));
 }
 
 int msMVTWriteTile(mapObj *map, int sendheaders) {
@@ -585,10 +588,14 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
         if (layer->classgroup && layer->numclasses > 0)
           classgroup = msAllocateValidClassGroups(layer, &nclasses);
 
-        /* Should be equivalent to shape.classindex = layer->resultcache->results[i].classindex; */
-        shape.classindex = msShapeGetClass(layer, map, &shape, classgroup, nclasses); /* Perform classification, and some annotation related magic. */
+        /* Should be equivalent to shape.classindex =
+         * layer->resultcache->results[i].classindex; */
+        shape.classindex =
+            msShapeGetClass(layer, map, &shape, classgroup,
+                            nclasses); /* Perform classification, and some
+                                          annotation related magic. */
 
-    	  if(classgroup)
+        if (classgroup)
           msFree(classgroup);
 
         if (shape.classindex < 0)
