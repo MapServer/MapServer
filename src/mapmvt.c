@@ -417,9 +417,9 @@ static void freeMvtTile(VectorTile__Tile *mvt_tile) {
 }
 
 /*
-* If there is a query filter (SLD, OGC, ...) is used, intercept the
-* msLayerWhichShapes() call.
-*/
+ * If there is a query filter (SLD, OGC, ...) is used, intercept the
+ * msLayerWhichShapes() call.
+ */
 int msMVTWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   if (!layer->resultcache)
     return msLayerWhichShapes(layer, rect, isQuery);
@@ -428,12 +428,12 @@ int msMVTWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 }
 
 /*
-* Provide the next shape for the layer. Two possibilities:
-* - No query filter involved (SLD, OGC, ...), go for msLayerNextShape() since
-*   msMVTWhichShapes() let msLayerWhichShapes() pass through.
-* - A query filter is involved (SLD, OGC, ...), look for resultcache given
-*   the last requested index (iShape) -> TODO: may be find a better way.
-*/
+ * Provide the next shape for the layer. Two possibilities:
+ * - No query filter involved (SLD, OGC, ...), go for msLayerNextShape() since
+ *   msMVTWhichShapes() let msLayerWhichShapes() pass through.
+ * - A query filter is involved (SLD, OGC, ...), look for resultcache given
+ *   the last requested index (iShape) -> TODO: may be find a better way.
+ */
 int msMVTGetNextShape(layerObj *layer, shapeObj *shape, int *iShape) {
   if (!iShape)
     return MS_FAILURE;
