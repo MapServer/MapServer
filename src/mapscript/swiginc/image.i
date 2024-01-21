@@ -250,7 +250,6 @@
             msSetError(MS_IMGERR, "Failed writing image to %s",
                        "imageObj::saveWebImage",
                        imageFile);
-            msFree(imageFile);                       
             msFree(imageFilename);
             return NULL;
         }
