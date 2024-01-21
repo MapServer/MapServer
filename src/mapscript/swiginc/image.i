@@ -250,12 +250,14 @@
             msSetError(MS_IMGERR, "Failed writing image to %s",
                        "imageObj::saveWebImage",
                        imageFile);
+            msFree(imageFilename);
+            msFree(imageFile);
             return NULL;
         }
 
         imageUrlFull = msBuildPath(path, self->imageurl, imageFilename);
         msFree(imageFilename);
-
+        msFree(imageFile);
         return imageUrlFull;
     }
 }
