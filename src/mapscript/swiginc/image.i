@@ -255,7 +255,6 @@
         }
 
         imageUrlFull = msStrdup(msBuildPath(path, self->imageurl, imageFilename));
-        msFree(imageFile);        
         msFree(imageFilename);
         return imageUrlFull;
     }
