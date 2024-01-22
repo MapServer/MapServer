@@ -443,8 +443,12 @@ int msMVTGetNextShape(layerObj *layer, shapeObj *shape, int *iShape) {
   if (!layer->resultcache)
     return msLayerNextShape(layer, shape);
 
-  return msLayerGetShape(layer, shape,
-                         &(layer->resultcache->results[(*iShape) - 1]));
+  if ((*iShape) >= 0 && (*iShape) < layer->resultcache->numresults) {
+    return msLayerGetShape(layer, shape,
+                           &(layer->resultcache->results[(*iShape) - 1]));
+  } else {
+    return MS_FAILURE;
+  }
 }
 
 int msMVTWriteTile(mapObj *map, int sendheaders) {
