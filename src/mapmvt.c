@@ -432,18 +432,19 @@ int msMVTWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
  * - No query filter involved (SLD, OGC, ...), go for msLayerNextShape() since
  *   msMVTWhichShapes() let msLayerWhichShapes() pass through.
  * - A query filter is involved (SLD, OGC, ...), look for resultcache given
- *   the last requested index (iShape) -> TODO: may be find a better way.
+ *   by the last requested index (iShape) -> TODO: find a better way.
+ *   Assumption is that query filter superseeds any other kind of filtering
+ *   like styles though class/classgroup definition.
  */
 int msMVTGetNextShape(layerObj *layer, shapeObj *shape, int *iShape) {
   if (!iShape)
     return MS_FAILURE;
 
-  (*iShape)++;
-
   if (!layer->resultcache)
     return msLayerNextShape(layer, shape);
 
   if ((*iShape) >= 0 && (*iShape) < layer->resultcache->numresults) {
+    (*iShape)++;
     return msLayerGetShape(layer, shape,
                            &(layer->resultcache->results[(*iShape) - 1]));
   } else {
