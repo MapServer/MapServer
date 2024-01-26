@@ -1,0 +1,30 @@
+# Test 1: mode=itemquery - matching record
+# RUN_PARMS: 6709_02_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemquery&qlayer=bdry_counpy2&qstring=ANOK&qitem=cty_abbr' > [RESULT_DEMIME]
+#
+# Test 2: mode=itemquery - no matching record
+# RUN_PARMS: 6709_02_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemquery&qlayer=bdry_counpy2&qstring=ABCD&qitem=cty_abbr' > [RESULT_DEMIME]
+MAP
+  NAME 'query'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+
+  WEB
+    EMPTY 'https://mapserver.org/'
+    QUERYFORMAT 'tmpl'
+  END
+
+  OUTPUTFORMAT
+    NAME 'tmpl'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/query.tmpl"
+  END
+
+  LAYER
+    NAME 'bdry_counpy2'
+    VALIDATION
+      qstring '^[A-Z]{4}$'
+    END
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+END
