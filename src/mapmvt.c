@@ -416,42 +416,6 @@ static void freeMvtTile(VectorTile__Tile *mvt_tile) {
   msFree(mvt_tile->layers);
 }
 
-/*
- * If there is a query filter (SLD, OGC, ...) is used, intercept the
- * msLayerWhichShapes() call.
- */
-int msMVTWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
-  if (!layer->resultcache)
-    return msLayerWhichShapes(layer, rect, isQuery);
-
-  return MS_SUCCESS;
-}
-
-/*
- * Provide the next shape for the layer. Two possibilities:
- * - No query filter involved (SLD, OGC, ...), go for msLayerNextShape() since
- *   msMVTWhichShapes() let msLayerWhichShapes() pass through.
- * - A query filter is involved (SLD, OGC, ...), look for resultcache given
- *   by the last requested index (iShape) -> TODO: find a better way.
- *   Assumption is that query filter superseeds any other kind of filtering
- *   like styles though class/classgroup definition.
- */
-int msMVTGetNextShape(layerObj *layer, shapeObj *shape, int *iShape) {
-  if (!iShape)
-    return MS_FAILURE;
-
-  if (!layer->resultcache)
-    return msLayerNextShape(layer, shape);
-
-  if ((*iShape) >= 0 && (*iShape) < layer->resultcache->numresults) {
-    (*iShape)++;
-    return msLayerGetShape(layer, shape,
-                           &(layer->resultcache->results[(*iShape) - 1]));
-  } else {
-    return MS_FAILURE;
-  }
-}
-
 int msMVTWriteTile(mapObj *map, int sendheaders) {
   int iLayer, retcode = MS_SUCCESS;
   unsigned len;
@@ -521,7 +485,7 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
     if (layer->project)
       msProjectRect(&(map->projection), &(layer->projection), &rect);
 
-    status = msMVTWhichShapes(layer, rect, MS_TRUE);
+    status = msLayerWhichShapes(layer, rect, MS_TRUE);
     if (status == MS_DONE) { /* no overlap - that's ok */
       retcode = MS_SUCCESS;
       goto layer_cleanup;
@@ -578,16 +542,21 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
                                         sizeof(VectorTile__Tile__Feature *));
     features_size = FEATURES_INCREMENT_SIZE;
 
-    int iShape = 0;
-    int nclasses = 0;
-    int *classgroup = NULL;
-
     msInitShape(&shape);
-    while ((status = msMVTGetNextShape(layer, &shape, &iShape)) == MS_SUCCESS) {
+    int nshapes;
+    nshapes = layer->resultcache ? layer->resultcache->numresults
+                                 : msLayerGetShapeCount(layer, rect, NULL);
+    for (i = 0; i < nshapes; i++) {
+      status = layer->resultcache
+                   ? msLayerGetShape(layer, &shape,
+                                     &(layer->resultcache->results[i]))
+                   : msLayerNextShape(layer, &shape);
+      if (status == MS_FAILURE)
+        goto feature_cleanup;
 
       if (layer->numclasses > 0) {
-        nclasses = 0;
-        classgroup = NULL;
+        int nclasses = 0;
+        int *classgroup = NULL;
 
         if (layer->classgroup && layer->numclasses > 0)
           classgroup = msAllocateValidClassGroups(layer, &nclasses);
