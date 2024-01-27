@@ -452,6 +452,9 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
     value_lookup *cur_value_lookup, *tmp_value_lookup;
     rectObj rect;
 
+    int nclasses = 0;
+    int *classgroup = NULL;
+
     unsigned features_size = 0;
 
     if (!msLayerIsVisible(map, layer))
@@ -541,8 +544,6 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
     /* -------------------------------------------------------------------- */
     /*      Setup classgroup if needed.                                     */
     /* -------------------------------------------------------------------- */
-    int nclasses = 0;
-    int *classgroup = NULL;
     if (layer->classgroup && layer->numclasses > 0)
       classgroup = msAllocateValidClassGroups(layer, &nclasses);
 
