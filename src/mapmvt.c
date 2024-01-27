@@ -553,7 +553,7 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
 
     msInitShape(&shape);
     i = 0;
-    while ((status = layer->resultcache
+    while ((status = layer->resultcache && i < layer->resultcache->numresults
                          ? msLayerGetShape(layer, &shape,
                                            &(layer->resultcache->results[i++]))
                          : msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
