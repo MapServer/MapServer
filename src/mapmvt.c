@@ -538,38 +538,34 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
       }
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Setup classgroup if needed.                                     */
+    /* -------------------------------------------------------------------- */
+    int nclasses = 0;
+    int *classgroup = NULL;
+    if (layer->classgroup && layer->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(layer, &nclasses);
+
     mvt_layer->features = msSmallCalloc(FEATURES_INCREMENT_SIZE,
                                         sizeof(VectorTile__Tile__Feature *));
     features_size = FEATURES_INCREMENT_SIZE;
 
     msInitShape(&shape);
-    int nshapes;
-    nshapes = layer->resultcache ? layer->resultcache->numresults
-                                 : msLayerGetShapeCount(layer, rect, NULL);
-    for (i = 0; i < nshapes; i++) {
-      status = layer->resultcache
-                   ? msLayerGetShape(layer, &shape,
-                                     &(layer->resultcache->results[i]))
-                   : msLayerNextShape(layer, &shape);
+    i = 0;
+    while ((status = layer->resultcache
+                         ? msLayerGetShape(layer, &shape,
+                                           &(layer->resultcache->results[i++]))
+                         : msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
       if (status == MS_FAILURE)
         goto feature_cleanup;
 
       if (layer->numclasses > 0) {
-        int nclasses = 0;
-        int *classgroup = NULL;
-
-        if (layer->classgroup && layer->numclasses > 0)
-          classgroup = msAllocateValidClassGroups(layer, &nclasses);
-
         /* Should be equivalent to shape.classindex =
          * layer->resultcache->results[i].classindex; */
         shape.classindex =
             msShapeGetClass(layer, map, &shape, classgroup,
                             nclasses); /* Perform classification, and some
                                           annotation related magic. */
-
-        if (classgroup)
-          msFree(classgroup);
 
         if (shape.classindex < 0)
           goto feature_cleanup; /* no matching CLASS found, skip this feature */
@@ -618,6 +614,8 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
         goto layer_cleanup;
     } /* next shape */
   layer_cleanup:
+    if (classgroup)
+      msFree(classgroup);
     msLayerClose(layer);
     msGMLFreeItems(item_list);
     UT_HASH_ITER(hh, value_lookup_cache.cache, cur_value_lookup,
