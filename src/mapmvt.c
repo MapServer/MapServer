@@ -553,11 +553,18 @@ int msMVTWriteTile(mapObj *map, int sendheaders) {
 
     msInitShape(&shape);
     i = 0;
-    while ((status = layer->resultcache && i < layer->resultcache->numresults
-                         ? msLayerGetShape(layer, &shape,
-                                           &(layer->resultcache->results[i++]))
-                         : msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-      if (status == MS_FAILURE)
+    for (;;) {
+      if (layer->resultcache) {
+        status = (i < layer->resultcache->numresults)
+                     ? msLayerGetShape(layer, &shape,
+                                       &(layer->resultcache->results[i]))
+                     : MS_DONE;
+        i++;
+      } else {
+        status = msLayerNextShape(layer, &shape);
+      }
+
+      if (status != MS_SUCCESS)
         goto feature_cleanup;
 
       if (layer->numclasses > 0) {
