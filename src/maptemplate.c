@@ -552,7 +552,7 @@ static int sortLayerByMetadata(mapObj *map, const char *pszMetadata) {
 
 /*
 ** This function return a pointer
-** at the begining of the first occurence
+** at the beginning of the first occurrence
 ** of pszTag in pszInstr.
 **
 ** Tag can be [TAG] or [TAG something]
@@ -632,7 +632,7 @@ static int getTagArgs(const char *pszTag, const char *pszInstr,
     return MS_FAILURE;
   }
 
-  /* set position to the begining of tag */
+  /* set position to the beginning of tag */
   pszStart = findTag(pszInstr, pszTag);
 
   if (pszStart) {
@@ -653,7 +653,7 @@ static int getTagArgs(const char *pszTag, const char *pszInstr,
         if (!(*ppoHashTable))
           *ppoHashTable = msCreateHashTable();
 
-        /* put all arguments seperate by space in a hash table */
+        /* put all arguments separate by space in a hash table */
         papszArgs = msStringTokenize(pszArgs, " ", &nArgs, MS_TRUE);
 
         /* msReturnTemplateQuerycheck all argument if they have values */
@@ -1108,8 +1108,9 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream,
     tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
-    if (getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS)
+    if (getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS) {
       return (MS_FAILURE);
+    }
     if (tagArgs) {
       src = msLookupHashTable(tagArgs, "src");
     }
@@ -1121,10 +1122,12 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream,
     if ((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src),
                                "r")) == NULL) {
       msSetError(MS_IOERR, "%s", "processIncludeTag()", src);
+      msFreeHashTable(tagArgs);
       return MS_FAILURE;
     }
 
     if (isValidTemplate(includeStream, src) != MS_TRUE) {
+      msFreeHashTable(tagArgs);
       fclose(includeStream);
       return MS_FAILURE;
     }
@@ -4252,7 +4255,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     return (NULL);
   if (processExtentTag(mapserv, &outstr, "mapext_esc", &(mapserv->map->extent),
                        &(mapserv->map->projection)) !=
-      MS_SUCCESS) /* depricated */
+      MS_SUCCESS) /* deprecated */
     return (NULL);
 
   snprintf(repstr, sizeof(repstr), "%f",
@@ -4582,8 +4585,10 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
 
   } /* end query mode specific substitutions */
 
-  if (processIncludeTag(mapserv, &outstr, stream, mode) != MS_SUCCESS)
+  if (processIncludeTag(mapserv, &outstr, stream, mode) != MS_SUCCESS) {
+    msFree(outstr);
     return (NULL);
+  }
 
   for (i = 0; i < mapserv->request->NumParams; i++) {
     /* Replace [variable] tags using values from URL. We cannot offer a
