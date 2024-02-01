@@ -478,7 +478,7 @@ int sortLayerByOrder(mapObj *map, const char *pszOrder) {
 
 /*!
  * This function set the map->layerorder
- * index order by the metadata collumn name
+ * index order by the metadata column name
  */
 static int sortLayerByMetadata(mapObj *map, const char *pszMetadata) {
   int nLegendOrder1;
@@ -524,7 +524,7 @@ static int sortLayerByMetadata(mapObj *map, const char *pszMetadata) {
   /*
    * Bubble sort algo (not very efficient)
    * should implement a kind of quick sort
-   * alog instead
+   * algo instead
    */
   for (i = 0; i < map->numlayers - 1; i++) {
     for (j = 0; j < map->numlayers - 1 - i; j++) {
@@ -688,7 +688,7 @@ static int getTagArgs(const char *pszTag, const char *pszInstr,
 ** Return a substring from instr between [tag] and [/tag]
 ** char * returned must be freed by caller.
 ** pszNextInstr will be a pointer at the end of the
-** first occurence found.
+** first occurrence found.
 */
 static int getInlineTag(const char *pszTag, const char *pszInstr,
                         char **pszResult) {
@@ -916,7 +916,7 @@ static char *getPreTagText(const char *string1, const char *string2) {
   return result;
 }
 
-/* Helper function to retunr the text after the supplied string2 in string1. */
+/* Helper function to return the text after the supplied string2 in string1. */
 static char *getPostTagText(const char *string1, const char *string2) {
   char *tmpstr;
 
@@ -1169,6 +1169,10 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream) {
     /* start rebuilding **line */
     free(*line);
     *line = preTag;
+
+    /* process any includes within the resultset tag */
+    if (processIncludeTag(mapserv, &tag, stream, 0) != MS_SUCCESS)
+      return (MS_FAILURE);
 
     if (lp->resultcache && lp->resultcache->numresults > 0) {
       /* probably will need a while-loop here to handle multiple instances of
@@ -2159,7 +2163,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape) {
     ** Pointers to static strings, naming convention is:
     **   char 1/2 - x=x, y=y, c=coordinate, p=part, s=shape, ir=inner ring,
     *or=outer ring
-    **   last char - h=header, f=footer, s=seperator
+    **   last char - h=header, f=footer, s=separator
     */
     const char *xh = "", *yh = "";
     const char *xf = ",";
@@ -2273,7 +2277,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape) {
     }
 
     /* build the per point format strings (version 1 contains the coordinate
-     * seperator, version 2 doesn't) */
+     * separator, version 2 doesn't) */
     const int pointFormatLength =
         strlen(xh) + strlen(xf) + strlen(yh) + strlen(yf) + strlen(cs) + 12 + 1;
     char *pointFormat1 = (char *)msSmallMalloc(pointFormatLength);
@@ -2535,7 +2539,7 @@ int processMetadata(char **pszInstr, hashTableObj *ht) {
     return MS_FAILURE;
   }
 
-  /* set position to the begining of metadata tag */
+  /* set position to the beginning of metadata tag */
   const char *pszStart = findTag(*pszInstr, "metadata");
 
   while (pszStart) {
@@ -2568,7 +2572,7 @@ int processMetadata(char **pszInstr, hashTableObj *ht) {
     msFreeHashTable(metadataArgs);
     metadataArgs = NULL;
 
-    /* set position to the begining of the next metadata tag */
+    /* set position to the beginning of the next metadata tag */
     if ((*pszInstr)[nOffset] != '\0')
       pszStart = findTag(*pszInstr + nOffset + 1, "metadata");
     else
@@ -2597,7 +2601,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char **pszInstr,
     return MS_FAILURE;
   }
 
-  /* find the begining of tag */
+  /* find the beginning of tag */
   pszImgTag = strstr(*pszInstr, "[leg_icon");
 
   while (pszImgTag) {
@@ -2695,7 +2699,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char **pszInstr,
     if (nLen > 0) {
       char *pszTag;
 
-      /* rebuid image tag ([leg_class_img all_args]) */
+      /* rebuild image tag ([leg_class_img all_args]) */
       /* to replace it by the image url */
       pszTag = (char *)msSmallMalloc(nLen + 1);
       strlcpy(pszTag, pszImgTag, nLen + 1);
@@ -2710,7 +2714,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char **pszInstr,
       msFree(pszFullImgUrlFname);
       msFree(pszTag);
 
-      /* find the begining of tag */
+      /* find the beginning of tag */
       pszImgTag = strstr(*pszInstr, "[leg_icon");
     } else {
       pszImgTag = NULL;
@@ -2770,19 +2774,19 @@ int generateGroupTemplate(char *pszGroupTemplate, mapObj *map,
   for (j = 0; j < map->numlayers; j++) {
     if (GET_LAYER(map, map->layerorder[j])->group &&
         strcmp(GET_LAYER(map, map->layerorder[j])->group, pszGroupName) == 0) {
-      /* dont display layer is off. */
+      /* don't display layer is off. */
       if ((nOptFlag & 2) == 0 &&
           GET_LAYER(map, map->layerorder[j])->status == MS_OFF)
         bShowGroup = 0;
       else
         bShowGroup = 1;
 
-      /* dont display layer is query. */
+      /* don't display layer is query. */
       if ((nOptFlag & 4) == 0 &&
           GET_LAYER(map, map->layerorder[j])->type == MS_LAYER_QUERY)
         bShowGroup = 0;
 
-      /* dont display layer if out of scale. */
+      /* don't display layer if out of scale. */
       if ((nOptFlag & 1) == 0) {
         if (map->scaledenom > 0) {
           if ((GET_LAYER(map, map->layerorder[j])->maxscaledenom > 0) &&
@@ -2931,17 +2935,17 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer,
   if (GET_LAYER(map, nIdxLayer)->status == MS_DELETE)
     return MS_SUCCESS;
 
-  /* dont display layer is off. */
+  /* don't display layer is off. */
   /* check this if Opt flag is not set */
   if ((nOptFlag & 2) == 0 && GET_LAYER(map, nIdxLayer)->status == MS_OFF)
     return MS_SUCCESS;
 
-  /* dont display layer is query. */
+  /* don't display layer is query. */
   /* check this if Opt flag is not set */
   if ((nOptFlag & 4) == 0 && GET_LAYER(map, nIdxLayer)->type == MS_LAYER_QUERY)
     return MS_SUCCESS;
 
-  /* dont display layer if out of scale. */
+  /* don't display layer if out of scale. */
   /* check this if Opt flag is not set             */
   if ((nOptFlag & 1) == 0) {
     if (map->scaledenom > 0) {
@@ -3032,7 +3036,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer,
 
   /* process all metadata tags
    * only current layer and web object
-   * metaddata are accessible
+   * metadata are accessible
    */
   if (processMetadata(pszTemp, &GET_LAYER(map, nIdxLayer)->metadata) !=
       MS_SUCCESS)
@@ -3087,17 +3091,17 @@ int generateClassTemplate(char *pszClassTemplate, mapObj *map, int nIdxLayer,
   if (GET_LAYER(map, nIdxLayer)->status == MS_DELETE)
     return MS_SUCCESS;
 
-  /* dont display class if layer is off. */
+  /* don't display class if layer is off. */
   /* check this if Opt flag is not set */
   if ((nOptFlag & 2) == 0 && GET_LAYER(map, nIdxLayer)->status == MS_OFF)
     return MS_SUCCESS;
 
-  /* dont display class if layer is query. */
+  /* don't display class if layer is query. */
   /* check this if Opt flag is not set       */
   if ((nOptFlag & 4) == 0 && GET_LAYER(map, nIdxLayer)->type == MS_LAYER_QUERY)
     return MS_SUCCESS;
 
-  /* dont display layer if out of scale. */
+  /* don't display layer if out of scale. */
   /* check this if Opt flag is not set */
   if ((nOptFlag & 1) == 0) {
     if (map->scaledenom > 0) {
@@ -3196,7 +3200,7 @@ int generateClassTemplate(char *pszClassTemplate, mapObj *map, int nIdxLayer,
 
   /* process all metadata tags
    * only current layer and web object
-   * metaddata are accessible
+   * metadata are accessible
    */
   if (processMetadata(pszTemp, &GET_LAYER(map, nIdxLayer)->metadata) !=
       MS_SUCCESS)
@@ -3315,7 +3319,7 @@ char *generateLegendTemplate(mapservObj *mapserv) {
     pszMapFname = NULL;
   } else {
     /* -------------------------------------------------------------------- */
-    /*      map file name may not be avaible when the template functions    */
+    /*      map file name may not be available when the template functions    */
     /*      are called from mapscript. Use the time stamp as prefix.        */
     /* -------------------------------------------------------------------- */
     char pszTime[20];
@@ -3383,7 +3387,7 @@ char *generateLegendTemplate(mapservObj *mapserv) {
   }
 
   /*
-   * Seperate header/footer, groups, layers and class
+   * Separate header/footer, groups, layers and class
    */
   getInlineTag("leg_header_html", file, &legHeaderHtml);
   getInlineTag("leg_footer_html", file, &legFooterHtml);
@@ -3502,7 +3506,7 @@ char *generateLegendTemplate(mapservObj *mapserv) {
         for (j = 0; j < mapserv->map->numlayers; j++) {
           /*
            * if order_metadata is set and the order
-           * value is less than 0, dont display it
+           * value is less than 0, don't display it
            */
           pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
           if (pszOrderMetadata) {
@@ -3587,7 +3591,7 @@ char *generateLegendTemplate(mapservObj *mapserv) {
         for (j = 0; j < mapserv->map->numlayers; j++) {
           /*
            * if order_metadata is set and the order
-           * value is less than 0, dont display it
+           * value is less than 0, don't display it
            */
           pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
           if (pszOrderMetadata) {
@@ -3655,7 +3659,7 @@ char *generateLegendTemplate(mapservObj *mapserv) {
       for (j = 0; j < mapserv->map->numlayers; j++) {
         /*
          * if order_metadata is set and the order
-         * value is less than 0, dont display it
+         * value is less than 0, don't display it
          */
         pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
         if (pszOrderMetadata) {
@@ -3733,7 +3737,7 @@ char *generateLegendTemplate(mapservObj *mapserv) {
         for (j = 0; j < mapserv->map->numlayers; j++) {
           /*
            * if order_metadata is set and the order
-           * value is less than 0, dont display it
+           * value is less than 0, don't display it
            */
           pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
           if (pszOrderMetadata) {
@@ -4143,7 +4147,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     }
   }
 
-  for (i = -1; i <= 1; i++) { /* make zoom direction persistant */
+  for (i = -1; i <= 1; i++) { /* make zoom direction persistent */
     if (mapserv->ZoomDirection == i) {
       snprintf(substr, sizeof(substr), "[zoomdir_%d_select]", i);
       outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
@@ -4157,7 +4161,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     }
   }
 
-  for (i = MINZOOM; i <= MAXZOOM; i++) { /* make zoom persistant */
+  for (i = MINZOOM; i <= MAXZOOM; i++) { /* make zoom persistent */
     if (mapserv->Zoom == i) {
       snprintf(substr, sizeof(substr), "[zoom_%d_select]", i);
       outstr = msReplaceSubstring(outstr, substr, "selected=\"selected\"");
@@ -4275,7 +4279,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     return (NULL);
   if (processExtentTag(mapserv, &outstr, "rawext_esc", &(mapserv->RawExt),
                        &(mapserv->map->projection)) !=
-      MS_SUCCESS) /* depricated */
+      MS_SUCCESS) /* deprecated */
     return (NULL);
 
   if ((strstr(outstr, "lat]") || strstr(outstr, "lon]") ||
@@ -4308,7 +4312,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
                          NULL) != MS_SUCCESS)
       return (NULL);
     if (processExtentTag(mapserv, &outstr, "mapext_latlon_esc", &(llextent),
-                         NULL) != MS_SUCCESS) /* depricated */
+                         NULL) != MS_SUCCESS) /* deprecated */
       return (NULL);
   }
 
@@ -4317,7 +4321,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     snprintf(repstr, sizeof(repstr), "%f",
              mapserv->map->reference.extent
                  .minx); /* Individual reference map extent elements for spatial
-                            query building, depricated. */
+                            query building, deprecated. */
     outstr = msReplaceSubstring(outstr, "[refminx]", repstr);
     snprintf(repstr, sizeof(repstr), "%f", mapserv->map->reference.extent.maxx);
     outstr = msReplaceSubstring(outstr, "[refmaxx]", repstr);
@@ -4332,7 +4336,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
       return (NULL);
     if (processExtentTag(
             mapserv, &outstr, "refext_esc", &(mapserv->map->reference.extent),
-            &(mapserv->map->projection)) != MS_SUCCESS) /* depricated */
+            &(mapserv->map->projection)) != MS_SUCCESS) /* deprecated */
       return (NULL);
   }
 
@@ -4482,7 +4486,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     snprintf(repstr, sizeof(repstr), "%d", mapserv->resultshape.tileindex);
     outstr = msReplaceSubstring(outstr, "[tileidx]", repstr);
 
-    /* return ALL attributes in one delimeted list */
+    /* return ALL attributes in one delimited list */
     if (strstr(outstr, "[values]") != NULL) {
       char *valuestr = NULL;
 
@@ -5020,7 +5024,7 @@ mapservObj *msAllocMapServObj() {
 
   mapserv->map = NULL;
 
-  mapserv->NumLayers = 0; /* number of layers specfied by a user */
+  mapserv->NumLayers = 0; /* number of layers specified by a user */
   mapserv->MaxLayers = 0; /* allocated size of Layers[] array */
   mapserv->Layers = NULL;
 
