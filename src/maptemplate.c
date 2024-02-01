@@ -1076,6 +1076,98 @@ static int processFeatureTag(mapservObj *mapserv, char **line,
 }
 
 /*
+** Function process a [include src="..."] tag.
+**
+** TODO's:
+**   - allow URLs
+*/
+static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream,
+                             int mode) {
+  char *tag, *tagEnd;
+  hashTableObj *tagArgs = NULL;
+  int tagOffset, tagLength;
+
+  char *content = NULL, *processedContent = NULL;
+  const char *src = NULL;
+
+  FILE *includeStream;
+  char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
+
+  if (!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processIncludeTag()");
+    return (MS_FAILURE);
+  }
+
+  const char *tagStart = findTag(*line, "include");
+
+  /* It is OK to have no include tags, just return. */
+  if (!tagStart)
+    return MS_SUCCESS;
+
+  while (tagStart) {
+    tagOffset = tagStart - *line;
+
+    /* check for any tag arguments */
+    if (getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS)
+      return (MS_FAILURE);
+    if (tagArgs) {
+      src = msLookupHashTable(tagArgs, "src");
+    }
+
+    if (!src)
+      return (MS_SUCCESS); /* don't process the tag, could be something else so
+                              return MS_SUCCESS */
+
+    if ((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src),
+                               "r")) == NULL) {
+      msSetError(MS_IOERR, "%s", "processIncludeTag()", src);
+      return MS_FAILURE;
+    }
+
+    if (isValidTemplate(includeStream, src) != MS_TRUE) {
+      fclose(includeStream);
+      return MS_FAILURE;
+    }
+
+    while (fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL)
+      content = msStringConcatenate(content, buffer);
+
+    /* done with included file handle */
+    fclose(includeStream);
+
+    /* find the end of the tag */
+    tagEnd = findTagEnd(tagStart);
+    tagEnd++;
+
+    /* build the complete tag so we can do substitution */
+    tagLength = tagEnd - tagStart;
+    tag = (char *)msSmallMalloc(tagLength + 1);
+    strlcpy(tag, tagStart, tagLength + 1);
+
+    /* process any other tags in the content */
+    processedContent = processLine(mapserv, content, stream, mode);
+
+    /* do the replacement */
+    *line = msReplaceSubstring(*line, tag, processedContent);
+
+    /* clean up */
+    free(tag);
+    tag = NULL;
+    msFreeHashTable(tagArgs);
+    tagArgs = NULL;
+    free(content);
+    free(processedContent);
+
+    if ((*line)[tagOffset] != '\0')
+      tagStart = findTag(*line + tagOffset + 1, "include");
+    else
+      tagStart = NULL;
+  }
+
+  return (MS_SUCCESS);
+}
+
+/*
 ** Function to process a [resultset ...] tag.
 */
 static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream) {
@@ -1195,98 +1287,6 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream) {
     tagStart = findTag(*line, "resultset");
   }
   msFreeHashTable(tagArgs);
-
-  return (MS_SUCCESS);
-}
-
-/*
-** Function process a [include src="..."] tag.
-**
-** TODO's:
-**   - allow URLs
-*/
-static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream,
-                             int mode) {
-  char *tag, *tagEnd;
-  hashTableObj *tagArgs = NULL;
-  int tagOffset, tagLength;
-
-  char *content = NULL, *processedContent = NULL;
-  const char *src = NULL;
-
-  FILE *includeStream;
-  char buffer[MS_BUFFER_LENGTH], path[MS_MAXPATHLEN];
-
-  if (!*line) {
-    msSetError(MS_WEBERR, "Invalid line pointer.", "processIncludeTag()");
-    return (MS_FAILURE);
-  }
-
-  const char *tagStart = findTag(*line, "include");
-
-  /* It is OK to have no include tags, just return. */
-  if (!tagStart)
-    return MS_SUCCESS;
-
-  while (tagStart) {
-    tagOffset = tagStart - *line;
-
-    /* check for any tag arguments */
-    if (getTagArgs("include", tagStart, &tagArgs) != MS_SUCCESS)
-      return (MS_FAILURE);
-    if (tagArgs) {
-      src = msLookupHashTable(tagArgs, "src");
-    }
-
-    if (!src)
-      return (MS_SUCCESS); /* don't process the tag, could be something else so
-                              return MS_SUCCESS */
-
-    if ((includeStream = fopen(msBuildPath(path, mapserv->map->mappath, src),
-                               "r")) == NULL) {
-      msSetError(MS_IOERR, "%s", "processIncludeTag()", src);
-      return MS_FAILURE;
-    }
-
-    if (isValidTemplate(includeStream, src) != MS_TRUE) {
-      fclose(includeStream);
-      return MS_FAILURE;
-    }
-
-    while (fgets(buffer, MS_BUFFER_LENGTH, includeStream) != NULL)
-      content = msStringConcatenate(content, buffer);
-
-    /* done with included file handle */
-    fclose(includeStream);
-
-    /* find the end of the tag */
-    tagEnd = findTagEnd(tagStart);
-    tagEnd++;
-
-    /* build the complete tag so we can do substitution */
-    tagLength = tagEnd - tagStart;
-    tag = (char *)msSmallMalloc(tagLength + 1);
-    strlcpy(tag, tagStart, tagLength + 1);
-
-    /* process any other tags in the content */
-    processedContent = processLine(mapserv, content, stream, mode);
-
-    /* do the replacement */
-    *line = msReplaceSubstring(*line, tag, processedContent);
-
-    /* clean up */
-    free(tag);
-    tag = NULL;
-    msFreeHashTable(tagArgs);
-    tagArgs = NULL;
-    free(content);
-    free(processedContent);
-
-    if ((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line + tagOffset + 1, "include");
-    else
-      tagStart = NULL;
-  }
 
   return (MS_SUCCESS);
 }
