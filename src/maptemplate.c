@@ -1263,8 +1263,10 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream) {
     *line = preTag;
 
     /* process any includes within the resultset tag */
-    if (processIncludeTag(mapserv, &tag, stream, 0) != MS_SUCCESS)
+    if (processIncludeTag(mapserv, &tag, stream, 0) != MS_SUCCESS) {
+      msFreeHashTable(tagArgs);
       return (MS_FAILURE);
+    }
 
     if (lp->resultcache && lp->resultcache->numresults > 0) {
       /* probably will need a while-loop here to handle multiple instances of
