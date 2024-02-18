@@ -33,7 +33,7 @@
 #include "gdal.h"
 
 static void gaussian_blur(float *values, int width, int height, int radius) {
-  float *tmp = (float *)msSmallMalloc(width * height * sizeof(float));
+  float *tmp = (float *)msSmallMalloc(sizeof(float) * width * height);
   int length = radius * 2 + 1;
   float *kernel = (float *)msSmallMalloc(length * sizeof(float));
   float sigma = radius / 3.0;
@@ -46,7 +46,7 @@ static void gaussian_blur(float *values, int width, int height, int radius) {
     float v = a * exp(-(x * x) / den);
     kernel[i] = v;
   }
-  memset(tmp, 0, width * height * sizeof(float));
+  memset(tmp, 0, sizeof(float) * width * height);
 
   for (y = 0; y < height; y++) {
     float *src_row = values + width * y;

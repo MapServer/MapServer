@@ -928,24 +928,29 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   pszHash = msLookupHashTable(&(layer->metadata), "wms_srs");
   if (((pszHash == NULL) || (strcasecmp(pszHash, "") == 0)) &&
       map->projection.numargs != 0) {
-    char *pszProj = map->projection.args[map->projection.numargs - 1];
+    const char *pszLastProjArg =
+        map->projection.args[map->projection.numargs - 1];
 
-    if (pszProj != NULL) {
-      if (strncasecmp(pszProj, "AUTO:", 5) == 0) {
-        msInsertHashTable(&(layer->metadata), "wms_srs", pszProj);
+    if (pszLastProjArg != NULL) {
+      if (strncasecmp(pszLastProjArg, "AUTO:", 5) == 0) {
+        msInsertHashTable(&(layer->metadata), "wms_srs", pszLastProjArg);
       } else {
-        if (strlen(pszProj) > 10) {
-          pszProj = (char *)malloc(sizeof(char) * (strlen(pszProj)));
-          sprintf(pszProj, "EPSG:%s",
-                  map->projection.args[map->projection.numargs - 1] + 10);
-          msInsertHashTable(&(layer->metadata), "wms_srs", pszProj);
+        if (strncasecmp(pszLastProjArg, "+init=epsg:", strlen("+init=epsg:")) ==
+            0) {
+          const size_t nSRSSize =
+              strlen("EPSG:") + strlen(pszLastProjArg + strlen("+init=epsg:")) +
+              1;
+          char *pszSRS = (char *)malloc(nSRSSize);
+          snprintf(pszSRS, nSRSSize, "EPSG:%s",
+                   pszLastProjArg + strlen("+init=epsg:"));
+          msInsertHashTable(&(layer->metadata), "wms_srs", pszSRS);
+          msFree(pszSRS);
         } else {
           msDebug("Unable to set data for layer wms_srs from this"
                   " value %s.",
-                  pszProj);
+                  pszLastProjArg);
         }
       }
-      msFree(pszProj);
     }
   }
 

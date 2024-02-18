@@ -154,6 +154,37 @@ class ImageWriteTestCase(MapTestCase):
             assert pyimg.size == (200, 200)
             assert pyimg.mode == "RGB"
 
+    def testSaveWebImage(self):
+        """save an image to the imagepath folder and return its URL"""
+
+        # set the imagepath and imageurl on the MAP WEB object
+        self.map.web.imagepath = ""
+        self.map.web.imageurl = "/output/"
+
+        image = self.map.draw()
+        url = image.saveWebImage()
+        assert url.startswith("/output/")
+        assert url.endswith(".png")
+
+    def testPasteImage(self):
+        """save an image to the imagepath folder and return its URL"""
+
+        image1 = self.map.draw()
+        image2 = self.map.draw()
+
+        ret = image1.pasteImage(image2, opacity=0.5, dstx=10, dsty=10)
+        assert ret == mapscript.MS_SUCCESS
+
+        filename = "testImagePaste.png"
+        fh = open(filename, "wb")
+        image1.write(fh)
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == "PNG"
+            assert pyimg.size == (200, 200)
+            assert pyimg.mode == "RGB"
+
 
 if __name__ == "__main__":
     unittest.main()

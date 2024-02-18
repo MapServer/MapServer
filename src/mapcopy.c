@@ -1270,9 +1270,9 @@ int msCopyRasterBuffer(rasterBufferObj *dst, const rasterBufferObj *src) {
   if (src->type == MS_BUFFER_BYTE_RGBA) {
     dst->data.rgba = src->data.rgba;
     dst->data.rgba.pixels =
-        msSmallMalloc(src->height * src->data.rgba.row_step);
+        msSmallMalloc(((size_t)src->height) * src->data.rgba.row_step);
     memcpy(dst->data.rgba.pixels, src->data.rgba.pixels,
-           src->data.rgba.row_step * src->height);
+           ((size_t)src->data.rgba.row_step) * src->height);
     dst->data.rgba.r =
         dst->data.rgba.pixels + (src->data.rgba.r - src->data.rgba.pixels);
     dst->data.rgba.g =

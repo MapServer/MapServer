@@ -1318,7 +1318,9 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape) {
     int uc = MS_FALSE;
     int lc = MS_FALSE;
     int commify = MS_FALSE;
+    int ignoremissing = MS_FALSE;
     int escape = ESCAPE_HTML;
+    int skip = MS_FALSE;
 
     /* check for any tag arguments */
     hashTableObj *tagArgs = NULL;
@@ -1361,6 +1363,10 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape) {
       if (argValue && strcasecmp(argValue, "true") == 0)
         commify = MS_TRUE;
 
+      argValue = msLookupHashTable(tagArgs, "ignoremissing");
+      if (argValue && strcasecmp(argValue, "true") == 0)
+        ignoremissing = MS_TRUE;
+
       argValue = msLookupHashTable(tagArgs, "escape");
       if (argValue && strcasecmp(argValue, "url") == 0)
         escape = ESCAPE_URL;
@@ -1383,16 +1389,21 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape) {
         break;
 
     if (i == layer->numitems) {
-      msSetError(MS_WEBERR, "Item name (%s) not found in layer item list.",
-                 "processItemTag()", name);
-      return (MS_FAILURE);
+      if (ignoremissing == MS_TRUE) {
+        skip = MS_TRUE;
+      } else {
+        msSetError(MS_WEBERR, "Item name (%s) not found in layer item list.",
+                   "processItemTag()", name);
+        return (MS_FAILURE);
+      }
     }
 
     /*
     ** now we know which item so build the tagValue
     */
+
     char *tagValue = NULL;
-    if (shape->values[i] && strlen(shape->values[i]) > 0) {
+    if (!skip && (shape->values[i] && strlen(shape->values[i]) > 0)) {
       char *itemValue = NULL;
 
       /* set tag text depending on pattern (if necessary), nullFormat can

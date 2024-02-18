@@ -5,6 +5,7 @@
 
 # Capabilities updatesequence (less than)
 # RUN_PARMS: ows_context_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&CONTEXT=ows_context.xml&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: ows_context_with_layer_list_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&CONTEXT=ows_context_with_layer_list.xml&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
 
 MAP
 
