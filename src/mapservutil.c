@@ -2012,7 +2012,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv) {
         /* note: this error message will not be displayed */
         msSetError(MS_NOTFOUND, "No matching record(s) found.",
                    "msCGIDispatchQueryRequest()");
-        return(MS_FAILURE);
+        return MS_FAILURE;
       }
     }
   }
