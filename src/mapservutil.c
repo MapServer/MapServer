@@ -90,9 +90,10 @@ void msCGIWriteError(mapservObj *mapserv) {
   }
 
   if ((ms_error->code == MS_NOTFOUND) &&
-      (mapserv->map->web.empty != NULL || CPLGetConfigOption("MS_EMPTY", NULL) != NULL)) {
+      (mapserv->map->web.empty != NULL ||
+       CPLGetConfigOption("MS_EMPTY", NULL) != NULL)) {
     const char *url = mapserv->map->web.empty;
-    if(url == NULL)
+    if (url == NULL)
       url = CPLGetConfigOption("MS_EMPTY", NULL);
     if (msReturnURL(mapserv, url, BROWSE) != MS_SUCCESS) {
       msIO_setHeader("Content-Type", "text/html");
@@ -1995,20 +1996,22 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv) {
 
     
     /* finally execute the query */
-    if(msExecuteQuery(mapserv->map) != MS_SUCCESS) return MS_FAILURE;
+    if (msExecuteQuery(mapserv->map) != MS_SUCCESS)
+      return MS_FAILURE;
 
     /* catch empty result set when web->empty is set (#6907) */
-    if(mapserv->map->web.empty != NULL || CPLGetConfigOption("MS_EMPTY", NULL) != NULL) {
+    if (mapserv->map->web.empty != NULL ||
+	CPLGetConfigOption("MS_EMPTY", NULL) != NULL) {
       int n=0;
-      for(int i=0; i<mapserv->map->numlayers; i++) { // count results for each layer
-	if (mapserv->map->layers[i]->resultcache) {
+      for (int i=0; i<mapserv->map->numlayers; i++) { // count results for each layer
+        if (mapserv->map->layers[i]->resultcache) {
           n += mapserv->map->layers[i]->resultcache->numresults;
-	}
+        }
       }
-      if(n == 0) {
-	/* note: this error message will not be displayed */
-	msSetError(MS_NOTFOUND, "No matching record(s) found.", "msCGIDispatchQueryRequest()");
-	return(MS_FAILURE);
+      if (n == 0) {
+        /* note: this error message will not be displayed */
+        msSetError(MS_NOTFOUND, "No matching record(s) found.", "msCGIDispatchQueryRequest()");
+        return(MS_FAILURE);
       }
     }
   }
