@@ -198,7 +198,7 @@ MS_DLL_EXPORT int checkWebScale(mapservObj *msObj);
 MS_DLL_EXPORT int setExtent(mapservObj *msObj);
 
 MS_DLL_EXPORT int msReturnPage(mapservObj *msObj, char *, int, char **);
-MS_DLL_EXPORT int msReturnURL(mapservObj *msObj, char *, int);
+MS_DLL_EXPORT int msReturnURL(mapservObj *msObj, const char *, int);
 MS_DLL_EXPORT int msReturnNestedTemplateQuery(mapservObj *msObj,
                                               char *pszMimeType,
                                               char **papszBuffer);

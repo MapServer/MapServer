@@ -91,10 +91,10 @@ void msCGIWriteError(mapservObj *mapserv) {
 
   if ((ms_error->code == MS_NOTFOUND) &&
       (mapserv->map->web.empty != NULL ||
-       CPLGetConfigOption("MS_EMPTY", NULL) != NULL)) {
+       CPLGetConfigOption("MS_EMPTY_URL", NULL) != NULL)) {
     const char *url = mapserv->map->web.empty;
     if (url == NULL)
-      url = CPLGetConfigOption("MS_EMPTY", NULL);
+      url = CPLGetConfigOption("MS_EMPTY_URL", NULL);
     if (msReturnURL(mapserv, url, BROWSE) != MS_SUCCESS) {
       msIO_setHeader("Content-Type", "text/html");
       msIO_sendHeaders();
@@ -2000,7 +2000,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv) {
 
     /* catch empty result set when web->empty is set (#6907) */
     if (mapserv->map->web.empty != NULL ||
-        CPLGetConfigOption("MS_EMPTY", NULL) != NULL) {
+        CPLGetConfigOption("MS_EMPTY_URL", NULL) != NULL) {
       int n = 0;
       for (int i = 0; i < mapserv->map->numlayers; i++) { // count results
         if (mapserv->map->layers[i]->resultcache) {

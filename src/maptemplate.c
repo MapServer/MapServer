@@ -4702,7 +4702,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode,
   return MS_SUCCESS;
 }
 
-int msReturnURL(mapservObj *ms, char *url, int mode) {
+int msReturnURL(mapservObj *ms, const char *url, int mode) {
   char *tmpurl;
 
   if (url == NULL) {
