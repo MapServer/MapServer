@@ -4,7 +4,7 @@
 # Test 2: mode=itemquery - no matching record
 # RUN_PARMS: 6907_01_test002.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemquery&qlayer=bdry_counpy2&qstring=ABCD&qitem=cty_abbr' > [RESULT]
 #
-# Test 3: mode=itemquery - no matching record, MS_EMPTY in config
+# Test 3: mode=itemquery - no matching record, MS_EMPTY_URL in config
 # RUN_PARMS: 6907_01_test003.txt [MAPSERV] -conf 6907_01.conf QUERY_STRING='map=[MAPFILE]&mode=itemquery&qlayer=bdry_counpy2&qstring=ABCD&qitem=cty_abbr' > [RESULT]
 MAP
   NAME 'query'
