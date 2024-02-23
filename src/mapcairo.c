@@ -1018,12 +1018,13 @@ int msPreloadSVGSymbol(symbolObj *symbol) {
     gboolean has_viewbox = FALSE;
     RsvgRectangle viewbox;
     rsvg_handle_get_intrinsic_dimensions(cache->svgc, &has_width, &width,
-                                         &has_height, &height, &has_viewbox, &viewbox);
+                                         &has_height, &height, &has_viewbox,
+                                         &viewbox);
     if (has_width && width.unit == RSVG_UNIT_PX && has_height &&
         height.unit == RSVG_UNIT_PX) {
       symbol->sizex = width.length;
       symbol->sizey = height.length;
-    } else if (!has_viewbox){
+    } else if (!has_viewbox) {
       RsvgRectangle ink_rect = {0, 0, 0, 0};
       rsvg_handle_get_geometry_for_element(cache->svgc, NULL, &ink_rect, NULL,
                                            NULL);
