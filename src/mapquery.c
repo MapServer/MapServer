@@ -686,7 +686,7 @@ int msQueryByIndex(mapObj *map) {
 
   status = msLayerGetShape(lp, &shape, &record);
   if (status != MS_SUCCESS) {
-    msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()");
+    msSetError(MS_QUERYERR, "Not valid record request.", "msQueryByIndex()");
     return (MS_FAILURE);
   }
 
@@ -711,7 +711,7 @@ int msQueryByIndex(mapObj *map) {
       (minfeaturesize > 0)) {
 
     if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
-      msSetError(MS_NOTFOUND,
+      msSetError(MS_QUERYERR,
                  "Requested shape not valid against layer minfeaturesize.",
                  "msQueryByIndex()");
       msFreeShape(&shape);
@@ -725,7 +725,7 @@ int msQueryByIndex(mapObj *map) {
       ((shape.classindex == -1) ||
        (lp->class[shape.classindex] -> status ==
                                            MS_OFF))) { /* not a valid shape */
-    msSetError(MS_NOTFOUND,
+    msSetError(MS_QUERYERR,
                "Requested shape not valid against layer classification scheme.",
                "msQueryByIndex()");
     msFreeShape(&shape);
@@ -735,7 +735,7 @@ int msQueryByIndex(mapObj *map) {
 
   if (!(lp->template) &&
       !(lp->class[shape.classindex] -> template)) { /* no valid template */
-    msSetError(MS_NOTFOUND,
+    msSetError(MS_QUERYERR,
                "Requested shape does not have a valid template, no way to "
                "present results.",
                "msQueryByIndex()");
