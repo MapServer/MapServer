@@ -206,7 +206,7 @@ MS_DLL_EXPORT int msReturnTemplateQuery(mapservObj *msObj, char *pszMimeType,
                                         char **papszBuffer);
 MS_DLL_EXPORT int msReturnOpenLayersPage(mapservObj *mapserv);
 
-MS_DLL_EXPORT int msRedirect(char *url);
+MS_DLL_EXPORT int msRedirect(const char *url);
 
 MS_DLL_EXPORT char *generateLegendTemplate(mapservObj *msObj);
 

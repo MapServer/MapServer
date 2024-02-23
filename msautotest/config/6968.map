@@ -1,0 +1,6 @@
+# Test 1: malformed mapfile
+# RUN_PARMS: 6968_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map' > [RESULT]
+#
+# Test 2: mapformed mapfile, MS_ERROR_URL in config
+# RUN_PARMS: 6968_test002.txt [MAPSERV] -conf 6968.conf QUERY_STRING='map=[MAPFILE]&mode=MAP' > [RESULT]
+BADTOKEN

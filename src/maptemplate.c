@@ -118,7 +118,7 @@ static int isValidTemplate(FILE *stream, const char *filename) {
  * Redirect to (only use in CGI)
  *
  */
-int msRedirect(char *url) {
+int msRedirect(const char *url) {
   msIO_setHeader("Status", "302 Found");
   msIO_setHeader("Uri", "%s", url);
   msIO_setHeader("Location", "%s", url);
