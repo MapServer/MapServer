@@ -56,6 +56,7 @@ jobs:
                 id: cpp/non-https-url
     - name: Install dependencies
       run: |
+          sudo apt update
           sudo apt-get install -y ccache cmake g++
           sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compiler libprotobuf-c-dev bison flex libfribidi-dev \
             librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev \
