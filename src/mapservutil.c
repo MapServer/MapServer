@@ -1992,13 +1992,15 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv) {
     /* catch empty result set when web->empty is set (#6907) */
     if (mapserv->map->web.empty != NULL ||
         CPLGetConfigOption("MS_EMPTY_URL", NULL) != NULL) {
-      int n = 0;
+      int empty = MS_TRUE;
       for (int i = 0; i < mapserv->map->numlayers; i++) { // count results
-        if (mapserv->map->layers[i]->resultcache) {
-          n += mapserv->map->layers[i]->resultcache->numresults;
+        if (mapserv->map->layers[i]->resultcache &&
+            mapserv->map->layers[i]->resultcache->numresults > 0) {
+          empty = MS_FALSE;
+          break;
         }
       }
-      if (n == 0) {
+      if (empty == MS_TRUE) {
         /* note: this error message will not be displayed */
         msSetError(MS_NOTFOUND, "No matching record(s) found.",
                    "msCGIDispatchQueryRequest()");
