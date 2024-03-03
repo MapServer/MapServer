@@ -55,7 +55,7 @@ extern FILE *msyyin;
 
 extern int msyysource;
 extern int msyystate;
-extern char *msyystring;
+extern const char *msyystring;
 extern char *msyybasepath;
 extern int msyyreturncomments;
 extern char *msyystring_buffer;
@@ -2345,7 +2345,7 @@ int loadExpression(expressionObj *exp) {
    See bug 339 for more details -- SG.
    ------------------------------------------------------------------------ */
 
-int msLoadExpressionString(expressionObj *exp, char *value) {
+int msLoadExpressionString(expressionObj *exp, const char *value) {
   int retval = MS_FAILURE;
 
   msAcquireLock(TLOCK_PARSER);
@@ -2355,7 +2355,7 @@ int msLoadExpressionString(expressionObj *exp, char *value) {
   return retval;
 }
 
-int loadExpressionString(expressionObj *exp, char *value) {
+int loadExpressionString(expressionObj *exp, const char *value) {
   msyystate = MS_TOKENIZE_STRING;
   msyystring = value;
   msyylex(); /* sets things up but processes no tokens */

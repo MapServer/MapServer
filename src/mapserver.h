@@ -2631,9 +2631,9 @@ insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
 
 /* To be used *only* within the mapfile loading phase */
-MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
+MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, const char *value);
 /* Use this next, thread safe wrapper, function everywhere else */
-MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
+MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, const char *value);
 MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
 MS_DLL_EXPORT void msInitExpression(expressionObj *exp);
 MS_DLL_EXPORT void msFreeExpressionTokens(expressionObj *exp);
