@@ -34,6 +34,7 @@
 #include "mapfile.h"
 #include "mapows.h"
 #include "mapparser.h"
+#include "mapogcsld.h"
 
 #include <assert.h>
 
@@ -894,7 +895,8 @@ static void buildLayerItemList(layerObj *layer) {
     layer->filteritemindex =
         string2list(layer->items, &(layer->numitems), layer->filteritem);
   if (layer->styleitem && (strcasecmp(layer->styleitem, "AUTO") != 0) &&
-      (strncasecmp(layer->styleitem, "javascript://", 13) != 0))
+      !STARTS_WITH_CI(layer->styleitem, "javascript://") &&
+      !STARTS_WITH_CI(layer->styleitem, "sld://"))
     layer->styleitemindex =
         string2list(layer->items, &(layer->numitems), layer->styleitem);
   if (layer->labelitem)
@@ -1067,7 +1069,8 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata) {
   if (layer->filteritem)
     nt++;
   if (layer->styleitem && (strcasecmp(layer->styleitem, "AUTO") != 0) &&
-      (strncasecmp(layer->styleitem, "javascript://", 13) != 0))
+      !STARTS_WITH_CI(layer->styleitem, "javascript://") &&
+      !STARTS_WITH_CI(layer->styleitem, "sld://"))
     nt++;
 
   if (layer->filter.type == MS_EXPRESSION)
@@ -1372,6 +1375,9 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c,
                "msLayerGetFeatureStyle()");
     return MS_FAILURE;
 #endif
+  } else if (layer->styleitem && STARTS_WITH_CI(layer->styleitem, "sld://")) {
+    // ignore the SLD styleitem
+    return MS_SUCCESS;
   } else { /* unknown styleitem */
     return MS_FAILURE;
   }
@@ -1411,6 +1417,10 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c,
              strncasecmp(stylestring, "symbol", 6) == 0 ||
              strncasecmp(stylestring, "label", 5) == 0) {
     msOGRUpdateStyleFromString(map, layer, c, stylestring);
+  } else if (strcasestr(stylestring, "StyledLayerDescriptor>") != NULL) {
+    // check for the closing tag of an SLD document </StyledLayerDescriptor> or
+    // with a namespace e.g. </sld:StyledLayerDescriptor>
+    msSLDApplySLD(map, stylestring, layer->index, NULL, NULL);
   } else {
     resetClassStyle(c);
   }

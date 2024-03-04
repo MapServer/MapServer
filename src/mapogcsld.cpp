@@ -37,11 +37,9 @@ extern "C" {
 extern int yyparse(parseObj *);
 }
 
-#if defined(USE_CURL)
 static inline void IGUR_sizet(size_t ignored) {
   (void)ignored;
 } /* Ignore GCC Unused Result */
-#endif
 
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
 #define SLD_LINE_SYMBOL_DASH_NAME "sld_line_symbol_dash"
@@ -147,6 +145,63 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
 #endif
 }
 
+/************************************************************************/
+/*                             msSLDApplyFromFile                       */
+/*                                                                      */
+/*      Apply SLD from a file on disk to the layerObj                   */
+/************************************************************************/
+int msSLDApplyFromFile(mapObj *map, layerObj *layer, const char *filename) {
+
+  FILE *fp = NULL;
+
+  int nStatus = MS_FAILURE;
+
+  /* open SLD file */
+  char szPath[MS_MAXPATHLEN];
+  char *pszSLDbuf = NULL;
+  const char *realpath = msBuildPath(szPath, map->mappath, filename);
+
+  if ((fp = fopen(realpath, "rb")) != NULL) {
+    int nBufsize = 0;
+    fseek(fp, 0, SEEK_END);
+    nBufsize = ftell(fp);
+    if (nBufsize > 0) {
+      rewind(fp);
+      pszSLDbuf = (char *)malloc((nBufsize + 1) * sizeof(char));
+      if (pszSLDbuf == NULL) {
+        msSetError(MS_MEMERR, "Failed to read SLD file.",
+                   "msSLDApplyFromFile()");
+        nStatus = MS_FAILURE;
+      } else {
+        IGUR_sizet(fread(pszSLDbuf, 1, nBufsize, fp));
+        pszSLDbuf[nBufsize] = '\0';
+      }
+    } else {
+      msSetError(MS_IOERR, "Could not open SLD %s as it appears empty",
+                 "msSLDApplyFromFile", realpath);
+      nStatus = MS_FAILURE;
+    }
+    fclose(fp);
+  }
+  if (pszSLDbuf) {
+    // if not set, then use the first NamedStyle in the SLD file
+    // even if the names don't match
+    const char *pszMetadataName = "SLD_USE_FIRST_NAMEDLAYER";
+    const char *pszValue =
+        msLookupHashTable(&(layer->metadata), pszMetadataName);
+    if (pszValue == NULL) {
+      msInsertHashTable(&(layer->metadata), pszMetadataName, "true");
+    }
+    nStatus = msSLDApplySLD(map, pszSLDbuf, layer->index, NULL, NULL);
+  } else {
+    msSetError(MS_IOERR, "Invalid SLD filename: \"%s\".",
+               "msSLDApplyFromFile()", realpath);
+  }
+
+  msFree(pszSLDbuf);
+  return nStatus;
+}
+
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) ||    \
     defined(USE_SOS_SVR)
 /* -------------------------------------------------------------------- */
@@ -196,6 +251,199 @@ static void msSLDApplySLD_DuplicateLayers(mapObj *map, int nSLDLayers,
 }
 #endif
 
+static int msApplySldLayerToMapLayer(layerObj *sldLayer, layerObj *lp) {
+
+  if (sldLayer->numclasses > 0) {
+    int iClass = 0;
+    bool bSLDHasNamedClass = false;
+
+    lp->type = sldLayer->type;
+    lp->rendermode = MS_ALL_MATCHING_CLASSES;
+
+    for (int k = 0; k < sldLayer->numclasses; k++) {
+      if (sldLayer->_class[k]->group) {
+        bSLDHasNamedClass = true;
+        break;
+      }
+    }
+
+    for (int k = 0; k < lp->numclasses; k++) {
+      if (lp->_class[k] != NULL) {
+        lp->_class[k]->layer = NULL;
+        if (freeClass(lp->_class[k]) == MS_SUCCESS) {
+          msFree(lp->_class[k]);
+          lp->_class[k] = NULL;
+        }
+      }
+    }
+    lp->numclasses = 0;
+
+    if (bSLDHasNamedClass && sldLayer->classgroup) {
+      /* Set the class group to the class that has UserStyle.IsDefaultf
+       */
+      msFree(lp->classgroup);
+      lp->classgroup = msStrdup(sldLayer->classgroup);
+    } else {
+      /*unset the classgroup on the layer if it was set. This allows the
+      layer to render with all the classes defined in the SLD*/
+      msFree(lp->classgroup);
+      lp->classgroup = NULL;
+    }
+
+    for (int k = 0; k < sldLayer->numclasses; k++) {
+      if (msGrowLayerClasses(lp) == NULL)
+        return MS_FAILURE;
+
+      initClass(lp->_class[iClass]);
+      msCopyClass(lp->_class[iClass], sldLayer->_class[k], NULL);
+      lp->_class[iClass]->layer = lp;
+      lp->numclasses++;
+
+      /*aliases may have been used as part of the sld text symbolizer
+        for label element. Try to process it if that is the case #3114*/
+
+      const int layerWasOpened = msLayerIsOpen(lp);
+
+      if (layerWasOpened || (msLayerOpen(lp) == MS_SUCCESS &&
+                             msLayerGetItems(lp) == MS_SUCCESS)) {
+
+        if (lp->_class[iClass]->text.string) {
+          for (int z = 0; z < lp->numitems; z++) {
+            if (!lp->items[z] || strlen(lp->items[z]) == 0)
+              continue;
+
+            char *pszTmp1 = msStrdup(lp->_class[iClass]->text.string);
+            const char *pszFullName = msOWSLookupMetadata(
+                &(lp->metadata), "G",
+                std::string(lp->items[z]).append("_alias").c_str());
+
+            if (pszFullName != NULL && (strstr(pszTmp1, pszFullName) != NULL)) {
+              pszTmp1 = msReplaceSubstring(pszTmp1, pszFullName, lp->items[z]);
+              msLoadExpressionString(
+                  &(lp->_class[iClass]->text),
+                  std::string("(").append(pszTmp1).append(")").c_str());
+            }
+            msFree(pszTmp1);
+          }
+        }
+        if (!layerWasOpened) { // don't close the layer if already
+                               // open
+          msLayerClose(lp);
+        }
+      }
+      iClass++;
+    }
+  } else {
+    /*this is probably an SLD that uses Named styles*/
+    if (sldLayer->classgroup) {
+      int k;
+      for (k = 0; k < lp->numclasses; k++) {
+        if (lp->_class[k]->group &&
+            strcasecmp(lp->_class[k]->group, sldLayer->classgroup) == 0)
+          break;
+      }
+      if (k < lp->numclasses) {
+        msFree(lp->classgroup);
+        lp->classgroup = msStrdup(sldLayer->classgroup);
+      } else {
+        /* TODO  we throw an exception ?*/
+      }
+    }
+  }
+  if (sldLayer->labelitem) {
+    if (lp->labelitem)
+      free(lp->labelitem);
+
+    lp->labelitem = msStrdup(sldLayer->labelitem);
+  }
+
+  if (sldLayer->classitem) {
+    if (lp->classitem)
+      free(lp->classitem);
+
+    lp->classitem = msStrdup(sldLayer->classitem);
+  }
+
+  /* opacity for sld raster */
+  if (lp->type == MS_LAYER_RASTER && sldLayer->compositer &&
+      sldLayer->compositer->opacity != 100)
+    msSetLayerOpacity(lp, sldLayer->compositer->opacity);
+
+  /* mark as auto-generate SLD */
+  if (lp->connectiontype == MS_WMS)
+    msInsertHashTable(&(lp->metadata), "wms_sld_body", "auto");
+
+  /* The SLD might have a FeatureTypeConstraint */
+  if (sldLayer->filter.type == MS_EXPRESSION) {
+    if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
+      char *pszBuffer = msStringConcatenate(NULL, "((");
+      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+      pszBuffer = msStringConcatenate(pszBuffer, ") AND (");
+      pszBuffer = msStringConcatenate(pszBuffer, sldLayer->filter.string);
+      pszBuffer = msStringConcatenate(pszBuffer, "))");
+      msFreeExpression(&lp->filter);
+      msInitExpression(&lp->filter);
+      lp->filter.string = pszBuffer;
+      lp->filter.type = MS_EXPRESSION;
+    } else {
+      msFreeExpression(&lp->filter);
+      msInitExpression(&lp->filter);
+      lp->filter.string = msStrdup(sldLayer->filter.string);
+      lp->filter.type = MS_EXPRESSION;
+    }
+  }
+
+  /*in some cases it would make sense to concatenate all the class
+    expressions and use it to set the filter on the layer. This
+    could increase performance. Will do it for db types layers
+    #2840*/
+  if (lp->filter.string == NULL ||
+      (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
+    if (lp->connectiontype == MS_POSTGIS ||
+        lp->connectiontype == MS_ORACLESPATIAL ||
+        lp->connectiontype == MS_PLUGIN) {
+      if (lp->numclasses > 0) {
+        /* check first that all classes have an expression type.
+          That is the only way we can concatenate them and set the
+          filter expression */
+        int k;
+        for (k = 0; k < lp->numclasses; k++) {
+          if (lp->_class[k]->expression.type != MS_EXPRESSION)
+            break;
+        }
+        if (k == lp->numclasses) {
+          char szTmp[512];
+          char *pszBuffer = NULL;
+          for (k = 0; k < lp->numclasses; k++) {
+            if (pszBuffer == NULL)
+              snprintf(szTmp, sizeof(szTmp), "%s",
+                       "(("); /* we a building a string expression,
+                                 explicitly set type below */
+            else
+              snprintf(szTmp, sizeof(szTmp), "%s", " OR ");
+
+            pszBuffer = msStringConcatenate(pszBuffer, szTmp);
+            pszBuffer = msStringConcatenate(pszBuffer,
+                                            lp->_class[k]->expression.string);
+          }
+
+          snprintf(szTmp, sizeof(szTmp), "%s", "))");
+          pszBuffer = msStringConcatenate(pszBuffer, szTmp);
+
+          msFreeExpression(&lp->filter);
+          msInitExpression(&lp->filter);
+          lp->filter.string = msStrdup(pszBuffer);
+          lp->filter.type = MS_EXPRESSION;
+
+          msFree(pszBuffer);
+        }
+      }
+    }
+  }
+
+  return MS_SUCCESS;
+}
+
 /************************************************************************/
 /*                              msSLDApplySLD                           */
 /*                                                                      */
@@ -241,6 +489,8 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
       /* compare layer name to wms_name as well */
       pszWMSLayerName = msOWSLookupMetadata(&(lp->metadata), "MO", "name");
 
+      bool bSldApplied = false;
+
       for (j = 0; j < nSLDLayers; j++) {
         layerObj *sldLayer = &pasSLDLayers[j];
 
@@ -269,202 +519,30 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
             goto sld_cleanup;
           }
 #endif
-
-          if (sldLayer->numclasses > 0) {
-            int iClass = 0;
-            int k;
-            int bSLDHasNamedClass = MS_FALSE;
-
-            lp->type = sldLayer->type;
-            lp->rendermode = MS_ALL_MATCHING_CLASSES;
-
-            for (k = 0; k < sldLayer->numclasses; k++) {
-              if (sldLayer->_class[k]->group) {
-                bSLDHasNamedClass = MS_TRUE;
-                break;
-              }
-            }
-
-            for (k = 0; k < lp->numclasses; k++) {
-              if (lp->_class[k] != NULL) {
-                lp->_class[k]->layer = NULL;
-                if (freeClass(lp->_class[k]) == MS_SUCCESS) {
-                  msFree(lp->_class[k]);
-                  lp->_class[k] = NULL;
-                }
-              }
-            }
-            lp->numclasses = 0;
-
-            if (bSLDHasNamedClass && sldLayer->classgroup) {
-              /* Set the class group to the class that has UserStyle.IsDefault
-               */
-              msFree(lp->classgroup);
-              lp->classgroup = msStrdup(sldLayer->classgroup);
-            } else {
-              /*unset the classgroup on the layer if it was set. This allows the
-              layer to render with all the classes defined in the SLD*/
-              msFree(lp->classgroup);
-              lp->classgroup = NULL;
-            }
-
-            for (k = 0; k < sldLayer->numclasses; k++) {
-              if (msGrowLayerClasses(lp) == NULL)
-                return MS_FAILURE;
-
-              initClass(lp->_class[iClass]);
-              msCopyClass(lp->_class[iClass], sldLayer->_class[k], NULL);
-              lp->_class[iClass]->layer = lp;
-              lp->numclasses++;
-
-              /*aliases may have been used as part of the sld text symbolizer
-                for label element. Try to process it if that is the case #3114*/
-              if (msLayerOpen(lp) == MS_SUCCESS) {
-                if (msLayerGetItems(lp) == MS_SUCCESS &&
-                    lp->_class[iClass]->text.string) {
-                  int z;
-                  for (z = 0; z < lp->numitems; z++) {
-                    const char *pszFullName;
-                    char szTmp[512];
-                    char *pszTmp1;
-                    if (!lp->items[z] || strlen(lp->items[z]) == 0)
-                      continue;
-                    snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[z]);
-                    pszFullName =
-                        msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
-                    pszTmp1 = msStrdup(lp->_class[iClass]->text.string);
-                    if (pszFullName != NULL &&
-                        (strstr(pszTmp1, pszFullName) != NULL)) {
-                      pszTmp1 = msReplaceSubstring(pszTmp1, pszFullName,
-                                                   lp->items[z]);
-                      char *pszTmp2 =
-                          (char *)malloc(sizeof(char) * (strlen(pszTmp1) + 3));
-                      sprintf(pszTmp2, "(%s)", pszTmp1);
-                      msLoadExpressionString(&(lp->_class[iClass]->text),
-                                             pszTmp2);
-                      msFree(pszTmp2);
-                    }
-                    msFree(pszTmp1);
-                  }
-                }
-                msLayerClose(lp);
-              }
-
-              iClass++;
-            }
-          } else {
-            /*this is probably an SLD that uses Named styles*/
-            if (sldLayer->classgroup) {
-              int k;
-              for (k = 0; k < lp->numclasses; k++) {
-                if (lp->_class[k]->group &&
-                    strcasecmp(lp->_class[k]->group, sldLayer->classgroup) == 0)
-                  break;
-              }
-              if (k < lp->numclasses) {
-                msFree(lp->classgroup);
-                lp->classgroup = msStrdup(sldLayer->classgroup);
-              } else {
-                /* TODO  we throw an exception ?*/
-              }
-            }
-          }
-          if (sldLayer->labelitem) {
-            if (lp->labelitem)
-              free(lp->labelitem);
-
-            lp->labelitem = msStrdup(sldLayer->labelitem);
-          }
-
-          if (sldLayer->classitem) {
-            if (lp->classitem)
-              free(lp->classitem);
-
-            lp->classitem = msStrdup(sldLayer->classitem);
-          }
-
-          /* opacity for sld raster */
-          if (lp->type == MS_LAYER_RASTER && sldLayer->compositer &&
-              sldLayer->compositer->opacity != 100)
-            msSetLayerOpacity(lp, sldLayer->compositer->opacity);
-
-          /* mark as auto-generate SLD */
-          if (lp->connectiontype == MS_WMS)
-            msInsertHashTable(&(lp->metadata), "wms_sld_body", "auto");
-
-          /* The SLD might have a FeatureTypeConstraint */
-          if (sldLayer->filter.type == MS_EXPRESSION) {
-            if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
-              char *pszBuffer = msStringConcatenate(NULL, "((");
-              pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-              pszBuffer = msStringConcatenate(pszBuffer, ") AND (");
-              pszBuffer =
-                  msStringConcatenate(pszBuffer, sldLayer->filter.string);
-              pszBuffer = msStringConcatenate(pszBuffer, "))");
-              msFreeExpression(&lp->filter);
-              msInitExpression(&lp->filter);
-              lp->filter.string = pszBuffer;
-              lp->filter.type = MS_EXPRESSION;
-            } else {
-              msFreeExpression(&lp->filter);
-              msInitExpression(&lp->filter);
-              lp->filter.string = msStrdup(sldLayer->filter.string);
-              lp->filter.type = MS_EXPRESSION;
-            }
-          }
-
-          /*in some cases it would make sense to concatenate all the class
-            expressions and use it to set the filter on the layer. This
-            could increase performance. Will do it for db types layers #2840*/
-          if (lp->filter.string == NULL ||
-              (lp->filter.string && lp->filter.type == MS_STRING &&
-               !lp->filteritem)) {
-            if (lp->connectiontype == MS_POSTGIS ||
-                lp->connectiontype == MS_ORACLESPATIAL ||
-                lp->connectiontype == MS_PLUGIN) {
-              if (lp->numclasses > 0) {
-                /* check first that all classes have an expression type. That is
-                  the only way we can concatenate them and set the filter
-                  expression */
-                int k;
-                for (k = 0; k < lp->numclasses; k++) {
-                  if (lp->_class[k]->expression.type != MS_EXPRESSION)
-                    break;
-                }
-                if (k == lp->numclasses) {
-                  char szTmp[512];
-                  char *pszBuffer = NULL;
-                  for (k = 0; k < lp->numclasses; k++) {
-                    if (pszBuffer == NULL)
-                      snprintf(szTmp, sizeof(szTmp), "%s",
-                               "(("); /* we a building a string expression,
-                                         explicitly set type below */
-                    else
-                      snprintf(szTmp, sizeof(szTmp), "%s", " OR ");
-
-                    pszBuffer = msStringConcatenate(pszBuffer, szTmp);
-                    pszBuffer = msStringConcatenate(
-                        pszBuffer, lp->_class[k]->expression.string);
-                  }
-
-                  snprintf(szTmp, sizeof(szTmp), "%s", "))");
-                  pszBuffer = msStringConcatenate(pszBuffer, szTmp);
-
-                  msFreeExpression(&lp->filter);
-                  msInitExpression(&lp->filter);
-                  lp->filter.string = msStrdup(pszBuffer);
-                  lp->filter.type = MS_EXPRESSION;
-
-                  msFree(pszBuffer);
-                }
-              }
-            }
-          }
+          if (msApplySldLayerToMapLayer(sldLayer, lp) == MS_FAILURE) {
+            return MS_FAILURE;
+          };
+          bSldApplied = true;
           break;
         }
       }
-      if (bUseSpecificLayer)
+      if (bUseSpecificLayer) {
+        if (!bSldApplied) {
+          // there was no name match between the map layer and the SLD named
+          // layer - check if we should apply the first SLD layer anyway
+          const char *pszSLDUseFirstNamedLayer =
+              msLookupHashTable(&(lp->metadata), "SLD_USE_FIRST_NAMEDLAYER");
+          if (pszSLDUseFirstNamedLayer) {
+            if (strcasecmp(pszSLDUseFirstNamedLayer, "true") == 0) {
+              layerObj *firstSldLayer = &pasSLDLayers[0];
+              if (msApplySldLayerToMapLayer(firstSldLayer, lp) == MS_FAILURE) {
+                return MS_FAILURE;
+              };
+            }
+          }
+        }
         break;
+      }
     }
 
     /* -------------------------------------------------------------------- */
@@ -503,7 +581,7 @@ sld_cleanup :
     }
     if (tmpfilename) {
       msSaveMap(map, tmpfilename);
-      msDebug("msApplySLD(): Map file after SLD was applied %s", tmpfilename);
+      msDebug("msApplySLD(): Map file after SLD was applied %s\n", tmpfilename);
       msFree(tmpfilename);
     }
   }

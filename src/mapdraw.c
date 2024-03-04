@@ -34,6 +34,7 @@
 #include "mapcopy.h"
 #include "mapfile.h"
 #include "mapows.h"
+#include "cpl_port.h"
 
 /* msPrepareImage()
  *
@@ -1105,8 +1106,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
     return MS_FAILURE;
 
   /* build item list. STYLEITEM javascript needs the shape attributes */
-  if (layer->styleitem &&
-      (strncasecmp(layer->styleitem, "javascript://", 13) == 0)) {
+  if (layer->styleitem && (STARTS_WITH_CI(layer->styleitem, "javascript://") ||
+                           STARTS_WITH_CI(layer->styleitem, "sld://"))) {
     status = msLayerWhichItems(layer, MS_TRUE, NULL);
   } else {
     status = msLayerWhichItems(layer, MS_FALSE, NULL);
