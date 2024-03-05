@@ -106,8 +106,13 @@ int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
           if (nBufsize > 0) {
             rewind(fp);
             pszSLDbuf = (char *)malloc((nBufsize + 1) * sizeof(char));
-            IGUR_sizet(fread(pszSLDbuf, 1, nBufsize, fp));
-            pszSLDbuf[nBufsize] = '\0';
+            if (pszSLDbuf == NULL) {
+              msSetError(MS_MEMERR, "Failed to open SLD file.",
+                         "msSLDApplySLDURL()");
+            } else {
+              IGUR_sizet(fread(pszSLDbuf, 1, nBufsize, fp));
+              pszSLDbuf[nBufsize] = '\0';
+            }
           } else {
             msSetError(MS_WMSERR, "Could not open SLD %s as it appears empty",
                        "msSLDApplySLDURL", szURL);
@@ -171,7 +176,6 @@ int msSLDApplyFromFile(mapObj *map, layerObj *layer, const char *filename) {
       if (pszSLDbuf == NULL) {
         msSetError(MS_MEMERR, "Failed to read SLD file.",
                    "msSLDApplyFromFile()");
-        nStatus = MS_FAILURE;
       } else {
         IGUR_sizet(fread(pszSLDbuf, 1, nBufsize, fp));
         pszSLDbuf[nBufsize] = '\0';
@@ -179,7 +183,6 @@ int msSLDApplyFromFile(mapObj *map, layerObj *layer, const char *filename) {
     } else {
       msSetError(MS_IOERR, "Could not open SLD %s as it appears empty",
                  "msSLDApplyFromFile", realpath);
-      nStatus = MS_FAILURE;
     }
     fclose(fp);
   }
