@@ -15,10 +15,11 @@ MAP
         CONNECTIONTYPE OGR
         CONNECTION "data/mixed_styles.csv"
         DATA "mixed_styles"
-
+        METADATA
+            "SLD_USE_FIRST_NAMEDLAYER" "true"
+        END
         TYPE LINE
         STATUS ON
-
         STYLEITEM "STYLE"
         CLASS
         END #CLASS

@@ -23,17 +23,20 @@
 # if the SLD path file is missing an empty image will be returned unless a fallback CLASS has been set. An error will be written to the log.
 # RUN_PARMS: sld_styleitem_file_missing.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=missing&STYLES=" > [RESULT_DEMIME]
 
+# test applying SLD to a raster LAYER
+# RUN_PARMS: sld_styleitem_file_raster.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=rgb&STYLES=" > [RESULT_DEMIME]
+
 MAP
     NAME "SLD_STYLEITEM"
     SHAPEPATH "./data"
     SIZE 300 300
     IMAGECOLOR 100 100 100
-    EXTENT 42 -5 52 9
+    EXTENT 40 -5 52 31
     FONTSET "data/fonts.lst"
     PROJECTION
         "init=epsg:4326"
     END
-    DEBUG 5
+    # DEBUG 5
     # CONFIG MS_ERRORFILE "sld.log"
     WEB
         IMAGEPATH "/tmp/ms_tmp/"
@@ -83,5 +86,11 @@ MAP
                 COLOR 255 255 0
             END
         END
+    END
+    LAYER
+        NAME rgb
+        TYPE raster
+        DATA "bg.tif"
+        STYLEITEM "sld://data/raster.xml"
     END
 END
