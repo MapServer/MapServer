@@ -2799,12 +2799,11 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                     sColor.green;
                 psLayer->_class[nClassId]->styles[0]->color.blue = sColor.blue;
 
-                if (psLayer->classitem &&
-                    strcasecmp(psLayer->classitem, "[pixel]") != 0)
+                if (!psLayer->classitem ||
+                    strcasecmp(psLayer->classitem, "[pixel]") != 0) {
                   free(psLayer->classitem);
-
-                if (!psLayer->classitem)
                   psLayer->classitem = msStrdup("[pixel]");
+                }
 
                 msLoadExpressionString(&psLayer->_class[nClassId]->expression,
                                        szExpression);
@@ -2858,12 +2857,11 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             psLayer->_class[nClassId]->styles[0]->color.green = sColor.green;
             psLayer->_class[nClassId]->styles[0]->color.blue = sColor.blue;
 
-            if (psLayer->classitem &&
-                strcasecmp(psLayer->classitem, "[pixel]") != 0)
+            if (!psLayer->classitem ||
+                strcasecmp(psLayer->classitem, "[pixel]") != 0) {
               free(psLayer->classitem);
-
-            if (!psLayer->classitem)
               psLayer->classitem = msStrdup("[pixel]");
+            }
 
             msLoadExpressionString(&psLayer->_class[nClassId]->expression,
                                    szExpression);
