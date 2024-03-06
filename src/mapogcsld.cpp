@@ -2802,7 +2802,9 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                 if (psLayer->classitem &&
                     strcasecmp(psLayer->classitem, "[pixel]") != 0)
                   free(psLayer->classitem);
-                psLayer->classitem = msStrdup("[pixel]");
+
+                if (!psLayer->classitem)
+                  psLayer->classitem = msStrdup("[pixel]");
 
                 msLoadExpressionString(&psLayer->_class[nClassId]->expression,
                                        szExpression);
@@ -2859,7 +2861,9 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             if (psLayer->classitem &&
                 strcasecmp(psLayer->classitem, "[pixel]") != 0)
               free(psLayer->classitem);
-            psLayer->classitem = msStrdup("[pixel]");
+
+            if (!psLayer->classitem)
+              psLayer->classitem = msStrdup("[pixel]");
 
             msLoadExpressionString(&psLayer->_class[nClassId]->expression,
                                    szExpression);
