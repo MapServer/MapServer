@@ -1675,12 +1675,13 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
   }
   response["servers"].push_back(server);
 
-  const std::string oapif_yaml_url =
-      "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/"
-      "ogcapi-features-1.yaml";
-  const std::string oapif_part2_yaml_url =
-      "http://schemas.opengis.net/ogcapi/features/part2/1.0/openapi/"
-      "ogcapi-features-2.yaml";
+  const std::string oapif_schema_base_url = msOWSGetSchemasLocation(map);
+  const std::string oapif_yaml_url = oapif_schema_base_url +
+                                     "/ogcapi/features/part1/1.0/openapi/"
+                                     "ogcapi-features-1.yaml";
+  const std::string oapif_part2_yaml_url = oapif_schema_base_url +
+                                           "/ogcapi/features/part2/1.0/openapi/"
+                                           "ogcapi-features-2.yaml";
 
   json paths;
 
