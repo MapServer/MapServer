@@ -86,7 +86,8 @@ static char *const ms_errorCodes[MS_NUMERRORCODES] = {
     "OpenGL renderer error.",
     "Renderer error.",
     "V8 engine error.",
-    "OCG API error."};
+    "OCG API error.",
+    "Flatgeobuf error."};
 
 #ifndef USE_THREAD
 
