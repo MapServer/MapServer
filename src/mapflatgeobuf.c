@@ -217,10 +217,13 @@ int msFlatGeobufLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
     return MS_DONE;
 
   if (msRectContained(&ctx->bounds, &rect) == MS_FALSE &&
-      ctx->index_node_size > 0)
+      ctx->index_node_size > 0) {
     flatgeobuf_index_search(ctx, &rect);
-  else
+    if (ctx->search_result_len == 0)
+      return MS_DONE;
+  } else {
     flatgeobuf_index_skip(ctx);
+  }
 
   return MS_SUCCESS;
 }
