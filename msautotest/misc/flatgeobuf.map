@@ -5,7 +5,7 @@
 #
 #RUN_PARMS: flatgeobuf-continent.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-continent
 #RUN_PARMS: flatgeobuf-classes.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l africa-classes
-# Given extend is fully in the Atlantic Ocean therefore no feature is selected and the result empty
+# Given extent is fully in the Atlantic Ocean therefore no feature is selected and the result empty
 #RUN_PARMS: flatgeobuf-ocean.png [MAP2IMG] -m [MAPFILE] -i png -e -7 -17 -4 -14 -s 50 50 -o [RESULT] -l africa-continent
 #
 # WFS 1.0.0
