@@ -233,7 +233,7 @@ int msFlatGeobufLayerNextShape(layerObj *layer, shapeObj *shape) {
 
   do {
     if (ctx->search_result) {
-      if (ctx->search_index >= ctx->search_result_len - 1)
+      if (ctx->search_index >= ctx->search_result_len)
         return MS_DONE;
       flatgeobuf_search_item item = ctx->search_result[ctx->search_index];
       if (VSIFSeekL(ctx->file, ctx->feature_offset + item.offset, SEEK_SET) ==
