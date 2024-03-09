@@ -1132,7 +1132,7 @@ int msQueryByFilter(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByFilter(): No matching record(s) found.");
+    msDebug("msQueryByFilter(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 
@@ -1472,7 +1472,7 @@ int msQueryByRect(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByRect(): No matching record(s) found.");
+    msDebug("msQueryByRect(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
@@ -1506,9 +1506,6 @@ int msQueryByFeatures(mapObj *map) {
   queryCacheObj queryCache;
 
   initQueryCache(&queryCache);
-
-  if (map->debug)
-    msDebug("in msQueryByFeatures()\n");
 
   /* is the selection layer valid and has it been queried */
   if (map->query.slayer < 0 || map->query.slayer >= map->numlayers) {
@@ -1853,7 +1850,7 @@ int msQueryByFeatures(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByFeatures(): No matching record(s) found.");
+    msDebug("msQueryByFeatures(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
@@ -2133,7 +2130,7 @@ int msQueryByPoint(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByPoint(): No matching record(s) found.");
+    msDebug("msQueryByPoint(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
@@ -2467,7 +2464,7 @@ int msQueryByShape(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByShape(): No matching record(s) found.");
+    msDebug("msQueryByShape(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
