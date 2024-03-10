@@ -361,6 +361,7 @@ static void msRedactString(char *str, const char *keyword) {
     /* Replace all characters from after equal sign to end of line, end of
      * string, or end of quoted string.
      */
+    char *ptr_first_redacted_char = NULL;
     while (*ptr != '\0' && *ptr != '\r' && *ptr != '\n') {
       if (chStringSep == '\0') {
         if (*ptr == chOptionDelimeter)
@@ -370,12 +371,17 @@ static void msRedactString(char *str, const char *keyword) {
           break;
         }
         if (*ptr == '\\' && ptr[1] == chStringSep) {
-          *ptr = '*';
           ptr++;
         }
       }
-      *ptr = '*';
+      if (!ptr_first_redacted_char) {
+        ptr_first_redacted_char = ptr;
+        *ptr = '*';
+      }
       ptr++;
+    }
+    if (ptr_first_redacted_char) {
+      memmove(ptr_first_redacted_char + 1, ptr, strlen(ptr) + 1);
     }
   }
 }

@@ -35,40 +35,34 @@ static void testRedactCredentials() {
   {
     std::string s("PG:dbname=foo password=mypassword");
     msRedactCredentials(&s[0]);
-    EXPECT_STREQ(s.data(), "PG:dbname=foo password=**********");
+    EXPECT_STREQ(s.data(), "PG:dbname=foo password=*");
   }
   {
     std::string s("PG:dbname=foo password=mypassword\n");
     msRedactCredentials(&s[0]);
-    EXPECT_STREQ(s.data(), "PG:dbname=foo password=**********\n");
+    EXPECT_STREQ(s.data(), "PG:dbname=foo password=*\n");
   }
   {
     std::string s("PG:dbname=foo password=mypassword something=else\n");
     msRedactCredentials(&s[0]);
-    EXPECT_STREQ(s.data(),
-                 "PG:dbname=foo password=********** something=else\n");
+    EXPECT_STREQ(s.data(), "PG:dbname=foo password=* something=else\n");
   }
   {
     std::string s(
         "PG:dbname=foo password='mypassword with\"\\'space' something=else\n");
     msRedactCredentials(&s[0]);
-    EXPECT_STREQ(
-        s.data(),
-        "PG:dbname=foo password='***********************' something=else\n");
+    EXPECT_STREQ(s.data(), "PG:dbname=foo password='*' something=else\n");
   }
   {
     std::string s("\\SQL2019;DATABASE=msautotest;pwd=Password12!;uid=sa;\n");
     msRedactCredentials(&s[0]);
-    EXPECT_STREQ(s.data(),
-                 "\\SQL2019;DATABASE=msautotest;pwd=***********;uid=sa;\n");
+    EXPECT_STREQ(s.data(), "\\SQL2019;DATABASE=msautotest;pwd=*;uid=sa;\n");
   }
   {
     std::string s(
         "\\SQL2019;DATABASE=msautotest;pwd={Password12!;foo};uid=sa;\n");
     msRedactCredentials(&s[0]);
-    EXPECT_STREQ(
-        s.data(),
-        "\\SQL2019;DATABASE=msautotest;pwd={***************};uid=sa;\n");
+    EXPECT_STREQ(s.data(), "\\SQL2019;DATABASE=msautotest;pwd={*};uid=sa;\n");
   }
 }
 
