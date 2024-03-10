@@ -62,6 +62,14 @@ static void testRedactCredentials() {
     EXPECT_STREQ(s.data(),
                  "\\SQL2019;DATABASE=msautotest;pwd=***********;uid=sa;\n");
   }
+  {
+    std::string s(
+        "\\SQL2019;DATABASE=msautotest;pwd={Password12!;foo};uid=sa;\n");
+    msRedactCredentials(&s[0]);
+    EXPECT_STREQ(
+        s.data(),
+        "\\SQL2019;DATABASE=msautotest;pwd={***************};uid=sa;\n");
+  }
 }
 
 /* ----------------------------------------------------------------------- */

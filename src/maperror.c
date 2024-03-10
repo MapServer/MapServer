@@ -349,6 +349,12 @@ static void msRedactString(char *str, const char *keyword) {
     char chStringSep = *ptr;
     if (chStringSep == '\'' || chStringSep == '"') {
       ++ptr;
+    } else if (chOptionDelimeter == ';' && chStringSep == '{' &&
+               strcmp(keyword, "pwd=") == 0) {
+      // Handle cases like "\\SQL2019;DATABASE=msautotest;Driver={ODBC Driver 17
+      // for SQL Server};pwd={Password;12!};uid=sa;"
+      ++ptr;
+      chStringSep = '}';
     } else {
       chStringSep = '\0';
     }
