@@ -1,5 +1,7 @@
 # Test OGR feature style PEN parameters
 
+# RUN_PARMS: ogrpen.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&layer=test&mode=map" > [RESULT_DEMIME]
+
 MAP
 EXTENT 0 -1 1 1
 SIZE 200 400

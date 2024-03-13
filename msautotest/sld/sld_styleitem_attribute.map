@@ -1,0 +1,27 @@
+#
+# Test loading SLD from an attribute using STYLEITEM. See RFC 138
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+
+# RUN_PARMS: sld_styleitem_attribute.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&layer=test&mode=map" > [RESULT_DEMIME]
+
+MAP
+    EXTENT 0 -1 1 1
+    SIZE 200 400
+    LAYER
+        NAME "test"
+        EXTENT 0 -1 1 1
+        CONNECTIONTYPE OGR
+        CONNECTION "data/mixed_styles.csv"
+        DATA "mixed_styles"
+        METADATA
+            "SLD_USE_FIRST_NAMEDLAYER" "true"
+        END
+        TYPE LINE
+        STATUS ON
+        STYLEITEM "STYLE"
+        CLASS
+        END #CLASS
+    END
+END
