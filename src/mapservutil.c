@@ -79,39 +79,8 @@ void msCGIWriteError(mapservObj *mapserv) {
   }
 
   if (!mapserv || !mapserv->map) {
-    msIO_setHeader("Content-Type", "text/html");
-    msIO_sendHeaders();
-    msIO_printf("<HTML>\n");
-    msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-    msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-    msWriteErrorXML(stdout);
-    msIO_printf("</BODY></HTML>");
-    return;
-  }
-
-  if ((ms_error->code == MS_NOTFOUND) && (mapserv->map->web.empty)) {
-    /* msRedirect(mapserv->map->web.empty); */
-    if (msReturnURL(mapserv, mapserv->map->web.empty, BROWSE) != MS_SUCCESS) {
-      msIO_setHeader("Content-Type", "text/html");
-      msIO_sendHeaders();
-      msIO_printf("<HTML>\n");
-      msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-      msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-      msWriteErrorXML(stdout);
-      msIO_printf("</BODY></HTML>");
-    }
-  } else {
-    if (mapserv->map->web.error) {
-      /* msRedirect(mapserv->map->web.error); */
-      if (msReturnURL(mapserv, mapserv->map->web.error, BROWSE) != MS_SUCCESS) {
-        msIO_setHeader("Content-Type", "text/html");
-        msIO_sendHeaders();
-        msIO_printf("<HTML>\n");
-        msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-        msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
-        msWriteErrorXML(stdout);
-        msIO_printf("</BODY></HTML>");
-      }
+    if (CPLGetConfigOption("MS_ERROR_URL", NULL) != NULL) {
+      msRedirect(CPLGetConfigOption("MS_ERROR_URL", NULL));
     } else {
       msIO_setHeader("Content-Type", "text/html");
       msIO_sendHeaders();
@@ -121,7 +90,33 @@ void msCGIWriteError(mapservObj *mapserv) {
       msWriteErrorXML(stdout);
       msIO_printf("</BODY></HTML>");
     }
+    return;
   }
+
+  if ((ms_error->code == MS_NOTFOUND) &&
+      (mapserv->map->web.empty != NULL ||
+       CPLGetConfigOption("MS_EMPTY_URL", NULL) != NULL)) {
+    const char *url = mapserv->map->web.empty; // takes precedence
+    if (url == NULL)
+      url = CPLGetConfigOption("MS_EMPTY_URL", NULL);
+    msRedirect(url);
+  } else if (mapserv->map->web.error != NULL ||
+             CPLGetConfigOption("MS_ERROR_URL", NULL) != NULL) {
+    const char *url = mapserv->map->web.error; // takes precedence
+    if (url == NULL)
+      url = CPLGetConfigOption("MS_ERROR_URL", NULL);
+    msRedirect(url);
+  } else {
+    msIO_setHeader("Content-Type", "text/html");
+    msIO_sendHeaders();
+    msIO_printf("<HTML>\n");
+    msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
+    msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
+    msWriteErrorXML(stdout);
+    msIO_printf("</BODY></HTML>");
+  }
+
+  return;
 }
 
 /*
@@ -1993,6 +1988,25 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv) {
     /* finally execute the query */
     if (msExecuteQuery(mapserv->map) != MS_SUCCESS)
       return MS_FAILURE;
+
+    /* catch empty result set when web->empty is set (#6907) */
+    if (mapserv->map->web.empty != NULL ||
+        CPLGetConfigOption("MS_EMPTY_URL", NULL) != NULL) {
+      int empty = MS_TRUE;
+      for (int i = 0; i < mapserv->map->numlayers; i++) { // count results
+        if (mapserv->map->layers[i]->resultcache &&
+            mapserv->map->layers[i]->resultcache->numresults > 0) {
+          empty = MS_FALSE;
+          break;
+        }
+      }
+      if (empty == MS_TRUE) {
+        /* note: this error message will not be displayed */
+        msSetError(MS_NOTFOUND, "No matching record(s) found.",
+                   "msCGIDispatchQueryRequest()");
+        return MS_FAILURE;
+      }
+    }
   }
 
   if (mapserv->map->querymap.width > 0 &&

@@ -118,7 +118,7 @@ static int isValidTemplate(FILE *stream, const char *filename) {
  * Redirect to (only use in CGI)
  *
  */
-int msRedirect(char *url) {
+int msRedirect(const char *url) {
   msIO_setHeader("Status", "302 Found");
   msIO_setHeader("Uri", "%s", url);
   msIO_setHeader("Location", "%s", url);
@@ -4713,7 +4713,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode,
   return MS_SUCCESS;
 }
 
-int msReturnURL(mapservObj *ms, char *url, int mode) {
+int msReturnURL(mapservObj *ms, const char *url, int mode) {
   char *tmpurl;
 
   if (url == NULL) {

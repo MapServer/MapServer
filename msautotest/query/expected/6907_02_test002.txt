@@ -1,0 +1,5 @@
+Status: 302 Found
+Uri: http://localhost/6907_02.html
+Location: http://localhost/6907_02.html
+Content-Type: text/html
+
