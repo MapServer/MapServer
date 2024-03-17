@@ -524,7 +524,8 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
           }
 #endif
           if (msApplySldLayerToMapLayer(sldLayer, lp) == MS_FAILURE) {
-            return MS_FAILURE;
+            nStatus = MS_FAILURE;
+            goto sld_cleanup;
           };
           bSldApplied = true;
           break;
@@ -540,7 +541,8 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
             if (strcasecmp(pszSLDUseFirstNamedLayer, "true") == 0) {
               layerObj *firstSldLayer = &pasSLDLayers[0];
               if (msApplySldLayerToMapLayer(firstSldLayer, lp) == MS_FAILURE) {
-                return MS_FAILURE;
+                nStatus = MS_FAILURE;
+                goto sld_cleanup;
               };
             }
           }
@@ -568,16 +570,13 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
 
   nStatus = MS_SUCCESS;
 
-#ifdef notdef
-sld_cleanup :
-#endif
-{
+sld_cleanup:
+
   if (pasSLDLayers) {
     for (int i = 0; i < nSLDLayers; i++)
       freeLayer(&pasSLDLayers[i]);
     msFree(pasSLDLayers);
   }
-}
 
   if (map->debug == MS_DEBUGLEVEL_VVV) {
     char *tmpfilename = msTmpFile(map, map->mappath, NULL, "_sld.map");
