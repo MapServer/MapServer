@@ -572,10 +572,11 @@ int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
 sld_cleanup :
 #endif
 {
-  int i;
-  for (i = 0; i < nSLDLayers; i++)
-    freeLayer(&pasSLDLayers[i]);
-  msFree(pasSLDLayers);
+  if (pasSLDLayers) {
+    for (int i = 0; i < nSLDLayers; i++)
+      freeLayer(&pasSLDLayers[i]);
+    msFree(pasSLDLayers);
+  }
 }
 
   if (map->debug == MS_DEBUGLEVEL_VVV) {
