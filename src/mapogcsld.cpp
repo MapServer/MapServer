@@ -322,9 +322,10 @@ static int msApplySldLayerToMapLayer(layerObj *sldLayer, layerObj *lp) {
 
             if (pszFullName != NULL && (strstr(pszTmp1, pszFullName) != NULL)) {
               pszTmp1 = msReplaceSubstring(pszTmp1, pszFullName, lp->items[z]);
-              msLoadExpressionString(
-                  &(lp->_class[iClass]->text),
-                  std::string("(").append(pszTmp1).append(")").c_str());
+              std::string osTmp("(");
+              osTmp.append(pszTmp1).append(")");
+              msLoadExpressionString(&(lp->_class[iClass]->text),
+                                     osTmp.c_str());
             }
             msFree(pszTmp1);
           }
