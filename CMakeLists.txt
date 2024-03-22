@@ -1126,3 +1126,12 @@ install(
   FILES ${PROJECT_SOURCE_DIR}/etc/mapserver-sample.conf
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/
 )
+
+option(BUILD_TESTING "Build unit test" ON)
+if(BUILD_DYNAMIC AND BUILD_TESTING)
+    enable_testing()
+    add_executable(unit_test tests/unit/test.cpp)
+    target_include_directories(unit_test PRIVATE src)
+    target_link_libraries(unit_test PRIVATE mapserver)
+    add_test(NAME unit_test COMMAND unit_test)
+endif()

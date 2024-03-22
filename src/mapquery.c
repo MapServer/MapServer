@@ -686,7 +686,7 @@ int msQueryByIndex(mapObj *map) {
 
   status = msLayerGetShape(lp, &shape, &record);
   if (status != MS_SUCCESS) {
-    msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()");
+    msSetError(MS_QUERYERR, "Not valid record request.", "msQueryByIndex()");
     return (MS_FAILURE);
   }
 
@@ -711,7 +711,7 @@ int msQueryByIndex(mapObj *map) {
       (minfeaturesize > 0)) {
 
     if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
-      msSetError(MS_NOTFOUND,
+      msSetError(MS_QUERYERR,
                  "Requested shape not valid against layer minfeaturesize.",
                  "msQueryByIndex()");
       msFreeShape(&shape);
@@ -725,7 +725,7 @@ int msQueryByIndex(mapObj *map) {
       ((shape.classindex == -1) ||
        (lp->class[shape.classindex] -> status ==
                                            MS_OFF))) { /* not a valid shape */
-    msSetError(MS_NOTFOUND,
+    msSetError(MS_QUERYERR,
                "Requested shape not valid against layer classification scheme.",
                "msQueryByIndex()");
     msFreeShape(&shape);
@@ -735,7 +735,7 @@ int msQueryByIndex(mapObj *map) {
 
   if (!(lp->template) &&
       !(lp->class[shape.classindex] -> template)) { /* no valid template */
-    msSetError(MS_NOTFOUND,
+    msSetError(MS_QUERYERR,
                "Requested shape does not have a valid template, no way to "
                "present results.",
                "msQueryByIndex()");
@@ -1132,7 +1132,7 @@ int msQueryByFilter(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByFilter(): No matching record(s) found.");
+    msDebug("msQueryByFilter(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 
@@ -1472,7 +1472,7 @@ int msQueryByRect(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByRect(): No matching record(s) found.");
+    msDebug("msQueryByRect(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
@@ -1506,9 +1506,6 @@ int msQueryByFeatures(mapObj *map) {
   queryCacheObj queryCache;
 
   initQueryCache(&queryCache);
-
-  if (map->debug)
-    msDebug("in msQueryByFeatures()\n");
 
   /* is the selection layer valid and has it been queried */
   if (map->query.slayer < 0 || map->query.slayer >= map->numlayers) {
@@ -1853,7 +1850,7 @@ int msQueryByFeatures(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByFeatures(): No matching record(s) found.");
+    msDebug("msQueryByFeatures(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
@@ -2133,7 +2130,7 @@ int msQueryByPoint(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByPoint(): No matching record(s) found.");
+    msDebug("msQueryByPoint(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }
@@ -2467,7 +2464,7 @@ int msQueryByShape(mapObj *map) {
   }
 
   if (map->debug >= MS_DEBUGLEVEL_V) {
-    msDebug("msQueryByShape(): No matching record(s) found.");
+    msDebug("msQueryByShape(): No matching record(s) found.\n");
   }
   return (MS_SUCCESS);
 }

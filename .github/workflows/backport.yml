@@ -5,8 +5,6 @@ on:
       - closed
       - labeled
 
-permissions: {}
-
 jobs:
   backport:
     runs-on: ubuntu-latest

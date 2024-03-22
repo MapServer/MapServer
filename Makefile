@@ -24,7 +24,7 @@ all: cmakebuild
 
 cmakebuild: lexer parser
 	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS); fi
-	cd build && $(MAKE) $(MFLAGS)
+	cd build && $(MAKE) $(MFLAGS) && ctest -V
 
 cmakebuild_nocoverage: lexer parser
 	if test ! -s build_nocoverage/Makefile; then  mkdir -p build_nocoverage ; cd build_nocoverage ; cmake .. $(CMAKEFLAGS_NOCOVERAGE); fi

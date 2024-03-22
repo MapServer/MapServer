@@ -2,6 +2,9 @@
 # Test 1: simple mode=query, HTML template 
 # RUN_PARMS: template_test001.html [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000&qformat=html' > [RESULT_DEMIME]
 # RUN_PARMS: template_test002.html [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000&qformat=feature' > [RESULT_DEMIME]
+# RUN_PARMS: template_test003.html [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000&qformat=feature_includes' > [RESULT_DEMIME]
+# RUN_PARMS: template_test004.json [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemnquery&qlayer=bdry_counpy2&qstring=/^Ca/&qitem=cty_name&qformat=json' > [RESULT_DEMIME]
+# RUN_PARMS: template_test005.html [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000&qformat=feature_missing_include' > [RESULT_DEMIME]
 #
 MAP
   NAME 'query'
@@ -22,9 +25,33 @@ MAP
     FORMATOPTION "FILE=template/feature.tmpl"
   END
 
+  OUTPUTFORMAT
+    NAME 'feature_includes'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/feature_includes.tmpl"
+  END
+  
+  OUTPUTFORMAT
+    NAME 'json'
+    DRIVER 'TEMPLATE'
+    MIMETYPE "application/json"
+    FORMATOPTION "FILE=template/feature_json.tmpl"
+  END
+
+  OUTPUTFORMAT
+    NAME 'feature_missing_include'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/feature_missing_include.tmpl"
+  END  
+
   LAYER
     NAME 'bdry_counpy2'
     INCLUDE 'include/bdry_counpy2_shapefile.map'
+    VALIDATION
+      qstring '.'
+    END    
   END
 
   LAYER

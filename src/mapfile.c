@@ -41,8 +41,10 @@
 #include "mapfile.h"
 #include "mapthread.h"
 #include "maptime.h"
+#include "mapogcsld.h"
 
 #include "cpl_conv.h"
+#include "cpl_port.h"
 
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
@@ -55,7 +57,7 @@ extern FILE *msyyin;
 
 extern int msyysource;
 extern int msyystate;
-extern char *msyystring;
+extern const char *msyystring;
 extern char *msyybasepath;
 extern int msyyreturncomments;
 extern char *msyystring_buffer;
@@ -2345,7 +2347,7 @@ int loadExpression(expressionObj *exp) {
    See bug 339 for more details -- SG.
    ------------------------------------------------------------------------ */
 
-int msLoadExpressionString(expressionObj *exp, char *value) {
+int msLoadExpressionString(expressionObj *exp, const char *value) {
   int retval = MS_FAILURE;
 
   msAcquireLock(TLOCK_PARSER);
@@ -2355,7 +2357,7 @@ int msLoadExpressionString(expressionObj *exp, char *value) {
   return retval;
 }
 
-int loadExpressionString(expressionObj *exp, char *value) {
+int loadExpressionString(expressionObj *exp, const char *value) {
   msyystate = MS_TOKENIZE_STRING;
   msyystring = value;
   msyylex(); /* sets things up but processes no tokens */
@@ -6894,6 +6896,27 @@ static bool msGetCWD(char *szBuffer, size_t nBufferSize,
 }
 
 /*
+ * Apply any SLD styles referenced in a LAYER's STYLEITEM
+ */
+static void applyStyleItemToLayer(mapObj *map) {
+
+  for (int i = 0; i < map->numlayers; i++) {
+    layerObj *layer = GET_LAYER(map, i);
+
+    if (layer->styleitem && STARTS_WITH_CI(layer->styleitem, "sld://")) {
+      const char *filename = layer->styleitem + strlen("sld://");
+
+      if (*filename == '\0') {
+        msSetError(MS_IOERR, "Empty SLD filename: \"%s\".",
+                   "applyLayerDefaultSubstitutions()", layer->styleitem);
+      } else {
+        msSLDApplyFromFile(map, layer, filename);
+      }
+    }
+  }
+}
+
+/*
 ** Sets up string-based mapfile loading and calls loadMapInternal to do the
 *work.
 */
@@ -6966,10 +6989,12 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
 
   msReleaseLock(TLOCK_PARSER);
 
+  applyStyleItemToLayer(map);
+
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
     /* In debug mode, report time spent loading/parsing mapfile. */
     msGettimeofday(&endtime, NULL);
-    msDebug("msLoadMap(): %.3fs\n",
+    msDebug("msLoadMapFromString(): %.3fs\n",
             (endtime.tv_sec + endtime.tv_usec / 1.0e6) -
                 (starttime.tv_sec + starttime.tv_usec / 1.0e6));
   }
@@ -7095,6 +7120,8 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
     return NULL;
   }
   msReleaseLock(TLOCK_PARSER);
+
+  applyStyleItemToLayer(map);
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
     /* In debug mode, report time spent loading/parsing mapfile. */
@@ -7246,6 +7273,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer,
     }
     default_key = msNextKeyFromHashTable(table, default_key);
   }
+
   return;
 }
 
@@ -7306,7 +7334,7 @@ char *_get_param_value(const char *key, char **names, char **values,
   if (npairs <= 0)
     return NULL; // bail, no point searching
 
-  if (getenv(key)) { /* envirronment override */
+  if (getenv(key)) { /* environment override */
     return getenv(key);
   }
   while (npairs) {

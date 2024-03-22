@@ -86,7 +86,8 @@ static char *const ms_errorCodes[MS_NUMERRORCODES] = {
     "OpenGL renderer error.",
     "Renderer error.",
     "V8 engine error.",
-    "OCG API error."};
+    "OCG API error.",
+    "Flatgeobuf error."};
 
 #ifndef USE_THREAD
 
@@ -339,26 +340,58 @@ char *msGetErrorString(const char *delimiter) {
   return (errstr);
 }
 
-void msRedactString(char *str, const char *keyword, const char delimeter) {
+static void msRedactString(char *str, const char *keyword) {
 
   char *password = strstr(str, keyword);
   if (password != NULL) {
+    const char chOptionDelimeter = password - str > 0 ? password[-1] : 0;
     char *ptr = password + strlen(keyword);
-    while (*ptr != '\0' && *ptr != delimeter) {
-      *ptr = '*';
+    char chStringSep = *ptr;
+    if (chStringSep == '\'' || chStringSep == '"') {
+      ++ptr;
+    } else if (chOptionDelimeter == ';' && chStringSep == '{' &&
+               strcmp(keyword, "pwd=") == 0) {
+      // Handle cases like "\\SQL2019;DATABASE=msautotest;Driver={ODBC Driver 17
+      // for SQL Server};pwd={Password;12!};uid=sa;"
+      ++ptr;
+      chStringSep = '}';
+    } else {
+      chStringSep = '\0';
+    }
+    /* Replace all characters from after equal sign to end of line, end of
+     * string, or end of quoted string.
+     */
+    char *ptr_first_redacted_char = NULL;
+    while (*ptr != '\0' && *ptr != '\r' && *ptr != '\n') {
+      if (chStringSep == '\0') {
+        if (*ptr == chOptionDelimeter)
+          break;
+      } else {
+        if (*ptr == chStringSep) {
+          break;
+        }
+        if (*ptr == '\\' && ptr[1] == chStringSep) {
+          ptr++;
+        }
+      }
+      if (!ptr_first_redacted_char) {
+        ptr_first_redacted_char = ptr;
+        *ptr = '*';
+      }
       ptr++;
+    }
+    if (ptr_first_redacted_char) {
+      memmove(ptr_first_redacted_char + 1, ptr, strlen(ptr) + 1);
     }
   }
 }
 
 void msRedactCredentials(char *str) {
 
-  // postgres formats
-  msRedactString(str, "password=", ' ');
-  // mssql use semi-colons as delimeters for parameters
-  msRedactString(str, "password=", ';');
+  // postgres or mssql formats
+  msRedactString(str, "password=");
   // ODBC connections can use pwd rather than password
-  msRedactString(str, "pwd=", ';');
+  msRedactString(str, "pwd=");
 }
 
 void msSetError(int code, const char *message_fmt, const char *routine, ...) {

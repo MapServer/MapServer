@@ -1,0 +1,7 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+msLoadMap(): Unknown identifier. First token must be MAP, this doesn&#39;t look like a mapfile.
+</BODY></HTML>

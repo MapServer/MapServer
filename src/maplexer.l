@@ -79,7 +79,7 @@ int msyylineno = 1;
 int msyysource=MS_STRING_TOKENS;
 double msyynumber;
 int msyystate=MS_TOKENIZE_DEFAULT;
-char *msyystring=NULL;
+const char *msyystring=NULL;
 char *msyybasepath=NULL;
 int  msyystring_buffer_size = 0;
 int  msyystring_size;

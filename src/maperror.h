@@ -85,6 +85,8 @@ extern "C" {
 #define MS_V8ERR 43
 #define MS_OGCAPIERR 44
 #define MS_FGBERR 45
+/* NOTE to developers: if adding a new constant, increment MS_NUMERRORCODES and
+ * add a new string in ms_errorCodes[] */
 #define MS_NUMERRORCODES 46
 
 #define MESSAGELENGTH 2048

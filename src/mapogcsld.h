@@ -40,6 +40,7 @@ MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
 MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, const char *psSLDXML, int iLayer,
                                 const char *pszStyleLayerName,
                                 char **ppszLayerNames);
+int msSLDApplyFromFile(mapObj *map, layerObj *layer, const char *filename);
 
 /* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
