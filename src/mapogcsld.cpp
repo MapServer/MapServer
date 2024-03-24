@@ -324,6 +324,10 @@ static int msApplySldLayerToMapLayer(layerObj *sldLayer, layerObj *lp) {
               pszTmp1 = msReplaceSubstring(pszTmp1, pszFullName, lp->items[z]);
               std::string osTmp("(");
               osTmp.append(pszTmp1).append(")");
+              // Silence false positive Coverity Scan warnings which wrongly
+              // believes that osTmp.c_str() might be used by
+              // msLoadExpressionString() after osTmp is destroyed.
+              // coverity[escape]
               msLoadExpressionString(&(lp->_class[iClass]->text),
                                      osTmp.c_str());
             }
