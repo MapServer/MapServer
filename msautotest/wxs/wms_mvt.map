@@ -6,13 +6,17 @@
 # RUN_PARMS: wms_mvt_xprotobuf.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=&LAYERS=road&FORMAT=application/x-protobuf" > [RESULT_DEVERSION]
 # RUN_PARMS: wms_mvt.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=&LAYERS=road&FORMAT=application/vnd.mapbox-vector-tile" > [RESULT_DEVERSION]
 
+# Test access with STYLES and FILTER parameters
+# RUN_PARMS: wms_mvt_filtered.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=&LAYERS=road&FILTER=<Filter><PropertyIsEqualTo><PropertyName>F_CODE</PropertyName><Literal>67</Literal></PropertyIsEqualTo></Filter>&FORMAT=application/vnd.mapbox-vector-tile" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_mvt_group.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=main&LAYERS=road2&FORMAT=application/vnd.mapbox-vector-tile" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_mvt_defaultgroup.mvt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:3857&BBOX=-7514065.628545966,5009377.085697311,-6261721.357121638,6261721.357121639&WIDTH=256&HEIGHT=256&STYLES=&LAYERS=road2&FORMAT=application/vnd.mapbox-vector-tile" > [RESULT_DEVERSION]
+
+
 MAP
 
-NAME WMS_TEST
+NAME WMS_MVT_TEST
 STATUS ON
 SIZE 400 300
-#EXTENT   2018000 -73300 3410396 647400
-#UNITS METERS
 EXTENT -67.5725 42 -58.9275 48.5
 UNITS DD
 IMAGECOLOR 255 255 255
@@ -31,38 +35,15 @@ WEB
 
   METADATA
     "ows_updatesequence"   "123"
-    "wms_title"		   "Test simple wms"
+    "wms_title"		   "Test simple MVT wms"
     "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
     "wms_srs"		   "EPSG:42304 EPSG:42101 EPSG:4269 EPSG:4326"
-    "ows_schemas_location" "http://schemas.opengis.net"
-    "ows_keywordlist" "ogc,wms,mapserver"
-    "ows_service_onlineresource" "http://www.mapserver.org/"
-    "ows_fees" "None"
-    "ows_accessconstraints" "None"
-    "ows_addresstype" "postal"
-    "ows_address"     "123 SomeRoad Road"
-    "ows_city" "Toronto"
-    "ows_stateorprovince" "Ontario"
-    "ows_postcode" "xxx-xxx"
-    "ows_country" "Canada"
-    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
-    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
-    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
-    "ows_contactperson" "Tom Kralidis"
-    "ows_contactorganization" "MapServer"
-    "ows_contactposition" "self"
-
-    "ows_rootlayer_title" "My Layers"
-    "ows_rootlayer_abstract" "These are my layers"
-    "ows_rootlayer_keywordlist" "layers,list"
-    "ows_layerlimit" "1"
     "ows_enable_request" "*" 
   END
 END
 
 PROJECTION
   "init=epsg:4326"
-  #"init=./data/epsg2:42304"
 END
 
 
@@ -94,6 +75,55 @@ LAYER
         COLOR 220 0 0
     END
   END
+END # Layer
+
+# A road layer with WMS groups
+LAYER
+  NAME road2
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road2"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:43204 EPSG:3857"
+    "gml_include_items" "all"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  CLASSITEM "Name_e"
+  CLASSGROUP "all"
+
+  CLASS
+    GROUP "all"
+    NAME "Roads"
+    STYLE
+        SYMBOL 0 
+        COLOR 0 0 0
+    END
+  END
+
+  CLASS
+    GROUP "main"
+    NAME "Roads"
+    EXPRESSION ([F_CODE] = 67)
+    STYLE
+        SYMBOL 0 
+        COLOR 0 220 0
+    END
+  END
+  CLASS
+    GROUP "other"
+    NAME "Roads"
+    EXPRESSION ([F_CODE] != 67)
+    STYLE
+        SYMBOL 0 
+        COLOR 220 0 0
+    END
+  END  
 END # Layer
 
 END # Map File

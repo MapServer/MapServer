@@ -1,0 +1,62 @@
+# RUN_PARMS: style_size_binding.png [MAP2IMG] -m [MAPFILE] -l style_size_binding -o [RESULT]
+# RUN_PARMS: style_size_fixed.png [MAP2IMG] -m [MAPFILE] -l style_size_fixed -o [RESULT]
+# RUN_PARMS: style_size_expression.png [MAP2IMG] -m [MAPFILE] -l style_size_expression -o [RESULT]
+#
+# Test style size settings using fixed values, attribute bindings, and expressions
+#
+
+MAP
+    IMAGETYPE "png"
+    SIZE 400 400
+    EXTENT -.5 -.5 1.5 1.5
+    FONTSET "../misc/fonts.lst"
+    SYMBOLSET "symbolset"
+    PROJECTION
+        "init=epsg:4326"
+    END
+    LAYER
+        NAME "style_size_fixed"
+        TYPE POINT
+        STATUS OFF
+        DATA "data/label_alias_offset.shp"
+        CLASS
+            STYLE
+                SYMBOL "circle"
+                SIZE 12
+                COLOR 0 0 255
+            END
+        END
+    END
+    LAYER
+        NAME "style_size_binding"
+        TYPE POINT
+        STATUS OFF
+        DATA "data/label_alias_offset.shp"
+        CLASS
+            STYLE
+                SYMBOL "circle"
+                # check any duplicate attribute bindings are ignored
+                SIZE [missing]
+                SIZE [priority]
+                COLOR 0 0 255
+            END
+        END
+    END
+    LAYER
+        NAME "style_size_expression"
+        TYPE POINT
+        STATUS OFF
+        DATA "data/label_alias_offset.shp"
+        LABELITEM "label"
+        CLASS
+            STYLE
+                SYMBOL "circle"
+                # add a duplicate SIZE that will be ignored
+                # but check it is cleaned up correctly
+                SIZE ([priority] * 10)
+                SIZE ([priority] *2)
+                COLOR 0 0 255
+            END
+        END
+    END
+END

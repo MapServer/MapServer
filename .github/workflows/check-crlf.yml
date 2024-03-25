@@ -5,14 +5,21 @@ name: Check CRLF
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   Check-CRLF:
     name: verify that only LF linefeeds are used
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository contents
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Use action to check for CRLF endings
         uses: erclu/check-crlf@v1.2.0

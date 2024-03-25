@@ -37,7 +37,7 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
         $line2->add(new pointObj(3,5));
         $shape2->add($line2);
 
-        $this->assertEquals(1.4142135623731, $this->shape->distanceToShape($shape2));
+        $this->assertEquals(1.4142135623730951, $this->shape->distanceToShape($shape2));
     }
 
     public function test__setresultindex()
@@ -51,9 +51,14 @@ class shapeObjTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(-1, $this->shape->resultindex);
     }
     
+    public function testClone()
+    {
+        $this->assertInstanceOf('shapeObj', $newShape = $this->shape->cloneShape());
+    }     
+    
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($shape, $this->shape, $point, $line, $line2, $shape2);
+        unset($shape, $this->shape, $point, $line, $line2, $shape2, $newShape);
     }    
 
 }

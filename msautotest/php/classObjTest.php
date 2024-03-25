@@ -26,14 +26,27 @@ class classObjTest extends \PHPUnit\Framework\TestCase
 
     }
 
-    public function testpleader()
+    public function testleader()
     {
         $this->assertInstanceOf('labelLeaderObj', $this->class->leader);
     }
     
+    public function testcreateLegendIcon()
+    {
+        $map_file = 'maps/labels-leader.map';
+        $map = new mapObj($map_file);
+        $layer = $map->getLayer(0);       
+        $this->assertInstanceOf('imageObj', $layer->getClass(0)->createLegendIcon( $map, $layer, 50, 50 ));
+    }
+
+    public function testClone()
+    {
+        $this->assertInstanceOf('classObj', $newClass = $this->class->cloneClass());
+    }    
+    
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void {
-        unset($this->class, $map_file, $map, $layer, $classtmp, $style);
+        unset($this->class, $map_file, $map, $layer, $classtmp, $style, $newClass);
     }
     
 }

@@ -1,7 +1,0 @@
-Content-Type: text/html
-
-<HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD>
-<BODY BGCOLOR="#FFFFFF">
-msCGILoadMap(): Web application error. CGI variable &quot;map&quot; not found in configuration and this server is not configured for full paths.
-</BODY></HTML>

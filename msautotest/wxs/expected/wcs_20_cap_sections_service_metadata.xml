@@ -2,10 +2,10 @@
 <wcs:Capabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0" xmlns:crs="http://www.opengis.net/wcs/crs/1.0" xmlns:int="http://www.opengis.net/wcs/interpolation/1.0" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd " version="2.0.1" updateSequence="2007-10-30T14:23:38Z">
   <wcs:ServiceMetadata>
     <wcs:formatSupported>image/tiff</wcs:formatSupported>
-    <wcs:formatSupported>image/png; mode=8bit</wcs:formatSupported>
     <wcs:formatSupported>image/x-aaigrid</wcs:formatSupported>
     <wcs:formatSupported>image/png</wcs:formatSupported>
     <wcs:formatSupported>image/jpeg</wcs:formatSupported>
+    <wcs:formatSupported>image/png; mode=8bit</wcs:formatSupported>
     <wcs:formatSupported>image/vnd.jpeg-png</wcs:formatSupported>
     <wcs:formatSupported>image/vnd.jpeg-png8</wcs:formatSupported>
     <wcs:Extension>

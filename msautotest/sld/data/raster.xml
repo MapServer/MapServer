@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyledLayerDescriptor xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" version="1.0.0" xmlns:sld="http://www.opengis.net/sld" xmlns:gml="http://www.opengis.net/gml">
+    <NamedLayer>
+    <sld:Name>test</sld:Name>
+    <sld:UserStyle>
+      <sld:Name>bg</sld:Name>
+      <sld:FeatureTypeStyle>
+        <sld:Rule>
+          <sld:RasterSymbolizer>
+            <sld:ChannelSelection>
+              <sld:GrayChannel>
+                <sld:SourceChannelName>1</sld:SourceChannelName>
+              </sld:GrayChannel>
+            </sld:ChannelSelection>
+            <sld:ColorMap type="values">
+              <sld:ColorMapEntry label="62" color="#f7fbff" quantity="62"/>
+              <sld:ColorMapEntry label="63" color="#f7fbff" quantity="63"/>
+              <sld:ColorMapEntry label="64" color="#f7fbff" quantity="64"/>
+              <sld:ColorMapEntry label="65" color="#f7fbff" quantity="65"/>
+              <sld:ColorMapEntry label="66" color="#f7fbff" quantity="66"/>
+              <sld:ColorMapEntry label="67" color="#f7fbff" quantity="67"/>
+              <sld:ColorMapEntry label="68" color="#f7fbff" quantity="68"/>
+              <sld:ColorMapEntry label="69" color="#f7fbff" quantity="69"/>
+              <sld:ColorMapEntry label="70" color="#f7fbff" quantity="70"/>
+              <sld:ColorMapEntry label="71" color="#f7fbff" quantity="71"/>
+              <sld:ColorMapEntry label="73" color="#f7fbff" quantity="73"/>
+              <sld:ColorMapEntry label="74" color="#f7fbff" quantity="74"/>
+              <sld:ColorMapEntry label="75" color="#f7fbff" quantity="75"/>
+              <sld:ColorMapEntry label="76" color="#f7fbff" quantity="76"/>
+              <sld:ColorMapEntry label="77" color="#f7fbff" quantity="77"/>
+              <sld:ColorMapEntry label="78" color="#f7fbff" quantity="78"/>
+              <sld:ColorMapEntry label="79" color="#f7fbff" quantity="79"/>
+              <sld:ColorMapEntry label="80" color="#deebf7" quantity="80"/>
+              <sld:ColorMapEntry label="81" color="#deebf7" quantity="81"/>
+              <sld:ColorMapEntry label="82" color="#deebf7" quantity="82"/>
+              <sld:ColorMapEntry label="83" color="#deebf7" quantity="83"/>
+              <sld:ColorMapEntry label="84" color="#deebf7" quantity="84"/>
+              <sld:ColorMapEntry label="85" color="#deebf7" quantity="85"/>
+              <sld:ColorMapEntry label="86" color="#deebf7" quantity="86"/>
+              <sld:ColorMapEntry label="87" color="#deebf7" quantity="87"/>
+              <sld:ColorMapEntry label="88" color="#deebf7" quantity="88"/>
+              <sld:ColorMapEntry label="89" color="#deebf7" quantity="89"/>
+              <sld:ColorMapEntry label="90" color="#deebf7" quantity="90"/>
+              <sld:ColorMapEntry label="91" color="#deebf7" quantity="91"/>
+              <sld:ColorMapEntry label="92" color="#deebf7" quantity="92"/>
+              <sld:ColorMapEntry label="93" color="#deebf7" quantity="93"/>
+              <sld:ColorMapEntry label="94" color="#deebf7" quantity="94"/>
+              <sld:ColorMapEntry label="95" color="#deebf7" quantity="95"/>
+              <sld:ColorMapEntry label="96" color="#deebf7" quantity="96"/>
+              <sld:ColorMapEntry label="97" color="#c6dbef" quantity="97"/>
+              <sld:ColorMapEntry label="98" color="#c6dbef" quantity="98"/>
+              <sld:ColorMapEntry label="99" color="#c6dbef" quantity="99"/>
+              <sld:ColorMapEntry label="100" color="#c6dbef" quantity="100"/>
+              <sld:ColorMapEntry label="101" color="#c6dbef" quantity="101"/>
+              <sld:ColorMapEntry label="102" color="#c6dbef" quantity="102"/>
+              <sld:ColorMapEntry label="103" color="#c6dbef" quantity="103"/>
+              <sld:ColorMapEntry label="104" color="#c6dbef" quantity="104"/>
+              <sld:ColorMapEntry label="105" color="#c6dbef" quantity="105"/>
+              <sld:ColorMapEntry label="106" color="#c6dbef" quantity="106"/>
+              <sld:ColorMapEntry label="107" color="#c6dbef" quantity="107"/>
+              <sld:ColorMapEntry label="108" color="#c6dbef" quantity="108"/>
+              <sld:ColorMapEntry label="109" color="#c6dbef" quantity="109"/>
+              <sld:ColorMapEntry label="110" color="#c6dbef" quantity="110"/>
+              <sld:ColorMapEntry label="111" color="#c6dbef" quantity="111"/>
+              <sld:ColorMapEntry label="112" color="#c6dbef" quantity="112"/>
+              <sld:ColorMapEntry label="113" color="#c6dbef" quantity="113"/>
+              <sld:ColorMapEntry label="114" color="#9ecae1" quantity="114"/>
+              <sld:ColorMapEntry label="115" color="#9ecae1" quantity="115"/>
+              <sld:ColorMapEntry label="116" color="#9ecae1" quantity="116"/>
+              <sld:ColorMapEntry label="117" color="#9ecae1" quantity="117"/>
+              <sld:ColorMapEntry label="118" color="#9ecae1" quantity="118"/>
+              <sld:ColorMapEntry label="119" color="#9ecae1" quantity="119"/>
+              <sld:ColorMapEntry label="120" color="#9ecae1" quantity="120"/>
+              <sld:ColorMapEntry label="121" color="#9ecae1" quantity="121"/>
+              <sld:ColorMapEntry label="122" color="#9ecae1" quantity="122"/>
+              <sld:ColorMapEntry label="123" color="#9ecae1" quantity="123"/>
+              <sld:ColorMapEntry label="124" color="#9ecae1" quantity="124"/>
+              <sld:ColorMapEntry label="125" color="#9ecae1" quantity="125"/>
+              <sld:ColorMapEntry label="126" color="#9ecae1" quantity="126"/>
+              <sld:ColorMapEntry label="127" color="#9ecae1" quantity="127"/>
+              <sld:ColorMapEntry label="128" color="#9ecae1" quantity="128"/>
+              <sld:ColorMapEntry label="129" color="#9ecae1" quantity="129"/>
+              <sld:ColorMapEntry label="130" color="#9ecae1" quantity="130"/>
+              <sld:ColorMapEntry label="131" color="#6baed6" quantity="131"/>
+              <sld:ColorMapEntry label="132" color="#6baed6" quantity="132"/>
+              <sld:ColorMapEntry label="133" color="#6baed6" quantity="133"/>
+              <sld:ColorMapEntry label="134" color="#6baed6" quantity="134"/>
+              <sld:ColorMapEntry label="135" color="#6baed6" quantity="135"/>
+              <sld:ColorMapEntry label="136" color="#6baed6" quantity="136"/>
+              <sld:ColorMapEntry label="137" color="#6baed6" quantity="137"/>
+              <sld:ColorMapEntry label="138" color="#6baed6" quantity="138"/>
+              <sld:ColorMapEntry label="139" color="#6baed6" quantity="139"/>
+              <sld:ColorMapEntry label="140" color="#6baed6" quantity="140"/>
+              <sld:ColorMapEntry label="141" color="#6baed6" quantity="141"/>
+              <sld:ColorMapEntry label="142" color="#6baed6" quantity="142"/>
+              <sld:ColorMapEntry label="143" color="#6baed6" quantity="143"/>
+              <sld:ColorMapEntry label="144" color="#6baed6" quantity="144"/>
+              <sld:ColorMapEntry label="145" color="#6baed6" quantity="145"/>
+              <sld:ColorMapEntry label="146" color="#6baed6" quantity="146"/>
+              <sld:ColorMapEntry label="147" color="#4292c6" quantity="147"/>
+              <sld:ColorMapEntry label="148" color="#4292c6" quantity="148"/>
+              <sld:ColorMapEntry label="149" color="#4292c6" quantity="149"/>
+              <sld:ColorMapEntry label="150" color="#4292c6" quantity="150"/>
+              <sld:ColorMapEntry label="151" color="#4292c6" quantity="151"/>
+              <sld:ColorMapEntry label="152" color="#4292c6" quantity="152"/>
+              <sld:ColorMapEntry label="153" color="#4292c6" quantity="153"/>
+              <sld:ColorMapEntry label="154" color="#4292c6" quantity="154"/>
+              <sld:ColorMapEntry label="155" color="#4292c6" quantity="155"/>
+              <sld:ColorMapEntry label="156" color="#4292c6" quantity="156"/>
+              <sld:ColorMapEntry label="157" color="#4292c6" quantity="157"/>
+              <sld:ColorMapEntry label="158" color="#4292c6" quantity="158"/>
+              <sld:ColorMapEntry label="159" color="#4292c6" quantity="159"/>
+              <sld:ColorMapEntry label="160" color="#4292c6" quantity="160"/>
+              <sld:ColorMapEntry label="161" color="#4292c6" quantity="161"/>
+              <sld:ColorMapEntry label="162" color="#4292c6" quantity="162"/>
+              <sld:ColorMapEntry label="163" color="#4292c6" quantity="163"/>
+              <sld:ColorMapEntry label="164" color="#2171b5" quantity="164"/>
+              <sld:ColorMapEntry label="165" color="#2171b5" quantity="165"/>
+              <sld:ColorMapEntry label="166" color="#2171b5" quantity="166"/>
+              <sld:ColorMapEntry label="167" color="#2171b5" quantity="167"/>
+              <sld:ColorMapEntry label="168" color="#2171b5" quantity="168"/>
+              <sld:ColorMapEntry label="169" color="#2171b5" quantity="169"/>
+              <sld:ColorMapEntry label="170" color="#2171b5" quantity="170"/>
+              <sld:ColorMapEntry label="171" color="#2171b5" quantity="171"/>
+              <sld:ColorMapEntry label="172" color="#2171b5" quantity="172"/>
+              <sld:ColorMapEntry label="173" color="#2171b5" quantity="173"/>
+              <sld:ColorMapEntry label="174" color="#2171b5" quantity="174"/>
+              <sld:ColorMapEntry label="175" color="#2171b5" quantity="175"/>
+              <sld:ColorMapEntry label="176" color="#2171b5" quantity="176"/>
+              <sld:ColorMapEntry label="177" color="#2171b5" quantity="177"/>
+              <sld:ColorMapEntry label="178" color="#2171b5" quantity="178"/>
+              <sld:ColorMapEntry label="179" color="#2171b5" quantity="179"/>
+              <sld:ColorMapEntry label="180" color="#2171b5" quantity="180"/>
+              <sld:ColorMapEntry label="181" color="#08519c" quantity="181"/>
+              <sld:ColorMapEntry label="182" color="#08519c" quantity="182"/>
+              <sld:ColorMapEntry label="183" color="#08519c" quantity="183"/>
+              <sld:ColorMapEntry label="184" color="#08519c" quantity="184"/>
+              <sld:ColorMapEntry label="185" color="#08519c" quantity="185"/>
+              <sld:ColorMapEntry label="186" color="#08519c" quantity="186"/>
+              <sld:ColorMapEntry label="187" color="#08519c" quantity="187"/>
+              <sld:ColorMapEntry label="188" color="#08519c" quantity="188"/>
+              <sld:ColorMapEntry label="189" color="#08519c" quantity="189"/>
+              <sld:ColorMapEntry label="190" color="#08519c" quantity="190"/>
+              <sld:ColorMapEntry label="191" color="#08519c" quantity="191"/>
+              <sld:ColorMapEntry label="192" color="#08519c" quantity="192"/>
+              <sld:ColorMapEntry label="193" color="#08519c" quantity="193"/>
+              <sld:ColorMapEntry label="194" color="#08519c" quantity="194"/>
+              <sld:ColorMapEntry label="195" color="#08519c" quantity="195"/>
+              <sld:ColorMapEntry label="196" color="#08519c" quantity="196"/>
+              <sld:ColorMapEntry label="197" color="#08519c" quantity="197"/>
+              <sld:ColorMapEntry label="198" color="#084b92" quantity="198"/>
+              <sld:ColorMapEntry label="199" color="#084b92" quantity="199"/>
+              <sld:ColorMapEntry label="200" color="#084b92" quantity="200"/>
+              <sld:ColorMapEntry label="201" color="#084b92" quantity="201"/>
+              <sld:ColorMapEntry label="202" color="#084b92" quantity="202"/>
+              <sld:ColorMapEntry label="203" color="#084b92" quantity="203"/>
+              <sld:ColorMapEntry label="204" color="#084b92" quantity="204"/>
+              <sld:ColorMapEntry label="205" color="#084b92" quantity="205"/>
+              <sld:ColorMapEntry label="206" color="#084b92" quantity="206"/>
+              <sld:ColorMapEntry label="207" color="#084b92" quantity="207"/>
+              <sld:ColorMapEntry label="208" color="#084b92" quantity="208"/>
+              <sld:ColorMapEntry label="209" color="#084b92" quantity="209"/>
+              <sld:ColorMapEntry label="210" color="#084b92" quantity="210"/>
+              <sld:ColorMapEntry label="211" color="#084b92" quantity="211"/>
+              <sld:ColorMapEntry label="212" color="#084b92" quantity="212"/>
+              <sld:ColorMapEntry label="213" color="#084b92" quantity="213"/>
+              <sld:ColorMapEntry label="214" color="#084b92" quantity="214"/>
+              <sld:ColorMapEntry label="215" color="#08306b" quantity="215"/>
+              <sld:ColorMapEntry label="216" color="#08306b" quantity="216"/>
+              <sld:ColorMapEntry label="217" color="#08306b" quantity="217"/>
+              <sld:ColorMapEntry label="218" color="#08306b" quantity="218"/>
+              <sld:ColorMapEntry label="219" color="#08306b" quantity="219"/>
+              <sld:ColorMapEntry label="220" color="#08306b" quantity="220"/>
+              <sld:ColorMapEntry label="221" color="#08306b" quantity="221"/>
+              <sld:ColorMapEntry label="222" color="#08306b" quantity="222"/>
+              <sld:ColorMapEntry label="223" color="#08306b" quantity="223"/>
+              <sld:ColorMapEntry label="224" color="#08306b" quantity="224"/>
+              <sld:ColorMapEntry label="225" color="#08306b" quantity="225"/>
+              <sld:ColorMapEntry label="226" color="#08306b" quantity="226"/>
+              <sld:ColorMapEntry label="227" color="#08306b" quantity="227"/>
+              <sld:ColorMapEntry label="228" color="#08306b" quantity="228"/>
+              <sld:ColorMapEntry label="229" color="#08306b" quantity="229"/>
+              <sld:ColorMapEntry label="231" color="#08306b" quantity="231"/>
+              <sld:ColorMapEntry label="235" color="#08306b" quantity="235"/>
+            </sld:ColorMap>
+          </sld:RasterSymbolizer>
+        </sld:Rule>
+      </sld:FeatureTypeStyle>
+    </sld:UserStyle>
+  </NamedLayer>
+</StyledLayerDescriptor>

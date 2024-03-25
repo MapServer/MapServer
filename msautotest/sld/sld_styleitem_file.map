@@ -1,0 +1,96 @@
+#
+# Test loading SLD files for a layer using STYLEITEM. See RFC 138
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# RUN_PARMS: sld_styleitem_file.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=green&STYLES=" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_getstyle.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetStyles&LAYERS=green" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_legend.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&FORMAT=image/png&LAYER=green" > [RESULT_DEMIME]
+
+# passing in SLD will still override any SLD file referenced in the Mapfile
+# RUN_PARMS: sld_styleitem_file_override.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=green&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>green</Name><UserStyle><FeatureTypeStyle><Rule><LineSymbolizer><Stroke><SvgParameter name=%22stroke-width%22><Literal>5</Literal></SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF0000</SvgParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+
+# RUN_PARMS: sld_styleitem_file_blue.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=twostyles&STYLES=blue" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_green.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=twostyles&STYLES=green" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_twostyles_legend_green.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&FORMAT=image/png&LAYER=twostyles" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_twostyles_legend_blue.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&FORMAT=image/png&LAYER=twostyles&STYLE=blue" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_getstyle_twostyles.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetStyles&LAYERS=twostyles" > [RESULT_DEMIME]
+
+# The matching named style should be used if present in the SLD file
+# RUN_PARMS: sld_styleitem_file_namedstyle_default.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=multi_namedstyles&styles=" > [RESULT_DEMIME]
+# RUN_PARMS: sld_styleitem_file_namedstyle_first.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=unknown&styles=" > [RESULT_DEMIME]
+
+# if the SLD path file is missing an empty image will be returned unless a fallback CLASS has been set. An error will be written to the log.
+# RUN_PARMS: sld_styleitem_file_missing.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=missing&STYLES=" > [RESULT_DEMIME]
+
+# test applying SLD to a raster LAYER
+# RUN_PARMS: sld_styleitem_file_raster.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=rgb&STYLES=" > [RESULT_DEMIME]
+
+MAP
+    NAME "SLD_STYLEITEM"
+    SHAPEPATH "./data"
+    SIZE 300 300
+    IMAGECOLOR 100 100 100
+    EXTENT 40 -5 52 31
+    FONTSET "data/fonts.lst"
+    PROJECTION
+        "init=epsg:4326"
+    END
+    # DEBUG 5
+    # CONFIG MS_ERRORFILE "sld.log"
+    WEB
+        IMAGEPATH "/tmp/ms_tmp/"
+        IMAGEURL "/ms_tmp/"
+        METADATA
+            "wms_title" "Test SLD STYLEITEM" 
+            "wms_onlineresource" "http://localhost/path/to/wms_simple?" 
+            "wms_srs" "EPSG:4326" 
+            "ows_schemas_location" "http://ogc.dmsolutions.ca" 
+            "ows_enable_request" "*" 
+            "ows_sld_enabled" "true" 
+        END
+    END
+    LAYER
+        NAME "green"
+        DATA "hexagon"
+        TYPE LINE
+        STYLEITEM "sld://data/green.sld"
+    END
+    LAYER
+        NAME "twostyles"
+        DATA "hexagon"
+        TYPE LINE
+        STYLEITEM "sld://data/twostyles.sld"
+    END
+    LAYER
+        NAME "multi_namedstyles" # this matches the second NamedLayer in the SLD file
+        DATA "hexagon"
+        TYPE LINE
+        STYLEITEM "sld://data/multi_namedstyles.sld"
+    END
+    LAYER
+        NAME "unknown" # this doesn't match either name so the first NamedLayer is used
+        DATA "hexagon"
+        TYPE LINE
+        STYLEITEM "sld://data/multi_namedstyles.sld"
+    END
+    LAYER
+        NAME "missing" # LAYER with incorrect SLD filepath
+        DATA "hexagon"
+        TYPE LINE
+        STYLEITEM "sld://data/missing.sld"
+        # if SLD is missing a default CLASS can be used as a fallback
+        CLASS
+            STYLE
+                WIDTH 1
+                COLOR 255 255 0
+            END
+        END
+    END
+    LAYER
+        NAME rgb
+        TYPE raster
+        DATA "bg.tif"
+        STYLEITEM "sld://data/raster.xml"
+    END
+END

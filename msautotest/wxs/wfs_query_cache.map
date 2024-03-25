@@ -8,6 +8,10 @@
 
 # RUN_PARMS: wfs_query_cache.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&MAXFEATURES=10&OUTPUTFORMAT=geojson" > [RESULT]
 
+# RUN_PARMS: wfs2_query_cache.json [MAPSERV] "QUERY_STRING=map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&MAXFEATURES=10&OUTPUTFORMAT=geojson" > [RESULT]
+
+# RUN_PARMS: wfs2_query_cache_no_default_extent.json [MAPSERV] "QUERY_STRING=map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province2&MAXFEATURES=10&OUTPUTFORMAT=geojson" > [RESULT]
+
 # This one will emit 'map->query.max_cached_shape_ram_amount = 10000 reached after 2 cached features'
 # Gives different result in Travis and Vagrant for some unknown reason
 # RUN_disabled_PARMS: wfs_query_cache_2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><PropertyIsEqualTo><PropertyName>NAME_E</PropertyName><Literal>Nova Scotia</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
@@ -104,5 +108,23 @@ LAYER
 
 END # Layer
 
+LAYER
+  NAME province2
+  DATA province
+  METADATA
+    "wfs_title"         "province2"
+    "wfs_description"   "province2"
+    "wfs_use_default_extent_for_getfeature" "false"
+    "wfs_featureid"     "NAME_E"
+    "gml_include_items" "NAME_E"
+    "gml_default_items"  "NAME_E"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+END # Layer
 
 END # Map File

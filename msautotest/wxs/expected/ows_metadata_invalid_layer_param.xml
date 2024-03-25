@@ -1,6 +1,6 @@
-Content-type: text/xml
+Content-type: text/xml; charset=UTF-8
 
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ows:ExceptionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" version="1.1.0" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd">
   <ows:Exception exceptionCode="InvalidParameterValue" locator="layer">
     <ows:ExceptionText>Layer not found</ows:ExceptionText>

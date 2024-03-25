@@ -55,6 +55,24 @@ LAYER
 END
 
 LAYER
+  NAME "too small symbol"
+  TYPE point
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "svgicon"
+        SIZE 0.1
+    END
+  END
+  FEATURE
+    POINTS
+        200 200
+    END
+  END
+END
+
+LAYER
     NAME "anchors"
     TYPE POINT
     STATUS default

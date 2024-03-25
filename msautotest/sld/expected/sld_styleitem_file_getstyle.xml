@@ -1,0 +1,20 @@
+<StyledLayerDescriptor version="1.1.0" xsi:schemaLocation="http://www.opengis.net/sld http://ogc.dmsolutions.ca/sld/1.1.0/StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:se="http://www.opengis.net/se" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<NamedLayer>
+<se:Name>green</se:Name>
+<UserStyle>
+<se:FeatureTypeStyle>
+<se:Rule>
+<se:Name>green#0</se:Name>
+<se:LineSymbolizer>
+<se:Stroke>
+<se:SvgParameter name="stroke">#00ff00</se:SvgParameter>
+<se:SvgParameter name="stroke-opacity">0.50</se:SvgParameter>
+<se:SvgParameter name="stroke-width">3.00</se:SvgParameter>
+</se:Stroke>
+</se:LineSymbolizer>
+</se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+</NamedLayer>
+</StyledLayerDescriptor>
+

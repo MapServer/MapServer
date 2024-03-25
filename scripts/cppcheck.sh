@@ -15,10 +15,14 @@ case $SCRIPT_DIR in
         ;;
 esac
 
-TOPDIR="$SCRIPT_DIR/.."
+TOPDIR="$SCRIPT_DIR/../src"
 
 CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
-CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 2.7 || /bin/true)
+CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
+CPPCHECK_MAJOR_VERSION=$(echo "$CPPCHECK_VERSION" | cut -d. -f1)
+CPPCHECK_MINOR_VERSION=$(echo "$CPPCHECK_VERSION" | cut -d. -f2)
+CPPCHECK_VERSION=$(("$CPPCHECK_MAJOR_VERSION" * 100 + "$CPPCHECK_MINOR_VERSION"))
+CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 207 || /bin/true)
 if test "$CPPCHECK_VERSION_GT_2_7" = 1; then
     POSIX="--library=gnu"
 else

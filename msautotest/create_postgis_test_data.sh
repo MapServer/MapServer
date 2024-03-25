@@ -143,3 +143,13 @@ CREATE TABLE text_datatypes (id SERIAL PRIMARY KEY, mychar5 CHAR(5), myvarchar5 
 SELECT AddGeometryColumn('public', 'text_datatypes', 'the_geom', 27700, 'POINT', 2);
 INSERT INTO text_datatypes (the_geom, mychar5, myvarchar5, mytext) VALUES (GeomFromEWKT('SRID=27700;POINT(1 2)'), 'abc  ', 'def  ', 'ghi ');
 "
+
+psql -U postgres -d msautotest -c "
+CREATE TABLE autotypes (id SERIAL PRIMARY KEY, mychar CHAR(5), myvarchar VARCHAR(5), mytext TEXT, mybool BOOL, myint2 INT2, myint4 INT4, myint8 INT8, 
+myfloat4 FLOAT4, myfloat8 FLOAT8, mynumeric NUMERIC(4,2), mydate DATE, mytime TIME, mytimez TIMETZ, mytimestamp TIMESTAMP, mytimestampz TIMESTAMPTZ);
+SELECT AddGeometryColumn('public', 'autotypes', 'the_geom', 4326, 'POINT', 2);
+INSERT INTO autotypes (the_geom, mychar, myvarchar, mytext, mybool, myint2, myint4, myint8, 
+myfloat4, myfloat8, mynumeric, mydate, mytime, mytimez, mytimestamp, mytimestampz) 
+VALUES (GeomFromEWKT('SRID=4326;POINT(1 2)'), 'abc', 'def', 'ghi', True, 10, 100, 1000, 
+1.5, 2.5, 3.33, '2023-01-01', '00:00:00', '00:00:00', '2023-01-01 00:00:00', '2023-01-01 00:00:00');
+"

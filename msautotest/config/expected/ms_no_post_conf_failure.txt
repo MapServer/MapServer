@@ -1,6 +1,7 @@
 Content-Type: text/html
 
 <HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD><BODY BGCOLOR="#FFFFFF">
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
 loadParams(): Web application error. This script should be referenced with a METHOD of GET or METHOD of POST.
 </BODY></HTML>

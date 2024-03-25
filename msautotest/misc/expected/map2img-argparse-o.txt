@@ -1,0 +1,1 @@
+Argument -o requires an additional argument.

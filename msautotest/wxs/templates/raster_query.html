@@ -1,0 +1,19 @@
+<!-- MapServer Template -->
+Blue: [blue]<br/>
+Green: [green]<br/>
+Red: [red]<br/>
+
+Band 1: [value_0]<br/>
+[item name="value_1" format="Band 2: $value" nullformat=""]<br/>
+Band 3: [item name="value_2" padding=5]<br/>
+Band 4: [item name="value_3" pattern="^\d*\.\d+$" nullformat="-1"]<br/>
+[item name="value_4" format="Band 5: $value"]<br/>
+[item name="value_5" format="Band 6: $value"]<br/>
+[item name="value_6" format="Band 7: $value"]<br/>
+[item name="value_7" format="Band 8: $value"]<br/>
+[item name="value_8" format="Band 9: $value"]<br/>
+Band 99: [item name="value_99" nullformat="missing" ignoremissing="true"]<br/>
+
+Value List: [value_list]<br/>
+X: [item name="x" precision=0]<br/>
+Y: [item name="y" precision=2]<br/>

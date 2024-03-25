@@ -1,0 +1,30 @@
+#
+# Test WMS SLD returned by GetStyles requests
+#
+# REQUIRES: SUPPORTS=WMS
+#
+#
+# GetStyles
+# RUN_PARMS: wms_getstyles1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test1" > [RESULT_DEMIME]
+
+MAP
+    NAME WMS_TEST
+
+    WEB
+      METADATA
+        "ows_enable_request" "*"
+      END
+    END
+
+    LAYER
+      NAME "Test1"
+      TYPE LINE
+      CLASS
+        STYLE
+          COLOR 255 0 0
+          WIDTH 2
+          PATTERN 10 10 END
+        END
+      END
+    END
+END

@@ -1,0 +1,49 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=autotypes&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>2.000000 1.000000</gml:lowerCorner>
+      		<gml:upperCorner>2.000000 1.000000</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:autotypes gml:id="autotypes.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>2.000000 1.000000</gml:lowerCorner>
+        		<gml:upperCorner>2.000000 1.000000</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="autotypes.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>2.000000 1.000000</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:id>1</ms:id>
+        <ms:mychar>abc</ms:mychar>
+        <ms:myvarchar>def</ms:myvarchar>
+        <ms:mytext>ghi</ms:mytext>
+        <ms:mybool>true</ms:mybool>
+        <ms:myint2>10</ms:myint2>
+        <ms:myint4>100</ms:myint4>
+        <ms:myint8>1000</ms:myint8>
+        <ms:myfloat4>1.5</ms:myfloat4>
+        <ms:myfloat8>2.5</ms:myfloat8>
+        <ms:mynumeric>3.33</ms:mynumeric>
+        <ms:mydate gml:id="autotypes.1.mydate"><gml:timePosition>2023-01-01</gml:timePosition></ms:mydate>
+        <ms:mytime gml:id="autotypes.1.mytime"><gml:timePosition>00:00:00Z</gml:timePosition></ms:mytime>
+        <ms:mytimez gml:id="autotypes.1.mytimez"><gml:timePosition>00:00:00Z</gml:timePosition></ms:mytimez>
+        <ms:mytimestamp gml:id="autotypes.1.mytimestamp"><gml:timePosition>2023-01-01T00:00:00Z</gml:timePosition></ms:mytimestamp>
+        <ms:mytimestampz gml:id="autotypes.1.mytimestampz"><gml:timePosition>2023-01-01T00:00:00Z</gml:timePosition></ms:mytimestampz>
+      </ms:autotypes>
+    </wfs:member>
+</wfs:FeatureCollection>
+

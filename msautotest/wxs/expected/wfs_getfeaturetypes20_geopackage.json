@@ -1,0 +1,11 @@
+Content-Disposition: attachment; filename=result.dat
+Content-Type: application/json
+
+{
+"type": "FeatureCollection",
+"numberMatched": 1,
+"name": "autotypes",
+"features": [
+{ "type": "Feature", "properties": { "mychar": "abc  ", "myvarchar": "def", "mytext": "ghi", "mybool": true, "myint2": 10, "myint4": 100, "myint8": 1000, "myfloat4": 1.5, "myfloat8": 2.5, "mynumeric": 3.33, "mydate": "2023-01-01", "mytime": "00:00:00", "mytimez": "00:00:00", "mytimestamp": "2023-01-01T00:00:00", "mytimestampz": "2023-01-01T00:00:00Z" }, "geometry": { "type": "Point", "coordinates": [ 1.0, 2.0 ] } }
+]
+}

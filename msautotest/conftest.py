@@ -1,14 +1,15 @@
 # coding: utf-8
 import os
-import pytest
 import sys
+
+import pytest
 
 # Put the pymod dir on the path, so modules can `import pmstestlib`
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 
 # These files may be non-importable, and don't contain tests anyway.
 # So we skip searching them during test collection.
-collect_ignore = [ 'pymod/msautotest_viewer.py' ]
+collect_ignore = ["pymod/msautotest_viewer.py"]
 
 
 def pytest_addoption(parser):
@@ -33,10 +34,8 @@ def pytest_addoption(parser):
         help="Run under ASAN",
     )
 
-    parser.addoption(
-        "--renderer",
-        default=None
-    )
+    parser.addoption("--renderer", default=None)
+
 
 @pytest.fixture
 def extra_args(request):

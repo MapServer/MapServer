@@ -1,0 +1,73 @@
+#
+# Test OWS Context loading
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+
+# Capabilities updatesequence (less than)
+# RUN_PARMS: ows_context_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&CONTEXT=ows_context.xml&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: ows_context_with_layer_list_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&CONTEXT=ows_context_with_layer_list.xml&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+
+MAP
+
+NAME OWS_CONTEXT_TEST
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_onlineresource"   "http://localhost/path/to/wfs_simple?myparam=something&"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+#    "init=./data/epsg2:42304"
+#    "init=epsg:42304"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wms_title"         "province"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+#    "init=epsg:42304"
+  END
+
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    STYLE
+        COLOR 200 255 0
+        OUTLINECOLOR 120 120 120
+    END
+  END
+END # Layer
+
+
+END # Map File

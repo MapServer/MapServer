@@ -1,5 +1,0 @@
-pytest
-pillow
-wheel>=0.31.1
-setuptools>=40.2.0
-flake8

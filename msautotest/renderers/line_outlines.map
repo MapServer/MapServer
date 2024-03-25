@@ -1,0 +1,123 @@
+# RUN_PARMS: outlines1.png [MAP2IMG] -m [MAPFILE] -o [RESULT] -l outlines1
+# RUN_PARMS: outlines2.png [MAP2IMG] -m [MAPFILE] -o [RESULT] -l outlines2
+# RUN_PARMS: outlines3.png [MAP2IMG] -m [MAPFILE] -o [RESULT] -l outlines3
+# RUN_PARMS: outlines4.png [MAP2IMG] -m [MAPFILE] -o [RESULT] -l outlines4
+# RUN_PARMS: outlines5.png [MAP2IMG] -m [MAPFILE] -o [RESULT] -l outlines5
+# RUN_PARMS: outlines6.png [MAP2IMG] -m [MAPFILE] -o [RESULT] -l outlines6
+#
+MAP
+    NAME "lineoutlines"
+    STATUS ON
+    EXTENT -135.620276 -69.508628 173.802333 104.769497
+    SIZE 400 300
+    IMAGETYPE "png24"
+    SHAPEPATH "data"
+    # fixed width and outlinewidth
+    LAYER
+        NAME "outlines1"
+        TYPE LINE
+        STATUS OFF
+        DATA "world_testlines"
+        CLASS
+            STYLE
+                COLOR 150 150 150
+                WIDTH 6
+                OUTLINECOLOR 0 0 0
+                OUTLINEWIDTH 1
+            END
+        END
+    END
+    # using attribute binding for width
+    LAYER
+        NAME "outlines2"
+        TYPE LINE
+        STATUS OFF
+        CONNECTIONTYPE OGR
+        CONNECTION "data/world_testlines.shp"
+        DATA "SELECT 6 AS width FROM world_testlines"
+        CLASS
+            STYLE
+                COLOR 150 150 150
+                WIDTH [width]
+                OUTLINECOLOR 0 0 0
+                OUTLINEWIDTH 1
+            END
+        END
+    END
+    # using attribute binding for outlinewidth
+    LAYER
+        NAME "outlines3"
+        TYPE LINE
+        STATUS ON
+        CONNECTIONTYPE OGR
+        CONNECTION "data/world_testlines.shp"
+        DATA "SELECT 1 AS outlinewidth FROM world_testlines"
+        CLASS
+            STYLE
+                COLOR 150 150 150
+                WIDTH 6
+                OUTLINECOLOR 0 0 0
+                OUTLINEWIDTH [outlinewidth]
+            END
+        END
+    END
+    # use bindings for both
+    LAYER
+        NAME "outlines4"
+        TYPE LINE
+        STATUS OFF
+        CONNECTIONTYPE OGR
+        CONNECTION "data/world_testlines.shp"
+        DATA "SELECT 6 AS width, 1 AS outlinewidth FROM world_testlines"
+        CLASS
+            STYLE
+                COLOR 150 150 150
+                WIDTH [width]
+                OUTLINECOLOR 0 0 0
+                OUTLINEWIDTH [outlinewidth]
+            END
+        END
+    END
+    # use bindings for both - only the first style will have merged lines
+    LAYER
+        NAME "outlines5"
+        TYPE LINE
+        STATUS OFF
+        CONNECTIONTYPE OGR
+        CONNECTION "data/world_testlines.shp"
+        DATA "SELECT 4 AS width, 1 AS outlinewidth FROM world_testlines"
+        CLASS
+            STYLE
+                COLOR 255 234 0
+                WIDTH 12
+                OUTLINECOLOR 0 0 0
+                OUTLINEWIDTH [outlinewidth]
+            END
+            STYLE
+                COLOR 100 100 100
+                WIDTH [width]
+            END          
+        END
+    END
+    # test for https://github.com/MapServer/MapServer/issues/3976
+    LAYER
+        NAME "outlines6"
+        TYPE LINE
+        STATUS OFF
+        CONNECTIONTYPE OGR
+        CONNECTION "data/world_testlines.shp"
+        DATA "SELECT '255 0 0' AS color01, '0 0 255' AS color02 FROM world_testlines"
+        CLASS
+            STYLE
+                OFFSET 5 -99
+                COLOR [color01]
+                WIDTH 10
+            END
+            STYLE
+                OFFSET -5 -99
+                COLOR [color02]
+                WIDTH 10
+            END        
+        END
+    END      
+END

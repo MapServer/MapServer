@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import sys
 import subprocess
+import sys
 
-retcode = subprocess.call(['phpunit','.'])
+retcode = subprocess.call(["phpunit", "."])
 
 sys.exit(retcode)

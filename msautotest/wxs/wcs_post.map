@@ -166,20 +166,6 @@ OUTPUTFORMAT
   EXTENSION "tif"
 END
 OUTPUTFORMAT
-  NAME GDPNG
-  DRIVER "AGG/PNG"
-  MIMETYPE "image/png"
-  IMAGEMODE RGB
-  EXTENSION "png"
-END
-OUTPUTFORMAT
-  NAME GDPNGGREY
-  DRIVER "GD/PNG"
-  MIMETYPE "image/png; mode=8bit"
-  IMAGEMODE PC256
-  EXTENSION "png"
-END
-OUTPUTFORMAT
   NAME AAIGRID
   DRIVER "GDAL/AAIGRID"
   MIMETYPE "image/x-aaigrid"
@@ -242,7 +228,7 @@ LAYER
    "ows_srs"	"EPSG:32611 EPSG:4326"
    "wcs_resolution" "10 10"
    "wcs_bandcount" "1"
-   "wcs_formats" "GEOTIFF_BYTE GDPNG AAIGRID"
+   "wcs_formats" "GEOTIFF_BYTE PNG AAIGRID"
    "wcs_nativeformat" "GeoTIFF"
    "wcs_description" "Test description"
    "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"

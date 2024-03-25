@@ -1,0 +1,81 @@
+#
+# Test WMS with a custom projection in a text file
+#
+# REQUIRES: OUTPUT=PNG SUPPORTS=WMS
+#
+#
+# GetMap
+# RUN_PARMS: wms_custom_projection_getmap110.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=epsg2:42304&BBOX=2258982,-70747.9140625,2615354.5,495480.9375&FORMAT=image/png&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > [RESULT_DEMIME]
+# RUN_PARMS: wms_custom_projection_getmap130.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=epsg2:42304&BBOX=2258982,-70747.9140625,2615354.5,495480.9375&FORMAT=image/png&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > [RESULT_DEMIME]
+# test with alternative advertised layer projection
+# RUN_PARMS: wms_custom_projection2_getmap130.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=epsg2:3978&BBOX=2258982,-70747.9140625,2615354.5,495480.9375&FORMAT=image/png&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > [RESULT_DEMIME]
+
+# only projection codes referenced in the map can be used
+# RUN_PARMS: wms_custom_projection_not_specified.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=esri:54009&BBOX=2258982,-70747.9140625,2615354.5,495480.9375&FORMAT=image/png&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > [RESULT_DEMIME]
+# convert from custom projection to EPSG:4326
+# RUN_PARMS: wms_custom_projection_4326.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42.000000,-67.572500,48.500000,-58.927500&FORMAT=image/png&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > [RESULT_DEMIME]
+
+# GetCapabilities
+# RUN_PARMS: wms_custom_projection_getcapabilities.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
+
+MAP
+
+NAME WMS_CUSTOM_PROJECTION
+STATUS ON
+SIZE 400 300
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+
+OUTPUTFORMAT
+  NAME png
+  DRIVER "AGG/PNG8"
+  MIMETYPE "image/png"
+  EXTENSION "png"
+END
+
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_title"		   "Test custom projection wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_custom_projection?"
+    "wms_srs"		   "EPSG:4326 epsg2:42304"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+LAYER
+  NAME road
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road"
+    # add in an additional custom code
+    "wms_srs" "epsg2:42304 epsg2:3978"
+    "gml_include_items" "all"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+	"init=epsg2:42304"
+  END
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    STYLE
+        SYMBOL 0 
+        COLOR 220 0 0
+    END
+  END
+END # Layer
+
+END # Map File

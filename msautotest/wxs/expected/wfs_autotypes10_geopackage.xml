@@ -1,0 +1,45 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<schema
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://www.w3.org/2001/XMLSchema"
+   xmlns:gml="http://www.opengis.net/gml"
+   elementFormDefault="qualified" version="0.1" >
+
+  <import namespace="http://www.opengis.net/gml"
+          schemaLocation="http://schemas.opengis.net/gml/2.1.2/feature.xsd" />
+
+  <element name="autotypes" 
+           type="ms:autotypesType" 
+           substitutionGroup="gml:_Feature" />
+
+  <complexType name="autotypesType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:GeometryPropertyType" minOccurs="0" maxOccurs="1"/>
+          <element name="mychar" minOccurs="0" type="string"/>
+          <element name="myvarchar" minOccurs="0" type="string"/>
+          <element name="mytext" minOccurs="0" type="string"/>
+          <element name="mybool" minOccurs="0" type="boolean"/>
+          <element name="myint2" minOccurs="0" type="integer"/>
+          <element name="myint4" minOccurs="0" type="integer"/>
+          <element name="myint8" minOccurs="0" type="long"/>
+          <element name="myfloat4" minOccurs="0" type="double"/>
+          <element name="myfloat8" minOccurs="0" type="double"/>
+          <element name="mynumeric" minOccurs="0" type="double"/>
+          <element name="mydate" minOccurs="0" type="date"/>
+          <element name="mytime" minOccurs="0" type="string"/>
+          <element name="mytimez" minOccurs="0" type="string"/>
+          <element name="mytimestamp" minOccurs="0" type="dateTime"/>
+          <element name="mytimestampz" minOccurs="0" type="dateTime"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

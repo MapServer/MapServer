@@ -1,9 +1,19 @@
 # RUN_PARMS: ogcapi_root.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT]
 # RUN_PARMS: ogcapi_root.html.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" QUERY_STRING= > [RESULT]
 # RUN_PARMS: ogcapi_root.json [ENV HTTP_ACCEPT=application/json] [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_error_repeated_query_parameter.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&f=bar" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=json" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_collections_mn_counties_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_with_headers.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_storage_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&crs=http://www.opengis.net/def/crs/EPSG/0/32615&limit=1" > [RESULT]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_epsg_4326_with_headers.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1" > [RESULT]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_bad_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&crs=http://www.opengis.net/def/crs/EPSG/0/12345&limit=1" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_empty_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&crs=&limit=1" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_bbox_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=190012.242200,4816648.737800,762254.477900,5472427.737000&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/32615&limit=1" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_bbox_crs_epsg_4326.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=-90,-180,90,0&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_bad_bbox_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=-90,-180,90,0&bbox-crs=http://www.opengis.net/def/crs/EPSG/0/12345&limit=1" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_empty_bbox_crs.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=-90,-180,90,0&bbox-crs=&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1_offset_2.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1&offset=2" > [RESULT_DEMIME]
@@ -63,6 +73,7 @@ MAP
       "oga_keywords" "boundary,Minnesota,counties" # falls back to wfs_keywordlist
       "oga_description" "This is the standard Minnesota State County Boundary dataset."
       "oga_title" "State of Minnesota County Boundaries"
+      "oga_srs" "EPSG:32615 EPSG:4326" # storageCrs is first in the list
 
       "oga_links" "link1"
       "oga_link1_href" "https://gisdata.mn.gov/dataset/bdry-counties-in-minnesota"
@@ -82,7 +93,7 @@ MAP
     VALIDATION
       "coun" "^[0-9]{1,2}$" # 1 or 2-digit number
     END
-    PROJECTION "+init=epsg:26915" END
+    PROJECTION "+init=epsg:32615" END
     TEMPLATE VOID
   END
 
