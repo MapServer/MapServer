@@ -46,7 +46,10 @@ else()
 	SWIG_ADD_LIBRARY(mapscript LANGUAGE csharp SOURCES ../mapscript.i)
 endif()
 
-if (WIN32)
+# CMake 3.29.0 corrects an issue with earlier CMake versions regarding the
+# shared library name (cf https://gitlab.kitware.com/cmake/cmake/-/issues/25405
+# / https://gitlab.kitware.com/cmake/cmake/-/merge_requests/8973)
+if (WIN32 OR (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.29.0"))
 	set_target_properties(mapscript PROPERTIES OUTPUT_NAME "mapscript")
 else()
 	set_target_properties(mapscript PROPERTIES OUTPUT_NAME "libmapscript")
