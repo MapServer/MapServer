@@ -121,6 +121,10 @@ check_function_exists("strlcpy"  HAVE_STRLCPY)
 check_function_exists("strlen"  HAVE_STRLEN)
 check_function_exists("strncasecmp"  HAVE_STRNCASECMP)
 
+IF((HAVE_STRLCAT OR HAVE_STRLCPY) AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+    add_definitions(-D_DEFAULT_SOURCE)
+ENDIF()
+
 check_symbol_exists(vsnprintf stdio.h HAVE_VSNPRINTF)
 IF(NOT HAVE_VSNPRINTF)
     check_function_exists("vsnprintf"  HAVE_VSNPRINTF)
