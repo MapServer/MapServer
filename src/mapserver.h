@@ -429,6 +429,7 @@ static __inline long int MS_NINT(double __x) {
 #define MS_RENDER_WITH_KML 106
 #define MS_RENDER_WITH_UTFGRID 107
 #define MS_RENDER_WITH_MVT 108
+#define MS_RENDER_WITH_SKIA 109
 
 #ifndef SWIG
 
@@ -3953,6 +3954,7 @@ MS_DLL_EXPORT int msPopulateRendererVTableCairoSVG(rendererVTableObj *renderer);
 MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF(rendererVTableObj *renderer);
 MS_DLL_EXPORT int msPopulateRendererVTableOGL(rendererVTableObj *renderer);
 MS_DLL_EXPORT int msPopulateRendererVTableAGG(rendererVTableObj *renderer);
+MS_DLL_EXPORT int msPopulateRendererVTableSkia(rendererVTableObj *renderer);
 MS_DLL_EXPORT int msPopulateRendererVTableUTFGrid(rendererVTableObj *renderer);
 MS_DLL_EXPORT int msPopulateRendererVTableKML(rendererVTableObj *renderer);
 MS_DLL_EXPORT int msPopulateRendererVTableOGR(rendererVTableObj *renderer);
