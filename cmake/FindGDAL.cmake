@@ -73,7 +73,7 @@ if(UNIX)
     )
 
     if(GDAL_CONFIG)
-        exec_program(${GDAL_CONFIG} ARGS --libs OUTPUT_VARIABLE GDAL_CONFIG_LIBS)
+        execute_process(COMMAND ${GDAL_CONFIG} --libs OUTPUT_VARIABLE GDAL_CONFIG_LIBS)
         if(GDAL_CONFIG_LIBS)
             string(REGEX MATCHALL "-l[^ ]+" _gdal_dashl ${GDAL_CONFIG_LIBS})
             string(REGEX REPLACE "-l" "" _gdal_lib "${_gdal_dashl}")
