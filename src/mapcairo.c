@@ -1024,7 +1024,16 @@ int msPreloadSVGSymbol(symbolObj *symbol) {
         height.unit == RSVG_UNIT_PX) {
       symbol->sizex = width.length;
       symbol->sizey = height.length;
-    } else if (!has_viewbox) {
+    } else if (has_width && width.unit != RSVG_UNIT_PERCENT && has_height &&
+               height.unit != RSVG_UNIT_PERCENT) {
+      gdouble width_px;
+      gdouble height_px;
+      rsvg_handle_get_intrinsic_size_in_pixels(cache->svgc, &width_px,
+                                               &height_px);
+      symbol->sizex = width_px;
+      symbol->sizey = height_px;
+    } else if (!has_viewbox && has_width && width.unit == RSVG_UNIT_PERCENT &&
+               has_height && height.unit == RSVG_UNIT_PERCENT) {
       RsvgRectangle ink_rect = {0, 0, 0, 0};
       rsvg_handle_get_geometry_for_element(cache->svgc, NULL, &ink_rect, NULL,
                                            NULL);
