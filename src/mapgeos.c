@@ -1284,7 +1284,13 @@ shapeObj *msGEOSCenterline(shapeObj *shape) {
     return NULL;
   }
 
-  shape2 = msGEOSVoronoiDiagram(shape, 0.0, MS_TRUE);
+  if (shape->numlines > 0 && shape->line[0].numpoints <= 6) {
+    // automatically densify simple polygons
+    shape2 = msDensify(shape, 3);
+    shape2 = msGEOSVoronoiDiagram(shape2, 0.0, MS_TRUE);
+  } else {
+    shape2 = msGEOSVoronoiDiagram(shape, 0.0, MS_TRUE);
+  }
   if (!shape2) {
     msSetError(MS_GEOSERR, "Voronoi diagram generation failed.",
                "msGEOSCenterline()");
