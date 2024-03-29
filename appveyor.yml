@@ -11,7 +11,7 @@ cache:
 environment:
 
   global:
-    SWIG_VER: swigwin-4.1.0
+    SWIG_VER: swigwin-4.2.1
     TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
