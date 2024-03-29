@@ -65,8 +65,7 @@ add_custom_command(
     OUTPUT mapscriptvenv.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMAND ${Python_EXECUTABLE} -m pip install pip --upgrade
-    COMMAND ${Python_EXECUTABLE} -m pip install virtualenv
-    COMMAND ${Python_EXECUTABLE} -m virtualenv mapscriptvenv
+    COMMAND ${Python_EXECUTABLE} -m venv mapscriptvenv
     COMMAND ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
@@ -108,21 +107,21 @@ add_custom_command(
     COMMENT "Copying files required to build Mapscript"
 )
 
-install(  
+install(
   CODE "
   
     SET(ENV{PYTHONPATH} \${Python_SITELIB}:\$ENV{PYTHONPATH})
-      
+
     if(DEFINED ENV{DESTDIR})
       SET(PYTHON_ROOT \"--root=\$ENV{DESTDIR}\")
     endif()
-  
+
     if(DEFINED CMAKE_INSTALL_PREFIX)
       SET(PYTHON_PREFIX \"--prefix=\${CMAKE_INSTALL_PREFIX}\")
     endif()
 
     execute_process(
-      COMMAND ${Python_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_PREFIX}
+      COMMAND ${Python_EXECUTABLE} -m pip install \${PYTHON_ROOT} \${PYTHON_PREFIX}
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "
