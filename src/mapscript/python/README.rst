@@ -2,13 +2,13 @@ Python MapScript for MapServer README
 =====================================
 
 :Author: MapServer Team
-:Last Updated: 2021-01-29
+:Last Updated: 2024-03-29
 
 Introduction
 ------------
 
 The Python mapscript module provides users an interface to `MapServer <http://mapserver.org>`_
-classes on any platform, and has been tested on Python versions 2.7 and 3.5+. 
+classes on any platform, and has been tested on Python 3.8+. 
 
 The Python mapscript module is created using `SWIG <http://www.swig.org.>`_ the
 the Simplified Wrapper and Interface Generator. This is used to create MapServer bindings in
@@ -38,13 +38,13 @@ Advantages of ready-made wheels on PyPI include:
 Wheels are built based on the `Appveyor build environments <https://github.com/MapServer/MapServer/blob/main/appveyor.yml>`_. 
 These are as follows at the time of writing:
 
-+ Python 2.7 x32
-+ Python 2.7 x64
-+ Python 3.6 x64
-+ Python 3.7 x64
 + Python 3.8 x64
++ Python 3.9 x64
++ Python 3.10 x64
++ Python 3.11 x64
++ Python 3.12 x64
 
-The mapscript wheels have been compiled using Visual Studio 2017 version 15 (``MSVC++ 14.11 _MSC_VER == 1911``). 
+The mapscript wheels have been compiled using Visual Studio 2022 version 17 (``MSVC++ 17.9 _MSC_VER == 1939``). 
 Linux Wheels may also be available in the future using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
 
 No source distributions will be provided on PyPI - to build from source requires the full MapServer source code,
@@ -79,6 +79,12 @@ If several folders are required (e.g. GDAL DLLs) multiple paths can be provided 
 
     SET MAPSERVER_DLL_PATH=C:\MapServer\bin;C:\GDAL\bin
 
+In PowerShell you can set this as follows:
+
+.. code-block:: ps1
+
+    $env:MAPSERVER_DLL_PATH="C:\MapServer\bin"
+
 For Earlier Python Versions
 +++++++++++++++++++++++++++
 
@@ -93,14 +99,14 @@ Windows Binaries
 ++++++++++++++++
 
 Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`_. 
-To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1928-x64-gdal-3-2-mapserver-7-6``
-for mapscript 7.6. 
+To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1930-x64-gdal-3-8-4-mapserver-8-0-1``
+for mapscript 8.0.1. 
 
 .. NOTE::
    `MS4W <https://www.ms4w.com>`_ (MapServer for Windows) is a full installer that contains Python & Python
    MapScript already configured out-of-the-box, as well as default OGC web services and over 60 working mapfiles.
 
-When using these packages the MapServer path will be similar to ``C:\release-1911-x64-gdal-2-3-mapserver-7-2\bin``. 
+When using these packages the MapServer path will be similar to ``C:\release-1930-x64-gdal-3-8-4-mapserver-8-0-1\bin``. 
 
 Prior to installing mapscript it is recommended to update pip to the latest version with the following command:
 
@@ -125,17 +131,17 @@ Now you should be able to import mapscript:
 .. code-block:: python
 
     python -c "import mapscript;print(mapscript.msGetVersion())"
-    MapServer version 7.6.0 OUTPUT=PNG OUTPUT=JPEG OUTPUT=KML SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
+    MapServer version 8.0.1 PROJ version 9.3 GDAL version 3.9 OUTPUT=PNG OUTPUT=JPEG SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=OGCAPI_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE INPUT=FLATGEOBUF
 
 Installation on Unix
 --------------------
 
-For Unix users there are two approaches to installing mapscript. The first is to install the ``python-mapscript`` package using a package manager. For example on
+For Unix users there are two approaches to installing mapscript. The first is to install the ``python3-mapscript`` package using a package manager. For example on
 Ubuntu the following command can be used:
 
 .. code-block:: bat
 
-    sudo apt-get install python-mapscript
+    sudo apt-get install python3-mapscript
 
 The second approach is to build and install the Python mapscript module from source. Full details on compiling MapServer from source are detailed on the
 `Compiling on Unix <https://www.mapserver.org/installation/unix.html>`_ page. To make sure Python mapscript is built alongside MapServer the following flag needs to be set:
@@ -175,7 +181,6 @@ If the mapscript library is not on your ``PYTHONPATH`` you may see one of the fo
 
 .. code-block:: python
 
-    ImportError: No module named _mapscript # Python 2.x
     ModuleNotFoundError: No module named '_mapscript' # Python 3.x
 
 If the ``MapServer.dll`` cannot be found in your system paths (or ``MAPSERVER_DLL_PATH`` environment variable when using Python 3.8 
@@ -257,8 +262,7 @@ suite. This process runs commands similar to the following:
  
 .. code-block:: bat
 
-    python -m pip install virtualenv
-    virtualenv mapscriptvenv
+    python -m venv mapscriptvenv
     python -m pip install --upgrade pip
     pip install -r requirements-dev.txt
     python setup.py bdist_wheel
@@ -291,12 +295,12 @@ The mapscript module includes a test suite and a small sample dataset to check t
 
     pip install pytest
 
-Make sure the MapServer binaries are on the system path, and that the PROJ_LIB variable has been set as this is required for many of the tests. 
+Make sure the MapServer binaries are on the system path, and that the PROJ_DATA variable has been set as this is required for many of the tests. 
 
 .. code-block:: bat
 
-    SET PATH=C:\release-1928-x64-gdal-3-2-mapserver-7-6\bin;%PATH%
-    SET PROJ_LIB=C:\release-1928-x64-gdal-3-2-mapserver-7-6\bin\proj\SHARE
+    SET PATH=C:\release-1930-x64-gdal-3-8-4-mapserver-8-0-1\bin;%PATH%
+    SET PROJ_DATA=C:\release-1930-x64-gdal-3-8-4-mapserver-8-0-1\bin\proj\SHARE
 
 Finally run the command below to run the test suite: 
 
