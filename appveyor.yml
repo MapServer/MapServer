@@ -20,8 +20,6 @@ environment:
   VS_VERSION: Visual Studio 16 2019
   matrix:
   - platform: x64
-    Python_ROOT_DIR: c:/python37-x64
-  - platform: x64
     Python_ROOT_DIR: c:/python38-x64
   - platform: x64
     Python_ROOT_DIR: c:/python39-x64
@@ -29,6 +27,8 @@ environment:
     Python_ROOT_DIR: c:/python310-x64
   - platform: x64
     Python_ROOT_DIR: c:/python311-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python312-x64
 
 matrix:
   fast_finish: true
