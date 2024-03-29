@@ -65,7 +65,8 @@ add_custom_command(
     OUTPUT mapscriptvenv.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
     COMMAND ${Python_EXECUTABLE} -m pip install pip --upgrade
-    COMMAND ${Python_EXECUTABLE} -m venv mapscriptvenv
+    COMMAND ${Python_EXECUTABLE} -m pip install virtualenv
+    COMMAND ${Python_EXECUTABLE} -m virtualenv mapscriptvenv
     COMMAND ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
@@ -74,7 +75,7 @@ add_custom_command(
     DEPENDS mapscriptvenv.stamp
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMAND ${Python_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log
+    COMMAND ${Python_VENV_SCRIPTS}/python -m build --wheel > wheel_build.log
     COMMENT "Building the mapscript Python wheel"
 )
 
