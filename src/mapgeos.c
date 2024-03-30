@@ -1286,8 +1286,12 @@ shapeObj *msGEOSCenterline(shapeObj *shape) {
 
   if (shape->numlines > 0 && shape->line[0].numpoints <= 6) {
     // automatically densify simple polygons
-    shape2 = msDensify(shape, 3);
-    shape2 = msGEOSVoronoiDiagram(shape2, 0.0, MS_TRUE);
+    shapeObj *densifiedShape = msDensify(shape, 3);
+    if (densifiedShape) {
+        shape2 = msGEOSVoronoiDiagram(densifiedShape, 0.0, MS_TRUE);
+        msFreeShape(densifiedShape);
+        free(densifiedShape);
+    }
   } else {
     shape2 = msGEOSVoronoiDiagram(shape, 0.0, MS_TRUE);
   }
