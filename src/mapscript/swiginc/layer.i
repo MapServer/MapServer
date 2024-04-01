@@ -314,12 +314,12 @@
     /// The numclasses field contains the number of classes available, and the first class is index 0.
     classObj *getClass(int i) 
     {
-    classObj *result=NULL;
+        classObj *result=NULL;
         if (i >= 0 && i < self->numclasses) {
-            result=self->class[i]; 
-        MS_REFCNT_INCR(result);
-    }
-    return result;
+            result=self->class[i];
+            MS_REFCNT_INCR(result);
+        }
+        return result;
     }
 
     /// Returns the requested item. Items are attribute fields, and this method returns the 

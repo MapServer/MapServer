@@ -75,7 +75,7 @@ add_custom_command(
     DEPENDS mapscriptvenv.stamp
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${OUTPUT_FOLDER}
-    COMMAND ${Python_VENV_SCRIPTS}/python setup.py bdist_wheel > wheel_build.log
+    COMMAND ${Python_VENV_SCRIPTS}/python -m build --wheel > wheel_build.log
     COMMENT "Building the mapscript Python wheel"
 )
 
@@ -108,21 +108,21 @@ add_custom_command(
     COMMENT "Copying files required to build Mapscript"
 )
 
-install(  
+install(
   CODE "
   
     SET(ENV{PYTHONPATH} \${Python_SITELIB}:\$ENV{PYTHONPATH})
-      
+
     if(DEFINED ENV{DESTDIR})
       SET(PYTHON_ROOT \"--root=\$ENV{DESTDIR}\")
     endif()
-  
+
     if(DEFINED CMAKE_INSTALL_PREFIX)
       SET(PYTHON_PREFIX \"--prefix=\${CMAKE_INSTALL_PREFIX}\")
     endif()
 
     execute_process(
-      COMMAND ${Python_EXECUTABLE} setup.py install \${PYTHON_ROOT} \${PYTHON_PREFIX}
+      COMMAND ${Python_EXECUTABLE} -m pip install \${PYTHON_ROOT} \${PYTHON_PREFIX}
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "
