@@ -1020,18 +1020,28 @@ int msPreloadSVGSymbol(symbolObj *symbol) {
     rsvg_handle_get_intrinsic_dimensions(cache->svgc, &has_width, &width,
                                          &has_height, &height, &has_viewbox,
                                          &viewbox);
-    if (has_width && width.unit == RSVG_UNIT_PX && has_height &&
-        height.unit == RSVG_UNIT_PX) {
+    // If width and height attributes are present and are with pixel, we get the size directly from them
+    if (width.unit == RSVG_UNIT_PX && height.unit == RSVG_UNIT_PX) {
       symbol->sizex = width.length;
       symbol->sizey = height.length;
-    } else if (has_width && width.unit != RSVG_UNIT_PERCENT && has_height &&
+      // If width and height attributes are present and are with intrinsic units, we compute the pixel size from them
+    } else if (width.unit != RSVG_UNIT_PERCENT &&
                height.unit != RSVG_UNIT_PERCENT) {
+#if LIBRSVG_CHECK_VERSION(2, 52, 0)
       gdouble width_px;
       gdouble height_px;
       rsvg_handle_get_intrinsic_size_in_pixels(cache->svgc, &width_px,
                                                &height_px);
       symbol->sizex = width_px;
       symbol->sizey = height_px;
+#else
+      RsvgDimensionData dim;
+      rsvg_handle_get_dimensions_sub(cache->svgc, &dim, NULL);
+      symbol->sizex = dim.width;
+      symbol->sizey = dim.height;
+#endif
+
+      // If no width and height attribute and no viewBox, then width/height is 100%, and we have to compute the pixel values from the SVG geometry
     } else if (!has_viewbox && has_width && width.unit == RSVG_UNIT_PERCENT &&
                has_height && height.unit == RSVG_UNIT_PERCENT) {
       RsvgRectangle ink_rect = {0, 0, 0, 0};
@@ -1039,15 +1049,11 @@ int msPreloadSVGSymbol(symbolObj *symbol) {
                                            NULL);
       symbol->sizex = ink_rect.width;
       symbol->sizey = ink_rect.height;
+      // If only viewBox is present we get the size in pixel from it
     } else {
       symbol->sizex = viewbox.width;
       symbol->sizey = viewbox.height;
     }
-#else
-    RsvgDimensionData dim;
-    rsvg_handle_get_dimensions_sub(cache->svgc, &dim, NULL);
-    symbol->sizex = dim.width;
-    symbol->sizey = dim.height;
 #endif
   }
 #endif
