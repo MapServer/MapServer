@@ -1163,8 +1163,9 @@ static msOGRFileInfo *msOGRFileOpen(layerObj *layer, const char *connection)
     char szPath[MS_MAXPATHLEN] = "";
     const char *pszDSSelectedName = pszDSName;
 
-    if (layer->debug)
+    if (layer->debug >= MS_DEBUGLEVEL_V) {
       msDebug("msOGRFileOpen(%s)...\n", connection);
+    }
 
     CPLErrorReset();
     if (msTryBuildPath3(szPath, layer->map->mappath, layer->map->shapepath,
@@ -1174,8 +1175,9 @@ static msOGRFileInfo *msOGRFileOpen(layerObj *layer, const char *connection)
       pszDSSelectedName = szPath;
     }
 
-    if (layer->debug)
-      msDebug("OGROPen(%s)\n", pszDSSelectedName);
+    if (layer->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("GDALOpenEx(%s)\n", pszDSSelectedName);
+    }
 
     ACQUIRE_OGR_LOCK;
     char **connectionoptions =
@@ -1325,9 +1327,13 @@ static msOGRFileInfo *msOGRFileOpen(layerObj *layer, const char *connection)
 
     if (have_spatialite)
       psInfo->dialect = "Spatialite";
-    else
-      msDebug("msOGRFileOpen: Native SQL not available, no Spatialite support "
-              "and/or not a Spatialite enabled db\n");
+    else {
+      if (layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug(
+            "msOGRFileOpen: Native SQL not available, no Spatialite support "
+            "and/or not a Spatialite enabled db\n");
+      }
+    }
   } else if (strcmp(name, "PostgreSQL") == 0) {
     psInfo->dialect = "PostgreSQL";
     // todo: PostgreSQL not yet tested
@@ -1375,10 +1381,13 @@ static msOGRFileInfo *msOGRFileOpen(layerObj *layer, const char *connection)
         psInfo->dialect = "GPKG";
         psInfo->bPaging = true;
         psInfo->bHasSpatialIndex = true;
-      } else
+      } else if (layer->debug >= MS_DEBUGLEVEL_DEBUG) {
         msDebug("msOGRFileOpen: Spatialite support in GPKG not enabled\n");
+      }
     } else {
-      msDebug("msOGRFileOpen: RTree index not available\n");
+      if (layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("msOGRFileOpen: RTree index not available\n");
+      }
     }
   }
 
