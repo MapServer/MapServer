@@ -4365,6 +4365,14 @@ int loadLayerCompositer(LayerCompositer *compositer) {
         compositer->comp_op = MS_COMPOP_SRC_OVER;
       else if (!strcmp(compop, "xor"))
         compositer->comp_op = MS_COMPOP_XOR;
+      else if (!strcmp(compop, "hsl-hue"))
+        compositer->comp_op = MS_COMPOP_HSL_HUE;
+      else if (!strcmp(compop, "hsl-luminosity"))
+        compositer->comp_op = MS_COMPOP_HSL_LUMINOSITY;
+      else if (!strcmp(compop, "hsl-saturation"))
+        compositer->comp_op = MS_COMPOP_HSL_SATURATION;
+      else if (!strcmp(compop, "hsl-color"))
+        compositer->comp_op = MS_COMPOP_HSL_COLOR;
       else {
         msSetError(MS_PARSEERR, "Unknown COMPOP \"%s\"",
                    "loadLayerCompositer()", compop);
@@ -4948,6 +4956,18 @@ static void writeLayerCompositer(FILE *stream, int indent,
         break;
       case MS_COMPOP_XOR:
         writeString(stream, indent, "COMPOP", NULL, "xor");
+        break;
+      case MS_COMPOP_HSL_HUE:
+        writeString(stream, indent, "COMPOP", NULL, "hsl-hue");
+        break;
+      case MS_COMPOP_HSL_LUMINOSITY:
+        writeString(stream, indent, "COMPOP", NULL, "hsl-luminosity");
+        break;
+      case MS_COMPOP_HSL_SATURATION:
+        writeString(stream, indent, "COMPOP", NULL, "hsl-saturation");
+        break;
+      case MS_COMPOP_HSL_COLOR:
+        writeString(stream, indent, "COMPOP", NULL, "hsl-color");
         break;
       }
     }
