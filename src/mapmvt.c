@@ -83,7 +83,7 @@ static enum MS_RING_DIRECTION mvtGetRingDirection(lineObj *ring) {
   if (ring->numpoints < 4)
     return MS_DIRECTION_INVALID_RING;
 
-  /* step throught the edges */
+  /* step through the edges */
   for (i = 0; i < ring->numpoints - 1; i++) {
     sum += ring->point[i].x * ring->point[i + 1].y -
            ring->point[i + 1].x * ring->point[i].y;
@@ -186,7 +186,7 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type,
   msFree(outers);
 
   return (shape->numlines == 0) ? MS_FAILURE
-                                : MS_SUCCESS; /* sucess if at least one line */
+                                : MS_SUCCESS; /* success if at least one line */
 }
 
 static int mvtClipShape(shapeObj *shape, int layer_type, int buffer,

@@ -50,7 +50,7 @@ public class RunTimeBuiltWMSClient {
 	   System.out.println("ImagePath="+web.getImagepath());
 
 
-	   // Layer Objekt wird erzeugt
+	   // Layer Object wird erzeugt
 	   layerObj layer;
 	   layer = new layerObj(map);
 	   layer.setName("DUEKN5000");

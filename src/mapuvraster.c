@@ -593,7 +593,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   /* Very special case to improve quality for rasters referenced from lon=0 to
    * 360 */
   /* We create a temporary VRT that swiches the 2 hemispheres, and then we */
-  /* modify the georeferncing to be in the more standard [-180, 180] range */
+  /* modify the georeferencing to be in the more standard [-180, 180] range */
   /* and we adjust the layer->data, extent and projection accordingly */
   if (layer->tileindex == NULL && uvlinfo->mapToUseForWhichShapes &&
       bHasLonWrap && dfLonWrap == 180.0) {
@@ -1062,7 +1062,7 @@ int msUVRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
   /*      If we are using a local shapefile as our tileindex (that is     */
   /*      to say, the tileindex name is not of another layer), then we    */
   /*      just install a backtics style filter on the raster layer.       */
-  /*      This is propogated to the "working layer" created for the       */
+  /*      This is propagated to the "working layer" created for the       */
   /*      tileindex by code in mapraster.c.                               */
   /* -------------------------------------------------------------------- */
   if (tilelayerindex == -1)

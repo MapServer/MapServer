@@ -243,7 +243,7 @@ static char *msWMSLayerGetFormat(layerObj *lp) {
   } else {
     msSetError(MS_WMSCONNERR,
                "Could not find a format that matches supported input "
-               "formats in wms_formatlist metdata in layer %s.  "
+               "formats in wms_formatlist metadata in layer %s.  "
                "Please either provide a valid CONNECTION URL, or "
                "provide the required layer metadata.\n",
                "msBuildWMSLayerURLBase()", lp->name);
@@ -262,7 +262,7 @@ static char *msWMSLayerGetFormat(layerObj *lp) {
  *   FORMAT
  *   TRANSPARENT
  *   STYLES
- *   QUERY_LAYERS (for queriable layers only)
+ *   QUERY_LAYERS (for queryable layers only)
  *
  * Returns a reference to a newly allocated string that should be freed
  * by the caller.
@@ -377,7 +377,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
   /* if  the metadata wms_sld_body is set to AUTO, we generate
    * the sld based on classes found in the map file and send
-   * it in the URL. If diffrent from AUTO, we are assuming that
+   * it in the URL. If different from AUTO, we are assuming that
    * it is a valid sld.
    */
   if (pszSLDBody) {

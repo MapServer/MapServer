@@ -2,7 +2,7 @@
 lcov --directory . --capture --output-file mapserver.info 
 
 cp /usr/bin/genhtml .
-# to remove date and occurences number, so that only real differences show up
+# to remove date and occurrences number, so that only real differences show up
 patch -p0 < genhtml.patch
 
 ./genhtml -o ./mapserver_coverage_html --num-spaces 2 mapserver.info  

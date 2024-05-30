@@ -290,7 +290,7 @@ long msGetCURLAuthType(enum MS_HTTP_AUTH_TYPE authType) {
  * msPrepareWMSLayerRequest() to handle proxy / http auth for requests
  *
  * Return value:
- * MS_SUCCESS if all requests completed succesfully.
+ * MS_SUCCESS if all requests completed successfully.
  * MS_FAILURE if a fatal error happened
  **********************************************************************/
 int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
@@ -845,7 +845,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
     if (!MS_HTTP_SUCCESS(psReq->nStatus)) {
       /* Set status to MS_DONE to indicate that transfers were  */
-      /* completed but may not be succesfull */
+      /* completed but may not be successful */
       nStatus = MS_DONE;
 
       if (psReq->nStatus == -(CURLE_OPERATION_TIMEOUTED)) {

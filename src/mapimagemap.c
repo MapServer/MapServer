@@ -91,7 +91,7 @@
 /* A pString is a variable-length (appendable) string, stored as a triple:
  * character pointer, allocated length, and used length.  The one wrinkle
  * is that we use pointers to the allocated size and character pointer,
- * in order to support refering to fields declared elsewhere (ie in the
+ * in order to support referring to fields declared elsewhere (ie in the
  * 'image' data structure) for these.  The 'iprintf' function appends
  * to a pString. */
 typedef struct pString {

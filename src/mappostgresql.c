@@ -273,7 +273,7 @@ int msPOSTGRESQLJoinPrepare(joinObj *join, shapeObj *shape) {
 /* join against the previously prepared shapeObj.  This will be called  */
 /* only once for a one-to-one join, with msPOSTGRESQLJoinPrepare()      */
 /* being called before each.  It will be called repeatedly for          */
-/* one-to-many joins, until in returns MS_DONE.  To accomodate this,    */
+/* one-to-many joins, until in returns MS_DONE.  To accommodate this,    */
 /* we store the next row number and query results in the joininfo and   */
 /* process the next tuple on each call.                                 */
 /************************************************************************/

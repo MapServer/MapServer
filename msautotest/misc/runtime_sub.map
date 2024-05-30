@@ -15,7 +15,7 @@
 # RUN_PARMS: runtime_sub_test012.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer9&mapext=0 0 300 300&mapsize=30 30&resample=average" > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test013.png [ENV resample=nearest] [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer9&mapext=0 0 300 300&mapsize=30 30&resample=average" > [RESULT_DEMIME]
 
-#override alloed request types by url. if we do not pass "enable=capabilities" in the url, then "layer2" would not appear in the resulting xml doc
+#override allowed request types by url. if we do not pass "enable=capabilities" in the url, then "layer2" would not appear in the resulting xml doc
 # RUN_PARMS: runtime_sub_test_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=wms&request=getcapabilities&enable=getcapabilities" > [RESULT_DEVERSION]
 #
 MAP

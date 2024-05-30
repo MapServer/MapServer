@@ -1,6 +1,6 @@
 #
 # Test rendering of an RGB image with nodata values that should give
-# equivelent processing to "OFFSET 0 0 0".
+# equivalent processing to "OFFSET 0 0 0".
 #
 MAP
   IMAGETYPE PNG24

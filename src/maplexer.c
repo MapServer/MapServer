@@ -2200,7 +2200,7 @@ char *yytext;
 
 /* msyylineno is required for flex 2.5.4 and older, but is already defined by
  * flex 2.5.31 (bug 975).
- * Unfortunately there is no clean way to differenciate the two versions,
+ * Unfortunately there is no clean way to differentiate the two versions,
  * so we use the symbol YY_CURRENT_BUFFER_LVALUE to base our test since it
  * was not present in 2.5.4 and is present in 2.5.31. Hopefully that won't
  * put us in trouble with other versions. If that happens then we can

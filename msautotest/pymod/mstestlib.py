@@ -751,7 +751,7 @@ def _run(map, out_file, command, extra_args):
             sys.stdout.flush()
     elif cmp == "files_differ_image_match":
         if strict:
-            return False, ("results dont match (though images match)", map, out_file)
+            return False, ("results don't match (though images match)", map, out_file)
 
         else:
             if not keep_pass:
@@ -764,7 +764,7 @@ def _run(map, out_file, command, extra_args):
     elif cmp == "files_differ_image_nearly_match":
         if strict:
             return False, (
-                "results dont match (though images perceptually match)",
+                "results don't match (though images perceptually match)",
                 map,
                 out_file,
             )
@@ -781,7 +781,7 @@ def _run(map, out_file, command, extra_args):
                 )
 
     elif cmp == "nomatch":
-        return False, ("results dont match", map, out_file)
+        return False, ("results don't match", map, out_file)
 
     elif cmp == "noresult":
         with open("result/" + out_file, "w") as fh:

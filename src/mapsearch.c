@@ -9,7 +9,7 @@
  *
  *   http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
  *
- * The appropriate copyright notice accompanies the funtion definition.
+ * The appropriate copyright notice accompanies the function definition.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
@@ -192,7 +192,7 @@ int msPointInPolygon(pointObj *p, lineObj *c) {
 
 int msIntersectSegments(
     const pointObj *a, const pointObj *b, const pointObj *c,
-    const pointObj *d) /* from comp.graphics.alogorithms FAQ */
+    const pointObj *d) /* from comp.graphics.algorithms FAQ */
 {
 
   double r, s;
@@ -203,7 +203,7 @@ int msIntersectSegments(
 
   if ((denominator == 0) &&
       (numerator == 0)) { /* lines are coincident, intersection is a line
-                             segement if it exists */
+                             segment if it exists */
     if (a->y == c->y) {   /* coincident horizontally, check x's */
       if (((a->x >= MS_MIN(c->x, d->x)) && (a->x <= MS_MAX(c->x, d->x))) ||
           ((b->x >= MS_MIN(c->x, d->x)) && (b->x <= MS_MAX(c->x, d->x))))
@@ -379,11 +379,11 @@ double msSquareDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b) {
       (l_squared);
 
   if (r >
-      1) /* perpendicular projection of P is on the forward extention of AB */
+      1) /* perpendicular projection of P is on the forward extension of AB */
     return (MS_MIN(msSquareDistancePointToPoint(p, b),
                    msSquareDistancePointToPoint(p, a)));
   if (r <
-      0) /* perpendicular projection of P is on the backward extention of AB */
+      0) /* perpendicular projection of P is on the backward extension of AB */
     return (MS_MIN(msSquareDistancePointToPoint(p, b),
                    msSquareDistancePointToPoint(p, a)));
 
@@ -438,7 +438,7 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc,
   const double e = dot(v, w);
 
   const double D = a * c - b * b;
-  /* N=numerator, D=demoninator */
+  /* N=numerator, D=denominator */
   double sN = 0;
   double sD = D;
   double tD = D;

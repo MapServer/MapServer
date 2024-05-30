@@ -632,7 +632,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   if (ts->label->wrap || ts->label->maxlength > 0) {
     if (ts->label->wrap && ts->label->maxlength == 0) {
       for (i = 0; i < num_glyphs; i++) {
-        /* replace all occurences of the wrap character with a newline */
+        /* replace all occurrences of the wrap character with a newline */
         if (glyphs.unicodes[i] == (unsigned)ts->label->wrap)
           glyphs.unicodes[i] = '\n';
       }
@@ -739,7 +739,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
               (runs[i - 1].offset + runs[i - 1].length) - runs[i].offset;
           runs[i - 1].length = runs[i].offset - runs[i - 1].offset;
 
-          /* new run starts at current postition */
+          /* new run starts at current position */
           runs[i].rtl = prevlevel = glyphs.bidi_levels[original_offset + j];
         }
       }

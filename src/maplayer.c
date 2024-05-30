@@ -242,7 +242,7 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
 int msLayerOpen(layerObj *layer) {
   int rv;
 
-  /* RFC-86 Scale dependant token replacements*/
+  /* RFC-86 Scale dependent token replacements*/
   rv = msLayerApplyScaletokens(layer,
                                (layer->map) ? layer->map->scaledenom : -1);
   if (rv != MS_SUCCESS)
@@ -883,7 +883,7 @@ parse_error:
 static void buildLayerItemList(layerObj *layer) {
   int i, j, k, l;
   /*
-  ** build layer item list, compute item indexes for explicity item references
+  ** build layer item list, compute item indexes for explicitly item references
   *(e.g. classitem) or item bindings
   */
 
@@ -1591,7 +1591,7 @@ int makeTimeFilter(layerObj *lp, const char *timestring, const char *timefield,
   if (!lp || !timestring || !timefield)
     return MS_FALSE;
 
-  /* parse the time string. We support dicrete times (eg 2004-09-21),  */
+  /* parse the time string. We support discrete times (eg 2004-09-21),  */
   /* multiple times (2004-09-21, 2004-09-22, ...) */
   /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
 
@@ -2467,7 +2467,7 @@ int msINLINELayerOpen(layerObj *layer) {
   layerinfo = msINLINECreateLayerInfo();
 
   layer->currentfeature =
-      layer->features; /* point to the begining of the feature list */
+      layer->features; /* point to the beginning of the feature list */
 
   layer->layerinfo = (void *)layerinfo;
 

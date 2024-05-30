@@ -912,7 +912,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params,
     return msWCSException(map, NULL, NULL, params->version);
   }
 
-  /* start the Capabilty section, only need the full start tag if this is the
+  /* start the Capability section, only need the full start tag if this is the
    * only section requested */
   if (!params->section ||
       (params->section && strcasecmp(params->section, "/") == 0))
@@ -1512,7 +1512,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer,
   /* supportedCRSs */
   msIO_printf("    <supportedCRSs>\n");
 
-  /* requestResposeCRSs: check the layer metadata/projection, and then the map
+  /* requestResponseCRSs: check the layer metadata/projection, and then the map
    * metadata/projection if necessary (should never get to the error message) */
   msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_FALSE,
                    &epsg_buf);
@@ -2599,7 +2599,7 @@ this request. Check wcs/ows_enable_request settings.",
     return status;
   }
 
-  /* did we get BBOX values? if not use the exent stored in the
+  /* did we get BBOX values? if not use the extent stored in the
    * coverageMetadataObj */
   if (fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001 ||
       fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001) {

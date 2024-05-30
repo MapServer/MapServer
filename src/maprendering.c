@@ -522,7 +522,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
      */
     if (initialgap < 0 && !line_in && line_length > symbol_width) {
 
-      /* total lengths of beginnning and end of current segment */
+      /* total lengths of beginning and end of current segment */
       double before_length = 0, after_length = 0;
 
       /*optimize*/
@@ -872,8 +872,8 @@ int msDrawShadeSymbol(mapObj *map, imageObj *image, shapeObj *p,
           ph = 1;
 
         /* if we're doing vector symbols with an antialiased pixel rendererer,
-         * we want to enable seamless mode, i.e. comute a tile that accounts for
-         * the blending of neighbouring tiles at the tile border
+         * we want to enable seamless mode, i.e. compute a tile that accounts
+         * for the blending of neighbouring tiles at the tile border
          */
         if (symbol->type == MS_SYMBOL_VECTOR && style->gap == 0 &&
             (image->format->renderer == MS_RENDER_WITH_AGG ||

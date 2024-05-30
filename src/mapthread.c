@@ -51,7 +51,7 @@ possible to implement for other thread libraries if needed.
   void msAcquireLock(int):
         Acquires the indicated Mutex.  If it is already held by another thread
         then this thread will block till the other thread releases it.  If
-        this thread already holds the mutex then behaviour is undefined.  If
+        this thread already holds the mutex then behavior is undefined.  If
         the mutex id is not valid (not in the range 0 to TLOCK_STATIC_MAX)
         then results are undefined.
 
@@ -124,7 +124,7 @@ constraints will not usually generate nice error messages, instead operation
 will just fail sometimes.
 
 1) It is currently assumed that a mapObj belongs only to one thread at a time.
-That is, there is no effort to syncronize access to a mapObj itself.
+That is, there is no effort to synchronize access to a mapObj itself.
 
 2) Stuff that results in a chdir() call are problematic.  In particular, the
 .map file SHAPEPATH directive should not be used.  Use full paths to data

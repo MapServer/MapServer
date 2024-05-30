@@ -1122,7 +1122,7 @@ static int loadFeature(layerObj *player, int type) {
     case (WKT): {
       char *string = NULL;
 
-      /* todo, what do we do with multiple WKT property occurances? */
+      /* todo, what do we do with multiple WKT property occurrences? */
 
       msFreeShape(shape);
       msFree(shape);
@@ -1504,7 +1504,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
     p->args[0] = msStrdup(value);
     p->numargs = 1;
   } else if (msLoadProjectionStringEPSGLike(p, value, "EPSG:", MS_FALSE) == 0) {
-    /* Assume lon/lat ordering. Use msLoadProjectionStringEPSG() if wanting to
+    /* Assume long/lat ordering. Use msLoadProjectionStringEPSG() if wanting to
      * follow EPSG axis */
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "urn:ogc:def:crs:EPSG:", MS_TRUE) == 0) {
@@ -1529,7 +1529,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/gml/srs/epsg.xml#",
                  MS_FALSE) == 0) {
-    /* We assume always lon/lat ordering, as that is what GeoServer does... */
+    /* We assume always long/lat ordering, as that is what GeoServer does... */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0) {
   } else if (msLoadProjectionCodeString(p, value) == 0) {
     /* allow strings in the form AUTH:XXXX */
@@ -2667,7 +2667,7 @@ char *msWriteClusterToString(clusterObj *cluster) {
 int initStyle(styleObj *style) {
   int i;
   MS_REFCNT_INIT(style);
-  MS_INIT_COLOR(style->color, -1, -1, -1, 255); /* must explictly set colors */
+  MS_INIT_COLOR(style->color, -1, -1, -1, 255); /* must explicitly set colors */
   MS_INIT_COLOR(style->outlinecolor, -1, -1, -1, 255);
   /* New Color Range fields*/
   MS_INIT_COLOR(style->mincolor, -1, -1, -1, 255);
@@ -5056,7 +5056,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
   writeString(stream, indent, "UTFITEM", NULL, layer->utfitem);
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
-  /* write potentially multiply occuring objects last */
+  /* write potentially multiply occurring objects last */
   for (i = 0; i < layer->numscaletokens; i++)
     writeScaleToken(stream, indent, &(layer->scaletokens[i]));
   for (i = 0; i < layer->numjoins; i++)
@@ -5934,7 +5934,7 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map) {
       break;
     case (SIZE):
       /*
-       ** we do -1 (and avoid 0) here to maintain backwards compatability as
+       ** we do -1 (and avoid 0) here to maintain backwards compatibility as
        *older versions write "SIZE -1 -1" when saving a mapfile
        */
       if (getInteger(&(querymap->width), MS_NUM_CHECK_RANGE, -1,
@@ -7088,7 +7088,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
   msyystate = MS_TOKENIZE_FILE;
   msyylex(); /* sets things up, but doesn't process any tokens */
 
-  msyyrestart(msyyin); /* start at line begining, line 1 */
+  msyyrestart(msyyin); /* start at line beginning, line 1 */
   msyylineno = 1;
 
   /* If new_mappath is provided then use it, otherwise use the location */
@@ -7465,7 +7465,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens) {
   msyylex();
   msyyreturncomments = 1; /* want all tokens, including comments */
 
-  msyyrestart(msyyin); /* start at line begining, line 1 */
+  msyyrestart(msyyin); /* start at line beginning, line 1 */
   msyylineno = 1;
 
   numtokens = 0;

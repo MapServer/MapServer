@@ -544,7 +544,7 @@ static int utfgridRenderLine(imageObj *img, shapeObj *lineshape,
   /* utfvalue is set to 0 if the shape isn't in the table. */
   if (r->utfvalue == 0) {
     return MS_SUCCESS;
-    /* If we dont get a caracter to draw we just skip execution
+    /* If we don't get a character to draw we just skip execution
      * instead of failing
      */
   }
@@ -669,7 +669,7 @@ static int utfgridRenderGlyphs(imageObj *img, const textSymbolObj *ts,
   const textPathObj *tp = ts->textpath;
   const UTFGridRenderer *r = UTFGRID_RENDERER(img);
 
-  /* If it's not a marker then it's a label or other thing and we dont
+  /* If it's not a marker then it's a label or other thing and we don't
    *  want to draw it on the map
    */
   if (!isMarker) {

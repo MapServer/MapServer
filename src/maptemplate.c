@@ -748,7 +748,7 @@ static int getInlineTag(const char *pszTag, const char *pszInstr,
       if (nLength > 0) {
         *pszResult = (char *)msSmallMalloc(nLength + 1);
 
-        /* copy string beetween start and end tag */
+        /* copy string between start and end tag */
         strlcpy(*pszResult, pszStart, nLength + 1);
 
         (*pszResult)[nLength] = '\0';
@@ -4261,7 +4261,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
   snprintf(repstr, sizeof(repstr), "%f",
            (mapserv->map->extent.maxx -
             mapserv->map->extent
-                .minx)); /* useful for creating cachable extents (i.e. 0 0 dx
+                .minx)); /* useful for creating cacheable extents (i.e. 0 0 dx
                             dy) with legends and scalebars */
   outstr = msReplaceSubstring(outstr, "[dx]", repstr);
   snprintf(repstr, sizeof(repstr), "%f",
@@ -4304,7 +4304,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     outstr = msReplaceSubstring(outstr, "[maplat]", repstr);
 
     snprintf(repstr, sizeof(repstr), "%f",
-             llextent.minx); /* map extent as lat/lon */
+             llextent.minx); /* map extent as lat/long */
     outstr = msReplaceSubstring(outstr, "[minlon]", repstr);
     snprintf(repstr, sizeof(repstr), "%f", llextent.maxx);
     outstr = msReplaceSubstring(outstr, "[maxlon]", repstr);
@@ -4463,7 +4463,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
       return (NULL);
     if (processExtentTag(
             mapserv, &outstr, "shpext_esc", &(mapserv->resultshape.bounds),
-            &(mapserv->resultlayer->projection)) != MS_SUCCESS) /* depricated */
+            &(mapserv->resultlayer->projection)) != MS_SUCCESS) /* deprecated */
       return (NULL);
 
     snprintf(repstr, sizeof(repstr), "%d", mapserv->resultshape.classindex);

@@ -3,5 +3,5 @@ Content-Type: text/html
 <HTML>
 <HEAD><TITLE>MapServer Message</TITLE></HEAD>
 <BODY BGCOLOR="#FFFFFF">
-msGetFontFace(): General error message. Freetype was unable to load font file &quot;/path/to/inexistant/file.ttf&quot; for key &quot;bogus&quot;
+msGetFontFace(): General error message. Freetype was unable to load font file &quot;/path/to/inexistent/file.ttf&quot; for key &quot;bogus&quot;
 </BODY></HTML>

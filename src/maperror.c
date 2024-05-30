@@ -344,12 +344,12 @@ static void msRedactString(char *str, const char *keyword) {
 
   char *password = strstr(str, keyword);
   if (password != NULL) {
-    const char chOptionDelimeter = password - str > 0 ? password[-1] : 0;
+    const char chOptionDelimiter = password - str > 0 ? password[-1] : 0;
     char *ptr = password + strlen(keyword);
     char chStringSep = *ptr;
     if (chStringSep == '\'' || chStringSep == '"') {
       ++ptr;
-    } else if (chOptionDelimeter == ';' && chStringSep == '{' &&
+    } else if (chOptionDelimiter == ';' && chStringSep == '{' &&
                strcmp(keyword, "pwd=") == 0) {
       // Handle cases like "\\SQL2019;DATABASE=msautotest;Driver={ODBC Driver 17
       // for SQL Server};pwd={Password;12!};uid=sa;"
@@ -364,7 +364,7 @@ static void msRedactString(char *str, const char *keyword) {
     char *ptr_first_redacted_char = NULL;
     while (*ptr != '\0' && *ptr != '\r' && *ptr != '\n') {
       if (chStringSep == '\0') {
-        if (*ptr == chOptionDelimeter)
+        if (*ptr == chOptionDelimiter)
           break;
       } else {
         if (*ptr == chStringSep) {
@@ -556,7 +556,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
                                             0);
       if (MS_LIKELY(MS_SUCCESS == msComputeTextPath(map, &ts))) {
         if (MS_SUCCESS != msDrawTextSymbol(NULL, img, pnt, &ts)) {
-          /* an error occured, but there's nothing much we can do about it here
+          /* an error occurred, but there's nothing much we can do about it here
            * as we are already handling an error condition */
         }
         freeTextSymbol(&ts);

@@ -124,7 +124,7 @@ public:
        * we return the command to close the current polygon*/
       m_line++;
       if (m_line >= m_lend) {
-        /*if here, we've finished all the vertexes of the shape.
+        /*if here, we've finished all the vertices of the shape.
          * we still return the command to close the current polygon,
          * but set m_stop so the subsequent call to vertex() will return
          * the stop command*/
@@ -139,7 +139,7 @@ public:
       return mapserver::path_cmd_end_poly;
     }
     /*if here, a previous call to vertex informed us that we'd consumed all the
-     * vertexes of the shape. return the command to stop processing this shape*/
+     * vertices of the shape. return the command to stop processing this shape*/
     return mapserver::path_cmd_stop;
   }
 

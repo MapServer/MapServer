@@ -226,35 +226,35 @@ bool OglContext::initSharingContext() {
 
   if (!(wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)
             wglGetProcAddress("wglChoosePixelFormatARB"))) {
-    msSetError(MS_OGLERR, "unable to retreive wglChoosePixelFormatARB method.",
+    msSetError(MS_OGLERR, "unable to retrieve wglChoosePixelFormatARB method.",
                "OglContext::createContext()");
     return FALSE;
   }
 
   if (!(wglCreatePbufferARB = (PFNWGLCREATEPBUFFERARBPROC)wglGetProcAddress(
             "wglCreatePbufferARB"))) {
-    msSetError(MS_OGLERR, "unable to retreive wglCreatePbufferARB method.",
+    msSetError(MS_OGLERR, "unable to retrieve wglCreatePbufferARB method.",
                "OglContext::createContext()");
     return FALSE;
   }
 
   if (!(wglGetPbufferDCARB = (PFNWGLGETPBUFFERDCARBPROC)wglGetProcAddress(
             "wglGetPbufferDCARB"))) {
-    msSetError(MS_OGLERR, "unable to retreive wglGetPbufferDCARB method.",
+    msSetError(MS_OGLERR, "unable to retrieve wglGetPbufferDCARB method.",
                "OglContext::createContext()");
     return FALSE;
   }
 
   if (!(wglReleasePbufferDCARB = (PFNWGLRELEASEPBUFFERDCARBPROC)
             wglGetProcAddress("wglReleasePbufferDCARB"))) {
-    msSetError(MS_OGLERR, "unable to retreive wglReleasePbufferDCARB method.",
+    msSetError(MS_OGLERR, "unable to retrieve wglReleasePbufferDCARB method.",
                "OglContext::createContext()");
     return FALSE;
   }
 
   if (!(wglMakeContextCurrentARB = (PFNWGLMAKECONTEXTCURRENTARBPROC)
             wglGetProcAddress("wglMakeContextCurrentARB"))) {
-    msSetError(MS_OGLERR, "unable to retreive wglMakeContextCurrentARB method.",
+    msSetError(MS_OGLERR, "unable to retrieve wglMakeContextCurrentARB method.",
                "OglContext::createContext()");
     return FALSE;
   }

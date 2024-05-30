@@ -169,7 +169,7 @@ FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode,
 
   std::string expr;
   /* -------------------------------------------------------------------- */
-  /*      build expresssion.                                              */
+  /*      build expression.                                              */
   /* -------------------------------------------------------------------- */
   /* attribute */
   if (bString)
@@ -256,7 +256,7 @@ FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
       bString = true;
   }
 
-  /* specical case to be able to have empty strings in the expression. */
+  /* special case to be able to have empty strings in the expression. */
   /* propertyislike is always treated as string */
   if (psFilterNode->psRightNode->pszValue == NULL ||
       strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)

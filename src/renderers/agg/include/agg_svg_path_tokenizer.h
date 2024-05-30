@@ -45,11 +45,11 @@ namespace svg
     // have single numeric values for Horizontal or Vertical line_to commands 
     // as well as more than two coordinates (4 or 6) for Bezier curves 
     // depending on the semantics of the command.
-    // The behaviour is as follows:
+    // The behavior is as follows:
     //
     // Each call to next() returns true if there's new command or new numeric
     // value or false when the path ends. How to interpret the result
-    // depends on the sematics of the command. For example, command "C" 
+    // depends on the semantics of the command. For example, command "C" 
     // (cubic Bezier curve) implies 6 floating point numbers preceded by this 
     // command. If the command assumes no arguments (like z or Z) the 
     // the last_number() values won't change, that is, last_number() always

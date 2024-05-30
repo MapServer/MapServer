@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  * Project:  MapServer
- * Purpose:  Content Dependant Legend rendering support
+ * Purpose:  Content Dependent Legend rendering support
  * Author:   Thomas Bonfort (tbonfort@terriscope.fr)
  *
  ******************************************************************************
@@ -293,7 +293,7 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
     return MS_SUCCESS;
 
   } else {
-    /* we don't hittest these layers, skip as they already have been initialised
+    /* we don't hittest these layers, skip as they already have been initialized
      */
     return MS_SUCCESS;
   }

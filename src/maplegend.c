@@ -761,7 +761,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent,
         continue;
     }
 
-    /* set the scale factor so that scale dependant symbols are drawn in the
+    /* set the scale factor so that scale dependent symbols are drawn in the
      * legend with their default size */
     if (lp->sizeunits != MS_PIXELS) {
       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
@@ -855,7 +855,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent,
     legendlabel *cur = head;
     class_hittest *ch = NULL;
 
-    /* set the scale factor so that scale dependant symbols are drawn in the
+    /* set the scale factor so that scale dependent symbols are drawn in the
      * legend with their default size */
     if (map->layers[cur->layerindex]->sizeunits != MS_PIXELS) {
       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
@@ -979,7 +979,7 @@ int msEmbedLegend(mapObj *map, imageObj *img) {
   if (!legendSymbol->pixmap_buffer)
     return (MS_FAILURE); /* something went wrong creating scalebar */
 
-  legendSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
+  legendSymbol->type = MS_SYMBOL_PIXMAP; /* initialize a few things */
   legendSymbol->name = msStrdup(LEGEND_SYMBOL_NAME);
   legendSymbol->sizex = legendSymbol->pixmap_buffer->width;
   legendSymbol->sizey = legendSymbol->pixmap_buffer->height;

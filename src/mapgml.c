@@ -353,7 +353,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
       geometry_aggregate_name =
           geometryList->geometries[geometry_aggregate_index].name;
 
-    /* get a list of outter rings for this polygon */
+    /* get a list of outer rings for this polygon */
     outerlist = msGetOuterList(shape);
 
     numouters = 0;
@@ -777,7 +777,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
       geometry_aggregate_name =
           geometryList->geometries[geometry_aggregate_index].name;
 
-    /* get a list of outter rings for this polygon */
+    /* get a list of outer rings for this polygon */
     outerlist = msGetOuterList(shape);
 
     numouters = 0;

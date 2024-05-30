@@ -349,7 +349,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink,
 /************************************************************************/
 /*                           msSOSAddGeometryNode                       */
 /*                                                                      */
-/*      Outout gml 2 gemptry nodes based on a shape. All logic comes    */
+/*      Output gml 2 gemptry nodes based on a shape. All logic comes    */
 /*      from gmlWriteGeometry_GML2. Should be merged at one point if    */
 /*      possible.                                                       */
 /************************************************************************/
@@ -645,7 +645,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent,
 /************************************************************************/
 /*                            msSOSAddMemberNode                        */
 /*                                                                      */
-/*      Add a memeber node corresponding to a feature.                  */
+/*      Add a member node corresponding to a feature.                  */
 /*      Assuming that the layer is opened and msLayerGetItems is        */
 /*      called on it.                                                   */
 /************************************************************************/
@@ -800,7 +800,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe,
     /* add result : gml:featureMember of all selected elements */
     psNode = xmlNewChild(psObsNode, NULL, BAD_CAST "result", NULL);
 
-    /*TODO should we add soemwhere the units of the value :
+    /*TODO should we add somewhere the units of the value :
       <om:result uom="units.xml#cm">29.00</om:result> */
 
     if (msProjectionsDiffer(&(lp->projection), &(map->projection))) {
@@ -991,8 +991,8 @@ static xmlNodePtr msSOSAddMemberNodeObservation(
   layerObj *lpfirst;
   const char *value = NULL;
 
-  /*always featch the first layer that has the same offering id and observered
-  propery. This allows to only define all the attributes and components on the
+  /*always fetch the first layer that has the same offering id and observed
+  property. This allows to only define all the attributes and components on the
   first layer if the user wants to present several mapserver layers as the same
   offering.*/
   lpfirst = msSOSGetFirstLayerForOffering(
@@ -1051,7 +1051,7 @@ static xmlNodePtr msSOSAddMemberNodeObservation(
       pszTmp = NULL;
     }
 
-    /*observed propery and components*/
+    /*observed property and components*/
     if (lp != lpfirst && msLayerOpen(lpfirst) == MS_SUCCESS &&
         msLayerGetItems(lpfirst) == MS_SUCCESS) {
       msSOSAddPropertyNode(psNsSwe, psNsXLink, psObsNode, lpfirst, psNsGml,
@@ -1084,7 +1084,7 @@ static xmlNodePtr msSOSAddMemberNodeObservation(
 /*       - <gml:TimeInstant>                                            */
 /*           <gml:timePosition>2003-02-13T12:28-08:00</gml:timePosition>*/
 /*           </gml:TimeInstant>                                         */
-/*       This will retunr the timevalue as a string.                    */
+/*       This will return the timevalue as a string.                    */
 /*                                                                      */
 /*       The caller of the function should free the return value.       */
 /************************************************************************/
@@ -1733,7 +1733,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams,
         }
         /*observed property */
         /* observed property are equivalent to layers. We can group
-           sevaral layers using the same sos_observedproperty_id. The
+           several layers using the same sos_observedproperty_id. The
            components are the attributes. Components are exposed
            using the metadata sos_%s_aliasl */
 
@@ -1808,7 +1808,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams,
   /*xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding :
    * "ISO-8859-1"), 1);*/
 
-  /* xmlDocDump crashs withe the prebuild windows binaries distibutes at the
+  /* xmlDocDump crashes with the prebuild windows binaries distributes at the
    libxml site???. It works with locally build binaries*/
 
   context = msIO_getHandler(stdout);
@@ -1905,8 +1905,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams,
   xmlNodePtr psObservationNode = NULL, psResultNode = NULL;
   const char *pszProcedure = NULL;
   const char *pszBlockSep = NULL;
-  int nDiffrentProc = 0;
-  SOSProcedureNode *paDiffrentProc = NULL;
+  int nDifferentProc = 0;
+  SOSProcedureNode *paDifferentProc = NULL;
   int iItemPosition, status;
   shapeObj sShape;
 
@@ -2224,7 +2224,7 @@ this request. Check sos/ows_enable_request settings.",
   /*                                                                      */
   /*       The user can specify mutilple times separated by commas.       */
   /*                                                                      */
-  /*       The gml will be parsed and trasformed into a sting tah         */
+  /*       The gml will be parsed and transformed into a sting tah         */
   /*      looks like timestart/timeend,...                                */
   /* -------------------------------------------------------------------- */
 
@@ -2451,7 +2451,7 @@ this request. Check sos/ows_enable_request settings.",
     FLTFreeFilterEncodingNode(psFilterNode);
   }
 
-  /* this is just a fall back if bbox is enetered. The bbox parameter is not
+  /* this is just a fall back if bbox is entered. The bbox parameter is not
      supported by the sos specs */
   if (sosparams->pszBBox && !sosparams->pszFeatureOfInterest) {
     char **tokens;
@@ -2738,51 +2738,52 @@ this request. Check sos/ows_enable_request settings.",
                 msFree(pszResult);
                 continue;
               }
-              for (k = 0; k < nDiffrentProc; k++) {
-                if (strcasecmp(paDiffrentProc[k].pszProcedure,
+              for (k = 0; k < nDifferentProc; k++) {
+                if (strcasecmp(paDifferentProc[k].pszProcedure,
                                pszProcedureValue) == 0) {
                   pszBlockSep = msOWSLookupMetadata(&(map->web.metadata), "S",
                                                     "encoding_blockSeparator");
                   if (pszBlockSep)
-                    xmlNodeAddContent(paDiffrentProc[k].psResultNode,
+                    xmlNodeAddContent(paDifferentProc[k].psResultNode,
                                       BAD_CAST pszBlockSep);
                   else
-                    xmlNodeAddContent(paDiffrentProc[k].psResultNode,
+                    xmlNodeAddContent(paDifferentProc[k].psResultNode,
                                       BAD_CAST "\n");
-                  xmlNodeAddContent(paDiffrentProc[k].psResultNode,
+                  xmlNodeAddContent(paDifferentProc[k].psResultNode,
                                     BAD_CAST pszResult);
                   break;
                 }
               }
-              if (k == nDiffrentProc) { /*a new procedure*/
-                nDiffrentProc++;
-                if (paDiffrentProc == NULL)
-                  paDiffrentProc =
+              if (k == nDifferentProc) { /*a new procedure*/
+                nDifferentProc++;
+                if (paDifferentProc == NULL)
+                  paDifferentProc =
                       (SOSProcedureNode *)malloc(sizeof(SOSProcedureNode));
                 else
-                  paDiffrentProc = (SOSProcedureNode *)realloc(
-                      paDiffrentProc, sizeof(SOSProcedureNode) * nDiffrentProc);
+                  paDifferentProc = (SOSProcedureNode *)realloc(
+                      paDifferentProc,
+                      sizeof(SOSProcedureNode) * nDifferentProc);
 
-                paDiffrentProc[nDiffrentProc - 1].pszProcedure =
+                paDifferentProc[nDifferentProc - 1].pszProcedure =
                     msStrdup(pszProcedureValue);
                 psObservationNode = msSOSAddMemberNodeObservation(
                     psNsGml, psNsOm, psNsSwe, psNsXLink, psRootNode, map,
                     (GET_LAYER(map, i)), pszProcedureValue);
 
-                paDiffrentProc[nDiffrentProc - 1].psResultNode = xmlNewChild(
+                paDifferentProc[nDifferentProc - 1].psResultNode = xmlNewChild(
                     psObservationNode, NULL, BAD_CAST "result", NULL);
 
                 xmlNodeAddContent(
-                    paDiffrentProc[nDiffrentProc - 1].psResultNode,
+                    paDifferentProc[nDifferentProc - 1].psResultNode,
                     BAD_CAST pszResult);
               }
               msFree(pszProcedureValue);
               msFree(pszResult);
             }
-            if (paDiffrentProc) {
-              for (k = 0; k < nDiffrentProc; k++)
-                msFree(paDiffrentProc[k].pszProcedure);
-              free(paDiffrentProc);
+            if (paDifferentProc) {
+              for (k = 0; k < nDifferentProc; k++)
+                msFree(paDifferentProc[k].pszProcedure);
+              free(paDifferentProc);
             }
           }
         }

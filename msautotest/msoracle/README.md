@@ -9,7 +9,7 @@ The composition can be launched using the following command:
 $ docker-compose up -d
 ```
 
-Once launched, we still have to load the sample datas (also inspired from the
+Once launched, we still have to load the sample data (also inspired from the
 QGis testsuite), using locally:
 
 ```

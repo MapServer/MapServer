@@ -294,14 +294,14 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
   for (child_node = parent_node->children; child_node != NULL;                 \
        child_node = child_node->next)
 
-/* Makro to continue the iteration over an xml structure    */
+/* Macro to continue the iteration over an xml structure    */
 /* when the current node has the type 'text' or 'comment'   */
 #define XML_LOOP_IGNORE_COMMENT_OR_TEXT(node)                                  \
   if (xmlNodeIsText(node) || node->type == XML_COMMENT_NODE) {                 \
     continue;                                                                  \
   }
 
-/* Makro to set an XML error that an unknown node type      */
+/* Macro to set an XML error that an unknown node type      */
 /* occurred.                                                */
 #define XML_UNKNOWN_NODE_ERROR(node)                                           \
   msSetError(MS_WCSERR, "Unknown XML element '%s'.", __FUNCTION__,             \

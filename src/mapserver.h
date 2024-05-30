@@ -1003,7 +1003,7 @@ typedef union {
 typedef struct tokenListNode {
   int token;
   tokenValueObj tokenval;
-  char *tokensrc; /* on occassion we may want to access to the original source
+  char *tokensrc; /* on occasion we may want to access to the original source
                      string (e.g. date/time) */
   struct tokenListNode *next;
   struct tokenListNode *tailifhead; /* this is the tail node in the list if this
@@ -1492,7 +1492,7 @@ struct labelObj {
   int maxsize; ///< Maximum height in pixels for scaled labels. See
                ///< :ref:`MAXSIZE <mapfile-label-maxsize>`
 
-  int position; ///< See :ref:`POSTION <mapfile-label-position>`
+  int position; ///< See :ref:`POSITION <mapfile-label-position>`
   int offsetx;  ///< Horizontal offset of label - see :ref:`OFFSET
                 ///< <mapfile-label-offset>`
   int offsety;  ///< Vertical offset of label - see :ref:`OFFSET
@@ -1909,7 +1909,7 @@ typedef struct {
   int status;            ///< ON, OFF or EMBED - see :ref:`STATUS
               ///< <mapfile-scalebar-status>` - :data:`MS_ON`, :data:`MS_OFF`,
               ///< or :data:`MS_EMBED`.
-  int position; ///< For embeded scalebars - see :ref:`POSITION
+  int position; ///< For embedded scalebars - see :ref:`POSITION
                 ///< <mapfile-scalebar-position>` - :data:`MS_UL`,
                 ///< :data:`MS_UC`, :data:`MS_UR`, :data:`MS_LL`, :data:`MS_LC`,
                 ///< or :data:`MS_LR`
@@ -2554,7 +2554,7 @@ Generic function to free a imageObj
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
 
 /**
-Sets up threads and font cache - called when MapScript is initialised
+Sets up threads and font cache - called when MapScript is initialized
 */
 MS_DLL_EXPORT int msSetup(void);
 
@@ -2871,7 +2871,7 @@ MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
 MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
 MS_DLL_EXPORT char *msStringConcatenate(char *pszDest, const char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength,
-                                  const char *delimeter);
+                                  const char *delimiter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
 MS_DLL_EXPORT int msHexToInt(char *hex);
@@ -3511,7 +3511,7 @@ MS_DLL_EXPORT shapeObj *msOffsetPolyline(shapeObj *shape, double offsetx,
                                          double offsety);
 MS_DLL_EXPORT int msMapSetLayerProjections(mapObj *map);
 
-/* Functions to chnage the drawing order of the layers. */
+/* Functions to change the drawing order of the layers. */
 /* Defined in mapobject.c */
 MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
 MS_DLL_EXPORT int msMoveLayerDown(mapObj *map, int nLayerIndex);
@@ -3895,7 +3895,7 @@ typedef struct {
    * in radians */
   double rotation;
 
-  /* the gap to space symbols appart when used as a polygon tile
+  /* the gap to space symbols apart when used as a polygon tile
    */
   double gap;
 

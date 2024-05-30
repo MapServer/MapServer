@@ -730,7 +730,7 @@ int msTestLabelCacheLeaderCollision(mapObj *map, pointObj *lp1, pointObj *lp2) {
   for (p = 0; p < map->labelcache.num_rendered_members; p++) {
     labelCacheMemberObj *curCachePtr = map->labelcache.rendered_text_symbols[p];
     if (msRectOverlap(&leaderbbox, &(curCachePtr->bbox))) {
-      /* leaderbbox interesects with the curCachePtr's global bbox */
+      /* leaderbbox intersects with the curCachePtr's global bbox */
       int t;
       for (t = 0; t < curCachePtr->numtextsymbols; t++) {
         int s;

@@ -329,7 +329,7 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist) {
     /* Fixes #5299 */
     /* Of course all of this assumes that the geometries are indeed valid in */
     /* OGC terms, otherwise all logic of msIsOuterRing(), msGetOuterList(), */
-    /* and msGetInnerList() has undefined behaviour. */
+    /* and msGetInnerList() has undefined behavior. */
     list[i] = msPointInPolygon(&(shape->line[i].point[0]), &(shape->line[r])) ||
               msPointInPolygon(&(shape->line[i].point[1]), &(shape->line[r]));
   }
@@ -414,7 +414,7 @@ int msAddLineDirectly(shapeObj *p, lineObj *new_line) {
 /*
 ** Converts a rect array to a shapeObj structure. Note order is CW assuming y
 *origin
-** is in the lower left corner (normal cartesian coordinate system). Also
+** is in the lower left corner (normal Cartesian coordinate system). Also
 *polygon is
 ** is closed (i.e. first=last). This conforms to the shapefile specification.
 *For image
@@ -1006,7 +1006,7 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent,
 }
 
 /**
- * Generic function to transorm the shape coordinates to output coordinates
+ * Generic function to transform the shape coordinates to output coordinates
  */
 void msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
                       imageObj *image) {
@@ -1678,7 +1678,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension) {
 }
 
 /* Compute all the lineString/segment lengths and determine the longest
- * lineString of a multiLineString shape: in paramater, the multiLineString to
+ * lineString of a multiLineString shape: in parameter, the multiLineString to
  * compute. struct polyline_lengths pll: out parameter, all line and segment
  * lengths
  */

@@ -1,4 +1,4 @@
-This readme covers building Mapserver from scatch on Windows.
+This readme covers building Mapserver from scratch on Windows.
 We will download current development state of php.
 If you need MapscriptNG for a different version of php, you have to fit the commands below.
 For the first time, it is a good idea to build as shown below and after you have a working state, you can change whatever you want, knowing there is a working state you can return to.
