@@ -73,6 +73,9 @@ static int msDrawRasterLayerGDAL_16BitClassification(
  * rasterBufferObj setting macros.
  */
 
+#define GAMMA_CORRECT(color, gamma)                                            \
+  (int)(0.5 + 255 * pow((color) / 255.0, (gamma)))
+
 /************************************************************************/
 /*                       msDrawRasterLayerGDAL()                        */
 /************************************************************************/
@@ -541,6 +544,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     return -1;
   }
 
+  const char *sgamma = msLayerGetProcessingKey(layer, "GAMMA");
+  const double gamma = sgamma ? CPLAtof(sgamma) : 1.0;
+
   /*
    * Setup the mapping between source eight bit pixel values, and the
    * output images color table.  There are two general cases, where the
@@ -654,6 +660,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             rb_cmap[2][j] = pixel.blue;
             rb_cmap[3][j] = 255;
           }
+
+          if (gamma != 1.0) {
+            rb_cmap[0][j] = GAMMA_CORRECT(rb_cmap[0][j], gamma);
+            rb_cmap[1][j] = GAMMA_CORRECT(rb_cmap[1][j], gamma);
+            rb_cmap[2][j] = GAMMA_CORRECT(rb_cmap[2][j], gamma);
+          }
         }
       }
     }
@@ -684,6 +696,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         rb_cmap[1][j] = sEntry.c2;
         rb_cmap[2][j] = sEntry.c3;
         rb_cmap[3][j] = sEntry.c4;
+        if (gamma != 1.0) {
+          rb_cmap[0][j] = GAMMA_CORRECT(rb_cmap[0][j], gamma);
+          rb_cmap[1][j] = GAMMA_CORRECT(rb_cmap[1][j], gamma);
+          rb_cmap[2][j] = GAMMA_CORRECT(rb_cmap[2][j], gamma);
+        }
       }
     }
   }
@@ -825,21 +842,33 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       for (int j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++) {
         if (SKIP_MASK(j, i) || (pbIsNoDataBuffer && pbIsNoDataBuffer[k]))
           continue;
-        if (MS_VALID_COLOR(layer->offsite) &&
-            pabyRaw1[k] == layer->offsite.red &&
-            pabyRaw2[k] == layer->offsite.green &&
-            pabyRaw3[k] == layer->offsite.blue)
+        int red = pabyRaw1[k];
+        int green = pabyRaw2[k];
+        int blue = pabyRaw3[k];
+        if (MS_VALID_COLOR(layer->offsite) && red == layer->offsite.red &&
+            green == layer->offsite.green && blue == layer->offsite.blue)
           continue;
 
-        if (bHaveRGBNoData && pabyRaw1[k] == nNoData1 &&
-            pabyRaw2[k] == nNoData2 && pabyRaw3[k] == nNoData3)
+        if (bHaveRGBNoData && red == nNoData1 && green == nNoData2 &&
+            blue == nNoData3)
           continue;
 
         if (pabyRawAlpha == NULL || pabyRawAlpha[k] == 255) {
-          RB_SET_PIXEL(rb, j, i, pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], 255);
+          if (gamma != 1.0) {
+            red = GAMMA_CORRECT(red, gamma);
+            green = GAMMA_CORRECT(green, gamma);
+            blue = GAMMA_CORRECT(blue, gamma);
+          }
+
+          RB_SET_PIXEL(rb, j, i, red, green, blue, 255);
         } else if (pabyRawAlpha[k] != 0) {
-          RB_MIX_PIXEL(rb, j, i, pabyRaw1[k], pabyRaw2[k], pabyRaw3[k],
-                       pabyRawAlpha[k]);
+          if (gamma != 1.0) {
+            red = GAMMA_CORRECT(red, gamma);
+            green = GAMMA_CORRECT(green, gamma);
+            blue = GAMMA_CORRECT(blue, gamma);
+          }
+
+          RB_MIX_PIXEL(rb, j, i, red, green, blue, pabyRawAlpha[k]);
         }
       }
     }
@@ -2065,6 +2094,9 @@ static int msDrawRasterLayerGDAL_16BitClassification(
     msGettimeofday(&starttime, NULL);
   }
 
+  const char *sgamma = msLayerGetProcessingKey(layer, "GAMMA");
+  const double gamma = sgamma ? CPLAtof(sgamma) : 1.0;
+
   lastC = -1;
   for (i = 0; i < nBucketCount; i++) {
     double dfOriginalValue;
@@ -2118,6 +2150,12 @@ static int msDrawRasterLayerGDAL_16BitClassification(
           rb_cmap[2][i] = layer->class[c]->styles[styleindex]->color.blue;
           rb_cmap[3][i] =
               (255 * layer->class[c] -> styles[styleindex] -> opacity / 100);
+
+          if (gamma != 1.0) {
+            rb_cmap[0][i] = GAMMA_CORRECT(rb_cmap[0][i], gamma);
+            rb_cmap[1][i] = GAMMA_CORRECT(rb_cmap[1][i], gamma);
+            rb_cmap[2][i] = GAMMA_CORRECT(rb_cmap[2][i], gamma);
+          }
         }
       }
     }
