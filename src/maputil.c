@@ -2839,3 +2839,8 @@ void msSetLayerOpacity(layerObj *layer, int opacity) {
   }
   layer->compositer->opacity = opacity;
 }
+
+void msReplaceFreeableStr(char **ppszStr, char *pszNewStr) {
+  msFree(*ppszStr);
+  *ppszStr = pszNewStr;
+}
