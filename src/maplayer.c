@@ -1999,24 +1999,31 @@ int msLayerSupportsSorting(layerObj *layer) {
   return MS_FALSE;
 }
 
+static void msLayerFreeSortBy(layerObj *layer) {
+  for (int i = 0; i < layer->sortBy.nProperties; i++)
+    msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
+  layer->sortBy.properties = NULL;
+  layer->sortBy.nProperties = 0;
+}
+
 /*
  * msLayerSetSort()
  *
  * Copy the sortBy clause passed as an argument into the layer sortBy member.
  */
 void msLayerSetSort(layerObj *layer, const sortByClause *sortBy) {
-  int i;
-  for (i = 0; i < layer->sortBy.nProperties; i++)
-    msFree(layer->sortBy.properties[i].item);
-  msFree(layer->sortBy.properties);
 
-  layer->sortBy.nProperties = sortBy->nProperties;
-  layer->sortBy.properties = (sortByProperties *)msSmallMalloc(
+  sortByProperties *newProperties = (sortByProperties *)msSmallMalloc(
       sortBy->nProperties * sizeof(sortByProperties));
-  for (i = 0; i < layer->sortBy.nProperties; i++) {
-    layer->sortBy.properties[i].item = msStrdup(sortBy->properties[i].item);
-    layer->sortBy.properties[i].sortOrder = sortBy->properties[i].sortOrder;
+  for (int i = 0; i < sortBy->nProperties; i++) {
+    newProperties[i].item = msStrdup(sortBy->properties[i].item);
+    newProperties[i].sortOrder = sortBy->properties[i].sortOrder;
   }
+
+  msLayerFreeSortBy(layer);
+  layer->sortBy.nProperties = sortBy->nProperties;
+  layer->sortBy.properties = newProperties;
 }
 
 /*
