@@ -122,7 +122,7 @@ install(
     endif()
 
     execute_process(
-      COMMAND ${Python_EXECUTABLE} -m pip install \${PYTHON_ROOT} \${PYTHON_PREFIX}
+      COMMAND ${Python_EXECUTABLE} -m pip install \${PYTHON_ROOT} \${PYTHON_PREFIX} .
       WORKING_DIRECTORY ${OUTPUT_FOLDER}
     )
   "
