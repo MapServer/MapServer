@@ -13,6 +13,44 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.0-beta1 release (2024-06-06)
+--------------------------------
+
+- restructure repo to move source code into /src (#6837)
+
+- remove sym2img.c from codebase (#6593)
+
+- handle templates + includes (#6113)
+
+- handle empty query response (#6907)
+
+- remove support for GDAL < 3 (#6901)
+
+- remove support for PROJ < 6 (#6900)
+
+- OGC API Features: implement Part 2 - CRS (#6893)
+
+- allow custom projections to be requested via WMS (#6795)
+
+- allow mapfiles to be accessed via URL Keys (#6862)
+
+- allow expressions in LABEL PRIORITY (#6884)
+
+- reference SLD files in Mapfiles (#7034)
+
+see detailed changelog for other fixes
+
+8.0.1 release (2023-04-17)
+--------------------------
+
+- fix WFS paging on Oracle (#6774) 
+
+- allow runtime substitutions on the Web template parameter (#6804)
+
+- handle multiple PROJ_DATA paths through config (#6863)
+
+see detailed changelog for other fixes
+
 8.0.0 release (2022-09-12)
 --------------------------
 
