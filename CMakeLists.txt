@@ -16,7 +16,7 @@ include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
 set (MapServer_VERSION_MAJOR 8)
-set (MapServer_VERSION_MINOR 1)
+set (MapServer_VERSION_MINOR 3)
 set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
 
