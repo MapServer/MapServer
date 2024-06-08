@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.0-beta2 release (2024-06-08)
+--------------------------------
+
+- fix Python MapScript installation (#7071)
+
 8.2.0-beta1 release (2024-06-06)
 --------------------------------
 
