@@ -167,7 +167,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
   int i;
   mapObj *map = NULL;
 
-  const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
+  const char *ms_map_bad_pattern_default = "[/\\\\]{2}|[/\\\\]?\\.+[/\\\\]|,";
 
   int ms_mapfile_tainted = MS_TRUE;
   const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
