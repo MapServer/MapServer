@@ -17,10 +17,18 @@ EXTRA_CMAKEFLAGS="-Werror=dev"
 
 if [ "${WITH_ASAN:-}" = "true" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
-    make cmakebuild MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-g -fsanitize=address -DNDEBUG" CMAKE_CXX_FLAGS="-g -fsanitize=address -DNDEBUG" \
-    EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DCMAKE_BUILD_TYPE=None -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"
+    make cmakebuild \
+        MFLAGS="-j$(nproc)" \
+        CMAKE_C_FLAGS="-g -fsanitize=address -DNDEBUG" \
+        CMAKE_CXX_FLAGS="-g -fsanitize=address -DNDEBUG" \
+        EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DCMAKE_BUILD_TYPE=None -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"
 else
-    make cmakebuild MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
+    make cmakebuild \
+        MFLAGS="-j$(nproc)" \
+        CMAKE_C_FLAGS="-O2" \
+        CMAKE_CXX_FLAGS="-O2" \
+        LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra" \
+        EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DWITH_PCRE2=ON"
     make mspython-wheel
     make phpng-build
 fi

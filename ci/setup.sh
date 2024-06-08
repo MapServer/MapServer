@@ -14,6 +14,7 @@ sudo apt-get update
 sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compiler libprotobuf-c-dev bison flex libfribidi-dev \
             librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev \
             libcairo2-dev libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin proj-bin ccache curl \
+            libpcre2-dev \
             postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts g++ ca-certificates
 
 sudo apt-get install -y --allow-unauthenticated libmono-system-drawing4.0-cil mono-mcs

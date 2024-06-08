@@ -51,7 +51,12 @@
 
 #include "mapserver.h"
 #include "mapregex.h"
+
+#ifdef USE_PCRE2
+#include <pcre2posix.h>
+#else
 #include <regex.h>
+#endif
 
 MS_API_EXPORT(int) ms_regcomp(ms_regex_t *regex, const char *expr, int cflags) {
   /* Must free in regfree() */
