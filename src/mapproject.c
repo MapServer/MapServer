@@ -1900,13 +1900,13 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
    */
   else {
     int apply_over = MS_TRUE;
-#if PROJ_VERSION_MAJOR >= 6 && PROJ_VERSION_MAJOR < 9
+#if PROJ_VERSION_MAJOR >= 6 && PROJ_VERSION_MAJOR < 9 || (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR <= 4 && PROJ_VERSION_PATCH < 1)
     // Workaround PROJ [6,9[ bug (fixed per
     // https://github.com/OSGeo/PROJ/pull/3055) that prevents datum shifts from
     // being applied when +over is added to +init=epsg:XXXX This is far from
     // being bullet proof but it should work for most common use cases
     if (in && in->proj) {
-      if (in->numargs == 1 && EQUAL(in->args[0], "init=epsg:4326") &&
+      if (((in->numargs == 1 && EQUAL(in->args[0], "init=epsg:4326")) || (in->numargs == 2 &&  EQUAL(in->args[0], "init=epsg:4326") && EQUAL(in->args[1], "+epsgaxis=ne"))) &&
           rect->minx >= -180 && rect->maxx <= 180) {
         apply_over = MS_FALSE;
       } else if (in->numargs == 1 && EQUAL(in->args[0], "init=epsg:3857") &&
