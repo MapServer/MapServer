@@ -55,9 +55,23 @@
 
 MS_API_EXPORT(int) ms_regcomp(ms_regex_t *regex, const char *expr, int cflags) {
   /* Must free in regfree() */
+  int reg_cflags = 0;
   regex_t *sys_regex = (regex_t *)msSmallMalloc(sizeof(regex_t));
   regex->sys_regex = (void *)sys_regex;
-  return regcomp(sys_regex, expr, cflags);
+  if (cflags & MS_REG_EXTENDED)
+    reg_cflags |= REG_EXTENDED;
+  if (cflags & MS_REG_ICASE)
+    reg_cflags |= REG_ICASE;
+  if (cflags & MS_REG_NOSUB)
+    reg_cflags |= REG_NOSUB;
+  if (cflags & MS_REG_NEWLINE)
+    reg_cflags |= REG_NEWLINE;
+  int ret = regcomp(sys_regex, expr, reg_cflags);
+  if (ret != 0) {
+    free(regex->sys_regex);
+    regex->sys_regex = NULL;
+  }
+  return ret;
 }
 
 MS_API_EXPORT(size_t)
