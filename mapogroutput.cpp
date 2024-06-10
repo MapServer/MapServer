@@ -829,9 +829,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     return MS_FAILURE;
   }
 
-  if( !EQUAL(storage,"stream") )
-  {
-    msBuildPath( datasource_name, request_dir, fo_filename );
+  if (!EQUAL(storage, "stream")) {
+    if (!msBuildPath(datasource_name, request_dir, fo_filename)) {
+      msFree(request_dir);
+      CSLDestroy(layer_options);
+      CSLDestroy(ds_options);
+      return MS_FAILURE;
+    }
 
     if( EQUAL(form,"zip") )
     {
@@ -842,8 +846,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
 
       /* and add .dat extension if user didn't provide another extension */
-      if( EQUAL(CPLGetExtension(datasource_name), "") ) {
-        strcat(datasource_name, ".dat");
+      if (EQUAL(CPLGetExtension(datasource_name), "")) {
+        strlcat(datasource_name, ".dat", sizeof(datasource_name));
       }
     }
 

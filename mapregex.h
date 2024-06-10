@@ -64,12 +64,11 @@ extern "C" {
   /* === regcomp.c === */
 #define MS_REG_BASIC  0000
 #define MS_REG_EXTENDED 0001
-#define MS_REG_ICASE  0002
-#define MS_REG_NOSUB  0004
-#define MS_REG_NEWLINE  0010
-#define MS_REG_NOSPEC 0020
-#define MS_REG_PEND 0040
-#define MS_REG_DUMP 0200
+#define MS_REG_ICASE 0002
+// WARNING: GNU regex has REG_NOSUB = (1 << 3) = 8
+#define MS_REG_NOSUB 0004
+// WARNING: GNU regex has REG_NEWLINE = (1 << 2) = 4
+#define MS_REG_NEWLINE 0010
 
 
   /* === regerror.c === */
