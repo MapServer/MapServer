@@ -768,7 +768,12 @@ int msOGRWriteFromQuery(mapObj *map, outputFormatObj *format, int sendheaders)
   }
 
   if (!EQUAL(storage, "stream")) {
-    msBuildPath(datasource_name, request_dir, fo_filename);
+    if (!msBuildPath(datasource_name, request_dir, fo_filename)) {
+      msFree(request_dir);
+      CSLDestroy(layer_options);
+      CSLDestroy(ds_options);
+      return MS_FAILURE;
+    }
 
     if (EQUAL(form, "zip")) {
       /* if generating a zip file, remove the zip extension for the internal */
@@ -779,7 +784,7 @@ int msOGRWriteFromQuery(mapObj *map, outputFormatObj *format, int sendheaders)
 
       /* and add .dat extension if user didn't provide another extension */
       if (EQUAL(CPLGetExtension(datasource_name), "")) {
-        strcat(datasource_name, ".dat");
+        strlcat(datasource_name, ".dat", sizeof(datasource_name));
       }
     }
 
