@@ -100,7 +100,7 @@ For testing the compilation and the runtime environment you can use
 
       nmake -f makefile.vc test
 
-within the csharp directory for starting the sample applications compiled previously. Before making the test the location of the corresponding libraries should be incuded in the system PATH. 
+within the csharp directory for starting the sample applications compiled previously. Before making the test the location of the corresponding libraries should be included in the system PATH. 
 
 1.6 Linux compilation targeting the MONO framework
 --------------------------------------------------
@@ -110,7 +110,7 @@ version you might want to compile and install it from the source.
 Download and uncompress the latest SWIG release. You should probably compile it
 from the source if precompiled binaries are not available for your platform.
 
-Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable pathes if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
+Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable paths if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
 use
 
 ::
@@ -131,7 +131,7 @@ for starting the sample applications compiled previously.
 ------------------------------------------------
 Beginning from 4.10.0 the csharp/Makefile supports the OSX builds. Before making the build the recent MONO package should be installed on the system.
 
-Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable pathes if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
+Before compiling mapscript mapserver should be configured and compiled. Beginning from mapserver 4.8.2 during configuration the mapscript/csharp/Makefile will be created according to the configuration options. Edit this file and set the SWIG and CSC for the corresponding executable paths if the files could not be accessed by default. To compile at a console step into the /mapscript/csharp directory
 use
 
 ::
@@ -202,7 +202,7 @@ According to the windows makefile the mapscript compilation target (mapscript.dl
 </dependency>
 </assembly>
 
-Like previously mentioned if you are creating a windows application the common language runtime will search for a manifest file for the application. The name of the manifest file should be the same as the executable appendend with the .manifest extension.
+Like previously mentioned if you are creating a windows application the common language runtime will search for a manifest file for the application. The name of the manifest file should be the same as the executable appended with the .manifest extension.
 However if the host process is not controlled by you (like web mapping applications using aspnet_wp.exe as the host process) you will not be certain if the host process (.exe) will have a manifest containing a reference to the CRT wrapper. In this case you may have to embed the manifest into the dll as a resource using the mt tool like:
 
 ::

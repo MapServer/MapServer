@@ -1010,7 +1010,7 @@ than height for certain hatch angles */
     // in the general case there will only be two intersections
     // so pt[4] should be sufficient to store the coordinates of the
     // intersection, but we allocate pt[8] to treat the special and
-    // rare/unfortunate case when the line is a perfect diagonal (and therfore
+    // rare/unfortunate case when the line is a perfect diagonal (and therefore
     // intersects all four sides) note that the order for testing is important
     // in this case so that the first two intersection points actually
     // correspond to the diagonal and not a degenerate line

@@ -205,7 +205,7 @@ char *msStrptime(const char *s, const char *format, struct tm *tm) {
 }
 
 /**
-   return MS_TRUE if the time string matchs the timeformat.
+   return MS_TRUE if the time string matches the timeformat.
    else return MS_FALSE.
  */
 int msTimeMatchPattern(const char *timestring, const char *timeformat) {
@@ -215,7 +215,7 @@ int msTimeMatchPattern(const char *timestring, const char *timeformat) {
   }
 
   /* match the pattern format first and then check if the time string  */
-  /* matchs the pattern. If it is the case retrurn the MS_TRUE */
+  /* matches the pattern. If it is the case retrurn the MS_TRUE */
   for (i = 0; i < MS_NUMTIMEFORMATS; i++) {
     if (strcasecmp(ms_timeFormats[i].userformat, timeformat) == 0)
       break;
@@ -388,7 +388,7 @@ int _msValidateTime(const char *timestring, const char *timeextent) {
     -  one range (2004-09-21/2004-09-25/resolution)
     -  multiple rages 2004-09-21/2004-09-25/res1,2004-09-21/2004-09-25/res2
     - one value 2004-09-21
-    - mutiple values 2004-09-21,2004-09-22,2004-09-23
+    - multiple values 2004-09-21,2004-09-22,2004-09-23
   */
 
   numextents = 0;

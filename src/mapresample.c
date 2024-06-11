@@ -58,7 +58,7 @@ int InvGeoTransform(double *gt_in, double *gt_out)
 
   inv_det = 1.0 / det;
 
-  /* compute adjoint, and devide by determinate */
+  /* compute adjoint, and divide by determinate */
 
   gt_out[1] = gt_in[5] * inv_det;
   gt_out[4] = -gt_in[4] * inv_det;
@@ -124,7 +124,7 @@ static int msNearestRasterResampler(
       /*
        * We test the original floating point values to
        * avoid errors related to asymmetric rounding around zero.
-       * (Also note bug #3120 regarding nearly redundent x/y < 0 checks).
+       * (Also note bug #3120 regarding nearly redundant x/y < 0 checks).
        */
       if (x[nDstX] < 0.0 || y[nDstX] < 0.0 || nSrcX < 0 || nSrcY < 0 ||
           nSrcX >= nSrcXSize || nSrcY >= nSrcYSize) {
@@ -1501,7 +1501,7 @@ int msResampleGDALToMap(mapObj *map, layerObj *layer, imageObj *image,
   /*      If we are working in 256 color GD mode, allocate 0 as the       */
   /*      transparent color on the temporary image so it will be          */
   /*      initialized to see-through.  We pick an arbitrary rgb tuple     */
-  /*      as our transparent color, but ensure it is initalized in the    */
+  /*      as our transparent color, but ensure it is initialized in the    */
   /*      map so that normal transparent avoidance will apply.            */
   /* -------------------------------------------------------------------- */
   if (MS_RENDERER_PLUGIN(sDummyMap.outputformat)) {

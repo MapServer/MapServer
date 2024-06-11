@@ -650,8 +650,8 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                                       OWS_METHOD_GETPOST, script_url));
       xmlAddChild(psMainNode, psNode);
 
-      /* Only advertize built-in GML formats for GetPropertyValue. Not sure */
-      /* it makes sense to advertize OGR formats. */
+      /* Only advertise built-in GML formats for GetPropertyValue. Not sure */
+      /* it makes sense to advertise OGR formats. */
       xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
                               ows_version, psNsOws, "Parameter", "outputFormat",
                               "application/gml+xml; version=3.2,"
@@ -821,7 +821,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                                                validated_language, script_url));
       }
 
-      /* As soon as at least one layer supports sorting, advertize sorting */
+      /* As soon as at least one layer supports sorting, advertise sorting */
       if (msLayerSupportsSorting(lp))
         bImplementsSorting = MS_TRUE;
     }

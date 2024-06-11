@@ -68,7 +68,7 @@ my $mapfile  = "/tmp/config.map";
 # init OWSRequest object
 my $req = new mapscript::OWSRequest();
 
-# pick up CGI paramters passed
+# pick up CGI parameters passed
 $req->loadParams();
 
 # init mapfile 

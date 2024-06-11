@@ -742,7 +742,7 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g) {
 #endif
 
 /*
-** Maintenence functions exposed to MapServer/MapScript.
+** Maintenance functions exposed to MapServer/MapScript.
 */
 
 void msGEOSFreeGeometry(shapeObj *shape) {

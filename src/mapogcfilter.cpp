@@ -810,9 +810,9 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /*      Parses an Filter Encoding XML string and creates a              */
 /*      FilterEncodingNodes corresponding to the string.                */
 /*      Returns a pointer to the first node or NULL if                  */
-/*      unsuccessfull.                                                  */
+/*      unsuccessful.                                                  */
 /*      Calling function should use FreeFilterEncodingNode function     */
-/*      to free memeory.                                                */
+/*      to free memory.                                                */
 /************************************************************************/
 FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString) {
   CPLXMLNode *psRoot = NULL, *psChild = NULL, *psFilter = NULL;
@@ -1431,7 +1431,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       }
 
       /* -------------------------------------------------------------------- */
-      /*      PropertyIsBetween filter : extract property name and boudary    */
+      /*      PropertyIsBetween filter : extract property name and boundary */
       /*      values. The boundary  values are stored in the right            */
       /*      node. The values are separated by a semi-column (;)             */
       /*      Eg of Filter :                                                  */
@@ -1477,7 +1477,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BOUNDARY;
 
-          /* adding a ; between bounary values */
+          /* adding a ; between boundary values */
           const int nStrLength =
               strlen(pszLowerNode) + strlen(pszUpperNode) + 2;
 
@@ -1581,7 +1581,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /*      </ogc:Filter>                                                   */
     /*                                                                      */
     /*                                                                      */
-    /*      Note that for FES1.1.0 the featureid has been depricated in     */
+    /*      Note that for FES1.1.0 the featureid has been deprecated in     */
     /*      favor of GmlObjectId                                            */
     /*      <GmlObjectId gml:id="TREESA_1M.1234"/>                          */
     /*                                                                      */
@@ -1799,7 +1799,7 @@ int FLTIsTemporalFilterType(const char *pszValue) {
 /************************************************************************/
 /*           int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode)           */
 /*                                                                      */
-/*      Verfify if the value of the node is one of the supported        */
+/*      Verify if the value of the node is one of the supported        */
 /*      filter type.                                                    */
 /************************************************************************/
 int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode) {
@@ -1847,7 +1847,7 @@ int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode,
 /************************************************************************/
 /*                          FLTValidForBBoxFilter                       */
 /*                                                                      */
-/*      Validate if there is only one BBOX filter node. Here is waht    */
+/*      Validate if there is only one BBOX filter node. Here is what    */
 /*      is supported (is valid) :                                       */
 /*        - one node which is a BBOX                                    */
 /*        - a logical AND with a valid BBOX                             */
@@ -1994,7 +1994,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
 
       if (psNode->pszValue && pdfDistance) {
         /*
-        sytnax expected is "distance;unit" or just "distance"
+        syntax expected is "distance;unit" or just "distance"
         if unit is there syntax is "URI#unit" (eg http://..../#m)
         or just "unit"
         */
@@ -2053,7 +2053,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
 /*                                FLTGetBBOX                            */
 /*                                                                      */
 /*      Loop through the nodes are return the coordinates of the        */
-/*      first bbox node found. The retrun value is the epsg code of     */
+/*      first bbox node found. The return value is the epsg code of     */
 /*      the bbox.                                                       */
 /************************************************************************/
 const char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect) {
@@ -2351,7 +2351,7 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
       bString = 1;
   }
 
-  /* specical case to be able to have empty strings in the expression. */
+  /* special case to be able to have empty strings in the expression. */
   if (psFilterNode->psRightNode->pszValue == NULL)
     bString = 1;
 
@@ -2432,7 +2432,7 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 /************************************************************************/
 /*                    FLTGetIsBetweenComparisonSQLExpresssion           */
 /*                                                                      */
-/*      Build an SQL expresssion for IsBteween Filter.                  */
+/*      Build an SQL expression for IsBteween Filter.                  */
 /************************************************************************/
 char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
                                               layerObj *lp) {
@@ -2483,9 +2483,9 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   }
 
   /* -------------------------------------------------------------------- */
-  /*      build expresssion.                                              */
+  /*      build expression.                                              */
   /* -------------------------------------------------------------------- */
-  /*opening paranthesis */
+  /*opening parenthesis */
   strlcat(szBuffer, " (", bufferSize);
 
   /* attribute */
@@ -2523,7 +2523,7 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   if (bString)
     strlcat(szBuffer, "'", bufferSize);
 
-  /*closing paranthesis*/
+  /*closing parenthesis*/
   strlcat(szBuffer, ")", bufferSize);
 
   msFreeCharArray(aszBounds, nBounds);

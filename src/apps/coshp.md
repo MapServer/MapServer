@@ -45,7 +45,7 @@ Nodes contain an
 * **byte 28, len 8** is a the **double** maxy of the node
 * **byte 36, len 4** is an **integer** numShapes, the count of shape ids stored in this node
 * **byte 40, len 4\*numShapes** is an **array of integer** shape ids
-* **btye 40+4\*numShapes, 40+4\*numShapes+4** is an **integer** numChildren number of child nodes under this node
+* **byte 40+4\*numShapes, 40+4\*numShapes+4** is an **integer** numChildren number of child nodes under this node
 
 All **integer** and **double** values may require a byte swap, if the system byte order differs from the file byte order.
 

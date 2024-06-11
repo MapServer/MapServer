@@ -1261,7 +1261,7 @@ static msOGRFileInfo *msOGRFileOpen(layerObj *layer, const char *connection)
   }
 
   /* ------------------------------------------------------------------
-   * OK... open succeded... alloc and fill msOGRFileInfo inside layer obj
+   * OK... open succeeded... alloc and fill msOGRFileInfo inside layer obj
    * ------------------------------------------------------------------ */
   msOGRFileInfo *psInfo = (msOGRFileInfo *)CPLCalloc(1, sizeof(msOGRFileInfo));
 
@@ -2359,7 +2359,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
           // Casting GeoPackage geometries to spatialie ones is done
           // automatically normally, since GDAL enables the
           // "amphibious" mode, but without it
-          // explicilty specified, spatialite 4.3.0a does an
+          // explicitly specified, spatialite 4.3.0a does an
           // out-of-bounds access.
           filter = msStringConcatenate(filter, "GeomFromGPB(");
         }
@@ -4519,7 +4519,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map,
       styleObj *s;
       int nIndex;
       if (bIsPenBrushOnly) {
-        /* Historic behaviour when there is a PEN and BRUSH only */
+        /* Historic behavior when there is a PEN and BRUSH only */
         if (bIsBrush || layer->type == MS_LAYER_POLYGON)
           // This is a multipart symbology, so pen defn goes in the
           // overlaysymbol params
@@ -5252,7 +5252,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   layer->vtable->LayerGetNumFeatures = msOGRLayerGetNumFeatures;
-  /* layer->vtable->LayerGetAutoProjection, use defaut*/
+  /* layer->vtable->LayerGetAutoProjection, use default*/
 
   layer->vtable->LayerEscapeSQLParam = msOGREscapeSQLParam;
   layer->vtable->LayerEscapePropertyName = msOGREscapePropertyName;

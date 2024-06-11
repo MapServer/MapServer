@@ -418,7 +418,7 @@ typedef struct {
   char *name;             /* name of the geometry (type of GML property) */
   char *type;             /* raw type for these geometries
                              (point|multipoint|line|multiline|polygon|multipolygon */
-  int occurmin, occurmax; /* number of occurances (default 0,1) */
+  int occurmin, occurmax; /* number of occurrences (default 0,1) */
 } gmlGeometryObj;
 
 typedef struct {

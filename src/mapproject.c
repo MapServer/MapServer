@@ -430,7 +430,7 @@ reprojectionObj *msProjectCreateReprojector(projectionObj *in,
     PJ *pj = NULL;
 
     if ((in == NULL || in->proj == NULL) && out &&
-        out->proj) { /* input coordinates are lat/lon */
+        out->proj) { /* input coordinates are lat/long */
       PJ *source_crs = getBaseGeographicCRS(out);
       projectionObj in_modified;
       memset(&in_modified, 0, sizeof(in_modified));
@@ -2378,7 +2378,7 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit) {
 /*           int GetMapserverUnitUsingProj(projectionObj *psProj)       */
 /*                                                                      */
 /*      Return a mapserver unit corresponding to the projection         */
-/*      passed. Retunr -1 on failure                                    */
+/*      passed. Return -1 on failure                                    */
 /************************************************************************/
 int GetMapserverUnitUsingProj(projectionObj *psProj) {
   if (msProjIsGeographicCRS(psProj))

@@ -39,7 +39,7 @@
 
 # RUN_PARMS: wfs_200_caps_205.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.5&REQUEST=GetCapabilities" > [EXTRACT_SERVICE_VERSION]
 
-# undefined behaviour (I think): repeated parameter. We take the first value.
+# undefined behavior (I think): repeated parameter. We take the first value.
 # RUN_PARMS: wfs_200_caps_200_110.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&VERSION=1.1.0&REQUEST=GetCapabilities" > [EXTRACT_SERVICE_VERSION]
 
 # Capabilities : ACCEPTVERSIONS
@@ -214,7 +214,7 @@
 # RUN_PARMS: wfs_200_getfeature_startindex_19_count2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&STARTINDEX=19&COUNT=2" > [RESULT_DEVERSION]
 # Should return 1 feature, have a previous uri pointing to STARTINDEX=18 and no next uri
 # RUN_PARMS: wfs_200_getfeature_startindex_20_count2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&STARTINDEX=20&COUNT=2" > [RESULT_DEVERSION]
-# Should return 0 feature. No previous uri : behaviour not defined in WFS 2.0 spec
+# Should return 0 feature. No previous uri : behavior not defined in WFS 2.0 spec
 # RUN_PARMS: wfs_200_getfeature_startindex_21_count2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=province&STARTINDEX=21&COUNT=2" > [RESULT_DEVERSION]
 #
 # -------------------

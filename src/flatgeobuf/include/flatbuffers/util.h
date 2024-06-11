@@ -360,7 +360,7 @@ inline bool StringToNumber<uint64_t>(const char *str, uint64_t *val) {
   // If the minus sign was part of the input sequence, the numeric value
   // calculated from the sequence of digits is negated as if by unary minus
   // in the result type, which applies unsigned integer wraparound rules.
-  // Fix this behaviour (except -0).
+  // Fix this behavior (except -0).
   if (*val) {
     auto s = str;
     while (*s && !is_digit(*s)) s++;

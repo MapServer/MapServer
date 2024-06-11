@@ -397,7 +397,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img) {
   pointObj point;
   imageObj *image = NULL;
   rendererVTableObj *renderer;
-  symbolObj *embededSymbol;
+  symbolObj *embeddedSymbol;
   char *imageType = NULL;
 
   index = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
@@ -406,7 +406,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img) {
                    index); /* remove cached symbol in case the function is
    called multiple times with different zoom levels */
 
-  if ((embededSymbol = msGrowSymbolSet(&map->symbolset)) == NULL)
+  if ((embeddedSymbol = msGrowSymbolSet(&map->symbolset)) == NULL)
     return MS_FAILURE;
 
   s = map->symbolset.numsymbols;
@@ -435,60 +435,60 @@ int msEmbedScalebar(mapObj *map, imageObj *img) {
   if (!image) {
     return MS_FAILURE;
   }
-  embededSymbol->pixmap_buffer = calloc(1, sizeof(rasterBufferObj));
-  MS_CHECK_ALLOC(embededSymbol->pixmap_buffer, sizeof(rasterBufferObj),
+  embeddedSymbol->pixmap_buffer = calloc(1, sizeof(rasterBufferObj));
+  MS_CHECK_ALLOC(embeddedSymbol->pixmap_buffer, sizeof(rasterBufferObj),
                  MS_FAILURE);
 
   if (MS_SUCCESS !=
-      renderer->getRasterBufferCopy(image, embededSymbol->pixmap_buffer)) {
+      renderer->getRasterBufferCopy(image, embeddedSymbol->pixmap_buffer)) {
     return MS_FAILURE;
   }
 
-  embededSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  embededSymbol->name = msStrdup("scalebar");
-  embededSymbol->sizex = embededSymbol->pixmap_buffer->width;
-  embededSymbol->sizey = embededSymbol->pixmap_buffer->height;
+  embeddedSymbol->type = MS_SYMBOL_PIXMAP; /* initialize a few things */
+  embeddedSymbol->name = msStrdup("scalebar");
+  embeddedSymbol->sizex = embeddedSymbol->pixmap_buffer->width;
+  embeddedSymbol->sizey = embeddedSymbol->pixmap_buffer->height;
   if (map->scalebar.transparent) {
-    embededSymbol->transparent = MS_TRUE;
-    embededSymbol->transparentcolor = 0;
+    embeddedSymbol->transparent = MS_TRUE;
+    embeddedSymbol->transparentcolor = 0;
   }
 
   switch (map->scalebar.position) {
   case (MS_LL):
-    point.x = MS_NINT(embededSymbol->pixmap_buffer->width / 2.0) +
+    point.x = MS_NINT(embeddedSymbol->pixmap_buffer->width / 2.0) +
               map->scalebar.offsetx;
     point.y = map->height -
-              MS_NINT(embededSymbol->pixmap_buffer->height / 2.0) -
+              MS_NINT(embeddedSymbol->pixmap_buffer->height / 2.0) -
               map->scalebar.offsety;
     break;
   case (MS_LR):
-    point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width / 2.0) -
+    point.x = map->width - MS_NINT(embeddedSymbol->pixmap_buffer->width / 2.0) -
               map->scalebar.offsetx;
     point.y = map->height -
-              MS_NINT(embededSymbol->pixmap_buffer->height / 2.0) -
+              MS_NINT(embeddedSymbol->pixmap_buffer->height / 2.0) -
               map->scalebar.offsety;
     break;
   case (MS_LC):
     point.x = MS_NINT(map->width / 2.0) + map->scalebar.offsetx;
     point.y = map->height -
-              MS_NINT(embededSymbol->pixmap_buffer->height / 2.0) -
+              MS_NINT(embeddedSymbol->pixmap_buffer->height / 2.0) -
               map->scalebar.offsety;
     break;
   case (MS_UR):
-    point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width / 2.0) -
+    point.x = map->width - MS_NINT(embeddedSymbol->pixmap_buffer->width / 2.0) -
               map->scalebar.offsetx;
-    point.y = MS_NINT(embededSymbol->pixmap_buffer->height / 2.0) +
+    point.y = MS_NINT(embeddedSymbol->pixmap_buffer->height / 2.0) +
               map->scalebar.offsety;
     break;
   case (MS_UL):
-    point.x = MS_NINT(embededSymbol->pixmap_buffer->width / 2.0) +
+    point.x = MS_NINT(embeddedSymbol->pixmap_buffer->width / 2.0) +
               map->scalebar.offsetx;
-    point.y = MS_NINT(embededSymbol->pixmap_buffer->height / 2.0) +
+    point.y = MS_NINT(embeddedSymbol->pixmap_buffer->height / 2.0) +
               map->scalebar.offsety;
     break;
   case (MS_UC):
     point.x = MS_NINT(map->width / 2.0) + map->scalebar.offsetx;
-    point.y = MS_NINT(embededSymbol->pixmap_buffer->height / 2.0) +
+    point.y = MS_NINT(embeddedSymbol->pixmap_buffer->height / 2.0) +
               map->scalebar.offsety;
     break;
   }

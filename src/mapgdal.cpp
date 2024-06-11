@@ -71,7 +71,7 @@ void msGDALCleanup(void)
     /*
     ** Cleanup any unreferenced but open datasets as will tend
     ** to exist due to deferred close requests.  We are careful
-    ** to only close one file at a time before refecting the
+    ** to only close one file at a time before reflecting the
     ** list as closing some datasets may cause others to be
     ** closed (subdatasets in a VRT for instance).
     */
@@ -684,7 +684,7 @@ char *msProjectionObj2OGCWKT(projectionObj *projection)
 
 int msGDALDriverSupportsVirtualIOOutput(GDALDriverH hDriver) {
   /* We need special testing here for the netCDF driver, since recent */
-  /* GDAL versions advertize VirtualIO support, but this is only for the */
+  /* GDAL versions advertise VirtualIO support, but this is only for the */
   /* read-side of the driver, not the write-side. */
   return GDALGetMetadataItem(hDriver, GDAL_DCAP_VIRTUALIO, NULL) != NULL &&
          !EQUAL(GDALGetDescription(hDriver), "netCDF");

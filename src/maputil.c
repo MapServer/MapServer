@@ -1236,7 +1236,7 @@ void msFreeImage(imageObj *image) {
 
 /*
 ** Return an array containing all the layer's index given a group name.
-** If nothing is found, NULL is returned. The nCount is initalized
+** If nothing is found, NULL is returned. The nCount is initialized
 ** to the number of elements in the returned array.
 ** Note : the caller of the function should free the array.
 */
@@ -1279,7 +1279,7 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount) {
 /************************************************************************/
 /*        pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)   */
 /*                                                                      */
-/*      Using a measured value get the XY location it corresonds        */
+/*      Using a measured value get the XY location it corresponds        */
 /*      to.                                                             */
 /*                                                                      */
 /************************************************************************/
@@ -1362,7 +1362,7 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m) {
 /************************************************************************/
 /*       IntersectionPointLinepointObj *p, pointObj *a, pointObj *b)    */
 /*                                                                      */
-/*      Retunrs a point object corresponding to the intersection of     */
+/*      Returns a point object corresponding to the intersection of     */
 /*      point p and a line formed of 2 points : a and b.                */
 /*                                                                      */
 /*      Alorith base on :                                               */
@@ -1718,7 +1718,7 @@ char *msTmpFilename(const char *ext) {
 }
 
 /**
- *  Generic function to Initalize an image object.
+ *  Generic function to Initialize an image object.
  */
 imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                         char *imagepath, char *imageurl, double resolution,
@@ -1841,13 +1841,13 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 }
 
 /**
- * Generic function to transorm a point.
+ * Generic function to transform a point.
  *
  */
 void msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
                       imageObj *image) {
   double invcellsize;
-  /*We should probabaly have a function defined at all the renders*/
+  /*We should probably have a function defined at all the renders*/
   if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
     if (image->format->renderer == MS_RENDER_WITH_KML) {
       return;

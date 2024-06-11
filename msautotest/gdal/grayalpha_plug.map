@@ -1,6 +1,6 @@
 #
 # Tests overlaying a greyscale image with an alpha band on a greyscale image
-# into an RGBA output via the AGG2 plugable renderer.
+# into an RGBA output via the AGG2 pluggable renderer.
 #
 # REQUIRES: SUPPORTS=AGG
 #

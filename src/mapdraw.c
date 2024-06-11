@@ -634,7 +634,7 @@ imageObj *msDrawMap(mapObj *map, int querymap) {
   }
 
   /* Do we need to fake out stuff for rotated support? */
-  /* This really needs to be done on every preceeding exit point too... */
+  /* This really needs to be done on every preceding exit point too... */
   if (map->gt.need_geotransform)
     msMapRestoreRealExtent(map);
 
@@ -812,7 +812,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image) {
   imageObj *image_draw = image;
   outputFormatObj *altFormat = NULL;
   int retcode = MS_SUCCESS;
-  const char *alternativeFomatString = NULL;
+  const char *alternativeFormatString = NULL;
   layerObj *maskLayer = NULL;
 
   if (!msLayerIsVisible(map, layer))
@@ -911,10 +911,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image) {
   msImageStartLayer(map, layer, image);
 
   /*check if an alternative renderer should be used for this layer*/
-  alternativeFomatString = msLayerGetProcessingKey(layer, "RENDERER");
+  alternativeFormatString = msLayerGetProcessingKey(layer, "RENDERER");
   if (MS_RENDERER_PLUGIN(image_draw->format) &&
-      alternativeFomatString != NULL &&
-      (altFormat = msSelectOutputFormat(map, alternativeFomatString))) {
+      alternativeFormatString != NULL &&
+      (altFormat = msSelectOutputFormat(map, alternativeFormatString))) {
     rendererVTableObj *renderer = NULL;
     msInitializeRendererVTable(altFormat);
 
@@ -1887,7 +1887,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image) {
     return rv;
   }
 
-  /* RFC-86 Scale dependant token replacements*/
+  /* RFC-86 Scale dependent token replacements*/
   rv = msLayerApplyScaletokens(layer,
                                (layer->map) ? layer->map->scaledenom : -1);
   if (rv != MS_SUCCESS)
@@ -3481,7 +3481,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
             /* we have an angle follow label */
             cachePtr->bbox = cachePtr->textsymbols[0]->textpath->bounds.bbox;
 
-            /* before going any futher, check that mindistance is respected */
+            /* before going any further, check that mindistance is respected */
             if (cachePtr->numtextsymbols &&
                 cachePtr->textsymbols[0]->label->mindistance > 0.0 &&
                 cachePtr->textsymbols[0]->annotext) {
@@ -3609,14 +3609,14 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
                 }
               }
               if (have_label_marker == -1)
-                return MS_FAILURE; /* error occured (symbol not found, etc...)
+                return MS_FAILURE; /* error occurred (symbol not found, etc...)
                                     */
 
               if (textSymbolPtr->annotext) {
                 /*
                  * if we don't have an offset defined, first check that the
                  * labelpoint itself does not collide this helps speed things up
-                 * in dense labelling, as if the labelpoint collides there's no
+                 * in dense labeling, as if the labelpoint collides there's no
                  * use in computing the labeltext bounds (i.e. going into
                  * shaping+freetype). We do however skip collision testing
                  * against the marker cache, as we want to allow rendering a
@@ -3638,7 +3638,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
                                     map, cachePtr, &labelpoint_bounds,
                                     MS_MAX_LABEL_PRIORITY, l)) {
                     cachePtr->status =
-                        MS_DELETE; /* we won't check for leader offseted
+                        MS_DELETE; /* we won't check for leader offsetted
                                       positions, as the anchor point colided */
                     MS_DEBUG(MS_DEBUGLEVEL_DEVDEBUG, map,
                              "Skipping label %d \"%s\" of labelgroup %d of "
@@ -3679,7 +3679,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
                 }
 
                 if (textSymbolPtr->label->position == MS_AUTO) {
-                  /* no point in using auto positionning if the marker cannot be
+                  /* no point in using auto positioning if the marker cannot be
                    * placed */
                   int positions[MS_POSITIONS_LENGTH], npositions = 0;
 

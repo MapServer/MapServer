@@ -784,7 +784,7 @@ int msOWSSchemaValidation(const char *xml_schema, const char *xml) {
   schema = NULL;
   ret = -1;
 
-  /* To valide WFS 2.0 requests, we might need to explicitely import */
+  /* To valid WFS 2.0 requests, we might need to explicitly import */
   /* GML and FES 2.0 */
   if (strlen(xml_schema) > strlen(MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION) &&
       strcmp(xml_schema + strlen(xml_schema) -

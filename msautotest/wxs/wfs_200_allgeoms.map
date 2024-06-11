@@ -29,7 +29,7 @@
 # RUN_PARMS: wfs_200_allgeoms_post_getfeature_filter_first_layer.xml [MAPSERV] [POST]<?xml version="1.0" ?><GetFeature service="WFS" version="2.0.0" xmlns="http://www.opengis.net/wfs/2.0"  xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd"><Query typeNames="point"><fes:Filter><fes:ResourceId rid="point.1"/></fes:Filter></Query><Query typeNames="multipoint"></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_allgeoms_post_getfeature_filter_second_layer.xml [MAPSERV] [POST]<?xml version="1.0" ?><GetFeature service="WFS" version="2.0.0" xmlns="http://www.opengis.net/wfs/2.0"  xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd"><Query typeNames="point"></Query><Query typeNames="multipoint"><fes:Filter><fes:ResourceId rid="multipoint.1"/></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
 #
-# Test numberMatched behaviour
+# Test numberMatched behavior
 # RUN_PARMS: wfs_200_allgeoms_getfeature_count_0.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=point,multipoint,linestring,multilinestring,polygon,multipolygon&COUNT=0" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_allgeoms_getfeature_bbox_count_0.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=point,multipoint,linestring,multilinestring,polygon,multipolygon&BBOX=222638,6274861,333959,6446276,EPSG:3857&COUNT=0" > [RESULT_DEVERSION]
 #

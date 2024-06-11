@@ -86,7 +86,7 @@ def compare_and_report(out_file, this_path="."):
         print("result images perceptually match, though files differ.")
 
     elif cmp == "nomatch":
-        assert False, "results dont match, TEST FAILED."
+        assert False, "results don't match, TEST FAILED."
 
     elif cmp == "noresult":
         assert False, "no result file generated, TEST FAILED."

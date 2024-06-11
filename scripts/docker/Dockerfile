@@ -146,7 +146,7 @@ RUN cd /build && \
 #    && wget http://download.osgeo.org/proj/vdatum/egm08_25/egm08_25.gtx && mv egm08_25.gtx /usr/share/proj \
 #    && rm -rf /vdatum
 
-# Force buit libraries dependencies
+# Update given built libraries dependencies
 RUN ldconfig
 
 # Enable these Apache modules

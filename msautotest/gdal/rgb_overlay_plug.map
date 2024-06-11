@@ -1,6 +1,6 @@
 #
 # Tests overlaying an RGB image with a transparent value on a greyscale image
-# into an RGB output via the AGG/plugable rendering mechanism.
+# into an RGB output via the AGG/pluggable rendering mechanism.
 #
 # NOTE: without resampling. 
 #

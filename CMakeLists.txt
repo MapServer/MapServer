@@ -147,12 +147,12 @@ int main(int argc, char **argv) {
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-#options suported by the cmake builder
+#options supported by the cmake builder
 option(WITH_PROTOBUFC "Choose if protocol buffers support should be built in (required for vector tiles)" ON)
 option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
 option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
 option(WITH_WMS "Enable WMS Server support (requires PROJ support)" ON)
-option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for right-to-left languages) (requires HARFBUZZ)" ON)
+option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (useful for right-to-left languages) (requires HARFBUZZ)" ON)
 option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
 option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
@@ -182,7 +182,7 @@ option(WITH_ORACLE_PLUGIN "include oracle spatial database input support as plug
 option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
-option(WITH_V8 "include javacript v8 scripting" OFF)
+option(WITH_V8 "include javascript v8 scripting" OFF)
 option(WITH_PIXMAN "use (experimental) support for pixman for layer compositing operations" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)

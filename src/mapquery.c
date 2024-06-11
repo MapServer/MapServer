@@ -34,8 +34,8 @@
 
 /* This object is used by the various mapQueryXXXXX() functions. It stores
  * the total amount of shapes and their RAM footprint, when they are cached
- * in the resultCacheObj* of layers. This is the total number accross all
- * queried layers. However this is isn't persistant accross several calls to
+ * in the resultCacheObj* of layers. This is the total number across all
+ * queried layers. However this is isn't persistent across several calls to
  * mapQueryXXXXX(), if the resultCacheObj* objects weren't cleaned up. This
  * is not needed in the context of WFS, for which this is used for now.
  */

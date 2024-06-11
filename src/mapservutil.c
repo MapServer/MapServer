@@ -382,7 +382,7 @@ int msCGISetMode(mapservObj *mapserv) {
 }
 
 /*
-** API-related funtions.
+** API-related functions.
 */
 int msCGIIsAPIRequest(mapservObj *mapserv) {
   char **tmp_api_path = NULL;
@@ -1567,7 +1567,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv) {
     return MS_FAILURE;
 
   /* -------------------------------------------------------------------- */
-  /*      generate map, legend, scalebar and refernce images.             */
+  /*      generate map, legend, scalebar and reference images.             */
   /* -------------------------------------------------------------------- */
   if (msGenerateImages(mapserv, MS_FALSE, MS_TRUE) != MS_SUCCESS)
     return MS_FAILURE;

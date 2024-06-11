@@ -295,7 +295,7 @@ int msLoadMapContextListInMetadata(CPLXMLNode *psRoot, hashTableObj *metadata,
 
 /* msLoadMapContextContactInfo
 **
-** Put the Contact informations from a XML node and put them in a metadata.
+** Put the Contact information from a XML node and put them in a metadata.
 **
 */
 int msLoadMapContextContactInfo(CPLXMLNode *psRoot, hashTableObj *metadata) {
@@ -1022,7 +1022,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
 **
 ** load an OGC Web Map Context format from an URL
 **
-** Take a map object and a URL to a conect file in arguments
+** Take a map object and a URL to a connect file in arguments
 */
 
 int msLoadMapContextURL(mapObj *map, char *urlfilename,

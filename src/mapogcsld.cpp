@@ -1836,7 +1836,7 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle, mapObj *map) {
   }
 
   /* graphic fill and graphic stroke pare parsed the same way :  */
-  /* TODO : It seems inconsistent to me since the only diffrence */
+  /* TODO : It seems inconsistent to me since the only difference */
   /* between them seems to be fill (fill) or not fill (stroke). And */
   /* then again the fill parameter can be used inside both elements. */
   psGraphicFill = CPLGetXMLNode(psFill, "GraphicFill");
@@ -2463,7 +2463,7 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle,
           return MS_FAILURE;
         }
 
-        /*external symbols using http will be automaticallly downloaded. The
+        /*external symbols using http will be automatically downloaded. The
           file should be saved in a temporary directory (msAddImageSymbol)
           #2305*/
         psStyle->symbol = msGetSymbolIndex(&map->symbolset, symbolurl, MS_TRUE);
@@ -2689,15 +2689,15 @@ int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      <xsd:element ref="se:Value"/>                                   */
 /*      </xsd:sequence>                                                 */
 /*      </xsd:sequence>                                                 */
-/*      <xsd:attribute name="threshholdsBelongTo"
- * type="se:ThreshholdsBelongToType" use="optional"/>*/
+/*      <xsd:attribute name="thresholdsBelongTo"
+ * type="se:ThresholdsBelongToType" use="optional"/>*/
 /*      </xsd:extension>                                                */
 /*      </xsd:complexContent>                                           */
 /*      </xsd:complexType>                                              */
 /*      <xsd:element name="LookupValue" type="se:ParameterValueType"/>  */
 /*      <xsd:element name="Value" type=" se:ParameterValueType"/>       */
 /*      <xsd:element name="Threshold" type=" se:ParameterValueType"/>   */
-/*      <xsd:simpleType name="ThreshholdsBelongToType">                 */
+/*      <xsd:simpleType name="ThresholdsBelongToType">                 */
 /*      <xsd:restriction base="xsd:token">                              */
 /*      <xsd:enumeration value="succeeding"/>                           */
 /*      <xsd:enumeration value="preceding"/>                            */
@@ -4190,7 +4190,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion) {
 
     if (psLabelExpr.type == MS_STRING) {
       // Rewrite string to an expression so that literal strings and attributes
-      // are explicitely concatenated, e.g.:
+      // are explicitly concatenated, e.g.:
       //   "area is: [area]" becomes ("area is: "+"[area]"+"")
       //             ^^^^^^                     ^^^^^^^^^^^^
       char *result;
@@ -4811,7 +4811,7 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
   if (!pszAnd && !pszOr && !pszNot)
     return 0;
 
-  /* doen not matter how many exactly if there are 2 or more */
+  /* done not matter how many exactly if there are 2 or more */
   if ((pszAnd && pszOr) || (pszAnd && pszNot) || (pszOr && pszNot))
     return 2;
 
@@ -4830,7 +4830,7 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
 }
 
 static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
-                                          const char *pszComparionValue,
+                                          const char *pszComparisonValue,
                                           int bReturnName) {
   char **aszValues = NULL;
   char *pszAttributeName = NULL;
@@ -4844,13 +4844,13 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
   char *pszFinalAttributeName = NULL, *pszFinalAttributeValue = NULL;
   int bSingleQuote = 0, bDoubleQuote = 0;
 
-  if (!pszExpression || !pszComparionValue || strlen(pszExpression) == 0)
+  if (!pszExpression || !pszComparisonValue || strlen(pszExpression) == 0)
     return NULL;
 
   szCompare[0] = '\0';
   szCompare2[0] = '\0';
 
-  if (strcasecmp(pszComparionValue, "PropertyIsEqualTo") == 0) {
+  if (strcasecmp(pszComparisonValue, "PropertyIsEqualTo") == 0) {
     cCompare = '=';
     szCompare[0] = 'e';
     szCompare[1] = 'q';
@@ -4858,7 +4858,7 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
 
     bOneCharCompare = 1;
   }
-  if (strcasecmp(pszComparionValue, "PropertyIsNotEqualTo") == 0) {
+  if (strcasecmp(pszComparisonValue, "PropertyIsNotEqualTo") == 0) {
     szCompare[0] = 'n';
     szCompare[1] = 'e';
     szCompare[2] = '\0';
@@ -4868,7 +4868,7 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     szCompare2[2] = '\0';
 
     bOneCharCompare = 0;
-  } else if (strcasecmp(pszComparionValue, "PropertyIsLike") == 0) {
+  } else if (strcasecmp(pszComparisonValue, "PropertyIsLike") == 0) {
     szCompare[0] = '=';
     szCompare[1] = '~';
     szCompare[2] = '\0';
@@ -4878,13 +4878,13 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     szCompare2[2] = '\0';
 
     bOneCharCompare = 0;
-  } else if (strcasecmp(pszComparionValue, "PropertyIsLessThan") == 0) {
+  } else if (strcasecmp(pszComparisonValue, "PropertyIsLessThan") == 0) {
     cCompare = '<';
     szCompare[0] = 'l';
     szCompare[1] = 't';
     szCompare[2] = '\0';
     bOneCharCompare = 1;
-  } else if (strcasecmp(pszComparionValue, "PropertyIsLessThanOrEqualTo") ==
+  } else if (strcasecmp(pszComparisonValue, "PropertyIsLessThanOrEqualTo") ==
              0) {
     szCompare[0] = 'l';
     szCompare[1] = 'e';
@@ -4895,13 +4895,13 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     szCompare2[2] = '\0';
 
     bOneCharCompare = 0;
-  } else if (strcasecmp(pszComparionValue, "PropertyIsGreaterThan") == 0) {
+  } else if (strcasecmp(pszComparisonValue, "PropertyIsGreaterThan") == 0) {
     cCompare = '>';
     szCompare[0] = 'g';
     szCompare[1] = 't';
     szCompare[2] = '\0';
     bOneCharCompare = 1;
-  } else if (strcasecmp(pszComparionValue, "PropertyIsGreaterThanOrEqualTo") ==
+  } else if (strcasecmp(pszComparisonValue, "PropertyIsGreaterThanOrEqualTo") ==
              0) {
     szCompare[0] = 'g';
     szCompare[1] = 'e';
@@ -5045,7 +5045,7 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
 
     /*trim  for regular expressions*/
     if (strlen(pszFinalAttributeValue) > 2 &&
-        strcasecmp(pszComparionValue, "PropertyIsLike") == 0) {
+        strcasecmp(pszComparisonValue, "PropertyIsLike") == 0) {
       int len = strlen(pszFinalAttributeValue);
       msStringTrimBlanks(pszFinalAttributeValue);
       if (pszFinalAttributeValue[0] == '/' &&
@@ -5074,13 +5074,13 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
 }
 
 static char *msSLDGetAttributeName(const char *pszExpression,
-                                   const char *pszComparionValue) {
-  return msSLDGetAttributeNameOrValue(pszExpression, pszComparionValue, 1);
+                                   const char *pszComparisonValue) {
+  return msSLDGetAttributeNameOrValue(pszExpression, pszComparisonValue, 1);
 }
 
 static char *msSLDGetAttributeValue(const char *pszExpression,
-                                    const char *pszComparionValue) {
-  return msSLDGetAttributeNameOrValue(pszExpression, pszComparionValue, 0);
+                                    const char *pszComparisonValue) {
+  return msSLDGetAttributeNameOrValue(pszExpression, pszComparisonValue, 0);
 }
 
 /************************************************************************/
@@ -5115,24 +5115,24 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
     if (!psNode)
       psNode = FLTCreateFilterEncodingNode();
 
-    const char *pszComparionValue = msSLDGetComparisonValue(pszExpression);
-    char *pszAttibuteName =
-        msSLDGetAttributeName(pszExpression, pszComparionValue);
-    char *pszAttibuteValue =
-        msSLDGetAttributeValue(pszExpression, pszComparionValue);
-    if (pszComparionValue && pszAttibuteName && pszAttibuteValue) {
+    const char *pszComparisonValue = msSLDGetComparisonValue(pszExpression);
+    char *pszAttributeName =
+        msSLDGetAttributeName(pszExpression, pszComparisonValue);
+    char *pszAttributeValue =
+        msSLDGetAttributeValue(pszExpression, pszComparisonValue);
+    if (pszComparisonValue && pszAttributeName && pszAttributeValue) {
       psNode->eType = FILTER_NODE_TYPE_COMPARISON;
-      psNode->pszValue = msStrdup(pszComparionValue);
+      psNode->pszValue = msStrdup(pszComparisonValue);
 
       psNode->psLeftNode = FLTCreateFilterEncodingNode();
       psNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-      psNode->psLeftNode->pszValue = msStrdup(pszAttibuteName);
+      psNode->psLeftNode->pszValue = msStrdup(pszAttributeName);
 
       psNode->psRightNode = FLTCreateFilterEncodingNode();
       psNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
-      psNode->psRightNode->pszValue = msStrdup(pszAttibuteValue);
+      psNode->psRightNode->pszValue = msStrdup(pszAttributeValue);
 
-      if (strcasecmp(pszComparionValue, "PropertyIsLike") == 0) {
+      if (strcasecmp(pszComparisonValue, "PropertyIsLike") == 0) {
         psNode->pOther = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
         ((FEPropertyIsLike *)psNode->pOther)->bCaseInsensitive = 0;
         ((FEPropertyIsLike *)psNode->pOther)->pszWildCard = msStrdup("*");
@@ -5140,8 +5140,8 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
         ((FEPropertyIsLike *)psNode->pOther)->pszEscapeChar = msStrdup("!");
       }
     }
-    free(pszAttibuteName);
-    free(pszAttibuteValue);
+    free(pszAttributeName);
+    free(pszAttributeValue);
     return psNode;
 
   } else if (nOperators == 1) {
@@ -5159,60 +5159,60 @@ static FilterEncodingNode *BuildExpressionTree(const char *pszExpression,
 
       if (pszLeftExpression || pszRightExpression) {
         if (pszLeftExpression) {
-          const char *pszComparionValue =
+          const char *pszComparisonValue =
               msSLDGetComparisonValue(pszLeftExpression);
-          char *pszAttibuteName =
-              msSLDGetAttributeName(pszLeftExpression, pszComparionValue);
-          char *pszAttibuteValue =
-              msSLDGetAttributeValue(pszLeftExpression, pszComparionValue);
+          char *pszAttributeName =
+              msSLDGetAttributeName(pszLeftExpression, pszComparisonValue);
+          char *pszAttributeValue =
+              msSLDGetAttributeValue(pszLeftExpression, pszComparisonValue);
 
-          if (pszComparionValue && pszAttibuteName && pszAttibuteValue) {
+          if (pszComparisonValue && pszAttributeName && pszAttributeValue) {
             psNode->psLeftNode = FLTCreateFilterEncodingNode();
             psNode->psLeftNode->eType = FILTER_NODE_TYPE_COMPARISON;
-            psNode->psLeftNode->pszValue = msStrdup(pszComparionValue);
+            psNode->psLeftNode->pszValue = msStrdup(pszComparisonValue);
 
             psNode->psLeftNode->psLeftNode = FLTCreateFilterEncodingNode();
             psNode->psLeftNode->psLeftNode->eType =
                 FILTER_NODE_TYPE_PROPERTYNAME;
             psNode->psLeftNode->psLeftNode->pszValue =
-                msStrdup(pszAttibuteName);
+                msStrdup(pszAttributeName);
 
             psNode->psLeftNode->psRightNode = FLTCreateFilterEncodingNode();
             psNode->psLeftNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
             psNode->psLeftNode->psRightNode->pszValue =
-                msStrdup(pszAttibuteValue);
+                msStrdup(pszAttributeValue);
           }
 
-          free(pszAttibuteName);
-          free(pszAttibuteValue);
+          free(pszAttributeName);
+          free(pszAttributeValue);
           free(pszLeftExpression);
         }
         if (pszRightExpression) {
-          const char *pszComparionValue =
+          const char *pszComparisonValue =
               msSLDGetComparisonValue(pszRightExpression);
-          char *pszAttibuteName =
-              msSLDGetAttributeName(pszRightExpression, pszComparionValue);
-          char *pszAttibuteValue =
-              msSLDGetAttributeValue(pszRightExpression, pszComparionValue);
+          char *pszAttributeName =
+              msSLDGetAttributeName(pszRightExpression, pszComparisonValue);
+          char *pszAttributeValue =
+              msSLDGetAttributeValue(pszRightExpression, pszComparisonValue);
 
-          if (pszComparionValue && pszAttibuteName && pszAttibuteValue) {
+          if (pszComparisonValue && pszAttributeName && pszAttributeValue) {
             psNode->psRightNode = FLTCreateFilterEncodingNode();
             psNode->psRightNode->eType = FILTER_NODE_TYPE_COMPARISON;
-            psNode->psRightNode->pszValue = msStrdup(pszComparionValue);
+            psNode->psRightNode->pszValue = msStrdup(pszComparisonValue);
 
             psNode->psRightNode->psLeftNode = FLTCreateFilterEncodingNode();
             psNode->psRightNode->psLeftNode->eType =
                 FILTER_NODE_TYPE_PROPERTYNAME;
             psNode->psRightNode->psLeftNode->pszValue =
-                msStrdup(pszAttibuteName);
+                msStrdup(pszAttributeName);
 
             psNode->psRightNode->psRightNode = FLTCreateFilterEncodingNode();
             psNode->psRightNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
             psNode->psRightNode->psRightNode->pszValue =
-                msStrdup(pszAttibuteValue);
+                msStrdup(pszAttributeValue);
           }
-          free(pszAttibuteName);
-          free(pszAttibuteValue);
+          free(pszAttributeName);
+          free(pszAttributeValue);
           free(pszRightExpression);
         }
       }

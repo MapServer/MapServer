@@ -46,7 +46,7 @@
 #
 # bug in MS: ? is treated as * in this case:
 #
-# UN_PARMS: wfs_ogr_native_sql_22.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsLike wildCard="*" singleChar="?" escape="!"><PropertyName>name</PropertyName><Literal>?r*</Literal></PropertyIsLike></Filter>" > [RESULT]
+# RUN_PARMS: wfs_ogr_native_sql_22.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsLike wildCard="*" singleChar="?" escape="!"><PropertyName>name</PropertyName><Literal>?r*</Literal></PropertyIsLike></Filter>" > [RESULT]
 #
 # spatial predicates
 # intersects, disjoint, touches, overlaps, crosses, within, contains, equals, beyond, dwithin

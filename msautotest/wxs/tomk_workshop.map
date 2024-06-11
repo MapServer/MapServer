@@ -247,7 +247,7 @@ MAP
 
    # sets:
    # /WMT_MS_Capabilities/Service/ContactInformation/ContactElectronicMailAddress
-   # /WCS_Capabilities/Service/contactInfo/address/eletronicMailAddress
+   # /WCS_Capabilities/Service/contactInfo/address/electronicMailAddress
    "ows_contactelectronicmailaddress" "tom.kralidis@ec.gc.ca"
 
    # sets:
@@ -256,7 +256,7 @@ MAP
    # /WFS_Capabilities/FeatureTypeList/FeatureType[*]/SRS
    # unless differently defined in LAYER object
    # if you are setting > 1 SRS for WMS, you need to define "wms_srs" and "wfs_srs"
-   # seperately because OGC:WFS only accepts one OUTPUT SRS
+   # separately because OGC:WFS only accepts one OUTPUT SRS
    "ows_srs" "EPSG:4326"	
 
    # sets /WMT_MS_Capabilities/Capability/Layer/Attribution/OnlineResource/@xlink:href

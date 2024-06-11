@@ -297,7 +297,7 @@ static void msWFSPrintRequestCap(const char *request, const char *script_url,
 **
 ** Utility function to check if a space separated list contains  the one passed
 *in argument.
-**  The list comes normaly from ows_srs metadata, and is expected to use the
+**  The list comes normally from ows_srs metadata, and is expected to use the
 *simple EPSG notation
 ** (EPSG:4326 ESPG:42304 ...). The srs comes from the query string and can
 *either
@@ -426,8 +426,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs,
         msFree(pszLayerSRS);
     }
   } else { /*srs is given so it should be valid for all layers*/
-    /*get all the srs defined at the map level and check them aginst the srsName
-      passed as argument*/
+    /*get all the srs defined at the map level and check them against the
+      srsName passed as argument*/
     msFree(pszMapSRS);
     msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_FALSE,
                      &pszMapSRS);
@@ -763,7 +763,7 @@ static int msWFSGetCapabilitiesNegotiateVersion(mapObj *map,
     }
     tmpInt = msOWSCommonNegotiateVersion(iVersion, wfsSupportedVersions,
                                          wfsNumSupportedVersions);
-    /* Old style negociation : paragraph D.11 of OWS 1.1.0 spec */
+    /* Old style negotiation : paragraph D.11 of OWS 1.1.0 spec */
     if (tmpInt < 0) {
       int i;
       for (i = 0; i < wfsNumSupportedVersions; i++) {
@@ -1379,7 +1379,7 @@ static int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj,
                             paramsObj->pszVersion);
     }
   }
-  /* If no outputFormat explicitely asked, use a sensible default for the WFS
+  /* If no outputFormat explicitly asked, use a sensible default for the WFS
      version */
   else {
     switch (nWFSVersion) {
@@ -1500,7 +1500,7 @@ this request. Check wfs/ows_enable_request settings.",
   }
 
   /* output definition for the default feature container, can't use
-     wfs:FeatureCollection with GML3: kept here so that the behaviour with
+     wfs:FeatureCollection with GML3: kept here so that the behavior with
      wfs1.0 and gml3 output is preserved. We can use the wfs:FeatureCollection
      for wfs1.1*/
   if (outputformat == OWS_SFE_SCHEMA && nWFSVersion == OWS_1_0_0) {
@@ -1901,7 +1901,7 @@ static int msWFSGetFeature_GMLPreamble(
     if (nMatchingFeatures < 0) {
       /* If we don't know the exact number, at least return something */
       /* equivalent to what we would return with WFS 1.1, otherwise */
-      /* resultType=hits would not return anything usefull to the client. */
+      /* resultType=hits would not return anything useful to the client. */
       if (iResultTypeHits == MS_TRUE)
         msIO_printf("%d", iNumberOfFeatures);
       else
@@ -2411,7 +2411,7 @@ static int msWFSRetrieveFeatures(
 
     /* -------------------------------------------------------------------- */
     /*      Parse the Filter parameter. If there are several Filter         */
-    /*      parameters, each Filter is inside a parantheses. Eg :           */
+    /*      parameters, each Filter is inside a parentheses. Eg :           */
     /*      FILTER=(<Filter><Within><PropertyName>                          */
     /*      INWATERA_1M/WKB_GEOM|INWATERA_1M/WKB_GEOM                       */
     /*      <PropertyName><gml:Box><gml:coordinates>10,10
@@ -2664,7 +2664,7 @@ this request. Check wfs/ows_enable_request settings.",
         msInitProjection(&sProjTmp);
         msProjectionInheritContextFrom(&sProjTmp, &(map->projection));
         /*do the axis order for now. It is unclear if the bbox are expected
-          ro respect the axis oder defined in the projectsion #3296*/
+          ro respect the axis order defined in the projectsion #3296*/
 
         if (nWFSVersion >= OWS_1_1_0) {
           if ((status = msLoadProjectionStringEPSG(&sProjTmp, sBBoxSrs)) == 0) {
@@ -3100,7 +3100,7 @@ static int msWFSComputeMatchingFeatures(mapObj *map, owsRequestObj *ows_request,
   int nMatchingFeatures = -1;
 
   if (nWFSVersion >= OWS_2_0_0) {
-    /* If no features have been retrived and there was no feature count limit,
+    /* If no features have been retrieved and there was no feature count limit,
      * then */
     /* it is obvious. We must test maxfeatures because if startindex is defined,
      */
@@ -3113,7 +3113,8 @@ static int msWFSComputeMatchingFeatures(mapObj *map, owsRequestObj *ows_request,
      */
     /* that the query has returned less features than the limit, or if there was
      */
-    /* no limit in fature count, we are able to determine the number of matching
+    /* no limit in feature count, we are able to determine the number of
+     * matching
      */
     /* features */
     else if (iNumberOfFeatures > 0 &&
@@ -3126,7 +3127,7 @@ static int msWFSComputeMatchingFeatures(mapObj *map, owsRequestObj *ows_request,
 
     /* Otherwise big hammer ! */
     else {
-      /* The WFS 2.0 spec is not really clear on numberMatched behaviour */
+      /* The WFS 2.0 spec is not really clear on numberMatched behavior */
       /* and there are interesting logic in server implementations. */
       /* */
       /* Deegree
@@ -3444,7 +3445,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
   if (status != MS_SUCCESS)
     return status;
 
-  /* typename is mandatory unless featureid is specfied. We do not
+  /* typename is mandatory unless featureid is specified. We do not
      support featureid */
   if (paramsObj->pszTypeName == NULL && paramsObj->pszFeatureId == NULL) {
     msSetError(MS_WFSERR, "Incomplete WFS request: %s parameter missing",
@@ -3653,7 +3654,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
             }
           }
 
-          /* Add mandatory items that are not explicitely listed. */
+          /* Add mandatory items that are not explicitly listed. */
           /* When the user specifies PROPERTYNAME, we might have to augment */
           /* the list of returned parameters so as to validate against the
            * schema. */
@@ -3717,7 +3718,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
               else
                 papszGMLIncludeItems[lp->index] = msStrdup("");
 
-              /* The user didn't specify explicity PROPERTYNAME for this layer
+              /* The user didn't specify explicitly PROPERTYNAME for this layer
                */
             } else if (strcasecmp(papszPropertyName[k], "!") == 0) {
               /* Add all non-excluded items, but only default and mandatory ones
@@ -4637,7 +4638,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
 
   /*
   ** Validate VERSION against the versions that we support... we don't do this
-  ** for GetCapabilities in order to allow version negociation.
+  ** for GetCapabilities in order to allow version negotiation.
   */
   if (strcmp(paramsObj->pszVersion, "1.0.0") != 0 &&
       strcmp(paramsObj->pszVersion, "1.1.0") != 0 &&
@@ -5349,7 +5350,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         /* --------------------------------------------------------------------
          */
         /*      Parse typenames and filters. If there are multiple queries, */
-        /*      typenames will be build with comma between thme */
+        /*      typenames will be build with comma between them */
         /*      (typename1,typename2,...) and filters will be build with */
         /*      bracets enclosinf the filters :(filter1)(filter2)... */
         /*      propertynames are stored like (property1,property2)(property1)
@@ -5478,7 +5479,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
             psIter = psIter->psNext;
           }
         }
-      } /* end of GetCapabilites */
+      } /* end of GetCapabilities */
       /* -------------------------------------------------------------------- */
       /*      Parse DescribeFeatureType                                       */
       /* -------------------------------------------------------------------- */
@@ -5510,7 +5511,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
           }
         }
 
-      } /* end of DescibeFeatureType */
+      } /* end of DescribeFeatureType */
 
       /* -------------------------------------------------------------------- */
       /*      Parse the ListStoredQueries                                     */

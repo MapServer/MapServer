@@ -275,7 +275,7 @@
     }
 
     %newobject getLabelPoint;
-    /// Given a shape, return a point object suitable for labelling it. 
+    /// Given a shape, return a point object suitable for labeling it. 
     pointObj *getLabelPoint()
     {
         pointObj *point = (pointObj *)calloc(1, sizeof(pointObj));

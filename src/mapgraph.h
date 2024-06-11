@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  Declarations for basic undirected, wighted graph support.
+ * Purpose:  Declarations for basic undirected, weighted graph support.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************

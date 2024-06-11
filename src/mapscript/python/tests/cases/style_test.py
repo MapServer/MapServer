@@ -159,7 +159,7 @@ class NewStylesTestCase(MapTestCase):
         style1 = class0.getStyle(1)
         style1.color.setRGB(255, 255, 0)
         msimg = self.map.draw()
-        filename = "testModifyMutiplePointStyle.png"
+        filename = "testModifyMultiplePointStyle.png"
         msimg.save(filename)
 
     def testInsertStylePastEnd(self):

@@ -48,7 +48,7 @@
 #include "mapcopy.h"
 
 /***********************************************************************
- * msCopyProjectioExtended()                                           *
+ * msCopyProjectionExtended()                                           *
  *                                                                     *
  * Copy a projectionObj while adding additional arguments              *
  **********************************************************************/

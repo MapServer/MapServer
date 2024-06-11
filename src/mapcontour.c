@@ -306,7 +306,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
      * integer sampling step.
      *
      * If source data has a greater cellsize (i.e. lower res) that requested
-     * ouptut map then we use the raw data cellsize as target cellsize since
+     * output map then we use the raw data cellsize as target cellsize since
      * there is no point in interpolating the data for contours in this case.
      */
 

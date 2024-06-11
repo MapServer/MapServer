@@ -191,7 +191,7 @@ static bool msWMSSetTimePattern(const char *timepatternstring,
                                 const char *timestring, bool checkonly) {
   if (timepatternstring && timestring) {
     /* parse the time parameter to extract a distinct time. */
-    /* time value can be dicrete times (eg 2004-09-21), */
+    /* time value can be discrete times (eg 2004-09-21), */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
     const auto atimes = msStringSplit(timestring, ',');
@@ -660,7 +660,7 @@ static bool msWMSValidateDimensionValue(const char *value,
       }
     }
   } else if (extents.size() >
-             1) { /*check if it is muliple values or mutliple ranges*/
+             1) { /*check if it is muliple values or multiple ranges*/
     if (strstr(dimensionextent, "/") == NULL) {
       /*multiple values*/
       isextentavalue = true;
@@ -702,12 +702,12 @@ static bool msWMSValidateDimensionValue(const char *value,
 
   /*for the extent of the dimesion, we support
   single value,  or list of mulitiple values comma separated,
-  a single range or multipe ranges */
+  a single range or multiple ranges */
 
   const auto uservalues = msStringSplit(value, ',');
   bool uservaluevalid = false;
   if (uservalues.size() == 1) {
-    /*user iput=single*/
+    /*user input=single*/
     /*is it descret or range*/
     const auto ranges = msStringSplit(uservalues[0].c_str(), '/');
     if (ranges.size() == 1) { /*discrete*/
@@ -761,7 +761,7 @@ static bool msWMSValidateDimensionValue(const char *value,
       for (const auto &uservalue : uservalues) {
         valueisvalid = false;
         if (isextentavalue) {
-          /*user input is multiple values, extent is defned as one or multiple
+          /*user input is multiple values, extent is defined as one or multiple
            * values*/
           for (const auto &extentvalue : aextentvalues) {
             if (ischaracter) {
@@ -776,11 +776,11 @@ static bool msWMSValidateDimensionValue(const char *value,
               }
             }
           }
-          /*every value shoule be valid*/
+          /*every value should be valid*/
           if (!valueisvalid)
             break;
         } else if (isextentarange) {
-          /*user input is multiple values, extent is defned as one or multiple
+          /*user input is multiple values, extent is defined as one or multiple
            * ranges*/
           for (const auto &extentrange : aextentranges) {
             const float minval = extentrange.x;
@@ -1745,7 +1745,7 @@ this request. Check wms/ows_enable_request settings.",
   }
 
   /* Validate Styles :
-  ** MapServer advertize styles through the group setting in a class object.
+  ** MapServer advertise styles through the group setting in a class object.
   ** If no styles are set MapServer expects to have empty values
   ** for the styles parameter (...&STYLES=&...) Or for multiple Styles/Layers,
   ** we could have ...&STYLES=,,,. If that is not the
@@ -1943,7 +1943,7 @@ this request. Check wms/ows_enable_request settings.",
           "Missing required parameter STYLES. Note to service administrators: "
           "defining the \"wms_allow_getmap_without_styles\" \"true\" "
           "MAP.WEB.METADATA "
-          "item will disable this check (backward compatibility with behaviour "
+          "item will disable this check (backward compatibility with behavior "
           "of MapServer < 8.0)",
           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue",
@@ -2576,7 +2576,7 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
   /* In wms_style_<style_name>_lengendurl_... metadata. So we have to detect */
   /* the current style before reading it. Also in the Style block, we need */
   /* a Title and a name. Title is derived from wms_style_<style>_title, */
-  /* which allows mutiple style definitions, e.g. by using classgroups. */
+  /* which allows multiple style definitions, e.g. by using classgroups. */
   const char *pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
   const char *pszLegendURL = NULL;
   if (pszStyle) {
@@ -3439,7 +3439,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
 
     const char *format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
                                                   "getfeatureinfo_formatlist");
-    /*feature_info_mime_type depricated for MapServer 6.0*/
+    /*feature_info_mime_type deprecated for MapServer 6.0*/
     if (!format_list)
       format_list = msOWSLookupMetadata(&(map->web.metadata), "MO",
                                         "feature_info_mime_type");
@@ -4204,7 +4204,7 @@ static int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values,
   /* maps to devices with non-square pixels. */
 
   /* If there was an SLD in the request, we need to treat it */
-  /* diffrently : some SLD may contain spatial filters requiring */
+  /* differently : some SLD may contain spatial filters requiring */
   /* to do a query. While parsing the SLD and applying it to the */
   /* layer, we added a temporary metadata on the layer */
   /* (tmp_wms_sld_query) for layers with a spatial filter. */
@@ -4245,7 +4245,7 @@ static int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values,
       GET_LAYER(map, i)->status = MS_OFF;
 
   if (sldrequested && sldspatialfilter) {
-    /* set the quermap style so that only selected features will be retruned */
+    /* set the quermap style so that only selected features will be returned */
     map->querymap.status = MS_ON;
     map->querymap.style = MS_SELECTED;
 
@@ -4615,7 +4615,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   }
 
   /*make sure to initialize the map scale so that layers that are scale
-    dependent are resepected for the query*/
+    dependent are respected for the query*/
   msCalculateScale(map->extent, map->units, map->width, map->height,
                    map->resolution, &map->scaledenom);
 
@@ -4715,7 +4715,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   valid_format = MS_FALSE;
   format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
                                     "getfeatureinfo_formatlist");
-  /*feature_info_mime_type depricated for MapServer 6.0*/
+  /*feature_info_mime_type deprecated for MapServer 6.0*/
   if (!format_list)
     format_list = msOWSLookupMetadata(&(map->web.metadata), "MO",
                                       "feature_info_mime_type");
@@ -5048,7 +5048,7 @@ static int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
   int nLayers = 0;
 
   if (!hittest) {
-    /* we can skip alot of testing if we already have a hittest, as it has
+    /* we can skip a lot of testing if we already have a hittest, as it has
      * already been done in the hittesting phase */
 
     sldenabled = msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
@@ -5346,9 +5346,9 @@ this request. Check wms/ows_enable_request settings.",
 }
 
 /*
-** msWMSGetContentDependantLegend()
+** msWMSGetContentDependentLegend()
 */
-static int msWMSGetContentDependantLegend(mapObj *map, int nVersion,
+static int msWMSGetContentDependentLegend(mapObj *map, int nVersion,
                                           char **names, char **values,
                                           int numentries,
                                           const char *wms_exception_format,
@@ -5561,7 +5561,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
   }
 
   /*
-  ** GetCapbilities request needs the service parametr defined as WMS:
+  ** GetCapbilities request needs the service parameter defined as WMS:
   see section 7.1.3.2 wms 1.1.1 specs for decsription.
   */
   if (request && service == NULL &&
@@ -5739,7 +5739,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
   if (msOWSMakeAllLayersUnique(map) != MS_SUCCESS)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 
-  bool isContentDependantLegend = false;
+  bool isContentDependentLegend = false;
   if (strcasecmp(request, "GetLegendGraphic") == 0) {
     /*
      * check for a BBOX in the request, in that case we have a content-dependant
@@ -5755,7 +5755,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
       }
     }
     if (found) {
-      isContentDependantLegend = true;
+      isContentDependentLegend = true;
       /* getLegendGraphic uses LAYER= , we need to create a LAYERS= value that
        * is identical we'll suppose that the client is conformat and hasn't
        * included a LAYERS= parameter in its request */
@@ -5781,11 +5781,11 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
     return msWMSGetSchemaExtension(map);
 
   /* getMap parameters are used by both getMap, getFeatureInfo, and content
-   * dependant legendgraphics */
+   * dependent legendgraphics */
   if (strcasecmp(request, "map") == 0 || strcasecmp(request, "GetMap") == 0 ||
       strcasecmp(request, "feature_info") == 0 ||
       strcasecmp(request, "GetFeatureInfo") == 0 ||
-      strcasecmp(request, "DescribeLayer") == 0 || isContentDependantLegend) {
+      strcasecmp(request, "DescribeLayer") == 0 || isContentDependentLegend) {
 
     const int status = msWMSLoadGetMapParams(
         map, nVersion, req->ParamNames, req->ParamValues, req->NumParams,
@@ -5811,8 +5811,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
   else if (strcasecmp(request, "DescribeLayer") == 0) {
     return msWMSDescribeLayer(map, nVersion, req->ParamNames, req->ParamValues,
                               req->NumParams, wms_exception_format);
-  } else if (isContentDependantLegend) {
-    return msWMSGetContentDependantLegend(map, nVersion, req->ParamNames,
+  } else if (isContentDependentLegend) {
+    return msWMSGetContentDependentLegend(map, nVersion, req->ParamNames,
                                           req->ParamValues, req->NumParams,
                                           wms_exception_format, ows_request);
   }

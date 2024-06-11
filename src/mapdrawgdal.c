@@ -127,7 +127,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Test the image format instead of the map format.                */
   /*      Normally the map format and the image format should be the      */
-  /*      same but In somes cases like swf and pdf support, a temporary   */
+  /*      same but In some cases like swf and pdf support, a temporary   */
   /*      GD image object is created and used to render raster layers     */
   /*      and then dumped into the SWF or the PDF file.                   */
   /* -------------------------------------------------------------------- */
@@ -1322,7 +1322,7 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
   /*      We need to do some scaling.  Will load into either a 16bit      */
   /*      unsigned or a floating point buffer depending on the source     */
   /*      data.  We offer a special case for 16U data because it is       */
-  /*      common and it is a substantial win to avoid alot of floating    */
+  /*      common and it is a substantial win to avoid a lot of floating    */
   /*      point operations on it.                                         */
   /* -------------------------------------------------------------------- */
   /* TODO */
@@ -1577,7 +1577,7 @@ int msGetGDALGeoTransform(GDALDatasetH hDS, mapObj *map, layerObj *layer,
         fileExtension = msStrdup(strrchr(szPath, '.') + 1);
       }
     }
-    /* common behaviour with worldfile generated from basename + .wld */
+    /* common behavior with worldfile generated from basename + .wld */
     else {
       fullPath = GDALGetDescription(hDS);
       fileExtension = msStrdup("wld");

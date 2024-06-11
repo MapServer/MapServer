@@ -65,7 +65,7 @@ END
 
 
 LAYER
-  NAME "countours"
+  NAME "contours"
   TYPE polygon
   STATUS on
   DATA "world_testpoly"

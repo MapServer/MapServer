@@ -173,7 +173,7 @@ def main():
     else:
         URL = ""
 
-    # Opening and reading directoy
+    # Opening and reading directory
     count = 0
     lines_list = []
 

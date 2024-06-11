@@ -280,7 +280,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
 #define DATA_ERROR_MESSAGE                                                     \
   "%s"                                                                         \
   "Error with MSSQL2008 data variable. You specified '%s'.<br>\n"              \
-  "Standard ways of specifiying are : <br>\n(1) 'geometry_column from "        \
+  "Standard ways of specifying are : <br>\n(1) 'geometry_column from "         \
   "geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as "    \
   "foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' "            \
   "<br><br>\n\n"                                                               \
@@ -1021,12 +1021,12 @@ int msMSSQL2008LayerOpen(layerObj *layer) {
           "Couldn't make connection to MS SQL Server with connect string "
           "'%s'.\n"
           "Error reported was '%s'.\n\n"
-          "This error occured when trying to make a connection to the "
+          "This error occurred when trying to make a connection to the "
           "specified SQL server.\n"
           "Most commonly this is caused by: \n"
           "(1) incorrect connection string \n"
           "(2) you didn't specify a 'user id=...' in your connection string \n"
-          "(3) SQL server isnt running \n"
+          "(3) SQL server isn't running \n"
           "(4) TCPIP not enabled for SQL Client or server \n\n",
           layer->connection, errMess);
       msSetError(MS_QUERYERR,
@@ -1443,7 +1443,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
       return MS_FAILURE;
     }
 
-    if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
+    if (pos_paren < pos_space) { /* closing parenthesis precedes any space */
       f_table_name = (char *)msSmallMalloc(pos_paren - pos_ftab + 1);
       strlcpy(f_table_name, pos_ftab, pos_paren - pos_ftab + 1);
     } else {
@@ -1492,7 +1492,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
     char *result = NULL;
 
     while (strstr(geom_table, "!BOX!")) {
-      /* need to do a substition */
+      /* need to do a substitution */
       char *start, *end;
       char *oldresult = result;
       start = strstr(geom_table, "!BOX!");
@@ -1828,7 +1828,7 @@ int msMSSQL2008LayerClose(layerObj *layer) {
 /* convert the wkb into points */
 /* points -> pass through */
 /* lines->   constituent points */
-/* polys->   treat ring like line and pull out the consituent points */
+/* polys->   treat ring like line and pull out the constituent points */
 
 static int force_to_points(char *wkb, shapeObj *shape) {
   /* we're going to make a 'line' for each entity (point, line or ring) in the
@@ -2052,7 +2052,7 @@ static int dont_force(char *wkb, shapeObj *shape) {
 /* convert the wkb into points */
 /* points -> pass through */
 /* lines->   constituent points */
-/* polys->   treat ring like line and pull out the consituent points */
+/* polys->   treat ring like line and pull out the constituent points */
 static int  force_to_shapeType(char *wkb, shapeObj *shape, int msShapeType)
 {
   int     offset = 0;
@@ -2289,7 +2289,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape,
       return MS_DONE;
     }
 
-    /* retreive an item */
+    /* retrieve an item */
 
     {
       /* have to retrieve shape attributes */
@@ -2845,7 +2845,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
 
   SQLNumResultCols(layerinfo->conn->hstmt, &cols);
 
-  layer->numitems = cols - 1; /* dont include the geometry column */
+  layer->numitems = cols - 1; /* don't include the geometry column */
 
   layer->items = msSmallMalloc(
       sizeof(char *) *
@@ -2854,9 +2854,9 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
   layerinfo->itemtypes =
       msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
   /* it will return an error if there is no geometry column found, */
-  /* so this isnt a problem */
+  /* so this isn't a problem */
 
-  found_geom = 0; /* havent found the geom field */
+  found_geom = 0; /* haven't found the geom field */
   item_num = 0;
 
   /* consider populating the field definitions in metadata */
@@ -2872,7 +2872,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
                pass_field_def, &itemType);
 
     if (strcmp(colBuff, layerinfo->geom_column) != 0) {
-      /* this isnt the geometry column */
+      /* this isn't the geometry column */
       layer->items[item_num] = (char *)msSmallMalloc(strlen(colBuff) + 1);
       strcpy(layer->items[item_num], colBuff);
       layerinfo->itemtypes[item_num] = itemType;
@@ -2885,7 +2885,7 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
   if (!found_geom) {
     msSetError(MS_QUERYERR,
                "msMSSQL2008LayerGetItems: tried to find the geometry column in "
-               "the results from the database, but couldnt find it.  Is it "
+               "the results from the database, but couldn't find it.  Is it "
                "miss-capitialized? '%s'",
                "msMSSQL2008LayerGetItems()", layerinfo->geom_column);
     return MS_FAILURE;
@@ -3119,7 +3119,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name,
     msSetError(
         MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()",
         "Error parsing MSSQL2008 data variable.  Must contain 'geometry_column "
-        "from table_name' or 'geom from (subselect) as foo' (couldnt find a "
+        "from table_name' or 'geom from (subselect) as foo' (couldn't find a "
         "geometry_column or table/subselect).  More help: <br><br>\n\n",
         data);
 
@@ -3911,7 +3911,7 @@ int msMSSQL2008LayerTranslateFilter(layerObj *layer, expressionObj *filter,
 
 #else
 
-/* prototypes if MSSQL2008 isnt supposed to be compiled */
+/* prototypes if MSSQL2008 isn't supposed to be compiled */
 
 int msMSSQL2008LayerOpen(layerObj *layer) {
   msSetError(MS_QUERYERR,
@@ -4098,7 +4098,7 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj *vtable,
   vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* vtable->LayerCreateItems, use default */
   vtable->LayerGetNumFeatures = msMSSQL2008LayerGetNumFeatures;
-  /* layer->vtable->LayerGetAutoProjection, use defaut*/
+  /* layer->vtable->LayerGetAutoProjection, use default*/
 
   return MS_SUCCESS;
 }
