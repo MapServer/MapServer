@@ -83,6 +83,15 @@ RC2 was released as the final 8.0.0 (see major changes below)
 
 - upgrade Travis and GitHub CI to run on Ubuntu Focal (#6430)
 
+7.6.5 release (2023-04-17)
+--------------------------
+
+- remove password content from logs (#6621)
+
+- increase security and stability (#6818)
+
+see detailed changelog for other fixes
+
 7.6.4 release (2021-07-12)
 --------------------------
 
