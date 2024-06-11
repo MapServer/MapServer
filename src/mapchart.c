@@ -323,11 +323,9 @@ int pieLayerProcessDynamicDiameter(layerObj *layer) {
   char *space = strchr(attrib, ' ');
   if (space) {
     *space = '\0';
-    switch (sscanf(space + 1, "%lf %lf %lf %lf", &mindiameter, &maxdiameter,
-                   &minvalue, &maxvalue)) {
-    case 4: /*we have the attribute and the four range values*/
-      break;
-    default:
+    if (sscanf(space + 1, "%lf %lf %lf %lf", &mindiameter, &maxdiameter,
+               &minvalue, &maxvalue) != 4) {
+      /*we don't have the attribute and the four range values*/
       free(attrib);
       msSetError(MS_MISCERR,
                  "Chart Layer format error for processing key \"CHART_RANGE\"",
@@ -554,13 +552,10 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image) {
   if (chartSizeProcessingKey == NULL) {
     width = height = 20;
   } else {
-    switch (sscanf(chartSizeProcessingKey, "%lf %lf", &width, &height)) {
-    case 2:
-      break;
-    case 1:
+    const int ret = sscanf(chartSizeProcessingKey, "%lf %lf", &width, &height);
+    if (ret == 1) {
       height = width;
-      break;
-    default:
+    } else if (ret != 2) {
       msSetError(MS_MISCERR,
                  "msDrawChart format error for processing key \"CHART_SIZE\"",
                  "msDrawBarChartLayer()");

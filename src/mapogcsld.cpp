@@ -1569,7 +1569,7 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
           break;
         msStringBufferAppend(function, sep);
         msStringBufferAppend(function, exprBindings[binding].string);
-        msFree(exprBindings[binding].string);
+        msReplaceFreeableStr(&(exprBindings[binding].string), nullptr);
         msInitExpression(&(exprBindings[binding]));
         sep = ",";
       }
@@ -1595,16 +1595,15 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       if (status == MS_SUCCESS) {
         msStringBufferAppend(expression, exprBindings[binding].string);
         msStringBufferAppend(expression, op);
-        msFree(exprBindings[binding].string);
+        msReplaceFreeableStr(&(exprBindings[binding].string), nullptr);
         msInitExpression(&(exprBindings[binding]));
         status = msSLDParseOgcExpression(psRoot->psChild->psNext, psObj,
                                          binding, objtype);
-        if (status == MS_SUCCESS) {
+        if (status == MS_SUCCESS && exprBindings[binding].string) {
           msStringBufferAppend(expression, exprBindings[binding].string);
           msStringBufferAppend(expression, ")");
-          msFree(exprBindings[binding].string);
-          exprBindings[binding].string =
-              msStringBufferReleaseStringAndFree(expression);
+          msReplaceFreeableStr(&(exprBindings[binding].string),
+                               msStringBufferReleaseStringAndFree(expression));
           expression = NULL;
           exprBindings[binding].type = MS_EXPRESSION;
           (*nexprbindings)++;

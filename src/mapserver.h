@@ -2741,6 +2741,7 @@ MS_DLL_EXPORT void msFree(void *p);
 #else
 #define msFree free
 #endif
+void msReplaceFreeableStr(char **ppszStr, char *pszNewStr);
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
 MS_DLL_EXPORT int msInitLabelCache(labelCacheObj *cache);
 MS_DLL_EXPORT int msFreeLabelCache(labelCacheObj *cache);

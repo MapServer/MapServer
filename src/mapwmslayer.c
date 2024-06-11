@@ -1494,12 +1494,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
       msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url"))
     lp->numclasses = 0;
 
-  if (lp->data)
-    free(lp->data);
-  if (mem_filename != NULL)
-    lp->data = mem_filename;
-  else
-    lp->data = msStrdup(pasReqInfo[iReq].pszOutputFile);
+  free(lp->data);
+  lp->data = mem_filename != NULL ? mem_filename
+                                  : msStrdup(pasReqInfo[iReq].pszOutputFile);
 
   const char *pszAllowedDrivers =
       msOWSLookupMetadata(&(lp->metadata), "MO", "allowed_gdal_drivers");
