@@ -1370,12 +1370,14 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
   /* -------------------------------------------------------------------- */
   for (iColorIndex = 0; iColorIndex < band_count; iColorIndex++) {
     unsigned char *pabyBuffer;
-    double dfScaleMin = 0.0, dfScaleMax = 255.0, dfScaleRatio, dfNoDataValue;
+    double dfScaleMin = 0.0, dfScaleMax = 255.0, dfScaleRatio = 0,
+           dfNoDataValue;
     const char *pszScaleInfo;
     float *pafRawData;
     int nPixelCount = dst_xsize * dst_ysize, i, bGotNoData = FALSE;
     GDALRasterBandH hBand = GDALGetRasterBand(hDS, band_numbers[iColorIndex]);
     pszScaleInfo = CSLFetchNameValue(layer->processing, "SCALE");
+    const bool bIsAllBandScale = pszScaleInfo != NULL;
     if (pszScaleInfo == NULL) {
       char szBandScalingName[20];
 
@@ -1388,7 +1390,17 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
 
       papszTokens = CSLTokenizeStringComplex(pszScaleInfo, " ,", FALSE, FALSE);
       if (CSLCount(papszTokens) == 1 && EQUAL(papszTokens[0], "AUTO")) {
-        dfScaleMin = dfScaleMax = 0.0;
+        if (bIsAllBandScale &&
+            GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand &&
+            GDALGetRasterDataType(hBand) == GDT_Byte) {
+          // Do not try to scale the alpha band, as it is going to produce
+          // wrong results
+          dfScaleMin = 0.0;
+          dfScaleMax = 255.0;
+          dfScaleRatio = 1.0;
+        } else {
+          dfScaleMin = dfScaleMax = 0.0;
+        }
       } else if (CSLCount(papszTokens) != 2) {
         free(pafWholeRawData);
         CSLDestroy(papszTokens);
@@ -1451,7 +1463,8 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
     /* -------------------------------------------------------------------- */
     /*      Now process the data.                                           */
     /* -------------------------------------------------------------------- */
-    dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
+    if (dfScaleRatio == 0.0)
+      dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
     pabyBuffer = pabyWholeBuffer + iColorIndex * nPixelCount;
 
     if (iColorIndex == 0 && bGotNoData)
