@@ -1,0 +1,29 @@
+# RUN_PARMS: compop_hsl_color_opacity_50.agg.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: compop_hsl_color_opacity_50.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+MAP
+
+# WARNING: compop_hsl_color_opacity_50.cairo.png output is incorrect
+# when running Cairo against Pixman versions up to date (0.43.4 at time of writing)
+# due to bug fixed per https://gitlab.freedesktop.org/pixman/pixman/-/merge_requests/97
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA ../gdal/data/rgba.tif
+  PROCESSING "BANDS=1,2,3"
+  PROCESSING "USE_MASK_BAND=NO"
+  COMPOSITE
+    OPACITY 50
+    COMPOP "hsl-color"
+  END
+END
+
+END # of map file

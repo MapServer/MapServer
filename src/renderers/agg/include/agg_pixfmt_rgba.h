@@ -30,6 +30,8 @@
 #include "agg_color_rgba.h"
 #include "agg_rendering_buffer.h"
 
+#include "pixman-combine-float-extract.h"
+
 namespace mapserver
 {
 
@@ -1392,9 +1394,110 @@ namespace mapserver
         }
     };
 
+    /* MapServer addition - start */
 
+    //=================================================comp_op_rgba_hsl_hue
+    template<class ColorT, class Order, typename BlendClass> struct comp_op_rgba_hsl_generic
+    {
+        typedef ColorT color_type;
+        typedef Order order_type;
+        typedef typename color_type::value_type value_type;
+        typedef typename color_type::calc_type calc_type;
+        typedef typename color_type::long_type long_type;
+        enum base_scale_e
+        {
+            base_shift = color_type::base_shift,
+            base_mask  = color_type::base_mask
+        };
 
+        static AGG_INLINE void blend_pix(value_type* p,
+                                         unsigned sr, unsigned sg, unsigned sb,
+                                         unsigned sa_int, unsigned cover)
+        {
+            if(cover < 255)
+            {
+                sr = (sr * cover + 255) >> 8;
+                sg = (sg * cover + 255) >> 8;
+                sb = (sb * cover + 255) >> 8;
+                sa_int = (sa_int * cover + 255) >> 8;
+            }
 
+            /* Adapted from pixman's MAKE_NON_SEPARABLE_PDF_COMBINERS() macro */
+            float sa, da;
+            rgb_t sc, dc, rc;
+
+            sa = float(sa_int) / base_mask;
+            sc.r = float(sr) /  base_mask;
+            sc.g = float(sg) /  base_mask;
+            sc.b = float(sb) /  base_mask;
+
+            da = float(p[Order::A]) / base_mask;
+            dc.r = float(p[Order::R]) / base_mask;
+            dc.g = float(p[Order::G]) / base_mask;
+            dc.b = float(p[Order::B]) / base_mask;
+
+            BlendClass::blend(&rc, &dc, da, &sc, sa);
+
+            p[Order::R] = (value_type)(((1 - sa) * dc.r + (1 - da) * sc.r + rc.r) * base_mask);
+            p[Order::G] = (value_type)(((1 - sa) * dc.g + (1 - da) * sc.g + rc.g) * base_mask);
+            p[Order::B] = (value_type)(((1 - sa) * dc.b + (1 - da) * sc.b + rc.b) * base_mask);
+            p[Order::A] = (value_type)((sa + da - sa * da) * base_mask);
+        }
+    };
+
+    struct blend_hsl_hue_class
+    {
+        static AGG_INLINE void blend(rgb_t *res, const rgb_t *dest, float da, const rgb_t *src, float sa)
+        {
+            blend_hsl_hue(res, dest, da, src, sa);
+        }
+    };
+
+    template<class ColorT, class Order> struct comp_op_rgba_hsl_hue:
+            public comp_op_rgba_hsl_generic<ColorT, Order, blend_hsl_hue_class>
+    {
+    };
+
+    struct blend_hsl_luminosity_class
+    {
+        static AGG_INLINE void blend(rgb_t *res, const rgb_t *dest, float da, const rgb_t *src, float sa)
+        {
+            blend_hsl_luminosity(res, dest, da, src, sa);
+        }
+    };
+
+    template<class ColorT, class Order> struct comp_op_rgba_hsl_luminosity:
+            public comp_op_rgba_hsl_generic<ColorT, Order, blend_hsl_luminosity_class>
+    {
+    };
+
+    struct blend_hsl_saturation_class
+    {
+        static AGG_INLINE void blend(rgb_t *res, const rgb_t *dest, float da, const rgb_t *src, float sa)
+        {
+            blend_hsl_saturation(res, dest, da, src, sa);
+        }
+    };
+
+    template<class ColorT, class Order> struct comp_op_rgba_hsl_saturation:
+            public comp_op_rgba_hsl_generic<ColorT, Order, blend_hsl_saturation_class>
+    {
+    };
+
+    struct blend_hsl_color_class
+    {
+        static AGG_INLINE void blend(rgb_t *res, const rgb_t *dest, float da, const rgb_t *src, float sa)
+        {
+            blend_hsl_color(res, dest, da, src, sa);
+        }
+    };
+
+    template<class ColorT, class Order> struct comp_op_rgba_hsl_color:
+            public comp_op_rgba_hsl_generic<ColorT, Order, blend_hsl_color_class>
+    {
+    };
+
+    /* MapServer addition - end */
 
     //======================================================comp_op_table_rgba
     template<class ColorT, class Order> struct comp_op_table_rgba
@@ -1442,6 +1545,12 @@ namespace mapserver
         comp_op_rgba_contrast   <ColorT,Order>::blend_pix,
         comp_op_rgba_invert     <ColorT,Order>::blend_pix,
         comp_op_rgba_invert_rgb <ColorT,Order>::blend_pix,
+        /* MapServer addition - start */
+        comp_op_rgba_hsl_hue        <ColorT,Order>::blend_pix,
+        comp_op_rgba_hsl_luminosity <ColorT,Order>::blend_pix,
+        comp_op_rgba_hsl_saturation <ColorT,Order>::blend_pix,
+        comp_op_rgba_hsl_color      <ColorT,Order>::blend_pix,
+        /* MapServer addition - end */
         0
     };
 
@@ -1477,7 +1586,12 @@ namespace mapserver
         comp_op_contrast,      //----comp_op_contrast
         comp_op_invert,        //----comp_op_invert
         comp_op_invert_rgb,    //----comp_op_invert_rgb
-
+        /* MapServer addition - start */
+        comp_op_hsl_hue,        //----comp_op_hsl_hue
+        comp_op_hsl_luminosity, //----comp_op_hsl_luminosity
+        comp_op_hsl_saturation, //----comp_op_hsl_saturation
+        comp_op_hsl_color,      //----comp_op_hsl_color
+        /* MapServer addition - end */
         end_of_comp_op_e
     };
 

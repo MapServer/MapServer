@@ -63,6 +63,9 @@
 
 #include "renderers/agg/include/agg_conv_clipper.h"
 
+#include "cpl_conv.h"   // CPLGetConfigOption
+#include "cpl_string.h" // CPLTestBool
+
 #ifdef USE_PIXMAN
 #include <pixman.h>
 #endif
@@ -1233,6 +1236,14 @@ static pixman_op_t ms2pixman_compop(CompositingOperation c) {
     return PIXMAN_OP_DIFFERENCE;
   case MS_COMPOP_EXCLUSION:
     return PIXMAN_OP_EXCLUSION;
+  case MS_COMPOP_HSL_HUE:
+    return PIXMAN_OP_HSL_HUE;
+  case MS_COMPOP_HSL_LUMINOSITY:
+    return PIXMAN_OP_HSL_LUMINOSITY;
+  case MS_COMPOP_HSL_SATURATION:
+    return PIXMAN_OP_HSL_SATURATION;
+  case MS_COMPOP_HSL_COLOR:
+    return PIXMAN_OP_HSL_COLOR;
   case MS_COMPOP_INVERT:
   case MS_COMPOP_INVERT_RGB:
   case MS_COMPOP_MINUS:
@@ -1241,7 +1252,8 @@ static pixman_op_t ms2pixman_compop(CompositingOperation c) {
     return PIXMAN_OP_OVER;
   }
 }
-#else
+#endif
+
 static mapserver::comp_op_e ms2agg_compop(CompositingOperation c) {
   switch (c) {
   case MS_COMPOP_CLEAR:
@@ -1300,17 +1312,26 @@ static mapserver::comp_op_e ms2agg_compop(CompositingOperation c) {
     return mapserver::comp_op_invert;
   case MS_COMPOP_INVERT_RGB:
     return mapserver::comp_op_invert_rgb;
+  case MS_COMPOP_HSL_HUE:
+    return mapserver::comp_op_hsl_hue;
+  case MS_COMPOP_HSL_LUMINOSITY:
+    return mapserver::comp_op_hsl_luminosity;
+  case MS_COMPOP_HSL_SATURATION:
+    return mapserver::comp_op_hsl_saturation;
+  case MS_COMPOP_HSL_COLOR:
+    return mapserver::comp_op_hsl_color;
   default:
     return mapserver::comp_op_src_over;
   }
 }
-#endif
 
-int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay,
-                             CompositingOperation comp, int opacity) {
+#ifdef USE_PIXMAN
+static int aggCompositeRasterBufferPixman(imageObj *dest,
+                                          rasterBufferObj *overlay,
+                                          CompositingOperation comp,
+                                          int opacity) {
   assert(overlay->type == MS_BUFFER_BYTE_RGBA);
   AGG2Renderer *r = AGG_RENDERER(dest);
-#ifdef USE_PIXMAN
   pixman_image_t *si = pixman_image_create_bits(
       PIXMAN_a8r8g8b8, overlay->width, overlay->height,
       (uint32_t *)overlay->data.rgba.pixels, overlay->data.rgba.row_step);
@@ -1344,7 +1365,15 @@ int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay,
     msFree(alpha_mask);
   }
   return MS_SUCCESS;
-#else
+}
+#endif
+
+static int aggCompositeRasterBufferNoPixman(imageObj *dest,
+                                            rasterBufferObj *overlay,
+                                            CompositingOperation comp,
+                                            int opacity) {
+  assert(overlay->type == MS_BUFFER_BYTE_RGBA);
+  AGG2Renderer *r = AGG_RENDERER(dest);
   rendering_buffer b(overlay->data.rgba.pixels, overlay->width, overlay->height,
                      overlay->data.rgba.row_step);
   pixel_format pf(b);
@@ -1358,7 +1387,6 @@ int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay,
     ren.blend_from(pf, 0, 0, 0, unsigned(opacity * 2.55));
   }
   return MS_SUCCESS;
-#endif
 }
 
 void msApplyBlurringCompositingFilter(rasterBufferObj *rb,
@@ -1370,7 +1398,13 @@ void msApplyBlurringCompositingFilter(rasterBufferObj *rb,
 }
 
 int msPopulateRendererVTableAGG(rendererVTableObj *renderer) {
-  renderer->compositeRasterBuffer = &aggCompositeRasterBuffer;
+  renderer->compositeRasterBuffer = &aggCompositeRasterBufferNoPixman;
+#ifdef USE_PIXMAN
+  const char *pszUsePixman = CPLGetConfigOption("MS_USE_PIXMAN", "YES");
+  if (CPLTestBool(pszUsePixman)) {
+    renderer->compositeRasterBuffer = &aggCompositeRasterBufferPixman;
+  }
+#endif
   renderer->supports_pixel_buffer = 1;
   renderer->use_imagecache = 0;
   renderer->supports_clipping = 0;
