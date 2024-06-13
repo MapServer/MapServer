@@ -1,0 +1,26 @@
+#
+# Test GAMMA correction on a RGB dataset
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME test
+  TYPE raster
+  STATUS default
+  DATA data/rgb.tif
+  PROCESSING "GAMMA=0.75"
+END
+
+END # of map file
