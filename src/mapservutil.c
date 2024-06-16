@@ -1389,9 +1389,13 @@ int msCGILoadForm(mapservObj *mapserv) {
 
       switch (rosa_type) {
       case 1:
-        sscanf(mapserv->request->ParamValues[i], "%lf,%lf;%lf,%lf",
-               &mapserv->ImgBox.minx, &mapserv->ImgBox.miny,
-               &mapserv->ImgBox.maxx, &mapserv->ImgBox.maxy);
+        if (sscanf(mapserv->request->ParamValues[i], "%lf,%lf;%lf,%lf",
+                   &mapserv->ImgBox.minx, &mapserv->ImgBox.miny,
+                   &mapserv->ImgBox.maxx, &mapserv->ImgBox.maxy) != 4) {
+          msSetError(MS_WEBERR, "Incorrectly formatted value for INPUT_COORD",
+                     "msCGILoadForm()");
+          return MS_FAILURE;
+        }
         if ((mapserv->ImgBox.minx != mapserv->ImgBox.maxx) &&
             (mapserv->ImgBox.miny != mapserv->ImgBox.maxy)) {
           mapserv->CoordSource = FROMIMGBOX;
@@ -1404,8 +1408,12 @@ int msCGILoadForm(mapservObj *mapserv) {
         }
         break;
       case 2:
-        sscanf(mapserv->request->ParamValues[i], "%lf,%lf", &mapserv->ImgPnt.x,
-               &mapserv->ImgPnt.y);
+        if (sscanf(mapserv->request->ParamValues[i], "%lf,%lf",
+                   &mapserv->ImgPnt.x, &mapserv->ImgPnt.y) != 2) {
+          msSetError(MS_WEBERR, "Incorrectly formatted value for INPUT_COORD",
+                     "msCGILoadForm()");
+          return MS_FAILURE;
+        }
         mapserv->CoordSource = FROMIMGPNT;
         mapserv->QueryCoordSource = FROMIMGPNT;
         break;
