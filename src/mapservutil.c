@@ -583,7 +583,6 @@ static int commonLoadForm(mapservObj *mapserv, mapObj *map) {
 int msCGILoadForm(mapservObj *mapserv) {
   int i, n;
   char **tokens = NULL;
-  int rosa_type = 0;
   double tmpval;
   char *strtoderr;
 
@@ -1360,69 +1359,6 @@ int msCGILoadForm(mapservObj *mapserv) {
 
       continue;
     }
-
-    /* -------------------------------------------------------------------- */
-    /*      The following code is used to support the rosa applet (for      */
-    /*      more information on Rosa, please consult :                      */
-    /*      http://www.maptools.org/rosa/) .                                */
-    /*      This code was provided by Tim.Mackey@agso.gov.au.               */
-    /*                                                                      */
-    /*      For Application using it can be seen at :                       */
-    /*        http://www.agso.gov.au/map/pilbara/                           */
-    /*                                                                      */
-    /* -------------------------------------------------------------------- */
-
-    if (strcasecmp(mapserv->request->ParamNames[i], "INPUT_TYPE") == 0) {
-      /* Rosa input type */
-      if (strcasecmp(mapserv->request->ParamValues[i], "auto_rect") == 0) {
-        rosa_type = 1; /* rectangle */
-        continue;
-      }
-
-      if (strcasecmp(mapserv->request->ParamValues[i], "auto_point") == 0) {
-        rosa_type = 2; /* point */
-        continue;
-      }
-    }
-    if (strcasecmp(mapserv->request->ParamNames[i], "INPUT_COORD") == 0) {
-      /* Rosa coordinates */
-
-      switch (rosa_type) {
-      case 1:
-        if (sscanf(mapserv->request->ParamValues[i], "%lf,%lf;%lf,%lf",
-                   &mapserv->ImgBox.minx, &mapserv->ImgBox.miny,
-                   &mapserv->ImgBox.maxx, &mapserv->ImgBox.maxy) != 4) {
-          msSetError(MS_WEBERR, "Incorrectly formatted value for INPUT_COORD",
-                     "msCGILoadForm()");
-          return MS_FAILURE;
-        }
-        if ((mapserv->ImgBox.minx != mapserv->ImgBox.maxx) &&
-            (mapserv->ImgBox.miny != mapserv->ImgBox.maxy)) {
-          mapserv->CoordSource = FROMIMGBOX;
-          mapserv->QueryCoordSource = FROMIMGBOX;
-        } else {
-          mapserv->CoordSource = FROMIMGPNT;
-          mapserv->QueryCoordSource = FROMIMGPNT;
-          mapserv->ImgPnt.x = mapserv->ImgBox.minx;
-          mapserv->ImgPnt.y = mapserv->ImgBox.miny;
-        }
-        break;
-      case 2:
-        if (sscanf(mapserv->request->ParamValues[i], "%lf,%lf",
-                   &mapserv->ImgPnt.x, &mapserv->ImgPnt.y) != 2) {
-          msSetError(MS_WEBERR, "Incorrectly formatted value for INPUT_COORD",
-                     "msCGILoadForm()");
-          return MS_FAILURE;
-        }
-        mapserv->CoordSource = FROMIMGPNT;
-        mapserv->QueryCoordSource = FROMIMGPNT;
-        break;
-      }
-      continue;
-    }
-    /* -------------------------------------------------------------------- */
-    /*      end of code for Rosa support.                                   */
-    /* -------------------------------------------------------------------- */
 
   } /* next parameter */
 
