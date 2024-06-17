@@ -20,10 +20,12 @@ jobs:
           - name: Regular, with coverage
             WITH_ASAN: "false"
             WITH_COVERAGE: "true"
+            SWIG_GIT_TAG: "v4.2.1"
 
           - name: Address_sanitizer
             WITH_ASAN: "true"
             WITH_COVERAGE: "false"
+            SWIG_GIT_TAG: "v4.2.1"
 
     name: ${{ matrix.name }}
 
@@ -37,6 +39,7 @@ jobs:
             -e WORK_DIR="$PWD" \
             -e WITH_ASAN="${{ matrix.WITH_ASAN }}" \
             -e WITH_COVERAGE="${{ matrix.WITH_COVERAGE }}" \
+            -e SWIG_GIT_TAG="${{ matrix.SWIG_GIT_TAG }}" \
             -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
 
       - name: Coveralls
