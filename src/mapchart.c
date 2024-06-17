@@ -394,8 +394,17 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image) {
     if (chartRangeProcessingKey == NULL)
       diameter = 20;
     else {
-      sscanf(chartRangeProcessingKey, "%*s %lf %lf %lf %lf %lf", &mindiameter,
-             &maxdiameter, &minvalue, &maxvalue, &exponent);
+      const int nvalues =
+          sscanf(chartRangeProcessingKey, "%*s %lf %lf %lf %lf %lf",
+                 &mindiameter, &maxdiameter, &minvalue, &maxvalue, &exponent);
+      if (nvalues != 4 && nvalues != 5) {
+        msSetError(
+            MS_MISCERR,
+            "msDrawChart format error for processing key \"CHART_SIZE_RANGE\": "
+            "itemname minsize maxsize minval maxval [exponent] is expected",
+            "msDrawPieChartLayer()");
+        return MS_FAILURE;
+      }
     }
   } else {
     if (sscanf(chartSizeProcessingKey, "%lf", &diameter) != 1) {
