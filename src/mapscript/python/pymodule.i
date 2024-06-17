@@ -88,7 +88,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   PyObject *r;
   r = CreateTupleFromDoubleArray(*$1, *$2);
   free(*$1);
-  $result = SWIG_Python_AppendOutput($result,r,1);
+  $result = SWIG_Python_AppendOutput($result,r);
 }
 
 /*
