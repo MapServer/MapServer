@@ -5,7 +5,7 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 
 if [ "${MAPSCRIPT_PYTHON_ONLY:-}" = "true" ]; then
-    # only build MapServer with the Python MapScript
+    # only build MapServer with the Python MapScript and not PHP, Perl etc.
     make cmakebuild_mapscript_python MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     # build the wheel and run the Python MapScript test suite
     make mspython-wheel
