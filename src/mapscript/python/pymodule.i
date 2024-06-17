@@ -82,13 +82,13 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   $2 = &nListSize;
 }
 
-%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") (double** argout, int* pnListSize) 
+%typemap(argout,fragment="CreateTupleFromDoubleArray") (double** argout, int* pnListSize) 
 {
    /* %typemap(argout) (double* argout, int* pnListSize)  */
   PyObject *r;
   r = CreateTupleFromDoubleArray(*$1, *$2);
   free(*$1);
-  $result = t_output_helper($result,r);
+  $result = SWIG_Python_AppendOutput($result,r,1);
 }
 
 /*
