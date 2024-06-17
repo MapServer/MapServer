@@ -88,11 +88,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   PyObject *r;
   r = CreateTupleFromDoubleArray(*$1, *$2);
   free(*$1);
-  %#if SWIG_VERSION >= 0x040300
-    $result = SWIG_Python_AppendOutput($result,r,1);
-  %#else
-    $result = SWIG_Python_AppendOutput($result,r);
-  %#endif
+  $result = SWIG_Python_AppendOutput($result, r, $isvoid);
 }
 
 /*
