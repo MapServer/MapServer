@@ -1379,7 +1379,8 @@ static int aggCompositeRasterBufferNoPixman(imageObj *dest,
   pixel_format pf(b);
   mapserver::comp_op_e comp_op = ms2agg_compop(comp);
   if (comp_op == mapserver::comp_op_src_over) {
-    r->m_renderer_base.blend_from(pf, 0, 0, 0, unsigned(MS_NINT(opacity * 2.55)));
+    r->m_renderer_base.blend_from(pf, 0, 0, 0,
+                                  unsigned(MS_NINT(opacity * 2.55)));
   } else {
     compop_pixel_format pixf(r->m_rendering_buffer);
     compop_renderer_base ren(pixf);
