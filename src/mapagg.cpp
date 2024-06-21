@@ -1345,7 +1345,7 @@ static int aggCompositeRasterBufferPixman(imageObj *dest,
     if (opacity == 100) {
       alpha_mask_i_ptr = NULL;
     } else {
-      unsigned char alpha = (unsigned char)(opacity * 2.55);
+      unsigned char alpha = (unsigned char)(MS_NINT(opacity * 2.55));
       if (!alpha_mask_i) {
         alpha_mask = (unsigned char *)msSmallMalloc(dest->width * dest->height);
         alpha_mask_i =
@@ -1379,12 +1379,12 @@ static int aggCompositeRasterBufferNoPixman(imageObj *dest,
   pixel_format pf(b);
   mapserver::comp_op_e comp_op = ms2agg_compop(comp);
   if (comp_op == mapserver::comp_op_src_over) {
-    r->m_renderer_base.blend_from(pf, 0, 0, 0, unsigned(opacity * 2.55));
+    r->m_renderer_base.blend_from(pf, 0, 0, 0, unsigned(MS_NINT(opacity * 2.55)));
   } else {
     compop_pixel_format pixf(r->m_rendering_buffer);
     compop_renderer_base ren(pixf);
     pixf.comp_op(comp_op);
-    ren.blend_from(pf, 0, 0, 0, unsigned(opacity * 2.55));
+    ren.blend_from(pf, 0, 0, 0, unsigned(MS_NINT(opacity * 2.55)));
   }
   return MS_SUCCESS;
 }
