@@ -72,7 +72,7 @@ typedef struct {
 struct projectionContext {
   PJ_CONTEXT *proj_ctx;
   unsigned ms_proj_data_change_counter;
-  int ref_count;
+  int refcount;
   pjCacheEntry pj_cache[PJ_CACHE_ENTRY_SIZE];
   int pj_cache_size;
 };
@@ -346,7 +346,7 @@ projectionContext *msProjectionContextCreate(void) {
     msFree(ctx);
     return NULL;
   }
-  ctx->ref_count = 1;
+  MS_REFCNT_INIT(ctx);
   proj_context_use_proj4_init_rules(ctx->proj_ctx, TRUE);
   proj_log_func(ctx->proj_ctx, NULL, msProjErrorLogger);
   return ctx;
@@ -359,8 +359,7 @@ projectionContext *msProjectionContextCreate(void) {
 void msProjectionContextUnref(projectionContext *ctx) {
   if (!ctx)
     return;
-  --ctx->ref_count;
-  if (ctx->ref_count == 0) {
+  if (MS_REFCNT_DECR_IS_ZERO(ctx)) {
     int i;
     for (i = 0; i < ctx->pj_cache_size; i++) {
       msFree(ctx->pj_cache[i].inStr);
@@ -528,7 +527,7 @@ void msProjectionInheritContextFrom(projectionObj *pDst,
                                     const projectionObj *pSrc) {
   if (pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL) {
     pDst->proj_ctx = pSrc->proj_ctx;
-    pDst->proj_ctx->ref_count++;
+    MS_REFCNT_INCR(pDst->proj_ctx);
   }
 }
 
@@ -539,7 +538,7 @@ void msProjectionInheritContextFrom(projectionObj *pDst,
 void msProjectionSetContext(projectionObj *p, projectionContext *ctx) {
   if (p->proj_ctx == NULL && ctx != NULL) {
     p->proj_ctx = ctx;
-    p->proj_ctx->ref_count++;
+    MS_REFCNT_INCR(p->proj_ctx);
   }
 }
 
