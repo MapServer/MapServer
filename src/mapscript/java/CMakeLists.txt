@@ -11,6 +11,7 @@ include_directories(${JNI_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/java)
+include_directories(${PROJECT_BINARY_DIR}/src/mapscript/)
 set (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}/edu/umn/gis/mapscript")
 set(CMAKE_SWIG_FLAGS -package edu.umn.gis.mapscript)
 
