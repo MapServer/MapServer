@@ -5,6 +5,7 @@ include_directories(${RUBY_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/ruby)
+include_directories(${PROJECT_BINARY_DIR}/src/mapscript/)
 
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
     swig_add_library(rubymapscript TYPE MODULE LANGUAGE ruby SOURCES ../mapscript.i)

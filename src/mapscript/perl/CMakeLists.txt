@@ -9,6 +9,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
 add_definitions(${PERL_EXTRA_C_FLAGS})
 set(CMAKE_SWIG_FLAGS -shadow -w314)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/perl)
+include_directories(${PROJECT_BINARY_DIR}/src/mapscript/)
 
 if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_GREATER 3.7)
     swig_add_library(perlmapscript TYPE MODULE LANGUAGE perl5 SOURCES ../mapscript.i)
