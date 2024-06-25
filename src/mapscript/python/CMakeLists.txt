@@ -7,6 +7,7 @@ include_directories(${Python_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/python)
+include_directories(${PROJECT_BINARY_DIR}/src/mapscript/)
 
 set(SwigFile ${PROJECT_SOURCE_DIR}/src/mapscript/mapscript.i)
 
