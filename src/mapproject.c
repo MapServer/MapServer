@@ -70,6 +70,7 @@ typedef struct {
 } pjCacheEntry;
 
 struct projectionContext {
+  void *thread_id;
   PJ_CONTEXT *proj_ctx;
   unsigned ms_proj_data_change_counter;
   int ref_count;
@@ -341,6 +342,7 @@ static void msProjErrorLogger(void *user_data, int level, const char *message) {
 projectionContext *msProjectionContextCreate(void) {
   projectionContext *ctx =
       (projectionContext *)msSmallCalloc(1, sizeof(projectionContext));
+  ctx->thread_id = msGetThreadId();
   ctx->proj_ctx = proj_context_create();
   if (ctx->proj_ctx == NULL) {
     msFree(ctx);
@@ -521,14 +523,40 @@ void msFreeProjectionExceptContext(projectionObj *p) {
 }
 
 /************************************************************************/
+/*                      msProjectionContextClone()                      */
+/************************************************************************/
+
+static projectionContext *
+msProjectionContextClone(const projectionContext *ctxSrc) {
+  projectionContext *ctx = msProjectionContextCreate();
+  if (ctx) {
+    ctx->pj_cache_size = ctxSrc->pj_cache_size;
+    for (int i = 0; i < ctx->pj_cache_size; ++i) {
+      pjCacheEntry *entryDst = &(ctx->pj_cache[i]);
+      const pjCacheEntry *entrySrc = &(ctxSrc->pj_cache[i]);
+      entryDst->inStr = msStrdup(entrySrc->inStr);
+      entryDst->outStr = msStrdup(entrySrc->outStr);
+      entryDst->pj = proj_clone(
+          /* use target PROJ context for cloning */
+          ctx->proj_ctx, entrySrc->pj);
+    }
+  }
+  return ctx;
+}
+
+/************************************************************************/
 /*                 msProjectionInheritContextFrom()                     */
 /************************************************************************/
 
 void msProjectionInheritContextFrom(projectionObj *pDst,
                                     const projectionObj *pSrc) {
   if (pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL) {
-    pDst->proj_ctx = pSrc->proj_ctx;
-    pDst->proj_ctx->ref_count++;
+    if (pSrc->proj_ctx->thread_id == msGetThreadId()) {
+      pDst->proj_ctx = pSrc->proj_ctx;
+      pDst->proj_ctx->ref_count++;
+    } else {
+      pDst->proj_ctx = msProjectionContextClone(pSrc->proj_ctx);
+    }
   }
 }
 
