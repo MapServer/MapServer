@@ -118,9 +118,12 @@ int msValidateParameter(const char *value, const char *pattern1,
 
 int msIsValidRegex(const char *e) {
   ms_regex_t re;
-  if (ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB) != 0) {
-    msSetError(MS_REGEXERR, "Failed to compile expression (%s).",
-               "msEvalRegex()", e);
+  int errcode = ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB);
+  if (errcode != 0) {
+    char szErrbuf[256];
+    ms_regerror(errcode, &re, szErrbuf, sizeof(szErrbuf));
+    msSetError(MS_REGEXERR, "Failed to compile expression (%s): %s.",
+               "msIsValidRegex()", e, szErrbuf);
     return (MS_FALSE);
   }
   ms_regfree(&re);
@@ -133,9 +136,12 @@ int msEvalRegex(const char *e, const char *s) {
   if (!e || !s)
     return (MS_FALSE);
 
-  if (ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB) != 0) {
-    msSetError(MS_REGEXERR, "Failed to compile expression (%s).",
-               "msEvalRegex()", e);
+  int errcode = ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB);
+  if (errcode != 0) {
+    char szErrbuf[256];
+    ms_regerror(errcode, &re, szErrbuf, sizeof(szErrbuf));
+    msSetError(MS_REGEXERR, "Failed to compile expression (%s): %s.",
+               "msEvalRegex()", e, szErrbuf);
     return (MS_FALSE);
   }
 
