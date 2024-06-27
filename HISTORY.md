@@ -13,8 +13,13 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.0-rc2 release (2024-06-27)
+------------------------------
+
+- fix SWIG MapScript build failure (#7090)
+
 8.2.0-rc1 release (2024-06-14)
---------------------------------
+------------------------------
 
 - no changes since beta3 (see major changes below)
 
