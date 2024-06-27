@@ -2110,9 +2110,9 @@ int msUpdateLabelFromString(labelObj *label, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -2624,9 +2624,9 @@ int msUpdateClusterFromString(clusterObj *cluster, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -3104,9 +3104,9 @@ int msUpdateStyleFromString(styleObj *style, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -3774,9 +3774,9 @@ int msUpdateClassFromString(classObj *class, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
 
   if (classResolveSymbolNames(class) != MS_SUCCESS)
     return MS_FAILURE;
@@ -4837,9 +4837,9 @@ int msUpdateLayerFromString(layerObj *layer, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
 
   /* step through classes to resolve symbol names */
   for (i = 0; i < layer->numclasses; i++) {
@@ -5176,9 +5176,9 @@ int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -5570,9 +5570,9 @@ int msUpdateLegendFromString(legendObj *legend, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -5769,9 +5769,9 @@ int msUpdateScalebarFromString(scalebarObj *scalebar, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -5918,9 +5918,9 @@ int msUpdateQueryMapFromString(queryMapObj *querymap, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -6167,9 +6167,9 @@ int msUpdateWebFromString(webObj *web, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -6893,6 +6893,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
   if (!msGetCWD(szCWDPath, MS_MAXPATHLEN, "msLoadMapFromString()")) {
     msFreeMap(map);
     msReleaseLock(TLOCK_PARSER);
+    return (NULL);
   }
   if (new_mappath) {
     mappath = msStrdup(new_mappath);
@@ -7038,12 +7039,12 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
 
   if (loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
-    msReleaseLock(TLOCK_PARSER);
     if (msyyin) {
       msyycleanup_includes();
       fclose(msyyin);
       msyyin = NULL;
     }
+    msReleaseLock(TLOCK_PARSER);
     return NULL;
   }
   msReleaseLock(TLOCK_PARSER);
