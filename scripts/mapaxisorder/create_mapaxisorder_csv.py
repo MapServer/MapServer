@@ -30,16 +30,31 @@
 
 from osgeo import gdal, osr
 
-sr = osr.SpatialReference()
-print("epsg_code")
-for code in range(32767):
+def inverted_axis(code): 
     gdal.PushErrorHandler()
     ret = sr.ImportFromEPSGA(code)
     gdal.PopErrorHandler()
-    if ret == 0 and sr.GetAxesCount() >= 2:
-        first_axis = sr.GetAxisOrientation(None, 0)
-        second_axis = sr.GetAxisOrientation(None, 1)
-        if first_axis == osr.OAO_North and second_axis == osr.OAO_East:
-            print(code)
-        elif first_axis == osr.OAO_South and second_axis == osr.OAO_West:
-            print(code)
+
+    if ret == 0 and sr.GetAxesCount() < 2:
+        return False
+
+    if sr.IsGeographic() and sr.EPSGTreatsAsLatLong(): 
+        return True
+    if sr.IsProjected() and sr.EPSGTreatsAsNorthingEasting():
+        return True
+    
+    first_axis = sr.GetAxisOrientation(None, 0)
+    second_axis = sr.GetAxisOrientation(None, 1)
+    if first_axis == osr.OAO_North and second_axis == osr.OAO_East:
+        return True
+    if first_axis == osr.OAO_South and second_axis == osr.OAO_West:
+        return True
+    
+    return False
+
+sr = osr.SpatialReference()
+print("epsg_code")
+for code in range(32767):
+    if inverted_axis(code):
+        print(code)
+
