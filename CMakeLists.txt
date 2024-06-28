@@ -18,7 +18,7 @@ include(CheckCSourceCompiles)
 set (MapServer_VERSION_MAJOR 8)
 set (MapServer_VERSION_MINOR 2)
 set (MapServer_VERSION_REVISION 0)
-set (MapServer_VERSION_SUFFIX "-rc2")
+set (MapServer_VERSION_SUFFIX "-rc3")
 
 # Set C++ version
 # Make CMAKE_CXX_STANDARD available as cache option overridable by user
