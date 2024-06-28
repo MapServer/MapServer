@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.0-rc3 release (2024-06-28)
+------------------------------
+
+- fix memory corruption in msUpdate...FromString (#7038)
+
 8.2.0-rc2 release (2024-06-27)
 ------------------------------
 
