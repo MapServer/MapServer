@@ -82,7 +82,7 @@ print_body ()
 	echo 'extern "C" '{
 	echo '#endif'
 	echo ' '
-	echo 'static unsigned char axisOrientationEpsgCodes[] = {'
+	echo 'static const unsigned char axisOrientationEpsgCodes[] = {'
    
 	# traverse array and print out elements
 	for i in {0..4095}
@@ -92,12 +92,10 @@ print_body ()
 		then
 			echo ,
 		else
-			echo
+			echo -n '};'
 		fi
 	done
-
-	echo '};'
-	echo ' '
+	echo -e '\n'
 
 	echo '#ifdef __cplusplus'
 	echo '}'
