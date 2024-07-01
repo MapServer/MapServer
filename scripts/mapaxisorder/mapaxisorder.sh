@@ -75,7 +75,7 @@ print_comment ()
 
 print_body ()
 {
-	echo -n '#ifdef __cplusplus'
+	echo '#ifdef __cplusplus'
 	echo 'extern "C" '{
 	echo '#endif'
 	echo 'static const unsigned char axisOrientationEpsgCodes[] = {'
