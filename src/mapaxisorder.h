@@ -30,7 +30,8 @@
  *
  * This file was generated from by means of a script. Do not edit manually.
  */
-#ifdef __cplusplusextern "C" {
+#ifdef __cplusplus
+extern "C" {
 #endif
 static const unsigned char axisOrientationEpsgCodes[] = {
     0 << 7 | 0 << 6 | 0 << 5 | 0 << 4 | 0 << 3 | 0 << 2 | 0 << 1 | 0 << 0,
