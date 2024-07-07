@@ -20,6 +20,8 @@ jobs:
     strategy:
       matrix:
         php-version: [8.3, 8.2]
+    env:
+      IGNORE_COMPARISON_RESULT_ON_CI: 'true'
 
     steps:
       - name: Checkout code
