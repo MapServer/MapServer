@@ -54,9 +54,19 @@ python -m http.server &> /dev/null &
 # get PHPUnit
 echo "PHP version"
 php -v
-cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
-echo "PHPUnit version"
-php phpunit-11.phar --version
+PHPVersion=$(php -v|grep --only-matching --perl-regexp "(PHP )\d+\.\\d+\.\\d+");
+PHPVersion=${PHPVersion:4:3};
+if [ ${PHPVersion} > 8.1 ]; then
+    cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
+    echo "PHPUnit version"
+    php phpunit-11.phar --version
+    PHPUnitVersion=11
+else
+    cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
+    echo "PHPUnit version"
+    php phpunit-10.phar --version
+    PHPUnitVersion=10
+fi
 echo "PHP includes"
 php-config --includes
 
