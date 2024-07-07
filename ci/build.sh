@@ -54,9 +54,9 @@ python -m http.server &> /dev/null &
 # get phpunit
 echo "PHP version"
 php -v
-cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
+cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
 echo "phpunit version"
-php phpunit-10.phar --version
+php phpunit-11.phar --version
 echo "PHP includes"
 php-config --includes
 
