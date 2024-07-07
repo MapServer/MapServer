@@ -54,10 +54,8 @@ python -m http.server &> /dev/null &
 # get PHPUnit
 echo "PHP version"
 php -v
-PHPVersion=$(php -v|grep --only-matching --perl-regexp "(PHP )\d+\.\\d+\.\\d+");
-PHPVersionMinor=${PHPVersion::0-2};
-echo "here: $PHPVersionMinor"
-if [ ${PHPVersionMinor} > 8.1 ]; then
+PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3);
+if [ ${PHPVersionMinor} > 81 ]; then
     cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
     echo "PHPUnit version"
     php phpunit-11.phar --version
