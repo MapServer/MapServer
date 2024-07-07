@@ -43,11 +43,11 @@ python -m pyflakes .
 # run the Python server for the tests
 python -m http.server &> /dev/null &
 
-# get phpunit
+# get PHPUnit
 echo "PHP version"
 php -v
 cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
-echo "phpunit version"
+echo "PHPUnit version"
 php phpunit-11.phar --version
 echo "PHP includes"
 php-config --includes
