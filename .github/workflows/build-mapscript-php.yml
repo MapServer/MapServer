@@ -6,6 +6,11 @@ on:
       - '*'
     except:
       - /^(cherry-pick-)?backport-\d+-to-/
+  pull_request:
+    branches:
+      - '*'
+    except:
+      - /^(cherry-pick-)?backport-\d+-to-/      
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
