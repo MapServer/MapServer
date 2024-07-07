@@ -3,7 +3,7 @@ name: Build and test PHP MapScript
 on:
   push:
     branches:
-      - 'main'
+      - '*'
     except:
       - /^(cherry-pick-)?backport-\d+-to-/
 
