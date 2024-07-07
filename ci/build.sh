@@ -59,12 +59,10 @@ if [ ${PHPVersionMinor} -gt 81 ]; then
     cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
     echo "PHPUnit version"
     php phpunit-11.phar --version
-    PHPUnitVersion=11
 else
     cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
     echo "PHPUnit version"
     php phpunit-10.phar --version
-    PHPUnitVersion=10
 fi
 echo "PHP includes"
 php-config --includes
