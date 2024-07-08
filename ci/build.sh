@@ -51,12 +51,19 @@ python -m pyflakes .
 # run the Python server for the tests
 python -m http.server &> /dev/null &
 
-# get phpunit
+# get PHPUnit
 echo "PHP version"
 php -v
-cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
-echo "phpunit version"
-php phpunit-10.phar --version
+PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
+if [ ${PHPVersionMinor} -gt 81 ]; then
+    cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
+    echo "PHPUnit version"
+    php phpunit-11.phar --version
+else
+    cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
+    echo "PHPUnit version"
+    php phpunit-10.phar --version
+fi
 echo "PHP includes"
 php-config --includes
 

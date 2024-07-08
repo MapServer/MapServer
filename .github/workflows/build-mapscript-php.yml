@@ -3,9 +3,14 @@ name: Build and test PHP MapScript
 on:
   push:
     branches:
-      - 'main'
+      - '*'
     except:
       - /^(cherry-pick-)?backport-\d+-to-/
+  pull_request:
+    branches:
+      - '*'
+    except:
+      - /^(cherry-pick-)?backport-\d+-to-/      
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -19,7 +24,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        php-version: [8.1, 8.2]
+        php-version: [8.3, 8.2]
     env:
       IGNORE_COMPARISON_RESULT_ON_CI: 'true'
 
