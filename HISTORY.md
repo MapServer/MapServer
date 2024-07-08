@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.0 release (2024-07-08)
+--------------------------
+
+RC3 was released as the final 8.2.0 (see major changes below)
+
 8.2.0-rc3 release (2024-06-28)
 ------------------------------
 
