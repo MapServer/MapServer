@@ -845,7 +845,6 @@ static int msWCSParseRequest20_XMLGetCapabilities(xmlNodePtr root,
 static int msWCSParseRequest20_XMLDescribeCoverage(xmlNodePtr root,
                                                    wcs20ParamsObjPtr params) {
   xmlNodePtr child;
-  int numIds = 0;
   char *id;
 
   XML_FOREACH_CHILD(root, child) {
@@ -860,7 +859,6 @@ static int msWCSParseRequest20_XMLDescribeCoverage(xmlNodePtr root,
       return MS_FAILURE;
     }
     /* insert coverage ID into the list */
-    ++numIds;
     params->ids = CSLAddString(params->ids, (char *)id);
     xmlFree(id);
   }
