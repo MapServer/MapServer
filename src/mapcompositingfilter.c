@@ -30,7 +30,7 @@
 #ifdef USE_PCRE2
 #include <pcre2posix.h>
 #else
- #include <regex.h>
+#include <regex.h>
 #endif
 
 #define pixmove(rb, srcx, srcy, dstx, dsty)                                    \
