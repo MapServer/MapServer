@@ -806,10 +806,10 @@ static int msWCSDescribeCoverage_CoverageDescription11(layerObj *layer,
     xmlNewChild(psGridCRS, NULL, BAD_CAST "GridType",
                 BAD_CAST "urn:ogc:def:method:WCS:1.1:2dSimpleGrid");
 
-    sprintf(format_buf, "%.15g %.15g", x0, y0);
+    snprintf(format_buf, sizeof(format_buf), "%.15g %.15g", x0, y0);
     xmlNewChild(psGridCRS, NULL, BAD_CAST "GridOrigin", BAD_CAST format_buf);
 
-    sprintf(format_buf, "%.15g %.15g", resx, resy);
+    snprintf(format_buf, sizeof(format_buf), "%.15g %.15g", resx, resy);
     xmlNewChild(psGridCRS, NULL, BAD_CAST "GridOffsets", BAD_CAST format_buf);
 
     xmlNewChild(psGridCRS, NULL, BAD_CAST "GridCS",
