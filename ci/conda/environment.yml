@@ -29,5 +29,4 @@ dependencies:
   - cmake
   - swig
   - zstd
-  - libv8  # [not win]
 
