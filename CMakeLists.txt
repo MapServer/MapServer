@@ -1146,6 +1146,20 @@ install(
 )
 
 install(
+  FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/collection.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/collection-item.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/collection-items.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/collections.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/conformance.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/debug.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/footer.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/header.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/landing.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap4/openapi.html
+  DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-bootstrap4/
+)
+
+install(
   FILES ${PROJECT_SOURCE_DIR}/etc/mapserver-sample.conf
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/
 )
