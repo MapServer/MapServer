@@ -1205,14 +1205,13 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
                                        const char *tab,
                                        WFSSchemaVersion outputformat) {
   int i, j;
-  char *element_tab;
 
   gmlItemObj *item = NULL;
   gmlConstantObj *constant = NULL;
 
   /* setup the element tab */
-  element_tab = (char *)msSmallMalloc(sizeof(char) * strlen(tab) + 5);
-  sprintf(element_tab, "%s    ", tab);
+  std::string element_tab(tab);
+  element_tab += "    ";
 
   if (group->type)
     msIO_fprintf(stream, "%s<complexType name=\"%s\">\n", tab, group->type);
@@ -1227,7 +1226,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
          j++) { /* find the right gmlConstantObj */
       constant = &(constantList->constants[j]);
       if (strcasecmp(constant->name, group->items[i]) == 0) {
-        msWFSWriteConstantElement(stream, constant, element_tab);
+        msWFSWriteConstantElement(stream, constant, element_tab.c_str());
         break;
       }
     }
@@ -1236,7 +1235,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
     for (j = 0; j < itemList->numitems; j++) { /* find the right gmlItemObj */
       item = &(itemList->items[j]);
       if (strcasecmp(item->name, group->items[i]) == 0) {
-        msWFSWriteItemElement(stream, item, element_tab, outputformat,
+        msWFSWriteItemElement(stream, item, element_tab.c_str(), outputformat,
                               MS_FALSE);
         break;
       }
@@ -1245,7 +1244,6 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
 
   msIO_fprintf(stream, "%s  </sequence>\n", tab);
   msIO_fprintf(stream, "%s</complexType>\n", tab);
-  free(element_tab);
 
   return;
 }
@@ -2111,11 +2109,10 @@ static void msWFSBuildParamList(char **ppszStrList, const char *pszValue,
     *ppszStrList = msStrdup(pszValue);
   else {
     char *pszTmp = msStrdup(*ppszStrList);
-    *ppszStrList = (char *)msSmallRealloc(
-        *ppszStrList, sizeof(char) * (strlen(pszTmp) + strlen(pszSep) +
-                                      strlen(pszValue) + 1));
+    size_t nSize = strlen(pszTmp) + strlen(pszSep) + strlen(pszValue) + 1;
+    *ppszStrList = (char *)msSmallRealloc(*ppszStrList, nSize);
 
-    sprintf(*ppszStrList, "%s%s%s", pszTmp, pszSep, pszValue);
+    snprintf(*ppszStrList, nSize, "%s%s%s", pszTmp, pszSep, pszValue);
     free(pszTmp);
   }
 }
@@ -4096,7 +4093,8 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
 
     if (nMatchingFeatures >= 0) {
       char szMatchingFeatures[12];
-      sprintf(szMatchingFeatures, "%d", nMatchingFeatures);
+      snprintf(szMatchingFeatures, sizeof(szMatchingFeatures), "%d",
+               nMatchingFeatures);
       msSetOutputFormatOption(psFormat, "_matching_features_",
                               szMatchingFeatures);
     } else {
@@ -4851,18 +4849,18 @@ static void msWFSParseXMLQueryNode(CPLXMLNode *psQuery,
       pszTmp2 = msStrdup(pszValue);
     } else {
       pszTmp = msStrdup(pszTmp2);
-      pszTmp2 = (char *)msSmallRealloc(
-          pszTmp2, sizeof(char) * (strlen(pszTmp) + strlen(pszValue) + 2));
-      sprintf(pszTmp2, "%s,%s", pszTmp, pszValue);
+      const size_t nSize = strlen(pszTmp) + strlen(pszValue) + 2;
+      pszTmp2 = (char *)msSmallRealloc(pszTmp2, nSize);
+      snprintf(pszTmp2, nSize, "%s,%s", pszTmp, pszValue);
       msFree(pszTmp);
     }
     psPropertyName = psPropertyName->psNext;
   }
   if (pszTmp2) {
     pszTmp = msStrdup(pszTmp2);
-    pszTmp2 =
-        (char *)msSmallRealloc(pszTmp2, sizeof(char) * (strlen(pszTmp) + 3));
-    sprintf(pszTmp2, "(%s)", pszTmp);
+    const size_t nSize = strlen(pszTmp) + 3;
+    pszTmp2 = (char *)msSmallRealloc(pszTmp2, nSize);
+    snprintf(pszTmp2, nSize, "(%s)", pszTmp);
     msFree(pszTmp);
 
     msWFSBuildParamList(&(wfsparams->pszPropertyName), pszTmp2, "");
@@ -4879,9 +4877,9 @@ static void msWFSParseXMLQueryNode(CPLXMLNode *psQuery,
     pszSerializedFilter = msStrdup("(!)");
   } else {
     char *pszCPLTmp = CPLSerializeXMLTree(psFilter);
-    pszSerializedFilter =
-        (char *)msSmallMalloc(sizeof(char) * (strlen(pszCPLTmp) + 3));
-    sprintf(pszSerializedFilter, "(%s)", pszCPLTmp);
+    const size_t nSize = strlen(pszCPLTmp) + 3;
+    pszSerializedFilter = (char *)msSmallMalloc(nSize);
+    snprintf(pszSerializedFilter, nSize, "(%s)", pszCPLTmp);
     CPLFree(pszCPLTmp);
   }
 
