@@ -29,10 +29,9 @@ Currently, the following versions are supported:
 | 6.4.x   | :x:                |
 | < 6.4   | :x:                |
 
-Note:
-- _MapServer 8.2.0 was released on 2024-07-08._
-- _MapServer 8.0.0 was released on 2022-09-12._
-- _MapServer 7.0.0 was released on 2015-07-24._
+- _MapServer 8.2.0 was released on 2024-07-08_
+- _MapServer 8.0.0 was released on 2022-09-12_
+- _MapServer 7.0.0 was released on 2015-07-24_
 
 ## Version Numbering: Explained
 
