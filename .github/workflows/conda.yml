@@ -1,0 +1,56 @@
+
+name: Conda-Forge builds
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: CF ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+     - uses: actions/checkout@v4
+     - uses: ilammy/msvc-dev-cmd@v1
+       if: matrix.os == 'windows-latest'
+     - name: Support longpaths
+       run: git config --system core.longpaths true
+       if: matrix.os == 'windows-latest'
+     - uses: mamba-org/setup-micromamba@v1
+       with:
+           init-shell: bash
+           environment-file: ci/conda/environment.yml
+           environment-name: "build"
+           cache-environment: true
+           cache-downloads: true
+
+     - name: Setup
+       shell: bash -l {0}
+       run: |
+           mkdir build
+
+     - name: CMake
+       shell: bash -l {0}
+
+       run: |
+
+        if [ "$RUNNER_OS" == "Windows" ]; then
+        export CC=cl.exe
+        export CXX=cl.exe
+        fi
+
+        ./ci/conda/cmake.sh
+
+       working-directory: ./build
+
+     - name: Compile
+       shell: bash -l {0}
+       run: |
+          ninja
+       working-directory: ./build
+
