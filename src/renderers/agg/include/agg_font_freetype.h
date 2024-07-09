@@ -23,6 +23,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <string>
 
 #include "agg_scanline_storage_aa.h"
 #include "agg_scanline_storage_bin.h"
@@ -89,7 +90,7 @@ namespace mapserver
 
         // Interface mandatory to implement for font_cache_manager
         //--------------------------------------------------------------------
-        const char*     font_signature() const { return m_signature;    }
+        const char*     font_signature() const { return m_signature.c_str();    }
         int             change_stamp()   const { return m_change_stamp; }
 
         bool            prepare_glyph(unsigned glyph_code);
@@ -115,10 +116,9 @@ namespace mapserver
         int             m_change_stamp;
         int             m_last_error;
         char*           m_name;
-        unsigned        m_name_len;
         unsigned        m_face_index;
         FT_Encoding     m_char_map;
-        char*           m_signature;
+        std::string     m_signature;
         unsigned        m_height;
         unsigned        m_width;
         bool            m_hinting;
