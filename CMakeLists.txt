@@ -273,10 +273,10 @@ src/renderers/agg/src/clipper.cpp
 include_directories(src/renderers/agg/include)
 
 set(v8_SOURCES
-  src/mapscript/v8/v8_object_wrap.hpp  
+  src/mapscript/v8/v8_object_wrap.hpp
   src/mapscript/v8/point.cpp
   src/mapscript/v8/line.cpp
-  src/mapscript/v8/shape.cpp  
+  src/mapscript/v8/shape.cpp
   src/mapscript/v8/v8_mapscript.cpp
   src/mapv8.cpp
 )
@@ -324,7 +324,7 @@ if(WIN32 AND NOT WITH_PCRE2)
   endif(MINGW)
 endif()
 
-set(mapserver_SOURCES src/fontcache.c 
+set(mapserver_SOURCES src/fontcache.c
 src/cgiutil.c src/mapgeos.c src/maporaclespatial.c src/mapsearch.c src/mapwms.cpp src/classobject.c
 src/mapgml.c src/mapoutput.c src/mapwmslayer.c src/layerobject.c src/mapgraticule.c src/mapows.c src/mapogcapi.cpp
 src/mapservutil.c src/mapxbase.c src/maphash.c src/mapowscommon.c src/mapshape.c src/mapxml.c src/mapbits.c
@@ -391,7 +391,7 @@ if(BUILD_DYNAMIC)
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
-) 
+)
 endif(BUILD_DYNAMIC)
 
 if(BUILD_STATIC)
@@ -399,7 +399,7 @@ if(BUILD_STATIC)
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
-  ) 
+  )
 endif(BUILD_STATIC)
 
 #SOVERSION is not necessarily the same as the
@@ -434,9 +434,9 @@ add_executable(shptreetst src/apps/shptreetst.c)
 target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(USE_EXTENDED_DEBUG 1)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 find_package(PNG)
 if(PNG_FOUND)
@@ -569,6 +569,11 @@ if(WITH_MYSQL)
     ms_link_libraries( ${MYSQL_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${MYSQL_INCLUDE_DIR})
     set (USE_MYSQL 1)
+    if (WIN32)
+        find_package(Zstd REQUIRED CONFIG)
+        include_directories(${ZSTD_INCLUDE_DIRS})
+        ms_link_libraries(zstd::libzstd_shared)
+    endif (WIN32)
   else(MYSQL_FOUND)
     report_optional_not_found(MYSQL)
   endif(MYSQL_FOUND)
@@ -810,7 +815,7 @@ if(WITH_XMLMAPFILE)
    if(NOT USE_LIBXML2)
     report_dependency_error(KML LIBXML2)
    endif(NOT USE_LIBXML2)
-  
+
   #check for xslt and exslt
   find_package(LibXslt)
   if(LIBXSLT_FOUND)
@@ -1036,6 +1041,10 @@ include_directories("${PROJECT_BINARY_DIR}")
 if(WIN32)
 set(REGEX_MALLOC 1)
 set(USE_GENERIC_MS_NINT 1)
+
+# FIXME: https://stackoverflow.com/a/65321305 this handles older MSVC
+# SDKs that are used by Conda Forge windows builds
+add_definitions(-D_XKEYCHECK_H=1)
 endif(WIN32)
 
 

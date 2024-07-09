@@ -10,7 +10,7 @@ on:
     branches:
       - '*'
     except:
-      - /^(cherry-pick-)?backport-\d+-to-/      
+      - /^(cherry-pick-)?backport-\d+-to-/
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -39,7 +39,7 @@ jobs:
 
       - name: Setup PHP
         run: |
-          # for pre-installed software see 
+          # for pre-installed software see
           # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2004-Readme.md
           # both swig and php are included, so removed these
           sudo apt-get -qq remove "php*-cli" "php*-dev"
@@ -49,7 +49,7 @@ jobs:
           sudo apt-get -qq install php${{ matrix.php-version }}-cli php${{ matrix.php-version }}-dev
 
       - name: Install dependencies
-        run: ./ci/setup.sh
+        run: ./ci/ubuntu/setup.sh
 
       - name: Build
-        run: ./ci/build.sh
+        run: ./ci/ubuntu/build.sh
