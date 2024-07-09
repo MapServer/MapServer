@@ -143,7 +143,7 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb, unsigned int *reqcolors,
   rgbaPixel **apixels =
       NULL; /* pointer to the start rows of truecolor pixels */
 
-  register rgbaPixel *pP;
+  rgbaPixel *pP;
 
   unsigned char newmaxval;
   acolorhist_vector achv, acolormap = NULL;
@@ -205,9 +205,9 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb, unsigned int *reqcolors,
 }
 
 int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb) {
-  register int ind;
+  int ind;
   unsigned char *outrow, *pQ;
-  register rgbaPixel *pP;
+  rgbaPixel *pP;
   acolorhash_table acht;
   int usehash;
   /*
@@ -228,8 +228,8 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb) {
       ind = pam_lookupacolor(acht, pP);
       if (ind == -1) {
         /* No; search acolormap for closest match. */
-        register int r1, g1, b1, a1, r2, g2, b2, a2;
-        register long dist, newdist;
+        int r1, g1, b1, a1, r2, g2, b2, a2;
+        long dist, newdist;
 
         r1 = PAM_GETR(*pP);
         g1 = PAM_GETG(*pP);
@@ -281,7 +281,7 @@ static acolorhist_vector mediancut(acolorhist_vector achv, int colors, int sum,
                                    unsigned char maxval, int newcolors) {
   acolorhist_vector acolormap;
   box_vector bv;
-  register int bi, i;
+  int bi, i;
   int boxes;
 
   bv = (box_vector)malloc(sizeof(struct box) * newcolors);
@@ -307,9 +307,9 @@ static acolorhist_vector mediancut(acolorhist_vector achv, int colors, int sum,
    ** Main loop: split boxes until we have enough.
    */
   while (boxes < newcolors) {
-    register int indx, clrs;
+    int indx, clrs;
     int sm;
-    register int minr, maxr, ming, mina, maxg, minb, maxb, maxa, v;
+    int minr, maxr, ming, mina, maxg, minb, maxb, maxa, v;
     int halfsum, lowersum;
 
     /*
@@ -449,9 +449,9 @@ static acolorhist_vector mediancut(acolorhist_vector achv, int colors, int sum,
    */
   for (bi = 0; bi < boxes; ++bi) {
 #ifdef REP_CENTER_BOX
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register int minr, maxr, ming, maxg, minb, maxb, mina, maxa, v;
+    int indx = bv[bi].ind;
+    int clrs = bv[bi].colors;
+    int minr, maxr, ming, maxg, minb, maxb, mina, maxa, v;
 
     minr = maxr = PAM_GETR(achv[indx].acolor);
     ming = maxg = PAM_GETG(achv[indx].acolor);
@@ -475,9 +475,9 @@ static acolorhist_vector mediancut(acolorhist_vector achv, int colors, int sum,
                (minb + maxb) / 2, (mina + maxa) / 2);
 #endif /*REP_CENTER_BOX*/
 #ifdef REP_AVERAGE_COLORS
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register long r = 0, g = 0, b = 0, a = 0;
+    int indx = bv[bi].ind;
+    int clrs = bv[bi].colors;
+    long r = 0, g = 0, b = 0, a = 0;
 
     for (i = 0; i < clrs; ++i) {
       r += PAM_GETR(achv[indx + i].acolor);
@@ -492,9 +492,9 @@ static acolorhist_vector mediancut(acolorhist_vector achv, int colors, int sum,
     PAM_ASSIGN(acolormap[bi].acolor, r, g, b, a);
 #endif /*REP_AVERAGE_COLORS*/
 #ifdef REP_AVERAGE_PIXELS
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register long r = 0, g = 0, b = 0, a = 0, sum = 0;
+    int indx = bv[bi].ind;
+    int clrs = bv[bi].colors;
+    long r = 0, g = 0, b = 0, a = 0, sum = 0;
 
     for (i = 0; i < clrs; ++i) {
       r += (long)PAM_GETR(achv[indx + i].acolor) * achv[indx + i].value;
@@ -586,12 +586,9 @@ static int sumcompare(const void *b1, const void *b2) {
     0x7fffffff) %                                                              \
    HASH_SIZE)
 
-static acolorhist_vector pam_computeacolorhist(apixels, cols, rows, maxacolors,
-                                               acolorsP)
-rgbaPixel **apixels;
-int cols, rows, maxacolors;
-int *acolorsP;
-{
+static acolorhist_vector pam_computeacolorhist(rgbaPixel **apixels, int cols,
+                                               int rows, int maxacolors,
+                                               int *acolorsP) {
   acolorhash_table acht;
   acolorhist_vector achv;
 
@@ -603,14 +600,11 @@ int *acolorsP;
   return achv;
 }
 
-static acolorhash_table pam_computeacolorhash(apixels, cols, rows, maxacolors,
-                                              acolorsP)
-rgbaPixel **apixels;
-int cols, rows, maxacolors;
-int *acolorsP;
-{
+static acolorhash_table pam_computeacolorhash(rgbaPixel **apixels, int cols,
+                                              int rows, int maxacolors,
+                                              int *acolorsP) {
   acolorhash_table acht;
-  register rgbaPixel *pP;
+  rgbaPixel *pP;
   acolorhist_list achl;
   int col, row, hash;
 
@@ -662,13 +656,10 @@ static acolorhash_table pam_allocacolorhash() {
   return acht;
 }
 
-static int pam_addtoacolorhash(acht, acolorP, value)
-acolorhash_table acht;
-rgbaPixel *acolorP;
-int value;
-{
-  register int hash;
-  register acolorhist_list achl;
+static int pam_addtoacolorhash(acolorhash_table acht, rgbaPixel *acolorP,
+                               int value) {
+  int hash;
+  acolorhist_list achl;
 
   achl = (acolorhist_list)msSmallMalloc(sizeof(struct acolorhist_list_item));
 
@@ -680,10 +671,8 @@ int value;
   return 0;
 }
 
-static acolorhist_vector pam_acolorhashtoacolorhist(acht, maxacolors)
-acolorhash_table acht;
-int maxacolors;
-{
+static acolorhist_vector pam_acolorhashtoacolorhist(acolorhash_table acht,
+                                                    int maxacolors) {
   acolorhist_vector achv;
   acolorhist_list achl;
   int i, j;
@@ -709,10 +698,7 @@ int maxacolors;
   return achv;
 }
 
-static int pam_lookupacolor(acht, acolorP)
-acolorhash_table acht;
-rgbaPixel *acolorP;
-{
+static int pam_lookupacolor(acolorhash_table acht, rgbaPixel *acolorP) {
   int hash;
   acolorhist_list achl;
 
@@ -724,11 +710,9 @@ rgbaPixel *acolorP;
   return -1;
 }
 
-static void pam_freeacolorhist(achv) acolorhist_vector achv;
-{ free((char *)achv); }
+static void pam_freeacolorhist(acolorhist_vector achv) { free((char *)achv); }
 
-static void pam_freeacolorhash(acht) acolorhash_table acht;
-{
+static void pam_freeacolorhash(acolorhash_table acht) {
   int i;
   acolorhist_list achl, achlnext;
 
