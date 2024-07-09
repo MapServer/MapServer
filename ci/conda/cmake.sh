@@ -1,4 +1,4 @@
-cmake                                                \
+cmake -G Ninja                                       \
     -DSWIG_EXECUTABLE=$CONDA_PREFIX/bin/swig4.0      \
     -DCMAKE_INSTALL_PREFIX:PATH=$CONDA_PREFIX        \
     -DCMAKE_BUILD_TYPE=Release                       \
