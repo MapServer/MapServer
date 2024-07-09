@@ -31,7 +31,7 @@ cmake -G Ninja                                       \
     -DWITH_POSTGRESQL=1                              \
     -DWITH_PROJ=1                                    \
     -DWITH_PROTOBUFC=0                               \
-    -DWITH_PYTHON=0                                  \
+    -DWITH_PYTHON=1                                  \
     -DWITH_RSVG=0                                    \
     -DWITH_SOS=1                                     \
     -DWITH_SVGCAIRO=0                                \
