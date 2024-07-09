@@ -1,5 +1,5 @@
 cmake -G Ninja                                       \
-    -DSWIG_EXECUTABLE=$CONDA_PREFIX/bin/swig4.0      \
+    -DSWIG_EXECUTABLE=$CONDA_PREFIX/bin/swig         \
     -DCMAKE_INSTALL_PREFIX:PATH=$CONDA_PREFIX        \
     -DCMAKE_BUILD_TYPE=Release                       \
     -DWITH_APACHE_MODULE=0                           \
@@ -31,7 +31,7 @@ cmake -G Ninja                                       \
     -DWITH_POSTGRESQL=1                              \
     -DWITH_PROJ=1                                    \
     -DWITH_PROTOBUFC=0                               \
-    -DWITH_PYTHON=1                                  \
+    -DWITH_PYTHON=0                                  \
     -DWITH_RSVG=0                                    \
     -DWITH_SOS=1                                     \
     -DWITH_SVGCAIRO=0                                \
