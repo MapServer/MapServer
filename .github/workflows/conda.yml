@@ -44,7 +44,7 @@ jobs:
         export CXX=cl.exe
         fi
 
-        ./ci/conda/cmake.sh
+        ../ci/conda/cmake.sh
 
        working-directory: ./build
 
