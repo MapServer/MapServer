@@ -2346,7 +2346,7 @@ int msCGIDispatchRequest(mapservObj *mapserv) {
 
 int msCGIHandler(const char *query_string, void **out_buffer,
                  size_t *buffer_length) {
-  int x, m = 0;
+  int m = 0;
   struct mstimeval execstarttime = {0}, execendtime = {0};
   struct mstimeval requeststarttime = {0}, requestendtime = {0};
   mapservObj *mapserv = NULL;
@@ -2389,7 +2389,7 @@ int msCGIHandler(const char *query_string, void **out_buffer,
 
   /* don't modify the string */
   queryString = msStrdup(query_string);
-  for (x = 0; queryString[0] != '\0'; x++) {
+  while (queryString[0] != '\0') {
     if (m >= maxParams) {
       maxParams *= 2;
       mapserv->request->ParamNames = (char **)realloc(
