@@ -1117,9 +1117,9 @@ static int msPostGISRetrievePK(layerObj *layer) {
           "pg_class.relname = '%s' and pg_class.relnamespace = "
           "pg_namespace.oid and pg_namespace.nspname = '%s' and "
           "pg_constraint.conkey[2] is null";
-      sql = (char *)msSmallMalloc(schema.size() + table.size() +
-                                  strlen(v73sql) + 1);
-      sprintf(sql, v73sql, table.c_str(), schema.c_str());
+      const size_t nSize = schema.size() + table.size() + strlen(v73sql) + 1;
+      sql = (char *)msSmallMalloc(nSize);
+      snprintf(sql, nSize, v73sql, table.c_str(), schema.c_str());
     } else {
       static const char *v73sql =
           "select attname from pg_attribute, pg_constraint, pg_class where "
@@ -1128,9 +1128,9 @@ static int msPostGISRetrievePK(layerObj *layer) {
           "pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname "
           "= '%s' and pg_table_is_visible(pg_class.oid) and "
           "pg_constraint.conkey[2] is null";
-      sql = (char *)msSmallMalloc(layerinfo->fromsource.size() +
-                                  strlen(v73sql) + 1);
-      sprintf(sql, v73sql, layerinfo->fromsource.c_str());
+      const size_t nSize = layerinfo->fromsource.size() + strlen(v73sql) + 1;
+      sql = (char *)msSmallMalloc(nSize);
+      snprintf(sql, nSize, v73sql, layerinfo->fromsource.c_str());
     }
   }
 
