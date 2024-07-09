@@ -18,16 +18,16 @@ only be supported for three years from the date of the 8.0 series release (until
 
 Currently, the following versions are supported:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 8.2.x   | :white_check_mark: |
-| 8.0.x   | :white_check_mark: |
-| 7.6.x   | :white_check_mark: |
-| 7.4.x   | :x:                |
-| 7.2.x   | :x:                |
-| 7.0.x   | :x:                |
-| 6.4.x   | :x:                |
-| < 6.4   | :x:                |
+| Version | Supported          | Support Until |
+| ------- | ------------------ |-------------- |
+| 8.2.x   | :white_check_mark: |               |
+| 8.0.x   | :white_check_mark: |               |
+| 7.6.x   | :white_check_mark: | 2025-09-12    |
+| 7.4.x   | :x:                |               |
+| 7.2.x   | :x:                |               |
+| 7.0.x   | :x:                |               |
+| 6.4.x   | :x:                |               |
+| < 6.4   | :x:                |               |
 
 - _MapServer 8.2.0 was released on 2024-07-08_
 - _MapServer 8.0.0 was released on 2022-09-12_
