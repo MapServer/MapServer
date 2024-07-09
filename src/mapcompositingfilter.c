@@ -26,7 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 #include "mapserver.h"
+
+#ifdef USE_PCRE2
+#include <pcre2posix.h>
+#else
 #include <regex.h>
+#endif
+
 #define pixmove(rb, srcx, srcy, dstx, dsty)                                    \
   memcpy(rb->data.rgba.pixels + dsty * rb->data.rgba.row_step + dstx * 4,      \
          rb->data.rgba.pixels + srcy * rb->data.rgba.row_step + srcx * 4, 4)
