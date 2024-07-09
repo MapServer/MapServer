@@ -973,7 +973,7 @@ static int msOGRSpatialRef2ProjectionObj(OGRSpatialReferenceH hSRS,
     const char *pszAuthCode = OSRGetAuthorityCode(hSRS, NULL);
     if (pszAuthCode) {
       char szInitStr[32];
-      sprintf(szInitStr, "init=epsg:%d", atoi(pszAuthCode));
+      snprintf(szInitStr, sizeof(szInitStr), "init=epsg:%d", atoi(pszAuthCode));
 
       if (debug_flag)
         msDebug("AUTO = %s\n", szInitStr);
@@ -2069,8 +2069,9 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
   default:
     if (n->token < 128) {
       char c = n->token;
-      out = (char *)msSmallMalloc(2);
-      sprintf(out, "%c", c);
+      const size_t nSize = 2;
+      out = (char *)msSmallMalloc(nSize);
+      snprintf(out, nSize, "%c", c);
     }
     break;
   }
@@ -2641,28 +2642,30 @@ static void msOGRPassThroughFieldDefinitions(layerObj *layer,
       } else {
         gml_type = "Integer";
         if (OGR_Fld_GetWidth(hField) > 0)
-          sprintf(gml_width, "%d", OGR_Fld_GetWidth(hField));
+          snprintf(gml_width, sizeof(gml_width), "%d",
+                   OGR_Fld_GetWidth(hField));
       }
       break;
 
     case OFTInteger64:
       gml_type = "Long";
       if (OGR_Fld_GetWidth(hField) > 0)
-        sprintf(gml_width, "%d", OGR_Fld_GetWidth(hField));
+        snprintf(gml_width, sizeof(gml_width), "%d", OGR_Fld_GetWidth(hField));
       break;
 
     case OFTReal:
       gml_type = "Real";
       if (OGR_Fld_GetWidth(hField) > 0)
-        sprintf(gml_width, "%d", OGR_Fld_GetWidth(hField));
+        snprintf(gml_width, sizeof(gml_width), "%d", OGR_Fld_GetWidth(hField));
       if (OGR_Fld_GetPrecision(hField) > 0)
-        sprintf(gml_precision, "%d", OGR_Fld_GetPrecision(hField));
+        snprintf(gml_precision, sizeof(gml_precision), "%d",
+                 OGR_Fld_GetPrecision(hField));
       break;
 
     case OFTString:
       gml_type = "Character";
       if (OGR_Fld_GetWidth(hField) > 0)
-        sprintf(gml_width, "%d", OGR_Fld_GetWidth(hField));
+        snprintf(gml_width, sizeof(gml_width), "%d", OGR_Fld_GetWidth(hField));
       break;
 
     case OFTDate:
