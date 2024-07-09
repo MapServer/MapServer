@@ -62,8 +62,9 @@ static int msWCSValidateRangeSetParam(layerObj *lp, char *name,
     return MS_FAILURE;
 
   /* Fetch the available values list for the rangeset item and tokenize */
-  tmpname = (char *)msSmallMalloc(sizeof(char) * strlen(name) + 10);
-  sprintf(tmpname, "%s_values", name);
+  const size_t nSize = strlen(name) + strlen("_values") + 1;
+  tmpname = (char *)msSmallMalloc(nSize);
+  snprintf(tmpname, nSize, "%s_values", name);
   ri_values_list = msOWSLookupMetadata(&(lp->metadata), "CO", tmpname);
   msFree(tmpname);
 
@@ -1976,18 +1977,19 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj *lp,
           // Make sure it is a GRIB2 band
           if (pszMDI) {
             char szKey[256];
-            sprintf(szKey, "BAND_%d_IDS", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_IDS", nDstBand);
             msSetOutputFormatOption(format, szKey, pszMDI);
 
-            sprintf(szKey, "BAND_%d_DISCIPLINE", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_DISCIPLINE", nDstBand);
             msSetOutputFormatOption(format, szKey,
                                     CSLFetchNameValue(papszMD, "DISCIPLINE"));
 
-            sprintf(szKey, "BAND_%d_PDS_PDTN", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_PDS_PDTN", nDstBand);
             msSetOutputFormatOption(
                 format, szKey, CSLFetchNameValue(papszMD, "GRIB_PDS_PDTN"));
 
-            sprintf(szKey, "BAND_%d_PDS_TEMPLATE_NUMBERS", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_PDS_TEMPLATE_NUMBERS",
+                     nDstBand);
             msSetOutputFormatOption(
                 format, szKey,
                 CSLFetchNameValue(papszMD, "GRIB_PDS_TEMPLATE_NUMBERS"));
