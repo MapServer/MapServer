@@ -510,8 +510,8 @@ FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode,
      * distance as a buffer earlier */
     if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
          strcasecmp(psNode->pszValue, "Beyond") == 0)) {
-      char szBuffer[256];
-      sprintf(szBuffer, ",%g", dfDistance);
+      char szBuffer[32];
+      snprintf(szBuffer, sizeof(szBuffer), ",%g", dfDistance);
       expr += szBuffer;
     }
 
