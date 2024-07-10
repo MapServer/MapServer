@@ -30,6 +30,7 @@ message(STATUS "PHP Include Path: ${PHP_INCLUDE_PATH}")
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/swiginc)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/)
 include_directories(${PROJECT_SOURCE_DIR}/src/mapscript/phpng)
+include_directories(${PROJECT_BINARY_DIR}/src/mapscript/)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # make sure mapscriptPHP7_wrap.c is found
 
 if(WIN32)
