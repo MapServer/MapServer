@@ -1,14 +1,6 @@
 #!/bin/sh
 
-if [ "$RUNNER_OS" == "Windows" ]; then
-    SWIG=$CONDA_PREFIX/Library/bin/swig
-else
-    SWIG=$CONDA_PREFIX/bin/swig
-fi
-
-
 cmake -G Ninja                                       \
-    -DSWIG_EXECUTABLE=$SWIG                          \
     -DCMAKE_INSTALL_PREFIX:PATH=$CONDA_PREFIX        \
     -DCMAKE_BUILD_TYPE=Release                       \
     -DWITH_APACHE_MODULE=0                           \
