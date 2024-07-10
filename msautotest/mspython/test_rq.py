@@ -398,6 +398,9 @@ def test_rq_9():
 
 
 def test_rq_10():
+    """
+    This test requires the GIF driver to be available in GDAL, by setting GDAL_DRIVER_PATH
+    """
 
     map = mapscript.mapObj(get_relpath_to_this("../gdal/classtest1.map"))
     layer = map.getLayer(0)
@@ -453,6 +456,9 @@ def test_rq_10():
 
 
 def test_rqtest_12():
+    """
+    This test requires the GIF driver to be available in GDAL, by setting GDAL_DRIVER_PATH
+    """
 
     map = mapscript.mapObj(get_relpath_to_this("../gdal/classtest1.map"))
     layer = map.getLayer(0)
