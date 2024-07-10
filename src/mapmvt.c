@@ -662,6 +662,7 @@ int msPopulateRendererVTableMVT(rendererVTableObj *renderer) {
 }
 #else
 int msPopulateRendererVTableMVT(rendererVTableObj *renderer) {
+  (void)renderer;
   msSetError(MS_MISCERR,
              "Vector Tile Driver requested but support is not compiled in",
              "msPopulateRendererVTableMVT()");
@@ -669,6 +670,8 @@ int msPopulateRendererVTableMVT(rendererVTableObj *renderer) {
 }
 
 int msMVTWriteTile(mapObj *map, int sendheaders) {
+  (void)map;
+  (void)sendheaders;
   msSetError(MS_MISCERR, "Vector Tile support is not available.",
              "msMVTWriteTile()");
   return MS_FAILURE;

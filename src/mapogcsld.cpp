@@ -3889,11 +3889,12 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion) {
 
   if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
       psStyle->color.blue != -1)
-    sprintf(szHexColor, "%02x%02x%02x", psStyle->color.red,
-            psStyle->color.green, psStyle->color.blue);
+    snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x", psStyle->color.red,
+             psStyle->color.green, psStyle->color.blue);
   else
-    sprintf(szHexColor, "%02x%02x%02x", psStyle->outlinecolor.red,
-            psStyle->outlinecolor.green, psStyle->outlinecolor.blue);
+    snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x",
+             psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+             psStyle->outlinecolor.blue);
 
   snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke\">#%s</%s>\n", sCssParam,
            szHexColor, sCssParam);
@@ -4014,8 +4015,8 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer,
       free(pszGraphicSLD);
     }
 
-    sprintf(szHexColor, "%02x%02x%02x", psStyle->color.red,
-            psStyle->color.green, psStyle->color.blue);
+    snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x", psStyle->color.red,
+             psStyle->color.green, psStyle->color.blue);
 
     snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%s</%s>\n", sCssParam,
              szHexColor, sCssParam);
@@ -4054,8 +4055,9 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer,
       }
     }
 
-    sprintf(szHexColor, "%02x%02x%02x", psStyle->outlinecolor.red,
-            psStyle->outlinecolor.green, psStyle->outlinecolor.blue);
+    snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x",
+             psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+             psStyle->outlinecolor.blue);
 
     snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke\">#%s</%s>\n", sCssParam,
              szHexColor, sCssParam);
@@ -4201,12 +4203,14 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion) {
         if (t->token == MS_TOKEN_BINDING_DOUBLE ||
             t->token == MS_TOKEN_BINDING_INTEGER ||
             t->token == MS_TOKEN_BINDING_STRING) {
-          char *target = static_cast<char *>(
-              msSmallMalloc(strlen(t->tokenval.bindval.item) + 3));
-          char *replacement = static_cast<char *>(
-              msSmallMalloc(strlen(t->tokenval.bindval.item) + 9));
-          sprintf(target, "[%s]", t->tokenval.bindval.item);
-          sprintf(replacement, "\"+\"[%s]\"+\"", t->tokenval.bindval.item);
+          const size_t nSizeTarget = strlen(t->tokenval.bindval.item) + 3;
+          char *target = static_cast<char *>(msSmallMalloc(nSizeTarget));
+          const size_t nSizeReplacement = strlen(t->tokenval.bindval.item) + 9;
+          char *replacement =
+              static_cast<char *>(msSmallMalloc(nSizeReplacement));
+          snprintf(target, nSizeTarget, "[%s]", t->tokenval.bindval.item);
+          snprintf(replacement, nSizeReplacement, "\"+\"[%s]\"+\"",
+                   t->tokenval.bindval.item);
           result = msReplaceSubstring(result, target, replacement);
           msFree(target);
           msFree(replacement);
@@ -4386,10 +4390,10 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion) {
       snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-      sprintf(szHexColor, "%02hhx%02hhx%02hhx",
-              (unsigned char)psLabelObj->color.red,
-              (unsigned char)psLabelObj->color.green,
-              (unsigned char)psLabelObj->color.blue);
+      snprintf(szHexColor, sizeof(szHexColor), "%02hhx%02hhx%02hhx",
+               (unsigned char)psLabelObj->color.red,
+               (unsigned char)psLabelObj->color.green,
+               (unsigned char)psLabelObj->color.blue);
 
       snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%s</%s>\n", sCssParam,
                szHexColor, sCssParam);

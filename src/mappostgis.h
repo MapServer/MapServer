@@ -53,7 +53,7 @@
 **
 ** Specific information needed for managing this layer.
 */
-typedef struct {
+struct msPostGISLayerInfo {
   std::string sql{};        /* SQL query to send to database */
   PGconn *pgconn = nullptr; /* Connection to database */
   long rownum = 0; /* What row is the next to be read (for random access) */
@@ -69,7 +69,7 @@ typedef struct {
   int version = 0;          /* PostGIS version of the database */
   int paging = 0;  /* Driver handling of pagination, enabled by default */
   int force2d = 0; /* Pass geometry through ST_Force2D */
-} msPostGISLayerInfo;
+};
 
 /*
 ** Utility structure for handling the WKB returned by the database while

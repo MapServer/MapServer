@@ -1671,10 +1671,11 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_TIME_PERIOD;
-          psFilterNode->psRightNode->pszValue = static_cast<char *>(
-              msSmallMalloc(strlen(pszBeginTime) + strlen(pszEndTime) + 2));
-          sprintf(psFilterNode->psRightNode->pszValue, "%s/%s", pszBeginTime,
-                  pszEndTime);
+          const size_t nSize = strlen(pszBeginTime) + strlen(pszEndTime) + 2;
+          psFilterNode->psRightNode->pszValue =
+              static_cast<char *>(msSmallMalloc(nSize));
+          snprintf(psFilterNode->psRightNode->pszValue, nSize, "%s/%s",
+                   pszBeginTime, pszEndTime);
         } else
           psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
       } else {
@@ -2237,8 +2238,9 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     if (!pszTmp)
       return NULL;
 
-    pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
-    sprintf(pszBuffer, "%s", pszTmp);
+    const size_t nSize = strlen(pszTmp + 1);
+    pszBuffer = (char *)malloc(nSize);
+    snprintf(pszBuffer, nSize, "%s", pszTmp);
   }
 
   /* ==================================================================== */
@@ -2256,8 +2258,9 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     if (!pszTmp)
       return NULL;
 
-    pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
-    sprintf(pszBuffer, "%s", pszTmp);
+    const size_t nSize = strlen(pszTmp + 1);
+    pszBuffer = (char *)malloc(nSize);
+    snprintf(pszBuffer, nSize, "%s", pszTmp);
   }
 
   /* -------------------------------------------------------------------- */

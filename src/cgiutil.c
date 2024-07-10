@@ -132,7 +132,7 @@ int loadParams(cgiRequestObj *request,
                char *(*getenv2)(const char *, void *thread_context),
                char *raw_post_data, ms_uint32 raw_post_data_length,
                void *thread_context) {
-  register int x, m = 0;
+  int m = 0;
   char *s, *queryString = NULL, *httpCookie = NULL;
   int debuglevel;
   int maxParams = MS_DEFAULT_CGI_PARAMS;
@@ -210,7 +210,7 @@ int loadParams(cgiRequestObj *request,
         msDebug("loadParams() QUERY_STRING: %s\n", s);
 
       queryString = msStrdup(s);
-      for (x = 0; queryString[0] != '\0'; x++) {
+      while (queryString[0] != '\0') {
         if (m >= maxParams) {
           maxParams *= 2;
           request->ParamNames = (char **)msSmallRealloc(
@@ -259,7 +259,7 @@ int loadParams(cgiRequestObj *request,
 
       /* don't modify the string returned by getenv2 */
       queryString = msStrdup(s);
-      for (x = 0; queryString[0] != '\0'; x++) {
+      while (queryString[0] != '\0') {
         if (m >= maxParams) {
           maxParams *= 2;
           request->ParamNames = (char **)msSmallRealloc(
@@ -291,7 +291,7 @@ int loadParams(cgiRequestObj *request,
   if (s != NULL) {
     httpCookie = msStrdup(s);
     request->httpcookiedata = msStrdup(s);
-    for (x = 0; httpCookie[0] != '\0'; x++) {
+    while (httpCookie[0] != '\0') {
       if (m >= maxParams) {
         maxParams *= 2;
         request->ParamNames = (char **)msSmallRealloc(

@@ -376,6 +376,11 @@ int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
   return MS_SUCCESS;
 
 #else
+  (void)img;
+  (void)x;
+  (void)y;
+  (void)symbol;
+  (void)style;
   msSetError(MS_MISCERR,
              "SVG Symbols requested but is not built with libsvgcairo",
              "renderSVGSymbolCairo()");
@@ -929,6 +934,8 @@ void freeSVGCache(symbolObj *s) {
   }
   msFree(s->renderer_cache);
   s->renderer_cache = NULL;
+#else
+  (void)s;
 #endif
 }
 
@@ -1056,6 +1063,7 @@ int msPreloadSVGSymbol(symbolObj *symbol) {
   return MS_SUCCESS;
 
 #else
+  (void)symbol;
   msSetError(MS_MISCERR,
              "SVG Symbols requested but is not built with libsvgcairo",
              "msPreloadSVGSymbol()");
@@ -1151,6 +1159,11 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y,
   MS_IMAGE_RENDERER(img)->freeSymbol(&pixsymbol);
   return status;
 #else
+  (void)img;
+  (void)x;
+  (void)y;
+  (void)symbol;
+  (void)style;
   msSetError(
       MS_MISCERR,
       "SVG Symbols requested but MapServer is not built with libsvgcairo",
@@ -1193,6 +1206,7 @@ int msPopulateRendererVTableCairoRaster(rendererVTableObj *renderer) {
   renderer->cleanup = &cleanupCairo;
   return MS_SUCCESS;
 #else
+  (void)renderer;
   msSetError(MS_MISCERR, "Cairo Driver requested but MapServer is not built in",
              "msPopulateRendererVTableCairoRaster()");
   return MS_FAILURE;
@@ -1231,6 +1245,7 @@ int populateRendererVTableCairoVector(rendererVTableObj *renderer) {
   renderer->cleanup = &cleanupCairo;
   return MS_SUCCESS;
 #else
+  (void)renderer;
   msSetError(MS_MISCERR, "Cairo Driver requested but MapServer is not built in",
              "msPopulateRendererVTableCairoRaster()");
   return MS_FAILURE;

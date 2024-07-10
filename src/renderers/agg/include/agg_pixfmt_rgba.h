@@ -144,7 +144,7 @@ namespace mapserver
         static AGG_INLINE void blend_pix(value_type* p, 
                                          unsigned cr, unsigned cg, unsigned cb,
                                          unsigned alpha, 
-                                         unsigned cover=0)
+                                         unsigned /*cover*/=0)
         {
             calc_type r = p[Order::R];
             calc_type g = p[Order::G];
@@ -210,7 +210,7 @@ namespace mapserver
         static AGG_INLINE void blend_pix(value_type* p, 
                                          unsigned cr, unsigned cg, unsigned cb,
                                          unsigned alpha,
-                                         unsigned cover=0)
+                                         unsigned /*cover*/=0)
         {
             if(alpha == 0) return;
             calc_type a = p[Order::A];
@@ -1716,7 +1716,7 @@ namespace mapserver
             base_mask  = color_type::base_mask 
         };
 
-        static AGG_INLINE void blend_pix(unsigned op, value_type* p, 
+        static AGG_INLINE void blend_pix(unsigned /*op*/, value_type* p, 
                                          unsigned cr, unsigned cg, unsigned cb,
                                          unsigned ca,
                                          unsigned cover)
@@ -1741,7 +1741,7 @@ namespace mapserver
             base_mask  = color_type::base_mask 
         };
 
-        static AGG_INLINE void blend_pix(unsigned op, value_type* p, 
+        static AGG_INLINE void blend_pix(unsigned /*op*/, value_type* p, 
                                          unsigned cr, unsigned cg, unsigned cb,
                                          unsigned ca,
                                          unsigned cover)
@@ -1771,7 +1771,7 @@ namespace mapserver
             base_mask  = color_type::base_mask 
         };
 
-        static AGG_INLINE void blend_pix(unsigned op, value_type* p, 
+        static AGG_INLINE void blend_pix(unsigned /*op*/, value_type* p, 
                                          unsigned cr, unsigned cg, unsigned cb,
                                          unsigned ca,
                                          unsigned cover)
@@ -2444,7 +2444,7 @@ namespace mapserver
         void blend_from_color(const SrcPixelFormatRenderer& from, 
                               const color_type& color,
                               int xdst, int ydst,
-                              int xsrc, int ysrc,
+                              int /*xsrc*/, int ysrc,
                               unsigned len,
                               int8u cover)
         {
@@ -2471,7 +2471,7 @@ namespace mapserver
         void blend_from_lut(const SrcPixelFormatRenderer& from, 
                             const color_type* color_lut,
                             int xdst, int ydst,
-                            int xsrc, int ysrc,
+                            int /*xsrc*/, int ysrc,
                             unsigned len,
                             int8u cover)
         {
@@ -2896,7 +2896,7 @@ namespace mapserver
         void blend_from_color(const SrcPixelFormatRenderer& from, 
                               const color_type& color,
                               int xdst, int ydst,
-                              int xsrc, int ysrc,
+                              int /*xsrc*/, int ysrc,
                               unsigned len,
                               int8u cover)
         {
@@ -2924,7 +2924,7 @@ namespace mapserver
         void blend_from_lut(const SrcPixelFormatRenderer& from, 
                             const color_type* color_lut,
                             int xdst, int ydst,
-                            int xsrc, int ysrc,
+                            int /*xsrc*/, int ysrc,
                             unsigned len,
                             int8u cover)
         {

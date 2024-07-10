@@ -3000,6 +3000,7 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
+      if(0) printf("%d", yynerrs); /* avoid warning about unused yynerrs */
 #if ! YYERROR_VERBOSE
       yyerror (p, YY_("syntax error"));
 #else

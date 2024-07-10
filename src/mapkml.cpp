@@ -228,6 +228,7 @@ int msPopulateRendererVTableKML(rendererVTableObj *renderer) {
 
   return MS_SUCCESS;
 #else
+  (void)renderer;
   msSetError(MS_MISCERR, "KML Driver requested but is not built in",
              "msPopulateRendererVTableKML()");
   return MS_FAILURE;
