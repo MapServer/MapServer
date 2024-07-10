@@ -97,21 +97,34 @@ add_custom_command(
 
 add_custom_command(
     TARGET ${SWIG_MODULE_pythonmapscript_REAL_NAME}
-    WORKING_DIRECTORY ${OUTPUT_FOLDER}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/src/mapscript/python/mapscript/__init__.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/mapscript.py" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}>" "$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/$<TARGET_FILE_NAME:${SWIG_MODULE_pythonmapscript_REAL_NAME}>"
-    COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/src/mapscript/python/README.rst" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/src/mapscript/python/tests/cases" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/tests" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests/data
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/src/mapscript/python/examples" $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<SHELL_PATH:${PROJECT_SOURCE_DIR}/src/mapscript/python/mapscript/__init__.py>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/__init__.py>
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<SHELL_PATH:${CMAKE_CURRENT_BINARY_DIR}/mapscript.py>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/mapscript.py>
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<SHELL_PATH:$<TARGET_FILE:${SWIG_MODULE_pythonmapscript_REAL_NAME}>>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/$<TARGET_FILE_NAME:${SWIG_MODULE_pythonmapscript_REAL_NAME}>>
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<SHELL_PATH:${PROJECT_SOURCE_DIR}/src/mapscript/python/README.rst>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/README.rst>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        $<SHELL_PATH:${PROJECT_SOURCE_DIR}/src/mapscript/python/tests/cases>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        $<SHELL_PATH:${PROJECT_SOURCE_DIR}/tests>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/tests/data>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        $<SHELL_PATH:${PROJECT_SOURCE_DIR}/src/mapscript/python/examples>
+        $<SHELL_PATH:$<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/mapscript/examples>
     COMMENT "Copying files required to build Mapscript"
 )
 
 install(
   CODE "
-  
+
     SET(ENV{PYTHONPATH} \${Python_SITELIB}:\$ENV{PYTHONPATH})
 
     if(DEFINED ENV{DESTDIR})
