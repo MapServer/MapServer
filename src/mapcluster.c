@@ -106,7 +106,7 @@ struct cluster_tree_node {
   clusterTreeNode *subnode[4];
 };
 
-/* layeinfo */
+/* layerinfo */
 struct cluster_layer_info {
   /* array of features (finalized clusters) */
   clusterInfo *finalized;
@@ -1415,7 +1415,7 @@ int RebuildClusters(layerObj *layer, int isQuery) {
   return MS_SUCCESS;
 }
 
-/* Close the the combined layer */
+/* Close the combined layer */
 int msClusterLayerClose(layerObj *layer) {
   msClusterLayerInfo *layerinfo = (msClusterLayerInfo *)layer->layerinfo;
 
@@ -1582,6 +1582,21 @@ int msClusterLayerGetShape(layerObj *layer, shapeObj *shape,
   }
 
   return prepareShape(layer, layerinfo, current, shape);
+}
+
+int msClusterLayerGetExtent(layerObj *layer, rectObj *extent) {
+
+  msClusterLayerInfo *layerinfo = (msClusterLayerInfo *)layer->layerinfo;
+
+  if (!layerinfo) {
+    msSetError(MS_MISCERR, "Layer not open: %s", "msClusterLayerGetExtent()",
+               layer->name);
+    return MS_FAILURE;
+  }
+
+  int status =
+      layerinfo->srcLayer.vtable->LayerGetExtent(&layerinfo->srcLayer, extent);
+  return status;
 }
 
 /* find the next shape with the appropriate shape type */
@@ -1814,6 +1829,7 @@ void msClusterLayerCopyVirtualTable(layerVTableObj *vtable) {
   vtable->LayerWhichShapes = msClusterLayerWhichShapes;
   vtable->LayerNextShape = msClusterLayerNextShape;
   vtable->LayerGetShape = msClusterLayerGetShape;
+  vtable->LayerGetExtent = msClusterLayerGetExtent;
   /* layer->vtable->LayerGetShapeCount, use default */
 
   vtable->LayerClose = msClusterLayerClose;
