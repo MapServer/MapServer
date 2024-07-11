@@ -1,4 +1,4 @@
-Content-Type: text/xml; charset=UTF-8
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 
 <?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
