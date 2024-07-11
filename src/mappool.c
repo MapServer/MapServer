@@ -286,11 +286,11 @@ static void msConnPoolClose(int conn_index)
   if (conn->debug)
     msDebug("msConnPoolClose(%s,%p)\n", conn->connection, conn->conn_handle);
 
-  if (conn->close != NULL)
-    conn->close(conn->conn_handle);
+  //if (conn->close != NULL)
+  //  conn->close(conn->conn_handle);
 
   /* free malloced() stuff in this connection */
-  free(conn->connection);
+  // free(conn->connection);
 
   connectionCount--;
   if (connectionCount == 0) {
