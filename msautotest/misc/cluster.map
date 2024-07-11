@@ -44,8 +44,8 @@ LAYER
   NAME popplace
   TYPE POINT
   CONNECTIONTYPE POSTGIS
-  CONNECTION "host=localhost user=docker password=docker port=25432 dbname=gis"
-  DATA "wkb_geometry FROM popplace USING UNIQUE ogc_fid USING srid=3978"
+  CONNECTION "user=postgres dbname=msautotest"
+  DATA "the_geom FROM popplace USING UNIQUE gid USING srid=3978"
   PROCESSING "CLOSE_CONNECTION=DEFER"
   STATUS OFF
   CLUSTER
