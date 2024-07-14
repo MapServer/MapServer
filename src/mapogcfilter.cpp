@@ -2238,7 +2238,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     if (!pszTmp)
       return NULL;
 
-    const size_t nSize = strlen(pszTmp + 1);
+    const size_t nSize = strlen(pszTmp) + 1;
     pszBuffer = (char *)malloc(nSize);
     snprintf(pszBuffer, nSize, "%s", pszTmp);
   }
@@ -2258,7 +2258,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     if (!pszTmp)
       return NULL;
 
-    const size_t nSize = strlen(pszTmp + 1);
+    const size_t nSize = strlen(pszTmp) + 1;
     pszBuffer = (char *)malloc(nSize);
     snprintf(pszBuffer, nSize, "%s", pszTmp);
   }
