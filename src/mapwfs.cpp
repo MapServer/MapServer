@@ -514,26 +514,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs,
   return MS_SUCCESS;
 }
 
-/* msWFSIsLayerSupported()
-**
-** Returns true (1) is this layer meets the requirements to be served as
-** a WFS feature type.
-*/
-int msWFSIsLayerSupported(layerObj *lp) {
-  /* In order to be supported, lp->type must be specified, even for
-  ** layers that are OGR, SDE, SDO, etc connections.
-  */
-  if ((lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE ||
-       lp->type == MS_LAYER_POLYGON) &&
-      lp->connectiontype != MS_WMS && lp->connectiontype != MS_GRATICULE) {
-    return 1; /* true */
-  }
-
-  return 0; /* false */
-}
-
 static int msWFSIsLayerAllowed(layerObj *lp, owsRequestObj *ows_request) {
-  return msWFSIsLayerSupported(lp) &&
+  return msIsLayerSupportedForWFSOrOAPIF(lp) &&
          (msIntegerInArray(lp->index, ows_request->enabled_layers,
                            ows_request->numlayers));
 }
@@ -4715,6 +4697,10 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
   return returnvalue;
 
 #else
+  (void)map;
+  (void)requestobj;
+  (void)ows_request;
+  (void)force_wfs_mode;
   msSetError(MS_WFSERR, "WFS server support is not available.",
              "msWFSDispatch()");
   return (MS_FAILURE);
@@ -5591,6 +5577,29 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
     msFree(pszSchemaLocation);
   }
 
+#else
+  (void)map;
+  (void)request;
+  (void)wfsparams;
+  (void)force_wfs_mode;
 #endif
   return MS_SUCCESS;
+}
+
+/* msIsLayerSupportedForWFSOrOAPIF()
+**
+** Returns true (1) is this layer meets the requirements to be served as
+** a WFS feature type or OGC API Features.
+*/
+int msIsLayerSupportedForWFSOrOAPIF(layerObj *lp) {
+  /* In order to be supported, lp->type must be specified, even for
+  ** layers that are OGR, SDE, SDO, etc connections.
+  */
+  if ((lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE ||
+       lp->type == MS_LAYER_POLYGON) &&
+      lp->connectiontype != MS_WMS && lp->connectiontype != MS_GRATICULE) {
+    return 1; /* true */
+  }
+
+  return 0; /* false */
 }
