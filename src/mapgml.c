@@ -2166,6 +2166,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream,
   return (MS_SUCCESS);
 
 #else  /* Stub for mapscript */
+  (void)map;
+  (void)stream;
+  (void)default_namespace_prefix;
+  (void)outputformat;
+  (void)nWFSVersion;
+  (void)bUseURN;
+  (void)bGetPropertyValueRequest;
   msSetError(MS_MISCERR, "WFS server support not enabled",
              "msGMLWriteWFSQuery()");
   return MS_FAILURE;
