@@ -815,7 +815,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                           ows_request->numlayers))
       continue;
 
-    if (msWFSIsLayerSupported(lp)) {
+    if (msIsLayerSupportedForWFSOrOAPIF(lp)) {
       if (psFtNode != NULL) {
         xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0,
                                                validated_language, script_url));
@@ -1137,7 +1137,7 @@ int msWFSListStoredQueries20(mapObj *map, owsRequestObj *ows_request) {
 
               if (!msIntegerInArray(lp->index, ows_request->enabled_layers,
                                     ows_request->numlayers) ||
-                  !msWFSIsLayerSupported(lp))
+                  !msIsLayerSupportedForWFSOrOAPIF(lp))
                 continue;
 
               value = msOWSLookupMetadata(&(map->web.metadata), "FO",
@@ -1372,7 +1372,7 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
 
               if (!msIntegerInArray(lp->index, ows_request->enabled_layers,
                                     ows_request->numlayers) ||
-                  !msWFSIsLayerSupported(lp))
+                  !msIsLayerSupportedForWFSOrOAPIF(lp))
                 continue;
 
               value = msOWSLookupMetadata(&(map->web.metadata), "FO",

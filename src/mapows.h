@@ -547,7 +547,7 @@ wfsParamsObj *msWFSCreateParamsObj(void);
 int msWFSHandleUpdateSequence(mapObj *map, wfsParamsObj *wfsparams,
                               const char *pszFunction);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
-int msWFSIsLayerSupported(layerObj *lp);
+int msIsLayerSupportedForWFSOrOAPIF(layerObj *lp);
 int msWFSException(mapObj *map, const char *locator, const char *code,
                    const char *version);
 

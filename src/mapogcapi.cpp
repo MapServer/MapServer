@@ -126,7 +126,7 @@ static void outputError(OGCAPIErrorType errorType,
 
 static int includeLayer(mapObj *map, layerObj *layer) {
   if (!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) ||
-      !msWFSIsLayerSupported(layer) || !msIsLayerQueryable(layer)) {
+      !msIsLayerSupportedForWFSOrOAPIF(layer) || !msIsLayerQueryable(layer)) {
     return MS_FALSE;
   } else {
     return MS_TRUE;
