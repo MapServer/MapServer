@@ -965,9 +965,14 @@ string_exp: STRING
     sprintf($$, "%s%s", $1, $3); free($1); free($3); 
   }
   | TOSTRING '(' math_exp ',' string_exp ')' {
-    $$ = (char *) malloc(strlen($5) + 64); /* Plenty big? Should use snprintf below... */
-    sprintf($$, $5, $3);
+    char* ret = msToString($5, $3);
     free($5);
+    $5 = NULL;
+    if(!ret) {
+      yyerror(p, "tostring() failed.");
+      return(-1);
+    }
+    $$ = ret;
   }
   | COMMIFY '(' string_exp ')' {  
     $3 = msCommifyString($3); 
