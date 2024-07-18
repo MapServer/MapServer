@@ -557,8 +557,8 @@ static const yytype_uint16 yyrline[] =
      672,   689,   705,   723,   724,   725,   726,   727,   728,   729,
      736,   737,   738,   739,   750,   751,   754,   755,   756,   770,
      784,   798,   812,   826,   840,   854,   868,   882,   896,   910,
-     924,   939,   961,   962,   963,   969,   974,   978,   982,   986,
-     990,   996,   997
+     924,   939,   961,   962,   963,   969,   978,   982,   986,   990,
+     994,  1000,  1001
 };
 #endif
 
@@ -2892,66 +2892,70 @@ yyreduce:
   case 95:
 #line 969 "mapparser.y" /* yacc.c:1646  */
     {
-    (yyval.strval) = (char *) malloc(strlen((yyvsp[-1].strval)) + 64); /* Plenty big? Should use snprintf below... */
-    sprintf((yyval.strval), (yyvsp[-1].strval), (yyvsp[-3].dblval));
+    char* ret = msToString((yyvsp[-1].strval), (yyvsp[-3].dblval));
     msReplaceFreeableStr(&((yyvsp[-1].strval)), NULL);
+    if(!ret) {
+      yyerror(p, "tostring() failed.");
+      return(-1);
+    }
+    (yyval.strval) = ret;
   }
-#line 2900 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2904 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 974 "mapparser.y" /* yacc.c:1646  */
+#line 978 "mapparser.y" /* yacc.c:1646  */
     {  
     (yyvsp[-1].strval) = msCommifyString((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2909 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2913 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 978 "mapparser.y" /* yacc.c:1646  */
+#line 982 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToUpper((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2918 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2922 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 982 "mapparser.y" /* yacc.c:1646  */
+#line 986 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToLower((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2927 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2931 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 986 "mapparser.y" /* yacc.c:1646  */
+#line 990 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringInitCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2936 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2940 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 990 "mapparser.y" /* yacc.c:1646  */
+#line 994 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringFirstCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2945 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2949 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 997 "mapparser.y" /* yacc.c:1646  */
+#line 1001 "mapparser.y" /* yacc.c:1646  */
     { (yyval.tmval) = (yyvsp[-1].tmval); }
-#line 2951 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2955 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
 
-#line 2955 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2959 "/vagrant/mapparser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3000,7 +3004,6 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-      if(0) printf("%d", yynerrs); /* avoid warning about unused yynerrs */
 #if ! YYERROR_VERBOSE
       yyerror (p, YY_("syntax error"));
 #else
@@ -3180,7 +3183,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1000 "mapparser.y" /* yacc.c:1906  */
+#line 1004 "mapparser.y" /* yacc.c:1906  */
 
 
 /*

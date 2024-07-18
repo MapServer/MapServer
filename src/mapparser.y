@@ -967,9 +967,13 @@ string_exp: STRING
     msReplaceFreeableStr(&($3), NULL);
   }
   | TOSTRING '(' math_exp ',' string_exp ')' {
-    $$ = (char *) malloc(strlen($5) + 64); /* Plenty big? Should use snprintf below... */
-    sprintf($$, $5, $3);
+    char* ret = msToString($5, $3);
     msReplaceFreeableStr(&($5), NULL);
+    if(!ret) {
+      yyerror(p, "tostring() failed.");
+      return(-1);
+    }
+    $$ = ret;
   }
   | COMMIFY '(' string_exp ')' {  
     $3 = msCommifyString($3); 
