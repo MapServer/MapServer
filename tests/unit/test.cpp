@@ -1,5 +1,5 @@
-#include "mapserver.h"
-#include "maperror.h"
+#include "../../src/mapserver.h"
+#include "../../src/maperror.h"
 
 /* ----------------------------------------------------------------------- */
 
