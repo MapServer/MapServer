@@ -37,6 +37,7 @@
 #include "cpl_vsi.h"
 
 #include <ctype.h>
+#include <float.h>
 #include <string.h>
 #include <errno.h>
 
@@ -1492,6 +1493,69 @@ char *msCommifyString(char *str)
   return str;
 }
 
+/************************************************************************/
+/*                              msToString()                            */
+/************************************************************************/
+
+char *msToString(const char *format, double value) {
+  int pctAlreadyFound = FALSE;
+  // Validate that the formatting string is OK for a single input double value
+  int extra_size = 0;
+  for (const char *ptr = format; *ptr; ++ptr) {
+    if (*ptr == '%' && ptr[1] == '%') {
+      ++ptr;
+    } else if (*ptr == '%') {
+      if (pctAlreadyFound) {
+        msSetError(MS_MISCERR, "More than one conversion specifier",
+                   "msToString()");
+        return NULL;
+      }
+      pctAlreadyFound = TRUE;
+      ++ptr;
+      // Skip flag characters
+      while (*ptr == '+' || *ptr == '-' || *ptr == ' ' || *ptr == '\'' ||
+             *ptr == '0') {
+        ++ptr;
+      }
+      // Skip width
+      if (*ptr >= '1' && *ptr <= '9') {
+        extra_size = atoi(ptr);
+        do {
+          ++ptr;
+        } while (*ptr >= '0' && *ptr <= '9');
+        if (extra_size > 1024) {
+          // To avoid arbitrary memory allocatin
+          msSetError(MS_MISCERR, "Too large width", "msToString()");
+          return NULL;
+        }
+      }
+      // maximum double value is of the order of ~1e308
+      if (extra_size < DBL_MAX_10_EXP)
+        extra_size = DBL_MAX_10_EXP;
+      extra_size += 32; // extra margin
+
+      // Skip precision
+      if (*ptr == '.') {
+        ++ptr;
+        while (*ptr >= '0' && *ptr <= '9')
+          ++ptr;
+      }
+      // Check conversion specifier
+      if (!(*ptr == 'e' || *ptr == 'E' || *ptr == 'f' || *ptr == 'F' ||
+            *ptr == 'g' || *ptr == 'G')) {
+        msSetError(MS_MISCERR, "Invalid conversion specifier", "msToString()");
+        return NULL;
+      }
+    }
+  }
+  {
+    // extra_size / 3 if thousands' grouping characters is used
+    const size_t nBufferSize = strlen(format) + extra_size + (extra_size / 3) + 1;
+    char *ret = (char*)(msSmallMalloc(nBufferSize));
+    snprintf(ret, nBufferSize, format, value);
+    return ret;
+  }
+}
 
 /* ------------------------------------------------------------------------------- */
 /*       Replace all occurrences of old with new in str.                           */

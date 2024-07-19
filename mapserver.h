@@ -2312,6 +2312,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
   MS_DLL_EXPORT char *msHashString(const char *pszStr);
   MS_DLL_EXPORT char *msCommifyString(char *str);
+  MS_DLL_EXPORT char *msToString(const char *format, double value);
   MS_DLL_EXPORT int msHexToInt(char *hex);
   MS_DLL_EXPORT char *msGetEncodedString(const char *string, const char *encoding);
   MS_DLL_EXPORT char *msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding);
