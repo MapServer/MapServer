@@ -17,7 +17,7 @@ include(CheckCSourceCompiles)
 
 set (MapServer_VERSION_MAJOR 8)
 set (MapServer_VERSION_MINOR 2)
-set (MapServer_VERSION_REVISION 0)
+set (MapServer_VERSION_REVISION 1)
 set (MapServer_VERSION_SUFFIX "")
 
 # Set C++ version

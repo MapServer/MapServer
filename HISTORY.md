@@ -13,6 +13,13 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.1 release (2024-07-21)
+--------------------------------
+
+- security: validate tostring() expression function (#7123)
+
+- handle PHP MapScript out of source builds (#7108)
+
 8.2.0 release (2024-07-08)
 --------------------------
 
