@@ -129,14 +129,17 @@ static void testToString() {
   {
     char *ret = msToString("%f%f", 1);
     EXPECT_TRUE(ret == nullptr);
+    msFree(ret);
   }
   {
     char *ret = msToString("%s", 1);
     EXPECT_TRUE(ret == nullptr);
+    msFree(ret);
   }
   {
     char *ret = msToString("%100000f", 1);
     EXPECT_TRUE(ret == nullptr);
+    msFree(ret);
   }
 }
 
