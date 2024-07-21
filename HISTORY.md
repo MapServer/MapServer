@@ -13,6 +13,18 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.1 release (2024-07-21)
+--------------------------
+
+- security: validate tostring() expression function (#7123)
+
+- handle PHP MapScript out of source builds (#7108)
+
+7.6.7 release (2024-07-21)
+--------------------------
+
+- security: validate tostring() expression function (#7123)
+
 8.2.0 release (2024-07-08)
 --------------------------
 
@@ -35,6 +47,11 @@ RC3 was released as the final 8.2.0 (see major changes below)
 
 8.2.0-beta3 release (2024-06-11)
 --------------------------------
+
+- security fix to prevent SQL injections through regex validation (#7075)
+
+7.6.6 release (2024-06-11)
+--------------------------
 
 - security fix to prevent SQL injections through regex validation (#7075)
 
