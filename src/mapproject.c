@@ -755,16 +755,25 @@ int msProcessProjection(projectionObj *p) {
       return (-1);
     }
   } else {
+    // Reserve one extra slot for terminating "type=crs"
     char **args = (char **)msSmallMalloc(sizeof(char *) * (p->numargs + 1));
-    memcpy(args, p->args, sizeof(char *) * p->numargs);
+    int numargs = 0;
+    for (int i = 0; i < p->numargs; ++i) {
+      // PROJ doesn't like extraneous parameters that it doesn't recognize
+      // when initializing a CRS from a +init=epsg:xxxx string
+      // Cf https://github.com/OSGeo/PROJ/issues/4203
+      if (strncmp(p->args[i], "epsgaxis=", strlen("epsgaxis=")) != 0) {
+        args[numargs] = p->args[i];
+        ++numargs;
+      }
+    }
 
 #if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR < 2
     /* PROJ lookups are faster with EPSG in uppercase. Fixed in PROJ 6.2 */
     /* Do that only for those versions, as it can create confusion if using */
     /* a real old-style 'epsg' file... */
     char szTemp[24];
-    if (p->numargs &&
-        strncmp(args[0], "init=epsg:", strlen("init=epsg:")) == 0 &&
+    if (numargs && strncmp(args[0], "init=epsg:", strlen("init=epsg:")) == 0 &&
         strlen(args[0]) < 24) {
       strcpy(szTemp, "init=EPSG:");
       strcat(szTemp, args[0] + strlen("init=epsg:"));
@@ -772,14 +781,15 @@ int msProcessProjection(projectionObj *p) {
     }
 #endif
 
-    args[p->numargs] = (char *)"type=crs";
+    args[numargs] = (char *)"type=crs";
+    ++numargs;
+
 #if 0
-      for( int i = 0; i <  p->numargs + 1; i++ )
+      for( int i = 0; i < numargs; i++ )
           fprintf(stderr, "%s ", args[i]);
       fprintf(stderr, "\n");
 #endif
-    if (!(p->proj =
-              proj_create_argv(p->proj_ctx->proj_ctx, p->numargs + 1, args))) {
+    if (!(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, numargs, args))) {
       int l_pj_errno = proj_context_errno(p->proj_ctx->proj_ctx);
       if (p->numargs > 1) {
         msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
