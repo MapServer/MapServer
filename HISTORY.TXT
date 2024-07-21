@@ -12,6 +12,11 @@ For a complete change history, please see the Git log comments.  For more
 details about recent point releases, please see the online changelog at:
 https://mapserver.org/development/changelog/
 
+7.6.7 release (2024-07-21)
+--------------------------
+
+- security: validate tostring() expression function (#7123)
+
 7.6.6 release (2024-06-11)
 --------------------------
 
