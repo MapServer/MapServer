@@ -1,0 +1,89 @@
+#
+# Test a layer with clustering
+#
+# REQUIRES: INPUT=GDAL INPUT=POSTGIS OUTPUT=PNG SUPPORTS=WMS
+#
+# RUN_PARMS: cluster.png [MAP2IMG] -m [MAPFILE] -l popplace -o [RESULT]
+#
+# Capabilities (return latest supported version by default)
+#
+# RUN_PARMS: wms_cluster_cap_latestversion.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: wms_cluster_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# Draw a map
+# RUN_PARMS: wms_get_map_cluster.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:3978&BBOX=2279399,-55345,2600377,461587&FORMAT=image/png&WIDTH=400&HEIGHT=400&STYLES=&LAYERS=popplace" > [RESULT_DEMIME]
+#
+MAP
+
+NAME "clusters"
+EXTENT 2279399 -55345 2600377 461587
+SIZE 400 400
+
+PROJECTION
+  "epsg:3978"
+END
+
+IMAGETYPE png
+
+SYMBOL
+  NAME 'circle'
+  TYPE ELLIPSE
+  POINTS 1 1 END
+  FILLED TRUE
+END
+
+WEB
+  METADATA
+      "ows_enable_request" "*" 
+      "ows_srs" "EPSG:3978" 
+      "ows_onlineresource" "http://foo"
+  END
+END
+
+LAYER
+  NAME popplace
+  TYPE POINT
+  CONNECTIONTYPE POSTGIS
+  CONNECTION "user=postgres dbname=msautotest"
+  DATA "the_geom FROM popplace USING UNIQUE gid USING srid=3978"
+  PROCESSING "CLOSE_CONNECTION=DEFER"
+  STATUS OFF
+  CLUSTER
+    MAXDISTANCE 50
+    REGION "ellipse"
+  END
+  LABELITEM "Cluster_FeatureCount"
+  CLASSITEM "Cluster_FeatureCount"  
+
+  CLASS
+    NAME "single"
+    EXPRESSION "1"
+    STYLE
+      COLOR 50 50 50
+      SIZE 5
+      SYMBOL 'circle'
+    END
+  END
+
+  CLASS
+    NAME "cluster"
+    EXPRESSION ("[Cluster_FeatureCount]" != "1")
+    LABEL
+      SIZE 8
+      COLOR 0 0 0
+      ALIGN CENTER
+      PRIORITY 10
+      BUFFER 1
+      PARTIALS TRUE
+      POSITION cc
+      FORCE TRUE
+    END
+    STYLE
+      COLOR 0 255 0
+      SIZE 20
+      SYMBOL 'circle'
+    END
+  END  
+END
+
+END

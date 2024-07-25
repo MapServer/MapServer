@@ -134,7 +134,7 @@ static int arcStrokeCircularString(wkbObj *w, double segment_angle,
 /*
 ** msPostGISCloseConnection()
 **
-** Handler registered witih msConnPoolRegister so that Mapserver
+** Handler registered with msConnPoolRegister so that Mapserver
 ** can clean up open connections during a shutdown.
 */
 static void msPostGISCloseConnection(void *pgconn) {
