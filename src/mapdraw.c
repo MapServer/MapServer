@@ -40,8 +40,7 @@
  *
  * A helper function to get the first parameter for msUpdateClassScaleFactor()
  */
-double msGetGeoCellSize(const mapObj *map)
-{
+double msGetGeoCellSize(const mapObj *map) {
   double geo_cellsize;
 
   /* We will need a cellsize that represents a real georeferenced */
@@ -50,12 +49,12 @@ double msGetGeoCellSize(const mapObj *map)
   geo_cellsize = map->cellsize;
   if (map->gt.need_geotransform == MS_TRUE) {
     double cellsize_x =
-      (map->saved_extent.maxx - map->saved_extent.minx) / map->width;
+        (map->saved_extent.maxx - map->saved_extent.minx) / map->width;
     double cellsize_y =
-      (map->saved_extent.maxy - map->saved_extent.miny) / map->height;
+        (map->saved_extent.maxy - map->saved_extent.miny) / map->height;
 
     geo_cellsize =
-      sqrt(cellsize_x * cellsize_x + cellsize_y * cellsize_y) / sqrt(2.0);
+        sqrt(cellsize_x * cellsize_x + cellsize_y * cellsize_y) / sqrt(2.0);
   }
   return geo_cellsize;
 }
@@ -65,14 +64,14 @@ double msGetGeoCellSize(const mapObj *map)
  * Provides correct scale factor inheritance for Class and all of its
  * styles and labels.
  */
-void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map, const layerObj *layer, classObj *c)
-{
+void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map,
+                              const layerObj *layer, classObj *c) {
   if (c->sizeunits == MS_INHERIT)
     c->scalefactor = layer->scalefactor;
   else if (c->sizeunits != MS_PIXELS)
-    c->scalefactor = (msInchesPerUnit(c->sizeunits, 0) /
-                      msInchesPerUnit(map->units, 0)) /
-                      geo_cellsize;
+    c->scalefactor =
+        (msInchesPerUnit(c->sizeunits, 0) / msInchesPerUnit(map->units, 0)) /
+        geo_cellsize;
   else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
     c->scalefactor = layer->symbolscaledenom / map->scaledenom *
                      map->resolution / map->defresolution;
@@ -85,7 +84,7 @@ void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map, const laye
     else if (style->sizeunits != MS_PIXELS)
       style->scalefactor = (msInchesPerUnit(style->sizeunits, 0) /
                             msInchesPerUnit(map->units, 0)) /
-                            geo_cellsize;
+                           geo_cellsize;
     else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
       style->scalefactor = layer->symbolscaledenom / map->scaledenom *
                            map->resolution / map->defresolution;
@@ -99,7 +98,7 @@ void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map, const laye
     else if (label->sizeunits != MS_PIXELS)
       label->scalefactor = (msInchesPerUnit(label->sizeunits, 0) /
                             msInchesPerUnit(map->units, 0)) /
-                            geo_cellsize;
+                           geo_cellsize;
     else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
       label->scalefactor = layer->symbolscaledenom / map->scaledenom *
                            map->resolution / map->defresolution;
@@ -112,7 +111,7 @@ void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map, const laye
       else if (lstyle->sizeunits != MS_PIXELS)
         lstyle->scalefactor = (msInchesPerUnit(lstyle->sizeunits, 0) /
                                msInchesPerUnit(map->units, 0)) /
-                               geo_cellsize;
+                              geo_cellsize;
       else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
         lstyle->scalefactor = layer->symbolscaledenom / map->scaledenom *
                               map->resolution / map->defresolution;
