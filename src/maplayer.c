@@ -1397,7 +1397,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c,
     msUpdateStyleFromString(c->styles[0], stylestring);
     double geo_cellsize = msGetGeoCellSize(map);
     msUpdateClassScaleFactor(geo_cellsize, map, layer, c);
-    
+
     if (c->styles[0]->symbolname) {
       if ((c->styles[0]->symbol = msGetSymbolIndex(
                &(map->symbolset), c->styles[0]->symbolname, MS_TRUE)) == -1) {

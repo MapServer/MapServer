@@ -3283,7 +3283,8 @@ rectObj msUVRASTERGetSearchRect(layerObj *layer, mapObj *map);
 /* ==================================================================== */
 
 MS_DLL_EXPORT double msGetGeoCellSize(const mapObj *map);
-MS_DLL_EXPORT void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map,
+MS_DLL_EXPORT void msUpdateClassScaleFactor(double geo_cellsize,
+                                            const mapObj *map,
                                             const layerObj *layer, classObj *c);
 MS_DLL_EXPORT imageObj *msPrepareImage(mapObj *map, int allow_nonsquare);
 MS_DLL_EXPORT imageObj *msDrawMap(mapObj *map, int querymap);
