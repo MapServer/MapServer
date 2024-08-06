@@ -90,13 +90,13 @@ find_library(PROTOBUFC_LIBRARY
 mark_as_advanced(PROTOBUFC_LIBRARY)
 
 find_path(PROTOBUFC_INCLUDE_DIR
-							NAMES "google/protobuf-c/protobuf-c.h"
+							NAMES "protobuf-c.h" "google/protobuf-c/protobuf-c.h"
 							PATHS "/usr" "/usr/local" "/opt" ENV PROTOBUFC_ROOTDIR
 							PATH_SUFFIXES "include")
 mark_as_advanced(PROTOBUFC_INCLUDE_DIR)
 
 find_program(PROTOBUFC_COMPILER
-							NAMES "protoc-c"
+							NAMES "protoc" "protoc-c"
 							PATHS "/usr" "/usr/local" "/opt" ENV PROTOBUFC_ROOTDIR
 							PATH_SUFFIXES "bin")
 mark_as_advanced(PROTOBUFC_COMPILER)
