@@ -22,7 +22,7 @@ if (WIN32)
       set(PLATFORM_TARGET ${PLATFORM_TARGET} /define:CLR4)
   endif (MSVC_VERSION GREATER 1500)
   MESSAGE(STATUS "Cmake build type: ${CMAKE_BUILD_TYPE}")
-  if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo") 
+  if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
       set(PLATFORM_TARGET ${PLATFORM_TARGET} /debug:full)
   endif (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 else()
@@ -41,11 +41,8 @@ if (WIN32)
 else()
 	SET( CMAKE_SWIG_FLAGS -namespace OSGeo.MapServer ${MAPSERVER_COMPILE_DEFINITIONS})
 endif()
-if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
-	SWIG_ADD_MODULE(mapscript csharp ../mapscript.i)
-else()
-	SWIG_ADD_LIBRARY(mapscript LANGUAGE csharp SOURCES ../mapscript.i)
-endif()
+
+SWIG_ADD_LIBRARY(mapscript LANGUAGE csharp SOURCES ../mapscript.i)
 
 # CMake 3.29.0 corrects an issue with earlier CMake versions regarding the
 # shared library name (cf https://gitlab.kitware.com/cmake/cmake/-/issues/25405
