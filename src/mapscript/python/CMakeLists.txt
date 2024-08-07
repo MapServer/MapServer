@@ -42,18 +42,20 @@ file(READ ${SETUP_PY_TEMP} SETUP_CONTENT)
 
 file(GENERATE OUTPUT $<TARGET_FILE_DIR:${SWIG_MODULE_pythonmapscript_REAL_NAME}>/setup.py INPUT ${SETUP_PY_TEMP})
 
-if(MSVC)
-    set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
-else()
-    # for non-Windows builds there are no build type subfolders (e.g. Release, Debug etc.)
-    set(OUTPUT_FOLDER ${CMAKE_CURRENT_BINARY_DIR})
-endif()
+IF (NOT DEFINED MAPSCRIPT_WORKING_DIR)
+    if(MSVC)
+        set(MAPSCRIPT_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+    else()
+        # for non-Windows builds there are no build type subfolders (e.g. Release, Debug etc.)
+        set(MAPSCRIPT_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
+ENDIF (NOT DEFINED MAPSCRIPT_WORKING_DIR)
 
 if(WIN32)
     # Windows venv binaries are in a different location than Linux
-    set(Python_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/Scripts)
+    set(Python_VENV_SCRIPTS ${MAPSCRIPT_WORKING_DIR}/mapscriptvenv/Scripts)
 else()
-    set(Python_VENV_SCRIPTS ${OUTPUT_FOLDER}/mapscriptvenv/bin)
+    set(Python_VENV_SCRIPTS ${MAPSCRIPT_WORKING_DIR}/mapscriptvenv/bin)
 endif()
 
 add_custom_target(
@@ -64,7 +66,7 @@ add_custom_target(
 add_custom_command(
     DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME}
     OUTPUT mapscriptvenv.stamp
-    WORKING_DIRECTORY ${OUTPUT_FOLDER}
+    WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     COMMAND ${Python_EXECUTABLE} -m pip install pip --upgrade
     COMMAND ${Python_EXECUTABLE} -m pip install virtualenv
     COMMAND ${Python_EXECUTABLE} -m virtualenv mapscriptvenv
@@ -75,7 +77,7 @@ add_custom_command(
 add_custom_command(
     DEPENDS mapscriptvenv.stamp
     OUTPUT mapscriptwheel.stamp
-    WORKING_DIRECTORY ${OUTPUT_FOLDER}
+    WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     COMMAND ${Python_VENV_SCRIPTS}/python -m build --wheel > wheel_build.log
     COMMENT "Building the mapscript Python wheel"
 )
@@ -84,7 +86,7 @@ add_custom_command(
     WORKING_DIRECTORY ${Python_VENV_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py
     DEPENDS mapscriptwheel.stamp
     OUTPUT mapscripttests.stamp
-    COMMAND ${Python_VENV_SCRIPTS}/pip install --no-index --find-links=${OUTPUT_FOLDER}/dist mapscript
+    COMMAND ${Python_VENV_SCRIPTS}/pip install --no-index --find-links=${MAPSCRIPT_WORKING_DIR}/dist mapscript
     # ERROR: file or package not found: mapscript.tests (missing __init__.py?) is caused by
     # ImportError: DLL load failed while importing _mapscript: The specified module could not be found.
     COMMAND ${Python_VENV_SCRIPTS}/python -m pytest --pyargs mapscript.tests
@@ -124,14 +126,14 @@ install(
 
     execute_process(
       COMMAND ${Python_EXECUTABLE} -m pip install \${PYTHON_ROOT} \${PYTHON_PREFIX} .
-      WORKING_DIRECTORY ${OUTPUT_FOLDER}
+      WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     )
   "
 )
 
 message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "Python MapScript output directory: ${OUTPUT_FOLDER}")
+message(STATUS "Python MapScript output directory: ${MAPSCRIPT_WORKING_DIR}")
 message(STATUS "Python Executable: ${Python_EXECUTABLE}")
 message(STATUS "Python Version: ${Python_VERSION}")
 message(STATUS "Python site packages: ${Python_SITELIB}")
