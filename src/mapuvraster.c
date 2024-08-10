@@ -54,32 +54,12 @@
 #define MSUVRASTER_LAT "lat"
 #define MSUVRASTER_LATINDEX -107
 
-#define RQM_UNKNOWN 0
-#define RQM_ENTRY_PER_PIXEL 1
-#define RQM_HIST_ON_CLASS 2
-#define RQM_HIST_ON_VALUE 3
-
 typedef struct {
 
   /* query cache results */
   int query_results;
-  /* int query_alloc_max;
-  int query_request_max;
-  int query_result_hard_max;
-  int raster_query_mode; */
-  int band_count;
 
   int refcount;
-
-  /* query bound in force
-     shapeObj *searchshape;*/
-
-  /* Only nearest result to this point.
-  int      range_mode; MS_QUERY_SINGLE, MS_QUERY_MULTIPLE or -1 (skip test)
-  double   range_dist;
-  pointObj target_point;*/
-
-  /* double   shape_tolerance; */
 
   float **u; /* u values */
   float **v; /* v values */
@@ -175,11 +155,6 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer) {
   uvlinfo = (uvRasterLayerInfo *)msSmallCalloc(1, sizeof(uvRasterLayerInfo));
   layer->layerinfo = uvlinfo;
 
-  uvlinfo->band_count = -1;
-  /* uvlinfo->raster_query_mode = RQM_ENTRY_PER_PIXEL; */
-  /* uvlinfo->range_mode = -1; /\* inactive *\/ */
-  /* uvlinfo->refcount = 0; */
-  /* uvlinfo->shape_tolerance = 0.0; */
   uvlinfo->u = NULL;
   uvlinfo->v = NULL;
   uvlinfo->width = 0;
@@ -202,16 +177,6 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer) {
       }
     }
   }
-
-  /* uvlinfo->query_result_hard_max = 1000000; */
-
-  /* if( CSLFetchNameValue( layer->processing, "RASTER_QUERY_MAX_RESULT" )  */
-  /*     != NULL ) */
-  /* { */
-  /*     uvlinfo->query_result_hard_max =  */
-  /*         atoi(CSLFetchNameValue( layer->processing,
-   * "RASTER_QUERY_MAX_RESULT" )); */
-  /* } */
 }
 
 static void msUVRasterLayerInfoFree(layerObj *layer)
@@ -550,7 +515,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   map_tmp->defresolution = layer->map->defresolution;
 
   outputformat = (outputFormatObj *)msSmallCalloc(1, sizeof(outputFormatObj));
-  outputformat->bands = uvlinfo->band_count = 2;
+  outputformat->bands = 2;
   outputformat->name = NULL;
   outputformat->driver = NULL;
   outputformat->refcount = 0;
