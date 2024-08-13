@@ -2124,8 +2124,6 @@ typedef struct {
   char *filteritem;
   char *filter;
   char **processing;
-  int *processing_idx;
-  int n_processing;
 } originalScaleTokenStrings;
 #endif
 
@@ -2206,7 +2204,6 @@ struct layerObj {
   clusterObj cluster; ///< See :ref:`CLUSTER <mapfile-layer-cluster>`
   rectObj extent;     ///< optional limiting extent for layer features - see
                       ///< :ref:`EXTENT <mapfile-layer-extent>`
-  int numprocessing;  ///< Number of raster processing directives
   int numjoins;       ///< Number of layer joins
 
   expressionObj utfdata; ///< See :ref:`UTFDATA <mapfile-layer-utfdata>`
@@ -3189,6 +3186,7 @@ MS_DLL_EXPORT void msLayerSetProcessingKey(layerObj *layer, const char *key,
                                            const char *value);
 MS_DLL_EXPORT const char *msLayerGetProcessing(const layerObj *layer,
                                                int proc_index);
+MS_DLL_EXPORT int msLayerGetNumProcessing(const layerObj *layer);
 MS_DLL_EXPORT const char *msLayerGetProcessingKey(const layerObj *layer,
                                                   const char *);
 MS_DLL_EXPORT int msLayerClearProcessing(layerObj *layer);
