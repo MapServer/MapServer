@@ -343,7 +343,7 @@ src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
-src/mapgraph.cpp src/mapserv-config.cpp)
+src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp)
 
 set(mapserver_HEADERS
 src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h

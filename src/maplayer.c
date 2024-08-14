@@ -2375,6 +2375,9 @@ int msInitializeVirtualTable(layerObj *layer) {
   case (MS_CONTOUR):
     return (msContourLayerInitializeVirtualTable(layer));
     break;
+  case (MS_RASTER_LABEL):
+    return (msRasterLabelLayerInitializeVirtualTable(layer));
+    break;
   default:
     msSetError(MS_MISCERR, "Unknown connectiontype, it was %d",
                "msInitializeVirtualTable()", layer->connectiontype);

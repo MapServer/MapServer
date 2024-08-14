@@ -1154,6 +1154,15 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
 
         searchrect = msUVRASTERGetSearchRect(layer, map);
         bDone = MS_TRUE;
+      } else if (layer->connectiontype == MS_RASTER_LABEL) {
+        /* Nasty hack to make msRasterLabelLayerWhichShapes() aware that the */
+        /* original area of interest is (map->extent, map->projection)... */
+        /* Useful when dealing with RasterLabel that extend beyond 180 deg */
+        msRasterLabelLayerUseMapExtentAndProjectionForNextWhichShapes(layer,
+                                                                      map);
+
+        searchrect = msUVRASTERGetSearchRect(layer, map);
+        bDone = MS_TRUE;
       }
 
       if (!bDone)
@@ -1172,6 +1181,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
 
   if (layer->connectiontype == MS_UVRASTER) {
     msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layer, NULL);
+  } else if (layer->connectiontype == MS_RASTER_LABEL) {
+    msRasterLabelLayerUseMapExtentAndProjectionForNextWhichShapes(layer, NULL);
   }
 
   if (status == MS_DONE) { /* no overlap */

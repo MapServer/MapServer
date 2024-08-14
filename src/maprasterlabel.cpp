@@ -1,11 +1,10 @@
 /**********************************************************************
- * $Id: mapuv.c 12629 2011-10-06 18:06:34Z aboudreault $
- *
  * Project:  MapServer
- * Purpose:  UV Layer
- * Author:   Alan Boudreault (aboudreault@mapgears.com)
+ * Purpose:  Raster Label Layer
+ * Author:   Even Rouault, <even.rouault@spatialys.com>
  *
  **********************************************************************
+ * Copyright (c) 2024, Even Rouault, <even.rouault@spatialys.com>
  * Copyright (c) 2011, Alan Boudreault, MapGears
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,23 +38,9 @@
 #include <cmath>
 #include <limits>
 
-#define MSUVRASTER_NUMITEMS 6
-#define MSUVRASTER_ANGLE "uv_angle"
-#define MSUVRASTER_ANGLEINDEX -100
-#define MSUVRASTER_MINUS_ANGLE "uv_minus_angle"
-#define MSUVRASTER_MINUSANGLEINDEX -101
-#define MSUVRASTER_LENGTH "uv_length"
-#define MSUVRASTER_LENGTHINDEX -102
-#define MSUVRASTER_LENGTH_2 "uv_length_2"
-#define MSUVRASTER_LENGTH2INDEX -103
-#define MSUVRASTER_U "u"
-#define MSUVRASTER_UINDEX -104
-#define MSUVRASTER_V "v"
-#define MSUVRASTER_VINDEX -105
-#define MSUVRASTER_LON "lon"
-#define MSUVRASTER_LONINDEX -106
-#define MSUVRASTER_LAT "lat"
-#define MSUVRASTER_LATINDEX -107
+#define MSRASTERLABEL_NUMITEMS 1
+#define MSRASTERLABEL_VALUE "value"
+#define MSRASTERLABEL_VALUEINDEX -100
 
 typedef struct {
 
@@ -64,8 +49,7 @@ typedef struct {
 
   int refcount;
 
-  float *u; /* u values */
-  float *v; /* v values */
+  float *raster_values; /* raster values */
   int width;
   int height;
   rectObj extent;
@@ -76,23 +60,20 @@ typedef struct {
   long last_queried_shapeindex; // value in [0, query_results[ range
   size_t last_raster_off;       // value in [0, width*height[ range
 
-  bool needsLonLat;
-  reprojectionObj *reprojectorToLonLat;
-
   mapObj
       *mapToUseForWhichShapes; /* set if the map->extent and map->projection are
-                                  valid in msUVRASTERLayerWhichShapes() */
+                                  valid in msRasterLabelLayerWhichShapes() */
 
-} uvRasterLayerInfo;
+} RasterLabelLayerInfo;
 
-void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj *layer,
-                                                                mapObj *map) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
-  uvlinfo->mapToUseForWhichShapes = map;
+void msRasterLabelLayerUseMapExtentAndProjectionForNextWhichShapes(
+    layerObj *layer, mapObj *map) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
+  rllinfo->mapToUseForWhichShapes = map;
 }
 
-static int msUVRASTERLayerInitItemInfo(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+static int msRasterLabelLayerInitItemInfo(layerObj *layer) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
   int i;
   int *itemindexes;
   int failed = 0;
@@ -100,9 +81,9 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer) {
   if (layer->numitems == 0)
     return MS_SUCCESS;
 
-  if (uvlinfo == NULL) {
+  if (rllinfo == NULL) {
     msSetError(MS_MISCERR, "Assertion failed: GDAL layer not opened!!!",
-               "msUVRASTERLayerInitItemInfo()");
+               "msRasterLabelLayerInitItemInfo()");
     return (MS_FAILURE);
   }
 
@@ -111,35 +92,19 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer) {
 
   if ((layer->iteminfo = (int *)malloc(sizeof(int) * layer->numitems)) ==
       NULL) {
-    msSetError(MS_MEMERR, NULL, "msUVRASTERLayerInitItemInfo()");
+    msSetError(MS_MEMERR, NULL, "msRasterLabelLayerInitItemInfo()");
     return (MS_FAILURE);
   }
 
   itemindexes = (int *)layer->iteminfo;
   for (i = 0; i < layer->numitems; i++) {
     /* Special attribute names. */
-    if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
-      itemindexes[i] = MSUVRASTER_ANGLEINDEX;
-    else if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
-      itemindexes[i] = MSUVRASTER_MINUSANGLEINDEX;
-    else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH))
-      itemindexes[i] = MSUVRASTER_LENGTHINDEX;
-    else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH_2))
-      itemindexes[i] = MSUVRASTER_LENGTH2INDEX;
-    else if (EQUAL(layer->items[i], MSUVRASTER_U))
-      itemindexes[i] = MSUVRASTER_UINDEX;
-    else if (EQUAL(layer->items[i], MSUVRASTER_V))
-      itemindexes[i] = MSUVRASTER_VINDEX;
-    else if (EQUAL(layer->items[i], MSUVRASTER_LON)) {
-      uvlinfo->needsLonLat = true;
-      itemindexes[i] = MSUVRASTER_LONINDEX;
-    } else if (EQUAL(layer->items[i], MSUVRASTER_LAT)) {
-      uvlinfo->needsLonLat = true;
-      itemindexes[i] = MSUVRASTER_LATINDEX;
+    if (EQUAL(layer->items[i], MSRASTERLABEL_VALUE)) {
+      itemindexes[i] = MSRASTERLABEL_VALUEINDEX;
     } else {
       itemindexes[i] = -1;
       msSetError(MS_MISCERR, "Invalid Field name: %s",
-                 "msUVRASTERLayerInitItemInfo()", layer->items[i]);
+                 "msRasterLabelLayerInitItemInfo()", layer->items[i]);
       failed = 1;
     }
   }
@@ -147,32 +112,31 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer) {
   return failed ? (MS_FAILURE) : (MS_SUCCESS);
 }
 
-void msUVRASTERLayerFreeItemInfo(layerObj *layer) {
+void msRasterLabelLayerFreeItemInfo(layerObj *layer) {
   if (layer->iteminfo)
     free(layer->iteminfo);
   layer->iteminfo = NULL;
 }
 
-static void msUVRasterLayerInfoInitialize(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+static void msRasterLabelLayerInfoInitialize(layerObj *layer) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
 
-  if (uvlinfo != NULL)
+  if (rllinfo != NULL)
     return;
 
-  uvlinfo = (uvRasterLayerInfo *)msSmallCalloc(1, sizeof(uvRasterLayerInfo));
-  layer->layerinfo = uvlinfo;
+  rllinfo =
+      (RasterLabelLayerInfo *)msSmallCalloc(1, sizeof(RasterLabelLayerInfo));
+  layer->layerinfo = rllinfo;
 
-  uvlinfo->u = NULL;
-  uvlinfo->v = NULL;
-  uvlinfo->width = 0;
-  uvlinfo->height = 0;
+  rllinfo->raster_values = NULL;
+  rllinfo->width = 0;
+  rllinfo->height = 0;
 
   /* Set attribute type to Real, unless the user has explicitly set */
   /* something else. */
   {
     const char *const items[] = {
-        MSUVRASTER_ANGLE,    MSUVRASTER_MINUS_ANGLE, MSUVRASTER_LENGTH,
-        MSUVRASTER_LENGTH_2, MSUVRASTER_U,           MSUVRASTER_V,
+        MSRASTERLABEL_VALUE,
     };
     size_t i;
     for (i = 0; i < sizeof(items) / sizeof(items[0]); ++i) {
@@ -186,165 +150,95 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer) {
   }
 }
 
-static void msUVRasterLayerInfoFree(layerObj *layer)
+static void msRasterLabelLayerInfoFree(layerObj *layer)
 
 {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
 
-  if (uvlinfo == NULL)
+  if (rllinfo == NULL)
     return;
 
-  free(uvlinfo->u);
-  free(uvlinfo->v);
+  free(rllinfo->raster_values);
 
-  if (uvlinfo->reprojectorToLonLat) {
-    msProjectDestroyReprojector(uvlinfo->reprojectorToLonLat);
-  }
-
-  free(uvlinfo);
+  free(rllinfo);
 
   layer->layerinfo = NULL;
 }
 
-int msUVRASTERLayerOpen(layerObj *layer) {
+int msRasterLabelLayerOpen(layerObj *layer) {
   /* If we don't have info, initialize an empty one now */
   if (layer->layerinfo == NULL)
-    msUVRasterLayerInfoInitialize(layer);
+    msRasterLabelLayerInfoInitialize(layer);
   if (layer->layerinfo == NULL)
     return MS_FAILURE;
 
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
 
-  uvlinfo->refcount = uvlinfo->refcount + 1;
+  rllinfo->refcount = rllinfo->refcount + 1;
 
   return MS_SUCCESS;
 }
 
-int msUVRASTERLayerIsOpen(layerObj *layer) {
+int msRasterLabelLayerIsOpen(layerObj *layer) {
   if (layer->layerinfo)
     return MS_TRUE;
   return MS_FALSE;
 }
 
-int msUVRASTERLayerClose(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+int msRasterLabelLayerClose(layerObj *layer) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
 
-  if (uvlinfo != NULL) {
-    uvlinfo->refcount--;
+  if (rllinfo != NULL) {
+    rllinfo->refcount--;
 
-    if (uvlinfo->refcount < 1)
-      msUVRasterLayerInfoFree(layer);
+    if (rllinfo->refcount < 1)
+      msRasterLabelLayerInfoFree(layer);
   }
   return MS_SUCCESS;
 }
 
-int msUVRASTERLayerGetItems(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+int msRasterLabelLayerGetItems(layerObj *layer) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
 
-  if (uvlinfo == NULL)
+  if (rllinfo == NULL)
     return MS_FAILURE;
 
   layer->numitems = 0;
-  layer->items = (char **)msSmallCalloc(sizeof(char *), 10);
+  layer->items =
+      (char **)msSmallCalloc(sizeof(char *), (MSRASTERLABEL_NUMITEMS + 1));
 
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_ANGLE);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_MINUS_ANGLE);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LENGTH);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LENGTH_2);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_U);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_V);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LON);
-  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LAT);
+  layer->items[layer->numitems++] = msStrdup(MSRASTERLABEL_VALUE);
   layer->items[layer->numitems] = NULL;
 
-  return msUVRASTERLayerInitItemInfo(layer);
+  return msRasterLabelLayerInitItemInfo(layer);
 }
 
 /**********************************************************************
- *                     msUVRASTERGetValues()
- *
- * Special attribute names are used to return some UV params: uv_angle,
- * uv_length, u and v.
+ *                     msRasterLabelGetValues()
  **********************************************************************/
-static char **msUVRASTERGetValues(layerObj *layer, float u, float v,
-                                  const pointObj *point) {
+static char **msRasterLabelGetValues(layerObj *layer, float value) {
   char **values;
   int i = 0;
   char tmp[100];
-  float size_scale;
   int *itemindexes = (int *)layer->iteminfo;
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
-  double lon = HUGE_VAL;
-  double lat = HUGE_VAL;
 
   if (layer->numitems == 0)
     return (NULL);
 
   if (!layer->iteminfo) { /* Should not happen... but just in case! */
-    if (msUVRASTERLayerInitItemInfo(layer) != MS_SUCCESS)
+    if (msRasterLabelLayerInitItemInfo(layer) != MS_SUCCESS)
       return NULL;
     itemindexes = (int *)layer->iteminfo; /* reassign after malloc */
   }
 
   if ((values = (char **)malloc(sizeof(char *) * layer->numitems)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "msUVRASTERGetValues()");
+    msSetError(MS_MEMERR, NULL, "msRasterLabelGetValues()");
     return (NULL);
   }
 
-  /* -------------------------------------------------------------------- */
-  /*    Determine desired size_scale.  Default to 1 if not otherwise set  */
-  /* -------------------------------------------------------------------- */
-  size_scale = 1;
-  if (CSLFetchNameValue(layer->processing, "UV_SIZE_SCALE") != NULL) {
-    size_scale = atof(CSLFetchNameValue(layer->processing, "UV_SIZE_SCALE"));
-  }
-
-  if (uvlinfo->needsLonLat) {
-    if (uvlinfo->reprojectorToLonLat == NULL)
-      uvlinfo->reprojectorToLonLat =
-          msProjectCreateReprojector(&layer->projection, NULL);
-    if (uvlinfo->reprojectorToLonLat) {
-      pointObj pointWrk = *point;
-      if (msProjectPointEx(uvlinfo->reprojectorToLonLat, &pointWrk) ==
-          MS_SUCCESS) {
-        lon = pointWrk.x;
-        lat = pointWrk.y;
-      }
-    }
-  }
-
   for (i = 0; i < layer->numitems; i++) {
-    if (itemindexes[i] == MSUVRASTER_ANGLEINDEX) {
-      snprintf(tmp, 100, "%f", (atan2((double)v, (double)u) * 180 / MS_PI));
-      values[i] = msStrdup(tmp);
-    } else if (itemindexes[i] == MSUVRASTER_MINUSANGLEINDEX) {
-      double minus_angle;
-      minus_angle = (atan2((double)v, (double)u) * 180 / MS_PI) + 180;
-      if (minus_angle >= 360)
-        minus_angle -= 360;
-      snprintf(tmp, 100, "%f", minus_angle);
-      values[i] = msStrdup(tmp);
-    } else if ((itemindexes[i] == MSUVRASTER_LENGTHINDEX) ||
-               (itemindexes[i] == MSUVRASTER_LENGTH2INDEX)) {
-      float length = sqrt((u * u) + (v * v)) * size_scale;
-
-      if (itemindexes[i] == MSUVRASTER_LENGTHINDEX)
-        snprintf(tmp, 100, "%f", length);
-      else
-        snprintf(tmp, 100, "%f", length / 2);
-
-      values[i] = msStrdup(tmp);
-    } else if (itemindexes[i] == MSUVRASTER_UINDEX) {
-      snprintf(tmp, 100, "%f", u);
-      values[i] = msStrdup(tmp);
-    } else if (itemindexes[i] == MSUVRASTER_VINDEX) {
-      snprintf(tmp, 100, "%f", v);
-      values[i] = msStrdup(tmp);
-    } else if (itemindexes[i] == MSUVRASTER_LONINDEX) {
-      snprintf(tmp, sizeof(tmp), "%.18g", lon);
-      values[i] = msStrdup(tmp);
-    } else if (itemindexes[i] == MSUVRASTER_LATINDEX) {
-      snprintf(tmp, sizeof(tmp), "%.18g", lat);
+    if (itemindexes[i] == MSRASTERLABEL_VALUEINDEX) {
+      snprintf(tmp, sizeof(tmp), "%f", value);
       values[i] = msStrdup(tmp);
     } else {
       values[i] = NULL;
@@ -354,11 +248,11 @@ static char **msUVRASTERGetValues(layerObj *layer, float u, float v,
   return values;
 }
 
-rectObj msUVRASTERGetSearchRect(layerObj *layer, mapObj *map) {
+rectObj msRasterLabelGetSearchRect(layerObj *layer, mapObj *map) {
   rectObj searchrect = map->extent;
   int bDone = MS_FALSE;
 
-  /* For UVRaster, it is important that the searchrect is not too large */
+  /* For RasterLabel, it is important that the searchrect is not too large */
   /* to avoid insufficient intermediate raster resolution, which could */
   /* happen if we use the default code path, given potential reprojection */
   /* issues when using a map extent that is not in the validity area of */
@@ -451,8 +345,43 @@ rectObj msUVRASTERGetSearchRect(layerObj *layer, mapObj *map) {
   return searchrect;
 }
 
-int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+static GDALDatasetH OpenRaster(layerObj *layer, std::string &osDecryptedPath) {
+  GDALDatasetH hDS = NULL;
+  char *decrypted_path;
+
+  if (strncmp(layer->data, "<VRTDataset", strlen("<VRTDataset")) == 0) {
+    decrypted_path = msStrdup(layer->data);
+  } else {
+    char szPath[MS_MAXPATHLEN];
+    msTryBuildPath3(szPath, layer->map->mappath, layer->map->shapepath,
+                    layer->data);
+    decrypted_path = msDecryptStringTokens(layer->map, szPath);
+  }
+
+  if (decrypted_path) {
+    char **connectionoptions;
+    GDALAllRegister();
+    connectionoptions =
+        msGetStringListFromHashTable(&(layer->connectionoptions));
+    hDS = GDALOpenEx(decrypted_path, GDAL_OF_RASTER, NULL,
+                     (const char *const *)connectionoptions, NULL);
+    CSLDestroy(connectionoptions);
+
+    osDecryptedPath = decrypted_path;
+    msFree(decrypted_path);
+    if (!hDS) {
+      msDebug(
+          "msRasterLabelLayerWhichShapes(): cannot open DATA %s of layer %s\n",
+          layer->data, layer->name);
+      msSetError(MS_MISCERR, "Cannot open DATA of layer %s",
+                 "msRasterLabelLayerWhichShapes()", layer->name);
+    }
+  }
+  return hDS;
+}
+
+int msRasterLabelLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
   imageObj *image_tmp;
   outputFormatObj *outputformat = NULL;
   mapObj *map_tmp;
@@ -472,17 +401,28 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   memset(&oldLayerProjection, 0, sizeof(oldLayerProjection));
 
   if (layer->debug)
-    msDebug("Entering msUVRASTERLayerWhichShapes().\n");
+    msDebug("Entering msRasterLabelLayerWhichShapes().\n");
 
-  if (uvlinfo == NULL)
+  if (rllinfo == NULL)
     return MS_FAILURE;
+
+  std::string osDecryptedPath;
+  GDALDatasetH hDS = OpenRaster(layer, osDecryptedPath);
+  if (!hDS) {
+    return MS_FAILURE;
+  }
 
   if (CSLFetchNameValue(layer->processing, "BANDS") == NULL) {
-    msSetError(MS_MISCERR,
-               "BANDS processing option is required for UV layer. You have to "
-               "specified 2 bands.",
-               "msUVRASTERLayerWhichShapes()");
-    return MS_FAILURE;
+    if (GDALGetRasterCount(hDS) == 1) {
+      msLayerSetProcessingKey(layer, "BANDS", "1");
+    } else {
+      GDALClose(hDS);
+      msSetError(MS_MISCERR,
+                 "BANDS processing option is required for RASTER_LABEL layer. "
+                 "You have to specify 1 band.",
+                 "msRasterLabelLayerWhichShapes()");
+      return MS_FAILURE;
+    }
   }
 
   /*
@@ -491,21 +431,9 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   map_tmp = (mapObj *)msSmallCalloc(sizeof(mapObj), 1);
   if (initMap(map_tmp) == -1) { /* initialize this map */
     msFree(map_tmp);
+    GDALClose(hDS);
     return (MS_FAILURE);
   }
-
-  /* -------------------------------------------------------------------- */
-  /*      Determine desired spacing.  Default to 32 if not otherwise set  */
-  /* -------------------------------------------------------------------- */
-  spacing = 32;
-  if (CSLFetchNameValue(layer->processing, "UV_SPACING") != NULL) {
-    spacing = atoi(CSLFetchNameValue(layer->processing, "UV_SPACING"));
-    if (spacing == 0)
-      spacing = 32;
-  }
-
-  width = (int)(layer->map->width / spacing);
-  height = (int)(layer->map->height / spacing);
 
   /* Initialize our dummy map */
   MS_INIT_COLOR(map_tmp->imagecolor, 255, 255, 255, 255);
@@ -513,7 +441,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   map_tmp->defresolution = layer->map->defresolution;
 
   outputformat = (outputFormatObj *)msSmallCalloc(1, sizeof(outputFormatObj));
-  outputformat->bands = 2;
+  outputformat->bands = 1;
   outputformat->name = NULL;
   outputformat->driver = NULL;
   outputformat->refcount = 0;
@@ -558,132 +486,137 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   /* We create a temporary VRT that swiches the 2 hemispheres, and then we */
   /* modify the georeferencing to be in the more standard [-180, 180] range */
   /* and we adjust the layer->data, extent and projection accordingly */
-  if (layer->tileindex == NULL && uvlinfo->mapToUseForWhichShapes &&
+  if (layer->tileindex == NULL && rllinfo->mapToUseForWhichShapes &&
       bHasLonWrap && dfLonWrap == 180.0) {
     rectObj layerExtent;
     msLayerGetExtent(layer, &layerExtent);
     if (layerExtent.minx == 0 && layerExtent.maxx == 360) {
-      GDALDatasetH hDS = NULL;
-      char *decrypted_path;
+      int iBand;
+      int nXSize = GDALGetRasterXSize(hDS);
+      int nYSize = GDALGetRasterYSize(hDS);
+      int nBands = GDALGetRasterCount(hDS);
+      int nMaxLen = 100 + nBands * (800 + 2 * osDecryptedPath.size());
+      int nOffset = 0;
+      char *pszInlineVRT = static_cast<char *>(msSmallMalloc(nMaxLen));
 
-      if (strncmp(layer->data, "<VRTDataset", strlen("<VRTDataset")) == 0) {
-        decrypted_path = msStrdup(layer->data);
-      } else {
-        char szPath[MS_MAXPATHLEN];
-        msTryBuildPath3(szPath, layer->map->mappath, layer->map->shapepath,
-                        layer->data);
-        decrypted_path = msDecryptStringTokens(layer->map, szPath);
-      }
-
-      if (decrypted_path) {
-        char **connectionoptions;
-        GDALAllRegister();
-        connectionoptions =
-            msGetStringListFromHashTable(&(layer->connectionoptions));
-        hDS = GDALOpenEx(decrypted_path, GDAL_OF_RASTER, NULL,
-                         (const char *const *)connectionoptions, NULL);
-        CSLDestroy(connectionoptions);
-      }
-      if (hDS != NULL) {
-        int iBand;
-        int nXSize = GDALGetRasterXSize(hDS);
-        int nYSize = GDALGetRasterYSize(hDS);
-        int nBands = GDALGetRasterCount(hDS);
-        int nMaxLen = 100 + nBands * (800 + 2 * strlen(decrypted_path));
-        int nOffset = 0;
-        char *pszInlineVRT = static_cast<char *>(msSmallMalloc(nMaxLen));
-
-        snprintf(pszInlineVRT, nMaxLen,
-                 "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">", nXSize,
-                 nYSize);
-        nOffset = strlen(pszInlineVRT);
-        for (iBand = 1; iBand <= nBands; iBand++) {
-          const char *pszDataType = "Byte";
-          switch (GDALGetRasterDataType(GDALGetRasterBand(hDS, iBand))) {
-          case GDT_Byte:
-            pszDataType = "Byte";
-            break;
-          case GDT_Int16:
-            pszDataType = "Int16";
-            break;
-          case GDT_UInt16:
-            pszDataType = "UInt16";
-            break;
-          case GDT_Int32:
-            pszDataType = "Int32";
-            break;
-          case GDT_UInt32:
-            pszDataType = "UInt32";
-            break;
-          case GDT_Float32:
-            pszDataType = "Float32";
-            break;
-          case GDT_Float64:
-            pszDataType = "Float64";
-            break;
-          default:
-            break;
-          }
-
-          snprintf(pszInlineVRT + nOffset, nMaxLen - nOffset,
-                   "    <VRTRasterBand dataType=\"%s\" band=\"%d\">"
-                   "        <SimpleSource>"
-                   "            <SourceFilename "
-                   "relativeToVrt=\"1\"><![CDATA[%s]]></SourceFilename>"
-                   "            <SourceBand>%d</SourceBand>"
-                   "            <SrcRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
-                   "ySize=\"%d\"/>"
-                   "            <DstRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
-                   "ySize=\"%d\"/>"
-                   "        </SimpleSource>"
-                   "        <SimpleSource>"
-                   "            <SourceFilename "
-                   "relativeToVrt=\"1\"><![CDATA[%s]]></SourceFilename>"
-                   "            <SourceBand>%d</SourceBand>"
-                   "            <SrcRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
-                   "ySize=\"%d\"/>"
-                   "            <DstRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
-                   "ySize=\"%d\"/>"
-                   "        </SimpleSource>"
-                   "    </VRTRasterBand>",
-                   pszDataType, iBand, decrypted_path, iBand, nXSize / 2, 0,
-                   nXSize - nXSize / 2, nYSize, 0, 0, nXSize - nXSize / 2,
-                   nYSize, decrypted_path, iBand, 0, 0, nXSize / 2, nYSize,
-                   nXSize - nXSize / 2, 0, nXSize / 2, nYSize);
-
-          nOffset += strlen(pszInlineVRT + nOffset);
+      snprintf(pszInlineVRT, nMaxLen,
+               "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">", nXSize,
+               nYSize);
+      nOffset = strlen(pszInlineVRT);
+      for (iBand = 1; iBand <= nBands; iBand++) {
+        const char *pszDataType = "Byte";
+        switch (GDALGetRasterDataType(GDALGetRasterBand(hDS, iBand))) {
+        case GDT_Byte:
+          pszDataType = "Byte";
+          break;
+        case GDT_Int16:
+          pszDataType = "Int16";
+          break;
+        case GDT_UInt16:
+          pszDataType = "UInt16";
+          break;
+        case GDT_Int32:
+          pszDataType = "Int32";
+          break;
+        case GDT_UInt32:
+          pszDataType = "UInt32";
+          break;
+        case GDT_Float32:
+          pszDataType = "Float32";
+          break;
+        case GDT_Float64:
+          pszDataType = "Float64";
+          break;
+        default:
+          break;
         }
-        snprintf(pszInlineVRT + nOffset, nMaxLen - nOffset, "</VRTDataset>");
 
-        oldLayerExtent = layer->extent;
-        oldLayerData = layer->data;
-        oldLayerProjection = layer->projection;
-        layer->extent.minx = -180;
-        layer->extent.maxx = 180;
-        layer->data = pszInlineVRT;
-        layer->projection = map_tmp->projection;
+        snprintf(pszInlineVRT + nOffset, nMaxLen - nOffset,
+                 "    <VRTRasterBand dataType=\"%s\" band=\"%d\">"
+                 "        <SimpleSource>"
+                 "            <SourceFilename "
+                 "relativeToVrt=\"1\"><![CDATA[%s]]></SourceFilename>"
+                 "            <SourceBand>%d</SourceBand>"
+                 "            <SrcRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
+                 "ySize=\"%d\"/>"
+                 "            <DstRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
+                 "ySize=\"%d\"/>"
+                 "        </SimpleSource>"
+                 "        <SimpleSource>"
+                 "            <SourceFilename "
+                 "relativeToVrt=\"1\"><![CDATA[%s]]></SourceFilename>"
+                 "            <SourceBand>%d</SourceBand>"
+                 "            <SrcRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
+                 "ySize=\"%d\"/>"
+                 "            <DstRect xOff=\"%d\" yOff=\"%d\" xSize=\"%d\" "
+                 "ySize=\"%d\"/>"
+                 "        </SimpleSource>"
+                 "    </VRTRasterBand>",
+                 pszDataType, iBand, osDecryptedPath.c_str(), iBand, nXSize / 2,
+                 0, nXSize - nXSize / 2, nYSize, 0, 0, nXSize - nXSize / 2,
+                 nYSize, osDecryptedPath.c_str(), iBand, 0, 0, nXSize / 2,
+                 nYSize, nXSize - nXSize / 2, 0, nXSize / 2, nYSize);
 
-        /* map_tmp->projection is actually layer->projection without lon_wrap */
-        rect = uvlinfo->mapToUseForWhichShapes->extent;
-        msProjectRect(&uvlinfo->mapToUseForWhichShapes->projection,
-                      &map_tmp->projection, &rect);
-        bHasLonWrap = MS_FALSE;
-
-        GDALClose(hDS);
+        nOffset += strlen(pszInlineVRT + nOffset);
       }
-      msFree(decrypted_path);
+      snprintf(pszInlineVRT + nOffset, nMaxLen - nOffset, "</VRTDataset>");
+
+      oldLayerExtent = layer->extent;
+      oldLayerData = layer->data;
+      oldLayerProjection = layer->projection;
+      layer->extent.minx = -180;
+      layer->extent.maxx = 180;
+      layer->data = pszInlineVRT;
+      layer->projection = map_tmp->projection;
+
+      /* map_tmp->projection is actually layer->projection without lon_wrap */
+      rect = rllinfo->mapToUseForWhichShapes->extent;
+      msProjectRect(&rllinfo->mapToUseForWhichShapes->projection,
+                    &map_tmp->projection, &rect);
+      bHasLonWrap = MS_FALSE;
     }
   }
 
   if (isQuery) {
     /* For query mode, use layer->map->extent reprojected rather than */
     /* the provided rect. Generic query code will filter returned features. */
-    rect = msUVRASTERGetSearchRect(layer, layer->map);
+    rect = msRasterLabelGetSearchRect(layer, layer->map);
   }
+
+  /* -------------------------------------------------------------------- */
+  /*      Determine desired spacing.  Default to 32 if not otherwise set  */
+  /* -------------------------------------------------------------------- */
+  spacing = 32;
+  if (CSLFetchNameValue(layer->processing, "LABEL_SPACING") != NULL) {
+    spacing = atoi(CSLFetchNameValue(layer->processing, "LABEL_SPACING"));
+    if (spacing == 0)
+      spacing = 32;
+  }
+
+  width = (int)(layer->map->width / spacing);
+  height = (int)(layer->map->height / spacing);
 
   map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx, layer->map->width),
                         MS_CELLSIZE(rect.miny, rect.maxy, layer->map->height));
   map_tmp->cellsize = map_cellsize * spacing;
+
+  // By default, do not oversample beyond the resolution of the layer
+  if (!CPLTestBoolean(
+          CSLFetchNameValueDef(layer->processing, "ALLOW_OVERSAMPLE", "NO"))) {
+    double adfGT[6];
+    if (GDALGetGeoTransform(hDS, adfGT) == CE_None) {
+      if (!msProjectionsDiffer(&(layer->map->projection),
+                               &(layer->projection)) &&
+          map_tmp->cellsize < adfGT[1]) {
+        map_tmp->cellsize = adfGT[1];
+        width = MS_MAX(2, (int)(rect.maxx - rect.minx) / map_tmp->cellsize);
+        height = MS_MAX(2, (int)(rect.maxy - rect.miny) / map_tmp->cellsize);
+        map_tmp->cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx, width),
+                                   MS_CELLSIZE(rect.miny, rect.maxy, height));
+      }
+    }
+  }
+
   map_tmp->extent.minx =
       rect.minx - (0.5 * map_cellsize) + (0.5 * map_tmp->cellsize);
   map_tmp->extent.miny =
@@ -692,6 +625,8 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
       map_tmp->extent.minx + ((width - 1) * map_tmp->cellsize);
   map_tmp->extent.maxy =
       map_tmp->extent.miny + ((height - 1) * map_tmp->cellsize);
+
+  GDALClose(hDS);
 
   if (bHasLonWrap && dfLonWrap == 180.0) {
     if (map_tmp->extent.minx >= 180) {
@@ -713,12 +648,12 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   }
 
   if (layer->debug)
-    msDebug(
-        "msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
-        width, height, map_tmp->cellsize);
+    msDebug("msRasterLabelLayerWhichShapes(): width: %d, height: %d, cellsize: "
+            "%g\n",
+            width, height, map_tmp->cellsize);
 
   if (layer->debug == MS_DEBUGLEVEL_VVV)
-    msDebug("msUVRASTERLayerWhichShapes(): extent: %g %g %g %g\n",
+    msDebug("msRasterLabelLayerWhichShapes(): extent: %g %g %g %g\n",
             map_tmp->extent.minx, map_tmp->extent.miny, map_tmp->extent.maxx,
             map_tmp->extent.maxy);
 
@@ -727,12 +662,13 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   msMapSetSize(map_tmp, width, height);
 
   if (layer->debug == MS_DEBUGLEVEL_VVV)
-    msDebug("msUVRASTERLayerWhichShapes(): geotransform: %g %g %g %g %g %g\n",
-            map_tmp->gt.geotransform[0], map_tmp->gt.geotransform[1],
-            map_tmp->gt.geotransform[2], map_tmp->gt.geotransform[3],
-            map_tmp->gt.geotransform[4], map_tmp->gt.geotransform[5]);
+    msDebug(
+        "msRasterLabelLayerWhichShapes(): geotransform: %g %g %g %g %g %g\n",
+        map_tmp->gt.geotransform[0], map_tmp->gt.geotransform[1],
+        map_tmp->gt.geotransform[2], map_tmp->gt.geotransform[3],
+        map_tmp->gt.geotransform[4], map_tmp->gt.geotransform[5]);
 
-  uvlinfo->extent = map_tmp->extent;
+  rllinfo->extent = map_tmp->extent;
 
   image_tmp = msImageCreate(width, height, map_tmp->outputformatlist[0], NULL,
                             NULL, map_tmp->resolution, map_tmp->defresolution,
@@ -774,7 +710,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 
   if (ret == MS_FAILURE) {
     msSetError(MS_MISCERR, "Unable to draw raster data.",
-               "msUVRASTERLayerWhichShapes()");
+               "msRasterLabelLayerWhichShapes()");
 
     msFreeMap(map_tmp);
     msFreeImage(image_tmp);
@@ -782,50 +718,37 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
     return MS_FAILURE;
   }
 
-  /* free old query arrays */
-  free(uvlinfo->u);
-  free(uvlinfo->v);
+  /* Update our rl layer structure */
+  rllinfo->width = width;
+  rllinfo->height = height;
+  rllinfo->query_results = 0;
 
-  /* Update our uv layer structure */
-  uvlinfo->width = width;
-  uvlinfo->height = height;
-  uvlinfo->query_results = 0;
+  rllinfo->last_queried_shapeindex = 0;
+  rllinfo->last_raster_off = 0;
 
-  uvlinfo->last_queried_shapeindex = 0;
-  uvlinfo->last_raster_off = 0;
-
-  uvlinfo->u = (float *)msSmallMalloc(sizeof(float *) * width * height);
-  uvlinfo->v = (float *)msSmallMalloc(sizeof(float *) * width * height);
+  free(rllinfo->raster_values);
+  rllinfo->raster_values =
+      (float *)msSmallMalloc(sizeof(float) * width * height);
 
   for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
-    /* Ignore invalid pixels (at nodata), or (u,v)=(0,0) */
     if (MS_GET_BIT(image_tmp->img_mask, off)) {
-      uvlinfo->u[off] = image_tmp->img.raw_float[off];
-      uvlinfo->v[off] =
-          image_tmp->img.raw_float[off + static_cast<size_t>(width) * height];
-      if (!(uvlinfo->u[off] == 0 && uvlinfo->v[off] == 0)) {
-        uvlinfo->query_results++;
-      } else {
-        uvlinfo->u[off] = std::numeric_limits<float>::quiet_NaN();
-        uvlinfo->v[off] = std::numeric_limits<float>::quiet_NaN();
-      }
-    } else {
-      uvlinfo->u[off] = std::numeric_limits<float>::quiet_NaN();
-      uvlinfo->v[off] = std::numeric_limits<float>::quiet_NaN();
-    }
+      rllinfo->raster_values[off] = image_tmp->img.raw_float[off];
+      rllinfo->query_results++;
+    } else
+      rllinfo->raster_values[off] = std::numeric_limits<float>::quiet_NaN();
   }
 
   msFreeImage(image_tmp); /* we do not need the imageObj anymore */
   msFreeMap(map_tmp);
 
-  uvlinfo->next_shape = 0;
+  rllinfo->next_shape = 0;
 
   return MS_SUCCESS;
 }
 
-int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
-                            resultObj *record) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+int msRasterLabelLayerGetShape(layerObj *layer, shapeObj *shape,
+                               resultObj *record) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
   lineObj line;
   pointObj point;
   const long shapeindex = record->shapeindex;
@@ -833,42 +756,43 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
   msFreeShape(shape);
   shape->type = MS_SHAPE_NULL;
 
-  if (shapeindex < 0 || shapeindex >= uvlinfo->query_results) {
+  if (shapeindex < 0 || shapeindex >= rllinfo->query_results) {
     msSetError(MS_MISCERR,
                "Out of range shape index requested.  Requested %ld\n"
                "but only %d shapes available.",
-               "msUVRASTERLayerGetShape()", shapeindex, uvlinfo->query_results);
+               "msRasterLabelLayerGetShape()", shapeindex,
+               rllinfo->query_results);
     return MS_FAILURE;
   }
 
   /* loop to the next valid value */
-  size_t raster_off = (shapeindex >= uvlinfo->last_queried_shapeindex)
-                          ? uvlinfo->last_raster_off
+  size_t raster_off = (shapeindex >= rllinfo->last_queried_shapeindex)
+                          ? rllinfo->last_raster_off
                           : 0;
-  for (long curshapeindex = (shapeindex >= uvlinfo->last_queried_shapeindex)
-                                ? uvlinfo->last_queried_shapeindex
+  for (long curshapeindex = (shapeindex >= rllinfo->last_queried_shapeindex)
+                                ? rllinfo->last_queried_shapeindex
                                 : 0;
-       raster_off < static_cast<size_t>(uvlinfo->width) * uvlinfo->height;
+       raster_off < static_cast<size_t>(rllinfo->width) * rllinfo->height;
        ++raster_off) {
-    if (!std::isnan(uvlinfo->u[raster_off])) {
+    if (!std::isnan(rllinfo->raster_values[raster_off])) {
       if (curshapeindex == shapeindex) {
-        uvlinfo->last_queried_shapeindex = shapeindex;
-        uvlinfo->last_raster_off = raster_off;
+        rllinfo->last_queried_shapeindex = shapeindex;
+        rllinfo->last_raster_off = raster_off;
         break;
       }
       ++curshapeindex;
     }
   }
-  assert(raster_off < static_cast<size_t>(uvlinfo->width) * uvlinfo->height);
+  assert(raster_off < static_cast<size_t>(rllinfo->width) * rllinfo->height);
 
-  const int x = static_cast<int>(raster_off % uvlinfo->width);
-  const int y = static_cast<int>(raster_off / uvlinfo->width);
-  point.x = Pix2Georef(x, 0, uvlinfo->width - 1, uvlinfo->extent.minx,
-                       uvlinfo->extent.maxx, MS_FALSE);
-  point.y = Pix2Georef(y, 0, uvlinfo->height - 1, uvlinfo->extent.miny,
-                       uvlinfo->extent.maxy, MS_TRUE);
+  const int x = static_cast<int>(raster_off % rllinfo->width);
+  const int y = static_cast<int>(raster_off / rllinfo->width);
+  point.x = Pix2Georef(x, 0, rllinfo->width - 1, rllinfo->extent.minx,
+                       rllinfo->extent.maxx, MS_FALSE);
+  point.y = Pix2Georef(y, 0, rllinfo->height - 1, rllinfo->extent.miny,
+                       rllinfo->extent.maxy, MS_TRUE);
   if (layer->debug == MS_DEBUGLEVEL_VVV)
-    msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
+    msDebug("msRasterLabelLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
             shapeindex, point.x, point.y);
 
   point.m = 0.0;
@@ -880,39 +804,39 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
   msComputeBounds(shape);
 
   shape->numvalues = layer->numitems;
-  shape->values = msUVRASTERGetValues(layer, uvlinfo->u[raster_off],
-                                      uvlinfo->v[raster_off], &point);
+  shape->values =
+      msRasterLabelGetValues(layer, rllinfo->raster_values[raster_off]);
   shape->index = shapeindex;
   shape->resultindex = shapeindex;
 
   return MS_SUCCESS;
 }
 
-int msUVRASTERLayerNextShape(layerObj *layer, shapeObj *shape) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+int msRasterLabelLayerNextShape(layerObj *layer, shapeObj *shape) {
+  RasterLabelLayerInfo *rllinfo = (RasterLabelLayerInfo *)layer->layerinfo;
 
-  if (uvlinfo->next_shape < 0 ||
-      uvlinfo->next_shape >= uvlinfo->query_results) {
+  if (rllinfo->next_shape < 0 ||
+      rllinfo->next_shape >= rllinfo->query_results) {
     msFreeShape(shape);
     shape->type = MS_SHAPE_NULL;
     return MS_DONE;
   } else {
     resultObj record;
 
-    record.shapeindex = uvlinfo->next_shape++;
+    record.shapeindex = rllinfo->next_shape++;
     record.tileindex = 0;
     record.classindex = record.resultindex = -1;
 
-    return msUVRASTERLayerGetShape(layer, shape, &record);
+    return msRasterLabelLayerGetShape(layer, shape, &record);
   }
 }
 
 /************************************************************************/
-/*                       msUVRASTERLayerGetExtent()                     */
+/*                       msRasterLabelLayerGetExtent()                     */
 /* Simple copy of the maprasterquery.c file. might change in the future */
 /************************************************************************/
 
-int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
+int msRasterLabelLayerGetExtent(layerObj *layer, rectObj *extent)
 
 {
   char szPath[MS_MAXPATHLEN];
@@ -997,7 +921,7 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 }
 
 /************************************************************************/
-/*                     msUVRASTERLayerSetTimeFilter()                   */
+/*                  msRasterLabelLayerSetTimeFilter()                   */
 /*                                                                      */
 /*      This function is actually just used in the context of           */
 /*      setting a filter on the tileindex for time based queries.       */
@@ -1011,8 +935,8 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 /*      place, we do nothing.                                           */
 /************************************************************************/
 
-int msUVRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
-                                 const char *timefield) {
+int msRasterLabelLayerSetTimeFilter(layerObj *layer, const char *timestring,
+                                    const char *timefield) {
   int tilelayerindex;
 
   /* -------------------------------------------------------------------- */
@@ -1050,26 +974,26 @@ int msUVRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
 /*                msRASTERLayerInitializeVirtualTable()                 */
 /************************************************************************/
 
-int msUVRASTERLayerInitializeVirtualTable(layerObj *layer) {
+int msRasterLabelLayerInitializeVirtualTable(layerObj *layer) {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
-  layer->vtable->LayerInitItemInfo = msUVRASTERLayerInitItemInfo;
-  layer->vtable->LayerFreeItemInfo = msUVRASTERLayerFreeItemInfo;
-  layer->vtable->LayerOpen = msUVRASTERLayerOpen;
-  layer->vtable->LayerIsOpen = msUVRASTERLayerIsOpen;
-  layer->vtable->LayerWhichShapes = msUVRASTERLayerWhichShapes;
-  layer->vtable->LayerNextShape = msUVRASTERLayerNextShape;
-  layer->vtable->LayerGetShape = msUVRASTERLayerGetShape;
+  layer->vtable->LayerInitItemInfo = msRasterLabelLayerInitItemInfo;
+  layer->vtable->LayerFreeItemInfo = msRasterLabelLayerFreeItemInfo;
+  layer->vtable->LayerOpen = msRasterLabelLayerOpen;
+  layer->vtable->LayerIsOpen = msRasterLabelLayerIsOpen;
+  layer->vtable->LayerWhichShapes = msRasterLabelLayerWhichShapes;
+  layer->vtable->LayerNextShape = msRasterLabelLayerNextShape;
+  layer->vtable->LayerGetShape = msRasterLabelLayerGetShape;
   /* layer->vtable->LayerGetShapeCount, use default */
-  layer->vtable->LayerClose = msUVRASTERLayerClose;
-  layer->vtable->LayerGetItems = msUVRASTERLayerGetItems;
-  layer->vtable->LayerGetExtent = msUVRASTERLayerGetExtent;
+  layer->vtable->LayerClose = msRasterLabelLayerClose;
+  layer->vtable->LayerGetItems = msRasterLabelLayerGetItems;
+  layer->vtable->LayerGetExtent = msRasterLabelLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-  /* layer->vtable->LayerCloseConnection = msUVRASTERLayerClose; */
+  /* layer->vtable->LayerCloseConnection = msRasterLabelLayerClose; */
   /* we use backtics for proper tileindex shapefile functioning */
-  layer->vtable->LayerSetTimeFilter = msUVRASTERLayerSetTimeFilter;
+  layer->vtable->LayerSetTimeFilter = msRasterLabelLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
 
