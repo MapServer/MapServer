@@ -4227,8 +4227,12 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion) {
     p.expr = &psLabelExpr;
     p.shape = NULL;
     p.type = MS_PARSE_TYPE_SLD;
+    p.result.strval = NULL;
     yyparse(&p);
-    psLabelText = msStrdup(p.result.strval);
+    // Not totally sure what we should do if p.result.strval. For now
+    // we export the raw MapServer expression.
+    psLabelText =
+        msStrdup(p.result.strval ? p.result.strval : psLabelExpr.string);
     msFree(p.result.strval);
     msFreeExpression(&psLabelExpr);
 
