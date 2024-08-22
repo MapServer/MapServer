@@ -634,7 +634,9 @@ char *msProjectionObj2OGCWKT(projectionObj *projection)
   /* -------------------------------------------------------------------- */
   /*      Look for an EPSG-like projection argument                       */
   /* -------------------------------------------------------------------- */
-  if (projection->numargs == 1 &&
+  if ((projection->numargs == 1 ||
+       (projection->numargs == 2 &&
+        strstr(projection->args[1], "epsgaxis=") != NULL)) &&
       (pszInitEpsg = strcasestr(projection->args[0], "init=epsg:"))) {
     int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
     eErr = OSRImportFromEPSG(hSRS, nEpsgCode);
