@@ -651,9 +651,9 @@
  
     %newobject executeWFSGetFeature;
     /// Executes a GetFeature request on a WFS layer and returns the name of the temporary GML file created. Returns an empty string on error.
-    char *executeWFSGetFeature(layerObj *layer) 
+    char *executeWFSGetFeature()
     {
-        return (char *) msWFSExecuteGetFeature(layer);
+        return (char *) msWFSExecuteGetFeature(self);
     }
 
     /**
