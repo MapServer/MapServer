@@ -504,8 +504,8 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   /*      band in the file.  Later we will deal with the various band     */
   /*      selection criteria.                                             */
   /* -------------------------------------------------------------------- */
-  pafRaster = (float *)calloc(sizeof(float),
-                              ((size_t)nWinXSize) * nWinYSize * nBandCount);
+  pafRaster = (float *)calloc(((size_t)nWinXSize) * nWinYSize * nBandCount,
+                              sizeof(float));
   MS_CHECK_ALLOC(pafRaster, sizeof(float) * nWinXSize * nWinYSize * nBandCount,
                  -1);
 

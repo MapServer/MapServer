@@ -48,6 +48,7 @@ static void hasMoreArgumentsOrExit(const char *option,
                                    int num_required_arguments,
                                    int num_remaining_arguments,
                                    configObj *config, mapObj *map) {
+  (void)map;
   if (num_remaining_arguments < num_required_arguments) {
     if (num_required_arguments == 1)
       fprintf(stderr, "Argument %s requires an additional argument.\n", option);

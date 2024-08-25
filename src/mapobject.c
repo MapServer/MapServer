@@ -49,7 +49,7 @@ mapObj *msNewMapObj() {
   mapObj *map = NULL;
 
   /* create an empty map, no layers etc... */
-  map = (mapObj *)calloc(sizeof(mapObj), 1);
+  map = (mapObj *)calloc(1, sizeof(mapObj));
 
   if (!map) {
     msSetError(MS_MEMERR, NULL, "msCreateMap()");

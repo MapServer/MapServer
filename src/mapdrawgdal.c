@@ -1631,7 +1631,8 @@ int msGetGDALGeoTransform(GDALDatasetH hDS, mapObj *map, layerObj *layer,
     if (success && layer->debug >= MS_DEBUGLEVEL_VVV) {
       msDebug("Worldfile location: %s.\n", fullPath);
     } else if (layer->debug >= MS_DEBUGLEVEL_VVV) {
-      msDebug("Failed using worldfile location: %s.\n", fullPath);
+      msDebug("Failed using worldfile location: %s.\n",
+              fullPath ? fullPath : "(null)");
     }
 
     msFree(fileExtension);
@@ -1777,7 +1778,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Do we have nodata values?                                       */
   /* -------------------------------------------------------------------- */
-  f_nodatas = (float *)calloc(sizeof(float), band_count);
+  f_nodatas = (float *)calloc(band_count, sizeof(float));
   if (f_nodatas == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n",
                "msDrawRasterLayerGDAL_RawMode()", __FILE__, __LINE__,

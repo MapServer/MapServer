@@ -128,7 +128,7 @@ static msIOContextGroup *msIO_GetContextGroup()
   /* -------------------------------------------------------------------- */
   /*      Create a new context group for this thread.                     */
   /* -------------------------------------------------------------------- */
-  group = (msIOContextGroup *)calloc(sizeof(msIOContextGroup), 1);
+  group = (msIOContextGroup *)calloc(1, sizeof(msIOContextGroup));
 
   group->stdin_context = default_contexts.stdin_context;
   group->stdout_context = default_contexts.stdout_context;
@@ -666,7 +666,7 @@ void msIO_installStdoutToBuffer()
   context.label = "buffer";
   context.write_channel = MS_TRUE;
   context.readWriteFunc = msIO_bufferWrite;
-  context.cbData = calloc(sizeof(msIOBuffer), 1);
+  context.cbData = calloc(1, sizeof(msIOBuffer));
 
   msIO_installHandlers(&group->stdin_context, &context, &group->stderr_context);
 }
@@ -732,7 +732,7 @@ void msIO_installStdinFromBuffer()
   context.label = "buffer";
   context.write_channel = MS_FALSE;
   context.readWriteFunc = msIO_bufferRead;
-  context.cbData = calloc(sizeof(msIOBuffer), 1);
+  context.cbData = calloc(1, sizeof(msIOBuffer));
 
   msIO_installHandlers(&context, &group->stdout_context,
                        &group->stderr_context);
