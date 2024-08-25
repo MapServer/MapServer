@@ -291,15 +291,14 @@ bool decompose_ft_outline(const FT_Outline &outline, bool flip_y,
 
   FT_Vector *point;
   FT_Vector *limit;
-  char *tags;
 
-  int n;     // index of contour in outline
-  int first; // index of first point in contour
-  char tag;  // current point's state
+  unsigned n;     // index of contour in outline
+  unsigned first; // index of first point in contour
+  char tag;       // current point's state
 
   first = 0;
 
-  for (n = 0; n < outline.n_contours; n++) {
+  for (n = 0; n < (unsigned)outline.n_contours; n++) {
     int last; // index of last point in contour
 
     last = outline.contours[n];
@@ -310,7 +309,7 @@ bool decompose_ft_outline(const FT_Outline &outline, bool flip_y,
     FT_Vector v_control = v_start;
 
     point = outline.points + first;
-    tags = outline.tags + first;
+    auto tags = outline.tags + first;
     tag = FT_CURVE_TAG(tags[0]);
 
     // A contour cannot start with a cubic control point!
