@@ -4,6 +4,7 @@ Content-Type: application/json; subtype=geojson; charset=utf-8
 {
 "type": "FeatureCollection",
 "name": "province",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
 "features": [
 { "type": "Feature", "properties": { "NAME_E": "Quebec" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -61.5105, 47.7742 ], [ -61.5089, 47.7886 ], [ -61.4927, 47.7964 ], [ -61.4576, 47.7874 ], [ -61.46, 47.7679 ], [ -61.4835, 47.7696 ], [ -61.5105, 47.7742 ] ] ] } },
 { "type": "Feature", "properties": { "NAME_E": "Nova Scotia" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -60.2049, 47.1664 ], [ -60.2117, 47.1799 ], [ -60.1944, 47.1927 ], [ -60.1734, 47.1876 ], [ -60.1688, 47.175 ], [ -60.2049, 47.1664 ] ] ] } },
