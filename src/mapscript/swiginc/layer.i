@@ -29,6 +29,9 @@
 
 %extend layerObj 
 {
+%immutable;
+    int numprocessing;
+%mutable;
 
     /**
     A :class:`layerObj` is associated with :class:`mapObj`. An instance of 
@@ -738,6 +741,12 @@
         msLayerAddProcessing( self, directive );
     }
 
+    /// Return the number of processing directives
+    int getNumProcessing()
+    {
+        return msLayerGetNumProcessing(self);
+    }
+
     /// Return the raster processing directive at *index*.
     char *getProcessing(int index) 
     {
@@ -834,3 +843,9 @@
         return itemType;
     }
 }
+
+%{
+int layerObj_numprocessing_get( layerObj *l ) {
+  return msLayerGetNumProcessing( l );
+}
+%}

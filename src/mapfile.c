@@ -45,6 +45,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_port.h"
+#include "cpl_string.h"
 
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
@@ -3990,7 +3991,6 @@ int initLayer(layerObj *layer, mapObj *map) {
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
-  layer->numprocessing = 0;
   layer->processing = NULL;
   layer->numjoins = 0;
   layer->joins = (joinObj *)malloc(MS_MAXJOINS * sizeof(joinObj));
@@ -4124,8 +4124,7 @@ int freeLayer(layerObj *layer) {
   msFreeHashItems(&(layer->validation));
   msFreeHashItems(&layer->bindvals);
 
-  if (layer->numprocessing > 0)
-    msFreeCharArray(layer->processing, layer->numprocessing);
+  CSLDestroy(layer->processing);
 
   for (i = 0; i < layer->numjoins; i++) /* each join */
     freeJoin(&(layer->joins[i]));
@@ -4945,7 +4944,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
   writeString(stream, indent, "PLUGIN", NULL, layer->plugin_library_original);
   writeKeyword(stream, indent, "POSTLABELCACHE", layer->postlabelcache, 1,
                MS_TRUE, "TRUE");
-  for (i = 0; i < layer->numprocessing; i++)
+  for (i = 0; layer->processing && layer->processing[i]; i++)
     writeString(stream, indent, "PROCESSING", NULL, layer->processing[i]);
   writeProjection(stream, indent, &(layer->projection));
   writeString(stream, indent, "REQUIRES", NULL, layer->requires);
