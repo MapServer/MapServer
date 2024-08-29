@@ -139,7 +139,7 @@ configObj *msLoadConfig(const char *ms_config_file) {
     return NULL;
   }
 
-  config = (configObj *)calloc(sizeof(configObj), 1);
+  config = (configObj *)calloc(1, sizeof(configObj));
   MS_CHECK_ALLOC(config, sizeof(configObj), NULL);
 
   if (initConfig(config) != MS_SUCCESS) {

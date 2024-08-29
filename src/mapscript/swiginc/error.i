@@ -39,7 +39,7 @@
         return msGetErrorObj();
     }
 
-    ~errorObj() {}
+    ~errorObj() { (void)self; }
 
     /// Returns the next error in the stack or NULL if the end has been reached
     errorObj *next() 

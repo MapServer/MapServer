@@ -3463,9 +3463,9 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
     }
   }
 
-  papszGMLGroups = (char **)calloc(sizeof(char *), map->numlayers);
-  papszGMLIncludeItems = (char **)calloc(sizeof(char *), map->numlayers);
-  papszGMLGeometries = (char **)calloc(sizeof(char *), map->numlayers);
+  papszGMLGroups = (char **)calloc(map->numlayers, sizeof(char *));
+  papszGMLIncludeItems = (char **)calloc(map->numlayers, sizeof(char *));
+  papszGMLGeometries = (char **)calloc(map->numlayers, sizeof(char *));
 
   if (paramsObj->pszTypeName) {
     int k, y, z;

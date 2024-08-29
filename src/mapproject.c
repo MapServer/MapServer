@@ -1703,7 +1703,7 @@ int msProjectRectAsPolygon(reprojectionObj *reprojector, rectObj *rect) {
   /* If there is more than two sample points we will also get samples from the
    * diagonal line */
   ringPoints =
-      (pointObj *)calloc(sizeof(pointObj), NUMBER_OF_SAMPLE_POINTS * 5 + 3);
+      (pointObj *)calloc(NUMBER_OF_SAMPLE_POINTS * 5 + 3, sizeof(pointObj));
   ring.point = ringPoints;
   ring.numpoints = 0;
 

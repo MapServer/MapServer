@@ -1,0 +1,25 @@
+name: Build Alpine Linux
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: build_alpine
+
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+            docker run \
+            -e WORK_DIR="$PWD" \
+            -v $PWD:$PWD alpine:edge $PWD/.github/workflows/build_alpine.sh

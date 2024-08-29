@@ -6869,7 +6869,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
   /*
   ** Allocate mapObj structure
   */
-  map = (mapObj *)calloc(sizeof(mapObj), 1);
+  map = (mapObj *)calloc(1, sizeof(mapObj));
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if (initMap(map) == -1) { /* initialize this map */
@@ -6964,7 +6964,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
   /*
   ** Allocate mapObj structure
   */
-  map = (mapObj *)calloc(sizeof(mapObj), 1);
+  map = (mapObj *)calloc(1, sizeof(mapObj));
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if (initMap(map) == -1) { /* initialize this map */

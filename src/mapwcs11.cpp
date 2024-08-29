@@ -170,7 +170,7 @@ static char *msWCSGetFormatsList11(mapObj *map, layerObj *layer)
   /*      duplicates.                                                     */
   /* -------------------------------------------------------------------- */
   numformats = 0;
-  formats = (char **)calloc(sizeof(char *), numtokens);
+  formats = (char **)calloc(numtokens, sizeof(char *));
 
   for (i = 0; i < numtokens; i++) {
     int format_i, j;
