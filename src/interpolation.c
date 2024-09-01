@@ -54,7 +54,7 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
                            layerObj *interpolation_layer, void **hDSvoid,
                            void **cleanup_ptr) {
 
-  int status, layer_idx, i, nclasses = 0, npoints = 0, length = 0;
+  int status, layer_idx, i, npoints = 0, length = 0;
   rectObj searchrect;
   shapeObj shape;
   layerObj *layer = NULL;
@@ -64,7 +64,6 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
   unsigned char *iValues;
   GDALDatasetH hDS;
   interpolationProcessingParams interpParams;
-  int *classgroup = NULL;
 
   memset(&interpParams, 0, sizeof(interpParams));
 
@@ -153,6 +152,8 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
   /* nothing to do */
   if (status == MS_SUCCESS) { /* at least one sample may have overlapped */
 
+    int nclasses = 0;
+    int *classgroup = NULL;
     if (layer->classgroup && layer->numclasses > 0)
       classgroup = msAllocateValidClassGroups(layer, &nclasses);
 
@@ -220,6 +221,9 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
     nextshape:
       msFreeShape(&shape);
     }
+
+    msFree(classgroup);
+
     // number of layer points.
     npoints = length / 3;
   } else if (status != MS_DONE) {
