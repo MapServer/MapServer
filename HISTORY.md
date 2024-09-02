@@ -13,6 +13,13 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.2.2 release (2024-09-02)
+--------------------------
+
+- fix build against FreeType 2.13.3 release (#7142)
+
+see detailed changelog for other fixes
+
 8.2.1 release (2024-07-21)
 --------------------------
 
