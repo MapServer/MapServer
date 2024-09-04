@@ -134,7 +134,7 @@ static int arcStrokeCircularString(wkbObj *w, double segment_angle,
 /*
 ** msPostGISCloseConnection()
 **
-** Handler registered witih msConnPoolRegister so that Mapserver
+** Handler registered with msConnPoolRegister so that Mapserver
 ** can clean up open connections during a shutdown.
 */
 static void msPostGISCloseConnection(void *pgconn) {
@@ -268,7 +268,7 @@ static char wkbReadChar(wkbObj *w) {
 
 /*
 ** Read one integer from the WKB and advance the read pointer.
-** We assume the endianess of the WKB is the same as this machine.
+** We assume the endianness of the WKB is the same as this machine.
 */
 static inline int wkbReadInt(wkbObj *w) {
   int i;
@@ -279,7 +279,7 @@ static inline int wkbReadInt(wkbObj *w) {
 
 /*
 ** Read one pointObj (two doubles) from the WKB and advance the read pointer.
-** We assume the endianess of the WKB is the same as this machine.
+** We assume the endianness of the WKB is the same as this machine.
 */
 static inline void wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag) {
   memcpy(&(p->x), w->ptr, sizeof(double));
@@ -302,7 +302,7 @@ static inline void wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag) {
 
 /*
 ** Read one pointObj (two doubles) from the WKB and advance the read pointer.
-** We assume the endianess of the WKB is the same as this machine.
+** We assume the endianness of the WKB is the same as this machine.
 */
 static inline pointObj wkbReadPoint(wkbObj *w, int nZMFlag) {
   pointObj p;
@@ -1117,9 +1117,9 @@ static int msPostGISRetrievePK(layerObj *layer) {
           "pg_class.relname = '%s' and pg_class.relnamespace = "
           "pg_namespace.oid and pg_namespace.nspname = '%s' and "
           "pg_constraint.conkey[2] is null";
-      sql = (char *)msSmallMalloc(schema.size() + table.size() +
-                                  strlen(v73sql) + 1);
-      sprintf(sql, v73sql, table.c_str(), schema.c_str());
+      const size_t nSize = schema.size() + table.size() + strlen(v73sql) + 1;
+      sql = (char *)msSmallMalloc(nSize);
+      snprintf(sql, nSize, v73sql, table.c_str(), schema.c_str());
     } else {
       static const char *v73sql =
           "select attname from pg_attribute, pg_constraint, pg_class where "
@@ -1128,9 +1128,9 @@ static int msPostGISRetrievePK(layerObj *layer) {
           "pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname "
           "= '%s' and pg_table_is_visible(pg_class.oid) and "
           "pg_constraint.conkey[2] is null";
-      sql = (char *)msSmallMalloc(layerinfo->fromsource.size() +
-                                  strlen(v73sql) + 1);
-      sprintf(sql, v73sql, layerinfo->fromsource.c_str());
+      const size_t nSize = layerinfo->fromsource.size() + strlen(v73sql) + 1;
+      sql = (char *)msSmallMalloc(nSize);
+      snprintf(sql, nSize, v73sql, layerinfo->fromsource.c_str());
     }
   }
 
@@ -2266,7 +2266,7 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
     free(wkb);
 
   if (result != MS_FAILURE) {
-    /* Found a drawable shape, so now retreive the attributes. */
+    /* Found a drawable shape, so now retrieve the attributes. */
 
     shape->values = (char **)msSmallMalloc(sizeof(char *) * layer->numitems);
     for (int t = 0; t < layer->numitems; t++) {
@@ -3141,19 +3141,19 @@ static int msPostGISLayerGetItems(layerObj *layer) {
   }
 
   layer->numitems = PQnfields(pgresult) -
-                    1; /* dont include the geometry column (last entry)*/
+                    1; /* don't include the geometry column (last entry)*/
   layer->items = static_cast<char **>(msSmallMalloc(
       sizeof(char *) *
       (layer->numitems +
        1))); /* +1 in case there is a problem finding geometry column */
 
-  bool found_geom = false; /* havent found the geom field */
+  bool found_geom = false; /* haven't found the geom field */
   int item_num = 0;
 
   for (int t = 0; t < PQnfields(pgresult); t++) {
     const char *col = PQfname(pgresult, t);
     if (col != layerinfo->geomcolumn) {
-      /* this isnt the geometry column */
+      /* this isn't the geometry column */
       layer->items[item_num] = msStrdup(col);
       item_num++;
     } else {
@@ -4020,7 +4020,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
   /* layer->vtable->LayerCreateItems, use default */
   layer->vtable->LayerGetNumFeatures = msPostGISLayerGetNumFeatures;
 
-  /* layer->vtable->LayerGetAutoProjection, use defaut*/
+  /* layer->vtable->LayerGetAutoProjection, use default*/
 
   layer->vtable->LayerEscapeSQLParam = msPostGISEscapeSQLParam;
   layer->vtable->LayerEnablePaging = msPostGISEnablePaging;

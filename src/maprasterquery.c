@@ -504,8 +504,8 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   /*      band in the file.  Later we will deal with the various band     */
   /*      selection criteria.                                             */
   /* -------------------------------------------------------------------- */
-  pafRaster = (float *)calloc(sizeof(float),
-                              ((size_t)nWinXSize) * nWinYSize * nBandCount);
+  pafRaster = (float *)calloc(((size_t)nWinXSize) * nWinYSize * nBandCount,
+                              sizeof(float));
   MS_CHECK_ALLOC(pafRaster, sizeof(float) * nWinXSize * nWinYSize * nBandCount,
                  -1);
 
@@ -523,7 +523,7 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Fetch color table for intepreting colors if needed.             */
+  /*      Fetch color table for interpreting colors if needed.             */
   /* -------------------------------------------------------------------- */
   rlinfo->hCT = GDALGetRasterColorTable(GDALGetRasterBand(hDS, panBandMap[0]));
 
@@ -1377,7 +1377,7 @@ int msRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
   /*      If we are using a local shapefile as our tileindex (that is     */
   /*      to say, the tileindex name is not of another layer), then we    */
   /*      just install a backtics style filter on the raster layer.       */
-  /*      This is propogated to the "working layer" created for the       */
+  /*      This is propagated to the "working layer" created for the       */
   /*      tileindex by code in mapraster.c.                               */
   /* -------------------------------------------------------------------- */
   if (tilelayerindex == -1)

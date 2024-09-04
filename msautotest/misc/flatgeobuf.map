@@ -22,7 +22,7 @@
 # Generate layer info using property name.
 # RUN_PARMS: flatgeobuf-wfs-get-feature-propertyname.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=africa-continent&propertyname=(name_en)" > [RESULT]
 #
-# Generate layer info using property name and a geoemtry property.
+# Generate layer info using property name and a geometry property.
 # RUN_PARMS: flatgeobuf-wfs-get-feature-propertyname-geometry.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=africa-continent&propertyname=(name_en,msGeometry)" > [RESULT]
 #
 # Get Feature by id

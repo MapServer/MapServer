@@ -443,7 +443,7 @@
 
         /* ============================================================ */
         /*  make sure to take the smallest size because this is the one */
-        /*  that will be used to ajust the scale.                       */
+        /*  that will be used to adjust the scale.                       */
         /* ============================================================ */
 
         if (self->width <  self->height)

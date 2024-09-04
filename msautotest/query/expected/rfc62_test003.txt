@@ -1,6 +1,5 @@
 --xxOGRBoundaryxx
-Content-Disposition: attachment; filename=foo
-bar.gml
+Content-Disposition: attachment; filename=some_default_value.gml
 Content-Type: application/binary
 Content-Transfer-Encoding: binary
 
@@ -8,8 +7,7 @@ Content-Transfer-Encoding: binary
 <ogr:FeatureCollection
      gml:id="aFeatureCollection"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://ogr.maptools.org/ foo
-bar.xsd"
+     xsi:schemaLocation="http://ogr.maptools.org/ some_default_value.xsd"
      xmlns:ogr="http://ogr.maptools.org/"
      xmlns:gml="http://www.opengis.net/gml/3.2">
   <gml:boundedBy><gml:Envelope><gml:lowerCorner>363237.626104089 5045148.78911013</gml:lowerCorner><gml:upperCorner>591752.164237744 5386497.208</gml:upperCorner></gml:Envelope></gml:boundedBy>
@@ -59,8 +57,7 @@ bar.xsd"
 </ogr:FeatureCollection>
 
 --xxOGRBoundaryxx
-Content-Disposition: attachment; filename=foo
-bar.xsd
+Content-Disposition: attachment; filename=some_default_value.xsd
 Content-Type: application/binary
 Content-Transfer-Encoding: binary
 

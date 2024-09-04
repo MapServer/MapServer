@@ -845,7 +845,6 @@ static int msWCSParseRequest20_XMLGetCapabilities(xmlNodePtr root,
 static int msWCSParseRequest20_XMLDescribeCoverage(xmlNodePtr root,
                                                    wcs20ParamsObjPtr params) {
   xmlNodePtr child;
-  int numIds = 0;
   char *id;
 
   XML_FOREACH_CHILD(root, child) {
@@ -860,7 +859,6 @@ static int msWCSParseRequest20_XMLDescribeCoverage(xmlNodePtr root,
       return MS_FAILURE;
     }
     /* insert coverage ID into the list */
-    ++numIds;
     params->ids = CSLAddString(params->ids, (char *)id);
     xmlFree(id);
   }
@@ -878,7 +876,6 @@ static int msWCSParseRequest20_XMLDescribeCoverage(xmlNodePtr root,
 static int msWCSParseRequest20_XMLGetCoverage(mapObj *map, xmlNodePtr root,
                                               wcs20ParamsObjPtr params) {
   xmlNodePtr child;
-  int numIds = 0;
   char *id;
 
   XML_FOREACH_CHILD(root, child) {
@@ -893,7 +890,6 @@ static int msWCSParseRequest20_XMLGetCoverage(mapObj *map, xmlNodePtr root,
       }
 
       /* insert coverage ID into the list */
-      ++numIds;
       params->ids = CSLAddString(params->ids, (char *)id);
       xmlFree(id);
     }
@@ -1651,7 +1647,7 @@ int msWCSParseRequest20(mapObj *map, cgiRequestObj *request,
       msFreeCharArray(tokens, num);
     } else if (EQUAL(key, "SCALEEXTENT")) {
       wcs20AxisObjPtr axis = NULL;
-      /* No real support for scaleextent, we just interprete it as SCALESIZE */
+      /* No real support for scaleextent, we just interpret it as SCALESIZE */
       tokens = msStringSplit(value, ',', &num);
       for (j = 0; j < num; ++j) {
         char axisName[500];
@@ -2586,7 +2582,7 @@ static const char *msWCSLookupRangesetAxisMetadata20(hashTableObj *table,
 /*                   msWCSGetCoverageMetadata20()                       */
 /*                                                                      */
 /*      Inits a coverageMetadataObj. Uses msWCSGetCoverageMetadata()    */
-/*      but exchanges the SRS URN by an URI for compliancy with 2.0.    */
+/*      but exchanges the SRS URN by an URI for compliance with 2.0.    */
 /************************************************************************/
 
 static int msWCSGetCoverageMetadata20(layerObj *layer,
@@ -3903,7 +3899,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(layerObj *layer,
 /************************************************************************/
 /*                   msWCSDescribeCoverage20()                          */
 /*                                                                      */
-/*      Implementation of the DescibeCoverage Operation. The result     */
+/*      Implementation of the DescribeCoverage Operation. The result     */
 /*      of this operation is a xml document, containing specific        */
 /*      information about a coverage identified by an ID. The result    */
 /*      is written on the stream.                                       */
@@ -3972,7 +3968,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params,
 /*                   msWCSGetCoverage_FinalizeParamsObj20()             */
 /*                                                                      */
 /*      Finalizes a wcs20ParamsObj for a GetCoverage operation. In the  */
-/*      process, the params boundig box is adjusted to the subsets,     */
+/*      process, the params bounding box is adjusted to the subsets,     */
 /*      width, height and resolution are determined and the subset crs  */
 /*      is found out.                                                   */
 /************************************************************************/

@@ -29,7 +29,7 @@
 # Generate layer info using property name.
 # RUN_PARMS: wfs_get_feature_propertyname.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&propertyname=(name_e)" > [RESULT]
 #
-# Generate layer info using property name and a geoemtry property.
+# Generate layer info using property name and a geometry property.
 # RUN_PARMS: wfs_get_feature_propertyname_geometry.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&propertyname=(name_e,msGeometry)" > [RESULT]
 #
 # Invalid number of property name tuples

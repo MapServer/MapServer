@@ -11,7 +11,7 @@ cache:
 environment:
 
   global:
-    SWIG_VER: swigwin-4.1.0
+    SWIG_VER: swigwin-4.2.1
     TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
@@ -20,8 +20,6 @@ environment:
   VS_VERSION: Visual Studio 16 2019
   matrix:
   - platform: x64
-    Python_ROOT_DIR: c:/python37-x64
-  - platform: x64
     Python_ROOT_DIR: c:/python38-x64
   - platform: x64
     Python_ROOT_DIR: c:/python39-x64
@@ -29,6 +27,8 @@ environment:
     Python_ROOT_DIR: c:/python310-x64
   - platform: x64
     Python_ROOT_DIR: c:/python311-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python312-x64
 
 matrix:
   fast_finish: true
@@ -85,7 +85,9 @@ build_script:
   - cd %BUILD_FOLDER%/build
   # set the MapScript custom environment variable for python 3.8+
   - set MAPSERVER_DLL_PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%
-  - set PROJ_LIB=%SDK_BIN%/proj9/SHARE
+  - set PROJ_DATA=%SDK_BIN%/proj9/SHARE
+  # ensure the GIF driver is available for tests
+  - set GDAL_DRIVER_PATH=%SDK_BIN%/gdal/plugins
   # check the mapserver exe can run
   - mapserv -v
   - cmake --build . --target pythonmapscript-wheel --config Release

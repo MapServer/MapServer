@@ -25,7 +25,7 @@ IMPORTANT - READ THIS FIRST:
 The easyest way to build Mapserver on Windows on your own is to use the
 build-system from http://gisinternals.com/.
 GISInternals provide a complete set of sources and dependencies and even
-makefiles for the full version of Visual Studio (not Express oder Community).
+makefiles for the full version of Visual Studio (not Express or Community).
 You don't have to download and compile them all by your own.
 
 If you are not using full version of Visual Studio you can not use the makefiles
@@ -40,9 +40,9 @@ Windows with CMake and the GISInternals-Packages for the following reasons:
     you to buy it just tu build Mapserver on Windows
   - CMake is the configuration-system for Linux. Why should you use something
     else which needs to be maintainerd?
-  - as of today, PHP-Mapscript is not suppored for PHP-7. PHP-5.6 is build
+  - as of today, PHP-Mapscript is not supported for PHP-7. PHP-5.6 is build
     with VC11. To make PHP-Mapscript compatible with the downloadable
-    PHP-Version you need to build with VC11 wich is Visual Studio 2012.
+    PHP-Version you need to build with VC11 which is Visual Studio 2012.
   - GISInternals Downloads contain most dependencies. it's way easier
 
 If you want to compile Mapserver with any other version of Visual Studio you
@@ -68,7 +68,7 @@ Tools Command Prompt by entering:
 For our first build, we will use stable releases to build mapserver.
 Download MSVC 2012 win32 Packages for GDAL-2.1.2 and Mapserver-7.0.2 from http://gisinternals.com/release.php.
 We need "Compiled binaries in a single .zip package", "GDAL and MapServer sources" and "Compiled libraries and headers".
-Download the MSVC 2012 win32 Developement Kit from http://gisinternals.com/sdk.php.
+Download the MSVC 2012 win32 Development Kit from http://gisinternals.com/sdk.php.
 Extract everything to C:\dev\work\release-1700-gdal-2-1-2-mapserver-7-0-2.
 There should be the directories inside now: bin, doc, gdal, include, lib, regex-0.12, relase-1700, ...
 After you got this done, feel free to use other packages which fit your needs better.
@@ -105,7 +105,7 @@ correctly).
 5. build
   nmake
 
-Thats it.
+That's it.
 You can use all CMake parameters and options as you are used from CMake to fit mapserver to your needs from here.
 Enjoy!
 
@@ -122,7 +122,7 @@ instructions.
       Dependencies Part 2
 --------------------------------------------------------------------
 
-The following sections descripe how to get mapserver dependencies when not
+The following sections describe how to get mapserver dependencies when not
 downloading GISInternals packages.
 
 --------------------------------------------------------------------
@@ -208,8 +208,8 @@ downloading GISInternals packages.
   - Download and extract the library (at this time it is known to work 
     with version 7.10.2 or more recent)
   - Open the workspace curlib.dsw located under curl-XXX/lib
-  - Build libcurl.dll. Note that the default active configuraion of the project
-     is  Win32 Debug. You can modify the configuarion to Release version 
+  - Build libcurl.dll. Note that the default active configuration of the project
+     is  Win32 Debug. You can modify the configuration to Release version 
      (Build/Set Active Configuration)          
 
   
@@ -220,11 +220,11 @@ downloading GISInternals packages.
     related to libcurl :
 
     * CURL_INC = -I../curl-7.10.2/include
-    * CURL_LIB = ../curl-7.10.2/lib/Relase/libcurl.lib
+    * CURL_LIB = ../curl-7.10.2/lib/Release/libcurl.lib
     * WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 
   You also need to install the libcurl.dll in your system directory. (The dll will
-  be located in libc-XXX/lib/Relase abfter your build of the library)
+  be located in libc-XXX/lib/Release abfter your build of the library)
     
 
 

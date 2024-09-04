@@ -557,8 +557,8 @@ static const yytype_uint16 yyrline[] =
      672,   689,   705,   723,   724,   725,   726,   727,   728,   729,
      736,   737,   738,   739,   750,   751,   754,   755,   756,   770,
      784,   798,   812,   826,   840,   854,   868,   882,   896,   910,
-     924,   939,   961,   962,   963,   967,   972,   976,   980,   984,
-     988,   994,   995
+     924,   939,   961,   962,   963,   969,   978,   982,   986,   990,
+     994,  1000,  1001
 };
 #endif
 
@@ -1784,8 +1784,8 @@ yyreduce:
       }
     }
 
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1791 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1809,8 +1809,8 @@ yyreduce:
       }
     }
 
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1816 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1888,8 +1888,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1895 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1901,8 +1901,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1908 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1914,8 +1914,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1921 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1927,8 +1927,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1934 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1940,8 +1940,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1947 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -1953,8 +1953,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 1960 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -2045,8 +2045,8 @@ yyreduce:
 
     if((yyval.intval) == MS_FALSE && strcmp((yyvsp[-2].strval),bufferp) == 0) // test for last (or only) item
       (yyval.intval) = MS_TRUE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 2052 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -2071,7 +2071,7 @@ yyreduce:
 
     if((yyvsp[-2].dblval) == atof(bufferp)) // is this test necessary?
       (yyval.intval) = MS_TRUE;  
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 2077 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -2094,8 +2094,8 @@ yyreduce:
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
-    free((yyvsp[-2].strval));
-    free((yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
 #line 2101 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
@@ -2836,7 +2836,7 @@ yyreduce:
       msFreeShape((yyvsp[-7].shpval));
       free((yyvsp[-7].shpval));
     }
-    free((yyvsp[-1].strval));
+    msReplaceFreeableStr(&((yyvsp[-1].strval)), NULL);
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -2857,7 +2857,7 @@ yyreduce:
       msFreeShape((yyvsp[-3].shpval));
       free((yyvsp[-3].shpval));
     }
-    free((yyvsp[-1].strval));
+    msReplaceFreeableStr(&((yyvsp[-1].strval)), NULL);
     if(!s) {
       yyerror(p, "Executing javascript failed.");
       return(-1);
@@ -2882,74 +2882,80 @@ yyreduce:
 #line 963 "mapparser.y" /* yacc.c:1646  */
     { 
     (yyval.strval) = (char *)malloc(strlen((yyvsp[-2].strval)) + strlen((yyvsp[0].strval)) + 1);
-    sprintf((yyval.strval), "%s%s", (yyvsp[-2].strval), (yyvsp[0].strval)); free((yyvsp[-2].strval)); free((yyvsp[0].strval)); 
+    sprintf((yyval.strval), "%s%s", (yyvsp[-2].strval), (yyvsp[0].strval));
+    msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
+    msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 2888 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2890 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 967 "mapparser.y" /* yacc.c:1646  */
+#line 969 "mapparser.y" /* yacc.c:1646  */
     {
-    (yyval.strval) = (char *) malloc(strlen((yyvsp[-1].strval)) + 64); /* Plenty big? Should use snprintf below... */
-    sprintf((yyval.strval), (yyvsp[-1].strval), (yyvsp[-3].dblval));
-    free((yyvsp[-1].strval));
+    char* ret = msToString((yyvsp[-1].strval), (yyvsp[-3].dblval));
+    msReplaceFreeableStr(&((yyvsp[-1].strval)), NULL);
+    if(!ret) {
+      yyerror(p, "tostring() failed.");
+      return(-1);
+    }
+    (yyval.strval) = ret;
   }
-#line 2898 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2904 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 972 "mapparser.y" /* yacc.c:1646  */
+#line 978 "mapparser.y" /* yacc.c:1646  */
     {  
     (yyvsp[-1].strval) = msCommifyString((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2907 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2913 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 976 "mapparser.y" /* yacc.c:1646  */
+#line 982 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToUpper((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2916 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2922 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 980 "mapparser.y" /* yacc.c:1646  */
+#line 986 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringToLower((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2925 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2931 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 984 "mapparser.y" /* yacc.c:1646  */
+#line 990 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringInitCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2934 "/vagrant/mapparser.c" /* yacc.c:1646  */
+#line 2940 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 988 "mapparser.y" /* yacc.c:1646  */
+#line 994 "mapparser.y" /* yacc.c:1646  */
     {  
     msStringFirstCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2943 "/vagrant/mapparser.c" /* yacc.c:1646  */
-    break;
-
-  case 102:
-#line 995 "mapparser.y" /* yacc.c:1646  */
-    { (yyval.tmval) = (yyvsp[-1].tmval); }
 #line 2949 "/vagrant/mapparser.c" /* yacc.c:1646  */
     break;
 
+  case 102:
+#line 1001 "mapparser.y" /* yacc.c:1646  */
+    { (yyval.tmval) = (yyvsp[-1].tmval); }
+#line 2955 "/vagrant/mapparser.c" /* yacc.c:1646  */
+    break;
 
-#line 2953 "/vagrant/mapparser.c" /* yacc.c:1646  */
+
+#line 2959 "/vagrant/mapparser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3177,7 +3183,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 998 "mapparser.y" /* yacc.c:1906  */
+#line 1004 "mapparser.y" /* yacc.c:1906  */
 
 
 /*

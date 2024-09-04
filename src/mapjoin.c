@@ -295,7 +295,7 @@ int msDBFJoinNext(joinObj *join) {
       return (MS_FAILURE);
     }
     for (i = 0; i < join->numitems; i++)
-      join->values[i] = msStrdup("\0"); /* intialize to zero length strings */
+      join->values[i] = msStrdup("\0"); /* initialize to zero length strings */
 
     joininfo->nextrecord = n;
     return (MS_DONE);
@@ -492,7 +492,7 @@ int msCSVJoinNext(joinObj *join) {
 
   if (i == joininfo->numrows) { /* unable to do the join     */
     for (j = 0; j < join->numitems; j++)
-      join->values[j] = msStrdup("\0"); /* intialize to zero length strings */
+      join->values[j] = msStrdup("\0"); /* initialize to zero length strings */
 
     joininfo->nextrow = joininfo->numrows;
     return (MS_DONE);
@@ -830,10 +830,10 @@ int msMySQLJoinNext(joinObj *join) {
         return (MS_FAILURE);
       }
       for (i = 0; i < join->numitems; i++) {
-        /* join->values[i] = msStrdup("\0"); */ /* intialize to zero length
+        /* join->values[i] = msStrdup("\0"); */ /* initialize to zero length
                                                    strings */
         join->values[i] =
-            msStrdup(row[i]); /* intialize to zero length strings */
+            msStrdup(row[i]); /* initialize to zero length strings */
         /* rows = atoi(row[0]); */
       }
     } else {
@@ -843,7 +843,8 @@ int msMySQLJoinNext(joinObj *join) {
         return (MS_FAILURE);
       }
       for (i = 0; i < join->numitems; i++)
-        join->values[i] = msStrdup("\0"); /* intialize to zero length strings */
+        join->values[i] =
+            msStrdup("\0"); /* initialize to zero length strings */
 
       return (MS_DONE);
     }
@@ -860,7 +861,7 @@ int msMySQLJoinNext(joinObj *join) {
       return (MS_FAILURE);
     }
     for (i = 0; i < join->numitems; i++)
-      join->values[i] = msStrdup("\0"); /* intialize to zero length strings  */
+      join->values[i] = msStrdup("\0"); /* initialize to zero length strings  */
 
     joininfo->nextrecord = n;
     return (MS_DONE);

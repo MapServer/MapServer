@@ -297,7 +297,7 @@ static void msWFSPrintRequestCap(const char *request, const char *script_url,
 **
 ** Utility function to check if a space separated list contains  the one passed
 *in argument.
-**  The list comes normaly from ows_srs metadata, and is expected to use the
+**  The list comes normally from ows_srs metadata, and is expected to use the
 *simple EPSG notation
 ** (EPSG:4326 ESPG:42304 ...). The srs comes from the query string and can
 *either
@@ -426,8 +426,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs,
         msFree(pszLayerSRS);
     }
   } else { /*srs is given so it should be valid for all layers*/
-    /*get all the srs defined at the map level and check them aginst the srsName
-      passed as argument*/
+    /*get all the srs defined at the map level and check them against the
+      srsName passed as argument*/
     msFree(pszMapSRS);
     msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_FALSE,
                      &pszMapSRS);
@@ -514,26 +514,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs,
   return MS_SUCCESS;
 }
 
-/* msWFSIsLayerSupported()
-**
-** Returns true (1) is this layer meets the requirements to be served as
-** a WFS feature type.
-*/
-int msWFSIsLayerSupported(layerObj *lp) {
-  /* In order to be supported, lp->type must be specified, even for
-  ** layers that are OGR, SDE, SDO, etc connections.
-  */
-  if ((lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE ||
-       lp->type == MS_LAYER_POLYGON) &&
-      lp->connectiontype != MS_WMS && lp->connectiontype != MS_GRATICULE) {
-    return 1; /* true */
-  }
-
-  return 0; /* false */
-}
-
 static int msWFSIsLayerAllowed(layerObj *lp, owsRequestObj *ows_request) {
-  return msWFSIsLayerSupported(lp) &&
+  return msIsLayerSupportedForWFSOrOAPIF(lp) &&
          (msIntegerInArray(lp->index, ows_request->enabled_layers,
                            ows_request->numlayers));
 }
@@ -763,7 +745,7 @@ static int msWFSGetCapabilitiesNegotiateVersion(mapObj *map,
     }
     tmpInt = msOWSCommonNegotiateVersion(iVersion, wfsSupportedVersions,
                                          wfsNumSupportedVersions);
-    /* Old style negociation : paragraph D.11 of OWS 1.1.0 spec */
+    /* Old style negotiation : paragraph D.11 of OWS 1.1.0 spec */
     if (tmpInt < 0) {
       int i;
       for (i = 0; i < wfsNumSupportedVersions; i++) {
@@ -1205,14 +1187,13 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
                                        const char *tab,
                                        WFSSchemaVersion outputformat) {
   int i, j;
-  char *element_tab;
 
   gmlItemObj *item = NULL;
   gmlConstantObj *constant = NULL;
 
   /* setup the element tab */
-  element_tab = (char *)msSmallMalloc(sizeof(char) * strlen(tab) + 5);
-  sprintf(element_tab, "%s    ", tab);
+  std::string element_tab(tab);
+  element_tab += "    ";
 
   if (group->type)
     msIO_fprintf(stream, "%s<complexType name=\"%s\">\n", tab, group->type);
@@ -1227,7 +1208,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
          j++) { /* find the right gmlConstantObj */
       constant = &(constantList->constants[j]);
       if (strcasecmp(constant->name, group->items[i]) == 0) {
-        msWFSWriteConstantElement(stream, constant, element_tab);
+        msWFSWriteConstantElement(stream, constant, element_tab.c_str());
         break;
       }
     }
@@ -1236,7 +1217,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
     for (j = 0; j < itemList->numitems; j++) { /* find the right gmlItemObj */
       item = &(itemList->items[j]);
       if (strcasecmp(item->name, group->items[i]) == 0) {
-        msWFSWriteItemElement(stream, item, element_tab, outputformat,
+        msWFSWriteItemElement(stream, item, element_tab.c_str(), outputformat,
                               MS_FALSE);
         break;
       }
@@ -1245,7 +1226,6 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
 
   msIO_fprintf(stream, "%s  </sequence>\n", tab);
   msIO_fprintf(stream, "%s</complexType>\n", tab);
-  free(element_tab);
 
   return;
 }
@@ -1379,7 +1359,7 @@ static int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj,
                             paramsObj->pszVersion);
     }
   }
-  /* If no outputFormat explicitely asked, use a sensible default for the WFS
+  /* If no outputFormat explicitly asked, use a sensible default for the WFS
      version */
   else {
     switch (nWFSVersion) {
@@ -1500,7 +1480,7 @@ this request. Check wfs/ows_enable_request settings.",
   }
 
   /* output definition for the default feature container, can't use
-     wfs:FeatureCollection with GML3: kept here so that the behaviour with
+     wfs:FeatureCollection with GML3: kept here so that the behavior with
      wfs1.0 and gml3 output is preserved. We can use the wfs:FeatureCollection
      for wfs1.1*/
   if (outputformat == OWS_SFE_SCHEMA && nWFSVersion == OWS_1_0_0) {
@@ -1901,7 +1881,7 @@ static int msWFSGetFeature_GMLPreamble(
     if (nMatchingFeatures < 0) {
       /* If we don't know the exact number, at least return something */
       /* equivalent to what we would return with WFS 1.1, otherwise */
-      /* resultType=hits would not return anything usefull to the client. */
+      /* resultType=hits would not return anything useful to the client. */
       if (iResultTypeHits == MS_TRUE)
         msIO_printf("%d", iNumberOfFeatures);
       else
@@ -2111,11 +2091,10 @@ static void msWFSBuildParamList(char **ppszStrList, const char *pszValue,
     *ppszStrList = msStrdup(pszValue);
   else {
     char *pszTmp = msStrdup(*ppszStrList);
-    *ppszStrList = (char *)msSmallRealloc(
-        *ppszStrList, sizeof(char) * (strlen(pszTmp) + strlen(pszSep) +
-                                      strlen(pszValue) + 1));
+    size_t nSize = strlen(pszTmp) + strlen(pszSep) + strlen(pszValue) + 1;
+    *ppszStrList = (char *)msSmallRealloc(*ppszStrList, nSize);
 
-    sprintf(*ppszStrList, "%s%s%s", pszTmp, pszSep, pszValue);
+    snprintf(*ppszStrList, nSize, "%s%s%s", pszTmp, pszSep, pszValue);
     free(pszTmp);
   }
 }
@@ -2411,7 +2390,7 @@ static int msWFSRetrieveFeatures(
 
     /* -------------------------------------------------------------------- */
     /*      Parse the Filter parameter. If there are several Filter         */
-    /*      parameters, each Filter is inside a parantheses. Eg :           */
+    /*      parameters, each Filter is inside a parentheses. Eg :           */
     /*      FILTER=(<Filter><Within><PropertyName>                          */
     /*      INWATERA_1M/WKB_GEOM|INWATERA_1M/WKB_GEOM                       */
     /*      <PropertyName><gml:Box><gml:coordinates>10,10
@@ -2664,7 +2643,7 @@ this request. Check wfs/ows_enable_request settings.",
         msInitProjection(&sProjTmp);
         msProjectionInheritContextFrom(&sProjTmp, &(map->projection));
         /*do the axis order for now. It is unclear if the bbox are expected
-          ro respect the axis oder defined in the projectsion #3296*/
+          ro respect the axis order defined in the projectsion #3296*/
 
         if (nWFSVersion >= OWS_1_1_0) {
           if ((status = msLoadProjectionStringEPSG(&sProjTmp, sBBoxSrs)) == 0) {
@@ -3100,7 +3079,7 @@ static int msWFSComputeMatchingFeatures(mapObj *map, owsRequestObj *ows_request,
   int nMatchingFeatures = -1;
 
   if (nWFSVersion >= OWS_2_0_0) {
-    /* If no features have been retrived and there was no feature count limit,
+    /* If no features have been retrieved and there was no feature count limit,
      * then */
     /* it is obvious. We must test maxfeatures because if startindex is defined,
      */
@@ -3113,7 +3092,8 @@ static int msWFSComputeMatchingFeatures(mapObj *map, owsRequestObj *ows_request,
      */
     /* that the query has returned less features than the limit, or if there was
      */
-    /* no limit in fature count, we are able to determine the number of matching
+    /* no limit in feature count, we are able to determine the number of
+     * matching
      */
     /* features */
     else if (iNumberOfFeatures > 0 &&
@@ -3126,7 +3106,7 @@ static int msWFSComputeMatchingFeatures(mapObj *map, owsRequestObj *ows_request,
 
     /* Otherwise big hammer ! */
     else {
-      /* The WFS 2.0 spec is not really clear on numberMatched behaviour */
+      /* The WFS 2.0 spec is not really clear on numberMatched behavior */
       /* and there are interesting logic in server implementations. */
       /* */
       /* Deegree
@@ -3444,7 +3424,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
   if (status != MS_SUCCESS)
     return status;
 
-  /* typename is mandatory unless featureid is specfied. We do not
+  /* typename is mandatory unless featureid is specified. We do not
      support featureid */
   if (paramsObj->pszTypeName == NULL && paramsObj->pszFeatureId == NULL) {
     msSetError(MS_WFSERR, "Incomplete WFS request: %s parameter missing",
@@ -3483,9 +3463,9 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
     }
   }
 
-  papszGMLGroups = (char **)calloc(sizeof(char *), map->numlayers);
-  papszGMLIncludeItems = (char **)calloc(sizeof(char *), map->numlayers);
-  papszGMLGeometries = (char **)calloc(sizeof(char *), map->numlayers);
+  papszGMLGroups = (char **)calloc(map->numlayers, sizeof(char *));
+  papszGMLIncludeItems = (char **)calloc(map->numlayers, sizeof(char *));
+  papszGMLGeometries = (char **)calloc(map->numlayers, sizeof(char *));
 
   if (paramsObj->pszTypeName) {
     int k, y, z;
@@ -3653,7 +3633,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
             }
           }
 
-          /* Add mandatory items that are not explicitely listed. */
+          /* Add mandatory items that are not explicitly listed. */
           /* When the user specifies PROPERTYNAME, we might have to augment */
           /* the list of returned parameters so as to validate against the
            * schema. */
@@ -3717,7 +3697,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
               else
                 papszGMLIncludeItems[lp->index] = msStrdup("");
 
-              /* The user didn't specify explicity PROPERTYNAME for this layer
+              /* The user didn't specify explicitly PROPERTYNAME for this layer
                */
             } else if (strcasecmp(papszPropertyName[k], "!") == 0) {
               /* Add all non-excluded items, but only default and mandatory ones
@@ -4095,7 +4075,8 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
 
     if (nMatchingFeatures >= 0) {
       char szMatchingFeatures[12];
-      sprintf(szMatchingFeatures, "%d", nMatchingFeatures);
+      snprintf(szMatchingFeatures, sizeof(szMatchingFeatures), "%d",
+               nMatchingFeatures);
       msSetOutputFormatOption(psFormat, "_matching_features_",
                               szMatchingFeatures);
     } else {
@@ -4637,7 +4618,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
 
   /*
   ** Validate VERSION against the versions that we support... we don't do this
-  ** for GetCapabilities in order to allow version negociation.
+  ** for GetCapabilities in order to allow version negotiation.
   */
   if (strcmp(paramsObj->pszVersion, "1.0.0") != 0 &&
       strcmp(paramsObj->pszVersion, "1.1.0") != 0 &&
@@ -4715,6 +4696,10 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
   return returnvalue;
 
 #else
+  (void)map;
+  (void)requestobj;
+  (void)ows_request;
+  (void)force_wfs_mode;
   msSetError(MS_WFSERR, "WFS server support is not available.",
              "msWFSDispatch()");
   return (MS_FAILURE);
@@ -4850,18 +4835,18 @@ static void msWFSParseXMLQueryNode(CPLXMLNode *psQuery,
       pszTmp2 = msStrdup(pszValue);
     } else {
       pszTmp = msStrdup(pszTmp2);
-      pszTmp2 = (char *)msSmallRealloc(
-          pszTmp2, sizeof(char) * (strlen(pszTmp) + strlen(pszValue) + 2));
-      sprintf(pszTmp2, "%s,%s", pszTmp, pszValue);
+      const size_t nSize = strlen(pszTmp) + strlen(pszValue) + 2;
+      pszTmp2 = (char *)msSmallRealloc(pszTmp2, nSize);
+      snprintf(pszTmp2, nSize, "%s,%s", pszTmp, pszValue);
       msFree(pszTmp);
     }
     psPropertyName = psPropertyName->psNext;
   }
   if (pszTmp2) {
     pszTmp = msStrdup(pszTmp2);
-    pszTmp2 =
-        (char *)msSmallRealloc(pszTmp2, sizeof(char) * (strlen(pszTmp) + 3));
-    sprintf(pszTmp2, "(%s)", pszTmp);
+    const size_t nSize = strlen(pszTmp) + 3;
+    pszTmp2 = (char *)msSmallRealloc(pszTmp2, nSize);
+    snprintf(pszTmp2, nSize, "(%s)", pszTmp);
     msFree(pszTmp);
 
     msWFSBuildParamList(&(wfsparams->pszPropertyName), pszTmp2, "");
@@ -4878,9 +4863,9 @@ static void msWFSParseXMLQueryNode(CPLXMLNode *psQuery,
     pszSerializedFilter = msStrdup("(!)");
   } else {
     char *pszCPLTmp = CPLSerializeXMLTree(psFilter);
-    pszSerializedFilter =
-        (char *)msSmallMalloc(sizeof(char) * (strlen(pszCPLTmp) + 3));
-    sprintf(pszSerializedFilter, "(%s)", pszCPLTmp);
+    const size_t nSize = strlen(pszCPLTmp) + 3;
+    pszSerializedFilter = (char *)msSmallMalloc(nSize);
+    snprintf(pszSerializedFilter, nSize, "(%s)", pszCPLTmp);
     CPLFree(pszCPLTmp);
   }
 
@@ -5349,7 +5334,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
         /* --------------------------------------------------------------------
          */
         /*      Parse typenames and filters. If there are multiple queries, */
-        /*      typenames will be build with comma between thme */
+        /*      typenames will be build with comma between them */
         /*      (typename1,typename2,...) and filters will be build with */
         /*      bracets enclosinf the filters :(filter1)(filter2)... */
         /*      propertynames are stored like (property1,property2)(property1)
@@ -5478,7 +5463,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
             psIter = psIter->psNext;
           }
         }
-      } /* end of GetCapabilites */
+      } /* end of GetCapabilities */
       /* -------------------------------------------------------------------- */
       /*      Parse DescribeFeatureType                                       */
       /* -------------------------------------------------------------------- */
@@ -5510,7 +5495,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
           }
         }
 
-      } /* end of DescibeFeatureType */
+      } /* end of DescribeFeatureType */
 
       /* -------------------------------------------------------------------- */
       /*      Parse the ListStoredQueries                                     */
@@ -5591,6 +5576,29 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request,
     msFree(pszSchemaLocation);
   }
 
+#else
+  (void)map;
+  (void)request;
+  (void)wfsparams;
+  (void)force_wfs_mode;
 #endif
   return MS_SUCCESS;
+}
+
+/* msIsLayerSupportedForWFSOrOAPIF()
+**
+** Returns true (1) is this layer meets the requirements to be served as
+** a WFS feature type or OGC API Features.
+*/
+int msIsLayerSupportedForWFSOrOAPIF(layerObj *lp) {
+  /* In order to be supported, lp->type must be specified, even for
+  ** layers that are OGR, SDE, SDO, etc connections.
+  */
+  if ((lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE ||
+       lp->type == MS_LAYER_POLYGON) &&
+      lp->connectiontype != MS_WMS && lp->connectiontype != MS_GRATICULE) {
+    return 1; /* true */
+  }
+
+  return 0; /* false */
 }

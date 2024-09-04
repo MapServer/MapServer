@@ -260,7 +260,7 @@ void KmlRenderer::processLayer(layerObj *layer, outputFormatObj *format) {
 /************************************************************************/
 /*                               getLayerName                           */
 /*                                                                      */
-/*      Internal utility function to build name used fo rthe layer.     */
+/*      Internal utility function to build name used for the layer.     */
 /************************************************************************/
 char *KmlRenderer::getLayerName(layerObj *layer) {
   char stmp[20];
@@ -595,7 +595,7 @@ void KmlRenderer::renderLine(imageObj *, shapeObj *p, strokeStyleObj *style) {
   addLineStyleToList(style);
   SymbologyFlag[Line] = 1;
 
-  /*p->index > CurrentDrawnShapeIndexneed to be reviewd. Added since the hight
+  /*p->index > CurrentDrawnShapeIndexneed to be reviewd. Added since the height
     level code caches shapes when rendering lines*/
   if (CurrentDrawnShapeIndex == -1 || p->index > CurrentDrawnShapeIndex) {
     xmlNodePtr geomNode = getGeomParentNode("LineString");
@@ -1240,7 +1240,7 @@ xmlNodePtr KmlRenderer::createDescriptionNode(shapeObj *shape) {
   } else if ((papszLayerIncludeItems && nIncludeItems > 0) ||
              (papszLayerExcludeItems && nExcludeItems > 0)) {
     /* -------------------------------------------------------------------- */
-    /*      preffered way is to use the ExtendedData tag (#3728)            */
+    /*      preferred way is to use the ExtendedData tag (#3728)            */
     /*      http://code.google.com/apis/kml/documentation/extendeddata.html */
     /* -------------------------------------------------------------------- */
 

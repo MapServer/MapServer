@@ -1,0 +1,38 @@
+#
+# Tests map2img incomplete arguments
+#
+# RUN_PARMS: map2img-argparse-s.txt [MAP2IMG] -m [MAPFILE] -s 640 > [RESULT] 2>&1 [ASAN_SKIP_LOG]
+# RUN_PARMS: map2img-argparse-e.txt [MAP2IMG] -m [MAPFILE] -e 0 1 > [RESULT] 2>&1 [ASAN_SKIP_LOG]
+# RUN_PARMS: map2img-argparse-o.txt [MAP2IMG] -m [MAPFILE] -o > [RESULT] 2>&1 [ASAN_SKIP_LOG]
+# RUN_PARMS: map2img-argparse-c.txt [MAP2IMG] -m [MAPFILE] -c > [RESULT] 2>&1 [ASAN_SKIP_LOG]
+# RUN_PARMS: map2img-argparse-d.txt [MAP2IMG] -m [MAPFILE] -d otherlayer > [RESULT] 2>&1 [ASAN_SKIP_LOG]
+# RUN_PARMS: map2img-argparse-layer_debug.txt [MAP2IMG] -m [MAPFILE] -layer_debug 3 > [RESULT] 2>&1 [ASAN_SKIP_LOG]
+
+MAP
+  NAME HELLO
+  STATUS ON
+  EXTENT 59 10 60 11
+  SIZE 400 300
+  IMAGECOLOR 200 255 255
+
+  IMAGETYPE png
+
+  LAYER
+    NAME "credits"
+    STATUS DEFAULT
+    TRANSFORM FALSE
+    TYPE POINT
+    FEATURE
+      POINTS
+        200 250
+      END
+      TEXT 'Hello world'
+    END
+    CLASS
+      LABEL
+        TYPE BITMAP
+        COLOR 0 0 0
+      END
+    END
+  END
+END

@@ -973,7 +973,7 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer,
       ** to be rendered instead of the newly generated imagery. To fix, simply
       *close the
       ** the handle and prevent further re-use.
-      ** Note that instead of this workaround, we could explicitely set
+      ** Note that instead of this workaround, we could explicitly set
       ** CLOSE_CONNECTION=ALWAYS on the kerneldensity layer.
       */
       GDALClose(hDS);

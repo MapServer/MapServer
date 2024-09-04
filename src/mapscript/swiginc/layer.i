@@ -29,6 +29,9 @@
 
 %extend layerObj 
 {
+%immutable;
+    int numprocessing;
+%mutable;
 
     /**
     A :class:`layerObj` is associated with :class:`mapObj`. An instance of 
@@ -314,12 +317,12 @@
     /// The numclasses field contains the number of classes available, and the first class is index 0.
     classObj *getClass(int i) 
     {
-    classObj *result=NULL;
+        classObj *result=NULL;
         if (i >= 0 && i < self->numclasses) {
-            result=self->class[i]; 
-        MS_REFCNT_INCR(result);
-    }
-    return result;
+            result=self->class[i];
+            MS_REFCNT_INCR(result);
+        }
+        return result;
     }
 
     /// Returns the requested item. Items are attribute fields, and this method returns the 
@@ -386,7 +389,7 @@
     on which the query is performed, and *qstring* is the expression to match. 
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
     Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
-    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occurred.
     */
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
     {
@@ -419,7 +422,7 @@
     Query layer at point location specified in georeferenced map coordinates (i.e. not pixels). 
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
     Note that the layer's FILTER/FILTERITEM are ignored by this function. *mode* is :data:`MS_SINGLE` or :data:`MS_MULTIPLE` depending on number of results you want. 
-    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occurred.
     */
     int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) 
     {
@@ -446,7 +449,7 @@
     Query layer using a rectangle specified in georeferenced map coordinates (i.e. not pixels).
     The query is performed on all the shapes that are part of a CLASS that contains a TEMPLATE value or that match any class in a layer that contains a LAYER TEMPLATE value.
     Note that the layer's FILTER/FILTERITEM are ignored by this function. The :data:`MS_MULTIPLE` mode is set by default.
-    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occurred.
     */
     int queryByRect(mapObj *map, rectObj rect) 
     {
@@ -471,7 +474,7 @@
     /**
     Perform a query set based on a previous set of results from another layer. 
     At present the results MUST be based on a polygon layer. 
-    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occurred.
     */
     int queryByFeatures(mapObj *map, int slayer) 
     {
@@ -490,7 +493,7 @@
 
     /**
     Query layer based on a single shape, the shape has to be a polygon at this point. 
-    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occured.
+    Returns :data:`MS_SUCCESS` if the query was successfully performed, regardless of whether any shapes were found, or :data:`MS_FAILURE` if an error occurred.
     */
     int queryByShape(mapObj *map, shapeObj *shape) 
     {
@@ -651,9 +654,9 @@
  
     %newobject executeWFSGetFeature;
     /// Executes a GetFeature request on a WFS layer and returns the name of the temporary GML file created. Returns an empty string on error.
-    char *executeWFSGetFeature(layerObj *layer) 
+    char *executeWFSGetFeature()
     {
-        return (char *) msWFSExecuteGetFeature(layer);
+        return (char *) msWFSExecuteGetFeature(self);
     }
 
     /**
@@ -736,6 +739,12 @@
     void addProcessing(const char *directive ) 
     {
         msLayerAddProcessing( self, directive );
+    }
+
+    /// Return the number of processing directives
+    int getNumProcessing()
+    {
+        return msLayerGetNumProcessing(self);
     }
 
     /// Return the raster processing directive at *index*.
@@ -834,3 +843,9 @@
         return itemType;
     }
 }
+
+%{
+int layerObj_numprocessing_get( layerObj *l ) {
+  return msLayerGetNumProcessing( l );
+}
+%}

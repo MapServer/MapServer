@@ -520,7 +520,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
                           ows_request->numlayers))
       continue;
 
-    if (msWFSIsLayerSupported(lp))
+    if (msIsLayerSupportedForWFSOrOAPIF(lp))
       xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0, NULL,
                                              script_url));
   }

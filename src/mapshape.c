@@ -1462,7 +1462,7 @@ void msSHPReadShape(SHPHandle psSHP, int hEntity, shapeObj *shape) {
     if (psSHP->nPartMax < nParts) {
       psSHP->panParts = (int *)SfRealloc(psSHP->panParts, nParts * sizeof(int));
       if (psSHP->panParts == NULL) {
-        /* Reallocate previous successfull size for following features */
+        /* Reallocate previous successful size for following features */
         psSHP->panParts = (int *)msSmallMalloc(psSHP->nPartMax * sizeof(int));
 
         shape->type = MS_SHAPE_NULL;
@@ -1935,7 +1935,7 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode,
   dbfFilename = (char *)msSmallMalloc(bufferSize);
   strcpy(dbfFilename, filename);
 
-  /* clean off any extention the filename might have */
+  /* clean off any extension the filename might have */
   for (i = strlen(dbfFilename) - 1;
        i > 0 && dbfFilename[i] != '.' && dbfFilename[i] != '/' &&
        dbfFilename[i] != '\\';
@@ -2639,7 +2639,7 @@ static int msTiledSHPGetShape(layerObj *layer, shapeObj *shape,
     return (MS_FAILURE); /* invalid tile id */
 
   if (tileindex !=
-      tSHP->tileshpfile->lastshape) { /* correct tile is not currenly open so
+      tSHP->tileshpfile->lastshape) { /* correct tile is not currently open so
                                          open the correct tile */
     msShapefileClose(tSHP->shpfile);  /* close current tile */
 
@@ -2876,7 +2876,7 @@ int msTiledSHPLayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
-  /* layer->vtable->LayerGetAutoProjection, use defaut*/
+  /* layer->vtable->LayerGetAutoProjection, use default*/
 
   return MS_SUCCESS;
 }

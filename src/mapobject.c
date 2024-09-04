@@ -49,7 +49,7 @@ mapObj *msNewMapObj() {
   mapObj *map = NULL;
 
   /* create an empty map, no layers etc... */
-  map = (mapObj *)calloc(sizeof(mapObj), 1);
+  map = (mapObj *)calloc(1, sizeof(mapObj));
 
   if (!map) {
     msSetError(MS_MEMERR, NULL, "msCreateMap()");
@@ -475,7 +475,7 @@ int msMapSetFakedExtent(mapObj *map)
   /* -------------------------------------------------------------------- */
   /*      Set extents such that the bottom left corner is 0,0 and the     */
   /*      top right is width,height.  Note this is upside down from       */
-  /*      the normal sense of pixel/line coordiantes, but we do this      */
+  /*      the normal sense of pixel/line coordinates, but we do this      */
   /*      so that the normal "extent" concept of coordinates              */
   /*      increasing to the right, and up is maintained (like in          */
   /*      georeferenced coordinate systems).                              */
@@ -488,7 +488,7 @@ int msMapSetFakedExtent(mapObj *map)
 
   /* -------------------------------------------------------------------- */
   /*      When we copy the geotransform into the projection object we     */
-  /*      have to flip it to account for the preceeding upside-down       */
+  /*      have to flip it to account for the preceding upside-down       */
   /*      coordinate system.                                              */
   /* -------------------------------------------------------------------- */
   map->projection.gt = map->gt;

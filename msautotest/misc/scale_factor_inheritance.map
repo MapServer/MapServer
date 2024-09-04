@@ -1,0 +1,25 @@
+#
+# Test style scale factor inheritance with STYLEITEM
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG
+#
+
+# RUN_PARMS: scale_factor_inheritance.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&layer=test&mode=map" > [RESULT_DEMIME]
+
+MAP
+    EXTENT 0 -1 1 1
+    SIZE 100 100
+    LAYER
+        NAME "test"
+        EXTENT 0 -1 1 1
+        CONNECTIONTYPE OGR
+        CONNECTION "data/styleitem_style.csv"
+        DATA "styleitem_style"
+        TYPE LINE
+        STATUS ON
+        SYMBOLSCALEDENOM 500
+        STYLEITEM "STYLE"
+        CLASS
+        END
+    END
+END

@@ -155,7 +155,7 @@ LAYER
   NAME lakes_elev
 
   METADATA
-    "DESCRIPTION" "Lakes with dimesions (elevation and text)"
+    "DESCRIPTION" "Lakes with dimensions (elevation and text)"
      "wms_title"         "Lakes"
     "wms_description"   "Lakes"
     "wms_dimensionlist" "elevation, text_dimension"
@@ -190,7 +190,7 @@ LAYER
   NAME lakes_elev_range
 
   METADATA
-    "DESCRIPTION" "Lakes with dimesions (elevation and text)"
+    "DESCRIPTION" "Lakes with dimensions (elevation and text)"
      "wms_title"         "Lakes"
     "wms_description"   "Lakes"
     "wms_dimensionlist" "elevation"
@@ -217,7 +217,7 @@ LAYER
   NAME lakes_elev_multi_range
 
   METADATA
-    "DESCRIPTION" "Lakes with dimesions (elevation and text)"
+    "DESCRIPTION" "Lakes with dimensions (elevation and text)"
      "wms_title"         "Lakes"
     "wms_description"   "Lakes"
     "wms_dimensionlist" "elevation"

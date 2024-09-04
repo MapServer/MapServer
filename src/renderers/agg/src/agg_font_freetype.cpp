@@ -112,10 +112,10 @@ namespace mapserver
     {
         unsigned crc = (unsigned)~0;
         const unsigned char* p;
-        unsigned len = 0; 
+        //unsigned len = 0; 
         unsigned nr = size;
 
-        for (len += nr, p = buf; nr--; ++p) 
+        for (/*len += nr, */ p = buf; nr--; ++p) 
         {
             crc = (crc >> 8) ^ crc32tab[(crc ^ *p) & 0xff];
         }
@@ -154,15 +154,14 @@ namespace mapserver
 
         FT_Vector*  point;
         FT_Vector*  limit;
-        char*       tags;
 
-        int   n;         // index of contour in outline
-        int   first;     // index of first point in contour
+        unsigned n;         // index of contour in outline
+        unsigned first;     // index of first point in contour
         char  tag;       // current point's state
 
         first = 0;
 
-        for(n = 0; n < outline.n_contours; n++)
+        for(n = 0; n < (unsigned)outline.n_contours; n++)
         {
             int  last;  // index of last point in contour
 
@@ -174,7 +173,7 @@ namespace mapserver
             FT_Vector v_control = v_start;
 
             point = outline.points + first;
-            tags  = outline.tags  + first;
+            auto tags  = outline.tags  + first;
             tag   = FT_CURVE_TAG(tags[0]);
 
             // A contour cannot start with a cubic control point!
@@ -500,7 +499,6 @@ namespace mapserver
         }
         delete [] m_face_names;
         delete [] m_faces;
-        delete [] m_signature;
         if(m_library_initialized) FT_Done_FreeType(m_library);
     }
 
@@ -512,10 +510,8 @@ namespace mapserver
         m_change_stamp(0),
         m_last_error(0),
         m_name(0),
-        m_name_len(256-16-1),
         m_face_index(0),
         m_char_map(FT_ENCODING_NONE),
-        m_signature(new char [256+256-16]),
         m_height(0),
         m_width(0),
         m_hinting(true),
@@ -824,14 +820,7 @@ namespace mapserver
     {
         if(m_cur_face && m_name)
         {
-            unsigned name_len = strlen(m_name);
-            if(name_len > m_name_len)
-            {
-                delete [] m_signature;
-                m_signature = new char [name_len + 32 + 256];
-                m_name_len = name_len + 32 - 1;
-            }
-
+            const unsigned name_len = strlen(m_name);
             unsigned gamma_hash = 0;
             if(m_glyph_rendering == glyph_ren_native_gray8 ||
                m_glyph_rendering == glyph_ren_agg_mono || 
@@ -846,7 +835,11 @@ namespace mapserver
                 gamma_hash = calc_crc32(gamma_table, sizeof(gamma_table));
             }
 
-            sprintf(m_signature, 
+            constexpr size_t EXTRA = 256;
+            const size_t nSignatureSize = name_len + 32 - 1 + EXTRA;
+            m_signature.resize(nSignatureSize);
+            snprintf(&m_signature[0], 
+                    nSignatureSize,
                     "%s,%u,%d,%d,%d:%dx%d,%d,%d,%08X", 
                     m_name,
                     m_char_map,
@@ -858,6 +851,7 @@ namespace mapserver
                     int(m_hinting),
                     int(m_flip_y),
                     gamma_hash);
+            m_signature.resize(strlen(m_signature.c_str()));
             if(m_glyph_rendering == glyph_ren_outline ||
                m_glyph_rendering == glyph_ren_agg_mono ||
                m_glyph_rendering == glyph_ren_agg_gray8)
@@ -865,14 +859,14 @@ namespace mapserver
                 double mtx[6];
                 char buf[100];
                 m_affine.store_to(mtx);
-                sprintf(buf, ",%08X%08X%08X%08X%08X%08X", 
+                snprintf(buf, sizeof(buf), ",%08X%08X%08X%08X%08X%08X", 
                     dbl_to_plain_fx(mtx[0]), 
                     dbl_to_plain_fx(mtx[1]), 
                     dbl_to_plain_fx(mtx[2]), 
                     dbl_to_plain_fx(mtx[3]), 
                     dbl_to_plain_fx(mtx[4]), 
                     dbl_to_plain_fx(mtx[5]));
-                strcat(m_signature, buf);
+                m_signature += buf;
             }
             ++m_change_stamp;
         }

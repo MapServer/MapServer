@@ -37,6 +37,7 @@
 #include "cpl_vsi.h"
 
 #include <ctype.h>
+#include <float.h>
 #include <string.h>
 #include <errno.h>
 
@@ -587,7 +588,7 @@ void msStringTrimBlanks(std::string &string) {
 /* -------------------------------------------------------------------------------
  */
 /*       Trims end-of-line marker from a string */
-/*       Usefull in conjunction with fgets() calls */
+/*       Useful in conjunction with fgets() calls */
 /* -------------------------------------------------------------------------------
  */
 void msStringTrimEOL(char *string) {
@@ -603,7 +604,7 @@ void msStringTrimEOL(char *string) {
 
 /* -------------------------------------------------------------------------------
  */
-/*       Replace all occurances of old with new in str. */
+/*       Replace all occurrences of old with new in str. */
 /*       It is assumed that str was dynamically created using malloc. */
 /* -------------------------------------------------------------------------------
  */
@@ -960,10 +961,10 @@ char **msStringSplitComplex(const char *pszString, const char *pszDelimiters,
 
     nTokenLen = 0;
 
-    /* Try to find the next delimeter, marking end of token */
+    /* Try to find the next delimiter, marking end of token */
     for (; *pszString != '\0'; pszString++) {
 
-      /* End if this is a delimeter skip it and break. */
+      /* End if this is a delimiter skip it and break. */
       if (!bInString && strchr(pszDelimiters, *pszString) != NULL) {
         pszString++;
         break;
@@ -1439,19 +1440,19 @@ char *msStringConcatenate(char *pszDest, const char *pszSrc) {
   return pszDest;
 }
 
-char *msJoinStrings(char **array, int arrayLength, const char *delimeter) {
+char *msJoinStrings(char **array, int arrayLength, const char *delimiter) {
   char *string;
   int stringLength = 0;
-  int delimeterLength;
+  int delimiterLength;
   int i;
 
-  if (!array || arrayLength <= 0 || !delimeter)
+  if (!array || arrayLength <= 0 || !delimiter)
     return NULL;
 
-  delimeterLength = strlen(delimeter);
+  delimiterLength = strlen(delimiter);
 
   for (i = 0; i < arrayLength; i++)
-    stringLength += strlen(array[i]) + delimeterLength;
+    stringLength += strlen(array[i]) + delimiterLength;
 
   string = (char *)calloc(stringLength + 1, sizeof(char));
   MS_CHECK_ALLOC(string, (stringLength + 1) * sizeof(char), NULL);
@@ -1459,7 +1460,7 @@ char *msJoinStrings(char **array, int arrayLength, const char *delimeter) {
 
   for (i = 0; i < arrayLength - 1; i++) {
     strlcat(string, array[i], stringLength);
-    strlcat(string, delimeter, stringLength);
+    strlcat(string, delimiter, stringLength);
   }
   strlcat(string, array[i], stringLength); /* add last element, no delimiter */
 
@@ -1548,6 +1549,68 @@ char *msCommifyString(char *str) {
   return str;
 }
 
+/************************************************************************/
+/*                              msToString()                            */
+/************************************************************************/
+
+char *msToString(const char *format, double value) {
+  bool pctAlreadyFound = false;
+  // Validate that the formatting string is OK for a single input double value
+  int extra_size = 0;
+  for (const char *ptr = format; *ptr; ++ptr) {
+    if (*ptr == '%' && ptr[1] == '%') {
+      ++ptr;
+    } else if (*ptr == '%') {
+      if (pctAlreadyFound) {
+        msSetError(MS_MISCERR, "More than one conversion specifier",
+                   "msToString()");
+        return nullptr;
+      }
+      pctAlreadyFound = true;
+      ++ptr;
+      // Skip flag characters
+      while (*ptr == '+' || *ptr == '-' || *ptr == ' ' || *ptr == '\'' ||
+             *ptr == '0') {
+        ++ptr;
+      }
+      // Skip width
+      if (*ptr >= '1' && *ptr <= '9') {
+        extra_size = atoi(ptr);
+        do {
+          ++ptr;
+        } while (*ptr >= '0' && *ptr <= '9');
+        if (extra_size > 1024) {
+          // To avoid arbitrary memory allocatin
+          msSetError(MS_MISCERR, "Too large width", "msToString()");
+          return nullptr;
+        }
+      }
+      // maximum double value is of the order of ~1e308
+      if (extra_size < DBL_MAX_10_EXP)
+        extra_size = DBL_MAX_10_EXP;
+      extra_size += 32; // extra margin
+
+      // Skip precision
+      if (*ptr == '.') {
+        ++ptr;
+        while (*ptr >= '0' && *ptr <= '9')
+          ++ptr;
+      }
+      // Check conversion specifier
+      if (!(*ptr == 'e' || *ptr == 'E' || *ptr == 'f' || *ptr == 'F' ||
+            *ptr == 'g' || *ptr == 'G')) {
+        msSetError(MS_MISCERR, "Invalid conversion specifier", "msToString()");
+        return nullptr;
+      }
+    }
+  }
+  // extra_size / 3 if thousands' grouping characters is used
+  const size_t nBufferSize = strlen(format) + extra_size + (extra_size / 3) + 1;
+  char *ret = static_cast<char *>(msSmallMalloc(nBufferSize));
+  snprintf(ret, nBufferSize, format, value);
+  return ret;
+}
+
 /* -------------------------------------------------------------------------------
  */
 /*       Replace all occurrences of old with new in str. */
@@ -1615,7 +1678,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *newstr) {
 }
 
 /*
-** Converts a 2 character hexidecimal string to an integer.
+** Converts a 2 character hexadecimal string to an integer.
 */
 int msHexToInt(char *hex) {
   int number;
@@ -1817,7 +1880,7 @@ char *msGetEncodedString(const char *string, const char *encoding) {
   if (*string == '\0' || (encoding && strcasecmp(encoding, "UTF-8") == 0))
     return msStrdup(string); /* Nothing to do: string already in UTF-8 */
 
-  msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.",
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.",
              "msGetEncodedString()");
   return NULL;
 #endif
@@ -2001,7 +2064,7 @@ wchar_t *msConvertWideStringFromUTF8(const char *string, const char *encoding) {
 *   - if utf8 decoding fails, as a raw character
 *
 ** This function mimics the character decoding function used in gdft.c of
-* libGD. It is necessary to have the same behaviour, as input strings must be
+* libGD. It is necessary to have the same behavior, as input strings must be
 * split into the same glyphs as what gd does.
 **
 ** In UTF-8, the number of leading 1 bits in the first byte specifies the

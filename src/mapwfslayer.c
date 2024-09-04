@@ -54,7 +54,7 @@
 /*      information. This object will be used when building the Get     */
 /*      and Post requsests.                                             */
 /*      Note : Verify the connection string to extract some values      */
-/*      for backward compatiblity. (It is though depricated).           */
+/*      for backward compatibility. (It is though deprecated).           */
 /*      This will also set layer projection and compute BBOX in that    */
 /*      projection.                                                     */
 /*                                                                      */
@@ -178,7 +178,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
 
   /* __TODO__ WFS servers support only one SRS... need to decide how we'll */
   /* handle this and document it well. */
-  /* It's likely that we'll simply reproject the BBOX to teh layer's projection.
+  /* It's likely that we'll simply reproject the BBOX to the layer's projection.
    */
 
   /* ------------------------------------------------------------------
@@ -328,7 +328,7 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   /*      Find out request version. Look first for the wfs_version        */
   /*      metedata. If not available try to find out if the CONNECTION    */
   /*      string contains the version. This last test is done for         */
-  /*      backward compatiblity but is depericated.                       */
+  /*      backward compatibility but is depericated.                       */
   /* -------------------------------------------------------------------- */
   pszVersion = psParams->pszVersion;
   if (!pszVersion) {
@@ -362,7 +362,7 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
   /*      Find out the typename. Look first for the wfs_tyename           */
   /*      metadata. If not available try to find out if the CONNECTION    */
   /*      string contains it. This last test is done for                  */
-  /*      backward compatiblity but is depericated.                       */
+  /*      backward compatibility but is depericated.                       */
   /* -------------------------------------------------------------------- */
   pszTypename = psParams->pszTypeName;
   if (!pszTypename) {
@@ -387,8 +387,8 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
    *   FILTER
    *   MAXFEATURES
    *
-   * For backward compatiblity the user could also have in the connection
-   * string the following parameters (but it is depricated):
+   * For backward compatibility the user could also have in the connection
+   * string the following parameters (but it is deprecated):
    *   VERSION
    *   SERVICE
    *   TYPENAME
@@ -430,7 +430,7 @@ static char *msBuildWFSLayerGetURL(layerObj *lp, rectObj *bbox,
 
   /* -------------------------------------------------------------------- */
   /*      If the filter parameter is given in the wfs_filter metadata,    */
-  /*      we use it and do not send the BBOX paramter as they are         */
+  /*      we use it and do not send the BBOX parameter as they are         */
   /*      mutually exclusive.                                             */
   /* -------------------------------------------------------------------- */
   if (psParams->pszFilter) {
@@ -570,7 +570,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   /*    If it is a Get request the URL would contain all the parameters in*/
   /*      the string;                                                     */
   /*      If it is a Post request, the URL will only contain the          */
-  /*      connection string comming from the layer.                       */
+  /*      connection string coming from the layer.                       */
   /* -------------------------------------------------------------------- */
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "request_method")) !=
       NULL) {
@@ -1267,7 +1267,7 @@ int msWFSLayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
-  /* layer->vtable->LayerGetAutoProjection, use defaut*/
+  /* layer->vtable->LayerGetAutoProjection, use default*/
 
   return MS_SUCCESS;
 }

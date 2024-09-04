@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  Command line utility to sort a shapefile based on a single
- *           attribute in ascending or decending order. Useful for
+ *           attribute in ascending or descending order. Useful for
  *           prioritizing drawing or labeling of shapes.
  * Author:   Steve Lime and the MapServer team.
  *

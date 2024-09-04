@@ -126,7 +126,7 @@ static void outputError(OGCAPIErrorType errorType,
 
 static int includeLayer(mapObj *map, layerObj *layer) {
   if (!msOWSRequestIsEnabled(map, layer, "AO", "OGCAPI", MS_FALSE) ||
-      !msWFSIsLayerSupported(layer) || !msIsLayerQueryable(layer)) {
+      !msIsLayerSupportedForWFSOrOAPIF(layer) || !msIsLayerQueryable(layer)) {
     return MS_FALSE;
   } else {
     return MS_TRUE;
@@ -1217,7 +1217,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
   msProjectionInheritContextFrom(&reprObjs.proj, &(map->projection));
   if (msLoadProjectionString(&reprObjs.proj, outputCrs.c_str()) != 0) {
-    outputError(OGCAPI_SERVER_ERROR, "Cannot instanciate output CRS.");
+    outputError(OGCAPI_SERVER_ERROR, "Cannot instantiate output CRS.");
     return MS_SUCCESS;
   }
 

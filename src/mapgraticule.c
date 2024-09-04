@@ -738,7 +738,7 @@ msGraticuleLayerGetIntersectionPoints(mapObj *map, layerObj *layer) {
     {
       int iTmpLine = 0;
       int nNumPoints = 0;
-      /*grid code seems to retunr lines that can double cross the extenst??*/
+      /*grid code seems to return lines that can double cross the extenst??*/
       /*creating a more than one clipped shape. Take the shape that has the most
         points, which should be the most likley to be correct*/
 
@@ -880,7 +880,7 @@ msGraticuleLayerGetIntersectionPoints(mapObj *map, layerObj *layer) {
           psValues->pasTop[psValues->nTop - 1].y = oLastPoint.y;
           psValues->papszTopLabels[psValues->nTop - 1] = pszLabel;
         }
-      } else { /*horzontal*/
+      } else { /*horizontal*/
         /*Normally lines are drawn from left to right but not always for some
           reason, so make sure that firstpoint < lastpoint in x*/
         if (oFirstPoint.x > oLastPoint.x) {
@@ -1123,7 +1123,7 @@ static int _AdjustLabelPosition(layerObj *pLayer, shapeObj *pShape,
              ->labels[0]
              ->size; /* TODO someday: adjust minsize/maxsize/resolution*/
   /* We only use the first label as there's no use (yet) in defining multiple
-   lables for GRID layers, as the only label to represent is the longitude or
+   labels for GRID layers, as the only label to represent is the longitude or
    latitude */
   labeltxt =
       msShapeGetLabelAnnotation(pLayer, pShape, pLayer->class[0] -> labels[0]);
@@ -1252,7 +1252,7 @@ static int _AdjustLabelPosition(layerObj *pLayer, shapeObj *pShape,
  * Permission is granted to use this code without restriction as long as
  * this copyright notice appears in all source files.
  *
- * Minor tweaks to incrment calculations - jnovak
+ * Minor tweaks to increment calculations - jnovak
  */
 void DefineAxis(int iTickCountTarget, double *Min, double *Max, double *Inc) {
   /* define local variables... */
@@ -1302,7 +1302,7 @@ void DefineAxis(int iTickCountTarget, double *Min, double *Max, double *Inc) {
   /* subtracting small values can screw up the scale limits, */
   /* eg: if DefineAxis is called with (min,max)=(0.01, 0.1), */
   /* then the calculated scale is 1.0408E17 TO 0.05 BY 0.01. */
-  /* the following if statment corrects for this... */
+  /* the following if statement corrects for this... */
 
   /* if(fabs(Test_min) < 1E-10) */
   /* Test_min = 0 ; */

@@ -17,7 +17,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     sudo php8.1-dev php8.1-xml php8.1-mbstring && \
     echo "$LANG UTF-8" > /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
-    update-locale LANG=$LANG    
+    update-locale LANG=$LANG
 
 USER=root
 export USER
@@ -37,8 +37,8 @@ pyenv global $PYTHON_VERSION
 
 cd "$WORK_DIR"
 
-ci/setup.sh
-ci/build.sh
+ci/ubuntu/setup.sh
+ci/ubuntu/build.sh
 
 # Validate openapi document
 pip install jsonschema

@@ -1,7 +1,7 @@
 
 #
 # Tests layering a layer with transparency on a layer with 256 colors already.
-# This is intended to address case where colors are exausted before a 
+# This is intended to address case where colors are exhausted before a 
 # transparent color can be allocated.
 #
 # NOTE: with resampling.

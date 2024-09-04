@@ -743,7 +743,11 @@ typedef enum {
   MS_COMPOP_EXCLUSION,
   MS_COMPOP_CONTRAST,
   MS_COMPOP_INVERT,
-  MS_COMPOP_INVERT_RGB
+  MS_COMPOP_INVERT_RGB,
+  MS_COMPOP_HSL_HUE,
+  MS_COMPOP_HSL_LUMINOSITY,
+  MS_COMPOP_HSL_SATURATION,
+  MS_COMPOP_HSL_COLOR,
 } CompositingOperation;
 
 typedef struct _CompositingFilter {
@@ -1003,7 +1007,7 @@ typedef union {
 typedef struct tokenListNode {
   int token;
   tokenValueObj tokenval;
-  char *tokensrc; /* on occassion we may want to access to the original source
+  char *tokensrc; /* on occasion we may want to access to the original source
                      string (e.g. date/time) */
   struct tokenListNode *next;
   struct tokenListNode *tailifhead; /* this is the tail node in the list if this
@@ -1492,7 +1496,7 @@ struct labelObj {
   int maxsize; ///< Maximum height in pixels for scaled labels. See
                ///< :ref:`MAXSIZE <mapfile-label-maxsize>`
 
-  int position; ///< See :ref:`POSTION <mapfile-label-position>`
+  int position; ///< See :ref:`POSITION <mapfile-label-position>`
   int offsetx;  ///< Horizontal offset of label - see :ref:`OFFSET
                 ///< <mapfile-label-offset>`
   int offsety;  ///< Vertical offset of label - see :ref:`OFFSET
@@ -1909,7 +1913,7 @@ typedef struct {
   int status;            ///< ON, OFF or EMBED - see :ref:`STATUS
               ///< <mapfile-scalebar-status>` - :data:`MS_ON`, :data:`MS_OFF`,
               ///< or :data:`MS_EMBED`.
-  int position; ///< For embeded scalebars - see :ref:`POSITION
+  int position; ///< For embedded scalebars - see :ref:`POSITION
                 ///< <mapfile-scalebar-position>` - :data:`MS_UL`,
                 ///< :data:`MS_UC`, :data:`MS_UR`, :data:`MS_LL`, :data:`MS_LC`,
                 ///< or :data:`MS_LR`
@@ -2120,8 +2124,6 @@ typedef struct {
   char *filteritem;
   char *filter;
   char **processing;
-  int *processing_idx;
-  int n_processing;
 } originalScaleTokenStrings;
 #endif
 
@@ -2202,7 +2204,6 @@ struct layerObj {
   clusterObj cluster; ///< See :ref:`CLUSTER <mapfile-layer-cluster>`
   rectObj extent;     ///< optional limiting extent for layer features - see
                       ///< :ref:`EXTENT <mapfile-layer-extent>`
-  int numprocessing;  ///< Number of raster processing directives
   int numjoins;       ///< Number of layer joins
 
   expressionObj utfdata; ///< See :ref:`UTFDATA <mapfile-layer-utfdata>`
@@ -2554,7 +2555,7 @@ Generic function to free a imageObj
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
 
 /**
-Sets up threads and font cache - called when MapScript is initialised
+Sets up threads and font cache - called when MapScript is initialized
 */
 MS_DLL_EXPORT int msSetup(void);
 
@@ -2737,6 +2738,7 @@ MS_DLL_EXPORT void msFree(void *p);
 #else
 #define msFree free
 #endif
+void msReplaceFreeableStr(char **ppszStr, char *pszNewStr);
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
 MS_DLL_EXPORT int msInitLabelCache(labelCacheObj *cache);
 MS_DLL_EXPORT int msFreeLabelCache(labelCacheObj *cache);
@@ -2871,9 +2873,10 @@ MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
 MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
 MS_DLL_EXPORT char *msStringConcatenate(char *pszDest, const char *pszSrc);
 MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength,
-                                  const char *delimeter);
+                                  const char *delimiter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 MS_DLL_EXPORT char *msCommifyString(char *str);
+MS_DLL_EXPORT char *msToString(const char *format, double value);
 MS_DLL_EXPORT int msHexToInt(char *hex);
 MS_DLL_EXPORT char *msGetEncodedString(const char *string,
                                        const char *encoding);
@@ -3183,6 +3186,7 @@ MS_DLL_EXPORT void msLayerSetProcessingKey(layerObj *layer, const char *key,
                                            const char *value);
 MS_DLL_EXPORT const char *msLayerGetProcessing(const layerObj *layer,
                                                int proc_index);
+MS_DLL_EXPORT int msLayerGetNumProcessing(const layerObj *layer);
 MS_DLL_EXPORT const char *msLayerGetProcessingKey(const layerObj *layer,
                                                   const char *);
 MS_DLL_EXPORT int msLayerClearProcessing(layerObj *layer);
@@ -3277,6 +3281,10 @@ rectObj msUVRASTERGetSearchRect(layerObj *layer, mapObj *map);
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
 
+MS_DLL_EXPORT double msGetGeoCellSize(const mapObj *map);
+MS_DLL_EXPORT void msUpdateClassScaleFactor(double geo_cellsize,
+                                            const mapObj *map,
+                                            const layerObj *layer, classObj *c);
 MS_DLL_EXPORT imageObj *msPrepareImage(mapObj *map, int allow_nonsquare);
 MS_DLL_EXPORT imageObj *msDrawMap(mapObj *map, int querymap);
 MS_DLL_EXPORT int msLayerIsVisible(mapObj *map, layerObj *layer);
@@ -3511,7 +3519,7 @@ MS_DLL_EXPORT shapeObj *msOffsetPolyline(shapeObj *shape, double offsetx,
                                          double offsety);
 MS_DLL_EXPORT int msMapSetLayerProjections(mapObj *map);
 
-/* Functions to chnage the drawing order of the layers. */
+/* Functions to change the drawing order of the layers. */
 /* Defined in mapobject.c */
 MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
 MS_DLL_EXPORT int msMoveLayerDown(mapObj *map, int nLayerIndex);
@@ -3895,7 +3903,7 @@ typedef struct {
    * in radians */
   double rotation;
 
-  /* the gap to space symbols appart when used as a polygon tile
+  /* the gap to space symbols apart when used as a polygon tile
    */
   double gap;
 

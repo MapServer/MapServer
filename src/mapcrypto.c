@@ -398,7 +398,7 @@ void msDecryptStringWithKey(const unsigned char *key, const char *in,
  *                        msDecryptStringTokens()
  *
  * Returns a newly allocated string (to be msFree'd by the caller) in
- * which all occurences of encrypted strings delimited by {...} have
+ * which all occurrences of encrypted strings delimited by {...} have
  * been decrypted.
  *
  **********************************************************************/

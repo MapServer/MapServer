@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  A C# based mapscript example to use the atribute query and 
+ * Purpose:  A C# based mapscript example to use the attribute query and 
  *           highlight the results.
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *

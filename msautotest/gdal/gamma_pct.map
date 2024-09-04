@@ -1,0 +1,22 @@
+#
+# Test GAMMA correction on a image with a color table
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24
+
+LAYER
+  NAME test
+  TYPE raster
+  STATUS default
+  DATA data/pct22.tif
+  PROCESSING "GAMMA=0.75"
+END
+
+END # of map file

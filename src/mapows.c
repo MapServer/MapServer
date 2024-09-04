@@ -1417,7 +1417,7 @@ char **msOWSGetLanguageList(mapObj *map, const char *namespaces,
 ** Returns a language according to the language requested by the client
 **
 ** If the requested language is in the languages metadata then use it,
-** otherwise ignore it and use the defaul language, which is the first entry in
+** otherwise ignore it and use the default language, which is the first entry in
 ** the languages metadata list. Calling with a NULL requested_langauge
 ** therefore returns this default language. If the language metadata list is
 ** not defined then the language is set to NULL.
@@ -1952,7 +1952,7 @@ int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char *pszGroupName,
 
 /* msOWSPrintURLType()
 **
-** Attempt to output a URL item in capabilties.  If corresponding metadata
+** Attempt to output a URL item in capabilities.  If corresponding metadata
 ** is not found then one of a number of predefined actions will be taken.
 ** Since it's a capability item, five metadata will be used to populate the
 ** XML elements.
@@ -2569,7 +2569,7 @@ void msOWSPrintContactInfo(FILE *stream, const char *tabspace, int nVersion,
           "      <ContactPosition>%s</ContactPosition>\n", NULL);
     }
 
-    /* ContactAdress is optional, but when present then all its  */
+    /* ContactAddress is optional, but when present then all its  */
     /* sub-elements are mandatory */
     if (msOWSLookupMetadata(metadata, namespaces, "addresstype") ||
         msOWSLookupMetadata(metadata, namespaces, "address") ||
@@ -3113,7 +3113,7 @@ int msOWSNegotiateUpdateSequence(const char *requested_updatesequence,
 /************************************************************************/
 /*                         msOwsIsOutputFormatValid                     */
 /*                                                                      */
-/*      Utlity function to parse a comma separated list in a            */
+/*      Utility function to parse a comma separated list in a            */
 /*      metedata object and select and outputformat.                    */
 /************************************************************************/
 outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format,

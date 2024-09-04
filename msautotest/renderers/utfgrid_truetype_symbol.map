@@ -72,7 +72,7 @@ LAYER
   END
 END
 
-# This layer renders the symbol to the utfgrid whith a rotation
+# This layer renders the symbol to the utfgrid with a rotation
 LAYER
   NAME "symbol-rotation"
   TYPE point

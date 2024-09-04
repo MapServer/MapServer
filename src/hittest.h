@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  * Project:  MapServer
- * Purpose:  Content Dependant Legend rendering support
+ * Purpose:  Content Dependent Legend rendering support
  * Author:   Thomas Bonfort (tbonfort@terriscope.fr)
  *
  ******************************************************************************

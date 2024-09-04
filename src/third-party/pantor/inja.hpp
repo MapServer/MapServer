@@ -995,7 +995,7 @@ nssv_DISABLE_MSVC_WARNINGS(4455 26481 26472)
 
 #if !nssv_CPP11_OR_GREATER || nssv_BETWEEN(nssv_COMPILER_MSVC_VERSION, 100, 141)
 
-  // accomodate for older compilers:
+  // accommodate for older compilers:
 
   // ==
 

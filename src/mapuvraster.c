@@ -54,32 +54,12 @@
 #define MSUVRASTER_LAT "lat"
 #define MSUVRASTER_LATINDEX -107
 
-#define RQM_UNKNOWN 0
-#define RQM_ENTRY_PER_PIXEL 1
-#define RQM_HIST_ON_CLASS 2
-#define RQM_HIST_ON_VALUE 3
-
 typedef struct {
 
   /* query cache results */
   int query_results;
-  /* int query_alloc_max;
-  int query_request_max;
-  int query_result_hard_max;
-  int raster_query_mode; */
-  int band_count;
 
   int refcount;
-
-  /* query bound in force
-     shapeObj *searchshape;*/
-
-  /* Only nearest result to this point.
-  int      range_mode; MS_QUERY_SINGLE, MS_QUERY_MULTIPLE or -1 (skip test)
-  double   range_dist;
-  pointObj target_point;*/
-
-  /* double   shape_tolerance; */
 
   float **u; /* u values */
   float **v; /* v values */
@@ -175,11 +155,6 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer) {
   uvlinfo = (uvRasterLayerInfo *)msSmallCalloc(1, sizeof(uvRasterLayerInfo));
   layer->layerinfo = uvlinfo;
 
-  uvlinfo->band_count = -1;
-  /* uvlinfo->raster_query_mode = RQM_ENTRY_PER_PIXEL; */
-  /* uvlinfo->range_mode = -1; /\* inactive *\/ */
-  /* uvlinfo->refcount = 0; */
-  /* uvlinfo->shape_tolerance = 0.0; */
   uvlinfo->u = NULL;
   uvlinfo->v = NULL;
   uvlinfo->width = 0;
@@ -202,16 +177,6 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer) {
       }
     }
   }
-
-  /* uvlinfo->query_result_hard_max = 1000000; */
-
-  /* if( CSLFetchNameValue( layer->processing, "RASTER_QUERY_MAX_RESULT" )  */
-  /*     != NULL ) */
-  /* { */
-  /*     uvlinfo->query_result_hard_max =  */
-  /*         atoi(CSLFetchNameValue( layer->processing,
-   * "RASTER_QUERY_MAX_RESULT" )); */
-  /* } */
 }
 
 static void msUVRasterLayerInfoFree(layerObj *layer)
@@ -550,7 +515,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   map_tmp->defresolution = layer->map->defresolution;
 
   outputformat = (outputFormatObj *)msSmallCalloc(1, sizeof(outputFormatObj));
-  outputformat->bands = uvlinfo->band_count = 2;
+  outputformat->bands = 2;
   outputformat->name = NULL;
   outputformat->driver = NULL;
   outputformat->refcount = 0;
@@ -593,7 +558,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   /* Very special case to improve quality for rasters referenced from lon=0 to
    * 360 */
   /* We create a temporary VRT that swiches the 2 hemispheres, and then we */
-  /* modify the georeferncing to be in the more standard [-180, 180] range */
+  /* modify the georeferencing to be in the more standard [-180, 180] range */
   /* and we adjust the layer->data, extent and projection accordingly */
   if (layer->tileindex == NULL && uvlinfo->mapToUseForWhichShapes &&
       bHasLonWrap && dfLonWrap == 180.0) {
@@ -1062,7 +1027,7 @@ int msUVRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
   /*      If we are using a local shapefile as our tileindex (that is     */
   /*      to say, the tileindex name is not of another layer), then we    */
   /*      just install a backtics style filter on the raster layer.       */
-  /*      This is propogated to the "working layer" created for the       */
+  /*      This is propagated to the "working layer" created for the       */
   /*      tileindex by code in mapraster.c.                               */
   /* -------------------------------------------------------------------- */
   if (tilelayerindex == -1)

@@ -5,19 +5,30 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 
 if [ "${MAPSCRIPT_PYTHON_ONLY:-}" = "true" ]; then
-    # only build MapServer with the Python MapScript
+    # only build MapServer with the Python MapScript and not PHP, Perl etc.
     make cmakebuild_mapscript_python MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
     # build the wheel and run the Python MapScript test suite
     make mspython-wheel
     exit
 fi
 
+# Turn CMake warnings as errors
+EXTRA_CMAKEFLAGS="-Werror=dev"
+
 if [ "${WITH_ASAN:-}" = "true" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
-    make cmakebuild MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-g -fsanitize=address -DNDEBUG" CMAKE_CXX_FLAGS="-g -fsanitize=address -DNDEBUG" \
-    EXTRA_CMAKEFLAGS="-DCMAKE_BUILD_TYPE=None -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"
+    make cmakebuild \
+        MFLAGS="-j$(nproc)" \
+        CMAKE_C_FLAGS="-g -fsanitize=address -DNDEBUG" \
+        CMAKE_CXX_FLAGS="-g -fsanitize=address -DNDEBUG" \
+        EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DCMAKE_BUILD_TYPE=None -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"
 else
-    make cmakebuild MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
+    make cmakebuild \
+        MFLAGS="-j$(nproc)" \
+        CMAKE_C_FLAGS="-O2" \
+        CMAKE_CXX_FLAGS="-O2" \
+        LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra" \
+        EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DWITH_PCRE2=ON"
     make mspython-wheel
     make phpng-build
 fi
@@ -40,12 +51,19 @@ python -m pyflakes .
 # run the Python server for the tests
 python -m http.server &> /dev/null &
 
-# get phpunit
+# get PHPUnit
 echo "PHP version"
 php -v
-cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
-echo "phpunit version"
-php phpunit-10.phar --version
+PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
+if [ ${PHPVersionMinor} -gt 81 ]; then
+    cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
+    echo "PHPUnit version"
+    php phpunit-11.phar --version
+else
+    cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
+    echo "PHPUnit version"
+    php phpunit-10.phar --version
+fi
 echo "PHP includes"
 php-config --includes
 

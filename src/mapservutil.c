@@ -167,7 +167,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
   int i;
   mapObj *map = NULL;
 
-  const char *ms_map_bad_pattern_default = "[/\\]{2}|[/\\]?\\.+[/\\]|,";
+  const char *ms_map_bad_pattern_default = "[/\\\\]{2}|[/\\\\]?\\.+[/\\\\]|,";
 
   int ms_mapfile_tainted = MS_TRUE;
   const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
@@ -382,7 +382,7 @@ int msCGISetMode(mapservObj *mapserv) {
 }
 
 /*
-** API-related funtions.
+** API-related functions.
 */
 int msCGIIsAPIRequest(mapservObj *mapserv) {
   char **tmp_api_path = NULL;
@@ -583,7 +583,6 @@ static int commonLoadForm(mapservObj *mapserv, mapObj *map) {
 int msCGILoadForm(mapservObj *mapserv) {
   int i, n;
   char **tokens = NULL;
-  int rosa_type = 0;
   double tmpval;
   char *strtoderr;
 
@@ -1361,61 +1360,6 @@ int msCGILoadForm(mapservObj *mapserv) {
       continue;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      The following code is used to support the rosa applet (for      */
-    /*      more information on Rosa, please consult :                      */
-    /*      http://www.maptools.org/rosa/) .                                */
-    /*      This code was provided by Tim.Mackey@agso.gov.au.               */
-    /*                                                                      */
-    /*      For Application using it can be seen at :                       */
-    /*        http://www.agso.gov.au/map/pilbara/                           */
-    /*                                                                      */
-    /* -------------------------------------------------------------------- */
-
-    if (strcasecmp(mapserv->request->ParamNames[i], "INPUT_TYPE") == 0) {
-      /* Rosa input type */
-      if (strcasecmp(mapserv->request->ParamValues[i], "auto_rect") == 0) {
-        rosa_type = 1; /* rectangle */
-        continue;
-      }
-
-      if (strcasecmp(mapserv->request->ParamValues[i], "auto_point") == 0) {
-        rosa_type = 2; /* point */
-        continue;
-      }
-    }
-    if (strcasecmp(mapserv->request->ParamNames[i], "INPUT_COORD") == 0) {
-      /* Rosa coordinates */
-
-      switch (rosa_type) {
-      case 1:
-        sscanf(mapserv->request->ParamValues[i], "%lf,%lf;%lf,%lf",
-               &mapserv->ImgBox.minx, &mapserv->ImgBox.miny,
-               &mapserv->ImgBox.maxx, &mapserv->ImgBox.maxy);
-        if ((mapserv->ImgBox.minx != mapserv->ImgBox.maxx) &&
-            (mapserv->ImgBox.miny != mapserv->ImgBox.maxy)) {
-          mapserv->CoordSource = FROMIMGBOX;
-          mapserv->QueryCoordSource = FROMIMGBOX;
-        } else {
-          mapserv->CoordSource = FROMIMGPNT;
-          mapserv->QueryCoordSource = FROMIMGPNT;
-          mapserv->ImgPnt.x = mapserv->ImgBox.minx;
-          mapserv->ImgPnt.y = mapserv->ImgBox.miny;
-        }
-        break;
-      case 2:
-        sscanf(mapserv->request->ParamValues[i], "%lf,%lf", &mapserv->ImgPnt.x,
-               &mapserv->ImgPnt.y);
-        mapserv->CoordSource = FROMIMGPNT;
-        mapserv->QueryCoordSource = FROMIMGPNT;
-        break;
-      }
-      continue;
-    }
-    /* -------------------------------------------------------------------- */
-    /*      end of code for Rosa support.                                   */
-    /* -------------------------------------------------------------------- */
-
   } /* next parameter */
 
   if (mapserv->Mode == ZOOMIN) {
@@ -1567,7 +1511,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv) {
     return MS_FAILURE;
 
   /* -------------------------------------------------------------------- */
-  /*      generate map, legend, scalebar and refernce images.             */
+  /*      generate map, legend, scalebar and reference images.             */
   /* -------------------------------------------------------------------- */
   if (msGenerateImages(mapserv, MS_FALSE, MS_TRUE) != MS_SUCCESS)
     return MS_FAILURE;
@@ -2402,7 +2346,7 @@ int msCGIDispatchRequest(mapservObj *mapserv) {
 
 int msCGIHandler(const char *query_string, void **out_buffer,
                  size_t *buffer_length) {
-  int x, m = 0;
+  int m = 0;
   struct mstimeval execstarttime = {0}, execendtime = {0};
   struct mstimeval requeststarttime = {0}, requestendtime = {0};
   mapservObj *mapserv = NULL;
@@ -2445,7 +2389,7 @@ int msCGIHandler(const char *query_string, void **out_buffer,
 
   /* don't modify the string */
   queryString = msStrdup(query_string);
-  for (x = 0; queryString[0] != '\0'; x++) {
+  while (queryString[0] != '\0') {
     if (m >= maxParams) {
       maxParams *= 2;
       mapserv->request->ParamNames = (char **)realloc(

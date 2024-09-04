@@ -62,8 +62,9 @@ static int msWCSValidateRangeSetParam(layerObj *lp, char *name,
     return MS_FAILURE;
 
   /* Fetch the available values list for the rangeset item and tokenize */
-  tmpname = (char *)msSmallMalloc(sizeof(char) * strlen(name) + 10);
-  sprintf(tmpname, "%s_values", name);
+  const size_t nSize = strlen(name) + strlen("_values") + 1;
+  tmpname = (char *)msSmallMalloc(nSize);
+  snprintf(tmpname, nSize, "%s_values", name);
   ri_values_list = msOWSLookupMetadata(&(lp->metadata), "CO", tmpname);
   msFree(tmpname);
 
@@ -912,7 +913,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params,
     return msWCSException(map, NULL, NULL, params->version);
   }
 
-  /* start the Capabilty section, only need the full start tag if this is the
+  /* start the Capability section, only need the full start tag if this is the
    * only section requested */
   if (!params->section ||
       (params->section && strcasecmp(params->section, "/") == 0))
@@ -1512,7 +1513,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer,
   /* supportedCRSs */
   msIO_printf("    <supportedCRSs>\n");
 
-  /* requestResposeCRSs: check the layer metadata/projection, and then the map
+  /* requestResponseCRSs: check the layer metadata/projection, and then the map
    * metadata/projection if necessary (should never get to the error message) */
   msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_FALSE,
                    &epsg_buf);
@@ -1976,18 +1977,19 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj *lp,
           // Make sure it is a GRIB2 band
           if (pszMDI) {
             char szKey[256];
-            sprintf(szKey, "BAND_%d_IDS", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_IDS", nDstBand);
             msSetOutputFormatOption(format, szKey, pszMDI);
 
-            sprintf(szKey, "BAND_%d_DISCIPLINE", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_DISCIPLINE", nDstBand);
             msSetOutputFormatOption(format, szKey,
                                     CSLFetchNameValue(papszMD, "DISCIPLINE"));
 
-            sprintf(szKey, "BAND_%d_PDS_PDTN", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_PDS_PDTN", nDstBand);
             msSetOutputFormatOption(
                 format, szKey, CSLFetchNameValue(papszMD, "GRIB_PDS_PDTN"));
 
-            sprintf(szKey, "BAND_%d_PDS_TEMPLATE_NUMBERS", nDstBand);
+            snprintf(szKey, sizeof(szKey), "BAND_%d_PDS_TEMPLATE_NUMBERS",
+                     nDstBand);
             msSetOutputFormatOption(
                 format, szKey,
                 CSLFetchNameValue(papszMD, "GRIB_PDS_TEMPLATE_NUMBERS"));
@@ -2599,7 +2601,7 @@ this request. Check wcs/ows_enable_request settings.",
     return status;
   }
 
-  /* did we get BBOX values? if not use the exent stored in the
+  /* did we get BBOX values? if not use the extent stored in the
    * coverageMetadataObj */
   if (fabs((params->bbox.maxx - params->bbox.minx)) < 0.000000000001 ||
       fabs(params->bbox.maxy - params->bbox.miny) < 0.000000000001) {

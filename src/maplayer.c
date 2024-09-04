@@ -36,6 +36,8 @@
 #include "mapparser.h"
 #include "mapogcsld.h"
 
+#include "cpl_string.h"
+
 #include <assert.h>
 
 #ifndef cppcheck_assert
@@ -110,15 +112,10 @@ int msLayerRestoreFromScaletokens(layerObj *layer) {
     msFree(layer->filteritem);
     layer->filteritem = layer->orig_st->filteritem;
   }
-  if (layer->orig_st->n_processing) {
-    int i;
-    for (i = 0; i < layer->orig_st->n_processing; i++) {
-      msFree(layer->processing[layer->orig_st->processing_idx[i]]);
-      layer->processing[layer->orig_st->processing_idx[i]] =
-          layer->orig_st->processing[i];
-    }
-    msFree(layer->orig_st->processing);
-    msFree(layer->orig_st->processing_idx);
+  if (layer->orig_st->processing) {
+    CSLDestroy(layer->processing);
+    layer->processing = layer->orig_st->processing;
+    layer->orig_st->processing = NULL;
   }
   msFree(layer->orig_st);
   layer->orig_st = NULL;
@@ -214,22 +211,18 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
                                 allocated expression */
       msFree(tmpval);
     }
-    for (p = 0; p < layer->numprocessing; p++) {
+
+    for (p = 0; layer->processing && layer->processing[p]; p++) {
       if (strstr(layer->processing[p], st->name)) {
         check_st_alloc(layer);
-        layer->orig_st->n_processing++;
-        layer->orig_st->processing =
-            msSmallRealloc(layer->orig_st->processing,
-                           layer->orig_st->n_processing * sizeof(char *));
-        layer->orig_st->processing_idx =
-            msSmallRealloc(layer->orig_st->processing_idx,
-                           layer->orig_st->n_processing * sizeof(int));
-        layer->orig_st->processing[layer->orig_st->n_processing - 1] =
-            layer->processing[p];
-        layer->orig_st->processing_idx[layer->orig_st->n_processing - 1] = p;
-        layer->processing[p] = msStrdup(layer->processing[p]);
-        layer->processing[p] =
-            msReplaceSubstring(layer->processing[p], st->name, ste->value);
+        if (!layer->orig_st->processing) {
+          layer->orig_st->processing = CSLDuplicate(layer->processing);
+        }
+        char *newVal = msStrdup(layer->processing[p]);
+        newVal = msReplaceSubstring(newVal, st->name, ste->value);
+        CPLFree(layer->processing[p]);
+        layer->processing[p] = CPLStrdup(newVal);
+        msFree(newVal);
       }
     }
   }
@@ -242,7 +235,7 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
 int msLayerOpen(layerObj *layer) {
   int rv;
 
-  /* RFC-86 Scale dependant token replacements*/
+  /* RFC-86 Scale dependent token replacements*/
   rv = msLayerApplyScaletokens(layer,
                                (layer->map) ? layer->map->scaledenom : -1);
   if (rv != MS_SUCCESS)
@@ -883,7 +876,7 @@ parse_error:
 static void buildLayerItemList(layerObj *layer) {
   int i, j, k, l;
   /*
-  ** build layer item list, compute item indexes for explicity item references
+  ** build layer item list, compute item indexes for explicitly item references
   *(e.g. classitem) or item bindings
   */
 
@@ -1395,6 +1388,9 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c,
     }
 
     msUpdateStyleFromString(c->styles[0], stylestring);
+    double geo_cellsize = msGetGeoCellSize(map);
+    msUpdateClassScaleFactor(geo_cellsize, map, layer, c);
+
     if (c->styles[0]->symbolname) {
       if ((c->styles[0]->symbol = msGetSymbolIndex(
                &(map->symbolset), c->styles[0]->symbolname, MS_TRUE)) == -1) {
@@ -1412,6 +1408,8 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c,
       c->layer = layer;
     }
     msUpdateClassFromString(c, stylestring);
+    double geo_cellsize = msGetGeoCellSize(map);
+    msUpdateClassScaleFactor(geo_cellsize, map, layer, c);
   } else if (strncasecmp(stylestring, "pen", 3) == 0 ||
              strncasecmp(stylestring, "brush", 5) == 0 ||
              strncasecmp(stylestring, "symbol", 6) == 0 ||
@@ -1460,67 +1458,33 @@ void msLayerSetProcessingKey(layerObj *layer, const char *key,
                              const char *value)
 
 {
-  int len = strlen(key);
-  int i;
-  char *directive = NULL;
-
-  if (value != NULL) {
-    directive = (char *)msSmallMalloc(strlen(key) + strlen(value) + 2);
-    sprintf(directive, "%s=%s", key, value);
-  }
-
-  for (i = 0; i < layer->numprocessing; i++) {
-    if (strncasecmp(key, layer->processing[i], len) == 0 &&
-        layer->processing[i][len] == '=') {
-      free(layer->processing[i]);
-
-      /*
-      ** Either replace the existing entry with a new one or
-      ** clear the entry.
-      */
-      if (directive != NULL)
-        layer->processing[i] = directive;
-      else {
-        layer->processing[i] = layer->processing[layer->numprocessing - 1];
-        layer->processing[layer->numprocessing - 1] = NULL;
-        layer->numprocessing--;
-      }
-      return;
-    }
-  }
-
-  /* otherwise add the directive at the end. */
-
-  if (directive != NULL) {
-    msLayerAddProcessing(layer, directive);
-    free(directive);
-  }
+  layer->processing = CSLSetNameValue(layer->processing, key, value);
 }
 
 void msLayerSubstituteProcessing(layerObj *layer, const char *from,
                                  const char *to) {
   int i;
-  for (i = 0; i < layer->numprocessing; i++) {
-    layer->processing[i] =
-        msCaseReplaceSubstring(layer->processing[i], from, to);
+  for (i = 0; layer->processing && layer->processing[i]; i++) {
+    char *newVal =
+        msCaseReplaceSubstring(msStrdup(layer->processing[i]), from, to);
+    CPLFree(layer->processing[i]);
+    layer->processing[i] = CPLStrdup(newVal);
+    msFree(newVal);
   }
 }
 
 void msLayerAddProcessing(layerObj *layer, const char *directive)
 
 {
-  layer->numprocessing++;
-  if (layer->numprocessing == 1)
-    layer->processing = (char **)msSmallMalloc(2 * sizeof(char *));
-  else
-    layer->processing = (char **)msSmallRealloc(
-        layer->processing, sizeof(char *) * (layer->numprocessing + 1));
-  layer->processing[layer->numprocessing - 1] = msStrdup(directive);
-  layer->processing[layer->numprocessing] = NULL;
+  layer->processing = CSLAddString(layer->processing, directive);
+}
+
+int msLayerGetNumProcessing(const layerObj *layer) {
+  return CSLCount(layer->processing);
 }
 
 const char *msLayerGetProcessing(const layerObj *layer, int proc_index) {
-  if (proc_index < 0 || proc_index >= layer->numprocessing) {
+  if (proc_index < 0 || proc_index >= msLayerGetNumProcessing(layer)) {
     msSetError(MS_CHILDERR, "Invalid processing index.",
                "msLayerGetProcessing()");
     return NULL;
@@ -1530,15 +1494,7 @@ const char *msLayerGetProcessing(const layerObj *layer, int proc_index) {
 }
 
 const char *msLayerGetProcessingKey(const layerObj *layer, const char *key) {
-  int i, len = strlen(key);
-
-  for (i = 0; i < layer->numprocessing; i++) {
-    if (strncasecmp(layer->processing[i], key, len) == 0 &&
-        layer->processing[i][len] == '=')
-      return layer->processing[i] + len + 1;
-  }
-
-  return NULL;
+  return CSLFetchNameValue(layer->processing, key);
 }
 
 /************************************************************************/
@@ -1571,13 +1527,11 @@ int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format) {
 
   return nMaxFeatures;
 }
+
 int msLayerClearProcessing(layerObj *layer) {
-  if (layer->numprocessing > 0) {
-    msFreeCharArray(layer->processing, layer->numprocessing);
-    layer->processing = NULL;
-    layer->numprocessing = 0;
-  }
-  return layer->numprocessing;
+  CSLDestroy(layer->processing);
+  layer->processing = 0;
+  return 0;
 }
 
 int makeTimeFilter(layerObj *lp, const char *timestring, const char *timefield,
@@ -1591,7 +1545,7 @@ int makeTimeFilter(layerObj *lp, const char *timestring, const char *timefield,
   if (!lp || !timestring || !timefield)
     return MS_FALSE;
 
-  /* parse the time string. We support dicrete times (eg 2004-09-21),  */
+  /* parse the time string. We support discrete times (eg 2004-09-21),  */
   /* multiple times (2004-09-21, 2004-09-22, ...) */
   /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
 
@@ -1999,24 +1953,31 @@ int msLayerSupportsSorting(layerObj *layer) {
   return MS_FALSE;
 }
 
+static void msLayerFreeSortBy(layerObj *layer) {
+  for (int i = 0; i < layer->sortBy.nProperties; i++)
+    msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
+  layer->sortBy.properties = NULL;
+  layer->sortBy.nProperties = 0;
+}
+
 /*
  * msLayerSetSort()
  *
  * Copy the sortBy clause passed as an argument into the layer sortBy member.
  */
 void msLayerSetSort(layerObj *layer, const sortByClause *sortBy) {
-  int i;
-  for (i = 0; i < layer->sortBy.nProperties; i++)
-    msFree(layer->sortBy.properties[i].item);
-  msFree(layer->sortBy.properties);
 
-  layer->sortBy.nProperties = sortBy->nProperties;
-  layer->sortBy.properties = (sortByProperties *)msSmallMalloc(
+  sortByProperties *newProperties = (sortByProperties *)msSmallMalloc(
       sortBy->nProperties * sizeof(sortByProperties));
-  for (i = 0; i < layer->sortBy.nProperties; i++) {
-    layer->sortBy.properties[i].item = msStrdup(sortBy->properties[i].item);
-    layer->sortBy.properties[i].sortOrder = sortBy->properties[i].sortOrder;
+  for (int i = 0; i < sortBy->nProperties; i++) {
+    newProperties[i].item = msStrdup(sortBy->properties[i].item);
+    newProperties[i].sortOrder = sortBy->properties[i].sortOrder;
   }
+
+  msLayerFreeSortBy(layer);
+  layer->sortBy.nProperties = sortBy->nProperties;
+  layer->sortBy.properties = newProperties;
 }
 
 /*
@@ -2467,7 +2428,7 @@ int msINLINELayerOpen(layerObj *layer) {
   layerinfo = msINLINECreateLayerInfo();
 
   layer->currentfeature =
-      layer->features; /* point to the begining of the feature list */
+      layer->features; /* point to the beginning of the feature list */
 
   layer->layerinfo = (void *)layerinfo;
 

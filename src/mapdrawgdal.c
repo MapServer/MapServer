@@ -73,6 +73,9 @@ static int msDrawRasterLayerGDAL_16BitClassification(
  * rasterBufferObj setting macros.
  */
 
+#define GAMMA_CORRECT(color, gamma)                                            \
+  (int)(0.5 + 255 * pow((color) / 255.0, (gamma)))
+
 /************************************************************************/
 /*                       msDrawRasterLayerGDAL()                        */
 /************************************************************************/
@@ -127,7 +130,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Test the image format instead of the map format.                */
   /*      Normally the map format and the image format should be the      */
-  /*      same but In somes cases like swf and pdf support, a temporary   */
+  /*      same but In some cases like swf and pdf support, a temporary   */
   /*      GD image object is created and used to render raster layers     */
   /*      and then dumped into the SWF or the PDF file.                   */
   /* -------------------------------------------------------------------- */
@@ -541,6 +544,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     return -1;
   }
 
+  const char *sgamma = msLayerGetProcessingKey(layer, "GAMMA");
+  const double gamma = sgamma ? CPLAtof(sgamma) : 1.0;
+
   /*
    * Setup the mapping between source eight bit pixel values, and the
    * output images color table.  There are two general cases, where the
@@ -654,6 +660,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             rb_cmap[2][j] = pixel.blue;
             rb_cmap[3][j] = 255;
           }
+
+          if (gamma != 1.0) {
+            rb_cmap[0][j] = GAMMA_CORRECT(rb_cmap[0][j], gamma);
+            rb_cmap[1][j] = GAMMA_CORRECT(rb_cmap[1][j], gamma);
+            rb_cmap[2][j] = GAMMA_CORRECT(rb_cmap[2][j], gamma);
+          }
         }
       }
     }
@@ -684,6 +696,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         rb_cmap[1][j] = sEntry.c2;
         rb_cmap[2][j] = sEntry.c3;
         rb_cmap[3][j] = sEntry.c4;
+        if (gamma != 1.0) {
+          rb_cmap[0][j] = GAMMA_CORRECT(rb_cmap[0][j], gamma);
+          rb_cmap[1][j] = GAMMA_CORRECT(rb_cmap[1][j], gamma);
+          rb_cmap[2][j] = GAMMA_CORRECT(rb_cmap[2][j], gamma);
+        }
       }
     }
   }
@@ -825,21 +842,33 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       for (int j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++) {
         if (SKIP_MASK(j, i) || (pbIsNoDataBuffer && pbIsNoDataBuffer[k]))
           continue;
-        if (MS_VALID_COLOR(layer->offsite) &&
-            pabyRaw1[k] == layer->offsite.red &&
-            pabyRaw2[k] == layer->offsite.green &&
-            pabyRaw3[k] == layer->offsite.blue)
+        int red = pabyRaw1[k];
+        int green = pabyRaw2[k];
+        int blue = pabyRaw3[k];
+        if (MS_VALID_COLOR(layer->offsite) && red == layer->offsite.red &&
+            green == layer->offsite.green && blue == layer->offsite.blue)
           continue;
 
-        if (bHaveRGBNoData && pabyRaw1[k] == nNoData1 &&
-            pabyRaw2[k] == nNoData2 && pabyRaw3[k] == nNoData3)
+        if (bHaveRGBNoData && red == nNoData1 && green == nNoData2 &&
+            blue == nNoData3)
           continue;
 
         if (pabyRawAlpha == NULL || pabyRawAlpha[k] == 255) {
-          RB_SET_PIXEL(rb, j, i, pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], 255);
+          if (gamma != 1.0) {
+            red = GAMMA_CORRECT(red, gamma);
+            green = GAMMA_CORRECT(green, gamma);
+            blue = GAMMA_CORRECT(blue, gamma);
+          }
+
+          RB_SET_PIXEL(rb, j, i, red, green, blue, 255);
         } else if (pabyRawAlpha[k] != 0) {
-          RB_MIX_PIXEL(rb, j, i, pabyRaw1[k], pabyRaw2[k], pabyRaw3[k],
-                       pabyRawAlpha[k]);
+          if (gamma != 1.0) {
+            red = GAMMA_CORRECT(red, gamma);
+            green = GAMMA_CORRECT(green, gamma);
+            blue = GAMMA_CORRECT(blue, gamma);
+          }
+
+          RB_MIX_PIXEL(rb, j, i, red, green, blue, pabyRawAlpha[k]);
         }
       }
     }
@@ -1322,7 +1351,7 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
   /*      We need to do some scaling.  Will load into either a 16bit      */
   /*      unsigned or a floating point buffer depending on the source     */
   /*      data.  We offer a special case for 16U data because it is       */
-  /*      common and it is a substantial win to avoid alot of floating    */
+  /*      common and it is a substantial win to avoid a lot of floating    */
   /*      point operations on it.                                         */
   /* -------------------------------------------------------------------- */
   /* TODO */
@@ -1370,12 +1399,14 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
   /* -------------------------------------------------------------------- */
   for (iColorIndex = 0; iColorIndex < band_count; iColorIndex++) {
     unsigned char *pabyBuffer;
-    double dfScaleMin = 0.0, dfScaleMax = 255.0, dfScaleRatio, dfNoDataValue;
+    double dfScaleMin = 0.0, dfScaleMax = 255.0, dfScaleRatio = 0,
+           dfNoDataValue;
     const char *pszScaleInfo;
     float *pafRawData;
     int nPixelCount = dst_xsize * dst_ysize, i, bGotNoData = FALSE;
     GDALRasterBandH hBand = GDALGetRasterBand(hDS, band_numbers[iColorIndex]);
     pszScaleInfo = CSLFetchNameValue(layer->processing, "SCALE");
+    const bool bIsAllBandScale = pszScaleInfo != NULL;
     if (pszScaleInfo == NULL) {
       char szBandScalingName[20];
 
@@ -1388,7 +1419,17 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
 
       papszTokens = CSLTokenizeStringComplex(pszScaleInfo, " ,", FALSE, FALSE);
       if (CSLCount(papszTokens) == 1 && EQUAL(papszTokens[0], "AUTO")) {
-        dfScaleMin = dfScaleMax = 0.0;
+        if (bIsAllBandScale &&
+            GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand &&
+            GDALGetRasterDataType(hBand) == GDT_Byte) {
+          // Do not try to scale the alpha band, as it is going to produce
+          // wrong results
+          dfScaleMin = 0.0;
+          dfScaleMax = 255.0;
+          dfScaleRatio = 1.0;
+        } else {
+          dfScaleMin = dfScaleMax = 0.0;
+        }
       } else if (CSLCount(papszTokens) != 2) {
         free(pafWholeRawData);
         CSLDestroy(papszTokens);
@@ -1451,7 +1492,8 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
     /* -------------------------------------------------------------------- */
     /*      Now process the data.                                           */
     /* -------------------------------------------------------------------- */
-    dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
+    if (dfScaleRatio == 0.0)
+      dfScaleRatio = 256.0 / (dfScaleMax - dfScaleMin);
     pabyBuffer = pabyWholeBuffer + iColorIndex * nPixelCount;
 
     if (iColorIndex == 0 && bGotNoData)
@@ -1577,7 +1619,7 @@ int msGetGDALGeoTransform(GDALDatasetH hDS, mapObj *map, layerObj *layer,
         fileExtension = msStrdup(strrchr(szPath, '.') + 1);
       }
     }
-    /* common behaviour with worldfile generated from basename + .wld */
+    /* common behavior with worldfile generated from basename + .wld */
     else {
       fullPath = GDALGetDescription(hDS);
       fileExtension = msStrdup("wld");
@@ -1589,7 +1631,8 @@ int msGetGDALGeoTransform(GDALDatasetH hDS, mapObj *map, layerObj *layer,
     if (success && layer->debug >= MS_DEBUGLEVEL_VVV) {
       msDebug("Worldfile location: %s.\n", fullPath);
     } else if (layer->debug >= MS_DEBUGLEVEL_VVV) {
-      msDebug("Failed using worldfile location: %s.\n", fullPath);
+      msDebug("Failed using worldfile location: %s.\n",
+              fullPath ? fullPath : "(null)");
     }
 
     msFree(fileExtension);
@@ -1735,7 +1778,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Do we have nodata values?                                       */
   /* -------------------------------------------------------------------- */
-  f_nodatas = (float *)calloc(sizeof(float), band_count);
+  f_nodatas = (float *)calloc(band_count, sizeof(float));
   if (f_nodatas == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n",
                "msDrawRasterLayerGDAL_RawMode()", __FILE__, __LINE__,
@@ -2065,6 +2108,9 @@ static int msDrawRasterLayerGDAL_16BitClassification(
     msGettimeofday(&starttime, NULL);
   }
 
+  const char *sgamma = msLayerGetProcessingKey(layer, "GAMMA");
+  const double gamma = sgamma ? CPLAtof(sgamma) : 1.0;
+
   lastC = -1;
   for (i = 0; i < nBucketCount; i++) {
     double dfOriginalValue;
@@ -2118,6 +2164,12 @@ static int msDrawRasterLayerGDAL_16BitClassification(
           rb_cmap[2][i] = layer->class[c]->styles[styleindex]->color.blue;
           rb_cmap[3][i] =
               (255 * layer->class[c] -> styles[styleindex] -> opacity / 100);
+
+          if (gamma != 1.0) {
+            rb_cmap[0][i] = GAMMA_CORRECT(rb_cmap[0][i], gamma);
+            rb_cmap[1][i] = GAMMA_CORRECT(rb_cmap[1][i], gamma);
+            rb_cmap[2][i] = GAMMA_CORRECT(rb_cmap[2][i], gamma);
+          }
         }
       }
     }

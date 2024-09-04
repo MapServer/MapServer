@@ -20,7 +20,7 @@ MAP
         DATA "data/label_alias_offset.shp"
         LABELITEM "label"
         CLASS
-            # make sure pnt7 gets labelling priority
+            # make sure pnt7 gets labeling priority
             EXPRESSION ([priority] = 7)
             LABEL
                 FONT "default"

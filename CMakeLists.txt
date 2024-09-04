@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0...3.23)
+cmake_minimum_required(VERSION 3.16...3.29)
 
 project (MapServer)
 
@@ -16,7 +16,7 @@ include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
 set (MapServer_VERSION_MAJOR 8)
-set (MapServer_VERSION_MINOR 1)
+set (MapServer_VERSION_MINOR 3)
 set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
 
@@ -82,10 +82,10 @@ endforeach()
 
 macro (ms_link_libraries)
   if(BUILD_DYNAMIC)
-    target_link_libraries(mapserver ${ARGV})
+    target_link_libraries(mapserver PRIVATE ${ARGV})
   endif(BUILD_DYNAMIC)
   if(BUILD_STATIC)
-    target_link_libraries(mapserver_static ${ARGV})
+    target_link_libraries(mapserver_static PRIVATE ${ARGV})
   endif(BUILD_STATIC)
 endmacro()
 
@@ -121,6 +121,10 @@ check_function_exists("strlcpy"  HAVE_STRLCPY)
 check_function_exists("strlen"  HAVE_STRLEN)
 check_function_exists("strncasecmp"  HAVE_STRNCASECMP)
 
+IF((HAVE_STRLCAT OR HAVE_STRLCPY) AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+    add_definitions(-D_DEFAULT_SOURCE)
+ENDIF()
+
 check_symbol_exists(vsnprintf stdio.h HAVE_VSNPRINTF)
 IF(NOT HAVE_VSNPRINTF)
     check_function_exists("vsnprintf"  HAVE_VSNPRINTF)
@@ -143,12 +147,12 @@ int main(int argc, char **argv) {
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-#options suported by the cmake builder
+#options supported by the cmake builder
 option(WITH_PROTOBUFC "Choose if protocol buffers support should be built in (required for vector tiles)" ON)
 option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
 option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
 option(WITH_WMS "Enable WMS Server support (requires PROJ support)" ON)
-option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for right-to-left languages) (requires HARFBUZZ)" ON)
+option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (useful for right-to-left languages) (requires HARFBUZZ)" ON)
 option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
 option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
@@ -178,7 +182,7 @@ option(WITH_ORACLE_PLUGIN "include oracle spatial database input support as plug
 option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
-option(WITH_V8 "include javacript v8 scripting" OFF)
+option(WITH_V8 "include javascript v8 scripting" OFF)
 option(WITH_PIXMAN "use (experimental) support for pixman for layer compositing operations" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
@@ -269,10 +273,10 @@ src/renderers/agg/src/clipper.cpp
 include_directories(src/renderers/agg/include)
 
 set(v8_SOURCES
-  src/mapscript/v8/v8_object_wrap.hpp  
+  src/mapscript/v8/v8_object_wrap.hpp
   src/mapscript/v8/point.cpp
   src/mapscript/v8/line.cpp
-  src/mapscript/v8/shape.cpp  
+  src/mapscript/v8/shape.cpp
   src/mapscript/v8/v8_mapscript.cpp
   src/mapv8.cpp
 )
@@ -286,8 +290,23 @@ src/flatgeobuf/packedrtree.cpp
 )
 include_directories(src/flatgeobuf/include)
 
+find_package(PCRE2)
+set(WITH_PCRE2_DEFAULT OFF)
+if(WIN32 AND (NOT DEFINED REGEX_DIR) AND PCRE2_FOUND)
+  set(WITH_PCRE2_DEFAULT ON)
+endif()
+option(WITH_PCRE2 "Use PCRE2 instead of POSIX regex" ${PCRE2_FOUND})
+if(WITH_PCRE2 AND NOT PCRE2_FOUND)
+    message(FATAL_ERROR "WITH_PCRE2=ON set, but PCRE2 not found")
+endif()
+
 #add_definitions(-DHASH_DEBUG=1)
-if(WIN32)
+set(REGEX_SOURCES "")
+
+if(WIN32 AND NOT WITH_PCRE2)
+  if(NOT DEFINED REGEX_DIR)
+      message(FATAL_ERROR "Variable REGEX_DIR should point to regex-0.12 source directory, or PCRE2 library should be available")
+  endif()
   set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
   include_directories(${REGEX_DIR})
   add_definitions(-DREGEX_MALLOC -DUSE_GENERIC_MS_NINT -DHAVE_STRING_H)
@@ -303,11 +322,9 @@ if(WIN32)
     # mingw provides stdlib.h
     add_definitions(-DSTDC_HEADERS=1)
   endif(MINGW)
-else(WIN32)
-  set(REGEX_SOURCES "")
-endif(WIN32)
+endif()
 
-set(mapserver_SOURCES src/fontcache.c 
+set(mapserver_SOURCES src/fontcache.c
 src/cgiutil.c src/mapgeos.c src/maporaclespatial.c src/mapsearch.c src/mapwms.cpp src/classobject.c
 src/mapgml.c src/mapoutput.c src/mapwmslayer.c src/layerobject.c src/mapgraticule.c src/mapows.c src/mapogcapi.cpp
 src/mapservutil.c src/mapxbase.c src/maphash.c src/mapowscommon.c src/mapshape.c src/mapxml.c src/mapbits.c
@@ -374,7 +391,7 @@ if(BUILD_DYNAMIC)
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
-) 
+)
 endif(BUILD_DYNAMIC)
 
 if(BUILD_STATIC)
@@ -382,7 +399,7 @@ if(BUILD_STATIC)
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 2
-  ) 
+  )
 endif(BUILD_STATIC)
 
 #SOVERSION is not necessarily the same as the
@@ -417,9 +434,9 @@ add_executable(shptreetst src/apps/shptreetst.c)
 target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(USE_EXTENDED_DEBUG 1)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 find_package(PNG)
 if(PNG_FOUND)
@@ -552,6 +569,11 @@ if(WITH_MYSQL)
     ms_link_libraries( ${MYSQL_LIBRARY})
     list(APPEND ALL_INCLUDE_DIRS ${MYSQL_INCLUDE_DIR})
     set (USE_MYSQL 1)
+    if (WIN32)
+        find_package(Zstd REQUIRED CONFIG)
+        include_directories(${ZSTD_INCLUDE_DIRS})
+        ms_link_libraries(zstd::libzstd_shared)
+    endif (WIN32)
   else(MYSQL_FOUND)
     report_optional_not_found(MYSQL)
   endif(MYSQL_FOUND)
@@ -793,7 +815,7 @@ if(WITH_XMLMAPFILE)
    if(NOT USE_LIBXML2)
     report_dependency_error(KML LIBXML2)
    endif(NOT USE_LIBXML2)
-  
+
   #check for xslt and exslt
   find_package(LibXslt)
   if(LIBXSLT_FOUND)
@@ -857,6 +879,11 @@ if(WITH_V8)
       - add the V8 install directory to the CMAKE_PREFIX_PATH variable (-DCMAKE_PREFIX_PATH=\"/path/to/${component}-install-dir;/path/to/other/dirs\") ")
   ENDIF()
 ENDIF(WITH_V8)
+
+if(WITH_PCRE2)
+  SET(USE_PCRE2 1)
+  ms_link_libraries(PCRE2::PCRE2-POSIX)
+endif()
 
 if(WITH_PHPNG)
    add_subdirectory("src/mapscript/phpng")
@@ -951,6 +978,7 @@ message(STATUS "  * png: ${PNG_LIBRARY}")
 message(STATUS "  * jpeg: ${JPEG_LIBRARY}")
 message(STATUS "  * freetype: ${FREETYPE_LIBRARY}")
 message(STATUS " * Optional components")
+status_optional_component("PCRE2" "${USE_PCRE2}" "${PCRE2-POSIX_LIBRARY}")
 status_optional_component("GIF" "${USE_GIF}" "${GIF_LIBRARY}")
 status_optional_component("MYSQL" "${USE_MYSQL}" "${MYSQL_LIBRARY}")
 status_optional_component("FRIBIDI" "${USE_FRIBIDI}" "${FRIBIDI_LIBRARY}")
@@ -1013,6 +1041,10 @@ include_directories("${PROJECT_BINARY_DIR}")
 if(WIN32)
 set(REGEX_MALLOC 1)
 set(USE_GENERIC_MS_NINT 1)
+
+# FIXME: https://stackoverflow.com/a/65321305 this handles older MSVC
+# SDKs that are used by Conda Forge windows builds
+add_definitions(-D_XKEYCHECK_H=1)
 endif(WIN32)
 
 
@@ -1131,7 +1163,6 @@ option(BUILD_TESTING "Build unit test" ON)
 if(BUILD_DYNAMIC AND BUILD_TESTING)
     enable_testing()
     add_executable(unit_test tests/unit/test.cpp)
-    target_include_directories(unit_test PRIVATE src)
     target_link_libraries(unit_test PRIVATE mapserver)
     add_test(NAME unit_test COMMAND unit_test)
 endif()

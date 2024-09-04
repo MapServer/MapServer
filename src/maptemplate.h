@@ -91,7 +91,7 @@ enum modes {
 /* struct mapservObj
  * Global structure used by templates and mapserver CGI interface.
  *
- * This structur was created to seperate template functionality
+ * This structure was created to separate template functionality
  * from the main mapserv file. Instead of moving all template
  * related functions in a new file (maptemplate.c) and change
  * their signatures to pass all global variables, we created this
@@ -111,7 +111,7 @@ typedef struct {
   char **Layers;
   char *icon; /* layer:class combination that defines a legend icon */
 
-  int NumLayers; /* number of layers specfied by a use */
+  int NumLayers; /* number of layers specified by a use */
   int MaxLayers; /* Allocated size of Layers[] array */
 
   layerObj *resultlayer;

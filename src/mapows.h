@@ -418,7 +418,7 @@ typedef struct {
   char *name;             /* name of the geometry (type of GML property) */
   char *type;             /* raw type for these geometries
                              (point|multipoint|line|multiline|polygon|multipolygon */
-  int occurmin, occurmax; /* number of occurances (default 0,1) */
+  int occurmin, occurmax; /* number of occurrences (default 0,1) */
 } gmlGeometryObj;
 
 typedef struct {
@@ -547,7 +547,7 @@ wfsParamsObj *msWFSCreateParamsObj(void);
 int msWFSHandleUpdateSequence(mapObj *map, wfsParamsObj *wfsparams,
                               const char *pszFunction);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
-int msWFSIsLayerSupported(layerObj *lp);
+int msIsLayerSupportedForWFSOrOAPIF(layerObj *lp);
 int msWFSException(mapObj *map, const char *locator, const char *code,
                    const char *version);
 

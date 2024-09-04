@@ -34,7 +34,7 @@
 /*******************************************************************************
 *                                                                              *
 * This is a translation of the Delphi Clipper library and the naming style     *
-* used has retained a Delphi flavour.                                          *
+* used has retained a Delphi flavor.                                          *
 *                                                                              *
 *******************************************************************************/
 
@@ -1326,7 +1326,7 @@ void Clipper::DisposeOutRec(PolyOutList::size_type index, bool ignorePts)
 void Clipper::SetWindingCount(TEdge &edge)
 {
   TEdge *e = edge.prevInAEL;
-  //find the edge of the same polytype that immediately preceeds 'edge' in AEL
+  //find the edge of the same polytype that immediately precedes 'edge' in AEL
   while ( e  && e->polyType != edge.polyType ) e = e->prevInAEL;
   if ( !e )
   {
@@ -2286,7 +2286,7 @@ void Clipper::ProcessHorizontal(TEdge *horzEdge)
       {
         //An overlapping horizontal edge. Overlapping horizontal edges are
         //processed as if layered with the current horizontal edge (horizEdge)
-        //being infinitesimally lower that the next (e). Therfore, we
+        //being infinitesimally lower that the next (e). Therefore, we
         //intersect with e only if e.xcurr is within the bounds of horzEdge ...
         if( dir == dLeftToRight )
           IntersectEdges( horzEdge , e, IntPoint(e->xcurr, horzEdge->ycurr),
@@ -3105,7 +3105,7 @@ PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
         if (len > 1 && m_p[m_i][0].X == m_p[m_i][len - 1].X &&
             m_p[m_i][0].Y == m_p[m_i][len-1].Y) len--;
 
-        //when 'shrinking' polygons - to minimize artefacts
+        //when 'shrinking' polygons - to minimize artifacts
         //strip those polygons that have an area < pi * delta^2 ...
         double a1 = Area(in_polys[m_i]);
         if (delta < 0) { if (a1 > 0 && a1 < deltaSq *pi) len = 0; }

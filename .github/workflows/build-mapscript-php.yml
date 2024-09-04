@@ -3,7 +3,12 @@ name: Build and test PHP MapScript
 on:
   push:
     branches:
-      - 'main'
+      - '*'
+    except:
+      - /^(cherry-pick-)?backport-\d+-to-/
+  pull_request:
+    branches:
+      - '*'
     except:
       - /^(cherry-pick-)?backport-\d+-to-/
 
@@ -19,7 +24,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        php-version: [8.1, 8.2]
+        php-version: [8.3, 8.2]
     env:
       IGNORE_COMPARISON_RESULT_ON_CI: 'true'
 
@@ -34,7 +39,7 @@ jobs:
 
       - name: Setup PHP
         run: |
-          # for pre-installed software see 
+          # for pre-installed software see
           # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2004-Readme.md
           # both swig and php are included, so removed these
           sudo apt-get -qq remove "php*-cli" "php*-dev"
@@ -44,7 +49,7 @@ jobs:
           sudo apt-get -qq install php${{ matrix.php-version }}-cli php${{ matrix.php-version }}-dev
 
       - name: Install dependencies
-        run: ./ci/setup.sh
+        run: ./ci/ubuntu/setup.sh
 
       - name: Build
-        run: ./ci/build.sh
+        run: ./ci/ubuntu/build.sh

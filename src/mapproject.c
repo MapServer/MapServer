@@ -70,6 +70,7 @@ typedef struct {
 } pjCacheEntry;
 
 struct projectionContext {
+  void *thread_id;
   PJ_CONTEXT *proj_ctx;
   unsigned ms_proj_data_change_counter;
   int ref_count;
@@ -341,6 +342,7 @@ static void msProjErrorLogger(void *user_data, int level, const char *message) {
 projectionContext *msProjectionContextCreate(void) {
   projectionContext *ctx =
       (projectionContext *)msSmallCalloc(1, sizeof(projectionContext));
+  ctx->thread_id = msGetThreadId();
   ctx->proj_ctx = proj_context_create();
   if (ctx->proj_ctx == NULL) {
     msFree(ctx);
@@ -430,7 +432,7 @@ reprojectionObj *msProjectCreateReprojector(projectionObj *in,
     PJ *pj = NULL;
 
     if ((in == NULL || in->proj == NULL) && out &&
-        out->proj) { /* input coordinates are lat/lon */
+        out->proj) { /* input coordinates are lat/long */
       PJ *source_crs = getBaseGeographicCRS(out);
       projectionObj in_modified;
       memset(&in_modified, 0, sizeof(in_modified));
@@ -521,14 +523,40 @@ void msFreeProjectionExceptContext(projectionObj *p) {
 }
 
 /************************************************************************/
+/*                      msProjectionContextClone()                      */
+/************************************************************************/
+
+static projectionContext *
+msProjectionContextClone(const projectionContext *ctxSrc) {
+  projectionContext *ctx = msProjectionContextCreate();
+  if (ctx) {
+    ctx->pj_cache_size = ctxSrc->pj_cache_size;
+    for (int i = 0; i < ctx->pj_cache_size; ++i) {
+      pjCacheEntry *entryDst = &(ctx->pj_cache[i]);
+      const pjCacheEntry *entrySrc = &(ctxSrc->pj_cache[i]);
+      entryDst->inStr = msStrdup(entrySrc->inStr);
+      entryDst->outStr = msStrdup(entrySrc->outStr);
+      entryDst->pj = proj_clone(
+          /* use target PROJ context for cloning */
+          ctx->proj_ctx, entrySrc->pj);
+    }
+  }
+  return ctx;
+}
+
+/************************************************************************/
 /*                 msProjectionInheritContextFrom()                     */
 /************************************************************************/
 
 void msProjectionInheritContextFrom(projectionObj *pDst,
                                     const projectionObj *pSrc) {
   if (pDst->proj_ctx == NULL && pSrc->proj_ctx != NULL) {
-    pDst->proj_ctx = pSrc->proj_ctx;
-    pDst->proj_ctx->ref_count++;
+    if (pSrc->proj_ctx->thread_id == msGetThreadId()) {
+      pDst->proj_ctx = pSrc->proj_ctx;
+      pDst->proj_ctx->ref_count++;
+    } else {
+      pDst->proj_ctx = msProjectionContextClone(pSrc->proj_ctx);
+    }
   }
 }
 
@@ -727,16 +755,25 @@ int msProcessProjection(projectionObj *p) {
       return (-1);
     }
   } else {
+    // Reserve one extra slot for terminating "type=crs"
     char **args = (char **)msSmallMalloc(sizeof(char *) * (p->numargs + 1));
-    memcpy(args, p->args, sizeof(char *) * p->numargs);
+    int numargs = 0;
+    for (int i = 0; i < p->numargs; ++i) {
+      // PROJ doesn't like extraneous parameters that it doesn't recognize
+      // when initializing a CRS from a +init=epsg:xxxx string
+      // Cf https://github.com/OSGeo/PROJ/issues/4203
+      if (strstr(p->args[i], "epsgaxis=") == NULL) {
+        args[numargs] = p->args[i];
+        ++numargs;
+      }
+    }
 
 #if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR < 2
     /* PROJ lookups are faster with EPSG in uppercase. Fixed in PROJ 6.2 */
     /* Do that only for those versions, as it can create confusion if using */
     /* a real old-style 'epsg' file... */
     char szTemp[24];
-    if (p->numargs &&
-        strncmp(args[0], "init=epsg:", strlen("init=epsg:")) == 0 &&
+    if (numargs && strncmp(args[0], "init=epsg:", strlen("init=epsg:")) == 0 &&
         strlen(args[0]) < 24) {
       strcpy(szTemp, "init=EPSG:");
       strcat(szTemp, args[0] + strlen("init=epsg:"));
@@ -744,14 +781,15 @@ int msProcessProjection(projectionObj *p) {
     }
 #endif
 
-    args[p->numargs] = (char *)"type=crs";
+    args[numargs] = (char *)"type=crs";
+    ++numargs;
+
 #if 0
-      for( int i = 0; i <  p->numargs + 1; i++ )
+      for( int i = 0; i < numargs; i++ )
           fprintf(stderr, "%s ", args[i]);
       fprintf(stderr, "\n");
 #endif
-    if (!(p->proj =
-              proj_create_argv(p->proj_ctx->proj_ctx, p->numargs + 1, args))) {
+    if (!(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, numargs, args))) {
       int l_pj_errno = proj_context_errno(p->proj_ctx->proj_ctx);
       if (p->numargs > 1) {
         msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
@@ -1665,7 +1703,7 @@ int msProjectRectAsPolygon(reprojectionObj *reprojector, rectObj *rect) {
   /* If there is more than two sample points we will also get samples from the
    * diagonal line */
   ringPoints =
-      (pointObj *)calloc(sizeof(pointObj), NUMBER_OF_SAMPLE_POINTS * 5 + 3);
+      (pointObj *)calloc(NUMBER_OF_SAMPLE_POINTS * 5 + 3, sizeof(pointObj));
   ring.point = ringPoints;
   ring.numpoints = 0;
 
@@ -2378,7 +2416,7 @@ static int ConvertProjUnitStringToMS(const char *pszProjUnit) {
 /*           int GetMapserverUnitUsingProj(projectionObj *psProj)       */
 /*                                                                      */
 /*      Return a mapserver unit corresponding to the projection         */
-/*      passed. Retunr -1 on failure                                    */
+/*      passed. Return -1 on failure                                    */
 /************************************************************************/
 int GetMapserverUnitUsingProj(projectionObj *psProj) {
   if (msProjIsGeographicCRS(psProj))

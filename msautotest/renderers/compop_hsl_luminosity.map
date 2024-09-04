@@ -1,0 +1,25 @@
+# RUN_PARMS: compop_hsl_luminosity.agg.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: compop_hsl_luminosity.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA ../gdal/data/rgba.tif
+  PROCESSING "BANDS=1,2,3"
+  PROCESSING "USE_MASK_BAND=NO"
+  COMPOSITE
+    OPACITY 100
+    COMPOP "hsl-luminosity"
+  END
+END
+
+END # of map file

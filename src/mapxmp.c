@@ -101,6 +101,7 @@ int msXmpPresent(mapObj *map) {
   return rv;
 
 #else
+  (void)map;
   return MS_FALSE;
 #endif
 }
@@ -278,6 +279,8 @@ int msXmpWrite(mapObj *map, const char *filename) {
   return MS_SUCCESS;
 
 #else
+  (void)map;
+  (void)filename;
   return MS_FAILURE;
 #endif
 }

@@ -63,6 +63,9 @@
 
 #include "renderers/agg/include/agg_conv_clipper.h"
 
+#include "cpl_conv.h"   // CPLGetConfigOption
+#include "cpl_string.h" // CPLTestBool
+
 #ifdef USE_PIXMAN
 #include <pixman.h>
 #endif
@@ -291,15 +294,14 @@ bool decompose_ft_outline(const FT_Outline &outline, bool flip_y,
 
   FT_Vector *point;
   FT_Vector *limit;
-  char *tags;
 
-  int n;     // index of contour in outline
-  int first; // index of first point in contour
-  char tag;  // current point's state
+  unsigned n;     // index of contour in outline
+  unsigned first; // index of first point in contour
+  char tag;       // current point's state
 
   first = 0;
 
-  for (n = 0; n < outline.n_contours; n++) {
+  for (n = 0; n < (unsigned)outline.n_contours; n++) {
     int last; // index of last point in contour
 
     last = outline.contours[n];
@@ -310,7 +312,7 @@ bool decompose_ft_outline(const FT_Outline &outline, bool flip_y,
     FT_Vector v_control = v_start;
 
     point = outline.points + first;
-    tags = outline.tags + first;
+    auto tags = outline.tags + first;
     tag = FT_CURVE_TAG(tags[0]);
 
     // A contour cannot start with a cubic control point!
@@ -1007,7 +1009,7 @@ than height for certain hatch angles */
     // in the general case there will only be two intersections
     // so pt[4] should be sufficient to store the coordinates of the
     // intersection, but we allocate pt[8] to treat the special and
-    // rare/unfortunate case when the line is a perfect diagonal (and therfore
+    // rare/unfortunate case when the line is a perfect diagonal (and therefore
     // intersects all four sides) note that the order for testing is important
     // in this case so that the first two intersection points actually
     // correspond to the diagonal and not a degenerate line
@@ -1233,6 +1235,14 @@ static pixman_op_t ms2pixman_compop(CompositingOperation c) {
     return PIXMAN_OP_DIFFERENCE;
   case MS_COMPOP_EXCLUSION:
     return PIXMAN_OP_EXCLUSION;
+  case MS_COMPOP_HSL_HUE:
+    return PIXMAN_OP_HSL_HUE;
+  case MS_COMPOP_HSL_LUMINOSITY:
+    return PIXMAN_OP_HSL_LUMINOSITY;
+  case MS_COMPOP_HSL_SATURATION:
+    return PIXMAN_OP_HSL_SATURATION;
+  case MS_COMPOP_HSL_COLOR:
+    return PIXMAN_OP_HSL_COLOR;
   case MS_COMPOP_INVERT:
   case MS_COMPOP_INVERT_RGB:
   case MS_COMPOP_MINUS:
@@ -1241,7 +1251,8 @@ static pixman_op_t ms2pixman_compop(CompositingOperation c) {
     return PIXMAN_OP_OVER;
   }
 }
-#else
+#endif
+
 static mapserver::comp_op_e ms2agg_compop(CompositingOperation c) {
   switch (c) {
   case MS_COMPOP_CLEAR:
@@ -1300,17 +1311,26 @@ static mapserver::comp_op_e ms2agg_compop(CompositingOperation c) {
     return mapserver::comp_op_invert;
   case MS_COMPOP_INVERT_RGB:
     return mapserver::comp_op_invert_rgb;
+  case MS_COMPOP_HSL_HUE:
+    return mapserver::comp_op_hsl_hue;
+  case MS_COMPOP_HSL_LUMINOSITY:
+    return mapserver::comp_op_hsl_luminosity;
+  case MS_COMPOP_HSL_SATURATION:
+    return mapserver::comp_op_hsl_saturation;
+  case MS_COMPOP_HSL_COLOR:
+    return mapserver::comp_op_hsl_color;
   default:
     return mapserver::comp_op_src_over;
   }
 }
-#endif
 
-int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay,
-                             CompositingOperation comp, int opacity) {
+#ifdef USE_PIXMAN
+static int aggCompositeRasterBufferPixman(imageObj *dest,
+                                          rasterBufferObj *overlay,
+                                          CompositingOperation comp,
+                                          int opacity) {
   assert(overlay->type == MS_BUFFER_BYTE_RGBA);
   AGG2Renderer *r = AGG_RENDERER(dest);
-#ifdef USE_PIXMAN
   pixman_image_t *si = pixman_image_create_bits(
       PIXMAN_a8r8g8b8, overlay->width, overlay->height,
       (uint32_t *)overlay->data.rgba.pixels, overlay->data.rgba.row_step);
@@ -1324,7 +1344,7 @@ int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay,
     if (opacity == 100) {
       alpha_mask_i_ptr = NULL;
     } else {
-      unsigned char alpha = (unsigned char)(opacity * 2.55);
+      unsigned char alpha = (unsigned char)(MS_NINT(opacity * 2.55));
       if (!alpha_mask_i) {
         alpha_mask = (unsigned char *)msSmallMalloc(dest->width * dest->height);
         alpha_mask_i =
@@ -1344,21 +1364,29 @@ int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay,
     msFree(alpha_mask);
   }
   return MS_SUCCESS;
-#else
+}
+#endif
+
+static int aggCompositeRasterBufferNoPixman(imageObj *dest,
+                                            rasterBufferObj *overlay,
+                                            CompositingOperation comp,
+                                            int opacity) {
+  assert(overlay->type == MS_BUFFER_BYTE_RGBA);
+  AGG2Renderer *r = AGG_RENDERER(dest);
   rendering_buffer b(overlay->data.rgba.pixels, overlay->width, overlay->height,
                      overlay->data.rgba.row_step);
   pixel_format pf(b);
   mapserver::comp_op_e comp_op = ms2agg_compop(comp);
   if (comp_op == mapserver::comp_op_src_over) {
-    r->m_renderer_base.blend_from(pf, 0, 0, 0, unsigned(opacity * 2.55));
+    r->m_renderer_base.blend_from(pf, 0, 0, 0,
+                                  unsigned(MS_NINT(opacity * 2.55)));
   } else {
     compop_pixel_format pixf(r->m_rendering_buffer);
     compop_renderer_base ren(pixf);
     pixf.comp_op(comp_op);
-    ren.blend_from(pf, 0, 0, 0, unsigned(opacity * 2.55));
+    ren.blend_from(pf, 0, 0, 0, unsigned(MS_NINT(opacity * 2.55)));
   }
   return MS_SUCCESS;
-#endif
 }
 
 void msApplyBlurringCompositingFilter(rasterBufferObj *rb,
@@ -1370,7 +1398,13 @@ void msApplyBlurringCompositingFilter(rasterBufferObj *rb,
 }
 
 int msPopulateRendererVTableAGG(rendererVTableObj *renderer) {
-  renderer->compositeRasterBuffer = &aggCompositeRasterBuffer;
+  renderer->compositeRasterBuffer = &aggCompositeRasterBufferNoPixman;
+#ifdef USE_PIXMAN
+  const char *pszUsePixman = CPLGetConfigOption("MS_USE_PIXMAN", "YES");
+  if (CPLTestBool(pszUsePixman)) {
+    renderer->compositeRasterBuffer = &aggCompositeRasterBufferPixman;
+  }
+#endif
   renderer->supports_pixel_buffer = 1;
   renderer->use_imagecache = 0;
   renderer->supports_clipping = 0;

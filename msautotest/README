@@ -4,3 +4,9 @@ See:
   
 Send new tests via MapServer Issue Tracker at https://github.com/MapServer/MapServer/issues/
 (use the label 'Msautotest').
+
+Note that a number of tests expect to be run under Ubuntu 20.04 with the prerequisites
+of ci/setup.sh to yield the expected test results. A Vagrant environment
+(https://mapserver.org/development/tests/vagrant.html) can be conveniently used
+to meet those prerequisites.
+

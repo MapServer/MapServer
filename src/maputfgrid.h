@@ -81,7 +81,7 @@ public:
 private:
   //--------------------------------------------------------------------
   static AGG_INLINE void copy_or_blend_pix(value_type *p, const color_type &c,
-                                           unsigned cover) {
+                                           unsigned /*cover*/) {
     *p = c.v;
   }
 
@@ -144,7 +144,7 @@ public:
 
   //--------------------------------------------------------------------
   AGG_INLINE void blend_pixel(int x, int y, const color_type &c,
-                              mapserver::int8u cover) {
+                              mapserver::int8u /*cover*/) {
     copy_or_blend_pix(
         (value_type *)m_rbuf->row_ptr(x, y, 1) + x * Step + Offset, c);
   }
@@ -184,7 +184,7 @@ public:
 
   //--------------------------------------------------------------------
   void blend_vline(int x, int y, unsigned len, const color_type &c,
-                   mapserver::int8u cover) {
+                   mapserver::int8u /*cover*/) {
     do {
       value_type *p =
           (value_type *)m_rbuf->row_ptr(x, y++, 1) + x * Step + Offset;

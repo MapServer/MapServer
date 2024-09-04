@@ -116,7 +116,7 @@ We will use POSTGIS names for convenience.
    member of the layerObj, then old style connection pooling is already
    present.  Remove it.
 
-Thats it!
+That's it!
 
 Other Notes
 -----------
@@ -423,7 +423,7 @@ void msConnPoolCloseUnreferenced()
 {
   int i;
 
-  /* this really needs to be commented out before commiting.  */
+  /* this really needs to be commented out before committing.  */
   /* msDebug( "msConnPoolCloseUnreferenced()\n" ); */
 
   msAcquireLock(TLOCK_POOL);
@@ -449,7 +449,7 @@ void msConnPoolCloseUnreferenced()
 void msConnPoolFinalCleanup()
 
 {
-  /* this really needs to be commented out before commiting.  */
+  /* this really needs to be commented out before committing.  */
   /* msDebug( "msConnPoolFinalCleanup()\n" ); */
 
   msAcquireLock(TLOCK_POOL);

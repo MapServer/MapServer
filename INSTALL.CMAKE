@@ -74,7 +74,7 @@ Depending on what packages are available in the default locations of your system
 the previous "cmake .." step will most probably have failed with messages indicating
 missing dependencies (by default, MapServer has *many* of those). The error message
 that CMake prints out should give you a rather good idea of what steps you should take
-next, depending on wether the failed dependency is a feature you require in your build
+next, depending on whether the failed dependency is a feature you require in your build
 or not.
 
 - Either disable the dependency by rerunning cmake with -DWITH_DEPENDENCY=0, e.g.
@@ -125,7 +125,7 @@ Refer to the CMakeLists.txt file for up-to-date options.
  - option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
  - option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
  - option(WITH_WMS "Enable WMS Server support (requires proj support)" ON)
- - option(WITH_FRIBIDI "Choose if FriBidi glyph reordering should be enabled (usefull for left-to-right languages)(requires harfbuzz)" ON)
+ - option(WITH_FRIBIDI "Choose if FriBidi glyph reordering should be enabled (useful for left-to-right languages)(requires harfbuzz)" ON)
  - option(WITH_HARFBUZZ "Choose if Harfbuzz complex script glyph shaping support should be built in (requires fribidi)" ON)
  - option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
  - option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
@@ -158,7 +158,7 @@ Refer to the CMakeLists.txt file for up-to-date options.
  - option(WITH_SDE "include ArcSDE support. Add -DSDE_VERSION=91 to use 9.1 arcSDE version" OFF)
  - option(WITH_EXEMPI "include xmp output metadata support" OFF)
  - option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
- - option(WITH_V8 "include javacript v8 scripting" OFF)
+ - option(WITH_V8 "include javascript v8 scripting" OFF)
 
 
 The following options are for advanced users, i.e. you should not enable them unless

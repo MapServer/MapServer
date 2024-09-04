@@ -45,6 +45,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_port.h"
+#include "cpl_string.h"
 
 extern int msyylex(void);
 extern void msyyrestart(FILE *);
@@ -118,9 +119,12 @@ int msValidateParameter(const char *value, const char *pattern1,
 
 int msIsValidRegex(const char *e) {
   ms_regex_t re;
-  if (ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB) != 0) {
-    msSetError(MS_REGEXERR, "Failed to compile expression (%s).",
-               "msEvalRegex()", e);
+  int errcode = ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB);
+  if (errcode != 0) {
+    char szErrbuf[256];
+    ms_regerror(errcode, &re, szErrbuf, sizeof(szErrbuf));
+    msSetError(MS_REGEXERR, "Failed to compile expression (%s): %s.",
+               "msIsValidRegex()", e, szErrbuf);
     return (MS_FALSE);
   }
   ms_regfree(&re);
@@ -133,9 +137,12 @@ int msEvalRegex(const char *e, const char *s) {
   if (!e || !s)
     return (MS_FALSE);
 
-  if (ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB) != 0) {
-    msSetError(MS_REGEXERR, "Failed to compile expression (%s).",
-               "msEvalRegex()", e);
+  int errcode = ms_regcomp(&re, e, MS_REG_EXTENDED | MS_REG_NOSUB);
+  if (errcode != 0) {
+    char szErrbuf[256];
+    ms_regerror(errcode, &re, szErrbuf, sizeof(szErrbuf));
+    msSetError(MS_REGEXERR, "Failed to compile expression (%s): %s.",
+               "msEvalRegex()", e, szErrbuf);
     return (MS_FALSE);
   }
 
@@ -643,12 +650,14 @@ static void writeCharacter(FILE *stream, int indent, const char *name,
   msIO_fprintf(stream, "%s '%c'\n", name, character);
 }
 
-static void writeStringElement(FILE *stream, char *string) {
-  char *string_escaped;
+static void writeStringElement(FILE *stream, const char *string) {
+  char *string_to_free = NULL;
+  const char *string_escaped;
 
   if (strchr(string, '\\')) {
-    string_escaped = msStrdup(string);
-    string_escaped = msReplaceSubstring(string_escaped, "\\", "\\\\");
+    string_to_free = msStrdup(string);
+    string_to_free = msReplaceSubstring(string_to_free, "\\", "\\\\");
+    string_escaped = string_to_free;
   } else {
     string_escaped = string;
   }
@@ -667,12 +676,12 @@ static void writeStringElement(FILE *stream, char *string) {
     if (string_escaped != string_tmp)
       free(string_tmp);
   }
-  if (string_escaped != string)
-    free(string_escaped);
+  if (string_to_free)
+    free(string_to_free);
 }
 
 static void writeString(FILE *stream, int indent, const char *name,
-                        const char *defaultString, char *string) {
+                        const char *defaultString, const char *string) {
   if (!string)
     return;
   if (defaultString && strcmp(string, defaultString) == 0)
@@ -1122,7 +1131,7 @@ static int loadFeature(layerObj *player, int type) {
     case (WKT): {
       char *string = NULL;
 
-      /* todo, what do we do with multiple WKT property occurances? */
+      /* todo, what do we do with multiple WKT property occurrences? */
 
       msFreeShape(shape);
       msFree(shape);
@@ -1504,7 +1513,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
     p->args[0] = msStrdup(value);
     p->numargs = 1;
   } else if (msLoadProjectionStringEPSGLike(p, value, "EPSG:", MS_FALSE) == 0) {
-    /* Assume lon/lat ordering. Use msLoadProjectionStringEPSG() if wanting to
+    /* Assume long/lat ordering. Use msLoadProjectionStringEPSG() if wanting to
      * follow EPSG axis */
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "urn:ogc:def:crs:EPSG:", MS_TRUE) == 0) {
@@ -1529,7 +1538,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/gml/srs/epsg.xml#",
                  MS_FALSE) == 0) {
-    /* We assume always lon/lat ordering, as that is what GeoServer does... */
+    /* We assume always long/lat ordering, as that is what GeoServer does... */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0) {
   } else if (msLoadProjectionCodeString(p, value) == 0) {
     /* allow strings in the form AUTH:XXXX */
@@ -2102,9 +2111,9 @@ int msUpdateLabelFromString(labelObj *label, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -2616,9 +2625,9 @@ int msUpdateClusterFromString(clusterObj *cluster, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -2667,7 +2676,7 @@ char *msWriteClusterToString(clusterObj *cluster) {
 int initStyle(styleObj *style) {
   int i;
   MS_REFCNT_INIT(style);
-  MS_INIT_COLOR(style->color, -1, -1, -1, 255); /* must explictly set colors */
+  MS_INIT_COLOR(style->color, -1, -1, -1, 255); /* must explicitly set colors */
   MS_INIT_COLOR(style->outlinecolor, -1, -1, -1, 255);
   /* New Color Range fields*/
   MS_INIT_COLOR(style->mincolor, -1, -1, -1, 255);
@@ -3096,9 +3105,9 @@ int msUpdateStyleFromString(styleObj *style, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -3766,9 +3775,9 @@ int msUpdateClassFromString(classObj *class, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
 
   if (classResolveSymbolNames(class) != MS_SUCCESS)
     return MS_FAILURE;
@@ -3982,7 +3991,6 @@ int initLayer(layerObj *layer, mapObj *map) {
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
-  layer->numprocessing = 0;
   layer->processing = NULL;
   layer->numjoins = 0;
   layer->joins = (joinObj *)malloc(MS_MAXJOINS * sizeof(joinObj));
@@ -4116,8 +4124,7 @@ int freeLayer(layerObj *layer) {
   msFreeHashItems(&(layer->validation));
   msFreeHashItems(&layer->bindvals);
 
-  if (layer->numprocessing > 0)
-    msFreeCharArray(layer->processing, layer->numprocessing);
+  CSLDestroy(layer->processing);
 
   for (i = 0; i < layer->numjoins; i++) /* each join */
     freeJoin(&(layer->joins[i]));
@@ -4292,6 +4299,46 @@ int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
   } /* next token*/
 }
 
+static const struct {
+  CompositingOperation eOp;
+  const char *pszName;
+} CompOps[] = {
+    {MS_COMPOP_CLEAR, "clear"},
+    {MS_COMPOP_COLOR_BURN, "color-burn"},
+    {MS_COMPOP_COLOR_DODGE, "color-dodge"},
+    {MS_COMPOP_CONTRAST, "contrast"},
+    {MS_COMPOP_DARKEN, "darken"},
+    {MS_COMPOP_DIFFERENCE, "difference"},
+    {MS_COMPOP_DST, "dst"},
+    {MS_COMPOP_DST_ATOP, "dst-atop"},
+    {MS_COMPOP_DST_IN, "dst-in"},
+    {MS_COMPOP_DST_OUT, "dst-out"},
+    {MS_COMPOP_DST_OVER, "dst-over"},
+    {MS_COMPOP_EXCLUSION, "exclusion"},
+    {MS_COMPOP_HARD_LIGHT, "hard-light"},
+    {MS_COMPOP_HSL_COLOR, "hsl-color"},
+    {MS_COMPOP_HSL_HUE, "hsl-hue"},
+    {MS_COMPOP_HSL_LUMINOSITY, "hsl-luminosity"},
+    {MS_COMPOP_HSL_SATURATION, "hsl-saturation"},
+    {MS_COMPOP_INVERT, "invert"},
+    {MS_COMPOP_INVERT_RGB, "invert-rgb"},
+    {MS_COMPOP_LIGHTEN, "lighten"},
+    {MS_COMPOP_MINUS, "minus"},
+    {MS_COMPOP_MULTIPLY, "multiply"},
+    {MS_COMPOP_OVERLAY, "overlay"},
+    {MS_COMPOP_PLUS, "plus"},
+    {MS_COMPOP_SCREEN, "screen"},
+    {MS_COMPOP_SOFT_LIGHT, "soft-light"},
+    {MS_COMPOP_SRC, "src"},
+    {MS_COMPOP_SRC_ATOP, "src-atop"},
+    {MS_COMPOP_SRC_IN, "src-in"},
+    {MS_COMPOP_SRC_OUT, "src-out"},
+    {MS_COMPOP_SRC_OVER, "src-over"},
+    {MS_COMPOP_XOR, "xor"},
+};
+
+#define SIZEOF_COMP_OPS ((int)(sizeof(CompOps) / sizeof(CompOps[0])))
+
 int loadLayerCompositer(LayerCompositer *compositer) {
   for (;;) {
     switch (msyylex()) {
@@ -4309,63 +4356,16 @@ int loadLayerCompositer(LayerCompositer *compositer) {
       char *compop = NULL;
       if (getString(&compop) == MS_FAILURE)
         return (MS_FAILURE);
-      else if (!strcmp(compop, "clear"))
-        compositer->comp_op = MS_COMPOP_CLEAR;
-      else if (!strcmp(compop, "color-burn"))
-        compositer->comp_op = MS_COMPOP_COLOR_BURN;
-      else if (!strcmp(compop, "color-dodge"))
-        compositer->comp_op = MS_COMPOP_COLOR_DODGE;
-      else if (!strcmp(compop, "contrast"))
-        compositer->comp_op = MS_COMPOP_CONTRAST;
-      else if (!strcmp(compop, "darken"))
-        compositer->comp_op = MS_COMPOP_DARKEN;
-      else if (!strcmp(compop, "difference"))
-        compositer->comp_op = MS_COMPOP_DIFFERENCE;
-      else if (!strcmp(compop, "dst"))
-        compositer->comp_op = MS_COMPOP_DST;
-      else if (!strcmp(compop, "dst-atop"))
-        compositer->comp_op = MS_COMPOP_DST_ATOP;
-      else if (!strcmp(compop, "dst-in"))
-        compositer->comp_op = MS_COMPOP_DST_IN;
-      else if (!strcmp(compop, "dst-out"))
-        compositer->comp_op = MS_COMPOP_DST_OUT;
-      else if (!strcmp(compop, "dst-over"))
-        compositer->comp_op = MS_COMPOP_DST_OVER;
-      else if (!strcmp(compop, "exclusion"))
-        compositer->comp_op = MS_COMPOP_EXCLUSION;
-      else if (!strcmp(compop, "hard-light"))
-        compositer->comp_op = MS_COMPOP_HARD_LIGHT;
-      else if (!strcmp(compop, "invert"))
-        compositer->comp_op = MS_COMPOP_INVERT;
-      else if (!strcmp(compop, "invert-rgb"))
-        compositer->comp_op = MS_COMPOP_INVERT_RGB;
-      else if (!strcmp(compop, "lighten"))
-        compositer->comp_op = MS_COMPOP_LIGHTEN;
-      else if (!strcmp(compop, "minus"))
-        compositer->comp_op = MS_COMPOP_MINUS;
-      else if (!strcmp(compop, "multiply"))
-        compositer->comp_op = MS_COMPOP_MULTIPLY;
-      else if (!strcmp(compop, "overlay"))
-        compositer->comp_op = MS_COMPOP_OVERLAY;
-      else if (!strcmp(compop, "plus"))
-        compositer->comp_op = MS_COMPOP_PLUS;
-      else if (!strcmp(compop, "screen"))
-        compositer->comp_op = MS_COMPOP_SCREEN;
-      else if (!strcmp(compop, "soft-light"))
-        compositer->comp_op = MS_COMPOP_SOFT_LIGHT;
-      else if (!strcmp(compop, "src"))
-        compositer->comp_op = MS_COMPOP_SRC;
-      else if (!strcmp(compop, "src-atop"))
-        compositer->comp_op = MS_COMPOP_SRC_ATOP;
-      else if (!strcmp(compop, "src-in"))
-        compositer->comp_op = MS_COMPOP_SRC_IN;
-      else if (!strcmp(compop, "src-out"))
-        compositer->comp_op = MS_COMPOP_SRC_OUT;
-      else if (!strcmp(compop, "src-over"))
-        compositer->comp_op = MS_COMPOP_SRC_OVER;
-      else if (!strcmp(compop, "xor"))
-        compositer->comp_op = MS_COMPOP_XOR;
-      else {
+
+      bool bFound = false;
+      for (int i = 0; i < SIZEOF_COMP_OPS; ++i) {
+        if (strcmp(compop, CompOps[i].pszName) == 0) {
+          bFound = true;
+          compositer->comp_op = CompOps[i].eOp;
+          break;
+        }
+      }
+      if (!bFound) {
         msSetError(MS_PARSEERR, "Unknown COMPOP \"%s\"",
                    "loadLayerCompositer()", compop);
         free(compop);
@@ -4836,9 +4836,9 @@ int msUpdateLayerFromString(layerObj *layer, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
 
   /* step through classes to resolve symbol names */
   for (i = 0; i < layer->numclasses; i++) {
@@ -4864,91 +4864,17 @@ static void writeLayerCompositer(FILE *stream, int indent,
     writeBlockBegin(stream, indent, "COMPOSITE");
     writeCompositingFilter(stream, indent, compositor->filter);
     if (compositor->comp_op != MS_COMPOP_SRC_OVER) {
-      switch (compositor->comp_op) {
-      case MS_COMPOP_CLEAR:
-        writeString(stream, indent, "COMPOP", NULL, "clear");
-        break;
-      case MS_COMPOP_COLOR_BURN:
-        writeString(stream, indent, "COMPOP", NULL, "color-burn");
-        break;
-      case MS_COMPOP_COLOR_DODGE:
-        writeString(stream, indent, "COMPOP", NULL, "color-dodge");
-        break;
-      case MS_COMPOP_CONTRAST:
-        writeString(stream, indent, "COMPOP", NULL, "contrast");
-        break;
-      case MS_COMPOP_DARKEN:
-        writeString(stream, indent, "COMPOP", NULL, "darken");
-        break;
-      case MS_COMPOP_DIFFERENCE:
-        writeString(stream, indent, "COMPOP", NULL, "difference");
-        break;
-      case MS_COMPOP_DST:
-        writeString(stream, indent, "COMPOP", NULL, "dst");
-        break;
-      case MS_COMPOP_DST_ATOP:
-        writeString(stream, indent, "COMPOP", NULL, "dst-atop");
-        break;
-      case MS_COMPOP_DST_IN:
-        writeString(stream, indent, "COMPOP", NULL, "dst-in");
-        break;
-      case MS_COMPOP_DST_OUT:
-        writeString(stream, indent, "COMPOP", NULL, "dst-out");
-        break;
-      case MS_COMPOP_DST_OVER:
-        writeString(stream, indent, "COMPOP", NULL, "dst-over");
-        break;
-      case MS_COMPOP_EXCLUSION:
-        writeString(stream, indent, "COMPOP", NULL, "exclusion");
-        break;
-      case MS_COMPOP_HARD_LIGHT:
-        writeString(stream, indent, "COMPOP", NULL, "hard-light");
-        break;
-      case MS_COMPOP_INVERT:
-        writeString(stream, indent, "COMPOP", NULL, "invert");
-        break;
-      case MS_COMPOP_INVERT_RGB:
-        writeString(stream, indent, "COMPOP", NULL, "invert-rgb");
-        break;
-      case MS_COMPOP_LIGHTEN:
-        writeString(stream, indent, "COMPOP", NULL, "lighten");
-        break;
-      case MS_COMPOP_MINUS:
-        writeString(stream, indent, "COMPOP", NULL, "minus");
-        break;
-      case MS_COMPOP_MULTIPLY:
-        writeString(stream, indent, "COMPOP", NULL, "multiply");
-        break;
-      case MS_COMPOP_OVERLAY:
-        writeString(stream, indent, "COMPOP", NULL, "overlay");
-        break;
-      case MS_COMPOP_PLUS:
-        writeString(stream, indent, "COMPOP", NULL, "plus");
-        break;
-      case MS_COMPOP_SCREEN:
-        writeString(stream, indent, "COMPOP", NULL, "screen");
-        break;
-      case MS_COMPOP_SOFT_LIGHT:
-        writeString(stream, indent, "COMPOP", NULL, "soft-light");
-        break;
-      case MS_COMPOP_SRC:
-        writeString(stream, indent, "COMPOP", NULL, "src");
-        break;
-      case MS_COMPOP_SRC_ATOP:
-        writeString(stream, indent, "COMPOP", NULL, "src-atop");
-        break;
-      case MS_COMPOP_SRC_IN:
-        writeString(stream, indent, "COMPOP", NULL, "src-in");
-        break;
-      case MS_COMPOP_SRC_OUT:
-        writeString(stream, indent, "COMPOP", NULL, "src-out");
-        break;
-      case MS_COMPOP_SRC_OVER:
-        writeString(stream, indent, "COMPOP", NULL, "src-over");
-        break;
-      case MS_COMPOP_XOR:
-        writeString(stream, indent, "COMPOP", NULL, "xor");
-        break;
+
+      bool bFound = false;
+      for (int i = 0; i < SIZEOF_COMP_OPS; ++i) {
+        if (compositor->comp_op == CompOps[i].eOp) {
+          bFound = true;
+          writeString(stream, indent, "COMPOP", NULL, CompOps[i].pszName);
+          break;
+        }
+      }
+      if (!bFound) {
+        assert(0);
       }
     }
     writeNumber(stream, indent, "OPACITY", 100, compositor->opacity);
@@ -5018,7 +4944,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
   writeString(stream, indent, "PLUGIN", NULL, layer->plugin_library_original);
   writeKeyword(stream, indent, "POSTLABELCACHE", layer->postlabelcache, 1,
                MS_TRUE, "TRUE");
-  for (i = 0; i < layer->numprocessing; i++)
+  for (i = 0; layer->processing && layer->processing[i]; i++)
     writeString(stream, indent, "PROCESSING", NULL, layer->processing[i]);
   writeProjection(stream, indent, &(layer->projection));
   writeString(stream, indent, "REQUIRES", NULL, layer->requires);
@@ -5056,7 +4982,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
   writeString(stream, indent, "UTFITEM", NULL, layer->utfitem);
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
-  /* write potentially multiply occuring objects last */
+  /* write potentially multiply occurring objects last */
   for (i = 0; i < layer->numscaletokens; i++)
     writeScaleToken(stream, indent, &(layer->scaletokens[i]));
   for (i = 0; i < layer->numjoins; i++)
@@ -5249,9 +5175,9 @@ int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -5643,9 +5569,9 @@ int msUpdateLegendFromString(legendObj *legend, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -5842,9 +5768,9 @@ int msUpdateScalebarFromString(scalebarObj *scalebar, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -5934,7 +5860,7 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map) {
       break;
     case (SIZE):
       /*
-       ** we do -1 (and avoid 0) here to maintain backwards compatability as
+       ** we do -1 (and avoid 0) here to maintain backwards compatibility as
        *older versions write "SIZE -1 -1" when saving a mapfile
        */
       if (getInteger(&(querymap->width), MS_NUM_CHECK_RANGE, -1,
@@ -5991,9 +5917,9 @@ int msUpdateQueryMapFromString(queryMapObj *querymap, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -6240,9 +6166,9 @@ int msUpdateWebFromString(webObj *web, char *string) {
     return MS_FAILURE; /* parse error */
     ;
   }
-  msReleaseLock(TLOCK_PARSER);
 
   msyylex_destroy();
+  msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 }
 
@@ -6943,7 +6869,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
   /*
   ** Allocate mapObj structure
   */
-  map = (mapObj *)calloc(sizeof(mapObj), 1);
+  map = (mapObj *)calloc(1, sizeof(mapObj));
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if (initMap(map) == -1) { /* initialize this map */
@@ -6966,6 +6892,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
   if (!msGetCWD(szCWDPath, MS_MAXPATHLEN, "msLoadMapFromString()")) {
     msFreeMap(map);
     msReleaseLock(TLOCK_PARSER);
+    return (NULL);
   }
   if (new_mappath) {
     mappath = msStrdup(new_mappath);
@@ -7037,7 +6964,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
   /*
   ** Allocate mapObj structure
   */
-  map = (mapObj *)calloc(sizeof(mapObj), 1);
+  map = (mapObj *)calloc(1, sizeof(mapObj));
   MS_CHECK_ALLOC(map, sizeof(mapObj), NULL);
 
   if (initMap(map) == -1) { /* initialize this map */
@@ -7088,7 +7015,7 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
   msyystate = MS_TOKENIZE_FILE;
   msyylex(); /* sets things up, but doesn't process any tokens */
 
-  msyyrestart(msyyin); /* start at line begining, line 1 */
+  msyyrestart(msyyin); /* start at line beginning, line 1 */
   msyylineno = 1;
 
   /* If new_mappath is provided then use it, otherwise use the location */
@@ -7111,12 +7038,12 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
 
   if (loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
-    msReleaseLock(TLOCK_PARSER);
     if (msyyin) {
       msyycleanup_includes();
       fclose(msyyin);
       msyyin = NULL;
     }
+    msReleaseLock(TLOCK_PARSER);
     return NULL;
   }
   msReleaseLock(TLOCK_PARSER);
@@ -7465,7 +7392,7 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens) {
   msyylex();
   msyyreturncomments = 1; /* want all tokens, including comments */
 
-  msyyrestart(msyyin); /* start at line begining, line 1 */
+  msyyrestart(msyyin); /* start at line beginning, line 1 */
   msyylineno = 1;
 
   numtokens = 0;

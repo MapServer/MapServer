@@ -1,0 +1,32 @@
+name: mapserver
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pip
+  - cairo
+  - fribidi
+  - freetype
+  - geos
+  - giflib
+  - harfbuzz
+  - libjpeg-turbo
+  - libcurl
+  - libgdal
+  - libiconv
+  - libpng
+  - libpq
+  - libxml2
+  - mysql-devel
+  - pixman
+  - postgresql
+  - proj
+  - swig
+  - zlib
+  - pcre2
+  - compilers
+  - ninja
+  - cmake
+  - swig
+  - zstd
+

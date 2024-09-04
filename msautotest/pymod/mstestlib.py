@@ -651,6 +651,12 @@ def _run(map, out_file, command, extra_args):
 
     (command, strip_items) = collect_strip_requests(command)
 
+    # option to skip asan log output capturing for tests wanting to capture stderr in result file
+    asan_skip_log = False
+    if command.find("[ASAN_SKIP_LOG]") != -1:
+        asan_skip_log = True
+        command = command.replace("[ASAN_SKIP_LOG]", "")
+
     if valgrind:
         valgrind_log = "result/%s.txt" % (out_file + ".vgrind.txt")
         command = command.strip()
@@ -666,7 +672,7 @@ def _run(map, out_file, command, extra_args):
                 + '" | valgrind --tool=memcheck -q --suppressions=../valgrind-suppressions.txt --leak-check=full --show-reachable=yes %s 2>%s'
                 % (command, valgrind_log)
             )
-    elif run_under_asan:
+    elif run_under_asan and not asan_skip_log:
         asan_log = "result/" + out_file + ".asan.txt"
         command = command.strip()
         command += " 2>%s" % asan_log
@@ -701,7 +707,7 @@ def _run(map, out_file, command, extra_args):
             if not quiet:
                 print("     Valgrind log non empty.")
 
-    elif run_under_asan:
+    elif run_under_asan and not asan_skip_log:
         if os.path.getsize(asan_log) == 0:
             os.remove(asan_log)
         else:
@@ -745,7 +751,7 @@ def _run(map, out_file, command, extra_args):
             sys.stdout.flush()
     elif cmp == "files_differ_image_match":
         if strict:
-            return False, ("results dont match (though images match)", map, out_file)
+            return False, ("results don't match (though images match)", map, out_file)
 
         else:
             if not keep_pass:
@@ -758,7 +764,7 @@ def _run(map, out_file, command, extra_args):
     elif cmp == "files_differ_image_nearly_match":
         if strict:
             return False, (
-                "results dont match (though images perceptually match)",
+                "results don't match (though images perceptually match)",
                 map,
                 out_file,
             )
@@ -775,7 +781,7 @@ def _run(map, out_file, command, extra_args):
                 )
 
     elif cmp == "nomatch":
-        return False, ("results dont match", map, out_file)
+        return False, ("results don't match", map, out_file)
 
     elif cmp == "noresult":
         with open("result/" + out_file, "w") as fh:

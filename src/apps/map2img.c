@@ -34,6 +34,33 @@
 
 #include "limits.h"
 
+/**
+ * Check if the required number of arguments are available for the
+ * parsed option or otherwise print an error message and exit.
+ *
+ * @param option option name for the error message
+ * @param num_required_arguments number of arguments required by option
+ * @param num_remaining_arguments number of arguments following the option
+ * @param config optional config object to free if we exit
+ * @param map optional map object to free if we exit
+ */
+static void hasMoreArgumentsOrExit(const char *option,
+                                   int num_required_arguments,
+                                   int num_remaining_arguments,
+                                   configObj *config, mapObj *map) {
+  (void)map;
+  if (num_remaining_arguments < num_required_arguments) {
+    if (num_required_arguments == 1)
+      fprintf(stderr, "Argument %s requires an additional argument.\n", option);
+    else
+      fprintf(stderr, "Argument %s needs %i space separated arguments.\n",
+              option, num_required_arguments);
+    msCleanup();
+    msFreeConfig(config);
+    exit(1);
+  }
+}
+
 int main(int argc, char *argv[]) {
   int i, j, k;
 
@@ -96,6 +123,7 @@ int main(int argc, char *argv[]) {
   const char *config_filename = NULL;
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-c") == 0) { /* user specified number of draws */
+      hasMoreArgumentsOrExit("-c", 1, argc - i - 1, config, map);
       iterations = atoi(argv[i + 1]);
       if (iterations < 0 || iterations > INT_MAX - 1) {
         printf("Invalid number of iterations");
@@ -105,7 +133,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (i < argc - 1 && strcmp(argv[i], "-all_debug") == 0) { /* global debug */
+    if (strcmp(argv[i], "-all_debug") == 0) { /* global debug */
+      hasMoreArgumentsOrExit("-all_debug", 1, argc - i - 1, config, map);
       int debug_level = atoi(argv[++i]);
 
       some_debug_requested = TRUE;
@@ -122,7 +151,8 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (i < argc - 1 && strcmp(argv[i], "-conf") == 0) {
+    if (strcmp(argv[i], "-conf") == 0) {
+      hasMoreArgumentsOrExit("-conf", 1, argc - i - 1, config, map);
       config_filename = argv[i + 1];
       ++i;
       continue;
@@ -159,6 +189,7 @@ int main(int argc, char *argv[]) {
          i++) { /* Step though the user arguments, 1st to find map file */
 
       if (strcmp(argv[i], "-m") == 0) {
+        hasMoreArgumentsOrExit("-m", 1, argc - i - 1, config, map);
         map = msLoadMap(argv[i + 1], NULL, config);
         if (!map) {
           msWriteError(stderr);
@@ -184,6 +215,7 @@ int main(int argc, char *argv[]) {
       }
 
       if (strcmp(argv[i], "-p") == 0) {
+        hasMoreArgumentsOrExit("-p", 1, argc - i - 1, config, map);
         int pause_length = atoi(argv[i + 1]);
         time_t start_time = time(NULL);
 
@@ -196,11 +228,13 @@ int main(int argc, char *argv[]) {
       }
 
       if (strcmp(argv[i], "-o") == 0) { /* load the output image filename */
+        hasMoreArgumentsOrExit("-o", 1, argc - i - 1, config, map);
         outfile = argv[i + 1];
         i += 1;
       }
 
       if (strcmp(argv[i], "-i") == 0) {
+        hasMoreArgumentsOrExit("-i", 1, argc - i - 1, config, map);
         outputFormatObj *format;
 
         format = msSelectOutputFormat(map, argv[i + 1]);
@@ -216,6 +250,7 @@ int main(int argc, char *argv[]) {
       }
 
       if (strcmp(argv[i], "-d") == 0) { /* swap layer data */
+        hasMoreArgumentsOrExit("-d", 2, argc - i - 1, config, map);
         for (j = 0; j < map->numlayers; j++) {
           if (strcmp(GET_LAYER(map, j)->name, argv[i + 1]) == 0) {
             free(GET_LAYER(map, j)->data);
@@ -226,8 +261,8 @@ int main(int argc, char *argv[]) {
         i += 2;
       }
 
-      if (i < argc - 1 &&
-          strcmp(argv[i], "-all_debug") == 0) { /* global debug */
+      if (strcmp(argv[i], "-all_debug") == 0) { /* global debug */
+        hasMoreArgumentsOrExit("-all_debug", 1, argc - i - 1, config, map);
         int debug_level = atoi(argv[++i]);
 
         /* msSetGlobalDebugLevel() already called. Just need to force debug
@@ -239,11 +274,13 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      if (i < argc - 1 && strcmp(argv[i], "-map_debug") == 0) { /* debug */
+      if (strcmp(argv[i], "-map_debug") == 0) { /* debug */
+        hasMoreArgumentsOrExit("-map_debug", 1, argc - i - 1, config, map);
         map->debug = atoi(argv[++i]);
       }
 
-      if (i < argc - 1 && strcmp(argv[i], "-layer_debug") == 0) { /* debug */
+      if (strcmp(argv[i], "-layer_debug") == 0) { /* debug */
+        hasMoreArgumentsOrExit("-layer_debug", 2, argc - i - 1, config, map);
         const char *layer_name = argv[++i];
         int debug_level = atoi(argv[++i]);
         int got_layer = 0;
@@ -261,13 +298,7 @@ int main(int argc, char *argv[]) {
       }
 
       if (strcmp(argv[i], "-e") == 0) { /* change extent */
-        if (argc <= i + 4) {
-          fprintf(stderr,
-                  "Argument -e needs 4 space separated numbers as argument.\n");
-          msCleanup();
-          msFreeConfig(config);
-          exit(1);
-        }
+        hasMoreArgumentsOrExit("-e", 4, argc - i - 1, config, map);
         map->extent.minx = atof(argv[i + 1]);
         map->extent.miny = atof(argv[i + 2]);
         map->extent.maxx = atof(argv[i + 3]);
@@ -276,11 +307,13 @@ int main(int argc, char *argv[]) {
       }
 
       if (strcmp(argv[i], "-s") == 0) {
+        hasMoreArgumentsOrExit("-s", 2, argc - i - 1, config, map);
         msMapSetSize(map, atoi(argv[i + 1]), atoi(argv[i + 2]));
         i += 2;
       }
 
       if (strcmp(argv[i], "-l") == 0) { /* load layer list */
+        hasMoreArgumentsOrExit("-l", 1, argc - i - 1, config, map);
         layers = msStringSplit(argv[i + 1], ' ', &(num_layers));
 
         for (j = 0; j < num_layers; j++) { /* loop over -l */
@@ -296,6 +329,8 @@ int main(int argc, char *argv[]) {
           }
           if (layer_found == 0) {
             fprintf(stderr, "Layer (-l) \"%s\" not found\n", layers[j]);
+            msFreeCharArray(layers, num_layers);
+            msFreeMap(map);
             msCleanup();
             msFreeConfig(config);
             exit(1);

@@ -82,13 +82,17 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   $2 = &nListSize;
 }
 
-%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") (double** argout, int* pnListSize) 
+%typemap(argout,fragment="CreateTupleFromDoubleArray") (double** argout, int* pnListSize) 
 {
    /* %typemap(argout) (double* argout, int* pnListSize)  */
   PyObject *r;
   r = CreateTupleFromDoubleArray(*$1, *$2);
   free(*$1);
-  $result = t_output_helper($result,r);
+  %#if SWIG_VERSION >= 0x040300
+    $result = SWIG_Python_AppendOutput($result, r, $isvoid);
+  %#else
+    $result = SWIG_Python_AppendOutput($result, r);
+  %#endif
 }
 
 /*
@@ -271,12 +275,21 @@ MapServerChildError = _mapscript.MapServerChildError
 
 %feature("shadow") insertClass %{
     def insertClass(*args):
+        """
+        Insert a **copy** of the class into the layer at the requested *index*. 
+        Default index of -1 means insertion at the end of the array of classes. Returns the index at which the class was inserted.
+        """
         actualIndex=$action(*args)
         args[1].p_layer=args[0]
         return actualIndex%}
 
+
 %feature("shadow") getClass %{
     def getClass(*args):
+        """
+        Fetch the requested class object at *i*. Returns NULL if the class index is out of the legal range. 
+        The numclasses field contains the number of classes available, and the first class is index 0.
+        """
         clazz = $action(*args)
         if clazz:
             if args and len(args)!=0:
@@ -287,12 +300,20 @@ MapServerChildError = _mapscript.MapServerChildError
 
 %feature("shadow") insertLayer %{
     def insertLayer(*args):
+        """
+        Insert a copy of *layer* into the map at *index*.
+        The default value of *index* is -1, which means the last possible index. 
+        Returns the index of the new layer, or -1 in the case of a failure.
+        """
         actualIndex=$action(*args)
         args[1].p_map=args[0]
         return actualIndex%}
 
 %feature("shadow") getLayer %{
     def getLayer(*args):
+        """
+        Returns a reference to the layer at index *i*.
+        """
         layer = $action(*args)
         if layer:
             if args and len(args)!=0:
@@ -303,6 +324,9 @@ MapServerChildError = _mapscript.MapServerChildError
 
 %feature("shadow") getLayerByName %{
     def getLayerByName(*args):
+        """
+        Returns a reference to the named layer.
+        """
         layer = $action(*args)
         if layer:
             if args and len(args)!=0:

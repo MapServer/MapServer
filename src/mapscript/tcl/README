@@ -133,7 +133,7 @@ NOTES
 e.g., the "SWIG_STUB_HACK"
 Building Tcl extensions that are not dependent on a particular version of
 Tcl is the preferred method.  Prior to Tcl 8.1, an extension had to be
-linked against a version dependent Tcl libarary.  Extensions had to be
+linked against a version dependent Tcl library.  Extensions had to be
 recompiled and relinked when newer versions of Tcl were installed.
 
 Beginning with Tcl 8.1, the 'stub' library was introduced to facilitate 

@@ -273,7 +273,7 @@ int msPOSTGRESQLJoinPrepare(joinObj *join, shapeObj *shape) {
 /* join against the previously prepared shapeObj.  This will be called  */
 /* only once for a one-to-one join, with msPOSTGRESQLJoinPrepare()      */
 /* being called before each.  It will be called repeatedly for          */
-/* one-to-many joins, until in returns MS_DONE.  To accomodate this,    */
+/* one-to-many joins, until in returns MS_DONE.  To accommodate this,    */
 /* we store the next row number and query results in the joininfo and   */
 /* process the next tuple on each call.                                 */
 /************************************************************************/
@@ -308,14 +308,18 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
     for (i = 0; i < join->numitems; i++) {
       length += 8 + strlen(join->items[i]) + 2;
     }
+    if (length > 1024 * 1024) {
+      msSetError(MS_MEMERR, "Too many joins.\n", "msPOSTGRESQLJoinNext()");
+      return MS_FAILURE;
+    }
 
-    columns = (char *)malloc(length);
+    columns = (char *)malloc(length + 1);
     if (!columns) {
       msSetError(MS_MEMERR, "Failure to malloc.\n", "msPOSTGRESQLJoinNext()");
       return MS_FAILURE;
     }
 
-    strcpy(columns, "");
+    columns[0] = 0;
     for (i = 0; i < join->numitems; i++) {
       strcat(columns, "\"");
       strcat(columns, join->items[i]);
@@ -326,14 +330,15 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
     }
 
     /* Create the query string. */
-    sql = (char *)malloc(26 + strlen(columns) + strlen(join->table) +
-                         strlen(join->to) + strlen(joininfo->from_value));
+    const size_t nSize = 26 + strlen(columns) + strlen(join->table) +
+                         strlen(join->to) + strlen(joininfo->from_value);
+    sql = (char *)malloc(nSize);
     if (!sql) {
       msSetError(MS_MEMERR, "Failure to malloc.\n", "msPOSTGRESQLJoinNext()");
       return MS_FAILURE;
     }
-    sprintf(sql, "SELECT %s FROM %s WHERE %s = '%s'", columns, join->table,
-            join->to, joininfo->from_value);
+    snprintf(sql, nSize, "SELECT %s FROM %s WHERE %s = '%s'", columns,
+             join->table, join->to, joininfo->from_value);
     if (joininfo->layer_debug) {
       msDebug("msPOSTGRESQLJoinNext(): executing %s.\n", sql);
     }

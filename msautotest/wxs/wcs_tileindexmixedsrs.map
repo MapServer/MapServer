@@ -64,7 +64,7 @@ LAYER
   TILESRS "src_srs"
   PROJECTION
     # AUTO isn't supported by WCS server code
-    # and we must explicitely set a EPSG code
+    # and we must explicitly set a EPSG code
     "+init=epsg:26711" 
   END
   METADATA   

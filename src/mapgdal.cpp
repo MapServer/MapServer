@@ -71,7 +71,7 @@ void msGDALCleanup(void)
     /*
     ** Cleanup any unreferenced but open datasets as will tend
     ** to exist due to deferred close requests.  We are careful
-    ** to only close one file at a time before refecting the
+    ** to only close one file at a time before reflecting the
     ** list as closing some datasets may cause others to be
     ** closed (subdatasets in a VRT for instance).
     */
@@ -411,7 +411,7 @@ int msSaveImageGDAL(mapObj *map, imageObj *image, const char *filenameIn)
   if (image->resolution > 0) {
     char res[30];
 
-    sprintf(res, "%lf", image->resolution);
+    snprintf(res, sizeof(res), "%lf", image->resolution);
     GDALSetMetadataItem(hMemDS, "TIFFTAG_XRESOLUTION", res, NULL);
     GDALSetMetadataItem(hMemDS, "TIFFTAG_YRESOLUTION", res, NULL);
     GDALSetMetadataItem(hMemDS, "TIFFTAG_RESOLUTIONUNIT", "2", NULL);
@@ -634,7 +634,9 @@ char *msProjectionObj2OGCWKT(projectionObj *projection)
   /* -------------------------------------------------------------------- */
   /*      Look for an EPSG-like projection argument                       */
   /* -------------------------------------------------------------------- */
-  if (projection->numargs == 1 &&
+  if ((projection->numargs == 1 ||
+       (projection->numargs == 2 &&
+        strstr(projection->args[1], "epsgaxis=") != NULL)) &&
       (pszInitEpsg = strcasestr(projection->args[0], "init=epsg:"))) {
     int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
     eErr = OSRImportFromEPSG(hSRS, nEpsgCode);
@@ -684,7 +686,7 @@ char *msProjectionObj2OGCWKT(projectionObj *projection)
 
 int msGDALDriverSupportsVirtualIOOutput(GDALDriverH hDriver) {
   /* We need special testing here for the netCDF driver, since recent */
-  /* GDAL versions advertize VirtualIO support, but this is only for the */
+  /* GDAL versions advertise VirtualIO support, but this is only for the */
   /* read-side of the driver, not the write-side. */
   return GDALGetMetadataItem(hDriver, GDAL_DCAP_VIRTUALIO, NULL) != NULL &&
          !EQUAL(GDALGetDescription(hDriver), "netCDF");

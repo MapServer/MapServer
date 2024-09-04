@@ -47,8 +47,10 @@
 
 #include "mapcopy.h"
 
+#include "cpl_string.h"
+
 /***********************************************************************
- * msCopyProjectioExtended()                                           *
+ * msCopyProjectionExtended()                                           *
  *                                                                     *
  * Copy a projectionObj while adding additional arguments              *
  **********************************************************************/
@@ -1091,11 +1093,7 @@ int msCopyLayer(layerObj *dst, const layerObj *src) {
 
   MS_COPYSTELEM(debug);
 
-  /* No need to copy the numprocessing member, as it is incremented by
-     msLayerAddProcessing */
-  for (i = 0; i < src->numprocessing; i++) {
-    msLayerAddProcessing(dst, msLayerGetProcessing(src, i));
-  }
+  dst->processing = CSLDuplicate(src->processing);
 
   MS_COPYSTELEM(numjoins);
 

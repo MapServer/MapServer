@@ -1,0 +1,18 @@
+- memory leak in msInsertLayer, from Ned Harding (#2784)
+- mapwcs.c: fix lonLatEnvelope/@srsName (#2507)
+ *              FORMATOPTION "POLYMOUSEOUT=return nd();"
+  if ((strstr(outstr, "lat]") || strstr(outstr, "lon]") ||
+      "long-axis", "lon",   "lon_axis", "lon-axis", NULL};
+#define MSUVRASTER_LON "lon"
+const char *_ms_script_prefix_te = "te:";
+    {"ang", 8736},     {"aring", 229},    {"asymp", 8776},  {"atilde", 227},
+    {"curren", 164},   {"dArr", 8659},    {"dagger", 8224}, {"darr", 8595},
+Node BA
+      text "colision after retry because of second bend"
+        text "SmalL#label#multiline"
+        text "LargE#label"
+        text "SmalL"
+        text "LargE"
+            "wms_style_title.ger" "INSPIRE Standard Stil"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+       <Title>INSPIRE Standard Stil</Title>

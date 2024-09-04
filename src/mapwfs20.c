@@ -650,8 +650,8 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                                       OWS_METHOD_GETPOST, script_url));
       xmlAddChild(psMainNode, psNode);
 
-      /* Only advertize built-in GML formats for GetPropertyValue. Not sure */
-      /* it makes sense to advertize OGR formats. */
+      /* Only advertise built-in GML formats for GetPropertyValue. Not sure */
+      /* it makes sense to advertise OGR formats. */
       xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
                               ows_version, psNsOws, "Parameter", "outputFormat",
                               "application/gml+xml; version=3.2,"
@@ -815,13 +815,13 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                           ows_request->numlayers))
       continue;
 
-    if (msWFSIsLayerSupported(lp)) {
+    if (msIsLayerSupportedForWFSOrOAPIF(lp)) {
       if (psFtNode != NULL) {
         xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0,
                                                validated_language, script_url));
       }
 
-      /* As soon as at least one layer supports sorting, advertize sorting */
+      /* As soon as at least one layer supports sorting, advertise sorting */
       if (msLayerSupportsSorting(lp))
         bImplementsSorting = MS_TRUE;
     }
@@ -1137,7 +1137,7 @@ int msWFSListStoredQueries20(mapObj *map, owsRequestObj *ows_request) {
 
               if (!msIntegerInArray(lp->index, ows_request->enabled_layers,
                                     ows_request->numlayers) ||
-                  !msWFSIsLayerSupported(lp))
+                  !msIsLayerSupportedForWFSOrOAPIF(lp))
                 continue;
 
               value = msOWSLookupMetadata(&(map->web.metadata), "FO",
@@ -1372,7 +1372,7 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
 
               if (!msIntegerInArray(lp->index, ows_request->enabled_layers,
                                     ows_request->numlayers) ||
-                  !msWFSIsLayerSupported(lp))
+                  !msIsLayerSupportedForWFSOrOAPIF(lp))
                 continue;
 
               value = msOWSLookupMetadata(&(map->web.metadata), "FO",

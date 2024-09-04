@@ -36,6 +36,91 @@
 #include "mapows.h"
 #include "cpl_port.h"
 
+/* msGetGeoCellSize
+ *
+ * A helper function to get the first parameter for msUpdateClassScaleFactor()
+ */
+double msGetGeoCellSize(const mapObj *map) {
+  double geo_cellsize;
+
+  /* We will need a cellsize that represents a real georeferenced */
+  /* coordinate cellsize here, so compute it from saved extents.   */
+
+  geo_cellsize = map->cellsize;
+  if (map->gt.need_geotransform == MS_TRUE) {
+    double cellsize_x =
+        (map->saved_extent.maxx - map->saved_extent.minx) / map->width;
+    double cellsize_y =
+        (map->saved_extent.maxy - map->saved_extent.miny) / map->height;
+
+    geo_cellsize =
+        sqrt(cellsize_x * cellsize_x + cellsize_y * cellsize_y) / sqrt(2.0);
+  }
+  return geo_cellsize;
+}
+
+/* msUpdateClassScaleFactor
+ *
+ * Provides correct scale factor inheritance for Class and all of its
+ * styles and labels.
+ */
+void msUpdateClassScaleFactor(double geo_cellsize, const mapObj *map,
+                              const layerObj *layer, classObj *c) {
+  if (c->sizeunits == MS_INHERIT)
+    c->scalefactor = layer->scalefactor;
+  else if (c->sizeunits != MS_PIXELS)
+    c->scalefactor =
+        (msInchesPerUnit(c->sizeunits, 0) / msInchesPerUnit(map->units, 0)) /
+        geo_cellsize;
+  else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
+    c->scalefactor = layer->symbolscaledenom / map->scaledenom *
+                     map->resolution / map->defresolution;
+  else
+    c->scalefactor = map->resolution / map->defresolution;
+  for (int sid = 0; sid < c->numstyles; sid++) {
+    styleObj *style = c->styles[sid];
+    if (style->sizeunits == MS_INHERIT)
+      style->scalefactor = c->scalefactor;
+    else if (style->sizeunits != MS_PIXELS)
+      style->scalefactor = (msInchesPerUnit(style->sizeunits, 0) /
+                            msInchesPerUnit(map->units, 0)) /
+                           geo_cellsize;
+    else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
+      style->scalefactor = layer->symbolscaledenom / map->scaledenom *
+                           map->resolution / map->defresolution;
+    else
+      style->scalefactor = map->resolution / map->defresolution;
+  }
+  for (int sid = 0; sid < c->numlabels; sid++) {
+    labelObj *label = c->labels[sid];
+    if (label->sizeunits == MS_INHERIT)
+      label->scalefactor = c->scalefactor;
+    else if (label->sizeunits != MS_PIXELS)
+      label->scalefactor = (msInchesPerUnit(label->sizeunits, 0) /
+                            msInchesPerUnit(map->units, 0)) /
+                           geo_cellsize;
+    else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
+      label->scalefactor = layer->symbolscaledenom / map->scaledenom *
+                           map->resolution / map->defresolution;
+    else
+      label->scalefactor = map->resolution / map->defresolution;
+    for (int lsid = 0; lsid < label->numstyles; lsid++) {
+      styleObj *lstyle = label->styles[lsid];
+      if (lstyle->sizeunits == MS_INHERIT)
+        lstyle->scalefactor = label->scalefactor;
+      else if (lstyle->sizeunits != MS_PIXELS)
+        lstyle->scalefactor = (msInchesPerUnit(lstyle->sizeunits, 0) /
+                               msInchesPerUnit(map->units, 0)) /
+                              geo_cellsize;
+      else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
+        lstyle->scalefactor = layer->symbolscaledenom / map->scaledenom *
+                              map->resolution / map->defresolution;
+      else
+        lstyle->scalefactor = map->resolution / map->defresolution;
+    }
+  }
+}
+
 /* msPrepareImage()
  *
  * Returns a new imageObj ready for rendering the current map.
@@ -154,19 +239,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare) {
   if (map->gt.need_geotransform)
     msMapSetFakedExtent(map);
 
-  /* We will need a cellsize that represents a real georeferenced */
-  /* coordinate cellsize here, so compute it from saved extents.   */
-
-  geo_cellsize = map->cellsize;
-  if (map->gt.need_geotransform == MS_TRUE) {
-    double cellsize_x =
-        (map->saved_extent.maxx - map->saved_extent.minx) / map->width;
-    double cellsize_y =
-        (map->saved_extent.maxy - map->saved_extent.miny) / map->height;
-
-    geo_cellsize =
-        sqrt(cellsize_x * cellsize_x + cellsize_y * cellsize_y) / sqrt(2.0);
-  }
+  geo_cellsize = msGetGeoCellSize(map);
 
   /* compute layer/class/style/label scale factors now */
   for (int lid = 0; lid < map->numlayers; lid++) {
@@ -182,59 +255,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare) {
       layer->scalefactor = map->resolution / map->defresolution;
     for (int cid = 0; cid < layer->numclasses; cid++) {
       classObj *class = GET_CLASS(map, lid, cid);
-      if (class->sizeunits == MS_INHERIT)
-        class->scalefactor = layer->scalefactor;
-      else if (class->sizeunits != MS_PIXELS)
-        class->scalefactor = (msInchesPerUnit(class->sizeunits, 0) /
-                              msInchesPerUnit(map->units, 0)) /
-                             geo_cellsize;
-      else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
-        class->scalefactor = layer->symbolscaledenom / map->scaledenom *
-                             map->resolution / map->defresolution;
-      else
-        class->scalefactor = map->resolution / map->defresolution;
-      for (int sid = 0; sid < class->numstyles; sid++) {
-        styleObj *style = class->styles[sid];
-        if (style->sizeunits == MS_INHERIT)
-          style->scalefactor = class->scalefactor;
-        else if (style->sizeunits != MS_PIXELS)
-          style->scalefactor = (msInchesPerUnit(style->sizeunits, 0) /
-                                msInchesPerUnit(map->units, 0)) /
-                               geo_cellsize;
-        else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
-          style->scalefactor = layer->symbolscaledenom / map->scaledenom *
-                               map->resolution / map->defresolution;
-        else
-          style->scalefactor = map->resolution / map->defresolution;
-      }
-      for (int sid = 0; sid < class->numlabels; sid++) {
-        labelObj *label = class->labels[sid];
-        if (label->sizeunits == MS_INHERIT)
-          label->scalefactor = class->scalefactor;
-        else if (label->sizeunits != MS_PIXELS)
-          label->scalefactor = (msInchesPerUnit(label->sizeunits, 0) /
-                                msInchesPerUnit(map->units, 0)) /
-                               geo_cellsize;
-        else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
-          label->scalefactor = layer->symbolscaledenom / map->scaledenom *
-                               map->resolution / map->defresolution;
-        else
-          label->scalefactor = map->resolution / map->defresolution;
-        for (int lsid = 0; lsid < label->numstyles; lsid++) {
-          styleObj *lstyle = label->styles[lsid];
-          if (lstyle->sizeunits == MS_INHERIT)
-            lstyle->scalefactor = label->scalefactor;
-          else if (lstyle->sizeunits != MS_PIXELS)
-            lstyle->scalefactor = (msInchesPerUnit(lstyle->sizeunits, 0) /
-                                   msInchesPerUnit(map->units, 0)) /
-                                  geo_cellsize;
-          else if (layer->symbolscaledenom > 0 && map->scaledenom > 0)
-            lstyle->scalefactor = layer->symbolscaledenom / map->scaledenom *
-                                  map->resolution / map->defresolution;
-          else
-            lstyle->scalefactor = map->resolution / map->defresolution;
-        }
-      }
+      msUpdateClassScaleFactor(geo_cellsize, map, layer, class);
     }
   }
 
@@ -634,7 +655,7 @@ imageObj *msDrawMap(mapObj *map, int querymap) {
   }
 
   /* Do we need to fake out stuff for rotated support? */
-  /* This really needs to be done on every preceeding exit point too... */
+  /* This really needs to be done on every preceding exit point too... */
   if (map->gt.need_geotransform)
     msMapRestoreRealExtent(map);
 
@@ -812,7 +833,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image) {
   imageObj *image_draw = image;
   outputFormatObj *altFormat = NULL;
   int retcode = MS_SUCCESS;
-  const char *alternativeFomatString = NULL;
+  const char *alternativeFormatString = NULL;
   layerObj *maskLayer = NULL;
 
   if (!msLayerIsVisible(map, layer))
@@ -911,10 +932,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image) {
   msImageStartLayer(map, layer, image);
 
   /*check if an alternative renderer should be used for this layer*/
-  alternativeFomatString = msLayerGetProcessingKey(layer, "RENDERER");
+  alternativeFormatString = msLayerGetProcessingKey(layer, "RENDERER");
   if (MS_RENDERER_PLUGIN(image_draw->format) &&
-      alternativeFomatString != NULL &&
-      (altFormat = msSelectOutputFormat(map, alternativeFomatString))) {
+      alternativeFormatString != NULL &&
+      (altFormat = msSelectOutputFormat(map, alternativeFormatString))) {
     rendererVTableObj *renderer = NULL;
     msInitializeRendererVTable(altFormat);
 
@@ -1887,7 +1908,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image) {
     return rv;
   }
 
-  /* RFC-86 Scale dependant token replacements*/
+  /* RFC-86 Scale dependent token replacements*/
   rv = msLayerApplyScaletokens(layer,
                                (layer->map) ? layer->map->scaledenom : -1);
   if (rv != MS_SUCCESS)
@@ -3481,7 +3502,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
             /* we have an angle follow label */
             cachePtr->bbox = cachePtr->textsymbols[0]->textpath->bounds.bbox;
 
-            /* before going any futher, check that mindistance is respected */
+            /* before going any further, check that mindistance is respected */
             if (cachePtr->numtextsymbols &&
                 cachePtr->textsymbols[0]->label->mindistance > 0.0 &&
                 cachePtr->textsymbols[0]->annotext) {
@@ -3609,14 +3630,14 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
                 }
               }
               if (have_label_marker == -1)
-                return MS_FAILURE; /* error occured (symbol not found, etc...)
+                return MS_FAILURE; /* error occurred (symbol not found, etc...)
                                     */
 
               if (textSymbolPtr->annotext) {
                 /*
                  * if we don't have an offset defined, first check that the
                  * labelpoint itself does not collide this helps speed things up
-                 * in dense labelling, as if the labelpoint collides there's no
+                 * in dense labeling, as if the labelpoint collides there's no
                  * use in computing the labeltext bounds (i.e. going into
                  * shaping+freetype). We do however skip collision testing
                  * against the marker cache, as we want to allow rendering a
@@ -3638,7 +3659,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
                                     map, cachePtr, &labelpoint_bounds,
                                     MS_MAX_LABEL_PRIORITY, l)) {
                     cachePtr->status =
-                        MS_DELETE; /* we won't check for leader offseted
+                        MS_DELETE; /* we won't check for leader offsetted
                                       positions, as the anchor point colided */
                     MS_DEBUG(MS_DEBUGLEVEL_DEVDEBUG, map,
                              "Skipping label %d \"%s\" of labelgroup %d of "
@@ -3679,7 +3700,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image) {
                 }
 
                 if (textSymbolPtr->label->position == MS_AUTO) {
-                  /* no point in using auto positionning if the marker cannot be
+                  /* no point in using auto positioning if the marker cannot be
                    * placed */
                   int positions[MS_POSITIONS_LENGTH], npositions = 0;
 

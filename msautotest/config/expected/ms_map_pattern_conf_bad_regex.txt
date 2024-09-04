@@ -4,5 +4,5 @@ Content-Type: text/html
 <HEAD><TITLE>MapServer Message</TITLE></HEAD>
 <BODY BGCOLOR="#FFFFFF">
 msCGILoadMap(): Web application error. CGI variable &quot;map&quot; fails to validate.
-msEvalRegex(): Regular expression error. Failed to compile expression ([A-Z*).
+msEvalRegex(): Regular expression error. Failed to compile expression ([A-Z*): Unmatched [, [^, [:, [., or [=.
 </BODY></HTML>

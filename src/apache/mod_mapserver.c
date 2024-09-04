@@ -30,7 +30,7 @@ typedef struct {
  * mapio.c. Note that cbData contains Apache's request_rec!
  */
 static int msIO_apacheWrite(void *cbData, void *data, int byteCount) {
-  /* simply use the block writing function which is very similiar to fwrite */
+  /* simply use the block writing function which is very similar to fwrite */
   return ap_rwrite(data, byteCount, (request_rec *)cbData);
 }
 
@@ -91,7 +91,7 @@ static int mapserver_decode_args(apr_pool_t *p, char *args, char ***ParamNames,
       args[n] = '\0';
     }
 
-  /* eleminate empty args */
+  /* eliminate empty args */
   for (n = 0, i = 0; argv[i]; i++)
     if (*(argv[i]) != '\0')
       argv[n++] = argv[i];
@@ -111,7 +111,7 @@ static int mapserver_decode_args(apr_pool_t *p, char *args, char ***ParamNames,
 
     if (ap_unescape_url(argv[i + WMS_MAX_ARGS + 1]) == HTTP_BAD_REQUEST) {
       ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                   "%s: malformed URI, couldn't unescape parm %s", __func__,
+                   "%s: malformed URI, couldn't unescape param %s", __func__,
                    argv[i]);
 
       argv[i + WMS_MAX_ARGS + 1] = NULL;
@@ -238,7 +238,7 @@ static mapObj *msModuleLoadMap(mapservObj *mapserv,
  * The main request handler.
  **/
 static int mapserver_handler(request_rec *r) {
-  /* aquire the apropriate configuration for this directory */
+  /* acquire the appropriate configuration for this directory */
   mapserver_dir_config *conf;
   conf = (mapserver_dir_config *)ap_get_module_config(r->per_dir_config,
                                                       &mapserver_module);

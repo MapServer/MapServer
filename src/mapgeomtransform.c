@@ -33,13 +33,12 @@
 extern int yyparse(parseObj *p);
 
 void msStyleSetGeomTransform(styleObj *s, const char *transform) {
-  msFree(s->_geomtransform.string);
   if (!transform) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+    msFree(s->_geomtransform.string);
     s->_geomtransform.string = NULL;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
     return;
   }
-  s->_geomtransform.string = msStrdup(transform);
   if (!strncasecmp("start", transform, 5)) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_START;
   } else if (!strncasecmp("end", transform, 3)) {
@@ -62,7 +61,11 @@ void msStyleSetGeomTransform(styleObj *s, const char *transform) {
                "msStyleSetGeomTransform()");
     msFree(s->_geomtransform.string);
     s->_geomtransform.string = NULL;
+    return;
   }
+
+  msFree(s->_geomtransform.string);
+  s->_geomtransform.string = msStrdup(transform);
 }
 
 /*

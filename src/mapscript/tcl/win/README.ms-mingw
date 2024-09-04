@@ -9,7 +9,7 @@ Things get ugly after this......
 
 
 
-First, make a new directory to hold everthing we will need.
+First, make a new directory to hold everything we will need.
 
 	mkdir ms_win
 	cd ms_win
@@ -117,7 +117,7 @@ building the various libraries the 'right' way, i.e, as DLL files.  This
 requires a majic Windows macro to export the symbols for the DLL, but another
 majic macro for code that uses the symbols in a DLL.  For software originally
 not designed to be portable across Unix and Windows, this requires changing
-alot of source files.  
+a lot of source files.  
 
     Examples of software that is written for portability: zlib, tcl
     Examples of software that is not: proj, mapserver
@@ -125,6 +125,6 @@ alot of source files.
 The alternative:  compile the source library code, and bundling it into
 a standard library file, e.g., libz.a, libjpeg.a, libttf.a, etc.
 We then take all of the libraries and create our final DLL, libMapscript.dll.
-The downside is that we're not allowing any reuse of the libaries, but the
-upside is we don't have to change much exisiting code.  I do this method.
+The downside is that we're not allowing any reuse of the libraries, but the
+upside is we don't have to change much existing code.  I do this method.
 
