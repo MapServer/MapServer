@@ -1,0 +1,37 @@
+# RUN_PARMS: rasterlabel.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+
+MAP
+  NAME 'test'
+  EXTENT -68.2072756 16.8083712 -63.9750679 19.7474043
+  SIZE 900 500
+  IMAGETYPE PNG
+  PROJECTION
+   "init=epsg:4326"
+  END
+
+  WEB
+    IMAGEPATH "/tmp/"
+    IMAGEURL "/tmp/"
+  END
+
+  LAYER
+    PROJECTION
+      "init=epsg:4326"
+    END
+    NAME "test"
+    TYPE POINT
+    CONNECTIONTYPE RASTERLABEL
+    STATUS DEFAULT
+    DATA data/temperature.tif
+    # PROCESSING "BANDS=1"
+    PROCESSING "LABEL_SPACING=40"
+    # PROCESSING "RESAMPLE=BILINEAR"
+    CLASS
+        TEXT (tostring([value],"%.1f")+"°")
+        LABEL
+          TYPE TRUETYPE
+          SIZE 7
+        END # label
+    END # class
+  END
+END

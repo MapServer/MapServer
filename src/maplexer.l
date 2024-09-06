@@ -494,6 +494,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>plugin                                { MS_LEXER_RETURN_TOKEN(MS_PLUGIN); }
 <INITIAL>query                                 { MS_LEXER_RETURN_TOKEN(MS_LAYER_QUERY); }
 <INITIAL>raster                                { MS_LEXER_RETURN_TOKEN(MS_LAYER_RASTER); }
+<INITIAL>rasterlabel                           { MS_LEXER_RETURN_TOKEN(MS_RASTER_LABEL); }
 <INITIAL>right                                 { MS_LEXER_RETURN_TOKEN(MS_ALIGN_RIGHT); }
 <INITIAL>round                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_ROUND); }
 <INITIAL>selected                              { MS_LEXER_RETURN_TOKEN(MS_SELECTED); }

@@ -36,6 +36,9 @@
 #include "mapresample.h"
 #include "mapthread.h"
 
+#include <cmath>
+#include <limits>
+
 #define MSUVRASTER_NUMITEMS 6
 #define MSUVRASTER_ANGLE "uv_angle"
 #define MSUVRASTER_ANGLEINDEX -100
@@ -61,13 +64,17 @@ typedef struct {
 
   int refcount;
 
-  float **u; /* u values */
-  float **v; /* v values */
+  float *u; /* u values */
+  float *v; /* v values */
   int width;
   int height;
   rectObj extent;
   int next_shape;
-  int x, y; /* used internally in msUVRasterLayerNextShape() */
+
+  /* To improve performance of GetShape() when queried on increasing shapeindex
+   */
+  long last_queried_shapeindex; // value in [0, query_results[ range
+  size_t last_raster_off;       // value in [0, width*height[ range
 
   bool needsLonLat;
   reprojectionObj *reprojectorToLonLat;
@@ -183,24 +190,12 @@ static void msUVRasterLayerInfoFree(layerObj *layer)
 
 {
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
-  int i;
 
   if (uvlinfo == NULL)
     return;
 
-  if (uvlinfo->u) {
-    for (i = 0; i < uvlinfo->width; ++i) {
-      free(uvlinfo->u[i]);
-    }
-    free(uvlinfo->u);
-  }
-
-  if (uvlinfo->v) {
-    for (i = 0; i < uvlinfo->width; ++i) {
-      free(uvlinfo->v[i]);
-    }
-    free(uvlinfo->v);
-  }
+  free(uvlinfo->u);
+  free(uvlinfo->v);
 
   if (uvlinfo->reprojectorToLonLat) {
     msProjectDestroyReprojector(uvlinfo->reprojectorToLonLat);
@@ -463,15 +458,18 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   mapObj *map_tmp;
   double map_cellsize;
   unsigned int spacing;
-  int width, height, u_src_off, v_src_off, i, x, y;
+  int width, height;
   char **alteredProcessing = NULL, *saved_layer_mask;
   char **savedProcessing = NULL;
   int bHasLonWrap = MS_FALSE;
   double dfLonWrap = 0.0;
-  rectObj oldLayerExtent = {0};
+  rectObj oldLayerExtent;
   char *oldLayerData = NULL;
-  projectionObj oldLayerProjection = {0};
+  projectionObj oldLayerProjection;
   int ret;
+
+  memset(&oldLayerExtent, 0, sizeof(oldLayerExtent));
+  memset(&oldLayerProjection, 0, sizeof(oldLayerProjection));
 
   if (layer->debug)
     msDebug("Entering msUVRASTERLayerWhichShapes().\n");
@@ -593,7 +591,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
         int nBands = GDALGetRasterCount(hDS);
         int nMaxLen = 100 + nBands * (800 + 2 * strlen(decrypted_path));
         int nOffset = 0;
-        char *pszInlineVRT = msSmallMalloc(nMaxLen);
+        char *pszInlineVRT = static_cast<char *>(msSmallMalloc(nMaxLen));
 
         snprintf(pszInlineVRT, nMaxLen,
                  "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">", nXSize,
@@ -785,42 +783,35 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   }
 
   /* free old query arrays */
-  if (uvlinfo->u) {
-    for (i = 0; i < uvlinfo->width; ++i) {
-      free(uvlinfo->u[i]);
-    }
-    free(uvlinfo->u);
-  }
-
-  if (uvlinfo->v) {
-    for (i = 0; i < uvlinfo->width; ++i) {
-      free(uvlinfo->v[i]);
-    }
-    free(uvlinfo->v);
-  }
+  free(uvlinfo->u);
+  free(uvlinfo->v);
 
   /* Update our uv layer structure */
   uvlinfo->width = width;
   uvlinfo->height = height;
-  uvlinfo->query_results = width * height;
+  uvlinfo->query_results = 0;
 
-  uvlinfo->u = (float **)msSmallMalloc(sizeof(float *) * width);
-  uvlinfo->v = (float **)msSmallMalloc(sizeof(float *) * width);
+  uvlinfo->last_queried_shapeindex = 0;
+  uvlinfo->last_raster_off = 0;
 
-  for (x = 0; x < width; ++x) {
-    uvlinfo->u[x] = (float *)msSmallMalloc(height * sizeof(float));
-    uvlinfo->v[x] = (float *)msSmallMalloc(height * sizeof(float));
+  uvlinfo->u = (float *)msSmallMalloc(sizeof(float *) * width * height);
+  uvlinfo->v = (float *)msSmallMalloc(sizeof(float *) * width * height);
 
-    for (y = 0; y < height; ++y) {
-      u_src_off = v_src_off = x + y * width;
-      v_src_off += width * height;
-
-      uvlinfo->u[x][y] = image_tmp->img.raw_float[u_src_off];
-      uvlinfo->v[x][y] = image_tmp->img.raw_float[v_src_off];
-
-      /* null vector? update the number of results  */
-      if (uvlinfo->u[x][y] == 0 && uvlinfo->v[x][y] == 0)
-        --uvlinfo->query_results;
+  for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
+    /* Ignore invalid pixels (at nodata), or (u,v)=(0,0) */
+    if (MS_GET_BIT(image_tmp->img_mask, off)) {
+      uvlinfo->u[off] = image_tmp->img.raw_float[off];
+      uvlinfo->v[off] =
+          image_tmp->img.raw_float[off + static_cast<size_t>(width) * height];
+      if (!(uvlinfo->u[off] == 0 && uvlinfo->v[off] == 0)) {
+        uvlinfo->query_results++;
+      } else {
+        uvlinfo->u[off] = std::numeric_limits<float>::quiet_NaN();
+        uvlinfo->v[off] = std::numeric_limits<float>::quiet_NaN();
+      }
+    } else {
+      uvlinfo->u[off] = std::numeric_limits<float>::quiet_NaN();
+      uvlinfo->v[off] = std::numeric_limits<float>::quiet_NaN();
     }
   }
 
@@ -837,8 +828,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
   lineObj line;
   pointObj point;
-  int i, j, k, x = 0, y = 0;
-  long shapeindex = record->shapeindex;
+  const long shapeindex = record->shapeindex;
 
   msFreeShape(shape);
   shape->type = MS_SHAPE_NULL;
@@ -851,15 +841,28 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
     return MS_FAILURE;
   }
 
-  /* loop to the next non null vector */
-  k = 0;
-  for (i = 0, x = -1; i < uvlinfo->width && k <= shapeindex; ++i, ++x) {
-    for (j = 0, y = -1; j < uvlinfo->height && k <= shapeindex; ++j, ++k, ++y) {
-      if (uvlinfo->u[i][j] == 0 && uvlinfo->v[i][j] == 0)
-        --k;
+  /* loop to the next valid value */
+  size_t raster_off = (shapeindex >= uvlinfo->last_queried_shapeindex)
+                          ? uvlinfo->last_raster_off
+                          : 0;
+  for (long curshapeindex = (shapeindex >= uvlinfo->last_queried_shapeindex)
+                                ? uvlinfo->last_queried_shapeindex
+                                : 0;
+       raster_off < static_cast<size_t>(uvlinfo->width) * uvlinfo->height;
+       ++raster_off) {
+    if (!std::isnan(uvlinfo->u[raster_off])) {
+      if (curshapeindex == shapeindex) {
+        uvlinfo->last_queried_shapeindex = shapeindex;
+        uvlinfo->last_raster_off = raster_off;
+        break;
+      }
+      ++curshapeindex;
     }
   }
+  assert(raster_off < static_cast<size_t>(uvlinfo->width) * uvlinfo->height);
 
+  const int x = static_cast<int>(raster_off % uvlinfo->width);
+  const int y = static_cast<int>(raster_off / uvlinfo->width);
   point.x = Pix2Georef(x, 0, uvlinfo->width - 1, uvlinfo->extent.minx,
                        uvlinfo->extent.maxx, MS_FALSE);
   point.y = Pix2Georef(y, 0, uvlinfo->height - 1, uvlinfo->extent.miny,
@@ -877,8 +880,8 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
   msComputeBounds(shape);
 
   shape->numvalues = layer->numitems;
-  shape->values =
-      msUVRASTERGetValues(layer, uvlinfo->u[x][y], uvlinfo->v[x][y], &point);
+  shape->values = msUVRASTERGetValues(layer, uvlinfo->u[raster_off],
+                                      uvlinfo->v[raster_off], &point);
   shape->index = shapeindex;
   shape->resultindex = shapeindex;
 

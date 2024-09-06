@@ -4447,10 +4447,10 @@ int loadLayer(layerObj *layer, mapObj *map) {
         return (-1); /* getString() cleans up previously allocated string */
       break;
     case (CONNECTIONTYPE):
-      if ((type = getSymbol(13, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL,
+      if ((type = getSymbol(14, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL,
                             MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION,
                             MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY, MS_IDW,
-                            MS_FLATGEOBUF)) == -1)
+                            MS_FLATGEOBUF, MS_RASTER_LABEL)) == -1)
         return (-1);
       layer->connectiontype = type;
       break;

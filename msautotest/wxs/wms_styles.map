@@ -7,6 +7,9 @@
 # GetStyles
 # RUN_PARMS: wms_getstyles1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test1" > [RESULT_DEMIME]
 
+# Below test is disabled because there's a memory leak during the call to yyparse() in msSLDGenerateTextSLD()
+# DISABLED: wms_getstyles2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test2" > [RESULT_DEMIME]
+
 MAP
     NAME WMS_TEST
 
@@ -24,6 +27,18 @@ MAP
           COLOR 255 0 0
           WIDTH 2
           PATTERN 10 10 END
+        END
+      END
+    END
+
+    # test for unsupported expression. We just check that this does not
+    # cause a crash, but the current "expected" result is not optimal
+    LAYER
+      NAME "Test2"
+      TYPE POINT
+      CLASS
+        TEXT (tostring([FID],"%d"))
+        LABEL
         END
       END
     END

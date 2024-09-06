@@ -1,6 +1,4 @@
 # RUN_PARMS: uvraster.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: uvraster.pdf [MAP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
-# RUN_PARMS: uvraster.svg [MAP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: uvraster.cairo.png [MAP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 
 MAP

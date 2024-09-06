@@ -335,7 +335,7 @@ src/mappostgresql.c src/mapthread.c src/mapcopy.c src/maplabel.c src/mapprimitiv
 src/mapcpl.c src/maplayer.c src/mapproject.c src/maptime.c src/mapcrypto.c src/maplegend.c src/hittest.c
 src/maptree.c src/mapdebug.c src/maplexer.c src/mapquantization.c src/mapunion.cpp
 src/mapdraw.c src/maplibxml2.c src/mapquery.c src/maputil.c src/strptime.c src/mapdrawgdal.c
-src/mapraster.c src/mapuvraster.c src/mapdummyrenderer.c src/mapobject.c src/maprasterquery.c
+src/mapraster.c src/mapuvraster.cpp src/mapdummyrenderer.c src/mapobject.c src/maprasterquery.c
 src/mapwcs.cpp src/maperror.c src/mapogcfilter.cpp src/mapregex.c src/mapwcs11.cpp src/mapfile.c
 src/mapogcfiltercommon.cpp src/maprendering.c src/mapwcs20.cpp src/mapogcsld.cpp src/mapmetadata.c
 src/mapresample.c src/mapwfs.cpp src/mapgdal.cpp src/mapogcsos.c src/mapscale.c src/mapwfs11.cpp src/mapwfs20.c
@@ -343,7 +343,7 @@ src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
-src/mapgraph.cpp src/mapserv-config.cpp)
+src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp)
 
 set(mapserver_HEADERS
 src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
