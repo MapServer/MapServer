@@ -1932,7 +1932,7 @@ typedef struct {
 /************************************************************************/
 
 #define MS_LEGEND_KEYSIZE_MIN 5
-#define MS_LEGEND_KEYSIZE_MAX 200
+#define MS_LEGEND_KEYSIZE_MAX 1000
 #define MS_LEGEND_KEYSPACING_MIN 0
 #define MS_LEGEND_KEYSPACING_MAX 50
 
