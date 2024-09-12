@@ -677,13 +677,6 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             return MS_FAILURE;
           }
         }
-        /* Update layers extent to the requested bbox and reproject to requested
-         * srs */
-        lp->extent = map->extent;
-
-        if (msProjectionsDiffer(&(map->projection), &(lp->projection))) {
-          msProjectRect(&(map->projection), &(lp->projection), &(lp->extent));
-        }
       }
       msFree(ows_srs);
     }
@@ -793,6 +786,9 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
     msFree(ows_srs);
   }
+
+  /* Set layer extent to wms bbox */
+  lp->extent = bbox;
 
   /* -------------------------------------------------------------------- */
   /*      Potentially return the bbox.                                    */
