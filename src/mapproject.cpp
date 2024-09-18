@@ -41,22 +41,30 @@
 #include "ogr_srs_api.h"
 #include "proj_experimental.h"
 
+#include <deque>
+#include <memory>
+#include <mutex>
+#include "mem_cache.h"
+
 static char *ms_proj_data = NULL;
 static unsigned ms_proj_data_change_counter = 0;
-
-typedef struct LinkedListOfProjContext LinkedListOfProjContext;
-struct LinkedListOfProjContext {
-  LinkedListOfProjContext *next;
-  projectionContext *context;
-};
-
-static LinkedListOfProjContext *headOfLinkedListOfProjContext = NULL;
-
 static int msTestNeedWrap(pointObj pt1, pointObj pt2, pointObj pt2_geo,
                           reprojectionObj *reprojector);
 
 static projectionContext *msProjectionContextCreate(void);
 static void msProjectionContextUnref(projectionContext *ctx);
+
+static std::mutex oMutexProjContextCache;
+struct ProjContextReleaser {
+  void operator()(projectionContext *ctxt) const {
+    msProjectionContextUnref(ctxt);
+  }
+};
+typedef std::unique_ptr<projectionContext, ProjContextReleaser>
+    ProjContextUniquePtr;
+typedef std::deque<ProjContextUniquePtr> QueueOfContext;
+static ms_lru11::Cache<std::thread::id, std::shared_ptr<QueueOfContext>>
+    oProjContextCache;
 
 /* Helps considerably for use cases like msautotest/wxs/wms_inspire.map */
 /* which involve a number of layers with same SRS, and a number of exposed */
@@ -99,7 +107,7 @@ static char *getStringFromArgv(int argc, char **args) {
   for (i = 0; i < argc; i++) {
     len += strlen(args[i]) + 1;
   }
-  char *str = msSmallMalloc(len + 1);
+  char *str = static_cast<char *>(msSmallMalloc(len + 1));
   len = 0;
   for (i = 0; i < argc; i++) {
     size_t arglen = strlen(args[i]);
@@ -528,8 +536,8 @@ void msFreeProjectionExceptContext(projectionObj *p) {
 
 static projectionContext *
 msProjectionContextClone(const projectionContext *ctxSrc) {
-  projectionContext *ctx = msProjectionContextCreate();
-  if (ctx) {
+  projectionContext *ctx = msProjectionContextGetFromPool();
+  if (ctx && ctx->pj_cache_size == 0) {
     ctx->pj_cache_size = ctxSrc->pj_cache_size;
     for (int i = 0; i < ctx->pj_cache_size; ++i) {
       pjCacheEntry *entryDst = &(ctx->pj_cache[i]);
@@ -710,7 +718,7 @@ int msProcessProjection(projectionObj *p) {
   }
 
   if (p->proj_ctx == NULL) {
-    p->proj_ctx = msProjectionContextCreate();
+    p->proj_ctx = msProjectionContextGetFromPool();
     if (p->proj_ctx == NULL) {
       return -1;
     }
@@ -952,7 +960,8 @@ static int msProjectSegment(reprojectionObj *reprojector, pointObj *start,
 
   while (fabs(subStart.x - subEnd.x) + fabs(subStart.y - subEnd.y) >
          TOLERANCE) {
-    pointObj midPoint = {0};
+    pointObj midPoint;
+    memset(&midPoint, 0, sizeof(midPoint));
 
     midPoint.x = (subStart.x + subEnd.x) * 0.5;
     midPoint.y = (subStart.y + subEnd.y) * 0.5;
@@ -1009,10 +1018,10 @@ msProjectGetLineCuttingCase(reprojectionObj *reprojector) {
 
         msInitShape(&(reprojector->splitShape));
         reprojector->splitShape.type = MS_SHAPE_POLYGON;
-        int j;
-        for (j = -1; j <= 1; j += 2) {
+        pointObj p;
+        memset(&p, 0, sizeof(p));
+        for (int j = -1; j <= 1; j += 2) {
           const double x = j * 180;
-          pointObj p = {0}; // initialize
           lineObj newLine = {0, NULL};
           p.x = x - EPS;
           p.y = 90;
@@ -1074,7 +1083,8 @@ msProjectGetLineCuttingCase(reprojectionObj *reprojector) {
     return reprojector->lineCuttingCase;
   }
 
-  pointObj p = {0}; // initialize
+  pointObj p;
+  memset(&p, 0, sizeof(p));
   double invgt0 = out->gt.need_geotransform ? out->gt.invgeotransform[0] : 0.0;
   double invgt1 = out->gt.need_geotransform ? out->gt.invgeotransform[1] : 1.0;
   double invgt3 = out->gt.need_geotransform ? out->gt.invgeotransform[3] : 0.0;
@@ -1845,7 +1855,7 @@ int msProjectHasLonWrap(projectionObj *in, double *pdfLonWrap) {
 /************************************************************************/
 
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
-  char *over = "+over";
+  const char *over = "+over";
   int ret;
   int bFreeInOver = MS_FALSE;
   int bFreeOutOver = MS_FALSE;
@@ -1960,7 +1970,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
          strncmp(out->args[0], "proj=", 5) == 0)) {
       bFreeOutOver = MS_TRUE;
       msInitProjection(&out_over);
-      msCopyProjectionExtended(&out_over, out, &over, 1);
+      msCopyProjectionExtended(&out_over, out, const_cast<char **>(&over), 1);
       outp = &out_over;
       if (reprojector) {
         msProjectDestroyReprojector(reprojector);
@@ -1975,7 +1985,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
          strncmp(in->args[0], "proj=", 5) == 0)) {
       bFreeInOver = MS_TRUE;
       msInitProjection(&in_over);
-      msCopyProjectionExtended(&in_over, in, &over, 1);
+      msCopyProjectionExtended(&in_over, in, const_cast<char **>(&over), 1);
       inp = &in_over;
       /* coverity[dead_error_begin] */
       if (reprojector) {
@@ -2489,19 +2499,19 @@ int GetMapserverUnitUsingProj(projectionObj *psProj) {
 /************************************************************************/
 
 projectionContext *msProjectionContextGetFromPool() {
-  projectionContext *context;
-  msAcquireLock(TLOCK_PROJ);
-
-  if (headOfLinkedListOfProjContext) {
-    LinkedListOfProjContext *next = headOfLinkedListOfProjContext->next;
-    context = headOfLinkedListOfProjContext->context;
-    msFree(headOfLinkedListOfProjContext);
-    headOfLinkedListOfProjContext = next;
-  } else {
+  projectionContext *context = nullptr;
+  {
+    std::lock_guard<std::mutex> oLock(oMutexProjContextCache);
+    std::shared_ptr<QueueOfContext> oThreadQueue;
+    if (oProjContextCache.tryGet(std::this_thread::get_id(), oThreadQueue) &&
+        !oThreadQueue->empty()) {
+      context = oThreadQueue->back().release();
+      oThreadQueue->pop_back();
+    }
+  }
+  if (!context) {
     context = msProjectionContextCreate();
   }
-
-  msReleaseLock(TLOCK_PROJ);
   return context;
 }
 
@@ -2510,13 +2520,22 @@ projectionContext *msProjectionContextGetFromPool() {
 /************************************************************************/
 
 void msProjectionContextReleaseToPool(projectionContext *ctx) {
-  LinkedListOfProjContext *link =
-      (LinkedListOfProjContext *)msSmallMalloc(sizeof(LinkedListOfProjContext));
-  link->context = ctx;
-  msAcquireLock(TLOCK_PROJ);
-  link->next = headOfLinkedListOfProjContext;
-  headOfLinkedListOfProjContext = link;
-  msReleaseLock(TLOCK_PROJ);
+  std::lock_guard<std::mutex> oLock(oMutexProjContextCache);
+  std::shared_ptr<QueueOfContext> oThreadQueue;
+  if (oProjContextCache.tryGet(std::this_thread::get_id(), oThreadQueue)) {
+    constexpr int MAX_SIZE_PER_THREAD = 4;
+    if (oThreadQueue->size() < MAX_SIZE_PER_THREAD) {
+      ctx->thread_id = msGetThreadId();
+      oThreadQueue->emplace_back(ProjContextUniquePtr(ctx));
+    } else {
+      msProjectionContextUnref(ctx);
+    }
+  } else {
+    oThreadQueue = std::make_shared<QueueOfContext>();
+    ctx->thread_id = msGetThreadId();
+    oThreadQueue->emplace_back(ProjContextUniquePtr(ctx));
+    oProjContextCache.insert(std::this_thread::get_id(), oThreadQueue);
+  }
 }
 
 /************************************************************************/
@@ -2524,15 +2543,6 @@ void msProjectionContextReleaseToPool(projectionContext *ctx) {
 /************************************************************************/
 
 void msProjectionContextPoolCleanup() {
-  LinkedListOfProjContext *link;
-  msAcquireLock(TLOCK_PROJ);
-  link = headOfLinkedListOfProjContext;
-  while (link) {
-    LinkedListOfProjContext *next = link->next;
-    msProjectionContextUnref(link->context);
-    msFree(link);
-    link = next;
-  }
-  headOfLinkedListOfProjContext = NULL;
-  msReleaseLock(TLOCK_PROJ);
+  std::lock_guard<std::mutex> oLock(oMutexProjContextCache);
+  oProjContextCache.clear();
 }
