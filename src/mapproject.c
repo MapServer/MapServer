@@ -2495,6 +2495,7 @@ projectionContext *msProjectionContextGetFromPool() {
   if (headOfLinkedListOfProjContext) {
     LinkedListOfProjContext *next = headOfLinkedListOfProjContext->next;
     context = headOfLinkedListOfProjContext->context;
+    context->thread_id = msGetThreadId();
     msFree(headOfLinkedListOfProjContext);
     headOfLinkedListOfProjContext = next;
   } else {
