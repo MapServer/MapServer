@@ -23,6 +23,12 @@
 # if the SLD path file is missing an empty image will be returned unless a fallback CLASS has been set. An error will be written to the log.
 # RUN_PARMS: sld_styleitem_file_missing.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=missing&STYLES=" > [RESULT_DEMIME]
 
+# test for when no matching NamedLayer is found in the SLD file - an empty image will be output
+# RUN_PARMS: sld_styleitem_file_no_match.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=no_match&STYLES=" > [RESULT_DEMIME]
+
+# test for two NamedLayers with the same name in the SLD file
+# RUN_PARMS: sld_styleitem_file_duplicate.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=duplicate&STYLES=" > [RESULT_DEMIME]
+
 # test applying SLD to a raster LAYER
 # RUN_PARMS: sld_styleitem_file_raster.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=40,7,50,31&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=rgb&STYLES=" > [RESULT_DEMIME]
 
@@ -86,6 +92,21 @@ MAP
                 COLOR 255 255 0
             END
         END
+    END
+    LAYER
+        NAME "duplicate"
+        DATA "hexagon"
+        TYPE LINE
+        STYLEITEM "sld://data/duplicated_namedstyles.sld"
+    END
+    LAYER
+        NAME "no_match"
+        DATA "hexagon"
+        TYPE LINE
+        METADATA
+            "SLD_USE_FIRST_NAMEDLAYER" "false"
+        END
+        STYLEITEM "sld://data/nomatch_namedstyles.sld"
     END
     LAYER
         NAME rgb
