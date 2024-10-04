@@ -660,12 +660,6 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       in ows_srs is a test to see if there are multiple EPSG: codes) */
       if (lp->projection.numargs == 0 || ows_srs == NULL ||
           (strchr(ows_srs, ' ') != NULL)) {
-        // Reproject layer extent if lp-projection is set since we might change
-        // layer projection
-        if (msProjectionsDiffer(&(map->projection), &(lp->projection))) {
-          msProjectRect(&(lp->projection), &(map->projection), &(lp->extent));
-        }
-
         if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
           char szProj[20];
           snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG + 5);
@@ -792,6 +786,9 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
     msFree(ows_srs);
   }
+
+  /* Set layer extent to wms bbox */
+  lp->extent = bbox;
 
   /* -------------------------------------------------------------------- */
   /*      Potentially return the bbox.                                    */
