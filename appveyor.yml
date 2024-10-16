@@ -6,12 +6,12 @@ image: Visual Studio 2019
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
-  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.2.1.zip'
+  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.3.0-beta1.zip'
 
 environment:
 
   global:
-    SWIG_VER: swigwin-4.2.1
+    SWIG_VER: swigwin-4.3.0-beta1
     TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
