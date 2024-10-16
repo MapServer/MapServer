@@ -6,7 +6,7 @@ image: Visual Studio 2019
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
-  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.1.0.zip'
+  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.2.1.zip'
 
 environment:
 
@@ -20,8 +20,6 @@ environment:
   VS_VERSION: Visual Studio 16 2019
   matrix:
   - platform: x64
-    Python_ROOT_DIR: c:/python38-x64
-  - platform: x64
     Python_ROOT_DIR: c:/python39-x64
   - platform: x64
     Python_ROOT_DIR: c:/python310-x64
@@ -29,6 +27,8 @@ environment:
     Python_ROOT_DIR: c:/python311-x64
   - platform: x64
     Python_ROOT_DIR: c:/python312-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python313-x64
 
 matrix:
   fast_finish: true
