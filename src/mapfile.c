@@ -6900,7 +6900,10 @@ static bool msGetCWD(char *szBuffer, size_t nBufferSize,
  */
 static void applyStyleItemToLayer(mapObj *map) {
 
-  for (int i = 0; i < map->numlayers; i++) {
+  // applying SLD can create cloned layers so store the original layer count
+  int layerCount = map->numlayers;
+
+  for (int i = 0; i < layerCount; i++) {
     layerObj *layer = GET_LAYER(map, i);
 
     if (layer->styleitem && STARTS_WITH_CI(layer->styleitem, "sld://")) {
