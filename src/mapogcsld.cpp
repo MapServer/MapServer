@@ -1124,6 +1124,8 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer,
   /*        - If there are no other symbolizers, a new class will be      */
   /*      created to contain the label object.                            */
   /* ==================================================================== */
+  if (psLayer->type == MS_LAYER_LINE || psLayer->type == MS_LAYER_POLYGON)
+    nSymbolizer++;
   LOOP_ON_CHILD_ELEMENT(psRoot, psTextSymbolizer, "TextSymbolizer") {
     if (nSymbolizer == 0)
       psLayer->type = MS_LAYER_POINT;
