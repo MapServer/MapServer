@@ -363,4 +363,33 @@ MAP
         END
       END
     END
+
+    LAYER
+      NAME "Test25"
+      TYPE POINT
+      CLASS
+        NAME "Or Test"
+        EXPRESSION (("[Property1]" = "Not value") OR ("[Property1]" = "An Or value"))
+        STYLE
+            COLOR 0 0 255
+            SYMBOL "star"
+        END
+      END
+      CLASS
+        NAME "And Test"
+        EXPRESSION (("[Property1]" = "An And value") AND ("[Property1]" = "A Not value"))
+        STYLE
+            COLOR 0 255 0
+            SYMBOL "star"
+        END
+      END
+      CLASS
+        NAME "Not Test"
+        EXPRESSION (NOT ("[Property1]" = "A Not value"))
+        STYLE
+            COLOR 255 0 0
+            SYMBOL "star"
+        END
+      END
+    END
 END
