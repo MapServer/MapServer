@@ -4800,42 +4800,51 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
   if (!pszExpression)
     return 0;
 
+  int nAndCount = 0;
+  int nNotCount = 0;
+  int nOrCount = 0;
+
+  int nArgs = 0;
+  char **papszArgs;
+  papszArgs = msStringTokenize(pszExpression, " ", &nArgs, MS_TRUE);
+
   /* -------------------------------------------------------------------- */
   /*      tests here are minimal to be able to parse simple expression    */
   /*      like A AND B, A OR B, NOT A.                                    */
   /* -------------------------------------------------------------------- */
-  pszAnd = strcasestr(pszExpression, " AND ");
-  pszOr = strcasestr(pszExpression, " OR ");
-  pszNot = strcasestr(pszExpression, "NOT ");
 
-  if (!pszAnd && !pszOr) {
-    pszAnd = strcasestr(pszExpression, "AND(");
-    pszOr = strcasestr(pszExpression, "OR(");
+  for (int i = 0; i < nArgs; i++) {
+    if (strlen(papszArgs[i]) == 0) {
+      free(papszArgs[i]);
+      continue;
+    }
+
+    if (strncasecmp(papszArgs[i], "AND", 3) == 0) {
+      nAndCount += 1;
+    }
+
+    if (strncasecmp(papszArgs[i], "OR", 3) == 0) {
+      nOrCount += 1;
+    }
+
+    if (strncasecmp(papszArgs[i], "NOT", 3) == 0) {
+      nNotCount += 1;
+    }
+
+    free(papszArgs[i]);
   }
+  free(papszArgs);
 
-  if (!pszNot) {
-    pszNot = strcasestr(pszExpression, "NOT(");
-  }
-
-  if (!pszAnd && !pszOr && !pszNot)
+  if (nAndCount == 0 && nNotCount == 0 && nOrCount == 0) {
     return 0;
-
-  /* done not matter how many exactly if there are 2 or more */
-  if ((pszAnd && pszOr) || (pszAnd && pszNot) || (pszOr && pszNot))
-    return 2;
-
-  if (pszAnd) {
-    pszSecondAnd = strcasestr(pszAnd + 3, " AND ");
-    pszSecondOr = strcasestr(pszAnd + 3, " OR ");
-  } else if (pszOr) {
-    pszSecondAnd = strcasestr(pszOr + 2, " AND ");
-    pszSecondOr = strcasestr(pszOr + 2, " OR ");
   }
 
-  if (!pszSecondAnd && !pszSecondOr)
+  int sum = nAndCount + nNotCount + nOrCount;
+  if (sum == 1) {
     return 1;
-  else
+  } else {
     return 2;
+  }
 }
 
 static char *msSLDGetAttributeNameOrValue(const char *pszExpression,

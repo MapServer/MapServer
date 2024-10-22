@@ -1,0 +1,28 @@
+<StyledLayerDescriptor version="1.1.0" xsi:schemaLocation="http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:se="http://www.opengis.net/se" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<NamedLayer>
+<se:Name>Test24</se:Name>
+<UserStyle>
+<se:FeatureTypeStyle>
+<se:Rule>
+<se:Name>Not Test</se:Name>
+<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>Property1</ogc:PropertyName><ogc:Literal>Not Applicable</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>
+<se:PointSymbolizer>
+</se:PointSymbolizer>
+</se:Rule>
+<se:Rule>
+<se:Name>And Test</se:Name>
+<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>Property1</ogc:PropertyName><ogc:Literal>With AND value</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>
+<se:PointSymbolizer>
+</se:PointSymbolizer>
+</se:Rule>
+<se:Rule>
+<se:Name>Or Test</se:Name>
+<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>Property1</ogc:PropertyName><ogc:Literal>With OR value</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>
+<se:PointSymbolizer>
+</se:PointSymbolizer>
+</se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+</NamedLayer>
+</StyledLayerDescriptor>
+
