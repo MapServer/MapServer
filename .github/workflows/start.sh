@@ -41,10 +41,10 @@ ci/ubuntu/setup.sh
 ci/ubuntu/build.sh
 
 # Validate openapi document
-pip install jsonschema
-wget https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json -O openapi_schema.json
-echo "Run jsonschema -i msautotest/api/expected/ogcapi_api.json openapi_schema.json"
-jsonschema -i msautotest/api/expected/ogcapi_api.json openapi_schema.json
+pip install check-jsonschema
+wget https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.yaml -O openapi_schema.yaml
+echo "Run check-jsonschema --schemafile openapi_schema.yaml msautotest/api/expected/ogcapi_api.json"
+check-jsonschema --schemafile openapi_schema.yaml msautotest/api/expected/ogcapi_api.json
 
 #####################################
 # Test MapServer as CGI and FastCGI #
