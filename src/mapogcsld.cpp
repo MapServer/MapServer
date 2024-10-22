@@ -4819,7 +4819,7 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
       nAndCount += 1;
     }
 
-    if (strncasecmp(papszArgs[i], "OR", 3) == 0) {
+    if (strncasecmp(papszArgs[i], "OR", 2) == 0) {
       nOrCount += 1;
     }
 
