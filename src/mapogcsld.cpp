@@ -4793,10 +4793,6 @@ static char *msSLDGetLeftExpressionOfOperator(const char *pszExpression) {
 }
 
 static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
-  const char *pszAnd = NULL;
-  const char *pszOr = NULL;
-  const char *pszNot = NULL;
-  const char *pszSecondAnd = NULL, *pszSecondOr = NULL;
   if (!pszExpression)
     return 0;
 
