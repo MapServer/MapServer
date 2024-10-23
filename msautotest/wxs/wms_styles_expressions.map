@@ -153,7 +153,7 @@ MAP
       NAME "Test10"
       TYPE POINT
       CLASS
-        EXPRESSION (([FID] > 1) And ([FID] <= 10))
+        EXPRESSION (([FID] > 1)And([FID] <= 10))
         STYLE
             COLOR 220 0 0
             WIDTH 1
@@ -165,7 +165,7 @@ MAP
       NAME "Test11"
       TYPE POINT
       CLASS
-        EXPRESSION (([FID] = 1) Or ([FID] = 10))
+        EXPRESSION (([FID] = 1)Or([FID] = 10))
         STYLE
             COLOR 220 0 0
             WIDTH 1
@@ -376,6 +376,7 @@ MAP
         END
       END
       CLASS
+        # TODO - this test incorrectly output "An" to the filter rather than "An And value"
         NAME "And Test"
         EXPRESSION (("[Property1]" = "An And value") AND ("[Property1]" = "A Not value"))
         STYLE

@@ -4793,6 +4793,11 @@ static char *msSLDGetLeftExpressionOfOperator(const char *pszExpression) {
 }
 
 static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
+  /* -------------------------------------------------------------------- */
+  /*      tests here are minimal to be able to parse simple expression    */
+  /*      like A AND B, A OR B, NOT A.                                    */
+  /*      TODO - add proper expression parsing                            */
+  /* -------------------------------------------------------------------- */
   if (!pszExpression)
     return 0;
 
@@ -4804,11 +4809,6 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
   char **papszArgs;
   papszArgs = msStringTokenize(pszExpression, " ", &nArgs, MS_TRUE);
 
-  /* -------------------------------------------------------------------- */
-  /*      tests here are minimal to be able to parse simple expression    */
-  /*      like A AND B, A OR B, NOT A.                                    */
-  /* -------------------------------------------------------------------- */
-
   for (int i = 0; i < nArgs; i++) {
     if (strlen(papszArgs[i]) == 0) {
       free(papszArgs[i]);
@@ -4819,11 +4819,23 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
       nAndCount += 1;
     }
 
+    if (strcasestr(pszExpression, "AND(")) {
+      nAndCount += 1;
+    }
+
     if (strncasecmp(papszArgs[i], "OR", 2) == 0) {
       nOrCount += 1;
     }
 
+    if (strcasestr(pszExpression, "OR(")) {
+      nOrCount += 1;
+    }
+
     if (strncasecmp(papszArgs[i], "NOT", 3) == 0) {
+      nNotCount += 1;
+    }
+
+    if (strcasestr(pszExpression, "NOT(")) {
       nNotCount += 1;
     }
 
