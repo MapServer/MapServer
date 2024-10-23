@@ -4815,27 +4815,18 @@ static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
       continue;
     }
 
-    if (strncasecmp(papszArgs[i], "AND", 3) == 0) {
+    if ((strncasecmp(papszArgs[i], "AND", 3) == 0) ||
+        (strcasestr(papszArgs[i], "AND("))) {
       nAndCount += 1;
     }
 
-    if (strcasestr(papszArgs[i], "AND(")) {
-      nAndCount += 1;
-    }
-
-    if (strncasecmp(papszArgs[i], "OR", 2) == 0) {
+    if ((strncasecmp(papszArgs[i], "OR", 3) == 0) ||
+        (strcasestr(papszArgs[i], "OR("))) {
       nOrCount += 1;
     }
 
-    if (strcasestr(papszArgs[i], "OR(")) {
-      nOrCount += 1;
-    }
-
-    if (strncasecmp(papszArgs[i], "NOT", 3) == 0) {
-      nNotCount += 1;
-    }
-
-    if (strcasestr(papszArgs[i], "NOT(")) {
+    if ((strncasecmp(papszArgs[i], "NOT", 3) == 0) ||
+        (strcasestr(papszArgs[i], "NOT("))) {
       nNotCount += 1;
     }
 
