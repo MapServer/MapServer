@@ -3,7 +3,7 @@
 #
 # REQUIRES: INPUT=OGR SUPPORTS=WFS
 #
-# RUN_PARMS: encrypted_connection_postgis_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=road" > [RESULT]
+# RUN_PARMS: encrypted_connection_postgis_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=road" > [RESULT_DEVERSION]
 
 MAP
 
