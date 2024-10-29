@@ -4793,49 +4793,57 @@ static char *msSLDGetLeftExpressionOfOperator(const char *pszExpression) {
 }
 
 static int msSLDNumberOfLogicalOperators(const char *pszExpression) {
-  const char *pszAnd = NULL;
-  const char *pszOr = NULL;
-  const char *pszNot = NULL;
-  const char *pszSecondAnd = NULL, *pszSecondOr = NULL;
-  if (!pszExpression)
-    return 0;
-
   /* -------------------------------------------------------------------- */
   /*      tests here are minimal to be able to parse simple expression    */
   /*      like A AND B, A OR B, NOT A.                                    */
+  /*      TODO - add proper expression parsing                            */
   /* -------------------------------------------------------------------- */
-  pszAnd = strcasestr(pszExpression, " AND ");
-  pszOr = strcasestr(pszExpression, " OR ");
-  pszNot = strcasestr(pszExpression, "NOT ");
-
-  if (!pszAnd && !pszOr) {
-    pszAnd = strcasestr(pszExpression, "AND(");
-    pszOr = strcasestr(pszExpression, "OR(");
-  }
-
-  if (!pszNot) {
-    pszNot = strcasestr(pszExpression, "NOT(");
-  }
-
-  if (!pszAnd && !pszOr && !pszNot)
+  if (!pszExpression)
     return 0;
 
-  /* done not matter how many exactly if there are 2 or more */
-  if ((pszAnd && pszOr) || (pszAnd && pszNot) || (pszOr && pszNot))
-    return 2;
+  int nAndCount = 0;
+  int nNotCount = 0;
+  int nOrCount = 0;
 
-  if (pszAnd) {
-    pszSecondAnd = strcasestr(pszAnd + 3, " AND ");
-    pszSecondOr = strcasestr(pszAnd + 3, " OR ");
-  } else if (pszOr) {
-    pszSecondAnd = strcasestr(pszOr + 2, " AND ");
-    pszSecondOr = strcasestr(pszOr + 2, " OR ");
+  int nArgs = 0;
+  char **papszArgs;
+  papszArgs = msStringTokenize(pszExpression, " ", &nArgs, MS_TRUE);
+
+  for (int i = 0; i < nArgs; i++) {
+    if (strlen(papszArgs[i]) == 0) {
+      free(papszArgs[i]);
+      continue;
+    }
+
+    if ((strncasecmp(papszArgs[i], "AND", 3) == 0) ||
+        (strcasestr(papszArgs[i], "AND("))) {
+      nAndCount += 1;
+    }
+
+    if ((strncasecmp(papszArgs[i], "OR", 3) == 0) ||
+        (strcasestr(papszArgs[i], "OR("))) {
+      nOrCount += 1;
+    }
+
+    if ((strncasecmp(papszArgs[i], "NOT", 3) == 0) ||
+        (strcasestr(papszArgs[i], "NOT("))) {
+      nNotCount += 1;
+    }
+
+    free(papszArgs[i]);
+  }
+  free(papszArgs);
+
+  if (nAndCount == 0 && nNotCount == 0 && nOrCount == 0) {
+    return 0;
   }
 
-  if (!pszSecondAnd && !pszSecondOr)
+  int sum = nAndCount + nNotCount + nOrCount;
+  if (sum == 1) {
     return 1;
-  else
+  } else {
     return 2;
+  }
 }
 
 static char *msSLDGetAttributeNameOrValue(const char *pszExpression,

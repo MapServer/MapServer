@@ -28,6 +28,7 @@
 # RUN_PARMS: wms_getstyles_expressions21.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test21" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions22.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test22" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions23.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test23" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions24.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test24" > [RESULT_DEMIME]
 
 MAP
     NAME WMS_TEST
@@ -329,6 +330,66 @@ MAP
         STYLE
             COLOR 220 0 0
             WIDTH 1
+        END
+      END
+    END
+
+    # test for string expressions containing logic operators
+    LAYER
+      NAME "Test24"
+      TYPE POINT
+      CLASS
+        NAME "Not Test"
+        EXPRESSION ("[Property1]" = "Not Applicable")
+        STYLE
+            COLOR 0 0 255
+            SYMBOL "star"
+        END
+      END
+      CLASS
+        NAME "And Test"
+        EXPRESSION ("[Property1]" = "With AND value")
+        STYLE
+            COLOR 0 255 0
+            SYMBOL "star"
+        END
+      END
+      CLASS
+        NAME "Or Test"
+        EXPRESSION ("[Property1]" = "With OR value")
+        STYLE
+            COLOR 255 0 0
+            SYMBOL "star"
+        END
+      END
+    END
+
+    LAYER
+      NAME "Test25"
+      TYPE POINT
+      CLASS
+        NAME "Or Test"
+        EXPRESSION (("[Property1]" = "Not value") OR ("[Property1]" = "An Or value"))
+        STYLE
+            COLOR 0 0 255
+            SYMBOL "star"
+        END
+      END
+      CLASS
+        # TODO - this test incorrectly output "An" to the filter rather than "An And value"
+        NAME "And Test"
+        EXPRESSION (("[Property1]" = "An And value") AND ("[Property1]" = "A Not value"))
+        STYLE
+            COLOR 0 255 0
+            SYMBOL "star"
+        END
+      END
+      CLASS
+        NAME "Not Test"
+        EXPRESSION (NOT ("[Property1]" = "A Not value"))
+        STYLE
+            COLOR 255 0 0
+            SYMBOL "star"
         END
       END
     END
