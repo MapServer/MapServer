@@ -7,7 +7,7 @@
 
 MAP
 
-NAME WMS_TEST
+NAME ENCRYPTED_TEST
 STATUS ON
 SIZE 400 300
 EXTENT 2018000 -73300 3410396 647400
@@ -15,6 +15,10 @@ UNITS METERS
 UNITS DD
 IMAGECOLOR 255 255 255
 IMAGETYPE png
+
+PROJECTION
+  "init=epsg:4326"
+END
 
 # use a relative path to an encryption key
 CONFIG "MS_ENCRYPTION_KEY" "data/mykey.txt"
@@ -34,6 +38,10 @@ LAYER
   DATA "the_geom from (select * from road order by gid) as foo using unique gid using srid=3978"
   TYPE LINE
   STATUS ON
+
+  PROJECTION
+    "init=epsg:3978"
+  END
 
   CLASS
     NAME "Roads"
