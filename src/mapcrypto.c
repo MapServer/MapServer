@@ -204,10 +204,18 @@ int msGenerateEncryptionKey(unsigned char *k) {
  * Returns MS_SUCCESS/MS_FAILURE.
  **********************************************************************/
 
-int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k) {
+int msReadEncryptionKeyFromFile(const char *keyfile, unsigned char *k,
+                                const char *pszRelToPath) {
   FILE *fp;
+  char extended_path[MS_MAXPATHLEN];
   char szBuf[100];
   int numchars;
+
+  /* Try to make the path relative */
+  if (msBuildPath(extended_path, pszRelToPath, keyfile) == NULL)
+    return MS_FAILURE;
+
+  keyfile = extended_path;
 
   if ((fp = fopen(keyfile, "rt")) == NULL) {
     msSetError(MS_MISCERR, "Cannot open key file.",
@@ -265,8 +273,8 @@ static int msLoadEncryptionKey(mapObj *map) {
   if (!keyfile)
     keyfile = CPLGetConfigOption("MS_ENCRYPTION_KEY", NULL);
 
-  if (keyfile &&
-      msReadEncryptionKeyFromFile(keyfile, map->encryption_key) == MS_SUCCESS) {
+  if (keyfile && msReadEncryptionKeyFromFile(keyfile, map->encryption_key,
+                                             map->mappath) == MS_SUCCESS) {
     map->encryption_key_loaded = MS_TRUE;
   } else {
     msSetError(MS_MISCERR,
@@ -522,7 +530,7 @@ int main(int argc, char *argv[]) {
   /*
   ** Test loading encryption key
   */
-  if (msReadEncryptionKeyFromFile("/tmp/test.key", encryption_key) !=
+  if (msReadEncryptionKeyFromFile("/tmp/test.key", encryption_key, NULL) !=
       MS_SUCCESS) {
     printf("msReadEncryptionKeyFromFile() = MS_FAILURE\n");
     printf("Aborting tests!\n");

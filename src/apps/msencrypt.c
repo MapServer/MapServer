@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     unsigned char key[16];
     char *pszBuf;
 
-    if (msReadEncryptionKeyFromFile(argv[2], key) != MS_SUCCESS) {
+    if (msReadEncryptionKeyFromFile(argv[2], key, NULL) != MS_SUCCESS) {
       printf("ERROR: Failed reading key from file %s\n", argv[2]);
       return -1;
     }

@@ -1,0 +1,55 @@
+#
+# Test encrypted connection strings
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+#
+# RUN_PARMS: encrypted_connection_postgis_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=road" > [RESULT_DEVERSION]
+
+MAP
+
+NAME ENCRYPTED_TEST
+STATUS ON
+SIZE 400 300
+EXTENT 2018000 -73300 3410396 647400
+UNITS METERS
+UNITS DD
+IMAGECOLOR 255 255 255
+IMAGETYPE png
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+# use a relative path to an encryption key
+CONFIG "MS_ENCRYPTION_KEY" "data/mykey.txt"
+
+WEB
+  METADATA
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "ows_enable_request" "*"
+  END
+END
+
+LAYER
+  NAME road
+  CONNECTIONTYPE postgis
+  # encrypted connection string details
+  CONNECTION "dbname={11BB7FB1E993759CD0E8761CA1DEC7B3} user={35B83E9A93BF72F0}"
+  DATA "the_geom from (select * from road order by gid) as foo using unique gid using srid=3978"
+  TYPE LINE
+  STATUS ON
+
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  CLASS
+    NAME "Roads"
+    STYLE
+      WIDTH 1
+      COLOR 220 0 0
+    END
+  END
+END # Layer
+
+END # Map File

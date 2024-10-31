@@ -3770,7 +3770,8 @@ MS_DLL_EXPORT double msGEOSDistance(shapeObj *shape1, shapeObj *shape2);
 /* ==================================================================== */
 MS_DLL_EXPORT int msGenerateEncryptionKey(unsigned char *k);
 MS_DLL_EXPORT int msReadEncryptionKeyFromFile(const char *keyfile,
-                                              unsigned char *k);
+                                              unsigned char *k,
+                                              const char *pszRelToPath);
 MS_DLL_EXPORT void msEncryptStringWithKey(const unsigned char *key,
                                           const char *in, char *out);
 MS_DLL_EXPORT void msDecryptStringWithKey(const unsigned char *key,
