@@ -4856,6 +4856,7 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
   char cCompare = '=';
   char szCompare[3] = {0};
   char szCompare2[3] = {0};
+  char szCompare3[3] = {0};
   int bOneCharCompare = -1, nTokens = 0, nLength = 0;
   int iValue = 0, i = 0, iValueIndex = 0;
   int bStartCopy = 0, iAtt = 0;
@@ -4867,6 +4868,7 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
 
   szCompare[0] = '\0';
   szCompare2[0] = '\0';
+  szCompare3[0] = '\0';
 
   if (strcasecmp(pszComparisonValue, "PropertyIsEqualTo") == 0) {
     cCompare = '=';
@@ -4885,9 +4887,9 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     szCompare2[1] = '=';
     szCompare2[2] = '\0';
 
-    szCompare2[0] = '<';
-    szCompare2[1] = '>';
-    szCompare2[2] = '\0';
+    szCompare3[0] = '<';
+    szCompare3[1] = '>';
+    szCompare3[2] = '\0';
 
     bOneCharCompare = 0;
   } else if (strcasecmp(pszComparisonValue, "PropertyIsLike") == 0) {
@@ -4968,10 +4970,12 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     pszAttributeName = (char *)malloc(sizeof(char) * (nLength + 1));
     iValue = 0;
     for (i = 0; i < nLength - 2; i++) {
-      if ((pszExpression[i] != szCompare[0] ||
+      if ((pszExpression[i] != szCompare[0] &&
            pszExpression[i] != toupper(szCompare[0])) &&
-          (pszExpression[i] != szCompare2[0] ||
-           pszExpression[i] != toupper(szCompare2[0])))
+          (pszExpression[i] != szCompare2[0] &&
+           pszExpression[i] != toupper(szCompare2[0])) &&
+          (pszExpression[i] != szCompare3[0] &&
+           pszExpression[i] != toupper(szCompare3[0])))
 
       {
         pszAttributeName[iValue++] = pszExpression[i];
@@ -4979,8 +4983,10 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
         if (((pszExpression[i + 1] == szCompare[1] ||
               pszExpression[i + 1] == toupper(szCompare[1])) ||
              (pszExpression[i + 1] == szCompare2[1] ||
-              pszExpression[i + 1] == toupper(szCompare2[1]))) &&
-            (pszExpression[i + 2] == ' ')) {
+              pszExpression[i + 1] == toupper(szCompare2[1])) ||
+             (pszExpression[i + 1] == szCompare3[1] ||
+              pszExpression[i + 1] == toupper(szCompare3[1]))) &&
+            (i + 2 < nLength && pszExpression[i + 2] == ' ')) {
           iValueIndex = i + 3;
           pszAttributeValue = msStrdup(pszExpression + iValueIndex);
           break;
