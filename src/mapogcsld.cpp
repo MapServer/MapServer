@@ -4885,6 +4885,10 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     szCompare2[1] = '=';
     szCompare2[2] = '\0';
 
+    szCompare2[0] = '<';
+    szCompare2[1] = '>';
+    szCompare2[2] = '\0';
+
     bOneCharCompare = 0;
   } else if (strcasecmp(pszComparisonValue, "PropertyIsLike") == 0) {
     szCompare[0] = '=';
