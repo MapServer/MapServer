@@ -4669,7 +4669,8 @@ static const char *msSLDGetComparisonValue(const char *pszExpression) {
     return "PropertyIsLike";
   else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
     return "PropertyIsGreaterThanOrEqualTo";
-  else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne "))
+  else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne ") ||
+           strstr(pszExpression, " <> "))
     return "PropertyIsNotEqualTo";
   else if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
     return "PropertyIsEqualTo";
