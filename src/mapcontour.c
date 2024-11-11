@@ -141,7 +141,6 @@ static void msContourLayerInfoFree(layerObj *layer) {
 static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
   mapObj *map = layer->map;
   char **bands;
-  char pointer[64], memDSPointer[128];
   int band = 1;
   double adfGeoTransform[6], adfInvGeoTransform[6];
   double llx, lly, urx, ury;
@@ -436,19 +435,40 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
     msSetError(MS_IOERR, "GDALRasterIO() failed: %s",
                "msContourLayerReadRaster()", CPLGetLastErrorMsg());
     free(clinfo->buffer);
+    clinfo->buffer = NULL;
     return MS_FAILURE;
   }
 
-  memset(pointer, 0, sizeof(pointer));
-  CPLPrintPointer(pointer, clinfo->buffer, sizeof(pointer));
-  sprintf(memDSPointer,
-          "MEM:::DATAPOINTER=%s,PIXELS=%d,LINES=%d,BANDS=1,DATATYPE=Float64",
-          pointer, dst_xsize, dst_ysize);
-  clinfo->hDS = GDALOpen(memDSPointer, GA_ReadOnly);
-  if (clinfo->hDS == NULL) {
-    msSetError(MS_IMGERR, "Unable to open GDAL Memory dataset.",
+  GDALDriverH hMemDRV = GDALGetDriverByName("MEM");
+  if (!hMemDRV) {
+    msSetError(MS_IOERR, "GDAL MEM driver not available",
                "msContourLayerReadRaster()");
     free(clinfo->buffer);
+    clinfo->buffer = NULL;
+    return MS_FAILURE;
+  }
+
+  char pointer[64];
+  memset(pointer, 0, sizeof(pointer));
+  CPLPrintPointer(pointer, clinfo->buffer, sizeof(pointer));
+
+  clinfo->hDS = GDALCreate(hMemDRV, "", dst_xsize, dst_ysize, 0, 0, NULL);
+  if (clinfo->hDS == NULL) {
+    msSetError(MS_IMGERR, "Unable to create GDAL Memory dataset.",
+               "msContourLayerReadRaster()");
+    free(clinfo->buffer);
+    clinfo->buffer = NULL;
+    return MS_FAILURE;
+  }
+
+  char **papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", pointer);
+  eErr = GDALAddBand(clinfo->hDS, GDT_Float64, papszOptions);
+  CSLDestroy(papszOptions);
+  if (eErr != CE_None) {
+    msSetError(MS_IMGERR, "Unable to add band to GDAL Memory dataset.",
+               "msContourLayerReadRaster()");
+    free(clinfo->buffer);
+    clinfo->buffer = NULL;
     return MS_FAILURE;
   }
 
