@@ -1007,8 +1007,8 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   const int nYSize = GDALGetRasterYSize(hDS);
   double adfGeoTransform[6] = {0};
   const CPLErr eErr = GDALGetGeoTransform(hDS, adfGeoTransform);
+  GDALClose(hDS);
   if (eErr != CE_None) {
-    GDALClose(hDS);
     return MS_FAILURE;
   }
 
