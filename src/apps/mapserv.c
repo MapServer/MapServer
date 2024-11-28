@@ -266,6 +266,8 @@ int main(int argc, char *argv[]) {
       goto end_request;
     }
 
+    msReadConfig(mapserv, config);
+
     mapserv->map = msCGILoadMap(mapserv, config);
     if (!mapserv->map) {
       msCGIWriteError(mapserv);
