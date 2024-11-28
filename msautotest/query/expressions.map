@@ -13,6 +13,8 @@
 # RUN_PARMS: expressions_test008.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test008" > [RESULT_DEMIME]
 # RUN_PARMS: expressions_test009.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test009" > [RESULT_DEMIME]
 # RUN_PARMS: expressions_test010.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test010" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test011.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test011" > [RESULT_DEMIME]
+# RUN_PARMS: expressions_test012.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&qformat=csv&qlayer=expressions_test012" > [RESULT_DEMIME]
 #
 MAP
   NAME 'expressions'
@@ -129,6 +131,26 @@ MAP
     INCLUDE 'include/bdry_counpy2_shapefile.map'
     METADATA
         "gml_include_items" "cty_name,area"
+    END
+  END
+
+  # Logical expression with <>
+  LAYER
+    NAME 'expressions_test011'
+    FILTER ('[CTY_NAME]' ~* '^A.*$' AND ('[CTY_NAME]' <> 'Aitkin'))
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
+    END
+  END
+
+  # Logical expression with !=
+  LAYER
+    NAME 'expressions_test012'
+    FILTER ('[CTY_NAME]' ~* '^A.*$' AND ('[CTY_NAME]' != 'Aitkin'))
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+    METADATA
+        "gml_include_items" "cty_name,cty_fips"
     END
   END
 
