@@ -65,6 +65,8 @@ typedef struct {
   PJ *proj;
   projectionContext *proj_ctx;
   geotransformObj gt; /* extra transformation to apply */
+  int is_polar;       /* whether the projection includes the pole. Set to -1 for
+                         unknown */
 #endif
 
 #ifdef SWIG
