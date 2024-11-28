@@ -4973,9 +4973,9 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     iValue = 0;
     for (int i = 0; i < nLength; i++) {
       // Check for comparison operator
-      if ((i + 1 < nLength && strncmp(&pszExpression[i], szCompare, 2) == 0) ||
-          (i + 1 < nLength && strncmp(&pszExpression[i], szCompare2, 2) == 0) ||
-          (i + 1 < nLength && strncmp(&pszExpression[i], szCompare3, 2) == 0)) {
+      if ((i + 1 < nLength && EQUALN(&pszExpression[i], szCompare, 2)) ||
+          (i + 1 < nLength && EQUALN(&pszExpression[i], szCompare2, 2)) ||
+          (i + 1 < nLength && EQUALN(&pszExpression[i], szCompare3, 2))) {
         // Extract value after the operator
         int offset = 2; // All operators are 2 characters long
         pszAttributeValue = msStrdup(&pszExpression[i + offset]);
