@@ -4670,7 +4670,7 @@ static const char *msSLDGetComparisonValue(const char *pszExpression) {
   else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
     return "PropertyIsGreaterThanOrEqualTo";
   else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne ") ||
-           strstr(pszExpression, " <> "))
+           strstr(pszExpression, "<>"))
     return "PropertyIsNotEqualTo";
   else if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
     return "PropertyIsEqualTo";
@@ -4941,9 +4941,11 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
   if (bOneCharCompare == 1) {
     aszValues = msStringSplit(pszExpression, cCompare, &nTokens);
     if (nTokens > 1) {
+      // for operators such as >
       pszAttributeName = msStrdup(aszValues[0]);
       pszAttributeValue = msStrdup(aszValues[1]);
     } else {
+      // for operators such as gt
       nLength = strlen(pszExpression);
       pszAttributeName = (char *)malloc(sizeof(char) * (nLength + 1));
       iValue = 0;
@@ -4969,29 +4971,18 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     nLength = strlen(pszExpression);
     pszAttributeName = (char *)malloc(sizeof(char) * (nLength + 1));
     iValue = 0;
-    for (i = 0; i < nLength - 2; i++) {
-      if ((pszExpression[i] != szCompare[0] &&
-           pszExpression[i] != toupper(szCompare[0])) &&
-          (pszExpression[i] != szCompare2[0] &&
-           pszExpression[i] != toupper(szCompare2[0])) &&
-          (pszExpression[i] != szCompare3[0] &&
-           pszExpression[i] != toupper(szCompare3[0])))
-
-      {
-        pszAttributeName[iValue++] = pszExpression[i];
+    for (int i = 0; i < nLength; i++) {
+      // Check for comparison operator
+      if ((i + 1 < nLength && strncmp(&pszExpression[i], szCompare, 2) == 0) ||
+          (i + 1 < nLength && strncmp(&pszExpression[i], szCompare2, 2) == 0) ||
+          (i + 1 < nLength && strncmp(&pszExpression[i], szCompare3, 2) == 0)) {
+        // Extract value after the operator
+        int offset = 2; // All operators are 2 characters long
+        pszAttributeValue = msStrdup(&pszExpression[i + offset]);
+        break;
       } else {
-        if (((pszExpression[i + 1] == szCompare[1] ||
-              pszExpression[i + 1] == toupper(szCompare[1])) ||
-             (pszExpression[i + 1] == szCompare2[1] ||
-              pszExpression[i + 1] == toupper(szCompare2[1])) ||
-             (pszExpression[i + 1] == szCompare3[1] ||
-              pszExpression[i + 1] == toupper(szCompare3[1]))) &&
-            (i + 2 < nLength && pszExpression[i + 2] == ' ')) {
-          iValueIndex = i + 3;
-          pszAttributeValue = msStrdup(pszExpression + iValueIndex);
-          break;
-        } else
-          pszAttributeName[iValue++] = pszExpression[i];
+        // Copy character to attribute name
+        pszAttributeName[iValue++] = pszExpression[i];
       }
     }
     pszAttributeName[iValue] = '\0';

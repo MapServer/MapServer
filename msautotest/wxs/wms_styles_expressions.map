@@ -32,6 +32,10 @@
 
 # RUN_PARMS: wms_getstyles_expressions26.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test26" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions27.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test27" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions28.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test28" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions29.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test29" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions30.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test30" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions31.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test31" > [RESULT_DEMIME]
 
 MAP
     NAME WMS_TEST
@@ -420,4 +424,59 @@ MAP
         END
       END
     END
+
+    # no spaces around comparison operator
+    LAYER
+      NAME "Test28"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID]=1 or [FID]=10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # no spaces around comparison operators
+    LAYER
+      NAME "Test29"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID]<>1 AND [FID]!=10 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # invalid comparison operator in this case will assume a literal
+    # after the equals and output <ogc:Literal>! 1</ogc:Literal>
+    LAYER
+      NAME "Test30"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] =! 1 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
+    # invalid comparison operator in this case will assume a literal
+    # after the > and output <ogc:Literal>! 1</ogc:Literal>
+    LAYER
+      NAME "Test31"
+      TYPE POINT
+      CLASS
+        EXPRESSION ( [FID] >! 1 )
+        STYLE
+            COLOR 220 0 0
+            WIDTH 1
+        END
+      END
+    END
+
 END
