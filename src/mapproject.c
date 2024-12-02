@@ -490,6 +490,7 @@ int msProjectTransformPoints(reprojectionObj *reprojector, int npoints,
 */
 int msInitProjection(projectionObj *p) {
   p->gt.need_geotransform = MS_FALSE;
+  p->is_polar = -1;
   p->numargs = 0;
   p->args = NULL;
   p->wellknownprojection = wkp_none;
@@ -508,6 +509,7 @@ void msFreeProjection(projectionObj *p) {
   p->proj_ctx = NULL;
 
   p->gt.need_geotransform = MS_FALSE;
+  p->is_polar = -1;
   p->wellknownprojection = wkp_none;
   msFreeCharArray(p->args, p->numargs);
   p->args = NULL;
@@ -1854,15 +1856,18 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
   reprojectionObj *reprojector = NULL;
 
   /* Detect projecting from polar stereographic to longlat */
-  if (in && !in->gt.need_geotransform && out && !out->gt.need_geotransform &&
-      !msProjIsGeographicCRS(in) && msProjIsGeographicCRS(out)) {
+  if (in && in->is_polar < 0 && !in->gt.need_geotransform && out &&
+      !out->gt.need_geotransform && !msProjIsGeographicCRS(in) &&
+      msProjIsGeographicCRS(out)) {
     reprojector = msProjectCreateReprojector(in, out);
+    in->is_polar = 0;
     for (int sign = 1; sign >= -1; sign -= 2) {
       pointObj p;
       p.x = 0.0;
       p.y = 0.0;
       if (reprojector && msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
           fabs(p.y - sign * 90) < 1e-8) {
+        in->is_polar = 1;
         /* Is the pole in the rectangle ? */
         if (0 >= rect->minx && 0 >= rect->miny && 0 <= rect->maxx &&
             0 <= rect->maxy) {
@@ -1885,11 +1890,12 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
   }
 
   /* Detect projecting from polar stereographic to another projected system */
-  else if (in && !in->gt.need_geotransform && out &&
+  else if (in && in->is_polar < 0 && !in->gt.need_geotransform && out &&
            !out->gt.need_geotransform && !msProjIsGeographicCRS(in) &&
            !msProjIsGeographicCRS(out)) {
     reprojectionObj *reprojectorToLongLat =
         msProjectCreateReprojector(in, NULL);
+    in->is_polar = 0;
     for (int sign = 1; sign >= -1; sign -= 2) {
       pointObj p;
       p.x = 0.0;
@@ -1897,6 +1903,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
       if (reprojectorToLongLat &&
           msProjectPointEx(reprojectorToLongLat, &p) == MS_SUCCESS &&
           fabs(p.y - 90) < 1e-8) {
+        in->is_polar = 1;
         reprojector = msProjectCreateReprojector(in, out);
         /* Is the pole in the rectangle ? */
         if (0 >= rect->minx && 0 >= rect->miny && 0 <= rect->maxx &&
