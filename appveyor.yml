@@ -19,14 +19,14 @@ environment:
   # VS 2022
   VS_VERSION: Visual Studio 17 2022
   matrix:
-  #- platform: x64
-  #  Python_ROOT_DIR: c:/python39-x64
-  #- platform: x64
-  #  Python_ROOT_DIR: c:/python310-x64
-  #- platform: x64
-  #  Python_ROOT_DIR: c:/python311-x64
-  #- platform: x64
-  #  Python_ROOT_DIR: c:/python312-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python39-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python310-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python311-x64
+  - platform: x64
+    Python_ROOT_DIR: c:/python312-x64
   - platform: x64
     Python_ROOT_DIR: c:/python313-x64
 
@@ -72,7 +72,7 @@ build_script:
   - set SDK_BIN=%BUILD_FOLDER%/sdk/%SDK%/bin
   - set SWIG_EXECUTABLE=%BUILD_FOLDER%/sdk/%SWIG_VER%/swig.exe
   - set REGEX_DIR=%BUILD_FOLDER%/sdk/support/regex-0.12
-  # there is a mismatch between sqlite3 in Python 3.13 and the SDK - ensure the SDK DLL is used by copying into _mapscript.pyd folder
+  # there is a mismatch between sqlite3 in Python 3.13 and the SDK - ensure the SDK DLL is used by overwriting the DLL in the Python installation
   - ps: |
         if ($env:Python_ROOT_DIR -eq "c:/python313-x64") {
             $sourcePath = Join-Path $env:SDK_BIN "sqlite3.dll"
