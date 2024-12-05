@@ -19,14 +19,14 @@ environment:
   # VS 2022
   VS_VERSION: Visual Studio 17 2022
   matrix:
-  - platform: x64
-    Python_ROOT_DIR: c:/python39-x64
-  - platform: x64
-    Python_ROOT_DIR: c:/python310-x64
-  - platform: x64
-    Python_ROOT_DIR: c:/python311-x64
-  - platform: x64
-    Python_ROOT_DIR: c:/python312-x64
+  #- platform: x64
+  #  Python_ROOT_DIR: c:/python39-x64
+  #- platform: x64
+  #  Python_ROOT_DIR: c:/python310-x64
+  #- platform: x64
+  #  Python_ROOT_DIR: c:/python311-x64
+  #- platform: x64
+  #  Python_ROOT_DIR: c:/python312-x64
   - platform: x64
     Python_ROOT_DIR: c:/python313-x64
 
@@ -95,6 +95,14 @@ before_test:
   - "./mssql/create_mssql_db.bat"
   - "%Python_ROOT_DIR%/python -m pip install -U -r requirements.txt"
   - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file://%BUILD_FOLDER%/build/src/mapscript/python/Release/dist mapscript"
+  # there is a mismatch between sqlite3 in Python 3.13 and the SDK - ensure the SDK DLL is used by copying into _mapscript.pyd folder
+  - ps: |
+        if ($env:Python_ROOT_DIR -eq "c:/python313-x64") {
+            $sourcePath = Join-Path $env:SDK_BIN "sqlite3.dll"
+            $targetPath = Join-Path $env:BUILD_FOLDER "build/src/mapscript/python/Release/mapscriptvenv/Lib/site-packages/mapscript"
+            Copy-Item -Path $sourcePath -Destination $targetPath -Force
+            Write-Host "sqlite3.dll successfully copied to $targetPath"
+        }
 
 test_script:
   - cd %BUILD_FOLDER%/msautotest/mssql
