@@ -2,22 +2,22 @@ branches:
   except:
     - /(cherry-pick-)?backport-\d+-to-/
 
-image: Visual Studio 2019
+image: Visual Studio 2022
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
-  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.3.0-beta1.zip'
+  - '%APPVEYOR_BUILD_FOLDER%\swigwin-4.3.0.zip'
 
 environment:
 
   global:
-    SWIG_VER: swigwin-4.3.0-beta1
+    SWIG_VER: swigwin-4.3.0
     TWINE_USERNAME: mapserver
     TWINE_PASSWORD:
       secure: mHoJHeXdXbBNoDf7MA4ZEg==
 
-  # VS 2019
-  VS_VERSION: Visual Studio 16 2019
+  # VS 2022
+  VS_VERSION: Visual Studio 17 2022
   matrix:
   - platform: x64
     Python_ROOT_DIR: c:/python39-x64
@@ -38,6 +38,7 @@ clone_depth: 5
 
 init:
   - net start MSSQL$SQL2019
+  # we can skip testing Python versions apart from for releases by updating the version below
   - ps: |
         if ($env:APPVEYOR_REPO_TAG -ne $TRUE) {
             if ("c:/python37-x64" -contains $env:Python_ROOT_DIR -eq $TRUE) {
@@ -53,12 +54,8 @@ build_script:
   - set "BUILD_FOLDER=%APPVEYOR_BUILD_FOLDER:\=/%"
   - if "%platform%" == "x64" SET VS_FULL=%VS_VERSION%
   - if "%platform%" == "x64" SET VS_ARCH=x64
-  - if "%platform%" == "x86" SET VS_FULL=%VS_VERSION%
-  - if "%platform%" == "x86" SET VS_ARCH=Win32 
-  - if "%platform%" == "x86" SET SDK=release-1928
-  - if "%platform%" == "x64" SET SDK=release-1928-x64
-  - if "%platform%" == "x64" call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars64.bat"
-  - if "%platform%" == "x86" call "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build/vcvars32.bat"
+  - if "%platform%" == "x64" SET SDK=release-1930-x64
+  - if "%platform%" == "x64" call "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars64.bat"
   - echo "%VS_FULL%"
   - if not exist %SWIG_VER%.zip appveyor DownloadFile https://github.com/geographika/python-mapscript/raw/main/%SWIG_VER%.zip
   - set SDK_ZIP=%SDK%-dev.zip
