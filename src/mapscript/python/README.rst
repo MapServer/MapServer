@@ -38,11 +38,11 @@ Advantages of ready-made wheels on PyPI include:
 Wheels are built based on the `Appveyor build environments <https://github.com/MapServer/MapServer/blob/main/appveyor.yml>`_. 
 These are as follows at the time of writing:
 
-+ Python 3.8 x64
 + Python 3.9 x64
 + Python 3.10 x64
 + Python 3.11 x64
 + Python 3.12 x64
++ Python 3.13 x64
 
 The mapscript wheels have been compiled using Visual Studio 2022 version 17 (``MSVC++ 17.9 _MSC_VER == 1939``). 
 Linux Wheels may also be available in the future using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
