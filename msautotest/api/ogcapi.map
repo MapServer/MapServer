@@ -20,7 +20,7 @@
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_bbox_empty_result.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=2,49,3,50" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/35" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id_not_found.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/12345678" "QUERY_STRING=f=json" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_collections_mn_population_centers_items_by_id_no_extent.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items/35" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_population_centers_items_by_id_no_extent.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items/2710700172" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_api.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/api" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: conformance.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/conformance" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_invalid_mapfile.txt [MAPSERV] "PATH_INFO=/invalid.map/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
