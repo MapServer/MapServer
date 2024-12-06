@@ -1912,7 +1912,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   }
 
   const rectObj rectInvalid = MS_INIT_INVALID_RECT;
-  bool bIsValidRect = memcmp(rect, &rectInvalid, sizeof(rectInvalid)) != 0;
+  bool bIsValidRect = (rect && memcmp(rect, &rectInvalid, sizeof(rectInvalid)) != 0);
 
   /* Populate strRect, if necessary. */
   std::string strRect;
