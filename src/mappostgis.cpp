@@ -1912,7 +1912,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   }
 
   const rectObj rectInvalid = MS_INIT_INVALID_RECT;
-  const int bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
+  bool bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
   /* Populate strRect, if necessary. */
   std::string strRect;
@@ -2030,6 +2030,10 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   std::string strWhere;
   if (bIsValidRect && !strRect.empty()) {
     strWhere += strRect;
+    insert_and = true;
+  } else {
+    // ignore extent and select all records
+    strWhere = "(true)";
     insert_and = true;
   }
 
@@ -2776,6 +2780,8 @@ static int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect,
 #ifdef USE_POSTGIS
   int rectSRID = -1;
   rectObj searchrectInLayerProj = rect;
+  const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+  bool bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
   assert(layer != nullptr);
   assert(layer->layerinfo != nullptr);
@@ -2788,8 +2794,9 @@ static int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect,
   // from the layer projection We want to issue a WHERE that includes
   // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT
   // ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
-  if (rectProjection != NULL && layer->project &&
-      msProjectionsDiffer(&(layer->projection), rectProjection)) {
+  if (bIsValidRect &&
+      (rectProjection != NULL && layer->project &&
+       msProjectionsDiffer(&(layer->projection), rectProjection))) {
     // If we cannot guess the EPSG code of the rectProjection, we cannot
     // use ST_Transform, so fallback on slow implementation
     if (rectProjection->numargs < 1 ||
