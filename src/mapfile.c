@@ -6514,7 +6514,8 @@ int msSaveMap(mapObj *map, char *filename) {
 
   stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
   if (!stream) {
-    msSetError(MS_IOERR, "(%s)", "msSaveMap()", filename);
+    msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR, "(%s)",
+                         "msSaveMap()", filename);
     return (-1);
   }
 
@@ -6546,7 +6547,8 @@ int msSaveConfig(configObj *config, const char *filename) {
 
   stream = fopen(filename, "w");
   if (!stream) {
-    msSetError(MS_IOERR, "(%s)", "msSaveConfig()", filename);
+    msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR, "(%s)",
+                         "msSaveConfig()", filename);
     return (-1);
   }
 
@@ -6836,8 +6838,10 @@ static void applyStyleItemToLayer(mapObj *map) {
       const char *filename = layer->styleitem + strlen("sld://");
 
       if (*filename == '\0') {
-        msSetError(MS_IOERR, "Empty SLD filename: \"%s\".",
-                   "applyLayerDefaultSubstitutions()", layer->styleitem);
+        msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                             "Empty SLD filename: \"%s\".",
+                             "applyLayerDefaultSubstitutions()",
+                             layer->styleitem);
       } else {
         msSLDApplyFromFile(map, layer, filename);
       }
@@ -6989,8 +6993,9 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
 
     msyyin = tmpfile();
     if (msyyin == NULL) {
-      msSetError(MS_IOERR, "tmpfile() failed to create temporary file",
-                 "msLoadMap()");
+      msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                           "tmpfile() failed to create temporary file",
+                           "msLoadMap()");
       msReleaseLock(TLOCK_PARSER);
       msFreeMap(map);
       return NULL;
@@ -7006,7 +7011,8 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
   } else {
 #endif
     if ((msyyin = fopen(filename, "r")) == NULL) {
-      msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
+      msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR, "(%s)",
+                           "msLoadMap()", filename);
       msReleaseLock(TLOCK_PARSER);
       msFreeMap(map);
       return NULL;
@@ -7386,7 +7392,8 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens) {
   }
 
   if ((msyyin = fopen(filename, "r")) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msTokenizeMap()", filename);
+    msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR, "(%s)",
+                         "msTokenizeMap()", filename);
     return NULL;
   }
 

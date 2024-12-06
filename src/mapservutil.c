@@ -82,6 +82,8 @@ void msCGIWriteError(mapservObj *mapserv) {
     if (CPLGetConfigOption("MS_ERROR_URL", NULL) != NULL) {
       msRedirect(CPLGetConfigOption("MS_ERROR_URL", NULL));
     } else {
+      if (ms_error->http_status[0])
+        msIO_setHeader("Status", "%s", ms_error->http_status);
       msIO_setHeader("Content-Type", "text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
@@ -107,6 +109,8 @@ void msCGIWriteError(mapservObj *mapserv) {
       url = CPLGetConfigOption("MS_ERROR_URL", NULL);
     msRedirect(url);
   } else {
+    if (ms_error->http_status[0])
+      msIO_setHeader("Status", "%s", ms_error->http_status);
     msIO_setHeader("Content-Type", "text/html");
     msIO_sendHeaders();
     msIO_printf("<HTML>\n");
@@ -182,6 +186,20 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
 
   const char *map_value = NULL;
 
+  // Determine if it is a WMS query so that errors emitted look for the
+  // MS_WMS_ERROR_STATUS_CODE configuration option to determine if a HTTP
+  // status must be emitted. Otherwise MS_HTTP_ERROR_STATUS_CODE is used.
+  {
+    int isWMS = MS_FALSE;
+    for (i = 0; i < mapserv->request->NumParams; i++) {
+      if (strcasecmp(mapserv->request->ParamNames[i], "SERVICE") == 0) {
+        isWMS = strcasecmp(mapserv->request->ParamValues[i], "WMS") == 0;
+        break;
+      }
+    }
+    msSetErrorSetIsWMS(isWMS);
+  }
+
   if (mapserv->request->api_path != NULL) {
     map_value = mapserv->request
                     ->api_path[0]; /* mapfile is *always* in the first position
@@ -198,8 +216,9 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
 
   if (map_value == NULL) {
     if (ms_mapfile == NULL) {
-      msSetError(MS_WEBERR, "CGI variable \"map\" is not set.",
-                 "msCGILoadMap()"); /* no default, outta here */
+      msSetErrorWithStatus(MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                           "CGI variable \"map\" is not set.",
+                           "msCGILoadMap()"); /* no default, outta here */
       return NULL;
     }
     ms_mapfile_tainted = MS_FALSE;
@@ -213,10 +232,11 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
       /* by now we know the map parameter isn't referencing something in the
        * configuration */
       if (ms_map_no_path != NULL) {
-        msSetError(MS_WEBERR,
-                   "CGI variable \"map\" not found in configuration and this "
-                   "server is not configured for full paths.",
-                   "msCGILoadMap()");
+        msSetErrorWithStatus(
+            MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+            "CGI variable \"map\" not found in configuration and this "
+            "server is not configured for full paths.",
+            "msCGILoadMap()");
         return NULL;
       }
       ms_mapfile = map_value;
@@ -226,20 +246,23 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
   /* validate ms_mapfile if tainted */
   if (ms_mapfile_tainted == MS_TRUE) {
     if (ms_map_pattern == NULL) { // can't go any further, bail
-      msSetError(MS_WEBERR,
-                 "Required configuration value MS_MAP_PATTERN not set.",
-                 "msCGILoadMap()");
+      msSetErrorWithStatus(
+          MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+          "Required configuration value MS_MAP_PATTERN not set.",
+          "msCGILoadMap()");
       return NULL;
     }
     if (msIsValidRegex(ms_map_bad_pattern) == MS_FALSE ||
         msEvalRegex(ms_map_bad_pattern, ms_mapfile) == MS_TRUE) {
-      msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.",
-                 "msCGILoadMap()");
+      msSetErrorWithStatus(MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                           "CGI variable \"map\" fails to validate.",
+                           "msCGILoadMap()");
       return NULL;
     }
     if (msEvalRegex(ms_map_pattern, ms_mapfile) != MS_TRUE) {
-      msSetError(MS_WEBERR, "CGI variable \"map\" fails to validate.",
-                 "msCGILoadMap()");
+      msSetErrorWithStatus(MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                           "CGI variable \"map\" fails to validate.",
+                           "msCGILoadMap()");
       return NULL;
     }
   }
@@ -285,8 +308,8 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
               ms_context_bad_pattern = ms_map_bad_pattern_default;
 
             if (ms_context_pattern == NULL) { // can't go any further, bail
-              msSetError(
-                  MS_WEBERR,
+              msSetErrorWithStatus(
+                  MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
                   "Required configuration value MS_CONTEXT_PATTERN not set.",
                   "msCGILoadMap()");
               msFreeMap(map);
@@ -295,17 +318,19 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
             if (msIsValidRegex(ms_context_bad_pattern) == MS_FALSE ||
                 msEvalRegex(ms_context_bad_pattern, map_context_filename) ==
                     MS_TRUE) {
-              msSetError(MS_WEBERR,
-                         "CGI variable \"context\" fails to validate.",
-                         "msCGILoadMap()");
+              msSetErrorWithStatus(
+                  MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                  "CGI variable \"context\" fails to validate.",
+                  "msCGILoadMap()");
               msFreeMap(map);
               return NULL;
             }
             if (msEvalRegex(ms_context_pattern, map_context_filename) !=
                 MS_TRUE) {
-              msSetError(MS_WEBERR,
-                         "CGI variable \"context\" fails to validate.",
-                         "msCGILoadMap()");
+              msSetErrorWithStatus(
+                  MS_WEBERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                  "CGI variable \"context\" fails to validate.",
+                  "msCGILoadMap()");
               msFreeMap(map);
               return NULL;
             }

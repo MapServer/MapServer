@@ -3,6 +3,10 @@
 #
 # REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
 #
+# RUN_PARMS: wms_invalid_request_without_500_status.txt [MAPSERV] QUERY_STRING="map=i_do_not_exist.map&SERVICE=WMS" > [RESULT]
+# RUN_PARMS: wms_invalid_request_with_500_status.txt MS_WMS_ERROR_STATUS_CODE=ON [MAPSERV] QUERY_STRING="map=i_do_not_exist.map&SERVICE=WMS" > [RESULT]
+# RUN_PARMS: wms_invalid_request_with_400_status.txt MS_WMS_ERROR_STATUS_CODE=ON [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS" > [RESULT]
+#
 #
 # Capabilities (return latest supported version by default
 #

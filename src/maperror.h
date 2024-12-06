@@ -91,8 +91,12 @@ extern "C" {
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
+#define HTTPSTATUSLENGTH 128
 
 #define MS_ERROR_LANGUAGE "en-US"
+
+#define MS_HTTP_400_BAD_REQUEST "400 Bad Request"
+#define MS_HTTP_500_INTERNAL_SERVER_ERROR "500 Internal Server Error"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define MS_DLL_EXPORT __declspec(dllexport)
@@ -119,7 +123,8 @@ typedef struct errorObj {
   int code; ///< MapServer error code such as :data:`MS_IMGERR`
   char
       routine[ROUTINELENGTH]; ///< MapServer function in which the error was set
-  char message[MESSAGELENGTH]; ///< Context-dependent error message
+  char message[MESSAGELENGTH];        ///< Context-dependent error message
+  char http_status[HTTPSTATUSLENGTH]; ////< HTTP status
   int isreported; ///< :data:`MS_TRUE` or :data:`MS_FALSE` flag indicating if
                   ///< the error has been output
   int errorcount; ///< Number of subsequent errors
@@ -161,6 +166,10 @@ MS_DLL_EXPORT void msRedactCredentials(char *str);
 MS_DLL_EXPORT void msSetError(int code, const char *message,
                               const char *routine, ...)
     MS_PRINT_FUNC_FORMAT(2, 4);
+void msSetErrorSetIsWMS(int is_wms);
+void msSetErrorWithStatus(int ms_errcode, const char *http_status,
+                          const char *message, const char *routine, ...)
+    MS_PRINT_FUNC_FORMAT(3, 5);
 MS_DLL_EXPORT void msWriteError(FILE *stream);
 MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
 MS_DLL_EXPORT char *msGetErrorCodeString(int code);

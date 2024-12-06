@@ -92,6 +92,11 @@ static int msWMSException(mapObj *map, int nVersion, const char *exception_code,
       wms_exception_format = "text/xml";
   }
 
+  errorObj *ms_error = msGetErrorObj();
+  if (ms_error && ms_error->http_status[0]) {
+    msIO_setHeader("Status", "%s", ms_error->http_status);
+  }
+
   if (strcasecmp(wms_exception_format, "INIMAGE") == 0 ||
       strcasecmp(wms_exception_format, "BLANK") == 0 ||
       strcasecmp(wms_exception_format, "application/vnd.ogc.se_inimage") == 0 ||
@@ -220,8 +225,8 @@ static bool msWMSSetTimePattern(const char *timepatternstring,
             }
           }
           if (!match) {
-            msSetError(
-                MS_WMSERR,
+            msSetErrorWithStatus(
+                MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                 "Time value %s given does not match the time format pattern.",
                 "msWMSSetTimePattern", range.c_str());
             return false;
@@ -263,8 +268,8 @@ static int msWMSApplyTime(mapObj *map, int version, const char *time,
         /* send an exception */
         if (time == NULL || strlen(time) <= 0) {
           if (timedefault == NULL) {
-            msSetError(
-                MS_WMSERR,
+            msSetErrorWithStatus(
+                MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                 "No Time value was given, and no default time value defined.",
                 "msWMSApplyTime");
             return msWMSException(map, version, "MissingDimensionValue",
@@ -272,10 +277,11 @@ static int msWMSApplyTime(mapObj *map, int version, const char *time,
           } else {
             if (msValidateTimeValue((char *)timedefault, timeextent) ==
                 MS_FALSE) {
-              msSetError(MS_WMSERR,
-                         "No Time value was given, and the default time value "
-                         "%s is invalid or outside the time extent defined %s",
-                         "msWMSApplyTime", timedefault, timeextent);
+              msSetErrorWithStatus(
+                  MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                  "No Time value was given, and the default time value "
+                  "%s is invalid or outside the time extent defined %s",
+                  "msWMSApplyTime", timedefault, timeextent);
               /* return MS_FALSE; */
               return msWMSException(map, version, "InvalidDimensionValue",
                                     wms_exception_format);
@@ -302,18 +308,19 @@ static int msWMSApplyTime(mapObj *map, int version, const char *time,
           /* check if given time is in the range */
           if (msValidateTimeValue(time, timeextent) == MS_FALSE) {
             if (timedefault == NULL) {
-              msSetError(MS_WMSERR,
-                         "Time value(s) %s given is invalid or outside the "
-                         "time extent defined (%s).",
-                         "msWMSApplyTime", time, timeextent);
+              msSetErrorWithStatus(
+                  MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                  "Time value(s) %s given is invalid or outside the "
+                  "time extent defined (%s).",
+                  "msWMSApplyTime", time, timeextent);
               /* return MS_FALSE; */
               return msWMSException(map, version, "InvalidDimensionValue",
                                     wms_exception_format);
             } else {
               if (msValidateTimeValue((char *)timedefault, timeextent) ==
                   MS_FALSE) {
-                msSetError(
-                    MS_WMSERR,
+                msSetErrorWithStatus(
+                    MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                     "Time value(s) %s given is invalid or outside the time "
                     "extent defined (%s), and default time set is invalid (%s)",
                     "msWMSApplyTime", time, timeextent, timedefault);
@@ -391,10 +398,11 @@ static int msWMSApplyFilter(mapObj *map, int version, const char *filter,
   }
 
   if (numfilters != ows_request->numwmslayerargs) {
-    msSetError(MS_WMSERR,
-               "Wrong number of filter elements, one filter must be specified "
-               "for each requested layer or groups.",
-               "msWMSApplyFilter");
+    msSetErrorWithStatus(
+        MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+        "Wrong number of filter elements, one filter must be specified "
+        "for each requested layer or groups.",
+        "msWMSApplyFilter");
     msFreeCharArray(paszFilters, numfilters);
     return msWMSException(map, version, "InvalidParameterValue",
                           wms_exception_format);
@@ -427,8 +435,9 @@ static int msWMSApplyFilter(mapObj *map, int version, const char *filter,
     /* Parse filter */
     FilterEncodingNode *psNode = FLTParseFilterEncoding(paszFilters[curfilter]);
     if (!psNode) {
-      msSetError(MS_WMSERR, "Invalid or Unsupported FILTER : %s",
-                 "msWMSApplyFilter()", paszFilters[curfilter]);
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Invalid or Unsupported FILTER : %s",
+                           "msWMSApplyFilter()", paszFilters[curfilter]);
       msFreeCharArray(paszFilters, numfilters);
       return msWMSException(map, version, "InvalidParameterValue",
                             wms_exception_format);
@@ -521,8 +530,9 @@ static int msWMSApplyFilter(mapObj *map, int version, const char *filter,
       errorObj *ms_error = msGetErrorObj();
 
       if (ms_error->code != MS_NOTFOUND) {
-        msSetError(MS_WMSERR, "FLTApplyFilterToLayer() failed",
-                   "msWMSApplyFilter()");
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                             "FLTApplyFilterToLayer() failed",
+                             "msWMSApplyFilter()");
         FLTFreeFilterEncodingNode(psNode);
         msFreeCharArray(paszFilters, numfilters);
         return msWMSException(map, version, "InvalidParameterValue",
@@ -570,7 +580,8 @@ static void msWMSPrepareNestedGroups(mapObj *map, int /* nVersion */,
           strlen(GET_LAYER(map, i)->group) != 0) {
         const char *errorMsg = "It is not allowed to set both the GROUP and "
                                "WMS_LAYER_GROUP for a layer";
-        msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                             errorMsg, "msWMSPrepareNestedGroups()", NULL);
         msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
         /* cannot return exception at this point because we are already writing
          * to stdout */
@@ -578,7 +589,8 @@ static void msWMSPrepareNestedGroups(mapObj *map, int /* nVersion */,
         if (groups[0] != '/') {
           const char *errorMsg =
               "The WMS_LAYER_GROUP metadata does not start with a '/'";
-          msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
+          msSetErrorWithStatus(MS_WMSERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                               errorMsg, "msWMSPrepareNestedGroups()", NULL);
           msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
           /* cannot return exception at this point because we are already
            * writing to stdout */
@@ -912,18 +924,19 @@ static bool msWMSApplyDimension(layerObj *lp, int /* version */,
         result = msWMSApplyDimensionLayer(lp, dimensionitem,
                                           currentvalue.c_str(), forcecharacter);
       } else {
-        msSetError(MS_WMSERR,
-                   "Dimension %s with a value of %s is invalid or outside the "
-                   "extents defined",
-                   "msWMSApplyDimension", dimension.c_str(),
-                   currentvalue.c_str());
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "Dimension %s with a value of %s is invalid or outside the "
+            "extents defined",
+            "msWMSApplyDimension", dimension.c_str(), currentvalue.c_str());
         result = false;
       }
     } else
-      msSetError(MS_WMSERR,
-                 "Dimension %s : invalid settings. Make sure that item, units "
-                 "and extent are set.",
-                 "msWMSApplyDimension", dimension.c_str());
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Dimension %s : invalid settings. Make sure that item, units "
+          "and extent are set.",
+          "msWMSApplyDimension", dimension.c_str());
   }
   return result;
 }
@@ -1010,8 +1023,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
       wmslayers = msStringSplit(values[i], ',');
       if (wmslayers.empty()) {
         if (sld_url == NULL && sld_body == NULL) {
-          msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
-                     "msWMSLoadGetMapParams()");
+          msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                               "At least one layer name required in LAYERS.",
+                               "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
         }
       }
@@ -1021,9 +1035,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
             msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
         if (layerlimit) {
           if (static_cast<int>(wmslayers.size()) > atoi(layerlimit)) {
-            msSetError(MS_WMSERR,
-                       "Number of layers requested exceeds LayerLimit.",
-                       "msWMSLoadGetMapParams()");
+            msSetErrorWithStatus(
+                MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                "Number of layers requested exceeds LayerLimit.",
+                "msWMSLoadGetMapParams()");
             return msWMSException(map, nVersion, NULL, wms_exception_format);
           }
         }
@@ -1183,17 +1198,19 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
       }
       if (!srsOk) {
         if (nVersion >= OWS_1_3_0) {
-          msSetError(MS_WMSERR,
-                     "Unsupported CRS namespace (CRS must be in the format "
-                     "AUTH:XXXX).",
-                     "msWMSLoadGetMapParams()");
+          msSetErrorWithStatus(
+              MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+              "Unsupported CRS namespace (CRS must be in the format "
+              "AUTH:XXXX).",
+              "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, "InvalidCRS",
                                 wms_exception_format);
         } else {
-          msSetError(MS_WMSERR,
-                     "Unsupported SRS namespace (SRS must be in the format "
-                     "AUTH:XXXX).",
-                     "msWMSLoadGetMapParams()");
+          msSetErrorWithStatus(
+              MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+              "Unsupported SRS namespace (SRS must be in the format "
+              "AUTH:XXXX).",
+              "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, "InvalidSRS",
                                 wms_exception_format);
         }
@@ -1202,8 +1219,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
       bboxfound = true;
       const auto tokens = msStringSplit(values[i], ',');
       if (tokens.size() != 4) {
-        msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.",
-                   "msWMSLoadGetMapParams()");
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                             "Wrong number of arguments for BBOX.",
+                             "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
       map->extent.minx = atof(tokens[0].c_str());
@@ -1218,8 +1236,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
         /* validate bbox values */
         if (map->extent.minx >= map->extent.maxx ||
             map->extent.miny >= map->extent.maxy) {
-          msSetError(MS_WMSERR, "Invalid values for BBOX.",
-                     "msWMSLoadGetMapParams()");
+          msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                               "Invalid values for BBOX.",
+                               "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
         }
         adjust_extent = true;
@@ -1241,8 +1260,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
           format = msOwsIsOutputFormatValid(
               map, values[i], &(map->web.metadata), "M", "getmap_formatlist");
           if (format == NULL) {
-            msSetError(MS_IMGERR, "Unsupported output format (%s).",
-                       "msWMSLoadGetMapParams()", values[i]);
+            msSetErrorWithStatus(MS_IMGERR, MS_HTTP_400_BAD_REQUEST,
+                                 "Unsupported output format (%s).",
+                                 "msWMSLoadGetMapParams()", values[i]);
             return msWMSException(map, nVersion, "InvalidFormat",
                                   wms_exception_format);
           }
@@ -1257,8 +1277,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
                strncasecmp(format->driver, "OGL/", 4) != 0 &&
                strncasecmp(format->driver, "KML", 3) != 0 &&
                strncasecmp(format->driver, "KMZ", 3) != 0)) {
-            msSetError(MS_IMGERR, "Unsupported output format (%s).",
-                       "msWMSLoadGetMapParams()", values[i]);
+            msSetErrorWithStatus(MS_IMGERR, MS_HTTP_400_BAD_REQUEST,
+                                 "Unsupported output format (%s).",
+                                 "msWMSLoadGetMapParams()", values[i]);
             return msWMSException(map, nVersion, "InvalidFormat",
                                   wms_exception_format);
           }
@@ -1308,8 +1329,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
     if (strcasecmp(wms_exception_format, "INIMAGE") != 0 &&
         strcasecmp(wms_exception_format, "BLANK") != 0 &&
         strcasecmp(wms_exception_format, "XML") != 0) {
-      msSetError(MS_WMSERR, "Invalid format %s for the EXCEPTIONS parameter.",
-                 "msWMSLoadGetMapParams()", wms_exception_format);
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Invalid format %s for the EXCEPTIONS parameter.",
+                           "msWMSLoadGetMapParams()", wms_exception_format);
       return msWMSException(map, nVersion, "InvalidFormat",
                             wms_exception_format);
     }
@@ -1356,8 +1378,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
     /* validate bbox values */
     if (map->extent.minx >= map->extent.maxx ||
         map->extent.miny >= map->extent.maxy) {
-      msSetError(MS_WMSERR, "Invalid values for BBOX.",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Invalid values for BBOX.",
+                           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
     adjust_extent = true;
@@ -1496,8 +1519,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
   */
   if (validlayers == 0 || invalidlayers > 0) {
     if (invalidlayers > 0) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "Invalid layer(s) given in the LAYERS parameter. A layer might be disabled for \
 this request. Check wms/ows_enable_request settings.",
           "msWMSLoadGetMapParams()");
@@ -1505,8 +1528,9 @@ this request. Check wms/ows_enable_request settings.",
                             wms_exception_format);
     }
     if (validlayers == 0 && sld_url == NULL && sld_body == NULL) {
-      msSetError(MS_WMSERR, "Missing required parameter LAYERS",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Missing required parameter LAYERS",
+                           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
@@ -1552,17 +1576,19 @@ this request. Check wms/ows_enable_request settings.",
           }
           if (!epsgvalid) {
             if (nVersion >= OWS_1_3_0) {
-              msSetError(MS_WMSERR,
-                         "Invalid CRS given : CRS must be valid for all "
-                         "requested layers.",
-                         "msWMSLoadGetMapParams()");
+              msSetErrorWithStatus(
+                  MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                  "Invalid CRS given : CRS must be valid for all "
+                  "requested layers.",
+                  "msWMSLoadGetMapParams()");
               return msWMSException(map, nVersion, "InvalidSRS",
                                     wms_exception_format);
             } else {
-              msSetError(MS_WMSERR,
-                         "Invalid SRS given : SRS must be valid for all "
-                         "requested layers.",
-                         "msWMSLoadGetMapParams()");
+              msSetErrorWithStatus(
+                  MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                  "Invalid SRS given : SRS must be valid for all "
+                  "requested layers.",
+                  "msWMSLoadGetMapParams()");
               return msWMSException(map, nVersion, "InvalidSRS",
                                     wms_exception_format);
             }
@@ -1577,10 +1603,11 @@ this request. Check wms/ows_enable_request settings.",
      */
     if (map->width > map->maxsize || map->height > map->maxsize ||
         map->width < 1 || map->height < 1) {
-      msSetError(MS_WMSERR,
-                 "Image size out of range, WIDTH and HEIGHT must be between 1 "
-                 "and %d pixels.",
-                 "msWMSLoadGetMapParams()", map->maxsize);
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Image size out of range, WIDTH and HEIGHT must be between 1 "
+          "and %d pixels.",
+          "msWMSLoadGetMapParams()", map->maxsize);
 
       /* Restore valid default values in case errors INIMAGE are used */
       map->width = 400;
@@ -1620,19 +1647,21 @@ this request. Check wms/ows_enable_request settings.",
 
     if (map->projection.numargs <= 0) {
       if (nVersion >= OWS_1_3_0) {
-        msSetError(MS_WMSERR,
-                   "Cannot set new CRS on a map that doesn't "
-                   "have any projection set. Please make sure your mapfile "
-                   "has a projection defined at the top level.",
-                   "msWMSLoadGetMapParams()");
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "Cannot set new CRS on a map that doesn't "
+            "have any projection set. Please make sure your mapfile "
+            "has a projection defined at the top level.",
+            "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, "InvalidCRS",
                               wms_exception_format);
       } else {
-        msSetError(MS_WMSERR,
-                   "Cannot set new SRS on a map that doesn't "
-                   "have any projection set. Please make sure your mapfile "
-                   "has a projection defined at the top level.",
-                   "msWMSLoadGetMapParams()");
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "Cannot set new SRS on a map that doesn't "
+            "have any projection set. Please make sure your mapfile "
+            "has a projection defined at the top level.",
+            "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, "InvalidSRS",
                               wms_exception_format);
       }
@@ -1830,8 +1859,9 @@ this request. Check wms/ows_enable_request settings.",
                 }
               }
               if (!found) {
-                msSetError(MS_WMSERR, "Style (%s) not defined on layer.",
-                           "msWMSLoadGetMapParams()", tokens[i]);
+                msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                                     "Style (%s) not defined on layer.",
+                                     "msWMSLoadGetMapParams()", tokens[i]);
                 msFreeCharArray(tokens, n);
 
                 return msWMSException(map, nVersion, "StyleNotDefined",
@@ -1846,8 +1876,9 @@ this request. Check wms/ows_enable_request settings.",
                 styleName = "default";
               char *pszEncodedStyleName = msEncodeHTMLEntities(styleName);
               if (strcasecmp(pszEncodedStyleName, tokens[i]) != 0) {
-                msSetError(MS_WMSERR, "Style (%s) not defined on root layer.",
-                           "msWMSLoadGetMapParams()", tokens[i]);
+                msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                                     "Style (%s) not defined on root layer.",
+                                     "msWMSLoadGetMapParams()", tokens[i]);
                 msFreeCharArray(tokens, n);
                 msFree(pszEncodedStyleName);
 
@@ -1858,11 +1889,12 @@ this request. Check wms/ows_enable_request settings.",
             }
           }
         } else {
-          msSetError(MS_WMSERR,
-                     "Invalid style (%s). Mapserver is expecting an empty "
-                     "string for the STYLES : STYLES= or STYLES=,,, or using "
-                     "keyword default  STYLES=default,default, ...",
-                     "msWMSLoadGetMapParams()", styles);
+          msSetErrorWithStatus(
+              MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+              "Invalid style (%s). Mapserver is expecting an empty "
+              "string for the STYLES : STYLES= or STYLES=,,, or using "
+              "keyword default  STYLES=default,default, ...",
+              "msWMSLoadGetMapParams()", styles);
           msFreeCharArray(tokens, n);
           return msWMSException(map, nVersion, "StyleNotDefined",
                                 wms_exception_format);
@@ -1894,41 +1926,47 @@ this request. Check wms/ows_enable_request settings.",
   if (request && strcasecmp(request, "DescribeLayer") != 0) {
     if (!srsfound) {
       if (nVersion >= OWS_1_3_0)
-        msSetError(MS_WMSERR, "Missing required parameter CRS",
-                   "msWMSLoadGetMapParams()");
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                             "Missing required parameter CRS",
+                             "msWMSLoadGetMapParams()");
       else
-        msSetError(MS_WMSERR, "Missing required parameter SRS",
-                   "msWMSLoadGetMapParams()");
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                             "Missing required parameter SRS",
+                             "msWMSLoadGetMapParams()");
 
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
 
     if (!bboxfound) {
-      msSetError(MS_WMSERR, "Missing required parameter BBOX",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Missing required parameter BBOX",
+                           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
 
     if (!formatfound && (strcasecmp(request, "GetMap") == 0 ||
                          strcasecmp(request, "map") == 0)) {
-      msSetError(MS_WMSERR, "Missing required parameter FORMAT",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Missing required parameter FORMAT",
+                           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
 
     if (!widthfound) {
-      msSetError(MS_WMSERR, "Missing required parameter WIDTH",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Missing required parameter WIDTH",
+                           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
 
     if (!heightfound) {
-      msSetError(MS_WMSERR, "Missing required parameter HEIGHT",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Missing required parameter HEIGHT",
+                           "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
@@ -1938,8 +1976,8 @@ this request. Check wms/ows_enable_request settings.",
          strcasecmp(request, "GetFeatureInfo") == 0) &&
         msOWSLookupMetadata(&(map->web.metadata), "M",
                             "allow_getmap_without_styles") == nullptr) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "Missing required parameter STYLES. Note to service administrators: "
           "defining the \"wms_allow_getmap_without_styles\" \"true\" "
           "MAP.WEB.METADATA "
@@ -1956,10 +1994,11 @@ this request. Check wms/ows_enable_request settings.",
   */
   if (filter) {
     if (sld_url || sld_body) {
-      msSetError(MS_WMSERR,
-                 "Vendor-specific FILTER parameter cannot be used with SLD or "
-                 "SLD_BODY.",
-                 "msWMSLoadGetMapParams()");
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Vendor-specific FILTER parameter cannot be used with SLD or "
+          "SLD_BODY.",
+          "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
 
@@ -3020,15 +3059,17 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     int i =
         msOWSNegotiateUpdateSequence(requested_updatesequence, updatesequence);
     if (i == 0) { /* current */
-      msSetError(
-          MS_WMSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
           "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
       return msWMSException(map, nVersion, "CurrentUpdateSequence",
                             wms_exception_format);
     }
     if (i > 0) { /* invalid */
-      msSetError(
-          MS_WMSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
           "msWMSGetCapabilities()", requested_updatesequence, updatesequence);
       return msWMSException(map, nVersion, "InvalidUpdateSequence",
                             wms_exception_format);
@@ -4497,9 +4538,10 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
 
       const auto wmslayers = msStringSplit(values[i], ',');
       if (wmslayers.empty()) {
-        msSetError(MS_WMSERR,
-                   "At least one layer name required in QUERY_LAYERS.",
-                   "msWMSFeatureInfo()");
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "At least one layer name required in QUERY_LAYERS.",
+            "msWMSFeatureInfo()");
         return msWMSException(map, nVersion, "LayerNotDefined",
                               wms_exception_format);
       }
@@ -4599,16 +4641,18 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
 
   if (numlayers_found == 0) {
     if (query_layer) {
-      msSetError(MS_WMSERR,
-                 "Layer(s) specified in QUERY_LAYERS parameter is not offered "
-                 "by the service instance.",
-                 "msWMSFeatureInfo()");
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Layer(s) specified in QUERY_LAYERS parameter is not offered "
+          "by the service instance.",
+          "msWMSFeatureInfo()");
       return msWMSException(map, nVersion, "LayerNotDefined",
                             wms_exception_format);
     } else {
-      msSetError(MS_WMSERR,
-                 "Required QUERY_LAYERS parameter missing for getFeatureInfo.",
-                 "msWMSFeatureInfo()");
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Required QUERY_LAYERS parameter missing for getFeatureInfo.",
+          "msWMSFeatureInfo()");
       return msWMSException(map, nVersion, "LayerNotDefined",
                             wms_exception_format);
     }
@@ -4631,10 +4675,11 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
       if (wms_layer == MS_TRUE) {
         if ((GET_LAYER(map, i)->connectiontype != MS_WMS) ||
             (strcasecmp(wms_connection, GET_LAYER(map, i)->connection) != 0)) {
-          msSetError(MS_WMSERR,
-                     "Requested WMS layer(s) are not queryable: type or "
-                     "connection differ",
-                     "msWMSFeatureInfo()");
+          msSetErrorWithStatus(
+              MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+              "Requested WMS layer(s) are not queryable: type or "
+              "connection differ",
+              "msWMSFeatureInfo()");
           return msWMSException(map, nVersion, "LayerNotQueryable",
                                 wms_exception_format);
         }
@@ -4653,20 +4698,23 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
 
     if (point.x == -1.0 || point.y == -1.0) {
       if (nVersion >= OWS_1_3_0)
-        msSetError(MS_WMSERR,
-                   "Required I/J parameters missing for getFeatureInfo.",
-                   "msWMSFeatureInfo()");
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "Required I/J parameters missing for getFeatureInfo.",
+            "msWMSFeatureInfo()");
       else
-        msSetError(MS_WMSERR,
-                   "Required X/Y parameters missing for getFeatureInfo.",
-                   "msWMSFeatureInfo()");
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "Required X/Y parameters missing for getFeatureInfo.",
+            "msWMSFeatureInfo()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
 
     /*wms1.3.0: check if the points are valid*/
     if (nVersion >= OWS_1_3_0) {
       if (point.x > map->width || point.y > map->height) {
-        msSetError(MS_WMSERR, "Invalid I/J values", "msWMSFeatureInfo()");
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                             "Invalid I/J values", "msWMSFeatureInfo()");
         return msWMSException(map, nVersion, "InvalidPoint",
                               wms_exception_format);
       }
@@ -4741,8 +4789,9 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     valid_format = MS_TRUE;
 
   if (!valid_format) {
-    msSetError(MS_WMSERR, "Unsupported INFO_FORMAT value (%s).",
-               "msWMSFeatureInfo()", info_format);
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "Unsupported INFO_FORMAT value (%s).",
+                         "msWMSFeatureInfo()", info_format);
     if (nVersion >= OWS_1_3_0)
       return msWMSException(map, nVersion, "InvalidFormat",
                             wms_exception_format);
@@ -4839,13 +4888,15 @@ static int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   }
 
   if (nVersion >= OWS_1_3_0 && sld_version == NULL) {
-    msSetError(MS_WMSERR, "Missing required parameter SLD_VERSION",
-               "DescribeLayer()");
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "Missing required parameter SLD_VERSION",
+                         "DescribeLayer()");
     return msWMSException(map, nVersion, "MissingParameterValue",
                           wms_exception_format);
   }
   if (nVersion >= OWS_1_3_0 && strcasecmp(sld_version, "1.1.0") != 0) {
-    msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "DescribeLayer()");
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "SLD_VERSION must be 1.1.0", "DescribeLayer()");
     return msWMSException(map, nVersion, "InvalidParameterValue",
                           wms_exception_format);
   }
@@ -5096,16 +5147,16 @@ static int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
     }
 
     if (!pszLayer) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "Mandatory LAYER parameter missing in GetLegendGraphic request.",
           "msWMSGetLegendGraphic()");
       return msWMSException(map, nVersion, "LayerNotDefined",
                             wms_exception_format);
     }
     if (!pszFormat) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "Mandatory FORMAT parameter missing in GetLegendGraphic request.",
           "msWMSGetLegendGraphic()");
       return msWMSException(map, nVersion, "InvalidFormat",
@@ -5113,13 +5164,15 @@ static int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
     }
 
     if (nVersion >= OWS_1_3_0 && sld_version == NULL) {
-      msSetError(MS_WMSERR, "Missing required parameter SLD_VERSION",
-                 "GetLegendGraphic()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Missing required parameter SLD_VERSION",
+                           "GetLegendGraphic()");
       return msWMSException(map, nVersion, "MissingParameterValue",
                             wms_exception_format);
     }
     if (nVersion >= OWS_1_3_0 && strcasecmp(sld_version, "1.1.0") != 0) {
-      msSetError(MS_WMSERR, "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "SLD_VERSION must be 1.1.0", "GetLegendGraphic()");
       return msWMSException(map, nVersion, "InvalidParameterValue",
                             wms_exception_format);
     }
@@ -5174,8 +5227,8 @@ static int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
     free(isUsedInNestedGroup);
 
     if (nLayers == 0) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "Invalid layer given in the LAYER parameter. A layer might be disabled for \
 this request. Check wms/ows_enable_request settings.",
           "msWMSGetLegendGraphic()");
@@ -5221,8 +5274,8 @@ this request. Check wms/ows_enable_request settings.",
       }
 
       if (!found) {
-        msSetError(
-            MS_WMSERR,
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
             "style used in the STYLE parameter is not defined on the layer.",
             "msWMSGetLegendGraphic()");
         return msWMSException(map, nVersion, "StyleNotDefined",
@@ -5250,8 +5303,9 @@ this request. Check wms/ows_enable_request settings.",
     psFormat = msOwsIsOutputFormatValid(map, pszFormat, &(map->web.metadata),
                                         "M", "getlegendgraphic_formatlist");
     if (psFormat == NULL) {
-      msSetError(MS_IMGERR, "Unsupported output format (%s).",
-                 "msWMSGetLegendGraphic()", pszFormat);
+      msSetErrorWithStatus(MS_IMGERR, MS_HTTP_400_BAD_REQUEST,
+                           "Unsupported output format (%s).",
+                           "msWMSGetLegendGraphic()", pszFormat);
       return msWMSException(map, nVersion, "InvalidFormat",
                             wms_exception_format);
     }
@@ -5262,8 +5316,9 @@ this request. Check wms/ows_enable_request settings.",
      ** after creation, so they can be called here without going through
      ** the msAlphaGD2AGG functions */
     {
-      msSetError(MS_IMGERR, "Unsupported output format (%s).",
-                 "msWMSGetLegendGraphic()", pszFormat);
+      msSetErrorWithStatus(MS_IMGERR, MS_HTTP_400_BAD_REQUEST,
+                           "Unsupported output format (%s).",
+                           "msWMSGetLegendGraphic()", pszFormat);
       return msWMSException(map, nVersion, "InvalidFormat",
                             wms_exception_format);
     }
@@ -5326,8 +5381,9 @@ this request. Check wms/ows_enable_request settings.",
       }
     }
     if (img == NULL) {
-      msSetError(MS_IMGERR, "Unavailable RULE (%s).", "msWMSGetLegendGraphic()",
-                 psRule);
+      msSetErrorWithStatus(MS_IMGERR, MS_HTTP_400_BAD_REQUEST,
+                           "Unavailable RULE (%s).", "msWMSGetLegendGraphic()",
+                           psRule);
       return msWMSException(map, nVersion, "InvalidRule", wms_exception_format);
     }
   }
@@ -5403,8 +5459,9 @@ static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
     if (strcasecmp(names[i], "LAYERS") == 0) {
       const auto wmslayers = msStringSplit(values[i], ',');
       if (wmslayers.empty()) {
-        msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
-                   "msWMSGetStyles()");
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                             "At least one layer name required in LAYERS.",
+                             "msWMSGetStyles()");
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
       for (int j = 0; j < map->numlayers; j++)
@@ -5452,8 +5509,8 @@ static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
   /* validate all layers given. If an invalid layer is sent, return an
    * exception. */
   if (!validlayer) {
-    msSetError(
-        MS_WMSERR,
+    msSetErrorWithStatus(
+        MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
         "Invalid layer(s) given in the LAYERS parameter. A layer might be disabled for \
 this request. Check wms/ows_enable_request settings.",
         "msWMSGetStyles()");
@@ -5569,8 +5626,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
        strcasecmp(request, "GetCapabilities") == 0) &&
       (nVersion >= OWS_1_0_7 || nVersion == OWS_VERSION_NOTSET)) {
     if (force_wms_mode) {
-      msSetError(MS_WMSERR, "Required SERVICE parameter missing.",
-                 "msWMSDispatch");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "Required SERVICE parameter missing.",
+                           "msWMSDispatch");
       return msWMSException(map, nVersion, "ServiceNotDefined",
                             wms_exception_format);
     } else
@@ -5607,8 +5665,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
         msOWSParseRequestMetadata(enable_request, "GetCapabilities", &disabled);
 
     if (ows_request->numlayers == 0 && !globally_enabled) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "WMS request not enabled. Check wms/ows_enable_request settings.",
           "msWMSGetCapabilities()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -5641,8 +5699,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
     nVersion = OWS_1_1_1;
 
     if (getcontext_enabled == NULL || atoi(getcontext_enabled) == 0) {
-      msSetError(MS_WMSERR, "GetContext not enabled on this server.",
-                 "msWMSDispatch()");
+      msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                           "GetContext not enabled on this server.",
+                           "msWMSDispatch()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
 
@@ -5688,24 +5747,27 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
 
   /* VERSION *and* REQUEST required by both getMap and getFeatureInfo */
   if (nVersion == OWS_VERSION_NOTSET) {
-    msSetError(MS_WMSERR, "Incomplete WMS request: VERSION parameter missing",
-               "msWMSDispatch()");
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "Incomplete WMS request: VERSION parameter missing",
+                         "msWMSDispatch()");
     return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }
 
   /*check if the version is one of the supported vcersions*/
   if (nVersion != OWS_1_0_0 && nVersion != OWS_1_0_6 && nVersion != OWS_1_0_7 &&
       nVersion != OWS_1_1_0 && nVersion != OWS_1_1_1 && nVersion != OWS_1_3_0) {
-    msSetError(MS_WMSERR,
-               "Invalid WMS version: VERSION %s is not supported. Supported "
-               "versions are 1.0.0, 1.0.6, 1.0.7, 1.1.0, 1.1.1, 1.3.0",
-               "msWMSDispatch()", version);
+    msSetErrorWithStatus(
+        MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+        "Invalid WMS version: VERSION %s is not supported. Supported "
+        "versions are 1.0.0, 1.0.6, 1.0.7, 1.1.0, 1.1.1, 1.3.0",
+        "msWMSDispatch()", version);
     return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }
 
   if (request == NULL) {
-    msSetError(MS_WMSERR, "Incomplete WMS request: REQUEST parameter missing",
-               "msWMSDispatch()");
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "Incomplete WMS request: REQUEST parameter missing",
+                         "msWMSDispatch()");
     return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
@@ -5728,8 +5790,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
 
     msOWSRequestLayersEnabled(map, "M", request_tmp, ows_request);
     if (ows_request->numlayers == 0) {
-      msSetError(
-          MS_WMSERR,
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
           "WMS request not enabled. Check wms/ows_enable_request settings.",
           "msWMSDispatch()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -5819,14 +5881,16 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
 
   /* Hummmm... incomplete or unsupported WMS request */
   if (service != NULL && strcasecmp(service, "WMS") == 0) {
-    msSetError(MS_WMSERR, "Incomplete or unsupported WMS request",
-               "msWMSDispatch()");
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "Incomplete or unsupported WMS request",
+                         "msWMSDispatch()");
     return msWMSException(map, nVersion, NULL, wms_exception_format);
   } else
     return MS_DONE; /* Not a WMS request */
 #else
-  msSetError(MS_WMSERR, "WMS server support is not available.",
-             "msWMSDispatch()");
+  msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                       "WMS server support is not available.",
+                       "msWMSDispatch()");
   return (MS_FAILURE);
 #endif
 }
