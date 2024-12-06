@@ -30,6 +30,7 @@
 #include "mapows.h"
 #include "mapgml.h"
 #include "maptime.h"
+#include "mapogcfilter.h"
 
 #include "cpl_conv.h"
 
@@ -273,13 +274,20 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
   int status;
 
   const char *bboxParam = getRequestParameter(request, "bbox");
-  if (!bboxParam ||
-      strlen(bboxParam) == 0) { // missing or empty - assign map->extent (no
-                                // projection necessary)
-    bbox->minx = map->extent.minx;
-    bbox->miny = map->extent.miny;
-    bbox->maxx = map->extent.maxx;
-    bbox->maxy = map->extent.maxy;
+  if (!bboxParam || strlen(bboxParam) == 0) { // missing or empty extent
+    rectObj rect;
+    if (FLTLayerSetInvalidRectIfSupported(layer, &rect, "OA")) {
+      bbox->minx = rect.minx;
+      bbox->miny = rect.miny;
+      bbox->maxx = rect.maxx;
+      bbox->maxy = rect.maxy;
+    } else {
+      // assign map->extent (no projection necessary)
+      bbox->minx = map->extent.minx;
+      bbox->miny = map->extent.miny;
+      bbox->maxx = map->extent.maxx;
+      bbox->maxy = map->extent.maxy;
+    }
   } else {
     const auto tokens = msStringSplit(bboxParam, ',');
     if (tokens.size() != 4) {
