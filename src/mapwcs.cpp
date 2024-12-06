@@ -1184,8 +1184,6 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params,
       strcasecmp(params->section, "/WCS_Capabilities/Capability") != 0 &&
       strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata") != 0 &&
       strcasecmp(params->section, "/") != 0) {
-    msIO_setHeader("Content-Type", "application/vnd.ogc.se_xml; charset=UTF-8");
-    msIO_sendHeaders();
     msSetError(MS_WCSERR, "Invalid SECTION parameter \"%s\"",
                "msWCSGetCapabilities()", params->section);
     return msWCSException(map, "InvalidParameterValue", "section",

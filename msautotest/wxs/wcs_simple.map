@@ -25,6 +25,8 @@
 # RUN_PARMS: wcs_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
 # RUN_PARMS: wcs_cap.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT]
 #
+# RUN_PARMS: wcs10_caps_section_error.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities&SECTION=error" > [RESULT]
+#
 # Capabilities updatesequence (less than)
 # RUN_PARMS: wcs_caps_updatesequence.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities&updatesequence=1999-10-21T12:22:33Z" > [RESULT_DEMIME]
 #
@@ -50,7 +52,6 @@
 #
 # Capabilities 1.1 selected sections
 # RUN_PARMS: wcs11_caps_section3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.1.1&REQUEST=GetCapabilities&sections=All" > [RESULT_DEMIME]
-#
 #
 # Coverage description
 # RUN_PARMS: wcs_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=DescribeCoverage&COVERAGE=grey" > [RESULT_DEMIME]
