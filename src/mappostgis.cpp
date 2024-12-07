@@ -2032,10 +2032,6 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   if (bIsValidRect && !strRect.empty()) {
     strWhere += strRect;
     insert_and = true;
-  } else {
-    // ignore extent and select all records
-    strWhere = "(true)";
-    insert_and = true;
   }
 
   /* Handle a translated filter (RFC91). */
@@ -2071,6 +2067,11 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
     strWhere += std::to_string(*uid);
   }
 
+  if (strWhere.empty()) {
+    // return all records
+    strWhere = "true";
+  }
+
   if (layer->sortBy.nProperties > 0) {
     char *pszTmp = msLayerBuildSQLOrderBy(layer);
     strWhere += " ORDER BY ";
@@ -2087,11 +2088,6 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   if (layerinfo->paging && layer->startindex > 0) {
     strWhere += " OFFSET ";
     strWhere += std::to_string(layer->startindex - 1);
-  }
-
-  if (strWhere.empty()) {
-    // return all records
-    strWhere = "true";
   }
 
   return strWhere;
