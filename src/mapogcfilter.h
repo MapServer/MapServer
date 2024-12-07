@@ -169,7 +169,8 @@ int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex,
                                                   rectObj rect);
 int FLTProcessPropertyIsNull(FilterEncodingNode *psFilterNode, mapObj *map,
                              int i);
-int FLTLayerSetInvalidRectIfSupported(layerObj *lp, rectObj *rect);
+int FLTLayerSetInvalidRectIfSupported(layerObj *lp, rectObj *rect,
+                                      const char *metadata_namespaces);
 
 #ifdef __cplusplus
 }
