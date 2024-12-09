@@ -279,6 +279,43 @@ int msLayerIsOpen(layerObj *layer) {
 }
 
 /*
+** msLayerPropertyIsCharacter()
+**
+** Check if a field in a layer is a Character type
+*/
+bool msLayerPropertyIsCharacter(layerObj *layer, const char *property) {
+  if (!property) {
+    return false;
+  }
+
+  char md_item_name[256];
+  snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type", property);
+
+  const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
+
+  return (type != NULL && (EQUAL(type, "Character")));
+}
+
+/*
+** msLayerPropertyIsNumeric()
+**
+** Check if a field in a layer is numeric - an Integer, Long, or Real
+*/
+bool msLayerPropertyIsNumeric(layerObj *layer, const char *property) {
+  if (!property) {
+    return false;
+  }
+
+  char md_item_name[256];
+  snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type", property);
+
+  const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
+
+  return (type != NULL && (EQUAL(type, "Integer") || EQUAL(type, "Long") ||
+                           EQUAL(type, "Real")));
+}
+
+/*
 ** Returns MS_TRUE is a layer supports the common expression/filter syntax (RFC
 *64) and MS_FALSE otherwise.
 */

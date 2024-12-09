@@ -2055,10 +2055,18 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
     if (insert_and) {
       strWhere += " AND ";
     }
-    strWhere += '"';
-    strWhere += layerinfo->uid;
-    strWhere += "\" = ";
-    strWhere += std::to_string(*uid);
+
+    bool is_numeric = msLayerPropertyIsNumeric(layer, layerinfo->uid.c_str());
+    if (is_numeric) {
+      strWhere += layerinfo->uid;
+      strWhere += " = ";
+      strWhere += *uid;
+    } else {
+      strWhere += '"';
+      strWhere += layerinfo->uid;
+      strWhere += "\" = ";
+      strWhere += std::to_string(*uid);
+    }
   }
 
   if (layer->sortBy.nProperties > 0) {
@@ -3696,6 +3704,10 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
   if (filter->type == MS_STRING && filter->string &&
       filteritem) { /* item/value pair - add escaping */
 
+    // check if field is numeric and avoid converting to string
+    // as this prevents indexes being used
+    bool is_numeric = msLayerPropertyIsNumeric(layer, filteritem);
+
     char *stresc = msLayerEscapePropertyName(layer, filteritem);
     if (filter->flags & MS_EXP_INSENSITIVE) {
       native_string += "upper(";
@@ -3703,16 +3715,23 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
       native_string += "::text) = upper(";
     } else {
       native_string += stresc;
-      native_string += "::text = ";
+      if (!is_numeric) {
+        native_string += "::text";
+      }
+      native_string += " = ";
     }
     msFree(stresc);
 
     /* don't have a type for the righthand literal so assume it's a string and
      * we quote */
     stresc = msPostGISEscapeSQLParam(layer, filter->string);
-    native_string += '\'';
-    native_string += stresc;
-    native_string += '\'';
+    if (!is_numeric) {
+      native_string += '\'';
+      native_string += stresc;
+      native_string += '\'';
+    } else {
+      native_string += stresc;
+    }
     msFree(stresc);
 
     if (filter->flags & MS_EXP_INSENSITIVE)

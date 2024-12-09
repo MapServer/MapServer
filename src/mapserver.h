@@ -3161,6 +3161,10 @@ MS_DLL_EXPORT int msLayerApplyScaletokens(layerObj *layer, double scale);
 MS_DLL_EXPORT int msLayerRestoreFromScaletokens(layerObj *layer);
 MS_DLL_EXPORT int msClusterLayerOpen(layerObj *layer); /* in mapcluster.c */
 MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
+MS_DLL_EXPORT bool msLayerPropertyIsCharacter(layerObj *layer,
+                                              const char *property);
+MS_DLL_EXPORT bool msLayerPropertyIsNumeric(layerObj *layer,
+                                            const char *property);
 MS_DLL_EXPORT void msLayerClose(layerObj *layer);
 MS_DLL_EXPORT void msLayerFreeExpressions(layerObj *layer);
 MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect,

@@ -1964,14 +1964,10 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
     nOutSize = strlen(stresc) + +30;
     out = (char *)msSmallMalloc(nOutSize);
 
-    char md_item_name[256];
-    snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type",
-             n->tokenval.bindval.item);
-    const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
+    bool bIsNumeric = msLayerPropertyIsNumeric(layer, n->tokenval.bindval.item);
     // Do not cast if the variable is of the appropriate type as it can
     // prevent using database indexes, such as for SQlite
-    if (type != NULL && (EQUAL(type, "Integer") || EQUAL(type, "Long") ||
-                         EQUAL(type, "Real"))) {
+    if (bIsNumeric) {
       snprintf(out, nOutSize, "%s", stresc);
     } else {
       const char *SQLtype = "float(16)";
@@ -1989,14 +1985,10 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
     nOutSize = strlen(stresc) + 20;
     out = (char *)msSmallMalloc(nOutSize);
 
-    char md_item_name[256];
-    snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type",
-             n->tokenval.bindval.item);
-    const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
+    bool bIsNumeric = msLayerPropertyIsNumeric(layer, n->tokenval.bindval.item);
     // Do not cast if the variable is of the appropriate type as it can
     // prevent using database indexes, such as for SQlite
-    if (type != NULL && (EQUAL(type, "Integer") || EQUAL(type, "Long") ||
-                         EQUAL(type, "Real"))) {
+    if (bIsNumeric) {
       snprintf(out, nOutSize, "%s", stresc);
     } else {
       snprintf(out, nOutSize, "CAST(%s AS integer)", stresc);
@@ -2009,13 +2001,11 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
     nOutSize = strlen(stresc) + 30;
     out = (char *)msSmallMalloc(nOutSize);
 
-    char md_item_name[256];
-    snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type",
-             n->tokenval.bindval.item);
-    const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
+    bool bIsCharacter =
+        msLayerPropertyIsCharacter(layer, n->tokenval.bindval.item);
     // Do not cast if the variable is of the appropriate type as it can
     // prevent using database indexes, such as for SQlite
-    if (type != NULL && EQUAL(type, "Character")) {
+    if (bIsCharacter) {
       snprintf(out, nOutSize, "%s", stresc);
     } else {
       snprintf(out, nOutSize, "CAST(%s AS text)", stresc);
@@ -3506,12 +3496,10 @@ msOGRTranslatePartialInternal(layerObj *layer, const msExprNode *expr,
         return "(" + osTmp1 + " IS NULL )";
       }
       if (expr->m_aoChildren[1]->m_nToken == MS_TOKEN_LITERAL_STRING) {
-        char md_item_name[256];
-        snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type",
-                 expr->m_aoChildren[0]->m_osVal.c_str());
-        const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
+        bool bIsCharacter = msLayerPropertyIsCharacter(
+            layer, expr->m_aoChildren[0]->m_osVal.c_str());
         // Cast if needed (or unsure)
-        if (type == NULL || !EQUAL(type, "Character")) {
+        if (!bIsCharacter) {
           osTmp1 = "CAST(" + osTmp1 + " AS CHARACTER(4096))";
         }
       }
