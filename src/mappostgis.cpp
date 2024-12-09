@@ -1911,91 +1911,22 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
     return std::string();
   }
 
+  const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+  bool bIsValidRect =
+      (rect && memcmp(rect, &rectInvalid, sizeof(rectInvalid)) != 0);
+
   /* Populate strRect, if necessary. */
   std::string strRect;
-  if (rect && !layerinfo->geomcolumn.empty()) {
-    /* We see to set the SRID on the box, but to what SRID? */
-    const std::string strSRID = msPostGISBuildSQLSRID(layer);
-    if (strSRID.empty()) {
-      return std::string();
-    }
+  if (bIsValidRect) {
 
-    char *strBox = msPostGISBuildSQLBox(layer, rect, strSRID.c_str());
-
-    if (!strBox) {
-      msSetError(MS_MISCERR, "Unable to build box SQL.",
-                 "msPostGISBuildSQLWhere()");
-      return std::string();
-    }
-
-    if (strSRID.find("find_srid(") == std::string::npos) {
-      // If the SRID is known, we can safely use ST_Intersects()
-      // otherwise if find_srid() would return 0, ST_Intersects() would not
-      // work at all, which breaks the msautotest/query/query_postgis.map
-      // tests, related to bdry_counpy2 layer that has no SRID
-      if (layerinfo->version >= 20500) {
-        strRect = "ST_Intersects(\"";
-        strRect += layerinfo->geomcolumn;
-        strRect += "\", ";
-        strRect += strBox;
-        strRect += ')';
-      } else {
-        // ST_Intersects() before PostGIS 2.5 doesn't support collections
-        // See
-        // https://github.com/MapServer/MapServer/pull/6355#issuecomment-877355007
-        strRect = "(\"";
-        strRect += layerinfo->geomcolumn;
-        strRect += "\" && ";
-        strRect += strBox;
-        strRect += ") AND ST_Distance(\"";
-        strRect += layerinfo->geomcolumn;
-        strRect += "\", ";
-        strRect += strBox;
-        strRect += ") = 0";
-      }
-    } else {
-      strRect = '"';
-      strRect += layerinfo->geomcolumn;
-      strRect += "\" && ";
-      strRect += strBox;
-    }
-    free(strBox);
-
-    /* Combine with other rectangle  expressed in another SRS */
-    /* (generally equivalent to the above in current code paths) */
-    if (rectInOtherSRID != nullptr && otherSRID > 0) {
-      strBox = msPostGISBuildSQLBox(layer, rectInOtherSRID,
-                                    std::to_string(otherSRID).c_str());
-      if (!strBox) {
-        msSetError(MS_MISCERR, "Unable to build box SQL.",
-                   "msPostGISBuildSQLWhere()");
-        return std::string();
-      }
-
-      std::string strRectOtherSRID = "ST_Intersects(ST_Transform(";
-      strRectOtherSRID += layerinfo->geomcolumn;
-      strRectOtherSRID += ',';
-      strRectOtherSRID += std::to_string(otherSRID);
-      strRectOtherSRID += "),";
-      strRectOtherSRID += strBox;
-      strRectOtherSRID += ')';
-
-      free(strBox);
-
-      std::string strTmp = "((";
-      strTmp += strRect;
-      strTmp += ") AND ";
-      strTmp += strRectOtherSRID;
-      strTmp += ')';
-
-      strRect = std::move(strTmp);
-    } else if (rectInOtherSRID != nullptr && otherSRID < 0) {
+    if (rect && !layerinfo->geomcolumn.empty()) {
+      /* We see to set the SRID on the box, but to what SRID? */
       const std::string strSRID = msPostGISBuildSQLSRID(layer);
       if (strSRID.empty()) {
         return std::string();
       }
-      char *strBox =
-          msPostGISBuildSQLBox(layer, rectInOtherSRID, strSRID.c_str());
+
+      char *strBox = msPostGISBuildSQLBox(layer, rect, strSRID.c_str());
 
       if (!strBox) {
         msSetError(MS_MISCERR, "Unable to build box SQL.",
@@ -2003,27 +1934,102 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
         return std::string();
       }
 
-      std::string strRectOtherSRID = "ST_Intersects(";
-      strRectOtherSRID += layerinfo->geomcolumn;
-      strRectOtherSRID += ',';
-      strRectOtherSRID += strBox;
-      strRectOtherSRID += ')';
-
+      if (strSRID.find("find_srid(") == std::string::npos) {
+        // If the SRID is known, we can safely use ST_Intersects()
+        // otherwise if find_srid() would return 0, ST_Intersects() would not
+        // work at all, which breaks the msautotest/query/query_postgis.map
+        // tests, related to bdry_counpy2 layer that has no SRID
+        if (layerinfo->version >= 20500) {
+          strRect = "ST_Intersects(\"";
+          strRect += layerinfo->geomcolumn;
+          strRect += "\", ";
+          strRect += strBox;
+          strRect += ')';
+        } else {
+          // ST_Intersects() before PostGIS 2.5 doesn't support collections
+          // See
+          // https://github.com/MapServer/MapServer/pull/6355#issuecomment-877355007
+          strRect = "(\"";
+          strRect += layerinfo->geomcolumn;
+          strRect += "\" && ";
+          strRect += strBox;
+          strRect += ") AND ST_Distance(\"";
+          strRect += layerinfo->geomcolumn;
+          strRect += "\", ";
+          strRect += strBox;
+          strRect += ") = 0";
+        }
+      } else {
+        strRect = '"';
+        strRect += layerinfo->geomcolumn;
+        strRect += "\" && ";
+        strRect += strBox;
+      }
       free(strBox);
 
-      std::string strTmp = "((";
-      strTmp += strRect;
-      strTmp += ") AND ";
-      strTmp += strRectOtherSRID;
-      strTmp += ')';
+      /* Combine with other rectangle  expressed in another SRS */
+      /* (generally equivalent to the above in current code paths) */
+      if (rectInOtherSRID != nullptr && otherSRID > 0) {
+        strBox = msPostGISBuildSQLBox(layer, rectInOtherSRID,
+                                      std::to_string(otherSRID).c_str());
+        if (!strBox) {
+          msSetError(MS_MISCERR, "Unable to build box SQL.",
+                     "msPostGISBuildSQLWhere()");
+          return std::string();
+        }
 
-      strRect = std::move(strTmp);
+        std::string strRectOtherSRID = "ST_Intersects(ST_Transform(";
+        strRectOtherSRID += layerinfo->geomcolumn;
+        strRectOtherSRID += ',';
+        strRectOtherSRID += std::to_string(otherSRID);
+        strRectOtherSRID += "),";
+        strRectOtherSRID += strBox;
+        strRectOtherSRID += ')';
+
+        free(strBox);
+
+        std::string strTmp = "((";
+        strTmp += strRect;
+        strTmp += ") AND ";
+        strTmp += strRectOtherSRID;
+        strTmp += ')';
+
+        strRect = std::move(strTmp);
+      } else if (rectInOtherSRID != nullptr && otherSRID < 0) {
+        const std::string strSRID = msPostGISBuildSQLSRID(layer);
+        if (strSRID.empty()) {
+          return std::string();
+        }
+        char *strBox =
+            msPostGISBuildSQLBox(layer, rectInOtherSRID, strSRID.c_str());
+
+        if (!strBox) {
+          msSetError(MS_MISCERR, "Unable to build box SQL.",
+                     "msPostGISBuildSQLWhere()");
+          return std::string();
+        }
+
+        std::string strRectOtherSRID = "ST_Intersects(";
+        strRectOtherSRID += layerinfo->geomcolumn;
+        strRectOtherSRID += ',';
+        strRectOtherSRID += strBox;
+        strRectOtherSRID += ')';
+
+        free(strBox);
+
+        std::string strTmp = "((";
+        strTmp += strRect;
+        strTmp += ") AND ";
+        strTmp += strRectOtherSRID;
+        strTmp += ')';
+
+        strRect = std::move(strTmp);
+      }
     }
   }
-
   bool insert_and = false;
   std::string strWhere;
-  if (!strRect.empty()) {
+  if (bIsValidRect && !strRect.empty()) {
     strWhere += strRect;
     insert_and = true;
   }
@@ -2069,6 +2075,11 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
     }
   }
 
+  if (strWhere.empty()) {
+    // return all records
+    strWhere = "true";
+  }
+
   if (layer->sortBy.nProperties > 0) {
     char *pszTmp = msLayerBuildSQLOrderBy(layer);
     strWhere += " ORDER BY ";
@@ -2085,11 +2096,6 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   if (layerinfo->paging && layer->startindex > 0) {
     strWhere += " OFFSET ";
     strWhere += std::to_string(layer->startindex - 1);
-  }
-
-  if (strWhere.empty()) {
-    // return all records
-    strWhere = "true";
   }
 
   return strWhere;
@@ -2779,6 +2785,8 @@ static int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect,
 #ifdef USE_POSTGIS
   int rectSRID = -1;
   rectObj searchrectInLayerProj = rect;
+  const rectObj rectInvalid = MS_INIT_INVALID_RECT;
+  bool bIsValidRect = memcmp(&rect, &rectInvalid, sizeof(rect)) != 0;
 
   assert(layer != nullptr);
   assert(layer->layerinfo != nullptr);
@@ -2791,8 +2799,9 @@ static int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect,
   // from the layer projection We want to issue a WHERE that includes
   // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT
   // ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
-  if (rectProjection != NULL && layer->project &&
-      msProjectionsDiffer(&(layer->projection), rectProjection)) {
+  if (bIsValidRect &&
+      (rectProjection != NULL && layer->project &&
+       msProjectionsDiffer(&(layer->projection), rectProjection))) {
     // If we cannot guess the EPSG code of the rectProjection, we cannot
     // use ST_Transform, so fallback on slow implementation
     if (rectProjection->numargs < 1 ||
