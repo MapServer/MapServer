@@ -70,6 +70,9 @@
 #
 # GetFeatureInfo
 # RUN_PARMS: wms_getfeatureinfo130.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&CRS=EPSG%3A4326&BBOX=35.18749999863387,-141.0000000021858,90.81250000136613,-51.99999999781419&WIDTH=560&HEIGHT=350&LAYERS=road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&QUERY_LAYERS=road&INFO_FORMAT=application%2Fvnd.ogc.gml&I=483&J=291&FEATURE_COUNT=5" > [RESULT]
+
+# RUN_PARMS: wms_getfeatureinfo130_empty.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&CRS=EPSG%3A4326&BBOX=35.18749999863387,-141.0000000021858,90.81250000136613,-51.99999999781419&WIDTH=560&HEIGHT=350&LAYERS=road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&QUERY_LAYERS=road&INFO_FORMAT=OTHER_GFI_RESULT&I=1&J=291&FEATURE_COUNT=5" > [RESULT]
+
 #
 # DescribeLayer
 # RUN_PARMS: wms_describelayer130.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&layers=road&sld_version=1.1.0" > [RESULT]
@@ -106,6 +109,7 @@ WEB
 
  IMAGEPATH "/tmp/ms_tmp/"
  IMAGEURL "/ms_tmp/"
+ EMPTY    "https://example.com/empty.html"
 
   METADATA
     "ows_updatesequence"   "123"
@@ -136,6 +140,7 @@ WEB
     "ows_layerlimit" "1"
     "ows_enable_request" "*" 
     "wms_getmap_formatlist" "image/png,image/png; mode=24bit,image/jpeg,image/gif,image/png; mode=8bit,image/tiff"
+    "wms_getfeatureinfo_formatlist" "application/vnd.ogc.gml,OTHER_GFI_RESULT"
   END
 END
 

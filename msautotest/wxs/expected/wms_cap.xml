@@ -63,8 +63,9 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       </DCPType>
     </GetMap>
     <GetFeatureInfo>
-      <Format>text/plain</Format>
       <Format>application/vnd.ogc.gml</Format>
+      <Format>OTHER_GFI_RESULT</Format>
+      <Format>text/plain</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
