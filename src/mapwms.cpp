@@ -4514,8 +4514,6 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   int feature_count = 1, numlayers_found = 0;
   pointObj point = {-1.0, -1.0, -1.0, -1.0};
   const char *info_format = "MIME";
-  errorObj *ms_error = msGetErrorObj();
-  int query_status = MS_NOERR;
   int query_layer = 0;
   const char *format_list = NULL;
   int valid_format = MS_FALSE;
@@ -4744,8 +4742,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     map->query.maxresults = feature_count;
 
     if (msQueryByPoint(map) != MS_SUCCESS)
-      if ((query_status = ms_error->code) != MS_NOTFOUND)
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
 
   } else { /* use_bbox == MS_TRUE */
     map->query.type = MS_QUERY_BY_RECT;
@@ -4755,8 +4752,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     map->query.buffer = 0;
     map->query.maxresults = feature_count;
     if (msQueryByRect(map) != MS_SUCCESS)
-      if ((query_status = ms_error->code) != MS_NOTFOUND)
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
   /*validate the INFO_FORMAT*/
@@ -4848,7 +4844,18 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     msObj->mappnt.x = point.x;
     msObj->mappnt.y = point.y;
 
-    if (query_status == MS_NOTFOUND && msObj->map->web.empty) {
+    bool hasResults = false;
+    for (int i = 0; i < map->numlayers; i++) {
+      layerObj *lp = (GET_LAYER(map, i));
+
+      if (lp->status == MS_ON && lp->resultcache &&
+          lp->resultcache->numresults != 0) {
+        hasResults = true;
+        break;
+      }
+    }
+
+    if (!hasResults && msObj->map->web.empty) {
       if (msReturnURL(msObj, msObj->map->web.empty, BROWSE) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL, wms_exception_format);
     } else if (msReturnTemplateQuery(msObj, (char *)info_format, NULL) !=

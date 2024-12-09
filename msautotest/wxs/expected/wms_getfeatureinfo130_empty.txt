@@ -1,0 +1,5 @@
+Status: 302 Found
+Uri: https://example.com/empty.html
+Location: https://example.com/empty.html
+Content-Type: text/html
+
