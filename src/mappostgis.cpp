@@ -1580,25 +1580,6 @@ static int msPostGISBase64Decode(unsigned char *dest, const char *src,
 #endif
 
 /*
-** isPropertyNumeric()
-**
-** Check if a field is numeric
-*/
-static bool isPropertyNumeric(layerObj *layer, const char *property) {
-
-  if (!property)
-    return false;
-
-  char md_item_name[256];
-  snprintf(md_item_name, sizeof(md_item_name), "gml_%s_type", property);
-
-  const char *type = msLookupHashTable(&(layer->metadata), md_item_name);
-
-  return (type != nullptr && (EQUAL(type, "Integer") || EQUAL(type, "Long") ||
-                              EQUAL(type, "Real")));
-}
-
-/*
 ** msPostGISBuildSQLBox()
 **
 ** Returns malloc'ed char* that must be freed by caller.
@@ -2075,7 +2056,7 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
       strWhere += " AND ";
     }
 
-    bool is_numeric = isPropertyNumeric(layer, layerinfo->uid.c_str());
+    bool is_numeric = msLayerPropertyIsNumeric(layer, layerinfo->uid.c_str());
     if (is_numeric) {
       strWhere += layerinfo->uid;
       strWhere += " = ";
@@ -3725,7 +3706,7 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
 
     // check if field is numeric and avoid converting to string
     // as this prevents indexes being used
-    bool is_numeric = isPropertyNumeric(layer, filteritem);
+    bool is_numeric = msLayerPropertyIsNumeric(layer, filteritem);
 
     char *stresc = msLayerEscapePropertyName(layer, filteritem);
     if (filter->flags & MS_EXP_INSENSITIVE) {
