@@ -1,0 +1,8 @@
+Content-Type: application/vnd.ogc.se_xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<ServiceExceptionReport version="1.2.0"
+xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wcs/1.0.0/OGC-exception.xsd">
+  <ServiceException code="InvalidParameterValue" locator="section">msWCSGetCapabilities(): WCS server error. Invalid SECTION parameter &quot;error&quot;
+  </ServiceException>
+</ServiceExceptionReport>
