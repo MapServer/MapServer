@@ -40,6 +40,7 @@
 #include <stdarg.h>
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 static char *const ms_errorCodes[MS_NUMERRORCODES] = {
     "",
@@ -93,7 +94,7 @@ static char *const ms_errorCodes[MS_NUMERRORCODES] = {
 
 // Get the MapServer error object
 errorObj *msGetErrorObj() {
-  static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, 0, NULL, 0};
+  static errorObj ms_error = {MS_NOERR, "", "", "", MS_FALSE, 0, NULL, 0};
   return &ms_error;
 }
 #endif
@@ -132,7 +133,7 @@ errorObj *msGetErrorObj() {
   /* We don't have one ... initialize one. */
   else if (link == NULL || link->next == NULL) {
     te_info_t *new_link;
-    errorObj error_obj = {MS_NOERR, "", "", 0, 0, NULL, 0};
+    errorObj error_obj = {MS_NOERR, "", "", "", 0, 0, NULL, 0};
 
     new_link = (te_info_t *)malloc(sizeof(te_info_t));
     new_link->next = error_list;
@@ -394,23 +395,13 @@ void msRedactCredentials(char *str) {
   msRedactString(str, "pwd=");
 }
 
-void msSetError(int code, const char *message_fmt, const char *routine, ...) {
-  errorObj *ms_error;
-  va_list args;
-  char message[MESSAGELENGTH];
+static void msSetErrorInternal(int ms_errcode, const char *http_status,
+                               const char *message, const char *routine) {
 
-  if (!message_fmt)
-    strcpy(message, "");
-  else {
-    va_start(args, routine);
-    vsnprintf(message, MESSAGELENGTH, message_fmt, args);
-    va_end(args);
-  }
-
-  ms_error = msGetErrorObj();
+  errorObj *ms_error = msGetErrorObj();
 
   /* Insert the error to the list if it is not the same as the previous error*/
-  if (ms_error->code != code || !EQUAL(message, ms_error->message) ||
+  if (ms_error->code != ms_errcode || !EQUAL(message, ms_error->message) ||
       !EQUAL(routine, ms_error->routine)) {
     ms_error = msInsertErrorObj();
     if (!routine)
@@ -418,8 +409,16 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...) {
     else {
       strlcpy(ms_error->routine, routine, sizeof(ms_error->routine));
     }
+
+    if (!http_status)
+      strcpy(ms_error->http_status, "");
+    else {
+      strlcpy(ms_error->http_status, http_status,
+              sizeof(ms_error->http_status));
+    }
+
     strlcpy(ms_error->message, message, sizeof(ms_error->message));
-    ms_error->code = code;
+    ms_error->code = ms_errcode;
     ms_error->errorcount = 0;
   } else
     ++ms_error->errorcount;
@@ -430,6 +429,52 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...) {
    * msDebug()) */
   msDebug("%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code],
           ms_error->message);
+}
+
+void msSetError(int code, const char *message_fmt, const char *routine, ...) {
+  va_list args;
+  char message[MESSAGELENGTH];
+
+  if (!message_fmt)
+    strcpy(message, "");
+  else {
+    va_start(args, routine);
+    vsnprintf(message, MESSAGELENGTH, message_fmt, args);
+    va_end(args);
+  }
+  msSetErrorInternal(code, NULL, message, routine);
+}
+
+#ifdef _MSC_VER
+__declspec(thread) int gIsWMS = MS_FALSE;
+#else
+static _Thread_local int gIsWMS = MS_FALSE;
+#endif
+
+void msSetErrorSetIsWMS(int is_wms) { gIsWMS = is_wms; }
+
+void msSetErrorWithStatus(int ms_errcode, const char *http_status,
+                          const char *message_fmt, const char *routine, ...) {
+  va_list args;
+  char message[MESSAGELENGTH];
+
+  if (!message_fmt)
+    strcpy(message, "");
+  else {
+    va_start(args, routine);
+    vsnprintf(message, MESSAGELENGTH, message_fmt, args);
+    va_end(args);
+  }
+  if (http_status) {
+    if (gIsWMS) {
+      if (!CPLTestBoolean(
+              CPLGetConfigOption("MS_WMS_ERROR_STATUS_CODE", "OFF")))
+        http_status = NULL;
+    } else {
+      http_status = NULL;
+    }
+  }
+  msSetErrorInternal(ms_errcode, http_status, message, routine);
 }
 
 void msWriteError(FILE *stream) {

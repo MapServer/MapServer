@@ -1,0 +1,8 @@
+Status: 500 Internal Server Error
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+msLoadMap(): Unable to access file. (i_do_not_exist.map)
+</BODY></HTML>
