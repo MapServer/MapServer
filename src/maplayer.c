@@ -283,7 +283,7 @@ int msLayerIsOpen(layerObj *layer) {
 **
 ** Check if a field in a layer is a Character type
 */
-static bool msLayerPropertyIsCharacter(layerObj *layer, const char *property) {
+bool msLayerPropertyIsCharacter(layerObj *layer, const char *property) {
   if (!property) {
     return false;
   }
@@ -301,7 +301,7 @@ static bool msLayerPropertyIsCharacter(layerObj *layer, const char *property) {
 **
 ** Check if a field in a layer is numeric - an Integer, Long, or Real
 */
-static bool msLayerPropertyIsNumeric(layerObj *layer, const char *property) {
+bool msLayerPropertyIsNumeric(layerObj *layer, const char *property) {
   if (!property) {
     return false;
   }
