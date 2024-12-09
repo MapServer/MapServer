@@ -3499,7 +3499,7 @@ msOGRTranslatePartialInternal(layerObj *layer, const msExprNode *expr,
         bool bIsCharacter = msLayerPropertyIsCharacter(
             layer, expr->m_aoChildren[0]->m_osVal.c_str());
         // Cast if needed (or unsure)
-        if (bIsCharacter) {
+        if (!bIsCharacter) {
           osTmp1 = "CAST(" + osTmp1 + " AS CHARACTER(4096))";
         }
       }
