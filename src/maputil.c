@@ -263,7 +263,7 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style,
     }
   }
 
-  if (applyOpacity == MS_TRUE && style->opacity < 100 ) {
+  if (applyOpacity == MS_TRUE && style->opacity < 100) {
     int alpha;
     alpha = MS_NINT(style->opacity * 2.55);
     style->color.alpha = alpha;
