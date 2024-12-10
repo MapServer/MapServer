@@ -4,6 +4,8 @@
 # REQUIRES: INPUT=SHAPE OUTPUT=PNG
 #
 # RUN_PARMS: attrbind_test001.png [MAP2IMG] -m [MAPFILE] -l test001 -o [RESULT]
+# RUN_PARMS: attrbind_test002.png [MAP2IMG] -m [MAPFILE] -l test002 -o [RESULT]
+
 MAP
   NAME 'attrbind'
   EXTENT -1.5 0.1 -0.6 1.0
@@ -71,5 +73,25 @@ MAP
       END 
    END
   END
+
+  # test with an alpha channel in bound colour
+  LAYER
+    NAME 'test002'
+    TYPE POINT
+    STATUS OFF
+    CONNECTIONTYPE OGR
+    CONNECTION "data/attrbind.shp"
+    DATA "SELECT *, '#006D2C14' AS hex FROM attrbind"
+    CLASS
+      STYLE
+        OPACITY 20
+        COLOR [hex]
+        SYMBOL [symbol]
+        OFFSET 2 2
+        SIZE 30
+      END
+    END
+  END
+
 END
  
