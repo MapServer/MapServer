@@ -13,6 +13,23 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.4.0-beta1 release (2024-12-13)
+--------------------------------
+
+- add PCRE2 support (#7073)
+
+- add CONNECTIONTYPE RASTERLABEL (#7135)
+
+- set MS_LEGEND_KEYSIZE_MAX to 1000 (#7154)
+
+- add 4 new COMPOSITE.COMPOP blending operations (#7065)
+
+- allow encryption key files to use paths relative to a mapfile (#7181)
+
+- allow use_default_extent_for_getfeature to be used for OGC Features API and PostGIS (#7197)
+
+see detailed changelog for other fixes
+
 8.2.2 release (2024-09-02)
 --------------------------
 
