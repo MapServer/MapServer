@@ -76,6 +76,7 @@ struct projectionContext {
   int ref_count;
   pjCacheEntry pj_cache[PJ_CACHE_ENTRY_SIZE];
   int pj_cache_size;
+  int cannotFindProjDb;
 };
 
 /************************************************************************/
@@ -327,12 +328,33 @@ static PJ *getBaseGeographicCRS(projectionObj *in) {
 /************************************************************************/
 
 static void msProjErrorLogger(void *user_data, int level, const char *message) {
-  (void)user_data;
+  projectionContext *ctx = (projectionContext *)user_data;
+  if (strstr(message, "Cannot find proj.db"))
+    ctx->cannotFindProjDb = MS_TRUE;
   if (level == PJ_LOG_ERROR && msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_VV) {
     msDebug("PROJ: Error: %s\n", message);
   } else if (level == PJ_LOG_DEBUG) {
     msDebug("PROJ: Debug: %s\n", message);
   }
+}
+
+/************************************************************************/
+/*                        msProjGetProjErrorString()                    */
+/************************************************************************/
+
+static const char *msProjGetProjErrorString(projectionObj *p) {
+  const int l_pj_errno = proj_context_errno(p->proj_ctx->proj_ctx);
+#if PROJ_VERSION_MAJOR >= 8
+  const char *projErrorStr =
+      proj_context_errno_string(p->proj_ctx->proj_ctx, l_pj_errno);
+#else
+  const char *projErrorStr = proj_errno_string(l_pj_errno);
+#endif
+  if (p->proj_ctx->cannotFindProjDb) {
+    projErrorStr = "Cannot find proj.db";
+    p->proj_ctx->cannotFindProjDb = MS_FALSE;
+  }
+  return projErrorStr;
 }
 
 /************************************************************************/
@@ -350,7 +372,7 @@ projectionContext *msProjectionContextCreate(void) {
   }
   ctx->ref_count = 1;
   proj_context_use_proj4_init_rules(ctx->proj_ctx, TRUE);
-  proj_log_func(ctx->proj_ctx, NULL, msProjErrorLogger);
+  proj_log_func(ctx->proj_ctx, ctx, msProjErrorLogger);
   return ctx;
 }
 
@@ -678,10 +700,8 @@ static int _msProcessAutoProjection(projectionObj *p) {
   args = msStringSplit(szProjBuf, '+', &numargs);
 
   if (!(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, numargs, args))) {
-    int l_pj_errno = proj_context_errno(p->proj_ctx->proj_ctx);
-    msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
-               "msProcessProjection()", proj_errno_string(l_pj_errno),
-               szProjBuf);
+    msSetError(MS_PROJERR, "PROJ error \"%s\" when instantiating \"%s\"",
+               "msProcessProjection()", msProjGetProjErrorString(p), szProjBuf);
     msFreeCharArray(args, numargs);
     return (-1);
   }
@@ -750,9 +770,8 @@ int msProcessProjection(projectionObj *p) {
     /* Deal e.g. with EPSG:XXXX or ESRI:XXXX */
     if (!(p->proj =
               proj_create_argv(p->proj_ctx->proj_ctx, p->numargs, p->args))) {
-      int l_pj_errno = proj_context_errno(p->proj_ctx->proj_ctx);
-      msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
-                 "msProcessProjection()", proj_errno_string(l_pj_errno),
+      msSetError(MS_PROJERR, "PROJ error \"%s\" when instantiating \"%s\"",
+                 "msProcessProjection()", msProjGetProjErrorString(p),
                  p->args[0]);
       return (-1);
     }
@@ -792,14 +811,13 @@ int msProcessProjection(projectionObj *p) {
       fprintf(stderr, "\n");
 #endif
     if (!(p->proj = proj_create_argv(p->proj_ctx->proj_ctx, numargs, args))) {
-      int l_pj_errno = proj_context_errno(p->proj_ctx->proj_ctx);
       if (p->numargs > 1) {
-        msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
-                   "msProcessProjection()", proj_errno_string(l_pj_errno),
+        msSetError(MS_PROJERR, "PROJ error \"%s\" when instantiating \"%s:%s\"",
+                   "msProcessProjection()", msProjGetProjErrorString(p),
                    p->args[0], p->args[1]);
       } else {
-        msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
-                   "msProcessProjection()", proj_errno_string(l_pj_errno),
+        msSetError(MS_PROJERR, "PROJ error \"%s\" when instantiating \"%s\"",
+                   "msProcessProjection()", msProjGetProjErrorString(p),
                    p->args[0]);
       }
       free(args);
