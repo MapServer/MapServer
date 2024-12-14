@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.4.0-beta2 release (2024-12-14)
+--------------------------------
+
+- add explicit error message when proj.db cannot be found (#7203)
+
 8.4.0-beta1 release (2024-12-13)
 --------------------------------
 
