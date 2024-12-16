@@ -2179,7 +2179,7 @@ static int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
   const int wkbstrlen =
       PQgetlength(layerinfo->pgresult, layerinfo->rownum, layer->numitems);
 
-  if (!wkbstr) {
+  if (!wkbstr || wkbstrlen == 0) {
     msSetError(MS_QUERYERR, "WKB returned is null!", "msPostGISReadShape()");
     return MS_FAILURE;
   }
