@@ -39,6 +39,7 @@
 #define _GNU_SOURCE /* Required for <string.h> strcasestr() defn */
 #endif
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
