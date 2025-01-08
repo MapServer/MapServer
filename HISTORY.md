@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.4.0-rc1 release (2025-01-08)
+------------------------------
+
+- include stdbool.h in mapserver.h (#7205)
+
 8.4.0-beta2 release (2024-12-14)
 --------------------------------
 
