@@ -51,7 +51,6 @@ authors:
 repository-code: https://github.com/MapServer/MapServer
 license: MIT
 doi: 10.5281/zenodo.6994443
-url: https://mapserver.org/
 keywords:
   - web
   - geospatial
