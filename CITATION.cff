@@ -9,14 +9,14 @@ authors:
     given-names: Jeff
     affiliation: GatewayGeo
     orcid: https://orcid.org/0000-0003-3900-1863
-  - given-names: Lime
-    family-names: Steve
+  - family-names: Lime
+    given-names: Steve
     affiliation: MNIT DNR
-  - given-names: Bonfort
-    family-names: Thomas
+  - family-names: Bonfort
+    given-names: Thomas
     affiliation: Airbus
-  - given-names: Boué
-    family-names: Jérome
+  - family-names: Boué
+    given-names: Jérome
   - family-names: Butler
     given-names: Howard
     affiliation: Hobu Inc
