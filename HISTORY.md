@@ -13,6 +13,12 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.4.0 release (2025-01-15)
+--------------------------
+
+- add CITATION.cff, useful for Zenodo/DOI (#7209)
+(see major changes below)
+
 8.4.0-rc1 release (2025-01-08)
 ------------------------------
 
