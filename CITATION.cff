@@ -1,0 +1,64 @@
+cff-version: 1.2.0
+title: MapServer
+message: If you use this software, please cite it using the metadata from this file.
+version: 8.4.0
+date-released: 2025-01-15
+abstract: MapServer is an Open Source platform for publishing spatial data and interactive mapping applications to the web.
+type: software
+authors:
+  - family-names: McKenna
+    given-names: Jeff
+    affiliation: GatewayGeo
+    orcid: https://orcid.org/0000-0003-3900-1863
+  - family-names: Lime
+    given-names: Steve
+    affiliation: MNIT DNR
+  - family-names: Bonfort
+    given-names: Thomas
+    affiliation: Airbus
+  - family-names: Boué
+    given-names: Jérome
+  - family-names: Butler
+    given-names: Howard
+    affiliation: Hobu Inc
+    orcid: https://orcid.org/0000-0002-5340-1380
+  - family-names: Girvin
+    given-names: Seth
+    affiliation: Geographika
+  - family-names: Kralidis
+    given-names: Tom
+  - family-names: Meissl
+    given-names: Stephan
+    affiliation: EOX
+    orcid: https://orcid.org/0000-0002-1407-8859
+  - family-names: Morissette
+    given-names: Daniel
+    affiliation: Mapgears
+  - family-names: Nacionales
+    given-names: Perry
+    affiliation: University of Minnesota
+  - family-names: Rahkonen
+    given-names: Jukka
+    affiliation: National Land Survey of Finland
+  - family-names: Rouault
+    given-names: Even
+    affiliation: Spatialys
+    orcid: https://orcid.org/0000-0002-5068-0476
+  - family-names: Smith
+    given-names: Mike
+    affiliation: US Army Corps of Engineers
+  - family-names: Szekeres
+    given-names: Tamas 
+repository-code: https://github.com/MapServer/MapServer
+license: MIT
+doi: 10.5281/zenodo.6994443
+keywords:
+  - web
+  - geospatial
+  - software
+  - ogc
+  - standards
+  - gdal
+  - open source
+  - free software
+  - MIT
