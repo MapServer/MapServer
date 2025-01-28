@@ -4997,8 +4997,6 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
     openlayersUrl = (char *)tmpUrl;
 
   if (mapserv->Mode == BROWSE) {
-    msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
-               "msWMSLoadGetMapParams()");
     layer = processLine(mapserv, olLayerMapServerTag, NULL, BROWSE);
   } else
     layer = processLine(mapserv, olLayerWMSTag, NULL, BROWSE);
