@@ -4235,6 +4235,14 @@ int msTranslateWMS2Mapserv(const char **names, const char **values,
 static int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values,
                        int numentries, const char *wms_exception_format,
                        owsRequestObj *ows_request) {
+
+  // If we are returning an OpenLayers map there is no need to first generate an
+  // image. We can't call msReturnOpenLayersPage directly here as it requires
+  // the mapservObj
+  if (strcasecmp(map->imagetype, "application/openlayers") == 0) {
+    return MS_SUCCESS;
+  }
+
   imageObj *img;
   int sldrequested = MS_FALSE, sldspatialfilter = MS_FALSE;
   int drawquerymap = MS_FALSE;
