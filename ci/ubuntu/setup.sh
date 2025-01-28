@@ -33,7 +33,7 @@ cmake --version
 # upgrade to recent SWIG
 git clone https://github.com/swig/swig.git swig-git-master
 cd swig-git-master
-wget https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
+wget https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.44/pcre2-10.44.tar.gz
 ./Tools/pcre-build.sh
 ./autogen.sh
 ./configure --prefix=/usr
