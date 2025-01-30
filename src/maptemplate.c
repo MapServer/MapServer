@@ -51,49 +51,73 @@ static inline void IGUR_voidp(void *ignored) {
   (void)ignored;
 } /* Ignore GCC Unused Result */
 
-static const char *const olUrl = "//www.mapserver.org/lib/OpenLayers-ms60.js";
+static const char *const olUrl = "//cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js";
+static const char *const olCssUrl = "//cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css";
+
 static const char *const olTemplate =
-    "<html>\n"
+    "<!DOCTYPE html>\n"
+    "<html lang=\"en\">\n"
     "<head>\n"
-    "<meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\">\n"
-    "  <title>MapServer Simple Viewer</title>\n"
-    "    <script type=\"text/javascript\" "
-    "src=\"[openlayers_js_url]\"></script>\n"
+    "    <meta charset=\"UTF-8\">\n"
+    "    <meta name=\"viewport\" content=\"width=device-width, "
+    "initial-scale=1.0\">\n"
+    "    <title>MapServer Simple Viewer</title>\n"
+    "    <link rel=\"stylesheet\" "
+    "href=\"[openlayers_css_url]\">\n"
     "    <link rel=\"shortcut icon\" type=\"image/x-icon\" "
-    "href=\"//www.mapserver.org/_static/mapserver.ico\"/>\n"
-    "    </head>\n"
-    "    <body>\n"
-    "      <div style=\"width:[mapwidth]; height:[mapheight]\" "
-    "id=\"map\"></div>\n"
-    "      <script defer=\"defer\" type=\"text/javascript\">\n"
-    "        var map = new OpenLayers.Map('map',\n"
-    "                                     {maxExtent: new "
-    "OpenLayers.Bounds([minx],[miny],[maxx],[maxy]),\n"
-    "                                      maxResolution: [cellsize]});\n"
-    "        [openlayers_layer];\n"
-    "        map.addLayer(mslayer);\n"
-    "        map.zoomToMaxExtent();\n"
-    "      </script>\n"
+    "href=\"//www.mapserver.org/_static/mapserver.ico\" />\n"
+    "    <style>\n"
+    "        #map {\n"
+    "            width: 100%;\n"
+    "            height: 100vh;\n"
+    "        }\n"
+    "    </style>\n"
+    "</head>\n"
+    "<body>\n"
+    "    <div id=\"map\"></div>\n"
+    "    <script "
+    "src=\"[openlayers_js_url]\"></script>\n"
+    "    <script>\n"
+    "        [openlayers_layer]\n"
+    "        const map = new ol.Map({\n"
+    "            layers: [mslayer],\n"
+    "            target: 'map',\n"
+    "            view: new ol.View()\n"
+    "        });\n"
+    "        map.getView().fit([[minx],[miny],[maxx],[maxy]], { size: "
+    "map.getSize() });\n"
+    "    </script>\n"
     "</body>\n"
     "</html>";
 
 static const char *const olLayerMapServerTag =
-    "var mslayer = new OpenLayers.Layer.MapServer( \"MapServer Layer\",\n"
-    "                                              "
-    "\"[mapserv_onlineresource]\",\n"
-    "                                              {layers: '[layers]'},\n"
-    "                                              {singleTile: \"true\", "
-    "ratio:1} )";
+    "const mslayer = new ol.layer.Image({\n"
+    "            extent: [[minx],[miny],[maxx],[maxy]],\n"
+    "            source: new ol.source.Image({\n"
+    "                loader: ol.source.mapserver.createLoader({\n"
+    "                    url: '[mapserv_onlineresource]',\n"
+    "                    params: {\n"
+    "                        'layers': '[layers]'\n"
+    "                    }\n"
+    "                })\n"
+    "            })\n"
+    "        });";
 
 static const char *const olLayerWMSTag =
-    "var mslayer = new OpenLayers.Layer.WMS('MapServer Simple Viewer\',\n"
-    "                                   '[mapserv_onlineresource]',\n"
-    "                                   {layers: '[LAYERS]',\n"
-    "                                   bbox: '[minx],[miny],[maxx],[maxy]',\n"
-    "                                   width: [mapwidth], height: "
-    "[mapheight], version: '[VERSION]', format:'[openlayers_format]'},"
-    "                                   {singleTile: \"true\", ratio:1, "
-    "projection: '[openlayers_projection]'});\n";
+    "const mslayer = new ol.layer.Image({\n"
+    "            source: new ol.source.Image({\n"
+    "                loader: ol.source.wms.createLoader({\n"
+    "                    url: '[mapserv_onlineresource]',\n"
+    "                    params: {\n"
+    "                        LAYERS: '[LAYERS]',\n"
+    "                        VERSION: '[VERSION]',\n"
+    "                        FORMAT: 'image/png'\n"
+    "                    },\n"
+    "                    projection: '[openlayers_projection]',\n"
+    "                    ratio: 1\n"
+    "                })\n"
+    "            })\n"
+    "        });";
 
 static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
                          int mode);
@@ -4964,6 +4988,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   char *buffer = NULL, *layer = NULL;
   const char *tmpUrl = NULL;
   const char *openlayersUrl = olUrl;
+  const char *openlayersCssUrl = olCssUrl;
   char *projection = NULL;
   char *format = NULL;
 
@@ -4996,6 +5021,14 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   if (tmpUrl)
     openlayersUrl = (char *)tmpUrl;
 
+  /* now do the same for the MS_OPENLAYERS_CSS_URL */
+  tmpUrl = msGetConfigOption(mapserv->map, "MS_OPENLAYERS_CSS_URL");
+  if (tmpUrl == NULL)
+    tmpUrl = CPLGetConfigOption("MS_OPENLAYERS_CSS_URL", NULL);
+
+  if (tmpUrl)
+    openlayersCssUrl = (char *)tmpUrl;
+
   if (mapserv->Mode == BROWSE) {
     layer = processLine(mapserv, olLayerMapServerTag, NULL, BROWSE);
   } else
@@ -5003,13 +5036,14 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
 
   buffer = processLine(mapserv, olTemplate, NULL, BROWSE);
   buffer = msReplaceSubstring(buffer, "[openlayers_js_url]", openlayersUrl);
+  buffer = msReplaceSubstring(buffer, "[openlayers_css_url]", openlayersCssUrl);
   buffer = msReplaceSubstring(buffer, "[openlayers_layer]", layer);
   if (projection)
     buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
   if (format)
     buffer = msReplaceSubstring(buffer, "[openlayers_format]", format);
   else
-    buffer = msReplaceSubstring(buffer, "[openlayers_format]", "image/jpeg");
+    buffer = msReplaceSubstring(buffer, "[openlayers_format]", "image/png");
   msIO_fwrite(buffer, strlen(buffer), 1, stdout);
   free(layer);
   free(buffer);
