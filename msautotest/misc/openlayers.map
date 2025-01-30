@@ -1,0 +1,61 @@
+# Test OpenLayers HTML template output through CGI and WMS
+
+# RUN_PARMS: browse.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&layers=world-polys world-lines&mode=browse&template=openlayers" > [RESULT_DEMIME]
+# RUN_PARMS: wms.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines&WIDTH=956&HEIGHT=705&CRS=EPSG:4326&BBOX=-180,-90,180,90" > [RESULT_DEMIME]
+# RUN_PARMS: wms_projected.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines&WIDTH=956&HEIGHT=705&CRS=EPSG:3857&BBOX=-20037508.34,-20048966.1,20037508.34,20048966.1" > [RESULT_DEMIME]
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG SUPPORTS=PROJ SUPPORTS=WMS
+#
+
+MAP
+  NAME 'OpenLayersTest'
+  IMAGETYPE PNG
+  EXTENT -180 -90 180 90
+  SIZE 400 400
+
+  # can test locally with OpenLayers hosted on a CDN
+  CONFIG "MS_OPENLAYERS_JS_URL" "//cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"
+  CONFIG "MS_OPENLAYERS_CSS_URL" "//cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css"
+
+  WEB
+    METADATA
+        # for testing output locally change the following to point to a MapServer URL and location of this Mapfile
+        "ows_onlineresource" "http://localhost/?map=msautotest/misc/openlayers.map&"
+        # required for both CGI and WMS
+        "wms_enable_request" "GetMap" # required for WMS testing
+        # following required for WMS
+        "wms_srs" "EPSG:4326 EPSG:3857"
+    END
+  END
+
+  PROJECTION
+    "+init=epsg:4326"
+  END
+
+  LAYER
+    NAME "world-polys"
+    TYPE POLYGON
+    STATUS OFF
+    DATA "data/world_testpoly.shp"
+    CLASS
+      STYLE
+        OUTLINECOLOR 255 0 0 
+        COLOR 0 255 0 
+      END
+    END
+  END
+
+  LAYER
+    NAME "world-lines"
+    TYPE LINE
+    STATUS OFF
+    DATA "data/testlines.shp"
+    CLASS
+      STYLE
+        WIDTH 0.5
+        COLOR 0 0 0
+      END
+    END
+  END
+
+END
