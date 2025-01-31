@@ -437,9 +437,11 @@ int msDrawRasterBuildRasterPath(mapObj *map, layerObj *layer,
                                 char szPath[MS_MAXPATHLEN] /* output */) {
   /*
   ** If using a tileindex then build the path relative to that file if SHAPEPATH
-  *is not set.
+  * is not set, provided that layer->tileindex does not refer to a layer (to
+  * save a useless file opening attempt)
   */
-  if (layer->tileindex && !map->shapepath) {
+  if (layer->tileindex && !map->shapepath &&
+      msGetLayerIndex(map, layer->tileindex) < 0) {
     char tiAbsFilePath[MS_MAXPATHLEN];
     char *tiAbsDirPath = NULL;
 
