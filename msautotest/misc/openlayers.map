@@ -13,9 +13,9 @@ MAP
   EXTENT -180 -90 180 90
   SIZE 400 400
 
-  # can test locally with OpenLayers hosted on a CDN
-  CONFIG "MS_OPENLAYERS_JS_URL" "//cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"
-  CONFIG "MS_OPENLAYERS_CSS_URL" "//cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css"
+  # can also test with OpenLayers hosted on a CDN
+  # CONFIG "MS_OPENLAYERS_JS_URL" "//cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js"
+  # CONFIG "MS_OPENLAYERS_CSS_URL" "//cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css"
 
   WEB
     METADATA

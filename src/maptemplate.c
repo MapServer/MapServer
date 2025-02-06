@@ -51,8 +51,9 @@ static inline void IGUR_voidp(void *ignored) {
   (void)ignored;
 } /* Ignore GCC Unused Result */
 
-static const char *const olUrl = "//cdn.jsdelivr.net/npm/ol@v10.4.0/dist/ol.js";
-static const char *const olCssUrl = "//cdn.jsdelivr.net/npm/ol@v10.4.0/ol.css";
+static const char *const olUrl = "//mapserver.org/lib/10.4.0/ol-mapserver.js";
+static const char *const olCssUrl =
+    "//mapserver.org/lib/10.4.0/ol-mapserver.css";
 
 static const char *const olTemplate =
     "<!DOCTYPE html>\n"
@@ -65,11 +66,14 @@ static const char *const olTemplate =
     "    <link rel=\"stylesheet\" "
     "href=\"[openlayers_css_url]\">\n"
     "    <link rel=\"shortcut icon\" type=\"image/x-icon\" "
-    "href=\"//www.mapserver.org/_static/mapserver.ico\" />\n"
+    "href=\"//mapserver.org/_static/mapserver.ico\" />\n"
     "    <style>\n"
     "        #map {\n"
+    "            position: absolute;\n"
+    "            top: 0;\n"
+    "            left: 0;\n"
     "            width: 100%;\n"
-    "            height: 100vh;\n"
+    "            height: 100%;\n"
     "        }\n"
     "    </style>\n"
     "</head>\n"
@@ -84,7 +88,7 @@ static const char *const olTemplate =
     "            target: 'map',\n"
     "            view: new ol.View()\n"
     "        });\n"
-    "        map.getView().fit([[minx],[miny],[maxx],[maxy]], { size: "
+    "        map.getView().fit([[minx], [miny], [maxx], [maxy]], { size: "
     "map.getSize() });\n"
     "    </script>\n"
     "</body>\n"
@@ -92,7 +96,7 @@ static const char *const olTemplate =
 
 static const char *const olLayerMapServerTag =
     "const mslayer = new ol.layer.Image({\n"
-    "            extent: [[minx],[miny],[maxx],[maxy]],\n"
+    "            extent: [[minx], [miny], [maxx], [maxy]],\n"
     "            source: new ol.source.Image({\n"
     "                loader: ol.source.mapserver.createLoader({\n"
     "                    url: '[mapserv_onlineresource]',\n"
