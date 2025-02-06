@@ -67,9 +67,7 @@ add_custom_command(
     DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME}
     OUTPUT mapscriptvenv.stamp
     WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
-    COMMAND ${Python_EXECUTABLE} -m pip install pip --upgrade
-    COMMAND ${Python_EXECUTABLE} -m pip install virtualenv
-    COMMAND ${Python_EXECUTABLE} -m virtualenv mapscriptvenv
+    COMMAND ${Python_EXECUTABLE} -m venv mapscriptvenv
     COMMAND ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
