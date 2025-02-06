@@ -80,7 +80,7 @@ for fuzzer in mapfuzzer shapefuzzer configfuzzer; do
     $CXX $CXXFLAGS $LIB_FUZZING_ENGINE ${fuzzer}.o -o ${fuzzer} \
         -L. -lmapserver_static -lgdal \
         -Wl,-Bstatic -lpng -ljpeg -lfreetype -lproj -lxml2 -lz -lsqlite3 -llzma \
-        -Wl,-Bdynamic  -lpthread -ldl -lc++
+        -Wl,-Bdynamic  -lpthread -ldl -lc++ -lclang_rt.builtins
 
     cp ${fuzzer} $OUT/
 done
