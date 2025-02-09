@@ -60,33 +60,33 @@ endif()
 
 add_custom_target(
     pythonmapscript-wheel
-    DEPENDS mapscripttests.stamp
+    DEPENDS ${MAPSCRIPT_WORKING_DIR}/mapscripttests.stamp
 )
 
 add_custom_command(
     DEPENDS ${SWIG_MODULE_pythonmapscript_REAL_NAME}
-    OUTPUT mapscriptvenv.stamp
+    OUTPUT ${MAPSCRIPT_WORKING_DIR}/mapscriptvenv.stamp
     WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     COMMAND ${Python_EXECUTABLE} -m venv mapscriptvenv
     COMMAND ${CMAKE_COMMAND} -E env PIP_NO_PYTHON_VERSION_WARNING=1 
             ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
-    COMMAND ${CMAKE_COMMAND} -E touch mapscriptvenv.stamp
+    COMMAND ${CMAKE_COMMAND} -E touch ${MAPSCRIPT_WORKING_DIR}/mapscriptvenv.stamp
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
 
 add_custom_command(
-    DEPENDS mapscriptvenv.stamp
-    OUTPUT mapscriptwheel.stamp
+    DEPENDS ${MAPSCRIPT_WORKING_DIR}/mapscriptvenv.stamp
+    OUTPUT ${MAPSCRIPT_WORKING_DIR}/mapscriptwheel.stamp
     WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     COMMAND ${Python_VENV_SCRIPTS}/python -m build --wheel > wheel_build.log
-    COMMAND ${CMAKE_COMMAND} -E touch mapscriptwheel.stamp
+    COMMAND ${CMAKE_COMMAND} -E touch ${MAPSCRIPT_WORKING_DIR}/mapscriptwheel.stamp
     COMMENT "Building the mapscript Python wheel"
 )
 
 add_custom_command(
     WORKING_DIRECTORY ${Python_VENV_SCRIPTS} # make sure scripts aren't run when from the same folder as mapscript.py
-    DEPENDS mapscriptwheel.stamp
-    OUTPUT mapscripttests.stamp
+    DEPENDS ${MAPSCRIPT_WORKING_DIR}/mapscriptwheel.stamp
+    OUTPUT ${MAPSCRIPT_WORKING_DIR}/mapscripttests.stamp
     COMMAND ${Python_VENV_SCRIPTS}/pip install --no-index --find-links=${MAPSCRIPT_WORKING_DIR}/dist mapscript
     # ERROR: file or package not found: mapscript.tests (missing __init__.py?) is caused by
     # ImportError: DLL load failed while importing _mapscript: The specified module could not be found.
@@ -95,7 +95,7 @@ add_custom_command(
     COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
     COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
     COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.wxs ${PROJECT_SOURCE_DIR}/tests/test.map > response.xml
-    COMMAND ${CMAKE_COMMAND} -E touch mapscripttests.stamp
+    COMMAND ${CMAKE_COMMAND} -E touch ${MAPSCRIPT_WORKING_DIR}/mapscripttests.stamp
     COMMENT "Installing the Python wheel and testing it in the virtual environment, then running tests and examples"
 )
 
