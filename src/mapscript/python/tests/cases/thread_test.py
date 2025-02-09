@@ -148,16 +148,15 @@ def draw_map_wms(name, save=0):
 
     # print("making map in thread %s" % (name))
     mo = mapscript.mapObj(TESTMAPFILE)
-    # WFS layer
+    # WMS layer
     lo = mapscript.layerObj()
-    lo.name = "jpl_wms"
+    lo.name = "world_latlong"
     lo.setProjection("+init=epsg:4326")
     lo.connectiontype = mapscript.MS_WMS
-    lo.connection = "http://vmap0.tiles.osgeo.org/wms/vmap0?"
+    lo.connection = "https://demo.mapserver.org/cgi-bin/msautotest?"
     lo.metadata.set("wms_service", "WMS")
-    lo.metadata.set("wms_server_version", "1.1.1")
-    lo.metadata.set("wms_name", "basic")
-    lo.metadata.set("wms_style", "visual")
+    lo.metadata.set("wms_server_version", "1.3.0")
+    lo.metadata.set("wms_name", "world_latlong")
     lo.metadata.set("wms_format", "image/jpeg")
     lo.type = mapscript.MS_LAYER_RASTER
     lo.status = mapscript.MS_DEFAULT
