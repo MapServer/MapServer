@@ -5023,7 +5023,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
     tmpUrl = CPLGetConfigOption("MS_OPENLAYERS_JS_URL", NULL);
 
   if (tmpUrl)
-    openlayersUrl = (char *)tmpUrl;
+    openlayersUrl = tmpUrl;
 
   /* now do the same for the MS_OPENLAYERS_CSS_URL */
   tmpUrl = msGetConfigOption(mapserv->map, "MS_OPENLAYERS_CSS_URL");
