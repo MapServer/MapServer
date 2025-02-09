@@ -91,6 +91,7 @@ build_script:
   # set the MapScript custom environment variable for python 3.8+
   - set MAPSERVER_DLL_PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%
   - set PROJ_DATA=%SDK_BIN%/proj9/SHARE
+  - set CURL_CA_BUNDLE=%SDK_BIN%/curl-ca-bundle.crt
   # ensure the GIF driver is available for tests
   - set GDAL_DRIVER_PATH=%SDK_BIN%/gdal/plugins
   # check the mapserver exe can run
