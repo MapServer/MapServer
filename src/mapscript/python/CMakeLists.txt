@@ -69,7 +69,7 @@ add_custom_command(
     WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     COMMAND ${Python_EXECUTABLE} -m venv mapscriptvenv
     COMMAND ${CMAKE_COMMAND} -E env PIP_NO_PYTHON_VERSION_WARNING=1 
-            ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
+            ${Python_VENV_SCRIPTS}/pip install --no-warn-script-location  -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
     COMMAND ${CMAKE_COMMAND} -E touch ${MAPSCRIPT_WORKING_DIR}/mapscriptvenv.stamp
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
