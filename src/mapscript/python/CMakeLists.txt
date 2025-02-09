@@ -70,6 +70,7 @@ add_custom_command(
     COMMAND ${Python_EXECUTABLE} -m venv mapscriptvenv
     COMMAND ${CMAKE_COMMAND} -E env PIP_NO_PYTHON_VERSION_WARNING=1 
             ${Python_VENV_SCRIPTS}/pip install -r ${PROJECT_SOURCE_DIR}/src/mapscript/python/requirements-dev.txt > requires.log
+    COMMAND ${CMAKE_COMMAND} -E touch mapscriptvenv.stamp
     COMMENT "Creating a Python virtual environment and installing the required packages"
 )
 
@@ -78,6 +79,7 @@ add_custom_command(
     OUTPUT mapscriptwheel.stamp
     WORKING_DIRECTORY ${MAPSCRIPT_WORKING_DIR}
     COMMAND ${Python_VENV_SCRIPTS}/python -m build --wheel > wheel_build.log
+    COMMAND ${CMAKE_COMMAND} -E touch mapscriptwheel.stamp
     COMMENT "Building the mapscript Python wheel"
 )
 
@@ -93,6 +95,7 @@ add_custom_command(
     COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.shpdump ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpdump.txt
     COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.shpinfo ${PROJECT_SOURCE_DIR}/tests/polygon.shp > shpinfo.txt
     COMMAND ${Python_VENV_SCRIPTS}/python -m mapscript.examples.wxs ${PROJECT_SOURCE_DIR}/tests/test.map > response.xml
+    COMMAND ${CMAKE_COMMAND} -E touch mapscripttests.stamp
     COMMENT "Installing the Python wheel and testing it in the virtual environment, then running tests and examples"
 )
 
