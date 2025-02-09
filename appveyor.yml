@@ -101,8 +101,9 @@ build_script:
 before_test:
   - set PATH=%SDK_BIN%/gdal/apps;%PATH%;
   - cd %BUILD_FOLDER%/msautotest
+  - set PIP_NO_PYTHON_VERSION_WARNING=1
   - "./mssql/create_mssql_db.bat"
-  - "%Python_ROOT_DIR%/python -m pip install -U -r requirements.txt"
+  - "%Python_ROOT_DIR%/python -m pip install --no-warn-script-location -U -r requirements.txt"
   - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file://%BUILD_FOLDER%/build/src/mapscript/python/Release/dist mapscript"
 
 test_script:
