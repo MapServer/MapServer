@@ -153,7 +153,7 @@ def draw_map_wms(name, save=0):
     lo.name = "world_latlong"
     lo.setProjection("+init=epsg:4326")
     lo.connectiontype = mapscript.MS_WMS
-    lo.connection = "http://demo.mapserver.org/cgi-bin/msautotest?"
+    lo.connection = "https://demo.mapserver.org/cgi-bin/msautotest?"
     lo.metadata.set("wms_service", "WMS")
     lo.metadata.set("wms_server_version", "1.3.0")
     lo.metadata.set("wms_name", "world_latlong")
