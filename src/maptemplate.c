@@ -5031,7 +5031,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
     tmpUrl = CPLGetConfigOption("MS_OPENLAYERS_CSS_URL", NULL);
 
   if (tmpUrl)
-    openlayersCssUrl = (char *)tmpUrl;
+    openlayersCssUrl = tmpUrl;
 
   if (mapserv->Mode == BROWSE) {
     layer = processLine(mapserv, olLayerMapServerTag, NULL, BROWSE);
