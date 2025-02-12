@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
@@ -37,7 +37,7 @@ jobs:
             -e WORK_DIR="$PWD" \
             -e WITH_ASAN="${{ matrix.WITH_ASAN }}" \
             -e WITH_COVERAGE="${{ matrix.WITH_COVERAGE }}" \
-            -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
+            -v $PWD:$PWD ubuntu:22.04 $PWD/.github/workflows/start.sh
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2
