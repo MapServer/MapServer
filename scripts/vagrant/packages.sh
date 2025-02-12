@@ -13,7 +13,7 @@ apt-get -y upgrade
 # install packages we need
 apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
     libpq-dev python3-dev python3-pip python3-venv libproj-dev libxml2-dev postgis php-dev \
-    postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts vim bison flex swig \
+    postgresql-server-dev-14 postgresql-14-postgis-3 postgresql-14-postgis-3-scripts vim bison flex swig \
     librsvg2-dev libpng-dev libjpeg-dev libgif-dev \
     libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev \
     libgdal-dev libfribidi-dev libexempi-dev \
