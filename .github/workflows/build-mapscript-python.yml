@@ -16,24 +16,19 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.9, "3.10", 3.11, 3.12, 3.13]
-    env:
-      MAPSCRIPT_PYTHON_ONLY: 'true'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: ./ci/ubuntu/setup.sh
-
-      - name: Build
-        run: ./ci/ubuntu/build.sh
+      - name: Set up Python and Install Dependencies
+        run: |
+            docker run \
+            -e WORK_DIR="$PWD" \
+            -e PYTHON_VERSION="${{ matrix.python-version }}" \
+            -e MAPSCRIPT_PYTHON_ONLY="true" \
+            -v $PWD:$PWD ubuntu:20.04 $PWD/scripts/build-mapscript-python.sh
