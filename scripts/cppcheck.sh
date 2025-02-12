@@ -1,4 +1,7 @@
 #!/bin/bash
+apt-get update -y
+apt-get install -y cppcheck
+
 cppcheck --version
 
 LOG_FILE=/tmp/cppcheck_mapserver.txt
