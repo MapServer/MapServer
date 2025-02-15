@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,8 +31,12 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_VAGRANT_MAPPARSER_H_INCLUDED
-# define YY_YY_VAGRANT_MAPPARSER_H_INCLUDED
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
+#ifndef YY_YY_MAPSERVER_SRC_MAPPARSER_H_INCLUDED
+# define YY_YY_MAPSERVER_SRC_MAPPARSER_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -40,63 +45,72 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    BOOLEAN = 258,
-    NUMBER = 259,
-    STRING = 260,
-    TIME = 261,
-    SHAPE = 262,
-    OR = 263,
-    AND = 264,
-    NOT = 265,
-    RE = 266,
-    EQ = 267,
-    NE = 268,
-    LT = 269,
-    GT = 270,
-    LE = 271,
-    GE = 272,
-    IN = 273,
-    IEQ = 274,
-    IRE = 275,
-    INTERSECTS = 276,
-    DISJOINT = 277,
-    TOUCHES = 278,
-    OVERLAPS = 279,
-    CROSSES = 280,
-    WITHIN = 281,
-    CONTAINS = 282,
-    EQUALS = 283,
-    BEYOND = 284,
-    DWITHIN = 285,
-    AREA = 286,
-    LENGTH = 287,
-    COMMIFY = 288,
-    ROUND = 289,
-    UPPER = 290,
-    LOWER = 291,
-    INITCAP = 292,
-    FIRSTCAP = 293,
-    TOSTRING = 294,
-    YYBUFFER = 295,
-    INNER = 296,
-    OUTER = 297,
-    DIFFERENCE = 298,
-    DENSIFY = 299,
-    SIMPLIFY = 300,
-    SIMPLIFYPT = 301,
-    GENERALIZE = 302,
-    SMOOTHSIA = 303,
-    CENTERLINE = 304,
-    JAVASCRIPT = 305,
-    NEG = 306
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    BOOLEAN = 258,                 /* BOOLEAN  */
+    NUMBER = 259,                  /* NUMBER  */
+    STRING = 260,                  /* STRING  */
+    TIME = 261,                    /* TIME  */
+    SHAPE = 262,                   /* SHAPE  */
+    OR = 263,                      /* OR  */
+    AND = 264,                     /* AND  */
+    NOT = 265,                     /* NOT  */
+    RE = 266,                      /* RE  */
+    EQ = 267,                      /* EQ  */
+    NE = 268,                      /* NE  */
+    LT = 269,                      /* LT  */
+    GT = 270,                      /* GT  */
+    LE = 271,                      /* LE  */
+    GE = 272,                      /* GE  */
+    IN = 273,                      /* IN  */
+    IEQ = 274,                     /* IEQ  */
+    IRE = 275,                     /* IRE  */
+    INTERSECTS = 276,              /* INTERSECTS  */
+    DISJOINT = 277,                /* DISJOINT  */
+    TOUCHES = 278,                 /* TOUCHES  */
+    OVERLAPS = 279,                /* OVERLAPS  */
+    CROSSES = 280,                 /* CROSSES  */
+    WITHIN = 281,                  /* WITHIN  */
+    CONTAINS = 282,                /* CONTAINS  */
+    EQUALS = 283,                  /* EQUALS  */
+    BEYOND = 284,                  /* BEYOND  */
+    DWITHIN = 285,                 /* DWITHIN  */
+    AREA = 286,                    /* AREA  */
+    LENGTH = 287,                  /* LENGTH  */
+    COMMIFY = 288,                 /* COMMIFY  */
+    ROUND = 289,                   /* ROUND  */
+    UPPER = 290,                   /* UPPER  */
+    LOWER = 291,                   /* LOWER  */
+    INITCAP = 292,                 /* INITCAP  */
+    FIRSTCAP = 293,                /* FIRSTCAP  */
+    TOSTRING = 294,                /* TOSTRING  */
+    YYBUFFER = 295,                /* YYBUFFER  */
+    INNER = 296,                   /* INNER  */
+    OUTER = 297,                   /* OUTER  */
+    DIFFERENCE = 298,              /* DIFFERENCE  */
+    DENSIFY = 299,                 /* DENSIFY  */
+    SIMPLIFY = 300,                /* SIMPLIFY  */
+    SIMPLIFYPT = 301,              /* SIMPLIFYPT  */
+    GENERALIZE = 302,              /* GENERALIZE  */
+    SMOOTHSIA = 303,               /* SMOOTHSIA  */
+    CENTERLINE = 304,              /* CENTERLINE  */
+    JAVASCRIPT = 305,              /* JAVASCRIPT  */
+    NEG = 306                      /* NEG  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define BOOLEAN 258
 #define NUMBER 259
 #define STRING 260
@@ -149,10 +163,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 30 "mapparser.y" /* yacc.c:1909  */
+#line 30 "src/mapparser.y"
 
   double dblval;
   int intval;  
@@ -160,9 +173,9 @@ union YYSTYPE
   struct tm tmval;
   shapeObj *shpval;
 
-#line 164 "/vagrant/mapparser.h" /* yacc.c:1909  */
-};
+#line 177 "/mapserver/src/mapparser.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -170,6 +183,8 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
+
 int yyparse (parseObj *p);
 
-#endif /* !YY_YY_VAGRANT_MAPPARSER_H_INCLUDED  */
+
+#endif /* !YY_YY_MAPSERVER_SRC_MAPPARSER_H_INCLUDED  */
