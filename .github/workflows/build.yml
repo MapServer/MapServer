@@ -37,7 +37,7 @@ jobs:
             -e WORK_DIR="$PWD" \
             -e WITH_ASAN="${{ matrix.WITH_ASAN }}" \
             -e WITH_COVERAGE="${{ matrix.WITH_COVERAGE }}" \
-            -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/start.sh
+            -v $PWD:$PWD ubuntu:24.04 $PWD/.github/workflows/start.sh
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2
