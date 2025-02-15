@@ -36,9 +36,9 @@ fi
 # msautotests setup
 
 # setup postgresql
-sudo sed -i  's/md5/trust/' /etc/postgresql/12/main/pg_hba.conf
-sudo sed -i  's/peer/trust/' /etc/postgresql/12/main/pg_hba.conf
-sudo service postgresql restart 12
+sudo sed -i  's/md5/trust/' /etc/postgresql/16/main/pg_hba.conf
+sudo sed -i  's/peer/trust/' /etc/postgresql/16/main/pg_hba.conf
+sudo service postgresql restart 16
 
 cd msautotest
 ./create_postgis_test_data.sh
