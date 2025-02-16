@@ -21,35 +21,19 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         php-version: [8.4, 8.3]
-    env:
-      IGNORE_COMPARISON_RESULT_ON_CI: 'true'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.8
-
-      - name: Setup PHP
+      - name: Set up PHP and Install Dependencies
         run: |
-          # for pre-installed software see
-          # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2004-Readme.md
-          # both swig and php are included, so removed these
-          sudo apt-get -qq remove "php*-cli" "php*-dev"
-          sudo apt-get -qq remove "swig*"
-          sudo add-apt-repository ppa:ondrej/php -y
-          sudo apt-get -qq update
-          sudo apt-get -qq install php${{ matrix.php-version }}-cli php${{ matrix.php-version }}-dev php${{ matrix.php-version }}-mbstring php${{ matrix.php-version }}-xml php${{ matrix.php-version }}-pcov php${{ matrix.php-version }}-xdebug
-
-      - name: Install dependencies
-        run: ./ci/ubuntu/setup.sh
-
-      - name: Build
-        run: ./ci/ubuntu/build.sh
+            docker run \
+            -e WORK_DIR="$PWD" \
+            -e PHP_VERSION="${{ matrix.php-version }}" \
+            -e IGNORE_COMPARISON_RESULT_ON_CI="true" \
+            -v $PWD:$PWD ubuntu:24.04 $PWD/scripts/build-mapscript-php.sh
