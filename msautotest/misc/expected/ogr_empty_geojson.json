@@ -2,6 +2,7 @@
 "type": "FeatureCollection",
 "name": "geojson",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
+"xy_coordinate_resolution": 1e-05,
 "features": [
 
 ]
