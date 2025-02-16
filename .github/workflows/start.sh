@@ -6,7 +6,7 @@ apt-get update -y
 
 export PYTHON_VERSION=system
 export LANG=en_US.UTF-8
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 
 apt-get install -y --no-install-recommends \
     sudo locales tzdata software-properties-common python3-dev python3-venv python3-pip python3-setuptools git curl \

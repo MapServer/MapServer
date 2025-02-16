@@ -34,9 +34,35 @@ sudo apt-get -qq install php"${PHP_VERSION}"-cli php"${PHP_VERSION}"-dev php"${P
 # install build dependencies
 ci/ubuntu/setup.sh
 
+# build the project
+export CC="ccache gcc"
+export CXX="ccache g++"
+
+make cmakebuild_mapscript_php
+
 cd "$WORK_DIR"
 
-# build the project
-ci/ubuntu/build.sh
+# get PHPUnit
+cd msautotest
+echo "PHP version"
+php -v
+PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
+if [ ${PHPVersionMinor} -gt 81 ]; then
+    cd php && curl -LO https://phar.phpunit.de/phpunit-11.phar
+    echo "PHPUnit version"
+    php phpunit-11.phar --version
+else
+    cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
+    echo "PHPUnit version"
+    php phpunit-10.phar --version
+fi
+
+echo "PHP includes"
+
+php-config --includes
+
+cd "$WORK_DIR"
+
+make php-testcase
 
 echo "Done!"
