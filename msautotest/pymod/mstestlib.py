@@ -596,15 +596,6 @@ def _run(map, out_file, command, extra_args):
     else:
         command = command.replace("[RENDERER]", "")
 
-    # Used in msautotest/wxs/wcs_netcdf_input_output.map as for some unknown
-    # reason comparison fails on Travis-CI but not in the github action tests
-    # when using Docker. Likely due to a pre-installed library on the test runners
-    ignore_comparison_result = False
-    if "[IGNORE_COMPARISON_RESULT_ON_CI]" in command:
-        command = command.replace("[IGNORE_COMPARISON_RESULT_ON_CI]", "")
-        if "IGNORE_COMPARISON_RESULT_ON_CI" in os.environ:
-            ignore_comparison_result = True
-
     os.environ["MS_PDF_CREATION_DATE"] = "dummy date"
 
     # support for environment variable of type [ENV foo=bar]
@@ -731,7 +722,7 @@ def _run(map, out_file, command, extra_args):
 
     cmp = compare_result(out_file)
 
-    if cmp != "match" and ignore_comparison_result:
+    if cmp != "match":
         if not keep_pass:
             os.remove("result/" + out_file)
         if not quiet:
