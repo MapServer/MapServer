@@ -9,7 +9,7 @@ if [ -z "${PYTHON_VERSION:-}" ]; then
     exit 1
 fi
 
-DEBIAN_FRONTEND=noninteractive 
+export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -y
 
@@ -50,7 +50,12 @@ ci/ubuntu/setup.sh
 
 cd "$WORK_DIR"
 
-# build the project
-ci/ubuntu/build.sh
+export CC="ccache gcc"
+export CXX="ccache g++"
+
+# only build MapServer with the Python MapScript and not PHP, Perl etc.
+make cmakebuild_mapscript_python MFLAGS="-j$(nproc)" CMAKE_C_FLAGS="-O2" CMAKE_CXX_FLAGS="-O2" LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra"
+# build the wheel and run the Python MapScript test suite
+make mspython-wheel
 
 echo "Done!"

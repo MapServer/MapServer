@@ -1,6 +1,6 @@
-#line 2 "src/maplexer.c"
+#line 2 "/mapserver/src/maplexer.c"
 
-#line 4 "src/maplexer.c"
+#line 4 "/mapserver/src/maplexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -2285,9 +2285,9 @@ int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 
-#line 2289 "src/maplexer.c"
+#line 2289 "/mapserver/src/maplexer.c"
 
-#line 2291 "src/maplexer.c"
+#line 2291 "/mapserver/src/maplexer.c"
 
 #define INITIAL 0
 #define EXPRESSION_STRING 1
@@ -2567,7 +2567,7 @@ YY_DECL
          break;
        }
 
-#line 2571 "src/maplexer.c"
+#line 2571 "/mapserver/src/maplexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -4546,7 +4546,7 @@ YY_RULE_SETUP
 #line 751 "src/maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4550 "src/maplexer.c"
+#line 4550 "/mapserver/src/maplexer.c"
 case YY_STATE_EOF(EXPRESSION_STRING):
 case YY_STATE_EOF(INCLUDE):
 case YY_STATE_EOF(MSSTRING):

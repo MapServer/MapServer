@@ -6,6 +6,7 @@ Content-Type: application/json; subtype=geojson; charset=utf-8
 "numberMatched": 28,
 "name": "popplace_fid",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3978" } },
+"xy_coordinate_resolution": 1e-05,
 "features": [
 { "type": "Feature", "id": 0, "properties": { "UNIQUE_KEY": "BACMK", "NAME": "\"Tignish", "CAPITAL": 0, "POP_CLASS": 1 }, "geometry": { "type": "Point", "coordinates": [ 2281604.25, 340848.9375 ] } },
 { "type": "Feature", "id": 1215011, "properties": { "UNIQUE_KEY": "CAGYX", "NAME": "'Cheticamp", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2503805.5, 427872.65625 ] } },
