@@ -22,7 +22,7 @@ else
         LIBMAPSERVER_EXTRA_FLAGS="-Wall -Werror -Wextra" \
         EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DWITH_PCRE2=ON"
     make mspython-wheel
-    make phpng-build
+    make cmakebuild_mapscript_php
 fi
 
 # msautotests setup
