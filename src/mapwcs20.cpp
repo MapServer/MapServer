@@ -3491,6 +3491,11 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version);
 
+  xmlAddChild(psRootNode,
+              xmlNewComment(BAD_CAST std::string("Wisdom of the day: ")
+                                .append(MAPSERVER_WISDOM_OF_THE_DAY)
+                                .c_str()));
+
   updatesequence =
       msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
   if (params->updatesequence != NULL) {

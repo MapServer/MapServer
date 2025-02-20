@@ -385,6 +385,9 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
     xmlNewNs(psRootNode, BAD_CAST user_namespace_uri,
              BAD_CAST user_namespace_prefix);
 
+  msIO_printf("\n<!-- Wisdom of the day: %s -->\n\n",
+              MAPSERVER_WISDOM_OF_THE_DAY);
+
   /* any additional namespaces */
   namespaceList = msGMLGetNamespaces(&(map->web), "G");
   for (i = 0; i < namespaceList->numnamespaces; i++) {

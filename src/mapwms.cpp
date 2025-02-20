@@ -3318,6 +3318,9 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     msIO_printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
   }
 
+  msIO_printf("\n<!-- Wisdom of the day: %s -->\n\n",
+              MAPSERVER_WISDOM_OF_THE_DAY);
+
   char szVersionBuf[OWS_VERSION_MAXLEN];
   const char *pszVersion = msOWSGetVersionString(nVersion, szVersionBuf);
   if (nVersion >= OWS_1_3_0)

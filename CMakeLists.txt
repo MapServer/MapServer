@@ -1140,6 +1140,8 @@ mark_as_advanced(
 add_definitions(-DMAPSERVER_BUILD)
 add_definitions(-DMAPSERVER_CONFIG_FILE="${MAPSERVER_CONFIG_FILE}")
 
+add_definitions(-DMAPSERVER_WISDOM_OF_THE_DAY="Nothing better than climbing Denali to enlighten your mind.")
+
 install(
   FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection.html
         ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/collection-item.html
