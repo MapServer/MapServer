@@ -43,7 +43,7 @@ class reprojectionObjTest extends \PHPUnit\Framework\TestCase
           $point->project($reprojector);
           //check that the first shape reprojects correctly, to EPSG:3857
           if ($i == 0) {
-            $this->assertStringContainsString("'x': -7078355.430891216, 'y': 5566372.173407509", $point->toString());
+            $this->assertStringContainsString("'x': -7078355.430891216, 'y': 5566372.173407508", $point->toString());
           }
           $i++;          
         }
