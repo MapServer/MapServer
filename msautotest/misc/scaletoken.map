@@ -8,6 +8,8 @@
 # RUN_PARMS: scaletoken_filter_655k.png [MAP2IMG] -l layer2 -m [MAPFILE] -o [RESULT] -e 474315 4762880 485645 4765610 
 # RUN_PARMS: scaletoken_filteritem_192k.png [MAP2IMG] -l layer3 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
 # RUN_PARMS: scaletoken_filteritem_424k.png [MAP2IMG] -l layer3  -m [MAPFILE] -o [RESULT] -e 476315 4762880 483645 4765610
+# RUN_PARMS: scaletoken_filterexpression_192k.png [MAP2IMG] -l layer4 -m [MAPFILE] -o [RESULT] -e 478315 4762880 481645 4765610
+# RUN_PARMS: scaletoken_filterexpression_424k.png [MAP2IMG] -l layer4  -m [MAPFILE] -o [RESULT] -e 476315 4762880 483645 4765610
 #
 MAP
   NAME 'scaletoken'
@@ -78,6 +80,25 @@ MAP
     END
     FILTERITEM "%filteritem%"
     FILTER "%filter%"
+    TYPE POLYGON
+    CLASS
+      STYLE COLOR 51 51 51 END
+    END
+  END
+  LAYER
+    NAME 'layer4'
+    STATUS ON
+    DEBUG 1
+    DATA "data/shppoly/poly.shp"
+    SCALETOKEN
+      NAME "%filter%"
+      VALUES
+        "0" "158"
+        "200000" "166"
+      END
+    END
+    # FILTER using an expression
+    FILTER ([EAS_ID] = %filter% )
     TYPE POLYGON
     CLASS
       STYLE COLOR 51 51 51 END
