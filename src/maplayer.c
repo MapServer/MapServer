@@ -105,8 +105,12 @@ int msLayerRestoreFromScaletokens(layerObj *layer) {
     layer->tileitem = layer->orig_st->tileitem;
   }
   if (layer->orig_st->filter) {
-    msLoadExpressionString(&(layer->filter), layer->orig_st->filter);
+    char *tmpval = (char *)msSmallMalloc(sizeof(char) *
+                                         (strlen(layer->filter.string) + 3));
+    sprintf(tmpval, "(%s)", layer->filter.string);
+    msLoadExpressionString(&(layer->filter), tmpval);
     msFree(layer->orig_st->filter);
+    msFree(tmpval);
   }
   if (layer->orig_st->filteritem) {
     msFree(layer->filteritem);
@@ -196,7 +200,6 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
           msReplaceSubstring(layer->filteritem, st->name, ste->value);
     }
     if (layer->filter.string && strstr(layer->filter.string, st->name)) {
-      char *tmpval;
       if (layer->debug >= MS_DEBUGLEVEL_DEBUG) {
         msDebug("replacing scaletoken (%s) with (%s) in layer->filter (%s) for "
                 "scale=%f\n",
@@ -204,11 +207,17 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
       }
       check_st_alloc(layer);
       layer->orig_st->filter = msStrdup(layer->filter.string);
-      tmpval = msStrdup(layer->filter.string);
+
+      char *tmpval = (char *)msSmallMalloc(sizeof(char) *
+                                           (strlen(layer->filter.string) + 3));
+      sprintf(tmpval, "(%s)", layer->filter.string);
       tmpval = msReplaceSubstring(tmpval, st->name, ste->value);
-      if (msLoadExpressionString(&(layer->filter), tmpval) == -1)
+
+      if (msLoadExpressionString(&(layer->filter), tmpval) == -1) {
+        msFree(tmpval);
         return (MS_FAILURE); /* msLoadExpressionString() cleans up previously
                                 allocated expression */
+      }
       msFree(tmpval);
     }
 
