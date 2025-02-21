@@ -815,6 +815,9 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams,
 
   msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
+  msIO_printf("\n<!-- Wisdom of the day: %s -->\n\n",
+              MAPSERVER_WISDOM_OF_THE_DAY);
+
   updatesequence =
       msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
   msIO_printf("<WFS_Capabilities \n"

@@ -239,6 +239,39 @@ def deversion_file(filename):
 
 
 ###############################################################################
+# Strip MapServer wisdom of the day comment from file.
+
+
+def de_wisdom_of_the_day(filename):
+
+    data = open(filename, "rb").read()
+
+    from sys import version_info
+
+    if version_info >= (3, 0, 0):
+        data = str(data, "iso-8859-1")
+
+    start = data.find("\n<!-- Wisdom of the day:")
+    if start == -1:
+        return
+
+    end = start
+    length = len(data)
+    while end < length - 5 and data[end : end + 5] != "-->\n\n":
+        end = end + 1
+
+    if data[end : end + 5] != "-->\n\n":
+        return
+
+    new_data = data[: start - 1] + data[end + 6 :]
+    if version_info >= (3, 0, 0):
+        open(filename, "wb").write(bytes(new_data, "iso-8859-1"))
+    else:
+        open(filename, "wb").write(new_data)
+    return
+
+
+###############################################################################
 # Strip GDAL version from file.
 
 
@@ -695,6 +728,7 @@ def _run(map, out_file, command, extra_args):
         demime_file("result/" + out_file)
     if deversion:
         deversion_file("result/" + out_file)
+        de_wisdom_of_the_day("result/" + out_file)
         degdalversion_file("result/" + out_file)
         fixexponent_file("result/" + out_file)
         detimestamp_file("result/" + out_file)

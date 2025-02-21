@@ -1203,6 +1203,9 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params,
     msIO_printf(
         "<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
 
+    msIO_printf("\n<!-- Wisdom of the day: %s -->\n\n",
+                MAPSERVER_WISDOM_OF_THE_DAY);
+
     if (!params->section ||
         (params->section && strcasecmp(params->section, "/") == 0))
       msIO_printf("<WCS_Capabilities\n"
