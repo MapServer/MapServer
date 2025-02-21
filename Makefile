@@ -10,12 +10,23 @@ YACC=yacc
 CMAKEFLAGS_MAPSCRIPT_PYTHON=-DWITH_CLIENT_WMS=1 \
 			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 \
 			  -DWITH_PYTHON=1 -DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=1 -DWITH_EXEMPI=1 \
-			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
+			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 \
+			  ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" \
+			  -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
+
+CMAKEFLAGS_MAPSCRIPT_PHP=-DWITH_CLIENT_WMS=1 \
+			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHPNG=1 \
+			  -DWITH_PYTHON=0 -DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=1 -DWITH_EXEMPI=1 \
+			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 \
+			  ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" \
+			  -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
 
 CMAKEFLAGS_NOCOVERAGE=-DWITH_CLIENT_WMS=1 \
 			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_CSHARP=1 -DWITH_PHPNG=1 -DWITH_PERL=1 \
 			  -DWITH_PYTHON=1 -DWITH_JAVA=1 -DWITH_THREAD_SAFETY=1 -DWITH_FRIBIDI=1 -DWITH_FCGI=1 -DWITH_EXEMPI=1 \
-			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 -DWITH_MSSQL2008=ON ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
+			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1 -DWITH_HARFBUZZ=1 -DWITH_MSSQL2008=ON \
+			  ${EXTRA_CMAKEFLAGS} -DLIBMAPSERVER_EXTRA_FLAGS="${LIBMAPSERVER_EXTRA_FLAGS}" \
+			  -DCMAKE_INSTALL_PREFIX=/tmp/install-mapserver
 
 CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage ${CMAKE_C_FLAGS}" -DCMAKE_CXX_FLAGS="--coverage ${CMAKE_CXX_FLAGS}" \
 			  -DCMAKE_SHARED_LINKER_FLAGS="-lgcov" ${CMAKEFLAGS_NOCOVERAGE}
@@ -33,7 +44,11 @@ cmakebuild_nocoverage: lexer parser
 cmakebuild_mapscript_python: lexer parser
 	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS_MAPSCRIPT_PYTHON); fi
 	cd build && $(MAKE) $(MFLAGS)
-    
+
+cmakebuild_mapscript_php: lexer parser
+	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS_MAPSCRIPT_PHP); fi
+	cd build && $(MAKE) $(MFLAGS)
+
 warning:
 	$(error "This Makefile is used to run the \"test\" target")
 
@@ -69,9 +84,6 @@ mspython-wheel:
 
 php-testcase:
 	test -f "$(PHP_MAPSCRIPT)" && (export PHP_MAPSCRIPT_SO="../../$(PHP_MAPSCRIPT)" && cd msautotest/php && ./run_test.sh)
-
-phpng-build:
-	cd build && cmake --build . --config Release
 
 java-testcase:
 	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../../$(JAVA_MAPSCRIPT_PATH)" && cd src/mapscript/java && ./run_test.sh)
