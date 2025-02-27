@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="150pt" height="100pt" viewBox="0 0 150 100" version="1.1">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="150" height="100" viewBox="0 0 150 100">
 <defs>
-<image id="image6" width="32" height="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAABz0lEQVRYhcVX0ZLDIAhcbvpf55/VTyNfxj1EIiLEpNdp6WQSBbPrKtQAXzYCgFqrlFIAAKUU+jgBAFJrVQKH8xNkfjLHp5SwILsKTQm1Osa83R6rgAqIa7+V0KAAAFJABfIEEjJRzCWiU5AnkPkje0p3EQ3DUzKnIBkJAAIIauJ+ioBAACkhSrHSLMiBd/CdoKA6ParAgUPDBYF6qTR1VkH8eKvAQYQchjgIGnGXWZATpHY3MntwJSTU7959DnKoADv7AzzbjhERS8KocHEP3ABXsDNSfU+sc7UeKsgsewQUAcYBAEB3s+DttlJgyvdqMyFTYDn7Dv91BVYmgAggUs3zcEW/KC68IC/XgdAuS2+GLPxT9YujaCYwVcD4D3NSgJmHSD2hMW/T8FJ++8uFhphi37kxwFuPz6yBDxczS9SvPl1PH8PMAsHQb+NbX88CZj5OxswMZm6ztHOZfZEyd+wRgeuB1C9HZswb3Pi9fWF0Wgeugp8S2zjx9ANKmIZWkdb+L5cQHEgUKKXQHVD3MRM+Z/YwgKJr96r8lnQG3mJEcb0zSTXA9yNIUU2zuW8eq76pEs6FKM8Iu/P3di80mp5N0VCNUgotDyQX7eUPkz8nQVfVub1LtgAAAABJRU5ErkJggg=="/>
-</defs>
-<g id="surface2">
-<rect x="0" y="0" width="150" height="100" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
-<use xlink:href="#image6" transform="matrix(1,0,0,1,9,66)"/>
-<use xlink:href="#image6" transform="matrix(1.21534,-1.21534,1.21534,1.21534,35.609127,33)"/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 29 82.5 C 29 87.832031 21 87.832031 21 82.5 C 21 77.167969 29 77.167969 29 82.5 "/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 78.5 33 C 78.5 38.332031 70.5 38.332031 70.5 33 C 70.5 27.667969 78.5 27.667969 78.5 33 "/>
+<filter id="filter-remove-color-and-invert-alpha" x="0%" y="0%" width="100%" height="100%">
+<feColorMatrix color-interpolation-filters="sRGB" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -1 1"/>
+</filter>
+<filter id="filter-0" x="0%" y="0%" width="100%" height="100%">
+<feImage xlink:href="#compositing-group-1" result="source" x="0" y="0" width="180" height="120"/>
+<feImage xlink:href="#compositing-group-2" result="destination" x="0" y="0" width="180" height="120"/>
+<feComposite in="source" in2="destination" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" color-interpolation-filters="sRGB"/>
+</filter>
+<g id="compositing-group-0" transform="translate(15, 10)">
+<rect x="-15" y="-10" width="180" height="120" fill="rgb(0%, 0%, 0%)" fill-opacity="0"/>
+<rect x="-15" y="-10" width="180" height="120" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
 </g>
+<mask id="mask-0">
+<use xlink:href="#compositing-group-0"/>
+</mask>
+<mask id="mask-1">
+<use xlink:href="#compositing-group-0" filter="url(#filter-remove-color-and-invert-alpha)"/>
+</mask>
+<g id="compositing-group-1" mask="url(#mask-0)">
+<g transform="translate(15, 10)">
+<rect x="-15" y="-10" width="180" height="120" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
+</g>
+</g>
+<g id="compositing-group-2" mask="url(#mask-1)">
+<g transform="translate(15, 10)">
+</g>
+</g>
+<image id="source-6" x="0" y="0" width="32" height="32" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAABz0lEQVRYhcVX0ZLDIAhcbvpf55/VTyNfxj1EIiLEpNdp6WQSBbPrKtQAXzYCgFqrlFIAAKUU+jgBAFJrVQKH8xNkfjLHp5SwILsKTQm1Osa83R6rgAqIa7+V0KAAAFJABfIEEjJRzCWiU5AnkPkje0p3EQ3DUzKnIBkJAAIIauJ+ioBAACkhSrHSLMiBd/CdoKA6ParAgUPDBYF6qTR1VkH8eKvAQYQchjgIGnGXWZATpHY3MntwJSTU7959DnKoADv7AzzbjhERS8KocHEP3ABXsDNSfU+sc7UeKsgsewQUAcYBAEB3s+DttlJgyvdqMyFTYDn7Dv91BVYmgAggUs3zcEW/KC68IC/XgdAuS2+GLPxT9YujaCYwVcD4D3NSgJmHSD2hMW/T8FJ++8uFhphi37kxwFuPz6yBDxczS9SvPl1PH8PMAsHQb+NbX88CZj5OxswMZm6ztHOZfZEyd+wRgeuB1C9HZswb3Pi9fWF0Wgeugp8S2zjx9ANKmIZWkdb+L5cQHEgUKKXQHVD3MRM+Z/YwgKJr96r8lnQG3mJEcb0zSTXA9yNIUU2zuW8eq76pEs6FKM8Iu/P3di80mp5N0VCNUgotDyQX7eUPkz8nQVfVub1LtgAAAABJRU5ErkJggg=="/>
+</defs>
+<g filter="url(#filter-0)" transform="translate(-15, -10)">
+<rect x="0" y="0" width="180" height="120" fill="rgb(0%, 0%, 0%)" fill-opacity="1"/>
+</g>
+<use xlink:href="#source-6" transform="matrix(1, 0, 0, 1, 9, 66)"/>
+<use xlink:href="#source-6" transform="matrix(1.21534, -1.21534, 1.21534, 1.21534, 35.609127, 33)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 29 82.5 C 29 87.832031 21 87.832031 21 82.5 C 21 77.167969 29 77.167969 29 82.5 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 78.5 33 C 78.5 38.332031 70.5 38.332031 70.5 33 C 70.5 27.667969 78.5 27.667969 78.5 33 "/>
 </svg>
