@@ -257,7 +257,7 @@ class RFC24 {
 		layerObj reference = map.getLayer(1);
 		
 		assert(newLayer.refcount == 3, "testGetLayerObjDestroy precondition");
-		//newLayer.Dispose(); // force the destruction needed for Mono on Windows
+		newLayer.Dispose(); // force the destruction needed for Mono on Windows
 		newLayer=null;
 		gc();
 		assert(reference.refcount == 2, "testGetLayerObjDestroy");
@@ -280,7 +280,7 @@ class RFC24 {
 		layerObj reference=map.getLayerByName("POLYGON");
 		
 		assert(newLayer.refcount == 3, "testGetLayerObjByNameDestroy precondition");
-		//newLayer.Dispose(); // force the destruction needed for Mono on Windows
+		newLayer.Dispose(); // force the destruction needed for Mono on Windows
 		newLayer=null;
 		gc();
 		assert(reference.refcount == 2, "testGetLayerObjByNameDestroy");
@@ -442,6 +442,7 @@ class RFC24 {
 		classObj reference = layer.getClass(0);
 		
 		assert(newClass.refcount == 3, "testGetClassObjDestroy precondition");
+		newClass.Dispose();
 		map=null; layer=null; newClass=null;
 		gc();
 		assert(reference.refcount == 2, "testGetClassObjDestroy");
@@ -468,6 +469,7 @@ class RFC24 {
 		styleObj reference=classobj.getStyle(0);
 		
 		assert(style.refcount == 3, "testGetStyleObjDestroy precondition");
+		style.Dispose();
 		map=null; layer=null; classobj=null; style=null;
 		gc();
 		assert(reference.refcount == 2, "testGetStyleObjDestroy");
