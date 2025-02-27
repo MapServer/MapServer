@@ -18,7 +18,8 @@ apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
     libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev \
     libgdal-dev libfribidi-dev libexempi-dev \
     libprotobuf-dev libprotobuf-c-dev protobuf-c-compiler libharfbuzz-dev gdal-bin \
-    curl sqlite3 libperl-dev python-is-python3
+    curl sqlite3 libperl-dev python-is-python3 \
+    libmono-system-drawing4.0-cil mono-mcs # for csharp bindings
 
 export PIP_BREAK_SYSTEM_PACKAGES=true
 export PIP_NO_WARN_SCRIPT_LOCATION=true
