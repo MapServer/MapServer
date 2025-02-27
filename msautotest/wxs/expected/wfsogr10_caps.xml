@@ -61,6 +61,7 @@ Content-Type: text/xml; charset=UTF-8
         <OGRGPX/>
         <OGRCSVZIP/>
         <SHAPEZIP/>
+        <SHAPEZIPMEM/>
         <MIDMIF/>
         <MultiMIDMIF/>
         <geojson/>
