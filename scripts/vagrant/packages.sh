@@ -20,5 +20,6 @@ apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
     libprotobuf-dev libprotobuf-c-dev protobuf-c-compiler libharfbuzz-dev gdal-bin \
     curl sqlite3 libperl-dev python-is-python3
 
-export PIP_BREAK_SYSTEM_PACKAGES=1
+export PIP_BREAK_SYSTEM_PACKAGES=true
+export PIP_NO_WARN_SCRIPT_LOCATION=true
 python -m pip install -U -r /vagrant/msautotest/requirements.txt
