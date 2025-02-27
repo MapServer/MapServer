@@ -51,12 +51,15 @@ done
 
 ret_code=0
 
+# exclude logs matching patterns below, and write to temporary file
 grep -v "unmatchedSuppression" ${LOG_FILE} \
     | grep -v "/renderers/agg" \
     | grep -v "/third-party" \
     | grep -v "/build" \
     | grep -v "yacc.c" \
     | grep -v "maplexer.c" \
+    | grep -v "mapparser.c" \
+    | grep -v "mapparser.y" \
     > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
