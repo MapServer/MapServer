@@ -9,11 +9,11 @@ sudo apt-get remove --purge postgresql* libpq-dev libpq5 cmake || /bin/true
 # Fix missing Kitware key issue
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo tee /etc/apt/keyrings/kitware-archive-latest.asc > /dev/null
-echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.kitware.com/ubuntu focal main' | sudo tee /etc/apt/sources.list.d/kitware.list > /dev/null
+echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.kitware.com/ubuntu noble main' | sudo tee /etc/apt/sources.list.d/kitware.list > /dev/null
 
 # Add required repositories
-sudo add-apt-repository -y ppa:ubuntugis/ppa # stable
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ noble main'
 
 sudo apt-get update
 
