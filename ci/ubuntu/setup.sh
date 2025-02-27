@@ -62,6 +62,9 @@ touch src/mapparser.y
 which python
 which pip
 
+export CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module
+export PIP_BREAK_SYSTEM_PACKAGES=true
+export PIP_NO_WARN_SCRIPT_LOCATION=true
+
 # install Python dependencies (required for msautotests)
-export PIP_BREAK_SYSTEM_PACKAGES=1
 pip install -r msautotest/requirements.txt
