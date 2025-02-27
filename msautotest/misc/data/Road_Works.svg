@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg1353"
    sodipodi:version="0.32"
-   inkscape:version="0.43"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
    width="747"
    height="656"
-   sodipodi:docbase="C:\Dokumente und Einstellungen\Gertis.VIVASOFT\Desktop"
-   sodipodi:docname="Zeichen_123.svg"
-   version="1.0">
+   sodipodi:docname="Road_Works.svg"
+   version="1.0"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <metadata
      id="metadata1358">
     <rdf:RDF>
@@ -30,8 +30,8 @@
   <defs
      id="defs1356" />
   <sodipodi:namedview
-     inkscape:window-height="968"
-     inkscape:window-width="1280"
+     inkscape:window-height="1009"
+     inkscape:window-width="1920"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -39,11 +39,16 @@
      pagecolor="#ffffff"
      id="base"
      inkscape:zoom="1.4142136"
-     inkscape:cx="355.06303"
-     inkscape:cy="216.20765"
-     inkscape:window-x="-4"
-     inkscape:window-y="-4"
-     inkscape:current-layer="svg1353" />
+     inkscape:cx="355.32115"
+     inkscape:cy="216.02112"
+     inkscape:window-x="1272"
+     inkscape:window-y="-8"
+     inkscape:current-layer="svg1353"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:window-maximized="1" />
   <path
      style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
      d="M 404.60969,20.515451 L 732.72019,587.57645 C 761.28347,633.2243 750.24362,660.09579 688.35479,655.39873 L 51.153635,654.92678 C 6.782529,655.99457 -12.725281,631.62837 10.113145,595.23367 C 10.982015,593.81715 343.08069,20.505924 343.08069,20.505924 C 357.49579,-6.1887276 390.72849,-5.9122536 404.60969,20.515451 z "
