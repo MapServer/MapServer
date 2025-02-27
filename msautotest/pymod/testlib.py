@@ -108,6 +108,9 @@ def check_with_gdal(result_file, expected_file):
             if exp_md != got_md:
                 return "nomatch"
             for band_num in range(1, exp_ds.RasterCount + 1):
+                # to ensure GetMetadata matches requires the .aux.xml
+                # files associated with the netCDF files to be present
+                # as they contain stats metadata e.g. STATISTICS_MINIMUM
                 if (
                     res_ds.GetRasterBand(band_num).GetMetadata()
                     != exp_ds.GetRasterBand(band_num).GetMetadata()
@@ -143,12 +146,12 @@ def compare_result(filename, this_path="."):
     # netCDF files contain a NC_GLOBAL#history that contains a datetime.
     # Binary comparison can't work
     if not expected_file.endswith(".nc"):
-        if filecmp.cmp(expected_file, result_file, 0):
+        if filecmp.cmp(expected_file, result_file, shallow=False):
             return "match"
 
         expected_file_alternative = expected_file + ".alternative"
         if os.path.exists(expected_file_alternative):
-            if filecmp.cmp(expected_file_alternative, result_file, 0):
+            if filecmp.cmp(expected_file_alternative, result_file, shallow=False):
                 return "match"
 
         if expected_file[-4:] == ".xml":
