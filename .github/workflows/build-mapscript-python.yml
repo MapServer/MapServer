@@ -31,4 +31,4 @@ jobs:
             -e WORK_DIR="$PWD" \
             -e PYTHON_VERSION="${{ matrix.python-version }}" \
             -e MAPSCRIPT_PYTHON_ONLY="true" \
-            -v $PWD:$PWD ubuntu:20.04 $PWD/scripts/build-mapscript-python.sh
+            -v $PWD:$PWD ubuntu:24.04 $PWD/scripts/build-mapscript-python.sh
