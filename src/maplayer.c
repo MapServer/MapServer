@@ -108,7 +108,7 @@ int msLayerRestoreFromScaletokens(layerObj *layer) {
     if (layer->filter.type == MS_EXPRESSION) {
       const size_t tmpval_size = strlen(layer->filter.string) + 3;
       char *tmpval = (char *)msSmallMalloc(tmpval_size);
-      snprintf(tmpval, "(%s)", tmpval_size, layer->filter.string);
+      snprintf(tmpval, tmpval_size, "(%s)", layer->filter.string);
       msLoadExpressionString(&(layer->filter), tmpval);
       msFree(tmpval);
     } else {
