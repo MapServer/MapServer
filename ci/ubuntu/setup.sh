@@ -9,11 +9,11 @@ sudo apt-get remove --purge postgresql* libpq-dev libpq5 cmake || /bin/true
 # Fix missing Kitware key issue
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo tee /etc/apt/keyrings/kitware-archive-latest.asc > /dev/null
-echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.kitware.com/ubuntu focal main' | sudo tee /etc/apt/sources.list.d/kitware.list > /dev/null
+echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.kitware.com/ubuntu noble main' | sudo tee /etc/apt/sources.list.d/kitware.list > /dev/null
 
 # Add required repositories
-sudo add-apt-repository -y ppa:ubuntugis/ppa # stable
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ noble main'
 
 sudo apt-get update
 
@@ -21,7 +21,7 @@ sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compi
             librsvg2-dev colordiff libpq-dev libpng-dev libjpeg-dev libgif-dev libgeos-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev \
             libcairo2-dev libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis libharfbuzz-dev gdal-bin proj-bin ccache curl \
             libpcre2-dev \
-            postgresql-server-dev-12 postgresql-12-postgis-3 postgresql-12-postgis-3-scripts g++ ca-certificates \
+            postgresql-server-dev-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts g++ ca-certificates \
             libmono-system-drawing4.0-cil mono-mcs \
             libperl-dev \
             openjdk-8-jdk \
@@ -62,6 +62,9 @@ touch src/mapparser.y
 which python
 which pip
 
+export CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module
+export PIP_BREAK_SYSTEM_PACKAGES=true
+export PIP_NO_WARN_SCRIPT_LOCATION=true
+
 # install Python dependencies (required for msautotests)
-export PIP_BREAK_SYSTEM_PACKAGES=1
 pip install -r msautotest/requirements.txt

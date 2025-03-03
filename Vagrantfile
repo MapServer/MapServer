@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   vm_ram = ENV['VAGRANT_VM_RAM'] || 2048
   vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
 
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "bento/ubuntu-24.04" # see https://portal.cloud.hashicorp.com/vagrant/discover?query=ubuntu
 
   config.vm.hostname = "mapserver-vagrant"
 
@@ -30,9 +30,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Unless explicitly declined, use the VM host's file system to cache
   # .deb files to avoid repeated downloads on each vagrant up
-  unless File.exists?("../.no_apt_cache")
+  unless File.exist?("../.no_apt_cache")
     cache_dir = "../apt-cache/#{config.vm.box}"
-    FileUtils.mkdir_p(cache_dir) unless Dir.exists?(cache_dir)
+    FileUtils.mkdir_p(cache_dir) unless Dir.exist?(cache_dir)
     puts "Using local apt cache, #{cache_dir}"
     config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
   end

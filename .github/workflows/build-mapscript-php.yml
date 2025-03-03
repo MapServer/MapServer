@@ -35,4 +35,4 @@ jobs:
             docker run \
             -e WORK_DIR="$PWD" \
             -e PHP_VERSION="${{ matrix.php-version }}" \
-            -v $PWD:$PWD ubuntu:20.04 $PWD/scripts/build-mapscript-php.sh
+            -v $PWD:$PWD ubuntu:24.04 $PWD/scripts/build-mapscript-php.sh

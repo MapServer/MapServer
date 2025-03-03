@@ -1,10 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
-<g id="surface2">
-<rect x="0" y="0" width="200" height="150" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,100%);fill-opacity:1;" d="M 45 124.167969 C 45 129.691406 36.046875 134.167969 25 134.167969 C 13.953125 134.167969 5 129.691406 5 124.167969 C 5 118.644531 13.953125 114.167969 25 114.167969 C 36.046875 114.167969 45 118.644531 45 124.167969 "/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,100%);fill-opacity:1;" d="M 124.25 24.917969 C 131.082031 31.753906 125.542969 48.371094 111.875 62.042969 C 98.207031 75.710938 81.585938 81.25 74.75 74.414062 C 67.917969 67.582031 73.457031 50.960938 87.125 37.292969 C 100.792969 23.625 117.414062 18.082031 124.25 24.917969 "/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 29 124.167969 C 29 129.5 21 129.5 21 124.167969 C 21 118.832031 29 118.832031 29 124.167969 "/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 103.5 49.667969 C 103.5 55 95.5 55 95.5 49.667969 C 95.5 44.332031 103.5 44.332031 103.5 49.667969 "/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="150" viewBox="0 0 200 150">
+<defs>
+<filter id="filter-remove-color-and-invert-alpha" x="0%" y="0%" width="100%" height="100%">
+<feColorMatrix color-interpolation-filters="sRGB" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -1 1"/>
+</filter>
+<filter id="filter-0" x="0%" y="0%" width="100%" height="100%">
+<feImage xlink:href="#compositing-group-1" result="source" x="0" y="0" width="240" height="180"/>
+<feImage xlink:href="#compositing-group-2" result="destination" x="0" y="0" width="240" height="180"/>
+<feComposite in="source" in2="destination" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" color-interpolation-filters="sRGB"/>
+</filter>
+<g id="compositing-group-0" transform="translate(20, 15)">
+<rect x="-20" y="-15" width="240" height="180" fill="rgb(0%, 0%, 0%)" fill-opacity="0"/>
+<rect x="-20" y="-15" width="240" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
 </g>
+<mask id="mask-0">
+<use xlink:href="#compositing-group-0"/>
+</mask>
+<mask id="mask-1">
+<use xlink:href="#compositing-group-0" filter="url(#filter-remove-color-and-invert-alpha)"/>
+</mask>
+<g id="compositing-group-1" mask="url(#mask-0)">
+<g transform="translate(20, 15)">
+<rect x="-20" y="-15" width="240" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
+</g>
+</g>
+<g id="compositing-group-2" mask="url(#mask-1)">
+<g transform="translate(20, 15)">
+</g>
+</g>
+</defs>
+<g filter="url(#filter-0)" transform="translate(-20, -15)">
+<rect x="0" y="0" width="240" height="180" fill="rgb(0%, 0%, 0%)" fill-opacity="1"/>
+</g>
+<path fill-rule="nonzero" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 45 124.167969 C 45 129.691406 36.046875 134.167969 25 134.167969 C 13.953125 134.167969 5 129.691406 5 124.167969 C 5 118.644531 13.953125 114.167969 25 114.167969 C 36.046875 114.167969 45 118.644531 45 124.167969 "/>
+<path fill-rule="nonzero" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 124.25 24.917969 C 131.082031 31.753906 125.542969 48.371094 111.875 62.042969 C 98.207031 75.710938 81.585938 81.25 74.75 74.414062 C 67.917969 67.582031 73.457031 50.960938 87.125 37.292969 C 100.792969 23.625 117.414062 18.082031 124.25 24.917969 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 29 124.167969 C 29 129.5 21 129.5 21 124.167969 C 21 118.832031 29 118.832031 29 124.167969 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 103.5 49.667969 C 103.5 55 95.5 55 95.5 49.667969 C 95.5 44.332031 103.5 44.332031 103.5 49.667969 "/>
 </svg>

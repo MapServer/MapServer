@@ -1,30 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="150" viewBox="0 0 200 150">
 <defs>
-<image id="image8" width="5" height="5" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAABmJLR0QA/wD/AP+gvaeTAAAAQklEQVQImU3KsQ2AMBTE0AeUSNQoVdgjA0SCOekyQzbJEExAw5e4zvbBgey3BRsaKh6MiBd23OjTJwsSOtZ4zjgDXlRLBk8bmWdZAAAAAElFTkSuQmCC"/>
-<pattern id="pattern0" patternUnits="userSpaceOnUse" width="5" height="5" >
-  <use xlink:href="#image8"/>
+<filter id="filter-remove-color-and-invert-alpha" x="0%" y="0%" width="100%" height="100%">
+<feColorMatrix color-interpolation-filters="sRGB" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -1 1"/>
+</filter>
+<filter id="filter-0" x="0%" y="0%" width="100%" height="100%">
+<feImage xlink:href="#compositing-group-1" result="source" x="0" y="0" width="240" height="180"/>
+<feImage xlink:href="#compositing-group-2" result="destination" x="0" y="0" width="240" height="180"/>
+<feComposite in="source" in2="destination" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" color-interpolation-filters="sRGB"/>
+</filter>
+<g id="compositing-group-0" transform="translate(20, 15)">
+<rect x="-20" y="-15" width="240" height="180" fill="rgb(0%, 0%, 0%)" fill-opacity="0"/>
+<rect x="-20" y="-15" width="240" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
+</g>
+<mask id="mask-0">
+<use xlink:href="#compositing-group-0"/>
+</mask>
+<mask id="mask-1">
+<use xlink:href="#compositing-group-0" filter="url(#filter-remove-color-and-invert-alpha)"/>
+</mask>
+<g id="compositing-group-1" mask="url(#mask-0)">
+<g transform="translate(20, 15)">
+<rect x="-20" y="-15" width="240" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
+</g>
+</g>
+<g id="compositing-group-2" mask="url(#mask-1)">
+<g transform="translate(20, 15)">
+</g>
+</g>
+<image id="source-8" x="0" y="0" width="5" height="5" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAABmJLR0QA/wD/AP+gvaeTAAAAQklEQVQImU3KsQ2AMBTE0AeUSNQoVdgjA0SCOekyQzbJEExAw5e4zvbBgey3BRsaKh6MiBd23OjTJwsSOtZ4zjgDXlRLBk8bmWdZAAAAAElFTkSuQmCC"/>
+<pattern id="pattern-0" patternUnits="userSpaceOnUse" x="0" y="0" width="5" height="5" viewBox="0 0 5 5">
+<use xlink:href="#source-8"/>
 </pattern>
-<image id="image12" width="8" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAABmJLR0QA/wD/AP+gvaeTAAAAc0lEQVQYlX3NoRHCUBCE4W8gIEgDQGQcGhWRSQHoFIBKhvSBoAnqwIUS0kMkM9g4zBPkzcBv7mZvd485LRp/eGD4daxQ4hUmWHwZjnjijkuc3qMOe44JGSyDeMYOBQ7YYoMe1uiixhNGrBJc8Y4MaXh7+wAWaQ1JIdfluAAAAABJRU5ErkJggg=="/>
-<pattern id="pattern1" patternUnits="userSpaceOnUse" width="8" height="8" >
-  <use xlink:href="#image12"/>
+<image id="source-12" x="0" y="0" width="8" height="8" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAABmJLR0QA/wD/AP+gvaeTAAAAc0lEQVQYlX3NoRHCUBCE4W8gIEgDQGQcGhWRSQHoFIBKhvSBoAnqwIUS0kMkM9g4zBPkzcBv7mZvd485LRp/eGD4daxQ4hUmWHwZjnjijkuc3qMOe44JGSyDeMYOBQ7YYoMe1uiixhNGrBJc8Y4MaXh7+wAWaQ1JIdfluAAAAABJRU5ErkJggg=="/>
+<pattern id="pattern-1" patternUnits="userSpaceOnUse" x="0" y="0" width="8" height="8" viewBox="0 0 8 8">
+<use xlink:href="#source-12"/>
 </pattern>
-<pattern id="pattern2" patternUnits="userSpaceOnUse" width="5" height="5" >
-  <use xlink:href="#image8"/>
+<pattern id="pattern-2" patternUnits="userSpaceOnUse" x="0" y="0" width="5" height="5" viewBox="0 0 5 5">
+<use xlink:href="#source-8"/>
 </pattern>
-<pattern id="pattern3" patternUnits="userSpaceOnUse" width="5" height="5" >
-  <use xlink:href="#image8"/>
+<pattern id="pattern-3" patternUnits="userSpaceOnUse" x="0" y="0" width="5" height="5" viewBox="0 0 5 5">
+<use xlink:href="#source-8"/>
 </pattern>
 </defs>
-<g id="surface2">
-<rect x="0" y="0" width="200" height="150" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 Z M 101.480469 54.453125 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern0);" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 L 101.480469 54.453125 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,70.588235%);fill-opacity:1;" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 Z M 167.320312 37.125 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern1);" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 L 167.320312 37.125 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 Z M 16.335938 61.382812 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern2);" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 L 16.335938 61.382812 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 Z M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 Z M 67.324219 90.09375 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern3);" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 L 76.234375 81.183594 M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 L 67.324219 90.09375 "/>
+<g filter="url(#filter-0)" transform="translate(-20, -15)">
+<rect x="0" y="0" width="240" height="180" fill="rgb(0%, 0%, 0%)" fill-opacity="1"/>
 </g>
+<path fill-rule="evenodd" fill="rgb(70.588235%, 70.588235%, 39.215686%)" fill-opacity="1" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 Z M 101.480469 54.453125 "/>
+<path fill-rule="evenodd" fill="url(#pattern-0)" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 L 101.480469 54.453125 "/>
+<path fill-rule="evenodd" fill="rgb(70.588235%, 70.588235%, 70.588235%)" fill-opacity="1" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 Z M 167.320312 37.125 "/>
+<path fill-rule="evenodd" fill="url(#pattern-1)" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 L 167.320312 37.125 "/>
+<path fill-rule="evenodd" fill="rgb(70.588235%, 70.588235%, 39.215686%)" fill-opacity="1" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 Z M 16.335938 61.382812 "/>
+<path fill-rule="evenodd" fill="url(#pattern-2)" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 L 16.335938 61.382812 "/>
+<path fill-rule="evenodd" fill="rgb(70.588235%, 70.588235%, 39.215686%)" fill-opacity="1" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 Z M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 Z M 67.324219 90.09375 "/>
+<path fill-rule="evenodd" fill="url(#pattern-3)" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 L 76.234375 81.183594 M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 L 67.324219 90.09375 "/>
 </svg>

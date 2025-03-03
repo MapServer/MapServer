@@ -160,7 +160,6 @@ def test_postgis_missing_data():
         "the_geom from (select * from multipolygon3d) as foo using unique",  # missing value for unique
         "the_geom from (select * from multipolygon3d) as foo using unique id using srid=",  # missing value for srid=
         "the_geom from (select * from non_existing_table order by id) as foo using srid=27700 using unique id",
-        "the_geom from (select * from multipolygon3d order by id) using srid=27700 using unique id",  # missing as foo
         "the_geom from (select * from multipolygon3d order by id) as foo using srid=27700",  # no using unique but subselect used
     ],
 )
@@ -198,6 +197,8 @@ def test_postgis_invalid_data(data):
         "the_geom from multipolygon3d using srid=27700",
         "the_geom from multipolygon3d using srid=27700 using unique id",
         "the_geom from (select * from multipolygon3d) as foo using unique non_existing_column",
+        # as of pg16 an alias is no longer required for a subquery
+        "the_geom from (select * from multipolygon3d order by id) using srid=27700 using unique id",
     ],
 )
 def test_postgis_valid_data(data):

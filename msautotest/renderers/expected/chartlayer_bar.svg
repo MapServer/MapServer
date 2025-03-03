@@ -1,18 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="150pt" height="150pt" viewBox="0 0 150 150" version="1.1">
-<g id="surface2">
-<rect x="0" y="0" width="150" height="150" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 63.148438 68.53125 L 69.648438 68.53125 L 69.648438 70.121094 L 63.148438 70.121094 Z M 63.148438 68.53125 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,100%,0%);fill-opacity:1;" d="M 70.648438 53.941406 L 77.148438 53.941406 L 77.148438 70.121094 L 70.648438 70.121094 Z M 70.648438 53.941406 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,0%,100%);fill-opacity:1;" d="M 78.148438 60.792969 L 84.648438 60.792969 L 84.648438 70.121094 L 78.148438 70.121094 Z M 78.148438 60.792969 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(100%,0%,100%);fill-opacity:1;" d="M 85.648438 40.121094 L 92.148438 40.121094 L 92.148438 70.121094 L 85.648438 70.121094 Z M 85.648438 40.121094 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 70.132812 81 L 76.632812 81 L 76.632812 111 L 70.132812 111 Z M 70.132812 81 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,100%,0%);fill-opacity:1;" d="M 77.632812 89.949219 L 84.132812 89.949219 L 84.132812 111 L 77.632812 111 Z M 77.632812 89.949219 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,0%,100%);fill-opacity:1;" d="M 85.132812 88.925781 L 91.632812 88.925781 L 91.632812 111 L 85.132812 111 Z M 85.132812 88.925781 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(100%,0%,100%);fill-opacity:1;" d="M 92.632812 96.140625 L 99.132812 96.140625 L 99.132812 111 L 92.632812 111 Z M 92.632812 96.140625 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(100%,0%,0%);fill-opacity:1;" d="M 6.128906 63.664062 L 12.628906 63.664062 L 12.628906 89.117188 L 6.128906 89.117188 Z M 6.128906 63.664062 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,100%,0%);fill-opacity:1;" d="M 13.628906 85.15625 L 20.128906 85.15625 L 20.128906 89.117188 L 13.628906 89.117188 Z M 13.628906 85.15625 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(0%,0%,100%);fill-opacity:1;" d="M 21.128906 59.117188 L 27.628906 59.117188 L 27.628906 89.117188 L 21.128906 89.117188 Z M 21.128906 59.117188 "/>
-<path style=" stroke:none;fill-rule:evenodd;fill:rgb(100%,0%,100%);fill-opacity:1;" d="M 28.628906 85.136719 L 35.128906 85.136719 L 35.128906 89.117188 L 28.628906 89.117188 Z M 28.628906 85.136719 "/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="150" height="150" viewBox="0 0 150 150">
+<defs>
+<filter id="filter-remove-color-and-invert-alpha" x="0%" y="0%" width="100%" height="100%">
+<feColorMatrix color-interpolation-filters="sRGB" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 -1 1"/>
+</filter>
+<filter id="filter-0" x="0%" y="0%" width="100%" height="100%">
+<feImage xlink:href="#compositing-group-1" result="source" x="0" y="0" width="180" height="180"/>
+<feImage xlink:href="#compositing-group-2" result="destination" x="0" y="0" width="180" height="180"/>
+<feComposite in="source" in2="destination" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" color-interpolation-filters="sRGB"/>
+</filter>
+<g id="compositing-group-0" transform="translate(15, 15)">
+<rect x="-15" y="-15" width="180" height="180" fill="rgb(0%, 0%, 0%)" fill-opacity="0"/>
+<rect x="-15" y="-15" width="180" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
 </g>
+<mask id="mask-0">
+<use xlink:href="#compositing-group-0"/>
+</mask>
+<mask id="mask-1">
+<use xlink:href="#compositing-group-0" filter="url(#filter-remove-color-and-invert-alpha)"/>
+</mask>
+<g id="compositing-group-1" mask="url(#mask-0)">
+<g transform="translate(15, 15)">
+<rect x="-15" y="-15" width="180" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
+</g>
+</g>
+<g id="compositing-group-2" mask="url(#mask-1)">
+<g transform="translate(15, 15)">
+</g>
+</g>
+</defs>
+<g filter="url(#filter-0)" transform="translate(-15, -15)">
+<rect x="0" y="0" width="180" height="180" fill="rgb(0%, 0%, 0%)" fill-opacity="1"/>
+</g>
+<path fill-rule="evenodd" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 63.148438 68.53125 L 69.648438 68.53125 L 69.648438 70.121094 L 63.148438 70.121094 Z M 63.148438 68.53125 "/>
+<path fill-rule="evenodd" fill="rgb(0%, 100%, 0%)" fill-opacity="1" d="M 70.648438 53.941406 L 77.148438 53.941406 L 77.148438 70.121094 L 70.648438 70.121094 Z M 70.648438 53.941406 "/>
+<path fill-rule="evenodd" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 78.148438 60.792969 L 84.648438 60.792969 L 84.648438 70.121094 L 78.148438 70.121094 Z M 78.148438 60.792969 "/>
+<path fill-rule="evenodd" fill="rgb(100%, 0%, 100%)" fill-opacity="1" d="M 85.648438 40.121094 L 92.148438 40.121094 L 92.148438 70.121094 L 85.648438 70.121094 Z M 85.648438 40.121094 "/>
+<path fill-rule="evenodd" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 70.132812 81 L 76.632812 81 L 76.632812 111 L 70.132812 111 Z M 70.132812 81 "/>
+<path fill-rule="evenodd" fill="rgb(0%, 100%, 0%)" fill-opacity="1" d="M 77.632812 89.949219 L 84.132812 89.949219 L 84.132812 111 L 77.632812 111 Z M 77.632812 89.949219 "/>
+<path fill-rule="evenodd" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 85.132812 88.925781 L 91.632812 88.925781 L 91.632812 111 L 85.132812 111 Z M 85.132812 88.925781 "/>
+<path fill-rule="evenodd" fill="rgb(100%, 0%, 100%)" fill-opacity="1" d="M 92.632812 96.140625 L 99.132812 96.140625 L 99.132812 111 L 92.632812 111 Z M 92.632812 96.140625 "/>
+<path fill-rule="evenodd" fill="rgb(100%, 0%, 0%)" fill-opacity="1" d="M 6.128906 63.664062 L 12.628906 63.664062 L 12.628906 89.117188 L 6.128906 89.117188 Z M 6.128906 63.664062 "/>
+<path fill-rule="evenodd" fill="rgb(0%, 100%, 0%)" fill-opacity="1" d="M 13.628906 85.15625 L 20.128906 85.15625 L 20.128906 89.117188 L 13.628906 89.117188 Z M 13.628906 85.15625 "/>
+<path fill-rule="evenodd" fill="rgb(0%, 0%, 100%)" fill-opacity="1" d="M 21.128906 59.117188 L 27.628906 59.117188 L 27.628906 89.117188 L 21.128906 89.117188 Z M 21.128906 59.117188 "/>
+<path fill-rule="evenodd" fill="rgb(100%, 0%, 100%)" fill-opacity="1" d="M 28.628906 85.136719 L 35.128906 85.136719 L 35.128906 89.117188 L 28.628906 89.117188 Z M 28.628906 85.136719 "/>
 </svg>

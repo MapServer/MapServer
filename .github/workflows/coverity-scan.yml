@@ -29,5 +29,5 @@ jobs:
             docker run \
             -e WORK_DIR="$PWD" \
             -e TOKEN="${{ secrets.COVERITY_SCAN_TOKEN }}" \
-            -v $PWD:$PWD ubuntu:20.04 $PWD/scripts/coverity-scan.sh
+            -v $PWD:$PWD ubuntu:24.04 $PWD/scripts/coverity-scan.sh
 
