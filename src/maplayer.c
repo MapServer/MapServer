@@ -106,9 +106,9 @@ int msLayerRestoreFromScaletokens(layerObj *layer) {
   }
   if (layer->orig_st->filter) {
     if (layer->filter.type == MS_EXPRESSION) {
-      char *tmpval = (char *)msSmallMalloc(sizeof(char) *
-                                           (strlen(layer->filter.string) + 3));
-      sprintf(tmpval, "(%s)", layer->filter.string);
+      const size_t tmpval_size = strlen(layer->filter.string) + 3;
+      char *tmpval = (char *)msSmallMalloc(tmpval_size);
+      snprintf(tmpval, "(%s)", tmpval_size, layer->filter.string);
       msLoadExpressionString(&(layer->filter), tmpval);
       msFree(tmpval);
     } else {
@@ -214,9 +214,9 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
 
       char *tmpval = NULL;
       if (layer->filter.type == MS_EXPRESSION) {
-        tmpval = (char *)msSmallMalloc(sizeof(char) *
-                                       (strlen(layer->filter.string) + 3));
-        sprintf(tmpval, "(%s)", layer->filter.string);
+        const size_t tmpval_size = strlen(layer->filter.string) + 3;
+        char *tmpval = (char *)msSmallMalloc(tmpval_size);
+        snprintf(tmpval, tmpval_size, "(%s)", layer->filter.string);
       } else {
         tmpval = msStrdup(layer->filter.string);
       }
