@@ -199,6 +199,11 @@ int msCopyExpression(expressionObj *dst, const expressionObj *src) {
   dst->compiled = MS_FALSE;
 
   MS_COPYSTRING(dst->string, src->string);
+
+  if (dst->string == NULL && src->string != NULL) {
+    return MS_FAILURE;
+  }
+
   MS_COPYSTELEM(type);
   MS_COPYSTELEM(flags);
 
@@ -458,9 +463,20 @@ int msCopyStyle(styleObj *dst, const styleObj *src) {
 
   for (i = 0; i < MS_STYLE_BINDING_LENGTH; i++) {
     MS_COPYSTRING(dst->bindings[i].item, src->bindings[i].item);
+
+    if (dst->bindings[i].item == NULL && src->bindings[i].item != NULL) {
+      return MS_FAILURE;
+    }
+
     dst->bindings[i].index =
         src->bindings[i].index; /* no way to use the macros */
     MS_COPYSTRING(dst->exprBindings[i].string, src->exprBindings[i].string);
+
+    if (dst->exprBindings[i].string == NULL &&
+        src->exprBindings[i].string != NULL) {
+      return MS_FAILURE;
+    }
+
     dst->exprBindings[i].type = src->exprBindings[i].type;
   }
   MS_COPYSTELEM(numbindings);
@@ -473,6 +489,11 @@ int msCopyStyle(styleObj *dst, const styleObj *src) {
   MS_COPYCOLOR(&(dst->maxcolor), &(src->maxcolor));
 
   MS_COPYSTRING(dst->symbolname, src->symbolname);
+
+  if (dst->symbolname == NULL && src->symbolname != NULL) {
+    return MS_FAILURE;
+  }
+
   MS_COPYSTELEM(patternlength);
   for (i = 0; i < src->patternlength; i++)
     dst->pattern[i] = src->pattern[i];
@@ -497,8 +518,19 @@ int msCopyStyle(styleObj *dst, const styleObj *src) {
   MS_COPYSTELEM(maxvalue);
   MS_COPYSTELEM(opacity);
   MS_COPYSTRING(dst->_geomtransform.string, src->_geomtransform.string);
+
+  if (dst->_geomtransform.string == NULL &&
+      src->_geomtransform.string != NULL) {
+    return MS_FAILURE;
+  }
+
   MS_COPYSTELEM(_geomtransform.type);
   MS_COPYSTRING(dst->rangeitem, src->rangeitem);
+
+  if (dst->rangeitem == NULL && src->rangeitem != NULL) {
+    return MS_FAILURE;
+  }
+
   MS_COPYSTELEM(rangeitemindex);
   MS_COPYSTELEM(outlinewidth);
   MS_COPYSTELEM(minscaledenom);
@@ -801,9 +833,18 @@ int msCopyReferenceMap(referenceMapObj *dst, const referenceMapObj *src,
   MS_COPYCOLOR(&(dst->outlinecolor), &(src->outlinecolor));
   MS_COPYSTRING(dst->image, src->image);
 
+  if (dst->image == NULL && src->image != NULL) {
+    return MS_FAILURE;
+  }
+
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(marker);
   MS_COPYSTRING(dst->markername, src->markername);
+
+  if (dst->markername == NULL && src->markername != NULL) {
+    return MS_FAILURE;
+  }
+
   MS_COPYSTELEM(markersize);
   MS_COPYSTELEM(minboxsize);
   MS_COPYSTELEM(maxboxsize);
@@ -1100,9 +1141,7 @@ int msCopyLayer(layerObj *dst, const layerObj *src) {
 
   for (i = 0; i < dst->numjoins; i++) {
     initJoin(&(dst->joins[i]));
-    return_value = msCopyJoin(&(dst->joins[i]), &(src->joins[i]));
-    if (return_value != MS_SUCCESS)
-      return MS_FAILURE;
+    msCopyJoin(&(dst->joins[i]), &(src->joins[i]));
   }
 
   MS_COPYRECT(&(dst->extent), &(src->extent));
@@ -1236,11 +1275,7 @@ int msCopyMap(mapObj *dst, const mapObj *src) {
     return MS_FAILURE;
   }
 
-  return_value = msCopyQueryMap(&(dst->querymap), &(src->querymap));
-  if (return_value != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy querymap.", "msCopyMap()");
-    return MS_FAILURE;
-  }
+  msCopyQueryMap(&(dst->querymap), &(src->querymap));
 
   return_value = msCopyWeb(&(dst->web), &(src->web), dst);
   if (return_value != MS_SUCCESS) {
