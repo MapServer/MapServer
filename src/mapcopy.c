@@ -162,8 +162,9 @@ int msCopyHashTable(hashTableObj *dst, const hashTableObj *src) {
     key = msNextKeyFromHashTable(src, key);
     if (!key)
       break;
-    else
-      msInsertHashTable(dst, key, msLookupHashTable(src, key));
+    else if (msInsertHashTable(dst, key, msLookupHashTable(src, key)) == NULL) {
+      return MS_FAILURE;
+    }
   }
   return MS_SUCCESS;
 }
