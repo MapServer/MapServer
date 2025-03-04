@@ -215,7 +215,7 @@ int msLayerApplyScaletokens(layerObj *layer, double scale) {
       char *tmpval = NULL;
       if (layer->filter.type == MS_EXPRESSION) {
         const size_t tmpval_size = strlen(layer->filter.string) + 3;
-        char *tmpval = (char *)msSmallMalloc(tmpval_size);
+        tmpval = (char *)msSmallMalloc(tmpval_size);
         snprintf(tmpval, tmpval_size, "(%s)", layer->filter.string);
       } else {
         tmpval = msStrdup(layer->filter.string);
