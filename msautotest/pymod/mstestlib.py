@@ -722,16 +722,6 @@ def _run(map, out_file, command, extra_args):
 
     cmp = compare_result(out_file)
 
-    if cmp != "match":
-        if not keep_pass:
-            os.remove("result/" + out_file)
-        if not quiet:
-            print("     results do not match, but ignored.")
-        else:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        return True, None
-
     if cmp == "match":
         if not keep_pass:
             os.remove("result/" + out_file)
