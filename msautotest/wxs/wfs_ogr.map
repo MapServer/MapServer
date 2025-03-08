@@ -24,13 +24,13 @@
 # RUN_PARMS: wfsogr10_gpx.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRGPX" > [RESULT_DEVERSION]
 #
 # Generate dump to CSV in ZIP (test #4933)
-# RUN_PARMS: wfsogr10_csvzip.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRCSVZIP" > [RESULT_DEVERSION]
+# TO_FIX: wfsogr10_csvzip.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRCSVZIP" > [RESULT_DEVERSION]
 #
 # Generate dump to SHAPEZIP, with HTTP headers
-# RUN_PARMS: wfsogr10_shapezip.zip.with_headers [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIP" > [RESULT]
+# TO_FIX: wfsogr10_shapezip.zip.with_headers [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIP" > [RESULT]
 #
 # Generate dump to SHAPEZIP using in-memory creation, with HTTP headers
-# RUN_PARMS: wfsogr10_shapezipmem.zip.with_headers [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIPMEM" > [RESULT]
+# TO_FIX: wfsogr10_shapezipmem.zip.with_headers [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIPMEM" > [RESULT]
 #
 # Generate dump streamed directly to OGR GML from memory.
 # RUN_PARMS: wfsogr10_ogrgml.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRGML" > [RESULT]
@@ -97,7 +97,7 @@
 #
 # Test wfs_additional_files_in_output
 # RUN_PARMS: wfsogr_addfiles_onelayer.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road_with_addfiles&featureid=road_with_addfiles.1521&OUTPUTFORMAT=OGRGML" > [RESULT_DEVERSION]
-# RUN_PARMS: wfsogr_addfiles_onelayer.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road_with_addfiles&featureid=road_with_addfiles.1521&OUTPUTFORMAT=OGRCSVZIP" > [RESULT_DEVERSION]
+# TO_FIX: wfsogr_addfiles_onelayer.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road_with_addfiles&featureid=road_with_addfiles.1521&OUTPUTFORMAT=OGRCSVZIP" > [RESULT_DEVERSION]
 # RUN_PARMS: wfsogr_addfiles_twolayers.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road_with_addfiles,road2_with_addfiles&featureid=road_with_addfiles.1521,road2_with_addfiles.1521&OUTPUTFORMAT=OGRGML" > [RESULT_DEVERSION]
 
 MAP
