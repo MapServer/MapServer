@@ -38,6 +38,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
+#include "cpl_string.h"
 
 #define KML_MAXFEATURES_TODRAW 1000
 
@@ -148,9 +149,14 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format) {
     char *zip_filename = NULL;
     void *hZip = NULL;
 
+    const char *timestamp;
+    timestamp = msGetOutputFormatOption(format, "TIMESTAMP", "NOW");
+    char **papszOptions = nullptr;
+    papszOptions = CSLAddNameValue(papszOptions, "TIMESTAMP", timestamp);
+
     zip_filename = msTmpFile(NULL, NULL, "/vsimem/kmlzip/", "kmz");
     hZip = CPLCreateZip(zip_filename, NULL);
-    CPLCreateFileInZip(hZip, "mapserver.kml", NULL);
+    CPLCreateFileInZip(hZip, "mapserver.kml", papszOptions);
     for (int i = 0; i < bufSize; i += chunkSize) {
       int size = chunkSize;
       if (i + size > bufSize)
