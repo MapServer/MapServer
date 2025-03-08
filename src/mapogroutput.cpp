@@ -1261,14 +1261,15 @@ int msOGRWriteFromQuery(mapObj *map, outputFormatObj *format, int sendheaders)
     file_list = msCSLConcatenate(file_list, papszAdditionalFiles);
     CSLDestroy(papszAdditionalFiles);
 
+    const char *timestamp;
+    timestamp = msGetOutputFormatOption(format, "TIMESTAMP", "NOW");
+    char **papszOptions = nullptr;
+
     for (i = 0; file_list != NULL && file_list[i] != NULL; i++) {
 
       const std::string osArchiveFilename(CPLGetFilename(file_list[i]));
 #if GDAL_VERSION_MAJOR > 3 ||                                                  \
     (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR >= 7)
-      const char *timestamp;
-      timestamp = msGetOutputFormatOption(format, "TIMESTAMP", "NOW");
-      char **papszOptions = nullptr;
       papszOptions = CSLAddNameValue(papszOptions, "TIMESTAMP", timestamp);
       if (CPLAddFileInZip(hZip, osArchiveFilename.c_str(), file_list[i],
                           nullptr, papszOptions, nullptr, nullptr) != CE_None) {
@@ -1315,6 +1316,7 @@ int msOGRWriteFromQuery(mapObj *map, outputFormatObj *format, int sendheaders)
 #endif
     }
     CPLCloseZip(hZip);
+    CSLDestroy(papszOptions);
 
     if (sendheaders) {
       const char *zip_filename = fo_filename;
