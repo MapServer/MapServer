@@ -1266,11 +1266,16 @@ int msOGRWriteFromQuery(mapObj *map, outputFormatObj *format, int sendheaders)
       const std::string osArchiveFilename(CPLGetFilename(file_list[i]));
 #if GDAL_VERSION_MAJOR > 3 ||                                                  \
     (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR >= 7)
+      const char *timestamp;
+      timestamp = msGetOutputFormatOption(format, "TIMESTAMP", "NOW");
+      char **papszOptions = nullptr;
+      papszOptions = CSLAddNameValue(papszOptions, "TIMESTAMP", timestamp);
       if (CPLAddFileInZip(hZip, osArchiveFilename.c_str(), file_list[i],
-                          nullptr, nullptr, nullptr, nullptr) != CE_None) {
+                          nullptr, papszOptions, nullptr, nullptr) != CE_None) {
         msSetError(MS_MISCERR, "CPLAddFileInZip() failed for %s",
                    "msOGRWriteFromQuery()", file_list[i]);
         CPLCloseZip(hZip);
+        CSLDestroy(papszOptions);
         msOGRCleanupDS(datasource_name);
         return MS_FAILURE;
       }
