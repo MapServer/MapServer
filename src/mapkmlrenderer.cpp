@@ -165,6 +165,7 @@ int KmlRenderer::saveImage(imageObj *, FILE *fp, outputFormatObj *format) {
     }
     CPLCloseFileInZip(hZip);
     CPLCloseZip(hZip);
+    CSLDestroy(papszOptions);
 
     context = msIO_getHandler(fp);
     fpZip = VSIFOpenL(zip_filename, "r");
