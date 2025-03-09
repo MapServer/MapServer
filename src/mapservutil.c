@@ -32,12 +32,11 @@
 #include "maptime.h"
 #include "mapows.h"
 #include "mapogcapi.h"
+#include "mapserv-homepage.h"
 
 #include "cpl_conv.h"
 
 #include "mapserver-config.h"
-
-#include "cpl_conv.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the
@@ -2487,30 +2486,32 @@ end_request:
   return 0;
 }
 
-int msReadConfig(mapservObj *mapserv, configObj *config) {
+int msCGIDispatchHomepageRequest(mapservObj *mapserv, configObj *config) {
 
-  const char *mode = NULL;
-  const char *key = NULL;
-  mapObj *map = NULL;
-  const char *pszValue;
-  int i = 0;
-  mode = CPLGetConfigOption("MS_MODE", NULL);
-  for (i = 0; i < mapserv->request->NumParams; i++) {
-    if (strcasecmp(mapserv->request->ParamNames[i], "mode") == 0) {
-      mode = mapserv->request->ParamValues[i];
-      break;
-    }
-  }
-  if (strcasecmp(mode, "config") == 0) {
-    while (1) {
-      key = msNextKeyFromHashTable(&config->maps, key);
-      if (!key) {
-        break;
-      } else {
-        pszValue = msLookupHashTable(&config->maps, key);
-        map = msLoadMap(pszValue, NULL, config);
-      }
-    }
+  return msReadConfig(mapserv, config);
+  // const char *mode = NULL;
+  // const char *key = NULL;
+  // mapObj *map = NULL;
+  // const char *pszValue;
+  // int i = 0;
+  // mode = CPLGetConfigOption("MS_MODE", NULL);
+  // for (i = 0; i < mapserv->request->NumParams; i++) {
+  //   if (strcasecmp(mapserv->request->ParamNames[i], "mode") == 0) {
+  //     mode = mapserv->request->ParamValues[i];
+  //     break;
+  //   }
+  // }
+  // if (strcasecmp(mode, "config") == 0) {
+  //   while (1) {
+  //     key = msNextKeyFromHashTable(&config->maps, key);
+  //     if (!key) {
+  //       break;
+  //     } else {
+  //       pszValue = msLookupHashTable(&config->maps, key);
+  //       map = msLoadMap(pszValue, NULL, config);
+  //     }
+  //   }
+  // }
 
-    return 0;
-  }
+  // return 0;
+}

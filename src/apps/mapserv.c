@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
       goto end_request;
     }
 
-    msReadConfig(mapserv, config);
+    msCGIDispatchHomepageRequest(mapserv, config);
 
     mapserv->map = msCGILoadMap(mapserv, config);
     if (!mapserv->map) {

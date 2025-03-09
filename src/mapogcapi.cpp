@@ -59,14 +59,6 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM "collection-item.html"
 #define OGCAPI_TEMPLATE_HTML_OPENAPI "openapi.html"
 
-enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML };
-
-#define OGCAPI_MIMETYPE_JSON "application/json"
-#define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
-#define OGCAPI_MIMETYPE_OPENAPI_V3                                             \
-  "application/vnd.oai.openapi+json;version=3.0"
-#define OGCAPI_MIMETYPE_HTML "text/html"
-
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
 #define OGCAPI_MAX_LIMIT 10000
 
@@ -78,14 +70,6 @@ constexpr const char *CRS84_URL =
     "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
 #ifdef USE_OGCAPI_SVR
-
-// Error types
-typedef enum {
-  OGCAPI_SERVER_ERROR = 0,
-  OGCAPI_CONFIG_ERROR = 1,
-  OGCAPI_PARAM_ERROR = 2,
-  OGCAPI_NOT_FOUND_ERROR = 3,
-} OGCAPIErrorType;
 
 /*
 ** Returns a JSON object using and a description.
