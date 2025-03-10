@@ -28,7 +28,7 @@
 #ifndef MAPHOMEPAGE_H
 #define MAPHOMEPAGE_H
 
-#include "../maptemplate.h"
+#include "maptemplate.h"
 
 #ifdef __cplusplus
 extern "C" {
