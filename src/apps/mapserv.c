@@ -260,13 +260,20 @@ int main(int argc, char *argv[]) {
 
     mapserv->request->NumParams =
         loadParams(mapserv->request, NULL, NULL, 0, NULL);
+
+    const char *path_info = getenv("PATH_INFO");
+    if (path_info != NULL && strcmp(path_info, "/") == 0) {
+      if (msConfigGetEnv(config, "MS_HOMEPAGE_TEMPLATE_DIRECTORY") != NULL) {
+        msCGIDispatchHomepageRequest(mapserv, config);
+        goto end_request;
+      }
+    }
+
     if (msCGIIsAPIRequest(mapserv) == MS_FALSE &&
         mapserv->request->NumParams == -1) { /* no QUERY_STRING or PATH_INFO */
       msCGIWriteError(mapserv);
       goto end_request;
     }
-
-    msCGIDispatchHomepageRequest(mapserv, config);
 
     mapserv->map = msCGILoadMap(mapserv, config);
     if (!mapserv->map) {

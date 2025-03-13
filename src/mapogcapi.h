@@ -67,6 +67,9 @@ void outputError(OGCAPIErrorType errorType, const std::string &description);
 void outputJson(const nlohmann::json &j, const char *mimetype,
                 const std::map<std::string, std::string> &extraHeaders);
 
+void outputTemplate(const char *directory, const char *filename,
+                    const nlohmann::json &j, const char *mimetype);
+
 #endif
 
 #endif
