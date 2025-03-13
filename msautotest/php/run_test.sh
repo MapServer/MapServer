@@ -9,15 +9,12 @@ php -v
 PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
 if [ ${PHPVersionMinor} -ge 83 ]; then
     PHPUnitVersion=12
-    cd php && curl -LO https://phar.phpunit.de/phpunit-12.phar
-    echo "PHPUnit version"
-    php phpunit-$PHPUnitVersion.phar --version
 else
     PHPUnitVersion=10
-    cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
-    echo "PHPUnit version"
-    php phpunit-$PHPUnitVersion.phar --version
 fi
+cd php && curl -LO https://phar.phpunit.de/phpunit-$PHPUnitVersion.phar
+echo "PHPUnit version"
+php phpunit-$PHPUnitVersion.phar --version
 
 if test -z $PHP_MAPSCRIPT_SO; then
    php phpunit-$PHPUnitVersion.phar .
