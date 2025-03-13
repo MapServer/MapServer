@@ -1,10 +1,10 @@
 #!/bin/bash
 
 PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
-if [ ${PHPVersionMinor} -gt 81 ]; then
-    PHPUnitVersion=11
+if [ ${PHPVersionMinor} -ge 83 ]; then
+    PHPUnitVersion=12
 else
-    PHPUnitVersion=10
+    PHPUnitVersion=11
 fi
 
 if test -z $PHP_MAPSCRIPT_SO; then
