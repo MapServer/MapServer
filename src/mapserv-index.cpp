@@ -122,7 +122,6 @@ static int processIndexRequest(configObj *config, cgiRequestObj *request,
   json response;
   std::map<std::string, std::string> extraHeaders;
   std::string path;
-  const char *directory;
   char fullpath[MS_MAXPATHLEN];
 
   response = {{"title", "Index Page"},
@@ -140,8 +139,6 @@ static int processIndexRequest(configObj *config, cgiRequestObj *request,
                                 "MS_INDEX_TEMPLATE_DIRECTORY");
     if (path.empty()) {
       outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
-      // msSetError(MS_IOERR, "Template directory not set.",
-      //            "processIndexRequest()");
       return MS_FAILURE;
     }
     msBuildPath(fullpath, NULL, path.c_str());
