@@ -51,7 +51,7 @@ typedef enum {
   OGCAPI_NOT_FOUND_ERROR = 3,
 } OGCAPIErrorType;
 
-enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML };
+enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML, Invalid };
 
 #define OGCAPI_MIMETYPE_JSON "application/json"
 #define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
@@ -61,6 +61,8 @@ enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML };
 
 std::string getTemplateDirectory(mapObj *map, const char *key,
                                  const char *envvar);
+
+OGCAPIFormat msGetOutputFormat(cgiRequestObj *request);
 
 void outputError(OGCAPIErrorType errorType, const std::string &description);
 

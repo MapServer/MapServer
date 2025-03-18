@@ -352,11 +352,13 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-static std::string getTemplateDirectory(mapObj *map, const char *key,
-                                        const char *envvar) {
-  const char *directory;
+std::string getTemplateDirectory(mapObj *map, const char *key,
+                                 const char *envvar) {
+  const char *directory = NULL;
 
-  directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+  if (map != NULL) {
+    directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+  }
 
   if (directory == NULL) {
     directory = CPLGetConfigOption(envvar, NULL);
@@ -879,8 +881,8 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
 ** Output stuff...
 */
 
-static void outputJson(const json &j, const char *mimetype,
-                       const std::map<std::string, std::string> &extraHeaders) {
+void outputJson(const json &j, const char *mimetype,
+                const std::map<std::string, std::string> &extraHeaders) {
   std::string js;
 
   try {
@@ -898,8 +900,8 @@ static void outputJson(const json &j, const char *mimetype,
   msIO_printf("%s\n", js.c_str());
 }
 
-static void outputTemplate(const char *directory, const char *filename,
-                           const json &j, const char *mimetype) {
+void outputTemplate(const char *directory, const char *filename, const json &j,
+                    const char *mimetype) {
   std::string _directory(directory);
   std::string _filename(filename);
   Environment env{_directory}; // catch
@@ -1919,29 +1921,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
 
 #endif
 
-int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
-#ifdef USE_OGCAPI_SVR
-
-  // make sure ogcapi requests are enabled for this map
-  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
-  if (status != MS_TRUE) {
-    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
-               "msCGIDispatchAPIRequest()");
-    return MS_FAILURE; // let normal error handling take over
-  }
-
-  for (int i = 0; i < request->NumParams; i++) {
-    for (int j = i + 1; j < request->NumParams; j++) {
-      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
-        std::string errorMsg("Query parameter ");
-        errorMsg += request->ParamNames[i];
-        errorMsg += " is repeated";
-        outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
-        return MS_SUCCESS;
-      }
-    }
-  }
-
+OGCAPIFormat msGetOutputFormat(cgiRequestObj *request) {
   OGCAPIFormat format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
 
@@ -1968,9 +1948,42 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
     std::string errorMsg("Unsupported format requested: ");
     errorMsg += p;
     outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
-    return MS_SUCCESS; // avoid any downstream MapServer processing
+    format = OGCAPIFormat::Invalid;
   } else {
     format = OGCAPIFormat::HTML; // default for now
+  }
+
+  return format;
+}
+
+int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
+#ifdef USE_OGCAPI_SVR
+
+  // make sure ogcapi requests are enabled for this map
+  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
+  if (status != MS_TRUE) {
+    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
+               "msCGIDispatchAPIRequest()");
+    return MS_FAILURE; // let normal error handling take over
+  }
+
+  for (int i = 0; i < request->NumParams; i++) {
+    for (int j = i + 1; j < request->NumParams; j++) {
+      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
+        std::string errorMsg("Query parameter ");
+        errorMsg += request->ParamNames[i];
+        errorMsg += " is repeated";
+        outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
+        return MS_SUCCESS;
+      }
+    }
+  }
+
+  OGCAPIFormat format;
+  format = msGetOutputFormat(request);
+
+  if (format == OGCAPIFormat::Invalid) {
+    return MS_SUCCESS; // avoid any downstream MapServer processing
   }
 
   if (request->api_path_length == 2) {

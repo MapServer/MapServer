@@ -189,6 +189,9 @@ configObj *msLoadConfig(const char *ms_config_file) {
     }
   }
 
+  // also store the path to the CONFIG file
+  msConfigSetConfigOption("MAPSERVER_CONFIG_FILE", ms_config_file);
+
   return config;
 }
 

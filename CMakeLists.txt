@@ -344,7 +344,7 @@ src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
-src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-homepage.cpp)
+src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp)
 
 set(mapserver_HEADERS
 src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
@@ -354,7 +354,7 @@ src/mapoglcontext.h src/mapoglrenderer.h src/mapowscommon.h src/mapows.h src/map
 src/mappostgis.h src/mapprimitive.h src/mapproject.h src/mapraster.h src/mapregex.h src/mapresample.h
 src/mapserver-api.h src/mapserver.h src/apps/mapserv.h src/mapshape.h src/mapsymbol.h src/maptemplate.h
 src/mapthread.h src/maptile.h src/maptime.h src/maptree.h src/maputfgrid.h src/mapwcs.h src/uthash.h src/mapiconv.h
-src/mapflatgeobuf.h src/mapgraph.h src/mapserv-config.h src/mapserv-homepage.h)
+src/mapflatgeobuf.h src/mapgraph.h src/mapserv-config.h src/mapserv-index.h)
 
 if(WIN32)
 	configure_file(

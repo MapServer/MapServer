@@ -25,8 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
-#ifndef MAPHOMEPAGE_H
-#define MAPHOMEPAGE_H
+#ifndef MAPINDEX_H
+#define MAPINDEX_H
 
 #include "maptemplate.h"
 
@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-int msReadConfig(mapservObj *mapserv, configObj *config);
+int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config);
 
 #ifdef __cplusplus
 }

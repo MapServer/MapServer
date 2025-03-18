@@ -1,1 +1,1 @@
-{"key": "value"}
+{"description":"List of Mapfiles","linkset":[{"name":"hello_world","service-desc":[{"href":"https://demo.mapserver.org/cgi-bin/msautotest?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities","title":"World WMS service","type":"text/xml"}],"title":"title"}],"title":"Index Page"}

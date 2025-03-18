@@ -263,8 +263,9 @@ int main(int argc, char *argv[]) {
 
     const char *path_info = getenv("PATH_INFO");
     if (path_info != NULL && strcmp(path_info, "/") == 0) {
-      if (msConfigGetEnv(config, "MS_HOMEPAGE_TEMPLATE_DIRECTORY") != NULL) {
-        msCGIDispatchHomepageRequest(mapserv, config);
+      if (msConfigGetEnv(config, "MS_INDEX_TEMPLATE_DIRECTORY") != NULL) {
+        // return the landing page if MS_INDEX_TEMPLATE_DIRECTORY is set
+        msCGIDispatchIndexRequest(mapserv, config);
         goto end_request;
       }
     }
