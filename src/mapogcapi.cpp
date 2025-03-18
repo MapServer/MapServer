@@ -74,8 +74,7 @@ constexpr const char *CRS84_URL =
 /*
 ** Returns a JSON object using and a description.
 */
-static void outputError(OGCAPIErrorType errorType,
-                        const std::string &description) {
+void outputError(OGCAPIErrorType errorType, const std::string &description) {
   const char *code = "";
   const char *status = "";
   switch (errorType) {

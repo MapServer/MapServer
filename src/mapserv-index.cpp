@@ -139,9 +139,9 @@ static int processIndexRequest(configObj *config, cgiRequestObj *request,
     path = getTemplateDirectory(NULL, "html_template_directory",
                                 "MS_INDEX_TEMPLATE_DIRECTORY");
     if (path.empty()) {
-      // outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
-      msSetError(MS_IOERR, "Template directory not set.",
-                 "processIndexRequest()");
+      outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
+      // msSetError(MS_IOERR, "Template directory not set.",
+      //            "processIndexRequest()");
       return MS_FAILURE;
     }
     msBuildPath(fullpath, NULL, path.c_str());
