@@ -117,8 +117,7 @@ static std::string getEnvVar(const char *envVar) {
   return value ? std::string(value) : std::string();
 }
 
-static int processIndexRequest(configObj *config, cgiRequestObj *request,
-                               OGCAPIFormat format) {
+static int processIndexRequest(configObj *config, OGCAPIFormat format) {
   json response;
   std::map<std::string, std::string> extraHeaders;
   std::string path;
@@ -181,7 +180,7 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
   OGCAPIFormat format;
   format = msGetOutputFormat(request);
 
-  return processIndexRequest(config, request, format);
+  return processIndexRequest(config, format);
 
 #else
   msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.",
