@@ -66,10 +66,15 @@ static int msDrawGradientSymbol(rendererVTableObj *renderer,
       b[4 * (j * rb->width + i)] = style->color.blue;
       g[4 * (j * rb->width + i)] = style->color.green;
       r[4 * (j * rb->width + i)] = style->color.red;
-      a[4 * (j * rb->width + i)] = style->color.alpha;
+      if (strncasecmp(image_draw->format->driver, "AGG/", 4) == 0) {
+        a[4 * (j * rb->width + i)] = 255; // Apply alpha later
+      } else {
+        a[4 * (j * rb->width + i)] = style->color.alpha;
+      }
     }
   }
   INIT_SYMBOL_STYLE(symbolStyle);
+  symbolStyle.color = &style->color;
   ret = renderer->renderPixmapSymbol(image_draw, x_center, y_center, &symbol,
                                      &symbolStyle);
   msFreeSymbol(&symbol);
