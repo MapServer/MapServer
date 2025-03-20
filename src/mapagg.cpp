@@ -692,8 +692,12 @@ int agg2RenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol,
   } else {
     // just copy the image at the correct location (we place the pixmap on
     // the nearest integer pixel to avoid blurring)
+    unsigned alpha = mapserver::cover_full;
+    if (style && style->color) {
+      alpha = style->color->alpha;
+    }
     r->m_renderer_base.blend_from(pf, 0, MS_NINT(x - pixmap->width / 2.),
-                                  MS_NINT(y - pixmap->height / 2.));
+                                  MS_NINT(y - pixmap->height / 2.), alpha);
   }
   return MS_SUCCESS;
 }
