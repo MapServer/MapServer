@@ -33,3 +33,5 @@ ignore =
     W503 
     # line break occurred after a binary operator - let black worry about that
     W504
+    # unused variable - variable is assigned a value but not used in the code
+    F824
