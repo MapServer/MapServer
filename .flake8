@@ -35,5 +35,5 @@ ignore =
     W504
     
 per-file-ignores =
-	# F824: unused variable - variable is assigned a value but not used in the code
-	msautotest/pymod/msautotest_viewer.py:F824
+    # F824: unused variable - variable is assigned a value but not used in the code
+    msautotest/pymod/msautotest_viewer.py:F824
