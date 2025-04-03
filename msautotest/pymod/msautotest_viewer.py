@@ -601,7 +601,6 @@ def tiff2png(tiff_file):
 ## Remove temporary PNG images file
 def rmTmpPngImages():
 
-    global config  # noqa: F824
     function_name = "rmTmpPngImages:  "
 
     tmp_path = config.get("Applications", "TmpDir")
