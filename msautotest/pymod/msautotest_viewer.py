@@ -21,7 +21,6 @@ logging_flag = config.getboolean("Logging", "PythonLogging")
 def main():
 
     function_name = "main:  "
-    global config, logging_flag
 
     if not os.path.isdir(os.path.dirname(python_logging_file)):
         print("Content-type: text/html")
@@ -444,7 +443,6 @@ def main():
 ## browser
 def tiff2png(tiff_file):
     function_name = "tiff2png:  "
-    global python_logging_file, logging_flag, config
 
     ## Checking if path is found
     if not os.path.isdir(os.path.dirname(python_logging_file)):
@@ -603,7 +601,6 @@ def tiff2png(tiff_file):
 ## Remove temporary PNG images file
 def rmTmpPngImages():
 
-    global config
     function_name = "rmTmpPngImages:  "
 
     tmp_path = config.get("Applications", "TmpDir")
