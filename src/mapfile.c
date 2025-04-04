@@ -3003,6 +3003,20 @@ int loadStyle(styleObj *style) {
       break;
     case (STYLE):
       break; /* for string loads */
+    case (DEFAULTSYMBOL):
+      if ((symbol = getSymbol(1, MS_NUMBER)) == -1)
+        return (MS_FAILURE);
+      if (symbol == MS_NUMBER) {
+        if (msCheckNumber(msyynumber, MS_NUM_CHECK_GTE, 0, -1) == MS_FAILURE) {
+          msSetError(
+              MS_MISCERR,
+              "Invalid DEFAULTSYMBOL id, must be greater than or equal to 0 (line %d)",
+              "loadStyle()", msyylineno);
+          return (MS_FAILURE);
+        }
+        style->symbol = (int)msyynumber;
+      }
+      break;
     case (SYMBOL):
       if ((symbol = getSymbol(3, MS_NUMBER, MS_STRING, MS_BINDING)) == -1)
         return (MS_FAILURE);
@@ -3238,9 +3252,11 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   else
     writeNumber(stream, indent, "SIZE", -1, style->size);
 
-  if (style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SYMBOL].item)
+  if (style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_SYMBOL].item) {
     writeAttributeBinding(stream, indent, "SYMBOL",
                           &(style->bindings[MS_STYLE_BINDING_SYMBOL]));
+    writeNumber(stream, indent, "DEFAULTSYMBOL", 0, style->symbol);
+  }
   else
     writeNumberOrString(stream, indent, "SYMBOL", 0, style->symbol,
                         style->symbolname);
