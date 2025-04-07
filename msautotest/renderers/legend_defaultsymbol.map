@@ -1,0 +1,84 @@
+# RUN_PARMS: legend_defaultsymbol.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=legend&map.imagetype=png" > [RESULT_DEMIME]
+#
+#
+# legend support with and without DEFAULTSYMBOL.
+#   
+# REQUIRES: OUTPUT=PNG 
+#
+MAP
+
+STATUS ON
+EXTENT 478300 4762880 481650 4765610
+SIZE 150 100
+shapepath "../misc/data"
+IMAGETYPE png
+fontset "../misc/fonts.lst"
+imagecolor 255 200 0
+
+SYMBOL
+    NAME "wb_015"
+    TYPE VECTOR
+    POINTS
+        0 0
+        24 0
+        25.7 8.2
+        -99 -99
+        22 0
+        23 3.5
+    END
+    ANCHORPOINT 0 0
+END
+
+LAYER
+    NAME "without_defaultsymbol"
+    TYPE POINT
+    STATUS default
+
+    CLASS
+        NAME "    Lower level"
+        GROUP "colorscale"
+        EXPRESSION ('[attr_value]' >= '0' and '[attr_value]' < '33')
+        STYLE
+            SYMBOL [symbol_name]
+            COLOR "#470D60"
+        END
+    END
+    CLASS
+        NAME "    Upper level"
+        GROUP "colorscale"
+        EXPRESSION ('[attr_value]' >= '33' and '[attr_value]' < '66')
+        STYLE
+            SYMBOL [symbol_name]
+            COLOR "#48186A"
+        END
+    END
+END
+
+LAYER
+    NAME "with_defaultsymbol"
+    TYPE POINT
+    STATUS default
+
+    CLASS
+        NAME "    Lower level"
+        GROUP "colorscale"
+        EXPRESSION ('[attr_value]' >= '0' and '[attr_value]' < '33')
+        STYLE
+            SYMBOL [symbol_name]
+            COLOR "#ff0000"
+            DEFAULTSYMBOL 1
+        END
+    END
+    CLASS
+        NAME "    Upper level"
+        GROUP "colorscale"
+        EXPRESSION ('[attr_value]' >= '33' and '[attr_value]' < '66')
+        STYLE
+            SYMBOL [symbol_name]
+            COLOR "#0000ff"
+            DEFAULTSYMBOL 1
+        END
+    END
+END
+
+END
