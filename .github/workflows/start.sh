@@ -40,7 +40,7 @@ ci/ubuntu/build.sh
 
 # Validate openapi document
 pip install check-jsonschema --break-system-packages
-wget https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.yaml -O openapi_schema.yaml
+wget https://raw.githubusercontent.com/OAI/OpenAPI-Specification/refs/heads/main/_archive_/schemas/v3.0/schema.yaml -O openapi_schema.yaml
 echo "Run check-jsonschema --schemafile openapi_schema.yaml msautotest/api/expected/ogcapi_api.json"
 check-jsonschema --schemafile openapi_schema.yaml msautotest/api/expected/ogcapi_api.json
 
