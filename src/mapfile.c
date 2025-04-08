@@ -3009,9 +3009,9 @@ int loadStyle(styleObj *style) {
       if (symbol == MS_NUMBER) {
         if (msCheckNumber(msyynumber, MS_NUM_CHECK_GTE, 0, -1) == MS_FAILURE) {
           msSetError(MS_MISCERR,
-                    "Invalid DEFAULTSYMBOL id, must be greater than or equal "
-                    "to 0 (line %d)",
-                    "loadStyle()", msyylineno);
+                     "Invalid DEFAULTSYMBOL id, must be greater than or equal "
+                     "to 0 (line %d)",
+                     "loadStyle()", msyylineno);
           return (MS_FAILURE);
         }
         style->symbol = (int)msyynumber;
