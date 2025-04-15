@@ -1885,9 +1885,8 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
       {"content",
        {{"application/json",
          {{"schema",
-           {{"$ref", "https://raw.githubusercontent.com/opengeospatial/"
-                     "ogcapi-processes/master/core/openapi/schemas/"
-                     "exception.yaml"}}}}}}}};
+           {{"$ref", "https://schemas.opengis.net/ogcapi/common/part1/1.0/"
+                     "openapi/schemas/exception.yaml"}}}}}}}};
 
   json parameters;
   parameters["f"] = {
