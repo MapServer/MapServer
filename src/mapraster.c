@@ -261,6 +261,7 @@ int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
     tlp->name = msStrdup("TILE");
     tlp->type = MS_LAYER_TILEINDEX;
     tlp->data = msStrdup(layer->tileindex);
+    tlp->encoding = msStrdup(layer->encoding);
 
     if (is_query) {
       tlp->map = map; /*needed when scaletokens are applied, to extract current
