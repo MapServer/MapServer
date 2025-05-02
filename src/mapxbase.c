@@ -144,6 +144,8 @@ DBFHandle msDBFOpenVirtualFile(VSILFILE *fp) {
   psDBF->pszStringField = NULL;
   psDBF->nStringFieldLen = 0;
 
+  psDBF->pszEncoding = NULL;
+
   /* -------------------------------------------------------------------- */
   /*  Read Table Header info                                              */
   /* -------------------------------------------------------------------- */
@@ -219,6 +221,32 @@ DBFHandle msDBFOpenVirtualFile(VSILFILE *fp) {
   return (psDBF);
 }
 
+/**
+ * Attempt to read character encoding from a .CPG-file
+ */
+char *msReadCPGEncoding(char *cpgFilename) {
+  VSILFILE *fpCPG = VSIFOpenL(cpgFilename, "rb");
+  if (fpCPG == NULL)
+    return NULL;
+
+  char szEncoding[100] = "";
+  size_t nRead = VSIFReadL(szEncoding, 1, sizeof(szEncoding) - 1, fpCPG);
+  VSIFCloseL(fpCPG);
+
+  if (nRead == 0)
+    return NULL;
+
+  // Null terminate and remove any line break
+  szEncoding[nRead] = '\0';
+  szEncoding[strcspn(szEncoding, "\r\n")] = 0;
+
+  if (szEncoding[0] == '\0') {
+    return NULL;
+  }
+
+  return msStrdup(szEncoding);
+}
+
 /************************************************************************/
 /*                              msDBFOpen()                             */
 /*                                                                      */
@@ -259,12 +287,30 @@ DBFHandle msDBFOpen(const char *pszFilename, const char *pszAccess)
       fp = VSIFOpenL(pszDBFFilename, pszAccess);
     }
   }
-  msFree(pszDBFFilename);
+
   if (fp == NULL) {
+    msFree(pszDBFFilename);
     return (NULL);
   }
 
-  return msDBFOpenVirtualFile(fp);
+  DBFHandle dbfHandle = msDBFOpenVirtualFile(fp);
+  if (dbfHandle) {
+    char *pszCPGFilename = (char *)msSmallMalloc(strlen(pszDBFFilename) + 1);
+    strcpy(pszCPGFilename, pszDBFFilename);
+
+    if (strcmp(pszDBFFilename + strlen(pszDBFFilename) - 4, ".dbf") == 0) {
+      strcpy(pszCPGFilename + strlen(pszCPGFilename) - 4, ".cpg");
+    } else {
+      strcpy(pszCPGFilename + strlen(pszCPGFilename) - 4, ".CPG");
+    }
+
+    dbfHandle->pszEncoding = msReadCPGEncoding(pszCPGFilename);
+
+    msFree(pszCPGFilename);
+  }
+
+  msFree(pszDBFFilename);
+  return dbfHandle;
 }
 
 /************************************************************************/
@@ -319,6 +365,7 @@ void msDBFClose(DBFHandle psDBF) {
   free(psDBF->pszCurrentRecord);
 
   free(psDBF->pszStringField);
+  free(psDBF->pszEncoding);
 
   free(psDBF);
 }
