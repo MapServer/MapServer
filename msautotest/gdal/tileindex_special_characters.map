@@ -1,0 +1,35 @@
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG
+#
+# RUN_PARMS: tileindex_special_chars.png [MAP2IMG] -m [MAPFILE] -l special_character_path -o [RESULT]
+# 
+# Test tileindex with special characters in location value
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 100 100
+EXTENT -117.6409662 33.8479548 -117.6080786 33.8754608
+IMAGECOLOR 0 0 0
+
+PROJECTION
+  "+init=epsg:4326"
+END
+
+IMAGETYPE png
+
+LAYER
+  NAME special_character_path
+  TYPE raster
+  STATUS default
+  TEMPLATE "fake.html"
+  TILEINDEX "./data/tile_index_paths_special_chars.shp"
+  TILEITEM "location"
+  TILESRS "src_srs"
+  PROJECTION
+    "+proj=latlong +datum=WGS84" 
+  END
+END
+
+END # of map file

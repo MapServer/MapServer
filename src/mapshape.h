@@ -147,6 +147,8 @@ typedef struct {
 
   char *pszStringField;
   int nStringFieldLen;
+
+  char *pszEncoding;
 #endif /* not SWIG */
 } DBFInfo;
 

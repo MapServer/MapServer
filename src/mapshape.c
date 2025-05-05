@@ -2939,6 +2939,11 @@ int msSHPLayerOpen(layerObj *layer) {
     }
   }
 
+  /* Update layer encoding if encoding is defined in CPG file */
+  if (!layer->encoding && shpfile->hDBF->pszEncoding) {
+    layer->encoding = msStrdup(shpfile->hDBF->pszEncoding);
+  }
+
   if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto")) {
     const char *pszPRJFilename = CPLResetExtension(szPath, "prj");
