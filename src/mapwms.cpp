@@ -1289,6 +1289,13 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
       map->imagetype = msStrdup(values[i]);
     } else if (strcasecmp(names[i], "TRANSPARENT") == 0) {
       transparent = (strcasecmp(values[i], "TRUE") == 0);
+      if ((!transparent) && (strcasecmp(values[i], "FALSE") != 0)) {
+        msSetErrorWithStatus(
+            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+            "Value for TRANSPARENT must be either TRUE or FALSE.",
+            "msWMSLoadGetMapParams()");
+        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      }
     } else if (strcasecmp(names[i], "BGCOLOR") == 0) {
       long c;
       c = strtol(values[i], NULL, 16);
