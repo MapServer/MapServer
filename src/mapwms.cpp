@@ -977,11 +977,25 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
 
   const char *filter = NULL;
 
+  const char *compliance_mode_str = NULL;
+  bool compliance_mode = false;
+
   /* Some of the getMap parameters are actually required depending on the */
   /* request, but for now we assume all are optional and the map file */
   /* defaults will apply. */
 
   msAdjustExtent(&(map->extent), map->width, map->height);
+
+  /*
+    Check if we need strict checks for standard compliance.
+    Defaults to false.
+    So far only used for TRANSPARENT parameter value, but we will eventually
+    need this more often.
+  */
+  compliance_mode_str =
+      msOWSLookupMetadata(&(map->web.metadata), "MO", "compliance_mode");
+  compliance_mode = (compliance_mode_str != NULL) &&
+                    (strcasecmp(compliance_mode_str, "true") == 0);
 
   /*
     Check for SLDs first. If SLD is available LAYERS and STYLES parameters are
@@ -1288,13 +1302,17 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
       msFree(map->imagetype);
       map->imagetype = msStrdup(values[i]);
     } else if (strcasecmp(names[i], "TRANSPARENT") == 0) {
-      transparent = (strcasecmp(values[i], "TRUE") == 0);
-      if ((!transparent) && (strcasecmp(values[i], "FALSE") != 0)) {
-        msSetErrorWithStatus(
-            MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
-            "Value for TRANSPARENT must be either TRUE or FALSE.",
-            "msWMSLoadGetMapParams()");
-        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      if (compliance_mode) {
+        transparent = (strcmp(values[i], "TRUE") == 0);
+        if ((!transparent) && (strcmp(values[i], "FALSE") != 0)) {
+          msSetErrorWithStatus(
+              MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+              "Value for TRANSPARENT must be either TRUE or FALSE.",
+              "msWMSLoadGetMapParams()");
+          return msWMSException(map, nVersion, NULL, wms_exception_format);
+        }
+      } else {
+        transparent = (strcasecmp(values[i], "TRUE") == 0);
       }
     } else if (strcasecmp(names[i], "BGCOLOR") == 0) {
       long c;
