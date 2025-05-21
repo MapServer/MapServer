@@ -244,6 +244,29 @@ char *msReadCPGEncoding(char *cpgFilename) {
     return NULL;
   }
 
+  /* See
+   * https://github.com/OSGeo/gdal/blob/release/3.11/ogr/ogrsf_frmts/shape/ogrshapelayer.cpp#L503
+   */
+  const int nCPG = atoi(szEncoding);
+  if ((nCPG >= 437 && nCPG <= 950) || (nCPG >= 1250 && nCPG <= 1258)) {
+    char szResult[20];
+    snprintf(szResult, sizeof(szResult), "CP%d", nCPG);
+    return msStrdup(szResult);
+  }
+
+  if (strncasecmp(szEncoding, "8859", 4) == 0) {
+    const char *suffix = szEncoding + 4;
+    if (*suffix == '-' || *suffix == '_')
+      suffix++;
+    char szResult[40];
+    snprintf(szResult, sizeof(szResult), "ISO-8859-%s", suffix);
+    return msStrdup(szResult);
+  }
+
+  if (strncasecmp(szEncoding, "ANSI 1251", 9) == 0) {
+    return msStrdup("CP1251");
+  }
+
   return msStrdup(szEncoding);
 }
 
