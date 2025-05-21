@@ -258,8 +258,12 @@ char *msReadCPGEncoding(char *cpgFilename) {
     const char *suffix = szEncoding + 4;
     if (*suffix == '-' || *suffix == '_')
       suffix++;
+
+    if (!isdigit((unsigned char)*suffix))
+      return msStrdup(szEncoding);
+
     char szResult[40];
-    snprintf(szResult, sizeof(szResult), "ISO-8859-%s", suffix);
+    snprintf(szResult, sizeof(szResult), "ISO-8859-%d", atoi(suffix));
     return msStrdup(szResult);
   }
 
