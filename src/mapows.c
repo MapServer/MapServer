@@ -42,6 +42,7 @@
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h>
+#include <stdbool.h>
 #include <assert.h>
 
 /*
@@ -231,6 +232,71 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
 }
 
 /*
+** msOWSStrictCompliance()
+** Check whether we need to strictly comply to OGC standards.
+*/
+bool msOWSStrictCompliance(mapObj *map) {
+  const char *compliance_mode_str = NULL;
+
+  compliance_mode_str =
+      msOWSLookupMetadata(&(map->web.metadata), "MO", "compliance_mode");
+  return (compliance_mode_str != NULL) &&
+         (strcasecmp(compliance_mode_str, "true") == 0);
+}
+
+/*
+** msOWSServiceParameterException()
+** Used when the service parameter is either missing
+** or invalid.
+*/
+static int msOWSServiceParameterException(mapObj *map,
+                                          const char *exceptionCode) {
+  int size = 0;
+  char *errorString = NULL;
+
+  xmlDocPtr psDoc = NULL;
+  xmlNodePtr psRootNode = NULL;
+  xmlNsPtr psNsOws = NULL;
+  xmlChar *buffer = NULL;
+
+  psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI,
+                     BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
+  errorString = msGetErrorString("\n");
+
+  psDoc = xmlNewDoc(BAD_CAST "1.0");
+
+  psRootNode = msOWSCommonExceptionReport(
+      psNsOws, OWS_1_0_0, msOWSGetSchemasLocation(map), "1.0.0",
+      msOWSGetLanguage(map, "exception"), exceptionCode, "service",
+      errorString);
+
+  xmlDocSetRootElement(psDoc, psRootNode);
+
+  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI,
+           BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
+
+  msIO_setHeader("Status", "200 OK");
+  msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
+  msIO_sendHeaders();
+
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "UTF-8", 1);
+
+  msIO_printf("%s", buffer);
+
+  /*free buffer and the document */
+  free(errorString);
+  xmlFree(buffer);
+  xmlFreeDoc(psDoc);
+  xmlFreeNs(psNsOws);
+
+  /* clear error since we have already reported it */
+  msResetErrorList();
+
+  return MS_FAILURE;
+}
+
+/*
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
 ** - If this is a valid request then it is processed and MS_SUCCESS is returned
 **   on success, or MS_FAILURE on failure.
@@ -243,6 +309,7 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
 int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode) {
   int status = MS_DONE, force_ows_mode = 0;
   owsRequestObj ows_request;
+  bool compliance_mode = false;
 
   if (!request) {
     return status;
@@ -260,6 +327,8 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode) {
     status = MS_DONE;
   }
 
+  compliance_mode = msOWSStrictCompliance(map);
+
   if (ows_request.service == NULL) {
 #ifdef USE_LIBXML2
     if (ows_request.request && EQUAL(ows_request.request, "GetMetadata")) {
@@ -274,6 +343,14 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode) {
                               MS_OWS_ERROR_MISSING_PARAMETER_VALUE, NULL);
     } else
 #endif
+        if (compliance_mode) {
+      msSetError(MS_MISCERR,
+                 "OWS Common exception: exceptionCode=MissingParameterValue, "
+                 "locator=SERVICE, ExceptionText=SERVICE parameter missing.",
+                 "msOWSDispatch()");
+      status = msOWSServiceParameterException(
+          map, MS_OWS_ERROR_MISSING_PARAMETER_VALUE);
+    } else
 
       /* exit if service is not set */
       if (force_ows_mode) {
@@ -321,6 +398,14 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode) {
         "SERVICE=SOS requested, but SOS support not configured in MapServer.",
         "msOWSDispatch()");
 #endif
+  } else if (compliance_mode) {
+    msSetError(
+        MS_MISCERR,
+        "OWS Common exception: exceptionCode=InvalidParameterValue, "
+        "locator=SERVICE, ExceptionText=SERVICE parameter value invalid.",
+        "msOWSDispatch()");
+    status = msOWSServiceParameterException(
+        map, MS_OWS_ERROR_INVALID_PARAMETER_VALUE);
   } else if (force_ows_mode) {
     msSetError(
         MS_MISCERR,

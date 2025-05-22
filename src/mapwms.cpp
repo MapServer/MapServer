@@ -977,7 +977,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
 
   const char *filter = NULL;
 
-  const char *compliance_mode_str = NULL;
   bool compliance_mode = false;
 
   /* Some of the getMap parameters are actually required depending on the */
@@ -989,13 +988,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
   /*
     Check if we need strict checks for standard compliance.
     Defaults to false.
-    So far only used for TRANSPARENT parameter value, but we will eventually
-    need this more often.
   */
-  compliance_mode_str =
-      msOWSLookupMetadata(&(map->web.metadata), "MO", "compliance_mode");
-  compliance_mode = (compliance_mode_str != NULL) &&
-                    (strcasecmp(compliance_mode_str, "true") == 0);
+  compliance_mode = msOWSStrictCompliance(map);
 
   /*
     Check for SLDs first. If SLD is available LAYERS and STYLES parameters are
