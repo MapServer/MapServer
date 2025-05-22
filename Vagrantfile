@@ -2,6 +2,7 @@
 # vi: set ft=ruby :
 
 require 'socket'
+require 'fileutils'
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
@@ -13,7 +14,7 @@ EOF
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  vm_ram = ENV['VAGRANT_VM_RAM'] || 2048
+  vm_ram = ENV['VAGRANT_VM_RAM'] || 4098
   vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
 
   config.vm.box = "bento/ubuntu-24.04" # see https://portal.cloud.hashicorp.com/vagrant/discover?query=ubuntu
@@ -37,7 +38,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
   end
 
-  config.vm.provision "shell", path: "scripts/vagrant/virtualbox-fix.sh"
   config.vm.provision "shell", path: "scripts/vagrant/packages.sh"
   config.vm.provision "shell", path: "scripts/vagrant/postgis.sh"
   config.vm.provision "shell", path: "scripts/vagrant/msautotest.sh"  
