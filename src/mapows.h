@@ -31,6 +31,7 @@
 #define MAPOWS_H
 
 #include "maphttp.h"
+#include <stdbool.h>
 #include <time.h>
 
 /* This is the URL to the official OGC Schema Repository. We use it by
@@ -355,6 +356,7 @@ outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format,
                                           hashTableObj *metadata,
                                           const char *namespaces,
                                           const char *name);
+bool msOWSStrictCompliance(mapObj *map);
 #endif /* #if any wxs service enabled */
 
 /*====================================================================
