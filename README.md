@@ -5,6 +5,7 @@ MapServer
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/vw1n07095a8bg23u?svg=true)](https://ci.appveyor.com/project/mapserver/mapserver)
 [![Coveralls Status](https://coveralls.io/repos/github/MapServer/MapServer/badge.svg?branch=main)](https://coveralls.io/github/MapServer/MapServer?branch=main)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6994443.svg)](https://doi.org/10.5281/zenodo.6994443)
+[![Release](https://img.shields.io/github/v/release/MapServer/MapServer)](https://github.com/MapServer/MapServer/releases)
 
 -------
 Summary
