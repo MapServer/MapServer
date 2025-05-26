@@ -747,7 +747,7 @@ static void setConnError(msODBCconn *conn) {
   conn->errorMessage[len] = 0;
 }
 
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
 static SQLWCHAR *convertCwchartToSQLWCHAR(const wchar_t *inStr) {
   SQLWCHAR *outStr;
   int i, len;
@@ -785,7 +785,7 @@ static msODBCconn *mssql2008Connect(const char *connString) {
   }
 
   {
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
     wchar_t *decodedConnString =
         msConvertWideStringFromUTF8(connString, "UCS-2LE");
     SQLWCHAR outConnString[1024];
@@ -832,7 +832,7 @@ static int executeSQL(msODBCconn *conn, const char *sql) {
 
   SQLCloseCursor(conn->hstmt);
 
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
   {
     wchar_t *decodedSql = msConvertWideStringFromUTF8(sql, "UCS-2LE");
     SQLWCHAR *decodedSqlSQLWCHAR = convertCwchartToSQLWCHAR(decodedSql);
@@ -1521,7 +1521,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
 
   /* adding items to the select list */
   for (t = 0; t < layer->numitems; t++) {
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
     query = msStringConcatenate(query, "convert(nvarchar(max), [");
 #else
     query = msStringConcatenate(query, "convert(varchar(max), [");
@@ -2307,7 +2307,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape,
           return MS_FAILURE;
         }
 
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
         SQLSMALLINT targetType = SQL_WCHAR;
 #else
         SQLSMALLINT targetType = SQL_CHAR;
@@ -2328,7 +2328,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape,
              * include */
             /* If we get SQL_NO_TOTAL we do not know how big buffer we need so
              * we increase it with 512. */
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
             totalLen -= sizeof(wchar_t);
             emptyLen = retLen != SQL_NO_TOTAL
                            ? retLen - emptyLen + 2 * sizeof(wchar_t)
@@ -2354,7 +2354,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape,
 
         if (totalLen > 0) {
           /* Pop the value into the shape's value array */
-#ifdef USE_ICONV
+#if defined(_WIN32) && defined(USE_ICONV)
           shape->values[t] =
               msConvertWideStringToUTF8((wchar_t *)valueBuffer, "UCS-2LE");
           msFree(valueBuffer);
