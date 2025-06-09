@@ -51,9 +51,9 @@ static inline void IGUR_voidp(void *ignored) {
   (void)ignored;
 } /* Ignore GCC Unused Result */
 
-static const char *const olUrl = "//mapserver.org/lib/10.4.0/ol-mapserver.js";
+static const char *const olUrl = "//mapserver.org/lib/10.5.0/ol-mapserver.js";
 static const char *const olCssUrl =
-    "//mapserver.org/lib/10.4.0/ol-mapserver.css";
+    "//mapserver.org/lib/10.5.0/ol-mapserver.css";
 
 static const char *const olTemplate =
     "<!DOCTYPE html>\n"
@@ -108,7 +108,11 @@ static const char *const olLayerMapServerTag =
     "        });";
 
 static const char *const olLayerWMSTag =
-    "const mslayer = new ol.layer.Image({\n"
+    "if (!ol.proj.get('[openlayers_projection]')) {\n"
+    "            ol.proj.addProjection(new ol.proj.Projection({ code : "
+    "'[openlayers_projection]' }));\n"
+    "        }\n"
+    "        const mslayer = new ol.layer.Image({\n"
     "            source: new ol.source.Image({\n"
     "                loader: ol.source.wms.createLoader({\n"
     "                    url: '[mapserv_onlineresource]',\n"
