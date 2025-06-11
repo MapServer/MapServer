@@ -1,0 +1,116 @@
+#
+# Test OWS Services enabling/disabling.
+#
+# REQUIRES: SUPPORTS=WMS SUPPORTS=WFS
+#
+# Test invalid/missing service parameter values
+#
+
+# RUN_PARMS: ows_no_service_strict_compliance.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetCapabilities" > [RESULT]
+# RUN_PARMS: ows_invalid_service_strict_compliance.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=&REQUEST=GetCapabilities" > [RESULT]
+# RUN_PARMS: ows_invalid_service_strict_compliance.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=zzzz&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT]
+
+
+
+# Results expected for all tests:
+# Service Exception sent with HTTP status code 200
+
+MAP
+
+NAME WMS_WFS_TEST
+SHAPEPATH ./data
+
+WEB
+  METADATA
+    "wms_onlineresource"   "http://localhost/path/to/ows?"
+    "ows_updatesequence"   "123"
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:4326 EPSG:4269"
+    "ows_abstract"    "Test WFS Abstract"
+    "ows_keywordlist" "ogc,wfs,gml,om"
+    "ows_service_onlineresource" "http://localhost"
+    "ows_fees" "none"
+    "ows_accessconstraints" "none"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+    "ows_hoursofservice" "0800h - 1600h EST"
+    "ows_contactinstructions" "during hours of service"
+    "ows_role" "staff"
+    "ows_enable_request" "*" # not read at all, all layers contains their setting.
+    "ows_compliance_mode" "true"
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+LAYER
+  NAME road
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:43204"
+    "gml_include_items" "all"
+    "ows_enable_request" "!*" # not read, wms_enable_request
+    "wms_enable_request" "*"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    STYLE
+        SYMBOL 0 
+        COLOR 220 0 0
+    END
+  END
+END # Layer
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wfs_title"         "province"
+    "wfs_description"   "province"
+    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+    "wfs_featureid"     "NAME_E"
+    "ows_enable_request" "*" # not read, wfs_enable_request
+    "wfs_enable_request" "!*" # all disabled  
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+#    "init=epsg:42304"
+  END
+
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    STYLE
+        COLOR 200 255 0
+        OUTLINECOLOR 120 120 120
+    END
+  END
+END # Layer
+
+END # Map File
