@@ -400,21 +400,29 @@ static const char *getTitle(mapObj *map) {
   return getWebMetadata(map, "OA", "title", OGCAPI_DEFAULT_TITLE);
 }
 
+static std::string getEnvVar(const char *envVar) {
+  const char *value = getenv(envVar);
+  return value ? std::string(value) : std::string();
+}
+
 /*
 ** Returns the API root URL from oga_onlineresource or builds a value if not
 *set.
 */
-static std::string getApiRootUrl(mapObj *map) {
+std::string getApiRootUrl(mapObj *map, const char *namespaces = "A") {
   const char *root;
 
-  if ((root = msOWSLookupMetadata(&(map->web.metadata), "A",
-                                  "onlineresource")) != NULL)
+  if ((root = msOWSLookupMetadata(&(map->web.metadata), namespaces,
+                                  "onlineresource")) != NULL) {
     return std::string(root);
-  else
-    return "http://" + std::string(getenv("SERVER_NAME")) + ":" +
-           std::string(getenv("SERVER_PORT")) +
-           std::string(getenv("SCRIPT_NAME")) +
-           std::string(getenv("PATH_INFO"));
+  } else {
+    std::string serverName = getEnvVar("SERVER_NAME");
+    std::string serverPort = getEnvVar("SERVER_PORT");
+    std::string scriptName = getEnvVar("SCRIPT_NAME");
+    std::string pathInfo = getEnvVar("PATH_INFO");
+
+    return "http://" + serverName + ":" + serverPort + scriptName + pathInfo;
+  }
 }
 
 static json getFeatureConstant(const gmlConstantObj *constant) {

@@ -64,6 +64,8 @@ std::string getTemplateDirectory(mapObj *map, const char *key,
 
 OGCAPIFormat msGetOutputFormat(cgiRequestObj *request);
 
+std::string getApiRootUrl(mapObj *map, const char *namespaces);
+
 void outputError(OGCAPIErrorType errorType, const std::string &description);
 
 void outputJson(const nlohmann::json &j, const char *mimetype,
