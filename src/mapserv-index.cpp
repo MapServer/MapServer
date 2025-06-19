@@ -44,7 +44,36 @@ using json = nlohmann::json;
 */
 #define TEMPLATE_HTML_INDEX "landing.html"
 
-json processMap(mapObj *map) {
+static std::vector<json> processWMS(mapObj *map) {
+
+  std::vector<json> serviceDescs; // List of JSON objects
+
+  // Create the first JSON object
+  json serviceDesc1;
+  const char *title = msOWSLookupMetadata(&(map->web.metadata), "MO", "title");
+  if (!title) {
+    title = map->name;
+  }
+
+  std::string api_root = getApiRootUrl(map, "MO");
+
+  serviceDesc1["title"] = title;
+  serviceDesc1["type"] = "WMS";
+  serviceDesc1["url"] = api_root;
+
+  serviceDescs.push_back(serviceDesc1); // Add to the list
+
+  json serviceDesc2;
+  serviceDesc2["title"] = title;
+  serviceDesc2["type"] = "WMS";
+  serviceDesc1["url"] = api_root;
+
+  serviceDescs.push_back(serviceDesc2); // Add to the list
+
+  return serviceDescs; // Return the list of JSON objects
+}
+
+static json processMap(mapObj *map) {
   json mapJson;
   mapJson["name"] = map->name;
   mapJson["title"] = "title";
@@ -55,20 +84,32 @@ json processMap(mapObj *map) {
   // Create the "service-desc" array
   mapJson["service-desc"] = json::array();
 
-  json serviceDesc;
-  serviceDesc["href"] =
-      "https://demo.mapserver.org/cgi-bin/"
-      "msautotest?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities";
-  serviceDesc["title"] = "World WMS service";
-  serviceDesc["type"] = "text/xml";
+  // json serviceDesc;
+  // serviceDesc["href"] =
+  //     "https://demo.mapserver.org/cgi-bin/"
+  //     "msautotest?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities";
+  // serviceDesc["title"] = "World WMS service";
+  // serviceDesc["type"] = "text/xml";
+
+#ifdef USE_WMS_SVR
+
+  // WMS services
+  std::vector<json> wmsServiceDescs = processWMS(map);
+
+  // Add each JSON object to the "service-desc" array
+  for (const auto &serviceDesc : wmsServiceDescs) {
+    mapJson["service-desc"].push_back(serviceDesc);
+  }
+
+#endif /* USE_WMS_SVR */
 
   // Append the nested object to the "service-desc" array
-  mapJson["service-desc"].push_back(serviceDesc);
+  // mapJson["service-desc"].push_back(serviceDesc);
 
   return mapJson;
 }
 
-json getMapJsonFromConfig(configObj *config) {
+static json getMapJsonFromConfig(configObj *config) {
 
   const char *key = NULL;
   json links =
@@ -103,7 +144,6 @@ json getMapJsonFromConfig(configObj *config) {
       } else {
         // Append the new JSON object to the "links" array
         links.push_back(processMap(map));
-        // Free the map object to avoid memory leaks
         msFreeMap(map);
       }
     }
