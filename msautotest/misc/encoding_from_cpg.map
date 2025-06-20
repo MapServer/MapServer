@@ -1,0 +1,478 @@
+# Test reading encodings from cpg. 
+# http://www.madore.org/~david/computers/unicode/cstab.HTML
+#
+# RUN_PARMS: shp_encodings.png [MAP2IMG] -m [MAPFILE] -o [RESULT]   
+#
+# Recipe to generate the files from the 'encodings_utf-8.shp': 
+#
+# encodings=(88591 88592 88593 88594 88595 88596 88597 88598 88599 885910 885911 885913 885915 437 1250 1251 1253 1254)
+# 
+# for ENC in "${encodings[@]}"; do
+#   ogr2ogr -f "ESRI Shapefile" "encoding_${ENC}.shp" "encodings_utf-8.shp" -lco ENCODING="$ENC"
+# done 
+#
+map
+  name "test encoding"
+  size 300 300
+  extent -30 -30 40 40
+  web
+    metadata
+      "ows_enable_request" "*"
+      "ows_srs" "epsg:4326"
+      "ows_onlineresource" "http://foo"
+    end
+  end
+  projection
+     "+init=epsg:4326"
+  end
+
+  imagetype png
+
+  symbol
+    type ellipse
+    name "circle"
+    points 1 1 end
+    filled true
+  end
+
+  LAYER
+    NAME "latin-1"
+    DATA "data/shp_encoding/encoding_88591.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS
+  END # LAYER
+
+  LAYER
+    NAME "latin-2"
+    DATA "data/shp_encoding/encoding_88592.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "Ą˘Ł¤ĽŚ§¨ŠŞŤŹŽŻ°ą˛ł´ľśˇ¸šşťź˝žżŔÁÂĂÄĹĆÇČÉĘËĚÍÎĎĐŃŇÓÔŐÖ×ŘŮÚŰÜÝŢßŕáâăäĺćçčéęëěíîďđńňóôőö÷řůúűüýţ˙"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-3"
+    DATA "data/shp_encoding/encoding_88593.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ÄĊĈÇÈÉÊËÌÍÎÏÑÒÓÔĠÖ×ĜÙÚÛÜŬŜßàáâäċĉçèéêëìíîïñòóôġö÷ĝùúûüŭŝ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-4"
+    DATA "data/shp_encoding/encoding_88594.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "šēģŧŊžŋĀÁÂÃÄÅÆĮČÉĘËĖÍÎĪĐŅŌĶÔÕÖ×ØŲÚÛÜŨŪßāáâãäåæįčéęëėíîīđņōķôõö÷øųúûüũū"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-5"
+    DATA "data/shp_encoding/encoding_88595.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ЎЏАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеежзийклмнопрстуфхцчшщъыьэюя№ёђѓєѕіїјљњћќ§ўџ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-6"
+    DATA "data/shp_encoding/encoding_88596.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ءآأؤإئابةتثجحخدذرزسشصضطظعغـفقكلمنهوى"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-7"
+    DATA "data/shp_encoding/encoding_88597.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩΪΫάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύώ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-8"
+    DATA "data/shp_encoding/encoding_88598.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "אבגדהוזחטיךכלםמןנסעףפץצקרשת"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-9"
+    DATA "data/shp_encoding/encoding_88599.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-10"
+    DATA "data/shp_encoding/encoding_885910.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ĄĒĢĪĨĶ§ĻĐŠŦŽ­ŪŊ°ąēģīĩķ·ļđšŧž―ūŋĀÁÂÃÄÅÆĮČÉĘËĖÍÎÏÐŅŌÓÔÕÖŨØŲÚÛÜÝÞßāáâãäåæįčéęëėíîïðņōóôõöũøųúûüýþĸ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+
+  LAYER
+    NAME "latin-11"
+    DATA "data/shp_encoding/encoding_885911.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรฤลฦวศษสหฬอฮฯะัำิีึืฺุู"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+ LAYER
+    NAME "latin-13"
+    DATA "data/shp_encoding/encoding_885913.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ĄĮĀĆÄÅĘĒČÉŹĖĢĶĪĻŠŃŅÓŌÕÖ×ŲŁŚŪÜŻŽßąįāćäåęēčéźėģķīļšńņóōõö÷ųłśūüżž’"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+  LAYER
+    NAME "latin-15"
+    DATA "data/shp_encoding/encoding_885915.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ŒœŸ¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+   LAYER
+    NAME "ANSI 1250"
+    DATA "data/shp_encoding/encoding_1250.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ŔÁÂĂÄĹĆÇČÉĘËĚÍÎĎĐŃŇÓÔŐÖ×ŘŮÚŰÜÝŢßŕáâăäĺćçčéęëěíîďđńňóôőö÷řůúűüý"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+ LAYER
+    NAME "ANSI 1251"
+    DATA "data/shp_encoding/encoding_1251.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзиклмнопрстуфхцчшщъыьэюя"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+  LAYER
+    NAME "ANSI 1253"
+    DATA "data/shp_encoding/encoding_1253.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩΪΫάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋόύώ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+  LAYER
+    NAME "ANSI 1254"
+    DATA "data/shp_encoding/encoding_1254.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞß"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+  LAYER
+    NAME "OEM Codepage 437"
+    DATA "data/shp_encoding/encoding_437.shp"
+    TYPE point
+    CLASSITEM "data"
+    LABELITEM "encoding"
+    STATUS on
+    CLASS
+     EXPRESSION "ÉæÆôöòûùÿÖÜ¢£¥₧ƒ"
+     STYLE
+      SYMBOL "circle"
+      SIZE 8
+      COLOR 255 0 0
+     END # STYLE
+     LABEL
+      SIZE 6
+      COLOR 0 0 0
+      POSITION AUTO
+      PARTIALS TRUE
+      MAXLENGTH 10
+     END # LABEL
+    END # CLASS 
+  END # LAYER
+
+END # MAP
