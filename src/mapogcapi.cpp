@@ -1930,7 +1930,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
        {
            {"type", "object"},
            {"additionalProperties", true},
-      }},
+       }},
       {"style", "form"},
   };
 
