@@ -1920,6 +1920,19 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
       {"explode", false},
   };
 
+  parameters["vendorSpecificParameters"] = {
+      {"name": "vendorSpecificParameters"},
+      {"in": "query"},
+      {"description": "Additional \"free-form\" parameters that are not explicitly defined"},
+      {"schema",
+        {
+            {"type": "object"},
+            {"additionalProperties": true},
+      }},
+      {"style": "form"},
+  };
+
+
   components["parameters"] = std::move(parameters);
 
   response["components"] = std::move(components);
