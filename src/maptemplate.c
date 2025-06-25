@@ -4060,7 +4060,7 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     char *ol;
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) ||    \
     defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    ol = msOWSGetOnlineResource(mapserv->map, "O", "onlineresource",
+    ol = msOWSGetOnlineResource(mapserv->map, "MO", "onlineresource",
                                 mapserv->request);
 #else
     ol = msBuildOnlineResource(mapserv->map, mapserv->request);
