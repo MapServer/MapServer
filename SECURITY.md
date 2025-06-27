@@ -2,8 +2,10 @@
 
 ## Reporting a Vulnerability in MapServer
 
-Security/vulnerability reports should not be submitted through GitHub tickets or the public mailing lists, but instead please send your report 
-to the email address: **mapserver-security nospam @ osgeo.org** (remove the blanks and ‘nospam’).  
+Security/vulnerability reports should not be submitted through GitHub tickets or the public mailing lists, 
+but instead please provide details to the Project Steering Committee via the GitHub [Report a vulnerability](https://github.com/MapServer/MapServer/security/advisories/new) 
+option link at the top of this page, or send your report to the email address: 
+**mapserver-security nospam @ osgeo.org** (remove the blanks and ‘nospam’).  
 
 Please follow the general guidelines for bug 
 submissions, when describing the vulnerability (see https://mapserver.org/development/bugs.html).
