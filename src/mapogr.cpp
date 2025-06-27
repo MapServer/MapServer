@@ -2490,9 +2490,6 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
       msFree(select);
       return MS_FAILURE;
     }
-
-    // Update itemindexes / layer->iteminfo
-    msOGRLayerInitItemInfo(layer);
   } else {
 
     // case of 1) GetLayer + SetFilter
@@ -4008,6 +4005,10 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect, int /*isQuery*/) {
   }
 
   status = msOGRFileWhichShapes(layer, rect, psInfo);
+
+  // Update itemindexes / layer->iteminfo
+  if (status == MS_SUCCESS)
+    msOGRLayerInitItemInfo(layer);
 
   if (status != MS_SUCCESS || layer->tileindex == NULL)
     return status;
