@@ -625,7 +625,7 @@ static json getFeatureGeometry(shapeObj *shape, int precision,
           json polygon = json::array();
           for (int i = 0; i < shape->numlines; i++) {
             if (i == k ||
-                outerList[i] ==
+                innerList[i] ==
                     MS_TRUE) { // add outer ring (k) and any inner rings
               json part = json::array();
               for (int j = 0; j < shape->line[i].numpoints; j++) {
