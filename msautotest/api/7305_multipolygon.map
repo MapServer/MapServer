@@ -1,0 +1,46 @@
+# RUN_PARMS: ogcapi_collections_multipolygon_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/multipolygon_layer/items" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_multipolygon_items.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/multipolygon_layer/items" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+
+MAP
+  EXTENT -23422614 -11650014 23758273 18540865
+  SIZE 800 800
+  
+  PROJECTION 
+    "+init=epsg:4326" 
+  END
+  UNITS METERS
+
+  WEB
+    METADATA
+    "oga_html_template_directory" "../../share/ogcapi/templates/html-plain"
+    "oga_title"                   "Pull Request #7305"
+    "oga_description"	          "This is a test OGC API server description for pull request #7305."
+    "oga_onlineresource"          "http://localhost/cgi-bin/mapserv/7305/ogcapi"
+    "oga_server_description"      "Server description"
+    "oga_enable_request"          "OGCAPI"
+    "oga_geometry_precision"      "4"
+    "oga_compliance_mode"         "true"
+    END
+  END
+  
+  LAYER
+    NAME "multipolygon_layer"
+    DATA "data/7305-multipolygon"
+    TYPE POLYGON
+    STATUS OFF
+    METADATA
+      "oga_keywords"    "multipolygon"
+      "oga_description" "Layer with multipolygon with holes"
+      "oga_title"       "Multipolygon layer"
+      "oga_featureid" "ogc_fid"
+    END
+    VALIDATION
+      "ogc_fid" "^3$" # only one acceptable value
+    END
+    PROJECTION 
+      "+init=epsg:4326" 
+    END
+    TEMPLATE VOID
+  END
+END
+  
