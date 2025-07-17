@@ -289,6 +289,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>expression                            { MS_LEXER_RETURN_TOKEN(EXPRESSION); }
 <INITIAL>extent                                { MS_LEXER_RETURN_TOKEN(EXTENT); }
 <INITIAL>extension                             { MS_LEXER_RETURN_TOKEN(EXTENSION); }
+<INITIAL>fallback                              { MS_LEXER_RETURN_TOKEN(FALLBACK); }
 <INITIAL>feature                               { MS_LEXER_RETURN_TOKEN(FEATURE); }
 <INITIAL>filled                                { MS_LEXER_RETURN_TOKEN(FILLED); }
 <INITIAL>filter                                { MS_LEXER_RETURN_TOKEN(FILTER); }
