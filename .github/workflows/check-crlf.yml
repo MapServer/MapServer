@@ -22,6 +22,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use action to check for CRLF endings
-        uses: erclu/check-crlf@v1.2.0
+        uses: erclu/check-crlf@master
         with: # ignore directories containing *.pdf and *.tab
           exclude: msautotest/misc/data/ /msautotest/renderers/expected/
