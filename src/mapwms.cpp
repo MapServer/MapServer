@@ -500,17 +500,21 @@ static int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 
     /* Apply filter to this layer */
 
-    /* But first, start by removing any wfs_use_default_extent_for_getfeature
-     * metadata item */
-    /* that could result in the BBOX to be removed */
-    std::string old_value_wfs_use_default_extent_for_getfeature;
-    {
-      const char *old_value_tmp = msLookupHashTable(
-          &(lp->metadata), "wfs_use_default_extent_for_getfeature");
-      if (old_value_tmp) {
-        old_value_wfs_use_default_extent_for_getfeature = old_value_tmp;
-        msRemoveHashTable(&(lp->metadata),
-                          "wfs_use_default_extent_for_getfeature");
+    /* But first, start by removing any use_default_extent_for_getfeature
+     * metadata items that could result in the BBOX to be removed */
+
+    hashTableObj *tmpTable = msCreateHashTable();
+
+    std::vector<std::string> keys_to_temporarily_remove = {
+        "wfs_use_default_extent_for_getfeature",
+        "ows_use_default_extent_for_getfeature",
+        "oga_use_default_extent_for_getfeature"};
+
+    for (const auto &key : keys_to_temporarily_remove) {
+      const char *value = msLookupHashTable(&(lp->metadata), key.c_str());
+      if (value) {
+        msInsertHashTable(tmpTable, key.c_str(), value);
+        msRemoveHashTable(&(lp->metadata), key.c_str());
       }
     }
 
@@ -520,11 +524,14 @@ static int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 
     msRemoveHashTable(&(lp->metadata), "gml_wmsfilter_flag");
 
-    if (!old_value_wfs_use_default_extent_for_getfeature.empty()) {
-      msInsertHashTable(
-          &(lp->metadata), "wfs_use_default_extent_for_getfeature",
-          old_value_wfs_use_default_extent_for_getfeature.c_str());
+    const char *pszKey;
+    pszKey = msFirstKeyFromHashTable(tmpTable);
+    for (; pszKey != NULL; pszKey = msNextKeyFromHashTable(tmpTable, pszKey)) {
+      msInsertHashTable(&(lp->metadata), pszKey,
+                        msLookupHashTable(tmpTable, pszKey));
     }
+
+    msFreeHashTable(tmpTable);
 
     if (ret != MS_SUCCESS) {
       errorObj *ms_error = msGetErrorObj();
