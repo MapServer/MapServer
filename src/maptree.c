@@ -734,7 +734,7 @@ static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node) {
 }
 
 int msWriteTree(treeObj *tree, char *filename, int B_order) {
-  char signature[3] = "SQT";
+  char signature[3] = {'S', 'Q', 'T'};
   char version = 1;
   char reserved[3] = {0, 0, 0};
   SHPTreeHandle disktree;
