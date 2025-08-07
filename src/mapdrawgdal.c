@@ -1191,7 +1191,7 @@ static int ApplyLUT(int iColorIndex, const char *lut_def, const void *pInBuffer,
 
   if (lut_def == NULL) {
     if (pInBuffer != pabyOutBuffer) {
-      GDALCopyWords((void *)pInBuffer, eDT, GDALGetDataTypeSize(eDT) / 8,
+      GDALCopyWords(pInBuffer, eDT, GDALGetDataTypeSizeBytes(eDT),
                     pabyOutBuffer, GDT_Byte, 1, nPixelCount);
     }
     return 0;
@@ -1332,7 +1332,7 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
       result_code =
           ApplyLUT(iColorIndex + 1, papszLUTs[iColorIndex],
                    (GByte *)pBuffer + dst_xsize * dst_ysize * iColorIndex *
-                                          (GDALGetDataTypeSize(eDT) / 8),
+                                          GDALGetDataTypeSizeBytes(eDT),
                    eDT, pabyWholeBuffer + dst_xsize * dst_ysize * iColorIndex,
                    dst_xsize * dst_ysize);
     }
@@ -1824,7 +1824,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   /*      Allocate buffer, and read data into it.                         */
   /* -------------------------------------------------------------------- */
   pBuffer = malloc(((size_t)dst_xsize) * dst_ysize * image->format->bands *
-                   (GDALGetDataTypeSize(eDataType) / 8));
+                   GDALGetDataTypeSizeBytes(eDataType));
   if (pBuffer == NULL) {
     msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize);
