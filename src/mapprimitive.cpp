@@ -32,6 +32,8 @@
 #include <locale.h>
 #include "fontcache.h"
 
+#include <algorithm>
+
 typedef enum { CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT } CLIP_STATE;
 
 #define CLIP_CHECK(min, a, max)                                                \
@@ -80,6 +82,53 @@ char *msShapeToWKT(shapeObj *shape) {
 #else
   return msOGRShapeToWKT(shape);
 #endif
+}
+
+shapeObj::shapeObj() { msInitShape(this); }
+
+shapeObj::~shapeObj() { msFreeShape(this); }
+
+shapeObj::shapeObj(const shapeObj &other) {
+  msInitShape(this);
+  operator=(other);
+}
+
+shapeObj::shapeObj(shapeObj &&other) {
+  msInitShape(this);
+  operator=(std::move(other));
+}
+
+shapeObj &shapeObj::operator=(const shapeObj &other) {
+  msFreeShape(this);
+  msCopyShape(&other, this);
+  return *this;
+}
+
+shapeObj &shapeObj::operator=(shapeObj &&other) {
+  std::swap(line, other.line);
+  std::swap(numlines, other.numlines);
+  type = other.type;
+  bounds = other.bounds;
+
+  /* attribute component */
+  std::swap(values, other.values);
+  std::swap(numvalues, other.numvalues);
+
+  std::swap(geometry, other.geometry);
+  std::swap(renderer_cache, other.renderer_cache);
+
+  /* annotation component */
+  std::swap(text, other.text);
+
+  /* bookkeeping component */
+  classindex = other.classindex; /* default class */
+  tileindex = other.tileindex;
+  index = other.index;
+  resultindex = other.resultindex;
+
+  scratch = other.scratch;
+
+  return *this;
 }
 
 void msInitShape(shapeObj *shape) {
@@ -539,8 +588,6 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect) {
   if (!shape || shape->numlines == 0) /* nothing to clip */
     return;
 
-  memset(&tmp, 0, sizeof(shapeObj));
-
   /*
   ** Don't do any clip processing of shapes completely within the
   ** clip rectangle based on a comparison of bounds.   We could do
@@ -600,9 +647,12 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect) {
   for (i = 0; i < shape->numlines; i++)
     free(shape->line[i].point);
   free(shape->line);
+  shape->numlines = 0;
+  shape->line = nullptr;
 
-  shape->line = tmp.line;
-  shape->numlines = tmp.numlines;
+  std::swap(shape->line, tmp.line);
+  std::swap(shape->numlines, tmp.numlines);
+
   msComputeBounds(shape);
 }
 
@@ -754,9 +804,12 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect) {
   for (i = 0; i < shape->numlines; i++)
     free(shape->line[i].point);
   free(shape->line);
+  shape->numlines = 0;
+  shape->line = nullptr;
 
-  shape->line = tmp.line;
-  shape->numlines = tmp.numlines;
+  std::swap(shape->line, tmp.line);
+  std::swap(shape->numlines, tmp.numlines);
+
   msComputeBounds(shape);
 
   return;
@@ -1224,7 +1277,7 @@ void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize) {
 */
 static pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c,
                                          pointObj d) {
-  pointObj p = {0}; // initialize
+  pointObj p;
   double r;
   double denominator, numerator;
 
@@ -1238,13 +1291,15 @@ static pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c,
 
   p.x = MS_NINT(a.x + r * (b.x - a.x));
   p.y = MS_NINT(a.y + r * (b.y - a.y));
+  p.z = 0;
+  p.m = 0;
 
   return (p);
 }
 
 void bufferPolyline(shapeObj *p, shapeObj *op, int w) {
   int i, j;
-  pointObj a = {0};
+  pointObj a = {0, 0, 0, 0};
   lineObj inside, outside;
   double angle;
   double dx, dy;
@@ -1687,7 +1742,8 @@ void msPolylineComputeLineSegments(shapeObj *shape,
   int i, j;
   double max_line_length = -1, max_segment_length = -1, segment_length;
 
-  pll->ll = msSmallMalloc(shape->numlines * sizeof(struct line_lengths));
+  pll->ll = (struct line_lengths *)msSmallMalloc(shape->numlines *
+                                                 sizeof(struct line_lengths));
   pll->total_length = 0;
   pll->longest_line_index = 0;
 
@@ -1838,9 +1894,9 @@ int msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts,
     }
 
     do {
-      lar->angles = msSmallRealloc(lar->angles, (lar->num_label_points + 1) *
-                                                    sizeof(double));
-      lar->label_points = msSmallRealloc(
+      lar->angles = (double *)msSmallRealloc(
+          lar->angles, (lar->num_label_points + 1) * sizeof(double));
+      lar->label_points = (pointObj *)msSmallRealloc(
           lar->label_points, (lar->num_label_points + 1) * sizeof(pointObj));
 
       /* if there is only 1 label to place... put it in the middle of the
@@ -2170,11 +2226,11 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts,
     double retry_offset = 0.0;
     int first_retry_idx = 0;
     // max_dec_retry_offset = max_inc_retry_offset = max_retry_offset;
-    textPathObj *tp = msSmallCalloc(1, sizeof(textPathObj));
+    textPathObj *tp = (textPathObj *)msSmallCalloc(1, sizeof(textPathObj));
     /* copy the textPath, we will be overriding the copy's positions and angles
      */
     msCopyTextPath(tp, ts->textpath);
-    tp->bounds.poly = msSmallMalloc(sizeof(lineObj));
+    tp->bounds.poly = (lineObj *)msSmallMalloc(sizeof(lineObj));
     bounds = tp->bounds.poly;
 
     /*
@@ -2468,13 +2524,13 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts,
         textPathObj *tmptp;
         textSymbolObj *tsnew;
         lfr->num_follow_labels++;
-        lfr->follow_labels =
-            msSmallRealloc(lfr->follow_labels,
-                           lfr->num_follow_labels * sizeof(textSymbolObj *));
+        lfr->follow_labels = (textSymbolObj **)msSmallRealloc(
+            lfr->follow_labels,
+            lfr->num_follow_labels * sizeof(textSymbolObj *));
         tmptp = ts->textpath;
         ts->textpath = NULL;
         lfr->follow_labels[lfr->num_follow_labels - 1] =
-            msSmallMalloc(sizeof(textSymbolObj));
+            (textSymbolObj *)msSmallMalloc(sizeof(textSymbolObj));
         tsnew = lfr->follow_labels[lfr->num_follow_labels - 1];
         initTextSymbol(tsnew);
         msCopyTextSymbol(tsnew, ts);

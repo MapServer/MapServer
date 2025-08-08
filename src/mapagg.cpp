@@ -1113,6 +1113,8 @@ int renderPolygonHatches(imageObj *img, VertexSource &clipper,
           if (MS_UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(img)->renderPolygon(
                                             img, &shape, color))) {
             free(shape.line[0].point);
+            shape.numlines = 0;
+            shape.line = nullptr;
             return MS_FAILURE;
           }
         }
@@ -1122,6 +1124,8 @@ int renderPolygonHatches(imageObj *img, VertexSource &clipper,
       }
     }
     free(shape.line[0].point);
+    shape.numlines = 0;
+    shape.line = nullptr;
   }
   return MS_SUCCESS;
 }

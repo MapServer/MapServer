@@ -80,7 +80,7 @@ typedef struct {
 Each feature of a layer's data is a :class:`shapeObj`. Each part of the shape is
 a closed :class:`lineObj`.
 */
-typedef struct {
+struct shapeObj {
 
 #ifndef SWIG
   lineObj *line;
@@ -109,7 +109,19 @@ typedef struct {
 
   int scratch;
   int resultindex; ///< Index within a query result set
-} shapeObj;
+
+#ifdef __cplusplus
+  shapeObj();
+  ~shapeObj();
+
+  shapeObj(const shapeObj &);
+  shapeObj &operator=(const shapeObj &);
+  shapeObj(shapeObj &&);
+  shapeObj &operator=(shapeObj &&);
+#endif
+};
+
+typedef struct shapeObj shapeObj;
 
 typedef lineObj multipointObj;
 
