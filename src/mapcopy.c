@@ -1014,6 +1014,8 @@ int msCopyLayer(layerObj *dst, const layerObj *src) {
   MS_COPYSTELEM(type);
   MS_COPYSTELEM(tolerance);
   MS_COPYSTELEM(toleranceunits);
+  MS_COPYSTELEM(identificationclassauto);
+  MS_COPYSTRING(dst->identificationclassgroup, src->identificationclassgroup);
   MS_COPYSTELEM(symbolscaledenom);
   MS_COPYSTELEM(scalefactor);
   MS_COPYSTELEM(minscaledenom);

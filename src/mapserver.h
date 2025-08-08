@@ -1171,6 +1171,9 @@ typedef struct {
 /*      encapsulates the information necessary to perform a query       */
 /************************************************************************/
 #ifndef SWIG
+
+typedef struct getFeatureInfoObj getFeatureInfoObj;
+
 typedef struct {
   int type; /* MS_QUERY_TYPE */
   int mode; /* MS_QUERY_MODE */
@@ -1205,6 +1208,8 @@ typedef struct {
   int max_cached_shape_ram_amount; /* maximum number of bytes taken by shapes
                                       cached in the total number of
                                       resultCacheObj */
+
+  getFeatureInfoObj *getFeatureInfo;
 } queryObj;
 #endif
 
@@ -2247,11 +2252,17 @@ struct layerObj {
       connectiontype; ///< the layer connection type - see :ref:`CONNECTIONTYPE
                       ///< <mapfile-layer-connectiontype>`
 
-  double tolerance;   ///< search buffer for point and line queries (in
-                      ///< toleranceunits) - see :ref:`TOLERANCE
-                      ///< <mapfile-layer-tolerance>`
-  int toleranceunits; ///< See :ref:`TOLERANCEUNITS
-                      ///< <mapfile-layer-toleranceunits>`
+  double tolerance;            ///< search buffer for point and line queries (in
+                               ///< toleranceunits) - see :ref:`TOLERANCE
+                               ///< <mapfile-layer-tolerance>`
+  int toleranceunits;          ///< See :ref:`TOLERANCEUNITS
+                               ///< <mapfile-layer-toleranceunits>`
+  int identificationclassauto; ///< whether we should use the style of the
+                               ///< WMS GetFeatureInfo request to precisely
+                               ///< identify features.
+  char *identificationclassgroup; ///< name of the class group to use for
+                                  ///< WMS GetFeatureInfo request to precisely
+                                  ///< identify features.
 
   double symbolscaledenom; ///< scale at which symbols are default size - see
                            ///< :ref:`SYMBOLSCALEDENOM
