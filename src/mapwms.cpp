@@ -43,12 +43,14 @@
 
 #include "maptime.h"
 #include "mapproject.h"
+#include "mapquery.h"
 
 #include <cassert>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -4564,12 +4566,117 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
                            isUsedInNestedGroup);
 
+  const char *styles = nullptr;
+  std::vector<std::string> wmslayers;
+  for (int i = 0; i < numentries; i++) {
+    if (strcasecmp(names[i], "LAYERS") == 0) {
+
+      wmslayers = msStringSplit(values[i], ',');
+      if (wmslayers.empty()) {
+        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      }
+
+      if (nVersion >= OWS_1_3_0) {
+        const char *layerlimit =
+            msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
+        if (layerlimit) {
+          if (static_cast<int>(wmslayers.size()) > atoi(layerlimit)) {
+            msSetErrorWithStatus(
+                MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                "Number of layers requested exceeds LayerLimit.",
+                "msWMSLoadGetMapParams()");
+            return msWMSException(map, nVersion, NULL, wms_exception_format);
+          }
+        }
+      }
+    } else if (strcasecmp(names[i], "STYLES=") == 0) {
+      styles = values[i];
+    }
+  }
+
+  std::map<std::string, std::vector<std::string>> mapLayerNameToStyleNames;
+
+  if (styles && strlen(styles) > 0) {
+    int n = 0;
+    char **tokens = msStringSplitComplex(styles, ",", &n, MS_ALLOWEMPTYTOKENS);
+
+    if (static_cast<int>(wmslayers.size()) != n) {
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Invalid style (%s). Mapserver is expecting an empty "
+          "string for the STYLES : STYLES= or STYLES=,,, or using "
+          "keyword default  STYLES=default,default, ...",
+          "msWMSLoadGetMapParams()", styles);
+      msFreeCharArray(tokens, n);
+      return msWMSException(map, nVersion, "StyleNotDefined",
+                            wms_exception_format);
+    }
+
+    for (int i = 0; i < n; i++) {
+      if (tokens[i] && strlen(tokens[i]) > 0 &&
+          strcasecmp(tokens[i], "default") != 0) {
+        const std::string &correspondingLayer = wmslayers[i];
+        for (int j = 0; j < map->numlayers; j++) {
+          layerObj *lp = GET_LAYER(map, j);
+          if ((lp->name &&
+               strcasecmp(lp->name, correspondingLayer.c_str()) == 0) ||
+              (lp->group &&
+               strcasecmp(lp->group, correspondingLayer.c_str()) == 0)) {
+            bool found = false;
+            for (int k = 0; k < lp->numclasses; k++) {
+              if (lp->_class[k]->group &&
+                  strcasecmp(lp->_class[k]->group, tokens[i]) == 0) {
+                mapLayerNameToStyleNames[correspondingLayer].push_back(
+                    tokens[i]);
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                                   "Style (%s) not defined on layer.",
+                                   "msWMSLoadGetMapParams()", tokens[i]);
+              msFreeCharArray(tokens, n);
+
+              return msWMSException(map, nVersion, "StyleNotDefined",
+                                    wms_exception_format);
+            }
+            /* Check the style of the root layer */
+          } else if (map->name &&
+                     strcasecmp(map->name, correspondingLayer.c_str()) == 0) {
+            const char *styleName =
+                msOWSLookupMetadata(&(map->web.metadata), "MO", "style_name");
+            if (styleName == NULL)
+              styleName = "default";
+            char *pszEncodedStyleName = msEncodeHTMLEntities(styleName);
+            if (strcasecmp(pszEncodedStyleName, tokens[i]) != 0) {
+              msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                                   "Style (%s) not defined on root layer.",
+                                   "msWMSLoadGetMapParams()", tokens[i]);
+              msFreeCharArray(tokens, n);
+              msFree(pszEncodedStyleName);
+
+              return msWMSException(map, nVersion, "StyleNotDefined",
+                                    wms_exception_format);
+            }
+            msFree(pszEncodedStyleName);
+
+            mapLayerNameToStyleNames[map->name].push_back(styleName);
+          }
+        }
+      }
+    }
+    msFreeCharArray(tokens, n);
+  }
+
+  std::map<int, std::vector<std::string>> mapLayerIndexToStyleNames;
+
   for (int i = 0; i < numentries; i++) {
     if (strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       query_layer = 1; /* flag set if QUERY_LAYERS is the request */
 
-      const auto wmslayers = msStringSplit(values[i], ',');
-      if (wmslayers.empty()) {
+      const auto querylayers = msStringSplit(values[i], ',');
+      if (querylayers.empty()) {
         msSetErrorWithStatus(
             MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
             "At least one layer name required in QUERY_LAYERS.",
@@ -4588,7 +4695,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
           msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_name");
       if (!rootlayer_name)
         rootlayer_name = map->name;
-      if (rootlayer_name && msStringInArray(rootlayer_name, wmslayers)) {
+      if (rootlayer_name && msStringInArray(rootlayer_name, querylayers)) {
         for (int j = 0; j < map->numlayers; j++) {
           layerObj *layer = GET_LAYER(map, j);
           if (msIsLayerQueryable(layer) &&
@@ -4598,6 +4705,9 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
               wms_layer = MS_TRUE;
               wms_connection = layer->connection;
             }
+
+            mapLayerIndexToStyleNames[j] =
+                mapLayerNameToStyleNames[rootlayer_name];
 
             numlayers_found++;
             layer->status = MS_ON;
@@ -4609,7 +4719,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
         layerObj *layer = GET_LAYER(map, j);
         if (!msIsLayerQueryable(layer))
           continue;
-        for (const auto &wmslayer : wmslayers) {
+        for (const auto &wmslayer : querylayers) {
           if (((layer->name &&
                 strcasecmp(layer->name, wmslayer.c_str()) == 0) ||
                (layer->group &&
@@ -4624,6 +4734,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
               wms_layer = MS_TRUE;
               wms_connection = layer->connection;
             }
+
+            mapLayerIndexToStyleNames[j] = mapLayerNameToStyleNames[wmslayer];
 
             numlayers_found++;
             layer->status = MS_ON;
@@ -4758,6 +4870,10 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
                                     incoming extent is correct */
     const double celly =
         MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
+
+    map->query.getFeatureInfo->x_pixel = point.x;
+    map->query.getFeatureInfo->y_pixel = point.y;
+
     point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
     point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
 
@@ -4774,6 +4890,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     map->query.point = point;
     map->query.buffer = 0;
     map->query.maxresults = feature_count;
+    map->query.getFeatureInfo->mapLayerIndexToStyleNames =
+        std::move(mapLayerIndexToStyleNames);
 
     if (msQueryByPoint(map) != MS_SUCCESS)
       return msWMSException(map, nVersion, NULL, wms_exception_format);
