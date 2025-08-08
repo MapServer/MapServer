@@ -1,0 +1,294 @@
+#
+# Test GetFeatureInfo on points with symbols
+#
+# REQUIRES: SUPPORTS=WMS
+#
+
+# RUN_PARMS: point_symbol_identification_rotation_30.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=" > [RESULT_DEMIME]
+# RUN_PARMS: point_symbol_identification_rotation_30_i_73_j_82.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_rotation_30_i_73_j_82_with_styles.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=test&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_rotation_30_i_70_j_82.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=70&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_rotation_30_i_118_j_78.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=111&J=78"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_rotation_30_i_159_j_91.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=159&J=91"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_rotation_30_classgroup_i_159_j_91.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_classgroup&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_classgroup&INFO_FORMAT=application%2Fvnd.ogc.gml&I=159&J=91&FEATURE_COUNT=10"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_wrong_layer.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=wrong_layer&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_classgroup&INFO_FORMAT=application%2Fvnd.ogc.gml&I=159&J=91"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_wrong_styles.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=wrong_styles&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_wrong_number_of_styles.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=test,test&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_two_layers.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30,test_classgroup&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=test,test&QUERY_LAYERS=test_rotation_30,test_classgroup&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82&NUM_FEATURES=10"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_class_minscaledenom_5700.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_class_minscaledenom_5700&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_class_minscaledenom_5700&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_style_minscaledenom_5700.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_style_minscaledenom_5700&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_style_minscaledenom_5700&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_expression_false.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_expression_false&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_expression_false&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+
+# RUN_PARMS: point_symbol_identification_mode_query_classauto.txt [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&mode=query&layer=test_classgroup&qlayer=test_rotation_30&imgxy=73+62&imgext=1000+2000+1400+2300&imgsize=200+150" > [RESULT_DEMIME]
+# RUN_PARMS: point_symbol_identification_mode_query_classgroup.txt [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&mode=query&layer=test_classgroup&qlayer=test_classgroup&imgxy=73+62&imgext=1000+2000+1400+2300&imgsize=200+150" > [RESULT_DEMIME]
+
+MAP
+
+STATUS ON
+EXTENT 1000 2000 1400 2300
+SIZE 200 150
+IMAGECOLOR 127 127 127
+SYMBOLSET "etc/symbols.sym"
+
+WEB
+  METADATA
+    "ows_updatesequence"   "123"
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:3857"
+    "ows_schemas_location" "http://schemas.opengis.net"
+    "ows_keywordlist" "ogc,wms,mapserver"
+    "ows_service_onlineresource" "http://www.mapserver.org/"
+    "ows_fees" "None"
+    "ows_accessconstraints" "None"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+
+    "ows_rootlayer_title" "My Layers"
+    "ows_rootlayer_abstract" "These are my layers"
+    "ows_rootlayer_keywordlist" "layers,list"
+    "ows_enable_request" "*" # not read at all, all layers contains their setting.
+  END
+END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  WEB
+    QUERYFORMAT 'tmpl'
+  END
+
+  OUTPUTFORMAT
+    NAME 'tmpl'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/plain'
+    FORMATOPTION "FILE=templates/point_symbol_identification.tmpl"
+  END
+
+LAYER
+  NAME "test_rotation_30"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_rotation_30"
+    "wms_description" "test_rotation_30"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFY
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    GROUP "test"
+    STYLE
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_classgroup"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  EXTENT 1000 2000 1400 2300
+
+  METADATA
+    "wms_title"       "test_classgroup"
+    "wms_description" "test_classgroup"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  IDENTIFY
+      CLASSGROUP "test"
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    GROUP "test"
+    STYLE
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2100
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+
+  FEATURE
+    POINTS
+        1201 2151
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_class_minscaledenom_5700"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_class_minscaledenom_5700"
+    "wms_description" "test_class_minscaledenom_5700"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFY
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    MINSCALEDENOM 5700
+    GROUP "test"
+    STYLE
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_style_minscaledenom_5700"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_style_minscaledenom_5700"
+    "wms_description" "test_style_minscaledenom_5700"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFY
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    GROUP "test"
+    STYLE
+        MINSCALEDENOM 5700
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_expression_false"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_expression_false"
+    "wms_description" "test_expression_false"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFY
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    EXPRESSION (false)
+    GROUP "test"
+    STYLE
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+
+END
