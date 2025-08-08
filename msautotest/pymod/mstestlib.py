@@ -495,6 +495,10 @@ def get_gdal_version():
         pos = gdal_version.find(",")
         if pos >= 0:
             return gdal_version[0:pos]
+        # e.g. "GDAL 3.11.3 Eganville"
+        pos = gdal_version.find(" ")
+        if pos >= 0:
+            return gdal_version[0:pos]
     return None
 
 
