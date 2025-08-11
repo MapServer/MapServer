@@ -15,6 +15,9 @@
 # RUN_PARMS: point_symbol_identification_wrong_styles.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=wrong_styles&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
 # RUN_PARMS: point_symbol_identification_wrong_number_of_styles.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=test,test&QUERY_LAYERS=test_rotation_30&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
 # RUN_PARMS: point_symbol_identification_two_layers.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_rotation_30,test_classgroup&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=test,test&QUERY_LAYERS=test_rotation_30,test_classgroup&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82&NUM_FEATURES=10"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_class_minscaledenom_5700.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_class_minscaledenom_5700&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_class_minscaledenom_5700&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_style_minscaledenom_5700.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_style_minscaledenom_5700&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_style_minscaledenom_5700&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_expression_false.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_expression_false&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_expression_false&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
 
 MAP
 
@@ -147,6 +150,129 @@ LAYER
   FEATURE
     POINTS
         1201 2151
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_class_minscaledenom_5700"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_class_minscaledenom_5700"
+    "wms_description" "test_class_minscaledenom_5700"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFICATION
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    MINSCALEDENOM 5700
+    GROUP "test"
+    STYLE
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_style_minscaledenom_5700"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_style_minscaledenom_5700"
+    "wms_description" "test_style_minscaledenom_5700"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFICATION
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    GROUP "test"
+    STYLE
+        MINSCALEDENOM 5700
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+
+LAYER
+  NAME "test_expression_false"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_expression_false"
+    "wms_description" "test_expression_false"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFICATION
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    EXPRESSION (false)
+    GROUP "test"
+    STYLE
+        ANGLE 30
+        SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
     END
   END
 END

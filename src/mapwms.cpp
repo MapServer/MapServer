@@ -4837,7 +4837,6 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     return msWMSLayerExecuteRequest(map, numOWSLayers, point.x, point.y,
                                     feature_count, info_format,
                                     WMS_GETFEATUREINFO);
-
   if (use_bbox == MS_FALSE) {
 
     if (point.x == -1.0 || point.y == -1.0) {
@@ -4863,6 +4862,53 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
                               wms_exception_format);
       }
     }
+  }
+
+  /*validate the INFO_FORMAT*/
+  valid_format = MS_FALSE;
+  format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
+                                    "getfeatureinfo_formatlist");
+  /*feature_info_mime_type deprecated for MapServer 6.0*/
+  if (!format_list)
+    format_list = msOWSLookupMetadata(&(map->web.metadata), "MO",
+                                      "feature_info_mime_type");
+  if (format_list) {
+    /*can not really validate if it is a valid output format
+      since old way of using template with web->header/footer and
+      layer templates need to still be supported.
+      We can only validate if it was part of the format list*/
+    if (strcasestr(format_list, info_format))
+      valid_format = MS_TRUE;
+  }
+  /*check to see if the format passed is text/plain or GML and if is
+    defined in the formatlist. If that is the case, It is a valid format*/
+  bool bMimeResponse = strcasecmp(info_format, "MIME") == 0 ||
+                       strcasecmp(info_format, "text/plain") == 0;
+  const bool bGMLResponse =
+      strncasecmp(info_format, "GML", 3) == 0 ||
+      strcasecmp(info_format, "application/vnd.ogc.gml") == 0;
+  if (bMimeResponse || bGMLResponse)
+    valid_format = MS_TRUE;
+
+  /*last case: if the info_format is not part of the request, it defaults to
+   * MIME*/
+  if (!valid_format && format_found == MS_FALSE) {
+    bMimeResponse = true, valid_format = MS_TRUE;
+  }
+
+  if (!valid_format) {
+    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                         "Unsupported INFO_FORMAT value (%s).",
+                         "msWMSFeatureInfo()", info_format);
+    if (nVersion >= OWS_1_3_0)
+      return msWMSException(map, nVersion, "InvalidFormat",
+                            wms_exception_format);
+    else
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+  }
+
+  if (use_bbox == MS_FALSE) {
+
     /* Perform the actual query */
     const double cellx =
         MS_CELLSIZE(map->extent.minx, map->extent.maxx,
@@ -4890,6 +4936,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     map->query.point = point;
     map->query.buffer = 0;
     map->query.maxresults = feature_count;
+    map->query.getFeatureInfo->templateBasedResponse =
+        !(bMimeResponse || bGMLResponse);
     map->query.getFeatureInfo->mapLayerIndexToStyleNames =
         std::move(mapLayerIndexToStyleNames);
 
@@ -4907,49 +4955,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
       return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
-  /*validate the INFO_FORMAT*/
-  valid_format = MS_FALSE;
-  format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
-                                    "getfeatureinfo_formatlist");
-  /*feature_info_mime_type deprecated for MapServer 6.0*/
-  if (!format_list)
-    format_list = msOWSLookupMetadata(&(map->web.metadata), "MO",
-                                      "feature_info_mime_type");
-  if (format_list) {
-    /*can not really validate if it is a valid output format
-      since old way of using template with web->header/footer and
-      layer templates need to still be supported.
-      We can only validate if it was part of the format list*/
-    if (strcasestr(format_list, info_format))
-      valid_format = MS_TRUE;
-  }
-  /*check to see if the format passed is text/plain or GML and if is
-    defined in the formatlist. If that is the case, It is a valid format*/
-  if (strcasecmp(info_format, "MIME") == 0 ||
-      strcasecmp(info_format, "text/plain") == 0 ||
-      strncasecmp(info_format, "GML", 3) == 0 ||
-      strcasecmp(info_format, "application/vnd.ogc.gml") == 0)
-    valid_format = MS_TRUE;
-
-  /*last case: if the info_format is not part of the request, it defaults to
-   * MIME*/
-  if (!valid_format && format_found == MS_FALSE)
-    valid_format = MS_TRUE;
-
-  if (!valid_format) {
-    msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
-                         "Unsupported INFO_FORMAT value (%s).",
-                         "msWMSFeatureInfo()", info_format);
-    if (nVersion >= OWS_1_3_0)
-      return msWMSException(map, nVersion, "InvalidFormat",
-                            wms_exception_format);
-    else
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
-  }
-
   /* Generate response */
-  if (strcasecmp(info_format, "MIME") == 0 ||
-      strcasecmp(info_format, "text/plain") == 0) {
+  if (bMimeResponse) {
 
     /* MIME response... we're free to use any valid MIME type */
     int numresults = 0;
@@ -4963,9 +4970,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     if (numresults == 0)
       msIO_printf("\n  Search returned no results.\n");
 
-  } else if (strncasecmp(info_format, "GML", 3) ==
-                 0 || /* accept GML.1 or GML */
-             strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
+  } else if (bGMLResponse) {
 
     if (nVersion <= OWS_1_0_7) /* 1.0.0 to 1.0.7 */
       msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");

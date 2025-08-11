@@ -1972,6 +1972,7 @@ int msQueryByPoint(mapObj *map) {
     struct SearchSymbol {
       mapObj *m_map = nullptr;
       shapeObj shape{};
+      int classindex = -1;
       styleObj *style = nullptr;
       imageObj *cachedImage = nullptr;
 
@@ -2004,12 +2005,14 @@ int msQueryByPoint(mapObj *map) {
       SearchSymbol(SearchSymbol &&other) {
         m_map = other.m_map;
         shape = std::move(other.shape);
+        classindex = other.classindex;
         std::swap(style, other.style);
         std::swap(cachedImage, other.cachedImage);
       }
       SearchSymbol &operator=(SearchSymbol &&other) {
         m_map = other.m_map;
         shape = std::move(other.shape);
+        classindex = other.classindex;
         std::swap(style, other.style);
         std::swap(cachedImage, other.cachedImage);
         return *this;
@@ -2027,9 +2030,10 @@ int msQueryByPoint(mapObj *map) {
         t = layer_tolerance * (msInchesPerUnit(lp->toleranceunits, 0) /
                                msInchesPerUnit(map->units, 0));
 
-      const auto takeIntoAccountClass = [map, t, cellx, celly, resolutionfactor,
-                                         &rect,
-                                         &searchSymbols](classObj *klass) {
+      const auto takeIntoAccountClass = [map, lp, t, cellx, celly,
+                                         resolutionfactor, &rect,
+                                         &searchSymbols](int classindex) {
+        classObj *klass = lp->_class[classindex];
         if (!msScaleInBounds(map->scaledenom, klass->minscaledenom,
                              klass->maxscaledenom)) {
           return;
@@ -2103,6 +2107,7 @@ int msQueryByPoint(mapObj *map) {
 
             SearchSymbol searchSymbol(map);
             searchSymbol.style = style;
+            searchSymbol.classindex = classindex;
 
             lineObj line = {0, NULL};
             line.numpoints = 5;
@@ -2139,7 +2144,7 @@ int msQueryByPoint(mapObj *map) {
           if (lp->_class[i]->group &&
               strcasecmp(lp->_class[i]->group, lp->identificationclassgroup) ==
                   0) {
-            takeIntoAccountClass(lp->_class[i]);
+            takeIntoAccountClass(i);
             break;
           }
         }
@@ -2151,11 +2156,11 @@ int msQueryByPoint(mapObj *map) {
           if (it ==
                   map->query.getFeatureInfo->mapLayerIndexToStyleNames.end() ||
               it->second.empty()) {
-            takeIntoAccountClass(lp->_class[i]);
+            takeIntoAccountClass(i);
           } else if (lp->_class[i]->group &&
                      std::find(it->second.begin(), it->second.end(),
                                lp->_class[i]->group) != it->second.end()) {
-            takeIntoAccountClass(lp->_class[i]);
+            takeIntoAccountClass(i);
           }
         }
       }
@@ -2238,19 +2243,142 @@ int msQueryByPoint(mapObj *map) {
         }
       }
 
-      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-      if (!(lp->_template) &&
-          ((shape.classindex == -1) || (lp->_class[shape.classindex]->status ==
-                                        MS_OFF))) { /* not a valid shape */
-        continue;
+      bool reprojectionDone = false;
+      bool matchFound = false;
+
+      if (map->query.getFeatureInfo->templateBasedResponse) {
+        shape.classindex =
+            msShapeGetClass(lp, map, &shape, classgroup, nclasses);
+        if (!(lp->_template) && ((shape.classindex == -1) ||
+                                 (lp->_class[shape.classindex]->status ==
+                                  MS_OFF))) { /* not a valid shape */
+          continue;
+        }
+
+        if (!(lp->_template) && !(lp->_class[shape.classindex]
+                                      ->_template)) { /* no valid _template */
+          continue;
+        }
+      } else {
+        int classindex = -1;
+        while ((classindex = msShapeGetNextClass(classindex, lp, map, &shape,
+                                                 classgroup, nclasses)) != -1) {
+          if (lp->_class[classindex]->status == MS_OFF) {
+            continue;
+          }
+          if (searchSymbols.empty() || shape.type != MS_SHAPE_POINT) {
+            break;
+          }
+
+          if (!reprojectionDone) {
+            reprojectionDone = true;
+            if (lp->project) {
+              if (reprojector == NULL) {
+                reprojector.reset(msProjectCreateReprojector(
+                    &(lp->projection), &(map->projection)));
+                if (reprojector == NULL) {
+                  status = MS_FAILURE;
+                  break;
+                }
+              }
+              msProjectShapeEx(reprojector.get(), &shape);
+            }
+          }
+
+          for (auto &searchSymbol : searchSymbols) {
+            if (searchSymbol.classindex == classindex &&
+                msPointInPolygon(&(shape.line[0].point[0]),
+                                 &(searchSymbol.shape.line[0]))) {
+              if (!searchSymbol.cachedImage) {
+                outputFormatObj *altFormat = msSelectOutputFormat(map, "png");
+                msInitializeRendererVTable(altFormat);
+
+                double symbol_width = 0;
+                double symbol_height = 0;
+                if (msGetMarkerSize(
+                        map, searchSymbol.style, &symbol_width, &symbol_height,
+                        searchSymbol.style->scalefactor) != MS_SUCCESS) {
+                  assert(false);
+                }
+
+                // Takes into account potential rotation of up to 45 deg: 1.5 >
+                // sqrt(2)
+                symbol_width *= 1.5;
+                symbol_height *= 1.5;
+
+                searchSymbol.cachedImage = msImageCreate(
+                    symbol_width, symbol_height, altFormat, nullptr, nullptr,
+                    map->resolution, map->defresolution, nullptr);
+                if (!searchSymbol.cachedImage) {
+                  msSetError(MS_MISCERR, "Unable to initialize symbol image.",
+                             "msQueryByPoint()");
+                  return (MS_FAILURE);
+                }
+
+                pointObj imCenter;
+                imCenter.x = searchSymbol.cachedImage->width / 2;
+                imCenter.y = searchSymbol.cachedImage->height / 2;
+                if (msDrawMarkerSymbol(map, searchSymbol.cachedImage, &imCenter,
+                                       searchSymbol.style,
+                                       searchSymbol.style->scalefactor) !=
+                    MS_SUCCESS) {
+                  msSetError(MS_MISCERR, "Unable to draw symbol image.",
+                             "msQueryByPoint()");
+                  return (MS_FAILURE);
+                }
+              }
+
+              rasterBufferObj rb;
+              memset(&rb, 0, sizeof(rasterBufferObj));
+
+              if (MS_IMAGE_RENDERER(searchSymbol.cachedImage)
+                          ->getRasterBufferHandle(searchSymbol.cachedImage,
+                                                  &rb) == MS_SUCCESS &&
+                  rb.type == MS_BUFFER_BYTE_RGBA) {
+
+                const int test_x = static_cast<int>(std::round(
+                    searchSymbol.cachedImage->width / 2 +
+                    (map->query.point.x - shape.line[0].point[0].x) / cellx));
+                const int test_y = static_cast<int>(std::round(
+                    searchSymbol.cachedImage->height / 2 -
+                    (map->query.point.y - shape.line[0].point[0].y) / celly));
+
+                // Check that the queried pixel hits a non-transparent pixel of
+                // the symbol
+                const int tolerancePixel =
+                    static_cast<int>(std::ceil(t / MS_MAX(cellx, celly)));
+                for (int y = -tolerancePixel;
+                     !matchFound && y <= tolerancePixel; ++y) {
+                  for (int x = -tolerancePixel; x <= tolerancePixel; ++x) {
+                    if (test_y + y >= 0 &&
+                        test_y + y < searchSymbol.cachedImage->height &&
+                        test_x + x >= 0 &&
+                        test_x + x < searchSymbol.cachedImage->width) {
+                      if (rb.data.rgba
+                              .a[(test_y + y) * rb.data.rgba.row_step +
+                                 (test_x + x) * rb.data.rgba.pixel_step]) {
+                        matchFound = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+
+              break;
+            }
+          }
+
+          break;
+        }
+        if (status == MS_FAILURE) {
+          break;
+        }
+        if (classindex == -1)
+          continue;
       }
 
-      if (!(lp->_template) &&
-          !(lp->_class[shape.classindex]->_template)) { /* no valid _template */
-        continue;
-      }
-
-      if (lp->project) {
+      if (!reprojectionDone && lp->project) {
         if (reprojector == NULL) {
           reprojector.reset(msProjectCreateReprojector(&(lp->projection),
                                                        &(map->projection)));
@@ -2263,93 +2391,10 @@ int msQueryByPoint(mapObj *map) {
       }
 
       double d = 0;
-      bool matchFound = false;
+
       if (searchSymbols.empty() || shape.type != MS_SHAPE_POINT) {
         d = msDistancePointToShape(&(map->query.point), &shape);
         matchFound = d <= t;
-      } else {
-        for (auto &searchSymbol : searchSymbols) {
-          if (msPointInPolygon(&(shape.line[0].point[0]),
-                               &(searchSymbol.shape.line[0]))) {
-            if (!searchSymbol.cachedImage) {
-              outputFormatObj *altFormat = msSelectOutputFormat(map, "png");
-              msInitializeRendererVTable(altFormat);
-
-              double symbol_width = 0;
-              double symbol_height = 0;
-              if (msGetMarkerSize(
-                      map, searchSymbol.style, &symbol_width, &symbol_height,
-                      searchSymbol.style->scalefactor) != MS_SUCCESS) {
-                assert(false);
-              }
-
-              // Takes into account potential rotation of up to 45 deg: 1.5 >
-              // sqrt(2)
-              symbol_width *= 1.5;
-              symbol_height *= 1.5;
-
-              searchSymbol.cachedImage = msImageCreate(
-                  symbol_width, symbol_height, altFormat, nullptr, nullptr,
-                  map->resolution, map->defresolution, nullptr);
-              if (!searchSymbol.cachedImage) {
-                msSetError(MS_MISCERR, "Unable to initialize symbol image.",
-                           "msQueryByPoint()");
-                return (MS_FAILURE);
-              }
-
-              pointObj imCenter;
-              imCenter.x = searchSymbol.cachedImage->width / 2;
-              imCenter.y = searchSymbol.cachedImage->height / 2;
-              if (msDrawMarkerSymbol(map, searchSymbol.cachedImage, &imCenter,
-                                     searchSymbol.style,
-                                     searchSymbol.style->scalefactor) !=
-                  MS_SUCCESS) {
-                msSetError(MS_MISCERR, "Unable to draw symbol image.",
-                           "msQueryByPoint()");
-                return (MS_FAILURE);
-              }
-            }
-
-            rasterBufferObj rb;
-            memset(&rb, 0, sizeof(rasterBufferObj));
-
-            if (MS_IMAGE_RENDERER(searchSymbol.cachedImage)
-                        ->getRasterBufferHandle(searchSymbol.cachedImage,
-                                                &rb) == MS_SUCCESS &&
-                rb.type == MS_BUFFER_BYTE_RGBA) {
-
-              const int test_x = static_cast<int>(std::round(
-                  searchSymbol.cachedImage->width / 2 +
-                  (map->query.point.x - shape.line[0].point[0].x) / cellx));
-              const int test_y = static_cast<int>(std::round(
-                  searchSymbol.cachedImage->height / 2 -
-                  (map->query.point.y - shape.line[0].point[0].y) / celly));
-
-              // Check that the queried pixel hits a non-transparent pixel of
-              // the symbol
-              const int tolerancePixel =
-                  static_cast<int>(std::ceil(t / MS_MAX(cellx, celly)));
-              for (int y = -tolerancePixel; !matchFound && y <= tolerancePixel;
-                   ++y) {
-                for (int x = -tolerancePixel; x <= tolerancePixel; ++x) {
-                  if (test_y + y >= 0 &&
-                      test_y + y < searchSymbol.cachedImage->height &&
-                      test_x + x >= 0 &&
-                      test_x + x < searchSymbol.cachedImage->width) {
-                    if (rb.data.rgba
-                            .a[(test_y + y) * rb.data.rgba.row_step +
-                               (test_x + x) * rb.data.rgba.pixel_step]) {
-                      matchFound = true;
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-
-            break;
-          }
-        }
       }
 
       if (matchFound) { /* found one */

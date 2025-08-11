@@ -38,6 +38,7 @@
 struct getFeatureInfoObj {
   double x_pixel = 0;
   double y_pixel = 0;
+  bool templateBasedResponse = true;
   std::map<int, std::vector<std::string>> mapLayerIndexToStyleNames{};
 };
 
