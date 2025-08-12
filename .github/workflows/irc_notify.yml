@@ -16,7 +16,7 @@ jobs:
     #if: github.repository == 'MapServer/MapServer'
     steps:
       - name: irc push
-        uses: rectalogic/notify-irc@v1
+        uses: rectalogic/notify-irc@v2
         if: github.event_name == 'push'
         with:
           channel: "#mapserver"
@@ -26,7 +26,7 @@ jobs:
             ${{ github.actor }} pushed ${{ github.event.ref }} ${{ github.event.compare }}
             ${{ join(github.event.commits.*.message) }}
       - name: irc pull request
-        uses: rectalogic/notify-irc@v1
+        uses: rectalogic/notify-irc@v2
         if: github.event_name == 'pull_request'
         with:
           channel: "#mapserver"
@@ -35,7 +35,7 @@ jobs:
           message: |
             ${{ github.actor }} opened PR ${{ github.event.pull_request.html_url }}
       - name: irc tag created
-        uses: rectalogic/notify-irc@v1
+        uses: rectalogic/notify-irc@v2
         if: github.event_name == 'create' && github.event.ref_type == 'tag'
         with:
           channel: "#mapserver"
