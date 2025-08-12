@@ -15,7 +15,7 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
-     - uses: actions/checkout@v4
+     - uses: actions/checkout@v5
      - uses: ilammy/msvc-dev-cmd@v1
        if: matrix.os == 'windows-latest'
      - name: Support longpaths
