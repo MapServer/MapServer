@@ -543,13 +543,13 @@ FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode,
     if (pszAttribute) {
       const auto tokens = msStringSplit(psFilterNode->pszValue, ',');
       if (!tokens.empty()) {
+        bool bString = false;
         for (size_t i = 0; i < tokens.size(); i++) {
           const char *pszId = tokens[i].c_str();
           const char *pszDot = strrchr(pszId, '.');
           if (pszDot)
             pszId = pszDot + 1;
 
-          bool bString = false;
           if (i == 0) {
             if (FLTIsNumeric(pszId) == MS_FALSE)
               bString = true;
