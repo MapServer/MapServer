@@ -16,6 +16,7 @@
 # RUN_PARMS: wfs_200_cite_postgis_propertyisnil_nillable_property.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsNil><PropertyName>NomFrancais</PropertyName></PropertyIsNil></Filter>" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_cite_postgis_not_propertyisnil_nillable_property.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><Not><PropertyIsNil><PropertyName>NomFrancais</PropertyName></PropertyIsNil></Not></Filter>" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_cite_postgis_filter_resourceid_stringvalue.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&typenames=province&Filter=<Filter><ResourceId rid='foo'/></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_postgis_filter_or_resourceid_stringvalue.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&typenames=province&Filter=<Filter><Or><ResourceId rid='foo'/><ResourceId rid='bar'/></Or></Filter>" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_200_cite_postgis_filter_like.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&typenames=province&Filter=<Filter><PropertyIsLike escapeChar='\' singleChar='?' wildCard='*'><ValueReference>island_e</ValueReference><Literal>*</Literal></PropertyIsLike></Filter>" > [RESULT_DEVERSION]
 
 MAP
