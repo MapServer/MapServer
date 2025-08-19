@@ -281,6 +281,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>connectiontype                        { MS_LEXER_RETURN_TOKEN(CONNECTIONTYPE); }
 <INITIAL>data                                  { MS_LEXER_RETURN_TOKEN(DATA); }
 <INITIAL>debug                                 { MS_LEXER_RETURN_TOKEN(DEBUG); }
+<INITIAL>defaultsymbol                         { MS_LEXER_RETURN_TOKEN(DEFAULTSYMBOL); }
 <INITIAL>driver                                { MS_LEXER_RETURN_TOKEN(DRIVER); }
 <INITIAL>empty                                 { MS_LEXER_RETURN_TOKEN(EMPTY); }
 <INITIAL>encoding                              { MS_LEXER_RETURN_TOKEN(ENCODING); }
