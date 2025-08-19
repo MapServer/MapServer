@@ -1978,9 +1978,9 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
           return std::string();
         }
 
-        std::string strRectOtherSRID = "ST_Intersects(ST_Transform(";
+        std::string strRectOtherSRID = "ST_Intersects(ST_Transform(\"";
         strRectOtherSRID += layerinfo->geomcolumn;
-        strRectOtherSRID += ',';
+        strRectOtherSRID += "\",";
         strRectOtherSRID += std::to_string(otherSRID);
         strRectOtherSRID += "),";
         strRectOtherSRID += strBox;
@@ -2009,9 +2009,9 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
           return std::string();
         }
 
-        std::string strRectOtherSRID = "ST_Intersects(";
+        std::string strRectOtherSRID = "ST_Intersects(\"";
         strRectOtherSRID += layerinfo->geomcolumn;
-        strRectOtherSRID += ',';
+        strRectOtherSRID += "\",";
         strRectOtherSRID += strBox;
         strRectOtherSRID += ')';
 
@@ -3262,7 +3262,7 @@ static int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent) {
 
   auto layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
   const std::string strSQL(addTableNameAndFilterToSelectFrom(
-      layer, "SELECT ST_Extent(" + layerinfo->geomcolumn + ") FROM "));
+      layer, "SELECT ST_Extent(\"" + layerinfo->geomcolumn + "\") FROM "));
 
   if (layer->debug) {
     msDebug("msPostGISLayerGetExtent executing SQL: %s\n", strSQL.c_str());
