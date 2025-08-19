@@ -804,13 +804,10 @@ int msShapeGetNextClass(int currentclass, layerObj *layer, mapObj *map,
       if (iclass < 0 || iclass >= layer->numclasses)
         continue; /* this should never happen but just in case */
 
-      if (map->scaledenom > 0) { /* verify scaledenom here  */
-        if ((layer->class[iclass] -> maxscaledenom > 0) &&
-            (map->scaledenom > layer->class[iclass] -> maxscaledenom))
-          continue; /* can skip this one, next class */
-        if ((layer->class[iclass] -> minscaledenom > 0) &&
-            (map->scaledenom <= layer->class[iclass] -> minscaledenom))
-          continue; /* can skip this one, next class */
+      if (!msScaleInBounds(map->scaledenom,
+                           layer->class[iclass] -> minscaledenom,
+                           layer -> class[iclass] -> maxscaledenom)) {
+        continue;
       }
 
       /* verify the minfeaturesize */

@@ -32,6 +32,7 @@
 #include "mapserver.h"
 #include "mapcopy.h"
 #include "fontcache.h"
+#include "maprendering.h"
 
 void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol,
                         double scalefactor, double resolutionfactor) {
@@ -936,37 +937,10 @@ int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p,
       p_x = p->x;
       p_y = p->y;
 
-      if (style->polaroffsetpixel != 0 || style->polaroffsetangle != 0) {
-        double angle = style->polaroffsetangle * MS_DEG_TO_RAD;
-        p_x += (style->polaroffsetpixel * cos(-angle)) * scalefactor;
-        p_y += (style->polaroffsetpixel * sin(-angle)) * scalefactor;
-      }
-
-      p_x += style->offsetx * scalefactor;
-      p_y += style->offsety * scalefactor;
-
-      if (symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
-        double sx, sy;
-        double ox, oy;
-        if (MS_UNLIKELY(MS_FAILURE ==
-                        msGetMarkerSize(map, style, &sx, &sy, scalefactor))) {
-          return MS_FAILURE;
-        }
-        ox = (0.5 - symbol->anchorpoint_x) * sx;
-        oy = (0.5 - symbol->anchorpoint_y) * sy;
-        if (s.rotation != 0) {
-          double sina, cosa;
-          double rox, roy;
-          sina = sin(-s.rotation);
-          cosa = cos(-s.rotation);
-          rox = ox * cosa - oy * sina;
-          roy = ox * sina + oy * cosa;
-          p_x += rox;
-          p_y += roy;
-        } else {
-          p_x += ox;
-          p_y += oy;
-        }
+      if (MS_UNLIKELY(MS_FAILURE == msAdjustMarkerPos(map, style, symbol, &p_x,
+                                                      &p_y, scalefactor,
+                                                      s.rotation))) {
+        return MS_FAILURE;
       }
 
       if (renderer->use_imagecache) {
@@ -1026,6 +1000,45 @@ int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p,
       msDrawMarkerSymbolIM(map, image, p, style, scalefactor);
   }
   return ret;
+}
+
+int msAdjustMarkerPos(mapObj *map, styleObj *style, symbolObj *symbol,
+                      double *p_x, double *p_y, double scalefactor,
+                      double rotation) {
+  if (style->polaroffsetpixel != 0 || style->polaroffsetangle != 0) {
+    double angle = style->polaroffsetangle * MS_DEG_TO_RAD;
+    *p_x += (style->polaroffsetpixel * cos(-angle)) * scalefactor;
+    *p_y += (style->polaroffsetpixel * sin(-angle)) * scalefactor;
+  }
+
+  *p_x += style->offsetx * scalefactor;
+  *p_y += style->offsety * scalefactor;
+
+  if (symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
+    double sx, sy;
+    double ox, oy;
+    if (MS_UNLIKELY(MS_FAILURE ==
+                    msGetMarkerSize(map, style, &sx, &sy, scalefactor))) {
+      return MS_FAILURE;
+    }
+    ox = (0.5 - symbol->anchorpoint_x) * sx;
+    oy = (0.5 - symbol->anchorpoint_y) * sy;
+    if (rotation != 0) {
+      double sina, cosa;
+      double rox, roy;
+      sina = sin(-rotation);
+      cosa = cos(-rotation);
+      rox = ox * cosa - oy * sina;
+      roy = ox * sina + oy * cosa;
+      *p_x += rox;
+      *p_y += roy;
+    } else {
+      *p_x += ox;
+      *p_y += oy;
+    }
+  }
+
+  return MS_SUCCESS;
 }
 
 int msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds,

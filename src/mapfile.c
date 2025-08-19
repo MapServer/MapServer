@@ -3901,6 +3901,8 @@ int initLayer(layerObj *layer, mapObj *map) {
   layer->toleranceunits = MS_PIXELS;
   layer->tolerance =
       -1; /* perhaps this should have a different value based on type */
+  layer->identificationclassauto = MS_FALSE;
+  layer->identificationclassgroup = NULL;
 
   layer->symbolscaledenom = -1.0; /* -1 means nothing is set */
   layer->scalefactor = 1.0;
@@ -4111,6 +4113,8 @@ int freeLayer(layerObj *layer) {
     cleanupResultCache(layer->resultcache);
     msFree(layer->resultcache);
   }
+
+  msFree(layer->identificationclassgroup);
 
   msFree(layer->styleitem);
 
@@ -4390,6 +4394,42 @@ int loadLayerCompositer(LayerCompositer *compositer) {
     }
   }
 }
+
+static int loadIdentification(layerObj *layer) {
+  for (;;) {
+    switch (msyylex()) {
+    case TOLERANCE:
+      if (getDouble(&(layer->tolerance), MS_NUM_CHECK_GTE, 0, -1) == -1)
+        return (-1);
+      break;
+
+    case TOLERANCEUNITS:
+      if ((layer->toleranceunits = getSymbol(
+               8, MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS,
+               MS_NAUTICALMILES, MS_DD, MS_PIXELS)) == -1)
+        return (-1);
+      break;
+
+    case CLASSGROUP:
+      if (getString(&layer->identificationclassgroup) == MS_FAILURE)
+        return (-1);
+      break;
+
+    case CLASSAUTO:
+      layer->identificationclassauto = MS_TRUE;
+      break;
+
+    case END:
+      return MS_SUCCESS;
+
+    default:
+      msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)",
+                 "loadIdentification()", msyystring_buffer, msyylineno);
+      return (MS_FAILURE);
+    }
+  }
+}
+
 int loadLayer(layerObj *layer, mapObj *map) {
   int type;
 
@@ -4751,6 +4791,10 @@ int loadLayer(layerObj *layer, mapObj *map) {
     case (TILESRS):
       if (getString(&layer->tilesrs) == MS_FAILURE)
         return (-1); /* getString() cleans up previously allocated string */
+      break;
+    case (IDENTIFICATION):
+      if (loadIdentification(layer) == MS_FAILURE)
+        return (-1);
       break;
     case (TOLERANCE):
       if (getDouble(&(layer->tolerance), MS_NUM_CHECK_GTE, 0, -1) == -1)
