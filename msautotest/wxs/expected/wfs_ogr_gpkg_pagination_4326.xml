@@ -1,0 +1,148 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="4" numberReturned="4"
+   next="http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=popplace&amp;BBOX=43.0%2C-65.0%2C45.0%2C-62.0&amp;COUNT=7&amp;STARTINDEX=7">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>44.020359 -64.732816</gml:lowerCorner>
+      		<gml:upperCorner>44.971547 -62.513078</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+<!-- WARNING: No featureid defined for typename 'popplace'. Output will not validate. -->
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.911800 -62.513078</gml:lowerCorner>
+        		<gml:upperCorner>44.911800 -62.513078</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.911800 -62.513078</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>10</ms:POPPLACE_>
+        <ms:POPPLACE_I>1</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CBIKA</ms:UNIQUE_KEY>
+        <ms:NAME>Sheet Harbour</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011D15</ms:NTS50>
+        <ms:LAT>445500</ms:LAT>
+        <ms:LONG>623200</ms:LONG>
+        <ms:SGC_CODE>1209036</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.971547 -64.190057</gml:lowerCorner>
+        		<gml:upperCorner>44.971547 -64.190057</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.971547 -64.190057</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>114</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CBPAK</ms:UNIQUE_KEY>
+        <ms:NAME>&quot;Wind&quot;sor</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>021A16</ms:NTS50>
+        <ms:LAT>445900</ms:LAT>
+        <ms:LONG>640800</ms:LONG>
+        <ms:SGC_CODE>1208002</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.375794 -64.333577</gml:lowerCorner>
+        		<gml:upperCorner>44.375794 -64.333577</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.375794 -64.333577</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>115</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAWAZ</ms:UNIQUE_KEY>
+        <ms:NAME>Lunenburg</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>021A08</ms:NTS50>
+        <ms:LAT>442300</ms:LAT>
+        <ms:LONG>641900</ms:LONG>
+        <ms:SGC_CODE>1206006</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.020359 -64.732816</gml:lowerCorner>
+        		<gml:upperCorner>44.020359 -64.732816</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.020359 -64.732816</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>116</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAUWZ</ms:UNIQUE_KEY>
+        <ms:NAME>Liverpool</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>021A02</ms:NTS50>
+        <ms:LAT>440200</ms:LAT>
+        <ms:LONG>644300</ms:LONG>
+        <ms:SGC_CODE>1204006</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+</wfs:FeatureCollection>
+
