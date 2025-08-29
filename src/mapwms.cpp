@@ -76,15 +76,13 @@ static int msWMSException(mapObj *map, int nVersion, const char *exception_code,
   if (nVersion <= 0)
     nVersion = OWS_1_3_0;
 
-  /* get scheam location */
+  /* get schema location */
   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   /* Establish default exception format depending on VERSION */
   if (wms_exception_format == NULL) {
     if (nVersion <= OWS_1_0_0)
       wms_exception_format = "INIMAGE"; /* WMS 1.0.0 */
-    else if (nVersion <= OWS_1_0_7)
-      wms_exception_format = "SE_XML"; /* WMS 1.0.1 to 1.0.7 */
     else if (nVersion <= OWS_1_1_1)
       wms_exception_format =
           "application/vnd.ogc.se_xml"; /* WMS 1.1.0 and later */
@@ -118,22 +116,10 @@ static int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     msIO_printf("<WMTException version=\"1.0.0\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</WMTException>\n");
-  } else /* XML error, the default: SE_XML (1.0.1 to 1.0.7) */
-  /* or application/vnd.ogc.se_xml (1.1.0 and later) */
+  } else /* XML error, the default:application/vnd.ogc.se_xml (1.1.0 and later)
+          */
   {
-    if (nVersion <= OWS_1_0_7) {
-      /* In V1.0.1 to 1.0.7, the MIME type was text/xml */
-      msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
-      msIO_sendHeaders();
-
-      msIO_printf(
-          "<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
-      msIO_printf(
-          "<!DOCTYPE ServiceExceptionReport SYSTEM "
-          "\"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
-
-      msIO_printf("<ServiceExceptionReport version=\"1.0.1\">\n");
-    } else if (nVersion <= OWS_1_1_0) {
+    if (nVersion <= OWS_1_1_0) {
       /* In V1.1.0 and later, we have OGC-specific MIME types */
       /* we cannot return anything else than application/vnd.ogc.se_xml here. */
       msIO_setHeader("Content-Type",
@@ -2054,7 +2040,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
   while (fmt != NULL) {
     /* Special case for early WMS with subelements in Format (bug 908) */
     char *encoded;
-    if (nVersion <= OWS_1_0_7) {
+    if (nVersion < OWS_1_1_0) {
       encoded = msStrdup(fmt);
     }
 
@@ -2333,7 +2319,7 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                  "the expected behavior of a WMS server. Using status ON or "
                  "OFF is recommended. -->\n");
 
-  if (nVersion <= OWS_1_0_7) {
+  if (nVersion < OWS_1_1_0) {
     msIO_printf("%s    <Layer queryable=\"%d\">\n", indent,
                 hasQueryableSubLayers || msIsLayerQueryable(lp));
   } else {
@@ -2560,12 +2546,9 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
     }
   }
 
-  if (nVersion >= OWS_1_0_7) {
-    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
-  }
-
   /* AuthorityURL support and Identifier support, only available >= WMS 1.1.0 */
   if (nVersion >= OWS_1_1_0) {
+    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
     msWMSPrintAuthorityURL(stdout, "        ", &(lp->metadata), "MO");
     msWMSPrintIdentifier(stdout, "        ", &(lp->metadata), "MO");
   }
@@ -3115,16 +3098,9 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
 
   /* Decide which version we're going to return. */
   std::string dtd_url;
-  if (nVersion < OWS_1_0_7) {
-    nVersion = OWS_1_0_0;
+  if (nVersion == OWS_1_0_0) {
     dtd_url = std::move(schemalocation);
     dtd_url += "/wms/1.0.0/capabilities_1_0_0.dtd";
-  }
-
-  else if (nVersion < OWS_1_1_0) {
-    nVersion = OWS_1_0_7;
-    dtd_url = std::move(schemalocation);
-    dtd_url += "/wms/1.0.7/capabilities_1_0_7.dtd";
   } else if (nVersion < OWS_1_1_1) {
     nVersion = OWS_1_1_0;
     dtd_url = std::move(schemalocation);
@@ -3132,7 +3108,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   } else if (nVersion < OWS_1_3_0) {
     nVersion = OWS_1_1_1;
     dtd_url = std::move(schemalocation);
-    /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
+    /* this exception was added to accommodate the OGC test suite (Bug 1576)*/
     if (strcasecmp(dtd_url.c_str(), OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
       dtd_url += "/wms/1.1.1/WMS_MS_Capabilities.dtd";
     else
@@ -3168,8 +3144,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     free(script_url);
   }
 
-  if (nVersion <= OWS_1_0_7 ||
-      nVersion >= OWS_1_3_0) /* 1.0.0 to 1.0.7 and >=1.3.0*/
+  if (nVersion == OWS_1_0_0 || nVersion >= OWS_1_3_0) /* 1.0.0 and >=1.3.0*/
     msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
   else /* 1.1.0 and later */
     msIO_setHeader("Content-Type",
@@ -3395,9 +3370,9 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   msIO_printf("<Service>\n");
 
   /* Service name is defined by the spec and changed at v1.0.0 */
-  if (nVersion <= OWS_1_0_7)
-    msIO_printf("  <Name>GetMap</Name>\n"); /* v 1.0.0 to 1.0.7 */
-  else if (nVersion > OWS_1_0_7 && nVersion < OWS_1_3_0)
+  if (nVersion == OWS_1_0_0)
+    msIO_printf("  <Name>GetMap</Name>\n"); /* v 1.0.0 */
+  else if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
     msIO_printf("  <Name>OGC:WMS</Name>\n"); /* v 1.1.0 to 1.1.1*/
   else
     msIO_printf("  <Name>WMS</Name>\n"); /* v 1.3.0+ */
@@ -3428,8 +3403,6 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
         "xlink:href=\"%s\"/>\n",
         script_url_encoded);
 
-  /* contact information is a required element in 1.0.7 but the */
-  /* sub-elements such as ContactPersonPrimary, etc. are not! */
   /* In 1.1.0, ContactInformation becomes optional. */
   msOWSPrintContactInfo(stdout, "  ", nVersion, &(map->web.metadata), "MO");
 
@@ -3456,8 +3429,8 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   msIO_printf("<Capability>\n");
   msIO_printf("  <Request>\n");
 
-  if (nVersion <= OWS_1_0_7) {
-    /* WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now
+  if (nVersion == OWS_1_0_0) {
+    /* WMS 1.0.0 - we don't try to use outputformats list here for now
      */
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "Map", script_url_encoded,
@@ -3608,7 +3581,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   msIO_printf("  </Request>\n");
 
   msIO_printf("  <Exception>\n");
-  if (nVersion <= OWS_1_0_7)
+  if (nVersion < OWS_1_1_0)
     msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   else if (nVersion <= OWS_1_1_1) {
     msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
@@ -3637,15 +3610,13 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
 
   /* SLD support */
   if (strcasecmp(sldenabled, "true") == 0) {
-    if (nVersion >= OWS_1_0_7) {
-      if (nVersion >= OWS_1_3_0)
-        msIO_printf("  <sld:UserDefinedSymbolization SupportSLD=\"1\" "
-                    "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\" "
-                    "InlineFeature=\"0\" RemoteWCS=\"0\"/>\n");
-      else
-        msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" "
-                    "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
-    }
+    if (nVersion >= OWS_1_3_0)
+      msIO_printf("  <sld:UserDefinedSymbolization SupportSLD=\"1\" "
+                  "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\" "
+                  "InlineFeature=\"0\" RemoteWCS=\"0\"/>\n");
+    else
+      msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" "
+                  "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
   }
 
   /* INSPIRE extended capabilities for WMS 1.3.0 */
@@ -3781,13 +3752,10 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     msOWSPrintBoundingBox(stdout, "    ", &(map->extent), &(map->projection),
                           NULL, &(map->web.metadata), "MO", nVersion);
 
-    if (nVersion >= OWS_1_0_7) {
-      msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
-    }
-
     /* AuthorityURL support and Identifier support, only available >= WMS 1.1.0
      */
     if (nVersion >= OWS_1_1_0) {
+      msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
       msWMSPrintAuthorityURL(stdout, "    ", &(map->web.metadata), "MO");
       msWMSPrintIdentifier(stdout, "    ", &(map->web.metadata), "MO");
     }
@@ -4849,7 +4817,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
                  0 || /* accept GML.1 or GML */
              strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
 
-    if (nVersion <= OWS_1_0_7) /* 1.0.0 to 1.0.7 */
+    if (nVersion == OWS_1_0_0)
       msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
     else /* 1.1.0 and later */
       msIO_setHeader("Content-Type", "application/vnd.ogc.gml; charset=UTF-8");
@@ -5660,12 +5628,12 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
 
   /*
   ** GetCapbilities request needs the service parameter defined as WMS:
-  see section 7.1.3.2 wms 1.1.1 specs for decsription.
+  see section 7.1.3.2 wms 1.1.1 specs for description.
   */
   if (request && service == NULL &&
       (strcasecmp(request, "capabilities") == 0 ||
        strcasecmp(request, "GetCapabilities") == 0) &&
-      (nVersion >= OWS_1_0_7 || nVersion == OWS_VERSION_NOTSET)) {
+      (nVersion >= OWS_1_1_0 || nVersion == OWS_VERSION_NOTSET)) {
     if (force_wms_mode) {
       msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                            "Required SERVICE parameter missing.",
@@ -5794,13 +5762,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
     return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }
 
-  /*check if the version is one of the supported vcersions*/
-  if (nVersion != OWS_1_0_0 && nVersion != OWS_1_0_6 && nVersion != OWS_1_0_7 &&
-      nVersion != OWS_1_1_0 && nVersion != OWS_1_1_1 && nVersion != OWS_1_3_0) {
+  /*check if the version is one of the supported versions*/
+  if (nVersion != OWS_1_0_0 && nVersion != OWS_1_1_0 && nVersion != OWS_1_1_1 &&
+      nVersion != OWS_1_3_0) {
     msSetErrorWithStatus(
         MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
         "Invalid WMS version: VERSION %s is not supported. Supported "
-        "versions are 1.0.0, 1.0.6, 1.0.7, 1.1.0, 1.1.1, 1.3.0",
+        "versions are 1.0.0, 1.1.0, 1.1.1, 1.3.0",
         "msWMSDispatch()", version);
     return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }
