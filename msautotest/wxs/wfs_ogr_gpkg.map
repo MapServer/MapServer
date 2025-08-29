@@ -11,6 +11,13 @@
 #
 # RUN_PARMS: wfs_ogr_gpkg_issue_6325.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=test_6325&BBOX=0.75,0.75,9,9&COUNT=1" > [RESULT_DEVERSION]
 #
+# Pagination with BBOX in other SRS than source
+# Ideally this should return all seven expected result, but some features being skipped where requested BBOX and source BBOX overlaps, and the next 3 expected features does not fall wihing startIndex and count.
+# Expected is 4 results and next link with startIndex 7
+# RUN_PARMS: wfs_ogr_gpkg_pagination_4326.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace&BBOX=43.0,-65.0,45.0,-62.0&COUNT=7&STARTINDEX=0" > [RESULT_DEVERSION]
+# Expect 3 results, one previous link with count 7, no next link
+# RUN_PARMS: wfs_ogr_gpkg_pagination_4326_2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace&BBOX=43.0,-65.0,45.0,-62.0&COUNT=7&STARTINDEX=7" > [RESULT_DEVERSION]
+#
 # Filter using intersect with point
 # RUN_PARMS: wfs_ogr_gpkg_filter_intersects_point.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_6325&FILTER=<Filter><Intersects><PropertyName>msGeometry</PropertyName><gml:Point srsName=%22EPSG:4326%22><gml:coordinates>1.000000,0.000000</gml:coordinates></gml:Point></Intersects></Filter>" > [RESULT]
 #

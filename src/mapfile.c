@@ -7507,6 +7507,7 @@ void initResultCache(resultCacheObj *resultcache) {
   if (resultcache) {
     resultcache->results = NULL;
     resultcache->numresults = 0;
+    resultcache->hasnext = MS_UNKNOWN;
     resultcache->cachesize = 0;
     resultcache->bounds.minx = resultcache->bounds.miny =
         resultcache->bounds.maxx = resultcache->bounds.maxy = -1;

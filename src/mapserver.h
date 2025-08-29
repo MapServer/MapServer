@@ -1794,6 +1794,7 @@ typedef struct {
     %immutable;
 #endif            /* SWIG */
   int numresults; ///< Length of result set
+  int hasnext;    /// If any there are any more features left
   rectObj bounds; ///< Bounding box of query results
 
 #ifdef SWIG
