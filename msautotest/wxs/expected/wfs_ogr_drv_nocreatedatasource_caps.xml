@@ -1,8 +1,0 @@
-Content-Type: text/html
-
-<HTML>
-<HEAD><TITLE>MapServer Message</TITLE></HEAD>
-<BODY BGCOLOR="#FFFFFF">
-loadOutputFormat(): General error message. OUTPUTFORMAT (nocreatedatasource) clause references driver (OGR/SDTS), but this driver isn&#39;t configured.
-msInitDefaultOGROutputFormat(): General error message. OGR `SDTS&#39; driver does not support output.
-</BODY></HTML>
