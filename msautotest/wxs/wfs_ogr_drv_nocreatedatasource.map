@@ -1,0 +1,19 @@
+#
+# Test WFS
+#
+# REQUIRES: SUPPORTS=WFS INPUT=OGR
+#
+# WFS 1.0
+#
+# Do formats show up in the Capabilities
+# RUN_PARMS: wfs_ogr_drv_nocreatedatasource_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+
+MAP
+
+OUTPUTFORMAT
+  NAME "nocreatedatasource"
+  DRIVER "OGR/SXF"
+  MIMETYPE "text/nocreatedatasource"
+END
+
+END # Map File
