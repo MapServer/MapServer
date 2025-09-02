@@ -1,0 +1,73 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.0.0/capabilities_1_0_0.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.0.0" updateSequence="123">
+<Service>
+  <Name>GetMap</Name>
+  <Title>Test simple wms</Title>
+  <Keywords>ogc wms mapserver   </Keywords>
+  <OnlineResource>http://www.mapserver.org/</OnlineResource>
+  <Fees>None</Fees>
+  <AccessConstraints>None</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <Map>
+      <Format><PNG /><JPEG /><SVG /></Format>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wms_simple?" />
+          <Post onlineResource="http://localhost/path/to/wms_simple?" />
+        </HTTP>
+      </DCPType>
+    </Map>
+    <Capabilities>
+      <Format><WMS_XML /></Format>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wms_simple?" />
+          <Post onlineResource="http://localhost/path/to/wms_simple?" />
+        </HTTP>
+      </DCPType>
+    </Capabilities>
+    <FeatureInfo>
+      <Format><MIME /><GML.1 /></Format>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wms_simple?" />
+          <Post onlineResource="http://localhost/path/to/wms_simple?" />
+        </HTTP>
+      </DCPType>
+    </FeatureInfo>
+  </Request>
+  <Exception>
+    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <Layer queryable="1">
+    <Name>WMS_TEST</Name>
+    <Title>My Layers</Title>
+    <Abstract>These are my layers</Abstract>
+    <Keywords>layers list     </Keywords>
+    <SRS>EPSG:42304 EPSG:42101 EPSG:4269 EPSG:4326</SRS>
+    <LatLonBoundingBox minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
+    <Layer queryable="1">
+        <Name>road</Name>
+        <Title>road</Title>
+        <SRS>EPSG:43204</SRS>
+        <LatLonBoundingBox minx="-66.633318" miny="42.382054" maxx="-59.292114" maxy="48.295512" />
+        <BoundingBox SRS="EPSG:43204"
+                    minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>
