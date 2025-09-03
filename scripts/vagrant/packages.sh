@@ -1,14 +1,12 @@
 #!/bin/sh
 
-sed -i 's#deb http://us.archive.ubuntu.com/ubuntu/#deb mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list
-
 export DEBIAN_FRONTEND=noninteractive
-
-apt-get update
 apt-get install -y software-properties-common
 add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+
+sed -i 's#deb http://us.archive.ubuntu.com/ubuntu/#deb mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list
+
 apt-get update
-apt-get -y upgrade
 
 # install packages we need
 apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
@@ -23,4 +21,4 @@ apt-get install -q -y git build-essential pkg-config cmake libgeos-dev rake \
 
 export PIP_BREAK_SYSTEM_PACKAGES=true
 export PIP_NO_WARN_SCRIPT_LOCATION=true
-python -m pip install -U -r /vagrant/msautotest/requirements.txt
+python -m pip install -r /vagrant/msautotest/requirements.txt
