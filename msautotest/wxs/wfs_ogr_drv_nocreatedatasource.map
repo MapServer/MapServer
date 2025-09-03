@@ -12,7 +12,7 @@ MAP
 
 OUTPUTFORMAT
   NAME "nocreatedatasource"
-  DRIVER "OGR/SDTS"
+  DRIVER "OGR/SXF"
   MIMETYPE "text/nocreatedatasource"
 END
 
