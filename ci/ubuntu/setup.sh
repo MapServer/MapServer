@@ -30,6 +30,9 @@ sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compi
 # install recent CMake from Kitware
 sudo apt-get install -y --allow-unauthenticated cmake
 
+echo "GDAL version"
+gdal --version
+
 echo "cmake version"
 cmake --version
 
