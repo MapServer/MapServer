@@ -1,0 +1,116 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="10" numberReturned="3"
+   previous="http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=GetFeature&amp;TYPENAMES=popplace&amp;BBOX=43.0%2C-65.0%2C45.0%2C-62.0&amp;COUNT=7">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>44.365195 -64.563218</gml:lowerCorner>
+      		<gml:upperCorner>44.682792 -63.570040</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+<!-- WARNING: No featureid defined for typename 'popplace'. Output will not validate. -->
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.365195 -64.563218</gml:lowerCorner>
+        		<gml:upperCorner>44.365195 -64.563218</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.365195 -64.563218</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>268</ms:POPPLACE_>
+        <ms:POPPLACE_I>3</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAFBR</ms:UNIQUE_KEY>
+        <ms:NAME>Bridgewater</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>021A07</ms:NTS50>
+        <ms:LAT>442300</ms:LAT>
+        <ms:LONG>643100</ms:LONG>
+        <ms:SGC_CODE>1206004</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>3</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.682792 -63.570040</gml:lowerCorner>
+        		<gml:upperCorner>44.682792 -63.570040</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.682792 -63.570040</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>392</ms:POPPLACE_>
+        <ms:POPPLACE_I>4</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAIYJ</ms:UNIQUE_KEY>
+        <ms:NAME>Dartmouth</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011D12</ms:NTS50>
+        <ms:LAT>444000</ms:LAT>
+        <ms:LONG>633400</ms:LONG>
+        <ms:SGC_CODE>1209022</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>5</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.615583 -63.692011</gml:lowerCorner>
+        		<gml:upperCorner>44.615583 -63.692011</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.615583 -63.692011</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>463</ms:POPPLACE_>
+        <ms:POPPLACE_I>96</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAPHL</ms:UNIQUE_KEY>
+        <ms:NAME>Halifax</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011D12</ms:NTS50>
+        <ms:LAT>443900</ms:LAT>
+        <ms:LONG>633600</ms:LONG>
+        <ms:SGC_CODE>1209021</ms:SGC_CODE>
+        <ms:CAPITAL>2</ms:CAPITAL>
+        <ms:POP_RANGE>6</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+</wfs:FeatureCollection>
+
