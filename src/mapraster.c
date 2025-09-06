@@ -651,7 +651,6 @@ void *msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
         GDALOpenEx(*p_decrypted_path, GDAL_OF_RASTER | GDAL_OF_SHARED,
                    (const char *const *)papszAllowedDrivers,
                    (const char *const *)connectionoptions, NULL);
-    CSLDestroy(papszAllowedDrivers);
     CSLDestroy(connectionoptions);
 
     // Give a hint about which GDAL driver should be enabled, but only in
@@ -678,6 +677,7 @@ void *msDrawRasterLayerLowOpenDataset(mapObj *map, layerObj *layer,
         }
       }
     }
+    CSLDestroy(papszAllowedDrivers);
     return hDS;
   } else {
     return GDALOpenShared(*p_decrypted_path, GA_ReadOnly);
