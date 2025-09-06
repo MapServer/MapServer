@@ -306,16 +306,9 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
   psWMSParams->onlineresource = msStrdup(pszOnlineResource);
 
-  if (strncmp(pszVersion, "1.0.7", 5) < 0)
-    pszVersionKeyword = "WMTVER";
-  else
-    pszVersionKeyword = "VERSION";
+  pszVersionKeyword = "VERSION";
 
   nVersion = msOWSParseVersionString(pszVersion);
-  /* WMS 1.0.8 is really just 1.1.0 */
-  if (nVersion == OWS_1_0_8)
-    nVersion = OWS_1_1_0;
-
   msSetWMSParamString(psWMSParams, pszVersionKeyword, pszVersion, MS_FALSE,
                       nVersion);
   msSetWMSParamString(psWMSParams, "SERVICE", "WMS", MS_FALSE, nVersion);
@@ -486,12 +479,7 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   }
 
   switch (nVersion) {
-  case OWS_1_0_8:
-    nVersion = OWS_1_1_0; /* 1.0.8 == 1.1.0 */
-    break;
   case OWS_1_0_0:
-  case OWS_1_0_1:
-  case OWS_1_0_7:
   case OWS_1_1_0:
   case OWS_1_1_1:
     /* All is good, this is a supported version. */
@@ -841,7 +829,7 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   if (nRequestType == WMS_GETFEATUREINFO) {
     char szBuf[100] = "";
 
-    if (nVersion >= OWS_1_0_7)
+    if (nVersion >= OWS_1_1_0)
       pszRequestParam = "GetFeatureInfo";
     else
       pszRequestParam = "feature_info";
@@ -851,8 +839,6 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       pszExceptionsParam = "XML";
     else if (nVersion >= OWS_1_1_0) /* 1.1.0 to 1.1.0 */
       pszExceptionsParam = "application/vnd.ogc.se_xml";
-    else if (nVersion > OWS_1_0_0) /* 1.0.1 to 1.0.7 */
-      pszExceptionsParam = "SE_XML";
     else
       pszExceptionsParam = "WMS_XML";
 
@@ -937,7 +923,7 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   } else { /* if (nRequestType == WMS_GETMAP) */
     char szBuf[100] = "";
 
-    if (nVersion >= OWS_1_0_7)
+    if (nVersion >= OWS_1_1_0)
       pszRequestParam = "GetMap";
     else
       pszRequestParam = "map";
