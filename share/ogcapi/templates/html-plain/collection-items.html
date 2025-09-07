@@ -9,12 +9,14 @@
 
 <table>
   <thead>
-    <th>ID</th>
+    <tr>
+      <th>ID</th>
 {% if response.features %}
 {% for key, value in response.features.0.properties %}
-    <th>{{ key }}</th>
+      <th>{{ key }}</th>
 {% endfor %}
 {% endif %}
+    </tr>
   </thead>
   <tbody>
 {% for feature in response.features %}
