@@ -1189,8 +1189,8 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
                  rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue]);
       } else if (EQUAL(layer->items[i], "class") && rlinfo->qc_class) {
         int p_class = rlinfo->qc_class[shapeindex];
-        if (layer->class[p_class]->name != NULL)
-          snprintf(szWork, bufferSize, "%.999s", layer->class[p_class]->name);
+        if (layer->class[p_class] -> name != NULL)
+          snprintf(szWork, bufferSize, "%.999s", layer->class[p_class] -> name);
         else
           snprintf(szWork, bufferSize, "%d", p_class);
       } else if (EQUAL(layer->items[i], "red") && rlinfo->qc_red)
