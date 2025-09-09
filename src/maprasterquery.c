@@ -1179,17 +1179,18 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
           if (iValue != 0)
             strlcat(szWork, ",", bufferSize);
 
-          snprintf(szWork + strlen(szWork), bufferSize - strlen(szWork), "%.8g",
+          snprintf(szWork + strlen(szWork), bufferSize - strlen(szWork),
+                   "%.10g",
                    rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue]);
         }
       } else if (EQUALN(layer->items[i], "value_", 6) && rlinfo->qc_values) {
         int iValue = atoi(layer->items[i] + 6);
-        snprintf(szWork, bufferSize, "%.8g",
+        snprintf(szWork, bufferSize, "%.10g",
                  rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue]);
       } else if (EQUAL(layer->items[i], "class") && rlinfo->qc_class) {
         int p_class = rlinfo->qc_class[shapeindex];
-        if (layer->class[p_class] -> name != NULL)
-          snprintf(szWork, bufferSize, "%.999s", layer->class[p_class] -> name);
+        if (layer->class[p_class]->name != NULL)
+          snprintf(szWork, bufferSize, "%.999s", layer->class[p_class]->name);
         else
           snprintf(szWork, bufferSize, "%d", p_class);
       } else if (EQUAL(layer->items[i], "red") && rlinfo->qc_red)
