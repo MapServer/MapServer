@@ -49,7 +49,7 @@ typedef struct {
 
   int refcount;
 
-  float *raster_values; /* raster values */
+  double *raster_values; /* raster values */
   int width;
   int height;
   rectObj extent;
@@ -216,7 +216,7 @@ int msRasterLabelLayerGetItems(layerObj *layer) {
 /**********************************************************************
  *                     msRasterLabelGetValues()
  **********************************************************************/
-static char **msRasterLabelGetValues(layerObj *layer, float value) {
+static char **msRasterLabelGetValues(layerObj *layer, double value) {
   char **values;
   int i = 0;
   char tmp[100];
@@ -448,7 +448,7 @@ int msRasterLabelLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   outputformat->vtable = NULL;
   outputformat->device = NULL;
   outputformat->renderer = MS_RENDER_WITH_RAWDATA;
-  outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
+  outputformat->imagemode = MS_IMAGEMODE_FLOAT64;
   msAppendOutputFormat(map_tmp, outputformat);
 
   msCopyHashTable(&map_tmp->configoptions, &layer->map->configoptions);
@@ -728,14 +728,14 @@ int msRasterLabelLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 
   free(rllinfo->raster_values);
   rllinfo->raster_values =
-      (float *)msSmallMalloc(sizeof(float) * width * height);
+      (double *)msSmallMalloc(sizeof(double) * width * height);
 
   for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
     if (MS_GET_BIT(image_tmp->img_mask, off)) {
-      rllinfo->raster_values[off] = image_tmp->img.raw_float[off];
+      rllinfo->raster_values[off] = image_tmp->img.raw_double[off];
       rllinfo->query_results++;
     } else
-      rllinfo->raster_values[off] = std::numeric_limits<float>::quiet_NaN();
+      rllinfo->raster_values[off] = std::numeric_limits<double>::quiet_NaN();
   }
 
   msFreeImage(image_tmp); /* we do not need the imageObj anymore */

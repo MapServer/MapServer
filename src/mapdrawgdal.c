@@ -1723,7 +1723,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   int *band_list, band_count;
   int i, j, k, band;
   CPLErr eErr;
-  float *f_nodatas = NULL;
+  double *f_nodatas = NULL;
   unsigned char *b_nodatas = NULL;
   GInt16 *i_nodatas = NULL;
   int got_nodata = FALSE;
@@ -1753,6 +1753,8 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
     eDataType = GDT_Int16;
   else if (image->format->imagemode == MS_IMAGEMODE_FLOAT32)
     eDataType = GDT_Float32;
+  else if (image->format->imagemode == MS_IMAGEMODE_FLOAT64)
+    eDataType = GDT_Float64;
   else if (image->format->imagemode == MS_IMAGEMODE_BYTE)
     eDataType = GDT_Byte;
   else
@@ -1778,11 +1780,11 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Do we have nodata values?                                       */
   /* -------------------------------------------------------------------- */
-  f_nodatas = (float *)calloc(band_count, sizeof(float));
+  f_nodatas = (double *)calloc(band_count, sizeof(double));
   if (f_nodatas == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n",
                "msDrawRasterLayerGDAL_RawMode()", __FILE__, __LINE__,
-               (unsigned int)(sizeof(float) * band_count));
+               (unsigned int)(sizeof(double) * band_count));
     free(band_list);
     return -1;
   }
@@ -1879,6 +1881,20 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
           }
 
           image->img.raw_float[off] = ((float *)pBuffer)[k++];
+          MS_SET_BIT(image->img_mask, off_mask);
+        }
+      } else if (image->format->imagemode == MS_IMAGEMODE_FLOAT64) {
+        for (j = dst_xoff; j < dst_xoff + dst_xsize; j++) {
+          int off = j + i * image->width + band * image->width * image->height;
+          int off_mask = j + i * image->width;
+
+          if ((f_nodatas && ((double *)pBuffer)[k] == f_nodatas[band]) ||
+              SKIP_MASK(j, i)) {
+            k++;
+            continue;
+          }
+
+          image->img.raw_double[off] = ((double *)pBuffer)[k++];
           MS_SET_BIT(image->img_mask, off_mask);
         }
       } else if (image->format->imagemode == MS_IMAGEMODE_BYTE) {

@@ -677,7 +677,8 @@ enum MS_IMAGEMODE {
   MS_IMAGEMODE_FLOAT32,
   MS_IMAGEMODE_BYTE,
   MS_IMAGEMODE_FEATURE,
-  MS_IMAGEMODE_NULL
+  MS_IMAGEMODE_NULL,
+  MS_IMAGEMODE_FLOAT64
 };
 
 enum MS_GEOS_OPERATOR {
@@ -2070,6 +2071,7 @@ struct imageObj {
     char *imagemap;
     short *raw_16bit;
     float *raw_float;
+    double *raw_double;
     unsigned char *raw_byte;
   } img;
   ms_bitarray img_mask;
