@@ -59,7 +59,7 @@ typedef struct {
   double *qc_y;
   double *qc_x_reproj;
   double *qc_y_reproj;
-  float *qc_values;
+  double *qc_values;
   int *qc_class;
   int *qc_red;
   int *qc_green;
@@ -211,7 +211,7 @@ static void msRasterLayerInfoInitialize(layerObj *layer)
 /************************************************************************/
 
 static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
-                                  pointObj *reprojectedLocation, float *values)
+                                  pointObj *reprojectedLocation, double *values)
 
 {
   rasterLayerInfo *rlinfo = (rasterLayerInfo *)layer->layerinfo;
@@ -238,8 +238,8 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
           (double *)msSmallCalloc(sizeof(double), rlinfo->query_alloc_max);
       rlinfo->qc_y_reproj =
           (double *)msSmallCalloc(sizeof(double), rlinfo->query_alloc_max);
-      rlinfo->qc_values = (float *)msSmallCalloc(
-          sizeof(float),
+      rlinfo->qc_values = (double *)msSmallCalloc(
+          sizeof(double),
           ((size_t)rlinfo->query_alloc_max) * rlinfo->band_count);
       rlinfo->qc_red =
           (int *)msSmallCalloc(sizeof(int), rlinfo->query_alloc_max);
@@ -285,7 +285,7 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
     if (rlinfo->qc_values != NULL)
       rlinfo->qc_values = msSmallRealloc(
           rlinfo->qc_values,
-          sizeof(float) * rlinfo->query_alloc_max * rlinfo->band_count);
+          sizeof(double) * rlinfo->query_alloc_max * rlinfo->band_count);
     if (rlinfo->qc_class != NULL)
       rlinfo->qc_class = msSmallRealloc(rlinfo->qc_class,
                                         sizeof(int) * rlinfo->query_alloc_max);
@@ -385,7 +385,7 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
   /* -------------------------------------------------------------------- */
   if (rlinfo->qc_values != NULL)
     memcpy(rlinfo->qc_values + rlinfo->query_results * rlinfo->band_count,
-           values, sizeof(float) * rlinfo->band_count);
+           values, sizeof(double) * rlinfo->band_count);
 
   /* -------------------------------------------------------------------- */
   /*      Add to the results cache.                                       */
@@ -408,7 +408,7 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   double dfXMin, dfYMin, dfXMax, dfYMax, dfX, dfY, dfAdjustedRange;
   int nWinXOff, nWinYOff, nWinXSize, nWinYSize;
   int nRXSize, nRYSize;
-  float *pafRaster;
+  double *pafRaster;
   int nBandCount, *panBandMap, iPixel, iLine;
   CPLErr eErr;
   rasterLayerInfo *rlinfo;
@@ -504,15 +504,17 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   /*      band in the file.  Later we will deal with the various band     */
   /*      selection criteria.                                             */
   /* -------------------------------------------------------------------- */
-  pafRaster = (float *)calloc(((size_t)nWinXSize) * nWinYSize * nBandCount,
-                              sizeof(float));
-  MS_CHECK_ALLOC(pafRaster, sizeof(float) * nWinXSize * nWinYSize * nBandCount,
-                 -1);
 
-  eErr = GDALDatasetRasterIO(hDS, GF_Read, nWinXOff, nWinYOff, nWinXSize,
-                             nWinYSize, pafRaster, nWinXSize, nWinYSize,
-                             GDT_Float32, nBandCount, panBandMap,
-                             4 * nBandCount, 4 * nBandCount * nWinXSize, 4);
+  size_t nPixels = (size_t)nWinXSize * nWinYSize * nBandCount;
+  pafRaster = (double *)calloc(nPixels, sizeof(double));
+  MS_CHECK_ALLOC(pafRaster, sizeof(double) * nPixels, -1);
+
+  // read raster block as GDT_Float64
+  eErr = GDALDatasetRasterIO(
+      hDS, GF_Read, nWinXOff, nWinYOff, nWinXSize, nWinYSize, pafRaster,
+      nWinXSize, nWinYSize, GDT_Float64, nBandCount, panBandMap,
+      sizeof(double) * nBandCount, sizeof(double) * nBandCount * nWinXSize,
+      sizeof(double));
 
   if (eErr != CE_None) {
     msSetError(MS_IOERR, "GDALDatasetRasterIO() failed: %s",
