@@ -1,0 +1,11 @@
+Content-Disposition: attachment; filename=result.dat
+Content-Type: application/json; subtype=geojson; charset=utf-8
+
+{
+"type": "FeatureCollection",
+"name": "test",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::2157" } },
+"features": [
+{ "type": "Feature", "properties": { "x": "600182.31", "y": "628802.89", "value_0": 114140618, "value_list": "114140618", "red": "255", "green": "255", "blue": "255" }, "geometry": { "type": "Point", "coordinates": [ 600182.310000000055879, 628802.89000000001397 ] } }
+]
+}
