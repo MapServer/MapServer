@@ -1,0 +1,29 @@
+# RUN_PARMS: rasterlabel_int32.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+
+MAP
+  NAME 'test'
+  EXTENT 600029.81 628680.39 600319.81 628905.39
+  SIZE 600 600
+  IMAGETYPE PNG
+  PROJECTION
+   "init=epsg:2157"
+  END
+
+  LAYER
+    PROJECTION
+      "init=epsg:2157"
+    END
+    NAME "test"
+    TYPE POINT
+    CONNECTIONTYPE RASTERLABEL
+    STATUS DEFAULT
+    DATA "data/int32.tif"
+    CLASS
+        TEXT (tostring([value],"%.0f"))
+        LABEL
+          TYPE TRUETYPE
+          SIZE 7
+        END # label
+    END # class
+  END
+END
