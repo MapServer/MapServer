@@ -1,6 +1,3 @@
-Content-Disposition: attachment; filename=result.dat
-Content-Type: application/json; subtype=geojson; charset=utf-8
-
 {
 "type": "FeatureCollection",
 "name": "test",
