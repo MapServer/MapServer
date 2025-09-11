@@ -76,7 +76,7 @@ typedef struct {
   pointObj target_point;
 
   GDALColorTableH hCT;
-
+  GDALDataType eDataType;
   double shape_tolerance;
 
 } rasterLayerInfo;
@@ -515,6 +515,9 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
       nWinXSize, nWinYSize, GDT_Float64, nBandCount, panBandMap,
       sizeof(double) * nBandCount, sizeof(double) * nBandCount * nWinXSize,
       sizeof(double));
+
+  // store the datatype of the original raster to use for output formatting
+  rlinfo->eDataType = GDALGetRasterDataType(GDALGetRasterBand(hDS, 1));
 
   if (eErr != CE_None) {
     msSetError(MS_IOERR, "GDALDatasetRasterIO() failed: %s",
@@ -1187,8 +1190,30 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
         }
       } else if (EQUALN(layer->items[i], "value_", 6) && rlinfo->qc_values) {
         int iValue = atoi(layer->items[i] + 6);
-        snprintf(szWork, bufferSize, "%.10g",
-                 rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue]);
+
+        double pixelValue =
+            rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue];
+
+        switch (rlinfo->eDataType) {
+        case GDT_Byte:
+        case GDT_Int8:
+        case GDT_UInt16:
+        case GDT_Int16:
+        case GDT_Int32:
+          snprintf(szWork, bufferSize, "%d", (int)pixelValue);
+          break;
+        case GDT_UInt32:
+          snprintf(szWork, bufferSize, "%u", (unsigned int)pixelValue);
+          break;
+        case GDT_Float64:
+          snprintf(szWork, bufferSize, "%.12g", pixelValue);
+          break;
+        default:
+          // GDT_Float32
+          snprintf(szWork, bufferSize, "%.8g", pixelValue);
+          break;
+        }
+
       } else if (EQUAL(layer->items[i], "class") && rlinfo->qc_class) {
         int p_class = rlinfo->qc_class[shapeindex];
         if (layer->class[p_class] -> name != NULL)
