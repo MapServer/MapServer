@@ -1723,7 +1723,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   int *band_list, band_count;
   int i, j, k, band;
   CPLErr eErr;
-  double *f_nodatas = NULL;
+  double *d_nodatas = NULL;
   unsigned char *b_nodatas = NULL;
   GInt16 *i_nodatas = NULL;
   int got_nodata = FALSE;
@@ -1780,8 +1780,9 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   /*      Do we have nodata values?                                       */
   /* -------------------------------------------------------------------- */
-  f_nodatas = (double *)calloc(band_count, sizeof(double));
-  if (f_nodatas == NULL) {
+
+  d_nodatas = (double *)calloc(band_count, sizeof(double));
+  if (d_nodatas == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n",
                "msDrawRasterLayerGDAL_RawMode()", __FILE__, __LINE__,
                (unsigned int)(sizeof(double) * band_count));
@@ -1793,33 +1794,33 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
       (layer->offsite.red != -1 || layer->offsite.green != -1 ||
        layer->offsite.blue != -1)) {
     if (band_count > 0)
-      f_nodatas[0] = layer->offsite.red;
+      d_nodatas[0] = layer->offsite.red;
     if (band_count > 1)
-      f_nodatas[1] = layer->offsite.green;
+      d_nodatas[1] = layer->offsite.green;
     if (band_count > 2)
-      f_nodatas[2] = layer->offsite.blue;
+      d_nodatas[2] = layer->offsite.blue;
     got_nodata = TRUE;
   }
 
   if (!got_nodata) {
     got_nodata = TRUE;
     for (band = 0; band < band_count && got_nodata; band++) {
-      f_nodatas[band] = msGetGDALNoDataValue(
+      d_nodatas[band] = msGetGDALNoDataValue(
           layer, GDALGetRasterBand(hDS, band_list[band]), &got_nodata);
     }
   }
 
   if (!got_nodata) {
-    free(f_nodatas);
-    f_nodatas = NULL;
+    free(d_nodatas);
+    d_nodatas = NULL;
   } else if (eDataType == GDT_Byte) {
-    b_nodatas = (unsigned char *)f_nodatas;
+    b_nodatas = (unsigned char *)d_nodatas;
     for (band = 0; band < band_count; band++)
-      b_nodatas[band] = (unsigned char)f_nodatas[band];
+      b_nodatas[band] = (unsigned char)d_nodatas[band];
   } else if (eDataType == GDT_Int16) {
-    i_nodatas = (GInt16 *)f_nodatas;
+    i_nodatas = (GInt16 *)d_nodatas;
     for (band = 0; band < band_count; band++)
-      i_nodatas[band] = (GInt16)f_nodatas[band];
+      i_nodatas[band] = (GInt16)d_nodatas[band];
   }
 
   /* -------------------------------------------------------------------- */
@@ -1831,7 +1832,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
     msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize);
     free(band_list);
-    free(f_nodatas);
+    free(d_nodatas);
     return -1;
   }
 
@@ -1845,7 +1846,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
     msSetError(MS_IOERR, "GDALRasterIO() failed: %s",
                "msDrawRasterLayerGDAL_RawMode()", CPLGetLastErrorMsg());
     free(pBuffer);
-    free(f_nodatas);
+    free(d_nodatas);
     return -1;
   }
 
@@ -1874,7 +1875,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
           int off = j + i * image->width + band * image->width * image->height;
           int off_mask = j + i * image->width;
 
-          if ((f_nodatas && ((float *)pBuffer)[k] == f_nodatas[band]) ||
+          if ((d_nodatas && ((float *)pBuffer)[k] == d_nodatas[band]) ||
               SKIP_MASK(j, i)) {
             k++;
             continue;
@@ -1888,7 +1889,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
           int off = j + i * image->width + band * image->width * image->height;
           int off_mask = j + i * image->width;
 
-          if ((f_nodatas && ((double *)pBuffer)[k] == f_nodatas[band]) ||
+          if ((d_nodatas && ((double *)pBuffer)[k] == d_nodatas[band]) ||
               SKIP_MASK(j, i)) {
             k++;
             continue;
@@ -1916,7 +1917,7 @@ msDrawRasterLayerGDAL_RawMode(mapObj *map, layerObj *layer, imageObj *image,
   }
 
   free(pBuffer);
-  free(f_nodatas);
+  free(d_nodatas);
 
   return 0;
 }

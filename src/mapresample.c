@@ -263,6 +263,12 @@ static void msSourceSample(imageObj *psSrcImage, rasterBufferObj *rb, int iSrcX,
         fValue = psSrcImage->img.raw_float[src_off];
 
         padfPixelSum[band] += fValue * dfWeight;
+      } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT64) {
+        double dValue;
+
+        dValue = psSrcImage->img.raw_double[src_off];
+
+        padfPixelSum[band] += dValue * dfWeight;
       } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE) {
         int nValue;
 
@@ -596,6 +602,8 @@ msAverageRasterResampler(imageObj *psSrcImage, rasterBufferObj *src_rb,
                 (short)(padfPixelSum[band] + 0.5);
           } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32) {
             psDstImage->img.raw_float[dst_off] = (float)padfPixelSum[band];
+          } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT64) {
+            psDstImage->img.raw_double[dst_off] = (double)padfPixelSum[band];
           } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE) {
             psDstImage->img.raw_byte[dst_off] =
                 (unsigned char)padfPixelSum[band];
