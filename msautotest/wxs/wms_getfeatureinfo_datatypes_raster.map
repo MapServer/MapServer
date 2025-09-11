@@ -48,6 +48,7 @@ MAP
     END
     METADATA
         "gml_include_items" "all"
+        "gml_value_0_type" "Long"		
     END
   END
   
