@@ -3704,6 +3704,10 @@ int loadClass(classObj *class, layerObj *layer) {
       if (loadHashTable(&(class->validation)) != MS_SUCCESS)
         return (-1);
       break;
+    case (FALLBACK):
+      if ((class->isfallback = getSymbol(2, MS_TRUE, MS_FALSE)) == -1)
+        return (-1);
+      break;
     default:
       if (strlen(msyystring_buffer) > 0) {
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)",
@@ -3813,6 +3817,8 @@ static void writeClass(FILE *stream, int indent, classObj *class) {
   writeExpression(stream, indent, "TEXT", &(class->text));
   writeString(stream, indent, "TITLE", NULL, class->title);
   writeHashTable(stream, indent, "VALIDATION", &(class->validation));
+  writeKeyword(stream, indent, "FALLBACK", class->isfallback, 1, MS_TRUE,
+               "TRUE");
   writeBlockEnd(stream, indent, "CLASS");
 }
 
@@ -4946,6 +4952,8 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
                MS_TRUE, "TRUE");
   for (i = 0; layer->processing && layer->processing[i]; i++)
     writeString(stream, indent, "PROCESSING", NULL, layer->processing[i]);
+  writeKeyword(stream, indent, "PROCESSING", layer->rendermode, 1,
+               MS_ALL_MATCHING_CLASSES, "\"RENDERMODE=ALL_MATCHING_CLASSES\"");
   writeProjection(stream, indent, &(layer->projection));
   writeString(stream, indent, "REQUIRES", NULL, layer->requires);
   writeKeyword(stream, indent, "SIZEUNITS", layer->sizeunits, 7, MS_INCHES,

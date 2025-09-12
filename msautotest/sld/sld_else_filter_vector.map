@@ -1,0 +1,112 @@
+# RUN_PARMS: sld_else_nofallback.png [MAP2IMG] -m [MAPFILE] -l multipolygon -o  [RESULT]
+# RUN_PARMS: sld_else_fallback.png [MAP2IMG] -m [MAPFILE] -l mapscript_output -o  [RESULT]
+# RUN_PARMS: sld_else_from_sld.png [MAP2IMG] -m [MAPFILE] -l set -o  [RESULT]
+
+# Test that we get the SLD else-filter behavior when FALLBACK is used together with RENDERMODE=ALL_MATCHING_CLASSES
+# FALLBACK should only be rendered if no other class is matching
+MAP
+  SIZE 500 500
+  EXTENT -5 42 9 52
+  INCLUDE "data/general.map.include"
+
+  LAYER
+    NAME multipolygon
+    TYPE POLYGON
+    CONNECTIONTYPE OGR
+    CONNECTION data/set.json
+    STATUS ON
+    SIZEUNITS PIXELS
+    PROCESSING "RENDERMODE=ALL_MATCHING_CLASSES"
+    CLASS
+      NAME "set#0"
+      GROUP "set"
+      EXPRESSION (([N_EDGES] > 4))
+      STYLE
+        COLOR 34 20 164
+      END # STYLE
+      STYLE
+        OUTLINECOLOR 35 35 35
+      END # STYLE
+    END # CLASS
+    CLASS
+      NAME "set#1"
+      GROUP "set"
+      EXPRESSION ((("[NAME]" = "Hauts-de-France") Or ("[NAME]" = "Bretagne")))
+      STYLE
+        COLOR "#b602055c"
+        OPACITY 36
+      END # STYLE
+      STYLE
+        OPACITY 40
+        OUTLINECOLOR "#23232366"
+        WIDTH 7
+      END # STYLE
+    END # CLASS
+    CLASS
+      NAME "set#2"
+      GROUP "set"
+      STYLE
+        COLOR 125 139 143
+      END # STYLE
+      STYLE
+        OUTLINECOLOR 35 35 35
+      END # STYLE
+    END # CLASS
+  END
+
+LAYER
+    NAME mapscript_output
+    TYPE POLYGON
+    CONNECTIONTYPE OGR
+    CONNECTION data/set.json
+    STATUS ON
+    SIZEUNITS PIXELS
+    PROCESSING "RENDERMODE=ALL_MATCHING_CLASSES"
+    CLASS
+      NAME "set#0"
+      GROUP "set"
+      EXPRESSION (([N_EDGES] > 4))
+      STYLE
+        COLOR 34 20 164
+      END # STYLE
+      STYLE
+        OUTLINECOLOR 35 35 35
+      END # STYLE
+    END # CLASS
+    CLASS
+      NAME "set#1"
+      GROUP "set"
+      EXPRESSION ((("[NAME]" = "Hauts-de-France") Or ("[NAME]" = "Bretagne")))
+      STYLE
+        COLOR "#b602055c"
+        OPACITY 36
+      END # STYLE
+      STYLE
+        OPACITY 40
+        OUTLINECOLOR "#23232366"
+        WIDTH 7
+      END # STYLE
+    END # CLASS
+    CLASS
+      NAME "set#2"
+      GROUP "set"
+      STYLE
+        COLOR 125 139 143
+      END # STYLE
+      STYLE
+        OUTLINECOLOR 35 35 35
+      END # STYLE
+      FALLBACK TRUE
+    END # CLASS
+  END
+
+  LAYER
+    NAME set
+    TYPE POLYGON
+    CONNECTIONTYPE OGR
+    CONNECTION data/set.json
+    STATUS ON
+    SIZEUNITS PIXELS
+    STYLEITEM "sld://set_else.sld"
+  END
+END
