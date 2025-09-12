@@ -1,0 +1,48 @@
+# RUN_PARMS: rasterlabel_int32.png [MAP2IMG] -m [MAPFILE] -i png -l int32 -o [RESULT]
+# RUN_PARMS: rasterlabel_float64.png [MAP2IMG] -m [MAPFILE] -i png -l float64 -o [RESULT]
+
+MAP
+  NAME 'test'
+  EXTENT 600029.81 628680.39 600319.81 628905.39
+  SIZE 600 600
+  IMAGETYPE PNG
+  PROJECTION
+   "init=epsg:2157"
+  END
+
+  LAYER
+    PROJECTION
+      "init=epsg:2157"
+    END
+    NAME "int32"
+    TYPE POINT
+    CONNECTIONTYPE RASTERLABEL
+    STATUS OFF
+    DATA "data/int32.tif"
+    CLASS
+        TEXT (tostring([value],"%.0f"))
+        LABEL
+          TYPE TRUETYPE
+          SIZE 7
+        END
+    END
+  END
+
+  LAYER
+    PROJECTION
+      "init=epsg:2157"
+    END
+    NAME "float64"
+    TYPE POINT
+    CONNECTIONTYPE RASTERLABEL
+    STATUS OFF
+    DATA "data/float64.tif"
+    CLASS
+        TEXT (tostring([value],"%.0f"))
+        LABEL
+          TYPE TRUETYPE
+          SIZE 7
+        END # label
+    END # class
+  END
+END
